@@ -22,7 +22,6 @@ const LOCAL_CONFIG = {
   name: "my-project",
   agents: ["web-developer"],
   skills: [],
-  installMode: "local",
 };
 
 const LOCAL_CONFIG_NO_MODE = {
@@ -44,8 +43,7 @@ async function createLocalProject(
 const PLUGIN_CONFIG = {
   name: "my-project",
   agents: ["web-developer"],
-  skills: [],
-  installMode: "plugin",
+  skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
 };
 
 async function createPluginProject(projectDir: string): Promise<void> {
@@ -73,7 +71,7 @@ describe("installation", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
-      expect(result!.scope).toBe("project");
+
       expect(result!.configPath).toBe(path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS));
       expect(result!.agentsDir).toBe(path.join(tempDir, CLAUDE_DIR, "agents"));
       expect(result!.skillsDir).toBe(path.join(tempDir, CLAUDE_DIR, "skills"));
@@ -87,7 +85,7 @@ describe("installation", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
-      expect(result!.scope).toBe("project");
+
     });
 
     it("detects plugin installation when installMode is plugin", async () => {
@@ -97,7 +95,7 @@ describe("installation", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("plugin");
-      expect(result!.scope).toBe("project");
+
       expect(result!.configPath).toBe(path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS));
       expect(result!.agentsDir).toBe(path.join(tempDir, CLAUDE_DIR, "agents"));
       expect(result!.skillsDir).toBe(path.join(tempDir, CLAUDE_DIR, PLUGINS_SUBDIR));
@@ -136,7 +134,7 @@ describe("installation", () => {
       // still enters the local branch. mode defaults to "local" via ?? operator.
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
-      expect(result!.scope).toBe("project");
+
     });
 
     it("uses provided projectDir parameter", async () => {
@@ -154,7 +152,7 @@ describe("installation", () => {
       const result = await detectProjectInstallation(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result!.scope).toBe("project");
+
       expect(result!.projectDir).toBe(tempDir);
     });
 
@@ -177,7 +175,7 @@ describe("installation", () => {
         // Test the fallback: project dir without config -> uses global
         const result = await detectInstallation(tempDir);
         expect(result).not.toBeNull();
-        expect(result!.scope).toBe("global");
+
         expect(result!.projectDir).toBe(homeDir);
       } else {
         // No global config either -> null
@@ -193,7 +191,7 @@ describe("installation", () => {
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result!.scope).toBe("project");
+
       expect(result!.projectDir).toBe(tempDir);
     });
   });
@@ -205,7 +203,7 @@ describe("installation", () => {
       const result = await getInstallationOrThrow(tempDir);
 
       expect(result.mode).toBe("local");
-      expect(result.scope).toBe("project");
+
       expect(result.projectDir).toBe(tempDir);
     });
 
@@ -240,7 +238,7 @@ describe("installation", () => {
       const result = await getInstallationOrThrow(tempDir);
 
       expect(result.mode).toBe("plugin");
-      expect(result.scope).toBe("project");
+
     });
   });
 });

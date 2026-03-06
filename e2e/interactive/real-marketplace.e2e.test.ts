@@ -122,7 +122,7 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
       expect(await fileExists(configPath)).toBe(true);
 
       const content = await readTestFile(configPath);
-      expect(content).toContain("installMode");
+      expect(content).toContain("skills");
     });
 
     it("should have compiled agents with real content", async () => {

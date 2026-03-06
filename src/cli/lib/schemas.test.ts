@@ -270,7 +270,7 @@ describe("projectConfigLoaderSchema", () => {
       const config = {
         name: "test-project",
         agents: ["web-developer"],
-        skills: ["web-framework-react"],
+        skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
       };
 
       const result = projectConfigLoaderSchema.safeParse(config);
@@ -799,7 +799,10 @@ describe("dynamic schema extension", () => {
       const result = projectConfigLoaderSchema.safeParse({
         name: "test-project",
         agents: ["web-developer"],
-        skills: ["web-framework-react", "acme-pipeline-deploy"],
+        skills: [
+          { id: "web-framework-react", scope: "project", source: "local" },
+          { id: "acme-pipeline-deploy", scope: "project", source: "local" },
+        ],
       });
       expect(result.success).toBe(true);
     });

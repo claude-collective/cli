@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { generateConfigSource } from "../config-writer";
-import { buildProjectConfig } from "../../__tests__/helpers";
+import { buildProjectConfig, buildSkillConfigs } from "../../__tests__/helpers";
+import type { SkillId } from "../../../types";
 
 describe("generateConfigSource", () => {
   it("produces valid TypeScript with import type and export default object literal", () => {
@@ -45,7 +46,7 @@ describe("generateConfigSource", () => {
     const config = buildProjectConfig({
       name: "preloaded-project",
       agents: ["api-developer"],
-      skills: ["api-framework-hono"],
+      skills: buildSkillConfigs(["api-framework-hono"]),
       stack: {
         "api-developer": {
           "api-api": [{ id: "api-framework-hono", preloaded: true }],

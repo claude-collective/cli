@@ -16,13 +16,13 @@ describe("source-switcher", () => {
 
   describe("deleteLocalSkill", () => {
     it("calls remove() with correct skill path", async () => {
-      await deleteLocalSkill("/project", "web-framework-react" as SkillId);
+      await deleteLocalSkill("/project", "web-framework-react");
 
       expect(remove).toHaveBeenCalledWith("/project/.claude/skills/web-framework-react");
     });
 
     it("logs verbose message on success", async () => {
-      await deleteLocalSkill("/project", "web-framework-react" as SkillId);
+      await deleteLocalSkill("/project", "web-framework-react");
 
       expect(verbose).toHaveBeenCalledWith(expect.stringContaining("Deleted"));
     });
@@ -30,34 +30,34 @@ describe("source-switcher", () => {
     it("silently handles missing skill directory", async () => {
       vi.mocked(remove).mockRejectedValueOnce(new Error("ENOENT: no such file or directory"));
 
-      await deleteLocalSkill("/project", "web-framework-react" as SkillId);
+      await deleteLocalSkill("/project", "web-framework-react");
 
       expect(warn).not.toHaveBeenCalled();
     });
 
     it("blocks path traversal in skill ID", async () => {
-      await deleteLocalSkill("/project", "web-traversal-../../dangerous" as SkillId);
+      await deleteLocalSkill("/project", "web-traversal-../../dangerous");
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(remove).not.toHaveBeenCalled();
     });
 
     it("blocks skill ID with forward slashes", async () => {
-      await deleteLocalSkill("/project", "web-framework-react/../../etc" as SkillId);
+      await deleteLocalSkill("/project", "web-framework-react/../../etc");
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(remove).not.toHaveBeenCalled();
     });
 
     it("blocks skill ID with backslashes", async () => {
-      await deleteLocalSkill("/project", "web-framework-react\\..\\..\\etc" as SkillId);
+      await deleteLocalSkill("/project", "web-framework-react\\..\\..\\etc");
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(remove).not.toHaveBeenCalled();
     });
 
     it("blocks null byte injection", async () => {
-      await deleteLocalSkill("/project", "web-skill-name\0../../passwd" as SkillId);
+      await deleteLocalSkill("/project", "web-skill-name\0../../passwd");
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(remove).not.toHaveBeenCalled();

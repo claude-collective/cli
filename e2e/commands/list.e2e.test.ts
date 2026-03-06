@@ -99,9 +99,7 @@ describe("list command", () => {
 
     it("should show mode as Local for local installations", async () => {
       tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
-        installMode: "local",
-      });
+      const projectDir = await createEditableProject(tempDir);
 
       const { exitCode, stdout } = await runCLI(["list"], projectDir);
 
@@ -228,8 +226,7 @@ describe("list command", () => {
         `export default ${JSON.stringify(
           {
             name: "global-test",
-            installMode: "local",
-            skills: ["web-framework-react"],
+            skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
             agents: ["web-developer"],
           },
           null,

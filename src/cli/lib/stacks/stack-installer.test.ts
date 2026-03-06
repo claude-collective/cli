@@ -186,8 +186,8 @@ describe("stack-installer", () => {
       const mockResult = createMockCompiledStackPlugin({
         pluginPath: "/tmp/cc-stack-999/test-stack",
         stackName: "Test Stack",
-        agents: ["web-developer", "api-developer"] as AgentName[],
-        skillPlugins: ["web-framework-react", "web-state-zustand"] as SkillId[],
+        agents: ["web-developer", "api-developer"],
+        skillPlugins: ["web-framework-react", "web-state-zustand"],
       });
       vi.mocked(compileStackPlugin).mockResolvedValue(mockResult);
 

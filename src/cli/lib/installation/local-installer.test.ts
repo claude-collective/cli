@@ -2,10 +2,11 @@ import { mkdir, writeFile, readFile } from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installLocal } from "./local-installer";
-import type { AgentConfig, AgentName, ProjectConfig } from "../../types";
+import type { AgentConfig, AgentName, ProjectConfig, SkillId } from "../../types";
 import {
   TEST_MATRICES,
   buildWizardResult,
+  buildSkillConfigs,
   buildSourceResult,
   createTempDir,
   cleanupTempDir,
@@ -48,10 +49,10 @@ vi.mock("../configuration/config-generator", async (importOriginal) => {
   const original = await importOriginal<typeof import("../configuration/config-generator")>();
   return {
     generateProjectConfigFromSkills: vi.fn().mockReturnValue({
-      // Uses literal string because vi.mock factories are hoisted above imports
+      // Uses literal values because vi.mock factories are hoisted above imports
       name: "agents-inc",
       agents: ["web-developer"],
-      skills: ["test-skill"],
+      skills: [{ id: "test-skill", scope: "project", source: "local" }],
     }),
     buildStackProperty: vi.fn().mockReturnValue({}),
     // Use real compactStackForYaml so configs with stack properties serialize correctly
@@ -78,7 +79,7 @@ describe("local-installer", () => {
   describe("installLocal", () => {
     it("should create required directories", async () => {
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
+      const wizardResult = buildWizardResult(buildSkillConfigs(["meta-test-skill"]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       await installLocal({
@@ -96,7 +97,7 @@ describe("local-installer", () => {
 
     it("should write config to .claude-src/config.ts", async () => {
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
+      const wizardResult = buildWizardResult(buildSkillConfigs(["meta-test-skill"]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       const result = await installLocal({
@@ -115,7 +116,7 @@ describe("local-installer", () => {
 
     it("should include source in config from sourceFlag", async () => {
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
+      const wizardResult = buildWizardResult(buildSkillConfigs(["meta-test-skill"]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       await installLocal({
@@ -133,7 +134,7 @@ describe("local-installer", () => {
 
     it("should include source from sourceResult when no sourceFlag", async () => {
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
+      const wizardResult = buildWizardResult(buildSkillConfigs(["meta-test-skill"]));
       const sourceResult = buildSourceResult(matrix, tempDir, {
         sourceConfig: {
           source: "github:default/source",
@@ -155,7 +156,7 @@ describe("local-installer", () => {
 
     it("should include marketplace in config when available", async () => {
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
+      const wizardResult = buildWizardResult(buildSkillConfigs(["meta-test-skill"]));
       const sourceResult = buildSourceResult(matrix, tempDir, {
         marketplace: "my-marketplace",
       });
@@ -174,7 +175,7 @@ describe("local-installer", () => {
 
     it("should return correct result structure", async () => {
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
+      const wizardResult = buildWizardResult(buildSkillConfigs(["meta-test-skill"]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       const result = await installLocal({
@@ -208,7 +209,7 @@ describe("local-installer", () => {
       );
 
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
+      const wizardResult = buildWizardResult(buildSkillConfigs(["meta-test-skill"]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       const result = await installLocal({
@@ -225,11 +226,11 @@ describe("local-installer", () => {
       expect(result.config.author).toBe("@existing");
     });
 
-    it("should set installMode on config", async () => {
+    it("should derive local installMode from skill configs", async () => {
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"], {
-        installMode: "local",
-      });
+      const wizardResult = buildWizardResult(
+        buildSkillConfigs(["meta-test-skill"], { source: "local" }),
+      );
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       const result = await installLocal({
@@ -238,12 +239,13 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      expect(result.config.installMode).toBe("local");
+      // installMode is derived from skills at runtime, not stored on config
+      expect(result.config.skills.every((s) => s.source === "local")).toBe(true);
     });
 
     it("should not set wasMerged when no existing config", async () => {
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
+      const wizardResult = buildWizardResult(buildSkillConfigs(["meta-test-skill"]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       const result = await installLocal({
@@ -270,10 +272,20 @@ describe("local-installer", () => {
         },
       } as unknown as Record<AgentName, AgentConfig>);
 
-      const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"], {
-        installMode: "plugin",
+      // Override generateProjectConfigFromSkills to return plugin-sourced skills
+      const mockGenerateConfig = vi.mocked(
+        (await import("../configuration/config-generator")).generateProjectConfigFromSkills,
+      );
+      mockGenerateConfig.mockReturnValueOnce({
+        name: "agents-inc",
+        agents: ["web-developer"],
+        skills: [{ id: "meta-test-skill", scope: "project", source: "agents-inc" }],
       });
+
+      const matrix = TEST_MATRICES.empty;
+      const wizardResult = buildWizardResult(
+        buildSkillConfigs(["meta-test-skill"], { source: "agents-inc" }),
+      );
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       mockCompileAgentForPlugin.mockClear();
@@ -285,6 +297,7 @@ describe("local-installer", () => {
       });
 
       // compileAgentForPlugin should have been called with installMode as the 5th arg
+      // deriveInstallMode returns "plugin" when all skills have non-local source
       expect(mockCompileAgentForPlugin).toHaveBeenCalledWith(
         "web-developer",
         expect.any(Object),
@@ -308,9 +321,9 @@ describe("local-installer", () => {
       } as unknown as Record<AgentName, AgentConfig>);
 
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"], {
-        installMode: "local",
-      });
+      const wizardResult = buildWizardResult(
+        buildSkillConfigs(["meta-test-skill"], { source: "local" }),
+      );
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       mockCompileAgentForPlugin.mockClear();
@@ -332,7 +345,7 @@ describe("local-installer", () => {
 
     it("should write valid config with satisfies ProjectConfig", async () => {
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
+      const wizardResult = buildWizardResult(buildSkillConfigs(["meta-test-skill"]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       await installLocal({
@@ -379,7 +392,7 @@ describe("local-installer", () => {
       mockGenerateConfig.mockReturnValueOnce({
         name: "agents-inc",
         agents: ["web-developer"],
-        skills: ["web-framework-react"],
+        skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
         stack: {
           "web-developer": {
             "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -395,9 +408,10 @@ describe("local-installer", () => {
       });
 
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["web-framework-react"], {
-        selectedStackId: "test-stack",
-      });
+      const wizardResult = buildWizardResult(
+        buildSkillConfigs(["web-framework-react"]),
+        { selectedStackId: "test-stack" },
+      );
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       const result = await installLocal({

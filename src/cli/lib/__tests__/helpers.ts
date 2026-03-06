@@ -154,6 +154,7 @@ import type {
   ResolvedStack,
   Skill,
   SkillAssignment,
+  SkillConfig,
   SkillDefinition,
   SkillDisplayName,
   SkillId,
@@ -211,29 +212,38 @@ export async function writeTestTsConfig(
 export function buildProjectConfig(overrides?: Partial<ProjectConfig>): ProjectConfig {
   return {
     name: "test-project",
-    agents: ["web-developer"] as AgentName[],
-    skills: ["web-framework-react"] as SkillId[],
+    agents: ["web-developer"],
+    skills: buildSkillConfigs(["web-framework-react"]),
     ...overrides,
   };
 }
 
 export function buildWizardResult(
-  selectedSkills: SkillId[],
+  skills: SkillConfig[],
   overrides?: Partial<WizardResultV2>,
 ): WizardResultV2 {
   return {
-    selectedSkills,
+    skills,
     selectedAgents: [],
     selectedStackId: null,
     domainSelections: {} as DomainSelections,
     selectedDomains: [],
-    sourceSelections: {},
-    installMode: "local",
-    installScope: "project",
     cancelled: false,
     validation: { valid: true, errors: [], warnings: [] },
     ...overrides,
   };
+}
+
+/** Build a SkillConfig array from skill IDs with default scope and source */
+export function buildSkillConfigs(
+  skillIds: SkillId[],
+  overrides?: Partial<Omit<SkillConfig, "id">>,
+): SkillConfig[] {
+  return skillIds.map((id) => ({
+    id,
+    scope: overrides?.scope ?? "project",
+    source: overrides?.source ?? "local",
+  }));
 }
 
 export function buildSourceResult(
@@ -666,23 +676,23 @@ export function createComprehensiveMatrix(
   const categories = {
     "web-framework": {
       ...TEST_CATEGORIES.framework,
-      domain: "web" as Domain,
+      domain: "web",
       exclusive: true,
       required: true,
     },
-    "web-client-state": { ...TEST_CATEGORIES.clientState, domain: "web" as Domain, order: 1 },
-    "web-styling": { ...TEST_CATEGORIES.styling, domain: "web" as Domain, order: 2 },
-    "api-api": { ...TEST_CATEGORIES.api, domain: "api" as Domain, exclusive: true, required: true },
-    "api-database": { ...TEST_CATEGORIES.database, domain: "api" as Domain, order: 1 },
+    "web-client-state": { ...TEST_CATEGORIES.clientState, domain: "web", order: 1 },
+    "web-styling": { ...TEST_CATEGORIES.styling, domain: "web", order: 2 },
+    "api-api": { ...TEST_CATEGORIES.api, domain: "api", exclusive: true, required: true },
+    "api-database": { ...TEST_CATEGORIES.database, domain: "api", order: 1 },
     "web-testing": {
       ...TEST_CATEGORIES.testing,
-      domain: "shared" as Domain,
+      domain: "shared",
       exclusive: false,
       order: 10,
     },
     "shared-methodology": {
       ...TEST_CATEGORIES.methodology,
-      domain: "shared" as Domain,
+      domain: "shared",
       exclusive: false,
       required: false,
       order: 11,
@@ -783,21 +793,21 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
     categories: {
       "web-framework": {
         ...TEST_CATEGORIES.framework,
-        domain: "web" as Domain,
+        domain: "web",
         exclusive: true,
         required: true,
       },
-      "web-client-state": { ...TEST_CATEGORIES.clientState, domain: "web" as Domain, order: 1 },
+      "web-client-state": { ...TEST_CATEGORIES.clientState, domain: "web", order: 1 },
       "api-api": {
         ...TEST_CATEGORIES.api,
-        domain: "api" as Domain,
+        domain: "api",
         exclusive: true,
         required: true,
       },
       "web-testing": {
         ...TEST_CATEGORIES.testing,
         displayName: "Testing Framework",
-        domain: "shared" as Domain,
+        domain: "shared",
         exclusive: false,
       },
     } as Record<Category, CategoryDefinition>,
@@ -837,14 +847,11 @@ export function buildWizardResultFromStore(
   const validation = validateSelection(allSkills, matrix);
 
   return {
-    selectedSkills: allSkills,
+    skills: store.skillConfigs.length > 0 ? store.skillConfigs : buildSkillConfigs(allSkills),
     selectedAgents: store.selectedAgents,
     selectedStackId: store.selectedStackId,
     domainSelections: store.domainSelections,
     selectedDomains: store.selectedDomains,
-    sourceSelections: store.sourceSelections,
-    installMode: store.installMode,
-    installScope: store.installScope,
     cancelled: false,
     validation,
     ...overrides,
@@ -996,8 +1003,8 @@ export function createMockCompiledStackPlugin(
     pluginPath: "/tmp/cc-stack-123456/test-stack",
     manifest: { name: "test-stack", version: "1.0.0" },
     stackName: "Test Stack",
-    agents: ["web-developer"] as AgentName[],
-    skillPlugins: ["web-framework-react"] as SkillId[],
+    agents: ["web-developer"],
+    skillPlugins: ["web-framework-react"],
     hasHooks: false,
     ...overrides,
   };

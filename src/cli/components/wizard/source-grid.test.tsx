@@ -381,13 +381,13 @@ describe("SourceGrid component", () => {
 
     const searchCandidates: BoundSkillCandidate[] = [
       {
-        id: "web-framework-react-pro" as SkillId,
+        id: "web-framework-react-pro",
         sourceUrl: "github:awesome-dev/skills",
         sourceName: "awesome-dev",
         alias: "react",
       },
       {
-        id: "web-framework-react-strict" as SkillId,
+        id: "web-framework-react-strict",
         sourceUrl: "github:team-xyz/skills",
         sourceName: "team-xyz",
         alias: "react",

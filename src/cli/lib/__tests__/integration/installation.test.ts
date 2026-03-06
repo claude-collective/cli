@@ -30,7 +30,6 @@ describe("installation", () => {
         tsConfigContent({
           name: "test-project",
           agents: ["web-developer"],
-          installMode: "local",
         }),
       );
 
@@ -80,7 +79,7 @@ describe("installation", () => {
   });
 
   describe("detectInstallation - plugin mode", () => {
-    it("should return plugin installation when config has installMode: plugin", async () => {
+    it("should return plugin installation when skills have non-local sources", async () => {
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -88,7 +87,7 @@ describe("installation", () => {
         tsConfigContent({
           name: "test-project",
           agents: ["web-developer"],
-          installMode: "plugin",
+          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
         }),
       );
 
@@ -109,7 +108,7 @@ describe("installation", () => {
         tsConfigContent({
           name: "test-project",
           agents: ["web-developer"],
-          installMode: "plugin",
+          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
         }),
       );
 
@@ -207,7 +206,7 @@ describe("installation", () => {
         tsConfigContent({
           name: "test-project",
           agents: ["web-developer"],
-          installMode: "plugin",
+          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
         }),
       );
 
@@ -220,7 +219,7 @@ describe("installation", () => {
   });
 
   describe("edge cases", () => {
-    it("should handle config with explicit installMode: plugin even without plugin dir", async () => {
+    it("should derive plugin mode from skills with non-local sources", async () => {
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -228,7 +227,7 @@ describe("installation", () => {
         tsConfigContent({
           name: "test-project",
           agents: ["web-developer"],
-          installMode: "plugin",
+          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
         }),
       );
 
@@ -245,7 +244,7 @@ describe("installation", () => {
       await writeFile(path.join(claudeSrcDir, "config.ts"), "invalid typescript content {{");
 
       // When config file exists but is invalid, loadProjectConfig returns null
-      // The detection logic sees file exists, loaded?.config?.installMode is undefined,
+      // The detection logic sees file exists but config is invalid,
       // so mode defaults to "local"
       const result = await detectInstallation(tempDir);
 

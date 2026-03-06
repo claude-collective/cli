@@ -36,8 +36,8 @@ describe("StepSources component", () => {
     useWizardStore.setState({
       domainSelections: {
         web: {
-          "web-framework": ["web-framework-react" as SkillId],
-          "web-client-state": ["web-state-zustand" as SkillId],
+          "web-framework": ["web-framework-react"],
+          "web-client-state": ["web-state-zustand"],
         },
       },
     });
@@ -284,7 +284,7 @@ describe("StepSources component", () => {
       useWizardStore.setState({
         domainSelections: {
           web: {
-            "web-framework": ["web-framework-react" as SkillId],
+            "web-framework": ["web-framework-react"],
           },
         },
       });

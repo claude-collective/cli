@@ -30,14 +30,14 @@ describe("WizardStore", () => {
       expect(selectedStackId).toBeNull();
     });
 
-    it("should default to local install mode", () => {
-      const { installMode } = useWizardStore.getState();
-      expect(installMode).toBe("local");
+    it("should have empty skillConfigs", () => {
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs).toEqual([]);
     });
 
-    it("should default to project install scope", () => {
-      const { installScope } = useWizardStore.getState();
-      expect(installScope).toBe("project");
+    it("should have null focusedSkillId", () => {
+      const { focusedSkillId } = useWizardStore.getState();
+      expect(focusedSkillId).toBeNull();
     });
 
     it("should have empty navigation history", () => {
@@ -308,7 +308,7 @@ describe("WizardStore", () => {
 
       // Manually change api skills
       store.toggleTechnology("api", "api-api", "api-framework-hono", true); // deselect
-      store.toggleTechnology("api", "api-api", "api-framework-express" as SkillId, true); // select new
+      store.toggleTechnology("api", "api-api", "api-framework-express", true); // select new
 
       // Toggle web off then on
       store.toggleDomain("web");
@@ -433,44 +433,6 @@ describe("WizardStore", () => {
   });
 
   describe("mode toggles", () => {
-    it("should toggle install mode to plugin", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleInstallMode();
-
-      const { installMode } = useWizardStore.getState();
-      expect(installMode).toBe("plugin");
-    });
-
-    it("should toggle install mode back to local", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleInstallMode();
-      store.toggleInstallMode();
-
-      const { installMode } = useWizardStore.getState();
-      expect(installMode).toBe("local");
-    });
-
-    it("should toggle install scope to global", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleInstallScope();
-
-      const { installScope } = useWizardStore.getState();
-      expect(installScope).toBe("global");
-    });
-
-    it("should toggle install scope back to project", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleInstallScope();
-      store.toggleInstallScope();
-
-      const { installScope } = useWizardStore.getState();
-      expect(installScope).toBe("project");
-    });
-
     it("should toggle show labels", () => {
       const store = useWizardStore.getState();
 
@@ -547,70 +509,223 @@ describe("WizardStore", () => {
     });
   });
 
-  describe("install mode auto-defaulting", () => {
-    it("should default installMode to plugin when set via setState (marketplace available)", () => {
-      // Simulates what Wizard component does when initialInstallMode="plugin"
-      useWizardStore.setState({ installMode: "plugin" });
+  describe("skillConfigs and per-skill scope", () => {
+    it("should sync skillConfigs when toggling a technology on", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      const { installMode } = useWizardStore.getState();
-      expect(installMode).toBe("plugin");
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs).toHaveLength(1);
+      expect(skillConfigs[0]).toEqual({
+        id: "web-framework-react",
+        scope: "project",
+        source: "agents-inc",
+      });
     });
 
-    it("should keep installMode as local when set via setState (no marketplace)", () => {
-      // Simulates what Wizard component does when initialInstallMode="local"
-      useWizardStore.setState({ installMode: "local" });
+    it("should remove from skillConfigs when toggling a technology off", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      const { installMode } = useWizardStore.getState();
-      expect(installMode).toBe("local");
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs).toHaveLength(0);
     });
 
-    it("should allow toggling installMode after auto-defaulting to plugin", () => {
-      // Simulates: marketplace sets plugin, then user presses P to switch back
-      useWizardStore.setState({ installMode: "plugin" });
-      useWizardStore.getState().toggleInstallMode();
+    it("should replace skillConfigs entry in exclusive mode", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-vue", true);
 
-      const { installMode } = useWizardStore.getState();
-      expect(installMode).toBe("local");
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs).toHaveLength(1);
+      expect(skillConfigs[0].id).toBe("web-framework-vue");
     });
 
-    it("should reset installMode to local after reset even if previously set to plugin", () => {
-      useWizardStore.setState({ installMode: "plugin" });
-      useWizardStore.getState().reset();
+    it("should accumulate skillConfigs in non-exclusive mode", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
+      store.toggleTechnology("web", "web-testing", "web-testing-playwright-e2e", false);
 
-      const { installMode } = useWizardStore.getState();
-      expect(installMode).toBe("local");
-    });
-  });
-
-  describe("install scope auto-defaulting", () => {
-    it("should default installScope to global when set via setState", () => {
-      useWizardStore.setState({ installScope: "global" });
-
-      const { installScope } = useWizardStore.getState();
-      expect(installScope).toBe("global");
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs).toHaveLength(2);
+      expect(skillConfigs.map((sc) => sc.id)).toEqual([
+        "web-testing-vitest",
+        "web-testing-playwright-e2e",
+      ]);
     });
 
-    it("should keep installScope as project when set via setState", () => {
-      useWizardStore.setState({ installScope: "project" });
+    it("should toggle skill scope between project and global", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      const { installScope } = useWizardStore.getState();
-      expect(installScope).toBe("project");
+      store.toggleSkillScope("web-framework-react");
+
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs[0].scope).toBe("global");
     });
 
-    it("should allow toggling installScope after auto-defaulting to global", () => {
-      useWizardStore.setState({ installScope: "global" });
-      useWizardStore.getState().toggleInstallScope();
+    it("should toggle skill scope back to project", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      const { installScope } = useWizardStore.getState();
-      expect(installScope).toBe("project");
+      store.toggleSkillScope("web-framework-react");
+      store.toggleSkillScope("web-framework-react");
+
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs[0].scope).toBe("project");
     });
 
-    it("should reset installScope to project after reset even if previously set to global", () => {
-      useWizardStore.setState({ installScope: "global" });
-      useWizardStore.getState().reset();
+    it("should update source via setSkillSource", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      const { installScope } = useWizardStore.getState();
-      expect(installScope).toBe("project");
+      store.setSkillSource("web-framework-react", "local");
+
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs[0].source).toBe("local");
+    });
+
+    it("should set and clear focusedSkillId", () => {
+      const store = useWizardStore.getState();
+
+      store.setFocusedSkillId("web-framework-react");
+      expect(useWizardStore.getState().focusedSkillId).toBe("web-framework-react");
+
+      store.setFocusedSkillId(null);
+      expect(useWizardStore.getState().focusedSkillId).toBeNull();
+    });
+
+    it("should update source via setSourceSelection on skillConfigs", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      store.setSourceSelection("web-framework-react", "local");
+
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs[0].source).toBe("local");
+    });
+
+    it("should populate skillConfigs from populateFromStack", () => {
+      const store = useWizardStore.getState();
+
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
+        agents: {
+          web: {
+            "web-framework": [sa("web-framework-react", true)],
+            "web-client-state": [sa("web-state-zustand")],
+          },
+        },
+      };
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+        "web-framework": { domain: "web" },
+        "web-client-state": { domain: "web" },
+      };
+
+      store.populateFromStack(stack, categories);
+
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs).toHaveLength(2);
+      expect(skillConfigs.map((sc) => sc.id)).toEqual(["web-framework-react", "web-state-zustand"]);
+      expect(skillConfigs.every((sc) => sc.scope === "project")).toBe(true);
+      expect(skillConfigs.every((sc) => sc.source === "agents-inc")).toBe(true);
+    });
+
+    it("should populate skillConfigs from populateFromSkillIds", () => {
+      const store = useWizardStore.getState();
+
+      const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
+        "web-framework-react": { category: "web-framework", displayName: "React" },
+        "api-framework-hono": { category: "api-api", displayName: "Hono" },
+      };
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+        "web-framework": { domain: "web" },
+        "api-api": { domain: "api" },
+      };
+
+      store.populateFromSkillIds(["web-framework-react", "api-framework-hono"], skills, categories);
+
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs).toHaveLength(2);
+      expect(skillConfigs.map((sc) => sc.id)).toEqual(["web-framework-react", "api-framework-hono"]);
+    });
+
+    it("should remove skillConfigs when domain is deselected", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      expect(useWizardStore.getState().skillConfigs).toHaveLength(1);
+
+      store.toggleDomain("web");
+
+      expect(useWizardStore.getState().skillConfigs).toHaveLength(0);
+    });
+
+    it("should restore skillConfigs when domain is re-toggled after populateFromStack", () => {
+      const store = useWizardStore.getState();
+
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
+        agents: {
+          web: { "web-framework": [sa("web-framework-react", true)] },
+        },
+      };
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+        "web-framework": { domain: "web" },
+      };
+
+      store.populateFromStack(stack, categories);
+      expect(useWizardStore.getState().skillConfigs).toHaveLength(1);
+
+      store.toggleDomain("web");
+      expect(useWizardStore.getState().skillConfigs).toHaveLength(0);
+
+      store.toggleDomain("web");
+      expect(useWizardStore.getState().skillConfigs).toHaveLength(1);
+      expect(useWizardStore.getState().skillConfigs[0].id).toBe("web-framework-react");
+    });
+
+    it("should reset skillConfigs and focusedSkillId on reset", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.setFocusedSkillId("web-framework-react");
+
+      store.reset();
+
+      const state = useWizardStore.getState();
+      expect(state.skillConfigs).toEqual([]);
+      expect(state.focusedSkillId).toBeNull();
+    });
+
+    it("should set all sources to local via setAllSourcesLocal", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
+
+      store.setAllSourcesLocal();
+
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs.every((sc) => sc.source === "local")).toBe(true);
+    });
+
+    it("should set all sources to plugin via setAllSourcesPlugin", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.setSourceSelection("web-framework-react", "local");
+
+      const matrix = createMockMatrix({
+        "web-framework-react": {
+          ...getTestSkill("react"),
+          availableSources: [
+            { name: "Acme Corp", type: "private", installed: false },
+          ],
+        },
+      });
+
+      store.setAllSourcesPlugin(matrix);
+
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs[0].source).toBe("Acme Corp");
     });
   });
 
@@ -739,7 +854,6 @@ describe("WizardStore", () => {
       expect(state.approach).toBeNull();
       expect(state.selectedStackId).toBeNull();
       expect(state.selectedDomains).toEqual([]);
-      expect(state.installMode).toBe("local");
       expect(state.history).toEqual([]);
     });
   });
@@ -800,7 +914,7 @@ describe("WizardStore", () => {
 
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
-          misc: { "shared-methodology": [sa("meta-methodology-vitest" as SkillId)] },
+          misc: { "shared-methodology": [sa("meta-methodology-vitest")] },
         },
       };
       const categories: Partial<Record<Category, { domain?: Domain }>> = {
@@ -991,7 +1105,7 @@ describe("WizardStore", () => {
 
       const matrix = createMockMatrix({ "web-framework-react": skill });
 
-      store.toggleTechnology("web", "web-framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);
@@ -1005,20 +1119,20 @@ describe("WizardStore", () => {
       const skill = {
         ...getTestSkill("react"),
         availableSources: [
-          makeSource({ name: "Agents Inc", type: "public" }),
+          makeSource({ name: "agents-inc", type: "public" }),
           makeSource({ name: "Acme Corp", type: "private", primary: true }),
         ],
       };
 
       const matrix = createMockMatrix({ "web-framework-react": skill });
 
-      store.toggleTechnology("web", "web-framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);
       expect(rows[0].options[0].id).toBe("local");
       expect(rows[0].options[1].id).toBe("Acme Corp");
-      expect(rows[0].options[2].id).toBe("Agents Inc");
+      expect(rows[0].options[2].id).toBe("agents-inc");
     });
 
     it("should sort default public marketplace before third-party sources", () => {
@@ -1028,18 +1142,18 @@ describe("WizardStore", () => {
         ...getTestSkill("react"),
         availableSources: [
           makeSource({ name: "Extra Corp", type: "private" }),
-          makeSource({ name: "Agents Inc", type: "public" }),
+          makeSource({ name: "agents-inc", type: "public" }),
         ],
       };
 
       const matrix = createMockMatrix({ "web-framework-react": skill });
 
-      store.toggleTechnology("web", "web-framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);
       expect(rows[0].options[0].id).toBe("local");
-      expect(rows[0].options[1].id).toBe("Agents Inc");
+      expect(rows[0].options[1].id).toBe("agents-inc");
       expect(rows[0].options[2].id).toBe("Extra Corp");
     });
 
@@ -1050,7 +1164,7 @@ describe("WizardStore", () => {
         ...getTestSkill("react"),
         availableSources: [
           makeSource({ name: "Extra Corp", type: "private" }),
-          makeSource({ name: "Agents Inc", type: "public" }),
+          makeSource({ name: "agents-inc", type: "public" }),
           makeSource({ name: "Acme Corp", type: "private", primary: true }),
           makeSource({ name: "local", type: "local", installed: true, installMode: "local" }),
         ],
@@ -1058,13 +1172,13 @@ describe("WizardStore", () => {
 
       const matrix = createMockMatrix({ "web-framework-react": skill });
 
-      store.toggleTechnology("web", "web-framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);
 
       const sourceNames = rows[0].options.map((opt) => opt.id);
-      expect(sourceNames).toEqual(["local", "Acme Corp", "Agents Inc", "Extra Corp"]);
+      expect(sourceNames).toEqual(["local", "Acme Corp", "agents-inc", "Extra Corp"]);
     });
   });
 
@@ -1262,7 +1376,7 @@ describe("WizardStore", () => {
   });
 
   describe("deriveInstallMode", () => {
-    it("should return 'plugin' when no source selections are set", () => {
+    it("should return 'plugin' when all skills have default marketplace source", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
@@ -1287,13 +1401,13 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("api", "api-api", "api-framework-hono", true);
       store.setSourceSelection("web-framework-react", "local");
-      store.setSourceSelection("api-framework-hono", "Agents Inc");
+      store.setSourceSelection("api-framework-hono", "agents-inc");
 
       const result = store.deriveInstallMode();
       expect(result).toBe("mixed");
     });
 
-    it("should return store installMode when no skills are selected", () => {
+    it("should return 'local' when no skills are configured", () => {
       const store = useWizardStore.getState();
 
       const result = store.deriveInstallMode();

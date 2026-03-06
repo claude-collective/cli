@@ -56,7 +56,6 @@ describe("list command", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       const configContent = `export default ${JSON.stringify({
         name: "test-project",
-        installMode: "local",
         agents: ["web-developer"],
       })};`;
       await writeFile(path.join(claudeSrcDir, "config.ts"), configContent);

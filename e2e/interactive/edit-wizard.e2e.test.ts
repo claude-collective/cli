@@ -297,6 +297,51 @@ describe("edit wizard", () => {
       expect(output).toContain("Help");
     });
 
+    it("should toggle focused skill scope with S key", async () => {
+      tempDir = await createTempDir();
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react", "web-styling-tailwind"],
+        agents: ["web-developer"],
+        domains: ["web"],
+      });
+
+      session = new TerminalSession(["edit"], projectDir, {
+        rows: 40,
+        cols: 120,
+      });
+
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      const buildOutput = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      // The "S" badge with "Scope" label should be visible in the build step footer
+      expect(buildOutput).toContain("Scope");
+
+      // The first skill (web-framework-react) is focused and pre-selected.
+      // Press "s" to toggle its scope from "project" (default) to "global".
+      session.write("s");
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Navigate to the confirm step to verify the scope change is reflected.
+      // Build step -> Sources step
+      session.enter();
+      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Sources step -> Agents step
+      session.enter();
+      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Agents step -> Confirm step
+      session.enter();
+      await session.waitForText("Ready to install", EXIT_TIMEOUT_MS);
+
+      const confirmOutput = session.getFullOutput();
+      // The confirm step shows "Scope:" with counts of project/global skills.
+      // After toggling one skill to global, it should show "global" in the scope line.
+      expect(confirmOutput).toContain("Scope:");
+      expect(confirmOutput).toContain("global");
+    });
+
   });
 
   describe("confirm step and completion", () => {

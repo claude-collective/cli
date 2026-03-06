@@ -19,8 +19,10 @@ import {
   directoryExists,
   readTestTsConfig,
   buildWizardResult,
+  buildSkillConfigs,
   buildSourceResult,
 } from "../helpers";
+import type { SkillConfig } from "../../../types/config";
 
 function buildMatrixFromTestSkills(skills: TestSkill[]) {
   const matrixSkills = Object.fromEntries(
@@ -208,7 +210,7 @@ describe("Integration: Source Switching with Delete", () => {
     });
 
     it("should handle deleting a non-existent skill silently", async () => {
-      const nonExistentSkill = "web-framework-nonexistent" as SkillId;
+      const nonExistentSkill = "web-framework-nonexistent";
 
       // Should not throw
       await deleteLocalSkill(dirs.projectDir, nonExistentSkill);
@@ -240,9 +242,13 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Re-copy from source using installLocal
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
-      const wizardResult = buildWizardResult(ALL_SKILL_NAMES, {
+      const skillConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
+        id,
+        scope: "project" as const,
+        source: id === REACT_SKILL_ID ? "local" : "local",
+      }));
+      const wizardResult = buildWizardResult(skillConfigs, {
         selectedAgents: ["web-developer"],
-        sourceSelections: { [REACT_SKILL_ID]: "local" },
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
@@ -264,7 +270,7 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Run installLocal with all skills
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
-      const wizardResult = buildWizardResult(ALL_SKILL_NAMES, {
+      const wizardResult = buildWizardResult(buildSkillConfigs(ALL_SKILL_NAMES), {
         selectedAgents: ["web-developer"],
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
@@ -307,9 +313,13 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Re-copy from source (simulates plugin -> local switch)
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
-      const wizardResult = buildWizardResult(ALL_SKILL_NAMES, {
+      const roundTripConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
+        id,
+        scope: "project" as const,
+        source: id === REACT_SKILL_ID ? "local" : "local",
+      }));
+      const wizardResult = buildWizardResult(roundTripConfigs, {
         selectedAgents: ["web-developer"],
-        sourceSelections: { [REACT_SKILL_ID]: "local" },
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 

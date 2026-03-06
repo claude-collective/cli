@@ -78,10 +78,10 @@ describe("generateConfigTypesSource", () => {
 
   it("generates Domain type from matrix categories", () => {
     const categories = {
-      "web-framework": createMockCategory("web-framework" as Category, "Framework", {
+      "web-framework": createMockCategory("web-framework", "Framework", {
         domain: "web",
       }),
-      "api-api": createMockCategory("api-api" as Category, "API", {
+      "api-api": createMockCategory("api-api", "API", {
         domain: "api",
       }),
     } as Record<Category, CategoryDefinition>;
@@ -93,13 +93,13 @@ describe("generateConfigTypesSource", () => {
 
   it("generates Category union from matrix category keys", () => {
     const categories = {
-      "web-framework": createMockCategory("web-framework" as Category, "Framework", {
+      "web-framework": createMockCategory("web-framework", "Framework", {
         domain: "web",
       }),
-      "api-api": createMockCategory("api-api" as Category, "API", {
+      "api-api": createMockCategory("api-api", "API", {
         domain: "api",
       }),
-      "web-styling": createMockCategory("web-styling" as Category, "Styling", {
+      "web-styling": createMockCategory("web-styling", "Styling", {
         domain: "web",
       }),
     } as Record<Category, CategoryDefinition>;
@@ -143,8 +143,7 @@ describe("generateConfigTypesSource", () => {
     expect(source).toContain("export interface ProjectConfig {");
     expect(source).toContain("name: string;");
     expect(source).toContain("agents: AgentName[];");
-    expect(source).toContain("skills: SkillId[];");
-    expect(source).toContain("installMode?: InstallMode;");
+    expect(source).toContain("skills: SkillConfig[];");
     expect(source).toContain("stack?: Partial<Record<AgentName, StackAgentConfig>>;");
     expect(source).toContain("domains?: Domain[];");
     expect(source).toContain("selectedAgents?: AgentName[];");
@@ -331,7 +330,7 @@ describe("generateConfigTypesSource", () => {
       // Boundary cast: custom skill/category IDs may not match built-in prefix patterns
       const acmeDeploy = "acme-deploy-pipeline" as SkillId;
       const categories = {
-        "web-framework": createMockCategory("web-framework" as Category, "Framework", {
+        "web-framework": createMockCategory("web-framework", "Framework", {
           domain: "web",
         }),
         "acme-deploy": createMockCategory("acme-deploy" as Category, "Deploy", {
@@ -363,7 +362,7 @@ describe("generateConfigTypesSource", () => {
       // Boundary cast: custom skill/category/domain not in built-in unions
       const acmeCi = "acme-ci-runner" as SkillId;
       const categories = {
-        "web-framework": createMockCategory("web-framework" as Category, "Framework", {
+        "web-framework": createMockCategory("web-framework", "Framework", {
           domain: "web",
         }),
         "devops-ci": createMockCategory("devops-ci" as Category, "CI/CD", {
@@ -395,7 +394,7 @@ describe("generateConfigTypesSource", () => {
       // Boundary cast: custom skill/category key not in built-in unions
       const acmeTool = "acme-web-tool" as SkillId;
       const categories = {
-        "web-framework": createMockCategory("web-framework" as Category, "Framework", {
+        "web-framework": createMockCategory("web-framework", "Framework", {
           domain: "web",
         }),
         "web-custom-tool": createMockCategory("web-custom-tool" as Category, "Custom Tool", {
@@ -405,7 +404,7 @@ describe("generateConfigTypesSource", () => {
 
       const matrix = createMockMatrix(
         {
-          [acmeTool]: createMockSkill(acmeTool, "web-custom-tool" as CategoryPath, {
+          [acmeTool]: createMockSkill(acmeTool, "web-custom-tool", {
             custom: true,
           }),
         },

@@ -156,7 +156,7 @@ describe("buildSkillRefsFromConfig", () => {
 
   it("should set preloaded to false when not specified", () => {
     const agentStack: StackAgentConfig = {
-      "web-framework": [{ id: "web-framework-react" as SkillId }],
+      "web-framework": [{ id: "web-framework-react" }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);

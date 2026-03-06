@@ -7,6 +7,7 @@ import {
   directoryExists,
   createTempDir,
   cleanupTempDir,
+  writeTestTsConfig,
 } from "../../helpers";
 import { EXIT_CODES } from "../../../exit-codes";
 import {
@@ -149,6 +150,7 @@ describe("new:marketplace command", () => {
     tempDir = await createTempDir("cc-new-marketplace-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
+    await writeTestTsConfig(projectDir, { skills: [] });
     process.chdir(projectDir);
   });
 
@@ -342,6 +344,7 @@ describe("new:marketplace command", () => {
     it("should initialize the current directory when name is '.'", async () => {
       const dotDir = path.join(tempDir, "acme-market");
       await mkdir(dotDir, { recursive: true });
+      await writeTestTsConfig(dotDir, { skills: [] });
       process.chdir(dotDir);
 
       const { error } = await runCliCommand(["new:marketplace", "."]);
@@ -354,6 +357,7 @@ describe("new:marketplace command", () => {
     it("should derive marketplace name from directory basename", async () => {
       const dotDir = path.join(tempDir, "acme-market");
       await mkdir(dotDir, { recursive: true });
+      await writeTestTsConfig(dotDir, { skills: [] });
       process.chdir(dotDir);
 
       await runCliCommand(["new:marketplace", "."]);
@@ -371,6 +375,7 @@ describe("new:marketplace command", () => {
     it("should not create a subdirectory when name is '.'", async () => {
       const dotDir = path.join(tempDir, "acme-market");
       await mkdir(dotDir, { recursive: true });
+      await writeTestTsConfig(dotDir, { skills: [] });
       process.chdir(dotDir);
 
       await runCliCommand(["new:marketplace", "."]);
@@ -382,6 +387,7 @@ describe("new:marketplace command", () => {
     it("should not error on existing directory when using '.'", async () => {
       const dotDir = path.join(tempDir, "acme-market");
       await mkdir(dotDir, { recursive: true });
+      await writeTestTsConfig(dotDir, { skills: [] });
       process.chdir(dotDir);
 
       const { error } = await runCliCommand(["new:marketplace", "."]);
@@ -417,6 +423,7 @@ describe("new:marketplace command", () => {
     it("should omit cd step in next steps when using '.'", async () => {
       const dotDir = path.join(tempDir, "acme-market");
       await mkdir(dotDir, { recursive: true });
+      await writeTestTsConfig(dotDir, { skills: [] });
       process.chdir(dotDir);
 
       const { stdout } = await runCliCommand(["new:marketplace", "."]);

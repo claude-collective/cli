@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { AgentName, ProjectConfig, SkillId } from "../../../types";
+import type { SkillConfig } from "../../../types/config";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import { installLocal, buildAndMergeConfig, writeConfigFile } from "../../installation/local-installer";
 import { detectMigrations } from "../../installation/mode-migrator";
+import { deriveInstallMode } from "../../installation/installation";
 import { useWizardStore } from "../../../stores/wizard-store";
 import {
   createMockMatrix,
@@ -13,6 +15,7 @@ import {
   getTestSkill,
   readTestTsConfig,
   buildWizardResult,
+  buildSkillConfigs,
   buildSourceResult,
   fileExists,
   writeTestTsConfig,
@@ -53,90 +56,90 @@ describe("Integration: Install Mode Persistence", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should persist installMode 'local' in config after install", async () => {
+  it("should persist skills with 'local' source in config after install", async () => {
+    const skills = buildSkillConfigs(INIT_SKILL_IDS, { source: "local" });
     const result = await installLocal({
-      wizardResult: buildWizardResult(INIT_SKILL_IDS, {
-        selectedAgents: ["web-developer"] as AgentName[],
-        installMode: "local",
+      wizardResult: buildWizardResult(skills, {
+        selectedAgents: ["web-developer"],
       }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.installMode).toBe("local");
+    expect(deriveInstallMode(config.skills)).toBe("local");
   });
 
-  it("should persist installMode 'plugin' in config after install", async () => {
+  it("should persist skills with 'plugin' source in config after install", async () => {
+    const skills = buildSkillConfigs(INIT_SKILL_IDS, { source: "agents-inc" });
     const result = await installLocal({
-      wizardResult: buildWizardResult(INIT_SKILL_IDS, {
-        selectedAgents: ["web-developer"] as AgentName[],
-        installMode: "plugin",
+      wizardResult: buildWizardResult(skills, {
+        selectedAgents: ["web-developer"],
       }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.installMode).toBe("plugin");
+    expect(deriveInstallMode(config.skills)).toBe("plugin");
   });
 
-  it("should persist installMode 'mixed' in config after install", async () => {
+  it("should persist skills with 'mixed' sources in config after install", async () => {
+    const skills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "local" },
+      { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: VITEST_SKILL_ID, scope: "project", source: "agents-inc" },
+    ];
     const result = await installLocal({
-      wizardResult: buildWizardResult(INIT_SKILL_IDS, {
-        selectedAgents: ["web-developer"] as AgentName[],
-        installMode: "mixed",
-        sourceSelections: {
-          [REACT_SKILL_ID]: "local",
-          [HONO_SKILL_ID]: "agents-inc",
-          [VITEST_SKILL_ID]: "agents-inc",
-        },
+      wizardResult: buildWizardResult(skills, {
+        selectedAgents: ["web-developer"],
       }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.installMode).toBe("mixed");
+    expect(deriveInstallMode(config.skills)).toBe("mixed");
   });
 
-  it("should persist sourceSelections in config after install", async () => {
-    const sourceSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [HONO_SKILL_ID]: "agents-inc",
-      [VITEST_SKILL_ID]: "local",
-    };
+  it("should persist per-skill source in config after install", async () => {
+    const skills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "local" },
+      { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: VITEST_SKILL_ID, scope: "project", source: "local" },
+    ];
 
     const result = await installLocal({
-      wizardResult: buildWizardResult(INIT_SKILL_IDS, {
-        selectedAgents: ["web-developer"] as AgentName[],
-        installMode: "mixed",
-        sourceSelections,
+      wizardResult: buildWizardResult(skills, {
+        selectedAgents: ["web-developer"],
       }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.sourceSelections).toBeDefined();
-    expect(config.sourceSelections?.[REACT_SKILL_ID]).toBe("local");
-    expect(config.sourceSelections?.[HONO_SKILL_ID]).toBe("agents-inc");
-    expect(config.sourceSelections?.[VITEST_SKILL_ID]).toBe("local");
+    const reactConfig = config.skills.find((s) => s.id === REACT_SKILL_ID);
+    const honoConfig = config.skills.find((s) => s.id === HONO_SKILL_ID);
+    const vitestConfig = config.skills.find((s) => s.id === VITEST_SKILL_ID);
+    expect(reactConfig?.source).toBe("local");
+    expect(honoConfig?.source).toBe("agents-inc");
+    expect(vitestConfig?.source).toBe("local");
   });
 
-  it("should not persist sourceSelections when empty", async () => {
+  it("should have all skills as local when no explicit source set", async () => {
+    const skills = buildSkillConfigs(INIT_SKILL_IDS, { source: "local" });
     const result = await installLocal({
-      wizardResult: buildWizardResult(INIT_SKILL_IDS, {
-        selectedAgents: ["web-developer"] as AgentName[],
-        installMode: "local",
-        sourceSelections: {},
+      wizardResult: buildWizardResult(skills, {
+        selectedAgents: ["web-developer"],
       }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.sourceSelections).toBeUndefined();
+    for (const skill of config.skills) {
+      expect(skill.source).toBe("local");
+    }
   });
 });
 
@@ -153,52 +156,54 @@ describe("Integration: Install Mode Config Round-Trip", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should round-trip installMode through config write and read", async () => {
-    // First install with "local"
+  it("should round-trip install mode through config write and read", async () => {
+    // First install with "local" sources
+    const localSkills = buildSkillConfigs(INIT_SKILL_IDS, { source: "local" });
     const result1 = await installLocal({
-      wizardResult: buildWizardResult(INIT_SKILL_IDS, {
-        selectedAgents: ["web-developer"] as AgentName[],
-        installMode: "local",
+      wizardResult: buildWizardResult(localSkills, {
+        selectedAgents: ["web-developer"],
       }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config1 = await readTestTsConfig<ProjectConfig>(result1.configPath);
-    expect(config1.installMode).toBe("local");
+    expect(deriveInstallMode(config1.skills)).toBe("local");
 
-    // Second install with "plugin" — config gets overwritten
+    // Second install with "plugin" sources — config gets overwritten
+    const pluginSkills = buildSkillConfigs(INIT_SKILL_IDS, { source: "agents-inc" });
     const result2 = await installLocal({
-      wizardResult: buildWizardResult(INIT_SKILL_IDS, {
-        selectedAgents: ["web-developer"] as AgentName[],
-        installMode: "plugin",
+      wizardResult: buildWizardResult(pluginSkills, {
+        selectedAgents: ["web-developer"],
       }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config2 = await readTestTsConfig<ProjectConfig>(result2.configPath);
-    expect(config2.installMode).toBe("plugin");
+    expect(deriveInstallMode(config2.skills)).toBe("plugin");
   });
 
-  it("should round-trip sourceSelections through config write and read", async () => {
-    const sourceSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [HONO_SKILL_ID]: "agents-inc",
-    };
+  it("should round-trip per-skill source through config write and read", async () => {
+    const skills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "local" },
+      { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: VITEST_SKILL_ID, scope: "project", source: "local" },
+    ];
 
     const result = await installLocal({
-      wizardResult: buildWizardResult(INIT_SKILL_IDS, {
-        selectedAgents: ["web-developer"] as AgentName[],
-        installMode: "mixed",
-        sourceSelections,
+      wizardResult: buildWizardResult(skills, {
+        selectedAgents: ["web-developer"],
       }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.sourceSelections).toEqual(sourceSelections);
+    const reactConfig = config.skills.find((s) => s.id === REACT_SKILL_ID);
+    const honoConfig = config.skills.find((s) => s.id === HONO_SKILL_ID);
+    expect(reactConfig?.source).toBe("local");
+    expect(honoConfig?.source).toBe("agents-inc");
   });
 });
 
@@ -215,136 +220,134 @@ describe("Integration: buildAndMergeConfig Install Mode", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should set installMode in merged config", async () => {
-    const wizardResult = buildWizardResult(INIT_SKILL_IDS, {
-      selectedAgents: ["web-developer"] as AgentName[],
-      installMode: "plugin",
+  it("should derive installMode from skills in merged config", async () => {
+    const skills = buildSkillConfigs(INIT_SKILL_IDS, { source: "agents-inc" });
+    const wizardResult = buildWizardResult(skills, {
+      selectedAgents: ["web-developer"],
     });
 
     const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, dirs.projectDir);
 
-    expect(mergeResult.config.installMode).toBe("plugin");
+    expect(deriveInstallMode(mergeResult.config.skills)).toBe("plugin");
   });
 
-  it("should set sourceSelections in merged config when non-empty", async () => {
-    const sourceSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [HONO_SKILL_ID]: "agents-inc",
-    };
+  it("should preserve per-skill source in merged config when non-uniform", async () => {
+    const skills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "local" },
+      { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: VITEST_SKILL_ID, scope: "project", source: "local" },
+    ];
 
-    const wizardResult = buildWizardResult(INIT_SKILL_IDS, {
-      selectedAgents: ["web-developer"] as AgentName[],
-      installMode: "mixed",
-      sourceSelections,
+    const wizardResult = buildWizardResult(skills, {
+      selectedAgents: ["web-developer"],
     });
 
     const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, dirs.projectDir);
 
-    expect(mergeResult.config.sourceSelections).toEqual(sourceSelections);
+    const reactConfig = mergeResult.config.skills.find((s) => s.id === REACT_SKILL_ID);
+    const honoConfig = mergeResult.config.skills.find((s) => s.id === HONO_SKILL_ID);
+    expect(reactConfig?.source).toBe("local");
+    expect(honoConfig?.source).toBe("agents-inc");
   });
 
-  it("should not set sourceSelections in merged config when empty", async () => {
-    const wizardResult = buildWizardResult(INIT_SKILL_IDS, {
-      selectedAgents: ["web-developer"] as AgentName[],
-      installMode: "local",
-      sourceSelections: {},
+  it("should have all-local skills in merged config when all sources are local", async () => {
+    const skills = buildSkillConfigs(INIT_SKILL_IDS, { source: "local" });
+    const wizardResult = buildWizardResult(skills, {
+      selectedAgents: ["web-developer"],
     });
 
     const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, dirs.projectDir);
 
-    expect(mergeResult.config.sourceSelections).toBeUndefined();
+    for (const skill of mergeResult.config.skills) {
+      expect(skill.source).toBe("local");
+    }
   });
 
-  it("should merge with existing config preserving installMode", async () => {
-    // Write initial config with "local" mode
+  it("should merge with existing config preserving install mode from new wizard result", async () => {
+    // Write initial config with "local" source skills
     await writeTestTsConfig(dirs.projectDir, {
       name: "test-project",
       agents: ["web-developer"],
-      skills: [REACT_SKILL_ID],
-      installMode: "local",
+      skills: [{ id: REACT_SKILL_ID, scope: "project", source: "local" }],
     });
 
-    // Build wizard result with "plugin" mode
-    const wizardResult = buildWizardResult(INIT_SKILL_IDS, {
-      selectedAgents: ["web-developer"] as AgentName[],
-      installMode: "plugin",
+    // Build wizard result with "plugin" source skills
+    const skills = buildSkillConfigs(INIT_SKILL_IDS, { source: "agents-inc" });
+    const wizardResult = buildWizardResult(skills, {
+      selectedAgents: ["web-developer"],
     });
 
     const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, dirs.projectDir);
 
-    // New wizard result's installMode should take precedence
-    expect(mergeResult.config.installMode).toBe("plugin");
+    // New wizard result's skills should take precedence
+    expect(deriveInstallMode(mergeResult.config.skills)).toBe("plugin");
     expect(mergeResult.merged).toBe(true);
   });
 });
 
 describe("Integration: detectMigrations with Config Data", () => {
-  it("should detect plugin-to-local migration from config sourceSelections", () => {
-    const oldSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "agents-inc",
-      [ZUSTAND_SKILL_ID]: "agents-inc",
-      [HONO_SKILL_ID]: "agents-inc",
-    };
+  it("should detect plugin-to-local migration from skill configs", () => {
+    const oldSkills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
+    ];
 
-    const newSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [ZUSTAND_SKILL_ID]: "agents-inc",
-      [HONO_SKILL_ID]: "local",
-    };
+    const newSkills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "local" },
+      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: HONO_SKILL_ID, scope: "project", source: "local" },
+    ];
 
-    const allSkills: SkillId[] = [REACT_SKILL_ID, ZUSTAND_SKILL_ID, HONO_SKILL_ID];
-    const plan = detectMigrations(oldSelections, newSelections, allSkills);
+    const plan = detectMigrations(oldSkills, newSkills);
 
-    expect(plan.toLocal).toEqual([REACT_SKILL_ID, HONO_SKILL_ID]);
+    expect(plan.toLocal.map((m) => m.id)).toEqual([REACT_SKILL_ID, HONO_SKILL_ID]);
     expect(plan.toPlugin).toEqual([]);
   });
 
-  it("should detect local-to-plugin migration from config sourceSelections", () => {
-    const oldSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [ZUSTAND_SKILL_ID]: "local",
-    };
+  it("should detect local-to-plugin migration from skill configs", () => {
+    const oldSkills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "local" },
+      { id: ZUSTAND_SKILL_ID, scope: "project", source: "local" },
+    ];
 
-    const newSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "agents-inc",
-      [ZUSTAND_SKILL_ID]: "agents-inc",
-    };
+    const newSkills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
+    ];
 
-    const allSkills: SkillId[] = [REACT_SKILL_ID, ZUSTAND_SKILL_ID];
-    const plan = detectMigrations(oldSelections, newSelections, allSkills);
+    const plan = detectMigrations(oldSkills, newSkills);
 
     expect(plan.toLocal).toEqual([]);
-    expect(plan.toPlugin).toEqual([REACT_SKILL_ID, ZUSTAND_SKILL_ID]);
+    expect(plan.toPlugin.map((m) => m.id)).toEqual([REACT_SKILL_ID, ZUSTAND_SKILL_ID]);
   });
 
   it("should detect bidirectional migration", () => {
-    const oldSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "agents-inc",
-      [ZUSTAND_SKILL_ID]: "local",
-      [HONO_SKILL_ID]: "local",
-    };
+    const oldSkills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: ZUSTAND_SKILL_ID, scope: "project", source: "local" },
+      { id: HONO_SKILL_ID, scope: "project", source: "local" },
+    ];
 
-    const newSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [ZUSTAND_SKILL_ID]: "agents-inc",
-      [HONO_SKILL_ID]: "local",
-    };
+    const newSkills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "local" },
+      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
+      { id: HONO_SKILL_ID, scope: "project", source: "local" },
+    ];
 
-    const allSkills: SkillId[] = [REACT_SKILL_ID, ZUSTAND_SKILL_ID, HONO_SKILL_ID];
-    const plan = detectMigrations(oldSelections, newSelections, allSkills);
+    const plan = detectMigrations(oldSkills, newSkills);
 
-    expect(plan.toLocal).toEqual([REACT_SKILL_ID]);
-    expect(plan.toPlugin).toEqual([ZUSTAND_SKILL_ID]);
+    expect(plan.toLocal.map((m) => m.id)).toEqual([REACT_SKILL_ID]);
+    expect(plan.toPlugin.map((m) => m.id)).toEqual([ZUSTAND_SKILL_ID]);
   });
 
-  it("should return empty plan when sourceSelections are unchanged", () => {
-    const selections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [ZUSTAND_SKILL_ID]: "agents-inc",
-    };
+  it("should return empty plan when skill configs are unchanged", () => {
+    const skills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "local" },
+      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
+    ];
 
-    const allSkills: SkillId[] = [REACT_SKILL_ID, ZUSTAND_SKILL_ID];
-    const plan = detectMigrations(selections, selections, allSkills);
+    const plan = detectMigrations(skills, skills);
 
     expect(plan.toLocal).toEqual([]);
     expect(plan.toPlugin).toEqual([]);
@@ -352,36 +355,33 @@ describe("Integration: detectMigrations with Config Data", () => {
 
   it("should detect migration when switching between marketplace sources as no migration", () => {
     // Switching from one marketplace to another is NOT a migration (both are plugin)
-    const oldSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "agents-inc",
-    };
+    const oldSkills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "agents-inc" },
+    ];
 
-    const newSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "other-marketplace",
-    };
+    const newSkills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "other-marketplace" },
+    ];
 
-    const allSkills: SkillId[] = [REACT_SKILL_ID];
-    const plan = detectMigrations(oldSelections, newSelections, allSkills);
+    const plan = detectMigrations(oldSkills, newSkills);
 
     // Neither source is "local" so no migration needed
     expect(plan.toLocal).toEqual([]);
     expect(plan.toPlugin).toEqual([]);
   });
 
-  it("should handle new skills with no previous sourceSelections", () => {
-    const oldSelections: Partial<Record<SkillId, string>> = {};
+  it("should handle new skills with no previous config", () => {
+    const oldSkills: SkillConfig[] = [];
 
-    const newSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [HONO_SKILL_ID]: "agents-inc",
-    };
+    const newSkills: SkillConfig[] = [
+      { id: REACT_SKILL_ID, scope: "project", source: "local" },
+      { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
+    ];
 
-    const allSkills: SkillId[] = [REACT_SKILL_ID, HONO_SKILL_ID];
-    const plan = detectMigrations(oldSelections, newSelections, allSkills);
+    const plan = detectMigrations(oldSkills, newSkills);
 
-    // New skill with "local" source is treated as toLocal (was undefined -> local)
-    expect(plan.toLocal).toEqual([REACT_SKILL_ID]);
-    // New skill with "agents-inc" is not a migration (was undefined -> non-local)
+    // New skills have no old entry, so no migration detected
+    expect(plan.toLocal).toEqual([]);
     expect(plan.toPlugin).toEqual([]);
   });
 });
@@ -391,41 +391,41 @@ describe("Integration: deriveInstallMode via Wizard Store", () => {
     useWizardStore.getState().reset();
   });
 
-  it("should derive 'local' when all sourceSelections are local", () => {
+  it("should derive 'local' when all skillConfigs are local", () => {
     const store = useWizardStore.getState();
 
-    store.toggleDomain("web" as any);
-    store.toggleTechnology("web" as any, "web-framework" as any, REACT_SKILL_ID, true);
-    store.toggleTechnology("web" as any, "web-styling" as any, "web-styling-scss-modules" as SkillId, true);
+    store.toggleDomain("web");
+    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
+    store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
 
     store.setSourceSelection(REACT_SKILL_ID, "local");
-    store.setSourceSelection("web-styling-scss-modules" as SkillId, "local");
+    store.setSourceSelection("web-styling-scss-modules", "local");
 
     expect(store.deriveInstallMode()).toBe("local");
   });
 
-  it("should derive 'plugin' when all sourceSelections are non-local", () => {
+  it("should derive 'plugin' when all skillConfigs are non-local", () => {
     const store = useWizardStore.getState();
 
-    store.toggleDomain("web" as any);
-    store.toggleTechnology("web" as any, "web-framework" as any, REACT_SKILL_ID, true);
-    store.toggleTechnology("web" as any, "web-styling" as any, "web-styling-scss-modules" as SkillId, true);
+    store.toggleDomain("web");
+    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
+    store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
 
     store.setSourceSelection(REACT_SKILL_ID, "agents-inc");
-    store.setSourceSelection("web-styling-scss-modules" as SkillId, "agents-inc");
+    store.setSourceSelection("web-styling-scss-modules", "agents-inc");
 
     expect(store.deriveInstallMode()).toBe("plugin");
   });
 
-  it("should derive 'mixed' when sourceSelections have both local and non-local", () => {
+  it("should derive 'mixed' when skillConfigs have both local and non-local", () => {
     const store = useWizardStore.getState();
 
-    store.toggleDomain("web" as any);
-    store.toggleTechnology("web" as any, "web-framework" as any, REACT_SKILL_ID, true);
-    store.toggleTechnology("web" as any, "web-styling" as any, "web-styling-scss-modules" as SkillId, true);
+    store.toggleDomain("web");
+    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
+    store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
 
     store.setSourceSelection(REACT_SKILL_ID, "local");
-    store.setSourceSelection("web-styling-scss-modules" as SkillId, "agents-inc");
+    store.setSourceSelection("web-styling-scss-modules", "agents-inc");
 
     expect(store.deriveInstallMode()).toBe("mixed");
   });
@@ -439,28 +439,31 @@ describe("Integration: deriveInstallMode via Wizard Store", () => {
   it("setAllSourcesLocal should set all selected skills to local", () => {
     const store = useWizardStore.getState();
 
-    store.toggleDomain("web" as any);
-    store.toggleTechnology("web" as any, "web-framework" as any, REACT_SKILL_ID, true);
-    store.toggleTechnology("web" as any, "web-styling" as any, "web-styling-scss-modules" as SkillId, true);
+    store.toggleDomain("web");
+    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
+    store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
 
     // Set them to plugin first
     store.setSourceSelection(REACT_SKILL_ID, "agents-inc");
-    store.setSourceSelection("web-styling-scss-modules" as SkillId, "agents-inc");
+    store.setSourceSelection("web-styling-scss-modules", "agents-inc");
     expect(store.deriveInstallMode()).toBe("plugin");
 
     // Now set all to local
     store.setAllSourcesLocal();
 
-    expect(useWizardStore.getState().sourceSelections[REACT_SKILL_ID]).toBe("local");
-    expect(useWizardStore.getState().sourceSelections["web-styling-scss-modules" as SkillId]).toBe("local");
+    const updatedStore = useWizardStore.getState();
+    const reactConfig = updatedStore.skillConfigs.find((sc) => sc.id === REACT_SKILL_ID);
+    const scssConfig = updatedStore.skillConfigs.find((sc) => sc.id === ("web-styling-scss-modules"));
+    expect(reactConfig?.source).toBe("local");
+    expect(scssConfig?.source).toBe("local");
     expect(store.deriveInstallMode()).toBe("local");
   });
 
   it("setAllSourcesPlugin should set all selected skills to their marketplace source", () => {
     const store = useWizardStore.getState();
 
-    store.toggleDomain("web" as any);
-    store.toggleTechnology("web" as any, "web-framework" as any, REACT_SKILL_ID, true);
+    store.toggleDomain("web");
+    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
 
     // Set to local first
     store.setSourceSelection(REACT_SKILL_ID, "local");
@@ -481,84 +484,10 @@ describe("Integration: deriveInstallMode via Wizard Store", () => {
     // Set all to plugin via matrix lookup
     store.setAllSourcesPlugin(matrix);
 
-    expect(useWizardStore.getState().sourceSelections[REACT_SKILL_ID]).toBe("agents-inc");
+    const updatedStore = useWizardStore.getState();
+    const reactConfig = updatedStore.skillConfigs.find((sc) => sc.id === REACT_SKILL_ID);
+    expect(reactConfig?.source).toBe("agents-inc");
     expect(store.deriveInstallMode()).toBe("plugin");
-  });
-});
-
-describe("Integration: getInstallModeLabel", () => {
-  // Import the function from step-confirm (it's not exported, so we re-implement the logic here
-  // to test the labeling behavior that users see in the confirm step)
-
-  function getInstallModeLabel(
-    installMode: "local" | "plugin" | "mixed",
-    selectedSkills?: SkillId[],
-    sourceSelections?: Partial<Record<SkillId, string>>,
-  ): string {
-    if (!selectedSkills?.length || !sourceSelections) {
-      return installMode === "plugin" ? "Plugin" : "Local (editable copies)";
-    }
-
-    const localCount = selectedSkills.filter((id) => sourceSelections[id] === "local").length;
-    const pluginCount = selectedSkills.length - localCount;
-
-    if (localCount === 0) return "Plugin";
-    if (pluginCount === 0) return "Local (editable copies)";
-    return `Mixed (${localCount} local, ${pluginCount} plugin)`;
-  }
-
-  it("should return 'Local (editable copies)' for local mode without skills", () => {
-    expect(getInstallModeLabel("local")).toBe("Local (editable copies)");
-  });
-
-  it("should return 'Plugin' for plugin mode without skills", () => {
-    expect(getInstallModeLabel("plugin")).toBe("Plugin");
-  });
-
-  it("should return 'Local (editable copies)' for local mode even with mixed flag", () => {
-    // When installMode is "mixed" but no skills/sourceSelections, fallback to "Local"
-    expect(getInstallModeLabel("mixed")).toBe("Local (editable copies)");
-  });
-
-  it("should return 'Plugin' when all skills have non-local sources", () => {
-    const skills: SkillId[] = [REACT_SKILL_ID, HONO_SKILL_ID];
-    const selections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "agents-inc",
-      [HONO_SKILL_ID]: "agents-inc",
-    };
-
-    expect(getInstallModeLabel("plugin", skills, selections)).toBe("Plugin");
-  });
-
-  it("should return 'Local (editable copies)' when all skills have local sources", () => {
-    const skills: SkillId[] = [REACT_SKILL_ID, HONO_SKILL_ID];
-    const selections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [HONO_SKILL_ID]: "local",
-    };
-
-    expect(getInstallModeLabel("local", skills, selections)).toBe("Local (editable copies)");
-  });
-
-  it("should return 'Mixed' label with counts when sources are mixed", () => {
-    const skills: SkillId[] = [REACT_SKILL_ID, HONO_SKILL_ID, VITEST_SKILL_ID];
-    const selections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [HONO_SKILL_ID]: "agents-inc",
-      [VITEST_SKILL_ID]: "local",
-    };
-
-    expect(getInstallModeLabel("mixed", skills, selections)).toBe("Mixed (2 local, 1 plugin)");
-  });
-
-  it("should count skills without sourceSelections as non-local (plugin)", () => {
-    const skills: SkillId[] = [REACT_SKILL_ID, HONO_SKILL_ID, VITEST_SKILL_ID];
-    const selections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      // HONO and VITEST have no selection -> treated as non-local
-    };
-
-    expect(getInstallModeLabel("mixed", skills, selections)).toBe("Mixed (1 local, 2 plugin)");
   });
 });
 
@@ -573,7 +502,7 @@ describe("Integration: writeConfigFile Round-Trip", () => {
     await cleanupTempDir(tempDir);
   });
 
-  it("should write and read back installMode", async () => {
+  it("should write and read back skills with derived installMode", async () => {
     const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
     const { mkdir } = await import("fs/promises");
     await mkdir(configDir, { recursive: true });
@@ -581,44 +510,21 @@ describe("Integration: writeConfigFile Round-Trip", () => {
 
     const config: ProjectConfig = {
       name: "test-project",
-      agents: ["web-developer"] as AgentName[],
-      skills: [REACT_SKILL_ID],
-      installMode: "mixed",
+      agents: ["web-developer"],
+      skills: [
+        { id: REACT_SKILL_ID, scope: "project", source: "local" },
+        { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
+      ],
     };
 
     await writeConfigFile(config, configPath);
 
     expect(await fileExists(configPath)).toBe(true);
     const readBack = await readTestTsConfig<ProjectConfig>(configPath);
-    expect(readBack.installMode).toBe("mixed");
+    expect(deriveInstallMode(readBack.skills)).toBe("mixed");
   });
 
-  it("should write and read back sourceSelections", async () => {
-    const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-    const { mkdir } = await import("fs/promises");
-    await mkdir(configDir, { recursive: true });
-    const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
-
-    const sourceSelections: Partial<Record<SkillId, string>> = {
-      [REACT_SKILL_ID]: "local",
-      [HONO_SKILL_ID]: "agents-inc",
-    };
-
-    const config: ProjectConfig = {
-      name: "test-project",
-      agents: ["web-developer"] as AgentName[],
-      skills: [REACT_SKILL_ID, HONO_SKILL_ID],
-      installMode: "mixed",
-      sourceSelections,
-    };
-
-    await writeConfigFile(config, configPath);
-
-    const readBack = await readTestTsConfig<ProjectConfig>(configPath);
-    expect(readBack.sourceSelections).toEqual(sourceSelections);
-  });
-
-  it("should omit sourceSelections from config when undefined", async () => {
+  it("should write and read back per-skill source", async () => {
     const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
     const { mkdir } = await import("fs/promises");
     await mkdir(configDir, { recursive: true });
@@ -626,15 +532,37 @@ describe("Integration: writeConfigFile Round-Trip", () => {
 
     const config: ProjectConfig = {
       name: "test-project",
-      agents: ["web-developer"] as AgentName[],
-      skills: [REACT_SKILL_ID],
-      installMode: "local",
-      // sourceSelections is intentionally omitted
+      agents: ["web-developer"],
+      skills: [
+        { id: REACT_SKILL_ID, scope: "project", source: "local" },
+        { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
+      ],
     };
 
     await writeConfigFile(config, configPath);
 
     const readBack = await readTestTsConfig<ProjectConfig>(configPath);
-    expect(readBack.sourceSelections).toBeUndefined();
+    const reactConfig = readBack.skills.find((s) => s.id === REACT_SKILL_ID);
+    const honoConfig = readBack.skills.find((s) => s.id === HONO_SKILL_ID);
+    expect(reactConfig?.source).toBe("local");
+    expect(honoConfig?.source).toBe("agents-inc");
+  });
+
+  it("should write config with all-local skills correctly", async () => {
+    const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
+    const { mkdir } = await import("fs/promises");
+    await mkdir(configDir, { recursive: true });
+    const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
+
+    const config: ProjectConfig = {
+      name: "test-project",
+      agents: ["web-developer"],
+      skills: [{ id: REACT_SKILL_ID, scope: "project", source: "local" }],
+    };
+
+    await writeConfigFile(config, configPath);
+
+    const readBack = await readTestTsConfig<ProjectConfig>(configPath);
+    expect(deriveInstallMode(readBack.skills)).toBe("local");
   });
 });

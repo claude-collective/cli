@@ -110,7 +110,10 @@ describe("init command", () => {
         path.join(configDir, "config.ts"),
         `export default ${JSON.stringify({
           name: "test-project",
-          skills: ["web-framework-react", "web-state-zustand"],
+          skills: [
+            { id: "web-framework-react", scope: "project", source: "local" },
+            { id: "web-state-zustand", scope: "project", source: "local" },
+          ],
         })};`,
       );
 

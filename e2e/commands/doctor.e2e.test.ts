@@ -90,7 +90,7 @@ describe("doctor command", () => {
     await mkdir(configDir, { recursive: true });
     await writeFile(
       path.join(configDir, STANDARD_FILES.CONFIG_TS),
-      `export default ${JSON.stringify({ name: "test-project", installMode: "local", agents: ["web-developer"] }, null, 2)};\n`,
+      `export default ${JSON.stringify({ name: "test-project", agents: ["web-developer"] }, null, 2)};\n`,
     );
 
     const { exitCode, stdout } = await runCLI(["doctor"], tempDir);
@@ -246,7 +246,6 @@ describe("doctor command", () => {
         `export default ${JSON.stringify(
           {
             name: "test-project",
-            installMode: "local",
             agents: ["web-developer"],
             stack: {
               "web-developer": {
@@ -307,7 +306,6 @@ describe("doctor command", () => {
         `export default ${JSON.stringify(
           {
             name: "global-test",
-            installMode: "local",
             agents: ["web-developer"],
           },
           null,

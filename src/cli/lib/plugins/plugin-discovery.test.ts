@@ -52,8 +52,8 @@ describe("plugin-discovery", () => {
         { pluginKey: "zustand@my-marketplace", installPath: "/cache/zustand" },
       ]);
 
-      const reactId = "web-framework-react" as SkillId;
-      const zustandId = "web-state-zustand" as SkillId;
+      const reactId = "web-framework-react";
+      const zustandId = "web-state-zustand";
 
       mockLoadPluginSkills
         .mockResolvedValueOnce({
@@ -86,7 +86,7 @@ describe("plugin-discovery", () => {
         { pluginKey: "react@marketplace-b", installPath: "/cache/react-b" },
       ]);
 
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
 
       mockLoadPluginSkills
         .mockResolvedValueOnce({
@@ -115,7 +115,7 @@ describe("plugin-discovery", () => {
         { pluginKey: "good-plugin", installPath: "/cache/good" },
       ]);
 
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
 
       mockLoadPluginSkills.mockRejectedValueOnce(new Error("Parse error")).mockResolvedValueOnce({
         [skillId]: {

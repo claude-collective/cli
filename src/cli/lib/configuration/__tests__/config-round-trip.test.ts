@@ -3,8 +3,8 @@ import path from "path";
 import { writeFile } from "fs/promises";
 import { generateConfigSource } from "../config-writer";
 import { loadConfig } from "../config-loader";
-import { createTempDir, cleanupTempDir, buildProjectConfig } from "../../__tests__/helpers";
-import type { ProjectConfig } from "../../../types";
+import { createTempDir, cleanupTempDir, buildProjectConfig, buildSkillConfigs } from "../../__tests__/helpers";
+import type { ProjectConfig, SkillId } from "../../../types";
 
 let tempDir: string;
 
@@ -55,7 +55,7 @@ describe("config round-trip", () => {
     const config = buildProjectConfig({
       name: "stack-project",
       agents: ["web-developer", "api-developer"],
-      skills: ["web-framework-react", "api-framework-hono"],
+      skills: buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
       stack: {
         "web-developer": {
           "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -70,7 +70,7 @@ describe("config round-trip", () => {
     // Stack gets compacted: non-preloaded single skills become bare strings
     expect(loaded.name).toBe("stack-project");
     expect(loaded.agents).toEqual(["web-developer", "api-developer"]);
-    expect(loaded.skills).toEqual(["web-framework-react", "api-framework-hono"]);
+    expect(loaded.skills).toEqual(buildSkillConfigs(["web-framework-react", "api-framework-hono"]));
 
     // After compaction, bare strings
     const webDev = loaded.stack?.["web-developer"] as Record<string, unknown>;
@@ -81,7 +81,7 @@ describe("config round-trip", () => {
     const config = buildProjectConfig({
       name: "preloaded-project",
       agents: ["api-developer"],
-      skills: ["api-framework-hono"],
+      skills: buildSkillConfigs(["api-framework-hono"]),
       stack: {
         "api-developer": {
           "api-api": [{ id: "api-framework-hono", preloaded: true }],
@@ -101,9 +101,8 @@ describe("config round-trip", () => {
       description: "A complete project configuration",
       version: "1",
       agents: ["web-developer", "api-developer"],
-      skills: ["web-framework-react", "api-framework-hono", "web-state-zustand"],
+      skills: buildSkillConfigs(["web-framework-react", "api-framework-hono", "web-state-zustand"]),
       author: "@vince",
-      installMode: "local",
       domains: ["web", "api"],
       selectedAgents: ["web-developer", "api-developer"],
       source: "github:agents-inc/skills",
@@ -117,7 +116,7 @@ describe("config round-trip", () => {
   it("round-trips a config with multiple skills per category", async () => {
     const config = buildProjectConfig({
       name: "multi-skill-project",
-      skills: ["web-testing-vitest", "web-testing-playwright-e2e"],
+      skills: buildSkillConfigs(["web-testing-vitest", "web-testing-playwright-e2e"]),
       stack: {
         "web-developer": {
           "web-testing": [

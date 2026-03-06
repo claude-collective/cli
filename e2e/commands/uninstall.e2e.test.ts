@@ -81,8 +81,7 @@ describe("uninstall command", () => {
       `export default ${JSON.stringify(
         {
           name: "test-edit-project",
-          installMode: "local",
-          skills: ["web-framework-react"],
+          skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
           agents: ["web-developer"],
           domains: ["web"],
         },

@@ -7,7 +7,7 @@ import {
 } from "./build-step-logic";
 import { createMockMatrix, TEST_SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
 import type { CategoryRow } from "../../components/wizard/category-grid";
-import type { SkillId, Category } from "../../types";
+import type { SkillId, Category, CategorySelections } from "../../types";
 
 describe("validateBuildStep", () => {
   const requiredCategory: CategoryRow = {
@@ -157,7 +157,7 @@ describe("buildCategoriesForDomain", () => {
     const matrix = createMatrix();
 
     // With React selected as framework, only Zustand (compatible with React) should show
-    const selections = { "web-framework": ["web-framework-react" as SkillId] };
+    const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
     const result = buildCategoriesForDomain("web", [], matrix, selections);
 
     const stateRow = result.find((r) => r.id === stateCategory);
@@ -178,7 +178,7 @@ describe("buildCategoriesForDomain", () => {
 
   it("should mark installed skills", () => {
     const matrix = createMatrix();
-    const installedSkillIds = ["web-framework-react" as import("../../types").SkillId];
+    const installedSkillIds: SkillId[] = ["web-framework-react"];
 
     const result = buildCategoriesForDomain("web", [], matrix, {}, installedSkillIds);
 

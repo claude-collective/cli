@@ -4,6 +4,7 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
   cleanupTempDir,
+  createMinimalInstallation,
   ensureBinaryExists,
   fileExists,
   readTestFile,
@@ -55,6 +56,7 @@ describe("new skill command", () => {
 
   it("should error with an invalid skill name", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
 
     const { exitCode, combined } = await runCLI(["new", "skill", "InvalidName"], tempDir);
 
@@ -64,6 +66,7 @@ describe("new skill command", () => {
 
   it("should create a new skill with SKILL.md and metadata.yaml", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
     const skillName = "my-test-skill";
 
     const { exitCode, stdout } = await runCLI(
@@ -89,6 +92,7 @@ describe("new skill command", () => {
 
   it("should produce SKILL.md with proper frontmatter", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
     const skillName = "my-frontmatter-skill";
 
     const { exitCode } = await runCLI(["new", "skill", skillName, "--domain", "shared"], tempDir);
@@ -111,6 +115,7 @@ describe("new skill command", () => {
 
   it("should produce a valid metadata.yaml", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
     const skillName = "my-metadata-skill";
 
     const { exitCode } = await runCLI(["new", "skill", skillName, "--domain", "shared"], tempDir);
@@ -133,6 +138,7 @@ describe("new skill command", () => {
 
   it("should error when skill already exists without --force", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
     const skillName = "duplicate-skill";
 
     const { exitCode: setupExitCode } = await runCLI(
@@ -152,6 +158,7 @@ describe("new skill command", () => {
 
   it("should overwrite existing skill with --force", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
     const skillName = "force-skill";
 
     await runCLI(["new", "skill", skillName, "--domain", "shared"], tempDir);
@@ -174,6 +181,7 @@ describe("new skill command", () => {
     expect(mpExitCode).toBe(EXIT_CODES.SUCCESS);
 
     const marketplaceDir = path.join(tempDir, marketplaceName);
+    await createMinimalInstallation(marketplaceDir);
 
     // Create a new skill inside the marketplace directory
     const { exitCode, stdout } = await runCLI(
@@ -198,6 +206,7 @@ describe("new skill command", () => {
 
   it("should accept a skill name containing numbers", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
     const skillName = "skill123";
 
     const { exitCode, stdout } = await runCLI(
@@ -211,6 +220,7 @@ describe("new skill command", () => {
 
   it("should accept a long skill name", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
     const skillName = "my-very-long-skill-name-that-has-many-segments";
 
     const { exitCode, stdout } = await runCLI(
@@ -224,6 +234,7 @@ describe("new skill command", () => {
 
   it("should set category in metadata.yaml when --category flag is provided", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
     const skillName = "my-cat-skill";
 
     const { exitCode, stdout } = await runCLI(
@@ -248,6 +259,7 @@ describe("new skill command", () => {
 
   it("should not create config files when creating a local skill", async () => {
     tempDir = await createTempDir();
+    await createMinimalInstallation(tempDir);
     const skillName = "local-only-skill";
 
     const { exitCode } = await runCLI(["new", "skill", skillName, "--domain", "shared"], tempDir);
@@ -267,9 +279,7 @@ describe("new skill command", () => {
     expect(mpExitCode).toBe(EXIT_CODES.SUCCESS);
 
     const marketplaceDir = path.join(tempDir, marketplaceName);
-
-    // Create .claude-src/ directory — required for loadConfigTypesDataInBackground
-    await mkdir(path.join(marketplaceDir, CLAUDE_SRC_DIR), { recursive: true });
+    await createMinimalInstallation(marketplaceDir);
 
     // Remove scaffolded config files that contain invalid dummy domain values.
     // loadSkillsMatrixFromSource validates these with Zod, and "dummy" is not

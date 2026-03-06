@@ -777,17 +777,15 @@ describe("Wizard integration", () => {
       expect(onComplete).toHaveBeenCalledTimes(1);
       const result = onComplete.mock.calls[0][0];
 
-      expect(result).toHaveProperty("selectedSkills");
+      expect(result).toHaveProperty("skills");
       expect(result).toHaveProperty("selectedStackId");
       expect(result).toHaveProperty("domainSelections");
-      expect(result).toHaveProperty("sourceSelections");
-      expect(result).toHaveProperty("installMode");
       expect(result).toHaveProperty("cancelled");
       expect(result).toHaveProperty("validation");
 
       expect(result.selectedStackId).toBe("react-fullstack");
       expect(result.cancelled).toBe(false);
-      expect(result.installMode).toBe("plugin");
+      expect(Array.isArray(result.skills)).toBe(true);
     });
 
     it("should include preselected skills in result", async () => {
@@ -813,7 +811,7 @@ describe("Wizard integration", () => {
       const result = onComplete.mock.calls[0][0];
 
       // Should include at least the preselected skills (methodology skills)
-      expect(Array.isArray(result.selectedSkills)).toBe(true);
+      expect(Array.isArray(result.skills)).toBe(true);
     });
   });
 

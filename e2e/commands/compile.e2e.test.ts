@@ -503,8 +503,7 @@ describe("compile command", () => {
         `export default ${JSON.stringify(
           {
             name: "global-test",
-            installMode: "local",
-            skills: ["web-testing-e2e-global"],
+            skills: [{ id: "web-testing-e2e-global", scope: "project", source: "local" }],
             agents: ["web-developer"],
           },
           null,

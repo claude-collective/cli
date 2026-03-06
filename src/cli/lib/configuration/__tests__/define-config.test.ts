@@ -7,7 +7,7 @@ describe("defineConfig", () => {
     const config: ProjectConfig = {
       name: "test-project",
       agents: ["web-developer"],
-      skills: ["web-framework-react"],
+      skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
     };
     const result = defineConfig(config);
     expect(result).toBe(config);
@@ -19,9 +19,11 @@ describe("defineConfig", () => {
       description: "A complete project",
       version: "1",
       agents: ["web-developer", "api-developer"],
-      skills: ["web-framework-react", "api-framework-hono"],
+      skills: [
+        { id: "web-framework-react", scope: "project", source: "local" },
+        { id: "api-framework-hono", scope: "project", source: "local" },
+      ],
       author: "@vince",
-      installMode: "local",
       domains: ["web", "api"],
       selectedAgents: ["web-developer", "api-developer"],
       stack: {

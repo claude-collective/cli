@@ -170,14 +170,14 @@ export const FRAMEWORK_AND_STYLING_CONFIG = createMockMatrixConfig(
       conflicts: [],
       discourages: [
         {
-          skills: ["web-framework-custom-a" as SkillId, "web-styling-custom-b" as SkillId],
+          skills: ["web-framework-custom-a", "web-styling-custom-b"],
           reason: "These tools have conflicting design philosophies",
         },
       ],
       recommends: [
         {
-          when: "web-framework-custom-a" as SkillId,
-          suggest: ["web-styling-custom-c" as SkillId],
+          when: "web-framework-custom-a",
+          suggest: ["web-styling-custom-c"],
           reason: "These work great together",
         },
       ],
@@ -231,8 +231,8 @@ export const FRAMEWORK_AND_TESTING_CONFIG = createMockMatrixConfig(
       recommends: [],
       requires: [
         {
-          skill: "web-testing-custom-rtl" as SkillId,
-          needs: ["web-framework-custom-react" as SkillId],
+          skill: "web-testing-custom-rtl",
+          needs: ["web-framework-custom-react"],
           reason: "RTL requires React to function",
         },
       ],

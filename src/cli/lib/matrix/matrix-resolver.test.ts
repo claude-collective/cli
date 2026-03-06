@@ -1486,7 +1486,7 @@ describe("validateSelection edge cases", () => {
 
   it("should report unused_setup warning when setup skill has no corresponding usage skill", () => {
     const setupSkill = createMockSkill("web-skill-setup", "web-framework", {
-      providesSetupFor: ["web-skill-usage" as SkillId],
+      providesSetupFor: ["web-skill-usage"],
     });
     const usageSkill = createMockSkill("web-skill-usage", "web-framework", {});
     const matrix = createMockMatrix({
@@ -1501,7 +1501,7 @@ describe("validateSelection edge cases", () => {
 
   it("should not report unused_setup when usage skill is also selected", () => {
     const setupSkill = createMockSkill("web-skill-setup", "web-framework", {
-      providesSetupFor: ["web-skill-usage" as SkillId],
+      providesSetupFor: ["web-skill-usage"],
     });
     const usageSkill = createMockSkill("web-skill-usage", "web-framework", {});
     const matrix = createMockMatrix({

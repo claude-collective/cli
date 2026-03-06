@@ -12,7 +12,6 @@ import {
 } from "../../src/cli/lib/__tests__/test-fs-utils.js";
 import { EXIT_CODES } from "../../src/cli/lib/exit-codes.js";
 import type { AgentName, Domain, SkillId } from "../../src/cli/types/index.js";
-import type { InstallMode } from "../../src/cli/lib/installation/installation.js";
 
 export { EXIT_CODES };
 
@@ -34,7 +33,7 @@ const E2E_TEMP_PREFIX = "ai-e2e-";
 // --- Shared timing constants for interactive E2E tests ---
 
 /** Time to wait for the wizard to load and render the first step */
-export const WIZARD_LOAD_TIMEOUT_MS = 20_000;
+export const WIZARD_LOAD_TIMEOUT_MS = 10_000;
 
 /** Time to wait for installation to complete */
 export const INSTALL_TIMEOUT_MS = 30_000;
@@ -108,6 +107,21 @@ contentHash: "e2e-test-hash"
   );
 
   return { projectDir, outputDir };
+}
+
+/**
+ * Creates a minimal `.claude-src/config.ts` installation in the given directory.
+ *
+ * This satisfies `detectInstallation()` for commands that require an existing
+ * installation (e.g., `new skill` when no `--output` flag is provided).
+ */
+export async function createMinimalInstallation(dir: string): Promise<void> {
+  const configDir = path.join(dir, CLAUDE_SRC_DIR);
+  await mkdir(configDir, { recursive: true });
+  await writeFile(
+    path.join(configDir, STANDARD_FILES.CONFIG_TS),
+    'export default { name: "test", skills: [], agents: [], domains: [] };\n',
+  );
 }
 
 export async function ensureBinaryExists(): Promise<void> {
@@ -227,7 +241,7 @@ export async function createPermissionsFile(projectDir: string): Promise<void> {
  * This helper creates the minimal file structure:
  *   <projectDir>/
  *     .claude-src/
- *       config.ts   (with name, skills, agents, installMode)
+ *       config.ts   (with name, skills, agents, domains)
  *     .claude/
  *       skills/
  *         <skillId>/
@@ -241,14 +255,12 @@ export async function createEditableProject(
     skills?: SkillId[];
     agents?: AgentName[];
     domains?: Domain[];
-    installMode?: InstallMode;
   },
 ): Promise<string> {
   const projectDir = path.join(tempDir, "project");
   const skills = options?.skills ?? ["web-framework-react"];
   const agents = options?.agents ?? ["web-developer"];
   const domains = options?.domains ?? ["web"];
-  const installMode = options?.installMode ?? "local";
 
   const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
   const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
@@ -258,11 +270,13 @@ export async function createEditableProject(
   await mkdir(skillsDir, { recursive: true });
   await mkdir(agentsDir, { recursive: true });
 
+  // Skills must be SkillConfig[] objects (not bare strings) to pass Zod validation
+  const skillConfigs = skills.map((id) => ({ id, scope: "project" as const, source: "local" }));
+
   const configContent = `export default ${JSON.stringify(
     {
       name: "test-edit-project",
-      installMode,
-      skills,
+      skills: skillConfigs,
       agents,
       domains,
     },
@@ -352,7 +366,7 @@ export type Category =
   | "web-custom-e2e"
   | "web-framework";
 
-export type InstallMode = "local" | "plugin";
+export type SkillConfig = { id: SkillId; scope: "project" | "global"; source: string };
 
 export type SkillAssignment = SkillId | { id: SkillId; preloaded: boolean };
 
@@ -363,9 +377,8 @@ export interface ProjectConfig {
   name: string;
   description?: string;
   agents: AgentName[];
-  skills: SkillId[];
+  skills: SkillConfig[];
   author?: string;
-  installMode?: InstallMode;
   stack?: Partial<Record<AgentName, StackAgentConfig>>;
   source?: string;
   marketplace?: string;
@@ -383,8 +396,7 @@ export interface ProjectConfig {
 export default {
   name: "test-custom-skill-project",
   agents: ["web-developer"],
-  skills: ["web-custom-e2e-widget"],
-  installMode: "local",
+  skills: [{ id: "web-custom-e2e-widget", scope: "project", source: "local" }],
   domains: ["web"],
   stack: {
     "web-developer": {

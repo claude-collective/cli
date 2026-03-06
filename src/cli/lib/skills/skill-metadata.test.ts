@@ -376,7 +376,7 @@ describe("skill-metadata", () => {
 
       await injectForkedFromMetadata(
         "/project/.claude/skills/react",
-        "web-framework-react" as SkillId,
+        "web-framework-react",
         "abc1234",
       );
 
@@ -403,7 +403,7 @@ describe("skill-metadata", () => {
         createValidMetadataYaml("old-skill-id", "old-hash", "2025-01-01"),
       );
 
-      await injectForkedFromMetadata("/dest", "web-framework-react" as SkillId, "new-hash");
+      await injectForkedFromMetadata("/dest", "web-framework-react", "new-hash");
 
       const writtenContent = vi.mocked(writeFile).mock.calls[0][1];
       expect(writtenContent).toContain("web-framework-react");
@@ -417,7 +417,7 @@ describe("skill-metadata", () => {
         createMetadataWithSchemaComment("web-framework-react", "abc1234"),
       );
 
-      await injectForkedFromMetadata("/dest", "web-framework-react" as SkillId, "new-hash");
+      await injectForkedFromMetadata("/dest", "web-framework-react", "new-hash");
 
       // Should successfully write (no parse error from schema comment)
       expect(writeFile).toHaveBeenCalledTimes(1);
@@ -429,7 +429,7 @@ describe("skill-metadata", () => {
       vi.mocked(readFile).mockResolvedValue("not: [valid: yaml: {broken");
 
       await expect(
-        injectForkedFromMetadata("/dest", "web-framework-react" as SkillId, "abc1234"),
+        injectForkedFromMetadata("/dest", "web-framework-react", "abc1234"),
       ).rejects.toThrow();
     });
 
@@ -438,7 +438,7 @@ describe("skill-metadata", () => {
 
       await injectForkedFromMetadata(
         "/project/skills/react",
-        "web-framework-react" as SkillId,
+        "web-framework-react",
         "abc1234",
       );
 

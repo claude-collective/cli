@@ -151,7 +151,6 @@ describe("plugin-info", () => {
       const skillsDir = path.join("/project", CLAUDE_DIR, "skills");
       const installation: Installation = {
         mode: "local",
-        scope: "project",
         configPath,
         agentsDir,
         skillsDir,
@@ -202,7 +201,6 @@ describe("plugin-info", () => {
     it("should return plugin installation info", async () => {
       const installation: Installation = {
         mode: "plugin",
-        scope: "project",
         configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
         agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
         skillsDir: path.join("/project", CLAUDE_DIR, PLUGINS_SUBDIR),
@@ -216,8 +214,7 @@ describe("plugin-info", () => {
         config: {
           name: "my-plugin",
           agents: ["web-developer"],
-          skills: [],
-          installMode: "plugin",
+          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
         },
         configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
       });
@@ -256,7 +253,6 @@ describe("plugin-info", () => {
       const mockConfigPath = path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const installation: Installation = {
         mode: "local",
-        scope: "project",
         configPath: mockConfigPath,
         agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
         skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
@@ -283,7 +279,6 @@ describe("plugin-info", () => {
     it("should use default name when loadProjectConfig returns null", async () => {
       const installation: Installation = {
         mode: "local",
-        scope: "project",
         configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
         agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
         skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
@@ -305,7 +300,6 @@ describe("plugin-info", () => {
       const mockConfigPath = path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const installation: Installation = {
         mode: "local",
-        scope: "project",
         configPath: mockConfigPath,
         agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
         skillsDir: path.join("/project", CLAUDE_DIR, "skills"),

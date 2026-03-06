@@ -220,7 +220,7 @@ describe("init wizard", () => {
       expect(await fileExists(configPath)).toBe(true);
 
       const configContent = await readTestFile(configPath);
-      expect(configContent).toContain("installMode");
+      expect(configContent).toContain('"scope"');
 
       // Verify agents directory was created with agent files
       const agentsDir = path.join(projectDir!, CLAUDE_DIR, "agents");
@@ -291,7 +291,7 @@ describe("init wizard", () => {
         expect(fullOutput).not.toContain("ENOENT");
       });
 
-      it("should include installMode in generated config", async () => {
+      it("should produce SkillConfig[] with id, scope, and source in config", async () => {
         await createProjectAndSource();
 
         session = await runFullInitFlow(projectDir!, sourceDir!);
@@ -300,7 +300,18 @@ describe("init wizard", () => {
 
         const configPath = path.join(projectDir!, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
         const configContent = await readTestFile(configPath);
-        expect(configContent).toContain("installMode");
+
+        // The config.ts skills field should be an array of SkillConfig objects,
+        // NOT bare strings. Each entry should have { id, scope, source } structure.
+        expect(configContent).toContain('"scope"');
+        expect(configContent).toContain('"source"');
+
+        // Verify the skills array contains objects (not plain strings).
+        // JSON.stringify produces: "skills": [ { "id": "...", "scope": "...", "source": "..." } ]
+        // Match a skill object pattern inside the skills array.
+        expect(configContent).toMatch(/"skills":\s*\[[\s\S]*\{[\s\S]*"id":/);
+        expect(configContent).toMatch(/"scope":\s*"(project|global)"/);
+        expect(configContent).toMatch(/"source":\s*"[^"]+"/);
       });
 
       it("should list copied skills in output", async () => {
@@ -408,7 +419,7 @@ describe("init wizard", () => {
       expect(confirmOutput).toContain("API");
       expect(confirmOutput).toContain("Skills:");
       expect(confirmOutput).toContain("Agents:");
-      expect(confirmOutput).toContain("Project");
+      expect(confirmOutput).toContain("project");
     });
 
     it("should complete a full scratch-based init flow through to install", async () => {
@@ -493,8 +504,8 @@ describe("init wizard", () => {
       await navigateStackToConfirm(session);
 
       const confirmOutput = session.getFullOutput();
-      expect(confirmOutput).toContain("Install scope:");
-      expect(confirmOutput).toContain("Project");
+      expect(confirmOutput).toContain("Scope:");
+      expect(confirmOutput).toContain("project");
     });
 
     it("should display selected skills grouped by domain on the confirm step", async () => {
@@ -717,27 +728,20 @@ describe("init wizard", () => {
       await wizardSession.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
     }
 
-    it("should toggle Global badge when G key is pressed", async () => {
+    it("should toggle scope badge when S key is pressed in build step", async () => {
       await createProjectAndSource();
       session = spawnInitWizard(projectDir!, sourceDir!);
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await navigateStackToBuild(session);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Verify "Global" badge is present in wizard layout
-      const outputBefore = session.getFullOutput();
-      expect(outputBefore).toContain("Global");
-
-      // Press G to toggle install scope from "project" (default) to "global"
-      session.write("G");
+      // Press S to toggle focused skill's scope to global
+      session.write("S");
       await delay(KEYSTROKE_DELAY_MS);
 
-      // The badge text "Global" is always rendered in the layout;
-      // the toggle changes internal state (color changes with NO_COLOR are invisible).
-      // Verify wizard is still functional after toggle.
-      const outputAfter = session.getFullOutput();
-      expect(outputAfter).toContain("Global");
-      expect(outputAfter).toContain("Choose a stack");
+      // The focused skill should now show the "G" badge for global scope
+      const output = session.getFullOutput();
+      expect(output).toContain("Customize your");
     });
 
     it("should toggle compatibility labels on skill tags when D key is pressed in build step", async () => {
@@ -778,7 +782,7 @@ describe("init wizard", () => {
       // Verify help modal content appears via screen (xterm-processed view)
       const helpScreen = session.getScreen();
       expect(helpScreen).toContain("Navigation");
-      expect(helpScreen).toContain("Global Toggles");
+      expect(helpScreen).toContain("Toggles");
 
       // Press ESC to close help modal
       session.escape();
@@ -787,7 +791,7 @@ describe("init wizard", () => {
       // Verify help modal is closed and wizard step content is visible again
       const afterCloseScreen = session.getScreen();
       expect(afterCloseScreen).toContain("Choose a stack");
-      expect(afterCloseScreen).not.toContain("Global Toggles");
+      expect(afterCloseScreen).not.toContain("Keyboard Shortcuts");
     });
 
     it("should open settings overlay when S key is pressed during sources step", async () => {
@@ -918,114 +922,6 @@ describe("init wizard", () => {
       const fullOutput = session.getFullOutput();
       expect(fullOutput).toContain("E2E Test Stack");
       expect(fullOutput).toContain("Minimal stack for E2E testing");
-    });
-  });
-
-  describe("global install scope", () => {
-    function spawnGlobalInitWizard(cwd: string, sourcePath: string): TerminalSession {
-      return new TerminalSession(["init", "--global", "--source", sourcePath], cwd, {
-        env: { AGENTSINC_SOURCE: undefined },
-      });
-    }
-
-    it("should show Global scope indicator in the wizard", async () => {
-      await createProjectAndSource();
-
-      // Spawn init with --global flag (HOME is set to cwd, so global install targets cwd)
-      session = spawnGlobalInitWizard(projectDir!, sourceDir!);
-
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      // The wizard layout shows a "Global" badge when installScope is "global"
-      const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("Global");
-    });
-
-    it("should create config in global paths when using --global flag", async () => {
-      await createProjectAndSource();
-      await createPermissionsFile(projectDir!);
-
-      session = spawnGlobalInitWizard(projectDir!, sourceDir!);
-
-      // Step 1: Stack selection
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.enter();
-
-      // Step 2: Domain selection
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.enter();
-
-      // Step 3: Build step — accept stack defaults
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.write("a");
-
-      // Step 4: Confirmation
-      await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.enter();
-
-      // Wait for installation to complete
-      await session.waitForText("initialized successfully", INSTALL_TIMEOUT_MS);
-
-      const exitCode = await session.waitForExit(INSTALL_TIMEOUT_MS);
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      // Since HOME is set to cwd in TerminalSession, --global installs to <cwd>/.claude-src/
-      // (os.homedir() returns HOME env var which is cwd)
-      const globalConfigPath = path.join(projectDir!, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      expect(await fileExists(globalConfigPath)).toBe(true);
-
-      // Verify skills were installed to <cwd>/.claude/skills/
-      const globalSkillsDir = path.join(projectDir!, CLAUDE_DIR, "skills");
-      expect(await directoryExists(globalSkillsDir)).toBe(true);
-
-      const skillFolders = await listFiles(globalSkillsDir);
-      expect(skillFolders.length).toBeGreaterThan(0);
-    });
-
-    it("should show dashboard when --global config already exists", async () => {
-      await createProjectAndSource();
-
-      // Create global config at <cwd>/.claude-src/config.ts (HOME=cwd)
-      const configDir = path.join(projectDir!, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify({ version: "1.0.0" })};\n`,
-      );
-
-      session = spawnGlobalInitWizard(projectDir!, sourceDir!);
-
-      // Dashboard should render instead of wizard when global config exists
-      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
-
-      // Press Escape to dismiss the dashboard
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.escape();
-
-      const exitCode = await session.waitForExit();
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    });
-
-    it("should toggle scope badge to Global when pressing G key", async () => {
-      await createProjectAndSource();
-
-      // Start wizard WITHOUT --global flag (default scope is "project")
-      session = spawnInitWizard(projectDir!, sourceDir!);
-
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Press G to toggle scope to "global"
-      session.write("G");
-      await delay(KEYSTROKE_DELAY_MS);
-
-      // The wizard layout should now show "Global" as active in the scope badge
-      const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("Global");
     });
   });
 
@@ -1501,23 +1397,6 @@ describe("init wizard", () => {
   });
 
   describe("startup message buffering", () => {
-    it("should show global installation message when using --global flag", async () => {
-      await createProjectAndSource();
-
-      // Spawn init with --global flag
-      // HOME is set to cwd by TerminalSession, so global install targets the temp dir
-      session = new TerminalSession(["init", "--global", "--source", sourceDir!], projectDir!, {
-        env: { AGENTSINC_SOURCE: undefined },
-      });
-
-      // The startup message "Installing globally to home directory..." should appear
-      // as buffered output rendered above the wizard via Ink's <Static>
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      const rawOutput = session.getRawOutput();
-      expect(rawOutput).toContain("Installing globally");
-    });
-
     it("should show global fallback message when edit falls back to global config", async () => {
       projectDir = await createTempDir();
 
@@ -1530,8 +1409,7 @@ describe("init wizard", () => {
         `export default ${JSON.stringify(
           {
             name: "global-test",
-            installMode: "local",
-            skills: ["web-framework-react"],
+            skills: [{ "id": "web-framework-react", "scope": "project", "source": "local" }],
             agents: ["web-developer"],
             domains: ["web"],
           },
@@ -1573,24 +1451,6 @@ describe("init wizard", () => {
   });
 
   describe("flag combinations", () => {
-    it("should use custom source for global install with --global --source", async () => {
-      await createProjectAndSource();
-
-      session = new TerminalSession(["init", "--global", "--source", sourceDir!], projectDir!, {
-        env: { AGENTSINC_SOURCE: undefined },
-      });
-
-      // The wizard should load with the E2E source's stack
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      const fullOutput = session.getFullOutput();
-      // Verify the custom source's stack is displayed
-      expect(fullOutput).toContain("E2E Test Stack");
-
-      // The wizard should show the Global scope indicator
-      expect(fullOutput).toContain("Global");
-    });
-
     it("should load skills from custom source with edit --source", async () => {
       projectDir = await createTempDir();
 

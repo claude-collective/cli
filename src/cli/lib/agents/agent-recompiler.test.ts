@@ -110,7 +110,7 @@ describe("agent-recompiler", () => {
     });
 
     it("uses provided skills instead of loading from plugin", async () => {
-      const skillId = "web-custom-skill" as SkillId;
+      const skillId: SkillId = "web-custom-skill";
       const providedSkills = {
         [skillId]: {
           id: skillId,

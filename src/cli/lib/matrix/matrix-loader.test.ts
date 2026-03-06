@@ -657,7 +657,7 @@ displayName: wrong
 
     it("passes skill domain to synthesized category regardless of prefix", async () => {
       const skill = createMockExtractedSkill("web-custom-tool", {
-        category: "web-custom" as CategoryPath,
+        category: "web-custom",
         domain: "cli",
       });
 
@@ -697,7 +697,7 @@ displayName: wrong
   describe("synthesizeCategory", () => {
     it("creates category with provided domain", () => {
       // Boundary cast: custom category not in built-in union
-      const cat = synthesizeCategory("web-custom" as CategoryPath, "web");
+      const cat = synthesizeCategory("web-custom", "web");
       expect(cat.domain).toBe("web");
       expect(cat.displayName).toBe("Web Custom");
     });

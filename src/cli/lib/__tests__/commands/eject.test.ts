@@ -8,6 +8,7 @@ import {
   readTestYaml,
   readTestTsConfig,
   buildWizardResult,
+  buildSkillConfigs,
   buildSourceResult,
   createMockSkill,
   createMockMatrix,
@@ -159,7 +160,7 @@ describe("eject command", () => {
 
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("export default");
-      expect(content).toContain('"installMode": "local"');
+      expect(content).toContain('"name": "project"');
     });
 
     it("should not overwrite existing config.yaml", async () => {
@@ -395,8 +396,8 @@ describe("eject command", () => {
 
 // Skills installed locally via installLocal (marked `local: true`)
 const INSTALLED_SKILL_IDS: SkillId[] = [
-  "web-framework-react" as SkillId,
-  "api-framework-hono" as SkillId,
+  "web-framework-react",
+  "api-framework-hono",
 ];
 
 // Skills that exist in the source but are NOT installed locally (eligible for eject)
@@ -465,7 +466,7 @@ describe("eject skills from initialized project", () => {
     const installMatrix = buildEjectMatrix();
     const installSource = buildSourceResult(installMatrix, dirs.sourceDir);
     await installLocal({
-      wizardResult: buildWizardResult(INSTALLED_SKILL_IDS),
+      wizardResult: buildWizardResult(buildSkillConfigs(INSTALLED_SKILL_IDS)),
       sourceResult: installSource,
       projectDir: dirs.projectDir,
     });
@@ -596,9 +597,9 @@ describe("eject in plugin mode", () => {
     const installMatrix = buildEjectMatrix();
     const installSource = buildSourceResult(installMatrix, dirs.sourceDir);
     await installPluginConfig({
-      wizardResult: buildWizardResult(INSTALLED_SKILL_IDS, {
-        installMode: "plugin",
-      }),
+      wizardResult: buildWizardResult(
+        buildSkillConfigs(INSTALLED_SKILL_IDS, { source: "agents-inc" }),
+      ),
       sourceResult: installSource,
       projectDir: dirs.projectDir,
     });
@@ -609,12 +610,13 @@ describe("eject in plugin mode", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should have installMode plugin in config after init", async () => {
+  it("should have plugin-sourced skills in config after init", async () => {
     const configPath = path.join(dirs.projectDir, ".claude-src", "config.ts");
     expect(await fileExists(configPath)).toBe(true);
 
     const config = await readTestTsConfig<ProjectConfig>(configPath);
-    expect(config.installMode).toBe("plugin");
+    // installMode is derived at runtime from skills; all skills should have non-local source
+    expect(config.skills.every((s) => s.source !== "local")).toBe(true);
   });
 
   it("should copy all skill directories to output in plugin mode", async () => {

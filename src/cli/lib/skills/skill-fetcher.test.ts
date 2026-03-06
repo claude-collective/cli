@@ -74,7 +74,7 @@ describe("skill-fetcher", () => {
 
     it("should throw when skill is not found", async () => {
       const marketplace = createMockMarketplace();
-      const skillId = "web-nonexistent-skill" as SkillId;
+      const skillId = "web-nonexistent-skill";
 
       // findSkillPath: baseDir exists but no matches
       mockDirectoryExists.mockResolvedValueOnce(true);

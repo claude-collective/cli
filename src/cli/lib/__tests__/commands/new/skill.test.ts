@@ -7,6 +7,7 @@ import {
   directoryExists,
   createTempDir,
   cleanupTempDir,
+  writeTestTsConfig,
 } from "../../helpers";
 import { EXIT_CODES } from "../../../exit-codes";
 import {
@@ -212,6 +213,7 @@ describe("new:skill command", () => {
     tempDir = await createTempDir("cc-new-skill-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
+    await writeTestTsConfig(projectDir, { skills: [] });
     process.chdir(projectDir);
   });
 

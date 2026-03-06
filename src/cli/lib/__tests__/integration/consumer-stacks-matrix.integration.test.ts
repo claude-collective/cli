@@ -11,6 +11,7 @@ import {
   directoryExists,
   readTestTsConfig,
   buildWizardResult,
+  buildSkillConfigs,
   buildSourceResult,
   createMockMatrix,
   createTempDir,
@@ -78,15 +79,14 @@ describe("Integration: Consumer-Defined Stacks", () => {
     const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
 
     const result = await installLocal({
-      wizardResult: buildWizardResult(["web-framework-react", "api-framework-hono"]),
+      wizardResult: buildWizardResult(buildSkillConfigs(["web-framework-react", "api-framework-hono"])),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.skills).toContain("web-framework-react");
-    expect(config.skills).toContain("api-framework-hono");
-    expect(config.installMode).toBe("local");
+    expect(config.skills.map((s) => s.id)).toContain("web-framework-react");
+    expect(config.skills.map((s) => s.id)).toContain("api-framework-hono");
   });
 
   it("should find a specific stack by ID using loadStackById", async () => {
@@ -266,7 +266,7 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
 
     const result = await installLocal({
       wizardResult: buildWizardResult(
-        ["web-framework-react", "api-framework-hono", "web-testing-vitest"],
+        buildSkillConfigs(["web-framework-react", "api-framework-hono", "web-testing-vitest"]),
         { selectedAgents: ["web-developer", "api-developer"] },
       ),
       sourceResult,
@@ -508,7 +508,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
       const result = await installLocal({
         wizardResult: buildWizardResult(
-          ["web-framework-react", "web-testing-vitest", "api-framework-hono"],
+          buildSkillConfigs(["web-framework-react", "web-testing-vitest", "api-framework-hono"]),
           { selectedAgents: ["web-developer", "api-developer"] },
         ),
         sourceResult,
@@ -521,9 +521,9 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
 
       // 6. Verify config.ts contains all selected skills
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-      expect(config.skills).toContain("web-framework-react");
-      expect(config.skills).toContain("web-testing-vitest");
-      expect(config.skills).toContain("api-framework-hono");
+      expect(config.skills.map((s) => s.id)).toContain("web-framework-react");
+      expect(config.skills.map((s) => s.id)).toContain("web-testing-vitest");
+      expect(config.skills.map((s) => s.id)).toContain("api-framework-hono");
     } finally {
       await cleanupTestSource(dirs);
     }

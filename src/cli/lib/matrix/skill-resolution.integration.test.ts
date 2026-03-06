@@ -21,6 +21,7 @@ import {
   createMockMatrix,
   createMockCategory,
   buildWizardResult,
+  buildSkillConfigs,
   buildSourceResult,
   readTestTsConfig,
 } from "../__tests__/helpers";
@@ -261,7 +262,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const matrix = buildMultiSourceMatrix();
 
       // Select a skill that doesn't exist in any source
-      const selections: SkillId[] = ["web-framework-react", "web-nonexistent-skill" as SkillId];
+      const selections: SkillId[] = ["web-framework-react", "web-nonexistent-skill"];
 
       // validateSelection treats unknown skills as valid (skips them)
       const validation = validateSelection(selections, matrix);
@@ -271,7 +272,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
     it("should not resolve unknown skill ID through alias lookup", () => {
       const matrix = buildMultiSourceMatrix();
 
-      const resolved = resolveAlias("web-nonexistent-skill" as SkillId, matrix);
+      const resolved = resolveAlias("web-nonexistent-skill", matrix);
       // Unknown skill returns as-is (not resolved to anything)
       expect(resolved).toBe("web-nonexistent-skill");
     });
@@ -292,13 +293,13 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const matrix = buildMultiSourceMatrix();
 
       // Add a skill that requires a non-existent skill
-      matrix.skills["web-feature-advanced" as SkillId] = createMockSkill(
-        "web-feature-advanced" as SkillId,
+      matrix.skills["web-feature-advanced"] = createMockSkill(
+        "web-feature-advanced",
         "web-framework",
         {
           requires: [
             {
-              skillIds: ["web-nonexistent-dep" as SkillId],
+              skillIds: ["web-nonexistent-dep"],
               needsAny: false,
               reason: "Needs nonexistent dependency",
             },
@@ -306,7 +307,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       );
 
-      const validation = validateSelection(["web-feature-advanced" as SkillId], matrix);
+      const validation = validateSelection(["web-feature-advanced"], matrix);
 
       expect(validation.valid).toBe(false);
       expect(validation.errors.some((e) => e.type === "missingRequirement")).toBe(true);
@@ -615,17 +616,18 @@ describe("Integration: Multi-Source Install Pipeline", () => {
 
     const matrix = buildPipelineMatrix();
 
-    const wizardResult = buildWizardResult(selectedSkills, {
-      installMode: "local",
-      selectedAgents: ["web-developer", "api-developer"],
-      sourceSelections: {
-        "web-framework-react": "public",
-        "api-framework-hono": "acme-corp",
-        "web-animation-framer": "internal",
-        "api-database-drizzle": "acme-corp",
-        "web-testing-vitest": "public",
-      } as Partial<Record<SkillId, string>>,
-    });
+    const wizardResult = buildWizardResult(
+      [
+        { id: "web-framework-react", scope: "project", source: "public" },
+        { id: "api-framework-hono", scope: "project", source: "acme-corp" },
+        { id: "web-animation-framer", scope: "project", source: "internal" },
+        { id: "api-database-drizzle", scope: "project", source: "acme-corp" },
+        { id: "web-testing-vitest", scope: "project", source: "public" },
+      ],
+      {
+        selectedAgents: ["web-developer", "api-developer"],
+      },
+    );
     const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
     const installResult = await installLocal({
@@ -641,8 +643,9 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     // Boundary cast: config parse returns `unknown`
     const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
 
+    const configSkillIds = config.skills.map((s) => s.id);
     for (const skillId of selectedSkills) {
-      expect(config.skills).toContain(skillId);
+      expect(configSkillIds).toContain(skillId);
     }
 
     // Verify agents were compiled
@@ -655,12 +658,9 @@ describe("Integration: Multi-Source Install Pipeline", () => {
 
     const matrix = buildPipelineMatrix();
 
-    const wizardResult = buildWizardResult(selectedSkills, {
-      installMode: "local",
-      sourceSelections: {
-        "api-framework-hono": "acme-corp",
-      } as Partial<Record<SkillId, string>>,
-    });
+    const wizardResult = buildWizardResult(
+      buildSkillConfigs(selectedSkills),
+    );
     const sourceResult = buildSourceResult(matrix, dirs.sourceDir, {
       marketplace: "test-marketplace",
     });

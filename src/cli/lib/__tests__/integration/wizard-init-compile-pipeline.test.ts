@@ -19,6 +19,7 @@ import {
   fileExists,
   directoryExists,
   buildWizardResult,
+  buildSkillConfigs,
   buildSourceResult,
 } from "../helpers";
 
@@ -237,10 +238,8 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 1: Full pipeline with 10 skills from scratch flow", () => {
     it("should install skills, generate config, and compile agents", async () => {
-      const wizardResult = buildWizardResult([], {
-        selectedSkills: SKILL_NAMES,
+      const wizardResult = buildWizardResult(buildSkillConfigs(SKILL_NAMES), {
         selectedAgents: PIPELINE_AGENTS,
-        installMode: "local",
         domainSelections: {
           web: {
             "web-framework": ["web-framework-react"],
@@ -274,8 +273,6 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       expect(Array.isArray(config.skills)).toBe(true);
       expect(config.agents).toBeDefined();
       expect(config.agents.length).toBeGreaterThan(0);
-      expect(config.installMode).toBe("local");
-
       const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, "skills");
       expect(await directoryExists(skillsDir)).toBe(true);
       expect(installResult.skillsDir).toBe(skillsDir);
@@ -300,10 +297,8 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
     });
 
     it("should produce agents that contain skill content from source", async () => {
-      const wizardResult = buildWizardResult([], {
-        selectedSkills: SKILL_NAMES,
+      const wizardResult = buildWizardResult(buildSkillConfigs(SKILL_NAMES), {
         selectedAgents: PIPELINE_AGENTS,
-        installMode: "local",
       });
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
@@ -333,10 +328,8 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 2: Compile round-trip (init then recompile)", () => {
     it("should recompile agents from installLocal output", async () => {
-      const wizardResult = buildWizardResult([], {
-        selectedSkills: SKILL_NAMES,
+      const wizardResult = buildWizardResult(buildSkillConfigs(SKILL_NAMES), {
         selectedAgents: PIPELINE_AGENTS,
-        installMode: "local",
       });
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
@@ -381,10 +374,8 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       const SUBSET_COUNT = 5;
       const selectedSkills = SKILL_NAMES.slice(0, SUBSET_COUNT);
 
-      const wizardResult = buildWizardResult([], {
-        selectedSkills,
+      const wizardResult = buildWizardResult(buildSkillConfigs(selectedSkills), {
         selectedAgents: PIPELINE_AGENTS,
-        installMode: "local",
       });
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
@@ -398,7 +389,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
 
       for (const skillId of selectedSkills) {
-        expect(config.skills).toContain(skillId);
+        expect(config.skills.map((s) => s.id)).toContain(skillId);
       }
       expect(config.skills?.length).toBe(SUBSET_COUNT);
 
@@ -414,10 +405,8 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
     it("should set source metadata in config when sourceFlag is provided", async () => {
       const selectedSkills = SKILL_NAMES.slice(0, 3);
 
-      const wizardResult = buildWizardResult([], {
-        selectedSkills,
+      const wizardResult = buildWizardResult(buildSkillConfigs(selectedSkills), {
         selectedAgents: PIPELINE_AGENTS,
-        installMode: "local",
       });
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir, {
         marketplace: "test-marketplace",
@@ -442,10 +431,8 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 4: Directory structure verification", () => {
     it("should create complete directory structure matching init expectations", async () => {
-      const wizardResult = buildWizardResult([], {
-        selectedSkills: SKILL_NAMES,
+      const wizardResult = buildWizardResult(buildSkillConfigs(SKILL_NAMES), {
         selectedAgents: PIPELINE_AGENTS,
-        installMode: "local",
       });
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 

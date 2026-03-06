@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SkillId } from "../../types";
+import type { SkillConfig } from "../../types/config";
 import type { SourceLoadResult } from "../loading/source-loader";
 import type { MigrationPlan } from "./mode-migrator";
 import {
   buildSourceResult,
+  buildSkillConfigs,
   createMockMatrix,
   createMockSkill,
   createTempDir,
@@ -29,93 +31,85 @@ import { claudePluginInstall, claudePluginUninstall } from "../../utils/exec";
 
 describe("mode-migrator", () => {
   describe("detectMigrations", () => {
+    function skill(id: string, source: string, scope: "project" | "global" = "project"): SkillConfig {
+      return { id: id as SkillId, source, scope };
+    }
+
     it("should detect skills moving from plugin to local", () => {
       const result = detectMigrations(
-        { "web-framework-react": "agents-inc" } as Partial<Record<SkillId, string>>,
-        { "web-framework-react": "local" } as Partial<Record<SkillId, string>>,
-        ["web-framework-react" as SkillId],
+        [skill("web-framework-react", "agents-inc")],
+        [skill("web-framework-react", "local")],
       );
 
-      expect(result.toLocal).toEqual(["web-framework-react"]);
+      expect(result.toLocal).toHaveLength(1);
+      expect(result.toLocal[0].id).toBe("web-framework-react");
       expect(result.toPlugin).toEqual([]);
     });
 
     it("should detect skills moving from local to plugin", () => {
       const result = detectMigrations(
-        { "web-framework-react": "local" } as Partial<Record<SkillId, string>>,
-        { "web-framework-react": "agents-inc" } as Partial<Record<SkillId, string>>,
-        ["web-framework-react" as SkillId],
+        [skill("web-framework-react", "local")],
+        [skill("web-framework-react", "agents-inc")],
       );
 
       expect(result.toLocal).toEqual([]);
-      expect(result.toPlugin).toEqual(["web-framework-react"]);
+      expect(result.toPlugin).toHaveLength(1);
+      expect(result.toPlugin[0].id).toBe("web-framework-react");
     });
 
     it("should detect mixed migrations", () => {
       const result = detectMigrations(
-        {
-          "web-framework-react": "agents-inc",
-          "web-state-zustand": "local",
-        } as Partial<Record<SkillId, string>>,
-        {
-          "web-framework-react": "local",
-          "web-state-zustand": "agents-inc",
-        } as Partial<Record<SkillId, string>>,
-        ["web-framework-react" as SkillId, "web-state-zustand" as SkillId],
+        [skill("web-framework-react", "agents-inc"), skill("web-state-zustand", "local")],
+        [skill("web-framework-react", "local"), skill("web-state-zustand", "agents-inc")],
       );
 
-      expect(result.toLocal).toEqual(["web-framework-react"]);
-      expect(result.toPlugin).toEqual(["web-state-zustand"]);
+      expect(result.toLocal).toHaveLength(1);
+      expect(result.toLocal[0].id).toBe("web-framework-react");
+      expect(result.toPlugin).toHaveLength(1);
+      expect(result.toPlugin[0].id).toBe("web-state-zustand");
     });
 
     it("should return empty plan when no migrations needed", () => {
       const result = detectMigrations(
-        { "web-framework-react": "agents-inc" } as Partial<Record<SkillId, string>>,
-        { "web-framework-react": "agents-inc" } as Partial<Record<SkillId, string>>,
-        ["web-framework-react" as SkillId],
+        [skill("web-framework-react", "agents-inc")],
+        [skill("web-framework-react", "agents-inc")],
       );
 
       expect(result.toLocal).toEqual([]);
       expect(result.toPlugin).toEqual([]);
     });
 
-    it("should handle skills with no previous selection", () => {
+    it("should handle skills with no previous selection (new skill, no migration)", () => {
       const result = detectMigrations(
-        {} as Partial<Record<SkillId, string>>,
-        { "web-framework-react": "local" } as Partial<Record<SkillId, string>>,
-        ["web-framework-react" as SkillId],
+        [],
+        [skill("web-framework-react", "local")],
       );
 
-      expect(result.toLocal).toEqual(["web-framework-react"]);
+      // New skills are not migrations (no old entry to compare)
+      expect(result.toLocal).toEqual([]);
       expect(result.toPlugin).toEqual([]);
     });
 
-    it("should handle skills with no new selection", () => {
+    it("should handle skills removed in new selection (no migration)", () => {
       const result = detectMigrations(
-        { "web-framework-react": "local" } as Partial<Record<SkillId, string>>,
-        {} as Partial<Record<SkillId, string>>,
-        ["web-framework-react" as SkillId],
+        [skill("web-framework-react", "local")],
+        [],
       );
 
+      // Removed skills are not migrations (no new entry to compare)
       expect(result.toLocal).toEqual([]);
-      expect(result.toPlugin).toEqual(["web-framework-react"]);
+      expect(result.toPlugin).toEqual([]);
     });
 
-    it("should only consider skills in the allSkills list", () => {
+    it("should only detect migrations for skills present in both old and new", () => {
       const result = detectMigrations(
-        {
-          "web-framework-react": "agents-inc",
-          "web-state-zustand": "local",
-        } as Partial<Record<SkillId, string>>,
-        {
-          "web-framework-react": "local",
-          "web-state-zustand": "agents-inc",
-        } as Partial<Record<SkillId, string>>,
-        // Only include react, not zustand
-        ["web-framework-react" as SkillId],
+        [skill("web-framework-react", "agents-inc"), skill("web-state-zustand", "local")],
+        [skill("web-framework-react", "local")],
       );
 
-      expect(result.toLocal).toEqual(["web-framework-react"]);
+      // Only react is in both old and new with a source change
+      expect(result.toLocal).toHaveLength(1);
+      expect(result.toLocal[0].id).toBe("web-framework-react");
       expect(result.toPlugin).toEqual([]);
     });
   });
@@ -129,11 +123,11 @@ describe("mode-migrator", () => {
 
       const matrix = createMockMatrix({
         "web-framework-react": createMockSkill(
-          "web-framework-react" as SkillId,
+          "web-framework-react",
           "web-framework",
         ),
         "web-state-zustand": createMockSkill(
-          "web-state-zustand" as SkillId,
+          "web-state-zustand",
           "web-client-state",
         ),
       });
@@ -149,7 +143,7 @@ describe("mode-migrator", () => {
     it("should copy skills to local and uninstall plugins for toLocal skills", async () => {
       vi.mocked(copySkillsToLocalFlattened).mockResolvedValue([
         {
-          skillId: "web-framework-react" as SkillId,
+          skillId: "web-framework-react",
           contentHash: "abc123",
           sourcePath: "/source/skills/web/framework/react",
           destPath: `${tempDir}/.claude/skills/web-framework-react`,
@@ -157,11 +151,18 @@ describe("mode-migrator", () => {
       ]);
 
       const plan: MigrationPlan = {
-        toLocal: ["web-framework-react" as SkillId],
+        toLocal: [{
+          id: "web-framework-react",
+          oldSource: "agents-inc",
+          newSource: "local",
+          oldScope: "project",
+          newScope: "project",
+        }],
         toPlugin: [],
+        scopeChanges: [],
       };
 
-      const result = await executeMigration(plan, tempDir, sourceResult, "project");
+      const result = await executeMigration(plan, tempDir, sourceResult);
 
       expect(copySkillsToLocalFlattened).toHaveBeenCalledWith(
         ["web-framework-react"],
@@ -181,10 +182,17 @@ describe("mode-migrator", () => {
     it("should archive and install plugins for toPlugin skills", async () => {
       const plan: MigrationPlan = {
         toLocal: [],
-        toPlugin: ["web-state-zustand" as SkillId],
+        toPlugin: [{
+          id: "web-state-zustand",
+          oldSource: "local",
+          newSource: "agents-inc",
+          oldScope: "project",
+          newScope: "project",
+        }],
+        scopeChanges: [],
       };
 
-      const result = await executeMigration(plan, tempDir, sourceResult, "project");
+      const result = await executeMigration(plan, tempDir, sourceResult);
 
       expect(deleteLocalSkill).toHaveBeenCalledWith(tempDir, "web-state-zustand");
       expect(claudePluginInstall).toHaveBeenCalledWith(
@@ -200,9 +208,10 @@ describe("mode-migrator", () => {
       const plan: MigrationPlan = {
         toLocal: [],
         toPlugin: [],
+        scopeChanges: [],
       };
 
-      const result = await executeMigration(plan, tempDir, sourceResult, "project");
+      const result = await executeMigration(plan, tempDir, sourceResult);
 
       expect(copySkillsToLocalFlattened).not.toHaveBeenCalled();
       expect(deleteLocalSkill).not.toHaveBeenCalled();
@@ -218,10 +227,17 @@ describe("mode-migrator", () => {
 
       const plan: MigrationPlan = {
         toLocal: [],
-        toPlugin: ["web-state-zustand" as SkillId],
+        toPlugin: [{
+          id: "web-state-zustand",
+          oldSource: "local",
+          newSource: "agents-inc",
+          oldScope: "project",
+          newScope: "project",
+        }],
+        scopeChanges: [],
       };
 
-      const result = await executeMigration(plan, tempDir, sourceResult, "project");
+      const result = await executeMigration(plan, tempDir, sourceResult);
 
       expect(deleteLocalSkill).toHaveBeenCalledWith(tempDir, "web-state-zustand");
       expect(result.pluginizedSkills).toEqual([]);
@@ -235,10 +251,17 @@ describe("mode-migrator", () => {
 
       const plan: MigrationPlan = {
         toLocal: [],
-        toPlugin: ["web-state-zustand" as SkillId],
+        toPlugin: [{
+          id: "web-state-zustand",
+          oldSource: "local",
+          newSource: "agents-inc",
+          oldScope: "project",
+          newScope: "project",
+        }],
+        scopeChanges: [],
       };
 
-      const result = await executeMigration(plan, tempDir, noMarketplaceSource, "project");
+      const result = await executeMigration(plan, tempDir, noMarketplaceSource);
 
       expect(deleteLocalSkill).toHaveBeenCalledWith(tempDir, "web-state-zustand");
       expect(claudePluginInstall).not.toHaveBeenCalled();

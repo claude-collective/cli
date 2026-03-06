@@ -38,9 +38,13 @@ vi.mock("ink", async (importOriginal) => {
   return { ...original, render: mockRender };
 });
 
-vi.mock("../../installation/index.js", () => ({
-  detectInstallation: (...args: unknown[]) => mockDetectInstallation(...(args as [])),
-}));
+vi.mock("../../installation/index.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../installation/index.js")>();
+  return {
+    ...original,
+    detectInstallation: (...args: unknown[]) => mockDetectInstallation(...(args as [])),
+  };
+});
 
 vi.mock("../../loading/index.js", async (importOriginal) => {
   const original = await importOriginal<typeof import("../../loading/index.js")>();
@@ -437,7 +441,8 @@ describe("edit command local-mode skill fallback", () => {
   let projectDir: string;
   let originalCwd: string;
 
-  const CONFIG_SKILLS: SkillId[] = ["web-framework-react", "api-framework-hono"];
+  const CONFIG_SKILL_IDS: SkillId[] = ["web-framework-react", "api-framework-hono"];
+  const CONFIG_SKILLS = CONFIG_SKILL_IDS.map(id => ({ id, scope: "project" as const, source: "local" }));
 
   const testMatrix = TEST_MATRICES.reactAndHono;
 
@@ -499,7 +504,7 @@ describe("edit command local-mode skill fallback", () => {
 
     expect(mockRender).toHaveBeenCalledOnce();
     const installedSkillIds = getRenderedInstalledSkillIds();
-    expect(installedSkillIds).toEqual(CONFIG_SKILLS);
+    expect(installedSkillIds).toEqual(CONFIG_SKILL_IDS);
   });
 
   it("should use discovered plugin skills as installedSkillIds when plugin discovery returns results", async () => {

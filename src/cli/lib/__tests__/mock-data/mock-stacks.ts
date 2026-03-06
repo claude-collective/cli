@@ -202,10 +202,10 @@ export const COMPILATION_TEST_STACK = createMockStack("test-stack", {
   description: "A test stack for integration testing",
   agents: {
     "web-developer": {
-      "web-framework": [{ id: "web-framework-react" as SkillId, preloaded: true }],
+      "web-framework": [{ id: "web-framework-react", preloaded: true }],
     },
     "api-developer": {
-      "api-api": [{ id: "api-framework-hono" as SkillId, preloaded: true }],
+      "api-api": [{ id: "api-framework-hono", preloaded: true }],
     },
   },
 });

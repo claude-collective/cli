@@ -27,7 +27,6 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          installMode="plugin"
           onBack={onBack}
         />,
       );
@@ -47,7 +46,6 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          installMode="plugin"
           onBack={onBack}
         />,
       );
@@ -68,7 +66,6 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          installMode="plugin"
           onBack={onBack}
         />,
       );
@@ -89,7 +86,10 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          installMode="plugin"
+          skillConfigs={[
+            { id: "web-framework-react", scope: "project", source: "agents-inc" },
+            { id: "web-styling-scss-modules", scope: "project", source: "agents-inc" },
+          ]}
           onBack={onBack}
         />,
       );
@@ -110,7 +110,10 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          installMode="local"
+          skillConfigs={[
+            { id: "web-framework-react", scope: "project", source: "local" },
+            { id: "web-styling-scss-modules", scope: "project", source: "local" },
+          ]}
           onBack={onBack}
         />,
       );
@@ -131,7 +134,6 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          installMode="plugin"
           onBack={onBack}
         />,
       );
@@ -160,7 +162,6 @@ describe("StepConfirm component", () => {
           }}
           technologyCount={3}
           skillCount={3}
-          installMode="local"
           onBack={onBack}
         />,
       );
@@ -188,7 +189,6 @@ describe("StepConfirm component", () => {
           }}
           technologyCount={3}
           skillCount={3}
-          installMode="local"
           onBack={onBack}
         />,
       );
@@ -215,7 +215,6 @@ describe("StepConfirm component", () => {
           }}
           technologyCount={1}
           skillCount={1}
-          installMode="local"
           onBack={onBack}
         />,
       );
@@ -240,7 +239,6 @@ describe("StepConfirm component", () => {
           }}
           technologyCount={1}
           skillCount={1}
-          installMode="local"
           onBack={onBack}
         />,
       );
@@ -267,7 +265,6 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          installMode="plugin"
           onBack={onBack}
         />,
       );
@@ -290,7 +287,6 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          installMode="plugin"
           onBack={onBack}
         />,
       );
@@ -313,7 +309,6 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          installMode="plugin"
           // No onBack provided
         />,
       );
@@ -329,14 +324,16 @@ describe("StepConfirm component", () => {
   });
 
   describe("install mode display", () => {
-    it('should show "Plugin" when installMode is "plugin"', () => {
+    it('should show "Plugin" when all skills use non-local source', () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={onComplete}
-          installMode="plugin"
-          selectedSkills={["web-framework-react", "web-styling-scss-modules"]}
+          skillConfigs={[
+            { id: "web-framework-react", scope: "project", source: "agents-inc" },
+            { id: "web-styling-scss-modules", scope: "project", source: "agents-inc" },
+          ]}
         />,
       );
       cleanup = unmount;
@@ -346,18 +343,16 @@ describe("StepConfirm component", () => {
       expect(output).toContain("Plugin");
     });
 
-    it('should show "Local (editable copies)" when installMode is "local" and all skills are local', () => {
+    it('should show "Local (editable copies)" when all skills are local', () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={onComplete}
-          installMode="local"
-          selectedSkills={["web-framework-react", "web-styling-scss-modules"]}
-          sourceSelections={{
-            "web-framework-react": "local",
-            "web-styling-scss-modules": "local",
-          }}
+          skillConfigs={[
+            { id: "web-framework-react", scope: "project", source: "local" },
+            { id: "web-styling-scss-modules", scope: "project", source: "local" },
+          ]}
         />,
       );
       cleanup = unmount;
@@ -367,23 +362,17 @@ describe("StepConfirm component", () => {
       expect(output).toContain("Local (editable copies)");
     });
 
-    it('should show "Mixed" with counts when installMode is "mixed"', () => {
+    it('should show "Mixed" with counts when skills have mixed sources', () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={onComplete}
-          installMode="mixed"
-          selectedSkills={[
-            "web-framework-react",
-            "web-styling-scss-modules",
-            "web-state-zustand",
+          skillConfigs={[
+            { id: "web-framework-react", scope: "project", source: "local" },
+            { id: "web-styling-scss-modules", scope: "project", source: "agents-inc" },
+            { id: "web-state-zustand", scope: "project", source: "local" },
           ]}
-          sourceSelections={{
-            "web-framework-react": "local",
-            "web-styling-scss-modules": "plugin",
-            "web-state-zustand": "local",
-          }}
         />,
       );
       cleanup = unmount;
@@ -395,20 +384,16 @@ describe("StepConfirm component", () => {
       expect(output).toContain("1 plugin");
     });
 
-    it("should handle missing sourceSelections gracefully", () => {
+    it("should not show install mode when skillConfigs is not provided", () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <StepConfirm
-          onComplete={onComplete}
-          installMode="local"
-        />,
+        <StepConfirm onComplete={onComplete} />,
       );
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Install mode:");
-      expect(output).toContain("Local (editable copies)");
+      expect(output).not.toContain("Install mode:");
     });
   });
 

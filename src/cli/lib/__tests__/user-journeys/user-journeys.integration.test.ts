@@ -77,8 +77,8 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
 
     // Verify initial state: config has react + zustand + methodology
     const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
-    expect(initialConfig.skills).toContain("web-framework-react");
-    expect(initialConfig.skills).toContain("web-state-zustand");
+    expect(initialConfig.skills.map((s) => s.id)).toContain("web-framework-react");
+    expect(initialConfig.skills.map((s) => s.id)).toContain("web-state-zustand");
     expect(initialResult.compiledAgents.length).toBeGreaterThan(0);
 
     // Step 2: Re-init with skills A, B, C (add hono)
@@ -103,9 +103,9 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // Config now includes all three skills
-    expect(updatedConfig.skills).toContain("web-framework-react");
-    expect(updatedConfig.skills).toContain("web-state-zustand");
-    expect(updatedConfig.skills).toContain("api-framework-hono");
+    expect(updatedConfig.skills.map((s) => s.id)).toContain("web-framework-react");
+    expect(updatedConfig.skills.map((s) => s.id)).toContain("web-state-zustand");
+    expect(updatedConfig.skills.map((s) => s.id)).toContain("api-framework-hono");
 
     // Agents are compiled
     expect(editResult.compiledAgents.length).toBeGreaterThan(0);
@@ -225,8 +225,8 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // Config should have react and hono
-    expect(updatedConfig.skills).toContain("web-framework-react");
-    expect(updatedConfig.skills).toContain("api-framework-hono");
+    expect(updatedConfig.skills.map((s) => s.id)).toContain("web-framework-react");
+    expect(updatedConfig.skills.map((s) => s.id)).toContain("api-framework-hono");
 
     // Note: config merge UNIONS skills, so zustand may still be in config.skills.
     // However, the STACK entries control what goes into agents. The stack is
@@ -270,7 +270,7 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // Web skill should remain
-    expect(updatedConfig.skills).toContain("web-framework-react");
+    expect(updatedConfig.skills.map((s) => s.id)).toContain("web-framework-react");
 
     // Agents should be recompiled successfully
     expect(editResult.compiledAgents.length).toBeGreaterThan(0);
@@ -571,10 +571,10 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
 
     // Config should contain all selected skills + methodology
     for (const skillId of selectedSkills) {
-      expect(config.skills).toContain(skillId);
+      expect(config.skills.map((s) => s.id)).toContain(skillId);
     }
     for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-      expect(config.skills).toContain(methodSkill);
+      expect(config.skills.map((s) => s.id)).toContain(methodSkill);
     }
 
     // Agents should include both web and api domain agents
@@ -593,7 +593,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
         const agentSkillIds = extractSkillIdsFromStack(agentConfig);
         for (const skillId of agentSkillIds) {
           // Every skill in the stack must be in config.skills
-          expect(config.skills).toContain(skillId);
+          expect(config.skills.map((s) => s.id)).toContain(skillId);
         }
       }
 
@@ -642,7 +642,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
 
     // Methodology skills should be in config.skills
     for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-      expect(config.skills).toContain(methodSkill);
+      expect(config.skills.map((s) => s.id)).toContain(methodSkill);
     }
 
     // All compiled agents should have valid .md files
@@ -717,7 +717,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
       for (const [, assignments] of Object.entries(agentConfig as Record<string, unknown>)) {
         const skillIds = extractSkillIdsFromAssignment(assignments);
         for (const skillId of skillIds) {
-          expect(config.skills).toContain(skillId);
+          expect(config.skills.map((s) => s.id)).toContain(skillId);
         }
       }
     }
@@ -854,9 +854,6 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
 
     // Source should be preserved
     expect(config.source).toBe("github:test/source");
-
-    // Install mode should be preserved
-    expect(config.installMode).toBe("local");
 
     // Stack should be loadable
     if (config.stack) {

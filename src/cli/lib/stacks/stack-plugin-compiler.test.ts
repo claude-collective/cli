@@ -125,7 +125,7 @@ describe("stack-plugin-compiler", () => {
       // Create skill in src/skills/ (new architecture)
       // Directory path is where the files live, frontmatter name is the canonical ID
       const directoryPath = "web/framework/react (@vince)";
-      const frontmatterName = "web-framework-react" as SkillId;
+      const frontmatterName = "web-framework-react";
       await createSkillInSource(directoryPath, {
         name: frontmatterName,
         description: "React development skills",
@@ -323,9 +323,9 @@ describe("stack-plugin-compiler", () => {
     it("should return skill plugin references", async () => {
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
-      const reactCanonicalId = "web-framework-react" as SkillId;
+      const reactCanonicalId = "web-framework-react";
       const tsDirPath = "web/language/typescript (@vince)";
-      const tsCanonicalId = "web-language-typescript" as SkillId;
+      const tsCanonicalId = "web-language-typescript";
 
       await createSkillInSource(reactDirPath, {
         name: reactCanonicalId,
@@ -618,9 +618,9 @@ describe("stack-plugin-compiler", () => {
     it("should include skill plugins in README when skills are present", async () => {
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
-      const reactCanonicalId = "web-framework-react" as SkillId;
+      const reactCanonicalId = "web-framework-react";
       const zustandDirPath = "web/client-state-management/zustand (@vince)";
-      const zustandCanonicalId = "web-state-zustand" as SkillId;
+      const zustandCanonicalId = "web-state-zustand";
 
       await createSkillInSource(reactDirPath, {
         name: reactCanonicalId,

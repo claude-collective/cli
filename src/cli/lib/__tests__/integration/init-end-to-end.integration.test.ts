@@ -17,6 +17,7 @@ import {
   directoryExists,
   readTestTsConfig,
 } from "../helpers";
+import { deriveInstallMode } from "../../installation/installation";
 import {
   DEFAULT_TEST_SKILLS,
   METHODOLOGY_TEST_SKILLS,
@@ -76,7 +77,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       // Verify methodology skills were added
       for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(wizardResult.selectedSkills).toContain(methodSkill);
+        expect(wizardResult.skills.map((s) => s.id)).toContain(methodSkill);
       }
 
       // Verify agents were preselected from domains (sorted)
@@ -99,8 +100,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       expect(config.agents).toEqual([...wizardResult.selectedAgents].sort());
 
       // Methodology skills should appear in config.skills
+      const configSkillIds = config.skills.map((s) => s.id);
       for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(config.skills).toContain(methodSkill);
+        expect(configSkillIds).toContain(methodSkill);
       }
     });
 
@@ -189,9 +191,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       expect(config.agents).toEqual([]);
 
       // Every skill in config.skills should be in selectedSkills + methodology skills
-      for (const skillId of config.skills) {
-        const isSelected = selectedSkillIds.includes(skillId as SkillId);
-        const isMethodology = DEFAULT_PRESELECTED_SKILLS.includes(skillId as SkillId);
+      for (const skillConfig of config.skills) {
+        const isSelected = selectedSkillIds.includes(skillConfig.id);
+        const isMethodology = DEFAULT_PRESELECTED_SKILLS.includes(skillConfig.id);
         expect(isSelected || isMethodology).toBe(true);
       }
     });
@@ -227,9 +229,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       simulateSkillSelections(selectedSkillIds, matrix, ["web", "api"]);
       useWizardStore.getState().preselectAgentsFromDomains();
 
-      const wizardResult = buildWizardResultFromStore(matrix, {
-        installMode: "plugin",
-      });
+      const wizardResult = buildWizardResultFromStore(matrix);
 
       const result = await installPluginConfig({
         wizardResult,
@@ -245,9 +245,6 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       // config.agents should match preselected agents (sorted)
       expect(config.agents).toEqual([...wizardResult.selectedAgents].sort());
-
-      // installMode should be plugin
-      expect(config.installMode).toBe("plugin");
 
       // Compiled agents should exist as .md files
       expect(result.compiledAgents.length).toBeGreaterThan(0);
@@ -267,22 +264,22 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       // Setup for plugin mode
       simulateSkillSelections(selectedSkillIds, matrix, ["web", "api"]);
       useWizardStore.getState().preselectAgentsFromDomains();
-      const pluginResult = buildWizardResultFromStore(matrix, { installMode: "plugin" });
+      const pluginResult = buildWizardResultFromStore(matrix);
       const pluginAgents = [...pluginResult.selectedAgents].sort();
 
       // Reset and setup for local mode with same selections
       useWizardStore.getState().reset();
       simulateSkillSelections(selectedSkillIds, matrix, ["web", "api"]);
       useWizardStore.getState().preselectAgentsFromDomains();
-      const localResult = buildWizardResultFromStore(matrix, { installMode: "local" });
+      const localResult = buildWizardResultFromStore(matrix);
       const localAgents = [...localResult.selectedAgents].sort();
 
       // Same selections should produce same agent list
       expect(pluginAgents).toEqual(localAgents);
 
       // Same skills (including methodology)
-      expect([...pluginResult.selectedSkills].sort()).toEqual(
-        [...localResult.selectedSkills].sort(),
+      expect([...pluginResult.skills.map((s) => s.id)].sort()).toEqual(
+        [...localResult.skills.map((s) => s.id)].sort(),
       );
     });
   });
@@ -342,7 +339,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
           // Assignments can be a bare string or an object with .id or an array
           const skillIds = extractSkillIdsFromAssignment(assignments);
           for (const skillId of skillIds) {
-            expect(config.skills).toContain(skillId);
+            expect(config.skills.map((s) => s.id)).toContain(skillId);
           }
         }
       }
@@ -391,11 +388,11 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       // All methodology skills should be present
       for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(wizardResult.selectedSkills).toContain(methodSkill);
+        expect(wizardResult.skills.map((s) => s.id)).toContain(methodSkill);
       }
 
       // Original selection should also be present
-      expect(wizardResult.selectedSkills).toContain("web-framework-react");
+      expect(wizardResult.skills.map((s) => s.id)).toContain("web-framework-react");
     });
 
     it("should not duplicate methodology skills if already selected", () => {
@@ -409,7 +406,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       const wizardResult = buildWizardResultFromStore(matrix);
 
       // Count occurrences of the first methodology skill
-      const occurrences = wizardResult.selectedSkills.filter(
+      const occurrences = wizardResult.skills.map((s) => s.id).filter(
         (s) => s === DEFAULT_PRESELECTED_SKILLS[0],
       ).length;
       expect(occurrences).toBe(1);
@@ -509,10 +506,10 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       // Skills should come from stack.allSkillIds + methodology skills
       for (const skillId of stack!.allSkillIds) {
-        expect(wizardResult.selectedSkills).toContain(skillId);
+        expect(wizardResult.skills.map((s) => s.id)).toContain(skillId);
       }
       for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(wizardResult.selectedSkills).toContain(methodSkill);
+        expect(wizardResult.skills.map((s) => s.id)).toContain(methodSkill);
       }
 
       const result = await installLocal({
@@ -525,7 +522,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       // Config should include all stack skills and methodology skills
       for (const skillId of stack!.allSkillIds) {
-        expect(config.skills).toContain(skillId);
+        expect(config.skills.map((s) => s.id)).toContain(skillId);
       }
     });
   });

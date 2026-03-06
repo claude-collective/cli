@@ -403,7 +403,7 @@ describe("output-validator", () => {
         warnings: [],
       };
 
-      printOutputValidationResult("web-developer" as AgentName, result);
+      printOutputValidationResult("web-developer", result);
 
       expect(consoleSpy).not.toHaveBeenCalled();
     });
@@ -415,7 +415,7 @@ describe("output-validator", () => {
         warnings: [],
       };
 
-      printOutputValidationResult("web-developer" as AgentName, result);
+      printOutputValidationResult("web-developer", result);
 
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("Validation errors for web-developer"),
@@ -433,7 +433,7 @@ describe("output-validator", () => {
         warnings: ["Missing <role> section", "Missing Core Principles section"],
       };
 
-      printOutputValidationResult("api-developer" as AgentName, result);
+      printOutputValidationResult("api-developer", result);
 
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("Validation warnings for api-developer"),
@@ -451,7 +451,7 @@ describe("output-validator", () => {
         warnings: ["Missing <role> section"],
       };
 
-      printOutputValidationResult("cli-developer" as AgentName, result);
+      printOutputValidationResult("cli-developer", result);
 
       const calls = consoleSpy.mock.calls.flat().join("\n");
       expect(calls).toContain("Validation errors for cli-developer");
@@ -467,7 +467,7 @@ describe("output-validator", () => {
         warnings: ["Warning one"],
       };
 
-      printOutputValidationResult("web-developer" as AgentName, result);
+      printOutputValidationResult("web-developer", result);
 
       expect(consoleSpy).toHaveBeenCalledWith("      - Error one");
       expect(consoleSpy).toHaveBeenCalledWith("      - Warning one");
