@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.58.0] - 2026-03-06
+
+**Per-skill scope toggle, S key badge, E2E fixes**
+
+- S key toggles focused skill's scope (project/global) in build step with [P]/[G] badge
+- Fix `new marketplace` / `new skill` failing in temp dirs (skip detectInstallation with --output)
+- 28 E2E test failures fixed, test suite updated for SkillConfig[] format
+
+See [changelogs/0.58.0.md](./changelogs/0.58.0.md) for full details.
+
+---
+
 ## [0.57.0] - 2026-03-02
 
 **Per-skill install mode, archive removal, mode migration**
