@@ -55,7 +55,7 @@ The user toggles to "plugin", confirms, the wizard completes, and nothing happen
 
 Even if the toggle were wired up correctly, there is no migration logic. Switching from local to plugin should:
 
-- Archive or remove `.claude/skills/` copies
+- Delete `.claude/skills/` copies
 - Install plugin references via `claude plugin install`
 - Update `config.ts`
 
@@ -83,7 +83,7 @@ This means:
 - **No separate mode toggle or screen** -- source selection already exists, we just add "Local" to the options
 - **Per-skill granularity by default** -- each skill can independently be local or plugin
 - **Bulk actions via hotkeys** -- `L` sets all skills to local, `P` sets all to their default marketplace source
-- **The `installMode` config value is derived** from the persisted `sourceSelections`: all marketplace = `"plugin"`, all local = `"local"`, mixed = `"mixed"`. The `sourceSelections` field (already on `WizardResultV2`) is persisted to `ProjectConfig` as the single source of truth for per-skill install decisions.
+- **The `installMode` config value is derived** from the `skills` array: all marketplace sources = `"plugin"`, all local = `"local"`, mixed = `"mixed"`. Each entry in `skills: SkillConfig[]` carries its own `source` field, making the array the single source of truth for per-skill install decisions. See `per-skill-scope.md` for the full data model.
 
 ### How Sources Are Rendered (Existing Pattern)
 
@@ -267,22 +267,21 @@ After the user confirms, the wizard result's `installMode` is derived from the p
 | All "Local"                                                     | `"local"`             | All skills copied to `.claude/skills/`          |
 | Mix of marketplace and "Local"                                  | `"mixed"`             | Per-skill behavior driven by `sourceSelections` |
 
-`installMode` is **derived, not stored separately**. The `sourceSelections` field on `ProjectConfig` (a `Partial<Record<SkillId, string>>`) is the single source of truth. A skill whose selected source is `"local"` gets a local install; any other source value means plugin install. The derived `installMode` is computed at read time for display and branching:
+`installMode` is **derived, not stored separately**. Each entry in the `skills` array carries its own `source` and `scope`. A skill with `source: "local"` gets a local install; any other source value means plugin install. The derived `installMode` is computed at read time for display and branching:
 
 ```typescript
 export default {
   name: "my-project",
-  skills: ["web-framework-react", "web-styling-tailwind", "api-framework-hono"],
+  skills: [
+    { id: "web-framework-react", scope: "project", source: "local" },
+    { id: "web-styling-tailwind", scope: "project", source: "local" },
+    { id: "api-framework-hono", scope: "project", source: "agents-inc" },
+  ],
   agents: ["web-developer", "api-developer"],
-  sourceSelections: {
-    "web-framework-react": "local",
-    "web-styling-tailwind": "local",
-    // api-framework-hono not listed → uses default marketplace source
-  },
 } satisfies ProjectConfig;
 ```
 
-No `skillOverrides` field is needed — `sourceSelections` already captures per-skill source choices, and install mode follows directly from them.
+No separate `sourceSelections` or `installMode` fields needed — the `skills` array is the single source of truth. See `per-skill-scope.md` for the full design.
 
 ---
 
@@ -309,7 +308,7 @@ After confirm:
 
 <!-- CORRECTED: more accurate description of actual flow in init.tsx -->
 
-1. Derives `installMode: "plugin"` from source selections (all marketplace)
+1. Derives `installMode: "plugin"` from skills array (all marketplace sources)
 2. Checks if `sourceResult.marketplace` exists (required for plugin mode individual skills)
 3. If no marketplace, falls back to local mode with a warning (existing behavior at `init.tsx:206-211`)
 4. Registers marketplace via `claudePluginMarketplaceAdd()` if not already registered
@@ -333,7 +332,7 @@ Ready to install your custom stack (Web + API)
 
 After confirm:
 
-1. Derives `installMode: "local"` from source selections (all local)
+1. Derives `installMode: "local"` from skills array (all local sources)
 2. Calls `installLocal()` (existing function in `local-installer.ts:511`)
 3. Copies skills to `.claude/skills/` via `copySkillsToLocalFlattened()`
 4. Writes `config.ts` via `generateConfigSource()` (internal `setConfigMetadata()` populates fields)
@@ -356,11 +355,11 @@ Ready to install your custom stack (Web + API)
 
 After confirm:
 
-1. Derives `installMode: "mixed"` from `sourceSelections` (mixed local and marketplace)
-2. Splits selected skills into two groups based on `sourceSelections`
+1. Derives `installMode: "mixed"` from skills array (mixed local and marketplace sources)
+2. Splits skills into two groups based on each skill's `source` field
 3. Installs plugin-mode skills via `claudePluginInstall()` for each
 4. Copies local-mode skills via `copySkillsToLocalFlattened()`
-5. Writes `config.ts` with `sourceSelections` persisted (install mode is derived at read time)
+5. Writes `config.ts` with `skills: SkillConfig[]` array (install mode is derived at read time)
 6. Compiles agents (which need per-skill install mode for skill references in agent markdown)
 
 ---
@@ -390,7 +389,7 @@ If confirmed:
 
 1. Copy the skill to `.claude/skills/` using `copySkillsToLocalFlattened()` (existing function in `skill-copier.ts:206`)
 2. Uninstall the plugin reference via `claudePluginUninstall()` for that skill
-3. Update `sourceSelections` in `config.ts` (installMode is derived)
+3. Update skills array in `config.ts` (installMode is derived)
 4. Recompile agents with the new per-skill install modes
 
 <!-- ADDED: complication about copySkillsToLocalFlattened requiring SourceLoadResult -->
@@ -417,7 +416,7 @@ If confirmed:
 
 1. Delete each local skill using `deleteLocalSkill()` (per-skill, from `source-switcher.ts`)
 2. Install plugin references via `claudePluginInstall()` for each skill
-3. Update `sourceSelections` in `config.ts` (installMode is derived)
+3. Update skills array in `config.ts` (installMode is derived)
 4. Recompile agents with the new per-skill install modes
 
 <!-- ADDED: complication about marketplace requirement -->
@@ -494,9 +493,9 @@ If the user keeps the same source selections, no migration is needed. The edit f
 
 | Field                        | File                              | Purpose                                             |
 | ---------------------------- | --------------------------------- | --------------------------------------------------- |
-| `installMode`                | `stores/wizard-store.ts:164`      | Current mode: `"plugin" \| "local"`                 |
-| `toggleInstallMode()`        | `stores/wizard-store.ts:567-569`  | Toggle between plugin and local                     |
-| `WizardResultV2.installMode` | `components/wizard/wizard.tsx:35` | Wizard result carries mode as `"plugin" \| "local"` |
+| `installMode`                | `stores/wizard-store.ts:183`      | Current mode: `"plugin" \| "local" \| "mixed"` (stored in store, derived from `sourceSelections`) |
+| `deriveInstallMode()`        | `stores/wizard-store.ts:626-644`  | Derives mode from `sourceSelections` — proposed for removal in `per-skill-scope.md` (derive from `SkillConfig[]` instead) |
+| `WizardResultV2.installMode` | `components/wizard/wizard.tsx:35` | Wizard result carries derived mode — proposed for removal in `per-skill-scope.md` |
 
 ---
 
@@ -513,9 +512,9 @@ If the user keeps the same source selections, no migration is needed. The edit f
 - **domains** -- domain selection changes are not persisted
 - **selectedAgents** -- agent selection changes are not persisted
 - **expertMode** -- expert mode toggle is not persisted
-- **sourceSelections** -- source changes are not persisted to config
+- **sourceSelections** -- source changes are not persisted to config (now proposed to be folded into `skills: SkillConfig[]` per `per-skill-scope.md`)
 
-The wizard result's `installMode` field is set during `init` (via `setConfigMetadata()` in `local-installer.ts:249-276`) but never during `edit`.
+The wizard result's `installMode` field is set during `init` (via `setConfigMetadata()` in `local-installer.ts`) but never during `edit`. Note: `per-skill-scope.md` proposes removing `installMode` and `sourceSelections` entirely, deriving mode from `skills: SkillConfig[]`.
 
 > **Impact:** Running `agentsinc edit` to add skills, then running it again, will show the original skill set from config rather than the updated one. The edit flow only "works" because `recompileAgents()` at `agent-recompiler.ts:184-186` discovers skills from the filesystem via `discoverAllPluginSkills()` rather than reading them from config. But for installMode, domains, agents, and expertMode, no such filesystem fallback exists.
 
@@ -541,7 +540,7 @@ The edit flow has no concept of "this change is destructive and needs user confi
 
 ### 5. No `installMode: "mixed"` support
 
-The `ProjectConfig` type (at `types/config.ts:58`) defines `installMode` as `"local" | "plugin"`. The Zod schema (at `lib/schemas.ts:396`) also validates against `z.enum(["local", "plugin"])`. The wizard store (at `stores/wizard-store.ts:164`) types it as `"plugin" | "local"`. The auto-generated `config-types-writer.ts:181` also hardcodes `InstallMode = "local" | "plugin"`. The "customize" option requires adding `"mixed"` to all these locations and persisting `sourceSelections` to `ProjectConfig` (no separate `skillOverrides` field — `sourceSelections` already captures per-skill choices).
+The `ProjectConfig` type (at `types/config.ts:58`) defines `installMode` as `"local" | "plugin"`. The Zod schema (at `lib/schemas.ts:396`) also validates against `z.enum(["local", "plugin"])`. The wizard store (at `stores/wizard-store.ts:164`) types it as `"plugin" | "local"`. The auto-generated `config-types-writer.ts:181` also hardcodes `InstallMode = "local" | "plugin"`. The "customize" option requires adding `"mixed"` to all these locations. Note: `per-skill-scope.md` proposes replacing `sourceSelections` and `installMode` with a consolidated `skills: SkillConfig[]` array.
 
 <!-- CORRECTED: added the Zod schema, wizard store, and config-types-writer as locations needing updates. Removed skillOverrides in favor of sourceSelections. -->
 
@@ -567,7 +566,7 @@ The "Existing Infrastructure" section lists `setConfigMetadata()` as a function 
 
 <!-- CORRECTED 2026-03-02: installMode is derived from sourceSelections -->
 
-The `WizardResultV2` type (at `wizard.tsx:27-42`) defines `installMode: "plugin" | "local"`. This needs to include `"mixed"` to match the new design. The wizard store's `installMode` state field (`wizard-store.ts:164`) also needs the same change. However, `installMode` is now **derived from `sourceSelections`** rather than stored independently — the wizard should compute it before returning the result. Additionally, `sourceSelections` (already on `WizardResultV2` at `wizard.tsx:34`) needs to be persisted to `ProjectConfig` so it can be restored during `edit`.
+The `WizardResultV2` type (at `wizard.tsx:27-42`) now includes `"mixed"` in `installMode`. The wizard store's `deriveInstallMode()` computes mode from `sourceSelections`. Note: `per-skill-scope.md` proposes removing both `installMode` and `sourceSelections` from `WizardResultV2` and `ProjectConfig`, replacing them with `skills: SkillConfig[]`.
 
 ### 9. `Installation` type and `detectInstallation()` need `"mixed"` awareness
 
@@ -605,8 +604,8 @@ The `Installation` type (at `installation.ts:13-21`) uses `InstallMode = "local"
    - Zod schema (`lib/schemas.ts:396` and `lib/schemas.ts:432`)
    - `InstallMode` (`installation.ts:13`)
    - `config-types-writer.ts:181` (hardcoded `InstallMode` in generated config-types.ts)
-8. Replace `toggleInstallMode()` in wizard-store with `setInstallMode(mode)` and add logic to derive mode from `sourceSelections`
-9. Add `sourceSelections?: Partial<Record<SkillId, string>>` to `ProjectConfig` (persists per-skill source choices; install mode is derived from this, no separate `skillOverrides` field needed)
+8. Replace `toggleInstallMode()` in wizard-store with `deriveInstallMode()` that computes mode from `sourceSelections`
+9. Add `sourceSelections?: Partial<Record<SkillId, string>>` to `ProjectConfig` (persists per-skill source choices; install mode is derived from this). Note: `per-skill-scope.md` proposes folding this into `skills: SkillConfig[]`
 10. Add corresponding Zod schema field for `sourceSelections`
 11. Add footer hint text to the source grid showing hotkey shortcuts: `L set all local  P set all plugin  ENTER continue  ESC back`
 
@@ -634,7 +633,7 @@ The `Installation` type (at `installation.ts:13-21`) uses `InstallMode = "local"
 **Scope:** Make `edit.tsx` persist wizard results to config and respect source selection changes that affect install mode.
 
 1. Export `setConfigMetadata()`, `writeConfigFile()`, and `buildAndMergeConfig()` from `local-installer.ts` and re-export from `lib/installation/index.ts` -- OR move config persistence logic to `lib/configuration/config-writer.ts` (which already exports `generateConfigSource()`)
-2. After wizard completes in `edit.tsx`, persist ALL wizard result changes to `config.ts` (skills, domains, agents, expertMode, sourceSelections — installMode is derived from sourceSelections)
+2. After wizard completes in `edit.tsx`, persist ALL wizard result changes to `config.ts` (skills, domains, agents, expertMode, source selections — installMode is derived from skills array)
 3. Compare new source selections against current installation state to detect per-skill migration needs (marketplace-to-local or local-to-marketplace)
 4. If any skills changed, call migration logic (Phase 3)
 5. Pass wizard result's derived `installMode` to `recompileAgents()` instead of relying on old config
@@ -709,13 +708,13 @@ Currently it reads from `projectConfig?.installMode`. For edit mode to work corr
 
 ~~Two approaches for storing per-skill mode choices.~~
 
-**Resolution:** Neither `skillOverrides` nor `localSkills` is needed. The existing `sourceSelections: Partial<Record<SkillId, string>>` field on `WizardResultV2` already captures per-skill source choices. Persist it directly to `ProjectConfig`. Install mode is derived from it:
+**Resolution:** Neither `skillOverrides` nor `localSkills` is needed. Per-skill source choices are captured in `sourceSelections` on `WizardResultV2` and persisted to `ProjectConfig`. Install mode is derived:
 
-- A skill with `sourceSelections[id] === "local"` → local install
-- A skill with any other source (or no entry) → plugin install
+- A skill with source `"local"` → local install
+- A skill with any other source → plugin install
 - Derived `installMode`: all local = `"local"`, all plugin = `"plugin"`, mix = `"mixed"`
 
-This avoids introducing a redundant field and reuses the multi-source infrastructure already built in Phase 6.
+Note: `per-skill-scope.md` proposes consolidating `sourceSelections` and `installMode` into `skills: SkillConfig[]`, where each entry carries `{ id, scope, source }`.
 
 ### Q6: Should we add a `convert` command?
 
@@ -735,11 +734,11 @@ The confirmation dialogs mention `agentsinc convert --to-plugin` and `agentsinc 
 
 The current `init.tsx` handles install after the wizard with a simple binary branch: `result.installMode === "plugin"` goes to `installIndividualPlugins()`, everything else goes to `installLocalMode()` (lines 203-215). With the source-selection approach, when some skills are "Local" and others are marketplace, init needs to:
 
-1. Derive `installMode: "mixed"` from `sourceSelections`
-2. Split selected skills into two groups based on `sourceSelections` (local vs marketplace)
+1. Derive `installMode: "mixed"` from skills array
+2. Split skills into two groups based on each skill's source (local vs marketplace)
 3. Install plugin-mode skills via `claudePluginInstall()`
 4. Copy local-mode skills via `copySkillsToLocalFlattened()`
-5. Write config with `sourceSelections` persisted (install mode derived at read time)
+5. Write config with skills array (install mode derived at read time)
 6. Compile agents (which need to know per-skill install mode for skill references)
 
 This is a non-trivial change to `init.tsx`'s `handleInstallation()` method that the current phases don't explicitly address.
@@ -779,7 +778,7 @@ This is a non-trivial change to `init.tsx`'s `handleInstallation()` method that 
 | `src/cli/components/wizard/step-sources.tsx` | Added L/P bulk hotkeys, footer hint text |
 | `src/cli/components/wizard/step-confirm.tsx` | Derived install mode display with counts |
 | `src/cli/lib/configuration/ts-config-types-writer.ts` | Added `"mixed"` to generated type |
-| `src/cli/lib/installation/local-installer.ts` | Exported `setConfigMetadata`, `buildAndMergeConfig`, `writeConfigFile`; persists `sourceSelections` |
+| `src/cli/lib/installation/local-installer.ts` | Exported `setConfigMetadata`, `buildAndMergeConfig`, `writeConfigFile`; persists source selections in skills array |
 | `src/cli/lib/installation/index.ts` | Re-exported new functions and mode-migrator |
 | `src/cli/lib/agents/agent-recompiler.ts` | Added optional `installMode` to `RecompileAgentsOptions` |
 | `src/cli/commands/edit.tsx` | Config persistence, migration integration, installMode override |

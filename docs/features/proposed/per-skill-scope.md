@@ -2,7 +2,7 @@
 
 Replace the global `installScope` toggle and parallel data structures (`skills[]` + `sourceSelections{}`) with a single consolidated `SkillConfig[]` array that carries scope and source per skill.
 
-**Status:** Proposed
+**Status:** Implemented (2026-03-06)
 **Date:** 2026-03-02
 **Related:** `ProjectConfig` in config.ts, `WizardResultV2` in wizard.tsx, `wizard-store.ts`
 
@@ -12,10 +12,11 @@ Replace the global `installScope` toggle and parallel data structures (`skills[]
 
 1. [Problem Statement](#problem-statement)
 2. [New Data Model](#new-data-model)
-3. [UI Changes](#ui-changes)
-4. [Installation Pipeline Changes](#installation-pipeline-changes)
-5. [Files to Modify](#files-to-modify)
-6. [Open Questions](#open-questions)
+3. [Dual Config Architecture](#dual-config-architecture)
+4. [UI Changes](#ui-changes)
+5. [Installation Pipeline Changes](#installation-pipeline-changes)
+6. [Files to Modify](#files-to-modify)
+7. [Open Questions](#open-questions)
 
 ---
 
@@ -119,38 +120,44 @@ type WizardResultV2 = {
 
 ### Wizard store changes
 
-The wizard store keeps `sourceSelections` and `scopeSelections` as separate maps internally -- they serve different UI interactions (source grid vs S hotkey). They get merged into `SkillConfig[]` only at completion time in `handleComplete`.
+The wizard store uses `SkillConfig[]` directly as its internal representation -- the same shape as the config file. No parallel maps, no merging step at completion.
 
 **Add:**
 
 | Item | Type | Purpose |
 |------|------|---------|
-| `scopeSelections` | `Partial<Record<SkillId, InstallScope>>` | Per-skill scope map (default: `{}`, sparse -- only `"global"` entries stored) |
-| `toggleSkillScope(skillId: SkillId)` | action | Toggles between project/global for a single skill |
-| `getScopeForSkill(skillId: SkillId): InstallScope` | helper | Returns effective scope (defaults to `"project"`) |
+| `skillConfigs` | `SkillConfig[]` | Per-skill config array (same shape as `ProjectConfig.skills`) |
+| `toggleSkillScope(skillId: SkillId)` | action | Toggles scope between project/global for a skill in `skillConfigs` |
+| `setSkillSource(skillId: SkillId, source: string)` | action | Updates source for a skill in `skillConfigs` |
+| `focusedSkillId` | `SkillId \| null` | Currently focused skill in build step (for `S` hotkey) |
+| `setFocusedSkillId(id: SkillId \| null)` | action | Set focused skill from CategoryGrid |
 
 **Remove:**
 
 - `installScope` field
 - `toggleInstallScope()` action
 - `toggleInstallMode()` action
+- `sourceSelections` (folded into `skillConfigs`)
 
 **Keep:**
 
-- `sourceSelections: Partial<Record<SkillId, string>>` -- still used internally by the sources step UI
-- `deriveInstallMode()` -- still useful for UI display (but no longer persisted)
+- `deriveInstallMode()` -- computed from `skillConfigs`, still useful for UI display
 
-**Update `handleComplete` in `wizard.tsx`:**
+The existing `selections: Partial<Record<Subcategory, SkillId[]>>` map remains as the category grid UI state -- it tracks which skills are checked. `skillConfigs` is the complementary metadata layer: when a skill is selected in the build step, an entry is added to `skillConfigs` with defaults `{ id, scope: "project", source: DEFAULT_PUBLIC_SOURCE_NAME }`. When deselected, the entry is removed from both `selections` and `skillConfigs`. The source grid updates `source` on existing `skillConfigs` entries. The `S` hotkey toggles `scope` on an existing entry. `selections` answers "what's selected," `skillConfigs` answers "how it's configured."
 
-Build `SkillConfig[]` by combining `selectedSkills`, `sourceSelections`, and `scopeSelections`:
+**`handleComplete` in `wizard.tsx`:**
 
 ```typescript
-const skills: SkillConfig[] = allSkills.map((id) => ({
-  id,
-  scope: store.getScopeForSkill(id),
-  source: store.sourceSelections[id] || DEFAULT_PUBLIC_SOURCE_NAME,
-}));
+// skillConfigs is already SkillConfig[] -- pass directly
+const result: WizardResultV2 = {
+  skills: store.skillConfigs,
+  // ... other fields unchanged
+};
 ```
+
+**Loading during edit:**
+
+When editing an existing project, `skillConfigs` is loaded directly from `projectConfig.skills` -- no decomposition needed since the shapes match.
 
 ### Zod schema changes
 
@@ -172,18 +179,71 @@ The `installMode` and `sourceSelections` fields are removed from the schema.
 
 ---
 
-## 3. UI Changes
+## 3. Dual Config Architecture
+
+### Two config locations
+
+Global-scope skills get their own config and types at the global installation directory. Project-scope skills live in the project config. Both configs use the same `SkillConfig[]` format.
+
+| Location | Config file | Types file | Contains |
+|----------|-------------|------------|----------|
+| `~/.claude-src/` | `config.ts` | `config-types.ts` | Global-scope skills only |
+| `{project}/.claude-src/` | `config.ts` | `config-types.ts` | All skills (project + global scope) |
+
+The **project config is the complete picture** -- it declares all skills the project uses, including global-scope ones. The global config is a full installation in its own right -- it has its own skills, agents, domains, and compiled agents. The typical use case is installing meta skills and their associated agents globally. The project config-types import gives projects type-safe access to globally available skill IDs.
+
+### Type imports
+
+The project `config-types.ts` auto-imports global types and extends them:
+
+```typescript
+// {project}/.claude-src/config-types.ts (generated)
+import type { SkillId as GlobalSkillId } from "/home/user/.claude-src/config-types";
+
+export type SkillId = GlobalSkillId | "web-framework-react" | "web-styling-tailwind";
+```
+
+This means:
+- Removing a global skill from the global config → type disappears → projects that reference it get TypeScript errors
+- New projects auto-import global types via `cc init` without knowing what's installed globally
+- The project config remains 100% self-contained for runtime behavior
+- The import path is an absolute path resolved from `os.homedir()` at generation time (TypeScript cannot resolve `~`)
+
+### Installation writes to both locations
+
+When `cc init` or `cc edit` completes:
+
+1. Global-scope skills → written to global config at `~/.claude-src/config.ts`, types generated at `~/.claude-src/config-types.ts`
+2. Project-scope skills → written to project config at `{project}/.claude-src/config.ts`
+3. Project `config-types.ts` regenerated with import from global types
+4. The project config's `skills` array contains ALL skills (both scopes)
+
+### When no global skills exist
+
+The global config at `~/.claude-src/` is only created when at least one global-scope skill is installed. If no global skills exist, the project `config-types.ts` is self-contained (no import). The global config is created on first global skill installation (via `cc init` or `cc edit`).
+
+### Loading during edit
+
+`cc edit` loads the **project config only** -- it has the full `skills: SkillConfig[]` with both scopes. No need to load the global config separately.
+
+### Changing global skills to project scope
+
+When `cc edit` changes a skill from global to project scope, the skill is removed from the global config and installed at project scope. A warning is shown: other projects that reference the global skill will have type errors until they re-run `cc init` or `cc edit`. This is intentional -- the type system surfaces the dependency break immediately.
+
+---
+
+## 4. UI Changes
 
 ### Build step -- skill tags
 
-Add a scope suffix to each selected skill tag using Unicode modifier letters:
+Add a scope suffix to each selected skill tag:
 
 ```
-[react \u1D3E] [zustand \u1D3E] [anti-over-engineering \u1D33]
+[react P] [zustand P] [anti-over-engineering G]
 ```
 
-- `\u1D3E` = project scope (default)
-- `\u1D33` = global scope
+- `P` = project scope (default)
+- `G` = global scope
 - Scope indicator shown only on selected skills
 - Scope passed as a prop to `SkillTag` (not read from store inside the component)
 
@@ -235,11 +295,20 @@ Replace the "Install mode: Plugin/Local/Mixed" line with a summary derived from 
 
 ---
 
-## 4. Installation Pipeline Changes
+## 5. Installation Pipeline Changes
 
 ### Config generation (`config-generator.ts`)
 
-`generateProjectConfigFromSkills()` now produces `SkillConfig[]` instead of `SkillId[]`. It needs `sourceSelections` and `scopeSelections` as additional parameters (or receives the pre-built `SkillConfig[]` directly from the wizard result).
+`generateProjectConfigFromSkills()` now produces `SkillConfig[]` instead of `SkillId[]`. It receives the pre-built `SkillConfig[]` directly from the wizard result.
+
+### Config types generation (`config-types-writer.ts`)
+
+The config types writer generates two files when global-scope skills exist:
+
+1. `~/.claude-src/config-types.ts` -- exports `SkillId` union for global skills only
+2. `{project}/.claude-src/config-types.ts` -- imports global types and extends with project skills
+
+When no global-scope skills exist, the project `config-types.ts` is self-contained (no import).
 
 ### Config metadata (`local-installer.ts`)
 
@@ -262,9 +331,39 @@ For each skill in the result:
 | non-local | `"project"` | `claudePluginInstall(ref, "project", projectDir)` |
 | non-local | `"global"` | `claudePluginInstall(ref, "user", projectDir)` |
 
+Each skill is an independent clean install -- no migration ordering needed. The install loop iterates over `result.skills` and dispatches each to the appropriate variant:
+
+```typescript
+for (const skill of result.skills) {
+  const isLocal = skill.source === "local";
+  const isGlobal = skill.scope === "global";
+  const skillsDir = isGlobal ? globalSkillsDir : projectSkillsDir;
+  const pluginScope = isGlobal ? "user" : "project";
+
+  if (isLocal) {
+    await copyToLocal(skill.id, skillsDir, sourceResult);
+  } else {
+    const pluginRef = `${skill.id}@${sourceResult.marketplace}`;
+    await claudePluginInstall(pluginRef, pluginScope, projectDir);
+  }
+}
+```
+
+Old artifacts are cleaned up independently per skill before installing.
+
 ### Mode migrator (`mode-migrator.ts`)
 
-`executeMigration()`: The scope parameter becomes per-skill, extracted from each `SkillConfig` entry.
+The mode-migrator handles **edit-time cleanup of old artifacts**. When a skill changes source, scope, or both, the old installation must be removed before the new one is created -- there should only be one instance of each skill.
+
+`detectMigrations()` compares old vs new `SkillConfig[]` entries by ID to find skills that changed source or scope. `executeMigration()` cleans up old artifacts:
+
+- Local->plugin: delete old local copy, then install plugin
+- Plugin->local: uninstall old plugin, then copy to local
+- Project->global (same source): remove from project location, install at global location
+- Global->project (same source): remove from global location, install at project location
+- Source AND scope change: clean up old, install new (both dimensions)
+
+During `cc init` there are no old artifacts -- the install loop handles everything directly. The mode-migrator is only needed during `cc edit`.
 
 ### Edit command (`edit.tsx`)
 
@@ -275,7 +374,7 @@ For each skill in the result:
 
 ---
 
-## 5. Files to Modify
+## 6. Files to Modify
 
 ### Types & Schemas
 
@@ -283,13 +382,13 @@ For each skill in the result:
 |------|--------|
 | `src/cli/types/config.ts` | Add `SkillConfig` type. Update `ProjectConfig.skills` from `SkillId[]` to `SkillConfig[]`. Remove `sourceSelections`. Remove `installMode`. |
 | `src/cli/lib/schemas.ts` | Update `projectConfigLoaderSchema` -- `skills` changes from `z.array(extensibleSkillIdSchema)` to `z.array(z.object({ id, scope, source }))`. Remove `installMode` and `sourceSelections` fields. |
-| `src/cli/lib/installation/installation.ts` | Keep `InstallScope` and `InstallMode` type exports (still used). Update install detection to derive mode from skills array. |
+| `src/cli/lib/installation/installation.ts` | Keep `InstallMode` type export (still used). Remove `scope` from `Installation` type. Add `deriveInstallMode(skills: SkillConfig[])` as shared utility. Update install detection to derive mode from skills array. |
 
 ### Wizard & UI
 
 | File | Change |
 |------|--------|
-| `src/cli/stores/wizard-store.ts` | Add `scopeSelections`, `toggleSkillScope`, `getScopeForSkill`. Remove `installScope`, `toggleInstallScope`, `toggleInstallMode`. Keep `sourceSelections` (internal wizard state). |
+| `src/cli/stores/wizard-store.ts` | Add `skillConfigs: SkillConfig[]`, `toggleSkillScope`, `setSkillSource`, `focusedSkillId`, `setFocusedSkillId`. Remove `installScope`, `toggleInstallScope`, `toggleInstallMode`, `sourceSelections` (folded into `skillConfigs`). |
 | `src/cli/components/wizard/wizard.tsx` | Remove `G` handler (lines 150-152). Add `S` handler gated on `step === "build"`. Update `WizardResultV2` type (replace `selectedSkills`/`sourceSelections`/`installMode`/`installScope` with `skills: SkillConfig[]`). Update `handleComplete` to build `SkillConfig[]`. Remove `initialInstallScope` prop. |
 | `src/cli/components/wizard/wizard-layout.tsx` | Remove `G` badge (lines 144-148). Add `S scope` badge visible on build step. |
 | `src/cli/components/wizard/help-modal.tsx` | Remove `G` from `GLOBAL_TOGGLES` (lines 22-28). Add `S` to `BUILD_KEYS`. |
@@ -297,7 +396,7 @@ For each skill in the result:
 | `src/cli/components/wizard/step-build.tsx` | Add `S scope` to footer hint text. |
 | `src/cli/components/wizard/step-confirm.tsx` | Remove `installScope` prop. Update scope display to per-skill summary ("Scope: 15 project, 3 global"). Remove `installMode` prop or derive it from skills. |
 | `src/cli/components/wizard/step-sources.tsx` | Update if it reads `installMode`/`installScope`. |
-| `src/cli/components/hooks/use-wizard-initialization.ts` | Remove `initialInstallScope` handling. Add `scopeSelections` loading from config. |
+| `src/cli/components/hooks/use-wizard-initialization.ts` | Remove `initialInstallScope` handling. Load `skillConfigs` from `config.skills`. |
 | `src/cli/components/hooks/use-build-step-props.ts` | Pass scope data through to `CategoryGrid`. |
 
 ### Installation Pipeline
@@ -307,7 +406,7 @@ For each skill in the result:
 | `src/cli/lib/configuration/config-generator.ts` | Update `generateProjectConfigFromSkills()` to produce `SkillConfig[]`. |
 | `src/cli/lib/installation/local-installer.ts` | Update `setConfigMetadata()` -- remove `sourceSelections` and `installMode` persistence. Update `buildLocalConfig()` to pass scope/source info. Route skills to correct directories by scope. |
 | `src/cli/lib/configuration/config-merger.ts` | Add skills merge logic (by ID). New skills union with existing. Existing skills keep scope/source unless explicitly changed. |
-| `src/cli/lib/configuration/config-types-writer.ts` | Update generated `ProjectConfig` interface -- `skills: SkillConfig[]`, emit `SkillConfig` type, remove `sourceSelections` and `installMode` fields. |
+| `src/cli/lib/configuration/config-types-writer.ts` | Update generated `ProjectConfig` interface -- `skills: SkillConfig[]`, emit `SkillConfig` type, remove `sourceSelections` and `installMode` fields. Generate dual config-types files: global types at `~/.claude-src/config-types.ts`, project types that import and extend global types. |
 | `src/cli/lib/configuration/project-config.ts` | Update defensive initialization for new skills format. Update `extendSchemasWithCustomValues` call to extract IDs: `raw.skills?.map(s => s.id) ?? []`. |
 | `src/cli/lib/installation/installation.ts` | Update `detectProjectInstallation`/`detectGlobalInstallation` to derive `installMode` from `skills` array instead of reading `config.installMode`. |
 | `src/cli/lib/installation/mode-migrator.ts` | Per-skill scope in `executeMigration()`. |
@@ -321,7 +420,7 @@ For each skill in the result:
 | File | Change |
 |------|--------|
 | `src/cli/lib/__tests__/helpers.ts` | Update `buildWizardResult()` and `buildWizardResultFromStore()` for new `WizardResultV2` type. |
-| `src/cli/stores/wizard-store.test.ts` | Rewrite `installScope`/`toggleInstallScope` tests. Add `scopeSelections`/`toggleSkillScope` tests. |
+| `src/cli/stores/wizard-store.test.ts` | Rewrite `installScope`/`toggleInstallScope` tests. Add `skillConfigs`/`toggleSkillScope`/`setSkillSource` tests. |
 | `src/cli/components/wizard/step-confirm.test.tsx` | Update to use per-skill scope summary instead of single scope prop. |
 | `src/cli/lib/configuration/__tests__/config-types-writer.test.ts` | Update `skills` assertions from ID array to object array. |
 | `src/cli/lib/configuration/config-generator.test.ts` | Update `skills` assertions from ID array to object array. |
@@ -333,7 +432,7 @@ For each skill in the result:
 
 ---
 
-## 6. Open Questions
+## 7. Open Questions
 
 ### Q1: Should scope default to "project" or be configurable?
 
@@ -345,8 +444,29 @@ Not applicable. The project is pre-1.0 -- no backward-compatibility shims or mig
 
 ### Q3: How does `cc edit` detect scope changes?
 
-Compare old and new `SkillConfig[]` entries by ID. If a skill's scope changed, trigger scope migration: uninstall from old scope, install at new scope. This extends the existing mode-migrator pattern.
+Compare old and new `SkillConfig[]` entries by ID. If a skill's scope changed, clean install at the new location and clean up the old one. Each skill is independent -- no migration ordering needed.
 
 ### Q4: Should skill tags show scope only when mixed?
 
-**Decision: Always show scope indicator on selected skills.** Users need to see what they are getting. The superscript characters (`\u1D3E`/`\u1D33`) are small enough to not add visual noise.
+**Decision: Always show scope indicator on selected skills.** `P` for project, `G` for global. Users need to see what they are getting.
+
+### Q5: Where does `deriveInstallMode()` live?
+
+In `installation.ts` alongside the `InstallMode` type definition. Exported as a shared utility for use by `agent-recompiler.ts`, `init.tsx`, `edit.tsx`, `step-confirm.tsx`, and anywhere else that needs the derived mode.
+
+### Q6: Should `Installation.scope` be kept?
+
+**Decision: Remove it.** The `Installation` type no longer has a single `scope` field. Each skill carries its own scope in `SkillConfig`. The `Installation` type retains `mode` (derived from skills array), `configPath`, `agentsDir`, `skillsDir`, and `projectDir`.
+
+### Q7: How does the install loop work?
+
+Four variants based on source x scope. Each skill is dispatched independently:
+
+| Source | Scope | Action |
+|--------|-------|--------|
+| `"local"` | `"project"` | Copy to `{project}/.claude/skills/` |
+| `"local"` | `"global"` | Copy to `~/.claude/skills/` |
+| non-local | `"project"` | `claudePluginInstall(ref, "project", projectDir)` |
+| non-local | `"global"` | `claudePluginInstall(ref, "user", projectDir)` |
+
+No complex migration ordering. Old artifacts cleaned up before install. Each skill is a clean install with clean arguments.

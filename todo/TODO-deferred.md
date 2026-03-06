@@ -2,6 +2,9 @@
 
 | ID    | Task                                                                                                                               | Status                         |
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| D-73  | Split `init-wizard.e2e.test.ts` into multiple files for parallel E2E execution                                                     | Deferred                       |
+| D-72  | Only show Agents Inc logo on the first init screen (not on edit or subsequent steps)                                               | Deferred                       |
+| D-71  | Audit Zod schemas for removal — config is now TypeScript (see [research](../docs/research/schema-removal-audit.md))                | Needs Research                 |
 | D-28  | Fix startup warning/error messages (see [plan](./D-28-fix-startup-messages.md))                                                    | Refined                        |
 | D-05  | Project dashboard — default command + already-initialized (see [plan](./D-05-improve-init-existing.md))                            | Ready for Dev                  |
 | P4-17 | `agentsinc new` supports multiple items (see [plan](./P4-17-new-multiple-items.md))                                                | Refined                        |
@@ -16,6 +19,7 @@
 | D-22  | ~~Automated agent-tester~~ — scrapped; existing validation should be made stricter over time instead                               | Deleted                        |
 | D-24  | ~~Configurable documentation file locations~~ — convention-only, no code needed (see [plan](./D-24-configurable-doc-locations.md)) | Closed                         |
 | D-14  | Import skills from third-party marketplaces                                                                                        | Needs Assistance               |
+| D-70  | ~~Re-enable source search~~ — runtime detection replaces static flag                                                               | Done                           |
 | UX-04 | Interactive skill search polish                                                                                                    | Needs Assistance               |
 | UX-05 | Refine step - skills.sh integration                                                                                                | Needs Assistance               |
 | UX-06 | Search with color highlighting                                                                                                     | Needs Assistance               |
@@ -300,6 +304,14 @@ agentsinc import skill github:someuser/their-skills --skill react-patterns
   - How to extract key patterns from external skill
   - How to handle conflicts with existing skills
 - Consider licensing/attribution requirements
+
+---
+
+## D-70: Re-enable Source Search — DONE
+
+Replaced the static `FEATURE_FLAGS.SOURCE_SEARCH` boolean with runtime detection. The source grid search pill and `searchExtraSources` integration now automatically enable when extra marketplace sources are configured in the project, and stay hidden when none exist.
+
+**Implementation:** `step-sources.tsx` resolves extra sources on mount via `useEffect` + `resolveAllSources(projectDir)`. The `hasExtraSources` state gates the `onSearch`/`onBind`/`onSearchStateChange` props. `feature-flags.ts` was deleted (it only contained this flag).
 
 ---
 
