@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.59.0] - 2026-03-07
+
+**Dual-scope agent installation with per-agent project/global scope**
+
+- `AgentScopeConfig` replaces bare agent name arrays — each agent has its own scope
+- Global installation detection in `init` command with project/global/cancel prompt
+- D-37, D-65, B-09 completed
+
+See [changelogs/0.59.0.md](./changelogs/0.59.0.md) for full details.
+
+---
+
 ## [0.58.0] - 2026-03-06
 
 **Per-skill scope toggle, S key badge, E2E fixes**
