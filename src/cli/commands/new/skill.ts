@@ -22,6 +22,7 @@ import {
   STANDARD_FILES,
 } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { detectInstallation } from "../../lib/installation/index.js";
 import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
 import { computeSkillFolderHash } from "../../lib/versioning.js";
 import type { CategoryPath } from "../../types/index.js";
@@ -215,8 +216,15 @@ export default class NewSkill extends BaseCommand {
     const { args, flags } = await this.parse(NewSkill);
     const projectDir = process.cwd();
 
+    if (!flags.output) {
+      const installation = await detectInstallation(projectDir);
+      if (!installation) {
+        this.error(`No installation found. Run '${CLI_BIN_NAME} init' first.`, { exit: EXIT_CODES.ERROR });
+      }
+    }
+
     // Kick off background loading for config-types.ts regeneration (non-blocking)
-    const configTypesReady = loadConfigTypesDataInBackground(flags.source, projectDir);
+    const configTypesReady = flags.output ? null : loadConfigTypesDataInBackground(flags.source, projectDir);
 
     this.log("");
     this.log("Create New Skill");
@@ -306,14 +314,16 @@ export default class NewSkill extends BaseCommand {
       }
 
       // Regenerate config-types.ts to include the new skill
-      try {
-        await regenerateConfigTypes(projectDir, configTypesReady, {
-          extraSkillIds: [args.name],
-          extraDomains: [domain],
-          extraCategories: [category],
-        });
-      } catch (error) {
-        this.warn(`Could not update ${STANDARD_FILES.CONFIG_TYPES_TS}: ${getErrorMessage(error)}`);
+      if (configTypesReady) {
+        try {
+          await regenerateConfigTypes(projectDir, configTypesReady, {
+            extraSkillIds: [args.name],
+            extraDomains: [domain],
+            extraCategories: [category],
+          });
+        } catch (error) {
+          this.warn(`Could not update ${STANDARD_FILES.CONFIG_TYPES_TS}: ${getErrorMessage(error)}`);
+        }
       }
 
       this.log("");
