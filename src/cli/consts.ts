@@ -166,12 +166,13 @@ export const DEFAULT_BRANDING = {
 } as const;
 
 /** Fallback name for the default public marketplace when marketplace.json is unavailable */
-export const DEFAULT_PUBLIC_SOURCE_NAME = "Agents Inc";
+export const DEFAULT_PUBLIC_SOURCE_NAME = "agents-inc";
 
 /** Human-readable labels for skill source types shown in the wizard and edit command */
 export const SOURCE_DISPLAY_NAMES: Record<string, string> = {
   public: "Public",
   local: "Local",
+  "agents-inc": "Agents Inc",
 };
 
 export const CLI_COLORS = {

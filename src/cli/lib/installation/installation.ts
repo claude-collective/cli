@@ -10,19 +10,26 @@ import {
   PLUGINS_SUBDIR,
   STANDARD_FILES,
 } from "../../consts";
+import type { SkillConfig } from "../../types/config";
 
 export type InstallMode = "local" | "plugin" | "mixed";
 
-export type InstallScope = "project" | "global";
-
 export type Installation = {
   mode: InstallMode;
-  scope: InstallScope;
   configPath: string;
   agentsDir: string;
   skillsDir: string;
   projectDir: string;
 };
+
+/** Derive install mode from skills array at runtime */
+export function deriveInstallMode(skills: SkillConfig[]): InstallMode {
+  if (skills.length === 0) return "local";
+  const hasLocal = skills.some((s) => s.source === "local");
+  const hasPlugin = skills.some((s) => s.source !== "local");
+  if (hasLocal && hasPlugin) return "mixed";
+  return hasLocal ? "local" : "plugin";
+}
 
 /** Detect installation in a specific directory only (no global fallback). */
 export async function detectProjectInstallation(projectDir: string): Promise<Installation | null> {
@@ -35,12 +42,11 @@ export async function detectProjectInstallation(projectDir: string): Promise<Ins
   // Use loadProjectConfigFromDir to avoid circular global fallback
   const loaded = await loadProjectConfigFromDir(projectDir);
 
-  const mode: InstallMode = loaded?.config?.installMode ?? "local";
+  const mode: InstallMode = deriveInstallMode(loaded?.config?.skills ?? []);
 
   if (mode === "local") {
     return {
       mode: "local",
-      scope: "project",
       configPath,
       agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
       skillsDir: path.join(projectDir, CLAUDE_DIR, "skills"),
@@ -51,7 +57,6 @@ export async function detectProjectInstallation(projectDir: string): Promise<Ins
   // Skills live in global plugin cache; agents compiled locally
   return {
     mode: "plugin",
-    scope: "project",
     configPath,
     agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
     skillsDir: path.join(projectDir, CLAUDE_DIR, PLUGINS_SUBDIR),
@@ -70,12 +75,11 @@ export async function detectGlobalInstallation(): Promise<Installation | null> {
 
   // Use loadProjectConfigFromDir directly to avoid recursion
   const loaded = await loadProjectConfigFromDir(homeDir);
-  const mode: InstallMode = loaded?.config?.installMode ?? "local";
+  const mode: InstallMode = deriveInstallMode(loaded?.config?.skills ?? []);
 
   if (mode === "local") {
     return {
       mode: "local",
-      scope: "global",
       configPath,
       agentsDir: path.join(homeDir, CLAUDE_DIR, "agents"),
       skillsDir: path.join(homeDir, CLAUDE_DIR, "skills"),
@@ -85,7 +89,6 @@ export async function detectGlobalInstallation(): Promise<Installation | null> {
 
   return {
     mode: "plugin",
-    scope: "global",
     configPath,
     agentsDir: path.join(homeDir, CLAUDE_DIR, "agents"),
     skillsDir: path.join(homeDir, CLAUDE_DIR, PLUGINS_SUBDIR),

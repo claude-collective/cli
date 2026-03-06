@@ -3,6 +3,13 @@ import type { Domain } from "./matrix";
 import type { SkillId, SkillReference } from "./skills";
 import type { StackAgentConfig } from "./stacks";
 
+/** Per-skill configuration with scope and source */
+export type SkillConfig = {
+  id: SkillId;
+  scope: "project" | "global";
+  source: string; // "local" | marketplace name (e.g., "agents-inc")
+};
+
 /** Agent configuration for compilation - contains skills for a specific agent */
 export type CompileAgentConfig = {
   skills?: SkillReference[];
@@ -45,20 +52,10 @@ export type ProjectConfig = {
 
   agents: AgentName[];
 
-  skills: SkillId[];
+  skills: SkillConfig[];
 
   /** Author handle (e.g., "@vince") */
   author?: string;
-
-  /**
-   * - 'local': Agents compiled to .claude/agents (committed to repo)
-   * - 'plugin': Agents compiled to .claude/plugins/<plugin-name>
-   * @default 'local'
-   */
-  installMode?: "local" | "plugin" | "mixed";
-
-  /** Per-skill source selections — maps skill IDs to source names. Install mode is derived from this. */
-  sourceSelections?: Partial<Record<SkillId, string>>;
 
   /**
    * Resolved stack configuration with agent->skill mappings.

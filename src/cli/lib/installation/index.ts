@@ -1,6 +1,5 @@
 export {
   type InstallMode,
-  type InstallScope,
   type Installation,
   detectGlobalInstallation,
   detectInstallation,
@@ -20,8 +19,11 @@ export {
 } from "./local-installer";
 
 export {
+  type SkillMigration,
   type MigrationPlan,
   type MigrationResult,
   detectMigrations,
   executeMigration,
 } from "./mode-migrator";
+
+export { deriveInstallMode } from "./installation";

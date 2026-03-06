@@ -9,6 +9,7 @@ import type {
   StackAgentConfig,
   Category,
 } from "../../types";
+import type { SkillConfig } from "../../types/config";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 
@@ -33,14 +34,16 @@ function extractCategoryFromPath(categoryPath: CategoryPath): Category | undefin
  * @param name - Project name for the config
  * @param selectedSkillIds - Skill IDs selected by the user in the wizard
  * @param matrix - Merged skills matrix (used to look up skill metadata)
- * @param options - Optional description, author, and selectedAgents fields
+ * @param options - Optional description, author, selectedAgents, and skillConfigs fields.
+ *                  When skillConfigs is provided, it is used directly as `skills` in the config.
+ *                  Otherwise, SkillConfig entries are synthesized from selectedSkillIds with defaults.
  * @returns Complete ProjectConfig ready to be saved to config.ts
  */
 export function generateProjectConfigFromSkills(
   name: string,
   selectedSkillIds: SkillId[],
   matrix: MergedSkillsMatrix,
-  options?: ProjectConfigOptions & { selectedAgents?: AgentName[] },
+  options?: ProjectConfigOptions & { selectedAgents?: AgentName[]; skillConfigs?: SkillConfig[] },
 ): ProjectConfig {
   const agentList = options?.selectedAgents ? [...options.selectedAgents].sort() : [];
 
@@ -97,10 +100,14 @@ export function generateProjectConfigFromSkills(
         )
       : undefined;
 
+  const skills: SkillConfig[] =
+    options?.skillConfigs ??
+    selectedSkillIds.map((id) => ({ id, scope: "project" as const, source: "local" }));
+
   return {
     name,
     agents: agentList,
-    skills: [...selectedSkillIds],
+    skills,
     ...(stackProperty && { stack: stackProperty }),
     ...(options?.description && { description: options.description }),
     ...(options?.author && { author: options.author }),

@@ -1,4 +1,5 @@
 import { Flags } from "@oclif/core";
+import os from "os";
 import path from "path";
 import { BaseCommand } from "../base-command";
 import { setVerbose, verbose, warn } from "../utils/logger";
@@ -156,7 +157,7 @@ export default class Compile extends BaseCommand {
       });
     }
 
-    if (installation.scope === "global") {
+    if (installation.projectDir === os.homedir()) {
       this.log("Using global installation from ~/.claude-src/");
     }
 
@@ -267,7 +268,7 @@ export default class Compile extends BaseCommand {
       verbose(`  No config found - using defaults`);
     }
 
-    const { allSkills, totalSkillCount } = await this.discoverAllSkills(projectDir);
+    const { allSkills } = await this.discoverAllSkills(projectDir);
     await this.resolveSourceForCompile(flags);
     const agentDefs = await this.loadAgentDefsForCompile(flags);
 
@@ -317,7 +318,7 @@ export default class Compile extends BaseCommand {
 
     await ensureDir(outputDir);
 
-    const { allSkills, totalSkillCount } = await this.discoverAllSkills();
+    const { allSkills } = await this.discoverAllSkills();
     await this.resolveSourceForCompile(flags);
     const agentDefs = await this.loadAgentDefsForCompile(flags);
 

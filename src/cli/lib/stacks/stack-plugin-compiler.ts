@@ -242,7 +242,7 @@ export async function compileStackPlugin(
       name: newStack.name,
       description: newStack.description,
       agents: typedKeys<AgentName>(newStack.agents),
-      skills: [...agentSkillIds],
+      skills: [...agentSkillIds].map((id) => ({ id, scope: "project" as const, source: "local" })),
       stack: buildStackProperty(newStack) as ProjectConfig["stack"],
     };
   } else {

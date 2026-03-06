@@ -32,8 +32,12 @@ export async function loadProjectConfigFromDir(
     if (!raw || typeof raw !== "object") return null;
 
     // Step 2: Extend Zod schemas with values from the config itself
+    // Extract skill IDs from SkillConfig[] entries (skills are now objects with id/scope/source)
+    const skillIds: string[] = Array.isArray(raw.skills)
+      ? raw.skills.map((s: { id?: string }) => s.id).filter((id): id is string => id != null)
+      : [];
     extendSchemasWithCustomValues({
-      skillIds: raw.skills ?? [],
+      skillIds,
       agentNames: raw.agents ?? [],
       domains: raw.domains ?? [],
       categories: Object.values(raw.stack ?? {}).flatMap(Object.keys),

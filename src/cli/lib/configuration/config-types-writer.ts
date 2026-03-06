@@ -180,6 +180,12 @@ export type Category = ${categoryLine};
 
 export type InstallMode = "local" | "plugin" | "mixed";
 
+export type SkillConfig = {
+  id: SkillId;
+  scope: "project" | "global";
+  source: string;
+};
+
 export type SkillAssignment = SkillId | { id: SkillId; preloaded: boolean };
 
 export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;
@@ -197,14 +203,11 @@ export interface ProjectConfig {
   /** Selected agent names */
   agents: AgentName[];
 
-  /** Selected skill IDs */
-  skills: SkillId[];
+  /** Per-skill configuration with scope and source */
+  skills: SkillConfig[];
 
   /** Author handle (e.g., "@vince") */
   author?: string;
-
-  /** Installation mode: local copies skills, plugin uses native plugins */
-  installMode?: InstallMode;
 
   /** Stack configuration: agent -> category -> skill assignment */
   stack?: Partial<Record<AgentName, StackAgentConfig>>;

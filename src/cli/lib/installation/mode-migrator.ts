@@ -1,5 +1,6 @@
 import path from "path";
 import type { SkillId } from "../../types";
+import type { SkillConfig } from "../../types/config";
 import type { SourceLoadResult } from "../loading";
 import { deleteLocalSkill, copySkillsToLocalFlattened } from "../skills";
 import { claudePluginInstall, claudePluginUninstall } from "../../utils/exec";
@@ -7,9 +8,18 @@ import { verbose, warn } from "../../utils/logger";
 import { getErrorMessage } from "../../utils/errors";
 import { LOCAL_SKILLS_PATH } from "../../consts";
 
+export type SkillMigration = {
+  id: SkillId;
+  oldSource: string;
+  newSource: string;
+  oldScope: "project" | "global";
+  newScope: "project" | "global";
+};
+
 export type MigrationPlan = {
-  toLocal: SkillId[];
-  toPlugin: SkillId[];
+  toLocal: SkillMigration[];
+  toPlugin: SkillMigration[];
+  scopeChanges: SkillMigration[];
 };
 
 export type MigrationResult = {
@@ -19,43 +29,58 @@ export type MigrationResult = {
 };
 
 /**
- * Detect which skills changed between local and plugin mode
- * by comparing old and new source selections.
+ * Detect which skills changed source or scope between old and new configs
+ * by comparing SkillConfig[] entries by ID.
  */
 export function detectMigrations(
-  oldSelections: Partial<Record<SkillId, string>>,
-  newSelections: Partial<Record<SkillId, string>>,
-  allSkills: SkillId[],
+  oldSkills: SkillConfig[],
+  newSkills: SkillConfig[],
 ): MigrationPlan {
-  const toLocal: SkillId[] = [];
-  const toPlugin: SkillId[] = [];
+  const toLocal: SkillMigration[] = [];
+  const toPlugin: SkillMigration[] = [];
+  const scopeChanges: SkillMigration[] = [];
 
-  for (const skillId of allSkills) {
-    const oldSource = oldSelections[skillId];
-    const newSource = newSelections[skillId];
+  const oldById = new Map(oldSkills.map((s) => [s.id, s]));
 
-    const wasLocal = oldSource === "local";
-    const isLocal = newSource === "local";
+  for (const newSkill of newSkills) {
+    const oldSkill = oldById.get(newSkill.id);
+    if (!oldSkill) continue;
+
+    const migration: SkillMigration = {
+      id: newSkill.id,
+      oldSource: oldSkill.source,
+      newSource: newSkill.source,
+      oldScope: oldSkill.scope,
+      newScope: newSkill.scope,
+    };
+
+    const wasLocal = oldSkill.source === "local";
+    const isLocal = newSkill.source === "local";
 
     if (wasLocal && !isLocal) {
-      toPlugin.push(skillId);
+      toPlugin.push(migration);
     } else if (!wasLocal && isLocal) {
-      toLocal.push(skillId);
+      toLocal.push(migration);
+    }
+
+    // Detect scope changes (independent of source changes)
+    if (oldSkill.scope !== newSkill.scope && wasLocal === isLocal) {
+      scopeChanges.push(migration);
     }
   }
 
-  return { toLocal, toPlugin };
+  return { toLocal, toPlugin, scopeChanges };
 }
 
 /**
  * Execute per-skill migration: delete locals that switch to plugin,
  * copy to local for skills that switch from plugin.
+ * Uses per-skill scope from the migration plan.
  */
 export async function executeMigration(
   plan: MigrationPlan,
   projectDir: string,
   sourceResult: SourceLoadResult,
-  scope: "project" | "user",
 ): Promise<MigrationResult> {
   const warnings: string[] = [];
   const localizedSkills: SkillId[] = [];
@@ -65,8 +90,9 @@ export async function executeMigration(
   if (plan.toLocal.length > 0) {
     try {
       const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
+      const skillIds = plan.toLocal.map((m) => m.id);
       const copied = await copySkillsToLocalFlattened(
-        plan.toLocal,
+        skillIds,
         localSkillsDir,
         sourceResult.matrix,
         sourceResult,
@@ -75,13 +101,16 @@ export async function executeMigration(
         localizedSkills.push(skill.skillId);
       }
 
-      // Uninstall plugin references
-      for (const skillId of plan.toLocal) {
+      // Uninstall plugin references using per-skill scope
+      for (const migration of plan.toLocal) {
         try {
-          await claudePluginUninstall(skillId, scope, projectDir);
-          verbose(`Uninstalled plugin for ${skillId}`);
+          const pluginScope = migration.oldScope === "global" ? "user" : "project";
+          await claudePluginUninstall(migration.id, pluginScope, projectDir);
+          verbose(`Uninstalled plugin for ${migration.id}`);
         } catch (error) {
-          warnings.push(`Could not uninstall plugin for ${skillId}: ${getErrorMessage(error)}`);
+          warnings.push(
+            `Could not uninstall plugin for ${migration.id}: ${getErrorMessage(error)}`,
+          );
         }
       }
     } catch (error) {
@@ -92,20 +121,21 @@ export async function executeMigration(
   // Migrate skills from local to plugin
   if (plan.toPlugin.length > 0) {
     // Delete local copies
-    for (const skillId of plan.toPlugin) {
-      await deleteLocalSkill(projectDir, skillId);
+    for (const migration of plan.toPlugin) {
+      await deleteLocalSkill(projectDir, migration.id);
     }
 
-    // Install as plugins
+    // Install as plugins using per-skill scope
     if (sourceResult.marketplace) {
-      for (const skillId of plan.toPlugin) {
+      for (const migration of plan.toPlugin) {
         try {
-          const pluginRef = `${skillId}@${sourceResult.marketplace}`;
-          await claudePluginInstall(pluginRef, scope, projectDir);
-          pluginizedSkills.push(skillId);
-          verbose(`Installed plugin for ${skillId}`);
+          const pluginScope = migration.newScope === "global" ? "user" : "project";
+          const pluginRef = `${migration.id}@${sourceResult.marketplace}`;
+          await claudePluginInstall(pluginRef, pluginScope, projectDir);
+          pluginizedSkills.push(migration.id);
+          verbose(`Installed plugin for ${migration.id}`);
         } catch (error) {
-          warnings.push(`Could not install plugin for ${skillId}: ${getErrorMessage(error)}`);
+          warnings.push(`Could not install plugin for ${migration.id}: ${getErrorMessage(error)}`);
         }
       }
     } else {

@@ -12,7 +12,7 @@ import type {
   SkillDefinition,
   SkillId,
 } from "../../types";
-import type { InstallMode } from "../installation/installation";
+import { type InstallMode, deriveInstallMode } from "../installation/installation";
 import { glob, writeFile, ensureDir } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -117,7 +117,7 @@ type CompileAndWriteParams = {
   agentsDir: string;
   sourcePath: string;
   engine: Liquid;
-  installMode: ProjectConfig["installMode"];
+  installMode?: InstallMode;
 };
 
 async function compileAndWriteAgents(
@@ -207,7 +207,7 @@ export async function recompileAgents(
       agentsDir,
       sourcePath,
       engine,
-      installMode: options.installMode ?? projectConfig?.installMode,
+      installMode: options.installMode ?? deriveInstallMode(projectConfig?.skills ?? []),
     },
     result,
   );

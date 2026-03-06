@@ -12,6 +12,8 @@ import type {
   Stack,
 } from "../../types";
 import type { InstallMode } from "./installation";
+import { deriveInstallMode } from "./installation";
+import type { SkillConfig } from "../../types/config";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
 import { type MergeResult, mergeWithExistingConfig } from "../configuration";
@@ -108,20 +110,15 @@ async function deleteAndCopySkills(
   projectDir: string,
   skillsDir: string,
 ): Promise<CopiedSkill[]> {
-  for (const skillId of wizardResult.selectedSkills) {
-    const selectedSource = wizardResult.sourceSelections?.[skillId];
-    if (selectedSource && selectedSource !== "local") {
-      verbose(`Using alternate source '${selectedSource}' for ${skillId}`);
-      await deleteLocalSkill(projectDir, skillId);
+  for (const skill of wizardResult.skills) {
+    if (skill.source && skill.source !== "local") {
+      verbose(`Using alternate source '${skill.source}' for ${skill.id}`);
+      await deleteLocalSkill(projectDir, skill.id);
     }
   }
 
-  return copySkillsToLocalFlattened(
-    wizardResult.selectedSkills,
-    skillsDir,
-    sourceResult.matrix,
-    sourceResult,
-  );
+  const skillIds = wizardResult.skills.map((s) => s.id);
+  return copySkillsToLocalFlattened(skillIds, skillsDir, sourceResult.matrix, sourceResult);
 }
 
 function buildLocalSkillsMap(
@@ -154,11 +151,11 @@ async function buildLocalConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
 ): Promise<{ config: ProjectConfig; loadedStack: Stack | null }> {
+  const skillIds = wizardResult.skills.map((s) => s.id);
   verbose(
     `buildLocalConfig: selectedStackId='${wizardResult.selectedStackId}', ` +
-      `selectedSkills=[${wizardResult.selectedSkills.join(", ")}], ` +
-      `selectedAgents=[${wizardResult.selectedAgents.join(", ")}], ` +
-      `installMode='${wizardResult.installMode}'`,
+      `skills=[${skillIds.join(", ")}], ` +
+      `selectedAgents=[${wizardResult.selectedAgents.join(", ")}]`,
   );
 
   let loadedStack: Stack | null = null;
@@ -175,18 +172,20 @@ async function buildLocalConfig(
 
   let localConfig: ProjectConfig;
 
-  // Pass user's agent selection when they explicitly selected agents in the wizard
-  const agentOptions =
-    wizardResult.selectedAgents.length > 0
-      ? { selectedAgents: wizardResult.selectedAgents }
-      : undefined;
+  // Pass user's agent selection and skill configs to config generator
+  const agentOptions: { selectedAgents?: AgentName[]; skillConfigs: SkillConfig[] } = {
+    skillConfigs: wizardResult.skills,
+    ...(wizardResult.selectedAgents.length > 0 && {
+      selectedAgents: wizardResult.selectedAgents,
+    }),
+  };
 
   if (wizardResult.selectedStackId) {
     if (loadedStack) {
       // Use actual selections (may differ from stack defaults after user customization)
       localConfig = generateProjectConfigFromSkills(
         DEFAULT_PLUGIN_NAME,
-        wizardResult.selectedSkills,
+        skillIds,
         sourceResult.matrix,
         agentOptions,
       );
@@ -233,7 +232,7 @@ async function buildLocalConfig(
   } else {
     localConfig = generateProjectConfigFromSkills(
       DEFAULT_PLUGIN_NAME,
-      wizardResult.selectedSkills,
+      skillIds,
       sourceResult.matrix,
       agentOptions,
     );
@@ -253,8 +252,6 @@ export function setConfigMetadata(
   sourceResult: SourceLoadResult,
   sourceFlag?: string,
 ): void {
-  config.installMode = wizardResult.installMode;
-
   // Only persist domains when non-empty (sparse output)
   if (wizardResult.selectedDomains && wizardResult.selectedDomains.length > 0) {
     config.domains = wizardResult.selectedDomains;
@@ -263,11 +260,6 @@ export function setConfigMetadata(
   // Only persist selectedAgents when non-empty (sparse output)
   if (wizardResult.selectedAgents && wizardResult.selectedAgents.length > 0) {
     config.selectedAgents = wizardResult.selectedAgents;
-  }
-
-  // Only persist sourceSelections when non-empty (sparse output)
-  if (wizardResult.sourceSelections && Object.keys(wizardResult.sourceSelections).length > 0) {
-    config.sourceSelections = wizardResult.sourceSelections;
   }
 
   if (sourceFlag) {
@@ -422,7 +414,7 @@ export async function installPluginConfig(
   const compileConfig: CompileConfig = {
     name: DEFAULT_PLUGIN_NAME,
     description:
-      finalConfig.description || `Plugin setup with ${wizardResult.selectedSkills.length} skills`,
+      finalConfig.description || `Plugin setup with ${wizardResult.skills.length} skills`,
     agents: compileAgentsConfig,
   };
   // Load skill metadata from source for compilation
@@ -440,7 +432,7 @@ export async function installPluginConfig(
     sourceResult,
     projectDir,
     paths.agentsDir,
-    wizardResult.installMode,
+    deriveInstallMode(finalConfig.skills),
   );
 
   return {
@@ -513,8 +505,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {
     name: DEFAULT_PLUGIN_NAME,
-    description:
-      finalConfig.description || `Local setup with ${wizardResult.selectedSkills.length} skills`,
+    description: finalConfig.description || `Local setup with ${wizardResult.skills.length} skills`,
     agents: compileAgentsConfig,
   };
   const compiledAgentNames = await compileAndWriteAgents(
@@ -524,7 +515,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     sourceResult,
     projectDir,
     paths.agentsDir,
-    wizardResult.installMode,
+    deriveInstallMode(finalConfig.skills),
   );
 
   return {

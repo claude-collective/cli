@@ -6,7 +6,9 @@ import {
   DEFAULT_PUBLIC_SOURCE_NAME,
   SOURCE_DISPLAY_NAMES,
 } from "../consts.js";
-import type { InstallMode, InstallScope } from "../lib/installation/index.js";
+import type { InstallMode } from "../lib/installation/index.js";
+import { deriveInstallMode as sharedDeriveInstallMode } from "../lib/installation/installation.js";
+import type { SkillConfig } from "../types/config.js";
 import { resolveAlias } from "../lib/matrix/index.js";
 import { getSkillDisplayLabel } from "../lib/wizard/build-step-logic.js";
 import type {
@@ -25,6 +27,10 @@ import { warn } from "../utils/logger.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
 
 const BUILT_IN_DOMAINS: Domain[] = ["web", "api", "cli", "mobile", "shared"];
+
+function createDefaultSkillConfig(id: SkillId): SkillConfig {
+  return { id, scope: "project", source: DEFAULT_PUBLIC_SOURCE_NAME };
+}
 
 /** Derive all unique domains from a categories map, preserving built-in order then appending custom. */
 function getAllDomainsFromCategories(
@@ -180,10 +186,9 @@ export type WizardState = {
 
   showLabels: boolean;
 
-  installMode: InstallMode;
-  installScope: InstallScope;
+  skillConfigs: SkillConfig[];
+  focusedSkillId: SkillId | null;
 
-  sourceSelections: Partial<Record<SkillId, string>>;
   customizeSources: boolean;
 
   showSettings: boolean;
@@ -256,6 +261,7 @@ export type WizardState = {
     skillIds: SkillId[],
     skills: Partial<Record<SkillId, { category: string; displayName?: string }>>,
     categories: Partial<Record<Category, { domain?: Domain }>>,
+    savedConfigs?: SkillConfig[],
   ) => void;
   /**
    * Toggle a domain on or off in the selectedDomains list.
@@ -300,22 +306,40 @@ export type WizardState = {
   prevDomain: () => boolean;
   /** Toggle compatibility label visibility on skill tags in the build step grid. */
   toggleShowLabels: () => void;
-  /** Toggle between "plugin" and "local" install modes. */
-  toggleInstallMode: () => void;
   /**
-   * Derive the install mode from per-skill source selections.
+   * Derive the install mode from skillConfigs source values.
    * If all skills use "local" source, returns "local". If all use non-local, returns "plugin".
-   * If mixed, returns "mixed". Falls back to current installMode when no skills are selected.
+   * If mixed, returns "mixed". Returns "local" when no skills are configured.
    */
   deriveInstallMode: () => InstallMode;
-  /** Toggle between "project" and "global" install scopes. */
-  toggleInstallScope: () => void;
+  /**
+   * Toggle the scope of a specific skill between "project" and "global".
+   * @param skillId - Skill to toggle scope for
+   *
+   * Side effects: updates `skillConfigs` entry for the skill
+   */
+  toggleSkillScope: (skillId: SkillId) => void;
+  /**
+   * Update the source for a specific skill in skillConfigs.
+   * @param skillId - Skill to update
+   * @param source - Source identifier (e.g., "local", marketplace name)
+   *
+   * Side effects: updates `skillConfigs` entry for the skill
+   */
+  setSkillSource: (skillId: SkillId, source: string) => void;
+  /**
+   * Set the currently focused skill ID in the build step (for S hotkey).
+   * @param id - Skill ID to focus, or null to clear
+   *
+   * Side effects: sets `focusedSkillId`
+   */
+  setFocusedSkillId: (id: SkillId | null) => void;
   /**
    * Set which source provides a specific skill.
    * @param skillId - Skill to configure the source for
    * @param sourceId - Source identifier (e.g., "public", "local", marketplace name)
    *
-   * Side effects: updates `sourceSelections[skillId]`. No-op with warning if either param is empty.
+   * Side effects: updates `skillConfigs` entry for the skill. No-op with warning if either param is empty.
    */
   setSourceSelection: (skillId: SkillId, sourceId: string) => void;
   /**
@@ -441,9 +465,8 @@ const createInitialState = () => ({
   /** Snapshot of domainSelections from populateFromStack/populateFromSkillIds, used to restore on domain re-toggle */
   _stackDomainSelections: null as DomainSelections | null,
   showLabels: false,
-  installMode: "local" as InstallMode,
-  installScope: "project" as InstallScope,
-  sourceSelections: {} as Partial<Record<SkillId, string>>,
+  skillConfigs: [] as SkillConfig[],
+  focusedSkillId: null as SkillId | null,
   customizeSources: false,
   showSettings: false,
   showHelp: false,
@@ -472,6 +495,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     set(() => {
       const domainSelections: DomainSelections = {};
       const domains = new Set<Domain>();
+      const allSkillIds = new Set<SkillId>();
 
       for (const agentConfig of Object.values(stack.agents)) {
         for (const [subcat, assignments] of typedEntries<Category, SkillAssignment[]>(
@@ -497,21 +521,26 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           for (const assignment of assignments) {
             if (!domainSelections[domain][subcat].includes(assignment.id)) {
               domainSelections[domain][subcat].push(assignment.id);
+              allSkillIds.add(assignment.id);
             }
           }
         }
       }
 
+      const skillConfigs: SkillConfig[] = [...allSkillIds].map(createDefaultSkillConfig);
+
       return {
         domainSelections,
         _stackDomainSelections: structuredClone(domainSelections),
         selectedDomains: sortDomainsCanonically(getAllDomainsFromCategories(categories)),
+        skillConfigs,
       };
     }),
 
-  populateFromSkillIds: (skillIds, skills, categories) =>
+  populateFromSkillIds: (skillIds, skills, categories, savedConfigs) =>
     set(() => {
       const domainSelections: DomainSelections = {};
+      const resolvedSkillIds: SkillId[] = [];
       let skippedCount = 0;
 
       for (const skillId of skillIds) {
@@ -527,6 +556,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
         if (!domainSelections[domain][subcat].includes(techId)) {
           domainSelections[domain][subcat].push(techId);
+          resolvedSkillIds.push(techId);
         }
       }
 
@@ -536,10 +566,20 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       const selectedDomains = sortDomainsCanonically(typedKeys<Domain>(domainSelections));
 
+      const skillConfigs: SkillConfig[] = resolvedSkillIds.map((id) => {
+        const saved = savedConfigs?.find((sc) => sc.id === id);
+        return {
+          id,
+          scope: saved?.scope ?? "project",
+          source: saved?.source ?? DEFAULT_PUBLIC_SOURCE_NAME,
+        };
+      });
+
       return {
         domainSelections,
         _stackDomainSelections: structuredClone(domainSelections),
         selectedDomains,
+        skillConfigs,
       };
     }),
 
@@ -548,24 +588,51 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const isSelected = state.selectedDomains.includes(domain);
       if (isSelected) {
         const { [domain]: _removed, ...remainingSelections } = state.domainSelections;
+
+        // Collect all skill IDs being removed from this domain
+        const removedSkillIds = new Set<SkillId>();
+        if (_removed) {
+          for (const skills of Object.values(_removed)) {
+            if (skills) {
+              for (const id of skills) {
+                removedSkillIds.add(id);
+              }
+            }
+          }
+        }
+
         return {
           selectedDomains: state.selectedDomains.filter((d) => d !== domain),
           domainSelections: remainingSelections,
+          skillConfigs: state.skillConfigs.filter((sc) => !removedSkillIds.has(sc.id)),
         };
       }
 
       // Restore stack selections for this domain if a stack snapshot exists
       const stackSelections = state._stackDomainSelections?.[domain];
+      if (stackSelections) {
+        // Also restore skillConfigs for the restored skills
+        const restoredSkillIds: SkillId[] = [];
+        for (const skills of Object.values(stackSelections)) {
+          if (skills) restoredSkillIds.push(...skills);
+        }
+        const existingIds = new Set(state.skillConfigs.map((sc) => sc.id));
+        const newConfigs = restoredSkillIds
+          .filter((id) => !existingIds.has(id))
+          .map(createDefaultSkillConfig);
+
+        return {
+          selectedDomains: sortDomainsCanonically([...state.selectedDomains, domain]),
+          domainSelections: {
+            ...state.domainSelections,
+            [domain]: structuredClone(stackSelections),
+          },
+          skillConfigs: [...state.skillConfigs, ...newConfigs],
+        };
+      }
+
       return {
         selectedDomains: sortDomainsCanonically([...state.selectedDomains, domain]),
-        ...(stackSelections
-          ? {
-              domainSelections: {
-                ...state.domainSelections,
-                [domain]: structuredClone(stackSelections),
-              },
-            }
-          : {}),
       };
     }),
 
@@ -583,7 +650,19 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           : [...currentSelections, technology];
       }
 
+      // Sync skillConfigs: add entries for newly selected, remove entries for deselected
+      const removed = currentSelections.filter((id) => !newSelections.includes(id));
+      const added = newSelections.filter((id) => !currentSelections.includes(id));
+
+      let updatedConfigs = state.skillConfigs.filter((sc) => !removed.includes(sc.id));
+      for (const id of added) {
+        if (!updatedConfigs.some((sc) => sc.id === id)) {
+          updatedConfigs = [...updatedConfigs, createDefaultSkillConfig(id)];
+        }
+      }
+
       return {
+        skillConfigs: updatedConfigs,
         domainSelections: {
           ...state.domainSelections,
           [domain]: {
@@ -618,36 +697,24 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleShowLabels: () => set((state) => ({ showLabels: !state.showLabels })),
 
-  toggleInstallMode: () =>
-    set((state) => ({
-      installMode: state.installMode === "plugin" ? "local" : "plugin",
-    })),
-
   deriveInstallMode: (): InstallMode => {
-    const state = get();
-    const allSkills = state.getAllSelectedTechnologies();
-    if (allSkills.length === 0) return state.installMode;
-
-    const selections = state.sourceSelections;
-    let hasLocal = false;
-    let hasPlugin = false;
-
-    for (const skillId of allSkills) {
-      if (selections[skillId] === "local") {
-        hasLocal = true;
-      } else {
-        hasPlugin = true;
-      }
-      if (hasLocal && hasPlugin) return "mixed";
-    }
-
-    return hasLocal ? "local" : "plugin";
+    const { skillConfigs } = get();
+    return sharedDeriveInstallMode(skillConfigs);
   },
 
-  toggleInstallScope: () =>
+  toggleSkillScope: (skillId) =>
     set((state) => ({
-      installScope: state.installScope === "project" ? "global" : "project",
+      skillConfigs: state.skillConfigs.map((sc) =>
+        sc.id === skillId ? { ...sc, scope: sc.scope === "project" ? "global" : "project" } : sc,
+      ),
     })),
+
+  setSkillSource: (skillId, source) =>
+    set((state) => ({
+      skillConfigs: state.skillConfigs.map((sc) => (sc.id === skillId ? { ...sc, source } : sc)),
+    })),
+
+  setFocusedSkillId: (id) => set({ focusedSkillId: id }),
 
   setSourceSelection: (skillId, sourceId) =>
     set((state) => {
@@ -660,7 +727,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         return state;
       }
       return {
-        sourceSelections: { ...state.sourceSelections, [skillId]: sourceId },
+        skillConfigs: state.skillConfigs.map((sc) =>
+          sc.id === skillId ? { ...sc, source: sourceId } : sc,
+        ),
       };
     }),
 
@@ -808,41 +877,37 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   setAllSourcesLocal: () => {
-    const state = get();
-    const allSkills = state.getAllSelectedTechnologies();
-    const newSelections: Partial<Record<SkillId, string>> = {};
-    for (const skillId of allSkills) {
-      newSelections[skillId] = "local";
-    }
-    set({ sourceSelections: newSelections });
+    set((state) => ({
+      skillConfigs: state.skillConfigs.map((sc) => ({ ...sc, source: "local" })),
+    }));
   },
 
   setAllSourcesPlugin: (matrix) => {
-    const state = get();
-    const allSkills = state.getAllSelectedTechnologies();
-    const newSelections: Partial<Record<SkillId, string>> = {};
-    for (const skillId of allSkills) {
-      const skill = matrix.skills[skillId];
-      if (skill?.availableSources) {
-        const marketplaceSource = skill.availableSources.find((s) => s.type !== "local");
-        if (marketplaceSource) {
-          newSelections[skillId] = marketplaceSource.name;
+    set((state) => ({
+      skillConfigs: state.skillConfigs.map((sc) => {
+        const skill = matrix.skills[sc.id];
+        if (skill?.availableSources) {
+          const marketplaceSource = skill.availableSources.find((s) => s.type !== "local");
+          if (marketplaceSource) {
+            return { ...sc, source: marketplaceSource.name };
+          }
         }
-      }
-    }
-    set({ sourceSelections: newSelections });
+        return sc;
+      }),
+    }));
   },
 
   buildSourceRows: (matrix) => {
     const state = get();
     const selectedTechnologies = get().getAllSelectedTechnologies();
-    const { sourceSelections, boundSkills } = state;
+    const { skillConfigs, boundSkills } = state;
 
     return selectedTechnologies.map((tech) => {
       const skillId = resolveAlias(tech, matrix);
       const skill = matrix.skills[skillId];
+      const configEntry = skillConfigs.find((sc) => sc.id === skillId);
       const selectedSource =
-        sourceSelections[skillId] || skill?.activeSource?.name || DEFAULT_PUBLIC_SOURCE_NAME;
+        configEntry?.source || skill?.activeSource?.name || DEFAULT_PUBLIC_SOURCE_NAME;
       const alias = getSkillAlias(skillId, matrix);
       const displayLabel = skill ? getSkillDisplayLabel(skill) : skillId;
 
@@ -864,7 +929,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           : [
               {
                 id: DEFAULT_PUBLIC_SOURCE_NAME,
-                label: DEFAULT_PUBLIC_SOURCE_NAME,
+                label: formatSourceLabel({ name: DEFAULT_PUBLIC_SOURCE_NAME, installed: false }),
                 selected: selectedSource === DEFAULT_PUBLIC_SOURCE_NAME,
                 installed: false,
               },

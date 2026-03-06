@@ -1,6 +1,7 @@
-import { difference } from "remeda";
+import { difference, indexBy } from "remeda";
 
 import type { ProjectConfig } from "../../types";
+import type { SkillConfig } from "../../types/config";
 import { loadProjectConfig } from "./project-config";
 import { loadProjectSourceConfig } from "./config";
 
@@ -40,6 +41,22 @@ export async function mergeWithExistingConfig(
     if (existingConfig.agents && existingConfig.agents.length > 0) {
       const newAgentIds = difference(localConfig.agents, existingConfig.agents);
       localConfig.agents = [...existingConfig.agents, ...newAgentIds];
+    }
+
+    // Merge skills by ID: new skills override existing, existing skills preserved otherwise
+    if (existingConfig.skills && existingConfig.skills.length > 0) {
+      const newSkillsById = indexBy(localConfig.skills, (s: SkillConfig) => s.id);
+      const merged: SkillConfig[] = existingConfig.skills.map(
+        (existing: SkillConfig) => newSkillsById[existing.id] ?? existing,
+      );
+      // Add skills that are only in the new config
+      const existingIds = new Set(existingConfig.skills.map((s: SkillConfig) => s.id));
+      for (const skill of localConfig.skills) {
+        if (!existingIds.has(skill.id)) {
+          merged.push(skill);
+        }
+      }
+      localConfig.skills = merged;
     }
 
     if (existingConfig.stack) {

@@ -1,5 +1,6 @@
 import { Flags } from "@oclif/core";
 import { render } from "ink";
+import os from "os";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
@@ -13,6 +14,7 @@ import {
   writeConfigFile,
   detectMigrations,
   executeMigration,
+  deriveInstallMode,
 } from "../lib/installation/index.js";
 import { getMarketplaceLabel, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
@@ -29,7 +31,6 @@ import {
   type StartupMessage,
 } from "../utils/logger.js";
 import { ERROR_MESSAGES, INFO_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
-import { typedEntries } from "../utils/typed-object.js";
 
 function formatSourceDisplayName(sourceName: string): string {
   return SOURCE_DISPLAY_NAMES[sourceName] ?? sourceName;
@@ -77,12 +78,10 @@ export default class Edit extends BaseCommand {
     }
 
     const projectDir = installation.projectDir;
-    const isPluginMode = installation.mode === "plugin";
-    const pluginScope = installation.scope === "global" ? "user" : "project";
 
     enableBuffering();
 
-    if (installation.scope === "global") {
+    if (installation.projectDir === os.homedir()) {
       pushBufferMessage("info", "No project installation found. Using global installation from ~/.claude-src/");
     }
     let sourceResult;
@@ -114,7 +113,7 @@ export default class Edit extends BaseCommand {
 
       // In local mode, plugin discovery returns empty — fall back to project config skills
       if (currentSkillIds.length === 0 && projectConfig?.config?.skills?.length) {
-        currentSkillIds = projectConfig.config.skills;
+        currentSkillIds = projectConfig.config.skills.map(s => s.id);
         pushBufferMessage("info", `Found ${currentSkillIds.length} skills from project config`);
       } else {
         pushBufferMessage("info", `Current plugin has ${currentSkillIds.length} skills`);
@@ -130,10 +129,6 @@ export default class Edit extends BaseCommand {
     let wizardResult: WizardResultV2 | null = null;
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
 
-    // Read saved installMode from config; fall back to marketplace-derived default only if absent
-    const savedInstallMode = projectConfig?.config?.installMode;
-    const initialInstallMode = savedInstallMode ?? (sourceResult.marketplace ? "plugin" : "local");
-
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
@@ -141,11 +136,10 @@ export default class Edit extends BaseCommand {
         marketplaceLabel={marketplaceLabel}
         logo={ASCII_LOGO}
         initialStep="build"
-        initialInstallMode={initialInstallMode}
-        initialInstallScope={installation.scope}
         initialDomains={projectConfig?.config?.domains}
         initialAgents={projectConfig?.config?.selectedAgents}
         installedSkillIds={currentSkillIds}
+        installedSkillConfigs={projectConfig?.config?.skills}
         projectDir={projectDir}
         startupMessages={startupMessages}
         onComplete={(result) => {
@@ -172,19 +166,20 @@ export default class Edit extends BaseCommand {
       });
     }
 
-    const addedSkills = result.selectedSkills.filter((id) => !currentSkillIds.includes(id));
-    const removedSkills = currentSkillIds.filter((id) => !result.selectedSkills.includes(id));
+    const newSkillIds = result.skills.map(s => s.id);
+    const addedSkills = newSkillIds.filter((id) => !currentSkillIds.includes(id));
+    const removedSkills = currentSkillIds.filter((id) => !newSkillIds.includes(id));
 
     const sourceChanges = new Map<SkillId, { from: string; to: string }>();
-    for (const [skillId, selectedSource] of typedEntries<SkillId, string>(
-      result.sourceSelections,
-    )) {
-      const skill = sourceResult.matrix.skills[skillId];
-      if (skill?.activeSource && skill.activeSource.name !== selectedSource) {
-        sourceChanges.set(skillId, {
-          from: skill.activeSource.name,
-          to: selectedSource,
-        });
+    if (projectConfig?.config?.skills) {
+      for (const newSkill of result.skills) {
+        const oldSkill = projectConfig.config.skills.find(s => s.id === newSkill.id);
+        if (oldSkill && oldSkill.source !== newSkill.source) {
+          sourceChanges.set(newSkill.id, {
+            from: oldSkill.source,
+            to: newSkill.source,
+          });
+        }
       }
     }
 
@@ -214,21 +209,21 @@ export default class Edit extends BaseCommand {
     this.log("");
 
     // Handle per-skill mode migrations (local <-> plugin)
-    const oldSelections = projectConfig?.config?.sourceSelections ?? {};
-    const migrationPlan = detectMigrations(oldSelections, result.sourceSelections, result.selectedSkills);
+    const oldSkills = projectConfig?.config?.skills ?? [];
+    const migrationPlan = detectMigrations(oldSkills, result.skills);
     const hasMigrations = migrationPlan.toLocal.length > 0 || migrationPlan.toPlugin.length > 0;
 
     if (hasMigrations) {
       if (migrationPlan.toLocal.length > 0) {
         this.log(`Switching ${migrationPlan.toLocal.length} skill(s) to local:`);
-        for (const id of migrationPlan.toLocal) {
-          this.log(`  - ${id}`);
+        for (const migration of migrationPlan.toLocal) {
+          this.log(`  - ${migration.id}`);
         }
       }
       if (migrationPlan.toPlugin.length > 0) {
         this.log(`Switching ${migrationPlan.toPlugin.length} skill(s) to plugin:`);
-        for (const id of migrationPlan.toPlugin) {
-          this.log(`  - ${id}`);
+        for (const migration of migrationPlan.toPlugin) {
+          this.log(`  - ${migration.id}`);
         }
       }
 
@@ -236,7 +231,6 @@ export default class Edit extends BaseCommand {
         migrationPlan,
         projectDir,
         sourceResult,
-        pluginScope,
       );
 
       for (const warning of migrationResult.warnings) {
@@ -244,10 +238,15 @@ export default class Edit extends BaseCommand {
       }
     }
 
+    const migratedSkillIds = new Set([
+      ...migrationPlan.toLocal.map(m => m.id),
+      ...migrationPlan.toPlugin.map(m => m.id),
+    ]);
+
     // Handle remaining non-migration source changes (e.g., marketplace A -> marketplace B)
     for (const [skillId, change] of sourceChanges) {
       // Skip skills already handled by mode migration
-      if (migrationPlan.toLocal.includes(skillId) || migrationPlan.toPlugin.includes(skillId)) {
+      if (migratedSkillIds.has(skillId)) {
         continue;
       }
       if (change.from === "local") {
@@ -255,9 +254,14 @@ export default class Edit extends BaseCommand {
       }
     }
 
-    if (isPluginMode && sourceResult.marketplace) {
+    if (sourceResult.marketplace) {
       for (const skillId of addedSkills) {
+        // Find the skill config to get its scope
+        const skillConfig = result.skills.find(s => s.id === skillId);
+        if (!skillConfig || skillConfig.source === "local") continue;
+
         const pluginRef = `${skillId}@${sourceResult.marketplace}`;
+        const pluginScope = skillConfig.scope === "global" ? "user" : "project";
         this.log(`Installing plugin: ${pluginRef}...`);
         try {
           await claudePluginInstall(pluginRef, pluginScope, projectDir);
@@ -266,6 +270,9 @@ export default class Edit extends BaseCommand {
         }
       }
       for (const skillId of removedSkills) {
+        // For removed skills, use old config to determine scope
+        const oldSkill = projectConfig?.config?.skills?.find(s => s.id === skillId);
+        const pluginScope = oldSkill?.scope === "global" ? "user" : "project";
         this.log(`Uninstalling plugin: ${skillId}...`);
         try {
           await claudePluginUninstall(skillId, pluginScope, projectDir);
@@ -316,7 +323,7 @@ export default class Edit extends BaseCommand {
         skills: recompileSkills,
         projectDir,
         outputDir: installation.agentsDir,
-        installMode: result.installMode,
+        installMode: deriveInstallMode(result.skills),
       });
 
       if (recompileResult.failed.length > 0) {

@@ -198,7 +198,6 @@ export default class Eject extends BaseCommand {
 
     const config: Record<string, unknown> = {
       name: projectName,
-      installMode: "local",
     };
 
     const resolvedConfig =

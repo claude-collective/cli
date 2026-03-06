@@ -17,6 +17,7 @@ import {
   installPluginConfig,
   detectGlobalInstallation,
   detectProjectInstallation,
+  deriveInstallMode,
 } from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";
 import { getInstallationInfo } from "../lib/plugins/plugin-info.js";
@@ -40,7 +41,6 @@ import {
   enableBuffering,
   drainBuffer,
   disableBuffering,
-  pushBufferMessage,
   type StartupMessage,
 } from "../utils/logger.js";
 import { SUCCESS_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
@@ -201,7 +201,8 @@ export async function getDashboardData(projectDir: string): Promise<DashboardDat
   const skillCount = loaded?.config?.skills?.length ?? 0;
   // Agent count from filesystem (compiled .md files in agents dir)
   const agentCount = info?.agentCount ?? 0;
-  const mode = info?.mode ?? loaded?.config?.installMode ?? "local";
+  const mode = info?.mode ?? (loaded?.config?.skills
+    ? deriveInstallMode(loaded.config.skills) : "local");
   const source = loaded?.config?.source;
 
   return { skillCount, agentCount, mode, source };
@@ -275,10 +276,6 @@ export default class Init extends BaseCommand {
       command: "<%= config.bin %> <%= command.id %>",
     },
     {
-      description: "Install globally to home directory",
-      command: "<%= config.bin %> <%= command.id %> --global",
-    },
-    {
       description: "Initialize from a custom marketplace",
       command: "<%= config.bin %> <%= command.id %> --source github:org/marketplace",
     },
@@ -290,11 +287,6 @@ export default class Init extends BaseCommand {
 
   static flags = {
     ...BaseCommand.baseFlags,
-    global: Flags.boolean({
-      char: "g",
-      description: "Install globally to home directory (~/.claude-src/)",
-      default: false,
-    }),
     refresh: Flags.boolean({
       description: "Force refresh from remote source",
       default: false,
@@ -303,7 +295,7 @@ export default class Init extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Init);
-    const projectDir = flags.global ? os.homedir() : process.cwd();
+    const projectDir = process.cwd();
 
     // For "already initialized" check, only look at the target directory (no global fallback)
     const individualPluginsExist = await hasIndividualPlugins(projectDir);
@@ -317,8 +309,8 @@ export default class Init extends BaseCommand {
       return;
     }
 
-    // No project config exists and not --global: check if a global installation exists
-    if (!individualPluginsExist && !existingInstallation && !flags.global) {
+    // No project config exists: check if a global installation exists
+    if (!individualPluginsExist && !existingInstallation) {
       const globalInstallation = await detectGlobalInstallation();
       if (globalInstallation) {
         const globalConfigDir = path.join(os.homedir(), CLAUDE_SRC_DIR);
@@ -361,10 +353,6 @@ export default class Init extends BaseCommand {
 
     enableBuffering();
 
-    if (flags.global) {
-      pushBufferMessage("info", "Installing globally to home directory...");
-    }
-
     let sourceResult: SourceLoadResult;
     let startupMessages: StartupMessage[] = [];
     try {
@@ -393,8 +381,6 @@ export default class Init extends BaseCommand {
         marketplaceLabel={marketplaceLabel}
         logo={ASCII_LOGO}
         projectDir={projectDir}
-        initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
-        initialInstallScope={flags.global ? "global" : "project"}
         startupMessages={startupMessages}
         onComplete={(result) => {
           // Boundary cast: Ink render callback returns unknown result type
@@ -414,7 +400,7 @@ export default class Init extends BaseCommand {
       this.exit(EXIT_CODES.CANCELLED);
     }
 
-    if (result.selectedSkills.length === 0) {
+    if (result.skills.length === 0) {
       this.error("No skills selected", { exit: EXIT_CODES.ERROR });
     }
 
@@ -424,21 +410,20 @@ export default class Init extends BaseCommand {
   private async handleInstallation(
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
-    flags: { source?: string; refresh: boolean; global: boolean },
+    flags: { source?: string; refresh: boolean },
   ): Promise<void> {
-    const isGlobal = result.installScope === "global";
-    const projectDir = isGlobal ? os.homedir() : process.cwd();
-    const pluginScope = isGlobal ? "user" : "project";
+    const projectDir = process.cwd();
+    const installMode = deriveInstallMode(result.skills);
 
     this.log("\n");
-    this.log(`Selected ${result.selectedSkills.length} skills`);
+    this.log(`Selected ${result.skills.length} skills`);
     this.log(
-      `Install mode: ${result.installMode === "plugin" ? "Plugin (native install)" : "Local (copy to .claude/skills/)"}`,
+      `Install mode: ${installMode === "plugin" ? "Plugin (native install)" : "Local (copy to .claude/skills/)"}`,
     );
 
-    if (result.installMode === "plugin") {
+    if (installMode === "plugin") {
       if (sourceResult.marketplace) {
-        await this.installIndividualPlugins(result, sourceResult, flags, projectDir, pluginScope);
+        await this.installIndividualPlugins(result, sourceResult, flags, projectDir);
       } else {
         this.warn("Plugin Mode requires a marketplace for individual skill installation.");
         this.log(`Falling back to Local Mode (copying to .claude/skills/)...`);
@@ -456,7 +441,6 @@ export default class Init extends BaseCommand {
     sourceResult: SourceLoadResult,
     flags: { source?: string },
     projectDir: string,
-    pluginScope: "project" | "user",
   ): Promise<void> {
     if (sourceResult.marketplace) {
       const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
@@ -476,8 +460,9 @@ export default class Init extends BaseCommand {
     }
 
     this.log("Installing skill plugins...");
-    for (const skillId of result.selectedSkills) {
-      const pluginRef = `${skillId}@${sourceResult.marketplace}`;
+    for (const skill of result.skills.filter(s => s.source !== "local")) {
+      const pluginRef = `${skill.id}@${sourceResult.marketplace}`;
+      const pluginScope = skill.scope === "global" ? "user" : "project";
       try {
         await claudePluginInstall(pluginRef, pluginScope, projectDir);
         this.log(`  Installed ${pluginRef}`);
@@ -488,7 +473,8 @@ export default class Init extends BaseCommand {
       }
     }
 
-    this.log(`Installed ${result.selectedSkills.length} skill plugins\n`);
+    const pluginSkillCount = result.skills.filter(s => s.source !== "local").length;
+    this.log(`Installed ${pluginSkillCount} skill plugins\n`);
 
     this.log("Generating configuration...");
     try {
