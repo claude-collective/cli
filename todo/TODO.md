@@ -2,20 +2,17 @@
 
 | ID   | Task                                                                                                                  | Status        |
 | ---- | --------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                       | Refined       |
 | D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md)) | Ready for Dev |
-| D-37 | Merge global + project installations in resolution (see [implementation plan](./D-37-merge-installs.md))              | Has Open Qs   |
-| D-53 | Rename `agent.yaml` to `metadata.yaml` (see [implementation plan](./D-53-rename-agent-yaml.md))                       | Ready for Dev |
+| D-74 | Per-agent scope toggle (project/global) — same as per-skill scope but for agents in the wizard                        | Needs Design  |
+| D-37 | Dual-installation resolution: global + project (see [design doc](./D-37-dual-installation.md))                        | Design        |
 | D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))         | Has Open Qs   |
 | D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))             | Ready for Dev |
 | D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                       | Ready for Dev |
 | D-62 | Review default stacks: include meta/methodology/reviewing skills                                                      | Ready for Dev |
 | D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                 | Ready for Dev |
-| D-65 | Init/edit scope: global config detection + prompt (see [implementation plan](./D-65-init-edit-scope.md))              | Ready for Dev |
 | D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                       | Investigate   |
 | D-67 | Skill metadata as single source of truth — eliminate redundant central config for intrinsic skill properties          | Investigate   |
 | D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                      | Investigate   |
-| B-09 | `new skill` + `edit` installs custom skill as plugin source instead of local                                          | Bug           |
 
 ---
 
@@ -34,50 +31,36 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 
 ## Active Tasks
 
-### CLI Improvements
+### Per-Agent and Global Resolution
 
-#### D-37: Install mode UX redesign
+#### D-74: Per-agent scope toggle (project/global)
 
-Replace the hidden `P` hotkey toggle with an explicit install mode choice on the confirm step. Implement mode migration during edit (local to plugin, plugin to local, per-skill customize). The current `P` toggle during edit is completely broken -- config is never updated, artifacts are never migrated.
+**Priority:** Medium
+**Depends on:** Per-skill scope (done in 0.57.0/0.58.0)
 
-**Design doc:** [`docs/features/proposed/install-mode-redesign.md`](../docs/features/proposed/install-mode-redesign.md)
+Add per-agent scope toggle in the wizard's agents step, mirroring the per-skill S key toggle. Each agent can be scoped to `"project"` (compiled to `.claude/agents/`) or `"global"` (compiled to `~/.claude/agents/`).
 
-**Location:** `step-confirm.tsx`, `wizard.tsx`, `wizard-layout.tsx`, `help-modal.tsx`, `wizard-store.ts`, `edit.tsx`, `local-installer.ts`, `agent-recompiler.ts`, `types/config.ts`.
+**Use case:** Meta agents (documenter, researcher, reviewer) are global — available in every project. Domain-specific agents (web-developer, api-developer) are project-scoped.
 
----
-
-### Framework Infrastructure
-
-#### D-37: Merge global + project installations in resolution
-
-**Priority:** Low (deferred until D-36 is stable)
-**Depends on:** D-36
-**Implementation plan:** [`D-37-merge-installs.md`](./D-37-merge-installs.md)
-
-Extend D-36's full-override behavior to support merging global and project-level installations. When a project-level installation exists, it currently replaces the global one entirely. This task adds the option to merge them — project-level selections take priority for overlapping categories, global fills in the rest.
-
-**Example:**
-
-- Global: `web-framework-react`, `web-state-zustand`, `web-testing-vitest`
-- Project: `api-framework-hono`
-- Merged result: all four skills active
-
-**Key design decisions (from implementation plan):**
-
-- Merge is opt-in via `merge: true` in project config (preserves D-36 full-override default)
-- Exclusive category conflicts: project wins. Non-exclusive categories: union.
-- Agents are merged (union), with project overriding per-agent per-category stack mappings
-- `edit` always modifies the project-level config; global skills shown as inherited
-- `excludeGlobalSkills` deferred to a later phase for simplicity
-- Merge operates at the config level, not the matrix loading level
+**Implementation areas:**
+- Agents step UI: S key toggle on focused agent, [P]/[G] badge
+- `AgentConfig` type: `{ name: AgentName, scope: "project" | "global" }` (mirrors `SkillConfig`)
+- Wizard store: `agentConfigs: AgentConfig[]`, `toggleAgentScope`, `focusedAgentId`
+- Confirm step: show per-agent scope summary
+- Compilation: write agent `.md` files to the correct directory based on scope
+- Config persistence: save `agentConfigs` array to the correct `config.ts` (global or project)
 
 ---
 
-#### D-53: Rename `agent.yaml` to `metadata.yaml`
+#### D-37: Dual-installation resolution (global + project)
 
-**Implementation plan:** [`D-53-rename-agent-yaml.md`](./D-53-rename-agent-yaml.md)
+**Priority:** Medium
+**Depends on:** D-74
+**Design doc:** [`D-37-dual-installation.md`](./D-37-dual-installation.md)
 
-Rename the agent definition file from `agent.yaml` to `metadata.yaml` for consistency with skill metadata files. CLI-repo-only change (~52 files). No fallback period needed (pre-1.0).
+Two separate installations with their own configs. The project `config.ts` imports from global and extends it — standard TypeScript, no runtime merge. Both local and plugin global skills supported. Compiler resolves from both `~/.claude/` and `.claude/`. Auto-creates blank global on first init so the import is always valid.
+
+**Phases:** (1) local installer path routing by scope, (2) config splitting on save with import generation, (3) compiler resolves both directories, (4) per-agent scope (D-74), (5) edit flow with scope migration
 
 ---
 
@@ -218,96 +201,6 @@ The current skill covers oclif command structure and Ink component patterns but 
 - `e2e/helpers/test-utils.ts` — runCLI, createTempDir, etc.
 - `e2e/vitest.config.ts` — E2E test runner config
 - `src/cli/base-command.ts` — BaseCommand pattern
-
----
-
-#### D-67: Skill metadata as single source of truth — eliminate redundant central config
-
-**Priority:** Low
-**Status:** Investigate
-
-The current architecture stores skill properties in three places: `metadata.yaml` per-skill, `skill-categories.ts` centrally, and `skill-rules.ts` centrally. These get merged at load time into a massive `MergedSkillsMatrix` object. This means intrinsic skill properties (display name, description, category, domain) are duplicated between the skill's own metadata and central config files.
-
-**Goal:** Skill metadata should be the authoritative source for all intrinsic skill properties. Central config should only contain inter-skill concerns (relationships, conflicts, recommendations, per-skill compatibility rules). Display names / aliases should come from `metadata.yaml` `displayName` field, not a hand-maintained central map.
-
-**This is part of a larger direction:**
-
-- Make `displayName` required in `metadata.yaml` (currently optional)
-- Remove the `aliases` section from `skill-rules.ts` — derive `displayNameToId` / `displayNames` from extracted skill metadata at load time
-- Evaluate whether `skill-categories.ts` and `skill-rules.ts` need to be files at all, vs. populating a global store directly from skill metadata + typed inter-skill rules
-- The `perSkill` section in `skill-rules.ts` currently uses alias keys (e.g., `react`, `zustand`) — these would need to use either full skill IDs or the `displayName` from metadata
-- Investigate an intermediate store pattern that collects skill metadata at load time and serves as the single lookup point for all skill properties
-
-**Current files involved:**
-
-- `src/cli/lib/configuration/default-rules.ts` — hardcoded aliases + relationships + perSkill rules
-- `src/cli/lib/matrix/matrix-loader.ts` — `loadSkillRules()`, `mergeMatrixWithSkills()`
-- `src/cli/types/matrix.ts` — `SkillRulesConfig.aliases`, `MergedSkillsMatrix.displayNameToId`
-- `src/cli/lib/matrix/matrix-resolver.ts` — `resolveAlias()`
-- Skills repo: `config/skill-rules.ts`, `config/skill-categories.ts`, individual `metadata.yaml` files
-
----
-
-#### D-69: Config migration strategy
-
-**Priority:** Medium
-**Status:** Investigate
-
-When the CLI's `ProjectConfig` shape changes between versions (new required fields, renamed properties, restructured objects), users with older configs will hit failures on `edit` or `compile`. Need a strategy for detecting and handling outdated config shapes.
-
-**Scenarios to handle:**
-
-- New optional field added → no breakage (Zod `.passthrough()` handles this)
-- New required field added → old configs fail Zod validation
-- Field renamed → old field ignored, new field missing
-- Field type changed → Zod validation fails
-- Structural change (e.g., YAML → TS migration) → config unreadable
-
-**Possible approaches:**
-
-1. **Config version field** — add `version: "1"` to ProjectConfig. CLI checks version on load and runs migration functions for older versions
-2. **Lenient loading + migration on write** — load with a permissive schema, detect missing/changed fields, fix them, write the updated config
-3. **`agentsinc migrate` command** — explicit migration command that updates config shape (like `prisma migrate` or `next codemod`)
-4. **Silent auto-migration** — CLI detects old format, migrates in-place, warns the user
-5. **Re-init prompt** — if config is too old, prompt the user to re-run `init` with their existing selections preserved
-
-**Investigation needed:**
-
-- How do Prisma, Next.js, ESLint handle config schema evolution?
-- What's the right granularity for version numbers? Per-field? Per-schema? Semver-tied?
-- Should migration be automatic or explicit?
-- How to preserve user customizations during migration (e.g., hand-edited fields)?
-- Should the CLI refuse to run with an outdated config, or best-effort load it?
-
-**Related:** D-46 (TS config migration) was the first instance of this problem. The approach there was a breaking change with no migration path (pre-1.0). Post-1.0 will need a real strategy.
-
-**Key files:**
-
-- `src/cli/lib/configuration/ts-config-loader.ts` — config loading
-- `src/cli/lib/schemas.ts` — Zod validation schemas
-- `src/cli/types/config.ts` — ProjectConfig type definition
-
----
-
-### B-09: `new skill` + `edit` installs custom skill as plugin source instead of local
-
-**Symptom:** After `agentsinc new skill dummy-react`, running `agentsinc edit` and selecting the new skill shows it being installed as `dummy-react@agents-inc` (plugin source), which fails because the skill doesn't exist in the marketplace. The source should be `local` since the skill was just created locally.
-
-**Reproduction:**
-
-1. `agentsinc new skill dummy-react --domain dummy`
-2. `agentsinc edit` → select the new `dummy-react` skill → confirm
-3. Error: `Plugin "dummy-react" not found in marketplace "agents-inc"`
-
-**Likely root cause:** When the edit wizard resolves skill sources, locally-created skills are not being detected as local-source skills. The source resolution logic may default to plugin/marketplace when it can't find source metadata, or the `new skill` command may not be writing enough metadata for the resolver to classify it as local.
-
-**Investigation areas:**
-
-- `src/cli/lib/loading/source-loader.ts` — how skill sources are resolved
-- `src/cli/lib/resolver.ts` — skill resolution logic
-- `src/cli/commands/new/skill.ts` — what metadata/config `new skill` writes
-- `src/cli/lib/installation/local-installer.ts` — local install path
-- How `availableSources` / `activeSource` on `ResolvedSkill` are populated for locally-created skills
 
 ---
 

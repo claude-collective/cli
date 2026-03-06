@@ -115,12 +115,18 @@ Should the operation continue after error?
 This means:
 
 - **Skills/agents/SKILL.md/metadata.yaml** → `createCLISkill()`, `createUserSkill()`, `writeTestSkill()`, `writeSourceSkill()`, `createTestSource()`
-- **Mock skill objects** → `createMockSkill()` from helpers.ts
-- **Mock matrices** → `createMockMatrix()` from helpers.ts
-- **Mock categories** → `createMockCategory()` from helpers.ts
+- **Mock skill objects** → `createMockSkill()`, `createMockSkillSource()`, `createMockExtractedSkill()`, `createMockSkillDefinition()`, `createMockSkillEntry()`, `createMockMultiSourceSkill()`
+- **Mock matrices** → `createMockMatrix()`, `createBasicMatrix()`, `createComprehensiveMatrix()`, `createMockMatrixConfig()`
+- **Mock categories** → `createMockCategory()`
+- **Mock agents** → `createMockAgent()`, `createMockAgentConfig()`, `createMockCompiledAgentData()`
+- **Mock stacks** → `createMockStack()`, `createMockResolvedStack()`, `createMockRawStacksConfig()`, `createMockCompiledStackPlugin()`
+- **Mock marketplace** → `createMockMarketplace()`, `createMockMarketplacePlugin()`
 - **Full project directories** → `createTestSource()` from fixtures/create-test-source.ts
 - **Stacks** → Use `TestStack[]` via `createTestSource({ stacks })` or extend existing fixtures
-- **Configs** → Use `buildWizardResult()`, `buildSourceResult()`, or extend helpers
+- **Configs** → `buildProjectConfig()`, `buildSkillConfigs()`, `buildAgentConfigs()`, `buildWizardResult()`, `buildWizardResultFromStore()`, `buildSourceResult()`, `buildTestProjectConfig()`
+- **Compile context** → `createCompileContext()`, `createMockCompileConfig()`, `createMockSkillAssignment()`
+- **Content generators** → `createSkillContent()`, `createAgentYamlContent()`
+- **Test utilities** → `parseTestFrontmatter()`, `simulateSkillSelections()`, `extractSkillIdsFromAssignment()`
 
 **If a factory doesn't exist for what you need, CREATE ONE in helpers.ts — do not inline the data.**
 

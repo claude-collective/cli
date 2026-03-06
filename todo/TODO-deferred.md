@@ -5,8 +5,8 @@
 | D-73  | Split `init-wizard.e2e.test.ts` into multiple files for parallel E2E execution                                                     | Deferred                       |
 | D-72  | Only show Agents Inc logo on the first init screen (not on edit or subsequent steps)                                               | Deferred                       |
 | D-71  | Audit Zod schemas for removal — config is now TypeScript (see [research](../docs/research/schema-removal-audit.md))                | Needs Research                 |
-| D-28  | Fix startup warning/error messages (see [plan](./D-28-fix-startup-messages.md))                                                    | Refined                        |
-| D-05  | Project dashboard — default command + already-initialized (see [plan](./D-05-improve-init-existing.md))                            | Ready for Dev                  |
+| D-28  | ~~Fix startup warning/error messages~~ (see [plan](./D-28-fix-startup-messages.md))                                                | Done                           |
+| D-05  | ~~Project dashboard — default command + already-initialized~~ (see [plan](./D-05-improve-init-existing.md))                        | Done                           |
 | P4-17 | `agentsinc new` supports multiple items (see [plan](./P4-17-new-multiple-items.md))                                                | Refined                        |
 | P4-18 | Test: multiple skill/agent creation (depends on P4-17)                                                                             | Deferred                       |
 | D-01  | Update skill documentation conventions                                                                                             | Needs Assistance               |
