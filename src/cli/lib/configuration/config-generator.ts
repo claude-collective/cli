@@ -9,9 +9,14 @@ import type {
   StackAgentConfig,
   Category,
 } from "../../types";
-import type { SkillConfig } from "../../types/config";
+import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
+
+export type SplitConfigResult = {
+  global: ProjectConfig;
+  project: ProjectConfig;
+};
 
 export type ProjectConfigOptions = {
   description?: string;
@@ -43,7 +48,11 @@ export function generateProjectConfigFromSkills(
   name: string,
   selectedSkillIds: SkillId[],
   matrix: MergedSkillsMatrix,
-  options?: ProjectConfigOptions & { selectedAgents?: AgentName[]; skillConfigs?: SkillConfig[] },
+  options?: ProjectConfigOptions & {
+    selectedAgents?: AgentName[];
+    skillConfigs?: SkillConfig[];
+    agentConfigs?: AgentScopeConfig[];
+  },
 ): ProjectConfig {
   const agentList = options?.selectedAgents ? [...options.selectedAgents].sort() : [];
 
@@ -104,9 +113,16 @@ export function generateProjectConfigFromSkills(
     options?.skillConfigs ??
     selectedSkillIds.map((id) => ({ id, scope: "project" as const, source: "local" }));
 
+  const agentConfigs: AgentScopeConfig[] = options?.agentConfigs
+    ? agentList.map((agentName) => {
+        const provided = options.agentConfigs!.find((ac) => ac.name === agentName);
+        return provided ?? { name: agentName, scope: "project" as const };
+      })
+    : agentList.map((agentName) => ({ name: agentName, scope: "project" as const }));
+
   return {
     name,
-    agents: agentList,
+    agents: agentConfigs,
     skills,
     ...(stackProperty && { stack: stackProperty }),
     ...(options?.description && { description: options.description }),
@@ -171,4 +187,61 @@ export function compactStackForYaml(
       })
       .filter(([, compacted]) => Object.keys(compacted).length > 0),
   );
+}
+
+/**
+ * Splits a ProjectConfig by scope into global and project partitions.
+ * Skills with `scope: "global"` go to the global partition, `scope: "project"` to the project partition.
+ * Agents are split based on which skills reference them in the stack.
+ * Domains are preserved in both configs as-is (the project config extends global at runtime).
+ */
+export function splitConfigByScope(config: ProjectConfig): SplitConfigResult {
+  const globalSkills = config.skills.filter((s) => s.scope === "global");
+  const projectSkills = config.skills.filter((s) => s.scope === "project");
+
+  // Split agents by their explicit scope (mirrors skill scope pattern)
+  const globalAgents = config.agents.filter((a) => a.scope === "global");
+  const projectAgents = config.agents.filter((a) => a.scope === "project");
+
+  // Split stack by agent partition
+  const globalStack: typeof config.stack = {};
+  const projectStack: typeof config.stack = {};
+
+  if (config.stack) {
+    for (const agent of globalAgents) {
+      if (config.stack[agent.name]) {
+        globalStack[agent.name] = config.stack[agent.name];
+      }
+    }
+    for (const agent of projectAgents) {
+      if (config.stack[agent.name]) {
+        projectStack[agent.name] = config.stack[agent.name];
+      }
+    }
+  }
+
+  const globalConfig: ProjectConfig = {
+    name: "global",
+    agents: globalAgents,
+    skills: globalSkills,
+    ...(Object.keys(globalStack).length > 0 && { stack: globalStack }),
+    ...(config.domains && config.domains.length > 0 && { domains: config.domains }),
+  };
+
+  const projectConfig: ProjectConfig = {
+    name: config.name,
+    agents: projectAgents,
+    skills: projectSkills,
+    ...(Object.keys(projectStack).length > 0 && { stack: projectStack }),
+    ...(config.description && { description: config.description }),
+    ...(config.author && { author: config.author }),
+    ...(config.source && { source: config.source }),
+    ...(config.marketplace && { marketplace: config.marketplace }),
+    ...(config.agentsSource && { agentsSource: config.agentsSource }),
+    ...(config.domains && config.domains.length > 0 && { domains: config.domains }),
+    ...(config.selectedAgents &&
+      config.selectedAgents.length > 0 && { selectedAgents: config.selectedAgents }),
+  };
+
+  return { global: globalConfig, project: projectConfig };
 }

@@ -1,7 +1,8 @@
-import { difference, indexBy } from "remeda";
+import { indexBy } from "remeda";
 
 import type { ProjectConfig } from "../../types";
 import type { SkillConfig } from "../../types/config";
+import { typedEntries } from "../../utils/typed-object";
 import { loadProjectConfig } from "./project-config";
 import { loadProjectSourceConfig } from "./config";
 
@@ -39,29 +40,25 @@ export async function mergeWithExistingConfig(
     }
 
     if (existingConfig.agents && existingConfig.agents.length > 0) {
-      const newAgentIds = difference(localConfig.agents, existingConfig.agents);
-      localConfig.agents = [...existingConfig.agents, ...newAgentIds];
+      const existingNames = new Set(existingConfig.agents.map((a) => a.name));
+      const newAgents = localConfig.agents.filter((a) => !existingNames.has(a.name));
+      localConfig.agents = [...existingConfig.agents, ...newAgents];
     }
 
     // Merge skills by ID: new skills override existing, existing skills preserved otherwise
     if (existingConfig.skills && existingConfig.skills.length > 0) {
       const newSkillsById = indexBy(localConfig.skills, (s: SkillConfig) => s.id);
-      const merged: SkillConfig[] = existingConfig.skills.map(
+      const existingIds = new Set(existingConfig.skills.map((s: SkillConfig) => s.id));
+      const updatedExisting = existingConfig.skills.map(
         (existing: SkillConfig) => newSkillsById[existing.id] ?? existing,
       );
-      // Add skills that are only in the new config
-      const existingIds = new Set(existingConfig.skills.map((s: SkillConfig) => s.id));
-      for (const skill of localConfig.skills) {
-        if (!existingIds.has(skill.id)) {
-          merged.push(skill);
-        }
-      }
-      localConfig.skills = merged;
+      const addedSkills = localConfig.skills.filter((s) => !existingIds.has(s.id));
+      localConfig.skills = [...updatedExisting, ...addedSkills];
     }
 
     if (existingConfig.stack) {
       const mergedStack = { ...localConfig.stack };
-      for (const [agentId, agentConfig] of Object.entries(existingConfig.stack)) {
+      for (const [agentId, agentConfig] of typedEntries(existingConfig.stack)) {
         mergedStack[agentId] = { ...mergedStack[agentId], ...agentConfig };
       }
       localConfig.stack = mergedStack;

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
 import type { AgentName, SkillAssignment, SkillId } from "../../types";
-import { createMockSkillAssignment, TEST_MATRICES } from "../__tests__/helpers";
+import { createMockSkillAssignment, buildAgentConfigs, TEST_MATRICES } from "../__tests__/helpers";
 import {
   FULLSTACK_STACK,
   EMPTY_AGENTS_STACK,
@@ -38,7 +38,7 @@ describe("config-generator", () => {
       );
 
       expect(config.name).toBe("my-project");
-      expect(config.agents).toEqual(["web-developer", "web-reviewer"]);
+      expect(config.agents).toEqual(buildAgentConfigs(["web-developer", "web-reviewer"]));
       expect(config.stack).toBeDefined();
       expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
         "web-framework-react",
@@ -77,7 +77,7 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      expect(config.agents).toEqual(["web-developer", "web-reviewer"]);
+      expect(config.agents).toEqual(buildAgentConfigs(["web-developer", "web-reviewer"]));
       expect(config.stack).toBeDefined();
       expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
         "web-framework-react",
@@ -104,7 +104,7 @@ describe("config-generator", () => {
 
       // Local skills have category "local" which has no category
       // Agents are still set from selectedAgents
-      expect(config.agents).toEqual(["web-developer"]);
+      expect(config.agents).toEqual(buildAgentConfigs(["web-developer"]));
       // Stack entries should not contain any "local" category
       if (config.stack) {
         for (const agentConfig of Object.values(config.stack)) {
@@ -161,7 +161,7 @@ describe("config-generator", () => {
       expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
         "web-framework-react",
       );
-      expect(config.agents).toEqual(["web-developer"]);
+      expect(config.agents).toEqual(buildAgentConfigs(["web-developer"]));
     });
 
     it("deduplicates agents across skills in the same domain", () => {
@@ -207,11 +207,12 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      expect(config.agents).toContain("web-developer");
-      expect(config.agents).toContain("web-reviewer");
-      expect(config.agents).toContain("api-developer");
-      expect(config.agents).toContain("api-reviewer");
-      const sortedAgents = [...config.agents].sort();
+      const agentNames = config.agents.map((a) => a.name);
+      expect(agentNames).toContain("web-developer");
+      expect(agentNames).toContain("web-reviewer");
+      expect(agentNames).toContain("api-developer");
+      expect(agentNames).toContain("api-reviewer");
+      const sortedAgents = [...config.agents].sort((a, b) => a.name.localeCompare(b.name));
       expect(config.agents).toEqual(sortedAgents);
     });
 
@@ -386,7 +387,7 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      expect(config.agents).toEqual(["api-developer", "web-developer"]);
+      expect(config.agents).toEqual(buildAgentConfigs(["api-developer", "web-developer"]));
       expect(config.stack).toBeDefined();
       expect(config.stack!["web-developer"]?.["shared-methodology"]?.[0]?.id).toBe(
         "meta-methodology-anti-over-engineering",

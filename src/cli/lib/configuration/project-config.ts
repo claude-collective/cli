@@ -38,7 +38,9 @@ export async function loadProjectConfigFromDir(
       : [];
     extendSchemasWithCustomValues({
       skillIds,
-      agentNames: raw.agents ?? [],
+      agentNames: Array.isArray(raw.agents)
+        ? raw.agents.map((a: { name?: string }) => a.name).filter((n): n is string => n != null)
+        : [],
       domains: raw.domains ?? [],
       categories: Object.values(raw.stack ?? {}).flatMap(Object.keys),
     });
@@ -116,8 +118,8 @@ export function validateProjectConfig(config: unknown): ValidationResult {
     errors.push("agents is required and must be an array");
   } else {
     for (const agent of c.agents) {
-      if (typeof agent !== "string") {
-        errors.push(`agents must contain strings, found: ${typeof agent}`);
+      if (typeof agent !== "object" || agent === null || typeof (agent as Record<string, unknown>).name !== "string") {
+        errors.push(`agents must contain objects with name and scope, found: ${typeof agent}`);
       }
     }
   }

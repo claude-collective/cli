@@ -20,7 +20,7 @@ describe("config-merger", () => {
     it("should return new config unchanged when no existing config exists", async () => {
       const newConfig: ProjectConfig = {
         name: "new-project",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         skills: [],
         description: "A new project",
       };
@@ -31,7 +31,7 @@ describe("config-merger", () => {
 
       expect(result.merged).toBe(false);
       expect(result.config.name).toBe("new-project");
-      expect(result.config.agents).toEqual(["web-developer"]);
+      expect(result.config.agents).toEqual([{ name: "web-developer", scope: "project" }]);
       expect(result.config.description).toBe("A new project");
       expect(result.existingConfigPath).toBeUndefined();
     });
@@ -44,7 +44,7 @@ describe("config-merger", () => {
 
       const newConfig: ProjectConfig = {
         name: "new-project",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         skills: [],
       };
 
@@ -66,7 +66,7 @@ describe("config-merger", () => {
 
       const newConfig: ProjectConfig = {
         name: "new-project",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         skills: [],
       };
 
@@ -106,14 +106,14 @@ describe("config-merger", () => {
         async ({ field, existingValue, newValue }) => {
           await writeFullConfig({
             name: "project",
-            agents: ["web-developer"],
+            agents: [{ name: "web-developer", scope: "project" }],
             skills: [],
             [field]: existingValue,
           });
 
           const newConfig: ProjectConfig = {
             name: "project",
-            agents: ["web-developer"],
+            agents: [{ name: "web-developer", scope: "project" }],
             skills: [],
             [field]: newValue,
           };
@@ -136,13 +136,13 @@ describe("config-merger", () => {
       it("should union agents (existing + new, deduplicated)", async () => {
         await writeFullConfig({
           name: "project",
-          agents: ["web-developer", "api-developer"],
+          agents: [{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }],
           skills: [],
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
-          agents: ["web-developer", "cli-developer"], // web-developer is duplicate
+          agents: [{ name: "web-developer", scope: "project" }, { name: "cli-developer", scope: "project" }], // web-developer is duplicate
           skills: [],
         };
 
@@ -151,7 +151,11 @@ describe("config-merger", () => {
         });
 
         expect(result.merged).toBe(true);
-        expect(result.config.agents).toEqual(["web-developer", "api-developer", "cli-developer"]);
+        expect(result.config.agents).toEqual([
+          { name: "web-developer", scope: "project" },
+          { name: "api-developer", scope: "project" },
+          { name: "cli-developer", scope: "project" },
+        ]);
       });
 
       it("should use new config agents if existing has empty agents", async () => {
@@ -163,7 +167,7 @@ describe("config-merger", () => {
 
         const newConfig: ProjectConfig = {
           name: "project",
-          agents: ["web-developer"],
+          agents: [{ name: "web-developer", scope: "project" }],
           skills: [],
         };
 
@@ -173,7 +177,7 @@ describe("config-merger", () => {
 
         expect(result.merged).toBe(true);
         // Empty existing agents, so new agents are used
-        expect(result.config.agents).toEqual(["web-developer"]);
+        expect(result.config.agents).toEqual([{ name: "web-developer", scope: "project" }]);
       });
     });
 
@@ -190,7 +194,7 @@ describe("config-merger", () => {
       it("should deep merge stack with existing agent configs taking precedence", async () => {
         await writeFullConfig({
           name: "project",
-          agents: ["web-developer"],
+          agents: [{ name: "web-developer", scope: "project" }],
           skills: [],
           stack: {
             "web-developer": {
@@ -202,7 +206,7 @@ describe("config-merger", () => {
 
         const newConfig: ProjectConfig = {
           name: "project",
-          agents: ["web-developer"],
+          agents: [{ name: "web-developer", scope: "project" }],
           skills: [],
           stack: {
             "web-developer": {
@@ -231,7 +235,7 @@ describe("config-merger", () => {
       it("should add new agents to stack from new config", async () => {
         await writeFullConfig({
           name: "project",
-          agents: ["web-developer"],
+          agents: [{ name: "web-developer", scope: "project" }],
           skills: [],
           stack: {
             "web-developer": {
@@ -242,7 +246,7 @@ describe("config-merger", () => {
 
         const newConfig: ProjectConfig = {
           name: "project",
-          agents: ["web-developer", "api-developer"],
+          agents: [{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }],
           skills: [],
           stack: {
             "web-developer": {
@@ -272,13 +276,13 @@ describe("config-merger", () => {
       it("should use new config stack if existing has no stack", async () => {
         await writeFullConfig({
           name: "project",
-          agents: ["web-developer"],
+          agents: [{ name: "web-developer", scope: "project" }],
           skills: [],
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
-          agents: ["web-developer"],
+          agents: [{ name: "web-developer", scope: "project" }],
           skills: [],
           stack: {
             "web-developer": {
@@ -303,14 +307,14 @@ describe("config-merger", () => {
     it("should not mutate the input config", async () => {
       await writeTestTsConfig(tempDir, {
         name: "existing",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         skills: [],
         author: "@existing",
       });
 
       const newConfig: ProjectConfig = {
         name: "new-project",
-        agents: ["api-developer"],
+        agents: [{ name: "api-developer", scope: "project" }],
         skills: [],
       };
 
@@ -318,19 +322,19 @@ describe("config-merger", () => {
 
       // Original input should be unchanged
       expect(newConfig.name).toBe("new-project");
-      expect(newConfig.agents).toEqual(["api-developer"]);
+      expect(newConfig.agents).toEqual([{ name: "api-developer", scope: "project" }]);
       expect(newConfig.author).toBeUndefined();
     });
 
     it("should return existingConfigPath when merged", async () => {
       await writeTestTsConfig(tempDir, {
         name: "existing",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
       });
 
       const newConfig: ProjectConfig = {
         name: "new-project",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         skills: [],
       };
 

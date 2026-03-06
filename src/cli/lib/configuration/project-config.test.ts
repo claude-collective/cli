@@ -33,7 +33,7 @@ describe("project-config", () => {
     it("should load minimal config (just name and agents)", async () => {
       await writeTestTsConfig(tempDir, {
         name: "my-project",
-        agents: ["web-developer", "api-developer"],
+        agents: [{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }],
       });
 
       const result = await loadProjectConfig(tempDir);
@@ -41,13 +41,13 @@ describe("project-config", () => {
       expect(result).not.toBeNull();
 
       expect(result!.config.name).toBe("my-project");
-      expect(result!.config.agents).toEqual(["web-developer", "api-developer"]);
+      expect(result!.config.agents).toEqual([{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }]);
     });
 
     it("should load config with stack (bare strings normalized to SkillAssignment[])", async () => {
       await writeTestTsConfig(tempDir, {
         name: "my-project",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         stack: {
           "web-developer": {
             "web-framework": "web-framework-react",
@@ -71,7 +71,7 @@ describe("project-config", () => {
     it("should load config with mixed stack formats (array, object, string)", async () => {
       await writeTestTsConfig(tempDir, {
         name: "my-project",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         stack: {
           "web-developer": {
             "web-framework": "web-framework-react",
@@ -110,7 +110,7 @@ describe("project-config", () => {
         name: "my-stack",
         author: "@vince",
         description: "A config with extra fields",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
       });
 
       const result = await loadProjectConfig(tempDir);
@@ -150,7 +150,7 @@ describe("project-config", () => {
     it("should pass for minimal valid config", () => {
       const result = validateProjectConfig({
         name: "my-project",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
       });
 
       expect(result.valid).toBe(true);
@@ -159,7 +159,7 @@ describe("project-config", () => {
 
     it("should fail for missing name", () => {
       const result = validateProjectConfig({
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
       });
 
       expect(result.valid).toBe(false);
@@ -175,20 +175,20 @@ describe("project-config", () => {
       expect(result.errors).toContain("agents is required and must be an array");
     });
 
-    it("should fail for non-string agents", () => {
+    it("should fail for non-object agents", () => {
       const result = validateProjectConfig({
         name: "my-project",
         agents: ["web-developer", 123],
       });
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("must contain strings"))).toBe(true);
+      expect(result.errors.some((e) => e.includes("must contain objects with name and scope"))).toBe(true);
     });
 
     it("should fail for invalid version", () => {
       const result = validateProjectConfig({
         name: "my-project",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         version: "2",
       });
 
