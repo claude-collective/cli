@@ -45,7 +45,7 @@ describe("generateConfigSource", () => {
   it("preserves preloaded flag as object in stack", () => {
     const config = buildProjectConfig({
       name: "preloaded-project",
-      agents: ["api-developer"],
+      agents: [{ name: "api-developer", scope: "project" }],
       skills: buildSkillConfigs(["api-framework-hono"]),
       stack: {
         "api-developer": {

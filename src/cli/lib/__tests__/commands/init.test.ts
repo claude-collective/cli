@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import { runCliCommand, createTempDir, cleanupTempDir, buildSkillConfigs } from "../helpers";
 import { getDashboardData, formatDashboardText } from "../../../commands/init";
+import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 
 describe("init command", () => {
   let tempDir: string;
@@ -28,14 +29,14 @@ describe("init command", () => {
    * need to verify flag parsing (no "unknown flag" error).
    */
   async function seedConfigForEarlyExit(): Promise<void> {
-    const configDir = path.join(projectDir, ".claude-src");
+    const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.ts"), 'export default { name: "test-project" };');
+    await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), 'export default { name: "test-project" };');
   }
 
   describe("flag validation", () => {
     it("should accept --refresh flag", async () => {
-      const { error } = await runCliCommand(["init", "--refresh"]);
+      const { error } = await runCliCommand(["init", "--refresh", "--source", "/nonexistent"]);
 
       // Should not error on --refresh flag parsing
       const output = error?.message || "";
@@ -81,10 +82,10 @@ describe("init command", () => {
 
   describe("already initialized — dashboard", () => {
     it("should show dashboard when project is already initialized", async () => {
-      const configDir = path.join(projectDir, ".claude-src");
+      const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.ts"),
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
         'export default { name: "test-project" };',
       );
 
@@ -104,16 +105,13 @@ describe("init command", () => {
     });
 
     it("should show skill and agent counts in dashboard", async () => {
-      const configDir = path.join(projectDir, ".claude-src");
+      const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.ts"),
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
         `export default ${JSON.stringify({
           name: "test-project",
-          skills: [
-            { id: "web-framework-react", scope: "project", source: "local" },
-            { id: "web-state-zustand", scope: "project", source: "local" },
-          ],
+          skills: buildSkillConfigs(["web-framework-react", "web-state-zustand"]),
         })};`,
       );
 
@@ -134,10 +132,10 @@ describe("init command", () => {
     });
 
     it("should show source when configured", async () => {
-      const configDir = path.join(projectDir, ".claude-src");
+      const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.ts"),
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
         `export default ${JSON.stringify({
           name: "test-project",
           skills: [],
@@ -153,9 +151,9 @@ describe("init command", () => {
     });
 
     it("should not modify existing config when already initialized", async () => {
-      const configDir = path.join(projectDir, ".claude-src");
+      const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
-      const configPath = path.join(configDir, "config.ts");
+      const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
       await writeFile(configPath, 'export default { name: "test-project" };');
 
       await runCliCommand(["init"]);
@@ -166,10 +164,10 @@ describe("init command", () => {
     });
 
     it("should exit with SUCCESS when already initialized", async () => {
-      const configDir = path.join(projectDir, ".claude-src");
+      const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.ts"),
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
         'export default { name: "test-project" };',
       );
 
@@ -180,10 +178,10 @@ describe("init command", () => {
     });
 
     it("should show 0 counts when skills and agents are empty", async () => {
-      const configDir = path.join(projectDir, ".claude-src");
+      const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.ts"),
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
         `export default ${JSON.stringify({ name: "test-project", skills: [] })};`,
       );
 

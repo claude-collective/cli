@@ -99,7 +99,7 @@ describe("Init Flow Integration: Local Mode", () => {
     expect(config.name).toBeDefined();
     expect(config.agents).toBeDefined();
     expect(Array.isArray(config.agents)).toBe(true);
-    expect(config.agents).toEqual(["api-developer", "web-developer"]);
+    expect(config.agents.map((a) => a.name)).toEqual(["api-developer", "web-developer"]);
     expect(config.skills).toBeDefined();
     expect(deriveInstallMode(config.skills)).toBe("local");
     expect(config.source).toBe(dirs.sourceDir);
@@ -271,7 +271,7 @@ describe("Init Flow Integration: All Skills Selection", () => {
     expect(config.skills).toHaveLength(3);
 
     // Agents should be exactly the selected agents
-    expect(config.agents).toEqual(["api-developer", "web-developer"]);
+    expect(config.agents.map((a) => a.name)).toEqual(["api-developer", "web-developer"]);
   });
 });
 
@@ -589,8 +589,8 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-    // config.agents should contain exactly the selected agents (sorted)
-    expect(config.agents).toEqual([...SELECTED_AGENTS_WITH_REVIEWER].sort());
+    // config.agents names should contain exactly the selected agents (sorted)
+    expect(config.agents.map((a) => a.name)).toEqual([...SELECTED_AGENTS_WITH_REVIEWER].sort());
   });
 
   it("should only have stack entries for selected agents, not DEFAULT_AGENTS", async () => {

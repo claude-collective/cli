@@ -1,28 +1,24 @@
 import { describe, it, expect } from "vitest";
 import { defineConfig } from "../define-config";
 import type { ProjectConfig } from "../../../types";
+import { buildProjectConfig, buildSkillConfigs, buildAgentConfigs } from "../../__tests__/helpers";
 
 describe("defineConfig", () => {
   it("returns its input unchanged for a minimal config", () => {
-    const config: ProjectConfig = {
-      name: "test-project",
-      agents: ["web-developer"],
-      skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
-    };
+    const config: ProjectConfig = buildProjectConfig({
+      skills: buildSkillConfigs(["web-framework-react"]),
+    });
     const result = defineConfig(config);
     expect(result).toBe(config);
   });
 
   it("returns its input unchanged for a full config", () => {
-    const config: ProjectConfig = {
+    const config: ProjectConfig = buildProjectConfig({
       name: "full-project",
       description: "A complete project",
       version: "1",
-      agents: ["web-developer", "api-developer"],
-      skills: [
-        { id: "web-framework-react", scope: "project", source: "local" },
-        { id: "api-framework-hono", scope: "project", source: "local" },
-      ],
+      agents: buildAgentConfigs(["web-developer", "api-developer"]),
+      skills: buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
       author: "@vince",
       domains: ["web", "api"],
       selectedAgents: ["web-developer", "api-developer"],
@@ -34,17 +30,17 @@ describe("defineConfig", () => {
           "api-api": [{ id: "api-framework-hono", preloaded: true }],
         },
       },
-    };
+    });
     const result = defineConfig(config);
     expect(result).toBe(config);
   });
 
   it("preserves object identity (identity function)", () => {
-    const config: ProjectConfig = {
+    const config: ProjectConfig = buildProjectConfig({
       name: "identity-test",
       agents: [],
       skills: [],
-    };
+    });
     expect(defineConfig(config)).toBe(config);
   });
 });

@@ -142,7 +142,7 @@ describe("generateConfigTypesSource", () => {
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain("export interface ProjectConfig {");
     expect(source).toContain("name: string;");
-    expect(source).toContain("agents: AgentName[];");
+    expect(source).toContain("agents: AgentScopeConfig[];");
     expect(source).toContain("skills: SkillConfig[];");
     expect(source).toContain("stack?: Partial<Record<AgentName, StackAgentConfig>>;");
     expect(source).toContain("domains?: Domain[];");

@@ -185,7 +185,7 @@ const EDIT_SKILLS: Partial<Record<SkillId, { category: string; displayName?: str
   "web-state-zustand": { category: "web-client-state" },
   "api-framework-hono": { category: "api-api" },
   "web-testing-vitest": { category: "web-testing" },
-} as Partial<Record<SkillId, { category: string; displayName?: string }>>;
+};
 
 // The edit command uses populateFromSkillIds() on the Zustand wizard store
 // to restore prior selections. Testing at the store level because the edit

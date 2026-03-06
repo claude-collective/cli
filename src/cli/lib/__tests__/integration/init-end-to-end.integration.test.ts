@@ -96,8 +96,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       // Read config and verify agents list
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-      // config.agents should match the preselected agents (sorted)
-      expect(config.agents).toEqual([...wizardResult.selectedAgents].sort());
+      // config.agents names should match the preselected agents (sorted)
+      const configAgentNames = config.agents.map((a) => a.name);
+      expect(configAgentNames).toEqual([...wizardResult.selectedAgents].sort());
 
       // Methodology skills should appear in config.skills
       const configSkillIds = config.skills.map((s) => s.id);
@@ -124,8 +125,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       expect(config.stack).toBeDefined();
 
       // Every agent in the stack must also be in config.agents
+      const stackCheckAgentNames = config.agents.map((a) => a.name);
       for (const agentId of Object.keys(config.stack || {})) {
-        expect(config.agents).toContain(agentId);
+        expect(stackCheckAgentNames).toContain(agentId);
       }
 
       // DEFAULT_AGENTS (agent-summoner, skill-summoner, documentor) must NOT
@@ -243,8 +245,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-      // config.agents should match preselected agents (sorted)
-      expect(config.agents).toEqual([...wizardResult.selectedAgents].sort());
+      // config.agents names should match preselected agents (sorted)
+      const pluginAgentNames = config.agents.map((a) => a.name);
+      expect(pluginAgentNames).toEqual([...wizardResult.selectedAgents].sort());
 
       // Compiled agents should exist as .md files
       expect(result.compiledAgents.length).toBeGreaterThan(0);
@@ -308,8 +311,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       expect(config.stack).toBeDefined();
+      const invariantAgentNames = config.agents.map((a) => a.name);
       for (const agentId of Object.keys(config.stack!)) {
-        expect(config.agents).toContain(agentId);
+        expect(invariantAgentNames).toContain(agentId);
       }
     });
 

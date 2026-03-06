@@ -3,7 +3,7 @@ import path from "path";
 import { writeFile } from "fs/promises";
 import { generateConfigSource } from "../config-writer";
 import { loadConfig } from "../config-loader";
-import { createTempDir, cleanupTempDir, buildProjectConfig, buildSkillConfigs } from "../../__tests__/helpers";
+import { createTempDir, cleanupTempDir, buildProjectConfig, buildSkillConfigs, buildAgentConfigs } from "../../__tests__/helpers";
 import type { ProjectConfig, SkillId } from "../../../types";
 
 let tempDir: string;
@@ -54,7 +54,7 @@ describe("config round-trip", () => {
   it("round-trips a config with stack (non-preloaded)", async () => {
     const config = buildProjectConfig({
       name: "stack-project",
-      agents: ["web-developer", "api-developer"],
+      agents: buildAgentConfigs(["web-developer", "api-developer"]),
       skills: buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
       stack: {
         "web-developer": {
@@ -69,7 +69,7 @@ describe("config round-trip", () => {
     const loaded = (await writeAndLoad(config)) as ProjectConfig;
     // Stack gets compacted: non-preloaded single skills become bare strings
     expect(loaded.name).toBe("stack-project");
-    expect(loaded.agents).toEqual(["web-developer", "api-developer"]);
+    expect(loaded.agents).toEqual(buildAgentConfigs(["web-developer", "api-developer"]));
     expect(loaded.skills).toEqual(buildSkillConfigs(["web-framework-react", "api-framework-hono"]));
 
     // After compaction, bare strings
@@ -80,7 +80,7 @@ describe("config round-trip", () => {
   it("round-trips a config with preloaded stack skills", async () => {
     const config = buildProjectConfig({
       name: "preloaded-project",
-      agents: ["api-developer"],
+      agents: buildAgentConfigs(["api-developer"]),
       skills: buildSkillConfigs(["api-framework-hono"]),
       stack: {
         "api-developer": {
@@ -100,7 +100,7 @@ describe("config round-trip", () => {
       name: "full-project",
       description: "A complete project configuration",
       version: "1",
-      agents: ["web-developer", "api-developer"],
+      agents: buildAgentConfigs(["web-developer", "api-developer"]),
       skills: buildSkillConfigs(["web-framework-react", "api-framework-hono", "web-state-zustand"]),
       author: "@vince",
       domains: ["web", "api"],

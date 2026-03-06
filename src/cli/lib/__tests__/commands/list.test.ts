@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir, writeTestSkill } from "../helpers";
+import { runCliCommand, createTempDir, cleanupTempDir, writeTestSkill, buildAgentConfigs } from "../helpers";
+import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 
 describe("list command", () => {
   let tempDir: string;
@@ -52,13 +53,13 @@ describe("list command", () => {
       await mkdir(skillsDir, { recursive: true });
 
       // Write minimal config
-      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
       const configContent = `export default ${JSON.stringify({
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
       })};`;
-      await writeFile(path.join(claudeSrcDir, "config.ts"), configContent);
+      await writeFile(path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS), configContent);
 
       // Write a test agent
       await writeFile(

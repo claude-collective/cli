@@ -148,14 +148,14 @@ describe("eject command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unexpected argument");
 
-      const partialsDir = path.join(projectDir, ".claude-src", "agents");
+      const partialsDir = path.join(projectDir, CLAUDE_SRC_DIR, "agents");
       expect(await directoryExists(partialsDir)).toBe(true);
     });
 
     it("should create config.ts if it does not exist", async () => {
       await runCliCommand(["eject", "agent-partials"]);
 
-      const configPath = path.join(projectDir, ".claude-src", "config.ts");
+      const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       expect(await fileExists(configPath)).toBe(true);
 
       const content = await readFile(configPath, "utf-8");
@@ -165,7 +165,7 @@ describe("eject command", () => {
 
     it("should not overwrite existing config.yaml", async () => {
       // Create existing config with custom YAML content (eject checks both .ts and .yaml)
-      const configDir = path.join(projectDir, ".claude-src");
+      const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       const configPath = path.join(configDir, "config.yaml");
       const customContent = "name: my-custom-project\nauthor: test-author\n";
@@ -183,7 +183,7 @@ describe("eject command", () => {
 
       await runCliCommand(["eject", "agent-partials", "--output", outputDir]);
 
-      const configPath = path.join(projectDir, ".claude-src", "config.ts");
+      const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       expect(await fileExists(configPath)).toBe(true);
     });
 
@@ -564,7 +564,7 @@ describe("eject skills from initialized project", () => {
 
     expect(stdout).toContain("Agent partials ejected");
 
-    const partialsDir = path.join(dirs.projectDir, ".claude-src", "agents");
+    const partialsDir = path.join(dirs.projectDir, CLAUDE_SRC_DIR, "agents");
     expect(await directoryExists(partialsDir)).toBe(true);
   });
 
@@ -573,7 +573,7 @@ describe("eject skills from initialized project", () => {
 
     expect(stdout).toContain("Agent partials ejected");
 
-    const partialsDir = path.join(dirs.projectDir, ".claude-src", "agents");
+    const partialsDir = path.join(dirs.projectDir, CLAUDE_SRC_DIR, "agents");
     const entries = await readdir(partialsDir);
     expect(entries.length).toBeGreaterThan(0);
   });
@@ -611,7 +611,7 @@ describe("eject in plugin mode", () => {
   });
 
   it("should have plugin-sourced skills in config after init", async () => {
-    const configPath = path.join(dirs.projectDir, ".claude-src", "config.ts");
+    const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
     expect(await fileExists(configPath)).toBe(true);
 
     const config = await readTestTsConfig<ProjectConfig>(configPath);
@@ -694,7 +694,7 @@ describe("eject in plugin mode", () => {
     // Partials eject from CLI source, not project source
     expect(stdout).toContain("Agent partials ejected");
 
-    const partialsDir = path.join(dirs.projectDir, ".claude-src", "agents");
+    const partialsDir = path.join(dirs.projectDir, CLAUDE_SRC_DIR, "agents");
     expect(await directoryExists(partialsDir)).toBe(true);
 
     const entries = await readdir(partialsDir);

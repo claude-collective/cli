@@ -267,7 +267,7 @@ describe("Integration: buildAndMergeConfig Install Mode", () => {
     // Write initial config with "local" source skills
     await writeTestTsConfig(dirs.projectDir, {
       name: "test-project",
-      agents: ["web-developer"],
+      agents: [{ name: "web-developer", scope: "project" }],
       skills: [{ id: REACT_SKILL_ID, scope: "project", source: "local" }],
     });
 
@@ -510,7 +510,7 @@ describe("Integration: writeConfigFile Round-Trip", () => {
 
     const config: ProjectConfig = {
       name: "test-project",
-      agents: ["web-developer"],
+      agents: [{ name: "web-developer", scope: "project" }],
       skills: [
         { id: REACT_SKILL_ID, scope: "project", source: "local" },
         { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
@@ -532,7 +532,7 @@ describe("Integration: writeConfigFile Round-Trip", () => {
 
     const config: ProjectConfig = {
       name: "test-project",
-      agents: ["web-developer"],
+      agents: [{ name: "web-developer", scope: "project" }],
       skills: [
         { id: REACT_SKILL_ID, scope: "project", source: "local" },
         { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
@@ -556,7 +556,7 @@ describe("Integration: writeConfigFile Round-Trip", () => {
 
     const config: ProjectConfig = {
       name: "test-project",
-      agents: ["web-developer"],
+      agents: [{ name: "web-developer", scope: "project" }],
       skills: [{ id: REACT_SKILL_ID, scope: "project", source: "local" }],
     };
 

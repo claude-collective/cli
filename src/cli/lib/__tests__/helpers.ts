@@ -137,6 +137,7 @@ import type {
   AgentConfig,
   AgentDefinition,
   AgentName,
+  AgentScopeConfig,
   CategoryDefinition,
   CategoryPath,
   CompiledAgentData,
@@ -212,7 +213,7 @@ export async function writeTestTsConfig(
 export function buildProjectConfig(overrides?: Partial<ProjectConfig>): ProjectConfig {
   return {
     name: "test-project",
-    agents: ["web-developer"],
+    agents: [{ name: "web-developer", scope: "project" }],
     skills: buildSkillConfigs(["web-framework-react"]),
     ...overrides,
   };
@@ -225,6 +226,7 @@ export function buildWizardResult(
   return {
     skills,
     selectedAgents: [],
+    agentConfigs: [],
     selectedStackId: null,
     domainSelections: {} as DomainSelections,
     selectedDomains: [],
@@ -243,6 +245,16 @@ export function buildSkillConfigs(
     id,
     scope: overrides?.scope ?? "project",
     source: overrides?.source ?? "local",
+  }));
+}
+
+export function buildAgentConfigs(
+  agentNames: AgentName[],
+  overrides?: Partial<Omit<AgentScopeConfig, "name">>,
+): AgentScopeConfig[] {
+  return agentNames.map((name) => ({
+    name,
+    scope: overrides?.scope ?? "project",
   }));
 }
 
@@ -849,6 +861,7 @@ export function buildWizardResultFromStore(
   return {
     skills: store.skillConfigs.length > 0 ? store.skillConfigs : buildSkillConfigs(allSkills),
     selectedAgents: store.selectedAgents,
+    agentConfigs: store.agentConfigs,
     selectedStackId: store.selectedStackId,
     domainSelections: store.domainSelections,
     selectedDomains: store.selectedDomains,

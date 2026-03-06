@@ -29,7 +29,7 @@ async function createProjectConfig(
   options?: {
     source?: string;
     extraSources?: Array<{ name: string; url: string }>;
-    agents?: string[];
+    agents?: Array<{ name: string; scope: string }>;
   },
 ): Promise<string> {
   const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
@@ -393,7 +393,7 @@ describe("uninstall command", () => {
 
   describe("agent removal", () => {
     it("should remove compiled agents listed in config", async () => {
-      await createProjectConfig(projectDir, { agents: ["web-developer"] });
+      await createProjectConfig(projectDir, { agents: [{ name: "web-developer", scope: "project" }] });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
 
       const agentsDir = path.join(claudeDir, "agents");
@@ -419,7 +419,7 @@ describe("uninstall command", () => {
     });
 
     it("should only remove agents listed in config and preserve others", async () => {
-      await createProjectConfig(projectDir, { agents: ["web-developer"] });
+      await createProjectConfig(projectDir, { agents: [{ name: "web-developer", scope: "project" }] });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
 
       const agentsDir = path.join(claudeDir, "agents");
@@ -618,7 +618,7 @@ describe("uninstall command", () => {
     });
 
     it("should remove everything with --all flag", async () => {
-      await createProjectConfig(projectDir, { agents: ["web-developer"] });
+      await createProjectConfig(projectDir, { agents: [{ name: "web-developer", scope: "project" }] });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
       const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
 

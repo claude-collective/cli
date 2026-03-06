@@ -158,8 +158,9 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // All initial agents should still be present (merge unions agents)
+    const updatedAgentNames = updatedConfig.agents.map((a) => a.name);
     for (const agentName of initialAgents) {
-      expect(updatedConfig.agents).toContain(agentName);
+      expect(updatedAgentNames).toContain(agentName);
     }
 
     // API agents should also be present
@@ -377,8 +378,9 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
 
     // The compiled agents should match what config.agents lists
     // (some may fail if agent definitions don't exist in source, but none should be extra)
+    const configAgentNames = configAgents.map((a) => a.name);
     for (const compiledAgent of recompileResult.compiled) {
-      expect(configAgents).toContain(compiledAgent);
+      expect(configAgentNames).toContain(compiledAgent);
     }
   });
 });
@@ -438,8 +440,9 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     const mergedConfig = await readTestTsConfig<ProjectConfig>(secondResult.configPath);
 
     // Merged config should contain agents from BOTH inits (union)
+    const mergedAgentNames = mergedConfig.agents.map((a) => a.name);
     for (const agent of firstAgents) {
-      expect(mergedConfig.agents).toContain(agent);
+      expect(mergedAgentNames).toContain(agent.name);
     }
 
     // Config was merged
@@ -578,8 +581,8 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     }
 
     // Agents should include both web and api domain agents
-    const hasWebAgent = config.agents.some((a: string) => a.startsWith("web-"));
-    const hasApiAgent = config.agents.some((a: string) => a.startsWith("api-"));
+    const hasWebAgent = config.agents.some((a) => a.name.startsWith("web-"));
+    const hasApiAgent = config.agents.some((a) => a.name.startsWith("api-"));
     expect(hasWebAgent).toBe(true);
     expect(hasApiAgent).toBe(true);
 
@@ -588,8 +591,9 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     if (config.stack) {
       // Verify stack structure: each agent has category-keyed entries
       // with skill assignments that are valid skill IDs from config.skills
+      const stackAgentNames = config.agents.map((a) => a.name);
       for (const [agentId, agentConfig] of Object.entries(config.stack)) {
-        expect(config.agents).toContain(agentId);
+        expect(stackAgentNames).toContain(agentId);
         const agentSkillIds = extractSkillIdsFromStack(agentConfig);
         for (const skillId of agentSkillIds) {
           // Every skill in the stack must be in config.skills
@@ -708,8 +712,9 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     expect(config.stack).toBeDefined();
 
     // Every agent in stack must be in config.agents
+    const agentNames = config.agents.map((a) => a.name);
     for (const agentId of Object.keys(config.stack!)) {
-      expect(config.agents).toContain(agentId);
+      expect(agentNames).toContain(agentId);
     }
 
     // Every skill in stack must be in config.skills
@@ -857,8 +862,9 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
 
     // Stack should be loadable
     if (config.stack) {
+      const roundTripAgentNames = config.agents.map((a) => a.name);
       for (const [agentId] of Object.entries(config.stack)) {
-        expect(config.agents).toContain(agentId);
+        expect(roundTripAgentNames).toContain(agentId);
       }
     }
   });
