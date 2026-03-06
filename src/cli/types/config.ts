@@ -10,6 +10,12 @@ export type SkillConfig = {
   source: string; // "local" | marketplace name (e.g., "agents-inc")
 };
 
+/** Per-agent configuration with scope (mirrors SkillConfig pattern) */
+export type AgentScopeConfig = {
+  name: AgentName;
+  scope: "project" | "global";
+};
+
 /** Agent configuration for compilation - contains skills for a specific agent */
 export type CompileAgentConfig = {
   skills?: SkillReference[];
@@ -50,7 +56,7 @@ export type ProjectConfig = {
 
   description?: string;
 
-  agents: AgentName[];
+  agents: AgentScopeConfig[];
 
   skills: SkillConfig[];
 

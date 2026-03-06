@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { buildAgentConfigs } from "./__tests__/helpers";
 import {
   agentYamlConfigSchema,
   brandingConfigSchema,
@@ -152,7 +153,7 @@ describe("projectConfigLoaderSchema", () => {
     it("should accept bare string skill IDs (format 1)", () => {
       const config = {
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         stack: {
           "web-developer": {
             "web-framework": "web-framework-react",
@@ -168,7 +169,7 @@ describe("projectConfigLoaderSchema", () => {
     it("should accept array of objects with preloaded (format 2)", () => {
       const config = {
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         stack: {
           "web-developer": {
             "shared-methodology": [
@@ -186,7 +187,7 @@ describe("projectConfigLoaderSchema", () => {
     it("should accept single object with preloaded (format 3)", () => {
       const config = {
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         stack: {
           "web-developer": {
             "web-framework": { id: "web-framework-react", preloaded: true },
@@ -201,7 +202,7 @@ describe("projectConfigLoaderSchema", () => {
     it("should accept mixed formats within the same agent config", () => {
       const config = {
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         stack: {
           "web-developer": {
             // Format 1: bare string
@@ -224,7 +225,7 @@ describe("projectConfigLoaderSchema", () => {
     it("should accept mixed formats across multiple agents", () => {
       const config = {
         name: "test-project",
-        agents: ["web-developer", "api-developer"],
+        agents: buildAgentConfigs(["web-developer", "api-developer"]),
         stack: {
           "web-developer": {
             "web-framework": "web-framework-react",
@@ -243,7 +244,7 @@ describe("projectConfigLoaderSchema", () => {
     it("should reject invalid skill ID format in stack", () => {
       const config = {
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         stack: {
           "web-developer": {
             "web-framework": "invalid", // Not a valid SkillId (needs 3+ segments)
@@ -258,7 +259,7 @@ describe("projectConfigLoaderSchema", () => {
     it("should accept stack with no agents", () => {
       const config = {
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         stack: {},
       };
 
@@ -269,7 +270,7 @@ describe("projectConfigLoaderSchema", () => {
     it("should accept config without stack field", () => {
       const config = {
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
       };
 
@@ -280,7 +281,7 @@ describe("projectConfigLoaderSchema", () => {
     it("should accept array with mixed string and object elements", () => {
       const config = {
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         stack: {
           "web-developer": {
             "shared-methodology": [
@@ -798,7 +799,7 @@ describe("dynamic schema extension", () => {
 
       const result = projectConfigLoaderSchema.safeParse({
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         skills: [
           { id: "web-framework-react", scope: "project", source: "local" },
           { id: "acme-pipeline-deploy", scope: "project", source: "local" },
@@ -812,7 +813,7 @@ describe("dynamic schema extension", () => {
 
       const result = projectConfigLoaderSchema.safeParse({
         name: "test-project",
-        agents: ["web-developer"],
+        agents: buildAgentConfigs(["web-developer"]),
         domains: ["web", "acme"],
       });
       expect(result.success).toBe(true);

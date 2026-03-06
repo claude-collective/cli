@@ -484,8 +484,15 @@ export const projectConfigLoaderSchema = z
     /** Project/plugin name in kebab-case */
     name: z.string().optional(),
     description: z.string().optional(),
-    /** Agent IDs to compile (e.g., ["web-developer", "api-developer"]) */
-    agents: z.array(z.string()).optional(),
+    /** Per-agent configuration with scope (e.g., [{ name: "web-developer", scope: "project" }]) */
+    agents: z
+      .array(
+        z.object({
+          name: z.string(),
+          scope: z.enum(["project", "global"]),
+        }),
+      )
+      .optional(),
     /** Per-skill configuration with scope and source */
     skills: z
       .array(
