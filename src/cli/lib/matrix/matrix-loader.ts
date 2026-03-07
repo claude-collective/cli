@@ -12,8 +12,6 @@ import {
   skillRulesFileSchema,
   formatZodErrors,
   categoryPathSchema,
-  skillDisplayNameSchema,
-  skillIdSchema,
   extensibleDomainSchema,
   DOMAIN_VALUES,
 } from "../schemas";
@@ -22,33 +20,36 @@ import type {
   CategoryDefinition,
   CategoryMap,
   CategoryPath,
+  CompatibilityGroup,
   ConflictRule,
   DiscourageRule,
   Domain,
   ExtractedSkillMetadata,
   MergedSkillsMatrix,
-  PerSkillRules,
-  RecommendRule,
+  Recommendation,
   RelationshipDefinitions,
   RequireRule,
   ResolvedSkill,
   ResolvedStack,
+  SetupPair,
   SkillAlternative,
-  SkillDisplayName,
   SkillId,
   SkillRelation,
   SkillRequirement,
   SkillRulesConfig,
+  SkillSlug,
+  SkillSlugMap,
   Category,
 } from "../../types";
 
-/** Resolves a raw ID (which may be a display name or alias) to a canonical SkillId */
+/** Resolves a raw ID (which may be a slug or alias) to a canonical SkillId */
 type ResolveId = (id: SkillId, context?: string) => SkillId;
 
 const rawMetadataSchema = z.object({
   category: categoryPathSchema,
   author: z.string(),
   displayName: z.string().optional(),
+  slug: z.string() as z.ZodType<SkillSlug>,
   cliDescription: z.string().optional(),
   usageGuidance: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -66,10 +67,8 @@ const AUTO_SYNTH_ORDER = 999;
  */
 export function synthesizeCategory(
   categoryPath: CategoryPath,
-  skillDomain: Domain,
+  domain: Domain,
 ): CategoryDefinition {
-  const domain = skillDomain;
-
   const displayName = categoryPath
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -117,9 +116,7 @@ export async function loadSkillCategories(configPath: string): Promise<CategoryM
 export async function loadSkillRules(configPath: string): Promise<SkillRulesConfig> {
   const data = await loadConfig<{
     version: string;
-    aliases?: Record<string, string>;
     relationships?: SkillRulesConfig["relationships"];
-    "per-skill"?: Record<string, unknown>;
   }>(configPath, skillRulesFileSchema);
 
   if (!data) {
@@ -128,7 +125,6 @@ export async function loadSkillRules(configPath: string): Promise<SkillRulesConf
 
   const config: SkillRulesConfig = {
     version: data.version,
-    aliases: data.aliases ?? {},
     relationships: data.relationships ?? {
       conflicts: [],
       discourages: [],
@@ -136,7 +132,6 @@ export async function loadSkillRules(configPath: string): Promise<SkillRulesConf
       requires: [],
       alternatives: [],
     },
-    perSkill: data["per-skill"] ?? {},
   };
 
   verbose(`Loaded skill rules: ${configPath}`);
@@ -211,6 +206,8 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
       tags: metadata.tags ?? [],
       path: `skills/${skillDir}/`,
       domain: metadata.domain,
+      displayName: metadata.displayName,
+      slug: metadata.slug,
       ...(metadata.custom === true ? { custom: true } : {}),
     };
 
@@ -221,23 +218,29 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
   return skills;
 }
 
-function buildReverseDisplayNames(
-  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
-): Partial<Record<SkillId, SkillDisplayName>> {
-  const reverse: Partial<Record<SkillId, SkillDisplayName>> = {};
-  // Object.entries returns [string, SkillId | undefined][] — validate with Zod at boundary
-  for (const [name, fullId] of Object.entries(displayNameToId)) {
-    const nameResult = skillDisplayNameSchema.safeParse(name);
-    const idResult = skillIdSchema.safeParse(fullId);
-    if (nameResult.success && idResult.success) {
-      reverse[idResult.data] = nameResult.data;
-    } else {
+/**
+ * Builds a bidirectional slug <-> ID map from extracted skill metadata.
+ * Warns on duplicate slugs (first one wins).
+ */
+function buildSlugMap(skills: ExtractedSkillMetadata[]): SkillSlugMap {
+  // Boundary cast: empty objects are populated in the loop below
+  const slugToId = {} as Record<SkillSlug, SkillId>;
+  const idToSlug = {} as Record<SkillId, SkillSlug>;
+
+  for (const skill of skills) {
+    const existingId = slugToId[skill.slug];
+    if (existingId) {
       warn(
-        `Invalid skill alias mapping: '${name}' -> '${fullId}'${!nameResult.success ? ` (invalid display name: ${nameResult.error.message})` : ""}${!idResult.success ? ` (invalid skill ID: ${idResult.error.message})` : ""}`,
+        `Duplicate slug '${skill.slug}': already mapped to '${existingId}', ignoring '${skill.id}'`,
       );
+      continue;
     }
+
+    slugToId[skill.slug] = skill.id;
+    idToSlug[skill.id] = skill.slug;
   }
-  return reverse;
+
+  return { slugToId, idToSlug };
 }
 
 function buildDirectoryPathToIdMap(skills: ExtractedSkillMetadata[]): Record<string, SkillId> {
@@ -252,14 +255,14 @@ function buildDirectoryPathToIdMap(skills: ExtractedSkillMetadata[]): Record<str
 
 function resolveToCanonicalId(
   nameOrId: SkillId,
-  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
+  slugToId: SkillSlugMap["slugToId"],
   directoryPathToId: Record<string, SkillId> = {},
   context?: string,
 ): SkillId {
-  // Boundary cast: nameOrId may contain a display name from YAML — narrow to SkillDisplayName for lookup
-  const displayNameResult = displayNameToId[nameOrId as unknown as SkillDisplayName];
-  if (displayNameResult) {
-    return displayNameResult;
+  // Boundary cast: nameOrId may contain a slug from YAML — narrow to SkillSlug for lookup
+  const slugResult = slugToId[nameOrId as unknown as SkillSlug];
+  if (slugResult) {
+    return slugResult;
   }
   if (directoryPathToId[nameOrId]) {
     return directoryPathToId[nameOrId];
@@ -276,23 +279,19 @@ function resolveToCanonicalId(
  *
  * This is the core resolution step that combines:
  * - Category definitions from skill-categories.ts
- * - Display name aliases and relationship rules from skill-rules.ts
+ * - Slug-based alias maps derived from metadata
+ * - Relationship rules from skill-rules.ts
  * - Extracted skill metadata (from scanning skill directories)
- * - Per-skill relationship rules from skill-rules.ts
  *
- * Each skill's raw relationship references (which may use display names, directory paths,
- * or short aliases) are resolved to canonical SkillIds. The result is the complete
- * data structure consumed by the wizard UI and validation logic.
+ * Each skill's raw relationship references are resolved to canonical SkillIds.
+ * The result is the complete data structure consumed by the wizard UI and validation logic.
  */
 export async function mergeMatrixWithSkills(
   categories: CategoryMap,
   relationships: RelationshipDefinitions,
-  aliases: Partial<Record<SkillDisplayName, SkillId>>,
   skills: ExtractedSkillMetadata[],
-  perSkillRules?: Partial<Record<SkillDisplayName, PerSkillRules>>,
 ): Promise<MergedSkillsMatrix> {
-  const displayNameToId = aliases;
-  const displayNames = buildReverseDisplayNames(displayNameToId);
+  const slugMap = buildSlugMap(skills);
   const directoryPathToId = buildDirectoryPathToIdMap(skills);
   const resolvedSkills: Partial<Record<SkillId, ResolvedSkill>> = {};
 
@@ -301,10 +300,8 @@ export async function mergeMatrixWithSkills(
       skill,
       categories,
       relationships,
-      displayNameToId,
-      displayNames,
+      slugMap,
       directoryPathToId,
-      perSkillRules,
     );
     resolvedSkills[skill.id] = resolved;
   }
@@ -327,29 +324,20 @@ export async function mergeMatrixWithSkills(
     categories: synthesizedCategories,
     skills: resolvedSkills,
     suggestedStacks,
-    displayNameToId,
-    displayNames,
+    slugMap,
     generatedAt: new Date().toISOString(),
   };
 
   return merged;
 }
 
-/** Resolves conflicts from skill metadata and matrix conflict rules */
+/** Resolves conflicts from centralized conflict rules */
 function resolveConflicts(
   skillId: SkillId,
-  metadataConflicts: SkillId[],
   conflictRules: ConflictRule[],
   resolve: ResolveId,
 ): SkillRelation[] {
   const conflicts: SkillRelation[] = [];
-
-  for (const conflictRef of metadataConflicts) {
-    conflicts.push({
-      skillId: resolve(conflictRef, "conflictsWith"),
-      reason: "Defined in skill metadata",
-    });
-  }
 
   for (const rule of conflictRules) {
     const resolved = rule.skills.map((id) => resolve(id, "conflicts"));
@@ -364,51 +352,66 @@ function resolveConflicts(
   return conflicts;
 }
 
-/** Resolves recommendations from skill compatibleWith and matrix recommend rules */
-function resolveRecommends(
+/** Resolves compatibility from CompatibilityGroup[] — collects all co-members across all groups */
+function resolveCompatibilityGroups(
   skillId: SkillId,
-  compatibleWith: SkillId[],
-  recommendRules: RecommendRule[],
+  compatibilityGroups: CompatibilityGroup[],
   resolve: ResolveId,
-): SkillRelation[] {
-  const recommends: SkillRelation[] = [];
+): SkillId[] {
+  const compatible = new Set<SkillId>();
 
-  for (const compatRef of compatibleWith) {
-    recommends.push({
-      skillId: resolve(compatRef, "compatibleWith"),
-      reason: "Compatible with this skill",
-    });
-  }
-
-  for (const rule of recommendRules) {
-    if (resolve(rule.when, "recommends.when") !== skillId) continue;
-    for (const suggested of rule.suggest) {
-      const canonicalId = resolve(suggested, "recommends.suggest");
-      if (!recommends.some((r) => r.skillId === canonicalId)) {
-        recommends.push({ skillId: canonicalId, reason: rule.reason });
+  for (const group of compatibilityGroups) {
+    const resolved = group.skills.map((id) => resolve(id, "compatibleWith"));
+    if (!resolved.includes(skillId)) continue;
+    for (const other of resolved) {
+      if (other !== skillId) {
+        compatible.add(other);
       }
     }
   }
 
-  return recommends;
+  return [...compatible];
 }
 
-/** Resolves requirements from skill metadata and matrix require rules */
+/** Resolves setup pairs — returns requiresSetup and providesSetupFor for a skill */
+function resolveSetupPairs(
+  skillId: SkillId,
+  setupPairs: SetupPair[],
+  resolve: ResolveId,
+): { requiresSetup: SkillId[]; providesSetupFor: SkillId[] } {
+  const requiresSetup = new Set<SkillId>();
+  const providesSetupFor = new Set<SkillId>();
+
+  for (const pair of setupPairs) {
+    const setupId = resolve(pair.setup, "setupPairs.setup");
+    const configuresIds = pair.configures.map((id) => resolve(id, "setupPairs.configures"));
+
+    if (setupId === skillId) {
+      // This skill is a setup skill — it provides setup for the configured skills
+      for (const configuredId of configuresIds) {
+        providesSetupFor.add(configuredId);
+      }
+    }
+
+    if (configuresIds.includes(skillId)) {
+      // This skill requires the setup skill
+      requiresSetup.add(setupId);
+    }
+  }
+
+  return {
+    requiresSetup: [...requiresSetup],
+    providesSetupFor: [...providesSetupFor],
+  };
+}
+
+/** Resolves requirements from centralized require rules */
 function resolveRequirements(
   skillId: SkillId,
-  metadataRequires: SkillId[],
   requireRules: RequireRule[],
   resolve: ResolveId,
 ): SkillRequirement[] {
   const requires: SkillRequirement[] = [];
-
-  if (metadataRequires.length > 0) {
-    requires.push({
-      skillIds: metadataRequires.map((id) => resolve(id, "requires")),
-      needsAny: false,
-      reason: "Defined in skill metadata",
-    });
-  }
 
   for (const rule of requireRules) {
     if (resolve(rule.skill, "requires.skill") !== skillId) continue;
@@ -469,26 +472,35 @@ function buildResolvedSkill(
   skill: ExtractedSkillMetadata,
   _categories: CategoryMap,
   relationships: RelationshipDefinitions,
-  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
-  displayNames: Partial<Record<SkillId, SkillDisplayName>>,
+  slugMap: SkillSlugMap,
   directoryPathToId: Record<string, SkillId>,
-  perSkillRules?: Partial<Record<SkillDisplayName, PerSkillRules>>,
 ): ResolvedSkill {
   const resolve: ResolveId = (id, context) =>
     resolveToCanonicalId(
       id,
-      displayNameToId,
+      slugMap.slugToId,
       directoryPathToId,
       context ? `${skill.id} ${context}` : undefined,
     );
 
-  // Look up per-skill rules by alias (display name)
-  const skillAlias = displayNames[skill.id];
-  const perSkill = skillAlias ? perSkillRules?.[skillAlias] : undefined;
+  const slug = skill.slug;
+
+  // Look up isRecommended/recommendedReason from flat recommends list
+  const recommendation = relationships.recommends.find(
+    (r) => r.skill === skill.id,
+  );
+
+  // Resolve setup pairs
+  const { requiresSetup, providesSetupFor } = resolveSetupPairs(
+    skill.id,
+    relationships.setupPairs ?? [],
+    resolve,
+  );
 
   return {
     id: skill.id,
-    displayName: displayNames[skill.id],
+    slug,
+    displayName: skill.displayName,
     description: skill.description,
     usageGuidance: skill.usageGuidance,
     category: skill.category,
@@ -496,29 +508,25 @@ function buildResolvedSkill(
     author: skill.author,
     conflictsWith: resolveConflicts(
       skill.id,
-      perSkill?.conflictsWith ?? [],
       relationships.conflicts,
       resolve,
     ),
-    recommends: resolveRecommends(
-      skill.id,
-      perSkill?.compatibleWith ?? [],
-      relationships.recommends,
-      resolve,
-    ),
+    isRecommended: recommendation != null,
+    recommendedReason: recommendation?.reason,
     requires: resolveRequirements(
       skill.id,
-      perSkill?.requires ?? [],
       relationships.requires,
       resolve,
     ),
     alternatives: resolveAlternatives(skill.id, relationships.alternatives, resolve),
     discourages: resolveDiscourages(skill.id, relationships.discourages, resolve),
-    compatibleWith: (perSkill?.compatibleWith ?? []).map((id) => resolve(id, "compatibleWith")),
-    requiresSetup: (perSkill?.requiresSetup ?? []).map((id) => resolve(id, "requiresSetup")),
-    providesSetupFor: (perSkill?.providesSetupFor ?? []).map((id) =>
-      resolve(id, "providesSetupFor"),
+    compatibleWith: resolveCompatibilityGroups(
+      skill.id,
+      relationships.compatibleWith ?? [],
+      resolve,
     ),
+    requiresSetup,
+    providesSetupFor,
     path: skill.path,
     ...(skill.custom === true ? { custom: true } : {}),
   };
@@ -550,8 +558,6 @@ export async function loadAndMergeSkillsMatrix(
   return mergeMatrixWithSkills(
     categories,
     rules.relationships,
-    rules.aliases,
     skills,
-    rules.perSkill,
   );
 }

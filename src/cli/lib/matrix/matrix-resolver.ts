@@ -4,7 +4,6 @@ import type {
   MergedSkillsMatrix,
   ResolvedSkill,
   SelectionValidation,
-  SkillDisplayName,
   SkillId,
   SkillOption,
   Category,
@@ -14,16 +13,16 @@ import type {
 import { typedEntries } from "../../utils/typed-object";
 
 function getLabel(
-  skill: { displayName?: string; id: string } | undefined,
+  skill: Pick<ResolvedSkill, "displayName" | "id"> | undefined,
   fallback: string,
 ): string {
   return skill?.displayName || skill?.id || fallback;
 }
 
-/** Resolves a display name or alias to its canonical SkillId, passing through if no mapping exists. */
-export function resolveAlias(aliasOrId: SkillId, matrix: MergedSkillsMatrix): SkillId {
-  // Boundary cast: aliasOrId may contain a display name — try display name lookup first, fall back to SkillId
-  return matrix.displayNameToId[aliasOrId as unknown as SkillDisplayName] || aliasOrId;
+/** Resolves a skill ID to its canonical SkillId. Throws if not found in the matrix. */
+export function resolveAlias(skillId: SkillId, matrix: MergedSkillsMatrix): SkillId {
+  if (matrix.skills[skillId]) return skillId;
+  throw new Error(`Unknown skill ID: '${skillId}' — not found in the matrix`);
 }
 
 type SelectionContext = {
@@ -60,7 +59,6 @@ export function getDependentSkills(
 ): SkillId[] {
   const fullId = resolveAlias(skillId, matrix);
   const skill = matrix.skills[fullId];
-
   if (!skill) return [];
 
   const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections, matrix);
@@ -69,7 +67,7 @@ export function getDependentSkills(
   for (const selectedId of resolvedSelections) {
     if (selectedId === fullId) continue;
 
-    const selectedSkill = matrix.skills[selectedId];
+    const selectedSkill: ResolvedSkill | undefined = matrix.skills[selectedId];
     if (!selectedSkill) continue;
 
     for (const requirement of selectedSkill.requires) {
@@ -112,10 +110,7 @@ export function isDiscouraged(
 ): boolean {
   const fullId = resolveAlias(skillId, matrix);
   const skill = matrix.skills[fullId];
-
-  if (!skill) {
-    return false;
-  }
+  if (!skill) return false;
 
   const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections, matrix);
 
@@ -179,10 +174,7 @@ export function getDiscourageReason(
 ): string | undefined {
   const fullId = resolveAlias(skillId, matrix);
   const skill = matrix.skills[fullId];
-
-  if (!skill) {
-    return undefined;
-  }
+  if (!skill) return undefined;
 
   const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections, matrix);
 
@@ -241,6 +233,15 @@ export function getDiscourageReason(
   return undefined;
 }
 
+/**
+ * Checks if a skill is recommended based on the flat recommends list
+ * and compatibility with current selections.
+ *
+ * A skill is recommended when:
+ * 1. It appears in the flat recommends list (isRecommended === true), AND
+ * 2. It is compatible with the user's current selections (shares a compatibleWith
+ *    group with at least one selected skill, or has no compatibility constraints)
+ */
 export function isRecommended(
   skillId: SkillId,
   currentSelections: SkillId[],
@@ -248,16 +249,27 @@ export function isRecommended(
 ): boolean {
   const fullId = resolveAlias(skillId, matrix);
   const skill = matrix.skills[fullId];
+  if (!skill) return false;
 
-  if (!skill) {
+  if (!skill.isRecommended) {
     return false;
+  }
+
+  // If no selections yet, isRecommended alone is sufficient
+  if (currentSelections.length === 0) {
+    return true;
   }
 
   const { resolvedSelections } = initializeSelectionContext(currentSelections, matrix);
 
+  // If the skill has no compatibility constraints, it's recommended unconditionally
+  if (skill.compatibleWith.length === 0) {
+    return true;
+  }
+
+  // Check if compatible with at least one selected skill
   for (const selectedId of resolvedSelections) {
-    const selectedSkill = matrix.skills[selectedId];
-    if (selectedSkill?.recommends.some((r) => r.skillId === fullId)) {
+    if (skill.compatibleWith.includes(selectedId)) {
       return true;
     }
   }
@@ -265,31 +277,17 @@ export function isRecommended(
   return false;
 }
 
+/** Returns the reason from the flat recommends entry */
 export function getRecommendReason(
   skillId: SkillId,
-  currentSelections: SkillId[],
+  _currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
   const fullId = resolveAlias(skillId, matrix);
   const skill = matrix.skills[fullId];
+  if (!skill) return undefined;
 
-  if (!skill) {
-    return undefined;
-  }
-
-  const { resolvedSelections } = initializeSelectionContext(currentSelections, matrix);
-
-  for (const selectedId of resolvedSelections) {
-    const selectedSkill = matrix.skills[selectedId];
-    if (selectedSkill) {
-      const recommendation = selectedSkill.recommends.find((r) => r.skillId === fullId);
-      if (recommendation) {
-        return `${recommendation.reason} (recommended by ${getLabel(selectedSkill, selectedId)})`;
-      }
-    }
-  }
-
-  return undefined;
+  return skill.recommendedReason;
 }
 
 type ValidationPartial = {
@@ -389,6 +387,10 @@ function validateExclusivity(
   return { errors, warnings: [] };
 }
 
+/**
+ * Validates recommendations: for each recommended skill that is NOT selected
+ * but IS compatible with current selections, produce a missing_recommendation warning.
+ */
 function validateRecommendations(
   resolvedSelections: SkillId[],
   selectedSet: Set<SkillId>,
@@ -396,27 +398,28 @@ function validateRecommendations(
 ): ValidationPartial {
   const warnings: ValidationWarning[] = [];
 
-  for (const skillId of resolvedSelections) {
-    const skill = matrix.skills[skillId];
+  // Iterate the flat recommends list from relationships
+  for (const [, skill] of typedEntries(matrix.skills)) {
     if (!skill) continue;
+    if (!skill.isRecommended) continue;
+    if (selectedSet.has(skill.id)) continue;
 
-    for (const recommendation of skill.recommends) {
-      if (!selectedSet.has(recommendation.skillId)) {
-        const recommendedSkill = matrix.skills[recommendation.skillId];
-        if (recommendedSkill) {
-          const hasConflict = recommendedSkill.conflictsWith.some((c) =>
-            selectedSet.has(c.skillId),
-          );
-          if (!hasConflict) {
-            warnings.push({
-              type: "missing_recommendation",
-              message: `${getLabel(skill, skillId)} recommends ${getLabel(recommendedSkill, recommendation.skillId)}: ${recommendation.reason}`,
-              skills: [skillId, recommendation.skillId],
-            });
-          }
-        }
-      }
-    }
+    // Check if compatible with current selections
+    const isCompatible =
+      skill.compatibleWith.length === 0 ||
+      resolvedSelections.some((selectedId) => skill.compatibleWith.includes(selectedId));
+
+    if (!isCompatible) continue;
+
+    // Check no conflict with current selections
+    const hasConflict = skill.conflictsWith.some((c) => selectedSet.has(c.skillId));
+    if (hasConflict) continue;
+
+    warnings.push({
+      type: "missing_recommendation",
+      message: `${getLabel(skill, skill.id)} is recommended: ${skill.recommendedReason ?? ""}`,
+      skills: [skill.id],
+    });
   }
 
   return { errors: [], warnings };
@@ -521,6 +524,7 @@ export function getAvailableSkills(
 
     skillOptions.push({
       id: skill.id,
+      slug: skill.slug,
       displayName: skill.displayName,
       description: skill.description,
       discouraged,
