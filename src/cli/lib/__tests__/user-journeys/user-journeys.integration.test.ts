@@ -5,10 +5,8 @@ import {
   createTestSource,
   cleanupTestSource,
   type TestDirs,
-  DEFAULT_TEST_SKILLS,
-  METHODOLOGY_TEST_SKILLS,
-  EXTRA_DOMAIN_TEST_SKILLS,
 } from "../fixtures/create-test-source";
+import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents";
 import { useWizardStore } from "../../../stores/wizard-store";
@@ -31,12 +29,6 @@ import {
 // ── Constants ───────────────────────────────────────────────────────────────────
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
-
-const ALL_TEST_SKILLS = [
-  ...DEFAULT_TEST_SKILLS,
-  ...EXTRA_DOMAIN_TEST_SKILLS,
-  ...METHODOLOGY_TEST_SKILLS,
-];
 
 // ── Journey 1: Init -> Edit -> Recompile (Add Skills) ────────────────────────
 
@@ -839,7 +831,7 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
-    const installResult = await installLocal({
+    await installLocal({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,

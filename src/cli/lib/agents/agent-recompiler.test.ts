@@ -9,11 +9,11 @@ import {
   writeTestSkill,
   fileExists,
 } from "../__tests__/helpers";
-import type { TestDirs } from "../__tests__/helpers";
+import type { PluginTestDirs } from "../__tests__/helpers";
 import type { AgentName, SkillId } from "../../types";
 
 describe("agent-recompiler", () => {
-  let testDirs: TestDirs;
+  let testDirs: PluginTestDirs;
 
   beforeEach(async () => {
     testDirs = await createTestDirs("cc-recompiler-test-");
@@ -35,7 +35,10 @@ describe("agent-recompiler", () => {
     });
 
     it("recompiles a single agent specified in options", async () => {
-      await writeTestSkill(testDirs.skillsDir, "test-skill");
+      await writeTestSkill(testDirs.skillsDir, "web-testing-vitest", {
+        slug: "vitest",
+        category: "web-testing",
+      });
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
@@ -94,8 +97,14 @@ describe("agent-recompiler", () => {
     });
 
     it("compiles multiple agents", async () => {
-      await writeTestSkill(testDirs.skillsDir, "react");
-      await writeTestSkill(testDirs.skillsDir, "hono");
+      await writeTestSkill(testDirs.skillsDir, "web-framework-react", {
+        slug: "react",
+        category: "web-framework",
+      });
+      await writeTestSkill(testDirs.skillsDir, "api-framework-hono", {
+        slug: "hono",
+        category: "api-api",
+      });
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
@@ -130,7 +139,10 @@ describe("agent-recompiler", () => {
     });
 
     it("generates valid agent markdown with frontmatter", async () => {
-      await writeTestSkill(testDirs.skillsDir, "test-skill");
+      await writeTestSkill(testDirs.skillsDir, "web-testing-vitest", {
+        slug: "vitest",
+        category: "web-testing",
+      });
 
       await recompileAgents({
         pluginDir: testDirs.pluginDir,

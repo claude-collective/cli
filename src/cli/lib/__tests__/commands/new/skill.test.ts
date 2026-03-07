@@ -465,7 +465,7 @@ describe("new:skill command", () => {
       expect(categoriesContent).toContain('"domain": "web"');
 
       const rulesContent = await readFile(rulesPath, "utf-8");
-      expect(rulesContent).toContain('"my-market-skill"');
+      expect(rulesContent).toContain('"relationships"');
     });
 
     it("should NOT create config files for local skills", async () => {
@@ -528,11 +528,11 @@ describe("new:skill command", () => {
       expect(categoriesContent).toContain('"api-database"');
 
       const rulesContent = await readFile(path.join(projectDir, SKILL_RULES_PATH), "utf-8");
-      expect(rulesContent).toContain('"first-skill"');
-      expect(rulesContent).toContain('"second-skill"');
+      expect(rulesContent).toContain('"version"');
+      expect(rulesContent).toContain('"relationships"');
     });
 
-    it("should not duplicate existing category or alias entries", async () => {
+    it("should not duplicate existing category entries", async () => {
       const marketplaceJsonDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
       await mkdir(marketplaceJsonDir, { recursive: true });
       await writeFile(path.join(marketplaceJsonDir, "marketplace.json"), '{"name":"test"}');
@@ -621,23 +621,22 @@ describe("generateSkillCategoriesTs", () => {
 
 describe("generateSkillRulesTs", () => {
   it("should contain version field", () => {
-    const content = generateSkillRulesTs("my-skill");
+    const content = generateSkillRulesTs();
     expect(content).toContain('"version": "1.0.0"');
   });
 
-  it("should contain aliases section with skill entry", () => {
-    const content = generateSkillRulesTs("my-skill");
-    expect(content).toContain('"aliases"');
-    expect(content).toContain('"my-skill": "my-skill"');
+  it("should contain relationships section", () => {
+    const content = generateSkillRulesTs();
+    expect(content).toContain('"relationships"');
   });
 
-  it("should include comment explaining alias format", () => {
-    const content = generateSkillRulesTs("my-skill");
-    expect(content).toContain("// Short aliases mapping to canonical skill IDs");
+  it("should include comment explaining rules format", () => {
+    const content = generateSkillRulesTs();
+    expect(content).toContain("// Skill rules configuration");
   });
 
   it("should be valid TypeScript with export default", () => {
-    const content = generateSkillRulesTs("my-skill");
+    const content = generateSkillRulesTs();
     expect(content).toContain("export default");
   });
 });

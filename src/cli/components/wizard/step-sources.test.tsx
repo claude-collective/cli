@@ -175,9 +175,9 @@ describe("StepSources component", () => {
       const output = lastFrame();
       // Should show the grid view with skill names
       expect(output).toContain("Customize skill sources");
-      // Should show the selected technologies
-      expect(output).toContain("react");
-      expect(output).toContain("zustand");
+      // Should show the selected technologies (title-cased display names)
+      expect(output).toContain("React");
+      expect(output).toContain("Zustand");
     });
   });
 
@@ -195,8 +195,8 @@ describe("StepSources component", () => {
       await delay(INPUT_DELAY_MS);
 
       const output = lastFrame();
-      expect(output).toContain("react");
-      expect(output).toContain("zustand");
+      expect(output).toContain("React");
+      expect(output).toContain("Zustand");
       expect(output).toContain("Agents Inc");
     });
 

@@ -14,6 +14,7 @@ import { createMockSkillAssignment } from "../../src/cli/lib/__tests__/helpers.j
 type E2ESkill = {
   category: CategoryPath;
   id: SkillId;
+  slug: string;
   description: string;
   domain: string;
 };
@@ -22,60 +23,70 @@ const E2E_SKILLS: E2ESkill[] = [
   {
     category: "web-framework",
     id: "web-framework-react",
+    slug: "react",
     description: "React framework for building user interfaces",
     domain: "web",
   },
   {
     category: "web-testing",
     id: "web-testing-vitest",
+    slug: "vitest",
     description: "Next generation testing framework",
     domain: "web",
   },
   {
     category: "web-client-state",
     id: "web-state-zustand",
+    slug: "zustand",
     description: "Bear necessities state management",
     domain: "web",
   },
   {
     category: "api-api",
     id: "api-framework-hono",
+    slug: "hono",
     description: "Lightweight web framework for the edge",
     domain: "api",
   },
   {
     category: "shared-methodology",
     id: "meta-methodology-anti-over-engineering",
+    slug: "anti-over-engineering",
     description: "Surgical implementation, not architectural innovation",
     domain: "shared",
   },
   {
     category: "shared-methodology",
     id: "meta-methodology-context-management",
+    slug: "context-management",
     description: "Maintain project continuity across sessions",
     domain: "shared",
   },
   {
     category: "shared-methodology",
     id: "meta-methodology-improvement-protocol",
+    slug: "improvement-protocol",
     description: "Evidence-based self-improvement",
     domain: "shared",
   },
   {
     category: "shared-methodology",
     id: "meta-methodology-investigation-requirements",
+    slug: "investigation-requirements",
     description: "Never speculate - read actual code first",
     domain: "shared",
   },
   {
     category: "shared-methodology",
     id: "meta-methodology-success-criteria",
+    slug: "success-criteria",
     description: "Explicit, measurable criteria defining done",
     domain: "shared",
   },
   {
     category: "shared-methodology",
     id: "meta-methodology-write-verification",
+    slug: "write-verification",
     description: "Verify work was actually saved",
     domain: "shared",
   },
@@ -167,7 +178,7 @@ async function writeSkills(sourceDir: string, skills: E2ESkill[]): Promise<void>
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@agents-inc"\ncategory: ${skill.category}\ndomain: ${skill.domain}\ntags: []\ndisplayName: ${skill.id}\ncontentHash: "e2e-hash"\n`,
+      `author: "@agents-inc"\ncategory: ${skill.category}\ndomain: ${skill.domain}\nslug: ${skill.slug}\ntags: []\ndisplayName: ${skill.id}\ncontentHash: "e2e-hash"\n`,
     );
   }
 }

@@ -59,7 +59,7 @@ describe("local-skill-loader", () => {
 
     it("discovers skills regardless of name prefix", async () => {
       await writeLocalSkill("my-normal-skill", {
-        metadata: `displayName: My Normal Skill\ncliDescription: A normal skill\ndomain: web`,
+        metadata: `displayName: My Normal Skill\nslug: my-normal-skill\ncliDescription: A normal skill\ndomain: web\ncategory: web-framework`,
         skillMd: `---\nname: my-normal-skill (@local)\ndescription: A normal skill\n---\nContent`,
       });
 
@@ -68,7 +68,7 @@ describe("local-skill-loader", () => {
       expect(result).not.toBeNull();
       expect(result?.skills).toHaveLength(1);
       expect(result?.skills[0].id).toBe("my-normal-skill (@local)");
-      expect(result?.skills[0].category).toBe("dummy-category");
+      expect(result?.skills[0].category).toBe("web-framework");
       expect(result?.skills[0].author).toBe("@dummy-author");
       expect(result?.skills[0].local).toBe(true);
       expect(result?.skills[0].localPath).toBe(`${LOCAL_SKILLS_PATH}/my-normal-skill/`);
@@ -95,15 +95,14 @@ describe("local-skill-loader", () => {
       expect(result?.skills).toEqual([]);
     });
 
-    it("throws when metadata.yaml is missing displayName", async () => {
+    it("skips skill when metadata.yaml is missing displayName", async () => {
       await writeLocalSkill("no-cli-name", {
-        metadata: `cliDescription: Just a description\ndomain: web`,
+        metadata: `slug: no-cli-name\ncliDescription: Just a description\ncategory: web-framework\ndomain: web`,
         skillMd: `---\nname: no-cli-name (@local)\ndescription: Missing displayName\n---\nContent`,
       });
 
-      await expect(discoverLocalSkills(tempDir)).rejects.toThrow(
-        /missing required 'displayName' field/,
-      );
+      const result = await discoverLocalSkills(tempDir);
+      expect(result?.skills).toEqual([]);
     });
 
     it("skips skill with invalid SKILL.md frontmatter", async () => {
@@ -120,7 +119,7 @@ describe("local-skill-loader", () => {
 
     it("uses cliDescription from metadata.yaml when provided", async () => {
       await writeLocalSkill("with-desc", {
-        metadata: `displayName: Desc Skill\ncliDescription: Custom CLI description\ndomain: web`,
+        metadata: `displayName: Desc Skill\nslug: desc-skill\ncliDescription: Custom CLI description\ndomain: web\ncategory: web-framework`,
         skillMd: `---\nname: desc-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
       });
 
@@ -131,7 +130,7 @@ describe("local-skill-loader", () => {
 
     it("falls back to frontmatter description when cliDescription not provided", async () => {
       await writeLocalSkill("fallback-desc", {
-        metadata: `displayName: Fallback Skill\ndomain: web`,
+        metadata: `displayName: Fallback Skill\nslug: fallback-skill\ndomain: web\ncategory: web-framework`,
         skillMd: `---\nname: fallback-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
       });
 
@@ -142,11 +141,11 @@ describe("local-skill-loader", () => {
 
     it("discovers multiple valid skills", async () => {
       await writeLocalSkill("skill-one", {
-        metadata: `displayName: Skill One\ndomain: web`,
+        metadata: `displayName: Skill One\nslug: skill-one\ndomain: web\ncategory: web-framework`,
         skillMd: `---\nname: skill-one (@local)\ndescription: First skill\n---\nContent`,
       });
       await writeLocalSkill("skill-two", {
-        metadata: `displayName: Skill Two\ndomain: api`,
+        metadata: `displayName: Skill Two\nslug: skill-two\ndomain: api\ncategory: api-api`,
         skillMd: `---\nname: skill-two (@local)\ndescription: Second skill\n---\nContent`,
       });
 
@@ -159,7 +158,7 @@ describe("local-skill-loader", () => {
 
     it("sets correct extracted metadata properties", async () => {
       await writeLocalSkill("full-skill", {
-        metadata: `displayName: Full Skill\ncliDescription: Complete skill for testing\ndomain: web`,
+        metadata: `displayName: Full Skill\nslug: full-skill\ncliDescription: Complete skill for testing\ndomain: web\ncategory: web-framework`,
         skillMd: `---\nname: full-skill (@local)\ndescription: Complete skill\n---\nContent`,
       });
 
@@ -172,7 +171,7 @@ describe("local-skill-loader", () => {
       expect(skill?.description).toBe("Complete skill for testing");
 
       // Catalog data
-      expect(skill?.category).toBe("dummy-category");
+      expect(skill?.category).toBe("web-framework");
       expect(skill?.author).toBe("@dummy-author");
       expect(skill?.tags).toEqual([]);
       expect(skill?.domain).toBe("web");
@@ -185,7 +184,7 @@ describe("local-skill-loader", () => {
 
     it("uses category from metadata.yaml when provided", async () => {
       await writeLocalSkill("categorized-skill", {
-        metadata: `displayName: Categorized Skill\ncategory: web-framework\ndomain: web`,
+        metadata: `displayName: Categorized Skill\nslug: categorized-skill\ncategory: web-framework\ndomain: web`,
         skillMd: `---\nname: categorized-skill (@local)\ndescription: A categorized skill\n---\nContent`,
       });
 
@@ -198,6 +197,7 @@ describe("local-skill-loader", () => {
       await writeLocalSkill("rich-skill", {
         metadata: [
           "displayName: Rich Skill",
+          "slug: rich-skill",
           "category: web-framework",
           "domain: web",
           "usageGuidance: When building components",
@@ -232,13 +232,13 @@ describe("local-skill-loader", () => {
     it("skips valid skills alongside invalid ones", async () => {
       // Valid skill
       await writeLocalSkill("valid-skill", {
-        metadata: "displayName: Valid Skill\ndomain: web",
+        metadata: "displayName: Valid Skill\nslug: valid-skill\ndomain: web\ncategory: web-framework",
         skillMd: `---\nname: valid-skill (@local)\ndescription: A valid skill\n---\nContent`,
       });
 
       // Invalid skill (no SKILL.md)
       await writeLocalSkill("invalid-skill", {
-        metadata: "displayName: Invalid Skill\ndomain: web",
+        metadata: "displayName: Invalid Skill\nslug: invalid-skill\ndomain: web",
         withSkillMd: false,
       });
 

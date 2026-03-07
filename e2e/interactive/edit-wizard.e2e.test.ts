@@ -114,8 +114,8 @@ describe("edit wizard", () => {
       await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
       const fullOutput = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       expect(fullOutput).toMatch(/Framework.*\(1 of 1\)/);
-      // The react skill tag should be visible
-      expect(fullOutput).toContain("react");
+      // The React skill tag should be visible
+      expect(fullOutput).toContain("React");
     });
 
     it("should reach the build step wizard view", async () => {
@@ -483,7 +483,7 @@ describe("edit wizard", () => {
       await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
       const outputAfter = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       expect(outputAfter).toMatch(/Framework.*\(1 of 1\)/);
-      expect(outputAfter).toContain("react");
+      expect(outputAfter).toContain("React");
     });
   });
 
@@ -510,8 +510,8 @@ describe("edit wizard", () => {
       // Testing category should show the pre-selected vitest skill
       expect(output).toMatch(/Testing.*\(1 selected\)/);
       // Both skill tags should be visible
-      expect(output).toContain("react");
-      expect(output).toContain("vitest");
+      expect(output).toContain("React");
+      expect(output).toContain("Vitest");
     });
   });
 
@@ -550,6 +550,7 @@ describe("edit wizard", () => {
       // The E2E source includes web-framework-react, web-testing-vitest, and
       // web-state-zustand — the build step should show skills from the custom source
       expect(output).toContain("Framework");
+      // E2E source uses skill IDs as displayNames (e.g. "web-framework-react")
       expect(output).toContain("react");
     });
   });
@@ -570,7 +571,7 @@ describe("edit wizard", () => {
       // shows all marketplace skills regardless.
       await createLocalSkill(projectDir, "web-testing-vitest", {
         description: "Next generation testing framework",
-        metadata: `author: "@test"\ndisplayName: web-testing-vitest\ncategory: web-testing\ncontentHash: "e2e-hash-vitest"\n`,
+        metadata: `author: "@test"\ndisplayName: web-testing-vitest\nslug: vitest\ncategory: web-testing\ndomain: web\ncontentHash: "e2e-hash-vitest"\n`,
       });
 
       session = new TerminalSession(["edit"], projectDir, {
@@ -582,10 +583,10 @@ describe("edit wizard", () => {
 
       const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // The original pre-selected skill should still be visible
-      expect(output).toContain("react");
+      expect(output).toContain("React");
       // The newly added skill tag should be visible in the build step.
-      // The marketplace matrix includes vitest as a selectable option.
-      expect(output).toContain("vitest");
+      // The marketplace matrix includes Vitest as a selectable option.
+      expect(output).toContain("Vitest");
     });
   });
 

@@ -6,11 +6,10 @@ import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 import {
   createTestSource,
   cleanupTestSource,
-  DEFAULT_TEST_SKILLS,
-  EXTRA_DOMAIN_TEST_SKILLS,
   type TestDirs,
   type TestStack,
 } from "../__tests__/fixtures/create-test-source";
+import { DEFAULT_TEST_SKILLS, EXTRA_DOMAIN_TEST_SKILLS } from "../__tests__/mock-data/mock-skills";
 import type { CategoryDefinition, ResolvedSkill } from "../../types";
 
 // ── Shared fixture ──────────────────────────────────────────────────────────────
@@ -174,7 +173,7 @@ describe("source-loader local skills integration", () => {
 
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      `displayName: My Local Skill\ncliDescription: A local skill\ndomain: web`,
+      `displayName: My Local Skill\nslug: my-local-skill\ncliDescription: A local skill\ndomain: web\ncategory: dummy-category\ncustom: true`,
     );
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
@@ -193,7 +192,6 @@ describe("source-loader local skills integration", () => {
     const localSkill = skills["my-local-skill"];
 
     expect(localSkill.id).toBe("my-local-skill");
-    // New local skill without a category in metadata.yaml gets default from LOCAL_DEFAULTS.CATEGORY
     expect(localSkill.category).toBe("dummy-category");
     expect(localSkill.author).toBe("@dummy-author");
     expect(localSkill.local).toBe(true);
@@ -206,7 +204,7 @@ describe("source-loader local skills integration", () => {
 
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      `displayName: Category Test\ndomain: web`,
+      `displayName: Category Test\nslug: cat-skill\ndomain: web\ncategory: dummy-category\ncustom: true`,
     );
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
@@ -244,14 +242,14 @@ describe("source-loader local skills integration", () => {
     const targetSkillId = "web-framework-react";
     const expectedCategory = "web-framework";
 
-    // Create a local skill with the SAME ID but no category in metadata
-    // (so local-skill-loader defaults category to "local" from LOCAL_CATEGORY constant)
+    // Create a local skill with the SAME ID but a different category in metadata
+    // (source-loader preserves the remote skill's category when overwriting)
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-override-category");
     await mkdir(skillsDir, { recursive: true });
 
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      `displayName: Override Test\ndomain: web`,
+      `displayName: Override Test\nslug: override-test\ndomain: web\ncategory: web-styling`,
     );
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
@@ -279,7 +277,7 @@ describe("source-loader local skills integration", () => {
 
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      `displayName: Preserve Test\ndomain: web`,
+      `displayName: Preserve Test\nslug: preserve-test\ndomain: web\ncategory: dummy-category\ncustom: true`,
     );
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
@@ -312,7 +310,7 @@ describe("source-loader local skills integration", () => {
     );
     await writeFile(
       path.join(skillDir, "metadata.yaml"),
-      'category: web-testing\nauthor: "@test"\ndisplayName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\ndomain: web\n',
+      'category: web-testing\nauthor: "@test"\ndisplayName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\ndomain: web\nslug: vitest\n',
     );
 
     // Load skills from source to verify marketplace skill is present
@@ -333,7 +331,7 @@ describe("source-loader local skills integration", () => {
 
     await writeFile(
       path.join(localSkillsDir, "metadata.yaml"),
-      `displayName: My Custom Vitest\ndomain: web`,
+      `displayName: My Custom Vitest\nslug: vitest\ndomain: web\ncategory: web-testing`,
     );
     await writeFile(
       path.join(localSkillsDir, "SKILL.md"),
@@ -391,7 +389,7 @@ describe("source-loader config-driven paths", () => {
     );
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      'category: web-framework\nauthor: "@test"\ndisplayName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\ndomain: web\n',
+      'category: web-framework\nauthor: "@test"\ndisplayName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\ndomain: web\nslug: react\n',
     );
 
     const result = await loadSkillsMatrixFromSource({

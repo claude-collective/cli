@@ -561,9 +561,9 @@ Content`);
       "/project",
     );
 
-    expect(result["good-skill"]).toBeDefined();
-    expect(result["good-skill"]?.id).toBe("good-skill");
-    expect(result["bad-skill"]).toBeUndefined();
+    expect(result["good-skill" as SkillId]).toBeDefined();
+    expect(result["good-skill" as SkillId]?.id).toBe("good-skill");
+    expect(result["bad-skill" as SkillId]).toBeUndefined();
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Could not load skill 'bad-skill'"));
   });
 });

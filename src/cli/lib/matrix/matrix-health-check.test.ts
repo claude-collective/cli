@@ -29,7 +29,8 @@ const missingDomainStylingCategory = createMockCategory("web-styling", "Styling"
 // ---------------------------------------------------------------------------
 
 const zustandSkill = createMockSkill("web-state-zustand", "web-client-state", {
-  recommends: [{ skillId: "web-framework-react", reason: "Works well with React" }],
+  isRecommended: true,
+  recommendedReason: "Works well with React",
 });
 
 const orphanSkill = createMockSkill("web-framework-react", "nonexistent-category" as Category);

@@ -9,11 +9,11 @@ import {
   readTestFile,
   writeTestFile,
   type TestDirs,
-  DEFAULT_TEST_SKILLS,
   DEFAULT_TEST_AGENTS,
 } from "../fixtures/create-test-source";
+import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { writeTestSkill, buildTestProjectConfig, createMockSkillDefinition } from "../helpers";
-import type { AgentName, SkillDefinition, SkillId } from "../../../types";
+import type { AgentName, SkillDefinitionMap } from "../../../types";
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
 const EDIT_MARKER = "EDITED-SKILL-CONTENT-MARKER";
@@ -92,7 +92,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     const pluginSkillsDir = path.join(pluginDir, "skills");
 
     // Step 1: Initial compile with skills provided directly
-    const reactSkillDef: Partial<Record<SkillId, SkillDefinition>> = {
+    const reactSkillDef: SkillDefinitionMap = {
       "web-framework-react": createMockSkillDefinition("web-framework-react", {
         description: "React framework",
       }),
@@ -169,7 +169,9 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     const agentPath = path.join(outputDir, "web-pm.md");
 
     // Step 2: Add a brand new skill to the plugin skills directory
-    await writeTestSkill(pluginSkillsDir, "new-testing-skill", {
+    await writeTestSkill(pluginSkillsDir, "web-testing-vitest", {
+      slug: "vitest",
+      category: "web-testing",
       description: "A newly added testing skill",
       skipMetadata: true,
     });
@@ -191,7 +193,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
   it("should handle removing skills from agents", async () => {
     // Step 1: Initial compile with explicit skills
-    const initialSkills: Partial<Record<SkillId, SkillDefinition>> = {
+    const initialSkills: SkillDefinitionMap = {
       "web-framework-react": createMockSkillDefinition("web-framework-react", {
         description: "React framework",
       }),
@@ -209,7 +211,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     expect(initialResult.compiled).toContain("web-pm");
 
     // Step 2: Recompile with fewer skills (simulating removal)
-    const reducedSkills: Partial<Record<SkillId, SkillDefinition>> = {
+    const reducedSkills: SkillDefinitionMap = {
       "web-framework-react": createMockSkillDefinition("web-framework-react", {
         description: "React framework",
       }),

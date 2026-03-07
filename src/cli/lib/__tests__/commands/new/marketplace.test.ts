@@ -238,8 +238,7 @@ describe("new:marketplace command", () => {
 
       const content = await readFile(rulesPath, "utf-8");
       expect(content).toContain('"version": "1.0.0"');
-      expect(content).toContain('"aliases"');
-      expect(content).toContain('"dummy-skill": "dummy-skill"');
+      expect(content).toContain('"relationships"');
     });
   });
 

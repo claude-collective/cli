@@ -17,21 +17,10 @@ import {
   directoryExists,
   readTestTsConfig,
 } from "../helpers";
-import { deriveInstallMode } from "../../installation/installation";
-import {
-  DEFAULT_TEST_SKILLS,
-  METHODOLOGY_TEST_SKILLS,
-  EXTRA_DOMAIN_TEST_SKILLS,
-} from "../fixtures/create-test-source";
+import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
 // ── Setup ───────────────────────────────────────────────────────────────────────
 
 // ── Constants ───────────────────────────────────────────────────────────────────
-
-const ALL_TEST_SKILLS = [
-  ...DEFAULT_TEST_SKILLS,
-  ...EXTRA_DOMAIN_TEST_SKILLS,
-  ...METHODOLOGY_TEST_SKILLS,
-];
 
 // ── Test Suites ─────────────────────────────────────────────────────────────────
 

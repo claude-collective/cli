@@ -5,7 +5,6 @@ import {
   createTestSource,
   cleanupTestSource,
   type TestDirs,
-  type TestSkill,
 } from "../__tests__/fixtures/create-test-source";
 import { installLocal } from "../installation/local-installer";
 import {
@@ -30,6 +29,13 @@ import {
   ACME_SOURCE,
   INTERNAL_SOURCE,
 } from "../__tests__/mock-data/mock-sources.js";
+import {
+  RESOLUTION_PIPELINE_SKILLS,
+  PUBLIC_SKILLS,
+  ACME_SKILLS,
+  INTERNAL_SKILLS,
+  type SkillEntry,
+} from "../__tests__/mock-data/mock-skills";
 import type {
   CategoryDefinition,
   CategoryPath,
@@ -48,44 +54,7 @@ const SELECTED_SKILL_COUNT = 10;
 
 // ── Test Data: 15 skills across 3 sources ──────────────────────────────────────
 
-type SkillEntry = { id: SkillId; category: CategoryPath; description: string };
 type TaggedSkillEntry = SkillEntry & { source: SkillSource };
-
-const PUBLIC_SKILLS: SkillEntry[] = [
-  { id: "web-framework-react", category: "web-framework", description: "React framework" },
-  { id: "web-framework-vue", category: "web-framework", description: "Vue.js framework" },
-  {
-    id: "web-state-zustand",
-    category: "web-client-state",
-    description: "Zustand state management",
-  },
-  { id: "web-styling-scss-modules", category: "web-styling", description: "SCSS Modules styling" },
-  { id: "web-testing-vitest", category: "web-testing", description: "Vitest testing framework" },
-];
-
-const ACME_SKILLS: SkillEntry[] = [
-  { id: "web-framework-react", category: "web-framework", description: "React (acme custom fork)" },
-  { id: "api-framework-hono", category: "api-api", description: "Hono web framework" },
-  { id: "api-database-drizzle", category: "api-database", description: "Drizzle ORM" },
-  { id: "api-security-auth-patterns", category: "shared-security", description: "Auth patterns" },
-  { id: "web-testing-vitest", category: "web-testing", description: "Vitest (acme custom)" },
-];
-
-const INTERNAL_SKILLS: SkillEntry[] = [
-  { id: "web-framework-react", category: "web-framework", description: "React (internal build)" },
-  { id: "web-animation-framer", category: "web-animation", description: "Framer Motion" },
-  {
-    id: "meta-methodology-investigation",
-    category: "shared-methodology",
-    description: "Investigation first",
-  },
-  { id: "web-accessibility-a11y", category: "web-accessibility", description: "Web accessibility" },
-  {
-    id: "api-monitoring-sentry",
-    category: "api-observability",
-    description: "Sentry error tracking",
-  },
-];
 
 // ── Category Fixtures ────────────────────────────────────────────────────────
 
@@ -258,23 +227,20 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   });
 
   describe("Scenario 3: Missing skill reference produces warning", () => {
-    it("should validate successfully when missing skill is selected (passes through)", () => {
+    it("should throw when missing skill is selected", () => {
       const matrix = buildMultiSourceMatrix();
 
       // Select a skill that doesn't exist in any source
       const selections: SkillId[] = ["web-framework-react", "web-nonexistent-skill"];
 
-      // validateSelection treats unknown skills as valid (skips them)
-      const validation = validateSelection(selections, matrix);
-      expect(validation.valid).toBe(true);
+      // resolveAlias throws for unknown skill IDs — invalid input is a bug
+      expect(() => validateSelection(selections, matrix)).toThrow("Unknown skill ID");
     });
 
-    it("should not resolve unknown skill ID through alias lookup", () => {
+    it("should throw for unknown skill ID through alias lookup", () => {
       const matrix = buildMultiSourceMatrix();
 
-      const resolved = resolveAlias("web-nonexistent-skill", matrix);
-      // Unknown skill returns as-is (not resolved to anything)
-      expect(resolved).toBe("web-nonexistent-skill");
+      expect(() => resolveAlias("web-nonexistent-skill", matrix)).toThrow("Unknown skill ID");
     });
 
     it("should not include missing skill in getAvailableSkills for any category", () => {
@@ -351,7 +317,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const validation = validateSelection(["api-database-drizzle"], matrix);
       expect(validation.valid).toBe(false);
       expect(validation.errors[0].type).toBe("missingRequirement");
-      expect(validation.errors[0].message).toContain("api-framework-hono");
+      expect(validation.errors[0].message).toContain("Hono");
     });
 
     it("should discourage dependent skill when requirement is not selected", () => {
@@ -373,7 +339,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       const reason = getDiscourageReason("api-security-auth-patterns", [], matrix);
       expect(reason).toContain("Auth patterns need a backend framework");
-      expect(reason).toContain("api-framework-hono");
+      expect(reason).toContain("Hono");
     });
 
     it("should not discourage dependent skill when requirement is selected", () => {
@@ -473,14 +439,10 @@ describe("Integration: Multi-Source Skill Resolution", () => {
     it("should validate 10 skills from 3 sources with recommendations", () => {
       const matrix = buildMultiSourceMatrix();
 
-      // zustand recommends react
-      const zustandSkill = matrix.skills["web-state-zustand"]!;
-      zustandSkill.recommends = [
-        {
-          skillId: "web-framework-react",
-          reason: "Zustand works best with React",
-        },
-      ];
+      // react is a recommended skill
+      const reactSkill = matrix.skills["web-framework-react"]!;
+      reactSkill.isRecommended = true;
+      reactSkill.recommendedReason = "Zustand works best with React";
 
       // Select zustand but not react -- should be valid with recommendation warning
       const validation = validateSelection(
@@ -489,19 +451,16 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       );
       expect(validation.valid).toBe(true);
       expect(validation.warnings.some((w) => w.type === "missing_recommendation")).toBe(true);
-      expect(validation.warnings[0].message).toContain("web-framework-react");
+      expect(validation.warnings[0].message).toContain("React");
     });
 
     it("should not warn about recommendation when recommended skill is selected", () => {
       const matrix = buildMultiSourceMatrix();
 
-      const zustandSkill = matrix.skills["web-state-zustand"]!;
-      zustandSkill.recommends = [
-        {
-          skillId: "web-framework-react",
-          reason: "Zustand works best with React",
-        },
-      ];
+      // react is a recommended skill
+      const reactSkill = matrix.skills["web-framework-react"]!;
+      reactSkill.isRecommended = true;
+      reactSkill.recommendedReason = "Zustand works best with React";
 
       // Select both zustand and react
       const validation = validateSelection(["web-state-zustand", "web-framework-react"], matrix);
@@ -532,78 +491,24 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 describe("Integration: Multi-Source Install Pipeline", () => {
   let dirs: TestDirs;
 
-  // Test skills that map to the multi-source scenario
-  const PIPELINE_SKILLS: TestSkill[] = [
-    {
-      id: "web-framework-react",
-      name: "web-framework-react",
-      description: "React framework (public source)",
-      category: "web-framework",
-      author: "@test",
-      domain: "web",
-      tags: ["react", "web"],
-      content: `---\nname: web-framework-react\ndescription: React framework\n---\n\n# React\n\nReact framework from public source.\n`,
-    },
-    {
-      id: "api-framework-hono",
-      name: "api-framework-hono",
-      description: "Hono framework (acme source)",
-      category: "api-api",
-      author: "@acme",
-      domain: "api",
-      tags: ["api", "hono"],
-      content: `---\nname: api-framework-hono\ndescription: Hono framework\n---\n\n# Hono\n\nHono framework from acme source.\n`,
-    },
-    {
-      id: "web-animation-framer",
-      name: "web-animation-framer",
-      description: "Framer Motion (internal source)",
-      category: "web-animation",
-      author: "@internal",
-      domain: "web",
-      tags: ["animation"],
-      content: `---\nname: web-animation-framer\ndescription: Framer Motion\n---\n\n# Framer Motion\n\nFramer Motion from internal source.\n`,
-    },
-    {
-      id: "api-database-drizzle",
-      name: "api-database-drizzle",
-      description: "Drizzle ORM (acme source)",
-      category: "api-database",
-      author: "@acme",
-      domain: "api",
-      tags: ["database"],
-      content: `---\nname: api-database-drizzle\ndescription: Drizzle ORM\n---\n\n# Drizzle ORM\n\nDrizzle from acme source.\n`,
-    },
-    {
-      id: "web-testing-vitest",
-      name: "web-testing-vitest",
-      description: "Vitest testing (public source)",
-      category: "web-testing",
-      author: "@test",
-      domain: "web",
-      tags: ["testing"],
-      content: `---\nname: web-testing-vitest\ndescription: Vitest testing\n---\n\n# Vitest\n\nVitest from public source.\n`,
-    },
-  ];
-
   const PIPELINE_SKILL_COUNT = 5;
 
   function buildPipelineMatrix(): MergedSkillsMatrix {
     return createMockMatrix(
-      mapToObj(PIPELINE_SKILLS, (skill) => [
-        skill.name,
-        createMockSkill(skill.name as SkillId, skill.category as CategoryPath, {
+      mapToObj(RESOLUTION_PIPELINE_SKILLS, (skill) => [
+        skill.id,
+        createMockSkill(skill.id, skill.category as CategoryPath, {
           description: skill.description,
           tags: skill.tags ?? [],
           author: skill.author,
-          path: `skills/${skill.category}/${skill.name}/`,
+          path: `skills/${skill.category}/${skill.id}/`,
         }),
       ]),
     );
   }
 
   beforeEach(async () => {
-    dirs = await createTestSource({ skills: PIPELINE_SKILLS });
+    dirs = await createTestSource({ skills: RESOLUTION_PIPELINE_SKILLS });
   });
 
   afterEach(async () => {
@@ -611,8 +516,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
   });
 
   it("should install skills from multiple sources and produce compiled agents", async () => {
-    // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
-    const selectedSkills = PIPELINE_SKILLS.map((s) => s.name) as unknown as SkillId[];
+    const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id);
 
     const matrix = buildPipelineMatrix();
 
@@ -653,8 +557,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
   });
 
   it("should preserve source selections through the config write", async () => {
-    // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
-    const selectedSkills = PIPELINE_SKILLS.map((s) => s.name) as unknown as SkillId[];
+    const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id);
 
     const matrix = buildPipelineMatrix();
 
@@ -681,17 +584,11 @@ describe("Integration: Multi-Source Install Pipeline", () => {
   });
 });
 
-describe("Integration: Display Name Alias Resolution in Multi-Source Context", () => {
-  it("should resolve display name aliases before source checking", () => {
+describe("Integration: Skill ID Resolution in Multi-Source Context", () => {
+  it("should resolve skill IDs with multi-source metadata", () => {
     const matrix = buildMultiSourceMatrix();
 
-    // Add display name aliases
-    (matrix.displayNameToId as Record<string, SkillId>)["react"] = "web-framework-react";
-    (matrix.displayNameToId as Record<string, SkillId>)["vitest"] = "web-testing-vitest";
-
-    // Resolve via alias
-    // Boundary cast: testing display name resolution — "react" is a SkillDisplayName, not SkillId
-    const resolved = resolveAlias("react" as unknown as SkillId, matrix);
+    const resolved = resolveAlias("web-framework-react", matrix);
     expect(resolved).toBe("web-framework-react");
 
     // Resolved skill should have multi-source metadata
@@ -700,17 +597,11 @@ describe("Integration: Display Name Alias Resolution in Multi-Source Context", (
     expect(skill!.availableSources!.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("should validate selection using aliases with multi-source skills", () => {
+  it("should validate selection using skill IDs with multi-source skills", () => {
     const matrix = buildMultiSourceMatrix();
 
-    // Add display name aliases
-    (matrix.displayNameToId as Record<string, SkillId>)["react"] = "web-framework-react";
-    (matrix.displayNameToId as Record<string, SkillId>)["hono"] = "api-framework-hono";
-
-    // Use aliases in validation -- resolveAlias is called internally by validateSelection
-    // Boundary cast: aliases are display names being used as SkillIds for resolution
     const validation = validateSelection(
-      ["react" as unknown as SkillId, "hono" as unknown as SkillId],
+      ["web-framework-react", "api-framework-hono"],
       matrix,
     );
     expect(validation.valid).toBe(true);

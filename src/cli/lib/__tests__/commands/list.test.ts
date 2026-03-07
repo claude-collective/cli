@@ -68,7 +68,10 @@ describe("list command", () => {
       );
 
       // Write a test skill
-      await writeTestSkill(skillsDir, "test-skill");
+      await writeTestSkill(skillsDir, "web-testing-vitest", {
+        slug: "vitest",
+        category: "web-testing",
+      });
 
       const { error } = await runCliCommand(["list"]);
 

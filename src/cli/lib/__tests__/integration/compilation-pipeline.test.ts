@@ -14,9 +14,9 @@ import type { Marketplace, PluginManifest } from "../../../types";
 import {
   createTestSource,
   cleanupTestSource,
-  DEFAULT_TEST_SKILLS,
   type TestDirs,
 } from "../fixtures/create-test-source";
+import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { createTempDir, cleanupTempDir } from "../helpers";
 import { COMPILATION_TEST_STACK } from "../mock-data/mock-stacks.js";
 

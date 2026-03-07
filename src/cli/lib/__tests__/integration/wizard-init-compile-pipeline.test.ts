@@ -9,7 +9,6 @@ import {
   createTestSource,
   cleanupTestSource,
   type TestDirs,
-  type TestSkill,
 } from "../fixtures/create-test-source";
 import type { AgentName, CategoryPath, ProjectConfig, SkillId } from "../../../types";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../../consts";
@@ -22,202 +21,19 @@ import {
   buildSkillConfigs,
   buildSourceResult,
 } from "../helpers";
+import { PIPELINE_TEST_SKILLS } from "../mock-data/mock-skills";
 
-const PIPELINE_TEST_SKILLS: TestSkill[] = [
-  {
-    id: "web-framework-react",
-    name: "web-framework-react",
-    description: "React framework for building user interfaces",
-    category: "web-framework",
-    author: "@test",
-    domain: "web",
-    tags: ["react", "web"],
-    content: `---
-name: web-framework-react
-description: React framework for building user interfaces
----
-
-# React
-
-React is a JavaScript library for building user interfaces.
-Use component-based architecture with JSX.
-`,
-  },
-  {
-    id: "web-state-zustand",
-    name: "web-state-zustand",
-    description: "Bear necessities state management",
-    category: "web-client-state",
-    author: "@test",
-    domain: "web",
-    tags: ["state", "zustand"],
-    content: `---
-name: web-state-zustand
-description: Bear necessities state management
----
-
-# Zustand
-
-Zustand is a minimal state management library for React.
-`,
-  },
-  {
-    id: "web-styling-scss-modules",
-    name: "web-styling-scss-modules",
-    description: "CSS Modules with SCSS",
-    category: "web-styling",
-    author: "@test",
-    domain: "web",
-    tags: ["css", "scss"],
-    content: `---
-name: web-styling-scss-modules
-description: CSS Modules with SCSS
----
-
-# SCSS Modules
-
-Use CSS Modules with SCSS for scoped styling.
-`,
-  },
-  {
-    id: "web-testing-vitest",
-    name: "web-testing-vitest",
-    description: "Next generation testing framework",
-    category: "web-testing",
-    author: "@test",
-    domain: "web",
-    tags: ["testing", "vitest"],
-    content: `---
-name: web-testing-vitest
-description: Next generation testing framework
----
-
-# Vitest
-
-Vitest is a fast unit test framework powered by Vite.
-`,
-  },
-  {
-    id: "api-framework-hono",
-    name: "api-framework-hono",
-    description: "Lightweight web framework for the edge",
-    category: "api-api",
-    author: "@test",
-    domain: "api",
-    tags: ["api", "hono"],
-    content: `---
-name: api-framework-hono
-description: Lightweight web framework for the edge
----
-
-# Hono
-
-Hono is a fast web framework for the edge.
-`,
-  },
-  {
-    id: "api-database-drizzle",
-    name: "api-database-drizzle",
-    description: "TypeScript ORM for SQL databases",
-    category: "api-database",
-    author: "@test",
-    domain: "api",
-    tags: ["database", "orm"],
-    content: `---
-name: api-database-drizzle
-description: TypeScript ORM for SQL databases
----
-
-# Drizzle ORM
-
-Drizzle is a lightweight TypeScript ORM.
-`,
-  },
-  {
-    id: "api-security-auth-patterns",
-    name: "api-security-auth-patterns",
-    description: "Authentication and authorization patterns",
-    category: "api-security",
-    author: "@test",
-    domain: "api",
-    tags: ["auth", "security"],
-    content: `---
-name: api-security-auth-patterns
-description: Authentication and authorization patterns
----
-
-# Auth Patterns
-
-JWT-based authentication and role-based authorization.
-`,
-  },
-  {
-    id: "web-accessibility-a11y",
-    name: "web-accessibility-a11y",
-    description: "Web accessibility best practices",
-    category: "web-accessibility",
-    author: "@test",
-    domain: "web",
-    tags: ["a11y", "accessibility"],
-    content: `---
-name: web-accessibility-a11y
-description: Web accessibility best practices
----
-
-# Accessibility
-
-Follow WCAG 2.1 guidelines for accessible web applications.
-`,
-  },
-  {
-    id: "meta-methodology-investigation",
-    name: "meta-methodology-investigation",
-    description: "Investigation before implementation",
-    category: "shared-methodology",
-    author: "@test",
-    domain: "shared",
-    tags: ["methodology"],
-    content: `---
-name: meta-methodology-investigation
-description: Investigation before implementation
----
-
-# Investigation Requirements
-
-Always investigate before implementing. Read the code first.
-`,
-  },
-  {
-    id: "web-animation-framer",
-    name: "web-animation-framer",
-    description: "Framer Motion animation library",
-    category: "web-animation",
-    author: "@test",
-    domain: "web",
-    tags: ["animation", "framer"],
-    content: `---
-name: web-animation-framer
-description: Framer Motion animation library
----
-
-# Framer Motion
-
-Production-ready motion library for React.
-`,
-  },
-];
-
-const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.name);
+const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.id);
 
 const PIPELINE_MATRIX = createMockMatrix(
   Object.fromEntries(
     PIPELINE_TEST_SKILLS.map((skill) => [
-      skill.name,
-      createMockSkill(skill.name as SkillId, skill.category as CategoryPath, {
+      skill.id,
+      createMockSkill(skill.id, skill.category as CategoryPath, {
         description: skill.description,
         tags: skill.tags ?? [],
         author: skill.author,
-        path: `skills/${skill.category}/${skill.name}/`,
+        path: `skills/${skill.category}/${skill.id}/`,
       }),
     ]),
   ),
@@ -314,7 +130,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         const agentContent = await readFile(agentFilePath, "utf-8");
 
         for (const skill of PIPELINE_TEST_SKILLS) {
-          if (agentContent.includes(skill.description) || agentContent.includes(skill.name)) {
+          if (agentContent.includes(skill.description) || agentContent.includes(skill.id)) {
             foundSkillContent = true;
             break;
           }

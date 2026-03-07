@@ -102,9 +102,12 @@ This skill exists solely for E2E testing of the compile command.
     path.join(skillDir, STANDARD_FILES.METADATA_YAML),
     `author: "@test"
 displayName: web-testing-e2e-compile
+slug: e2e-compile
 contentHash: "e2e-test-hash"
 `,
   );
+
+  await createMinimalInstallation(projectDir);
 
   return { projectDir, outputDir };
 }
@@ -299,10 +302,11 @@ export async function createEditableProject(
     // Derive category from skill ID (e.g., "web-framework-react" -> "web-framework")
     const parts = skillId.split("-");
     const category = parts.slice(0, 2).join("-");
+    const slug = parts.slice(2).join("-") || skillId;
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@test"\ndisplayName: ${skillId}\ncategory: ${category}\ncontentHash: "e2e-hash-${skillId}"\n`,
+      `author: "@test"\ndisplayName: ${skillId}\ncategory: ${category}\nslug: ${slug}\ncontentHash: "e2e-hash-${skillId}"\n`,
     );
   }
 
@@ -434,6 +438,7 @@ Custom skill for E2E testing of custom skill ID handling.
     `custom: true
 domain: custom-e2e
 category: web-custom-e2e
+slug: e2e-widget
 author: "@test"
 displayName: Custom E2E Widget
 contentHash: "e2e-custom-hash"

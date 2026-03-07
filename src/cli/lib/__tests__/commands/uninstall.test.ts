@@ -11,6 +11,7 @@ import {
   writeTestSkill,
 } from "../helpers";
 import { DEFAULT_BRANDING, STANDARD_FILES, CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../../consts";
+import type { SkillId } from "../../../types";
 
 vi.mock("../../../utils/exec.js", () => ({
   claudePluginUninstall: vi.fn(),
@@ -108,14 +109,16 @@ async function createPluginDir(projectDir: string, fakeHome: string): Promise<st
 /** Creates a skill with forkedFrom.source matching a configured source (CLI-installed) */
 async function createCLISkill(
   skillsDir: string,
-  skillName: string,
+  skillId: SkillId,
   source = TEST_SOURCE,
 ): Promise<string> {
-  return writeTestSkill(skillsDir, skillName, {
+  return writeTestSkill(skillsDir, skillId, {
+    slug: "react",
+    category: "web-framework",
     extraMetadata: {
-      displayName: skillName,
+      displayName: skillId,
       forkedFrom: {
-        skillId: skillName,
+        skillId,
         contentHash: "abc1234",
         date: "2026-01-01",
         source,
@@ -125,16 +128,20 @@ async function createCLISkill(
 }
 
 /** Creates a skill directory WITHOUT forkedFrom (user-created skill) */
-async function createUserSkill(skillsDir: string, skillName: string): Promise<string> {
-  return writeTestSkill(skillsDir, skillName, {
+async function createUserSkill(skillsDir: string, skillId: SkillId): Promise<string> {
+  return writeTestSkill(skillsDir, skillId, {
+    slug: "react",
+    category: "web-framework",
     description: "User skill",
-    extraMetadata: { displayName: skillName },
+    extraMetadata: { displayName: skillId },
   });
 }
 
 /** Creates a skill directory with no metadata.yaml at all */
-async function createSkillWithoutMetadata(skillsDir: string, skillName: string): Promise<string> {
-  return writeTestSkill(skillsDir, skillName, {
+async function createSkillWithoutMetadata(skillsDir: string, skillId: SkillId): Promise<string> {
+  return writeTestSkill(skillsDir, skillId, {
+    slug: "react",
+    category: "web-framework",
     description: "No metadata skill",
     skipMetadata: true,
   });
@@ -372,6 +379,8 @@ describe("uninstall command", () => {
 
       // Create a legacy skill with forkedFrom but no source
       const legacySkillDir = await writeTestSkill(skillsDir, "web-framework-vue", {
+        slug: "vue",
+        category: "web-framework",
         extraMetadata: {
           displayName: "web-framework-vue",
           forkedFrom: {

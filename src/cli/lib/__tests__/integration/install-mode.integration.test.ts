@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { AgentName, ProjectConfig, SkillId } from "../../../types";
+import type { ProjectConfig, SkillId } from "../../../types";
 import type { SkillConfig } from "../../../types/config";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import { installLocal, buildAndMergeConfig, writeConfigFile } from "../../installation/local-installer";
@@ -23,9 +23,9 @@ import {
 import {
   createTestSource,
   cleanupTestSource,
-  DEFAULT_TEST_SKILLS,
   type TestDirs,
 } from "../fixtures/create-test-source";
+import { DEFAULT_TEST_SKILLS, INIT_SKILL_IDS } from "../mock-data/mock-skills";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 import path from "path";
 
@@ -34,7 +34,6 @@ const ZUSTAND_SKILL_ID: SkillId = "web-state-zustand";
 const HONO_SKILL_ID: SkillId = "api-framework-hono";
 const VITEST_SKILL_ID: SkillId = "web-testing-vitest";
 
-const INIT_SKILL_IDS: SkillId[] = [REACT_SKILL_ID, HONO_SKILL_ID, VITEST_SKILL_ID];
 const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => INIT_SKILL_IDS.includes(s.id));
 
 const INIT_TEST_MATRIX = createMockMatrix({

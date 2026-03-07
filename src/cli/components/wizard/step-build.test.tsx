@@ -413,7 +413,7 @@ describe("StepBuild component", () => {
     it("should handle allSelections with skills from other domains", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
-        allSelections: ["api-framework-hono", "api-database-drizzle"], // API skills (aliases)
+        allSelections: ["api-framework-hono", "api-database-postgres"], // API skills in test matrix
         selections: { "web-framework": ["web-framework-react"] }, // Need framework to see other categories
       });
       cleanup = unmount;
@@ -657,16 +657,10 @@ describe("StepBuild component", () => {
 
 describe("getSkillDisplayLabel", () => {
   it("should return displayName when available", () => {
-    expect(getSkillDisplayLabel({ displayName: "react", id: "web-framework-react" })).toBe("react");
+    expect(getSkillDisplayLabel({ displayName: "react" })).toBe("react");
   });
 
-  it("should return id when no displayName", () => {
-    expect(getSkillDisplayLabel({ id: "web-framework-react" })).toBe("web-framework-react");
-  });
-
-  it("should prefer displayName over id", () => {
-    expect(
-      getSkillDisplayLabel({ displayName: "scss-modules", id: "web-styling-scss-modules" }),
-    ).toBe("scss-modules");
+  it("should return displayName", () => {
+    expect(getSkillDisplayLabel({ displayName: "scss-modules" })).toBe("scss-modules");
   });
 });

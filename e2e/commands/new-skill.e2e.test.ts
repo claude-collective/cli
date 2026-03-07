@@ -1,5 +1,5 @@
 import path from "path";
-import { mkdir, rm } from "fs/promises";
+import { rm } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
@@ -198,10 +198,10 @@ describe("new skill command", () => {
     expect(categoriesContent).toContain('"api-database"');
     expect(categoriesContent).toContain('"domain": "api"');
 
-    // Verify skill-rules.ts was updated with the new skill alias
+    // Verify skill-rules.ts exists (created by marketplace scaffold, not modified by new skill)
     const rulesPath = path.join(marketplaceDir, SKILL_RULES_PATH);
     const rulesContent = await readTestFile(rulesPath);
-    expect(rulesContent).toContain('"my-extra-skill"');
+    expect(rulesContent).toContain('"relationships"');
   });
 
   it("should accept a skill name containing numbers", async () => {
@@ -279,7 +279,6 @@ describe("new skill command", () => {
     expect(mpExitCode).toBe(EXIT_CODES.SUCCESS);
 
     const marketplaceDir = path.join(tempDir, marketplaceName);
-    await createMinimalInstallation(marketplaceDir);
 
     // Remove scaffolded config files that contain invalid dummy domain values.
     // loadSkillsMatrixFromSource validates these with Zod, and "dummy" is not

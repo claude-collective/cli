@@ -11,47 +11,24 @@ import {
 } from "./matrix-resolver";
 import type {
   CategoryDefinition,
-  ResolvedSkill,
-  SkillDisplayName,
   SkillId,
   Category,
 } from "../../types";
-import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
+import { createMockSkill, createMockCategory, createMockMatrix } from "../__tests__/helpers";
 
 describe("resolveAlias", () => {
-  it("should resolve an alias to full ID", () => {
+  it("when skill ID exists in matrix, should return it unchanged", () => {
+    const skill = createMockSkill("web-framework-react", "web-framework");
     const matrix = createMockMatrix(
-      {},
-      {
-        displayNameToId: { react: "web-framework-react" } as unknown as Record<
-          SkillDisplayName,
-          SkillId
-        >,
-      },
-    );
-    // Boundary cast: testing display name resolution — "react" is a SkillDisplayName, not SkillId
-    const result = resolveAlias("react" as unknown as SkillId, matrix);
-    expect(result).toBe("web-framework-react");
-  });
-
-  it("when input is already a full skill ID, should return it unchanged", () => {
-    const matrix = createMockMatrix(
-      {},
-      {
-        displayNameToId: { react: "web-framework-react" } as unknown as Record<
-          SkillDisplayName,
-          SkillId
-        >,
-      },
+      { "web-framework-react": skill },
     );
     const result = resolveAlias("web-framework-react", matrix);
     expect(result).toBe("web-framework-react");
   });
 
-  it("when alias does not exist in matrix, should return input unchanged", () => {
+  it("when skill ID does not exist in matrix, should throw", () => {
     const matrix = createMockMatrix({});
-    const result = resolveAlias("web-test-unknown", matrix);
-    expect(result).toBe("web-test-unknown");
+    expect(() => resolveAlias("web-test-unknown", matrix)).toThrow("Unknown skill ID");
   });
 });
 
@@ -174,7 +151,7 @@ describe("isDiscouraged", () => {
 });
 
 describe("isRecommended", () => {
-  it("should return false for skill with no recommendations", () => {
+  it("should return false for skill not in recommends list", () => {
     const skill = createMockSkill("web-skill-a", "web-framework");
     const matrix = createMockMatrix({ "web-skill-a": skill });
 
@@ -182,30 +159,26 @@ describe("isRecommended", () => {
     expect(result).toBe(false);
   });
 
-  it("should return true if selected skill recommends this skill", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework");
-    const skillB = createMockSkill("web-skill-b", "web-framework", {
-      recommends: [{ skillId: "web-skill-a", reason: "Works well together" }],
+  it("should return true if skill is recommended and has no compatibility constraints", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework", {
+      isRecommended: true,
+      recommendedReason: "Works well together",
     });
+    const skillB = createMockSkill("web-skill-b", "web-framework");
     const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
     const result = isRecommended("web-skill-a", ["web-skill-b"], matrix);
     expect(result).toBe(true);
   });
 
-  it("should return false if no selected skill recommends this skill", () => {
+  it("should return false if skill is not marked as recommended", () => {
     const skillA = createMockSkill("web-skill-a", "web-framework");
     const skillB = createMockSkill("web-skill-b", "web-framework");
-    const skillC = createMockSkill("web-skill-c", "web-framework", {
-      recommends: [{ skillId: "web-skill-a", reason: "Works well" }],
-    });
     const matrix = createMockMatrix({
       "web-skill-a": skillA,
       "web-skill-b": skillB,
-      "web-skill-c": skillC,
     });
 
-    // skill-b is selected, but it doesn't recommend skill-a
     const result = isRecommended("web-skill-a", ["web-skill-b"], matrix);
     expect(result).toBe(false);
   });
@@ -300,10 +273,11 @@ describe("validateSelection", () => {
   });
 
   it("should return warning for missing recommendations", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework", {
-      recommends: [{ skillId: "web-skill-b", reason: "Works better together" }],
+    const skillA = createMockSkill("web-skill-a", "web-framework");
+    const skillB = createMockSkill("web-skill-b", "web-framework", {
+      isRecommended: true,
+      recommendedReason: "Works better together",
     });
-    const skillB = createMockSkill("web-skill-b", "web-framework");
     const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
     const result = validateSelection(["web-skill-a"], matrix);
@@ -322,14 +296,7 @@ describe("validateSelection", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: true,
-            required: false,
-            order: 1,
-          },
+          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", order: 1 }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -372,7 +339,7 @@ describe("getSkillsByCategory", () => {
   });
 });
 
-describe("Empty skill selection (P1-21)", () => {
+describe("Empty skill selection", () => {
   describe("validateSelection with empty skills", () => {
     it("should return valid=true for empty selection", () => {
       const matrix = createMockMatrix({});
@@ -396,16 +363,19 @@ describe("Empty skill selection (P1-21)", () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it("should not flag missing recommendations for empty selection", () => {
-      // Even if skills recommend each other, empty selection has no warnings
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        recommends: [{ skillId: "web-skill-b", reason: "Works well together" }],
+    it("should not flag missing recommendations for empty selection when recommended skills have compatibility constraints", () => {
+      // Recommended skill with compatibleWith won't trigger warning when nothing is selected
+      const skillA = createMockSkill("web-skill-a", "web-framework");
+      const skillB = createMockSkill("web-skill-b", "web-framework", {
+        isRecommended: true,
+        recommendedReason: "Works well together",
+        compatibleWith: ["web-skill-a"],
       });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const result = validateSelection([], matrix);
 
+      // skillB is recommended but has compatibleWith constraint — not compatible with empty selection
       expect(result.warnings).toHaveLength(0);
     });
 
@@ -415,14 +385,7 @@ describe("Empty skill selection (P1-21)", () => {
         {},
         {
           categories: {
-            "web-framework": {
-              id: "web-framework",
-              displayName: "Framework",
-              description: "Required framework",
-              exclusive: true,
-              required: true,
-              order: 1,
-            },
+            "web-framework": createMockCategory("web-framework", "Framework", { description: "Required framework", required: true, order: 1 }),
           } as Record<Category, CategoryDefinition>,
         },
       );
@@ -456,15 +419,22 @@ describe("Empty skill selection (P1-21)", () => {
   });
 
   describe("isRecommended with empty current selections", () => {
-    it("should not recommend anything when nothing is selected", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework");
-      const skillB = createMockSkill("web-skill-b", "web-framework", {
-        recommends: [{ skillId: "web-skill-a", reason: "Works well" }],
+    it("should recommend skill with isRecommended even when nothing is selected", () => {
+      const skillA = createMockSkill("web-skill-a", "web-framework", {
+        isRecommended: true,
+        recommendedReason: "Works well",
       });
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix({ "web-skill-a": skillA });
 
-      // With no selections, A should not be recommended
-      // (only recommended when B is selected)
+      // With no selections, isRecommended alone is sufficient
+      const result = isRecommended("web-skill-a", [], matrix);
+      expect(result).toBe(true);
+    });
+
+    it("should not recommend skill without isRecommended flag", () => {
+      const skillA = createMockSkill("web-skill-a", "web-framework");
+      const matrix = createMockMatrix({ "web-skill-a": skillA });
+
       const result = isRecommended("web-skill-a", [], matrix);
       expect(result).toBe(false);
     });
@@ -484,7 +454,7 @@ describe("Empty skill selection (P1-21)", () => {
   });
 });
 
-describe("Conflicting skills (P1-22)", () => {
+describe("Conflicting skills", () => {
   describe("validateSelection catches conflicts", () => {
     it("should return error when conflicting skills are both selected", () => {
       const skillA = createMockSkill("web-skill-a", "web-framework", {
@@ -498,7 +468,7 @@ describe("Conflicting skills (P1-22)", () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].type).toBe("conflict");
-      expect(result.errors[0].message).toContain("web-skill-a conflicts with web-skill-b");
+      expect(result.errors[0].message).toContain("A conflicts with B");
       expect(result.errors[0].message).toContain("These cannot work together");
       expect(result.errors[0].skills).toContain("web-skill-a");
       expect(result.errors[0].skills).toContain("web-skill-b");
@@ -567,14 +537,7 @@ describe("Conflicting skills (P1-22)", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
+          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
         },
       },
     );
@@ -597,7 +560,7 @@ describe("Conflicting skills (P1-22)", () => {
   });
 });
 
-describe("Missing skill dependencies (P1-24)", () => {
+describe("Missing skill dependencies", () => {
   describe("validateSelection catches missing dependencies", () => {
     it("should return error when required skill is not selected (single dependency)", () => {
       const skillA = createMockSkill("web-skill-a", "web-framework", {
@@ -738,7 +701,7 @@ describe("Missing skill dependencies (P1-24)", () => {
       expect(result.errors[0].skills).toEqual(["web-skill-a", "web-skill-b"]);
     });
 
-    it("should include skill name in error message", () => {
+    it("should include skill display name in error message", () => {
       const skillA = createMockSkill("web-skill-a", "web-framework", {
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs B" }],
       });
@@ -747,11 +710,11 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       const result = validateSelection(["web-skill-a"], matrix);
 
-      expect(result.errors[0].message).toContain("web-skill-a");
-      expect(result.errors[0].message).toContain("web-skill-b");
+      expect(result.errors[0].message).toContain("A");
+      expect(result.errors[0].message).toContain("B");
     });
 
-    it("should include all missing skill names when multiple are missing", () => {
+    it("should include all missing skill display names when multiple are missing", () => {
       const skillA = createMockSkill("web-skill-a", "web-framework", {
         requires: [
           {
@@ -771,17 +734,18 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       const result = validateSelection(["web-skill-a"], matrix);
 
-      expect(result.errors[0].message).toContain("web-skill-b");
-      expect(result.errors[0].message).toContain("web-skill-c");
+      expect(result.errors[0].message).toContain("B");
+      expect(result.errors[0].message).toContain("C");
     });
   });
 
-  describe("recommendation system suggests adding required dependencies", () => {
+  describe("recommendation system suggests adding recommended skills", () => {
     it("should issue warning when recommended skill is not selected", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        recommends: [{ skillId: "web-skill-b", reason: "Better type safety" }],
+      const skillA = createMockSkill("web-skill-a", "web-framework");
+      const skillB = createMockSkill("web-skill-b", "web-framework", {
+        isRecommended: true,
+        recommendedReason: "Better type safety",
       });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const result = validateSelection(["web-skill-a"], matrix);
@@ -789,29 +753,28 @@ describe("Missing skill dependencies (P1-24)", () => {
       expect(result.valid).toBe(true); // Recommendations are warnings, not errors
       expect(result.warnings).toHaveLength(1);
       expect(result.warnings[0].type).toBe("missing_recommendation");
-      expect(result.warnings[0].message).toContain("web-skill-a");
-      expect(result.warnings[0].message).toContain("web-skill-b");
+      expect(result.warnings[0].message).toContain("B");
       expect(result.warnings[0].message).toContain("Better type safety");
     });
 
     it("should include recommended skill in warning skills array", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        recommends: [{ skillId: "web-skill-b", reason: "Recommended" }],
+      const skillA = createMockSkill("web-skill-a", "web-framework");
+      const skillB = createMockSkill("web-skill-b", "web-framework", {
+        isRecommended: true,
+        recommendedReason: "Recommended",
       });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const result = validateSelection(["web-skill-a"], matrix);
 
-      expect(result.warnings[0].skills).toContain("web-skill-a");
       expect(result.warnings[0].skills).toContain("web-skill-b");
     });
 
     it("should not warn about recommendations that conflict with selected skills", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        recommends: [{ skillId: "web-skill-b", reason: "Recommended" }],
-      });
+      const skillA = createMockSkill("web-skill-a", "web-framework");
       const skillB = createMockSkill("web-skill-b", "web-framework", {
+        isRecommended: true,
+        recommendedReason: "Recommended",
         conflictsWith: [{ skillId: "web-skill-c", reason: "Incompatible" }],
       });
       const skillC = createMockSkill("web-skill-c", "web-framework");
@@ -821,7 +784,7 @@ describe("Missing skill dependencies (P1-24)", () => {
         "web-skill-c": skillC,
       });
 
-      // A recommends B, but B conflicts with C which is selected
+      // B is recommended but conflicts with C which is selected
       const result = validateSelection(["web-skill-a", "web-skill-c"], matrix);
 
       // Should not recommend B since it conflicts with C
@@ -829,10 +792,11 @@ describe("Missing skill dependencies (P1-24)", () => {
     });
 
     it("should not warn when recommended skill is already selected", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        recommends: [{ skillId: "web-skill-b", reason: "Recommended" }],
+      const skillA = createMockSkill("web-skill-a", "web-framework");
+      const skillB = createMockSkill("web-skill-b", "web-framework", {
+        isRecommended: true,
+        recommendedReason: "Recommended",
       });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const result = validateSelection(["web-skill-a", "web-skill-b"], matrix);
@@ -885,7 +849,7 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       expect(reason).toContain("Framework required");
       expect(reason).toContain("requires");
-      expect(reason).toContain("web-skill-b");
+      expect(reason).toContain("B");
     });
 
     it("should list all missing required skills (AND logic)", () => {
@@ -908,8 +872,8 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       const reason = getDiscourageReason("web-skill-a", [], matrix);
 
-      expect(reason).toContain("web-skill-b");
-      expect(reason).toContain("web-skill-c");
+      expect(reason).toContain("B");
+      expect(reason).toContain("C");
     });
 
     it("should explain OR requirement options", () => {
@@ -937,8 +901,8 @@ describe("Missing skill dependencies (P1-24)", () => {
     });
   });
 
-  describe("alias resolution works with dependencies", () => {
-    it("should resolve aliases when checking dependencies", () => {
+  describe("skill ID resolution works with dependencies", () => {
+    it("should detect missing requirement when dependency is not selected", () => {
       const skillA = createMockSkill("web-skill-a-v", "web-framework", {
         requires: [
           {
@@ -951,22 +915,15 @@ describe("Missing skill dependencies (P1-24)", () => {
       const skillB = createMockSkill("web-skill-b-v", "web-framework");
       const matrix = createMockMatrix(
         { "web-skill-a-v": skillA, "web-skill-b-v": skillB },
-        {
-          displayNameToId: {
-            "web-skill-a": "web-skill-a-v",
-            "web-skill-b": "web-skill-b-v",
-          } as unknown as Record<SkillDisplayName, SkillId>,
-        },
       );
 
-      // Use alias in selection
-      const result = validateSelection(["web-skill-a"], matrix);
+      const result = validateSelection(["web-skill-a-v"], matrix);
 
       expect(result.valid).toBe(false);
       expect(result.errors[0].type).toBe("missingRequirement");
     });
 
-    it("should validate successfully when dependency is selected via alias", () => {
+    it("should validate successfully when dependency is selected", () => {
       const skillA = createMockSkill("web-skill-a-v", "web-framework", {
         requires: [
           {
@@ -979,16 +936,9 @@ describe("Missing skill dependencies (P1-24)", () => {
       const skillB = createMockSkill("web-skill-b-v", "web-framework");
       const matrix = createMockMatrix(
         { "web-skill-a-v": skillA, "web-skill-b-v": skillB },
-        {
-          displayNameToId: {
-            "web-skill-a": "web-skill-a-v",
-            "web-skill-b": "web-skill-b-v",
-          } as unknown as Record<SkillDisplayName, SkillId>,
-        },
       );
 
-      // Use aliases in selection
-      const result = validateSelection(["web-skill-a", "web-skill-b"], matrix);
+      const result = validateSelection(["web-skill-a-v", "web-skill-b-v"], matrix);
 
       expect(result.valid).toBe(true);
     });
@@ -1007,11 +957,12 @@ describe("getDependentSkills", () => {
     expect(result).toEqual([]);
   });
 
-  it("should return empty array when skill is not in matrix", () => {
+  it("should throw when skill is not in matrix", () => {
     const matrix = createMockMatrix({});
 
-    const result = getDependentSkills("web-skill-nonexistent", [], matrix);
-    expect(result).toEqual([]);
+    expect(() => getDependentSkills("web-skill-nonexistent", [], matrix)).toThrow(
+      "Unknown skill ID",
+    );
   });
 
   it("should find single dependent with AND requirement", () => {
@@ -1143,23 +1094,16 @@ describe("getDependentSkills", () => {
     expect(resultB).toEqual(["web-skill-a"]);
   });
 
-  it("should resolve aliases in selections", () => {
+  it("should find dependents using full skill IDs", () => {
     const skillA = createMockSkill("web-skill-a-v", "web-framework");
     const skillB = createMockSkill("web-skill-b-v", "web-framework", {
       requires: [{ skillIds: ["web-skill-a-v"], needsAny: false, reason: "B needs A" }],
     });
     const matrix = createMockMatrix(
       { "web-skill-a-v": skillA, "web-skill-b-v": skillB },
-      {
-        displayNameToId: {
-          "web-skill-a": "web-skill-a-v",
-          "web-skill-b": "web-skill-b-v",
-        } as unknown as Record<SkillDisplayName, SkillId>,
-      },
     );
 
-    // Use aliases in selections
-    const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b"], matrix);
+    const result = getDependentSkills("web-skill-a-v", ["web-skill-a-v", "web-skill-b-v"], matrix);
     expect(result).toEqual(["web-skill-b-v"]);
   });
 
@@ -1210,14 +1154,7 @@ describe("getAvailableSkills edge cases", () => {
       },
       {
         categories: {
-          "web-styling": {
-            id: "web-styling",
-            displayName: "Styling",
-            description: "Styling options",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
+          "web-styling": createMockCategory("web-styling", "Styling", { description: "Styling options", exclusive: false, order: 1 }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1228,23 +1165,15 @@ describe("getAvailableSkills edge cases", () => {
 
   it("should handle large number of skills without issues", () => {
     const SKILL_COUNT = 200;
-    const skills: Record<string, ResolvedSkill> = {};
-    for (let i = 0; i < SKILL_COUNT; i++) {
-      const id = `web-perf-skill${i}` as SkillId;
-      skills[id] = createMockSkill(id, "web-framework", {
-        category: "api-performance",
-      });
-    }
+    const skills = Object.fromEntries(
+      Array.from({ length: SKILL_COUNT }, (_, i) => {
+        const id = `web-perf-skill${i}` as SkillId;
+        return [id, createMockSkill(id, "web-framework", { category: "api-performance" })];
+      }),
+    );
     const matrix = createMockMatrix(skills, {
       categories: {
-        "api-performance": {
-          id: "api-performance",
-          displayName: "Performance",
-          description: "Performance tools",
-          exclusive: false,
-          required: false,
-          order: 1,
-        },
+        "api-performance": createMockCategory("api-performance", "Performance", { description: "Performance tools", exclusive: false, order: 1 }),
       } as Record<Category, CategoryDefinition>,
     });
 
@@ -1271,14 +1200,7 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-c": skillC },
       {
         categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
+          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1300,14 +1222,7 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
+          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1331,14 +1246,7 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
+          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1352,23 +1260,17 @@ describe("getAvailableSkills edge cases", () => {
   it("should set recommended and recommendedReason when applicable", () => {
     const skillA = createMockSkill("web-skill-a", "web-framework", {
       category: "web-framework",
-      recommends: [{ skillId: "web-skill-b", reason: "Great combination" }],
     });
     const skillB = createMockSkill("web-skill-b", "web-framework", {
       category: "web-framework",
+      isRecommended: true,
+      recommendedReason: "Great combination",
     });
     const matrix = createMockMatrix(
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
+          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1392,14 +1294,7 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
+          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1414,23 +1309,17 @@ describe("getAvailableSkills edge cases", () => {
     const skillA = createMockSkill("web-skill-a", "web-framework", {
       category: "web-framework",
       conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible" }],
-      recommends: [{ skillId: "web-skill-b", reason: "Good pairing" }],
     });
     const skillB = createMockSkill("web-skill-b", "web-framework", {
       category: "web-framework",
+      isRecommended: true,
+      recommendedReason: "Good pairing",
     });
     const matrix = createMockMatrix(
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
+          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1444,13 +1333,13 @@ describe("getAvailableSkills edge cases", () => {
 });
 
 describe("validateSelection edge cases", () => {
-  it("when selected skill does not exist in matrix, should not throw", () => {
+  it("when selected skill does not exist in matrix, should throw", () => {
     const matrix = createMockMatrix({});
 
-    // Selecting a skill that doesn't exist in the matrix
-    const result = validateSelection(["web-skill-nonexistent"], matrix);
-    // Should not crash; the skill is simply skipped in validation
-    expect(result.valid).toBe(true);
+    // Selecting a skill that doesn't exist in the matrix is a bug
+    expect(() => validateSelection(["web-skill-nonexistent"], matrix)).toThrow(
+      "Unknown skill ID",
+    );
   });
 
   it("should detect category exclusivity with more than 2 skills in same exclusive category", () => {
@@ -1467,14 +1356,7 @@ describe("validateSelection edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-c": skillC },
       {
         categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: true,
-            required: false,
-            order: 1,
-          },
+          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", order: 1 }),
         } as Record<Category, CategoryDefinition>,
       },
     );

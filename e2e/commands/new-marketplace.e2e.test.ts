@@ -87,6 +87,10 @@ describe("new marketplace command", () => {
 
     // Verify README.md exists
     expect(await fileExists(path.join(marketplaceDir, "README.md"))).toBe(true);
+
+    // Verify .claude-src/config.ts exists (installation marker)
+    const configPath = path.join(marketplaceDir, ".claude-src", "config.ts");
+    expect(await fileExists(configPath)).toBe(true);
   });
 
   it("should produce a valid stacks.ts with marketplace name", async () => {
@@ -241,7 +245,6 @@ describe("new marketplace command", () => {
     const content = await readTestFile(rulesPath);
     expect(content).toContain("export default");
     expect(content).toContain('"version": "1.0.0"');
-    expect(content).toContain('"aliases"');
-    expect(content).toContain('"dummy-skill": "dummy-skill"');
+    expect(content).toContain('"relationships"');
   });
 });

@@ -460,6 +460,7 @@ describe("custom: true in schemas", () => {
       category: "web-framework",
       author: "@acme",
       displayName: "My Custom Skill",
+      slug: "my-custom-skill",
       cliDescription: "A custom skill for deployment",
       usageGuidance: "Use when deploying services to staging or production.",
       custom: true,
@@ -554,6 +555,7 @@ describe("category validation with custom: true bypass", () => {
   describe("localRawMetadataSchema", () => {
     it("should reject non-custom skill with invalid category", () => {
       const result = localRawMetadataSchema.safeParse({
+        slug: "react",
         category: "foo-bar",
         domain: "web",
       });
@@ -562,6 +564,7 @@ describe("category validation with custom: true bypass", () => {
 
     it("should reject non-custom skill with custom: false and invalid category", () => {
       const result = localRawMetadataSchema.safeParse({
+        slug: "react",
         category: "acme-core",
         custom: false,
         domain: "web",
@@ -571,6 +574,8 @@ describe("category validation with custom: true bypass", () => {
 
     it("should accept custom: true with kebab-case category", () => {
       const result = localRawMetadataSchema.safeParse({
+        displayName: "Test Skill",
+        slug: "react",
         category: "acme-core",
         custom: true,
         domain: "web",
@@ -580,6 +585,7 @@ describe("category validation with custom: true bypass", () => {
 
     it("should reject custom: true with non-kebab-case category", () => {
       const result = localRawMetadataSchema.safeParse({
+        slug: "react",
         category: "NOT KEBAB",
         custom: true,
         domain: "web",
@@ -589,6 +595,7 @@ describe("category validation with custom: true bypass", () => {
 
     it("should reject custom: true with uppercase category", () => {
       const result = localRawMetadataSchema.safeParse({
+        slug: "react",
         category: "Acme-Core",
         custom: true,
         domain: "web",
@@ -598,23 +605,35 @@ describe("category validation with custom: true bypass", () => {
 
     it("should accept non-custom skill with valid built-in category", () => {
       const result = localRawMetadataSchema.safeParse({
+        displayName: "Test Skill",
+        slug: "react",
         category: "web-framework",
         domain: "web",
       });
       expect(result.success).toBe(true);
     });
 
-    it("should accept metadata without category field", () => {
+    it("should reject metadata without category field", () => {
       const result = localRawMetadataSchema.safeParse({
+        slug: "my-skill",
         displayName: "my-skill",
         domain: "web",
       });
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
     });
 
     it("should reject metadata without domain field", () => {
       const result = localRawMetadataSchema.safeParse({
+        slug: "my-skill",
         displayName: "my-skill",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject metadata without slug field", () => {
+      const result = localRawMetadataSchema.safeParse({
+        displayName: "my-skill",
+        domain: "web",
       });
       expect(result.success).toBe(false);
     });
@@ -764,6 +783,7 @@ describe("dynamic schema extension", () => {
         category: "acme-pipeline",
         author: "@acme",
         displayName: "Deploy Pipeline",
+        slug: "deploy-pipeline",
         cliDescription: "Kubernetes deployment automation",
         usageGuidance: "Use when deploying services to staging or production.",
         custom: true,

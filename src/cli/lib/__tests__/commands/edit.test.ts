@@ -11,8 +11,9 @@ import {
   TEST_MATRICES,
 } from "../helpers";
 import { EXIT_CODES } from "../../exit-codes";
-import { useWizardStore } from "../../../stores/wizard-store";
-import type { Domain, SkillId, Category } from "../../../types";
+import { useWizardStore, type SkillLookupEntry } from "../../../stores/wizard-store";
+import { TEST_SKILLS } from "../test-fixtures";
+import type { CategoryPath, Domain, SkillId, Category } from "../../../types";
 import Edit from "../../../commands/edit.js";
 
 // --- Module mocks (hoisted by vitest) ---
@@ -172,7 +173,7 @@ describe("edit command", () => {
   });
 });
 
-// Shared test data for populateFromSkillIds and domain filtering tests
+// Explicit domain assignments — these tests verify domain filtering, so domains must be correct
 const EDIT_CATEGORIES: Partial<Record<Category, { domain?: Domain }>> = {
   "web-framework": { domain: "web" },
   "web-client-state": { domain: "web" },
@@ -180,11 +181,11 @@ const EDIT_CATEGORIES: Partial<Record<Category, { domain?: Domain }>> = {
   "web-testing": { domain: "shared" },
 };
 
-const EDIT_SKILLS: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-  "web-framework-react": { category: "web-framework" },
-  "web-state-zustand": { category: "web-client-state" },
-  "api-framework-hono": { category: "api-api" },
-  "web-testing-vitest": { category: "web-testing" },
+const EDIT_SKILLS = {
+  "web-framework-react": TEST_SKILLS.react,
+  "web-state-zustand": TEST_SKILLS.zustand,
+  "api-framework-hono": TEST_SKILLS.hono,
+  "web-testing-vitest": TEST_SKILLS.vitest,
 };
 
 // The edit command uses populateFromSkillIds() on the Zustand wizard store
@@ -271,10 +272,10 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   });
 
   it("should skip skills missing a category", () => {
-    const sparseSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-      "web-framework-react": { category: "web-framework" },
-      "web-framework-unknown": {} as { category: string },
-    } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
+    const sparseSkills = {
+      "web-framework-react": TEST_SKILLS.react,
+      "web-framework-unknown": {} as SkillLookupEntry,
+    } as Partial<Record<SkillId, SkillLookupEntry>>;
 
     const installedSkills: SkillId[] = ["web-framework-react", "web-framework-unknown"];
 
@@ -288,9 +289,10 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   });
 
   it("should skip skills whose category has no domain mapping", () => {
-    const extraSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-      "web-framework-react": { category: "web-framework" },
-      "infra-tooling-linter": { category: "unmapped-category" },
+    const extraSkills = {
+      "web-framework-react": TEST_SKILLS.react,
+      // Boundary cast: intentionally testing unmapped category handling
+      "infra-tooling-linter": { category: "unmapped-category" as CategoryPath, displayName: "Linter" },
     };
 
     const installedSkills: SkillId[] = ["web-framework-react", "infra-tooling-linter"];
@@ -320,10 +322,10 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
   it("should populate multiple skills within the same category (non-exclusive)", () => {
     // testing category is non-exclusive, so multiple selections are valid
-    const multiSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
+    const multiSkills = {
       ...EDIT_SKILLS,
-      "web-testing-playwright": { category: "web-testing" },
-    } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
+      "web-testing-playwright": { category: "web-testing" as CategoryPath, displayName: "Playwright" },
+    };
 
     const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright"];
 

@@ -23,16 +23,17 @@ import {
   buildSourceResult,
 } from "../helpers";
 import type { SkillConfig } from "../../../types/config";
+import { SWITCHABLE_SKILLS, LOCAL_SKILL_VARIANTS } from "../mock-data/mock-skills";
 
 function buildMatrixFromTestSkills(skills: TestSkill[]) {
   const matrixSkills = Object.fromEntries(
     skills.map((skill) => [
-      skill.name,
-      createMockSkill(skill.name, skill.category, {
+      skill.id,
+      createMockSkill(skill.id, skill.category, {
         description: skill.description,
         tags: skill.tags ?? [],
         author: skill.author,
-        path: `skills/${skill.category}/${skill.name}/`,
+        path: `skills/${skill.category}/${skill.id}/`,
       }),
     ]),
   );
@@ -42,14 +43,14 @@ function buildMatrixFromTestSkills(skills: TestSkill[]) {
 function buildMatrixWithLocalOverrides(localSkillIds: SkillId[]) {
   const matrixSkills = Object.fromEntries(
     SWITCHABLE_SKILLS.map((skill) => [
-      skill.name,
-      createMockSkill(skill.name, skill.category, {
+      skill.id,
+      createMockSkill(skill.id, skill.category, {
         description: skill.description,
         tags: skill.tags ?? [],
         author: skill.author,
-        path: `skills/${skill.category}/${skill.name}/`,
-        ...(localSkillIds.includes(skill.name)
-          ? { local: true, localPath: `.claude/skills/${skill.name}` }
+        path: `skills/${skill.category}/${skill.id}/`,
+        ...(localSkillIds.includes(skill.id)
+          ? { local: true, localPath: `.claude/skills/${skill.id}` }
           : {}),
       }),
     ]),
@@ -57,124 +58,9 @@ function buildMatrixWithLocalOverrides(localSkillIds: SkillId[]) {
   return createMockMatrix(matrixSkills);
 }
 
-const SWITCHABLE_SKILLS: TestSkill[] = [
-  {
-    id: "web-framework-react",
-    name: "web-framework-react",
-    description: "React framework for building user interfaces",
-    category: "web-framework",
-    author: "@test",
-    domain: "web",
-    tags: ["react", "web"],
-    content: `---
-name: web-framework-react
-description: React framework for building user interfaces
----
-
-# React (Marketplace Version)
-
-React is a JavaScript library for building user interfaces.
-Use component-based architecture with JSX.
-`,
-  },
-  {
-    id: "web-state-zustand",
-    name: "web-state-zustand",
-    description: "Bear necessities state management",
-    category: "web-client-state",
-    author: "@test",
-    domain: "web",
-    tags: ["state", "zustand"],
-    content: `---
-name: web-state-zustand
-description: Bear necessities state management
----
-
-# Zustand (Marketplace Version)
-
-Zustand is a minimal state management library for React.
-`,
-  },
-  {
-    id: "api-framework-hono",
-    name: "api-framework-hono",
-    description: "Lightweight web framework for the edge",
-    category: "api-api",
-    author: "@test",
-    domain: "api",
-    tags: ["api", "hono"],
-    content: `---
-name: api-framework-hono
-description: Lightweight web framework for the edge
----
-
-# Hono (Marketplace Version)
-
-Hono is a fast web framework for the edge.
-`,
-  },
-  {
-    id: "web-testing-vitest",
-    name: "web-testing-vitest",
-    description: "Next generation testing framework",
-    category: "web-testing",
-    author: "@test",
-    domain: "web",
-    tags: ["testing", "vitest"],
-    content: `---
-name: web-testing-vitest
-description: Next generation testing framework
----
-
-# Vitest (Marketplace Version)
-
-Vitest is a fast unit test framework powered by Vite.
-`,
-  },
-];
-
-const LOCAL_SKILL_VARIANTS: TestSkill[] = [
-  {
-    id: "web-framework-react",
-    name: "web-framework-react",
-    description: "React framework (local customized version)",
-    category: "web-framework",
-    author: "@local-user",
-    domain: "web",
-    tags: ["react", "web"],
-    content: `---
-name: web-framework-react
-description: React framework (local customized version)
----
-
-# React (Local Version)
-
-This is my customized React skill with project-specific patterns.
-`,
-  },
-  {
-    id: "web-state-zustand",
-    name: "web-state-zustand",
-    description: "Zustand state management (local customized version)",
-    category: "web-client-state",
-    author: "@local-user",
-    domain: "web",
-    tags: ["state", "zustand"],
-    content: `---
-name: web-state-zustand
-description: Zustand state management (local customized version)
----
-
-# Zustand (Local Version)
-
-My customized Zustand patterns with project-specific stores.
-`,
-  },
-];
-
 const REACT_SKILL_ID: SkillId = "web-framework-react";
 const ZUSTAND_SKILL_ID: SkillId = "web-state-zustand";
-const ALL_SKILL_NAMES = SWITCHABLE_SKILLS.map((s) => s.name);
+const ALL_SKILL_NAMES = SWITCHABLE_SKILLS.map((s) => s.id);
 
 describe("Integration: Source Switching with Delete", () => {
   let dirs: TestDirs;

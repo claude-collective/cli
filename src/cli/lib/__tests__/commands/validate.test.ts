@@ -5,6 +5,7 @@ import { stringify as stringifyYaml } from "yaml";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 import { validateSource } from "../../source-validator";
 import { STANDARD_FILES } from "../../../consts";
+import type { TestSkill } from "../fixtures/create-test-source";
 
 describe("validate command", () => {
   let tempDir: string;
@@ -215,17 +216,7 @@ describe("validate command", () => {
 async function writeValidSourceSkill(
   skillsDir: string,
   dirPath: string,
-  config: {
-    id: string;
-    description: string;
-    category: string;
-    domain: string;
-    displayName: string;
-    cliDescription: string;
-    usageGuidance: string;
-    author?: string;
-    tags?: string[];
-  },
+  config: TestSkill,
 ): Promise<void> {
   const skillDir = path.join(skillsDir, dirPath);
   await mkdir(skillDir, { recursive: true });
@@ -236,6 +227,7 @@ async function writeValidSourceSkill(
   );
 
   const domain = config.domain;
+  const slug = config.slug;
   const metadata: Record<string, unknown> = {
     category: config.category,
     domain,
@@ -243,6 +235,7 @@ async function writeValidSourceSkill(
     displayName: config.displayName,
     cliDescription: config.cliDescription,
     usageGuidance: config.usageGuidance,
+    slug,
   };
   if (config.tags) metadata.tags = config.tags;
 
@@ -333,6 +326,8 @@ describe("source validation (validateSource)", () => {
       displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
+      slug: "react",
+      author: "@test",
       tags: ["react", "web"],
     });
 
@@ -458,6 +453,8 @@ describe("source validation (validateSource)", () => {
       displayName: "react-v2",
       cliDescription: "React JavaScript framework v2",
       usageGuidance: "Use React for building component-based UIs",
+      slug: "react",
+      author: "@test",
     });
 
     await writeTestMatrix(configDir, {
@@ -497,6 +494,7 @@ describe("source validation (validateSource)", () => {
         displayName: "react",
         cliDescription: "React JavaScript framework",
         usageGuidance: "Use React for building component-based UIs",
+        slug: "react",
       }),
     );
 
@@ -560,6 +558,8 @@ describe("source validation (validateSource)", () => {
       displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
+      slug: "react",
+      author: "@test",
     });
 
     await writeValidSourceSkill(skillsDir, "api/api/hono", {
@@ -570,6 +570,8 @@ describe("source validation (validateSource)", () => {
       displayName: "hono",
       cliDescription: "Lightweight web framework for the edge",
       usageGuidance: "Use Hono for building edge-first APIs",
+      slug: "hono",
+      author: "@test",
     });
 
     await writeTestMatrix(configDir, {
@@ -612,6 +614,8 @@ describe("validate --source integration", () => {
       displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
+      slug: "react",
+      author: "@test",
     });
 
     await writeTestMatrix(configDir, {
@@ -671,6 +675,8 @@ describe("validate --source integration", () => {
       displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
+      slug: "react",
+      author: "@test",
     });
 
     await writeTestMatrix(configDir, {

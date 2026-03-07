@@ -1427,7 +1427,7 @@ describe("init wizard", () => {
       );
       await writeFile(
         path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        'author: "@test"\ndisplayName: web-framework-react\ncategory: web-framework\ncontentHash: "hash"\n',
+        'author: "@test"\ndisplayName: web-framework-react\ncategory: web-framework\nslug: react\ncontentHash: "hash"\n',
       );
 
       // Create a subdirectory to run `edit` from (without its own config)

@@ -55,6 +55,7 @@ This is test content for the info command E2E tests.
     path.join(skillDir, STANDARD_FILES.METADATA_YAML),
     `category: web-testing
 domain: web
+slug: info-e2e
 author: "@test"
 displayName: info-e2e
 cliDescription: A test skill for info E2E
@@ -154,7 +155,7 @@ describe("info command", () => {
       );
       await writeFile(
         localSkillMetadataPath,
-        `category: web-testing\nauthor: "@test"\ndomain: web\ndisplayName: info-e2e\ncontentHash: "e2e-hash"\n`,
+        `category: web-testing\nauthor: "@test"\ndomain: web\ndisplayName: info-e2e\nslug: info-e2e\ncontentHash: "e2e-hash"\n`,
       );
 
       const { exitCode, stdout } = await runCLI(
@@ -208,7 +209,7 @@ describe("info command", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Requires:");
       expect(stdout).toContain("Conflicts with:");
-      expect(stdout).toContain("Recommends:");
+      expect(stdout).toContain("Recommended:");
     });
   });
 
@@ -336,6 +337,7 @@ ${longDescription}
         path.join(skillDir, STANDARD_FILES.METADATA_YAML),
         `category: web-testing
 domain: web
+slug: long-desc
 author: "@test"
 displayName: long-desc-test
 cliDescription: ${longDescription}

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 import { createMockMatrix, getTestSkill } from "../lib/__tests__/helpers";
+import { TEST_SKILLS, TEST_CATEGORIES } from "../lib/__tests__/test-fixtures";
 import { typedKeys } from "../utils/typed-object";
 import type { AgentName, Domain, SkillAssignment, SkillId, SkillSource, Category } from "../types";
 
@@ -252,13 +253,13 @@ describe("WizardStore", () => {
     it("should restore stack skills when re-toggling a domain ON after populateFromSkillIds", () => {
       const store = useWizardStore.getState();
 
-      const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-        "web-framework-react": { category: "web-framework", displayName: "React" },
-        "api-framework-hono": { category: "api-api", displayName: "Hono" },
+      const skills = {
+        "web-framework-react": TEST_SKILLS.react,
+        "api-framework-hono": TEST_SKILLS.hono,
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
-        "web-framework": { domain: "web" },
-        "api-api": { domain: "api" },
+      const categories = {
+        "web-framework": TEST_CATEGORIES.framework,
+        "api-api": TEST_CATEGORIES.api,
       };
 
       store.populateFromSkillIds(["web-framework-react", "api-framework-hono"], skills, categories);
@@ -634,13 +635,13 @@ describe("WizardStore", () => {
     it("should populate skillConfigs from populateFromSkillIds", () => {
       const store = useWizardStore.getState();
 
-      const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-        "web-framework-react": { category: "web-framework", displayName: "React" },
-        "api-framework-hono": { category: "api-api", displayName: "Hono" },
+      const skills = {
+        "web-framework-react": TEST_SKILLS.react,
+        "api-framework-hono": TEST_SKILLS.hono,
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
-        "web-framework": { domain: "web" },
-        "api-api": { domain: "api" },
+      const categories = {
+        "web-framework": TEST_CATEGORIES.framework,
+        "api-api": TEST_CATEGORIES.api,
       };
 
       store.populateFromSkillIds(["web-framework-react", "api-framework-hono"], skills, categories);

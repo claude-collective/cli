@@ -130,6 +130,7 @@ describe("validate command", () => {
         [
           `author: "@test"`,
           `category: web-testing`,
+          `slug: vitest`,
           `displayName: web-valid-skill`,
           `cliDescription: A fully valid test skill`,
           `usageGuidance: Use for testing`,
@@ -137,7 +138,7 @@ describe("validate command", () => {
         ].join("\n") + "\n",
       );
 
-      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
       expect(combined).toContain("Checked 1 skill(s)");
       expect(combined).toContain("0 error(s)");
@@ -263,6 +264,7 @@ describe("validate command", () => {
           `author: "@test"`,
           `category: web-framework`,
           `domain: web`,
+          `slug: react`,
           `displayName: web-framework-alpha`,
           `cliDescription: Alpha framework for testing`,
           `usageGuidance: Use for testing relationship validation`,
@@ -280,6 +282,7 @@ describe("validate command", () => {
           `author: "@test"`,
           `category: web-testing`,
           `domain: web`,
+          `slug: vitest`,
           `displayName: web-testing-beta`,
           `cliDescription: Beta testing framework`,
           `usageGuidance: Use for testing relationship validation`,
@@ -378,6 +381,7 @@ describe("validate command", () => {
         [
           `author: "@test"`,
           `category: web-framework`,
+          `slug: react`,
           `displayName: web-framework-react`,
           `cliDescription: React framework skill`,
           `usageGuidance: Use for building React applications`,
@@ -395,6 +399,7 @@ describe("validate command", () => {
         [
           `author: "@test"`,
           `category: web-testing`,
+          `slug: react`,
           `displayName: web-framework-react`,
           `cliDescription: React testing skill`,
           `usageGuidance: Use for testing React applications`,

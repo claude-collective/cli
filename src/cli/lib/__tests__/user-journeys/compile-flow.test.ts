@@ -8,10 +8,9 @@ import {
   directoryExists,
   readTestFile,
   type TestDirs,
-  DEFAULT_TEST_SKILLS,
   DEFAULT_TEST_AGENTS,
-  COMPILE_LOCAL_SKILL,
 } from "../fixtures/create-test-source";
+import { DEFAULT_TEST_SKILLS, COMPILE_LOCAL_SKILL } from "../mock-data/mock-skills";
 import { runCliCommand, parseTestFrontmatter, buildTestProjectConfig } from "../helpers";
 
 describe("User Journey: Compile Flow", () => {

@@ -60,17 +60,6 @@ import type { CategoryPath, Category } from "../../types";
 
 const EMPTY_MATRIX = createMockMatrixConfig({});
 
-const INVALID_ALIAS_MATRIX = createMockMatrixConfig(
-  {},
-  {
-    // Boundary cast: intentionally invalid alias key to test error handling
-    skillAliases: {
-      react: "web-framework-react",
-      "": "invalid-empty-key",
-    } as Partial<Record<string, string>>,
-  },
-);
-
 const UNRESOLVED_CONFLICT_MATRIX = createMockMatrixConfig(
   {},
   {
@@ -159,50 +148,45 @@ describe("matrix-loader", () => {
     it("loads and validates a valid skill-rules config", async () => {
       mockLoadConfig.mockResolvedValue({
         version: "1.0.0",
-        aliases: {
-          react: "web-framework-react",
-          vue: "web-framework-vue-composition-api",
-          zustand: "web-state-zustand",
-        },
         relationships: {
-          conflicts: [{ skills: ["react", "vue"], reason: "Frameworks are mutually exclusive" }],
-          discourages: [{ skills: ["zustand", "react"], reason: "Test discourage rule" }],
-          recommends: [{ when: "react", suggest: ["zustand"], reason: "Best React libraries" }],
-          requires: [{ skill: "zustand", needs: ["react"], reason: "Zustand requires React" }],
-          alternatives: [{ purpose: "Frontend Framework", skills: ["react", "vue"] }],
-        },
-        "per-skill": {
-          react: {
-            compatibleWith: ["web-state-zustand"],
-            conflictsWith: ["web-framework-vue-composition-api"],
-          },
-          zustand: {
-            compatibleWith: ["web-framework-react", "web-server-state-react-query"],
-          },
+          conflicts: [
+            {
+              skills: ["web-framework-react", "web-framework-vue-composition-api"],
+              reason: "Frameworks are mutually exclusive",
+            },
+          ],
+          discourages: [
+            {
+              skills: ["web-state-zustand", "web-framework-react"],
+              reason: "Test discourage rule",
+            },
+          ],
+          recommends: [{ skill: "web-state-zustand", reason: "Best React state management" }],
+          requires: [
+            {
+              skill: "web-state-zustand",
+              needs: ["web-framework-react"],
+              reason: "Zustand requires React",
+            },
+          ],
+          alternatives: [
+            {
+              purpose: "Frontend Framework",
+              skills: ["web-framework-react", "web-framework-vue-composition-api"],
+            },
+          ],
         },
       });
 
       const result = await loadSkillRules("/project/config/skill-rules.ts");
 
       expect(result.version).toBe("1.0.0");
-      expect(result.aliases).toBeDefined();
-      expect(result.aliases.react).toBe("web-framework-react");
-      expect(result.aliases.vue).toBe("web-framework-vue-composition-api");
-      expect(result.aliases.zustand).toBe("web-state-zustand");
       expect(result.relationships).toBeDefined();
       expect(result.relationships.conflicts).toHaveLength(1);
       expect(result.relationships.recommends).toHaveLength(1);
       expect(result.relationships.requires).toHaveLength(1);
       expect(result.relationships.alternatives).toHaveLength(1);
       expect(result.relationships.discourages).toHaveLength(1);
-      expect(result.perSkill).toBeDefined();
-      expect(result.perSkill.react).toEqual({
-        compatibleWith: ["web-state-zustand"],
-        conflictsWith: ["web-framework-vue-composition-api"],
-      });
-      expect(result.perSkill.zustand).toEqual({
-        compatibleWith: ["web-framework-react", "web-server-state-react-query"],
-      });
     });
 
     it("throws when loadConfig returns null", async () => {
@@ -219,35 +203,36 @@ describe("matrix-loader", () => {
       await expect(loadSkillRules("/nonexistent/skill-rules.ts")).rejects.toThrow();
     });
 
-    it("parses valid aliases without error", async () => {
+    it("parses valid relationships without error", async () => {
       mockLoadConfig.mockResolvedValue({
         version: "1.0.0",
-        aliases: {
-          react: "web-framework-react",
-          vue: "web-framework-vue-composition-api",
+        relationships: {
+          conflicts: [],
+          discourages: [],
+          recommends: [{ skill: "web-framework-react", reason: "Recommended framework" }],
+          requires: [],
+          alternatives: [],
         },
       });
 
       const result = await loadSkillRules("/project/skill-rules.ts");
 
-      expect(result.aliases.react).toBe("web-framework-react");
-      expect(result.aliases.vue).toBe("web-framework-vue-composition-api");
+      expect(result.relationships.recommends).toHaveLength(1);
+      expect(result.relationships.recommends[0].skill).toBe("web-framework-react");
     });
 
-    it("returns default empty arrays when relationships, aliases, and per-skill are missing", async () => {
+    it("returns default empty arrays when relationships are missing", async () => {
       mockLoadConfig.mockResolvedValue({
         version: "1.0.0",
       });
 
       const result = await loadSkillRules("/project/skill-rules.ts");
 
-      expect(result.aliases).toEqual({});
       expect(result.relationships.conflicts).toEqual([]);
       expect(result.relationships.discourages).toEqual([]);
       expect(result.relationships.recommends).toEqual([]);
       expect(result.relationships.requires).toEqual([]);
       expect(result.relationships.alternatives).toEqual([]);
-      expect(result.perSkill).toEqual({});
     });
 
     it("includes path in error message", async () => {
@@ -271,6 +256,7 @@ domain: web
 author: "@vince"
 version: "1"
 displayName: react
+slug: react
 cliDescription: React framework
 `;
         }
@@ -328,7 +314,7 @@ description: React framework
 category: web-framework
 domain: web
 author: "@test"
-version: "1"
+slug: "no-cli"
 `;
         }
         return `---\nname: no-cli\ndescription: test\n---\n# Test`;
@@ -354,6 +340,7 @@ domain: web
 author: "@test"
 version: "1"
 displayName: bad-fm
+slug: bad-fm
 `;
         }
         return "no frontmatter here";
@@ -421,7 +408,7 @@ displayName: wrong
       });
       mockReadFile.mockImplementation(async (filePath: string) => {
         if (filePath.includes("skill-valid") && filePath.includes("metadata.yaml")) {
-          return `category: web-framework\ndomain: web\nauthor: "@test"\nversion: "1"\ndisplayName: valid`;
+          return `category: web-framework\ndomain: web\nauthor: "@test"\nversion: "1"\ndisplayName: valid\nslug: valid`;
         }
         if (filePath.includes("skill-bad-meta") && filePath.includes("metadata.yaml")) {
           return "invalid: true\n";
@@ -446,22 +433,18 @@ displayName: wrong
       const merged = await mergeMatrixWithSkills(
         MERGE_BASIC_MATRIX.categories,
         MERGE_BASIC_MATRIX.relationships,
-        MERGE_BASIC_MATRIX.aliases,
         [REACT_EXTRACTED],
       );
 
       expect(merged.version).toBe("1.0.0");
       expect(merged.skills["web-framework-react"]).toBeDefined();
       expect(merged.skills["web-framework-react"]!.id).toBe("web-framework-react");
-      expect(merged.skills["web-framework-react"]!.displayName).toBe("react");
-      expect(merged.displayNameToId.react).toBe("web-framework-react");
     });
 
-    it("resolves conflict references using display name aliases", async () => {
+    it("resolves conflict references between skills", async () => {
       const merged = await mergeMatrixWithSkills(
         CONFLICT_MATRIX.categories,
         CONFLICT_MATRIX.relationships,
-        CONFLICT_MATRIX.aliases,
         [REACT_EXTRACTED_BASIC, VUE_EXTRACTED_BASIC],
       );
 
@@ -476,7 +459,6 @@ displayName: wrong
       const merged = await mergeMatrixWithSkills(
         EMPTY_MATRIX.categories,
         EMPTY_MATRIX.relationships,
-        EMPTY_MATRIX.aliases,
         [],
       );
 
@@ -484,23 +466,25 @@ displayName: wrong
       expect(merged.suggestedStacks).toEqual([]);
     });
 
-    it("warns when skillAliases contains invalid entries", async () => {
+    it("builds slugToId map from extracted skill metadata", async () => {
+      const reactWithSlug = createMockExtractedSkill("web-framework-react", {
+        description: "React",
+        slug: "react" as import("../../types").SkillSlug,
+      });
       const merged = await mergeMatrixWithSkills(
-        INVALID_ALIAS_MATRIX.categories,
-        INVALID_ALIAS_MATRIX.relationships,
-        INVALID_ALIAS_MATRIX.aliases,
-        [REACT_EXTRACTED_BASIC],
+        EMPTY_MATRIX.categories,
+        EMPTY_MATRIX.relationships,
+        [reactWithSlug],
       );
 
-      expect(merged.displayNames["web-framework-react"]).toBe("react");
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill alias mapping"));
+      expect(merged.slugMap.slugToId.react).toBe("web-framework-react");
+      expect(merged.slugMap.idToSlug["web-framework-react"]).toBe("react");
     });
 
     it("passes through unresolved conflict references as-is", async () => {
       const merged = await mergeMatrixWithSkills(
         UNRESOLVED_CONFLICT_MATRIX.categories,
         UNRESOLVED_CONFLICT_MATRIX.relationships,
-        UNRESOLVED_CONFLICT_MATRIX.aliases,
         [REACT_EXTRACTED_BASIC],
       );
 
@@ -515,7 +499,6 @@ displayName: wrong
       const merged = await mergeMatrixWithSkills(
         ALTERNATIVES_MATRIX.categories,
         ALTERNATIVES_MATRIX.relationships,
-        ALTERNATIVES_MATRIX.aliases,
         [ZUSTAND_EXTRACTED, JOTAI_EXTRACTED],
       );
 
@@ -537,7 +520,6 @@ displayName: wrong
       const merged = await mergeMatrixWithSkills(
         REQUIRES_MATRIX.categories,
         REQUIRES_MATRIX.relationships,
-        REQUIRES_MATRIX.aliases,
         [ZUSTAND_EXTRACTED, REACT_EXTRACTED_BASIC],
       );
 
@@ -552,68 +534,41 @@ displayName: wrong
       );
     });
 
-    it("applies per-skill rules to resolved skills", async () => {
-      const matrixWithAliases = createMockMatrixConfig(
+    it("resolves recommendations from flat recommends list", async () => {
+      const matrixConfig = createMockMatrixConfig(
         { "web-framework": FRAMEWORK_CATEGORY },
         {
-          skillAliases: {
-            react: "web-framework-react",
-            zustand: "web-state-zustand",
+          relationships: {
+            conflicts: [],
+            discourages: [],
+            recommends: [{ skill: "web-state-zustand", reason: "Best state management" }],
+            requires: [],
+            alternatives: [],
           },
         },
       );
 
-      const perSkillRules = {
-        react: {
-          compatibleWith: ["web-state-zustand" as const],
-          conflictsWith: ["web-framework-vue-composition-api" as const],
-        },
-        zustand: {
-          compatibleWith: ["web-framework-react" as const, "web-server-state-react-query" as const],
-          requires: ["web-framework-react" as const],
-        },
-      };
-
       const merged = await mergeMatrixWithSkills(
-        matrixWithAliases.categories,
-        matrixWithAliases.relationships,
-        matrixWithAliases.aliases,
+        matrixConfig.categories,
+        matrixConfig.relationships,
         [REACT_EXTRACTED_BASIC, ZUSTAND_EXTRACTED],
-        perSkillRules,
-      );
-
-      const react = merged.skills["web-framework-react"];
-      expect(react).toBeDefined();
-      expect(react!.compatibleWith).toContain("web-state-zustand");
-      expect(react!.conflictsWith).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ skillId: "web-framework-vue-composition-api" }),
-        ]),
-      );
-      expect(react!.recommends).toEqual(
-        expect.arrayContaining([expect.objectContaining({ skillId: "web-state-zustand" })]),
       );
 
       const zustand = merged.skills["web-state-zustand"];
       expect(zustand).toBeDefined();
-      expect(zustand!.compatibleWith).toContain("web-framework-react");
-      expect(zustand!.compatibleWith).toContain("web-server-state-react-query");
-      expect(zustand!.requires).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            skillIds: expect.arrayContaining(["web-framework-react"]),
-          }),
-        ]),
-      );
+      expect(zustand!.isRecommended).toBe(true);
+      expect(zustand!.recommendedReason).toBe("Best state management");
+
+      const react = merged.skills["web-framework-react"];
+      expect(react).toBeDefined();
+      expect(react!.isRecommended).toBe(false);
     });
 
-    it("returns empty relationship fields when no per-skill rules exist for a skill", async () => {
+    it("returns empty relationship fields when no relationships reference a skill", async () => {
       const merged = await mergeMatrixWithSkills(
         MERGE_BASIC_MATRIX.categories,
         MERGE_BASIC_MATRIX.relationships,
-        MERGE_BASIC_MATRIX.aliases,
         [REACT_EXTRACTED_BASIC],
-        {},
       );
 
       const react = merged.skills["web-framework-react"];
@@ -621,6 +576,7 @@ displayName: wrong
       expect(react!.compatibleWith).toEqual([]);
       expect(react!.requiresSetup).toEqual([]);
       expect(react!.providesSetupFor).toEqual([]);
+      expect(react!.isRecommended).toBe(false);
     });
   });
 
@@ -632,7 +588,7 @@ displayName: wrong
         domain: "web",
       });
 
-      const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
+      const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, [skill]);
 
       // Boundary cast: accessing synthesized custom category key
       const synthesized = merged.categories["devops-iac" as Category];
@@ -650,7 +606,7 @@ displayName: wrong
         domain: "api",
       });
 
-      const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
+      const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, [skill]);
 
       expect(merged.categories["devops-iac" as Category]!.domain).toBe("api");
     });
@@ -661,7 +617,7 @@ displayName: wrong
         domain: "cli",
       });
 
-      const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
+      const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, [skill]);
 
       expect(merged.categories["web-custom" as Category]!.domain).toBe("cli");
     });
@@ -673,7 +629,7 @@ displayName: wrong
         domain: "shared",
       });
 
-      const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
+      const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, [skill]);
 
       expect(merged.categories["devops-iac" as Category]!.domain).toBe("shared");
     });
@@ -686,7 +642,6 @@ displayName: wrong
       const merged = await mergeMatrixWithSkills(
         existingCategories,
         EMPTY_MATRIX.relationships,
-        {},
         [REACT_EXTRACTED_BASIC],
       );
 

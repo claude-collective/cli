@@ -5,9 +5,9 @@ import { parse as parseYaml } from "yaml";
 import {
   createTestSource,
   cleanupTestSource,
-  DEFAULT_TEST_SKILLS,
   type TestDirs,
 } from "../fixtures/create-test-source";
+import { DEFAULT_TEST_SKILLS, INIT_SKILL_IDS } from "../mock-data/mock-skills";
 import { installLocal } from "../../installation/local-installer";
 import type { AgentName, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
@@ -29,11 +29,6 @@ const AGENTS_SUBDIR = "agents";
 
 // Use the 3 skills needed for init flow tests, filtered from the shared fixture.
 // DEFAULT_TEST_SKILLS has 4 skills; init tests only need react, hono, vitest.
-const INIT_SKILL_IDS: SkillId[] = [
-  "web-framework-react",
-  "api-framework-hono",
-  "web-testing-vitest",
-];
 const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => INIT_SKILL_IDS.includes(s.id));
 
 // Matrix whose skill.path values match the file system layout from createTestSource.

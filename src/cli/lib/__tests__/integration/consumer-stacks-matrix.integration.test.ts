@@ -36,7 +36,14 @@ import {
   OBSERVABILITY_CONFIG,
   FRAMEWORK_AND_TESTING_CONFIG,
 } from "../mock-data/mock-matrices.js";
-import { CONSUMER_MATRIX_SKILLS } from "../mock-data/mock-skills.js";
+import {
+  CONSUMER_MATRIX_SKILLS,
+  DOCKER_TOOLING_SKILL,
+  CI_CD_SKILLS,
+  DISCOURAGES_TEST_SKILLS,
+  DATADOG_OBSERVABILITY_SKILL,
+  REQUIRES_TEST_SKILLS,
+} from "../mock-data/mock-skills.js";
 
 function buildConsumerMatrix() {
   return createMockMatrix(CONSUMER_MATRIX_SKILLS);
@@ -288,20 +295,13 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const skillsDir = path.join(tempDir, "src", "skills");
 
       // Create a skill in the tooling category (use "infra" prefix — valid categoryPath prefix)
-      await writeSourceSkill(skillsDir, path.join("infra", "tooling", "docker"), {
-        id: "infra-tooling-docker",
-        description: "Docker containerization patterns",
-        category: "infra-tooling",
-        domain: "shared",
-        tags: ["docker", "devops", "containers"],
-      });
+      await writeSourceSkill(skillsDir, path.join("infra", "tooling", "docker"), DOCKER_TOOLING_SKILL);
 
       // Extract skills from filesystem and merge with matrix config
       const skills = await extractAllSkills(skillsDir);
       const merged = await mergeMatrixWithSkills(
         TOOLING_AND_FRAMEWORK_CONFIG.categories,
         TOOLING_AND_FRAMEWORK_CONFIG.relationships,
-        TOOLING_AND_FRAMEWORK_CONFIG.aliases,
         skills,
       );
 
@@ -330,22 +330,15 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const skillsDir = path.join(tempDir, "src", "skills");
 
       // Create skills in the exclusive category (use "infra" prefix — valid categoryPath prefix)
-      for (const skillName of ["github-actions", "gitlab-ci"]) {
-        const skillId = `infra-ci-cd-${skillName}`;
-        await writeSourceSkill(skillsDir, path.join("infra", "ci-cd", skillName), {
-          id: skillId,
-          description: `${skillName} CI/CD pipeline`,
-          category: "infra-ci-cd",
-          domain: "shared",
-          tags: ["ci-cd", skillName],
-        });
+      for (const skill of CI_CD_SKILLS) {
+        const dir = skill.id.replace(`${skill.category}-`, "");
+        await writeSourceSkill(skillsDir, path.join("infra", "ci-cd", dir), skill);
       }
 
       const skills = await extractAllSkills(skillsDir);
       const merged = await mergeMatrixWithSkills(
         CI_CD_CONFIG.categories,
         CI_CD_CONFIG.relationships,
-        CI_CD_CONFIG.aliases,
         skills,
       );
 
@@ -368,32 +361,16 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const skillsDir = path.join(tempDir, "src", "skills");
 
       // Create the skills referenced in relationships
-      const skillDefs = [
-        {
-          name: "custom-a",
-          id: "web-framework-custom-a",
-          category: "web-framework",
-          domain: "web",
-        },
-        { name: "custom-b", id: "web-styling-custom-b", category: "web-styling", domain: "web" },
-        { name: "custom-c", id: "web-styling-custom-c", category: "web-styling", domain: "web" },
-      ];
-
-      for (const def of skillDefs) {
-        const categoryPath = def.category.replace(/\//g, path.sep);
-        await writeSourceSkill(skillsDir, path.join(categoryPath, def.name), {
-          id: def.id,
-          description: `${def.name} skill`,
-          category: def.category,
-          domain: def.domain,
-        });
+      for (const skill of DISCOURAGES_TEST_SKILLS) {
+        const dir = skill.id.replace(`${skill.category}-`, "");
+        const categoryPath = skill.category.replace(/\//g, path.sep);
+        await writeSourceSkill(skillsDir, path.join(categoryPath, dir), skill);
       }
 
       const skills = await extractAllSkills(skillsDir);
       const merged = await mergeMatrixWithSkills(
         FRAMEWORK_AND_STYLING_CONFIG.categories,
         FRAMEWORK_AND_STYLING_CONFIG.relationships,
-        FRAMEWORK_AND_STYLING_CONFIG.aliases,
         skills,
       );
 
@@ -411,10 +388,11 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       expect(skillB!.discourages).toHaveLength(1);
       expect(skillB!.discourages[0].skillId).toBe("web-framework-custom-a");
 
-      // Verify recommends relationship
-      expect(skillA!.recommends).toHaveLength(1);
-      expect(skillA!.recommends[0].skillId).toBe("web-styling-custom-c");
-      expect(skillA!.recommends[0].reason).toBe("These work great together");
+      // Verify recommended skill is marked as isRecommended
+      const skillC = merged.skills["web-styling-custom-c"];
+      expect(skillC).toBeDefined();
+      expect(skillC!.isRecommended).toBe(true);
+      expect(skillC!.recommendedReason).toBe("These work great together");
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -583,26 +561,18 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
     try {
       const skillsDir = path.join(tempDir, "src", "skills");
 
-      const customTags = ["monitoring", "observability", "apm", "custom-tag"];
-      await writeSourceSkill(skillsDir, path.join("api", "observability", "datadog"), {
-        id: "api-observability-datadog",
-        description: "Datadog APM integration",
-        category: "api-observability",
-        domain: "api",
-        tags: customTags,
-      });
+      await writeSourceSkill(skillsDir, path.join("api", "observability", "datadog"), DATADOG_OBSERVABILITY_SKILL);
 
       const skills = await extractAllSkills(skillsDir);
       const merged = await mergeMatrixWithSkills(
         OBSERVABILITY_CONFIG.categories,
         OBSERVABILITY_CONFIG.relationships,
-        OBSERVABILITY_CONFIG.aliases,
         skills,
       );
 
       const datadogSkill = merged.skills["api-observability-datadog"];
       expect(datadogSkill).toBeDefined();
-      expect(datadogSkill!.tags).toEqual(customTags);
+      expect(datadogSkill!.tags).toEqual(DATADOG_OBSERVABILITY_SKILL.tags);
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -615,29 +585,16 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       const skillsDir = path.join(tempDir, "src", "skills");
 
       // Create the skills (use valid categoryPath prefixes — "shared" is not valid)
-      for (const def of [
-        {
-          name: "custom-react",
-          id: "web-framework-custom-react",
-          cat: "web-framework",
-          domain: "web",
-        },
-        { name: "custom-rtl", id: "web-testing-custom-rtl", cat: "web-testing", domain: "web" },
-      ]) {
-        const catPath = def.cat.replace(/\//g, path.sep);
-        await writeSourceSkill(skillsDir, path.join(catPath, def.name), {
-          id: def.id,
-          description: def.name,
-          category: def.cat,
-          domain: def.domain,
-        });
+      for (const skill of REQUIRES_TEST_SKILLS) {
+        const dir = skill.id.replace(`${skill.category}-`, "");
+        const catPath = skill.category.replace(/\//g, path.sep);
+        await writeSourceSkill(skillsDir, path.join(catPath, dir), skill);
       }
 
       const skills = await extractAllSkills(skillsDir);
       const merged = await mergeMatrixWithSkills(
         FRAMEWORK_AND_TESTING_CONFIG.categories,
         FRAMEWORK_AND_TESTING_CONFIG.relationships,
-        FRAMEWORK_AND_TESTING_CONFIG.aliases,
         skills,
       );
 

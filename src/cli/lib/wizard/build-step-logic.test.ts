@@ -82,18 +82,8 @@ describe("computeOptionState", () => {
 });
 
 describe("getSkillDisplayLabel", () => {
-  it("should return displayName when present", () => {
-    expect(getSkillDisplayLabel({ displayName: "React", id: "web-framework-react" })).toBe("React");
-  });
-
-  it("should return id when displayName is undefined", () => {
-    expect(getSkillDisplayLabel({ id: "web-framework-react" })).toBe("web-framework-react");
-  });
-
-  it("should return id when displayName is empty string", () => {
-    expect(getSkillDisplayLabel({ displayName: "", id: "web-framework-react" })).toBe(
-      "web-framework-react",
-    );
+  it("should return displayName", () => {
+    expect(getSkillDisplayLabel({ displayName: "React" })).toBe("React");
   });
 });
 

@@ -19,9 +19,9 @@ import {
 import {
   createTestSource,
   cleanupTestSource,
-  DEFAULT_TEST_SKILLS,
   type TestDirs,
 } from "../fixtures/create-test-source";
+import { DEFAULT_TEST_SKILLS, EJECT_INSTALLED_SKILL_IDS } from "../mock-data/mock-skills";
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { copySkillsToLocalFlattened } from "../../skills/skill-copier";
 import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
@@ -394,14 +394,8 @@ describe("eject command", () => {
   });
 });
 
-// Skills installed locally via installLocal (marked `local: true`)
-const INSTALLED_SKILL_IDS: SkillId[] = [
-  "web-framework-react",
-  "api-framework-hono",
-];
-
 // Skills that exist in the source but are NOT installed locally (eligible for eject)
-const NON_INSTALLED_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => !INSTALLED_SKILL_IDS.includes(s.id));
+const NON_INSTALLED_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => !EJECT_INSTALLED_SKILL_IDS.includes(s.id));
 
 /**
  * Build a MergedSkillsMatrix from DEFAULT_TEST_SKILLS with skill paths matching
@@ -416,7 +410,7 @@ function buildEjectMatrix(localSkillIds: SkillId[] = []): MergedSkillsMatrix {
       description: testSkill.description,
       tags: testSkill.tags ?? [],
       // path must match createTestSource layout: skills/<category>/<skillName>/
-      path: `skills/${testSkill.category}/${testSkill.name}/`,
+      path: `skills/${testSkill.category}/${testSkill.id}/`,
       // Mark installed skills as local so the eject filtering works
       ...(isLocal
         ? {
@@ -466,7 +460,7 @@ describe("eject skills from initialized project", () => {
     const installMatrix = buildEjectMatrix();
     const installSource = buildSourceResult(installMatrix, dirs.sourceDir);
     await installLocal({
-      wizardResult: buildWizardResult(buildSkillConfigs(INSTALLED_SKILL_IDS)),
+      wizardResult: buildWizardResult(buildSkillConfigs(EJECT_INSTALLED_SKILL_IDS)),
       sourceResult: installSource,
       projectDir: dirs.projectDir,
     });
@@ -481,7 +475,7 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
+    await runEjectCopy(dirs, outputDir, EJECT_INSTALLED_SKILL_IDS);
 
     for (const skill of NON_INSTALLED_SKILLS) {
       const skillDir = path.join(outputDir, skill.id);
@@ -493,9 +487,9 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
+    await runEjectCopy(dirs, outputDir, EJECT_INSTALLED_SKILL_IDS);
 
-    for (const skillId of INSTALLED_SKILL_IDS) {
+    for (const skillId of EJECT_INSTALLED_SKILL_IDS) {
       const skillDir = path.join(outputDir, skillId);
       expect(await directoryExists(skillDir)).toBe(false);
     }
@@ -505,7 +499,7 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
+    await runEjectCopy(dirs, outputDir, EJECT_INSTALLED_SKILL_IDS);
 
     for (const skill of NON_INSTALLED_SKILLS) {
       const ejectedSkillMd = path.join(outputDir, skill.id, STANDARD_FILES.SKILL_MD);
@@ -514,7 +508,7 @@ describe("eject skills from initialized project", () => {
       const content = await readFile(ejectedSkillMd, "utf-8");
       const frontmatter = parseTestFrontmatter(content);
       expect(frontmatter).not.toBeNull();
-      expect(frontmatter?.name).toBe(skill.name);
+      expect(frontmatter?.name).toBe(skill.id);
     }
   });
 
@@ -522,7 +516,7 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
+    await runEjectCopy(dirs, outputDir, EJECT_INSTALLED_SKILL_IDS);
 
     const targetSkill = NON_INSTALLED_SKILLS[0];
     const metadataPath = path.join(outputDir, targetSkill.id, STANDARD_FILES.METADATA_YAML);
@@ -542,7 +536,7 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    const copiedSkills = await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
+    const copiedSkills = await runEjectCopy(dirs, outputDir, EJECT_INSTALLED_SKILL_IDS);
 
     expect(copiedSkills.length).toBe(NON_INSTALLED_SKILLS.length);
   });
@@ -551,7 +545,7 @@ describe("eject skills from initialized project", () => {
     const defaultSkillsDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH);
     await mkdir(defaultSkillsDir, { recursive: true });
 
-    await runEjectCopy(dirs, defaultSkillsDir, INSTALLED_SKILL_IDS);
+    await runEjectCopy(dirs, defaultSkillsDir, EJECT_INSTALLED_SKILL_IDS);
 
     for (const skill of NON_INSTALLED_SKILLS) {
       const skillDir = path.join(defaultSkillsDir, skill.id);
@@ -598,7 +592,7 @@ describe("eject in plugin mode", () => {
     const installSource = buildSourceResult(installMatrix, dirs.sourceDir);
     await installPluginConfig({
       wizardResult: buildWizardResult(
-        buildSkillConfigs(INSTALLED_SKILL_IDS, { source: "agents-inc" }),
+        buildSkillConfigs(EJECT_INSTALLED_SKILL_IDS, { source: "agents-inc" }),
       ),
       sourceResult: installSource,
       projectDir: dirs.projectDir,
@@ -644,7 +638,7 @@ describe("eject in plugin mode", () => {
     const content = await readFile(skillMdPath, "utf-8");
     const frontmatter = parseTestFrontmatter(content);
     expect(frontmatter).not.toBeNull();
-    expect(frontmatter?.name).toBe(targetSkill.name);
+    expect(frontmatter?.name).toBe(targetSkill.id);
   });
 
   it("should include metadata.yaml with forkedFrom in plugin mode", async () => {
