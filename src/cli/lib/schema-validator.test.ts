@@ -284,6 +284,7 @@ describe("schema-validator", () => {
           "displayName: React",
           "cliDescription: React component patterns and hooks",
           "usageGuidance: When building React components and hooks",
+          "slug: react",
         ].join("\n"),
       );
 

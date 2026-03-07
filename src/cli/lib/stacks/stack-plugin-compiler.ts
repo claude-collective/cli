@@ -30,7 +30,6 @@ import type {
   CompiledAgentData,
   PluginManifest,
   ProjectConfig,
-  SkillDefinition,
   SkillId,
   Stack,
 } from "../../types";
@@ -250,11 +249,10 @@ export async function compileStackPlugin(
   }
 
   const stackSkillIds = stack.stack ? getStackSkillIds(stack.stack) : [];
-  // Boundary cast: loadSkillsByIds returns Record<string, SkillDefinition>, keys are SkillId by construction
-  const skills = (await loadSkillsByIds(
+  const skills = await loadSkillsByIds(
     stackSkillIds.map((id) => ({ id })),
     projectRoot,
-  )) as Record<SkillId, SkillDefinition>;
+  );
 
   const compileConfig: CompileConfig = convertStackToCompileConfig(stackId, stack);
 

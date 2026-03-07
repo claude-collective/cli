@@ -4,6 +4,7 @@ import type {
   Domain,
   MergedSkillsMatrix,
   SkillId,
+  SkillOption,
   CategorySelections,
 } from "../../types/index.js";
 import type { SkillConfig } from "../../types/config.js";
@@ -40,10 +41,9 @@ export function validateBuildStep(
   return { valid: true };
 }
 
-export function computeOptionState(skill: {
-  discouraged: boolean;
-  recommended: boolean;
-}): OptionState {
+export function computeOptionState(
+  skill: Pick<SkillOption, "discouraged" | "recommended">,
+): OptionState {
   if (skill.discouraged) {
     return "discouraged";
   }
@@ -53,16 +53,13 @@ export function computeOptionState(skill: {
   return "normal";
 }
 
-export function getSkillDisplayLabel(skill: { displayName?: string; id: string }): string {
-  return skill.displayName || skill.id;
+export function getSkillDisplayLabel(skill: Pick<SkillOption, "displayName">): string {
+  return skill.displayName;
 }
 
-function getStateReason(skill: {
-  discouraged: boolean;
-  discouragedReason?: string;
-  recommended: boolean;
-  recommendedReason?: string;
-}): string | undefined {
+function getStateReason(
+  skill: Pick<SkillOption, "discouraged" | "discouragedReason" | "recommended" | "recommendedReason">,
+): string | undefined {
   if (skill.discouraged && skill.discouragedReason) {
     return skill.discouragedReason;
   }

@@ -1,4 +1,4 @@
-import type { SkillDefinition, SkillId } from "../../types";
+import type { SkillDefinition, SkillDefinitionMap, SkillId } from "../../types";
 import { getErrorMessage } from "../../utils/errors";
 import { verbose } from "../../utils/logger";
 import { typedEntries } from "../../utils/typed-object";
@@ -17,8 +17,8 @@ import { getVerifiedPluginInstallPaths } from "./plugin-settings";
  */
 export async function discoverAllPluginSkills(
   projectDir: string,
-): Promise<Partial<Record<SkillId, SkillDefinition>>> {
-  const allSkills: Partial<Record<SkillId, SkillDefinition>> = {};
+): Promise<SkillDefinitionMap> {
+  const allSkills: SkillDefinitionMap = {};
 
   try {
     const pluginPaths = await getVerifiedPluginInstallPaths(projectDir);

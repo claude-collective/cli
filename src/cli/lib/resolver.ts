@@ -10,8 +10,7 @@ import type {
   CompileConfig,
   ProjectConfig,
   Skill,
-  SkillDefinition,
-  SkillId,
+  SkillDefinitionMap,
   SkillReference,
   Stack,
   StackAgentConfig,
@@ -31,7 +30,7 @@ export async function resolveClaudeMd(projectRoot: string, stackId: string): Pro
 
 export function resolveSkillReference(
   ref: SkillReference,
-  skills: Partial<Record<SkillId, SkillDefinition>>,
+  skills: SkillDefinitionMap,
 ): Skill | null {
   const definition = skills[ref.id];
   if (!definition) {
@@ -47,7 +46,7 @@ export function resolveSkillReference(
 
 export function resolveSkillReferences(
   skillRefs: SkillReference[],
-  skills: Partial<Record<SkillId, SkillDefinition>>,
+  skills: SkillDefinitionMap,
 ): Skill[] {
   return skillRefs
     .map((ref) => resolveSkillReference(ref, skills))
@@ -153,7 +152,7 @@ export async function resolveAgentSkillRefs(
  */
 export async function resolveAgents(
   agents: Record<AgentName, AgentDefinition>,
-  skills: Partial<Record<SkillId, SkillDefinition>>,
+  skills: SkillDefinitionMap,
   compileConfig: CompileConfig,
   _projectRoot: string,
   stack?: Stack,

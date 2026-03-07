@@ -219,17 +219,13 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
         ? await loadSkillRules(rulesPath)
         : {
             version: "1.0.0",
-            aliases: {},
             relationships: defaultRelationships,
-            perSkill: {},
           };
       const skills = await extractAllSkills(skillsDir);
       const mergedMatrix = await mergeMatrixWithSkills(
         cats,
         rules.relationships,
-        rules.aliases,
         skills,
-        rules.perSkill,
       );
       const healthIssues = checkMatrixHealth(mergedMatrix);
 

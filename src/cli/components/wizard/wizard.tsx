@@ -176,15 +176,7 @@ export const Wizard: React.FC<WizardProps> = ({
       allSkills = [...(stack?.allSkillIds || [])];
     } else {
       const techNames = store.getAllSelectedTechnologies();
-      allSkills = techNames.map((tech) => {
-        const resolved = resolveAlias(tech, matrix);
-        if (!matrix.skills[resolved]) {
-          warn(
-            `Technology '${tech}' could not be resolved to a skill ID - it may be missing from skill_aliases`,
-          );
-        }
-        return resolved;
-      });
+      allSkills = techNames.map((tech) => resolveAlias(tech, matrix));
     }
 
     const methodologySkills = store.getDefaultMethodologySkills();

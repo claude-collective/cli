@@ -129,7 +129,8 @@ async function deleteAndCopySkills(
 function buildLocalSkillsMap(
   copiedSkills: CopiedSkill[],
   matrix: MergedSkillsMatrix,
-): Partial<Record<SkillId, LocalResolvedSkill>> {
+): Record<SkillId, LocalResolvedSkill> {
+  // Boundary cast: Object.fromEntries returns { [k: string]: V }
   return Object.fromEntries(
     copiedSkills
       .filter((cs) => matrix.skills[cs.skillId])
@@ -139,7 +140,7 @@ function buildLocalSkillsMap(
         path: cs.destPath,
         content: "", // Content not needed for skill references
       }]),
-  ) as Partial<Record<SkillId, LocalResolvedSkill>>;
+  );
 }
 
 async function loadMergedAgents(sourcePath: string): Promise<Record<AgentName, AgentDefinition>> {
@@ -363,7 +364,7 @@ async function writeConfigTypes(
 async function compileAndWriteAgents(
   compileConfig: CompileConfig,
   agents: Record<AgentName, AgentDefinition>,
-  localSkills: Partial<Record<SkillId, LocalResolvedSkill>>,
+  localSkills: Record<SkillId, LocalResolvedSkill>,
   sourceResult: SourceLoadResult,
   projectDir: string,
   agentsDir: string,
@@ -469,10 +470,11 @@ export async function installPluginConfig(
   // Load skill metadata from source for compilation
   // (actual skill content will be loaded from plugins at runtime)
   const stackSkillIds = finalConfig.stack ? getStackSkillIds(finalConfig.stack) : [];
+  // Boundary cast: loadSkillsByIds returns SkillDefinitionMap, LocalResolvedSkill extends SkillDefinition
   const skillsForCompilation = (await loadSkillsByIds(
     stackSkillIds.map((id) => ({ id })),
     sourceResult.sourcePath,
-  )) as Partial<Record<SkillId, LocalResolvedSkill>>;
+  )) as Record<SkillId, LocalResolvedSkill>;
 
   const compiledAgentNames = await compileAndWriteAgents(
     compileConfig,

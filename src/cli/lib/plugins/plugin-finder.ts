@@ -79,8 +79,8 @@ export async function getPluginSkillIds(
   const aliasToId = new Map<string, SkillId>();
   for (const [id, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     if (!skill) continue;
-    if (skill.displayName) {
-      aliasToId.set(skill.displayName.toLowerCase(), id);
+    if (skill.slug) {
+      aliasToId.set(skill.slug.toLowerCase(), id);
     }
   }
 

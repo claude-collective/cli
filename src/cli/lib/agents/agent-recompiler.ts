@@ -9,8 +9,7 @@ import type {
   CompileAgentConfig,
   CompileConfig,
   ProjectConfig,
-  SkillDefinition,
-  SkillId,
+  SkillDefinitionMap,
 } from "../../types";
 import { type InstallMode, deriveInstallMode } from "../installation/installation";
 import { glob, writeFile, ensureDir } from "../../utils/fs";
@@ -28,7 +27,7 @@ export type RecompileAgentsOptions = {
   pluginDir: string;
   sourcePath: string;
   agents?: AgentName[];
-  skills?: Partial<Record<SkillId, SkillDefinition>>;
+  skills?: SkillDefinitionMap;
   projectDir?: string;
   outputDir?: string;
   installMode?: InstallMode;
@@ -62,7 +61,7 @@ async function resolveAgentNames(params: ResolveAgentNamesParams): Promise<Agent
     return specifiedAgents;
   }
 
-  if (projectConfig?.agents) {
+  if (projectConfig?.agents?.length) {
     const agentNames = projectConfig.agents.map((a) => a.name);
     verbose(`Using agents from config: ${agentNames.join(", ")}`);
     return agentNames;
@@ -181,7 +180,7 @@ export async function recompileAgents(
   verbose(`Recompiling ${agentNames.length} agents in ${outputDir ?? pluginDir}`);
 
   // When skills are not provided, discover from all plugin directories.
-  let pluginSkills: Partial<Record<SkillId, SkillDefinition>>;
+  let pluginSkills: SkillDefinitionMap;
   if (providedSkills) {
     pluginSkills = providedSkills;
   } else {

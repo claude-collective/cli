@@ -17,6 +17,7 @@ import type {
   Domain,
   DomainSelections,
   MergedSkillsMatrix,
+  ResolvedSkill,
   SkillAlias,
   SkillAssignment,
   SkillId,
@@ -92,7 +93,7 @@ function formatSourceLabel(source: { name: string; installed?: boolean }): strin
   return `${prefix}${displayName}`;
 }
 
-type SkillLookupEntry = { category: string; displayName?: string };
+export type SkillLookupEntry = Pick<ResolvedSkill, "category" | "displayName">;
 
 function resolveSkillForPopulation(
   skillId: SkillId,
@@ -137,12 +138,12 @@ function buildBoundSkillOptions(
 }
 
 function getSkillAlias(skillId: SkillId, matrix: MergedSkillsMatrix): SkillAlias {
-  const displayName = matrix.displayNames?.[skillId];
-  if (displayName) return displayName;
+  const slug = matrix.slugMap.idToSlug[skillId];
+  if (slug) return slug;
   // Fallback: use the last segment of the skill ID (e.g., "web-framework-react" -> "react")
   const segments = skillId.split("-");
   const fallback = segments[segments.length - 1] || skillId;
-  warn(`No display name found for skill '${skillId}', using fallback alias '${fallback}'`);
+  warn(`No slug found for skill '${skillId}', using fallback alias '${fallback}'`);
   return fallback;
 }
 
@@ -266,7 +267,7 @@ export type WizardState = {
    */
   populateFromSkillIds: (
     skillIds: SkillId[],
-    skills: Partial<Record<SkillId, { category: string; displayName?: string }>>,
+    skills: Partial<Record<SkillId, SkillLookupEntry>>,
     categories: Partial<Record<Category, { domain?: Domain }>>,
     savedConfigs?: SkillConfig[],
   ) => void;
