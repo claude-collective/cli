@@ -1,18 +1,20 @@
 import { parse as parseYaml } from "yaml";
 import path from "path";
 import { directoryExists, listDirectories, fileExists, readFile } from "../../utils/fs";
-import { verbose, warn } from "../../utils/logger";
+import { verbose } from "../../utils/logger";
 import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../consts";
 import { parseFrontmatter } from "../loading";
-import type { CategoryPath, Domain, ExtractedSkillMetadata, SkillId } from "../../types";
+import type { CategoryPath, Domain, ExtractedSkillMetadata, SkillSlug } from "../../types";
 import { formatZodErrors, localRawMetadataSchema } from "../schemas";
-import { LOCAL_DEFAULTS, METADATA_KEYS } from "../metadata-keys";
+import { LOCAL_DEFAULTS } from "../metadata-keys";
 
 type LocalRawMetadata = {
   displayName: string;
+  /** Kebab-case short key for alias resolution */
+  slug: SkillSlug;
   cliDescription?: string;
-  /** Original skill category from source (e.g., "web-framework", "web-styling", "api-api") */
-  category?: CategoryPath;
+  /** Skill category (e.g., "web-framework", "web-styling", "api-api") */
+  category: CategoryPath;
   usageGuidance?: string;
   tags?: string[];
   /** Domain this skill belongs to (e.g., "web", "api", "cli") */
@@ -84,12 +86,6 @@ async function extractLocalSkill(
 
   const metadata = parsed.data as LocalRawMetadata;
 
-  if (!metadata.displayName) {
-    throw new Error(
-      `Local skill '${skillDirName}' is missing required '${METADATA_KEYS.DISPLAY_NAME}' field in metadata.yaml`,
-    );
-  }
-
   const skillMdContent = await readFile(skillMdPath);
   const frontmatter = parseFrontmatter(skillMdContent, skillMdPath);
 
@@ -101,22 +97,12 @@ async function extractLocalSkill(
   const relativePath = `${LOCAL_SKILLS_PATH}/${skillDirName}/`;
   const skillId = frontmatter.name;
 
-  // Use category from metadata.yaml if available (preserved from source skill),
-  // otherwise fall back to generic "local" category
-  const category = metadata.category || LOCAL_DEFAULTS.CATEGORY;
-
-  if (!metadata.category) {
-    warn(
-      `Local skill '${skillDirName}' has no category in metadata.yaml — defaulting to '${LOCAL_DEFAULTS.CATEGORY}' (will not appear in wizard domain views)`,
-    );
-  }
-
   const extracted: ExtractedSkillMetadata = {
     id: skillId,
     directoryPath: skillDirName,
     description: metadata.cliDescription || frontmatter.description,
     usageGuidance: metadata.usageGuidance,
-    category,
+    category: metadata.category,
     author: LOCAL_DEFAULTS.AUTHOR,
     tags: metadata.tags ?? [],
     path: relativePath,
@@ -124,6 +110,8 @@ async function extractLocalSkill(
     localPath: relativePath,
     domain: metadata.domain,
     custom: metadata.custom,
+    slug: metadata.slug,
+    displayName: metadata.displayName,
   };
 
   verbose(`Extracted local skill: ${skillId}`);

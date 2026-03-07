@@ -10,8 +10,11 @@ import {
 } from "../plugins";
 import { parseFrontmatter } from "../loading";
 import { computeSkillFolderHash, determinePluginVersion, writeContentHash } from "../versioning";
-import type { PluginManifest, SkillFrontmatter, SkillMetadataConfig } from "../../types";
+import type { PluginManifest, SkillFrontmatter } from "../../types";
 import { formatZodErrors, skillMetadataLoaderSchema } from "../schemas";
+import type { z } from "zod";
+
+type SkillMetadata = z.infer<typeof skillMetadataLoaderSchema>;
 import { DEFAULT_BRANDING, STANDARD_FILES } from "../../consts";
 import { SKILL_CONTENT_FILES, SKILL_CONTENT_DIRS } from "../metadata-keys";
 
@@ -31,7 +34,7 @@ function sanitizeSkillName(name: string): string {
   return name.replace(/\+/g, "-");
 }
 
-async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig | null> {
+async function readSkillMetadata(skillPath: string): Promise<SkillMetadata | null> {
   const metadataPath = path.join(skillPath, STANDARD_FILES.METADATA_YAML);
 
   if (!(await fileExists(metadataPath))) {
@@ -60,7 +63,7 @@ async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig
 function generateReadme(
   skillName: string,
   frontmatter: SkillFrontmatter,
-  metadata: SkillMetadataConfig | null,
+  metadata: SkillMetadata | null,
 ): string {
   const lines: string[] = [];
 
@@ -90,10 +93,6 @@ function generateReadme(
   lines.push("## Usage");
   lines.push("");
   lines.push("This skill is automatically available when installed.");
-  if (metadata?.requires && metadata.requires.length > 0) {
-    lines.push("");
-    lines.push(`**Requires:** ${metadata.requires.join(", ")}`);
-  }
   lines.push("");
 
   lines.push("---");

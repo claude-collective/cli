@@ -5,7 +5,7 @@ import { getErrorMessage } from "../../utils/errors";
 import { glob, readFile, directoryExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { CLAUDE_SRC_DIR, DIRS, STANDARD_FILES } from "../../consts";
-import type { AgentDefinition, SkillDefinition, SkillFrontmatter, SkillId } from "../../types";
+import type { AgentDefinition, SkillDefinition, SkillDefinitionMap, SkillFrontmatter, SkillId } from "../../types";
 import { formatZodErrors, skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "../schemas";
 
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
@@ -121,8 +121,8 @@ async function buildIdToDirectoryPathMap(skillsDir: string): Promise<Record<stri
 export async function loadSkillsByIds(
   skillIds: Array<{ id: SkillId }>,
   projectRoot: string,
-): Promise<Record<string, SkillDefinition>> {
-  const skills: Record<string, SkillDefinition> = {};
+): Promise<SkillDefinitionMap> {
+  const skills: SkillDefinitionMap = {};
   const skillsDir = path.join(projectRoot, DIRS.skills);
 
   const idToDirectoryPath = await buildIdToDirectoryPathMap(skillsDir);
@@ -177,10 +177,6 @@ export async function loadSkillsByIds(
       };
 
       skills[canonicalId] = skillDef;
-
-      if (directoryPath !== canonicalId) {
-        skills[directoryPath] = skillDef;
-      }
 
       verbose(`Loaded skill: ${canonicalId} (from ${directoryPath})`);
     } catch (error) {

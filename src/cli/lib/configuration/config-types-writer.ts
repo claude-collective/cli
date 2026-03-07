@@ -100,6 +100,7 @@ export function loadConfigTypesDataInBackground(
     const sourceResult = await loadSkillsMatrixFromSource({
       sourceFlag,
       projectDir,
+      skipExtraSources: true,
     });
 
     const cliAgents = await loadAllAgents(PROJECT_ROOT);

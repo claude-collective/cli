@@ -19,12 +19,10 @@ import type {
   CategoryMap,
   Domain,
   MergedSkillsMatrix,
-  PerSkillRules,
   RelationshipDefinitions,
   ResolvedSkill,
   ResolvedStack,
   SkillAssignment,
-  SkillDisplayName,
   SkillId,
   Stack,
   Category,
@@ -65,6 +63,8 @@ export type SourceLoadOptions = {
   projectDir?: string;
   forceRefresh?: boolean;
   devMode?: boolean;
+  /** Skip loading skills from extra sources (multi-source). Only needed for wizard UI tagging. */
+  skipExtraSources?: boolean;
 };
 
 export type SourceLoadResult = {
@@ -118,13 +118,15 @@ export async function loadSkillsMatrixFromSource(
     result.matrix = mergeLocalSkillsIntoMatrix(result.matrix, localSkillsResult);
   }
 
-  await loadSkillsFromAllSources(
-    result.matrix,
-    sourceConfig,
-    resolvedProjectDir,
-    forceRefresh,
-    result.marketplace,
-  );
+  if (!options.skipExtraSources) {
+    await loadSkillsFromAllSources(
+      result.matrix,
+      sourceConfig,
+      resolvedProjectDir,
+      forceRefresh,
+      result.marketplace,
+    );
+  }
 
   checkMatrixHealth(result.matrix);
 
@@ -201,8 +203,6 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
 
   let categories: CategoryMap = defaultCategories;
   let relationships: RelationshipDefinitions = defaultRules.relationships;
-  let aliases: Partial<Record<SkillDisplayName, SkillId>> = defaultRules.aliases;
-  let perSkillRules: Partial<Record<SkillDisplayName, PerSkillRules>> = defaultRules.perSkill;
 
   // Discover custom values from source entities BEFORE strict schema validation
   await discoverAndExtendFromSource(basePath);
@@ -244,13 +244,15 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
           ...defaultRules.relationships.alternatives,
           ...sourceRules.relationships.alternatives,
         ],
+        compatibleWith: [
+          ...(defaultRules.relationships.compatibleWith ?? []),
+          ...(sourceRules.relationships.compatibleWith ?? []),
+        ],
+        setupPairs: [
+          ...(defaultRules.relationships.setupPairs ?? []),
+          ...(sourceRules.relationships.setupPairs ?? []),
+        ],
       };
-
-      // Merge aliases: source wins on same key
-      aliases = { ...defaultRules.aliases, ...sourceRules.aliases };
-
-      // Merge per-skill rules: source wins on same key
-      perSkillRules = { ...defaultRules.perSkill, ...sourceRules.perSkill };
 
       verbose(`Loaded source rules: ${sourceRulesPath}`);
     }
@@ -267,9 +269,7 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   const mergedMatrix = await mergeMatrixWithSkills(
     categories,
     relationships,
-    aliases,
     skills,
-    perSkillRules,
   );
 
   // Load stacks from source first, fall back to CLI's built-in defaults
@@ -290,9 +290,9 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
       agentDefinedDomains[agentId as AgentName] = agentDef.domain;
     }
   }
-  if (Object.keys(agentDefinedDomains).length > 0) {
+  if (typedKeys(agentDefinedDomains).length > 0) {
     mergedMatrix.agentDefinedDomains = agentDefinedDomains;
-    verbose(`Loaded ${Object.keys(agentDefinedDomains).length} agent domain definition(s)`);
+    verbose(`Loaded ${typedKeys(agentDefinedDomains).length} agent domain definition(s)`);
   }
 
   return mergedMatrix;
@@ -605,10 +605,12 @@ function mergeLocalSkillsIntoMatrix(
     // If overwriting an existing remote skill, inherit its category unconditionally.
     // Otherwise, use whatever the local skill declared in its metadata.yaml.
     const category = existingSkill?.category ?? metadata.category;
-    const displayName = existingSkill?.displayName ?? matrix.displayNames[metadata.id];
+    const slug = existingSkill?.slug ?? metadata.slug;
+    const displayName = existingSkill?.displayName ?? metadata.displayName;
 
     const resolvedSkill: ResolvedSkill = {
       id: metadata.id,
+      slug,
       displayName,
       description: metadata.description,
       usageGuidance: metadata.usageGuidance,
@@ -619,7 +621,8 @@ function mergeLocalSkillsIntoMatrix(
       author: LOCAL_DEFAULTS.AUTHOR,
 
       conflictsWith: existingSkill?.conflictsWith ?? [],
-      recommends: existingSkill?.recommends ?? [],
+      isRecommended: existingSkill?.isRecommended ?? false,
+      recommendedReason: existingSkill?.recommendedReason,
       requires: existingSkill?.requires ?? [],
       alternatives: existingSkill?.alternatives ?? [],
       discourages: existingSkill?.discourages ?? [],
