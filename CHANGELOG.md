@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.60.0] - 2026-03-07
+
+**Slug-based skill identity — R-04 Phase 1**
+
+- `SkillSlug` union type replaces `SkillDisplayName` with compile-time checked slugs
+- Aliases and per-skill rules removed — slugs derived from metadata, relationships use group-based declarations
+- New relationship types: `CompatibilityGroup`, `SetupPair`, flat `Recommendation`
+
+See [changelogs/0.60.0.md](./changelogs/0.60.0.md) for full details.
+
+---
+
 ## [0.59.0] - 2026-03-07
 
 **Dual-scope agent installation with per-agent project/global scope**
