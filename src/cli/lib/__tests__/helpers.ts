@@ -17,8 +17,6 @@ import { computeSkillFolderHash } from "../versioning";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const VALID_DOMAINS = new Set(["web", "api", "cli", "mobile", "shared"]);
-
 export const CLI_ROOT = path.resolve(__dirname, "../../../..");
 
 /** Resolve @agents-inc/cli/config to the source config-exports.ts so jiti can load it in dev. */
@@ -157,7 +155,8 @@ import type {
   SkillAssignment,
   SkillConfig,
   SkillDefinition,
-  SkillDisplayName,
+  SkillSlug,
+  SkillSlugMap,
   SkillId,
   SkillSource,
   SkillSourceType,
@@ -173,7 +172,7 @@ import type { SourceLoadResult } from "../loading/source-loader";
 import type { ResolvedConfig } from "../configuration/config";
 import { useWizardStore } from "../../stores/wizard-store";
 import { resolveAlias, validateSelection } from "../matrix";
-import type { TestProjectConfig } from "./fixtures/create-test-source";
+import type { TestProjectConfig, TestSkill } from "./fixtures/create-test-source";
 import { getTestSkill, TEST_SKILLS, TEST_CATEGORIES } from "./test-fixtures";
 
 export { fileExists, directoryExists } from "./test-fs-utils";
@@ -303,7 +302,7 @@ export function parseTestFrontmatter(content: string): Record<string, unknown> |
 import { createTempDir, cleanupTempDir } from "./test-fs-utils";
 export { createTempDir, cleanupTempDir };
 
-export interface TestDirs {
+export interface PluginTestDirs {
   tempDir: string;
   projectDir: string;
   pluginDir: string;
@@ -311,7 +310,7 @@ export interface TestDirs {
   agentsDir: string;
 }
 
-export async function createTestDirs(prefix = "ai-test-"): Promise<TestDirs> {
+export async function createTestDirs(prefix = "ai-test-"): Promise<PluginTestDirs> {
   const tempDir = await createTempDir(prefix);
   const projectDir = path.join(tempDir, "project");
   const pluginDir = path.join(projectDir, ".claude", "plugins", DEFAULT_PLUGIN_NAME);
@@ -324,7 +323,7 @@ export async function createTestDirs(prefix = "ai-test-"): Promise<TestDirs> {
   return { tempDir, projectDir, pluginDir, skillsDir, agentsDir };
 }
 
-export async function cleanupTestDirs(dirs: TestDirs): Promise<void> {
+export async function cleanupTestDirs(dirs: PluginTestDirs): Promise<void> {
   await cleanupTempDir(dirs.tempDir);
 }
 
@@ -333,14 +332,27 @@ export function createMockSkill(
   category: CategoryPath,
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
+  // Derive slug from skill ID: strip domain-category prefix to get the last segment(s)
+  // e.g., "web-framework-react" -> "react", "meta-methodology-anti-over-engineering" -> "anti-over-engineering"
+  const segments = id.split("-");
+  const defaultSlug = (segments.length >= 3 ? segments.slice(2).join("-") : id) as SkillSlug;
+
+  // Derive display name from slug: title-case each segment
+  const defaultDisplayName = defaultSlug
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
   return {
     id,
+    slug: defaultSlug,
+    displayName: defaultDisplayName,
     description: `${id} skill`,
     category,
     tags: [],
     author: "@test",
     conflictsWith: [],
-    recommends: [],
+    isRecommended: false,
     requires: [],
     alternatives: [],
     discourages: [],
@@ -393,6 +405,8 @@ export function createMockExtractedSkill(
     tags: [],
     path: `skills/${directoryPath}/`,
     domain: domain as Domain,
+    displayName: name,
+    slug: name as SkillSlug,
     ...overrides,
   };
 }
@@ -401,24 +415,22 @@ export function createMockMatrix(
   skills: Record<string, ResolvedSkill>,
   overrides?: Partial<MergedSkillsMatrix>,
 ): MergedSkillsMatrix {
-  // Auto-generate displayNames and displayNameToId from skills
-  const skillsWithDisplayName = typedEntries(skills).filter(
-    ([, skill]) => skill.displayName != null,
-  );
-  const autoDisplayNames = Object.fromEntries(
-    skillsWithDisplayName.map(([id, skill]) => [id, skill.displayName!]),
-  ) as Record<SkillId, SkillDisplayName>;
-  const autoDisplayNameToId = Object.fromEntries(
-    skillsWithDisplayName.map(([id, skill]) => [skill.displayName!, id]),
-  ) as Record<SkillDisplayName, SkillId>;
+  // Boundary cast: empty objects are populated in the loop below
+  const autoSlugToId = {} as Record<SkillSlug, SkillId>;
+  const autoIdToSlug = {} as Record<SkillId, SkillSlug>;
+  for (const [id, skill] of typedEntries(skills)) {
+    if (skill.slug) {
+      autoSlugToId[skill.slug] = id as SkillId;
+      autoIdToSlug[id as SkillId] = skill.slug;
+    }
+  }
 
   return {
     version: "1.0.0",
     categories: {} as Record<Category, import("../../types").CategoryDefinition>,
     skills,
     suggestedStacks: [],
-    displayNameToId: autoDisplayNameToId,
-    displayNames: autoDisplayNames,
+    slugMap: { slugToId: autoSlugToId, idToSlug: autoIdToSlug },
     generatedAt: new Date().toISOString(),
     ...overrides,
   };
@@ -492,11 +504,6 @@ This is a test skill.
 `;
 }
 
-function createMetadataContent(author = "@test"): string {
-  return `author: "${author}"
-`;
-}
-
 export function createAgentYamlContent(name: string, description = `Test ${name} agent`): string {
   return `id: ${name}
 title: ${name} Agent
@@ -508,8 +515,10 @@ tools:
 
 export async function writeTestSkill(
   skillsDir: string,
-  skillName: string,
-  options?: {
+  skillId: SkillId,
+  options: {
+    slug: SkillSlug;
+    category: CategoryPath;
     author?: string;
     description?: string;
     /** Extra fields to merge into metadata.yaml (e.g., forkedFrom, displayName) */
@@ -520,30 +529,28 @@ export async function writeTestSkill(
     skillContent?: string;
   },
 ): Promise<string> {
-  const skillDir = path.join(skillsDir, skillName);
+  const skillDir = path.join(skillsDir, skillId);
   await mkdir(skillDir, { recursive: true });
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    options?.skillContent ?? createSkillContent(skillName, options?.description),
+    options.skillContent ?? createSkillContent(skillId, options.description),
   );
 
-  if (!options?.skipMetadata) {
+  if (!options.skipMetadata) {
     const contentHash = await computeSkillFolderHash(skillDir);
-    const parts = skillName.split("-");
-    const rawPrefix = parts[0] ?? "web";
-    const domainPrefix = VALID_DOMAINS.has(rawPrefix) ? rawPrefix : "web";
-    const category = parts.length >= 2 ? `${domainPrefix}-${parts[1]}` : `${domainPrefix}-general`;
+    const domain = options.category.split("-")[0] ?? "web";
     const baseMetadata = {
-      author: options?.author ?? "@test",
-      category,
-      domain: domainPrefix,
+      author: options.author ?? "@test",
+      category: options.category,
+      domain,
+      slug: options.slug,
       contentHash,
     };
-    if (options?.extraMetadata) {
+    if (options.extraMetadata) {
       const metadata = {
         ...baseMetadata,
-        ...options?.extraMetadata,
+        ...options.extraMetadata,
       };
       await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
     } else {
@@ -567,15 +574,7 @@ export async function writeTestSkill(
 export async function writeSourceSkill(
   skillsDir: string,
   directoryPath: string,
-  config: {
-    id: string;
-    description: string;
-    category: string;
-    author?: string;
-    tags?: string[];
-    content?: string;
-    domain: string;
-  },
+  config: TestSkill,
 ): Promise<string> {
   const skillDir = path.join(skillsDir, directoryPath);
   await mkdir(skillDir, { recursive: true });
@@ -586,8 +585,10 @@ export async function writeSourceSkill(
   );
 
   const domain = config.domain;
+  const slug = config.slug;
   const metadata: Record<string, unknown> = {
     displayName: config.id,
+    slug,
     category: config.category,
     domain,
     author: config.author ?? "@test",
@@ -670,19 +671,18 @@ export function createComprehensiveMatrix(
     }),
     "web-state-zustand": getTestSkill("zustand", {
       category: "web-client-state",
-      recommends: [{ skillId: "web-framework-react", reason: "Works great with React" }],
     }),
     "web-styling-scss-modules": getTestSkill("scss-modules", { category: "web-styling" }),
     "api-framework-hono": getTestSkill("hono", { category: "api-api" }),
     "api-database-drizzle": getTestSkill("drizzle", { category: "api-database" }),
     "web-testing-vitest": getTestSkill("vitest", { category: "web-testing" }),
     // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — auto-injected by wizard
-    "meta-methodology-investigation-requirements": TEST_SKILLS.investigationRequirements,
-    "meta-methodology-anti-over-engineering": TEST_SKILLS.antiOverEngineering,
-    "meta-methodology-success-criteria": TEST_SKILLS.successCriteria,
-    "meta-methodology-write-verification": TEST_SKILLS.writeVerification,
-    "meta-methodology-improvement-protocol": TEST_SKILLS.improvementProtocol,
-    "meta-methodology-context-management": TEST_SKILLS.contextManagement,
+    "meta-methodology-investigation-requirements": TEST_SKILLS["investigation-requirements"],
+    "meta-methodology-anti-over-engineering": TEST_SKILLS["anti-over-engineering"],
+    "meta-methodology-success-criteria": TEST_SKILLS["success-criteria"],
+    "meta-methodology-write-verification": TEST_SKILLS["write-verification"],
+    "meta-methodology-improvement-protocol": TEST_SKILLS["improvement-protocol"],
+    "meta-methodology-context-management": TEST_SKILLS["context-management"],
   };
 
   const categories = {
@@ -746,7 +746,8 @@ export function createComprehensiveMatrix(
     }),
   ];
 
-  const displayNameToId = {
+  // Boundary cast: test matrix only contains a subset of all possible slugs
+  const slugToId = {
     react: "web-framework-react",
     vue: "web-framework-vue",
     zustand: "web-state-zustand",
@@ -760,19 +761,17 @@ export function createComprehensiveMatrix(
     "write-verification": "meta-methodology-write-verification",
     "improvement-protocol": "meta-methodology-improvement-protocol",
     "context-management": "meta-methodology-context-management",
-    // Double cast needed: object literal's string keys are not assignable to branded
-    // SkillDisplayName/SkillId types without going through `unknown` first (boundary cast)
-  } as unknown as Record<SkillDisplayName, SkillId>;
+  } as unknown as Record<SkillSlug, SkillId>;
 
-  const displayNames = Object.fromEntries(
-    typedEntries(displayNameToId).map(([displayName, fullId]) => [fullId, displayName]),
-  ) as Record<SkillId, SkillDisplayName>;
+  // Boundary cast: Object.fromEntries returns { [k: string]: string }
+  const idToSlug = Object.fromEntries(
+    typedEntries(slugToId).map(([slug, fullId]) => [fullId, slug]),
+  ) as SkillSlugMap["idToSlug"];
 
   return createMockMatrix(skills, {
     categories,
     suggestedStacks,
-    displayNameToId,
-    displayNames,
+    slugMap: { slugToId, idToSlug },
     ...overrides,
   });
 }
@@ -789,6 +788,13 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
     "web-state-zustand": getTestSkill("zustand", { category: "web-client-state" }),
     "api-framework-hono": getTestSkill("hono", { category: "api-api" }),
     "web-testing-vitest": getTestSkill("vitest", { category: "web-testing" }),
+    // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — auto-injected by wizard
+    "meta-methodology-anti-over-engineering": TEST_SKILLS["anti-over-engineering"],
+    "meta-methodology-context-management": TEST_SKILLS["context-management"],
+    "meta-methodology-improvement-protocol": TEST_SKILLS["improvement-protocol"],
+    "meta-methodology-investigation-requirements": TEST_SKILLS["investigation-requirements"],
+    "meta-methodology-success-criteria": TEST_SKILLS["success-criteria"],
+    "meta-methodology-write-verification": TEST_SKILLS["write-verification"],
   };
 
   const suggestedStacks: ResolvedStack[] = [
@@ -821,6 +827,12 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
         displayName: "Testing Framework",
         domain: "shared",
         exclusive: false,
+      },
+      "shared-methodology": {
+        ...TEST_CATEGORIES.methodology,
+        domain: "shared",
+        exclusive: false,
+        required: false,
       },
     } as Record<Category, CategoryDefinition>,
     ...overrides,
@@ -955,14 +967,14 @@ export function createMockSkillDefinition(
 export type MockMatrixConfig = {
   categories: Record<string, CategoryDefinition>;
   relationships: RelationshipDefinitions;
-  aliases: Partial<Record<SkillDisplayName, SkillId>>;
+  aliases: Partial<Record<SkillSlug, SkillId>>;
 };
 
 export function createMockMatrixConfig(
   categories: Record<string, CategoryDefinition>,
   overrides?: {
     relationships?: RelationshipDefinitions;
-    skillAliases?: Partial<Record<SkillDisplayName, SkillId>>;
+    skillAliases?: Partial<Record<SkillSlug, SkillId>>;
   },
 ): MockMatrixConfig {
   return {

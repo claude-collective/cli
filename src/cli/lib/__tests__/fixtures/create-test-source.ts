@@ -2,7 +2,7 @@ import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { DEFAULT_PLUGIN_NAME } from "../../../consts";
-import type { CategoryPath, Domain, SkillId } from "../../../types";
+import type { CategoryPath, Domain, SkillId, SkillSlug } from "../../../types";
 import { computeSkillFolderHash } from "../../versioning";
 import {
   fileExists,
@@ -11,10 +11,11 @@ import {
   createTempDir,
   cleanupTempDir,
 } from "../helpers";
+import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 
 export type TestSkill = {
   id: SkillId;
-  name: SkillId;
+  slug: SkillSlug;
   alias?: string;
   description: string;
   category: CategoryPath;
@@ -22,6 +23,9 @@ export type TestSkill = {
   tags?: string[];
   content?: string;
   domain: Domain;
+  displayName?: string;
+  cliDescription?: string;
+  usageGuidance?: string;
   /** Skip metadata.yaml creation for this local skill (for testing missing-metadata warnings) */
   skipMetadata?: boolean;
   forkedFrom?: {
@@ -106,7 +110,7 @@ const TEST_AUTHOR = "@test";
 /** Valid local skill with SKILL.md and metadata.yaml */
 export const VALID_LOCAL_SKILL: TestSkill = {
   id: "web-tooling-valid",
-  name: "web-tooling-valid",
+  slug: "tooling",
   description: "A valid skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -116,7 +120,7 @@ export const VALID_LOCAL_SKILL: TestSkill = {
 /** Skill created WITHOUT metadata.yaml (for testing missing-metadata warnings) */
 export const SKILL_WITHOUT_METADATA: TestSkill = {
   id: "web-tooling-incomplete",
-  name: "web-tooling-incomplete",
+  slug: "storybook",
   description: "Missing metadata",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -127,7 +131,7 @@ export const SKILL_WITHOUT_METADATA: TestSkill = {
 /** Another skill without metadata.yaml (for path warning tests) */
 export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = {
   id: "web-tooling-custom",
-  name: "web-tooling-custom",
+  slug: "security",
   description: "No metadata",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -138,7 +142,7 @@ export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = {
 /** A basic local-only skill (no forkedFrom) with SKILL.md and metadata.yaml */
 export const LOCAL_SKILL_BASIC: TestSkill = {
   id: "web-tooling-my-skill",
-  name: "web-tooling-my-skill",
+  slug: "tooling",
   description: "A test skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -158,7 +162,7 @@ Test content here.
 /** A forked local skill with forkedFrom metadata for diff/update/outdated commands */
 export const LOCAL_SKILL_FORKED: TestSkill = {
   id: "web-tooling-forked-skill",
-  name: "web-tooling-forked-skill",
+  slug: "tooling",
   description: "A forked skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -183,7 +187,7 @@ Local modifications here.
 /** A minimal local skill for error handling tests (with forkedFrom) */
 export const LOCAL_SKILL_FORKED_MINIMAL: TestSkill = {
   id: "web-tooling-test-minimal",
-  name: "web-tooling-test-minimal",
+  slug: "env",
   description: "Test skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -282,206 +286,12 @@ Apply rate limiting to prevent abuse.
 `,
 };
 
-export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
-  {
-    id: "meta-methodology-investigation-requirements",
-    name: "meta-methodology-investigation-requirements",
-    description: "Never speculate - read actual code first",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    domain: "shared",
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-anti-over-engineering",
-    name: "meta-methodology-anti-over-engineering",
-    description: "Surgical implementation, not architectural innovation",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    domain: "shared",
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-success-criteria",
-    name: "meta-methodology-success-criteria",
-    description: "Explicit, measurable criteria defining done",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    domain: "shared",
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-write-verification",
-    name: "meta-methodology-write-verification",
-    description: "Verify work was actually saved",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    domain: "shared",
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-improvement-protocol",
-    name: "meta-methodology-improvement-protocol",
-    description: "Evidence-based self-improvement",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    domain: "shared",
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-context-management",
-    name: "meta-methodology-context-management",
-    description: "Maintain project continuity across sessions",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    domain: "shared",
-    tags: ["methodology", "foundational"],
-  },
-];
-
-export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [
-  {
-    id: "web-framework-vue",
-    name: "web-framework-vue",
-    description: "Progressive JavaScript framework",
-    category: "web-framework",
-    author: TEST_AUTHOR,
-    domain: "web",
-    tags: ["vue", "web"],
-  },
-  {
-    id: "web-styling-scss-modules",
-    name: "web-styling-scss-modules",
-    description: "CSS Modules with SCSS",
-    category: "web-styling",
-    author: TEST_AUTHOR,
-    domain: "web",
-    tags: ["css", "scss"],
-  },
-  {
-    id: "api-database-drizzle",
-    name: "api-database-drizzle",
-    description: "TypeScript ORM for SQL databases",
-    category: "api-database",
-    author: TEST_AUTHOR,
-    domain: "api",
-    tags: ["database", "orm"],
-  },
-];
-
-export const COMPILE_LOCAL_SKILL: TestSkill = {
-  id: "web-tooling-local-skill",
-  name: "web-tooling-local-skill",
-  description: "A local project skill",
-  category: "web-tooling",
-  author: TEST_AUTHOR,
-  domain: "web",
-  tags: ["local", "custom"],
-  content: `---
-name: web-tooling-local-skill
-description: A local project skill for testing
----
-
-# Web Tooling Local Skill
-
-This is a locally defined skill for the project.
-
-## Usage
-
-Use this skill for project-specific patterns.
-`,
-};
-
-export const DEFAULT_TEST_SKILLS: TestSkill[] = [
-  {
-    id: "web-framework-react",
-    name: "web-framework-react",
-    alias: "web-framework-react",
-    description: "React framework for building user interfaces",
-    category: "web-framework",
-    author: TEST_AUTHOR,
-    domain: "web",
-    tags: ["react", "web", "ui"],
-    content: `---
-name: web-framework-react
-description: React framework for building user interfaces
----
-
-# React
-
-React is a JavaScript library for building user interfaces with components.
-
-## Key Capabilities
-
-- Component-based architecture
-- Virtual DOM for performance
-- JSX syntax for templates
-`,
-  },
-  {
-    id: "web-state-zustand",
-    name: "web-state-zustand",
-    alias: "web-state-zustand",
-    description: "Bear necessities state management",
-    category: "web-client-state",
-    author: TEST_AUTHOR,
-    domain: "web",
-    tags: ["state", "react", "zustand"],
-    content: `---
-name: web-state-zustand
-description: Bear necessities state management
----
-
-# Zustand
-
-Zustand is a small, fast state management solution for React.
-
-## Key Features
-
-- Simple API
-- No boilerplate
-- TypeScript support
-`,
-  },
-  {
-    id: "web-testing-vitest",
-    name: "web-testing-vitest",
-    alias: "web-testing-vitest",
-    description: "Next generation testing framework",
-    category: "web-testing",
-    author: TEST_AUTHOR,
-    domain: "web",
-    tags: ["testing", "vitest", "unit"],
-    content: `---
-name: web-testing-vitest
-description: Next generation testing framework
----
-
-# Vitest
-
-Vitest is a fast unit test framework powered by Vite.
-`,
-  },
-  {
-    id: "api-framework-hono",
-    name: "api-framework-hono",
-    alias: "api-framework-hono",
-    description: "Lightweight web framework for the edge",
-    category: "api-api",
-    author: TEST_AUTHOR,
-    domain: "api",
-    tags: ["api", "hono", "edge"],
-    content: `---
-name: api-framework-hono
-description: Lightweight web framework for the edge
----
-
-# Hono
-
-Hono is a small, fast web framework for the edge.
-`,
-  },
-];
+export {
+  METHODOLOGY_TEST_SKILLS,
+  EXTRA_DOMAIN_TEST_SKILLS,
+  COMPILE_LOCAL_SKILL,
+  DEFAULT_TEST_SKILLS,
+} from "../mock-data/mock-skills";
 
 export const DEFAULT_TEST_AGENTS: TestAgent[] = [
   {
@@ -631,17 +441,17 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   }
 
   for (const skill of skills) {
-    const skillDir = path.join(skillsDir, skill.category, skill.name);
+    const skillDir = path.join(skillsDir, skill.category, skill.id);
     await mkdir(skillDir, { recursive: true });
 
     const content =
       skill.content ??
       `---
-name: ${skill.name}
+name: ${skill.id}
 description: ${skill.description}
 ---
 
-# ${skill.name}
+# ${skill.id}
 
 ${skill.description}
 `;
@@ -649,13 +459,15 @@ ${skill.description}
 
     const contentHash = await computeSkillFolderHash(skillDir);
     const domain = skill.domain;
+    const slug = skill.slug;
     const metadata = {
       author: skill.author,
       category: skill.category,
       domain,
       tags: skill.tags ?? [],
       // displayName is required by extractAllSkills for source-based matrix loading
-      displayName: skill.name,
+      displayName: skill.id,
+      slug,
       contentHash,
     };
     await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
@@ -734,8 +546,8 @@ permissionMode: {{ agent.permissionMode }}
 
     for (const skill of skills) {
       const categoryPath = skill.category;
-      const srcSkillDir = path.join(skillsDir, categoryPath, skill.name);
-      const destSkillDir = path.join(pluginDir, "skills", skill.name);
+      const srcSkillDir = path.join(skillsDir, categoryPath, skill.id);
+      const destSkillDir = path.join(pluginDir, "skills", skill.id);
       await mkdir(destSkillDir, { recursive: true });
 
       const skillMdContent = await readFile(path.join(srcSkillDir, "SKILL.md"), "utf-8");
@@ -765,17 +577,17 @@ permissionMode: {{ agent.permissionMode }}
     await mkdir(localSkillsDir, { recursive: true });
 
     for (const skill of options.localSkills) {
-      const skillDir = path.join(localSkillsDir, skill.name);
+      const skillDir = path.join(localSkillsDir, skill.id);
       await mkdir(skillDir, { recursive: true });
 
       const content =
         skill.content ??
         `---
-name: ${skill.name}
+name: ${skill.id}
 description: ${skill.description}
 ---
 
-# ${skill.name}
+# ${skill.id}
 
 ${skill.description}
 `;
@@ -784,7 +596,7 @@ ${skill.description}
       if (!skill.skipMetadata) {
         const localDomain = skill.domain;
         const metadata: Record<string, unknown> = {
-          displayName: skill.name,
+          displayName: skill.id,
           author: skill.author,
           domain: localDomain,
         };

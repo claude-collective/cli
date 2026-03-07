@@ -97,7 +97,7 @@ export const MIXED_LOCAL_REMOTE_MATRIX = createMockMatrix({
 });
 
 export const METHODOLOGY_MATRIX = createMockMatrix({
-  "meta-methodology-anti-over-engineering": TEST_SKILLS.antiOverEngineering,
+  "meta-methodology-anti-over-engineering": TEST_SKILLS["anti-over-engineering"],
 });
 
 export const VITEST_MATRIX = createMockMatrix({
@@ -176,8 +176,7 @@ export const FRAMEWORK_AND_STYLING_CONFIG = createMockMatrixConfig(
       ],
       recommends: [
         {
-          when: "web-framework-custom-a",
-          suggest: ["web-styling-custom-c"],
+          skill: "web-styling-custom-c" as SkillId,
           reason: "These work great together",
         },
       ],

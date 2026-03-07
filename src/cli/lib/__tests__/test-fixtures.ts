@@ -1,83 +1,44 @@
-import type {
-  CategoryPath,
-  MergedSkillsMatrix,
-  ResolvedSkill,
-  SkillDisplayName,
-  SkillId,
-} from "../../types";
+import type { MergedSkillsMatrix, ResolvedSkill, SkillSlug } from "../../types";
 import { createMockSkill, createMockCategory, createMockMatrix } from "./helpers";
 
-interface SkillFixtureConfig {
-  id: SkillId;
-  category: CategoryPath;
-  displayName?: SkillDisplayName;
-  description: string;
-  tags: string[];
-}
-
-const SKILL_FIXTURES: Record<string, SkillFixtureConfig> = {
-  react: {
-    id: "web-framework-react",
-    category: "web-framework",
-    displayName: "react",
+const SKILL_FIXTURES = {
+  react: createMockSkill("web-framework-react", "web-framework", {
     description: "React framework for building user interfaces",
     tags: ["react", "web", "ui", "component"],
-  },
-  zustand: {
-    id: "web-state-zustand",
-    category: "web-client-state",
-    displayName: "zustand",
+  }),
+  zustand: createMockSkill("web-state-zustand", "web-client-state", {
     description: "Bear necessities state management",
     tags: ["state", "react", "zustand"],
-  },
-  hono: {
-    id: "api-framework-hono",
-    category: "api-api",
-    displayName: "hono",
+  }),
+  hono: createMockSkill("api-framework-hono", "api-api", {
     description: "Lightweight web framework for the edge",
     tags: ["api", "api", "edge", "serverless"],
-  },
-  vitest: {
-    id: "web-testing-vitest",
-    category: "web-testing",
-    displayName: "vitest",
+  }),
+  vitest: createMockSkill("web-testing-vitest", "web-testing", {
     description: "Next generation testing framework",
     tags: ["testing", "vitest", "unit"],
-  },
-  vue: {
-    id: "web-framework-vue",
-    category: "web-framework",
-    displayName: "vue",
+  }),
+  vue: createMockSkill("web-framework-vue", "web-framework", {
     description: "Progressive JavaScript framework",
     tags: ["vue", "web", "reactive"],
-  },
-  "auth-patterns": {
-    id: "api-security-auth-patterns",
-    category: "api-security",
+  }),
+  "auth-patterns": createMockSkill("api-security-auth-patterns", "api-security", {
     description: "Authentication and authorization patterns",
     tags: ["auth", "security", "jwt", "oauth"],
-  },
-  drizzle: {
-    id: "api-database-drizzle",
-    category: "api-database",
-    displayName: "drizzle",
+  }),
+  drizzle: createMockSkill("api-database-drizzle", "api-database", {
     description: "TypeScript ORM for SQL databases",
     tags: ["database", "orm", "sql"],
-  },
-  methodology: {
-    id: "meta-methodology-anti-over-engineering",
-    category: "shared-methodology",
+  }),
+  "anti-over-engineering": createMockSkill("meta-methodology-anti-over-engineering", "shared-methodology", {
     description: "Surgical implementation, not architectural innovation",
     tags: ["methodology", "foundational"],
-  },
-  "scss-modules": {
-    id: "web-styling-scss-modules",
-    category: "web-styling",
-    displayName: "scss-modules",
+  }),
+  "scss-modules": createMockSkill("web-styling-scss-modules", "web-styling", {
     description: "CSS Modules with SCSS",
     tags: ["css", "scss", "modules"],
-  },
-} as const;
+  }),
+} satisfies Partial<Record<SkillSlug, ResolvedSkill>>;
 
 export type TestSkillName = keyof typeof SKILL_FIXTURES;
 
@@ -85,14 +46,12 @@ export function getTestSkill(
   name: TestSkillName,
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
-  const config = SKILL_FIXTURES[name];
-  const { id, category, ...defaults } = config;
-  return createMockSkill(id, category, { ...defaults, ...overrides });
+  return { ...SKILL_FIXTURES[name], ...overrides };
 }
 
 // ---------------------------------------------------------------------------
 // Shared base skill fixtures — canonical defaults with no overrides.
-// Use spread for per-test customization: `{ ...TEST_SKILLS.react, displayName: "react" }`
+// Use spread for per-test customization: `{ ...TEST_SKILLS.react, slug: "react" }`
 // ---------------------------------------------------------------------------
 
 export const TEST_SKILLS = {
@@ -106,36 +65,36 @@ export const TEST_SKILLS = {
   }),
   hono: createMockSkill("api-framework-hono", "api-api"),
   vitest: createMockSkill("web-testing-vitest", "web-testing"),
-  scssModules: createMockSkill("web-styling-scss-modules", "web-styling"),
+  "scss-modules": createMockSkill("web-styling-scss-modules", "web-styling"),
   drizzle: createMockSkill("api-database-drizzle", "api-database"),
   // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — used by createComprehensiveMatrix
-  investigationRequirements: createMockSkill(
+  "investigation-requirements": createMockSkill(
     "meta-methodology-investigation-requirements",
     "shared-methodology",
     { description: "Never speculate - read actual code first" },
   ),
-  antiOverEngineering: createMockSkill(
+  "anti-over-engineering": createMockSkill(
     "meta-methodology-anti-over-engineering",
     "shared-methodology",
     {
       description: "Surgical implementation, not architectural innovation",
     },
   ),
-  successCriteria: createMockSkill("meta-methodology-success-criteria", "shared-methodology", {
+  "success-criteria": createMockSkill("meta-methodology-success-criteria", "shared-methodology", {
     description: "Explicit, measurable criteria defining done",
   }),
-  writeVerification: createMockSkill("meta-methodology-write-verification", "shared-methodology", {
+  "write-verification": createMockSkill("meta-methodology-write-verification", "shared-methodology", {
     description: "Verify work was actually saved",
   }),
-  improvementProtocol: createMockSkill(
+  "improvement-protocol": createMockSkill(
     "meta-methodology-improvement-protocol",
     "shared-methodology",
     { description: "Evidence-based self-improvement" },
   ),
-  contextManagement: createMockSkill("meta-methodology-context-management", "shared-methodology", {
+  "context-management": createMockSkill("meta-methodology-context-management", "shared-methodology", {
     description: "Maintain project continuity across sessions",
   }),
-};
+} satisfies Partial<Record<SkillSlug, ResolvedSkill>>;
 
 // ---------------------------------------------------------------------------
 // Shared base category fixtures — canonical defaults with no overrides.
@@ -174,11 +133,11 @@ export const TEST_MATRICES: Record<string, MergedSkillsMatrix> = {
   }),
   reactAndScss: createMockMatrix({
     "web-framework-react": TEST_SKILLS.react,
-    "web-styling-scss-modules": TEST_SKILLS.scssModules,
+    "web-styling-scss-modules": TEST_SKILLS["scss-modules"],
   }),
   reactScssAndHono: createMockMatrix({
     "web-framework-react": TEST_SKILLS.react,
-    "web-styling-scss-modules": TEST_SKILLS.scssModules,
+    "web-styling-scss-modules": TEST_SKILLS["scss-modules"],
     "api-framework-hono": TEST_SKILLS.hono,
   }),
   reactZustandAndHono: createMockMatrix({
