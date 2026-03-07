@@ -16,7 +16,13 @@ import {
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
 import { compileAllSkillPlugins } from "../../lib/skills/skill-plugin-compiler.js";
+import {
+  loadConfigTypesDataInBackground,
+  regenerateConfigTypes,
+} from "../../lib/configuration/config-types-writer.js";
+import { saveProjectConfig } from "../../lib/configuration/config.js";
 import { generateMarketplace, writeMarketplace } from "../../lib/marketplace-generator.js";
+import { extendSchemasWithCustomValues } from "../../lib/schemas.js";
 import { generateSkillCategoriesTs, generateSkillRulesTs } from "./skill.js";
 import type { CategoryPath } from "../../types/index.js";
 
@@ -180,7 +186,6 @@ export default class NewMarketplace extends BaseCommand {
     this.log("");
 
     const skillName = "dummy-skill";
-    const skillPath = path.join(SKILLS_DIR_PATH, skillName);
 
     this.log("Creating marketplace structure...");
 
@@ -200,14 +205,14 @@ export default class NewMarketplace extends BaseCommand {
       await writeFile(categoriesPath, categoriesContent);
 
       // Create config/skill-rules.ts
-      const rulesContent = generateSkillRulesTs(skillName);
+      const rulesContent = generateSkillRulesTs();
       const rulesPath = path.join(marketplaceDir, SKILL_RULES_PATH);
       await writeFile(rulesPath, rulesContent);
 
       // Delegate skill creation to the new:skill command
       const skillsDir = path.join(marketplaceDir, SKILLS_DIR_PATH);
 
-      const skillArgs = [skillName, "--output", skillsDir, "--domain", "shared"];
+      const skillArgs = [skillName, "--output", skillsDir, "--domain", LOCAL_DEFAULTS.DOMAIN];
       if (flags.force) skillArgs.push("--force");
       await this.config.runCommand("new:skill", skillArgs);
 
@@ -216,11 +221,18 @@ export default class NewMarketplace extends BaseCommand {
       const readmePath = path.join(marketplaceDir, "README.md");
       await writeFile(readmePath, readmeContent);
 
+      // Create .claude-src/config.ts so the marketplace is a valid installation
+      await saveProjectConfig(marketplaceDir, {
+        source: ".",
+        marketplace: marketplaceName,
+      });
+
       this.log("");
       this.logSuccess(`Created ${STACKS_FILE_PATH}`);
       this.logSuccess(`Created ${SKILL_CATEGORIES_PATH}`);
       this.logSuccess(`Created ${SKILL_RULES_PATH}`);
       this.logSuccess("Created README.md");
+      this.logSuccess("Created .claude-src/config.ts");
       this.log("");
 
       // Build plugins and marketplace.json so the marketplace is immediately valid
@@ -255,6 +267,12 @@ export default class NewMarketplace extends BaseCommand {
     );
 
     try {
+      // Register custom values so schema validation accepts marketplace-specific domains/categories
+      extendSchemasWithCustomValues({
+        categories: [LOCAL_DEFAULTS.CATEGORY],
+        domains: [LOCAL_DEFAULTS.DOMAIN],
+      });
+
       this.log("Building plugins...");
       const results = await compileAllSkillPlugins(skillsDir, pluginsOutputDir);
       this.logSuccess(`Built ${results.length} skill plugins.`);
@@ -269,6 +287,11 @@ export default class NewMarketplace extends BaseCommand {
       this.logSuccess(
         `Generated ${PLUGIN_MANIFEST_DIR}/marketplace.json with ${marketplace.plugins.length} plugins.`,
       );
+
+      this.log("Generating config-types.ts...");
+      const configTypesData = loadConfigTypesDataInBackground(marketplaceDir, marketplaceDir);
+      await regenerateConfigTypes(marketplaceDir, configTypesData);
+      this.logSuccess("Generated .claude-src/config-types.ts");
     } catch (error) {
       this.warn(`Build step failed: ${getErrorMessage(error)}`);
       this.warn(

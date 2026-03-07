@@ -39,7 +39,8 @@ function matchesQuery(skill: SourcedSkill, query: string): boolean {
   const lowerQuery = query.toLowerCase();
 
   if (skill.id.toLowerCase().includes(lowerQuery)) return true;
-  if (skill.displayName?.toLowerCase().includes(lowerQuery)) return true;
+  if (skill.displayName.toLowerCase().includes(lowerQuery)) return true;
+  if (skill.slug?.toLowerCase().includes(lowerQuery)) return true;
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
   if (skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))) return true;

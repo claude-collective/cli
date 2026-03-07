@@ -9,9 +9,8 @@ import { EXIT_CODES } from "../lib/exit-codes.js";
 import { STATUS_MESSAGES } from "../utils/messages.js";
 import type {
   ResolvedSkill,
-  SkillDisplayName,
+  SkillSlug,
   SkillId,
-  SkillRelation,
   SkillRequirement,
 } from "../types/index.js";
 
@@ -56,13 +55,6 @@ function getPreviewLines(content: string, maxLines: number): string[] {
   return result;
 }
 
-function formatRelations(relations: SkillRelation[]): string {
-  if (relations.length === 0) {
-    return "(none)";
-  }
-  return relations.map((r) => r.skillId).join(", ");
-}
-
 function formatRequirements(requirements: SkillRequirement[]): string {
   if (requirements.length === 0) {
     return "(none)";
@@ -95,7 +87,8 @@ function findSuggestions(
     if (matches.length >= maxSuggestions) break;
     if (
       skill.id.toLowerCase().includes(lowerQuery) ||
-      skill.displayName?.toLowerCase().includes(lowerQuery)
+      skill.displayName.toLowerCase().includes(lowerQuery) ||
+      skill.slug?.toLowerCase().includes(lowerQuery)
     ) {
       matches.push(skill.id);
     }
@@ -108,9 +101,10 @@ function formatSkillInfo(skill: ResolvedSkill, isInstalled: boolean): string {
   const lines: string[] = [];
 
   lines.push(`Skill: ${skill.id}`);
-  if (skill.displayName) {
-    lines.push(`Alias: ${skill.displayName}`);
+  if (skill.slug) {
+    lines.push(`Slug: ${skill.slug}`);
   }
+  lines.push(`Display Name: ${skill.displayName}`);
   lines.push(`Author: ${skill.author}`);
   lines.push(`Category: ${skill.category}`);
   lines.push("");
@@ -120,8 +114,8 @@ function formatSkillInfo(skill: ResolvedSkill, isInstalled: boolean): string {
   lines.push(`Tags: ${formatTags(skill.tags)}`);
   lines.push("");
   lines.push(`Requires: ${formatRequirements(skill.requires)}`);
-  lines.push(`Conflicts with: ${formatRelations(skill.conflictsWith)}`);
-  lines.push(`Recommends: ${formatRelations(skill.recommends)}`);
+  lines.push(`Conflicts with: ${skill.conflictsWith.length > 0 ? skill.conflictsWith.map((r) => r.skillId).join(", ") : "(none)"}`);
+  lines.push(`Recommended: ${skill.isRecommended ? `Yes${skill.recommendedReason ? ` — ${skill.recommendedReason}` : ""}` : "No"}`);
 
   if (skill.usageGuidance) {
     lines.push("");
@@ -187,8 +181,8 @@ export default class Info extends BaseCommand {
       let skill: ResolvedSkill | undefined = matrix.skills[args.skill as SkillId];
 
       if (!skill) {
-        // Try alias lookup — CLI arg is an untyped string
-        const fullId = matrix.displayNameToId[args.skill as SkillDisplayName];
+        // Try slug lookup — CLI arg is an untyped string
+        const fullId = matrix.slugMap.slugToId[args.skill as SkillSlug];
         if (fullId) {
           skill = matrix.skills[fullId];
         }

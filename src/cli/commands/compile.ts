@@ -18,15 +18,15 @@ import {
   INFO_MESSAGES,
 } from "../utils/messages";
 import { detectInstallation, type Installation } from "../lib/installation";
-import type { AgentSourcePaths, SkillDefinition, SkillId } from "../types";
+import type { AgentSourcePaths, SkillDefinition, SkillDefinitionMap, SkillId } from "../types";
 import { getStackSkillIds } from "../lib/stacks/stacks-loader";
 import { typedEntries, typedKeys } from "../utils/typed-object";
 
 async function loadSkillsFromDir(
   skillsDir: string,
   pathPrefix = "",
-): Promise<Partial<Record<SkillId, SkillDefinition>>> {
-  const skills: Partial<Record<SkillId, SkillDefinition>> = {};
+): Promise<SkillDefinitionMap> {
+  const skills: SkillDefinitionMap = {};
 
   if (!(await directoryExists(skillsDir))) {
     return skills;
@@ -75,16 +75,16 @@ async function loadSkillsFromDir(
 
 async function discoverLocalProjectSkills(
   projectDir: string,
-): Promise<Partial<Record<SkillId, SkillDefinition>>> {
+): Promise<SkillDefinitionMap> {
   const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
   return loadSkillsFromDir(localSkillsDir, LOCAL_SKILLS_PATH);
 }
 
 /** Later sources take precedence over earlier ones */
 function mergeSkills(
-  ...skillSources: Partial<Record<SkillId, SkillDefinition>>[]
-): Partial<Record<SkillId, SkillDefinition>> {
-  const merged: Partial<Record<SkillId, SkillDefinition>> = {};
+  ...skillSources: SkillDefinitionMap[]
+): SkillDefinitionMap {
+  const merged: SkillDefinitionMap = {};
 
   for (const source of skillSources) {
     for (const [id, skill] of typedEntries<SkillId, SkillDefinition | undefined>(source)) {
@@ -104,7 +104,7 @@ type CompileFlags = {
 };
 
 type DiscoveredSkills = {
-  allSkills: Partial<Record<SkillId, SkillDefinition>>;
+  allSkills: SkillDefinitionMap;
   totalSkillCount: number;
 };
 

@@ -116,6 +116,7 @@ domain: ${domain}
 category: ${category}
 author: "${author}"
 displayName: ${titleName}
+slug: ${name}
 cliDescription: Brief description
 usageGuidance: Use when <guidance>.
 contentHash: ${contentHash}
@@ -128,7 +129,7 @@ tags:
 const DEFAULT_CATEGORY_ORDER = 99;
 
 const CATEGORIES_TS_COMMENT = "// Skill category definitions";
-const RULES_TS_COMMENT = "// Short aliases mapping to canonical skill IDs";
+const RULES_TS_COMMENT = "// Skill rules configuration";
 
 function formatTsExport(comment: string, data: unknown): string {
   const body = JSON.stringify(data, null, 2);
@@ -163,11 +164,15 @@ export function generateSkillCategoriesTs(category: CategoryPath, domain: string
   return formatTsExport(CATEGORIES_TS_COMMENT, data);
 }
 
-export function generateSkillRulesTs(skillName: string): string {
+export function generateSkillRulesTs(): string {
   const data = {
     version: DEFAULT_VERSION,
-    aliases: {
-      [skillName]: skillName,
+    relationships: {
+      conflicts: [],
+      discourages: [],
+      recommends: [],
+      requires: [],
+      alternatives: [],
     },
   };
   return formatTsExport(RULES_TS_COMMENT, data);
@@ -362,20 +367,10 @@ export default class NewSkill extends BaseCommand {
       verbose(`Created ${SKILL_CATEGORIES_PATH}`);
     }
 
-    // Update skill-rules.ts
-    if (await fileExists(rulesPath)) {
-      // Boundary cast: loadConfig returns unknown structure from TS file
-      const parsed = (await loadConfig<Record<string, unknown>>(rulesPath)) ?? {};
-      const aliases = (parsed.aliases ?? {}) as Record<string, unknown>;
-      if (!aliases[skillName]) {
-        aliases[skillName] = skillName;
-        parsed.aliases = aliases;
-        await writeFile(rulesPath, formatTsExport(RULES_TS_COMMENT, parsed));
-        verbose(`Added alias '${skillName}' to ${SKILL_RULES_PATH}`);
-      }
-    } else {
+    // Create skill-rules.ts if it doesn't exist (no aliases to update — slugs are in metadata.yaml)
+    if (!(await fileExists(rulesPath))) {
       await ensureDir(path.dirname(rulesPath));
-      await writeFile(rulesPath, generateSkillRulesTs(skillName));
+      await writeFile(rulesPath, generateSkillRulesTs());
       verbose(`Created ${SKILL_RULES_PATH}`);
     }
   }

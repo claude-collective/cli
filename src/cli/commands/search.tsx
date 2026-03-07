@@ -10,9 +10,9 @@ import type { SourcedSkill } from "../components/skill-search/skill-search.js";
 import { DEFAULT_SKILLS_SUBDIR, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { resolveAllSources, type SourceEntry } from "../lib/configuration/index.js";
-import { loadSkillsMatrixFromSource, fetchFromSource } from "../lib/loading/index.js";
-import type { CategoryPath, ResolvedSkill, SkillId } from "../types/index.js";
-import { listDirectories, fileExists, copy, ensureDir } from "../utils/fs.js";
+import { loadSkillsMatrixFromSource, fetchFromSource, parseFrontmatter } from "../lib/loading/index.js";
+import type { CategoryPath, ResolvedSkill, SkillSlug } from "../types/index.js";
+import { listDirectories, fileExists, readFile, copy, ensureDir } from "../utils/fs.js";
 import { SUCCESS_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";
 
 const MAX_DESCRIPTION_WIDTH = 50;
@@ -26,7 +26,8 @@ function matchesQuery(skill: ResolvedSkill, query: string): boolean {
   const lowerQuery = query.toLowerCase();
 
   if (skill.id.toLowerCase().includes(lowerQuery)) return true;
-  if (skill.displayName?.toLowerCase().includes(lowerQuery)) return true;
+  if (skill.displayName.toLowerCase().includes(lowerQuery)) return true;
+  if (skill.slug?.toLowerCase().includes(lowerQuery)) return true;
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
 
@@ -67,28 +68,34 @@ async function fetchSkillsFromSource(
 
     for (const skillDir of skillDirs) {
       const skillMdPath = path.join(skillsDir, skillDir, STANDARD_FILES.SKILL_MD);
-      if (await fileExists(skillMdPath)) {
-        skills.push({
-          // Directory name is an untyped string — cast at data boundary
-          id: skillDir as SkillId,
-          description: `Skill from ${source.name}`,
-          // Synthetic category for third-party sources — not in CategoryPath union
-          category: "imported" as CategoryPath,
-          tags: [],
-          author: `@${source.name}`,
-          conflictsWith: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-          discourages: [],
-          compatibleWith: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          sourceName: source.name,
-          sourceUrl: source.url,
-          path: path.join(skillsDir, skillDir),
-        });
-      }
+      if (!(await fileExists(skillMdPath))) continue;
+
+      const content = await readFile(skillMdPath);
+      const frontmatter = parseFrontmatter(content, skillMdPath);
+      if (!frontmatter) continue;
+
+      skills.push({
+        id: frontmatter.name,
+        description: frontmatter.description,
+        // Boundary cast: directory name used as slug for third-party source skill
+        slug: skillDir as SkillSlug,
+        displayName: skillDir,
+        // Boundary cast: external source skills have no category metadata
+        category: "imported" as CategoryPath,
+        tags: [],
+        author: `@${source.name}`,
+        conflictsWith: [],
+        isRecommended: false,
+        requires: [],
+        alternatives: [],
+        discourages: [],
+        compatibleWith: [],
+        requiresSetup: [],
+        providesSetupFor: [],
+        sourceName: source.name,
+        sourceUrl: source.url,
+        path: path.join(skillsDir, skillDir),
+      });
     }
 
     return skills;
@@ -272,7 +279,7 @@ export default class Search extends BaseCommand {
         results = results.filter((skill) => matchesCategory(skill, flags.category as CategoryPath));
       }
 
-      results = sortBy(results, (r) => r.displayName || r.id);
+      results = sortBy(results, (r) => (r.displayName || r.id).toLowerCase());
 
       this.log("");
       if (results.length === 0) {
