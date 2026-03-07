@@ -41,7 +41,6 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "shared-ci-cd": [{ id: "api-ci-cd-github-actions", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "cli-developer": {
@@ -64,7 +63,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "cli-reviewer": {
@@ -242,7 +240,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: true }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-reviewer": {
@@ -258,7 +255,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pm": {
@@ -372,7 +368,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: true }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-reviewer": {
@@ -389,7 +384,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pm": {
@@ -509,7 +503,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: true }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-reviewer": {
@@ -525,7 +518,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pm": {
@@ -638,7 +630,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: true }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-reviewer": {
@@ -654,7 +645,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pm": {
@@ -766,7 +756,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: true }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-reviewer": {
@@ -781,7 +770,6 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "web-testing": [{ id: "api-testing-api-testing", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pm": {
