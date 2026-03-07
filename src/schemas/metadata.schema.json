@@ -22,6 +22,12 @@
       "minLength": 1,
       "maxLength": 60
     },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "minLength": 1,
+      "maxLength": 50
+    },
     "usageGuidance": {
       "type": "string",
       "minLength": 10

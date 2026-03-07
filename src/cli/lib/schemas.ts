@@ -11,6 +11,7 @@ import type {
   CategoryDefinition,
   CategoryMap,
   CategoryPath,
+  CompatibilityGroup,
   ConflictRule,
   DiscourageRule,
   Domain,
@@ -23,12 +24,13 @@ import type {
   PermissionMode,
   PluginAuthor,
   PluginManifest,
-  RecommendRule,
+  Recommendation,
   RelationshipDefinitions,
   RequireRule,
+  SetupPair,
   SkillAssignment,
-  SkillDisplayName,
   SkillId,
+  SkillSlug,
   SkillSourceType,
   Category,
 } from "../types";
@@ -150,7 +152,7 @@ export const permissionModeSchema = z.enum([
   "delegate",
 ]) as z.ZodType<PermissionMode>;
 
-export const skillDisplayNameSchema = z.enum([
+export const skillSlugSchema = z.enum([
   "react",
   "vue",
   "angular",
@@ -219,7 +221,6 @@ export const skillDisplayNameSchema = z.enum([
   "file-upload",
   "image-handling",
   "date-fns",
-  "api-testing",
   "api-performance",
   "web-performance",
   "security",
@@ -235,7 +236,7 @@ export const skillDisplayNameSchema = z.enum([
   "write-verification",
   "improvement-protocol",
   "context-management",
-]) as z.ZodType<SkillDisplayName>;
+]) as z.ZodType<SkillSlug>;
 
 /** Matches SkillId format: prefix-category-name (at least 3 dash-separated segments) */
 export const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+-.+$/;
@@ -396,9 +397,6 @@ export const skillMetadataLoaderSchema = z
     category: (z.string() as z.ZodType<CategoryPath>).optional(),
     author: z.string().optional(),
     tags: z.array(z.string()).optional(),
-    requires: z.array(extensibleSkillIdSchema).optional(),
-    compatibleWith: z.array(extensibleSkillIdSchema).optional(),
-    conflictsWith: z.array(extensibleSkillIdSchema).optional(),
     domain: extensibleDomainSchema,
     custom: z.boolean().optional(),
   })
@@ -532,7 +530,7 @@ export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object(
   icon: z.string().optional(),
 });
 
-// Lenient: accepts both SkillId and SkillDisplayName, resolved to canonical IDs by matrix-loader
+// Lenient: accepts both SkillId and SkillSlug, resolved to canonical IDs by matrix-loader
 const skillRefInYaml = z.string() as z.ZodType<SkillId>;
 
 export const conflictRuleSchema: z.ZodType<ConflictRule> = z.object({
@@ -545,9 +543,19 @@ export const discourageRuleSchema: z.ZodType<DiscourageRule> = z.object({
   reason: z.string(),
 });
 
-export const recommendRuleSchema: z.ZodType<RecommendRule> = z.object({
-  when: skillRefInYaml,
-  suggest: z.array(skillRefInYaml).min(1),
+export const recommendationSchema: z.ZodType<Recommendation> = z.object({
+  skill: skillIdSchema,
+  reason: z.string(),
+});
+
+export const compatibilityGroupSchema: z.ZodType<CompatibilityGroup> = z.object({
+  skills: z.array(skillIdSchema).min(2),
+  reason: z.string(),
+});
+
+export const setupPairSchema: z.ZodType<SetupPair> = z.object({
+  setup: skillIdSchema,
+  configures: z.array(skillIdSchema).min(1),
   reason: z.string(),
 });
 
@@ -566,9 +574,11 @@ export const alternativeGroupSchema: z.ZodType<AlternativeGroup> = z.object({
 export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> = z.object({
   conflicts: z.array(conflictRuleSchema),
   discourages: z.array(discourageRuleSchema),
-  recommends: z.array(recommendRuleSchema),
+  recommends: z.array(recommendationSchema),
   requires: z.array(requireRuleSchema),
   alternatives: z.array(alternativeGroupSchema),
+  compatibleWith: z.array(compatibilityGroupSchema).optional().default([]),
+  setupPairs: z.array(setupPairSchema).optional().default([]),
 });
 
 /**
@@ -589,42 +599,29 @@ export const skillCategoriesFileSchema = z.object({
 });
 
 /**
- * Per-skill relationship rules from skill-rules.ts.
- * All 5 fields use canonical skill IDs (aliases resolved at load time).
- */
-export const perSkillRulesSchema = z.object({
-  compatibleWith: z.array(extensibleSkillIdSchema).optional(),
-  conflictsWith: z.array(extensibleSkillIdSchema).optional(),
-  requires: z.array(extensibleSkillIdSchema).optional(),
-  requiresSetup: z.array(extensibleSkillIdSchema).optional(),
-  providesSetupFor: z.array(extensibleSkillIdSchema).optional(),
-});
-
-/**
  * Standalone skill-rules.ts file schema.
- * Contains aliases (short name -> canonical skill ID), aggregate relationship rules,
- * and per-skill relationship rules previously stored in individual metadata.yaml files.
+ * Contains version and aggregate relationship rules between skills.
  */
 export const skillRulesFileSchema = z.object({
   version: z.string(),
-  aliases: z.record(z.string(), extensibleSkillIdSchema).optional(),
   relationships: relationshipDefinitionsSchema.optional(),
-  "per-skill": z.record(z.string(), perSkillRulesSchema).optional(),
 });
 
 /**
  * Raw metadata from a local skill's metadata.yaml.
- * All fields optional — the loader validates displayName after parsing.
+ * displayName and category are required — the skill must declare both.
  */
 export const localRawMetadataSchema = z
   .object({
     /** Short name shown in the wizard grid (e.g., "my-custom-react") */
-    displayName: z.string().optional(),
+    displayName: z.string(),
+    /** Kebab-case short key for alias resolution (e.g., "react") */
+    slug: z.string() as z.ZodType<SkillSlug>,
     /** One-line description for the wizard */
     cliDescription: z.string().optional(),
     /** Category to place this skill in (e.g., "web-framework") */
     // Field accepts any string; cross-field validation in superRefine enforces strict/custom rules
-    category: (z.string() as z.ZodType<CategoryPath>).optional(),
+    category: z.string() as z.ZodType<CategoryPath>,
     /** When an AI agent should invoke this skill */
     usageGuidance: z.string().optional(),
     tags: z.array(z.string()).optional(),
@@ -897,13 +894,10 @@ export const metadataValidationSchema = z
     cliDescription: z.string().min(1).max(60),
     /** When an AI agent should invoke this skill (min 10 chars to ensure usefulness) */
     usageGuidance: z.string().min(10),
-    requires: z.array(z.string().min(1)).optional(),
-    compatibleWith: z.array(z.string().min(1)).optional(),
-    conflictsWith: z.array(z.string().min(1)).optional(),
+    /** Kebab-case short key for alias resolution, search, and relationship rules */
+    slug: z.string().regex(/^[a-z][a-z0-9-]*$/).min(1).max(50),
     /** Searchable tags — kebab-case only */
     tags: z.array(z.string().regex(/^[a-z][a-z0-9-]*$/)).optional(),
-    requiresSetup: z.array(z.string().min(1)).optional(),
-    providesSetupFor: z.array(z.string().min(1)).optional(),
     /** 7-char hex SHA of skill content (for change detection) */
     contentHash: z
       .string()

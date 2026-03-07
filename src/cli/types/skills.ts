@@ -1,4 +1,4 @@
-import type { Category, Domain, ModelName } from "./matrix";
+import type { Category, ModelName } from "./matrix";
 
 /** Prefix segments used in skill IDs, including non-domain prefixes (infra, meta, security) */
 export type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
@@ -9,8 +9,8 @@ export type SkillId = `${SkillIdPrefix}-${string}-${string}`;
 /** Fully-qualified plugin skill reference: "plugin-name:skill-name" for Claude Code plugin resolution */
 export type PluginSkillRef = `${SkillId}:${SkillId}`;
 
-/** Short human-readable labels resolved to canonical SkillId at the YAML parse boundary */
-export type SkillDisplayName =
+/** Kebab-case short key for alias resolution, search, and relationship rules */
+export type SkillSlug =
   // Frameworks
   | "react"
   | "vue"
@@ -98,11 +98,11 @@ export type SkillDisplayName =
   | "image-handling"
   | "date-fns"
   // Backend-specific category skills
-  | "api-testing"
   | "api-performance"
   | "web-performance"
   // Security
   | "security"
+  | "auth-patterns"
   // CLI
   | "commander"
   | "cli-commander"
@@ -118,6 +118,7 @@ export type SkillDisplayName =
   | "write-verification"
   | "improvement-protocol"
   | "context-management";
+
 
 /**
  * Either "prefix-category" (e.g., "web-framework"), a standalone category,
@@ -145,6 +146,9 @@ export type SkillDefinition = {
   path: string;
   description: string;
 };
+
+/** Map of skill IDs to their definitions — index-signature semantics via template literal key */
+export type SkillDefinitionMap = Record<SkillId, SkillDefinition>;
 
 /** Skill assignment in stack config.yaml, specifies preloaded (embedded) vs dynamic (Skill tool) */
 export type SkillAssignment = {
@@ -190,25 +194,3 @@ export type SkillFrontmatter = {
   model?: ModelName;
 };
 
-/**
- * metadata.yaml fields - relationship and catalog data (identity comes from SKILL.md frontmatter).
- * All fields optional because metadata.yaml is supplementary; SKILL.md is the primary source.
- */
-export type SkillMetadataConfig = {
-  /** Which category this skill belongs to (e.g., "web-framework" or "web-testing") */
-  category?: CategoryPath;
-  /** Author handle (e.g., "@vince") */
-  author?: string;
-  /** Searchable tags for filtering (e.g., ["react", "hooks", "state"]) */
-  tags?: string[];
-  /** Skill IDs that must be selected before this skill (dependency) */
-  requires?: SkillId[];
-  /** Framework skill IDs this skill works with (for framework-first filtering) */
-  compatibleWith?: SkillId[];
-  /** Skill IDs that cannot be selected alongside this skill (mutual exclusion) */
-  conflictsWith?: SkillId[];
-  /** Domain assignment from metadata */
-  domain?: Domain;
-  /** True if this skill was created outside the CLI's built-in vocabulary */
-  custom?: boolean;
-};

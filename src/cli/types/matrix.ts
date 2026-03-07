@@ -1,4 +1,4 @@
-import type { CategoryPath, SkillDisplayName, SkillId } from "./skills";
+import type { CategoryPath, SkillSlug, SkillId } from "./skills";
 import type { AgentName } from "./agents";
 
 /** Wizard domain grouping for skill categories */
@@ -97,12 +97,16 @@ export type RelationshipDefinitions = {
   conflicts: ConflictRule[];
   /** Selecting one shows warning for others but doesn't disable */
   discourages: DiscourageRule[];
-  /** Selecting one highlights recommended companions */
-  recommends: RecommendRule[];
+  /** Flat opinionated picks — skills we actively recommend */
+  recommends: Recommendation[];
   /** Skill A requires skill B to be selected first */
   requires: RequireRule[];
   /** Groups of interchangeable skills for the same purpose */
   alternatives: AlternativeGroup[];
+  /** Symmetric compatibility groups — all skills in each group work together */
+  compatibleWith?: CompatibilityGroup[];
+  /** Bidirectional setup relationships — setup skills configure usage skills */
+  setupPairs?: SetupPair[];
 };
 
 /** Mutual exclusion rule - selecting any one skill disables ALL others */
@@ -119,11 +123,22 @@ export type DiscourageRule = {
   reason: string;
 };
 
-/** Suggestion rule - selecting a skill highlights recommended companions */
-export type RecommendRule = {
-  /** Skill ID that triggers this recommendation */
-  when: SkillId;
-  suggest: SkillId[];
+/** Flat opinionated pick — skills we actively recommend */
+export type Recommendation = {
+  skill: SkillId;
+  reason: string;
+};
+
+/** Symmetric compatibility group — all skills in the group work together */
+export type CompatibilityGroup = {
+  skills: SkillId[];
+  reason: string;
+};
+
+/** Bidirectional setup relationship — setup skill configures usage skills */
+export type SetupPair = {
+  setup: SkillId;
+  configures: SkillId[];
   reason: string;
 };
 
@@ -147,24 +162,11 @@ export type AlternativeGroup = {
   skills: SkillId[];
 };
 
-/** Per-skill relationship rules from skill-rules.ts per-skill section */
-export type PerSkillRules = {
-  compatibleWith?: SkillId[];
-  conflictsWith?: SkillId[];
-  requires?: SkillId[];
-  requiresSetup?: SkillId[];
-  providesSetupFor?: SkillId[];
-};
-
 /** Parsed configuration from skill-rules.ts */
 export type SkillRulesConfig = {
   version: string;
-  /** Short name aliases mapping to canonical skill IDs */
-  aliases: Partial<Record<SkillDisplayName, SkillId>>;
   /** Aggregate relationship rules between skills */
   relationships: RelationshipDefinitions;
-  /** Per-skill relationship rules keyed by alias */
-  perSkill: Partial<Record<SkillDisplayName, PerSkillRules>>;
 };
 
 /** Pre-configured stack of skills for a specific use case */
@@ -175,6 +177,14 @@ export type SuggestedStack = {
   /** Structure: { agentName: { category: skillId } } */
   skills: Record<string, Partial<Record<Category, SkillId>>>;
   philosophy: string;
+};
+
+/** Bidirectional slug <-> skill ID mapping. */
+export type SkillSlugMap = {
+  /** Forward: slug -> canonical skill ID */
+  slugToId: Record<SkillSlug, SkillId>;
+  /** Reverse: canonical skill ID -> slug */
+  idToSlug: Record<SkillId, SkillSlug>;
 };
 
 /**
@@ -188,10 +198,8 @@ export type MergedSkillsMatrix = {
   skills: Partial<Record<SkillId, ResolvedSkill>>;
   /** Stacks with all skill aliases resolved to canonical IDs */
   suggestedStacks: ResolvedStack[];
-  /** Forward map: display name (e.g., "react") to canonical skill ID (e.g., "web-framework-react") */
-  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>;
-  /** Reverse map: canonical skill ID to display name */
-  displayNames: Partial<Record<SkillId, SkillDisplayName>>;
+  /** Bidirectional slug <-> ID mapping */
+  slugMap: SkillSlugMap;
   /** Explicit domain definitions from agent metadata files */
   agentDefinedDomains?: Partial<Record<AgentName, Domain>>;
   /** ISO timestamp of when this matrix was generated */
@@ -204,8 +212,10 @@ export type MergedSkillsMatrix = {
  */
 export type ResolvedSkill = {
   id: SkillId;
-  /** Short display name (e.g., "react"); absent for skills without an alias in skillAliases */
-  displayName?: SkillDisplayName;
+  /** Kebab-case short key for alias resolution, search, and relationship rules (e.g., "react") */
+  slug: SkillSlug;
+  /** Title-cased label for UI display (e.g., "React", "Apollo Client") */
+  displayName: string;
   description: string;
   /** When an AI agent should invoke this skill (decision criteria) */
   usageGuidance?: string;
@@ -216,8 +226,10 @@ export type ResolvedSkill = {
   author: string;
   /** Selecting this skill disables these others (hard exclusion) */
   conflictsWith: SkillRelation[];
-  /** Selecting this skill highlights these as good companions (soft suggestion) */
-  recommends: SkillRelation[];
+  /** True if this skill is in the flat recommends list (opinionated pick) */
+  isRecommended: boolean;
+  /** Reason from the flat recommends entry (e.g., "Recommended client state management") */
+  recommendedReason?: string;
   /** Skills that THIS skill requires (must select first) */
   requires: SkillRequirement[];
   /** Other skills that serve the same purpose (informational, not enforced) */
@@ -339,7 +351,10 @@ export type BoundSkillCandidate = {
  */
 export type SkillOption = {
   id: SkillId;
-  displayName?: SkillDisplayName;
+  /** Kebab-case short key for alias resolution and lookups */
+  slug: SkillSlug;
+  /** Title-cased label for UI display (e.g., "React", "Apollo Client") */
+  displayName: string;
   description: string;
   /** True if a discourage rule, conflict, or unmet requirement applies (shown with warning indicator) */
   discouraged: boolean;
@@ -379,8 +394,8 @@ export type ValidationWarning = {
 /**
  * Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix merge.
  *
- * Relationship fields (compatibleWith, conflictsWith, requires, etc.) are loaded from
- * skill-rules.ts via perSkillRules — not from individual skill metadata.
+ * Relationship fields (compatibleWith, conflictsWith, requires, etc.) are resolved from
+ * centralized group-based declarations in skill-rules.ts — not from individual skill metadata.
  */
 export type ExtractedSkillMetadata = {
   /** Normalized from frontmatter name, e.g. "web-framework-react" */
@@ -403,4 +418,8 @@ export type ExtractedSkillMetadata = {
   domain: Domain;
   /** True if this skill was created outside the CLI's built-in vocabulary */
   custom?: boolean;
+  /** Kebab-case short key for alias resolution */
+  slug: SkillSlug;
+  /** Title-cased label for UI display (e.g., "React", "Apollo Client") */
+  displayName: string;
 };
