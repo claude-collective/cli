@@ -72,10 +72,7 @@ describe("test helpers", () => {
 
     it("writeTestSkill creates skill files", async () => {
       testDirs = await createTestDirs();
-      const skillDir = await writeTestSkill(testDirs.skillsDir, "web-testing-vitest", {
-        slug: "vitest",
-        category: "web-testing",
-      });
+      const skillDir = await writeTestSkill(testDirs.skillsDir, "web-testing-vitest");
 
       expect(await fileExists(`${skillDir}/SKILL.md`)).toBe(true);
       expect(await fileExists(`${skillDir}/metadata.yaml`)).toBe(true);

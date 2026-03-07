@@ -13,7 +13,7 @@ import {
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore, type SkillLookupEntry } from "../../../stores/wizard-store";
 import { TEST_SKILLS } from "../test-fixtures";
-import type { CategoryPath, Domain, SkillId, Category } from "../../../types";
+import type { CategoryPath, Domain, SkillId, Category, CategoryDomainMap } from "../../../types";
 import Edit from "../../../commands/edit.js";
 
 // --- Module mocks (hoisted by vitest) ---
@@ -174,7 +174,7 @@ describe("edit command", () => {
 });
 
 // Explicit domain assignments — these tests verify domain filtering, so domains must be correct
-const EDIT_CATEGORIES: Partial<Record<Category, { domain?: Domain }>> = {
+const EDIT_CATEGORIES: CategoryDomainMap = {
   "web-framework": { domain: "web" },
   "web-client-state": { domain: "web" },
   "api-api": { domain: "api" },
@@ -292,7 +292,10 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const extraSkills = {
       "web-framework-react": TEST_SKILLS.react,
       // Boundary cast: intentionally testing unmapped category handling
-      "infra-tooling-linter": { category: "unmapped-category" as CategoryPath, displayName: "Linter" },
+      "infra-tooling-linter": {
+        category: "unmapped-category" as CategoryPath,
+        displayName: "Linter",
+      },
     };
 
     const installedSkills: SkillId[] = ["web-framework-react", "infra-tooling-linter"];
@@ -324,7 +327,10 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     // testing category is non-exclusive, so multiple selections are valid
     const multiSkills = {
       ...EDIT_SKILLS,
-      "web-testing-playwright": { category: "web-testing" as CategoryPath, displayName: "Playwright" },
+      "web-testing-playwright": {
+        category: "web-testing" as CategoryPath,
+        displayName: "Playwright",
+      },
     };
 
     const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright"];
@@ -444,7 +450,11 @@ describe("edit command local-mode skill fallback", () => {
   let originalCwd: string;
 
   const CONFIG_SKILL_IDS: SkillId[] = ["web-framework-react", "api-framework-hono"];
-  const CONFIG_SKILLS = CONFIG_SKILL_IDS.map(id => ({ id, scope: "project" as const, source: "local" }));
+  const CONFIG_SKILLS = CONFIG_SKILL_IDS.map((id) => ({
+    id,
+    scope: "project" as const,
+    source: "local",
+  }));
 
   const testMatrix = TEST_MATRICES.reactAndHono;
 

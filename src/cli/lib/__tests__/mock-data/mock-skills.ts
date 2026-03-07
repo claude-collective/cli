@@ -109,6 +109,7 @@ export const CONSUMER_MATRIX_SKILLS: Record<string, ResolvedSkill> = {
 export const DOCKER_TOOLING_SKILL: TestSkill = {
   id: "infra-tooling-docker",
   slug: "tooling",
+  displayName: "Docker",
   description: "Docker containerization patterns",
   category: "infra-tooling",
   author: "@test",
@@ -120,6 +121,7 @@ export const CI_CD_SKILLS: TestSkill[] = [
   {
     id: "infra-ci-cd-github-actions",
     slug: "github-actions",
+    displayName: "GitHub Actions",
     description: "github-actions CI/CD pipeline",
     category: "infra-ci-cd",
     author: "@test",
@@ -129,6 +131,7 @@ export const CI_CD_SKILLS: TestSkill[] = [
   {
     id: "infra-ci-cd-gitlab-ci",
     slug: "github-actions",
+    displayName: "GitLab CI",
     description: "gitlab-ci CI/CD pipeline",
     category: "infra-ci-cd",
     author: "@test",
@@ -141,6 +144,7 @@ export const DISCOURAGES_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-custom-a",
     slug: "react",
+    displayName: "Custom A",
     description: "custom-a skill",
     category: "web-framework",
     author: "@test",
@@ -149,6 +153,7 @@ export const DISCOURAGES_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-styling-custom-b",
     slug: "cva",
+    displayName: "Custom B",
     description: "custom-b skill",
     category: "web-styling",
     author: "@test",
@@ -157,6 +162,7 @@ export const DISCOURAGES_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-styling-custom-c",
     slug: "scss-modules",
+    displayName: "Custom C",
     description: "custom-c skill",
     category: "web-styling",
     author: "@test",
@@ -167,6 +173,7 @@ export const DISCOURAGES_TEST_SKILLS: TestSkill[] = [
 export const DATADOG_OBSERVABILITY_SKILL: TestSkill = {
   id: "api-observability-datadog",
   slug: "axiom-pino-sentry",
+  displayName: "Datadog",
   description: "Datadog APM integration",
   category: "api-observability",
   author: "@test",
@@ -178,6 +185,7 @@ export const REQUIRES_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-custom-react",
     slug: "react",
+    displayName: "Custom React",
     description: "custom-react",
     category: "web-framework",
     author: "@test",
@@ -186,6 +194,7 @@ export const REQUIRES_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-testing-custom-rtl",
     slug: "react-testing-library",
+    displayName: "Custom RTL",
     description: "custom-rtl",
     category: "web-testing",
     author: "@test",
@@ -201,6 +210,7 @@ export const PIPELINE_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react",
     slug: "react",
+    displayName: "React",
     description: "React framework for building user interfaces",
     category: "web-framework",
     author: "@test",
@@ -220,6 +230,7 @@ Use component-based architecture with JSX.
   {
     id: "web-state-zustand",
     slug: "zustand",
+    displayName: "Zustand",
     description: "Bear necessities state management",
     category: "web-client-state",
     author: "@test",
@@ -238,6 +249,7 @@ Zustand is a minimal state management library for React.
   {
     id: "web-styling-scss-modules",
     slug: "scss-modules",
+    displayName: "SCSS Modules",
     description: "CSS Modules with SCSS",
     category: "web-styling",
     author: "@test",
@@ -256,6 +268,7 @@ Use CSS Modules with SCSS for scoped styling.
   {
     id: "web-testing-vitest",
     slug: "vitest",
+    displayName: "Vitest",
     description: "Next generation testing framework",
     category: "web-testing",
     author: "@test",
@@ -274,6 +287,7 @@ Vitest is a fast unit test framework powered by Vite.
   {
     id: "api-framework-hono",
     slug: "hono",
+    displayName: "Hono",
     description: "Lightweight web framework for the edge",
     category: "api-api",
     author: "@test",
@@ -292,6 +306,7 @@ Hono is a fast web framework for the edge.
   {
     id: "api-database-drizzle",
     slug: "drizzle",
+    displayName: "Drizzle",
     description: "TypeScript ORM for SQL databases",
     category: "api-database",
     author: "@test",
@@ -310,6 +325,7 @@ Drizzle is a lightweight TypeScript ORM.
   {
     id: "api-security-auth-patterns",
     slug: "auth-patterns",
+    displayName: "Auth Patterns",
     description: "Authentication and authorization patterns",
     category: "api-security",
     author: "@test",
@@ -328,6 +344,7 @@ JWT-based authentication and role-based authorization.
   {
     id: "web-accessibility-a11y",
     slug: "accessibility",
+    displayName: "A11y",
     description: "Web accessibility best practices",
     category: "web-accessibility",
     author: "@test",
@@ -346,6 +363,7 @@ Follow WCAG 2.1 guidelines for accessible web applications.
   {
     id: "meta-methodology-investigation",
     slug: "investigation-requirements",
+    displayName: "Investigation",
     description: "Investigation before implementation",
     category: "shared-methodology",
     author: "@test",
@@ -364,6 +382,7 @@ Always investigate before implementing. Read the code first.
   {
     id: "web-animation-framer",
     slug: "framer-motion",
+    displayName: "Framer Motion",
     description: "Framer Motion animation library",
     category: "web-animation",
     author: "@test",
@@ -390,6 +409,7 @@ export const RESOLUTION_PIPELINE_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react",
     slug: "react",
+    displayName: "React",
     description: "React framework (public source)",
     category: "web-framework",
     author: "@test",
@@ -400,6 +420,7 @@ export const RESOLUTION_PIPELINE_SKILLS: TestSkill[] = [
   {
     id: "api-framework-hono",
     slug: "hono",
+    displayName: "Hono",
     description: "Hono framework (acme source)",
     category: "api-api",
     author: "@acme",
@@ -410,6 +431,7 @@ export const RESOLUTION_PIPELINE_SKILLS: TestSkill[] = [
   {
     id: "web-animation-framer",
     slug: "framer-motion",
+    displayName: "Framer Motion",
     description: "Framer Motion (internal source)",
     category: "web-animation",
     author: "@internal",
@@ -420,6 +442,7 @@ export const RESOLUTION_PIPELINE_SKILLS: TestSkill[] = [
   {
     id: "api-database-drizzle",
     slug: "drizzle",
+    displayName: "Drizzle",
     description: "Drizzle ORM (acme source)",
     category: "api-database",
     author: "@acme",
@@ -430,6 +453,7 @@ export const RESOLUTION_PIPELINE_SKILLS: TestSkill[] = [
   {
     id: "web-testing-vitest",
     slug: "vitest",
+    displayName: "Vitest",
     description: "Vitest testing (public source)",
     category: "web-testing",
     author: "@test",
@@ -447,6 +471,7 @@ export const SWITCHABLE_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react",
     slug: "react",
+    displayName: "React",
     description: "React framework for building user interfaces",
     category: "web-framework",
     author: "@test",
@@ -466,6 +491,7 @@ Use component-based architecture with JSX.
   {
     id: "web-state-zustand",
     slug: "zustand",
+    displayName: "Zustand",
     description: "Bear necessities state management",
     category: "web-client-state",
     author: "@test",
@@ -484,6 +510,7 @@ Zustand is a minimal state management library for React.
   {
     id: "api-framework-hono",
     slug: "hono",
+    displayName: "Hono",
     description: "Lightweight web framework for the edge",
     category: "api-api",
     author: "@test",
@@ -502,6 +529,7 @@ Hono is a fast web framework for the edge.
   {
     id: "web-testing-vitest",
     slug: "vitest",
+    displayName: "Vitest",
     description: "Next generation testing framework",
     category: "web-testing",
     author: "@test",
@@ -527,6 +555,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
   {
     id: "meta-methodology-investigation-requirements",
     slug: "investigation-requirements",
+    displayName: "Investigation Requirements",
     description: "Never speculate - read actual code first",
     category: "shared-methodology",
     author: "@test",
@@ -536,6 +565,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
   {
     id: "meta-methodology-anti-over-engineering",
     slug: "anti-over-engineering",
+    displayName: "Anti Over-Engineering",
     description: "Surgical implementation, not architectural innovation",
     category: "shared-methodology",
     author: "@test",
@@ -545,6 +575,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
   {
     id: "meta-methodology-success-criteria",
     slug: "success-criteria",
+    displayName: "Success Criteria",
     description: "Explicit, measurable criteria defining done",
     category: "shared-methodology",
     author: "@test",
@@ -554,6 +585,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
   {
     id: "meta-methodology-write-verification",
     slug: "write-verification",
+    displayName: "Write Verification",
     description: "Verify work was actually saved",
     category: "shared-methodology",
     author: "@test",
@@ -563,6 +595,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
   {
     id: "meta-methodology-improvement-protocol",
     slug: "improvement-protocol",
+    displayName: "Improvement Protocol",
     description: "Evidence-based self-improvement",
     category: "shared-methodology",
     author: "@test",
@@ -572,6 +605,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
   {
     id: "meta-methodology-context-management",
     slug: "context-management",
+    displayName: "Context Management",
     description: "Maintain project continuity across sessions",
     category: "shared-methodology",
     author: "@test",
@@ -584,6 +618,7 @@ export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-vue",
     slug: "vue",
+    displayName: "Vue",
     description: "Progressive JavaScript framework",
     category: "web-framework",
     author: "@test",
@@ -593,6 +628,7 @@ export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-styling-scss-modules",
     slug: "scss-modules",
+    displayName: "SCSS Modules",
     description: "CSS Modules with SCSS",
     category: "web-styling",
     author: "@test",
@@ -602,6 +638,7 @@ export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [
   {
     id: "api-database-drizzle",
     slug: "drizzle",
+    displayName: "Drizzle",
     description: "TypeScript ORM for SQL databases",
     category: "api-database",
     author: "@test",
@@ -613,6 +650,7 @@ export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [
 export const COMPILE_LOCAL_SKILL: TestSkill = {
   id: "web-tooling-local-skill",
   slug: "tooling",
+  displayName: "Local Skill",
   description: "A local project skill",
   category: "web-tooling",
   author: "@test",
@@ -637,7 +675,7 @@ export const DEFAULT_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react",
     slug: "react",
-    alias: "web-framework-react",
+    displayName: "React",
     description: "React framework for building user interfaces",
     category: "web-framework",
     author: "@test",
@@ -662,7 +700,7 @@ React is a JavaScript library for building user interfaces with components.
   {
     id: "web-state-zustand",
     slug: "zustand",
-    alias: "web-state-zustand",
+    displayName: "Zustand",
     description: "Bear necessities state management",
     category: "web-client-state",
     author: "@test",
@@ -687,7 +725,7 @@ Zustand is a small, fast state management solution for React.
   {
     id: "web-testing-vitest",
     slug: "vitest",
-    alias: "web-testing-vitest",
+    displayName: "Vitest",
     description: "Next generation testing framework",
     category: "web-testing",
     author: "@test",
@@ -706,7 +744,7 @@ Vitest is a fast unit test framework powered by Vite.
   {
     id: "api-framework-hono",
     slug: "hono",
-    alias: "api-framework-hono",
+    displayName: "Hono",
     description: "Lightweight web framework for the edge",
     category: "api-api",
     author: "@test",
@@ -732,6 +770,7 @@ export const LOCAL_SKILL_VARIANTS: TestSkill[] = [
   {
     id: "web-framework-react",
     slug: "react",
+    displayName: "React",
     description: "React framework (local customized version)",
     category: "web-framework",
     author: "@local-user",
@@ -750,6 +789,7 @@ This is my customized React skill with project-specific patterns.
   {
     id: "web-state-zustand",
     slug: "zustand",
+    displayName: "Zustand",
     description: "Zustand state management (local customized version)",
     category: "web-client-state",
     author: "@local-user",
@@ -825,10 +865,7 @@ export const INIT_SKILL_IDS: SkillId[] = [
   "web-testing-vitest",
 ];
 
-export const EJECT_INSTALLED_SKILL_IDS: SkillId[] = [
-  "web-framework-react",
-  "api-framework-hono",
-];
+export const EJECT_INSTALLED_SKILL_IDS: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
 export const TEST_AVAILABLE_SKILLS = [
   "web-framework-react",

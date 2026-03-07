@@ -4,7 +4,15 @@ import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 import { createMockMatrix, getTestSkill } from "../lib/__tests__/helpers";
 import { TEST_SKILLS, TEST_CATEGORIES } from "../lib/__tests__/test-fixtures";
 import { typedKeys } from "../utils/typed-object";
-import type { AgentName, Domain, SkillAssignment, SkillId, SkillSource, Category } from "../types";
+import type {
+  AgentName,
+  Domain,
+  SkillAssignment,
+  SkillId,
+  SkillSource,
+  Category,
+  CategoryDomainMap,
+} from "../types";
 
 function sa(id: SkillId, preloaded = false): SkillAssignment {
   return { id, preloaded };
@@ -231,7 +239,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "web-framework": { domain: "web" },
         "web-client-state": { domain: "web" },
         "api-api": { domain: "api" },
@@ -300,7 +308,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "web-framework": { domain: "web" },
         "api-api": { domain: "api" },
       };
@@ -618,7 +626,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "web-framework": { domain: "web" },
         "web-client-state": { domain: "web" },
       };
@@ -648,7 +656,10 @@ describe("WizardStore", () => {
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(2);
-      expect(skillConfigs.map((sc) => sc.id)).toEqual(["web-framework-react", "api-framework-hono"]);
+      expect(skillConfigs.map((sc) => sc.id)).toEqual([
+        "web-framework-react",
+        "api-framework-hono",
+      ]);
     });
 
     it("should remove skillConfigs when domain is deselected", () => {
@@ -671,7 +682,7 @@ describe("WizardStore", () => {
           web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "web-framework": { domain: "web" },
       };
 
@@ -717,9 +728,7 @@ describe("WizardStore", () => {
       const matrix = createMockMatrix({
         "web-framework-react": {
           ...getTestSkill("react"),
-          availableSources: [
-            { name: "Acme Corp", type: "private", installed: false },
-          ],
+          availableSources: [{ name: "Acme Corp", type: "private", installed: false }],
         },
       });
 
@@ -868,7 +877,7 @@ describe("WizardStore", () => {
           web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "web-framework": { domain: "web" },
       };
 
@@ -895,7 +904,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "web-framework": { domain: "web" },
         "web-client-state": { domain: "web" },
         "api-api": { domain: "api" },
@@ -918,7 +927,7 @@ describe("WizardStore", () => {
           misc: { "shared-methodology": [sa("meta-methodology-vitest")] },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "shared-methodology": {},
       };
 
@@ -943,7 +952,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "shared-methodology": { domain: "shared" },
       };
 
@@ -973,7 +982,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "web-framework": { domain: "web" },
         "shared-methodology": { domain: "shared" },
         "api-api": { domain: "api" },
@@ -1010,7 +1019,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      const categories: Partial<Record<Category, { domain?: Domain }>> = {
+      const categories: CategoryDomainMap = {
         "shared-methodology": { domain: "shared" },
       };
 
@@ -1258,7 +1267,9 @@ describe("WizardStore", () => {
       expect(agentConfigs).toEqual([{ name: "web-developer", scope: "global" }]);
 
       store.toggleAgentScope("web-developer");
-      expect(useWizardStore.getState().agentConfigs).toEqual([{ name: "web-developer", scope: "project" }]);
+      expect(useWizardStore.getState().agentConfigs).toEqual([
+        { name: "web-developer", scope: "project" },
+      ]);
     });
 
     it("should set and clear focusedAgentId", () => {

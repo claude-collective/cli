@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir, writeTestSkill, buildAgentConfigs } from "../helpers";
+import {
+  runCliCommand,
+  createTempDir,
+  cleanupTempDir,
+  writeTestSkill,
+  buildAgentConfigs,
+} from "../helpers";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 
 describe("list command", () => {
@@ -68,10 +74,7 @@ describe("list command", () => {
       );
 
       // Write a test skill
-      await writeTestSkill(skillsDir, "web-testing-vitest", {
-        slug: "vitest",
-        category: "web-testing",
-      });
+      await writeTestSkill(skillsDir, "web-testing-vitest");
 
       const { error } = await runCliCommand(["list"]);
 

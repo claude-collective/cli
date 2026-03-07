@@ -16,10 +16,7 @@ import { FRAMEWORK_CATEGORY } from "./mock-categories.js";
 // Matrix configs from matrix-loader.test.ts
 // ---------------------------------------------------------------------------
 
-export const MERGE_BASIC_MATRIX = createMockMatrixConfig(
-  { "web-framework": FRAMEWORK_CATEGORY },
-  { skillAliases: { react: "web-framework-react" } },
-);
+export const MERGE_BASIC_MATRIX = createMockMatrixConfig({ "web-framework": FRAMEWORK_CATEGORY });
 
 export const CONFLICT_MATRIX = createMockMatrixConfig(
   {},
@@ -32,10 +29,6 @@ export const CONFLICT_MATRIX = createMockMatrixConfig(
       recommends: [],
       requires: [],
       alternatives: [],
-    },
-    skillAliases: {
-      react: "web-framework-react",
-      vue: "web-framework-vue",
     },
   },
 );

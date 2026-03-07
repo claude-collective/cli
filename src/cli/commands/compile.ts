@@ -22,10 +22,7 @@ import type { AgentSourcePaths, SkillDefinition, SkillDefinitionMap, SkillId } f
 import { getStackSkillIds } from "../lib/stacks/stacks-loader";
 import { typedEntries, typedKeys } from "../utils/typed-object";
 
-async function loadSkillsFromDir(
-  skillsDir: string,
-  pathPrefix = "",
-): Promise<SkillDefinitionMap> {
+async function loadSkillsFromDir(skillsDir: string, pathPrefix = ""): Promise<SkillDefinitionMap> {
   const skills: SkillDefinitionMap = {};
 
   if (!(await directoryExists(skillsDir))) {
@@ -73,17 +70,13 @@ async function loadSkillsFromDir(
   return skills;
 }
 
-async function discoverLocalProjectSkills(
-  projectDir: string,
-): Promise<SkillDefinitionMap> {
+async function discoverLocalProjectSkills(projectDir: string): Promise<SkillDefinitionMap> {
   const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
   return loadSkillsFromDir(localSkillsDir, LOCAL_SKILLS_PATH);
 }
 
 /** Later sources take precedence over earlier ones */
-function mergeSkills(
-  ...skillSources: SkillDefinitionMap[]
-): SkillDefinitionMap {
+function mergeSkills(...skillSources: SkillDefinitionMap[]): SkillDefinitionMap {
   const merged: SkillDefinitionMap = {};
 
   for (const source of skillSources) {
@@ -208,15 +201,15 @@ export default class Compile extends BaseCommand {
       );
     }
 
-    const localTotalCount = localSkillCount + globalLocalSkillCount;
-    if (localTotalCount > 0 && pluginSkillCount > 0) {
+    if (pluginSkillCount > 0 && totalSkillCount > pluginSkillCount) {
+      const localCount = totalSkillCount - pluginSkillCount;
       this.log(
-        `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localTotalCount} local)`,
+        `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localCount} local)`,
       );
-    } else if (localTotalCount > 0) {
-      this.log(`Discovered ${localTotalCount} local skills`);
-    } else {
+    } else if (pluginSkillCount > 0) {
       this.log(`Discovered ${pluginSkillCount} skills from plugins`);
+    } else {
+      this.log(`Discovered ${totalSkillCount} local skills`);
     }
 
     return { allSkills, totalSkillCount };

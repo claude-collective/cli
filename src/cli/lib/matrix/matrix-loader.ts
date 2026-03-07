@@ -65,10 +65,7 @@ const AUTO_SYNTH_ORDER = 999;
  * skill-categories.ts. This is a safety net — the preferred path is for
  * skill authors to maintain proper skill-categories.ts entries.
  */
-export function synthesizeCategory(
-  categoryPath: CategoryPath,
-  domain: Domain,
-): CategoryDefinition {
+export function synthesizeCategory(categoryPath: CategoryPath, domain: Domain): CategoryDefinition {
   const displayName = categoryPath
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -378,7 +375,7 @@ function resolveSetupPairs(
   skillId: SkillId,
   setupPairs: SetupPair[],
   resolve: ResolveId,
-): { requiresSetup: SkillId[]; providesSetupFor: SkillId[] } {
+): Pick<ResolvedSkill, "requiresSetup" | "providesSetupFor"> {
   const requiresSetup = new Set<SkillId>();
   const providesSetupFor = new Set<SkillId>();
 
@@ -486,9 +483,7 @@ function buildResolvedSkill(
   const slug = skill.slug;
 
   // Look up isRecommended/recommendedReason from flat recommends list
-  const recommendation = relationships.recommends.find(
-    (r) => r.skill === skill.id,
-  );
+  const recommendation = relationships.recommends.find((r) => r.skill === skill.id);
 
   // Resolve setup pairs
   const { requiresSetup, providesSetupFor } = resolveSetupPairs(
@@ -506,18 +501,10 @@ function buildResolvedSkill(
     category: skill.category,
     tags: skill.tags,
     author: skill.author,
-    conflictsWith: resolveConflicts(
-      skill.id,
-      relationships.conflicts,
-      resolve,
-    ),
+    conflictsWith: resolveConflicts(skill.id, relationships.conflicts, resolve),
     isRecommended: recommendation != null,
     recommendedReason: recommendation?.reason,
-    requires: resolveRequirements(
-      skill.id,
-      relationships.requires,
-      resolve,
-    ),
+    requires: resolveRequirements(skill.id, relationships.requires, resolve),
     alternatives: resolveAlternatives(skill.id, relationships.alternatives, resolve),
     discourages: resolveDiscourages(skill.id, relationships.discourages, resolve),
     compatibleWith: resolveCompatibilityGroups(
@@ -555,9 +542,5 @@ export async function loadAndMergeSkillsMatrix(
   const rules = await loadSkillRules(rulesPath);
   const skillsDir = path.join(projectRoot, DIRS.skills);
   const skills = await extractAllSkills(skillsDir);
-  return mergeMatrixWithSkills(
-    categories,
-    rules.relationships,
-    skills,
-  );
+  return mergeMatrixWithSkills(categories, rules.relationships, skills);
 }

@@ -9,7 +9,7 @@ import {
 } from "../plugins";
 import { computeStringHash, determinePluginVersion, writeContentHash } from "../versioning";
 import { extractFrontmatter } from "../../utils/frontmatter";
-import type { PluginManifest } from "../../types";
+import type { AgentFrontmatter, PluginManifest } from "../../types";
 import { agentFrontmatterValidationSchema, formatZodErrors } from "../schemas";
 
 export type AgentPluginOptions = {
@@ -26,7 +26,7 @@ export type CompiledAgentPlugin = {
 function parseAgentFrontmatter(
   content: string,
   filePath: string,
-): { name: string; description: string } | null {
+): Pick<AgentFrontmatter, "name" | "description"> | null {
   const raw = extractFrontmatter(content);
   if (!raw) {
     return null;

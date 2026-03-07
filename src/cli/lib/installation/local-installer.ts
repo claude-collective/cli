@@ -134,12 +134,15 @@ function buildLocalSkillsMap(
   return Object.fromEntries(
     copiedSkills
       .filter((cs) => matrix.skills[cs.skillId])
-      .map((cs) => [cs.skillId, {
-        id: cs.skillId,
-        description: matrix.skills[cs.skillId]!.description || "",
-        path: cs.destPath,
-        content: "", // Content not needed for skill references
-      }]),
+      .map((cs) => [
+        cs.skillId,
+        {
+          id: cs.skillId,
+          description: matrix.skills[cs.skillId]!.description || "",
+          path: cs.destPath,
+          content: "", // Content not needed for skill references
+        },
+      ]),
   );
 }
 
@@ -330,9 +333,8 @@ function buildCompileAgents(
       if (agentStack) {
         const refs = buildSkillRefsFromConfig(agentStack);
         // Global agents only see global skills (cross-scope safety net)
-        const filteredRefs = agentConfig.scope === "global"
-          ? refs.filter((ref) => globalSkillIds.has(ref.id))
-          : refs;
+        const filteredRefs =
+          agentConfig.scope === "global" ? refs.filter((ref) => globalSkillIds.has(ref.id)) : refs;
         compileAgents[agentConfig.name] = { skills: filteredRefs };
       } else {
         compileAgents[agentConfig.name] = {};
@@ -404,26 +406,8 @@ async function compileAndWriteAgents(
   return compiledAgentNames;
 }
 
-/**
- * Result of a plugin config installation (no skill copying).
- *
- * Returned by {@link installPluginConfig} with details about what was written to disk,
- * enabling the caller to display a summary to the user.
- */
-export type PluginConfigResult = {
-  /** Final project configuration (may be merged with existing config.ts) */
-  config: ProjectConfig;
-  /** Absolute path to the written config.ts file */
-  configPath: string;
-  /** Agent names that were compiled and written to `.claude/agents/` */
-  compiledAgents: AgentName[];
-  /** Whether the config was merged with an existing config.ts (true) or freshly created (false) */
-  wasMerged: boolean;
-  /** Absolute path to the pre-existing config.ts that was merged, if any */
-  mergedConfigPath?: string;
-  /** Absolute path to the `.claude/agents/` directory */
-  agentsDir: string;
-};
+/** Result of plugin-mode config installation — same as LocalInstallResult without copied skills or skillsDir */
+export type PluginConfigResult = Omit<LocalInstallResult, "copiedSkills" | "skillsDir">;
 
 /**
  * Generates config and compiles agents for plugin mode (without copying skills).
@@ -538,12 +522,14 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   }
 
   // Copy skills to their scope-appropriate directories
-  const projectCopied = projectSkills.length > 0
-    ? await deleteAndCopySkills(projectSkills, sourceResult, projectDir, projectPaths.skillsDir)
-    : [];
-  const globalCopied = globalSkills.length > 0
-    ? await deleteAndCopySkills(globalSkills, sourceResult, projectDir, globalPaths.skillsDir)
-    : [];
+  const projectCopied =
+    projectSkills.length > 0
+      ? await deleteAndCopySkills(projectSkills, sourceResult, projectDir, projectPaths.skillsDir)
+      : [];
+  const globalCopied =
+    globalSkills.length > 0
+      ? await deleteAndCopySkills(globalSkills, sourceResult, projectDir, globalPaths.skillsDir)
+      : [];
   const copiedSkills = [...projectCopied, ...globalCopied];
 
   const localSkillsForResolution = buildLocalSkillsMap(copiedSkills, sourceResult.matrix);

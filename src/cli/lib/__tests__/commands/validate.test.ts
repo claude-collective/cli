@@ -269,7 +269,6 @@ async function writeTestMatrix(
 
   const rulesData = {
     version: "1.0.0",
-    aliases: {},
     relationships: {
       conflicts: [],
       discourages: [],
@@ -519,7 +518,6 @@ describe("source validation (validateSource)", () => {
 
     const rulesData = {
       version: "1.0.0",
-      aliases: {},
       relationships: {
         conflicts: [
           {

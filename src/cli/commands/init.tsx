@@ -59,11 +59,7 @@ const DASHBOARD_OPTIONS: DashboardOption[] = [
   { label: "List", command: "list" },
 ];
 
-type DashboardProps = {
-  skillCount: number;
-  agentCount: number;
-  source?: string;
-  mode: string;
+type DashboardProps = DashboardData & {
   onSelect: (command: string) => void;
   onCancel: () => void;
 };

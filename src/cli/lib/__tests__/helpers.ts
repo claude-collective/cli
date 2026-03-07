@@ -513,12 +513,25 @@ tools:
   - Write`;
 }
 
+/** Derive domain, category, and slug from a SkillId like "web-framework-react". */
+function parseSkillId(skillId: SkillId): {
+  domain: string;
+  category: CategoryPath;
+  slug: SkillSlug;
+} {
+  const parts = skillId.split("-");
+  const domain = parts[0];
+  const category = parts.slice(0, 2).join("-") as CategoryPath;
+  const slug = parts.slice(2).join("-") as SkillSlug;
+  return { domain, category, slug };
+}
+
 export async function writeTestSkill(
   skillsDir: string,
   skillId: SkillId,
-  options: {
-    slug: SkillSlug;
-    category: CategoryPath;
+  options?: {
+    slug?: SkillSlug;
+    category?: CategoryPath;
     author?: string;
     description?: string;
     /** Extra fields to merge into metadata.yaml (e.g., forkedFrom, displayName) */
@@ -529,25 +542,29 @@ export async function writeTestSkill(
     skillContent?: string;
   },
 ): Promise<string> {
+  const parsed = parseSkillId(skillId);
+  const slug = options?.slug ?? parsed.slug;
+  const category = options?.category ?? parsed.category;
+  const domain = options?.category?.split("-")[0] ?? parsed.domain;
+
   const skillDir = path.join(skillsDir, skillId);
   await mkdir(skillDir, { recursive: true });
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    options.skillContent ?? createSkillContent(skillId, options.description),
+    options?.skillContent ?? createSkillContent(skillId, options?.description),
   );
 
-  if (!options.skipMetadata) {
+  if (!options?.skipMetadata) {
     const contentHash = await computeSkillFolderHash(skillDir);
-    const domain = options.category.split("-")[0] ?? "web";
     const baseMetadata = {
-      author: options.author ?? "@test",
-      category: options.category,
+      author: options?.author ?? "@test",
+      category,
       domain,
-      slug: options.slug,
+      slug,
       contentHash,
     };
-    if (options.extraMetadata) {
+    if (options?.extraMetadata) {
       const metadata = {
         ...baseMetadata,
         ...options.extraMetadata,
@@ -967,14 +984,12 @@ export function createMockSkillDefinition(
 export type MockMatrixConfig = {
   categories: Record<string, CategoryDefinition>;
   relationships: RelationshipDefinitions;
-  aliases: Partial<Record<SkillSlug, SkillId>>;
 };
 
 export function createMockMatrixConfig(
   categories: Record<string, CategoryDefinition>,
   overrides?: {
     relationships?: RelationshipDefinitions;
-    skillAliases?: Partial<Record<SkillSlug, SkillId>>;
   },
 ): MockMatrixConfig {
   return {
@@ -986,7 +1001,6 @@ export function createMockMatrixConfig(
       requires: [],
       alternatives: [],
     },
-    aliases: overrides?.skillAliases ?? {},
   };
 }
 

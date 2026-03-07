@@ -113,8 +113,6 @@ async function createCLISkill(
   source = TEST_SOURCE,
 ): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
-    slug: "react",
-    category: "web-framework",
     extraMetadata: {
       displayName: skillId,
       forkedFrom: {
@@ -130,8 +128,6 @@ async function createCLISkill(
 /** Creates a skill directory WITHOUT forkedFrom (user-created skill) */
 async function createUserSkill(skillsDir: string, skillId: SkillId): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
-    slug: "react",
-    category: "web-framework",
     description: "User skill",
     extraMetadata: { displayName: skillId },
   });
@@ -140,8 +136,6 @@ async function createUserSkill(skillsDir: string, skillId: SkillId): Promise<str
 /** Creates a skill directory with no metadata.yaml at all */
 async function createSkillWithoutMetadata(skillsDir: string, skillId: SkillId): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
-    slug: "react",
-    category: "web-framework",
     description: "No metadata skill",
     skipMetadata: true,
   });
@@ -379,8 +373,6 @@ describe("uninstall command", () => {
 
       // Create a legacy skill with forkedFrom but no source
       const legacySkillDir = await writeTestSkill(skillsDir, "web-framework-vue", {
-        slug: "vue",
-        category: "web-framework",
         extraMetadata: {
           displayName: "web-framework-vue",
           forkedFrom: {
@@ -402,7 +394,9 @@ describe("uninstall command", () => {
 
   describe("agent removal", () => {
     it("should remove compiled agents listed in config", async () => {
-      await createProjectConfig(projectDir, { agents: [{ name: "web-developer", scope: "project" }] });
+      await createProjectConfig(projectDir, {
+        agents: [{ name: "web-developer", scope: "project" }],
+      });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
 
       const agentsDir = path.join(claudeDir, "agents");
@@ -428,7 +422,9 @@ describe("uninstall command", () => {
     });
 
     it("should only remove agents listed in config and preserve others", async () => {
-      await createProjectConfig(projectDir, { agents: [{ name: "web-developer", scope: "project" }] });
+      await createProjectConfig(projectDir, {
+        agents: [{ name: "web-developer", scope: "project" }],
+      });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
 
       const agentsDir = path.join(claudeDir, "agents");
@@ -440,12 +436,8 @@ describe("uninstall command", () => {
 
       expect(stdout).toContain("Removed 1 compiled agent");
       expect(await directoryExists(agentsDir)).toBe(true);
-      expect(
-        await fileExists(path.join(agentsDir, "web-developer.md")),
-      ).toBe(false);
-      expect(
-        await fileExists(path.join(agentsDir, "my-custom-agent.md")),
-      ).toBe(true);
+      expect(await fileExists(path.join(agentsDir, "web-developer.md"))).toBe(false);
+      expect(await fileExists(path.join(agentsDir, "my-custom-agent.md"))).toBe(true);
     });
   });
 
@@ -627,7 +619,9 @@ describe("uninstall command", () => {
     });
 
     it("should remove everything with --all flag", async () => {
-      await createProjectConfig(projectDir, { agents: [{ name: "web-developer", scope: "project" }] });
+      await createProjectConfig(projectDir, {
+        agents: [{ name: "web-developer", scope: "project" }],
+      });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
       const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
 

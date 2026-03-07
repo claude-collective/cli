@@ -2,7 +2,7 @@ import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { DEFAULT_PLUGIN_NAME } from "../../../consts";
-import type { CategoryPath, Domain, SkillId, SkillSlug } from "../../../types";
+import type { ExtractedSkillMetadata } from "../../../types";
 import { computeSkillFolderHash } from "../../versioning";
 import {
   fileExists,
@@ -13,19 +13,13 @@ import {
 } from "../helpers";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 
-export type TestSkill = {
-  id: SkillId;
-  slug: SkillSlug;
-  alias?: string;
-  description: string;
-  category: CategoryPath;
-  author: string;
+export type TestSkill = Pick<
+  ExtractedSkillMetadata,
+  "id" | "slug" | "description" | "category" | "author" | "domain" | "displayName" | "usageGuidance"
+> & {
   tags?: string[];
   content?: string;
-  domain: Domain;
-  displayName?: string;
   cliDescription?: string;
-  usageGuidance?: string;
   /** Skip metadata.yaml creation for this local skill (for testing missing-metadata warnings) */
   skipMetadata?: boolean;
   forkedFrom?: {
@@ -56,7 +50,6 @@ export type TestMatrix = {
     description: string;
     allSkillIds: string[];
   }>;
-  aliases: Record<string, string>;
 };
 
 export type TestProjectConfig = {
@@ -111,6 +104,7 @@ const TEST_AUTHOR = "@test";
 export const VALID_LOCAL_SKILL: TestSkill = {
   id: "web-tooling-valid",
   slug: "tooling",
+  displayName: "Valid",
   description: "A valid skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -121,6 +115,7 @@ export const VALID_LOCAL_SKILL: TestSkill = {
 export const SKILL_WITHOUT_METADATA: TestSkill = {
   id: "web-tooling-incomplete",
   slug: "storybook",
+  displayName: "Incomplete",
   description: "Missing metadata",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -132,6 +127,7 @@ export const SKILL_WITHOUT_METADATA: TestSkill = {
 export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = {
   id: "web-tooling-custom",
   slug: "security",
+  displayName: "Custom",
   description: "No metadata",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -143,6 +139,7 @@ export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = {
 export const LOCAL_SKILL_BASIC: TestSkill = {
   id: "web-tooling-my-skill",
   slug: "tooling",
+  displayName: "My Skill",
   description: "A test skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -163,6 +160,7 @@ Test content here.
 export const LOCAL_SKILL_FORKED: TestSkill = {
   id: "web-tooling-forked-skill",
   slug: "tooling",
+  displayName: "Forked Skill",
   description: "A forked skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -188,6 +186,7 @@ Local modifications here.
 export const LOCAL_SKILL_FORKED_MINIMAL: TestSkill = {
   id: "web-tooling-test-minimal",
   slug: "env",
+  displayName: "Test Minimal",
   description: "Test skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
@@ -322,7 +321,7 @@ export { fileExists, directoryExists };
  * Generates matrix representations from skill definitions:
  * 1. `testMatrix` — the internal TestMatrix used by test assertions
  * 2. `diskCategories` — a skill-categories.ts-compatible structure
- * 3. `diskRules` — a skill-rules.ts-compatible structure (empty relationships/aliases)
+ * 3. `diskRules` — a skill-rules.ts-compatible structure (empty relationships)
  *
  * The disk format requires `categories` as CategoryDefinition objects
  * keyed by valid categorySchema values. Skill data is loaded separately
@@ -337,14 +336,10 @@ function generateMatrix(
   diskRules: Record<string, unknown>;
 } {
   const skillsMap: Record<string, TestSkill> = {};
-  const aliases: Record<string, string> = {};
   const categories: Record<string, { name: string; description: string }> = {};
 
   for (const skill of skills) {
     skillsMap[skill.id] = skill;
-    if (skill.alias) {
-      aliases[skill.alias] = skill.id;
-    }
     // Category is hyphen-separated (e.g., "web-framework", "api-api")
     const category = skill.category;
     if (!categories[category]) {
@@ -363,7 +358,6 @@ function generateMatrix(
     skills: skillsMap,
     categories,
     suggestedStacks: [],
-    aliases,
     ...overrides,
   };
 
@@ -394,7 +388,6 @@ function generateMatrix(
 
   const diskRules = {
     version: "1.0.0",
-    aliases: {},
     relationships: {
       conflicts: [],
       discourages: [],

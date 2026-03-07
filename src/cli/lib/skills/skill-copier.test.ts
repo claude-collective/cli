@@ -25,18 +25,19 @@ import {
 async function writeLocalSkillOnDisk(
   projectDir: string,
   skillId: SkillId,
-  options: {
-    slug: SkillSlug;
-    category: CategoryPath;
+  options?: {
+    slug?: SkillSlug;
+    category?: CategoryPath;
     description?: string;
   },
 ): Promise<string> {
+  const description = options?.description ?? `${skillId} skill`;
   const localSkillPath = `.claude/skills/${skillId}/`;
   await writeTestSkill(path.join(projectDir, ".claude/skills"), skillId, {
-    slug: options.slug,
-    category: options.category,
-    description: options.description ?? `${skillId} skill`,
-    skillContent: `---\nname: ${skillId} (@local)\ndescription: ${options.description ?? `${skillId} skill`}\n---\n${skillId} content`,
+    slug: options?.slug,
+    category: options?.category,
+    description,
+    skillContent: `---\nname: ${skillId} (@local)\ndescription: ${description}\n---\n${skillId} content`,
     skipMetadata: true,
   });
   return localSkillPath;
@@ -52,8 +53,8 @@ async function writeRemoteSkillOnDisk(
   config: {
     name: string;
     description: string;
-    slug: SkillSlug;
-    category: CategoryPath;
+    slug?: SkillSlug;
+    category?: CategoryPath;
     displayName?: string;
     author?: string;
   },
@@ -61,20 +62,16 @@ async function writeRemoteSkillOnDisk(
   const skillDir = path.join(projectDir, "src", relPath);
   // Boundary cast: path.basename extracts the skill ID directory name (e.g., "web-framework-react")
   const skillId = path.basename(relPath) as SkillId;
-  await writeTestSkill(
-    path.join(projectDir, "src", path.dirname(relPath)),
-    skillId,
-    {
-      slug: config.slug,
-      category: config.category,
-      description: config.description,
-      skillContent: `---\nname: ${config.name}\ndescription: ${config.description}\n---\n${config.description}`,
-      extraMetadata: {
-        displayName: config.displayName ?? config.name,
-        author: config.author ?? "@vince",
-      },
+  await writeTestSkill(path.join(projectDir, "src", path.dirname(relPath)), skillId, {
+    slug: config.slug,
+    category: config.category,
+    description: config.description,
+    skillContent: `---\nname: ${config.name}\ndescription: ${config.description}\n---\n${config.description}`,
+    extraMetadata: {
+      displayName: config.displayName ?? config.name,
+      author: config.author ?? "@vince",
     },
-  );
+  });
   return skillDir;
 }
 
@@ -167,8 +164,6 @@ describe("skill-copier", () => {
     it("skips local skills and does not copy them", async () => {
       // Create a local skill in the project's .claude/skills/ directory
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-testing-copier", {
-        slug: "vitest",
-        category: "web-testing",
         description: "Local skill",
       });
 
@@ -220,8 +215,6 @@ describe("skill-copier", () => {
 
     it("returns correct metadata for local skills", async () => {
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-testing-metadata", {
-        slug: "react-testing-library",
-        category: "web-testing",
         description: "Test local",
       });
 
@@ -265,8 +258,6 @@ describe("skill-copier", () => {
     it("handles mix of local and remote skills", async () => {
       // Create local skill
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-styling-custom", {
-        slug: "tailwind",
-        category: "web-styling",
         description: "Local",
       });
 
@@ -275,8 +266,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
         description: "React",
-        slug: "react",
-        category: "web-framework",
       });
 
       const matrix = createMockMatrix({
@@ -361,8 +350,6 @@ describe("skill-copier", () => {
     it("overrides local-skip when sourceSelections selects remote source", async () => {
       // Create local skill
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        slug: "react",
-        category: "web-framework",
         description: "Local React",
       });
 
@@ -371,8 +358,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
         description: "Remote React",
-        slug: "react",
-        category: "web-framework",
         displayName: "React",
       });
 
@@ -412,8 +397,6 @@ describe("skill-copier", () => {
 
     it("preserves local skill when sourceSelections selects local", async () => {
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        slug: "react",
-        category: "web-framework",
         description: "Local React",
       });
 
@@ -459,8 +442,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-state-zustand",
         description: "Zustand state management",
-        slug: "zustand",
-        category: "web-state",
         displayName: "Zustand",
       });
 
@@ -501,8 +482,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "api-framework-hono",
         description: "Hono API",
-        slug: "hono",
-        category: "api-framework",
         displayName: "Hono",
       });
 
@@ -532,8 +511,6 @@ describe("skill-copier", () => {
     it("skips local skills and does not copy them", async () => {
       // Create a local skill already in .claude/skills/
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-testing-copier", {
-        slug: "vitest",
-        category: "web-testing",
         description: "Local skill",
       });
 
@@ -576,8 +553,6 @@ describe("skill-copier", () => {
     it("handles mix of local and remote skills", async () => {
       // Create local skill
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-styling-custom", {
-        slug: "tailwind",
-        category: "web-styling",
         description: "Local",
       });
 
@@ -586,8 +561,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
         description: "React",
-        slug: "react",
-        category: "web-framework",
         displayName: "React",
       });
 
@@ -658,8 +631,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, deeplyNestedPath, {
         name: "web-framework-react",
         description: "React content from deeply nested dir",
-        slug: "react",
-        category: "web-framework",
         displayName: "React",
       });
 
@@ -717,8 +688,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, reactPath, {
         name: "web-framework-react",
         description: "React",
-        slug: "react",
-        category: "web-framework",
         displayName: "React",
       });
 
@@ -726,8 +695,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, honoPath, {
         name: "api-framework-hono",
         description: "Hono",
-        slug: "hono",
-        category: "api-framework",
         displayName: "Hono",
       });
 
@@ -735,8 +702,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, vitestPath, {
         name: "web-testing-vitest",
         description: "Vitest",
-        slug: "vitest",
-        category: "web-testing",
         displayName: "Vitest",
       });
 
@@ -794,7 +759,6 @@ describe("skill-copier", () => {
         name: "web-tooling-vite",
         description: "Vite bundler",
         slug: "tooling",
-        category: "web-tooling",
         displayName: "Vite",
       });
 
@@ -826,8 +790,6 @@ describe("skill-copier", () => {
     it("overrides local-skip when sourceSelections selects remote source", async () => {
       // Create local skill
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        slug: "react",
-        category: "web-framework",
         description: "Local React",
       });
 
@@ -836,8 +798,6 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
         description: "Remote React",
-        slug: "react",
-        category: "web-framework",
         displayName: "React",
       });
 
@@ -886,8 +846,6 @@ describe("skill-copier", () => {
 
     it("preserves local skill when sourceSelections selects local", async () => {
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        slug: "react",
-        category: "web-framework",
         description: "Local React",
       });
 
@@ -929,8 +887,6 @@ describe("skill-copier", () => {
 
     it("works without sourceSelections (backward compatible)", async () => {
       const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        slug: "react",
-        category: "web-framework",
         description: "Local React",
       });
 

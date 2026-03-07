@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.60.1] - 2026-03-08
+
+**Type redundancy cleanup and test infrastructure improvements**
+
+- `CategoryDomainMap`, `PluginConfigResult`, and 4 other types simplified with `Pick`/`Omit`/extends
+- `TestSkill` derived from `ExtractedSkillMetadata`, dead alias fields removed, `writeTestSkill` options auto-derived
+
+See [changelogs/0.60.1.md](./changelogs/0.60.1.md) for full details.
+
+---
+
 ## [0.60.0] - 2026-03-07
 
 **Slug-based skill identity — R-04 Phase 1**

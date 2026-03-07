@@ -23,7 +23,9 @@ import type {
   SkillId,
   SkillSource,
   Category,
+  CategoryDomainMap,
 } from "../types/index.js";
+import type { SourceOption } from "../components/wizard/source-grid.js";
 import { warn } from "../utils/logger.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
 
@@ -34,9 +36,7 @@ function createDefaultSkillConfig(id: SkillId): SkillConfig {
 }
 
 /** Derive all unique domains from a categories map, preserving built-in order then appending custom. */
-function getAllDomainsFromCategories(
-  categories: Partial<Record<Category, { domain?: Domain }>>,
-): Domain[] {
+function getAllDomainsFromCategories(categories: CategoryDomainMap): Domain[] {
   const allDomains = unique(
     Object.values(categories)
       .map((cat) => cat?.domain)
@@ -98,7 +98,7 @@ export type SkillLookupEntry = Pick<ResolvedSkill, "category" | "displayName">;
 function resolveSkillForPopulation(
   skillId: SkillId,
   skills: Partial<Record<SkillId, SkillLookupEntry>>,
-  categories: Partial<Record<Category, { domain?: Domain }>>,
+  categories: CategoryDomainMap,
 ): { domain: Domain; subcat: Category; techId: SkillId } | null {
   const skill = skills[skillId];
   if (!skill?.category) {
@@ -123,7 +123,7 @@ function buildBoundSkillOptions(
   boundSkills: BoundSkill[],
   alias: SkillAlias,
   selectedSource: string,
-): { id: string; label: string; selected: boolean; installed: boolean }[] {
+): SourceOption[] {
   return boundSkills
     .filter((b) => b.boundTo === alias)
     .map((bound) => ({
@@ -251,7 +251,7 @@ export type WizardState = {
    */
   populateFromStack: (
     stack: { agents: Record<string, Partial<Record<Category, SkillAssignment[]>>> },
-    categories: Partial<Record<Category, { domain?: Domain }>>,
+    categories: CategoryDomainMap,
   ) => void;
   /**
    * Pre-populate domainSelections from a flat list of installed skill IDs.
@@ -268,7 +268,7 @@ export type WizardState = {
   populateFromSkillIds: (
     skillIds: SkillId[],
     skills: Partial<Record<SkillId, SkillLookupEntry>>,
-    categories: Partial<Record<Category, { domain?: Domain }>>,
+    categories: CategoryDomainMap,
     savedConfigs?: SkillConfig[],
   ) => void;
   /**
@@ -817,10 +817,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       }
       return {
         selectedAgents: [...state.selectedAgents, agent],
-        agentConfigs: [
-          ...state.agentConfigs,
-          { name: agent, scope: "project" as const },
-        ],
+        agentConfigs: [...state.agentConfigs, { name: agent, scope: "project" as const }],
       };
     }),
 

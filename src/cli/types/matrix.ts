@@ -64,6 +64,9 @@ export type PermissionMode =
  */
 export type CategoryMap = Partial<Record<Category, CategoryDefinition>>;
 
+/** Map from category to its domain — used by wizard store for domain lookups */
+export type CategoryDomainMap = Partial<Record<Category, { domain?: Domain }>>;
+
 /**
  * Full domain selections used throughout the wizard pipeline (store, components, result).
  *
