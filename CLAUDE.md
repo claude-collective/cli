@@ -28,6 +28,9 @@ This file provides decision trees, behavioral rules, and conventions. For codeba
 - NEVER use git worktrees (`isolation: "worktree"`) — always work directly on the main branch
 - NEVER introduce new workflow patterns (tools, flags, strategies) that the user hasn't explicitly requested
 - NEVER construct test data inline — no inline configs, matrices, skills, stacks. Use factories from `helpers.ts` and fixtures from `create-test-source.ts`. If a factory doesn't exist, create one.
+- NEVER use `as SkillSlug` casts on test data — use valid values from the `SkillSlug` union in `types/skills.ts`. If a test needs a slug not in the union, the union is incomplete.
+- NEVER create redundant type aliases — reuse existing types with `Pick<>`, `Partial<>`, or intersection (`&`). Check `types/` before defining a new type.
+- NEVER derive `slug` from skill ID or directory path — `slug` is a required field in metadata, always pass it explicitly.
 - NEVER put TODO/task IDs (T1, T6, etc.) in test `describe()` blocks — test code is not a task tracker
 - NEVER add backward-compatibility shims, migration code, or legacy fallbacks. The project is pre-1.0 — backward compatibility is not a concern. Remove old code cleanly instead of maintaining two paths.
 - NEVER add unnecessary comments — only add comments when something is unintuitive, complex, or for edge cases. Self-explanatory code should not have comments. Do not add JSDoc to obvious functions.
@@ -116,12 +119,14 @@ This means:
 
 - **Skills/agents/SKILL.md/metadata.yaml** → `createCLISkill()`, `createUserSkill()`, `writeTestSkill()`, `writeSourceSkill()`, `createTestSource()`
 - **Mock skill objects** → `createMockSkill()`, `createMockSkillSource()`, `createMockExtractedSkill()`, `createMockSkillDefinition()`, `createMockSkillEntry()`, `createMockMultiSourceSkill()`
+- **Shared `TestSkill[]` constants** → `mock-data/mock-skills.ts` (e.g., `DEFAULT_TEST_SKILLS`, `PIPELINE_TEST_SKILLS`, `SWITCHABLE_SKILLS`). NEVER define `TestSkill[]` arrays inline in test files.
 - **Mock matrices** → `createMockMatrix()`, `createBasicMatrix()`, `createComprehensiveMatrix()`, `createMockMatrixConfig()`
 - **Mock categories** → `createMockCategory()`
 - **Mock agents** → `createMockAgent()`, `createMockAgentConfig()`, `createMockCompiledAgentData()`
 - **Mock stacks** → `createMockStack()`, `createMockResolvedStack()`, `createMockRawStacksConfig()`, `createMockCompiledStackPlugin()`
 - **Mock marketplace** → `createMockMarketplace()`, `createMockMarketplacePlugin()`
-- **Full project directories** → `createTestSource()` from fixtures/create-test-source.ts
+- **Full project directories** → `createTestSource()` from `fixtures/create-test-source.ts`
+- **All mock data is centralised** in `__tests__/mock-data/` — skills in `mock-skills.ts`, matrices in `mock-matrices.ts`, agents in `mock-agents.ts`, stacks in `mock-stacks.ts`, categories in `mock-categories.ts`, sources in `mock-sources.ts`. NEVER define shared mock constants inline in test files.
 - **Stacks** → Use `TestStack[]` via `createTestSource({ stacks })` or extend existing fixtures
 - **Configs** → `buildProjectConfig()`, `buildSkillConfigs()`, `buildAgentConfigs()`, `buildWizardResult()`, `buildWizardResultFromStore()`, `buildSourceResult()`, `buildTestProjectConfig()`
 - **Compile context** → `createCompileContext()`, `createMockCompileConfig()`, `createMockSkillAssignment()`
@@ -261,6 +266,8 @@ this.error(message, { exit: 2 });
 - [ ] **ALL test data uses factories/fixtures** — no inline configs, matrices, skills, stacks, or agents
 - [ ] No raw `writeFile` for skill/agent test data — use `createCLISkill`, `createUserSkill`, `writeTestSkill`, `writeSourceSkill`, `createTestSource`
 - [ ] No inline `SkillsMatrixConfig` or `MergedSkillsMatrix` construction — use `createMockMatrix()`, `createMockSkill()`
+- [ ] No inline `TestSkill[]` arrays — use constants from `mock-data/mock-skills.ts`
+- [ ] No `as SkillSlug` casts on test data — use valid union members only
 - [ ] No alias/mapping hacks to paper over wrong test data — fix the data at the source
 - [ ] No TODO/task IDs in test describe blocks — describes are purely descriptive
 - [ ] Tests written and passing (`npm test`)
