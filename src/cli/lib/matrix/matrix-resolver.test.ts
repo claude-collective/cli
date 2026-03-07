@@ -9,19 +9,13 @@ import {
   getSkillsByCategory,
   getAvailableSkills,
 } from "./matrix-resolver";
-import type {
-  CategoryDefinition,
-  SkillId,
-  Category,
-} from "../../types";
+import type { CategoryDefinition, SkillId, Category } from "../../types";
 import { createMockSkill, createMockCategory, createMockMatrix } from "../__tests__/helpers";
 
 describe("resolveAlias", () => {
   it("when skill ID exists in matrix, should return it unchanged", () => {
     const skill = createMockSkill("web-framework-react", "web-framework");
-    const matrix = createMockMatrix(
-      { "web-framework-react": skill },
-    );
+    const matrix = createMockMatrix({ "web-framework-react": skill });
     const result = resolveAlias("web-framework-react", matrix);
     expect(result).toBe("web-framework-react");
   });
@@ -296,7 +290,10 @@ describe("validateSelection", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", order: 1 }),
+          "web-framework": createMockCategory("web-framework", "Framework", {
+            description: "Frameworks",
+            order: 1,
+          }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -385,7 +382,11 @@ describe("Empty skill selection", () => {
         {},
         {
           categories: {
-            "web-framework": createMockCategory("web-framework", "Framework", { description: "Required framework", required: true, order: 1 }),
+            "web-framework": createMockCategory("web-framework", "Framework", {
+              description: "Required framework",
+              required: true,
+              order: 1,
+            }),
           } as Record<Category, CategoryDefinition>,
         },
       );
@@ -537,7 +538,11 @@ describe("Conflicting skills", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
+          "web-framework": createMockCategory("web-framework", "Framework", {
+            description: "Frameworks",
+            exclusive: false,
+            order: 1,
+          }),
         },
       },
     );
@@ -913,9 +918,7 @@ describe("Missing skill dependencies", () => {
         ],
       });
       const skillB = createMockSkill("web-skill-b-v", "web-framework");
-      const matrix = createMockMatrix(
-        { "web-skill-a-v": skillA, "web-skill-b-v": skillB },
-      );
+      const matrix = createMockMatrix({ "web-skill-a-v": skillA, "web-skill-b-v": skillB });
 
       const result = validateSelection(["web-skill-a-v"], matrix);
 
@@ -934,9 +937,7 @@ describe("Missing skill dependencies", () => {
         ],
       });
       const skillB = createMockSkill("web-skill-b-v", "web-framework");
-      const matrix = createMockMatrix(
-        { "web-skill-a-v": skillA, "web-skill-b-v": skillB },
-      );
+      const matrix = createMockMatrix({ "web-skill-a-v": skillA, "web-skill-b-v": skillB });
 
       const result = validateSelection(["web-skill-a-v", "web-skill-b-v"], matrix);
 
@@ -1099,9 +1100,7 @@ describe("getDependentSkills", () => {
     const skillB = createMockSkill("web-skill-b-v", "web-framework", {
       requires: [{ skillIds: ["web-skill-a-v"], needsAny: false, reason: "B needs A" }],
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a-v": skillA, "web-skill-b-v": skillB },
-    );
+    const matrix = createMockMatrix({ "web-skill-a-v": skillA, "web-skill-b-v": skillB });
 
     const result = getDependentSkills("web-skill-a-v", ["web-skill-a-v", "web-skill-b-v"], matrix);
     expect(result).toEqual(["web-skill-b-v"]);
@@ -1154,7 +1153,11 @@ describe("getAvailableSkills edge cases", () => {
       },
       {
         categories: {
-          "web-styling": createMockCategory("web-styling", "Styling", { description: "Styling options", exclusive: false, order: 1 }),
+          "web-styling": createMockCategory("web-styling", "Styling", {
+            description: "Styling options",
+            exclusive: false,
+            order: 1,
+          }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1173,7 +1176,11 @@ describe("getAvailableSkills edge cases", () => {
     );
     const matrix = createMockMatrix(skills, {
       categories: {
-        "api-performance": createMockCategory("api-performance", "Performance", { description: "Performance tools", exclusive: false, order: 1 }),
+        "api-performance": createMockCategory("api-performance", "Performance", {
+          description: "Performance tools",
+          exclusive: false,
+          order: 1,
+        }),
       } as Record<Category, CategoryDefinition>,
     });
 
@@ -1200,7 +1207,11 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-c": skillC },
       {
         categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
+          "web-framework": createMockCategory("web-framework", "Framework", {
+            description: "Frameworks",
+            exclusive: false,
+            order: 1,
+          }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1222,7 +1233,11 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
+          "web-framework": createMockCategory("web-framework", "Framework", {
+            description: "Frameworks",
+            exclusive: false,
+            order: 1,
+          }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1246,7 +1261,11 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
+          "web-framework": createMockCategory("web-framework", "Framework", {
+            description: "Frameworks",
+            exclusive: false,
+            order: 1,
+          }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1270,7 +1289,11 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
+          "web-framework": createMockCategory("web-framework", "Framework", {
+            description: "Frameworks",
+            exclusive: false,
+            order: 1,
+          }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1294,7 +1317,11 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
+          "web-framework": createMockCategory("web-framework", "Framework", {
+            description: "Frameworks",
+            exclusive: false,
+            order: 1,
+          }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1319,7 +1346,11 @@ describe("getAvailableSkills edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB },
       {
         categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", exclusive: false, order: 1 }),
+          "web-framework": createMockCategory("web-framework", "Framework", {
+            description: "Frameworks",
+            exclusive: false,
+            order: 1,
+          }),
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1337,9 +1368,7 @@ describe("validateSelection edge cases", () => {
     const matrix = createMockMatrix({});
 
     // Selecting a skill that doesn't exist in the matrix is a bug
-    expect(() => validateSelection(["web-skill-nonexistent"], matrix)).toThrow(
-      "Unknown skill ID",
-    );
+    expect(() => validateSelection(["web-skill-nonexistent"], matrix)).toThrow("Unknown skill ID");
   });
 
   it("should detect category exclusivity with more than 2 skills in same exclusive category", () => {
@@ -1356,7 +1385,10 @@ describe("validateSelection edge cases", () => {
       { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-c": skillC },
       {
         categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", { description: "Frameworks", order: 1 }),
+          "web-framework": createMockCategory("web-framework", "Framework", {
+            description: "Frameworks",
+            order: 1,
+          }),
         } as Record<Category, CategoryDefinition>,
       },
     );

@@ -1047,14 +1047,14 @@ output-format.md          # Optional: output format section
 
 ### Evolution History
 
-| Phase | What Changed                                                                                                                             |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| P1-P4 | Core commands, test coverage from 384 to 1160 tests                                                                                      |
-| P5    | Commander.js + @clack/prompts migrated to oclif + Ink                                                                                    |
-| P6    | Agent-centric configuration (skills in stacks, not agents)                                                                               |
-| P7A   | Architecture fix (stack-based skill resolution)                                                                                          |
-| P7B   | Wizard UX redesign (2D grid, domain-based, vim keys)                                                                                     |
-| D5    | Type simplification (types over interfaces, shared base, display names)                                                                  |
-| D6    | Type narrowing (union types, named aliases, Zod schemas, Remeda, typed helpers)                                                          |
-| D7    | Domain restructuring (8 lib subdirectories, barrel exports, ~140 import paths)                                                           |
-| MS    | Multi-source UX (6 phases: source grid, multi-source loader, delete/recopy, installed indicators, source settings, bound skill search)   |
+| Phase | What Changed                                                                                                                           |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| P1-P4 | Core commands, test coverage from 384 to 1160 tests                                                                                    |
+| P5    | Commander.js + @clack/prompts migrated to oclif + Ink                                                                                  |
+| P6    | Agent-centric configuration (skills in stacks, not agents)                                                                             |
+| P7A   | Architecture fix (stack-based skill resolution)                                                                                        |
+| P7B   | Wizard UX redesign (2D grid, domain-based, vim keys)                                                                                   |
+| D5    | Type simplification (types over interfaces, shared base, display names)                                                                |
+| D6    | Type narrowing (union types, named aliases, Zod schemas, Remeda, typed helpers)                                                        |
+| D7    | Domain restructuring (8 lib subdirectories, barrel exports, ~140 import paths)                                                         |
+| MS    | Multi-source UX (6 phases: source grid, multi-source loader, delete/recopy, installed indicators, source settings, bound skill search) |

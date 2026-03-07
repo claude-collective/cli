@@ -125,7 +125,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({
           />
         </Box>
         <Box marginTop={1}>
-          <Text dimColor>L set all local  P set all plugin  ENTER continue  ESC back</Text>
+          <Text dimColor>L set all local P set all plugin ENTER continue ESC back</Text>
         </Box>
       </Box>
     );

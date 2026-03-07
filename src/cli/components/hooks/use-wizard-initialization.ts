@@ -37,7 +37,12 @@ export function useWizardInitialization({
       if (installedSkillIds?.length) {
         useWizardStore
           .getState()
-          .populateFromSkillIds(installedSkillIds, matrix.skills, matrix.categories, installedSkillConfigs);
+          .populateFromSkillIds(
+            installedSkillIds,
+            matrix.skills,
+            matrix.categories,
+            installedSkillConfigs,
+          );
       }
       useWizardStore.setState({ step: initialStep, approach: "scratch" });
     }

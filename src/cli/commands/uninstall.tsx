@@ -423,5 +423,4 @@ export default class Uninstall extends BaseCommand {
       this.log(`Kept ${CLAUDE_DIR}/ (contains user content)`);
     }
   }
-
 }

@@ -136,13 +136,19 @@ describe("config-merger", () => {
       it("should union agents (existing + new, deduplicated)", async () => {
         await writeFullConfig({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }],
+          agents: [
+            { name: "web-developer", scope: "project" },
+            { name: "api-developer", scope: "project" },
+          ],
           skills: [],
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }, { name: "cli-developer", scope: "project" }], // web-developer is duplicate
+          agents: [
+            { name: "web-developer", scope: "project" },
+            { name: "cli-developer", scope: "project" },
+          ], // web-developer is duplicate
           skills: [],
         };
 
@@ -246,7 +252,10 @@ describe("config-merger", () => {
 
         const newConfig: ProjectConfig = {
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }],
+          agents: [
+            { name: "web-developer", scope: "project" },
+            { name: "api-developer", scope: "project" },
+          ],
           skills: [],
           stack: {
             "web-developer": {

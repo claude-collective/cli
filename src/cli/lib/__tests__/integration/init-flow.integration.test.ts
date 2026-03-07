@@ -2,11 +2,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
-import {
-  createTestSource,
-  cleanupTestSource,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS, INIT_SKILL_IDS } from "../mock-data/mock-skills";
 import { installLocal } from "../../installation/local-installer";
 import type { AgentName, ProjectConfig, SkillId } from "../../../types";
@@ -467,7 +463,9 @@ describe("Init Flow Integration: Install Mode in Config", () => {
 
   it("should set installMode to local in config", async () => {
     const result = await installLocal({
-      wizardResult: buildWizardResult(buildSkillConfigs(["web-framework-react"], { source: "local" })),
+      wizardResult: buildWizardResult(
+        buildSkillConfigs(["web-framework-react"], { source: "local" }),
+      ),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -478,7 +476,9 @@ describe("Init Flow Integration: Install Mode in Config", () => {
 
   it("should set installMode to plugin when wizard selects plugin mode", async () => {
     const result = await installLocal({
-      wizardResult: buildWizardResult(buildSkillConfigs(["web-framework-react"], { source: "agents-inc" })),
+      wizardResult: buildWizardResult(
+        buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+      ),
       sourceResult,
       projectDir: dirs.projectDir,
     });

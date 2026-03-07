@@ -266,11 +266,7 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   verbose(`Skills from source: ${skillsDir}`);
 
   const skills = await extractAllSkills(skillsDir);
-  const mergedMatrix = await mergeMatrixWithSkills(
-    categories,
-    relationships,
-    skills,
-  );
+  const mergedMatrix = await mergeMatrixWithSkills(categories, relationships, skills);
 
   // Load stacks from source first, fall back to CLI's built-in defaults
   const sourceStacks = await loadStacks(basePath, stacksRelFile);

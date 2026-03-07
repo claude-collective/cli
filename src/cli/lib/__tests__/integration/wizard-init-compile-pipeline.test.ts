@@ -5,11 +5,7 @@ import { readTestTsConfig } from "../helpers";
 
 import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents/agent-recompiler";
-import {
-  createTestSource,
-  cleanupTestSource,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import type { AgentName, CategoryPath, ProjectConfig, SkillId } from "../../../types";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../../consts";
 import {

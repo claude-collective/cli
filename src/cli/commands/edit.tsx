@@ -6,7 +6,14 @@ import { render } from "ink";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { ASCII_LOGO, CLI_BIN_NAME, CLAUDE_SRC_DIR, GLOBAL_INSTALL_ROOT, SOURCE_DISPLAY_NAMES, STANDARD_FILES } from "../consts.js";
+import {
+  ASCII_LOGO,
+  CLI_BIN_NAME,
+  CLAUDE_SRC_DIR,
+  GLOBAL_INSTALL_ROOT,
+  SOURCE_DISPLAY_NAMES,
+  STANDARD_FILES,
+} from "../consts.js";
 import { getAgentDefinitions, recompileAgents } from "../lib/agents/index.js";
 import { splitConfigByScope } from "../lib/configuration/config-generator.js";
 import { loadProjectConfig } from "../lib/configuration/index.js";
@@ -85,7 +92,10 @@ export default class Edit extends BaseCommand {
     enableBuffering();
 
     if (installation.projectDir === os.homedir()) {
-      pushBufferMessage("info", "No project installation found. Using global installation from ~/.claude-src/");
+      pushBufferMessage(
+        "info",
+        "No project installation found. Using global installation from ~/.claude-src/",
+      );
     }
     let sourceResult;
     let startupMessages: StartupMessage[] = [];
@@ -116,7 +126,7 @@ export default class Edit extends BaseCommand {
 
       // In local mode, plugin discovery returns empty — fall back to project config skills
       if (currentSkillIds.length === 0 && projectConfig?.config?.skills?.length) {
-        currentSkillIds = projectConfig.config.skills.map(s => s.id);
+        currentSkillIds = projectConfig.config.skills.map((s) => s.id);
         pushBufferMessage("info", `Found ${currentSkillIds.length} skills from project config`);
       } else {
         pushBufferMessage("info", `Current plugin has ${currentSkillIds.length} skills`);
@@ -137,14 +147,10 @@ export default class Edit extends BaseCommand {
     const isGlobalDir = projectDir === GLOBAL_INSTALL_ROOT;
     const lockedSkillIds = isGlobalDir
       ? undefined
-      : projectConfig?.config?.skills
-          ?.filter(s => s.scope === "global")
-          .map(s => s.id);
+      : projectConfig?.config?.skills?.filter((s) => s.scope === "global").map((s) => s.id);
     const lockedAgentNames = isGlobalDir
       ? undefined
-      : projectConfig?.config?.agents
-          ?.filter(a => a.scope === "global")
-          .map(a => a.name);
+      : projectConfig?.config?.agents?.filter((a) => a.scope === "global").map((a) => a.name);
 
     const { waitUntilExit } = render(
       <Wizard
@@ -185,15 +191,18 @@ export default class Edit extends BaseCommand {
       });
     }
 
-    const newSkillIds = result.skills.map(s => s.id);
+    const newSkillIds = result.skills.map((s) => s.id);
     const addedSkills = newSkillIds.filter((id) => !currentSkillIds.includes(id));
     const removedSkills = currentSkillIds.filter((id) => !newSkillIds.includes(id));
 
     const sourceChanges = new Map<SkillId, { from: string; to: string }>();
-    const scopeChanges = new Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>();
+    const scopeChanges = new Map<
+      SkillId,
+      { from: "project" | "global"; to: "project" | "global" }
+    >();
     if (projectConfig?.config?.skills) {
       for (const newSkill of result.skills) {
-        const oldSkill = projectConfig.config.skills.find(s => s.id === newSkill.id);
+        const oldSkill = projectConfig.config.skills.find((s) => s.id === newSkill.id);
         if (oldSkill && oldSkill.source !== newSkill.source) {
           sourceChanges.set(newSkill.id, {
             from: oldSkill.source,
@@ -259,11 +268,7 @@ export default class Edit extends BaseCommand {
         }
       }
 
-      const migrationResult = await executeMigration(
-        migrationPlan,
-        projectDir,
-        sourceResult,
-      );
+      const migrationResult = await executeMigration(migrationPlan, projectDir, sourceResult);
 
       for (const warning of migrationResult.warnings) {
         this.warn(warning);
@@ -271,13 +276,13 @@ export default class Edit extends BaseCommand {
     }
 
     const migratedSkillIds = new Set([
-      ...migrationPlan.toLocal.map(m => m.id),
-      ...migrationPlan.toPlugin.map(m => m.id),
+      ...migrationPlan.toLocal.map((m) => m.id),
+      ...migrationPlan.toPlugin.map((m) => m.id),
     ]);
 
     // Handle scope migrations (P→G or G→P) for local-mode skills
     for (const [skillId, change] of scopeChanges) {
-      const skillConfig = result.skills.find(s => s.id === skillId);
+      const skillConfig = result.skills.find((s) => s.id === skillId);
       if (skillConfig?.source === "local") {
         await migrateLocalSkillScope(skillId, change.from, projectDir);
       } else if (sourceResult.marketplace && skillConfig) {
@@ -308,7 +313,7 @@ export default class Edit extends BaseCommand {
     if (sourceResult.marketplace) {
       for (const skillId of addedSkills) {
         // Find the skill config to get its scope
-        const skillConfig = result.skills.find(s => s.id === skillId);
+        const skillConfig = result.skills.find((s) => s.id === skillId);
         if (!skillConfig || skillConfig.source === "local") continue;
 
         const pluginRef = `${skillId}@${sourceResult.marketplace}`;
@@ -322,7 +327,7 @@ export default class Edit extends BaseCommand {
       }
       for (const skillId of removedSkills) {
         // For removed skills, use old config to determine scope
-        const oldSkill = projectConfig?.config?.skills?.find(s => s.id === skillId);
+        const oldSkill = projectConfig?.config?.skills?.find((s) => s.id === skillId);
         const pluginScope = oldSkill?.scope === "global" ? "user" : "project";
         this.log(`Uninstalling plugin: ${skillId}...`);
         try {
@@ -336,12 +341,7 @@ export default class Edit extends BaseCommand {
     // Persist wizard result to config.ts (split by scope when in project context)
     const isGlobalContext = projectDir === GLOBAL_INSTALL_ROOT;
     try {
-      const mergeResult = await buildAndMergeConfig(
-        result,
-        sourceResult,
-        projectDir,
-        flags.source,
-      );
+      const mergeResult = await buildAndMergeConfig(result, sourceResult, projectDir, flags.source);
 
       if (isGlobalContext) {
         // Editing from ~/ — write directly to global config (no import preamble)
@@ -349,8 +349,9 @@ export default class Edit extends BaseCommand {
         verbose(`Updated global config at ${installation.configPath}`);
       } else {
         // Editing from project — split by scope and write to both locations
-        const { global: globalConfig, project: projectSplitConfig } =
-          splitConfigByScope(mergeResult.config);
+        const { global: globalConfig, project: projectSplitConfig } = splitConfigByScope(
+          mergeResult.config,
+        );
 
         // Write global config to ~/.claude-src/config.ts
         const globalConfigPath = path.join(

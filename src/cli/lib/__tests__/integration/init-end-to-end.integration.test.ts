@@ -399,9 +399,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       const wizardResult = buildWizardResultFromStore(matrix);
 
       // Count occurrences of the first methodology skill
-      const occurrences = wizardResult.skills.map((s) => s.id).filter(
-        (s) => s === DEFAULT_PRESELECTED_SKILLS[0],
-      ).length;
+      const occurrences = wizardResult.skills
+        .map((s) => s.id)
+        .filter((s) => s === DEFAULT_PRESELECTED_SKILLS[0]).length;
       expect(occurrences).toBe(1);
     });
   });

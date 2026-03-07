@@ -639,11 +639,9 @@ displayName: wrong
         "web-framework": FRAMEWORK_CATEGORY,
       };
 
-      const merged = await mergeMatrixWithSkills(
-        existingCategories,
-        EMPTY_MATRIX.relationships,
-        [REACT_EXTRACTED_BASIC],
-      );
+      const merged = await mergeMatrixWithSkills(existingCategories, EMPTY_MATRIX.relationships, [
+        REACT_EXTRACTED_BASIC,
+      ]);
 
       expect(merged.categories["web-framework"]).toBe(FRAMEWORK_CATEGORY);
     });

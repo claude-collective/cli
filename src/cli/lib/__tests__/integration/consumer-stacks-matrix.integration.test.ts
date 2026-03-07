@@ -86,7 +86,9 @@ describe("Integration: Consumer-Defined Stacks", () => {
     const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
 
     const result = await installLocal({
-      wizardResult: buildWizardResult(buildSkillConfigs(["web-framework-react", "api-framework-hono"])),
+      wizardResult: buildWizardResult(
+        buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+      ),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -295,7 +297,11 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const skillsDir = path.join(tempDir, "src", "skills");
 
       // Create a skill in the tooling category (use "infra" prefix — valid categoryPath prefix)
-      await writeSourceSkill(skillsDir, path.join("infra", "tooling", "docker"), DOCKER_TOOLING_SKILL);
+      await writeSourceSkill(
+        skillsDir,
+        path.join("infra", "tooling", "docker"),
+        DOCKER_TOOLING_SKILL,
+      );
 
       // Extract skills from filesystem and merge with matrix config
       const skills = await extractAllSkills(skillsDir);
@@ -561,7 +567,11 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
     try {
       const skillsDir = path.join(tempDir, "src", "skills");
 
-      await writeSourceSkill(skillsDir, path.join("api", "observability", "datadog"), DATADOG_OBSERVABILITY_SKILL);
+      await writeSourceSkill(
+        skillsDir,
+        path.join("api", "observability", "datadog"),
+        DATADOG_OBSERVABILITY_SKILL,
+      );
 
       const skills = await extractAllSkills(skillsDir);
       const merged = await mergeMatrixWithSkills(

@@ -44,7 +44,10 @@ function hashStackConfig(stack: ProjectConfig): string {
     `name:${stack.name}`,
     `description:${stack.description ?? ""}`,
     `skills:${stackSkillIds.join(",")}`,
-    `agents:${(stack.agents || []).map((a) => a.name).sort().join(",")}`,
+    `agents:${(stack.agents || [])
+      .map((a) => a.name)
+      .sort()
+      .join(",")}`,
   ];
   return computeStringHash(parts.join("\n"));
 }
@@ -240,7 +243,10 @@ export async function compileStackPlugin(
     stack = {
       name: newStack.name,
       description: newStack.description,
-      agents: typedKeys<AgentName>(newStack.agents).map((name) => ({ name, scope: "project" as const })),
+      agents: typedKeys<AgentName>(newStack.agents).map((name) => ({
+        name,
+        scope: "project" as const,
+      })),
       skills: [...agentSkillIds].map((id) => ({ id, scope: "project" as const, source: "local" })),
       stack: buildStackProperty(newStack) as ProjectConfig["stack"],
     };

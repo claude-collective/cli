@@ -895,7 +895,11 @@ export const metadataValidationSchema = z
     /** When an AI agent should invoke this skill (min 10 chars to ensure usefulness) */
     usageGuidance: z.string().min(10),
     /** Kebab-case short key for alias resolution, search, and relationship rules */
-    slug: z.string().regex(/^[a-z][a-z0-9-]*$/).min(1).max(50),
+    slug: z
+      .string()
+      .regex(/^[a-z][a-z0-9-]*$/)
+      .min(1)
+      .max(50),
     /** Searchable tags — kebab-case only */
     tags: z.array(z.string().regex(/^[a-z][a-z0-9-]*$/)).optional(),
     /** 7-char hex SHA of skill content (for change detection) */

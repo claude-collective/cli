@@ -16,11 +16,7 @@ import {
   createTempDir,
   cleanupTempDir,
 } from "../helpers";
-import {
-  createTestSource,
-  cleanupTestSource,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS, EJECT_INSTALLED_SKILL_IDS } from "../mock-data/mock-skills";
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { copySkillsToLocalFlattened } from "../../skills/skill-copier";
@@ -395,7 +391,9 @@ describe("eject command", () => {
 });
 
 // Skills that exist in the source but are NOT installed locally (eligible for eject)
-const NON_INSTALLED_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => !EJECT_INSTALLED_SKILL_IDS.includes(s.id));
+const NON_INSTALLED_SKILLS = DEFAULT_TEST_SKILLS.filter(
+  (s) => !EJECT_INSTALLED_SKILL_IDS.includes(s.id),
+);
 
 /**
  * Build a MergedSkillsMatrix from DEFAULT_TEST_SKILLS with skill paths matching

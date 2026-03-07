@@ -30,10 +30,14 @@ const SKILL_FIXTURES = {
     description: "TypeScript ORM for SQL databases",
     tags: ["database", "orm", "sql"],
   }),
-  "anti-over-engineering": createMockSkill("meta-methodology-anti-over-engineering", "shared-methodology", {
-    description: "Surgical implementation, not architectural innovation",
-    tags: ["methodology", "foundational"],
-  }),
+  "anti-over-engineering": createMockSkill(
+    "meta-methodology-anti-over-engineering",
+    "shared-methodology",
+    {
+      description: "Surgical implementation, not architectural innovation",
+      tags: ["methodology", "foundational"],
+    },
+  ),
   "scss-modules": createMockSkill("web-styling-scss-modules", "web-styling", {
     description: "CSS Modules with SCSS",
     tags: ["css", "scss", "modules"],
@@ -83,17 +87,25 @@ export const TEST_SKILLS = {
   "success-criteria": createMockSkill("meta-methodology-success-criteria", "shared-methodology", {
     description: "Explicit, measurable criteria defining done",
   }),
-  "write-verification": createMockSkill("meta-methodology-write-verification", "shared-methodology", {
-    description: "Verify work was actually saved",
-  }),
+  "write-verification": createMockSkill(
+    "meta-methodology-write-verification",
+    "shared-methodology",
+    {
+      description: "Verify work was actually saved",
+    },
+  ),
   "improvement-protocol": createMockSkill(
     "meta-methodology-improvement-protocol",
     "shared-methodology",
     { description: "Evidence-based self-improvement" },
   ),
-  "context-management": createMockSkill("meta-methodology-context-management", "shared-methodology", {
-    description: "Maintain project continuity across sessions",
-  }),
+  "context-management": createMockSkill(
+    "meta-methodology-context-management",
+    "shared-methodology",
+    {
+      description: "Maintain project continuity across sessions",
+    },
+  ),
 } satisfies Partial<Record<SkillSlug, ResolvedSkill>>;
 
 // ---------------------------------------------------------------------------

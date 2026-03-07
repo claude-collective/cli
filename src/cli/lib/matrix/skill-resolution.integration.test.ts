@@ -561,9 +561,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
 
     const matrix = buildPipelineMatrix();
 
-    const wizardResult = buildWizardResult(
-      buildSkillConfigs(selectedSkills),
-    );
+    const wizardResult = buildWizardResult(buildSkillConfigs(selectedSkills));
     const sourceResult = buildSourceResult(matrix, dirs.sourceDir, {
       marketplace: "test-marketplace",
     });
@@ -600,10 +598,7 @@ describe("Integration: Skill ID Resolution in Multi-Source Context", () => {
   it("should validate selection using skill IDs with multi-source skills", () => {
     const matrix = buildMultiSourceMatrix();
 
-    const validation = validateSelection(
-      ["web-framework-react", "api-framework-hono"],
-      matrix,
-    );
+    const validation = validateSelection(["web-framework-react", "api-framework-hono"], matrix);
     expect(validation.valid).toBe(true);
   });
 });

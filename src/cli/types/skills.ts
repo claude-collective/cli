@@ -119,7 +119,6 @@ export type SkillSlug =
   | "improvement-protocol"
   | "context-management";
 
-
 /**
  * Either "prefix-category" (e.g., "web-framework"), a standalone category,
  * or "local" for user-defined local skills.
@@ -193,4 +192,3 @@ export type SkillFrontmatter = {
   description: string;
   model?: ModelName;
 };
-

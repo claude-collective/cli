@@ -80,10 +80,7 @@ export default {
     { id: "web-framework-react", scope: "project", source: "local" },
     { id: "web-state-zustand", scope: "project", source: "local" },
   ],
-  agents: [
-    ...globalConfig.agents,
-    { name: "web-developer", scope: "project" },
-  ],
+  agents: [...globalConfig.agents, { name: "web-developer", scope: "project" }],
   domains: [...(globalConfig.domains ?? []), "web"],
 } satisfies ProjectConfig;
 ```
@@ -154,6 +151,7 @@ This ensures the project config can always import from global — no conditional
 **Goal:** `scope: "global"` local skills install to `~/.claude/skills/`, `scope: "project"` to `.claude/skills/`.
 
 **Files:**
+
 - `src/cli/lib/installation/local-installer.ts` — `resolveInstallPaths()` takes scope, routes to `os.homedir()` or `projectDir`
 - `src/cli/commands/init.tsx` — pass scope when installing local skills
 - `src/cli/commands/edit.tsx` — same
@@ -165,6 +163,7 @@ This ensures the project config can always import from global — no conditional
 **Goal:** Wizard result gets split by scope. Global items → `~/.claude-src/config.ts`. Project items → `.claude-src/config.ts` with import from global.
 
 **Files:**
+
 - `src/cli/lib/configuration/config-generator.ts` — split `generateProjectConfigFromSkills()` output by scope
 - `src/cli/lib/configuration/config-writer.ts` — write to two locations, project config includes import
 - `src/cli/lib/configuration/config-types-writer.ts` — project types import and extend global types
@@ -179,9 +178,11 @@ This ensures the project config can always import from global — no conditional
 **Goal:** `agentsinc compile` finds skills from both global and project local skill directories.
 
 **Files:**
+
 - `src/cli/commands/compile.ts` — `discoverAllSkills()` scans both `~/.claude/skills/` and `.claude/skills/`
 
 **Change (~5 lines):**
+
 ```typescript
 // In discoverAllSkills():
 const globalLocalSkills = await loadSkillsFromDir(
@@ -193,6 +194,7 @@ const allSkills = mergeSkills(pluginSkills, globalLocalSkills, localSkills);
 ```
 
 **Agent output routing:** When writing compiled agent `.md` files, check the agent's scope:
+
 - `scope: "global"` → `path.join(os.homedir(), CLAUDE_DIR, "agents", name + ".md")`
 - `scope: "project"` → `path.join(projectDir, CLAUDE_DIR, "agents", name + ".md")`
 
@@ -203,6 +205,7 @@ const allSkills = mergeSkills(pluginSkills, globalLocalSkills, localSkills);
 **Goal:** Agents get the same scope treatment as skills.
 
 **Files:**
+
 - `src/cli/types/config.ts` — `AgentConfig = { name: AgentName, scope: "project" | "global" }`
 - `src/cli/stores/wizard-store.ts` — `agentConfigs`, `toggleAgentScope`, `focusedAgentId`
 - `src/cli/components/wizard/step-agents.tsx` — S key toggle, [P]/[G] badge
@@ -216,10 +219,12 @@ const allSkills = mergeSkills(pluginSkills, globalLocalSkills, localSkills);
 **How it works:** The project `config.ts` already includes global items via the TypeScript import. When the CLI loads the config (via jiti), it gets the full merged object. The wizard shows everything with scope badges ([P]/[G]). On save, items are split by scope and written to the correct config file.
 
 **Files:**
+
 - `src/cli/commands/edit.tsx` — load config (already merged via import), split on save
 - `src/cli/components/hooks/use-wizard-initialization.ts` — populate wizard with scope-tagged items
 
 **Scope change during edit:** If a user toggles a skill from [P] to [G] (or vice versa):
+
 1. The skill's `SkillConfig.scope` changes
 2. On save, the skill moves between configs
 3. For local mode: skill files migrate between `.claude/skills/` and `~/.claude/skills/`
@@ -328,17 +333,17 @@ $ agentsinc compile
 
 Beyond the core phases above, these commands need scope awareness:
 
-| Command | Change needed |
-|---------|--------------|
-| `compile` | Phase 3 — scan both `~/.claude/skills/` and `.claude/skills/`, route agent output by scope |
-| `init` | Phase 2 — split config by scope on save, auto-create blank global |
-| `edit` | Phase 5 — load merged config, split on save, migrate files on scope change |
-| `list` | Show scope badge ([P]/[G]) next to each skill/agent |
-| `doctor` | Validate both global and project installations, check global config exists |
-| `new skill` | Route created skill to correct directory based on `--scope` flag or default |
-| `eject` | Eject from correct directory (global skills from `~/`, project from `./`) |
-| `uninstall` | Remove from correct directory/registry based on skill's scope |
-| `import` | Route imported skill to correct directory based on scope |
+| Command     | Change needed                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------ |
+| `compile`   | Phase 3 — scan both `~/.claude/skills/` and `.claude/skills/`, route agent output by scope |
+| `init`      | Phase 2 — split config by scope on save, auto-create blank global                          |
+| `edit`      | Phase 5 — load merged config, split on save, migrate files on scope change                 |
+| `list`      | Show scope badge ([P]/[G]) next to each skill/agent                                        |
+| `doctor`    | Validate both global and project installations, check global config exists                 |
+| `new skill` | Route created skill to correct directory based on `--scope` flag or default                |
+| `eject`     | Eject from correct directory (global skills from `~/`, project from `./`)                  |
+| `uninstall` | Remove from correct directory/registry based on skill's scope                              |
+| `import`    | Route imported skill to correct directory based on scope                                   |
 
 ### Installation type changes
 
@@ -405,9 +410,8 @@ The current codebase uses `"global"` but Claude Code's plugin system uses `--sco
 Enforced at compile time with a simple filter:
 
 ```typescript
-const availableSkills = agent.scope === "global"
-  ? allSkills.filter(s => s.scope === "global")
-  : allSkills; // project agents see everything
+const availableSkills =
+  agent.scope === "global" ? allSkills.filter((s) => s.scope === "global") : allSkills; // project agents see everything
 ```
 
 This is naturally consistent with the config structure: global `config.ts` only lists global skills, so a global agent's stacks can only reference global skills. The filter is a safety net (~2 lines). (Note: `"global"` becomes `"user"` after D5 rename.)
@@ -419,6 +423,7 @@ This is naturally consistent with the config structure: global `config.ts` only 
 ### D9: Global items in project wizard — read-only but promotable
 
 When running `init` or `edit` from a project directory:
+
 - **Existing global items** (already in `~/.claude-src/config.ts`) show as pre-selected with [G] badge and are **disabled** — the user cannot toggle or remove them.
 - **Project items can be promoted to global** — pressing S on a [P] item toggles it to [G], which moves it to the global config on save.
 - To remove or demote existing global items, run `edit` from `~/`.

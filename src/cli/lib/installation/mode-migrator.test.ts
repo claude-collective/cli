@@ -31,7 +31,11 @@ import { claudePluginInstall, claudePluginUninstall } from "../../utils/exec";
 
 describe("mode-migrator", () => {
   describe("detectMigrations", () => {
-    function skill(id: string, source: string, scope: "project" | "global" = "project"): SkillConfig {
+    function skill(
+      id: string,
+      source: string,
+      scope: "project" | "global" = "project",
+    ): SkillConfig {
       return { id: id as SkillId, source, scope };
     }
 
@@ -80,10 +84,7 @@ describe("mode-migrator", () => {
     });
 
     it("should handle skills with no previous selection (new skill, no migration)", () => {
-      const result = detectMigrations(
-        [],
-        [skill("web-framework-react", "local")],
-      );
+      const result = detectMigrations([], [skill("web-framework-react", "local")]);
 
       // New skills are not migrations (no old entry to compare)
       expect(result.toLocal).toEqual([]);
@@ -91,10 +92,7 @@ describe("mode-migrator", () => {
     });
 
     it("should handle skills removed in new selection (no migration)", () => {
-      const result = detectMigrations(
-        [skill("web-framework-react", "local")],
-        [],
-      );
+      const result = detectMigrations([skill("web-framework-react", "local")], []);
 
       // Removed skills are not migrations (no new entry to compare)
       expect(result.toLocal).toEqual([]);
@@ -122,14 +120,8 @@ describe("mode-migrator", () => {
       tempDir = await createTempDir("mode-migrator-test-");
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill(
-          "web-framework-react",
-          "web-framework",
-        ),
-        "web-state-zustand": createMockSkill(
-          "web-state-zustand",
-          "web-client-state",
-        ),
+        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+        "web-state-zustand": createMockSkill("web-state-zustand", "web-client-state"),
       });
       sourceResult = buildSourceResult(matrix, "/test/source", {
         marketplace: "https://marketplace.example.com",
@@ -151,13 +143,15 @@ describe("mode-migrator", () => {
       ]);
 
       const plan: MigrationPlan = {
-        toLocal: [{
-          id: "web-framework-react",
-          oldSource: "agents-inc",
-          newSource: "local",
-          oldScope: "project",
-          newScope: "project",
-        }],
+        toLocal: [
+          {
+            id: "web-framework-react",
+            oldSource: "agents-inc",
+            newSource: "local",
+            oldScope: "project",
+            newScope: "project",
+          },
+        ],
         toPlugin: [],
         scopeChanges: [],
       };
@@ -170,11 +164,7 @@ describe("mode-migrator", () => {
         sourceResult.matrix,
         sourceResult,
       );
-      expect(claudePluginUninstall).toHaveBeenCalledWith(
-        "web-framework-react",
-        "project",
-        tempDir,
-      );
+      expect(claudePluginUninstall).toHaveBeenCalledWith("web-framework-react", "project", tempDir);
       expect(result.localizedSkills).toEqual(["web-framework-react"]);
       expect(result.warnings).toEqual([]);
     });
@@ -182,13 +172,15 @@ describe("mode-migrator", () => {
     it("should archive and install plugins for toPlugin skills", async () => {
       const plan: MigrationPlan = {
         toLocal: [],
-        toPlugin: [{
-          id: "web-state-zustand",
-          oldSource: "local",
-          newSource: "agents-inc",
-          oldScope: "project",
-          newScope: "project",
-        }],
+        toPlugin: [
+          {
+            id: "web-state-zustand",
+            oldSource: "local",
+            newSource: "agents-inc",
+            oldScope: "project",
+            newScope: "project",
+          },
+        ],
         scopeChanges: [],
       };
 
@@ -227,13 +219,15 @@ describe("mode-migrator", () => {
 
       const plan: MigrationPlan = {
         toLocal: [],
-        toPlugin: [{
-          id: "web-state-zustand",
-          oldSource: "local",
-          newSource: "agents-inc",
-          oldScope: "project",
-          newScope: "project",
-        }],
+        toPlugin: [
+          {
+            id: "web-state-zustand",
+            oldSource: "local",
+            newSource: "agents-inc",
+            oldScope: "project",
+            newScope: "project",
+          },
+        ],
         scopeChanges: [],
       };
 
@@ -251,13 +245,15 @@ describe("mode-migrator", () => {
 
       const plan: MigrationPlan = {
         toLocal: [],
-        toPlugin: [{
-          id: "web-state-zustand",
-          oldSource: "local",
-          newSource: "agents-inc",
-          oldScope: "project",
-          newScope: "project",
-        }],
+        toPlugin: [
+          {
+            id: "web-state-zustand",
+            oldSource: "local",
+            newSource: "agents-inc",
+            oldScope: "project",
+            newScope: "project",
+          },
+        ],
         scopeChanges: [],
       };
 
@@ -265,9 +261,7 @@ describe("mode-migrator", () => {
 
       expect(deleteLocalSkill).toHaveBeenCalledWith(tempDir, "web-state-zustand");
       expect(claudePluginInstall).not.toHaveBeenCalled();
-      expect(result.warnings).toEqual([
-        expect.stringContaining("No marketplace configured"),
-      ]);
+      expect(result.warnings).toEqual([expect.stringContaining("No marketplace configured")]);
     });
   });
 });

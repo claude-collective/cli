@@ -10,7 +10,11 @@ import type { SourcedSkill } from "../components/skill-search/skill-search.js";
 import { DEFAULT_SKILLS_SUBDIR, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { resolveAllSources, type SourceEntry } from "../lib/configuration/index.js";
-import { loadSkillsMatrixFromSource, fetchFromSource, parseFrontmatter } from "../lib/loading/index.js";
+import {
+  loadSkillsMatrixFromSource,
+  fetchFromSource,
+  parseFrontmatter,
+} from "../lib/loading/index.js";
 import type { CategoryPath, ResolvedSkill, SkillSlug } from "../types/index.js";
 import { listDirectories, fileExists, readFile, copy, ensureDir } from "../utils/fs.js";
 import { SUCCESS_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";

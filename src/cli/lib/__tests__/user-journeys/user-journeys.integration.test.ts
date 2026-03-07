@@ -1,11 +1,7 @@
 import path from "path";
 import { readFile } from "fs/promises";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  createTestSource,
-  cleanupTestSource,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents";

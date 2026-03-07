@@ -458,21 +458,21 @@ If the user keeps the same source selections, no migration is needed. The edit f
 
 ### Functions to Reuse
 
-| Function                       | File                                  | Exported?                             | Purpose                                                 |
-| ------------------------------ | ------------------------------------- | ------------------------------------- | ------------------------------------------------------- |
-| `deleteLocalSkill()`           | `lib/skills/source-switcher.ts`       | Yes (via `lib/skills/index.ts`)       | Delete a single local skill permanently                 |
-| `installLocal()`               | `lib/installation/local-installer.ts` | Yes (via `lib/installation/index.ts`) | Full local installation pipeline                        |
-| `installPluginConfig()`        | `lib/installation/local-installer.ts` | Yes (via `lib/installation/index.ts`) | Plugin config installation (no skill copying)           |
-| `setConfigMetadata()`          | `lib/installation/local-installer.ts` | **No -- module-private**              | Populate wizard result fields onto ProjectConfig object |
-| `writeConfigFile()`            | `lib/installation/local-installer.ts` | **No -- module-private**              | Write config.ts to disk (calls `generateConfigSource`)  |
-| `buildAndMergeConfig()`        | `lib/installation/local-installer.ts` | **No -- module-private**              | Build config from wizard result and merge with existing  |
-| `generateConfigSource()`       | `lib/configuration/config-writer.ts`  | Yes (via `lib/configuration/index.ts`)| Serialize ProjectConfig to TypeScript source string      |
-| `copySkillsToLocalFlattened()` | `lib/skills/skill-copier.ts`          | Yes (via `lib/skills/index.ts`)       | Copy skills from source to `.claude/skills/`            |
-| `recompileAgents()`            | `lib/agents/agent-recompiler.ts`      | Yes (via `lib/agents/index.ts`)       | Recompile agent markdown from config                    |
-| `claudePluginInstall()`        | `utils/exec.ts`                       | Yes                                   | Run `claude plugin install`                             |
-| `claudePluginUninstall()`      | `utils/exec.ts`                       | Yes                                   | Run `claude plugin uninstall`                           |
-| `loadProjectConfig()`          | `lib/configuration/index.ts`          | Yes                                   | Load config from disk                                   |
-| `mergeWithExistingConfig()`    | `lib/configuration/index.ts`          | Yes                                   | Merge new config with existing on disk                  |
+| Function                       | File                                  | Exported?                              | Purpose                                                 |
+| ------------------------------ | ------------------------------------- | -------------------------------------- | ------------------------------------------------------- |
+| `deleteLocalSkill()`           | `lib/skills/source-switcher.ts`       | Yes (via `lib/skills/index.ts`)        | Delete a single local skill permanently                 |
+| `installLocal()`               | `lib/installation/local-installer.ts` | Yes (via `lib/installation/index.ts`)  | Full local installation pipeline                        |
+| `installPluginConfig()`        | `lib/installation/local-installer.ts` | Yes (via `lib/installation/index.ts`)  | Plugin config installation (no skill copying)           |
+| `setConfigMetadata()`          | `lib/installation/local-installer.ts` | **No -- module-private**               | Populate wizard result fields onto ProjectConfig object |
+| `writeConfigFile()`            | `lib/installation/local-installer.ts` | **No -- module-private**               | Write config.ts to disk (calls `generateConfigSource`)  |
+| `buildAndMergeConfig()`        | `lib/installation/local-installer.ts` | **No -- module-private**               | Build config from wizard result and merge with existing |
+| `generateConfigSource()`       | `lib/configuration/config-writer.ts`  | Yes (via `lib/configuration/index.ts`) | Serialize ProjectConfig to TypeScript source string     |
+| `copySkillsToLocalFlattened()` | `lib/skills/skill-copier.ts`          | Yes (via `lib/skills/index.ts`)        | Copy skills from source to `.claude/skills/`            |
+| `recompileAgents()`            | `lib/agents/agent-recompiler.ts`      | Yes (via `lib/agents/index.ts`)        | Recompile agent markdown from config                    |
+| `claudePluginInstall()`        | `utils/exec.ts`                       | Yes                                    | Run `claude plugin install`                             |
+| `claudePluginUninstall()`      | `utils/exec.ts`                       | Yes                                    | Run `claude plugin uninstall`                           |
+| `loadProjectConfig()`          | `lib/configuration/index.ts`          | Yes                                    | Load config from disk                                   |
+| `mergeWithExistingConfig()`    | `lib/configuration/index.ts`          | Yes                                    | Merge new config with existing on disk                  |
 
 <!-- ADDED: "Exported?" column and three additional functions that are relevant but were missing -->
 
@@ -491,11 +491,11 @@ If the user keeps the same source selections, no migration is needed. The edit f
 
 <!-- CORRECTED: line numbers verified -->
 
-| Field                        | File                              | Purpose                                             |
-| ---------------------------- | --------------------------------- | --------------------------------------------------- |
-| `installMode`                | `stores/wizard-store.ts:183`      | Current mode: `"plugin" \| "local" \| "mixed"` (stored in store, derived from `sourceSelections`) |
+| Field                        | File                              | Purpose                                                                                                                   |
+| ---------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `installMode`                | `stores/wizard-store.ts:183`      | Current mode: `"plugin" \| "local" \| "mixed"` (stored in store, derived from `sourceSelections`)                         |
 | `deriveInstallMode()`        | `stores/wizard-store.ts:626-644`  | Derives mode from `sourceSelections` — proposed for removal in `per-skill-scope.md` (derive from `SkillConfig[]` instead) |
-| `WizardResultV2.installMode` | `components/wizard/wizard.tsx:35` | Wizard result carries derived mode — proposed for removal in `per-skill-scope.md` |
+| `WizardResultV2.installMode` | `components/wizard/wizard.tsx:35` | Wizard result carries derived mode — proposed for removal in `per-skill-scope.md`                                         |
 
 ---
 
@@ -758,27 +758,27 @@ This is a non-trivial change to `init.tsx`'s `handleInstallation()` method that 
 
 ### Files Created
 
-| File | Purpose |
-|------|---------|
-| `src/cli/lib/installation/mode-migrator.ts` | `detectMigrations()` and `executeMigration()` for per-skill mode changes |
-| `src/cli/lib/installation/mode-migrator.test.ts` | Unit tests for migration detection and execution |
+| File                                                                 | Purpose                                                                   |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `src/cli/lib/installation/mode-migrator.ts`                          | `detectMigrations()` and `executeMigration()` for per-skill mode changes  |
+| `src/cli/lib/installation/mode-migrator.test.ts`                     | Unit tests for migration detection and execution                          |
 | `src/cli/lib/__tests__/integration/install-mode.integration.test.ts` | Integration tests for config persistence, migration, and store derivation |
 
 ### Files Modified
 
-| File | Change |
-|------|--------|
-| `src/cli/lib/installation/installation.ts` | Added `"mixed"` to `InstallMode` type |
-| `src/cli/types/config.ts` | Added `"mixed"` to `installMode`, added `sourceSelections` field |
-| `src/cli/lib/schemas.ts` | Added `"mixed"` to schema, added `sourceSelections` field |
-| `src/cli/stores/wizard-store.ts` | Added `deriveInstallMode()`, `setAllSourcesLocal()`, `setAllSourcesPlugin()`, ensured "Local" always in buildSourceRows |
-| `src/cli/components/wizard/wizard.tsx` | Removed P handler, uses `deriveInstallMode()` in result |
-| `src/cli/components/wizard/wizard-layout.tsx` | Removed "Plugin mode" indicator |
-| `src/cli/components/wizard/help-modal.tsx` | Removed P from GLOBAL_TOGGLES |
-| `src/cli/components/wizard/step-sources.tsx` | Added L/P bulk hotkeys, footer hint text |
-| `src/cli/components/wizard/step-confirm.tsx` | Derived install mode display with counts |
-| `src/cli/lib/configuration/ts-config-types-writer.ts` | Added `"mixed"` to generated type |
-| `src/cli/lib/installation/local-installer.ts` | Exported `setConfigMetadata`, `buildAndMergeConfig`, `writeConfigFile`; persists source selections in skills array |
-| `src/cli/lib/installation/index.ts` | Re-exported new functions and mode-migrator |
-| `src/cli/lib/agents/agent-recompiler.ts` | Added optional `installMode` to `RecompileAgentsOptions` |
-| `src/cli/commands/edit.tsx` | Config persistence, migration integration, installMode override |
+| File                                                  | Change                                                                                                                  |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `src/cli/lib/installation/installation.ts`            | Added `"mixed"` to `InstallMode` type                                                                                   |
+| `src/cli/types/config.ts`                             | Added `"mixed"` to `installMode`, added `sourceSelections` field                                                        |
+| `src/cli/lib/schemas.ts`                              | Added `"mixed"` to schema, added `sourceSelections` field                                                               |
+| `src/cli/stores/wizard-store.ts`                      | Added `deriveInstallMode()`, `setAllSourcesLocal()`, `setAllSourcesPlugin()`, ensured "Local" always in buildSourceRows |
+| `src/cli/components/wizard/wizard.tsx`                | Removed P handler, uses `deriveInstallMode()` in result                                                                 |
+| `src/cli/components/wizard/wizard-layout.tsx`         | Removed "Plugin mode" indicator                                                                                         |
+| `src/cli/components/wizard/help-modal.tsx`            | Removed P from GLOBAL_TOGGLES                                                                                           |
+| `src/cli/components/wizard/step-sources.tsx`          | Added L/P bulk hotkeys, footer hint text                                                                                |
+| `src/cli/components/wizard/step-confirm.tsx`          | Derived install mode display with counts                                                                                |
+| `src/cli/lib/configuration/ts-config-types-writer.ts` | Added `"mixed"` to generated type                                                                                       |
+| `src/cli/lib/installation/local-installer.ts`         | Exported `setConfigMetadata`, `buildAndMergeConfig`, `writeConfigFile`; persists source selections in skills array      |
+| `src/cli/lib/installation/index.ts`                   | Re-exported new functions and mode-migrator                                                                             |
+| `src/cli/lib/agents/agent-recompiler.ts`              | Added optional `installMode` to `RecompileAgentsOptions`                                                                |
+| `src/cli/commands/edit.tsx`                           | Config persistence, migration integration, installMode override                                                         |

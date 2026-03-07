@@ -436,11 +436,7 @@ describe("skill-metadata", () => {
     it("reads from correct metadata.yaml path", async () => {
       vi.mocked(readFile).mockResolvedValue(createMetadataWithoutForkedFrom());
 
-      await injectForkedFromMetadata(
-        "/project/skills/react",
-        "web-framework-react",
-        "abc1234",
-      );
+      await injectForkedFromMetadata("/project/skills/react", "web-framework-react", "abc1234");
 
       expect(readFile).toHaveBeenCalledWith("/project/skills/react/metadata.yaml");
     });

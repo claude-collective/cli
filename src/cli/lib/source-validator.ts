@@ -222,11 +222,7 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
             relationships: defaultRelationships,
           };
       const skills = await extractAllSkills(skillsDir);
-      const mergedMatrix = await mergeMatrixWithSkills(
-        cats,
-        rules.relationships,
-        skills,
-      );
+      const mergedMatrix = await mergeMatrixWithSkills(cats, rules.relationships, skills);
       const healthIssues = checkMatrixHealth(mergedMatrix);
 
       for (const healthIssue of healthIssues) {

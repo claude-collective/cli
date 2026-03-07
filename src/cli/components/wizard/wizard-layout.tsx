@@ -142,11 +142,7 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
                 isVisible={store.step === "build"}
                 isActive={store.showLabels}
               />
-              <DefinitionItem
-                label="Scope"
-                values={["S"]}
-                isVisible={store.step === "build"}
-              />
+              <DefinitionItem label="Scope" values={["S"]} isVisible={store.step === "build"} />
               <DefinitionItem
                 label="Settings"
                 values={["S"]}

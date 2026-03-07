@@ -2,8 +2,19 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "fs";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { CLAUDE_SRC_DIR, DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../../consts";
-import { createTempDir, cleanupTempDir, buildProjectConfig, buildSkillConfigs, buildAgentConfigs } from "../helpers";
+import {
+  CLAUDE_SRC_DIR,
+  DEFAULT_BRANDING,
+  DEFAULT_PLUGIN_NAME,
+  STANDARD_FILES,
+} from "../../../consts";
+import {
+  createTempDir,
+  cleanupTempDir,
+  buildProjectConfig,
+  buildSkillConfigs,
+  buildAgentConfigs,
+} from "../helpers";
 import { detectInstallation, getInstallationOrThrow } from "../../installation";
 
 function tsConfigContent(config: Record<string, unknown>): string {
@@ -75,9 +86,11 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(buildProjectConfig({
-          skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
-        })),
+        tsConfigContent(
+          buildProjectConfig({
+            skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+          }),
+        ),
       );
 
       const result = await detectInstallation(tempDir);
@@ -94,9 +107,11 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(buildProjectConfig({
-          skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
-        })),
+        tsConfigContent(
+          buildProjectConfig({
+            skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+          }),
+        ),
       );
 
       const result = await detectInstallation(tempDir);
@@ -184,9 +199,11 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(buildProjectConfig({
-          skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
-        })),
+        tsConfigContent(
+          buildProjectConfig({
+            skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+          }),
+        ),
       );
 
       const result = await getInstallationOrThrow(tempDir);
@@ -203,9 +220,11 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(buildProjectConfig({
-          skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
-        })),
+        tsConfigContent(
+          buildProjectConfig({
+            skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+          }),
+        ),
       );
 
       const result = await detectInstallation(tempDir);
@@ -218,7 +237,10 @@ describe("installation", () => {
     it("should treat invalid config file as local mode (file exists)", async () => {
       const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
-      await writeFile(path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS), "invalid typescript content {{");
+      await writeFile(
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        "invalid typescript content {{",
+      );
 
       // When config file exists but is invalid, loadProjectConfig returns null
       // The detection logic sees file exists but config is invalid,

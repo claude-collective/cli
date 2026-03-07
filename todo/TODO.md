@@ -43,6 +43,7 @@ Add per-agent scope toggle in the wizard's agents step, mirroring the per-skill 
 **Use case:** Meta agents (documenter, researcher, reviewer) are global — available in every project. Domain-specific agents (web-developer, api-developer) are project-scoped.
 
 **Implementation areas:**
+
 - Agents step UI: S key toggle on focused agent, [P]/[G] badge
 - `AgentConfig` type: `{ name: AgentName, scope: "project" | "global" }` (mirrors `SkillConfig`)
 - Wizard store: `agentConfigs: AgentConfig[]`, `toggleAgentScope`, `focusedAgentId`

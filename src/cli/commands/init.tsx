@@ -199,8 +199,8 @@ export async function getDashboardData(projectDir: string): Promise<DashboardDat
   const skillCount = loaded?.config?.skills?.length ?? 0;
   // Agent count from filesystem (compiled .md files in agents dir)
   const agentCount = info?.agentCount ?? 0;
-  const mode = info?.mode ?? (loaded?.config?.skills
-    ? deriveInstallMode(loaded.config.skills) : "local");
+  const mode =
+    info?.mode ?? (loaded?.config?.skills ? deriveInstallMode(loaded.config.skills) : "local");
   const source = loaded?.config?.source;
 
   return { skillCount, agentCount, mode, source };
@@ -465,7 +465,7 @@ export default class Init extends BaseCommand {
     }
 
     this.log("Installing skill plugins...");
-    for (const skill of result.skills.filter(s => s.source !== "local")) {
+    for (const skill of result.skills.filter((s) => s.source !== "local")) {
       const pluginRef = `${skill.id}@${sourceResult.marketplace}`;
       const pluginScope = skill.scope === "global" ? "user" : "project";
       try {
@@ -478,7 +478,7 @@ export default class Init extends BaseCommand {
       }
     }
 
-    const pluginSkillCount = result.skills.filter(s => s.source !== "local").length;
+    const pluginSkillCount = result.skills.filter((s) => s.source !== "local").length;
     this.log(`Installed ${pluginSkillCount} skill plugins\n`);
 
     this.log("Generating configuration...");

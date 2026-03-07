@@ -100,7 +100,9 @@ export async function migrateLocalSkillScope(
     await ensureDir(toSkillsDir);
     await copy(fromPath, toPath);
     await remove(fromPath);
-    verbose(`Migrated skill '${skillId}' from ${fromScope} to ${fromScope === "global" ? "project" : "global"}`);
+    verbose(
+      `Migrated skill '${skillId}' from ${fromScope} to ${fromScope === "global" ? "project" : "global"}`,
+    );
   } catch {
     warn(`Could not migrate skill '${skillId}' — source directory may not exist`);
   }

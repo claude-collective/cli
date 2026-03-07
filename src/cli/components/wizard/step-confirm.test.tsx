@@ -87,7 +87,9 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          skillConfigs={buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"], { source: "agents-inc" })}
+          skillConfigs={buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"], {
+            source: "agents-inc",
+          })}
           onBack={onBack}
         />,
       );
@@ -325,7 +327,9 @@ describe("StepConfirm component", () => {
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={onComplete}
-          skillConfigs={buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"], { source: "agents-inc" })}
+          skillConfigs={buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"], {
+            source: "agents-inc",
+          })}
         />,
       );
       cleanup = unmount;
@@ -376,9 +380,7 @@ describe("StepConfirm component", () => {
     it("should not show install mode when skillConfigs is not provided", () => {
       const onComplete = vi.fn();
 
-      const { lastFrame, unmount } = render(
-        <StepConfirm onComplete={onComplete} />,
-      );
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={onComplete} />);
       cleanup = unmount;
 
       const output = lastFrame();

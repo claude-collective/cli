@@ -3,7 +3,13 @@ import path from "path";
 import { writeFile } from "fs/promises";
 import { generateConfigSource } from "../config-writer";
 import { loadConfig } from "../config-loader";
-import { createTempDir, cleanupTempDir, buildProjectConfig, buildSkillConfigs, buildAgentConfigs } from "../../__tests__/helpers";
+import {
+  createTempDir,
+  cleanupTempDir,
+  buildProjectConfig,
+  buildSkillConfigs,
+  buildAgentConfigs,
+} from "../../__tests__/helpers";
 import type { ProjectConfig, SkillId } from "../../../types";
 
 let tempDir: string;

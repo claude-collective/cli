@@ -1409,7 +1409,7 @@ describe("init wizard", () => {
         `export default ${JSON.stringify(
           {
             name: "global-test",
-            skills: [{ "id": "web-framework-react", "scope": "project", "source": "local" }],
+            skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
             agents: ["web-developer"],
             domains: ["web"],
           },

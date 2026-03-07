@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { ProjectConfig, SkillId } from "../../../types";
 import type { SkillConfig } from "../../../types/config";
 import type { SourceLoadResult } from "../../loading/source-loader";
-import { installLocal, buildAndMergeConfig, writeConfigFile } from "../../installation/local-installer";
+import {
+  installLocal,
+  buildAndMergeConfig,
+  writeConfigFile,
+} from "../../installation/local-installer";
 import { detectMigrations } from "../../installation/mode-migrator";
 import { deriveInstallMode } from "../../installation/installation";
 import { useWizardStore } from "../../../stores/wizard-store";
@@ -20,11 +24,7 @@ import {
   fileExists,
   writeTestTsConfig,
 } from "../helpers";
-import {
-  createTestSource,
-  cleanupTestSource,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS, INIT_SKILL_IDS } from "../mock-data/mock-skills";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 import path from "path";
@@ -452,7 +452,7 @@ describe("Integration: deriveInstallMode via Wizard Store", () => {
 
     const updatedStore = useWizardStore.getState();
     const reactConfig = updatedStore.skillConfigs.find((sc) => sc.id === REACT_SKILL_ID);
-    const scssConfig = updatedStore.skillConfigs.find((sc) => sc.id === ("web-styling-scss-modules"));
+    const scssConfig = updatedStore.skillConfigs.find((sc) => sc.id === "web-styling-scss-modules");
     expect(reactConfig?.source).toBe("local");
     expect(scssConfig?.source).toBe("local");
     expect(store.deriveInstallMode()).toBe("local");
@@ -470,14 +470,10 @@ describe("Integration: deriveInstallMode via Wizard Store", () => {
 
     // Build a matrix with availableSources
     const matrix = createMockMatrix({
-      "web-framework-react": createMockMultiSourceSkill(
-        REACT_SKILL_ID,
-        "web-framework",
-        [
-          createMockSkillSource("local"),
-          createMockSkillSource("public", { name: "agents-inc" }),
-        ],
-      ),
+      "web-framework-react": createMockMultiSourceSkill(REACT_SKILL_ID, "web-framework", [
+        createMockSkillSource("local"),
+        createMockSkillSource("public", { name: "agents-inc" }),
+      ]),
     });
 
     // Set all to plugin via matrix lookup

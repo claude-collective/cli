@@ -232,7 +232,8 @@ describe("local-skill-loader", () => {
     it("skips valid skills alongside invalid ones", async () => {
       // Valid skill
       await writeLocalSkill("valid-skill", {
-        metadata: "displayName: Valid Skill\nslug: valid-skill\ndomain: web\ncategory: web-framework",
+        metadata:
+          "displayName: Valid Skill\nslug: valid-skill\ndomain: web\ncategory: web-framework",
         skillMd: `---\nname: valid-skill (@local)\ndescription: A valid skill\n---\nContent`,
       });
 

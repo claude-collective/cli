@@ -2,16 +2,16 @@
 
 > Refactoring tasks from [TODO.md](./TODO.md) are tracked here separately.
 
-| ID   | Task                                                                                                                                  | Status   |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                            | Refactor |
-| R-02 | Flatten nested for-loops in `default-stacks.test.ts` — parameterize per (stack, agent, category) instead of nesting inside `it.each`  | Refactor |
-| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                      | Refactor |
-| R-04 | Eliminate redundant central config — derive aliases from metadata, move perSkill relationships to group-based declarations             | Phase 1 Done |
-| R-05 | Centralize wizard hotkeys and labels — single source of truth for key bindings and their `[X]` display labels                         | Refactor |
-| R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                     | Refactor |
-| R-07 | Codegen `SkillSlug` union from metadata.yaml — auto-generate the type from skills source instead of manual maintenance               | Refactor |
-| R-08 | Unify resolve* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor |
+| ID   | Task                                                                                                                                                                                                    | Status       |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                                                                                              | Refactor     |
+| R-02 | Flatten nested for-loops in `default-stacks.test.ts` — parameterize per (stack, agent, category) instead of nesting inside `it.each`                                                                    | Refactor     |
+| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                                                                                        | Refactor     |
+| R-04 | Eliminate redundant central config — derive aliases from metadata, move perSkill relationships to group-based declarations                                                                              | Phase 1 Done |
+| R-05 | Centralize wizard hotkeys and labels — single source of truth for key bindings and their `[X]` display labels                                                                                           | Refactor     |
+| R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor     |
+| R-07 | Codegen `SkillSlug` union from metadata.yaml — auto-generate the type from skills source instead of manual maintenance                                                                                  | Refactor     |
+| R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor     |
 
 ---
 
@@ -57,17 +57,17 @@
 category: web-framework
 domain: web
 author: "@vince"
-displayName: React       # Title-cased, for UI labels
-slug: react              # Kebab-case short key, for alias resolution and search
+displayName: React # Title-cased, for UI labels
+slug: react # Kebab-case short key, for alias resolution and search
 ```
 
 Three identifiers, three purposes:
 
-| Field | Example | Where | Purpose |
-|-------|---------|-------|---------|
-| `name` (SKILL.md frontmatter) | `web-framework-react` | SKILL.md | Canonical ID — types, configs, code |
-| `displayName` (metadata.yaml) | `React` | metadata.yaml | UI labels — wizard display, search results |
-| `slug` (metadata.yaml, **new**) | `react` | metadata.yaml | Short key — alias resolution, search, Phase 2 relationship rules |
+| Field                           | Example               | Where         | Purpose                                                          |
+| ------------------------------- | --------------------- | ------------- | ---------------------------------------------------------------- |
+| `name` (SKILL.md frontmatter)   | `web-framework-react` | SKILL.md      | Canonical ID — types, configs, code                              |
+| `displayName` (metadata.yaml)   | `React`               | metadata.yaml | UI labels — wizard display, search results                       |
+| `slug` (metadata.yaml, **new**) | `react`               | metadata.yaml | Short key — alias resolution, search, Phase 2 relationship rules |
 
 **Important:** `slug` is NOT derivable from `displayName`. They are independent values. Examples: `displayName: "Observability"` → `slug: axiom-pino-sentry`, `displayName: "Motion"` → `slug: framer-motion`, `displayName: "Apollo Client"` → `slug: graphql-apollo`. The slug values come directly from the current `aliases` keys in `default-rules.ts`.
 
@@ -114,9 +114,8 @@ export type SkillSlug =
   | "nuxt"
   | "zustand"
   | "redux-toolkit"
-  | "pinia"
-  // ... ~85 total
-  ;
+  | "pinia";
+// ... ~85 total
 ```
 
 **Changes to `MergedSkillsMatrix`:** Rename `displayNameToId` → `slugToId` and `displayNames` → `idToSlug` to reflect what these maps actually contain. `slugToId` maps `"react"` → `"web-framework-react"` (lookup by short key). `idToSlug` maps `"web-framework-react"` → `"react"` (reverse lookup for display).
@@ -126,6 +125,7 @@ export type SkillSlug =
 #### 2. Move `compatibleWith` to group-based `relationships.compatibleWith`
 
 **Current** (per-skill, unidirectional):
+
 ```typescript
 perSkill: {
   zustand: { compatibleWith: ["web-framework-react", "web-server-state-react-query", ...] },
@@ -134,6 +134,7 @@ perSkill: {
 ```
 
 **New** (group-based, symmetric, narrow groups, canonical IDs in Phase 1):
+
 ```typescript
 relationships: {
   compatibleWith: [
@@ -194,6 +195,7 @@ relationships: {
 #### 3. Redesign `recommends` as flat opinionated picks
 
 **Current** (directional rules — ~26 entries with `{when, suggest[], reason}`):
+
 ```typescript
 relationships: {
   recommends: [
@@ -207,6 +209,7 @@ relationships: {
 **Problem:** The current format is directional (good), but `resolveRecommends()` in `matrix-loader.ts` conflates `perSkill.compatibleWith` entries into the same `ResolvedSkill.recommends` array. This means "compatible with" gets treated as "recommended by," causing false recommendations — e.g., Zustand's `compatibleWith: ["web-framework-react"]` makes React appear as "recommended" when Zustand is selected. Separating `compatibleWith` into its own relationship type (section 2) fixes the root cause. The `recommends` format itself is also simplified from directional rules to flat picks.
 
 **New** (flat opinionated picks, canonical IDs in Phase 1):
+
 ```typescript
 relationships: {
   recommends: [
@@ -224,12 +227,14 @@ relationships: {
 ```
 
 **Badge logic:** A skill shows the recommended badge only when BOTH conditions are true:
+
 1. The skill is in the `recommends` list (opinionated pick)
 2. The skill is compatible with the user's current selections (via `compatibleWith` groups)
 
 If no framework is selected yet, compatibility is unconstrained, so all recommended skills show badges. Once a framework is selected, only recommended skills that share a `compatibleWith` group with the selected framework show badges.
 
 **Type change:**
+
 ```typescript
 // Old: directional rule
 type RecommendRule = { when: SkillId; suggest: SkillId[]; reason: string };
@@ -239,6 +244,7 @@ type Recommendation = { skill: SkillId; reason: string };
 ```
 
 **Resolution change:** `ResolvedSkill.recommends` field is **removed**. Replaced by:
+
 - `ResolvedSkill.isRecommended: boolean` — computed at resolution time from flat list membership
 - `ResolvedSkill.recommendedReason?: string` — the reason from the flat list entry (e.g., "Recommended client state management"), set alongside `isRecommended` during resolution. Avoids a second lookup at render time.
 - Badge display combines `isRecommended && isCompatibleWithSelections` at render time
@@ -248,6 +254,7 @@ The resolver sets `isRecommended` and `recommendedReason` by checking flat list 
 **Skills with empty `compatibleWith`:** If a skill has `compatibleWith: []` (no compatibility groups), it's compatible with everything. A recommended skill with no groups always shows the badge — this is correct for domain-agnostic skills. Compatibility groups should reflect actual technical relationships, not be prerequisites for recommendations.
 
 **Consumers that change:**
+
 - `matrix-resolver.ts:isRecommended()` — new logic: `skill.isRecommended && isCompatibleWithSelections`
 - `matrix-resolver.ts:getRecommendReason()` — returns `skill.recommendedReason` directly (no lookup needed)
 - `matrix-resolver.ts:validateRecommendations()` — new logic: iterate the flat `recommends` list. For each recommended skill that is NOT selected but IS compatible with current selections, produce a `missing_recommendation` warning.
@@ -255,6 +262,7 @@ The resolver sets `isRecommended` and `recommendedReason` by checking flat list 
 - `source-loader.ts` — no longer merges `recommends` arrays for local skill overrides
 
 **Benefits:**
+
 - `recommends` shrinks from ~26 directional rules to ~15-20 flat entries
 - Root cause fixed — `compatibleWith` no longer conflated into `recommends`
 - No false recommendations — Zustand doesn't get a badge when Vue is selected
@@ -264,6 +272,7 @@ The resolver sets `isRecommended` and `recommendedReason` by checking flat list 
 #### 4a. Move `requiresSetup`/`providesSetupFor` to `relationships.setupPairs`
 
 **Current** (per-skill, bidirectional declared separately):
+
 ```typescript
 perSkill: {
   posthog: { requiresSetup: ["api-analytics-setup-posthog"] },
@@ -272,6 +281,7 @@ perSkill: {
 ```
 
 **New** (single declaration, canonical IDs in Phase 1):
+
 ```typescript
 relationships: {
   setupPairs: [
@@ -295,6 +305,7 @@ relationships: {
 ```
 
 **Resolution:** For each setup pair, the resolver derives:
+
 - For each skill in `configures`: `requiresSetup` includes the `setup` skill
 - For the `setup` skill: `providesSetupFor` includes all `configures` skills
 
@@ -302,20 +313,20 @@ relationships: {
 
 **`conflictsWith` (3 entries):**
 
-| Entry | Already in `relationships.conflicts`? | Action |
-|-------|--------------------------------------|--------|
-| `oclif: { conflictsWith: ["cli-framework-cli-commander"] }` | YES — line 186-188 covers CLI frameworks | Remove (redundant) |
-| `tailwind: { conflictsWith: ["web-styling-scss-modules"] }` | NO — only in alternatives, not conflicts | Add new conflict rule |
+| Entry                                                                       | Already in `relationships.conflicts`?                            | Action                |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------- |
+| `oclif: { conflictsWith: ["cli-framework-cli-commander"] }`                 | YES — line 186-188 covers CLI frameworks                         | Remove (redundant)    |
+| `tailwind: { conflictsWith: ["web-styling-scss-modules"] }`                 | NO — only in alternatives, not conflicts                         | Add new conflict rule |
 | `mobx: { conflictsWith: ["web-state-zustand", "web-state-redux-toolkit"] }` | NO — only in discourages (soft), perSkill declares hard conflict | Add new conflict rule |
 
 **`requires` (4 entries):**
 
-| Entry | Already in `relationships.requires`? | Action |
-|-------|--------------------------------------|--------|
-| `"better-auth": { requires: ["api-database-drizzle"] }` | YES — line 456-460 (needsAny: Drizzle OR Prisma). perSkill is more restrictive (Drizzle only) and likely outdated. | Remove (redundant, perSkill version is wrong) |
-| `"framer-motion": { requires: ["web-framework-react"] }` | NO | Add new require rule |
-| `"nextjs-server-actions": { requires: ["web-framework-nextjs-app-router"] }` | NO | Add new require rule |
-| `"cli-reviewing": { requires: ["cli-framework-cli-commander"] }` | NO | Add new require rule |
+| Entry                                                                        | Already in `relationships.requires`?                                                                               | Action                                        |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| `"better-auth": { requires: ["api-database-drizzle"] }`                      | YES — line 456-460 (needsAny: Drizzle OR Prisma). perSkill is more restrictive (Drizzle only) and likely outdated. | Remove (redundant, perSkill version is wrong) |
+| `"framer-motion": { requires: ["web-framework-react"] }`                     | NO                                                                                                                 | Add new require rule                          |
+| `"nextjs-server-actions": { requires: ["web-framework-nextjs-app-router"] }` | NO                                                                                                                 | Add new require rule                          |
+| `"cli-reviewing": { requires: ["cli-framework-cli-commander"] }`             | NO                                                                                                                 | Add new require rule                          |
 
 After this, `perSkill` is empty and removed.
 
@@ -346,6 +357,7 @@ This is a large (~80 rules, hundreds of ID references) but purely mechanical cha
 #### 6. Result
 
 **Before** (973 lines):
+
 ```typescript
 export const defaultRules: SkillRulesConfig = {
   version: "1.0.0",
@@ -356,6 +368,7 @@ export const defaultRules: SkillRulesConfig = {
 ```
 
 **After Phase 1** (~450-550 lines, canonical IDs):
+
 ```typescript
 export const defaultRules: SkillRulesConfig = {
   version: "2.0.0",
@@ -376,65 +389,65 @@ Same structure but all canonical IDs replaced with slugs. More readable, fewer c
 
 ### Type Changes
 
-| Type | Change |
-|------|--------|
-| `SkillRulesConfig` | Remove `aliases` and `perSkill` fields. |
-| `RelationshipDefinitions` | Add `compatibleWith?: CompatibilityGroup[]` and `setupPairs?: SetupPair[]`. Change `recommends` from `RecommendRule[]` to `Recommendation[]`. |
-| `CompatibilityGroup` (new) | `{ skills: SkillId[]; reason: string }` in Phase 1, `{ skills: SkillSlug[]; reason: string }` in Phase 2. Same shape as `ConflictRule`. |
-| `SetupPair` (new) | `{ setup: SkillId; configures: SkillId[]; reason: string }` in Phase 1, changes to `SkillSlug` in Phase 2. |
-| `Recommendation` (new) | `{ skill: SkillId; reason: string }` in Phase 1, `{ skill: SkillSlug; reason: string }` in Phase 2. Flat opinionated pick. Replaces directional `RecommendRule`. |
-| `RecommendRule` | Remove entirely (replaced by `Recommendation`). |
-| `SkillSlug` (new) | Union type of ~85 valid slug values in `types/skills.ts`. Provides compile-time type checking for relationship rules. Replaces `SkillDisplayName`. |
-| `PerSkillRules` | Remove entirely. |
-| `SkillMetadataConfig` | Remove `compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor` fields — all relationships are centralized. |
-| `ExtractedSkillMetadata` | Add `displayName: string` (title-cased, required) and `slug: SkillSlug` (kebab-case, required). |
-| `ResolvedSkill` | Add `slug: SkillSlug`. Keep `displayName` (now carries the title-cased value from metadata, not the slug). Add `isRecommended: boolean` and `recommendedReason?: string` (both computed at resolution time from centralized `relationships.recommends` — NOT metadata). Remove `recommends: SkillRelation[]` field. |
-| `SkillOption` | Keep `displayName` field (now carries title-cased value). Add `slug: SkillSlug` if needed for lookups. |
-| `SkillDisplayName` type | Rename to `SkillSlug` (it was always the slug, not the display name). |
-| `MergedSkillsMatrix` | Rename `displayNameToId` → `slugToId`, `displayNames` → `idToSlug`. |
+| Type                       | Change                                                                                                                                                                                                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SkillRulesConfig`         | Remove `aliases` and `perSkill` fields.                                                                                                                                                                                                                                                                             |
+| `RelationshipDefinitions`  | Add `compatibleWith?: CompatibilityGroup[]` and `setupPairs?: SetupPair[]`. Change `recommends` from `RecommendRule[]` to `Recommendation[]`.                                                                                                                                                                       |
+| `CompatibilityGroup` (new) | `{ skills: SkillId[]; reason: string }` in Phase 1, `{ skills: SkillSlug[]; reason: string }` in Phase 2. Same shape as `ConflictRule`.                                                                                                                                                                             |
+| `SetupPair` (new)          | `{ setup: SkillId; configures: SkillId[]; reason: string }` in Phase 1, changes to `SkillSlug` in Phase 2.                                                                                                                                                                                                          |
+| `Recommendation` (new)     | `{ skill: SkillId; reason: string }` in Phase 1, `{ skill: SkillSlug; reason: string }` in Phase 2. Flat opinionated pick. Replaces directional `RecommendRule`.                                                                                                                                                    |
+| `RecommendRule`            | Remove entirely (replaced by `Recommendation`).                                                                                                                                                                                                                                                                     |
+| `SkillSlug` (new)          | Union type of ~85 valid slug values in `types/skills.ts`. Provides compile-time type checking for relationship rules. Replaces `SkillDisplayName`.                                                                                                                                                                  |
+| `PerSkillRules`            | Remove entirely.                                                                                                                                                                                                                                                                                                    |
+| `SkillMetadataConfig`      | Remove `compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor` fields — all relationships are centralized.                                                                                                                                                                               |
+| `ExtractedSkillMetadata`   | Add `displayName: string` (title-cased, required) and `slug: SkillSlug` (kebab-case, required).                                                                                                                                                                                                                     |
+| `ResolvedSkill`            | Add `slug: SkillSlug`. Keep `displayName` (now carries the title-cased value from metadata, not the slug). Add `isRecommended: boolean` and `recommendedReason?: string` (both computed at resolution time from centralized `relationships.recommends` — NOT metadata). Remove `recommends: SkillRelation[]` field. |
+| `SkillOption`              | Keep `displayName` field (now carries title-cased value). Add `slug: SkillSlug` if needed for lookups.                                                                                                                                                                                                              |
+| `SkillDisplayName` type    | Rename to `SkillSlug` (it was always the slug, not the display name).                                                                                                                                                                                                                                               |
+| `MergedSkillsMatrix`       | Rename `displayNameToId` → `slugToId`, `displayNames` → `idToSlug`.                                                                                                                                                                                                                                                 |
 
 ### File Changes
 
 #### Production code
 
-| File | Change |
-|------|--------|
-| `src/cli/lib/configuration/default-rules.ts` | Phase 1: Remove `aliases` and `perSkill`. Add `compatibleWith` groups, `setupPairs`, and flat `recommends` to `relationships`. Absorb perSkill `conflictsWith` (2 new rules) and `requires` (3 new rules). Phase 2: Replace all canonical IDs with slugs. |
-| `src/cli/types/matrix.ts` | Remove `PerSkillRules`, `RecommendRule`. Remove `aliases` and `perSkill` from `SkillRulesConfig`. Add `CompatibilityGroup`, `SetupPair`, `Recommendation`. Change `recommends` type on `RelationshipDefinitions`. Add `compatibleWith` and `setupPairs` to `RelationshipDefinitions`. Add `slug` to `ExtractedSkillMetadata` and `ResolvedSkill`. Add `isRecommended` to `ResolvedSkill`, remove `recommends` field. Fix `displayName` on `ResolvedSkill` and `SkillOption` to carry the title-cased value. Rename `displayNameToId`/`displayNames` on `MergedSkillsMatrix`. |
-| `src/cli/types/skills.ts` | Add `SkillSlug` type. Rename `SkillDisplayName` → `SkillSlug` (update all references repo-wide). Remove `compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor` from `SkillMetadataConfig`. |
-| `src/cli/lib/matrix/matrix-loader.ts` | `extractAllSkills()`: carry both `displayName` (title-cased) and `slug` (kebab-case) through. Build `slugToId` map from metadata with duplicate-slug validation. `mergeMatrixWithSkills()`: remove `aliases` and `perSkillRules` params. `buildResolvedSkill()`: remove all `perSkill` parameter usage, set `isRecommended`/`recommendedReason` from flat list, derive `compatibleWith` from groups, derive `requiresSetup`/`providesSetupFor` from `setupPairs`. Remove `resolveRecommends()` (conflated compatibleWith+recommends), add `resolveCompatibilityGroups()`, `resolveSetupPairs()`. Simplify `resolveConflicts()`/`resolveRequirements()` signatures — remove `metadataConflicts`/`metadataRequires` first params (now always `[]`). `rawMetadataSchema` (lines 48-57): add `slug` field. `loadSkillRules()`: update for new schema. `loadAndMergeSkillsMatrix()`: stop passing removed params. |
-| `src/cli/lib/schemas.ts` | Update `skillRulesFileSchema` — remove `aliases` and `per-skill`. Add `compatibleWith`, `setupPairs`, and updated `recommends` to `relationshipDefinitionsSchema` (optional, `[]` defaults). Add `slug` to `rawMetadataSchema` (required). Update or rename `skillDisplayNameSchema` → `skillSlugSchema`. Update `localRawMetadataSchema` if it exists. |
-| `src/cli/lib/matrix/matrix-resolver.ts` | `resolveAlias()`: use `slugToId` map. `getLabel()`: simplify to just return `displayName` (required, no fallback). `isRecommended()`: rewrite — check `skill.isRecommended && isCompatibleWithSelections`. `getRecommendReason()`: return `skill.recommendedReason` directly (no lookup needed). `validateRecommendations()`: new logic — iterate flat `recommends` list, for each recommended skill not selected but compatible with current selections, produce `missing_recommendation` warning. `getAvailableSkills()`: update to use new `isRecommended` logic. |
-| `src/cli/lib/loading/source-loader.ts` | Remove `aliases` and `perSkillRules` variables and merge logic (lines 204-205, 250-253). Add `compatibleWith`, `setupPairs`, and `recommends` to relationship array concatenation with `?? []` guards. Update `mergeMatrixWithSkills()` call (lines 267-273). Update `mergeLocalSkillsIntoMatrix()` (lines 610-636) — manual `ResolvedSkill` construction needs: set `slug` from `idToSlug` map or local metadata, set `displayName` to title-cased value from metadata, set `isRecommended`/`recommendedReason` from flat list lookup, remove `recommends` field. |
-| `src/cli/lib/source-validator.ts` | Update fallback `SkillRulesConfig` construction — remove `aliases` and `perSkill`. Change displayName-vs-directory check (~line 167) to use `slug` instead. |
-| `src/cli/config-exports.ts` | `SkillRulesConfig` shape changes. Breaking (pre-1.0). |
-| `src/cli/lib/loading/multi-source-loader.ts` | Update if it passes aliases through. |
-| `src/cli/commands/new/skill.ts` | `generateSkillRulesTs()`: stop generating `aliases` section. `generateMetadataYaml()`: add `slug` field. `updateConfigFiles()`: stop updating `aliases` in existing `skill-rules.ts` files. |
-| `src/cli/lib/wizard/build-step-logic.ts` | `computeOptionState()`: update to use `isRecommended && isCompatibleWithSelections` instead of checking `skill.recommended`. `getSkillDisplayLabel()`: uses `displayName` (now title-cased, correct). |
-| `src/schemas/metadata.schema.json` | Add `slug` (required). Remove `requires`, `compatibleWith`, `conflictsWith`, `requiresSetup`, `providesSetupFor` — all relationships centralized. Must be updated FIRST (has `additionalProperties: false`). |
-| `src/cli/commands/info.ts` | Update `.displayName` references (3) to use title-cased value. Update `displayNameToId` → `slugToId`. Display `isRecommended` / `recommendedReason` instead of iterating removed `recommends` array. Change "Alias:" label to use `slug` (currently shows `displayName` which will be title-cased after R-04). |
-| `src/cli/commands/init.tsx` | Update `skill?.displayName` reference (1) — now title-cased. |
-| `src/cli/commands/search.tsx` | Update `skill.displayName` references (3) — now title-cased. Fix sort key (line 275) to use `.toLowerCase()` or `slug` to avoid ASCII case-sensitivity sort order change. Update synthetic `SourcedSkill` construction (lines 71-91) — add `slug`, `isRecommended`, remove `recommends`. |
-| `src/cli/commands/edit.tsx` | Update `skill?.displayName` references (2) — now title-cased. |
-| `src/cli/components/skill-search/skill-search.tsx` | Update `skill.displayName` references (2) — now title-cased. |
-| `src/cli/lib/plugins/plugin-finder.ts` | Update `.displayName` references (2). Currently builds `aliasToId` from `skill.displayName.toLowerCase()` — change to use `slug`. |
-| `src/cli/lib/skills/skill-plugin-compiler.ts` | Currently reads `metadata.requires` (line 93) to generate "Requires" section in plugin README. Must derive requirements from centralized `relationships.requires` instead. |
-| `src/cli/lib/skills/local-skill-loader.ts` | Update `metadata.displayName` reference — add `slug` handling. |
+| File                                               | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/cli/lib/configuration/default-rules.ts`       | Phase 1: Remove `aliases` and `perSkill`. Add `compatibleWith` groups, `setupPairs`, and flat `recommends` to `relationships`. Absorb perSkill `conflictsWith` (2 new rules) and `requires` (3 new rules). Phase 2: Replace all canonical IDs with slugs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `src/cli/types/matrix.ts`                          | Remove `PerSkillRules`, `RecommendRule`. Remove `aliases` and `perSkill` from `SkillRulesConfig`. Add `CompatibilityGroup`, `SetupPair`, `Recommendation`. Change `recommends` type on `RelationshipDefinitions`. Add `compatibleWith` and `setupPairs` to `RelationshipDefinitions`. Add `slug` to `ExtractedSkillMetadata` and `ResolvedSkill`. Add `isRecommended` to `ResolvedSkill`, remove `recommends` field. Fix `displayName` on `ResolvedSkill` and `SkillOption` to carry the title-cased value. Rename `displayNameToId`/`displayNames` on `MergedSkillsMatrix`.                                                                                                                                                                                                                                                                                                                                 |
+| `src/cli/types/skills.ts`                          | Add `SkillSlug` type. Rename `SkillDisplayName` → `SkillSlug` (update all references repo-wide). Remove `compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor` from `SkillMetadataConfig`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `src/cli/lib/matrix/matrix-loader.ts`              | `extractAllSkills()`: carry both `displayName` (title-cased) and `slug` (kebab-case) through. Build `slugToId` map from metadata with duplicate-slug validation. `mergeMatrixWithSkills()`: remove `aliases` and `perSkillRules` params. `buildResolvedSkill()`: remove all `perSkill` parameter usage, set `isRecommended`/`recommendedReason` from flat list, derive `compatibleWith` from groups, derive `requiresSetup`/`providesSetupFor` from `setupPairs`. Remove `resolveRecommends()` (conflated compatibleWith+recommends), add `resolveCompatibilityGroups()`, `resolveSetupPairs()`. Simplify `resolveConflicts()`/`resolveRequirements()` signatures — remove `metadataConflicts`/`metadataRequires` first params (now always `[]`). `rawMetadataSchema` (lines 48-57): add `slug` field. `loadSkillRules()`: update for new schema. `loadAndMergeSkillsMatrix()`: stop passing removed params. |
+| `src/cli/lib/schemas.ts`                           | Update `skillRulesFileSchema` — remove `aliases` and `per-skill`. Add `compatibleWith`, `setupPairs`, and updated `recommends` to `relationshipDefinitionsSchema` (optional, `[]` defaults). Add `slug` to `rawMetadataSchema` (required). Update or rename `skillDisplayNameSchema` → `skillSlugSchema`. Update `localRawMetadataSchema` if it exists.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `src/cli/lib/matrix/matrix-resolver.ts`            | `resolveAlias()`: use `slugToId` map. `getLabel()`: simplify to just return `displayName` (required, no fallback). `isRecommended()`: rewrite — check `skill.isRecommended && isCompatibleWithSelections`. `getRecommendReason()`: return `skill.recommendedReason` directly (no lookup needed). `validateRecommendations()`: new logic — iterate flat `recommends` list, for each recommended skill not selected but compatible with current selections, produce `missing_recommendation` warning. `getAvailableSkills()`: update to use new `isRecommended` logic.                                                                                                                                                                                                                                                                                                                                         |
+| `src/cli/lib/loading/source-loader.ts`             | Remove `aliases` and `perSkillRules` variables and merge logic (lines 204-205, 250-253). Add `compatibleWith`, `setupPairs`, and `recommends` to relationship array concatenation with `?? []` guards. Update `mergeMatrixWithSkills()` call (lines 267-273). Update `mergeLocalSkillsIntoMatrix()` (lines 610-636) — manual `ResolvedSkill` construction needs: set `slug` from `idToSlug` map or local metadata, set `displayName` to title-cased value from metadata, set `isRecommended`/`recommendedReason` from flat list lookup, remove `recommends` field.                                                                                                                                                                                                                                                                                                                                           |
+| `src/cli/lib/source-validator.ts`                  | Update fallback `SkillRulesConfig` construction — remove `aliases` and `perSkill`. Change displayName-vs-directory check (~line 167) to use `slug` instead.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `src/cli/config-exports.ts`                        | `SkillRulesConfig` shape changes. Breaking (pre-1.0).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `src/cli/lib/loading/multi-source-loader.ts`       | Update if it passes aliases through.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `src/cli/commands/new/skill.ts`                    | `generateSkillRulesTs()`: stop generating `aliases` section. `generateMetadataYaml()`: add `slug` field. `updateConfigFiles()`: stop updating `aliases` in existing `skill-rules.ts` files.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `src/cli/lib/wizard/build-step-logic.ts`           | `computeOptionState()`: update to use `isRecommended && isCompatibleWithSelections` instead of checking `skill.recommended`. `getSkillDisplayLabel()`: uses `displayName` (now title-cased, correct).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `src/schemas/metadata.schema.json`                 | Add `slug` (required). Remove `requires`, `compatibleWith`, `conflictsWith`, `requiresSetup`, `providesSetupFor` — all relationships centralized. Must be updated FIRST (has `additionalProperties: false`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `src/cli/commands/info.ts`                         | Update `.displayName` references (3) to use title-cased value. Update `displayNameToId` → `slugToId`. Display `isRecommended` / `recommendedReason` instead of iterating removed `recommends` array. Change "Alias:" label to use `slug` (currently shows `displayName` which will be title-cased after R-04).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `src/cli/commands/init.tsx`                        | Update `skill?.displayName` reference (1) — now title-cased.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `src/cli/commands/search.tsx`                      | Update `skill.displayName` references (3) — now title-cased. Fix sort key (line 275) to use `.toLowerCase()` or `slug` to avoid ASCII case-sensitivity sort order change. Update synthetic `SourcedSkill` construction (lines 71-91) — add `slug`, `isRecommended`, remove `recommends`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `src/cli/commands/edit.tsx`                        | Update `skill?.displayName` references (2) — now title-cased.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `src/cli/components/skill-search/skill-search.tsx` | Update `skill.displayName` references (2) — now title-cased.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `src/cli/lib/plugins/plugin-finder.ts`             | Update `.displayName` references (2). Currently builds `aliasToId` from `skill.displayName.toLowerCase()` — change to use `slug`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `src/cli/lib/skills/skill-plugin-compiler.ts`      | Currently reads `metadata.requires` (line 93) to generate "Requires" section in plugin README. Must derive requirements from centralized `relationships.requires` instead.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `src/cli/lib/skills/local-skill-loader.ts`         | Update `metadata.displayName` reference — add `slug` handling.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 #### Test code
 
-| File | Change |
-|------|--------|
-| `src/cli/lib/__tests__/helpers.ts` | Update `MockMatrixConfig` — remove `aliases`. Update `mergeMatrixWithSkills()` call sites. Update factory defaults: remove `recommends: []`, add `isRecommended: false`, add `slug`. |
-| `src/cli/lib/__tests__/mock-data/mock-matrices.ts` | Update `SkillRulesConfig` / `PerSkillRules` usage. Update mock skills with `recommends` arrays → `isRecommended: boolean`. |
-| `src/cli/lib/configuration/__tests__/default-rules.test.ts` | Rewrite — remove alias/perSkill assertions, add compatibleWith/setupPairs/recommends assertions. |
-| `src/cli/lib/matrix/matrix-loader.test.ts` | Rewrite `loadSkillRules`, `mergeMatrixWithSkills`, `resolveRecommends` tests. |
-| `src/cli/lib/matrix/matrix-resolver.test.ts` | Rewrite `isRecommended()` tests (13+ refs). Update `getRecommendReason()`, `validateRecommendations()` tests. Update `getAvailableSkills()` tests. Update mock skills constructing `recommends: [...]` → `isRecommended: boolean`. |
-| `src/cli/lib/matrix/matrix-health-check.test.ts` | Update mock skill data — `recommends` field removed. |
-| `src/cli/lib/matrix/skill-resolution.integration.test.ts` | Update direct `recommends` assignments. Update `displayNameToId` references. |
-| `src/cli/lib/__tests__/integration/consumer-stacks-matrix.integration.test.ts` | Update `recommends` assertions. Update `displayName` assertions. |
-| `src/cli/components/wizard/category-grid.test.tsx` | Update `state: "recommended"` test cases if badge logic changes. |
-| `fixtures/create-test-source.ts` | Update metadata.yaml generation to include `slug` field. |
+| File                                                                           | Change                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/cli/lib/__tests__/helpers.ts`                                             | Update `MockMatrixConfig` — remove `aliases`. Update `mergeMatrixWithSkills()` call sites. Update factory defaults: remove `recommends: []`, add `isRecommended: false`, add `slug`.                                               |
+| `src/cli/lib/__tests__/mock-data/mock-matrices.ts`                             | Update `SkillRulesConfig` / `PerSkillRules` usage. Update mock skills with `recommends` arrays → `isRecommended: boolean`.                                                                                                         |
+| `src/cli/lib/configuration/__tests__/default-rules.test.ts`                    | Rewrite — remove alias/perSkill assertions, add compatibleWith/setupPairs/recommends assertions.                                                                                                                                   |
+| `src/cli/lib/matrix/matrix-loader.test.ts`                                     | Rewrite `loadSkillRules`, `mergeMatrixWithSkills`, `resolveRecommends` tests.                                                                                                                                                      |
+| `src/cli/lib/matrix/matrix-resolver.test.ts`                                   | Rewrite `isRecommended()` tests (13+ refs). Update `getRecommendReason()`, `validateRecommendations()` tests. Update `getAvailableSkills()` tests. Update mock skills constructing `recommends: [...]` → `isRecommended: boolean`. |
+| `src/cli/lib/matrix/matrix-health-check.test.ts`                               | Update mock skill data — `recommends` field removed.                                                                                                                                                                               |
+| `src/cli/lib/matrix/skill-resolution.integration.test.ts`                      | Update direct `recommends` assignments. Update `displayNameToId` references.                                                                                                                                                       |
+| `src/cli/lib/__tests__/integration/consumer-stacks-matrix.integration.test.ts` | Update `recommends` assertions. Update `displayName` assertions.                                                                                                                                                                   |
+| `src/cli/components/wizard/category-grid.test.tsx`                             | Update `state: "recommended"` test cases if badge logic changes.                                                                                                                                                                   |
+| `fixtures/create-test-source.ts`                                               | Update metadata.yaml generation to include `slug` field.                                                                                                                                                                           |
 
 ### Skills Repo Changes
 
@@ -456,6 +469,7 @@ slug: react
 4 skills without current aliases get new slugs: `next-intl`, `react-intl`, `vue-i18n`, `native-js`.
 
 **Deployment order:**
+
 1. CLI updates `metadata.schema.json` to allow `slug` field (without this, `additionalProperties: false` rejects the new field)
 2. Skills repo adds `slug` to all `metadata.yaml` files
 3. CLI deploys Phase 1 (reads `slug`, removes `aliases`/`perSkill`, redesigns `recommends`)
@@ -540,32 +554,33 @@ Pre-1.0. Source repos must update their `skill-rules.ts` files to match the new 
 
 Steps 1-5 are effectively atomic for compilation but can be committed separately for review. Step 6 is the bulk test update work.
 
-| Step | What | Key Files | Status |
-|------|------|-----------|--------|
-| **0** | Pre-work: allow `slug` in JSON schema (optional, additive) | `metadata.schema.json` | ✅ Done |
-| **1** | Type foundation (atomic with 2-5 for compilation) | `types/skills.ts`, `types/matrix.ts` | ✅ Done |
-| **2** | Zod schema updates | `schemas.ts`, `matrix-loader.ts` rawMetadataSchema | ✅ Done |
-| **3** | Core pipeline: loaders + resolver | `matrix-loader.ts`, `matrix-resolver.ts`, `source-loader.ts`, `multi-source-loader.ts`, `source-validator.ts` | ✅ Done |
-| **4** | Consumer commands + components | `info.ts`, `search.tsx`, `edit.tsx`, `init.tsx`, `new/skill.ts`, `plugin-finder.ts`, `skill-plugin-compiler.ts`, `local-skill-loader.ts`, `build-step-logic.ts`, `skill-search.tsx`, `config-exports.ts` | ✅ Done |
-| **5** | Rule data: rewrite `default-rules.ts` | `default-rules.ts` — remove aliases/perSkill, flat recommends | ✅ Done |
-| **6** | Test updates (bulk) | `helpers.ts`, `mock-matrices.ts`, all test files listed above | ✅ Done |
-| **7** | Schema finalization: `slug` required, remove relationship fields | `metadata.schema.json` | Deferred (Step 0 made slug optional; finalization happens when skills repo adds slugs) |
-| **Phase 2** | Canonical IDs → slugs in rules (separate PR) | `default-rules.ts`, `matrix-loader.ts` slug resolution | Not started |
+| Step        | What                                                             | Key Files                                                                                                                                                                                                | Status                                                                                 |
+| ----------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **0**       | Pre-work: allow `slug` in JSON schema (optional, additive)       | `metadata.schema.json`                                                                                                                                                                                   | ✅ Done                                                                                |
+| **1**       | Type foundation (atomic with 2-5 for compilation)                | `types/skills.ts`, `types/matrix.ts`                                                                                                                                                                     | ✅ Done                                                                                |
+| **2**       | Zod schema updates                                               | `schemas.ts`, `matrix-loader.ts` rawMetadataSchema                                                                                                                                                       | ✅ Done                                                                                |
+| **3**       | Core pipeline: loaders + resolver                                | `matrix-loader.ts`, `matrix-resolver.ts`, `source-loader.ts`, `multi-source-loader.ts`, `source-validator.ts`                                                                                            | ✅ Done                                                                                |
+| **4**       | Consumer commands + components                                   | `info.ts`, `search.tsx`, `edit.tsx`, `init.tsx`, `new/skill.ts`, `plugin-finder.ts`, `skill-plugin-compiler.ts`, `local-skill-loader.ts`, `build-step-logic.ts`, `skill-search.tsx`, `config-exports.ts` | ✅ Done                                                                                |
+| **5**       | Rule data: rewrite `default-rules.ts`                            | `default-rules.ts` — remove aliases/perSkill, flat recommends                                                                                                                                            | ✅ Done                                                                                |
+| **6**       | Test updates (bulk)                                              | `helpers.ts`, `mock-matrices.ts`, all test files listed above                                                                                                                                            | ✅ Done                                                                                |
+| **7**       | Schema finalization: `slug` required, remove relationship fields | `metadata.schema.json`                                                                                                                                                                                   | Deferred (Step 0 made slug optional; finalization happens when skills repo adds slugs) |
+| **Phase 2** | Canonical IDs → slugs in rules (separate PR)                     | `default-rules.ts`, `matrix-loader.ts` slug resolution                                                                                                                                                   | Not started                                                                            |
 
 ### E2E Tests
 
 Add end-to-end tests covering the key user journeys affected by R-04. These go in `e2e/interactive/` using the existing `TerminalSession` infrastructure.
 
-| Journey | Test | Verifies |
-|---------|------|----------|
-| Init → pick React → Zustand badge | Select React framework, navigate to client-state category, verify Zustand shows `(recommended)` badge | `isRecommended && isCompatibleWithSelections` logic works end-to-end |
-| Init → pick Vue → no Zustand badge | Select Vue framework, navigate to client-state category, verify Zustand does NOT show `(recommended)` and is filtered out | Incompatible recommended skills are correctly hidden |
-| Init → pick Vue → Pinia badge | Select Vue framework, navigate to client-state category, verify Pinia shows `(recommended)` badge | Vue-specific recommendations work |
-| Info command → slug lookup | Run `cc info zustand`, verify output shows title-cased "Zustand", recommended status, and resolved relationships | `slugToId` lookup and `isRecommended` display work |
-| New skill → slug generation | Run `cc new skill my-tool`, verify generated `metadata.yaml` includes `slug: my-tool` and no `aliases` section in rules | Slug generation replaces alias generation |
-| Setup pair resolution | Select PostHog Analytics, verify setup skill is surfaced/suggested | `setupPairs` → `requiresSetup`/`providesSetupFor` resolution works end-to-end |
+| Journey                            | Test                                                                                                                      | Verifies                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Init → pick React → Zustand badge  | Select React framework, navigate to client-state category, verify Zustand shows `(recommended)` badge                     | `isRecommended && isCompatibleWithSelections` logic works end-to-end          |
+| Init → pick Vue → no Zustand badge | Select Vue framework, navigate to client-state category, verify Zustand does NOT show `(recommended)` and is filtered out | Incompatible recommended skills are correctly hidden                          |
+| Init → pick Vue → Pinia badge      | Select Vue framework, navigate to client-state category, verify Pinia shows `(recommended)` badge                         | Vue-specific recommendations work                                             |
+| Info command → slug lookup         | Run `cc info zustand`, verify output shows title-cased "Zustand", recommended status, and resolved relationships          | `slugToId` lookup and `isRecommended` display work                            |
+| New skill → slug generation        | Run `cc new skill my-tool`, verify generated `metadata.yaml` includes `slug: my-tool` and no `aliases` section in rules   | Slug generation replaces alias generation                                     |
+| Setup pair resolution              | Select PostHog Analytics, verify setup skill is surfaced/suggested                                                        | `setupPairs` → `requiresSetup`/`providesSetupFor` resolution works end-to-end |
 
 Non-interactive E2E tests (using `runCLI()` helper):
+
 - `cc info <slug>` resolves correctly for multiple skills
 - `cc info <canonical-id>` still works (direct ID lookup)
 - `cc list` shows title-cased display names
@@ -673,12 +688,8 @@ Generates `src/cli/types/generated/skill-slugs.ts`:
 
 ```typescript
 // AUTO-GENERATED from metadata.yaml files — do not edit manually
-export type SkillSlug =
-  | "react"
-  | "vue"
-  | "angular"
-  // ...
-  ;
+export type SkillSlug = "react" | "vue" | "angular";
+// ...
 ```
 
 The generated file is committed to the repo. Re-run when skills change.
@@ -701,6 +712,7 @@ The generated file is committed to the repo. Re-run when skills change.
 ### Problem
 
 `matrix-loader.ts` has 5 separate resolve functions with duplicate iteration logic:
+
 - `resolveConflicts()` — iterates conflict groups, checks membership, collects other members
 - `resolveDiscourages()` — identical pattern to conflicts
 - `resolveCompatibilityGroups()` — identical pattern (iterates groups, checks membership, collects others)

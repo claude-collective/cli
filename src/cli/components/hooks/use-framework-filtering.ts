@@ -22,7 +22,15 @@ export function useFrameworkFiltering({
   skillConfigs,
 }: UseFrameworkFilteringOptions): CategoryRow[] {
   return useMemo(
-    () => buildCategoriesForDomain(domain, allSelections, matrix, selections, installedSkillIds, skillConfigs),
+    () =>
+      buildCategoriesForDomain(
+        domain,
+        allSelections,
+        matrix,
+        selections,
+        installedSkillIds,
+        skillConfigs,
+      ),
     [domain, allSelections, matrix, selections, installedSkillIds, skillConfigs],
   );
 }

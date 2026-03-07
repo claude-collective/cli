@@ -290,7 +290,10 @@ describe("convertStackToCompileConfig", () => {
     const config: ProjectConfig = {
       name: "Test Stack",
       description: "A test stack",
-      agents: [{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }],
+      agents: [
+        { name: "web-developer", scope: "project" },
+        { name: "api-developer", scope: "project" },
+      ],
       skills: [],
     };
 

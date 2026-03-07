@@ -2,7 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import os from "os";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { createTempDir, cleanupTempDir, buildProjectConfig, buildSkillConfigs, buildAgentConfigs } from "../__tests__/helpers";
+import {
+  createTempDir,
+  cleanupTempDir,
+  buildProjectConfig,
+  buildSkillConfigs,
+  buildAgentConfigs,
+} from "../__tests__/helpers";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, PLUGINS_SUBDIR, STANDARD_FILES } from "../../consts";
 
 // Mock logger (suppress verbose/warn output during tests)
@@ -77,7 +83,6 @@ describe("installation", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
-
     });
 
     it("detects plugin installation when installMode is plugin", async () => {
@@ -126,7 +131,6 @@ describe("installation", () => {
       // still enters the local branch. mode defaults to "local" via ?? operator.
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
-
     });
 
     it("uses provided projectDir parameter", async () => {
@@ -230,7 +234,6 @@ describe("installation", () => {
       const result = await getInstallationOrThrow(tempDir);
 
       expect(result.mode).toBe("plugin");
-
     });
   });
 });

@@ -15,9 +15,7 @@ import { getVerifiedPluginInstallPaths } from "./plugin-settings";
  * @param projectDir - Absolute path to the project root
  * @returns Merged map of all discovered plugin skills (later plugins override earlier)
  */
-export async function discoverAllPluginSkills(
-  projectDir: string,
-): Promise<SkillDefinitionMap> {
+export async function discoverAllPluginSkills(projectDir: string): Promise<SkillDefinitionMap> {
   const allSkills: SkillDefinitionMap = {};
 
   try {

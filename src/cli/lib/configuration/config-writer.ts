@@ -22,10 +22,7 @@ export type ConfigSourceOptions = {
  * When `options.isProjectConfig` is true, the generated config imports from the global
  * config and spreads global arrays into skills, agents, and domains.
  */
-export function generateConfigSource(
-  config: ProjectConfig,
-  options?: ConfigSourceOptions,
-): string {
+export function generateConfigSource(config: ProjectConfig, options?: ConfigSourceOptions): string {
   const serializable = config.stack
     ? { ...config, stack: compactStackForYaml(config.stack) }
     : { ...config };
@@ -58,11 +55,15 @@ function generateProjectConfigWithGlobalImport(
   const importPath = `${globalImportPath}/config`;
 
   // Boundary cast: cleaned comes from JSON.parse(JSON.stringify(...)) so arrays are plain JSON values
-  const skillItems = (cleaned.skills as unknown[] ?? []).map(s => `    ${JSON.stringify(s)},`).join("\n");
-  const agentItems = (cleaned.agents as unknown[] ?? []).map(a => `    ${JSON.stringify(a)},`).join("\n");
+  const skillItems = ((cleaned.skills as unknown[]) ?? [])
+    .map((s) => `    ${JSON.stringify(s)},`)
+    .join("\n");
+  const agentItems = ((cleaned.agents as unknown[]) ?? [])
+    .map((a) => `    ${JSON.stringify(a)},`)
+    .join("\n");
 
   const domainsBlock = cleaned.domains
-    ? `  domains: [...(globalConfig.domains ?? []),\n${(cleaned.domains as unknown[]).map(d => `    ${JSON.stringify(d)},`).join("\n")}\n  ],`
+    ? `  domains: [...(globalConfig.domains ?? []),\n${(cleaned.domains as unknown[]).map((d) => `    ${JSON.stringify(d)},`).join("\n")}\n  ],`
     : "";
 
   const arrayFields = new Set(["skills", "agents", "domains", "name"]);
@@ -72,8 +73,7 @@ function generateProjectConfigWithGlobalImport(
     .join("\n");
 
   const tail =
-    (domainsBlock ? `${domainsBlock}\n` : "") +
-    (scalarFields ? `${scalarFields}\n` : "");
+    (domainsBlock ? `${domainsBlock}\n` : "") + (scalarFields ? `${scalarFields}\n` : "");
 
   return `import globalConfig from "${importPath}";
 import type { ProjectConfig } from "./config-types";

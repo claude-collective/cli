@@ -7,12 +7,7 @@ import { fileExists, readFile } from "../utils/fs.js";
 import { CLI_BIN_NAME, STANDARD_FILES } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { STATUS_MESSAGES } from "../utils/messages.js";
-import type {
-  ResolvedSkill,
-  SkillSlug,
-  SkillId,
-  SkillRequirement,
-} from "../types/index.js";
+import type { ResolvedSkill, SkillSlug, SkillId, SkillRequirement } from "../types/index.js";
 
 const CONTENT_PREVIEW_LINES = 10;
 const MAX_LINE_LENGTH = 80;
@@ -114,8 +109,12 @@ function formatSkillInfo(skill: ResolvedSkill, isInstalled: boolean): string {
   lines.push(`Tags: ${formatTags(skill.tags)}`);
   lines.push("");
   lines.push(`Requires: ${formatRequirements(skill.requires)}`);
-  lines.push(`Conflicts with: ${skill.conflictsWith.length > 0 ? skill.conflictsWith.map((r) => r.skillId).join(", ") : "(none)"}`);
-  lines.push(`Recommended: ${skill.isRecommended ? `Yes${skill.recommendedReason ? ` — ${skill.recommendedReason}` : ""}` : "No"}`);
+  lines.push(
+    `Conflicts with: ${skill.conflictsWith.length > 0 ? skill.conflictsWith.map((r) => r.skillId).join(", ") : "(none)"}`,
+  );
+  lines.push(
+    `Recommended: ${skill.isRecommended ? `Yes${skill.recommendedReason ? ` — ${skill.recommendedReason}` : ""}` : "No"}`,
+  );
 
   if (skill.usageGuidance) {
     lines.push("");

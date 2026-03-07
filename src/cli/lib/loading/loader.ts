@@ -5,7 +5,13 @@ import { getErrorMessage } from "../../utils/errors";
 import { glob, readFile, directoryExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { CLAUDE_SRC_DIR, DIRS, STANDARD_FILES } from "../../consts";
-import type { AgentDefinition, SkillDefinition, SkillDefinitionMap, SkillFrontmatter, SkillId } from "../../types";
+import type {
+  AgentDefinition,
+  SkillDefinition,
+  SkillDefinitionMap,
+  SkillFrontmatter,
+  SkillId,
+} from "../../types";
 import { formatZodErrors, skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "../schemas";
 
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;

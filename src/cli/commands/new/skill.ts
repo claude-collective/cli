@@ -224,12 +224,16 @@ export default class NewSkill extends BaseCommand {
     if (!flags.output) {
       const installation = await detectInstallation(projectDir);
       if (!installation) {
-        this.error(`No installation found. Run '${CLI_BIN_NAME} init' first.`, { exit: EXIT_CODES.ERROR });
+        this.error(`No installation found. Run '${CLI_BIN_NAME} init' first.`, {
+          exit: EXIT_CODES.ERROR,
+        });
       }
     }
 
     // Kick off background loading for config-types.ts regeneration (non-blocking)
-    const configTypesReady = flags.output ? null : loadConfigTypesDataInBackground(flags.source, projectDir);
+    const configTypesReady = flags.output
+      ? null
+      : loadConfigTypesDataInBackground(flags.source, projectDir);
 
     this.log("");
     this.log("Create New Skill");
@@ -327,7 +331,9 @@ export default class NewSkill extends BaseCommand {
             extraCategories: [category],
           });
         } catch (error) {
-          this.warn(`Could not update ${STANDARD_FILES.CONFIG_TYPES_TS}: ${getErrorMessage(error)}`);
+          this.warn(
+            `Could not update ${STANDARD_FILES.CONFIG_TYPES_TS}: ${getErrorMessage(error)}`,
+          );
         }
       }
 

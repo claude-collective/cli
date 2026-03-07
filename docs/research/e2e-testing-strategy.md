@@ -617,12 +617,12 @@ All 8 proposed journeys were traced through the actual codebase to verify testab
 
 **Command:** User navigates back from confirm step, changes source
 
-| Aspect           | Details                                                                        |
-| ---------------- | ------------------------------------------------------------------------------ |
-| **Text signals** | "Customize skill sources", source grid labels, G hotkey settings modal         |
-| **Keyboard**     | Escape (back), arrow keys (grid nav), Enter (select source), G (settings)      |
-| **File output**  | `sourceSelections` map in config, delete/recopy for local↔public transitions   |
-| **Testable?**    | YES — forward/back navigation, source grid, settings modal all text-based      |
+| Aspect           | Details                                                                      |
+| ---------------- | ---------------------------------------------------------------------------- |
+| **Text signals** | "Customize skill sources", source grid labels, G hotkey settings modal       |
+| **Keyboard**     | Escape (back), arrow keys (grid nav), Enter (select source), G (settings)    |
+| **File output**  | `sourceSelections` map in config, delete/recopy for local↔public transitions |
+| **Testable?**    | YES — forward/back navigation, source grid, settings modal all text-based    |
 
 ### Journey 6: Plugin vs Local Install Mode
 

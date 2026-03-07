@@ -341,7 +341,6 @@ describe("edit wizard", () => {
       expect(confirmOutput).toContain("Scope:");
       expect(confirmOutput).toContain("global");
     });
-
   });
 
   describe("confirm step and completion", () => {

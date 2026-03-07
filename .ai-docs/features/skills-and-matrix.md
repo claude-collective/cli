@@ -29,15 +29,15 @@
 
 ### Skills System (`src/cli/lib/skills/`)
 
-| File                       | Path                                          | Purpose                                     |
-| -------------------------- | --------------------------------------------- | ------------------------------------------- |
-| `skill-fetcher.ts`         | `src/cli/lib/skills/skill-fetcher.ts`         | Fetch skills from source directories        |
-| `skill-metadata.ts`        | `src/cli/lib/skills/skill-metadata.ts`        | Read/write skill metadata, hashing          |
-| `skill-copier.ts`          | `src/cli/lib/skills/skill-copier.ts`          | Copy skills to local/plugin dirs            |
-| `skill-plugin-compiler.ts` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Compile skill as Claude plugin              |
-| `local-skill-loader.ts`    | `src/cli/lib/skills/local-skill-loader.ts`    | Discover local skills in project            |
-| `source-switcher.ts`       | `src/cli/lib/skills/source-switcher.ts`       | Delete local skills for source switching    |
-| `index.ts`                 | `src/cli/lib/skills/index.ts`                 | Barrel exports                              |
+| File                       | Path                                          | Purpose                                  |
+| -------------------------- | --------------------------------------------- | ---------------------------------------- |
+| `skill-fetcher.ts`         | `src/cli/lib/skills/skill-fetcher.ts`         | Fetch skills from source directories     |
+| `skill-metadata.ts`        | `src/cli/lib/skills/skill-metadata.ts`        | Read/write skill metadata, hashing       |
+| `skill-copier.ts`          | `src/cli/lib/skills/skill-copier.ts`          | Copy skills to local/plugin dirs         |
+| `skill-plugin-compiler.ts` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Compile skill as Claude plugin           |
+| `local-skill-loader.ts`    | `src/cli/lib/skills/local-skill-loader.ts`    | Discover local skills in project         |
+| `source-switcher.ts`       | `src/cli/lib/skills/source-switcher.ts`       | Delete local skills for source switching |
+| `index.ts`                 | `src/cli/lib/skills/index.ts`                 | Barrel exports                           |
 
 ### Loading System (`src/cli/lib/loading/`)
 

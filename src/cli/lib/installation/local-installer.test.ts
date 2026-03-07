@@ -408,10 +408,9 @@ describe("local-installer", () => {
       });
 
       const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(
-        buildSkillConfigs(["web-framework-react"]),
-        { selectedStackId: "test-stack" },
-      );
+      const wizardResult = buildWizardResult(buildSkillConfigs(["web-framework-react"]), {
+        selectedStackId: "test-stack",
+      });
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       const result = await installLocal({

@@ -114,7 +114,15 @@ export function sanitizeCompiledAgentData(data: CompiledAgentData): CompiledAgen
   };
 }
 
-type AgentFiles = Pick<CompiledAgentData, "intro" | "workflow" | "examples" | "criticalRequirementsTop" | "criticalReminders" | "outputFormat">;
+type AgentFiles = Pick<
+  CompiledAgentData,
+  | "intro"
+  | "workflow"
+  | "examples"
+  | "criticalRequirementsTop"
+  | "criticalReminders"
+  | "outputFormat"
+>;
 
 async function readAgentFiles(
   name: AgentName,

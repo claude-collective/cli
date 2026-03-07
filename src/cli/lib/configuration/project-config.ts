@@ -118,7 +118,11 @@ export function validateProjectConfig(config: unknown): ValidationResult {
     errors.push("agents is required and must be an array");
   } else {
     for (const agent of c.agents) {
-      if (typeof agent !== "object" || agent === null || typeof (agent as Record<string, unknown>).name !== "string") {
+      if (
+        typeof agent !== "object" ||
+        agent === null ||
+        typeof (agent as Record<string, unknown>).name !== "string"
+      ) {
         errors.push(`agents must contain objects with name and scope, found: ${typeof agent}`);
       }
     }

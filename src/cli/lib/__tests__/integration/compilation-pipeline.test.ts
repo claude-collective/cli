@@ -11,11 +11,7 @@ import {
 import { validateAllPlugins, validatePlugin } from "../../plugins";
 import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME } from "../../../consts";
 import type { Marketplace, PluginManifest } from "../../../types";
-import {
-  createTestSource,
-  cleanupTestSource,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { createTempDir, cleanupTempDir } from "../helpers";
 import { COMPILATION_TEST_STACK } from "../mock-data/mock-stacks.js";

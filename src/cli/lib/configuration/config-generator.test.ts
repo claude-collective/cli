@@ -266,7 +266,7 @@ describe("config-generator", () => {
         { selectedAgents: ["web-developer"] },
       );
 
-      expect(config.skills.map(s => s.id)).toEqual(selectedSkills);
+      expect(config.skills.map((s) => s.id)).toEqual(selectedSkills);
     });
 
     it("includes unknown skill IDs in skills array even when skipped for agents", () => {
@@ -277,7 +277,7 @@ describe("config-generator", () => {
         { selectedAgents: ["web-developer"] },
       );
 
-      expect(config.skills.map(s => s.id)).toEqual(["web-framework-react", "web-unknown-skill"]);
+      expect(config.skills.map((s) => s.id)).toEqual(["web-framework-react", "web-unknown-skill"]);
     });
 
     it("produces no stack when all skills are unknown", () => {
@@ -289,7 +289,10 @@ describe("config-generator", () => {
 
       expect(config.agents).toEqual([]);
       expect(config.stack).toBeUndefined();
-      expect(config.skills.map(s => s.id)).toEqual(["web-nonexistent-skill", "api-nonexistent-thing"]);
+      expect(config.skills.map((s) => s.id)).toEqual([
+        "web-nonexistent-skill",
+        "api-nonexistent-thing",
+      ]);
     });
 
     it("does not add description when options.description is empty string", () => {

@@ -33,7 +33,10 @@ describe("project-config", () => {
     it("should load minimal config (just name and agents)", async () => {
       await writeTestTsConfig(tempDir, {
         name: "my-project",
-        agents: [{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }],
+        agents: [
+          { name: "web-developer", scope: "project" },
+          { name: "api-developer", scope: "project" },
+        ],
       });
 
       const result = await loadProjectConfig(tempDir);
@@ -41,7 +44,10 @@ describe("project-config", () => {
       expect(result).not.toBeNull();
 
       expect(result!.config.name).toBe("my-project");
-      expect(result!.config.agents).toEqual([{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }]);
+      expect(result!.config.agents).toEqual([
+        { name: "web-developer", scope: "project" },
+        { name: "api-developer", scope: "project" },
+      ]);
     });
 
     it("should load config with stack (bare strings normalized to SkillAssignment[])", async () => {
@@ -182,7 +188,9 @@ describe("project-config", () => {
       });
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("must contain objects with name and scope"))).toBe(true);
+      expect(
+        result.errors.some((e) => e.includes("must contain objects with name and scope")),
+      ).toBe(true);
     });
 
     it("should fail for invalid version", () => {

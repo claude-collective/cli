@@ -58,7 +58,10 @@ export function getSkillDisplayLabel(skill: Pick<SkillOption, "displayName">): s
 }
 
 function getStateReason(
-  skill: Pick<SkillOption, "discouraged" | "discouragedReason" | "recommended" | "recommendedReason">,
+  skill: Pick<
+    SkillOption,
+    "discouraged" | "discouragedReason" | "recommended" | "recommendedReason"
+  >,
 ): string | undefined {
   if (skill.discouraged && skill.discouragedReason) {
     return skill.discouragedReason;

@@ -287,34 +287,34 @@ project/
 
 ## Summary Table
 
-| #   | Claim                                                                                        | Verdict            | Severity                                                                  |
-| --- | -------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------- |
-| 1   | ~2400 tests across 248 files                                                                 | INACCURATE         | Medium -- file count is 2.4x inflated (104 actual)                        |
-| 2   | 280+ mocked callbacks in step-build.test.tsx                                                 | INACCURATE         | High -- actual count is 11 vi.fn() calls, not 280+                        |
-| 3   | 95+ mock assertions in skill-fetcher.test.ts                                                 | INACCURATE         | High -- actual count is 7 mock assertions, not 95+                        |
-| 4   | Zero tests spawn the CLI binary                                                              | ACCURATE           | --                                                                        |
-| 5   | `cc new` as wizard command                                                                   | INACCURATE         | High -- wizard is `cc init`, `new` is subcommands only                    |
-| 6   | `.claude/plugins/manifest.json`                                                              | INACCURATE         | High -- actual is `.claude/plugins/agents-inc/.claude-plugin/plugin.json` |
+| #   | Claim                                                                                        | Verdict            | Severity                                                                    |
+| --- | -------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------- |
+| 1   | ~2400 tests across 248 files                                                                 | INACCURATE         | Medium -- file count is 2.4x inflated (104 actual)                          |
+| 2   | 280+ mocked callbacks in step-build.test.tsx                                                 | INACCURATE         | High -- actual count is 11 vi.fn() calls, not 280+                          |
+| 3   | 95+ mock assertions in skill-fetcher.test.ts                                                 | INACCURATE         | High -- actual count is 7 mock assertions, not 95+                          |
+| 4   | Zero tests spawn the CLI binary                                                              | ACCURATE           | --                                                                          |
+| 5   | `cc new` as wizard command                                                                   | INACCURATE         | High -- wizard is `cc init`, `new` is subcommands only                      |
+| 6   | `.claude/plugins/manifest.json`                                                              | INACCURATE         | High -- actual is `.claude/plugins/agents-inc/.claude-plugin/plugin.json`   |
 | 7   | `.claude/_archived/`                                                                         | INACCURATE         | Medium -- archive replaced with permanent deletion via `deleteLocalSkill()` |
-| 8   | "Loading marketplace skills..."                                                              | INACCURATE         | Low -- actual messages are different                                      |
-| 9   | "Installation complete"                                                                      | CANNOT VERIFY      | Medium -- string not found in codebase                                    |
-| 10  | `.claude/config.yaml` in example code                                                        | INACCURATE         | Medium -- should be `.claude-src/config.yaml`                             |
-| 11  | Eject creates `.claude/agents/_templates/`                                                   | INACCURATE         | Medium -- actual is `.claude-src/agents/_templates/`                      |
-| 12  | Plugin mode agents at `.claude/agents/`                                                      | INACCURATE         | Medium -- agents are inside plugin directory                              |
-| 13  | "Are you sure? (y/n)"                                                                        | PARTIALLY ACCURATE | Low -- actual is "Are you sure you want to uninstall?"                    |
-| 14  | Function names (5 checked)                                                                   | ACCURATE           | --                                                                        |
-| 15  | Ink TTY/raw mode architecture                                                                | ACCURATE           | --                                                                        |
-| 16  | child_process.spawn pipe behavior                                                            | ACCURATE           | --                                                                        |
-| 17  | "Choose a stack" text signal                                                                 | ACCURATE           | --                                                                        |
-| 18  | "Edit Plugin Skills" text signal                                                             | ACCURATE           | --                                                                        |
-| 19  | "Start from scratch" text signal                                                             | ACCURATE           | --                                                                        |
-| 20  | "Customize your [Domain] stack"                                                              | ACCURATE           | --                                                                        |
-| 21  | "Customize skill sources"                                                                    | ACCURATE           | --                                                                        |
-| 22  | "The following will be removed:"                                                             | ACCURATE           | --                                                                        |
-| 23  | Hotkeys: P (install mode), E (expert), G (settings)                                          | ACCURATE           | --                                                                        |
-| 24  | Uninstall `--all` behavior                                                                   | ACCURATE           | --                                                                        |
-| 25  | Missing commands (diff, doctor, info, list, outdated, search, update, build, config, import) | OMISSION           | Low -- strategy doc, not inventory                                        |
-| 26  | "Install mode: Plugin" / "Local" text                                                        | PARTIALLY ACCURATE | Low -- actual includes parenthetical descriptions                         |
+| 8   | "Loading marketplace skills..."                                                              | INACCURATE         | Low -- actual messages are different                                        |
+| 9   | "Installation complete"                                                                      | CANNOT VERIFY      | Medium -- string not found in codebase                                      |
+| 10  | `.claude/config.yaml` in example code                                                        | INACCURATE         | Medium -- should be `.claude-src/config.yaml`                               |
+| 11  | Eject creates `.claude/agents/_templates/`                                                   | INACCURATE         | Medium -- actual is `.claude-src/agents/_templates/`                        |
+| 12  | Plugin mode agents at `.claude/agents/`                                                      | INACCURATE         | Medium -- agents are inside plugin directory                                |
+| 13  | "Are you sure? (y/n)"                                                                        | PARTIALLY ACCURATE | Low -- actual is "Are you sure you want to uninstall?"                      |
+| 14  | Function names (5 checked)                                                                   | ACCURATE           | --                                                                          |
+| 15  | Ink TTY/raw mode architecture                                                                | ACCURATE           | --                                                                          |
+| 16  | child_process.spawn pipe behavior                                                            | ACCURATE           | --                                                                          |
+| 17  | "Choose a stack" text signal                                                                 | ACCURATE           | --                                                                          |
+| 18  | "Edit Plugin Skills" text signal                                                             | ACCURATE           | --                                                                          |
+| 19  | "Start from scratch" text signal                                                             | ACCURATE           | --                                                                          |
+| 20  | "Customize your [Domain] stack"                                                              | ACCURATE           | --                                                                          |
+| 21  | "Customize skill sources"                                                                    | ACCURATE           | --                                                                          |
+| 22  | "The following will be removed:"                                                             | ACCURATE           | --                                                                          |
+| 23  | Hotkeys: P (install mode), E (expert), G (settings)                                          | ACCURATE           | --                                                                          |
+| 24  | Uninstall `--all` behavior                                                                   | ACCURATE           | --                                                                          |
+| 25  | Missing commands (diff, doctor, info, list, outdated, search, update, build, config, import) | OMISSION           | Low -- strategy doc, not inventory                                          |
+| 26  | "Install mode: Plugin" / "Local" text                                                        | PARTIALLY ACCURATE | Low -- actual includes parenthetical descriptions                           |
 
 ---
 

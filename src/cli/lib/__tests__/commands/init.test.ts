@@ -31,7 +31,10 @@ describe("init command", () => {
   async function seedConfigForEarlyExit(): Promise<void> {
     const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), 'export default { name: "test-project" };');
+    await writeFile(
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
+      'export default { name: "test-project" };',
+    );
   }
 
   describe("flag validation", () => {
