@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.61.0] - 2026-03-08
+
+**Dual-pass compile for global and project installations**
+
+- `compile` detects both global and project installations, runs independent passes for each
+- `writeProjectConfig()` E2E helper with `ProjectConfig` typing, all inline config writes migrated
+- 6 new dual-scope E2E tests covering scope isolation, single-installation fallbacks, and verbose output
+
+See [changelogs/0.61.0.md](./changelogs/0.61.0.md) for full details.
+
+---
+
 ## [0.60.1] - 2026-03-08
 
 **Type redundancy cleanup and test infrastructure improvements**
