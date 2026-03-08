@@ -6,6 +6,7 @@ import {
   cleanupTempDir,
   ensureBinaryExists,
   createEditableProject,
+  writeProjectConfig,
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
@@ -86,12 +87,10 @@ describe("doctor command", () => {
 
   it("should pass config check with valid config file", async () => {
     tempDir = await createTempDir();
-    const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-    await mkdir(configDir, { recursive: true });
-    await writeFile(
-      path.join(configDir, STANDARD_FILES.CONFIG_TS),
-      `export default ${JSON.stringify({ name: "test-project", agents: [{ name: "web-developer", scope: "project" }] }, null, 2)};\n`,
-    );
+    await writeProjectConfig(tempDir, {
+      name: "test-project",
+      agents: [{ name: "web-developer", scope: "project" }],
+    });
 
     const { exitCode, stdout } = await runCLI(["doctor"], tempDir);
 
@@ -239,24 +238,15 @@ describe("doctor command", () => {
       sourceTempDir = source.tempDir;
 
       // Create valid config referencing a skill NOT in the E2E source matrix
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify(
-          {
-            name: "test-project",
-            agents: [{ name: "web-developer", scope: "project" }],
-            stack: {
-              "web-developer": {
-                "web-framework": [{ skillId: "web-framework-nonexistent", required: true }],
-              },
-            },
+      await writeProjectConfig(tempDir, {
+        name: "test-project",
+        agents: [{ name: "web-developer", scope: "project" }],
+        stack: {
+          "web-developer": {
+            "web-framework": [{ skillId: "web-framework-nonexistent", required: true }],
           },
-          null,
-          2,
-        )};\n`,
-      );
+        },
+      });
 
       // Do NOT create .claude/skills/ directory -- it is missing
 
@@ -299,19 +289,10 @@ describe("doctor command", () => {
 
       // Create a "global home" directory with valid .claude-src/config.ts
       const globalHome = path.join(tempDir, "global-home");
-      const globalConfigDir = path.join(globalHome, CLAUDE_SRC_DIR);
-      await mkdir(globalConfigDir, { recursive: true });
-      await writeFile(
-        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify(
-          {
-            name: "global-test",
-            agents: [{ name: "web-developer", scope: "project" }],
-          },
-          null,
-          2,
-        )};\n`,
-      );
+      await writeProjectConfig(globalHome, {
+        name: "global-test",
+        agents: [{ name: "web-developer", scope: "project" }],
+      });
 
       // Create a project directory WITHOUT config
       const projectDir = path.join(tempDir, "project");

@@ -12,9 +12,10 @@ import {
   listFiles,
   readTestFile,
   runCLI,
+  writeProjectConfig,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
+import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 
 const COMPILE_ENV = {
@@ -493,20 +494,11 @@ describe("compile command", () => {
 
       // Create a "global home" directory with .claude-src/config.ts and .claude/skills/
       const globalHome = path.join(tempDir, "global-home");
-      const globalConfigDir = path.join(globalHome, CLAUDE_SRC_DIR);
-      await mkdir(globalConfigDir, { recursive: true });
-      await writeFile(
-        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify(
-          {
-            name: "global-test",
-            skills: [{ id: "web-testing-e2e-global", scope: "project", source: "local" }],
-            agents: [{ name: "web-developer", scope: "project" }],
-          },
-          null,
-          2,
-        )};\n`,
-      );
+      await writeProjectConfig(globalHome, {
+        name: "global-test",
+        skills: [{ id: "web-testing-e2e-global", scope: "project", source: "local" }],
+        agents: [{ name: "web-developer", scope: "project" }],
+      });
 
       // Create a local skill in the global home directory
       await createLocalSkill(globalHome, "web-testing-e2e-global", {
@@ -525,8 +517,8 @@ describe("compile command", () => {
       });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // When using global installation, compile logs this message
-      expect(combined).toContain("Using global installation from ~/.claude-src/");
+      // When using global installation, dual-pass compile runs the global pass
+      expect(combined).toContain("Compiling global agents");
     });
   });
 });

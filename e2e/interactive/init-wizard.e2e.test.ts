@@ -13,6 +13,7 @@ import {
   readTestFile,
   createPermissionsFile,
   createEditableProject,
+  writeProjectConfig,
   delay,
   WIZARD_LOAD_TIMEOUT_MS,
   INSTALL_TIMEOUT_MS,
@@ -890,12 +891,9 @@ describe("init wizard", () => {
     it("should show dashboard when project already has a config", async () => {
       await createProjectAndSource();
 
-      const configDir = path.join(projectDir!, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify({ version: "1.0.0" })};\n`,
-      );
+      await writeProjectConfig(projectDir!, {
+        name: "test-project",
+      });
 
       session = spawnInitWizard(projectDir!, sourceDir!);
 
@@ -1402,21 +1400,12 @@ describe("init wizard", () => {
 
       // Create a global config at HOME/.claude-src/config.ts
       // TerminalSession sets HOME=cwd, so we create the config at the temp dir root
-      const globalConfigDir = path.join(projectDir, CLAUDE_SRC_DIR);
-      await mkdir(globalConfigDir, { recursive: true });
-      await writeFile(
-        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify(
-          {
-            name: "global-test",
-            skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
-            agents: ["web-developer"],
-            domains: ["web"],
-          },
-          null,
-          2,
-        )};\n`,
-      );
+      await writeProjectConfig(projectDir, {
+        name: "global-test",
+        skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+        agents: [{ name: "web-developer", scope: "project" }],
+        domains: ["web"],
+      });
 
       // Create the skill directory for the global installation
       const skillDir = path.join(projectDir, CLAUDE_DIR, "skills", "web-framework-react");
@@ -1491,12 +1480,9 @@ describe("init wizard", () => {
       const tempDir = await createTempDir();
 
       // Create a global config at <tempDir>/.claude-src/config.ts
-      const globalConfigDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(globalConfigDir, { recursive: true });
-      await writeFile(
-        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify({ version: "1.0.0" })};\n`,
-      );
+      await writeProjectConfig(tempDir, {
+        name: "global-test",
+      });
 
       // Create a subdirectory with no project config to run init from
       const workDir = path.join(tempDir, "work");

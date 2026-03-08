@@ -7,10 +7,11 @@ import {
   createEditableProject,
   createLocalSkill,
   ensureBinaryExists,
+  writeProjectConfig,
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import { CLAUDE_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
 
 describe("list command", () => {
   let tempDir: string;
@@ -219,20 +220,11 @@ describe("list command", () => {
 
       // Create a "global home" directory with .claude-src/config.ts
       const globalHome = path.join(tempDir, "global-home");
-      const globalConfigDir = path.join(globalHome, CLAUDE_SRC_DIR);
-      await mkdir(globalConfigDir, { recursive: true });
-      await writeFile(
-        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify(
-          {
-            name: "global-test",
-            skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
-            agents: ["web-developer"],
-          },
-          null,
-          2,
-        )};\n`,
-      );
+      await writeProjectConfig(globalHome, {
+        name: "global-test",
+        skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+        agents: [{ name: "web-developer", scope: "project" }],
+      });
 
       // Create skills directory with a skill folder so skill count > 0
       const globalSkillsDir = path.join(globalHome, CLAUDE_DIR, "skills", "web-framework-react");

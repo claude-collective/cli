@@ -8,6 +8,7 @@ import {
   ensureBinaryExists,
   directoryExists,
   fileExists,
+  writeProjectConfig,
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
@@ -74,21 +75,13 @@ describe("uninstall command", () => {
 
     await addForkedFromMetadata(projectDir);
 
-    // Add a config.ts source field so skills match
-    const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-    await writeFile(
-      configPath,
-      `export default ${JSON.stringify(
-        {
-          name: "test-edit-project",
-          skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
-          agents: ["web-developer"],
-          domains: ["web"],
-        },
-        null,
-        2,
-      )};\n`,
-    );
+    // Overwrite config with source field so skills match
+    await writeProjectConfig(projectDir, {
+      name: "test-edit-project",
+      skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+      agents: [{ name: "web-developer", scope: "project" }],
+      domains: ["web"],
+    });
 
     // Verify files exist before uninstall
     const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
