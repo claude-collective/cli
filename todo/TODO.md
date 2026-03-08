@@ -5,6 +5,9 @@
 | D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md)) | Ready for Dev |
 | D-74 | Per-agent scope toggle (project/global) — same as per-skill scope but for agents in the wizard                        | Needs Design  |
 | D-37 | Dual-installation resolution: global + project (see [design doc](./D-37-dual-installation.md))                        | Design        |
+| D-75 | Remove `--output` flag from compile command                                                                           | Ready for Dev |
+| D-76 | Init: generate project `config-types.ts` that imports from global `~/.claude-src/config-types.ts`                     | Ready for Dev |
+| D-77 | Wizard: show stack scope origin labels (global vs project) in build step                                              | Needs Design  |
 | D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))         | Has Open Qs   |
 | D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))             | Ready for Dev |
 | D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                       | Ready for Dev |

@@ -128,7 +128,7 @@ This means:
 - **Full project directories** → `createTestSource()` from `fixtures/create-test-source.ts`
 - **All mock data is centralised** in `__tests__/mock-data/` — skills in `mock-skills.ts`, matrices in `mock-matrices.ts`, agents in `mock-agents.ts`, stacks in `mock-stacks.ts`, categories in `mock-categories.ts`, sources in `mock-sources.ts`. NEVER define shared mock constants inline in test files.
 - **Stacks** → Use `TestStack[]` via `createTestSource({ stacks })` or extend existing fixtures
-- **Configs** → `buildProjectConfig()`, `buildSkillConfigs()`, `buildAgentConfigs()`, `buildWizardResult()`, `buildWizardResultFromStore()`, `buildSourceResult()`, `buildTestProjectConfig()`
+- **Configs** → `buildProjectConfig()`, `buildSkillConfigs()`, `buildAgentConfigs()`, `buildWizardResult()`, `buildWizardResultFromStore()`, `buildSourceResult()`, `buildTestProjectConfig()`, `writeProjectConfig()` (E2E disk configs)
 - **Compile context** → `createCompileContext()`, `createMockCompileConfig()`, `createMockSkillAssignment()`
 - **Content generators** → `createSkillContent()`, `createAgentYamlContent()`
 - **Test utilities** → `parseTestFrontmatter()`, `simulateSkillSelections()`, `extractSkillIdsFromAssignment()`
@@ -264,7 +264,7 @@ this.error(message, { exit: 2 });
 - [ ] Use `createTempDir()` / `cleanupTempDir()` in tests (not raw `mkdtemp`)
 - [ ] Import test helpers from `__tests__/helpers.ts` (don't redefine)
 - [ ] **ALL test data uses factories/fixtures** — no inline configs, matrices, skills, stacks, or agents
-- [ ] No raw `writeFile` for skill/agent test data — use `createCLISkill`, `createUserSkill`, `writeTestSkill`, `writeSourceSkill`, `createTestSource`
+- [ ] No raw `writeFile` for skill/agent/config test data — use `createCLISkill`, `createUserSkill`, `writeTestSkill`, `writeSourceSkill`, `createTestSource`, `writeProjectConfig`
 - [ ] No inline `SkillsMatrixConfig` or `MergedSkillsMatrix` construction — use `createMockMatrix()`, `createMockSkill()`
 - [ ] No inline `TestSkill[]` arrays — use constants from `mock-data/mock-skills.ts`
 - [ ] No `as SkillSlug` casts on test data — use valid union members only
