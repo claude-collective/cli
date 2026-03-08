@@ -11,7 +11,7 @@ import {
   directoryExists,
 } from "../../src/cli/lib/__tests__/test-fs-utils.js";
 import { EXIT_CODES } from "../../src/cli/lib/exit-codes.js";
-import type { AgentName, Domain, SkillId } from "../../src/cli/types/index.js";
+import type { AgentName, Domain, ProjectConfig, SkillId } from "../../src/cli/types/index.js";
 
 export { EXIT_CODES };
 
@@ -119,11 +119,20 @@ contentHash: "e2e-test-hash"
  * installation (e.g., `new skill` when no `--output` flag is provided).
  */
 export async function createMinimalInstallation(dir: string): Promise<void> {
-  const configDir = path.join(dir, CLAUDE_SRC_DIR);
+  await writeProjectConfig(dir, { name: "test", domains: [] });
+}
+
+/** Write a config.ts file to the .claude-src/ directory of the given base dir. */
+export async function writeProjectConfig(
+  baseDir: string,
+  config: Partial<ProjectConfig> & Pick<ProjectConfig, "name">,
+): Promise<void> {
+  const resolved: ProjectConfig = { skills: [], agents: [], ...config };
+  const configDir = path.join(baseDir, CLAUDE_SRC_DIR);
   await mkdir(configDir, { recursive: true });
   await writeFile(
     path.join(configDir, STANDARD_FILES.CONFIG_TS),
-    'export default { name: "test", skills: [], agents: [], domains: [] };\n',
+    `export default ${JSON.stringify(resolved, null, 2)};\n`,
   );
 }
 
@@ -265,11 +274,9 @@ export async function createEditableProject(
   const agents = options?.agents ?? ["web-developer"];
   const domains = options?.domains ?? ["web"];
 
-  const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
   const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
   const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
 
-  await mkdir(configDir, { recursive: true });
   await mkdir(skillsDir, { recursive: true });
   await mkdir(agentsDir, { recursive: true });
 
@@ -277,18 +284,12 @@ export async function createEditableProject(
   const skillConfigs = skills.map((id) => ({ id, scope: "project" as const, source: "local" }));
   const agentConfigs = agents.map((name) => ({ name, scope: "project" as const }));
 
-  const configContent = `export default ${JSON.stringify(
-    {
-      name: "test-edit-project",
-      skills: skillConfigs,
-      agents: agentConfigs,
-      domains,
-    },
-    null,
-    2,
-  )};\n`;
-
-  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), configContent);
+  await writeProjectConfig(projectDir, {
+    name: "test-edit-project",
+    skills: skillConfigs,
+    agents: agentConfigs,
+    domains,
+  });
 
   for (const skillId of skills) {
     const skillDir = path.join(skillsDir, skillId);
@@ -311,6 +312,68 @@ export async function createEditableProject(
   }
 
   return projectDir;
+}
+
+/**
+ * Creates two independent installations (global + project) for dual-scope compile tests.
+ *
+ * Structure:
+ *   <tempDir>/
+ *     global-home/                        <- fake HOME
+ *       .claude-src/config.ts             <- global config
+ *       .claude/skills/web-testing-e2e-global/
+ *     project/                            <- project dir (cwd)
+ *       .claude-src/config.ts             <- project config
+ *       .claude/skills/web-testing-e2e-local/
+ */
+export async function createDualScopeProject(tempDir: string): Promise<{
+  globalHome: string;
+  projectDir: string;
+}> {
+  const globalHome = path.join(tempDir, "global-home");
+  const projectDir = path.join(tempDir, "project");
+
+  // --- Global installation ---
+  await writeProjectConfig(globalHome, {
+    name: "global-test",
+    skills: [{ id: "web-testing-e2e-global", scope: "global", source: "local" }],
+    agents: [{ name: "web-developer", scope: "global" }],
+    domains: ["web"],
+    stack: {
+      "web-developer": {
+        "web-testing": [{ id: "web-testing-e2e-global", preloaded: true }],
+      },
+    },
+  });
+
+  await createLocalSkill(globalHome, "web-testing-e2e-global", {
+    description: "Global E2E skill for dual-scope testing",
+    metadata: `author: "@test"\ncontentHash: "hash-global"\n`,
+  });
+
+  // --- Project installation ---
+  await writeProjectConfig(projectDir, {
+    name: "project-test",
+    skills: [
+      { id: "web-testing-e2e-local", scope: "project", source: "local" },
+      { id: "web-testing-e2e-global", scope: "global", source: "local" },
+    ],
+    agents: [{ name: "api-developer", scope: "project" }],
+    domains: ["web"],
+    stack: {
+      "api-developer": {
+        "web-testing": [{ id: "web-testing-e2e-global", preloaded: true }],
+        "web-mocking": [{ id: "web-testing-e2e-local", preloaded: true }],
+      },
+    },
+  });
+
+  await createLocalSkill(projectDir, "web-testing-e2e-local", {
+    description: "Project-local E2E skill for dual-scope testing",
+    metadata: `author: "@test"\ncontentHash: "hash-local"\n`,
+  });
+
+  return { globalHome, projectDir };
 }
 
 /**
