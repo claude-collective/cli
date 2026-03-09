@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.62.0] - 2026-03-09
+
+**Matrix store — centralized skill lookups, remove parameter threading**
+
+- `useMatrixStore` Zustand store replaces matrix parameter threading across resolver, wizard, config, and all commands
+- Remove `matrix` parameter from 9 resolver functions, 4 wizard store functions, 3 build-step functions, and config generator
+- Remove redundant `slug`/`displayName`/`description` from `SkillOption` — derive from store
+
+See [changelogs/0.62.0.md](./changelogs/0.62.0.md) for full details.
+
+---
+
 ## [0.61.0] - 2026-03-08
 
 **Dual-pass compile for global and project installations**
