@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import { runCliCommand, createTempDir, cleanupTempDir, buildTestProjectConfig } from "../helpers";
 import {
   createTestSource,
   cleanupTestSource,
@@ -61,25 +61,6 @@ describe("compile command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
 
-    it("should accept --output flag with path", async () => {
-      const outputPath = path.join(tempDir, "output");
-
-      const { error } = await runCliCommand(["compile", "--output", outputPath]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
-
-    it("should accept -o shorthand for output", async () => {
-      const outputPath = path.join(tempDir, "output");
-
-      const { error } = await runCliCommand(["compile", "-o", outputPath]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
     it("should accept --source flag", async () => {
       const { error } = await runCliCommand(["compile", "--source", "/some/path"]);
 
@@ -113,17 +94,6 @@ describe("compile command", () => {
     });
   });
 
-  describe("output mode", () => {
-    it("should show custom output directory in message", async () => {
-      const outputPath = path.join(tempDir, "custom-output");
-
-      const { stdout, error } = await runCliCommand(["compile", "--output", outputPath]);
-
-      const output = stdout + (error?.message || "");
-      expect(output).toBeTruthy();
-    });
-  });
-
   describe("verbose mode", () => {
     it("should accept --verbose flag", async () => {
       const { error } = await runCliCommand(["compile", "--verbose"]);
@@ -132,25 +102,13 @@ describe("compile command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
 
-    it("should accept -v with -o", async () => {
-      const outputPath = path.join(tempDir, "output");
-
-      const { error } = await runCliCommand(["compile", "-v", "-o", outputPath]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
   });
 
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {
-      const outputPath = path.join(tempDir, "combined-output");
-
       const { error } = await runCliCommand([
         "compile",
         "--verbose",
-        "--output",
-        outputPath,
         "--source",
         "/custom/source",
       ]);
@@ -160,13 +118,9 @@ describe("compile command", () => {
     });
 
     it("should accept shorthand flags together", async () => {
-      const outputPath = path.join(tempDir, "shorthand-output");
-
       const { error } = await runCliCommand([
         "compile",
         "-v",
-        "-o",
-        outputPath,
         "-s",
         "/custom/source",
       ]);
@@ -193,16 +147,16 @@ describe("compile command", () => {
     });
 
     it("should include a skill that has both SKILL.md and metadata.yaml", async () => {
-      const outputPath = path.join(tempDir, "metadata-output");
-
       localDirs = await createTestSource({
         skills: [],
         agents: [],
         localSkills: [VALID_LOCAL_SKILL],
+        projectConfig: buildTestProjectConfig([], []),
+        asPlugin: true,
       });
       process.chdir(localDirs.projectDir);
 
-      const { stdout, error } = await runCliCommand(["compile", "--output", outputPath]);
+      const { stdout, error } = await runCliCommand(["compile"]);
 
       const output = stdout + (error?.message || "");
       // Skill should be discovered (not skipped)
@@ -211,16 +165,16 @@ describe("compile command", () => {
     });
 
     it("should skip a skill with SKILL.md but no metadata.yaml and emit a warning", async () => {
-      const outputPath = path.join(tempDir, "no-metadata-output");
-
       localDirs = await createTestSource({
         skills: [],
         agents: [],
         localSkills: [SKILL_WITHOUT_METADATA],
+        projectConfig: buildTestProjectConfig([], []),
+        asPlugin: true,
       });
       process.chdir(localDirs.projectDir);
 
-      const { stderr, stdout, error } = await runCliCommand(["compile", "--output", outputPath]);
+      const { stderr, stdout, error } = await runCliCommand(["compile"]);
 
       const allOutput = stdout + stderr + (error?.message || "");
       // Warning should be emitted with the skill name and mention metadata.yaml
@@ -230,16 +184,16 @@ describe("compile command", () => {
     });
 
     it("should include the skill directory path in the warning message", async () => {
-      const outputPath = path.join(tempDir, "path-warning-output");
-
       localDirs = await createTestSource({
         skills: [],
         agents: [],
         localSkills: [SKILL_WITHOUT_METADATA_CUSTOM],
+        projectConfig: buildTestProjectConfig([], []),
+        asPlugin: true,
       });
       process.chdir(localDirs.projectDir);
 
-      const { stderr, stdout, error } = await runCliCommand(["compile", "--output", outputPath]);
+      const { stderr, stdout, error } = await runCliCommand(["compile"]);
 
       const allOutput = stdout + stderr + (error?.message || "");
       // Warning should contain the skill name
@@ -271,19 +225,9 @@ describe("compile command", () => {
     });
   });
 
-  describe("plugin mode vs custom output mode", () => {
-    it("should use plugin mode when no output flag provided", async () => {
+  describe("plugin mode", () => {
+    it("should use plugin mode by default", async () => {
       const { error } = await runCliCommand(["compile"]);
-
-      // Command should complete without flag parsing errors
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should use custom output mode when output flag provided", async () => {
-      const outputPath = path.join(tempDir, "custom-output");
-
-      const { error } = await runCliCommand(["compile", "--output", outputPath]);
 
       // Command should complete without flag parsing errors
       const output = error?.message || "";

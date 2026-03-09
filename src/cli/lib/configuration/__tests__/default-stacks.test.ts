@@ -4,6 +4,19 @@ import { defaultStacks } from "../default-stacks";
 
 const EXPECTED_STACK_COUNT = 6;
 
+/** Flat list of every (stack, agent, category) combination for parameterized tests */
+const agentCategoryCases = defaultStacks.flatMap((stack) =>
+  typedEntries(stack.agents).flatMap(([agentName, agentConfig]) => {
+    if (agentConfig == null) return [];
+    return typedEntries(agentConfig).map(([category, assignments]) => ({
+      stackId: stack.id,
+      agentName,
+      category,
+      assignments,
+    }));
+  }),
+);
+
 describe("defaultStacks", () => {
   it("has the expected number of stacks", () => {
     expect(defaultStacks).toHaveLength(EXPECTED_STACK_COUNT);
@@ -37,26 +50,18 @@ describe("defaultStacks", () => {
     expect(stack.agents).toBeDefined();
   });
 
-  it.each(defaultStacks)(
-    "stack $id has normalized SkillAssignment[] values in all agent configs",
-    (stack) => {
-      for (const [agentName, agentConfig] of typedEntries(stack.agents)) {
-        if (agentConfig == null) continue;
-        for (const [category, assignments] of typedEntries(agentConfig)) {
-          expect(assignments).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                id: expect.any(String),
-                preloaded: expect.any(Boolean),
-              }),
-            ]),
-          );
-          expect(
-            Array.isArray(assignments),
-            `${stack.id} > ${agentName} > ${category} should be an array`,
-          ).toBe(true);
-        }
-      }
+  it.each(agentCategoryCases)(
+    "$stackId > $agentName > $category has normalized SkillAssignment[] values",
+    ({ assignments }) => {
+      expect(Array.isArray(assignments)).toBe(true);
+      expect(assignments).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            preloaded: expect.any(Boolean),
+          }),
+        ]),
+      );
     },
   );
 

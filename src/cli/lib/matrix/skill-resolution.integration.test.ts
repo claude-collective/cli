@@ -286,10 +286,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       );
 
-      const validation = validateSelection(["web-feature-advanced"]);
-
-      expect(validation.valid).toBe(false);
-      expect(validation.errors.some((e) => e.type === "missingRequirement")).toBe(true);
+      expect(() => validateSelection(["web-feature-advanced"])).toThrow();
     });
   });
 

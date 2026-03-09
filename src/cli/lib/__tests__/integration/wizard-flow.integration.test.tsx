@@ -130,7 +130,7 @@ describe("Wizard integration", () => {
       expect(lastFrame()).toContain("Select domains");
       await navigateDomainSelectionToBuild(stdin);
 
-      expect(lastFrame()).toContain("Build");
+      expect(lastFrame()).toContain("Skills");
 
       const state = useWizardStore.getState();
       expect(state.stackAction).toBe("customize");
@@ -200,7 +200,7 @@ describe("Wizard integration", () => {
       expect(state.selectedDomains).toContain("web");
     });
 
-    it("should allow selecting web technologies in Build step", async () => {
+    it("should allow selecting web technologies in Skills step", async () => {
       useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
@@ -220,7 +220,7 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      expect(lastFrame()).toContain("Build");
+      expect(lastFrame()).toContain("Skills");
 
       await stdin.write(SPACE);
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -739,9 +739,9 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Should show wizard tabs (4 tabs: Stack, Build, Sources, Confirm)
+      // Should show wizard tabs (4 tabs: Stack, Skills, Sources, Confirm)
       expect(lastFrame()).toContain("Stack");
-      expect(lastFrame()).toContain("Build");
+      expect(lastFrame()).toContain("Skills");
       expect(lastFrame()).toContain("Sources");
       expect(lastFrame()).toContain("Confirm");
       // Should NOT show "Intro" tab (removed by U14)
@@ -889,7 +889,7 @@ describe("Wizard integration", () => {
       // Check tabs are visible on initial stack selection
       let frame = lastFrame();
       expect(frame).toContain("Stack");
-      expect(frame).toContain("Build");
+      expect(frame).toContain("Skills");
       expect(frame).toContain("Confirm");
       expect(frame).not.toContain("Intro");
 
@@ -900,7 +900,7 @@ describe("Wizard integration", () => {
       // Check tabs are still visible on domain selection
       frame = lastFrame();
       expect(frame).toContain("Stack");
-      expect(frame).toContain("Build");
+      expect(frame).toContain("Skills");
     });
   });
 
@@ -938,8 +938,8 @@ describe("Wizard integration", () => {
       // selectedDomains should be populated (domains derived from skill IDs by populateFromSkillIds)
       expect(state.selectedDomains.length).toBeGreaterThan(0);
 
-      // The Build step should be visible
-      expect(lastFrame()).toContain("Build");
+      // The Skills step should be visible
+      expect(lastFrame()).toContain("Skills");
     });
 
     it("should not pre-select when installedSkillIds is empty (regression: local mode bug)", async () => {

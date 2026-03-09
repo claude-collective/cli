@@ -1,11 +1,9 @@
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mkdir } from "fs/promises";
 import {
   createTestSource,
   cleanupTestSource,
   fileExists,
-  directoryExists,
   readTestFile,
   type TestDirs,
   DEFAULT_TEST_AGENTS,
@@ -15,7 +13,7 @@ import { runCliCommand, parseTestFrontmatter, buildTestProjectConfig } from "../
 
 describe("User Journey: Compile Flow", () => {
   let dirs: TestDirs;
-  let outputDir: string;
+  let agentsDir: string;
   let originalCwd: string;
 
   beforeEach(async () => {
@@ -33,8 +31,7 @@ describe("User Journey: Compile Flow", () => {
       asPlugin: true,
     });
 
-    outputDir = path.join(dirs.tempDir, "output");
-    await mkdir(outputDir, { recursive: true });
+    agentsDir = path.join(dirs.projectDir, ".claude", "agents");
 
     // Change to project directory for the test
     process.chdir(dirs.projectDir);
@@ -46,14 +43,14 @@ describe("User Journey: Compile Flow", () => {
   });
 
   describe("agent file creation", () => {
-    it("should create agent markdown files in output directory", async () => {
+    it("should create agent markdown files in agents directory", async () => {
       // Suppress console output during test
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       try {
-        // Run compile command with custom output
-        const { error } = await runCliCommand(["compile", "--output", outputDir]);
+        // Run compile command
+        const { error } = await runCliCommand(["compile"]);
 
         // The compile command may error due to skill resolution issues
         // (test skill IDs don't match what resolver expects)
@@ -72,8 +69,8 @@ describe("User Journey: Compile Flow", () => {
         }
 
         // Verify agent files if they exist
-        const webDevPath = path.join(outputDir, "web-developer.md");
-        const apiDevPath = path.join(outputDir, "api-developer.md");
+        const webDevPath = path.join(agentsDir, "web-developer.md");
+        const apiDevPath = path.join(agentsDir, "api-developer.md");
 
         const webDevExists = await fileExists(webDevPath);
         const apiDevExists = await fileExists(apiDevPath);
@@ -98,27 +95,6 @@ describe("User Journey: Compile Flow", () => {
         warnSpy.mockRestore();
       }
     });
-
-    it("should create output directory if it does not exist", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-      try {
-        const nonExistentOutput = path.join(dirs.tempDir, "new-output");
-
-        // Directory should not exist yet
-        expect(await directoryExists(nonExistentOutput)).toBe(false);
-
-        // Run compile with new output directory
-        await runCliCommand(["compile", "--output", nonExistentOutput]);
-
-        // Directory should now exist (command creates it)
-        expect(await directoryExists(nonExistentOutput)).toBe(true);
-      } finally {
-        consoleSpy.mockRestore();
-        warnSpy.mockRestore();
-      }
-    });
   });
 
   describe("frontmatter skill references", () => {
@@ -127,9 +103,9 @@ describe("User Journey: Compile Flow", () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       try {
-        await runCliCommand(["compile", "--output", outputDir]);
+        await runCliCommand(["compile"]);
 
-        const webDevPath = path.join(outputDir, "web-developer.md");
+        const webDevPath = path.join(agentsDir, "web-developer.md");
 
         if (await fileExists(webDevPath)) {
           const content = await readTestFile(webDevPath);
@@ -157,9 +133,9 @@ describe("User Journey: Compile Flow", () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       try {
-        await runCliCommand(["compile", "--output", outputDir]);
+        await runCliCommand(["compile"]);
 
-        const webDevPath = path.join(outputDir, "web-developer.md");
+        const webDevPath = path.join(agentsDir, "web-developer.md");
 
         if (await fileExists(webDevPath)) {
           const content = await readTestFile(webDevPath);
@@ -188,8 +164,6 @@ describe("User Journey: Compile Flow", () => {
     it("should provide detailed output with --verbose flag", async () => {
       const { stdout, error } = await runCliCommand([
         "compile",
-        "--output",
-        outputDir,
         "--verbose",
       ]);
 
@@ -204,7 +178,7 @@ describe("User Journey: Compile Flow", () => {
 
 describe("User Journey: Compile with Local Skills", () => {
   let dirs: TestDirs;
-  let outputDir: string;
+  let agentsDir: string;
   let originalCwd: string;
 
   beforeEach(async () => {
@@ -222,8 +196,7 @@ describe("User Journey: Compile with Local Skills", () => {
       asPlugin: true,
     });
 
-    outputDir = path.join(dirs.tempDir, "output");
-    await mkdir(outputDir, { recursive: true });
+    agentsDir = path.join(dirs.projectDir, ".claude", "agents");
 
     process.chdir(dirs.projectDir);
   });
@@ -251,8 +224,6 @@ describe("User Journey: Compile with Local Skills", () => {
       // Run compile
       const { stdout, error } = await runCliCommand([
         "compile",
-        "--output",
-        outputDir,
         "--verbose",
       ]);
 
@@ -272,9 +243,9 @@ describe("User Journey: Compile with Local Skills", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     try {
-      await runCliCommand(["compile", "--output", outputDir]);
+      await runCliCommand(["compile"]);
 
-      const webDevPath = path.join(outputDir, "web-developer.md");
+      const webDevPath = path.join(agentsDir, "web-developer.md");
 
       if (await fileExists(webDevPath)) {
         const content = await readTestFile(webDevPath);
