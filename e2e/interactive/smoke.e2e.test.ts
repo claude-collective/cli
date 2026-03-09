@@ -39,7 +39,6 @@ describe("TerminalSession smoke tests", () => {
     const screen = getScreen();
 
     expect(screen).toContain("compile");
-    expect(screen).toContain("--output");
     expect(screen).toContain("--verbose");
   });
 

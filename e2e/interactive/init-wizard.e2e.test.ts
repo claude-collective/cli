@@ -670,7 +670,7 @@ describe("init wizard", () => {
 
       const fullOutput = session.getFullOutput();
       expect(fullOutput).toContain("Stack");
-      expect(fullOutput).toContain("Build");
+      expect(fullOutput).toContain("Skills");
       expect(fullOutput).toContain("Sources");
       expect(fullOutput).toContain("Agents");
       expect(fullOutput).toContain("Confirm");

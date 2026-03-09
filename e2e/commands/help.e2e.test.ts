@@ -34,7 +34,6 @@ describe("help and version", () => {
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Compile agents");
-    expect(stdout).toContain("--output");
     expect(stdout).toContain("--verbose");
     expect(stdout).toContain("--source");
   });
@@ -75,7 +74,6 @@ describe("help and version", () => {
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Compile agents");
-    expect(stdout).toContain("--output");
   });
 
   it("should display version with --version flag", async () => {

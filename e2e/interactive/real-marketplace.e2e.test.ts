@@ -154,31 +154,30 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
   });
 
   describe("compile with real installed project", () => {
-    it("should compile agents to a custom output directory", async () => {
-      const outputDir = path.join(projectDir, "compile-output");
+    it("should compile agents to project output directory", async () => {
+      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
 
-      const { exitCode, stdout } = await runCLI(["compile", "--output", outputDir], projectDir, {
+      const { exitCode } = await runCLI(["compile"], projectDir, {
         env: { AGENTSINC_SOURCE: undefined },
       });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Custom output compile complete!");
 
-      const outputFiles = await listFiles(outputDir);
+      const outputFiles = await listFiles(agentsDir);
       const mdFiles = outputFiles.filter((f) => f.endsWith(".md"));
       expect(mdFiles.length).toBeGreaterThan(0);
     });
 
     it("should produce agents with real skill content", async () => {
-      const outputDir = path.join(projectDir, "compile-verify");
+      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
 
-      const { exitCode } = await runCLI(["compile", "--output", outputDir], projectDir, {
+      const { exitCode } = await runCLI(["compile"], projectDir, {
         env: { AGENTSINC_SOURCE: undefined },
       });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const outputFiles = await listFiles(outputDir);
+      const outputFiles = await listFiles(agentsDir);
       const mdFiles = outputFiles.filter((f) => f.endsWith(".md"));
 
       // Read a compiled agent and verify it has real skill text
@@ -186,7 +185,7 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
       const MIN_REAL_CONTENT_LENGTH = 1000;
       let foundRealContent = false;
       for (const mdFile of mdFiles) {
-        const content = await readTestFile(path.join(outputDir, mdFile));
+        const content = await readTestFile(path.join(agentsDir, mdFile));
 
         // Real agents should have YAML frontmatter + substantial body
         if (content.startsWith("---") && content.length > MIN_REAL_CONTENT_LENGTH) {

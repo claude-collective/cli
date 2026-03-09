@@ -138,7 +138,7 @@ describe("edit wizard", () => {
       expect(output).toContain("ENTER");
       expect(output).toContain("ESC");
       // Should show the wizard step indicators
-      expect(output).toContain("Build");
+      expect(output).toContain("Skills");
       expect(output).toContain("Confirm");
     });
   });
