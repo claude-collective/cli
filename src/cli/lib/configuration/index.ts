@@ -12,7 +12,7 @@ export {
   getProjectConfigPath,
   loadProjectSourceConfig,
   loadGlobalSourceConfig,
-  saveProjectConfig,
+  writeProjectSourceConfig,
   resolveSource,
   resolveAgentsSource,
   formatOrigin,
@@ -51,6 +51,8 @@ export { loadConfig } from "./config-loader";
 export { generateConfigSource } from "./config-writer";
 export {
   generateConfigTypesSource,
+  generateProjectConfigTypesSource,
+  getGlobalConfigTypesPath,
   type ConfigTypesBackgroundData,
   loadConfigTypesDataInBackground,
   regenerateConfigTypes,

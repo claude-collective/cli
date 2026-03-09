@@ -1,5 +1,5 @@
 import type { SourceEntry } from "./config";
-import { loadProjectSourceConfig, saveProjectConfig, DEFAULT_SOURCE } from "./config";
+import { loadProjectSourceConfig, writeProjectSourceConfig, DEFAULT_SOURCE } from "./config";
 import { fetchMarketplace } from "../loading/source-fetcher";
 import { discoverLocalSkills } from "../skills/local-skill-loader";
 import { discoverAllPluginSkills } from "../plugins/plugin-discovery";
@@ -35,7 +35,7 @@ export async function addSource(
 
   sources.push({ name, url });
   config.sources = sources;
-  await saveProjectConfig(projectDir, config);
+  await writeProjectSourceConfig(projectDir, config);
 
   verbose(`Added source "${name}" with ${skillCount} skills`);
   return { name, skillCount };
@@ -58,7 +58,7 @@ export async function removeSource(projectDir: string, name: string): Promise<vo
   }
 
   config.sources = filtered;
-  await saveProjectConfig(projectDir, config);
+  await writeProjectSourceConfig(projectDir, config);
 
   verbose(`Removed source "${name}"`);
 }
