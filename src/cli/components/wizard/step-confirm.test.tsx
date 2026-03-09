@@ -1,16 +1,11 @@
 import { render } from "ink-testing-library";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { StepConfirm } from "./step-confirm";
-import { useWizardStore } from "../../stores/wizard-store";
 import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 import { buildSkillConfigs } from "../../lib/__tests__/helpers";
 
 describe("StepConfirm component", () => {
   let cleanup: (() => void) | undefined;
-
-  beforeEach(() => {
-    useWizardStore.getState().reset();
-  });
 
   afterEach(() => {
     cleanup?.();

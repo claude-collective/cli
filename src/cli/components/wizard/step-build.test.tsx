@@ -1,8 +1,8 @@
 import { render } from "ink-testing-library";
 import { indexBy } from "remeda";
-import { describe, expect, it, afterEach, vi } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { StepBuild, type StepBuildProps } from "./step-build";
-import { validateBuildStep, getSkillDisplayLabel } from "../../lib/wizard/index";
+import { validateBuildStep } from "../../lib/wizard/index";
 import { orderDomains } from "./utils";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
 import type {
@@ -25,6 +25,7 @@ import {
   createMockMatrix,
   getTestSkill,
 } from "../../lib/__tests__/helpers";
+import { useMatrixStore } from "../../stores/matrix-store";
 import {
   WEB_FRAMEWORK_CATEGORY,
   WEB_STYLING_CATEGORY,
@@ -44,16 +45,16 @@ const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill
 
 const reactSkill = getTestSkill("react", { displayName: "react" });
 const vueSkill = getTestSkill("vue", { displayName: "vue" });
-const tailwindSkill = createMockSkill("web-styling-tailwind", "web-styling", {
+const tailwindSkill = createMockSkill("web-styling-tailwind", {
   displayName: "tailwind",
 });
 const scssSkill = getTestSkill("scss-modules", { displayName: "scss-modules" });
 const zustandSkill = getTestSkill("zustand", { displayName: "zustand" });
 const honoSkill = getTestSkill("hono", { displayName: "hono" });
-const expressSkill = createMockSkill("api-framework-express", "api-api", {
+const expressSkill = createMockSkill("api-framework-express", {
   displayName: "express",
 });
-const postgresSkill = createMockSkill("api-database-postgres", "api-database");
+const postgresSkill = createMockSkill("api-database-postgres");
 
 const defaultMatrix = buildTestMatrix(
   [
@@ -76,7 +77,6 @@ const defaultMatrix = buildTestMatrix(
 );
 
 const defaultProps: StepBuildProps = {
-  matrix: defaultMatrix,
   domain: "web",
   selectedDomains: ["web"],
   selections: {},
@@ -94,6 +94,10 @@ const renderStepBuild = (props: Partial<StepBuildProps> = {}) => {
 
 describe("StepBuild component", () => {
   let cleanup: (() => void) | undefined;
+
+  beforeEach(() => {
+    useMatrixStore.getState().setMatrix(defaultMatrix);
+  });
 
   afterEach(() => {
     cleanup?.();
@@ -455,7 +459,7 @@ describe("StepBuild component", () => {
         required: true,
         order: 0,
       });
-      const commanderSkill = createMockSkill("cli-cli-framework-commander", "cli-framework", {
+      const commanderSkill = createMockSkill("cli-cli-framework-commander", {
         displayName: "commander",
       });
 
@@ -481,8 +485,8 @@ describe("StepBuild component", () => {
         ],
       );
 
+      useMatrixStore.getState().setMatrix(matrixWithCli);
       const { lastFrame, unmount } = renderStepBuild({
-        matrix: matrixWithCli,
         domain: "api",
         selectedDomains: ["web", "api", "cli"],
       });
@@ -535,7 +539,7 @@ describe("StepBuild component", () => {
           displayName: "Framework",
           required: true,
           exclusive: true,
-          options: [{ id: "web-framework-react", label: "React", state: "normal", selected: true }],
+          options: [{ id: "web-framework-react", state: "normal", selected: true }],
         },
       ];
       const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
@@ -553,7 +557,7 @@ describe("StepBuild component", () => {
           required: true,
           exclusive: true,
           options: [
-            { id: "web-framework-react", label: "React", state: "normal", selected: false },
+            { id: "web-framework-react", state: "normal", selected: false },
           ],
         },
       ];
@@ -574,7 +578,6 @@ describe("StepBuild component", () => {
           options: [
             {
               id: "web-state-zustand",
-              label: "Zustand",
               state: "normal",
               selected: false,
             },
@@ -655,12 +658,3 @@ describe("StepBuild component", () => {
   });
 });
 
-describe("getSkillDisplayLabel", () => {
-  it("should return displayName when available", () => {
-    expect(getSkillDisplayLabel({ displayName: "react" })).toBe("react");
-  });
-
-  it("should return displayName", () => {
-    expect(getSkillDisplayLabel({ displayName: "scss-modules" })).toBe("scss-modules");
-  });
-});

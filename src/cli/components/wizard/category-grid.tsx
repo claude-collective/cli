@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useRef } from "react";
 import { Box, Text } from "ink";
 
 import { CLI_COLORS } from "../../consts.js";
+import { getSkill } from "../../stores/matrix-store.js";
 import type { SkillId, Category } from "../../types/index.js";
 import { isSectionLocked, useCategoryGridInput } from "../hooks/use-category-grid-input.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
@@ -12,7 +13,6 @@ export type OptionState = "normal" | "recommended" | "discouraged";
 
 export type CategoryOption = {
   id: SkillId;
-  label: string;
   state: OptionState;
   stateReason?: string;
   selected: boolean;
@@ -116,7 +116,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
       <>
         <Text color={textColor} bold>
           {" "}
-          {option.label}{" "}
+          {getSkill(option.id).displayName}{" "}
         </Text>
         {option.scope === "global" && <Text color={CLI_COLORS.WARNING}>G </Text>}
         {compatibilityLabel && <Text dimColor>{compatibilityLabel} </Text>}

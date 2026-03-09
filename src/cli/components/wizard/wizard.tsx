@@ -12,11 +12,11 @@ import { StepSources } from "./step-sources.js";
 import { StepSettings } from "./step-settings.js";
 import { StepAgents } from "./step-agents.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
+import { getMatrix } from "../../stores/matrix-store.js";
 import type {
   AgentName,
   Domain,
   DomainSelections,
-  MergedSkillsMatrix,
   SkillId,
 } from "../../types/index.js";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
@@ -41,7 +41,6 @@ export type WizardResultV2 = {
 };
 
 type WizardProps = {
-  matrix: MergedSkillsMatrix;
   onComplete: (result: WizardResultV2) => void;
   onCancel: () => void;
   version?: string;
@@ -62,7 +61,6 @@ const MIN_TERMINAL_WIDTH = 80;
 const MIN_TERMINAL_HEIGHT = 15;
 
 export const Wizard: React.FC<WizardProps> = ({
-  matrix,
   onComplete,
   onCancel,
   version,
@@ -88,7 +86,6 @@ export const Wizard: React.FC<WizardProps> = ({
   const isShortTerminal = terminalHeight < MIN_TERMINAL_HEIGHT;
 
   useWizardInitialization({
-    matrix,
     initialStep,
     initialDomains,
     initialAgents,
@@ -98,7 +95,7 @@ export const Wizard: React.FC<WizardProps> = ({
     lockedAgentNames,
   });
 
-  const buildStepProps = useBuildStepProps({ store, matrix, installedSkillIds });
+  const buildStepProps = useBuildStepProps({ store, installedSkillIds });
 
   useInput((input, key) => {
     // ESC is handled by step-settings.tsx's own useKeyboardNavigation hook
@@ -169,14 +166,14 @@ export const Wizard: React.FC<WizardProps> = ({
     let allSkills: SkillId[];
 
     if (store.selectedStackId && store.stackAction === "defaults") {
-      const stack = matrix.suggestedStacks.find((s) => s.id === store.selectedStackId);
+      const stack = getMatrix().suggestedStacks.find((s) => s.id === store.selectedStackId);
       if (!stack) {
         warn(`Stack not found in matrix: '${store.selectedStackId}'`);
       }
       allSkills = [...(stack?.allSkillIds || [])];
     } else {
       const techNames = store.getAllSelectedTechnologies();
-      allSkills = techNames.map((tech) => resolveAlias(tech, matrix));
+      allSkills = techNames.map((tech) => resolveAlias(tech));
     }
 
     const methodologySkills = store.getDefaultMethodologySkills();
@@ -191,7 +188,7 @@ export const Wizard: React.FC<WizardProps> = ({
       return existing ?? { id, scope: "project" as const, source: "local" };
     });
 
-    const validation = validateSelection(allSkills, matrix);
+    const validation = validateSelection(allSkills);
 
     const result: WizardResultV2 = {
       skills: skillConfigs,
@@ -206,7 +203,7 @@ export const Wizard: React.FC<WizardProps> = ({
 
     onComplete(result);
     exit();
-  }, [store, matrix, onComplete, exit]);
+  }, [store, onComplete, exit]);
 
   const handleCancel = useCallback(() => {
     onCancel();
@@ -216,7 +213,7 @@ export const Wizard: React.FC<WizardProps> = ({
   const renderStep = () => {
     switch (store.step) {
       case "stack":
-        return <StepStack matrix={matrix} onCancel={handleCancel} />;
+        return <StepStack onCancel={handleCancel} />;
 
       case "build":
         return <StepBuild {...buildStepProps} />;
@@ -232,7 +229,6 @@ export const Wizard: React.FC<WizardProps> = ({
         }
         return (
           <StepSources
-            matrix={matrix}
             projectDir={projectDir}
             onContinue={() => {
               if (!initialAgents?.length) {
@@ -246,10 +242,10 @@ export const Wizard: React.FC<WizardProps> = ({
       }
 
       case "agents":
-        return <StepAgents matrix={matrix} />;
+        return <StepAgents />;
 
       case "confirm": {
-        const stackName = getStackName(store.selectedStackId, matrix);
+        const stackName = getStackName(store.selectedStackId);
         const selectedSkills = store.getAllSelectedTechnologies();
         return (
           <StepConfirm

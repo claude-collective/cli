@@ -1,5 +1,5 @@
 import { render } from "ink-testing-library";
-import { describe, expect, it, afterEach, vi } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import {
   CategoryGrid,
   type CategoryGridProps,
@@ -17,14 +17,56 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
+import { createMockSkill, createMockMatrix } from "../../lib/__tests__/helpers";
+import { useMatrixStore } from "../../stores/matrix-store";
+
+const TEST_GRID_SKILLS: { id: SkillId; displayName: string; category: import("../../types").CategoryPath }[] = [
+  { id: "web-framework-react", displayName: "React", category: "web-framework" },
+  { id: "web-framework-vue-composition-api", displayName: "Vue", category: "web-framework" },
+  { id: "web-framework-angular-standalone", displayName: "Angular", category: "web-framework" },
+  { id: "web-framework-solidjs", displayName: "SolidJS", category: "web-framework" },
+  { id: "web-framework-nuxt", displayName: "Nuxt", category: "web-framework" },
+  { id: "web-framework-remix", displayName: "Remix", category: "web-framework" },
+  { id: "web-framework-nextjs-app-router", displayName: "Next.js App Router", category: "web-framework" },
+  { id: "web-framework-nextjs-server-actions", displayName: "Next.js Server Actions", category: "web-framework" },
+  { id: "web-styling-scss-modules", displayName: "SCSS Modules", category: "web-styling" },
+  { id: "web-styling-tailwind", displayName: "Tailwind", category: "web-styling" },
+  { id: "web-styling-cva", displayName: "CVA", category: "web-styling" },
+  { id: "web-state-zustand", displayName: "Zustand", category: "web-client-state" },
+  { id: "web-state-jotai", displayName: "Jotai", category: "web-client-state" },
+  { id: "web-state-redux-toolkit", displayName: "Redux", category: "web-client-state" },
+  { id: "web-state-mobx", displayName: "MobX", category: "web-client-state" },
+  { id: "web-server-state-react-query", displayName: "React Query", category: "web-server-state" },
+  { id: "web-data-fetching-swr", displayName: "SWR", category: "web-server-state" },
+  { id: "web-data-fetching-graphql-apollo", displayName: "Apollo", category: "web-server-state" },
+  { id: "api-analytics-posthog-analytics", displayName: "PostHog", category: "api-analytics" },
+  { id: "web-forms-react-hook-form", displayName: "React Hook Form", category: "web-forms" },
+  { id: "web-forms-vee-validate", displayName: "Vee Validate", category: "web-forms" },
+  { id: "web-forms-zod-validation", displayName: "Zod Validation", category: "web-forms" },
+  { id: "web-testing-vitest", displayName: "Vitest", category: "web-testing" },
+  { id: "web-testing-playwright-e2e", displayName: "Playwright", category: "web-testing" },
+  { id: "web-testing-cypress-e2e", displayName: "Cypress", category: "web-testing" },
+  { id: "web-mocks-msw", displayName: "MSW", category: "web-mocking" },
+  { id: "web-testing-react-testing-library", displayName: "React Testing Library", category: "web-testing" },
+  { id: "web-testing-vue-test-utils", displayName: "Vue Test Utils", category: "web-testing" },
+  { id: "web-i18n-next-intl", displayName: "Next Intl", category: "web-i18n" },
+  { id: "web-i18n-react-intl", displayName: "React Intl", category: "web-i18n" },
+  { id: "web-i18n-vue-i18n", displayName: "Vue I18n", category: "web-i18n" },
+];
+
+function buildTestMatrix() {
+  const skills: Record<string, import("../../types").ResolvedSkill> = {};
+  for (const { id, displayName, category } of TEST_GRID_SKILLS) {
+    skills[id] = createMockSkill(id, { displayName, category });
+  }
+  return createMockMatrix(skills);
+}
 
 const createOption = (
   id: SkillId,
-  label: string,
   overrides: Partial<CategoryOption> = {},
 ): CategoryOption => ({
   id,
-  label,
   state: "normal",
   selected: false,
   ...overrides,
@@ -49,13 +91,13 @@ const defaultCategories: CategoryRow[] = [
     "web-framework",
     "Framework",
     [
-      createOption("web-framework-react", "React", {
+      createOption("web-framework-react", {
         state: "recommended",
         stateReason: "Popular choice",
       }),
-      createOption("web-framework-vue-composition-api", "Vue"),
-      createOption("web-framework-angular-standalone", "Angular"),
-      createOption("web-framework-solidjs", "SolidJS"),
+      createOption("web-framework-vue-composition-api"),
+      createOption("web-framework-angular-standalone"),
+      createOption("web-framework-solidjs"),
     ],
     { required: true },
   ),
@@ -63,29 +105,29 @@ const defaultCategories: CategoryRow[] = [
     "web-styling",
     "Styling",
     [
-      createOption("web-styling-scss-modules", "SCSS Modules", { selected: true }),
-      createOption("web-styling-tailwind", "Tailwind", { state: "recommended" }),
-      createOption("web-styling-cva", "CVA"),
-      createOption("web-framework-nuxt", "Nuxt"),
+      createOption("web-styling-scss-modules", { selected: true }),
+      createOption("web-styling-tailwind", { state: "recommended" }),
+      createOption("web-styling-cva"),
+      createOption("web-framework-nuxt"),
     ],
     { required: true },
   ),
   createCategory("web-client-state", "Client State", [
-    createOption("web-state-zustand", "Zustand", { state: "recommended" }),
-    createOption("web-state-jotai", "Jotai"),
-    createOption("web-state-redux-toolkit", "Redux", {
+    createOption("web-state-zustand", { state: "recommended" }),
+    createOption("web-state-jotai"),
+    createOption("web-state-redux-toolkit", {
       state: "discouraged",
       stateReason: "Complex for most apps",
     }),
-    createOption("web-state-mobx", "MobX"),
+    createOption("web-state-mobx"),
   ]),
   createCategory("web-server-state", "Server State", [
-    createOption("web-server-state-react-query", "React Query", { selected: true }),
-    createOption("web-data-fetching-swr", "SWR"),
-    createOption("web-data-fetching-graphql-apollo", "Apollo"),
+    createOption("web-server-state-react-query", { selected: true }),
+    createOption("web-data-fetching-swr"),
+    createOption("web-data-fetching-graphql-apollo"),
   ]),
   createCategory("api-analytics", "Analytics", [
-    createOption("api-analytics-posthog-analytics", "PostHog"),
+    createOption("api-analytics-posthog-analytics"),
   ]),
 ];
 
@@ -94,14 +136,14 @@ const categoriesWithFramework: CategoryRow[] = [
     "web-framework",
     "Framework",
     [
-      createOption("web-framework-react", "React", {
+      createOption("web-framework-react", {
         state: "recommended",
         stateReason: "Popular choice",
         selected: true, // Framework selected
       }),
-      createOption("web-framework-vue-composition-api", "Vue"),
-      createOption("web-framework-angular-standalone", "Angular"),
-      createOption("web-framework-solidjs", "SolidJS"),
+      createOption("web-framework-vue-composition-api"),
+      createOption("web-framework-angular-standalone"),
+      createOption("web-framework-solidjs"),
     ],
     { required: true },
   ),
@@ -109,77 +151,77 @@ const categoriesWithFramework: CategoryRow[] = [
     "web-styling",
     "Styling",
     [
-      createOption("web-styling-scss-modules", "SCSS Modules"),
-      createOption("web-styling-tailwind", "Tailwind", { state: "recommended" }),
-      createOption("web-styling-cva", "CVA"),
-      createOption("web-framework-nuxt", "Nuxt"),
+      createOption("web-styling-scss-modules"),
+      createOption("web-styling-tailwind", { state: "recommended" }),
+      createOption("web-styling-cva"),
+      createOption("web-framework-nuxt"),
     ],
     { required: true },
   ),
   createCategory("web-client-state", "Client State", [
-    createOption("web-state-zustand", "Zustand", { state: "recommended" }),
-    createOption("web-state-jotai", "Jotai"),
-    createOption("web-state-redux-toolkit", "Redux", { state: "discouraged" }),
-    createOption("web-state-mobx", "MobX"),
+    createOption("web-state-zustand", { state: "recommended" }),
+    createOption("web-state-jotai"),
+    createOption("web-state-redux-toolkit", { state: "discouraged" }),
+    createOption("web-state-mobx"),
   ]),
 ];
 
 const manyCategories: CategoryRow[] = [
   createCategory("web-framework", "Category 0", [
-    createOption("web-framework-react", "Option 0A"),
-    createOption("web-framework-vue-composition-api", "Option 0B"),
-    createOption("web-framework-angular-standalone", "Option 0C"),
+    createOption("web-framework-react"),
+    createOption("web-framework-vue-composition-api"),
+    createOption("web-framework-angular-standalone"),
   ]),
   createCategory("web-styling", "Category 1", [
-    createOption("web-styling-tailwind", "Option 1A"),
-    createOption("web-styling-scss-modules", "Option 1B"),
-    createOption("web-styling-cva", "Option 1C"),
+    createOption("web-styling-tailwind"),
+    createOption("web-styling-scss-modules"),
+    createOption("web-styling-cva"),
   ]),
   createCategory("web-client-state", "Category 2", [
-    createOption("web-state-zustand", "Option 2A"),
-    createOption("web-state-jotai", "Option 2B"),
-    createOption("web-state-mobx", "Option 2C"),
+    createOption("web-state-zustand"),
+    createOption("web-state-jotai"),
+    createOption("web-state-mobx"),
   ]),
   createCategory("web-server-state", "Category 3", [
-    createOption("web-server-state-react-query", "Option 3A"),
-    createOption("web-data-fetching-swr", "Option 3B"),
-    createOption("web-data-fetching-graphql-apollo", "Option 3C"),
+    createOption("web-server-state-react-query"),
+    createOption("web-data-fetching-swr"),
+    createOption("web-data-fetching-graphql-apollo"),
   ]),
   createCategory("web-forms", "Category 4", [
-    createOption("web-forms-react-hook-form", "Option 4A"),
-    createOption("web-forms-vee-validate", "Option 4B"),
-    createOption("web-forms-zod-validation", "Option 4C"),
+    createOption("web-forms-react-hook-form"),
+    createOption("web-forms-vee-validate"),
+    createOption("web-forms-zod-validation"),
   ]),
   createCategory("web-testing", "Category 5", [
-    createOption("web-testing-vitest", "Option 5A"),
-    createOption("web-testing-playwright-e2e", "Option 5B"),
-    createOption("web-testing-cypress-e2e", "Option 5C"),
+    createOption("web-testing-vitest"),
+    createOption("web-testing-playwright-e2e"),
+    createOption("web-testing-cypress-e2e"),
   ]),
   createCategory("web-mocking", "Category 6", [
-    createOption("web-mocks-msw", "Option 6A"),
-    createOption("web-testing-react-testing-library", "Option 6B"),
-    createOption("web-testing-vue-test-utils", "Option 6C"),
+    createOption("web-mocks-msw"),
+    createOption("web-testing-react-testing-library"),
+    createOption("web-testing-vue-test-utils"),
   ]),
   createCategory("web-i18n", "Category 7", [
-    createOption("web-i18n-next-intl", "Option 7A"),
-    createOption("web-i18n-react-intl", "Option 7B"),
-    createOption("web-i18n-vue-i18n", "Option 7C"),
+    createOption("web-i18n-next-intl"),
+    createOption("web-i18n-react-intl"),
+    createOption("web-i18n-vue-i18n"),
   ]),
 ];
 
 const navCategories: CategoryRow[] = [
-  createCategory("web-framework", "Category 0", [createOption("web-framework-react", "Option 0A")]),
-  createCategory("web-styling", "Category 1", [createOption("web-styling-tailwind", "Option 1A")]),
+  createCategory("web-framework", "Category 0", [createOption("web-framework-react")]),
+  createCategory("web-styling", "Category 1", [createOption("web-styling-tailwind")]),
   createCategory("web-client-state", "Category 2", [
-    createOption("web-state-zustand", "Option 2A"),
+    createOption("web-state-zustand"),
   ]),
   createCategory("web-server-state", "Category 3", [
-    createOption("web-server-state-react-query", "Option 3A"),
+    createOption("web-server-state-react-query"),
   ]),
   createCategory("web-forms", "Category 4", [
-    createOption("web-forms-react-hook-form", "Option 4A"),
+    createOption("web-forms-react-hook-form"),
   ]),
-  createCategory("web-testing", "Category 5", [createOption("web-testing-vitest", "Option 5A")]),
+  createCategory("web-testing", "Category 5", [createOption("web-testing-vitest")]),
 ];
 
 const defaultProps: CategoryGridProps = {
@@ -199,9 +241,14 @@ const renderGrid = (props: Partial<CategoryGridProps> = {}) => {
 describe("CategoryGrid component", () => {
   let cleanup: (() => void) | undefined;
 
+  beforeEach(() => {
+    useMatrixStore.getState().setMatrix(buildTestMatrix());
+  });
+
   afterEach(() => {
     cleanup?.();
     cleanup = undefined;
+    useMatrixStore.getState().reset();
   });
 
   describe("rendering", () => {
@@ -270,7 +317,7 @@ describe("CategoryGrid component", () => {
   });
 
   describe("visual states", () => {
-    it("should show selected options with label text", () => {
+    it("should show selected options with display name", () => {
       const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
@@ -280,12 +327,12 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("React Query");
     });
 
-    it("should show unselected options with label text", () => {
+    it("should show unselected options with display name", () => {
       const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      // Unselected options should display their labels
+      // Unselected options should display their names from the store
       expect(output).toContain("Vue");
       expect(output).toContain("Angular");
     });
@@ -311,8 +358,8 @@ describe("CategoryGrid component", () => {
     it("should show discouraged options with warning styling", () => {
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", "Option 1"),
-          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
+          createOption("web-forms-react-hook-form"),
+          createOption("web-forms-vee-validate", { state: "discouraged" }),
         ]),
       ];
 
@@ -320,14 +367,14 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Discouraged options should show label
-      expect(output).toContain("Option 2");
+      // Discouraged options should show display name
+      expect(output).toContain("Vee Validate");
     });
 
-    it("should render selected skills with label text", () => {
+    it("should render selected skills with display name", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Selected Skill", { selected: true }),
+          createOption("web-forms-react-hook-form", { selected: true }),
         ]),
       ];
 
@@ -335,13 +382,13 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Selected Skill");
+      expect(output).toContain("React Hook Form");
     });
 
-    it("should render unselected skills with label text", () => {
+    it("should render unselected skills with display name", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Unselected Skill", {
+          createOption("web-forms-react-hook-form", {
             state: "normal",
             selected: false,
           }),
@@ -352,13 +399,13 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Unselected Skill");
+      expect(output).toContain("React Hook Form");
     });
 
-    it("should render discouraged skills with label text", () => {
+    it("should render discouraged skills with display name", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Discouraged Skill", { state: "discouraged" }),
+          createOption("web-forms-react-hook-form", { state: "discouraged" }),
         ]),
       ];
 
@@ -366,17 +413,17 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Discouraged Skill");
+      expect(output).toContain("React Hook Form");
     });
 
-    it("should render discouraged+selected skills with label text", () => {
+    it("should render discouraged+selected skills with display name", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Discouraged Selected", {
+          createOption("web-forms-react-hook-form", {
             state: "discouraged",
             selected: true,
           }),
-          createOption("web-forms-vee-validate", "Discouraged Only", {
+          createOption("web-forms-vee-validate", {
             state: "discouraged",
             selected: false,
           }),
@@ -387,14 +434,14 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Discouraged Selected");
-      expect(output).toContain("Discouraged Only");
+      expect(output).toContain("React Hook Form");
+      expect(output).toContain("Vee Validate");
     });
 
-    it("should render discouraged skills with label text", () => {
+    it("should render discouraged skills with display name from store", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Discouraged Skill", { state: "discouraged" }),
+          createOption("web-forms-react-hook-form", { state: "discouraged" }),
         ]),
       ];
 
@@ -402,14 +449,14 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Discouraged Skill");
+      expect(output).toContain("React Hook Form");
     });
 
-    it("should render both selected and unselected skills with labels", () => {
+    it("should render both selected and unselected skills with display names", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Active", { selected: true }),
-          createOption("web-forms-vee-validate", "Inactive", { selected: false }),
+          createOption("web-forms-react-hook-form", { selected: true }),
+          createOption("web-forms-vee-validate", { selected: false }),
         ]),
       ];
 
@@ -417,14 +464,14 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Active");
-      expect(output).toContain("Inactive");
+      expect(output).toContain("React Hook Form");
+      expect(output).toContain("Vee Validate");
     });
 
-    it("should render skill label regardless of selection state", () => {
+    it("should render skill display name regardless of selection state", () => {
       const categories1: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Toggle Skill", { selected: false }),
+          createOption("web-forms-react-hook-form", { selected: false }),
         ]),
       ];
 
@@ -435,7 +482,7 @@ describe("CategoryGrid component", () => {
       // Second render: same option selected
       const categories2: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Toggle Skill", { selected: true }),
+          createOption("web-forms-react-hook-form", { selected: true }),
         ]),
       ];
 
@@ -443,9 +490,9 @@ describe("CategoryGrid component", () => {
       cleanup = unmount2;
       const output2 = frame2();
 
-      // Both states should render the label
-      expect(output1).toContain("Toggle Skill");
-      expect(output2).toContain("Toggle Skill");
+      // Both states should render the display name
+      expect(output1).toContain("React Hook Form");
+      expect(output2).toContain("React Hook Form");
     });
   });
 
@@ -477,10 +524,10 @@ describe("CategoryGrid component", () => {
     it("should not lock any sections when no framework category exists", () => {
       const categoriesNoFramework: CategoryRow[] = [
         createCategory("web-styling", "Styling", [
-          createOption("web-styling-scss-modules", "SCSS"),
-          createOption("web-styling-tailwind", "Tailwind"),
+          createOption("web-styling-scss-modules"),
+          createOption("web-styling-tailwind"),
         ]),
-        createCategory("web-client-state", "State", [createOption("web-state-zustand", "Zustand")]),
+        createCategory("web-client-state", "State", [createOption("web-state-zustand")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({
@@ -495,7 +542,7 @@ describe("CategoryGrid component", () => {
   });
 
   describe("focus indicator", () => {
-    it("should render focused option with label text", () => {
+    it("should render focused option with display name", () => {
       const { lastFrame, unmount } = renderGrid({
         defaultFocusedRow: 0,
         defaultFocusedCol: 0,
@@ -757,8 +804,8 @@ describe("CategoryGrid component", () => {
           "web-framework",
           "Framework",
           [
-            createOption("web-framework-react", "React", { selected: true }),
-            createOption("web-framework-vue-composition-api", "Vue"),
+            createOption("web-framework-react", { selected: true }),
+            createOption("web-framework-vue-composition-api"),
           ],
           { required: true },
         ),
@@ -782,8 +829,8 @@ describe("CategoryGrid component", () => {
       const onToggle = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", "Option 1", { state: "discouraged" }),
-          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
+          createOption("web-forms-react-hook-form", { state: "discouraged" }),
+          createOption("web-forms-vee-validate", { state: "discouraged" }),
         ]),
       ];
 
@@ -824,9 +871,9 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", "Option 1"),
-          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
-          createOption("web-forms-zod-validation", "Option 3"),
+          createOption("web-forms-react-hook-form"),
+          createOption("web-forms-vee-validate", { state: "discouraged" }),
+          createOption("web-forms-zod-validation"),
         ]),
       ];
 
@@ -851,9 +898,9 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", "Option 1"),
-          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
-          createOption("web-forms-zod-validation", "Option 3"),
+          createOption("web-forms-react-hook-form"),
+          createOption("web-forms-vee-validate", { state: "discouraged" }),
+          createOption("web-forms-zod-validation"),
         ]),
       ];
 
@@ -878,8 +925,8 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", "Option 1", { state: "discouraged" }),
-          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
+          createOption("web-forms-react-hook-form", { state: "discouraged" }),
+          createOption("web-forms-vee-validate", { state: "discouraged" }),
         ]),
       ];
 
@@ -1013,8 +1060,8 @@ describe("CategoryGrid component", () => {
     it("should show discouraged label for discouraged options when showLabels is true", () => {
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", "Option 1"),
-          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
+          createOption("web-forms-react-hook-form"),
+          createOption("web-forms-vee-validate", { state: "discouraged" }),
         ]),
       ];
 
@@ -1030,10 +1077,10 @@ describe("CategoryGrid component", () => {
     it("should preserve original order regardless of state", () => {
       const categories: CategoryRow[] = [
         createCategory("web-client-state", "State", [
-          createOption("web-state-jotai", "Jotai"),
-          createOption("web-state-zustand", "Zustand", { state: "recommended" }),
-          createOption("web-state-redux-toolkit", "Redux", { state: "discouraged" }),
-          createOption("web-state-mobx", "MobX"),
+          createOption("web-state-jotai"),
+          createOption("web-state-zustand", { state: "recommended" }),
+          createOption("web-state-redux-toolkit", { state: "discouraged" }),
+          createOption("web-state-mobx"),
         ]),
       ];
 
@@ -1055,17 +1102,17 @@ describe("CategoryGrid component", () => {
     it("should not change order when a skill is selected", () => {
       const categoriesBefore: CategoryRow[] = [
         createCategory("web-client-state", "State", [
-          createOption("web-state-jotai", "Jotai"),
-          createOption("web-state-zustand", "Zustand"),
-          createOption("web-state-redux-toolkit", "Redux"),
+          createOption("web-state-jotai"),
+          createOption("web-state-zustand"),
+          createOption("web-state-redux-toolkit"),
         ]),
       ];
 
       const categoriesAfter: CategoryRow[] = [
         createCategory("web-client-state", "State", [
-          createOption("web-state-jotai", "Jotai"),
-          createOption("web-state-zustand", "Zustand", { selected: true }),
-          createOption("web-state-redux-toolkit", "Redux"),
+          createOption("web-state-jotai"),
+          createOption("web-state-zustand", { selected: true }),
+          createOption("web-state-redux-toolkit"),
         ]),
       ];
 
@@ -1091,17 +1138,17 @@ describe("CategoryGrid component", () => {
     it("should not change order when a skill state changes from normal to discouraged", () => {
       const categoriesBefore: CategoryRow[] = [
         createCategory("web-client-state", "State", [
-          createOption("web-state-jotai", "Jotai"),
-          createOption("web-state-zustand", "Zustand"),
-          createOption("web-state-redux-toolkit", "Redux"),
+          createOption("web-state-jotai"),
+          createOption("web-state-zustand"),
+          createOption("web-state-redux-toolkit"),
         ]),
       ];
 
       const categoriesAfter: CategoryRow[] = [
         createCategory("web-client-state", "State", [
-          createOption("web-state-jotai", "Jotai"),
-          createOption("web-state-zustand", "Zustand", { state: "discouraged" }),
-          createOption("web-state-redux-toolkit", "Redux"),
+          createOption("web-state-jotai"),
+          createOption("web-state-zustand", { state: "discouraged" }),
+          createOption("web-state-redux-toolkit"),
         ]),
       ];
 
@@ -1129,7 +1176,7 @@ describe("CategoryGrid component", () => {
     it("should handle single category", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Single Category", [
-          createOption("web-forms-react-hook-form", "Option 1"),
+          createOption("web-forms-react-hook-form"),
         ]),
       ];
 
@@ -1138,13 +1185,13 @@ describe("CategoryGrid component", () => {
 
       const output = lastFrame();
       expect(output).toContain("Single Category");
-      expect(output).toContain("Option 1");
+      expect(output).toContain("React Hook Form");
     });
 
     it("should handle single option in category", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Single", [
-          createOption("web-forms-react-hook-form", "Only Option"),
+          createOption("web-forms-react-hook-form"),
         ]),
       ];
 
@@ -1152,7 +1199,7 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Only Option");
+      expect(output).toContain("React Hook Form");
     });
 
     it("should handle category with many options (flows naturally)", () => {
@@ -1168,7 +1215,7 @@ describe("CategoryGrid component", () => {
         "web-styling-tailwind",
         "web-styling-scss-modules",
       ];
-      const options = manySkillIds.map((id, i) => createOption(id, `Option ${i}`));
+      const options = manySkillIds.map((id) => createOption(id));
       const categories: CategoryRow[] = [createCategory("web-mocking", "Many Options", options)];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -1177,15 +1224,15 @@ describe("CategoryGrid component", () => {
       const output = lastFrame();
       expect(output).toContain("Many Options");
       // All options should be present (no fixed row limit)
-      expect(output).toContain("Option 0");
-      expect(output).toContain("Option 9");
+      expect(output).toContain("React");
+      expect(output).toContain("SCSS Modules");
     });
 
-    it("should handle long option labels", () => {
+    it("should handle long display names", () => {
       const categories: CategoryRow[] = [
         createCategory("web-i18n", "Long Labels", [
-          createOption("web-i18n-next-intl", "Very Long Option Name"),
-          createOption("web-i18n-react-intl", "Another Long Name"),
+          createOption("web-i18n-next-intl"),
+          createOption("web-i18n-react-intl"),
         ]),
       ];
 
@@ -1193,23 +1240,23 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Labels should be rendered (flowing layout handles long labels)
-      expect(output).toContain("Very Long Option Name");
+      // Display names should be rendered (flowing layout handles long names)
+      expect(output).toContain("Next Intl");
     });
 
     it("should handle categories with different option counts", () => {
       const categories: CategoryRow[] = [
         createCategory("web-framework", "Category 1", [
-          createOption("web-forms-react-hook-form", "Option 1"),
-          createOption("web-forms-vee-validate", "Option 2"),
+          createOption("web-forms-react-hook-form"),
+          createOption("web-forms-vee-validate"),
         ]),
         createCategory("web-styling", "Category 2", [
-          createOption("web-forms-zod-validation", "Option 3"),
+          createOption("web-forms-zod-validation"),
         ]),
         createCategory("web-client-state", "Category 3", [
-          createOption("web-testing-vitest", "Option 4"),
-          createOption("web-testing-playwright-e2e", "Option 5"),
-          createOption("web-testing-react-testing-library", "Option 6"),
+          createOption("web-testing-vitest"),
+          createOption("web-testing-playwright-e2e"),
+          createOption("web-testing-react-testing-library"),
         ]),
       ];
 
@@ -1231,14 +1278,14 @@ describe("CategoryGrid component", () => {
           "web-framework",
           "Framework",
           [
-            createOption("web-forms-react-hook-form", "Option 1", { selected: true }), // Framework selected
-            createOption("web-forms-vee-validate", "Option 2"),
-            createOption("web-forms-zod-validation", "Option 3"),
+            createOption("web-forms-react-hook-form", { selected: true }), // Framework selected
+            createOption("web-forms-vee-validate"),
+            createOption("web-forms-zod-validation"),
           ],
           { required: true },
         ),
         createCategory("web-styling", "Category 2", [
-          createOption("web-testing-vitest", "Option 4"),
+          createOption("web-testing-vitest"),
         ]),
       ];
 
@@ -1260,10 +1307,10 @@ describe("CategoryGrid component", () => {
   });
 
   describe("installed skills", () => {
-    it("should render installed skill with label only (no checkmark icon)", () => {
+    it("should render installed skill with display name (no checkmark icon)", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Option 1", { installed: true }),
+          createOption("web-forms-react-hook-form", { installed: true }),
         ]),
       ];
 
@@ -1272,13 +1319,13 @@ describe("CategoryGrid component", () => {
 
       const output = lastFrame();
       expect(output).not.toContain("✓");
-      expect(output).toContain("Option 1");
+      expect(output).toContain("React Hook Form");
     });
 
-    it("should render installed and selected skill with label only", () => {
+    it("should render installed and selected skill with display name only", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Option 1", {
+          createOption("web-forms-react-hook-form", {
             installed: true,
             selected: true,
           }),
@@ -1290,13 +1337,13 @@ describe("CategoryGrid component", () => {
 
       const output = lastFrame();
       expect(output).not.toContain("✓");
-      expect(output).toContain("Option 1");
+      expect(output).toContain("React Hook Form");
     });
 
     it("should render local installed skill without L badge or checkmark", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Option 1", { local: true, installed: true }),
+          createOption("web-forms-react-hook-form", { local: true, installed: true }),
         ]),
       ];
 
@@ -1305,7 +1352,7 @@ describe("CategoryGrid component", () => {
 
       const output = lastFrame();
       expect(output).not.toContain("✓");
-      expect(output).toContain("Option 1");
+      expect(output).toContain("React Hook Form");
     });
   });
 
@@ -1366,8 +1413,8 @@ describe("CategoryGrid component", () => {
           "web-framework",
           "Framework",
           [
-            createOption("web-framework-react", "React"),
-            createOption("web-framework-vue-composition-api", "Vue"),
+            createOption("web-framework-react"),
+            createOption("web-framework-vue-composition-api"),
           ],
           { exclusive: true },
         ),
@@ -1386,8 +1433,8 @@ describe("CategoryGrid component", () => {
           "web-framework",
           "Framework",
           [
-            createOption("web-framework-react", "React", { selected: true }),
-            createOption("web-framework-vue-composition-api", "Vue"),
+            createOption("web-framework-react", { selected: true }),
+            createOption("web-framework-vue-composition-api"),
           ],
           { exclusive: true },
         ),
@@ -1406,9 +1453,9 @@ describe("CategoryGrid component", () => {
           "web-testing",
           "Testing",
           [
-            createOption("web-testing-vitest", "Vitest", { selected: true }),
-            createOption("web-testing-playwright-e2e", "Playwright", { selected: true }),
-            createOption("web-testing-cypress-e2e", "Cypress"),
+            createOption("web-testing-vitest", { selected: true }),
+            createOption("web-testing-playwright-e2e", { selected: true }),
+            createOption("web-testing-cypress-e2e"),
           ],
           { exclusive: false },
         ),
@@ -1427,8 +1474,8 @@ describe("CategoryGrid component", () => {
           "web-testing",
           "Testing",
           [
-            createOption("web-testing-vitest", "Vitest"),
-            createOption("web-testing-playwright-e2e", "Playwright"),
+            createOption("web-testing-vitest"),
+            createOption("web-testing-playwright-e2e"),
           ],
           { exclusive: false },
         ),
@@ -1446,13 +1493,13 @@ describe("CategoryGrid component", () => {
         createCategory(
           "web-framework",
           "Framework",
-          [createOption("web-framework-react", "React", { selected: true })],
+          [createOption("web-framework-react", { selected: true })],
           { exclusive: true },
         ),
         createCategory(
           "web-testing",
           "Testing",
-          [createOption("web-testing-vitest", "Vitest", { selected: true })],
+          [createOption("web-testing-vitest", { selected: true })],
           { exclusive: false },
         ),
       ];
@@ -1472,8 +1519,8 @@ describe("CategoryGrid component", () => {
           "web-framework",
           "Framework",
           [
-            createOption("web-framework-react", "React", { selected: true }),
-            createOption("web-framework-vue-composition-api", "Vue"),
+            createOption("web-framework-react", { selected: true }),
+            createOption("web-framework-vue-composition-api"),
           ],
           { exclusive: true },
         ),
@@ -1481,9 +1528,9 @@ describe("CategoryGrid component", () => {
           "web-testing",
           "Testing",
           [
-            createOption("web-testing-vitest", "Vitest", { selected: true }),
-            createOption("web-testing-playwright-e2e", "Playwright", { selected: true }),
-            createOption("web-testing-cypress-e2e", "Cypress"),
+            createOption("web-testing-vitest", { selected: true }),
+            createOption("web-testing-playwright-e2e", { selected: true }),
+            createOption("web-testing-cypress-e2e"),
           ],
           { exclusive: false },
         ),

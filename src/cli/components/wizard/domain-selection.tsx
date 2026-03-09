@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 import { unique } from "remeda";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type { Domain, MergedSkillsMatrix } from "../../types/index.js";
+import { useMatrixStore } from "../../stores/matrix-store.js";
+import type { Domain } from "../../types/index.js";
 import { typedEntries } from "../../utils/typed-object.js";
 import { CheckboxGrid, type CheckboxItem } from "./checkbox-grid.js";
 import { getDomainDisplayName, orderDomains } from "./utils.js";
@@ -14,12 +15,9 @@ const BUILT_IN_DOMAIN_DESCRIPTIONS: Record<Domain, string> = {
   shared: "Shared utilities and methodology",
 };
 
-type DomainSelectionProps = {
-  matrix: MergedSkillsMatrix;
-};
-
-export const DomainSelection: React.FC<DomainSelectionProps> = ({ matrix }) => {
+export const DomainSelection: React.FC = () => {
   const { selectedDomains, toggleDomain, setStep, setApproach, selectStack } = useWizardStore();
+  const matrix = useMatrixStore((s) => s.matrix!);
 
   const availableDomains = useMemo((): CheckboxItem<Domain>[] => {
     const matrixDomains = unique(

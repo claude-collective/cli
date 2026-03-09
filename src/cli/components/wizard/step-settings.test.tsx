@@ -10,14 +10,16 @@ import {
 } from "../../lib/__tests__/test-constants";
 
 // Mock source-manager
-vi.mock("../../lib/configuration/source-manager.js", () => ({
+vi.mock("../../lib/configuration/source-manager.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/configuration/source-manager.js")>()),
   getSourceSummary: vi.fn(),
   addSource: vi.fn(),
   removeSource: vi.fn(),
 }));
 
 // Mock config
-vi.mock("../../lib/configuration/config.js", () => ({
+vi.mock("../../lib/configuration/config.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/configuration/config.js")>()),
   DEFAULT_SOURCE: "github:agents-inc/skills",
 }));
 

@@ -2,7 +2,7 @@ import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { StepSources, type StepSourcesProps } from "./step-sources";
 import { useWizardStore } from "../../stores/wizard-store";
-import type { SkillId } from "../../types";
+import { useMatrixStore } from "../../stores/matrix-store";
 import {
   ENTER,
   ESCAPE,
@@ -18,7 +18,6 @@ import { DEFAULT_BRANDING, UI_SYMBOLS } from "../../consts";
 const mockMatrix = TEST_MATRICES.reactAndZustand;
 
 const defaultProps: StepSourcesProps = {
-  matrix: mockMatrix,
   onContinue: vi.fn(),
   onBack: vi.fn(),
 };
@@ -31,7 +30,7 @@ describe("StepSources component", () => {
   let cleanup: (() => void) | undefined;
 
   beforeEach(() => {
-    useWizardStore.getState().reset();
+    useMatrixStore.getState().setMatrix(mockMatrix);
     // Set up some selected technologies so the step has data to display
     useWizardStore.setState({
       domainSelections: {

@@ -2,7 +2,7 @@ import { Box, useInput } from "ink";
 import React, { useState } from "react";
 import { DEFAULT_SCRATCH_DOMAINS } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type { MergedSkillsMatrix } from "../../types/index.js";
+import { useMatrixStore } from "../../stores/matrix-store.js";
 import { useSectionScroll } from "../hooks/use-section-scroll.js";
 import { SelectionCard } from "./selection-card.js";
 
@@ -14,19 +14,18 @@ const SCRATCH_DESCRIPTION = "Select domains and skills manually";
 const EXTRA_ITEMS_COUNT = 1;
 
 export type StackSelectionProps = {
-  matrix: MergedSkillsMatrix;
   /** Available height in terminal lines for the scrollable viewport. 0 = no constraint. */
   availableHeight?: number;
   onCancel?: () => void;
 };
 
 export const StackSelection: React.FC<StackSelectionProps> = ({
-  matrix,
   availableHeight = 0,
   onCancel,
 }) => {
   const { selectStack, setApproach, setStackAction, populateFromSkillIds, toggleDomain } =
     useWizardStore();
+  const matrix = useMatrixStore((s) => s.matrix!);
 
   const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
 
@@ -64,7 +63,7 @@ export const StackSelection: React.FC<StackSelectionProps> = ({
       if (focusedStack) {
         selectStack(focusedStack.id);
         setStackAction("customize");
-        populateFromSkillIds(focusedStack.allSkillIds, matrix.skills, matrix.categories);
+        populateFromSkillIds(focusedStack.allSkillIds);
         setApproach("stack");
       }
       return;

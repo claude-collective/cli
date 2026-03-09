@@ -2,6 +2,7 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepStack } from "./step-stack";
 import { useWizardStore } from "../../stores/wizard-store";
+import { useMatrixStore } from "../../stores/matrix-store";
 import {
   createMockCategory,
   createMockMatrix,
@@ -68,8 +69,8 @@ describe("StepStack component", () => {
   let mockMatrix: MergedSkillsMatrix;
 
   beforeEach(() => {
-    useWizardStore.getState().reset();
     mockMatrix = createMockStackWithSkills();
+    useMatrixStore.getState().setMatrix(mockMatrix);
   });
 
   afterEach(() => {
@@ -80,7 +81,7 @@ describe("StepStack component", () => {
   describe("unified stack/scratch selection (initial view)", () => {
     describe("rendering", () => {
       it("should render stack options and scratch option", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -90,7 +91,7 @@ describe("StepStack component", () => {
       });
 
       it("should render focused stack description (only focused item shows description)", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -98,7 +99,7 @@ describe("StepStack component", () => {
       });
 
       it("should render ViewTitle for stack selection", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -106,7 +107,7 @@ describe("StepStack component", () => {
       });
 
       it("should render divider between stacks and scratch option", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -116,7 +117,7 @@ describe("StepStack component", () => {
 
     describe("stack selection", () => {
       it("should select first stack on Enter and show domain selection", async () => {
-        const { stdin, lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -133,7 +134,7 @@ describe("StepStack component", () => {
       });
 
       it("should select second stack when navigated to", async () => {
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -150,7 +151,7 @@ describe("StepStack component", () => {
 
     describe("scratch selection", () => {
       it("should show domain selection when scratch is selected", async () => {
-        const { stdin, lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -171,7 +172,7 @@ describe("StepStack component", () => {
       });
 
       it("should pre-select domains except CLI when scratch is chosen", async () => {
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -194,7 +195,7 @@ describe("StepStack component", () => {
     describe("cancel navigation", () => {
       it("should call onCancel when pressing Escape at initial view", async () => {
         const onCancel = vi.fn();
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} onCancel={onCancel} />);
+        const { stdin, unmount } = render(<StepStack onCancel={onCancel} />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -208,7 +209,7 @@ describe("StepStack component", () => {
 
     describe("arrow key navigation", () => {
       it("should navigate down to second stack card", async () => {
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -223,7 +224,7 @@ describe("StepStack component", () => {
       });
 
       it("should navigate down then up back to first stack", async () => {
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -240,7 +241,7 @@ describe("StepStack component", () => {
       });
 
       it("should clamp at top boundary", async () => {
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -257,7 +258,7 @@ describe("StepStack component", () => {
       });
 
       it("should clamp at bottom boundary (scratch is last)", async () => {
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -281,8 +282,9 @@ describe("StepStack component", () => {
     describe("empty state", () => {
       it("should still show scratch option with no stacks available", () => {
         const emptyMatrix = createMockMatrix({}, { suggestedStacks: [] });
+        useMatrixStore.getState().setMatrix(emptyMatrix);
 
-        const { lastFrame, unmount } = render(<StepStack matrix={emptyMatrix} />);
+        const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -299,7 +301,7 @@ describe("StepStack component", () => {
 
     describe("rendering", () => {
       it("should render domain options", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -309,7 +311,7 @@ describe("StepStack component", () => {
       });
 
       it("should render header text for domain selection", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -317,7 +319,7 @@ describe("StepStack component", () => {
       });
 
       it("should show domain descriptions", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -328,7 +330,7 @@ describe("StepStack component", () => {
 
     describe("domain selection", () => {
       it("should toggle domain when selected", async () => {
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -342,7 +344,7 @@ describe("StepStack component", () => {
       });
 
       it("should allow multiple domain selection", async () => {
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -363,7 +365,7 @@ describe("StepStack component", () => {
       it("should show selected domains summary when domains selected", async () => {
         useWizardStore.getState().toggleDomain("web");
 
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -374,7 +376,7 @@ describe("StepStack component", () => {
       it("should navigate to build step when continuing", async () => {
         useWizardStore.getState().toggleDomain("web");
 
-        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -394,7 +396,7 @@ describe("StepStack component", () => {
 
     describe("back navigation", () => {
       it("should return to stack/scratch selection when pressing ESC", async () => {
-        const { stdin, lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { stdin, lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);

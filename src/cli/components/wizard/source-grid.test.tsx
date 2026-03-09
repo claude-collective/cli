@@ -1,7 +1,9 @@
 import { render } from "ink-testing-library";
-import { describe, expect, it, afterEach, vi } from "vitest";
+import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { SourceGrid, type SourceGridProps, type SourceRow, type SourceOption } from "./source-grid";
 import type { BoundSkillCandidate, SkillId } from "../../types";
+import { useMatrixStore } from "../../stores/matrix-store";
+import { createMockMatrix, createMockSkill } from "../../lib/__tests__/helpers";
 import {
   ARROW_UP,
   ARROW_DOWN,
@@ -29,33 +31,30 @@ const createSourceOption = (
 
 const createSourceRow = (
   skillId: SkillId,
-  displayName: string,
   options: SourceOption[],
 ): SourceRow => ({
   skillId,
-  displayName,
-  alias: displayName,
   options,
 });
 
 const defaultRows: SourceRow[] = [
-  createSourceRow("web-framework-react", "react", [
+  createSourceRow("web-framework-react", [
     createSourceOption("public", "Public", { selected: true }),
   ]),
-  createSourceRow("web-state-zustand", "zustand", [
+  createSourceRow("web-state-zustand", [
     createSourceOption("public", "Public", { selected: true }),
   ]),
-  createSourceRow("web-testing-vitest", "vitest", [
+  createSourceRow("web-testing-vitest", [
     createSourceOption("public", "Public", { selected: true }),
   ]),
 ];
 
 const multiSourceRows: SourceRow[] = [
-  createSourceRow("web-framework-react", "react", [
+  createSourceRow("web-framework-react", [
     createSourceOption("public", "Public", { selected: true }),
     createSourceOption("acme-corp", "Acme Corp"),
   ]),
-  createSourceRow("web-state-zustand", "zustand", [
+  createSourceRow("web-state-zustand", [
     createSourceOption("public", "Public", { selected: true }),
     createSourceOption("acme-corp", "Acme Corp"),
     createSourceOption("internal", "Internal"),
@@ -77,9 +76,20 @@ const renderGrid = (props: Partial<SourceGridProps> = {}) => {
 describe("SourceGrid component", () => {
   let cleanup: (() => void) | undefined;
 
+  beforeEach(() => {
+    useMatrixStore.getState().setMatrix(
+      createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react"),
+        "web-state-zustand": createMockSkill("web-state-zustand"),
+        "web-testing-vitest": createMockSkill("web-testing-vitest"),
+      }),
+    );
+  });
+
   afterEach(() => {
     cleanup?.();
     cleanup = undefined;
+    useMatrixStore.getState().reset();
   });
 
   describe("rendering", () => {
@@ -88,9 +98,9 @@ describe("SourceGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("react");
-      expect(output).toContain("zustand");
-      expect(output).toContain("vitest");
+      expect(output).toContain("React");
+      expect(output).toContain("Zustand");
+      expect(output).toContain("Vitest");
     });
 
     it("should render source option labels", () => {
@@ -120,7 +130,7 @@ describe("SourceGrid component", () => {
 
     it("should render single row", () => {
       const rows: SourceRow[] = [
-        createSourceRow("web-framework-react", "react", [
+        createSourceRow("web-framework-react", [
           createSourceOption("public", "Public", { selected: true }),
         ]),
       ];
@@ -129,7 +139,7 @@ describe("SourceGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("react");
+      expect(output).toContain("React");
       expect(output).toContain("Public");
     });
   });
@@ -359,8 +369,25 @@ describe("SourceGrid component", () => {
     });
 
     it("should handle many rows", () => {
-      const rows: SourceRow[] = Array.from({ length: 10 }, (_, i) =>
-        createSourceRow(`web-test-${i}`, `test-${i}`, [
+      const skillIds: SkillId[] = [
+        "web-framework-react",
+        "web-framework-vue",
+        "web-styling-tailwind",
+        "web-styling-scss-modules",
+        "web-state-zustand",
+        "web-state-mobx",
+        "web-testing-vitest",
+        "web-testing-playwright",
+        "web-data-fetching-react-query",
+        "web-tooling-vite",
+      ];
+      const skills = Object.fromEntries(
+        skillIds.map((id) => [id, createMockSkill(id)]),
+      );
+      useMatrixStore.getState().setMatrix(createMockMatrix(skills));
+
+      const rows: SourceRow[] = skillIds.map((id) =>
+        createSourceRow(id, [
           createSourceOption("public", "Public", { selected: true }),
         ]),
       );
@@ -369,8 +396,8 @@ describe("SourceGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("test-0");
-      expect(output).toContain("test-9");
+      expect(output).toContain("React");
+      expect(output).toContain("Vite");
     });
   });
 

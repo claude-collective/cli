@@ -4,7 +4,6 @@ import { CLI_COLORS } from "../../consts.js";
 import { validateBuildStep } from "../../lib/wizard/index.js";
 import type {
   Domain,
-  MergedSkillsMatrix,
   SkillId,
   Category,
   CategorySelections,
@@ -17,7 +16,6 @@ import { getDomainDisplayName, orderDomains } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
 export type StepBuildProps = {
-  matrix: MergedSkillsMatrix;
   domain: Domain;
   selectedDomains: Domain[];
   selections: CategorySelections;
@@ -49,7 +47,6 @@ const Footer: React.FC<FooterProps> = ({ validationError }) => {
 };
 
 export const StepBuild: React.FC<StepBuildProps> = ({
-  matrix,
   domain: activeDomain,
   selectedDomains,
   selections,
@@ -75,7 +72,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   const categories = useFrameworkFiltering({
     domain: activeDomain,
     allSelections,
-    matrix,
     selections,
     installedSkillIds,
     skillConfigs,

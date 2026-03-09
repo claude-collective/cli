@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import type { BoundSkillCandidate, SkillAlias } from "../../types/index.js";
+import { getMatrix } from "../../stores/matrix-store.js";
 import { useModalState } from "./use-modal-state.js";
 import type { SourceRow } from "../wizard/source-grid.js";
 
@@ -41,7 +42,7 @@ export function useSourceGridSearchModal({
       const row = rows[rowIndex];
       if (!row || !onSearch) return;
 
-      const alias = row.alias;
+      const alias = getMatrix().slugMap.idToSlug[row.skillId];
       setSearchAlias(alias);
       searchModal.open(rowIndex);
       onSearchStateChange?.(true);

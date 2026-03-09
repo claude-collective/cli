@@ -1,10 +1,9 @@
 import { useRef } from "react";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
 import type { SkillConfig } from "../../types/config.js";
-import type { AgentName, Domain, MergedSkillsMatrix, SkillId } from "../../types/index.js";
+import type { AgentName, Domain, SkillId } from "../../types/index.js";
 
 type UseWizardInitializationOptions = {
-  matrix: MergedSkillsMatrix;
   initialStep?: WizardStep;
   initialDomains?: Domain[];
   initialAgents?: AgentName[];
@@ -19,7 +18,6 @@ type UseWizardInitializationOptions = {
  * Populates step, approach, and skill selections from props.
  */
 export function useWizardInitialization({
-  matrix,
   initialStep,
   initialDomains,
   initialAgents,
@@ -39,8 +37,6 @@ export function useWizardInitialization({
           .getState()
           .populateFromSkillIds(
             installedSkillIds,
-            matrix.skills,
-            matrix.categories,
             installedSkillConfigs,
           );
       }

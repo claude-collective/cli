@@ -7,7 +7,6 @@ import { searchExtraSources } from "../../lib/loading/multi-source-loader.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type {
   BoundSkillCandidate,
-  MergedSkillsMatrix,
   SkillAlias,
   SkillId,
 } from "../../types/index.js";
@@ -17,7 +16,6 @@ import { SourceGrid } from "./source-grid.js";
 import { ViewTitle } from "./view-title.js";
 
 export type StepSourcesProps = {
-  matrix: MergedSkillsMatrix;
   projectDir?: string;
   onContinue: () => void;
   onBack: () => void;
@@ -26,7 +24,6 @@ export type StepSourcesProps = {
 type SourcesView = "choice" | "customize";
 
 export const StepSources: React.FC<StepSourcesProps> = ({
-  matrix,
   projectDir,
   onContinue,
   onBack,
@@ -97,7 +94,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({
         store.setAllSourcesLocal();
       }
       if (input === "p" || input === "P") {
-        store.setAllSourcesPlugin(matrix);
+        store.setAllSourcesPlugin();
       }
       if (key.return) {
         onContinue();
@@ -110,7 +107,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({
   });
 
   if (view === "customize") {
-    const rows = store.buildSourceRows(matrix);
+    const rows = store.buildSourceRows();
     return (
       <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
         <ViewTitle>Customize skill sources</ViewTitle>
@@ -132,7 +129,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({
   }
 
   const selectedTechnologies = store.getAllSelectedTechnologies();
-  const rows = store.buildSourceRows(matrix);
+  const rows = store.buildSourceRows();
   const isRecommendedSelected = choiceIndex === 0;
   const hasLocalSkills = rows.some((row) =>
     row.options.some((o) => o.installed && o.id === "local"),
