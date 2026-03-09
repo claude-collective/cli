@@ -2,9 +2,8 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Wizard } from "../../../components/wizard/wizard";
 import { useWizardStore } from "../../../stores/wizard-store";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import { createComprehensiveMatrix, createBasicMatrix } from "../helpers";
-
-import type { MergedSkillsMatrix } from "../../../types";
 import {
   ARROW_DOWN,
   ENTER,
@@ -38,11 +37,9 @@ const navigateDomainSelectionToBuild = async (stdin: {
 
 describe("Wizard integration", () => {
   let cleanup: (() => void) | undefined;
-  let mockMatrix: MergedSkillsMatrix;
 
   beforeEach(() => {
-    useWizardStore.getState().reset();
-    mockMatrix = createBasicMatrix();
+    useMatrixStore.getState().setMatrix(createBasicMatrix());
   });
 
   afterEach(() => {
@@ -56,7 +53,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -94,7 +91,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -116,12 +113,12 @@ describe("Wizard integration", () => {
 
   describe("Flow A2: Stack path with customize", () => {
     it("should navigate stack -> domain -> build step (pre-populated from stack)", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -144,12 +141,12 @@ describe("Wizard integration", () => {
 
   describe("Flow B: Scratch path with single domain (Web)", () => {
     it("should start scratch flow from unified stack selection", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -174,7 +171,7 @@ describe("Wizard integration", () => {
     });
 
     it("should complete scratch flow from domain selection to build", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -186,7 +183,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -204,7 +201,7 @@ describe("Wizard integration", () => {
     });
 
     it("should allow selecting web technologies in Build step", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -217,7 +214,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -238,12 +235,12 @@ describe("Wizard integration", () => {
 
   describe("Flow C: Scratch path with multi-domain (Web + API)", () => {
     it("should correctly set approach when selecting scratch", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -263,7 +260,7 @@ describe("Wizard integration", () => {
     });
 
     it("should navigate through multi-domain build with pre-selected domains", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -275,7 +272,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -293,7 +290,7 @@ describe("Wizard integration", () => {
     });
 
     it("should show domain tabs for multi-domain build", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -307,7 +304,7 @@ describe("Wizard integration", () => {
       });
 
       const { lastFrame, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -319,7 +316,7 @@ describe("Wizard integration", () => {
     });
 
     it("should advance to next domain when validation passes", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -335,7 +332,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -351,7 +348,7 @@ describe("Wizard integration", () => {
     });
 
     it("should allow navigation between domains using escape", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -368,7 +365,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -393,7 +390,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -422,12 +419,12 @@ describe("Wizard integration", () => {
     });
 
     it("should preserve domain selections when navigating back in scratch flow", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -456,7 +453,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -476,7 +473,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -511,7 +508,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -537,7 +534,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -568,7 +565,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -587,7 +584,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -614,7 +611,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -644,7 +641,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -676,7 +673,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -693,7 +690,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -711,7 +708,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -736,7 +733,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -758,7 +755,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -793,7 +790,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -821,7 +818,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -838,7 +835,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -854,7 +851,7 @@ describe("Wizard integration", () => {
     });
 
     it("should show domain selection hint when no domains selected on scratch path", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -867,7 +864,7 @@ describe("Wizard integration", () => {
       });
 
       const { lastFrame, unmount } = render(
-        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -883,7 +880,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -909,13 +906,13 @@ describe("Wizard integration", () => {
 
   describe("Flow F: Edit mode pre-selection (local mode)", () => {
     it("should pre-select skills from installedSkillIds in edit mode", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
         <Wizard
-          matrix={comprehensiveMatrix}
+
           onComplete={onComplete}
           onCancel={onCancel}
           initialStep="build"
@@ -946,13 +943,13 @@ describe("Wizard integration", () => {
     });
 
     it("should not pre-select when installedSkillIds is empty (regression: local mode bug)", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
         <Wizard
-          matrix={comprehensiveMatrix}
+
           onComplete={onComplete}
           onCancel={onCancel}
           initialStep="build"
@@ -973,13 +970,13 @@ describe("Wizard integration", () => {
     });
 
     it("should include pre-selected skills in final wizard result", async () => {
-      const comprehensiveMatrix = createComprehensiveMatrix();
+      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
         <Wizard
-          matrix={comprehensiveMatrix}
+
           onComplete={onComplete}
           onCancel={onCancel}
           initialStep="build"

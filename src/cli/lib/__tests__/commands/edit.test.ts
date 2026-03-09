@@ -6,14 +6,18 @@ import {
   runCliCommand,
   createTempDir,
   cleanupTempDir,
+  createMockMatrix,
+  createMockCategory,
+  createMockSkill,
   buildSourceResult,
   CLI_ROOT,
   TEST_MATRICES,
 } from "../helpers";
 import { EXIT_CODES } from "../../exit-codes";
-import { useWizardStore, type SkillLookupEntry } from "../../../stores/wizard-store";
+import { useWizardStore } from "../../../stores/wizard-store";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import { TEST_SKILLS } from "../test-fixtures";
-import type { CategoryPath, Domain, SkillId, Category, CategoryDomainMap } from "../../../types";
+import type { CategoryPath, SkillId } from "../../../types";
 import Edit from "../../../commands/edit.js";
 
 // --- Module mocks (hoisted by vitest) ---
@@ -174,11 +178,11 @@ describe("edit command", () => {
 });
 
 // Explicit domain assignments — these tests verify domain filtering, so domains must be correct
-const EDIT_CATEGORIES: CategoryDomainMap = {
-  "web-framework": { domain: "web" },
-  "web-client-state": { domain: "web" },
-  "api-api": { domain: "api" },
-  "web-testing": { domain: "shared" },
+const EDIT_CATEGORIES = {
+  "web-framework": createMockCategory("web-framework", "Web Framework", { domain: "web" }),
+  "web-client-state": createMockCategory("web-client-state", "Client State", { domain: "web" }),
+  "api-api": createMockCategory("api-api", "API Framework", { domain: "api" }),
+  "web-testing": createMockCategory("web-testing", "Testing", { domain: "shared" }),
 };
 
 const EDIT_SKILLS = {
@@ -196,7 +200,9 @@ const EDIT_SKILLS = {
 
 describe("edit wizard pre-selection via populateFromSkillIds", () => {
   beforeEach(() => {
-    useWizardStore.getState().reset();
+    useMatrixStore.getState().setMatrix(createMockMatrix(EDIT_SKILLS, {
+      categories: EDIT_CATEGORIES,
+    }));
   });
 
   it("should pre-populate domainSelections from installed skill IDs", () => {
@@ -206,7 +212,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       "api-framework-hono",
     ];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -221,7 +227,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should not pre-select skills that are not in the installed list", () => {
     const installedSkills: SkillId[] = ["web-framework-react"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -236,7 +242,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should set selectedDomains to only the domains found in the provided skill IDs", () => {
     const installedSkills: SkillId[] = ["web-framework-react"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const { selectedDomains } = useWizardStore.getState();
 
@@ -249,7 +255,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should place shared-domain skills under the shared domain key", () => {
     const installedSkills: SkillId[] = ["web-testing-vitest"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -264,7 +270,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should produce empty domainSelections when installed list is empty", () => {
     const installedSkills: SkillId[] = [];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -274,12 +280,19 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should skip skills missing a category", () => {
     const sparseSkills = {
       "web-framework-react": TEST_SKILLS.react,
-      "web-framework-unknown": {} as SkillLookupEntry,
-    } as Partial<Record<SkillId, SkillLookupEntry>>;
+      // Boundary cast: intentionally testing skill with no category
+      "web-framework-unknown": createMockSkill("web-framework-unknown", {
+        category: undefined as unknown as CategoryPath,
+      }),
+    };
+
+    useMatrixStore.getState().setMatrix(createMockMatrix(sparseSkills, {
+      categories: EDIT_CATEGORIES,
+    }));
 
     const installedSkills: SkillId[] = ["web-framework-react", "web-framework-unknown"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, sparseSkills, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -292,15 +305,16 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const extraSkills = {
       "web-framework-react": TEST_SKILLS.react,
       // Boundary cast: intentionally testing unmapped category handling
-      "infra-tooling-linter": {
-        category: "unmapped-category" as CategoryPath,
-        displayName: "Linter",
-      },
+      "infra-tooling-linter": createMockSkill("infra-tooling-linter"),
     };
+
+    useMatrixStore.getState().setMatrix(createMockMatrix(extraSkills, {
+      categories: EDIT_CATEGORIES,
+    }));
 
     const installedSkills: SkillId[] = ["web-framework-react", "infra-tooling-linter"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, extraSkills, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -314,7 +328,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should not duplicate skills when the same skill ID appears twice in installed list", () => {
     const installedSkills: SkillId[] = ["web-framework-react", "web-framework-react"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -327,15 +341,16 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     // testing category is non-exclusive, so multiple selections are valid
     const multiSkills = {
       ...EDIT_SKILLS,
-      "web-testing-playwright": {
-        category: "web-testing" as CategoryPath,
-        displayName: "Playwright",
-      },
+      "web-testing-playwright": createMockSkill("web-testing-playwright"),
     };
+
+    useMatrixStore.getState().setMatrix(createMockMatrix(multiSkills, {
+      categories: EDIT_CATEGORIES,
+    }));
 
     const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, multiSkills, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -352,13 +367,15 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
 describe("edit wizard domain filtering", () => {
   beforeEach(() => {
-    useWizardStore.getState().reset();
+    useMatrixStore.getState().setMatrix(createMockMatrix(EDIT_SKILLS, {
+      categories: EDIT_CATEGORIES,
+    }));
   });
 
   it("should report only web domain when only web skills are installed", () => {
     const installedSkills: SkillId[] = ["web-framework-react", "web-state-zustand"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -375,7 +392,7 @@ describe("edit wizard domain filtering", () => {
   it("should report both web and api domains when both have selections", () => {
     const installedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -387,7 +404,7 @@ describe("edit wizard domain filtering", () => {
   it("should report only shared domain when only shared skills are installed", () => {
     const installedSkills: SkillId[] = ["web-testing-vitest"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -405,7 +422,7 @@ describe("edit wizard domain filtering", () => {
   it("should return empty result when no skills are installed", () => {
     const installedSkills: SkillId[] = [];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -421,7 +438,7 @@ describe("edit wizard domain filtering", () => {
       "web-testing-vitest",
     ];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
+    useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -489,6 +506,7 @@ describe("edit command local-mode skill fallback", () => {
     });
 
     mockLoadSkillsMatrixFromSource.mockResolvedValue(testSourceResult);
+    useMatrixStore.getState().setMatrix(testSourceResult.matrix);
     mockGetMarketplaceLabel.mockReturnValue(undefined);
   });
 

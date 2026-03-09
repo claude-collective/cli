@@ -17,6 +17,7 @@ import {
   buildSkillConfigs,
   buildSourceResult,
 } from "../helpers";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import { PIPELINE_TEST_SKILLS } from "../mock-data/mock-skills";
 
 const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.id);
@@ -25,7 +26,8 @@ const PIPELINE_MATRIX = createMockMatrix(
   Object.fromEntries(
     PIPELINE_TEST_SKILLS.map((skill) => [
       skill.id,
-      createMockSkill(skill.id, skill.category as CategoryPath, {
+      createMockSkill(skill.id, {
+        category: skill.category as CategoryPath,
         description: skill.description,
         tags: skill.tags ?? [],
         author: skill.author,
@@ -42,6 +44,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   beforeEach(async () => {
     dirs = await createTestSource({ skills: PIPELINE_TEST_SKILLS });
+    useMatrixStore.getState().setMatrix(PIPELINE_MATRIX);
   });
 
   afterEach(async () => {

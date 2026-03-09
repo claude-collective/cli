@@ -625,7 +625,7 @@ describe("validate --source integration", () => {
     expect(error).toBeUndefined();
     expect(stdout).toContain("Validating source");
     expect(stdout).toContain("Checked 1 skill(s)");
-    expect(stdout).toContain("Source validated successfully");
+    expect(stdout).toContain("0 error(s)");
   });
 
   it("should exit with error when source has invalid metadata", async () => {

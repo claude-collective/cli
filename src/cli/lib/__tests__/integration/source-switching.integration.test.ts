@@ -10,6 +10,7 @@ import {
   type TestDirs,
   type TestSkill,
 } from "../fixtures/create-test-source";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import type { ProjectConfig, SkillId } from "../../../types";
 import { LOCAL_SKILLS_PATH } from "../../../consts";
 import {
@@ -29,7 +30,8 @@ function buildMatrixFromTestSkills(skills: TestSkill[]) {
   const matrixSkills = Object.fromEntries(
     skills.map((skill) => [
       skill.id,
-      createMockSkill(skill.id, skill.category, {
+      createMockSkill(skill.id, {
+        category: skill.category,
         description: skill.description,
         tags: skill.tags ?? [],
         author: skill.author,
@@ -44,7 +46,8 @@ function buildMatrixWithLocalOverrides(localSkillIds: SkillId[]) {
   const matrixSkills = Object.fromEntries(
     SWITCHABLE_SKILLS.map((skill) => [
       skill.id,
-      createMockSkill(skill.id, skill.category, {
+      createMockSkill(skill.id, {
+        category: skill.category,
         description: skill.description,
         tags: skill.tags ?? [],
         author: skill.author,
@@ -128,6 +131,7 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Re-copy from source using installLocal
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
+      useMatrixStore.getState().setMatrix(matrix);
       const skillConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
         id,
         scope: "project" as const,
@@ -156,6 +160,7 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Run installLocal with all skills
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
+      useMatrixStore.getState().setMatrix(matrix);
       const wizardResult = buildWizardResult(buildSkillConfigs(ALL_SKILL_NAMES), {
         selectedAgents: ["web-developer"],
       });
@@ -199,6 +204,7 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Re-copy from source (simulates plugin -> local switch)
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
+      useMatrixStore.getState().setMatrix(matrix);
       const roundTripConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
         id,
         scope: "project" as const,

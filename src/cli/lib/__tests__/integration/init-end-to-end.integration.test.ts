@@ -4,6 +4,7 @@ import { readFile } from "fs/promises";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { useWizardStore } from "../../../stores/wizard-store";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import { DEFAULT_PRESELECTED_SKILLS, STANDARD_FILES } from "../../../consts";
 import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
@@ -36,10 +37,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
     process.chdir(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
-    // Reset wizard store between tests
-    useWizardStore.getState().reset();
   });
 
   afterEach(async () => {

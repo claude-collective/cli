@@ -5,6 +5,7 @@ import { writeSourceSkill } from "../helpers";
 
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal } from "../../installation/local-installer";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import type { ProjectConfig } from "../../../types";
 import {
   fileExists,
@@ -83,7 +84,9 @@ describe("Integration: Consumer-Defined Stacks", () => {
   });
 
   it("should install with custom stack skills reflected in config.ts", async () => {
-    const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
+    const consumerMatrix = buildConsumerMatrix();
+    useMatrixStore.getState().setMatrix(consumerMatrix);
+    const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
 
     const result = await installLocal({
       wizardResult: buildWizardResult(
@@ -271,7 +274,9 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
   });
 
   it("should install all skills from source and compile agents", async () => {
-    const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
+    const consumerMatrix = buildConsumerMatrix();
+    useMatrixStore.getState().setMatrix(consumerMatrix);
+    const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
 
     const result = await installLocal({
       wizardResult: buildWizardResult(
@@ -489,7 +494,9 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       expect(await fileExists(categoriesPath)).toBe(true);
 
       // 4. Install with the custom stack skills
-      const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
+      const consumerMatrix = buildConsumerMatrix();
+      useMatrixStore.getState().setMatrix(consumerMatrix);
+      const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
       const result = await installLocal({
         wizardResult: buildWizardResult(
           buildSkillConfigs(["web-framework-react", "web-testing-vitest", "api-framework-hono"]),

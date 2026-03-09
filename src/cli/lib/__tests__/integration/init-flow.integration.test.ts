@@ -19,6 +19,7 @@ import {
   getTestSkill,
 } from "../helpers";
 import { deriveInstallMode } from "../../installation/installation";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_SKILLS_SUBDIR, STANDARD_FILES } from "../../../consts";
 
 const AGENTS_SUBDIR = "agents";
@@ -63,6 +64,7 @@ describe("Init Flow Integration: Local Mode", () => {
     process.chdir(dirs.projectDir);
 
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -201,6 +203,7 @@ describe("Init Flow Integration: Single Skill Selection", () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -238,6 +241,7 @@ describe("Init Flow Integration: All Skills Selection", () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -276,6 +280,7 @@ describe("Init Flow Integration: Source Configuration", () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -321,6 +326,7 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -410,6 +416,7 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -454,6 +461,7 @@ describe("Init Flow Integration: Install Mode in Config", () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -498,6 +506,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -566,6 +575,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {

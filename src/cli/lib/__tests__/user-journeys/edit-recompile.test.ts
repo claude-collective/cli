@@ -170,7 +170,6 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // Step 2: Add a brand new skill to the plugin skills directory
     await writeTestSkill(pluginSkillsDir, "web-testing-vitest", {
-      description: "A newly added testing skill",
       skipMetadata: true,
     });
 

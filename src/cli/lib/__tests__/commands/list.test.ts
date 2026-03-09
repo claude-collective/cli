@@ -7,7 +7,10 @@ import {
   cleanupTempDir,
   writeTestSkill,
   buildAgentConfigs,
+  createMockMatrix,
+  TEST_SKILLS,
 } from "../helpers";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 
 describe("list command", () => {
@@ -22,6 +25,10 @@ describe("list command", () => {
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
+
+    useMatrixStore.getState().setMatrix(createMockMatrix({
+      "web-testing-vitest": TEST_SKILLS.vitest,
+    }));
   });
 
   afterEach(async () => {

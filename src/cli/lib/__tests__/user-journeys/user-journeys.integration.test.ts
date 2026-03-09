@@ -6,6 +6,7 @@ import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents";
 import { useWizardStore } from "../../../stores/wizard-store";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import { loadProjectConfig } from "../../configuration";
 import { DEFAULT_PRESELECTED_SKILLS, STANDARD_FILES } from "../../../consts";
 import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
@@ -40,8 +41,8 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     process.chdir(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    useWizardStore.getState().reset();
   });
 
   afterEach(async () => {
@@ -171,8 +172,8 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     process.chdir(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    useWizardStore.getState().reset();
   });
 
   afterEach(async () => {
@@ -280,8 +281,8 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
     process.chdir(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    useWizardStore.getState().reset();
   });
 
   afterEach(async () => {
@@ -387,8 +388,8 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     process.chdir(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    useWizardStore.getState().reset();
   });
 
   afterEach(async () => {
@@ -530,8 +531,8 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     process.chdir(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    useWizardStore.getState().reset();
   });
 
   afterEach(async () => {
@@ -731,8 +732,8 @@ describe("Recompile Idempotency", () => {
     process.chdir(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    useWizardStore.getState().reset();
   });
 
   afterEach(async () => {
@@ -808,8 +809,8 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     process.chdir(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    useWizardStore.getState().reset();
   });
 
   afterEach(async () => {

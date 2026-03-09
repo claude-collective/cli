@@ -9,11 +9,16 @@ import {
   createTempDir,
   cleanupTempDir,
   writeTestSkill,
+  createMockMatrix,
+  createMockSkill,
+  TEST_SKILLS,
 } from "../helpers";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import { DEFAULT_BRANDING, STANDARD_FILES, CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../../consts";
 import type { SkillId } from "../../../types";
 
-vi.mock("../../../utils/exec.js", () => ({
+vi.mock("../../../utils/exec.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../utils/exec.js")>()),
   claudePluginUninstall: vi.fn(),
   isClaudeCLIAvailable: vi.fn().mockResolvedValue(true),
 }));
@@ -128,7 +133,6 @@ async function createCLISkill(
 /** Creates a skill directory WITHOUT forkedFrom (user-created skill) */
 async function createUserSkill(skillsDir: string, skillId: SkillId): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
-    description: "User skill",
     extraMetadata: { displayName: skillId },
   });
 }
@@ -136,7 +140,6 @@ async function createUserSkill(skillsDir: string, skillId: SkillId): Promise<str
 /** Creates a skill directory with no metadata.yaml at all */
 async function createSkillWithoutMetadata(skillsDir: string, skillId: SkillId): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
-    description: "No metadata skill",
     skipMetadata: true,
   });
 }
@@ -194,6 +197,17 @@ describe("uninstall command", () => {
     await mkdir(fakeHome, { recursive: true });
     process.chdir(projectDir);
     process.env.HOME = fakeHome;
+
+    useMatrixStore.getState().setMatrix(createMockMatrix({
+      "web-framework-react": TEST_SKILLS.react,
+      "web-framework-vue": TEST_SKILLS.vue,
+      "web-state-zustand": TEST_SKILLS.zustand,
+      "api-framework-hono": TEST_SKILLS.hono,
+      "web-tooling-acme": createMockSkill("web-tooling-acme"),
+      "web-tooling-custom": createMockSkill("web-tooling-custom"),
+      "web-tooling-personal": createMockSkill("web-tooling-personal"),
+      "web-tooling-nometadata": createMockSkill("web-tooling-nometadata"),
+    }));
   });
 
   afterEach(async () => {

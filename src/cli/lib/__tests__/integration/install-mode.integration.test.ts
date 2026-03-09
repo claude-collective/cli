@@ -10,6 +10,7 @@ import {
 import { detectMigrations } from "../../installation/mode-migrator";
 import { deriveInstallMode } from "../../installation/installation";
 import { useWizardStore } from "../../../stores/wizard-store";
+import { useMatrixStore } from "../../../stores/matrix-store";
 import {
   createMockMatrix,
   createMockMultiSourceSkill,
@@ -49,6 +50,7 @@ describe("Integration: Install Mode Persistence", () => {
   beforeEach(async () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -149,6 +151,7 @@ describe("Integration: Install Mode Config Round-Trip", () => {
   beforeEach(async () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -213,6 +216,7 @@ describe("Integration: buildAndMergeConfig Install Mode", () => {
   beforeEach(async () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -386,10 +390,6 @@ describe("Integration: detectMigrations with Config Data", () => {
 });
 
 describe("Integration: deriveInstallMode via Wizard Store", () => {
-  beforeEach(() => {
-    useWizardStore.getState().reset();
-  });
-
   it("should derive 'local' when all skillConfigs are local", () => {
     const store = useWizardStore.getState();
 
@@ -468,16 +468,16 @@ describe("Integration: deriveInstallMode via Wizard Store", () => {
     store.setSourceSelection(REACT_SKILL_ID, "local");
     expect(store.deriveInstallMode()).toBe("local");
 
-    // Build a matrix with availableSources
-    const matrix = createMockMatrix({
-      "web-framework-react": createMockMultiSourceSkill(REACT_SKILL_ID, "web-framework", [
+    // Build a matrix with availableSources and set on store
+    useMatrixStore.getState().setMatrix(createMockMatrix({
+      "web-framework-react": createMockMultiSourceSkill(REACT_SKILL_ID, [
         createMockSkillSource("local"),
         createMockSkillSource("public", { name: "agents-inc" }),
       ]),
-    });
+    }));
 
-    // Set all to plugin via matrix lookup
-    store.setAllSourcesPlugin(matrix);
+    // Set all to plugin via matrix store lookup
+    store.setAllSourcesPlugin();
 
     const updatedStore = useWizardStore.getState();
     const reactConfig = updatedStore.skillConfigs.find((sc) => sc.id === REACT_SKILL_ID);
