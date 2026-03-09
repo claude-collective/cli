@@ -2,43 +2,42 @@ import type { MergedSkillsMatrix, ResolvedSkill, SkillSlug } from "../../types";
 import { createMockSkill, createMockCategory, createMockMatrix } from "./helpers";
 
 const SKILL_FIXTURES = {
-  react: createMockSkill("web-framework-react", "web-framework", {
+  react: createMockSkill("web-framework-react", {
     description: "React framework for building user interfaces",
     tags: ["react", "web", "ui", "component"],
   }),
-  zustand: createMockSkill("web-state-zustand", "web-client-state", {
+  zustand: createMockSkill("web-state-zustand", {
     description: "Bear necessities state management",
     tags: ["state", "react", "zustand"],
   }),
-  hono: createMockSkill("api-framework-hono", "api-api", {
+  hono: createMockSkill("api-framework-hono", {
     description: "Lightweight web framework for the edge",
     tags: ["api", "api", "edge", "serverless"],
   }),
-  vitest: createMockSkill("web-testing-vitest", "web-testing", {
+  vitest: createMockSkill("web-testing-vitest", {
     description: "Next generation testing framework",
     tags: ["testing", "vitest", "unit"],
   }),
-  vue: createMockSkill("web-framework-vue", "web-framework", {
+  vue: createMockSkill("web-framework-vue", {
     description: "Progressive JavaScript framework",
     tags: ["vue", "web", "reactive"],
   }),
-  "auth-patterns": createMockSkill("api-security-auth-patterns", "api-security", {
+  "auth-patterns": createMockSkill("api-security-auth-patterns", {
     description: "Authentication and authorization patterns",
     tags: ["auth", "security", "jwt", "oauth"],
   }),
-  drizzle: createMockSkill("api-database-drizzle", "api-database", {
+  drizzle: createMockSkill("api-database-drizzle", {
     description: "TypeScript ORM for SQL databases",
     tags: ["database", "orm", "sql"],
   }),
   "anti-over-engineering": createMockSkill(
     "meta-methodology-anti-over-engineering",
-    "shared-methodology",
     {
       description: "Surgical implementation, not architectural innovation",
       tags: ["methodology", "foundational"],
     },
   ),
-  "scss-modules": createMockSkill("web-styling-scss-modules", "web-styling", {
+  "scss-modules": createMockSkill("web-styling-scss-modules", {
     description: "CSS Modules with SCSS",
     tags: ["css", "scss", "modules"],
   }),
@@ -59,49 +58,44 @@ export function getTestSkill(
 // ---------------------------------------------------------------------------
 
 export const TEST_SKILLS = {
-  react: createMockSkill("web-framework-react", "web-framework"),
-  vue: createMockSkill("web-framework-vue", "web-framework"),
-  zustand: createMockSkill("web-state-zustand", "web-client-state", {
+  react: createMockSkill("web-framework-react"),
+  vue: createMockSkill("web-framework-vue"),
+  zustand: createMockSkill("web-state-zustand", {
     compatibleWith: ["web-framework-react"],
   }),
-  pinia: createMockSkill("web-state-pinia", "web-client-state", {
+  pinia: createMockSkill("web-state-pinia", {
     compatibleWith: ["web-framework-vue"],
   }),
-  hono: createMockSkill("api-framework-hono", "api-api"),
-  vitest: createMockSkill("web-testing-vitest", "web-testing"),
-  "scss-modules": createMockSkill("web-styling-scss-modules", "web-styling"),
-  drizzle: createMockSkill("api-database-drizzle", "api-database"),
+  hono: createMockSkill("api-framework-hono"),
+  vitest: createMockSkill("web-testing-vitest"),
+  "scss-modules": createMockSkill("web-styling-scss-modules"),
+  drizzle: createMockSkill("api-database-drizzle"),
   // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — used by createComprehensiveMatrix
   "investigation-requirements": createMockSkill(
     "meta-methodology-investigation-requirements",
-    "shared-methodology",
     { description: "Never speculate - read actual code first" },
   ),
   "anti-over-engineering": createMockSkill(
     "meta-methodology-anti-over-engineering",
-    "shared-methodology",
     {
       description: "Surgical implementation, not architectural innovation",
     },
   ),
-  "success-criteria": createMockSkill("meta-methodology-success-criteria", "shared-methodology", {
+  "success-criteria": createMockSkill("meta-methodology-success-criteria", {
     description: "Explicit, measurable criteria defining done",
   }),
   "write-verification": createMockSkill(
     "meta-methodology-write-verification",
-    "shared-methodology",
     {
       description: "Verify work was actually saved",
     },
   ),
   "improvement-protocol": createMockSkill(
     "meta-methodology-improvement-protocol",
-    "shared-methodology",
     { description: "Evidence-based self-improvement" },
   ),
   "context-management": createMockSkill(
     "meta-methodology-context-management",
-    "shared-methodology",
     {
       description: "Maintain project continuity across sessions",
     },

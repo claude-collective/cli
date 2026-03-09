@@ -11,6 +11,7 @@ import {
   DEFAULT_PLUGIN_NAME,
   STANDARD_FILES,
 } from "../../consts";
+import { findSkill, useMatrixStore } from "../../stores/matrix-store";
 import { typedEntries } from "../../utils/typed-object";
 import { computeSkillFolderHash } from "../versioning";
 
@@ -327,11 +328,84 @@ export async function cleanupTestDirs(dirs: PluginTestDirs): Promise<void> {
   await cleanupTempDir(dirs.tempDir);
 }
 
+/**
+ * Canonical category for known test skills.
+ * createMockSkill() looks up from here when no category override is provided.
+ * Custom/novel skills must pass { category } in overrides.
+ *
+ * Uses a lazy singleton to avoid circular initialization issues:
+ * test-fixtures.ts calls createMockSkill() at module level during import,
+ * and ESM hoists all imports before evaluating any `const` declarations.
+ */
+// eslint-disable-next-line no-var -- `var` avoids TDZ in circular ESM imports (let/const would throw)
+var _canonicalSkillCategories: Partial<Record<SkillId, CategoryPath>> | undefined;
+function getCanonicalSkillCategories(): Partial<Record<SkillId, CategoryPath>> {
+  if (!_canonicalSkillCategories) {
+    _canonicalSkillCategories = {
+      "web-framework-react": "web-framework",
+      "web-framework-vue": "web-framework",
+      "web-framework-original": "web-framework",
+      "web-framework-simple": "web-framework",
+      "web-framework-arbitrary": "web-framework",
+      "web-framework-unknown": "web-framework",
+      "web-styling-tailwind": "web-styling",
+      "web-styling-scss-modules": "web-styling",
+      "web-styling-custom": "web-styling",
+      "web-state-zustand": "web-client-state",
+      "web-state-pinia": "web-client-state",
+      "web-state-mobx": "web-client-state",
+      "web-testing-vitest": "web-testing",
+      "web-testing-copier": "web-testing",
+      "web-testing-metadata": "web-testing",
+      "web-testing-playwright": "web-testing",
+      "web-testing-cypress-e2e": "web-testing",
+      "web-data-fetching-react-query": "web-server-state",
+      "web-tooling-vite": "shared-tooling",
+      "web-tooling-acme": "web-tooling",
+      "web-tooling-custom": "web-tooling",
+      "web-tooling-nometadata": "web-tooling",
+      "web-tooling-personal": "web-tooling",
+      "web-skill-a": "web-framework",
+      "web-skill-a-v": "web-framework",
+      "web-skill-b": "web-framework",
+      "web-skill-b-v": "web-framework",
+      "web-skill-c": "web-framework",
+      "web-skill-d": "web-framework",
+      "web-skill-setup": "web-framework",
+      "web-skill-usage": "web-framework",
+      "web-local-skill": "local",
+      "api-framework-hono": "api-api",
+      "api-framework-express": "api-api",
+      "api-database-drizzle": "api-database",
+      "api-database-postgres": "api-database",
+      "api-security-auth-patterns": "api-security",
+      "cli-cli-framework-commander": "cli-framework",
+      "infra-setup-env": "shared-tooling",
+      "infra-tooling-linter": "unmapped-category" as CategoryPath,
+      "meta-methodology-success-criteria": "shared-methodology",
+      "meta-methodology-investigation-requirements": "shared-methodology",
+      "meta-methodology-anti-over-engineering": "shared-methodology",
+      "meta-methodology-write-verification": "shared-methodology",
+      "meta-methodology-improvement-protocol": "shared-methodology",
+      "meta-methodology-context-management": "shared-methodology",
+      "meta-company-patterns": "local",
+    };
+  }
+  return _canonicalSkillCategories;
+}
+
 export function createMockSkill(
   id: SkillId,
-  category: CategoryPath,
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
+  const category = overrides?.category ?? getCanonicalSkillCategories()[id];
+
+  if (!category) {
+    throw new Error(
+      `createMockSkill: "${id}" not in canonical registry — provide { category } in overrides`,
+    );
+  }
+
   // Derive slug from skill ID: strip domain-category prefix to get the last segment(s)
   // e.g., "web-framework-react" -> "react", "meta-methodology-anti-over-engineering" -> "anti-over-engineering"
   const segments = id.split("-");
@@ -513,27 +587,10 @@ tools:
   - Write`;
 }
 
-/** Derive domain, category, and slug from a SkillId like "web-framework-react". */
-function parseSkillId(skillId: SkillId): {
-  domain: string;
-  category: CategoryPath;
-  slug: SkillSlug;
-} {
-  const parts = skillId.split("-");
-  const domain = parts[0];
-  const category = parts.slice(0, 2).join("-") as CategoryPath;
-  const slug = parts.slice(2).join("-") as SkillSlug;
-  return { domain, category, slug };
-}
-
 export async function writeTestSkill(
   skillsDir: string,
   skillId: SkillId,
   options?: {
-    slug?: SkillSlug;
-    category?: CategoryPath;
-    author?: string;
-    description?: string;
     /** Extra fields to merge into metadata.yaml (e.g., forkedFrom, displayName) */
     extraMetadata?: Record<string, unknown>;
     /** Skip metadata.yaml creation entirely */
@@ -542,34 +599,39 @@ export async function writeTestSkill(
     skillContent?: string;
   },
 ): Promise<string> {
-  const parsed = parseSkillId(skillId);
-  const slug = options?.slug ?? parsed.slug;
-  const category = options?.category ?? parsed.category;
-  const domain = options?.category?.split("-")[0] ?? parsed.domain;
+  const skill = findSkill(skillId);
+
+  if (!options?.skipMetadata && !skill) {
+    throw new Error(
+      `writeTestSkill: "${skillId}" not found in matrix store — populate the store in beforeEach`,
+    );
+  }
 
   const skillDir = path.join(skillsDir, skillId);
   await mkdir(skillDir, { recursive: true });
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    options?.skillContent ?? createSkillContent(skillId, options?.description),
+    options?.skillContent ?? createSkillContent(skillId, skill?.description),
   );
 
-  if (!options?.skipMetadata) {
+  if (!options?.skipMetadata && skill) {
+    const { slug, category, author } = skill;
+    const domain = category.split("-")[0];
+
     const contentHash = await computeSkillFolderHash(skillDir);
     const baseMetadata = {
-      author: options?.author ?? "@test",
+      author,
       category,
       domain,
       slug,
       contentHash,
     };
     if (options?.extraMetadata) {
-      const metadata = {
-        ...baseMetadata,
-        ...options.extraMetadata,
-      };
-      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        stringifyYaml({ ...baseMetadata, ...options.extraMetadata }),
+      );
     } else {
       await writeFile(
         path.join(skillDir, STANDARD_FILES.METADATA_YAML),
@@ -879,13 +941,13 @@ export function buildWizardResultFromStore(
     allSkills = [...(stack?.allSkillIds || [])];
   } else {
     const techNames = store.getAllSelectedTechnologies();
-    allSkills = techNames.map((tech) => resolveAlias(tech, matrix));
+    allSkills = techNames.map((tech) => resolveAlias(tech));
   }
 
   const methodologySkills = store.getDefaultMethodologySkills();
   allSkills = [...allSkills, ...methodologySkills.filter((s) => !allSkills.includes(s))];
 
-  const validation = validateSelection(allSkills, matrix);
+  const validation = validateSelection(allSkills);
 
   return {
     skills: store.skillConfigs.length > 0 ? store.skillConfigs : buildSkillConfigs(allSkills),
@@ -1162,12 +1224,11 @@ export function createMockMarketplacePlugin(
  */
 export function createMockMultiSourceSkill(
   id: SkillId,
-  category: CategoryPath,
   sources: SkillSource[],
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
   const activeSource = sources.find((s) => s.installed) ?? sources[0];
-  return createMockSkill(id, category, {
+  return createMockSkill(id, {
     availableSources: sources,
     activeSource,
     ...overrides,

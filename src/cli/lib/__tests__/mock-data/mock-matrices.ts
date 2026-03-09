@@ -75,7 +75,7 @@ export const REQUIRES_MATRIX = createMockMatrixConfig(
 // ---------------------------------------------------------------------------
 
 export const LOCAL_SKILL_MATRIX = createMockMatrix({
-  "web-local-skill": createMockSkill("web-local-skill", "local", {
+  "web-local-skill": createMockSkill("web-local-skill", {
     local: true,
     localPath: ".claude/skills/my-local-skill/",
   }),
@@ -83,7 +83,7 @@ export const LOCAL_SKILL_MATRIX = createMockMatrix({
 
 export const MIXED_LOCAL_REMOTE_MATRIX = createMockMatrix({
   "web-framework-react": TEST_SKILLS.react,
-  "meta-company-patterns": createMockSkill("meta-company-patterns", "local", {
+  "meta-company-patterns": createMockSkill("meta-company-patterns", {
     local: true,
     localPath: ".claude/skills/company-patterns/",
   }),

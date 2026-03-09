@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   createMockSkill,
   createMockMatrix,
@@ -9,11 +9,20 @@ import {
   directoryExists,
   writeTestSkill,
   writeTestAgent,
+  TEST_SKILLS,
 } from "./helpers";
 import type { PluginTestDirs } from "./helpers";
+import type { SkillId } from "../../types";
+import { useMatrixStore } from "../../stores/matrix-store";
 
 describe("test helpers", () => {
   let testDirs: PluginTestDirs | null = null;
+
+  beforeEach(() => {
+    useMatrixStore.getState().setMatrix(createMockMatrix({
+      "web-testing-vitest": TEST_SKILLS.vitest,
+    }));
+  });
 
   afterEach(async () => {
     if (testDirs) {
@@ -24,8 +33,8 @@ describe("test helpers", () => {
 
   describe("createMockSkill", () => {
     it("creates a valid skill with defaults", () => {
-      // Using normalized skill ID format
-      const skill = createMockSkill("web-framework-react", "web-framework");
+      // Using normalized skill ID format — category resolved from canonical registry
+      const skill = createMockSkill("web-framework-react");
 
       expect(skill.id).toBe("web-framework-react");
       expect(skill.category).toBe("web-framework");
@@ -33,7 +42,7 @@ describe("test helpers", () => {
     });
 
     it("allows overrides", () => {
-      const skill = createMockSkill("web-framework-react", "web-framework", {
+      const skill = createMockSkill("web-framework-react", {
         author: "@custom",
         tags: ["popular"],
       });
@@ -41,11 +50,26 @@ describe("test helpers", () => {
       expect(skill.author).toBe("@custom");
       expect(skill.tags).toEqual(["popular"]);
     });
+
+    it("throws for unknown skill without category override", () => {
+      expect(() => createMockSkill("web-unknown-mystery" as SkillId)).toThrow(
+        'createMockSkill: "web-unknown-mystery" not in canonical registry',
+      );
+    });
+
+    it("accepts unknown skill with category override", () => {
+      const skill = createMockSkill("web-unknown-mystery" as SkillId, {
+        category: "web-framework",
+      });
+
+      expect(skill.id).toBe("web-unknown-mystery");
+      expect(skill.category).toBe("web-framework");
+    });
   });
 
   describe("createMockMatrix", () => {
     it("creates a valid matrix", () => {
-      const skill = createMockSkill("web-framework-react", "web-framework");
+      const skill = createMockSkill("web-framework-react");
       const matrix = createMockMatrix({ "web-framework-react": skill });
 
       expect(matrix.version).toBe("1.0.0");
