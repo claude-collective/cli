@@ -31,7 +31,7 @@ function matchesQuery(skill: ResolvedSkill, query: string): boolean {
 
   if (skill.id.toLowerCase().includes(lowerQuery)) return true;
   if (skill.displayName.toLowerCase().includes(lowerQuery)) return true;
-  if (skill.slug?.toLowerCase().includes(lowerQuery)) return true;
+  if (skill.slug.toLowerCase().includes(lowerQuery)) return true;
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
 
@@ -283,7 +283,7 @@ export default class Search extends BaseCommand {
         results = results.filter((skill) => matchesCategory(skill, flags.category as CategoryPath));
       }
 
-      results = sortBy(results, (r) => (r.displayName || r.id).toLowerCase());
+      results = sortBy(results, (r) => r.displayName.toLowerCase());
 
       this.log("");
       if (results.length === 0) {
@@ -302,7 +302,7 @@ export default class Search extends BaseCommand {
 
         printTable({
           data: results.map((skill) => ({
-            id: skill.displayName || skill.id,
+            id: skill.displayName,
             category: skill.category,
             description: truncate(skill.description, MAX_DESCRIPTION_WIDTH),
           })),

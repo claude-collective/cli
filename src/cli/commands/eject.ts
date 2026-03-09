@@ -20,6 +20,7 @@ import {
 } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
+import { getMatrix } from "../stores/matrix-store";
 import { copySkillsToLocalFlattened } from "../lib/skills/index.js";
 import type { SkillId } from "../types/index.js";
 import { typedKeys } from "../utils/typed-object.js";
@@ -323,8 +324,9 @@ export default class Eject extends BaseCommand {
       return;
     }
 
-    const skillIds = typedKeys<SkillId>(sourceResult.matrix.skills).filter(
-      (skillId) => !sourceResult.matrix.skills[skillId]?.local,
+    const matrix = getMatrix();
+    const skillIds = typedKeys<SkillId>(matrix.skills).filter(
+      (skillId) => !matrix.skills[skillId]?.local,
     );
 
     if (skillIds.length === 0) {
@@ -337,7 +339,7 @@ export default class Eject extends BaseCommand {
     const copiedSkills = await copySkillsToLocalFlattened(
       skillIds,
       destDir,
-      sourceResult.matrix,
+      matrix,
       sourceResult,
     );
 

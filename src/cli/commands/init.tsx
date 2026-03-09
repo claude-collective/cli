@@ -37,6 +37,7 @@ import {
 } from "../consts.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import { getSkill, useMatrixStore } from "../stores/matrix-store";
 import { loadProjectConfig } from "../lib/configuration/project-config.js";
 import {
   enableBuffering,
@@ -379,9 +380,9 @@ export default class Init extends BaseCommand {
     let wizardResult: WizardResultV2 | null = null;
 
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
+    useMatrixStore.getState().setMatrix(sourceResult.matrix);
     const { waitUntilExit } = render(
       <Wizard
-        matrix={sourceResult.matrix}
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
         logo={ASCII_LOGO}
@@ -529,8 +530,6 @@ export default class Init extends BaseCommand {
     flags: { source?: string },
     projectDir: string,
   ): Promise<void> {
-    const matrix = sourceResult.matrix;
-
     this.log("Copying skills to local directory...");
     try {
       const installResult = await installLocal({
@@ -555,8 +554,7 @@ export default class Init extends BaseCommand {
       this.log("Skills copied to:");
       this.log(`  ${installResult.skillsDir}`);
       for (const copiedSkill of installResult.copiedSkills) {
-        const skill = matrix.skills[copiedSkill.skillId];
-        const displayName = skill?.displayName || copiedSkill.skillId;
+        const displayName = getSkill(copiedSkill.skillId).displayName;
         this.log(`    ${displayName}/`);
       }
       this.log("");

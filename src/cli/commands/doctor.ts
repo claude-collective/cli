@@ -5,6 +5,7 @@ import { getErrorMessage } from "../utils/errors";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { loadProjectConfig, validateProjectConfig } from "../lib/configuration";
 import { loadSkillsMatrixFromSource } from "../lib/loading";
+import { useMatrixStore } from "../stores/matrix-store";
 import { discoverLocalSkills } from "../lib/skills";
 import { getStackSkillIds } from "../lib/stacks";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
@@ -182,7 +183,8 @@ async function checkSourceReachable(
       projectDir,
     });
 
-    const skillCount = Object.keys(result.matrix.skills).length;
+    const matrix = useMatrixStore.getState().matrix;
+    const skillCount = matrix ? Object.keys(matrix.skills).length : 0;
     const sourceLabel = result.isLocal ? "local" : "remote";
 
     return {
@@ -349,7 +351,6 @@ export default class Doctor extends BaseCommand {
     formatCheckLine("Config Valid", configResult, flags.verbose).forEach((line) => this.log(line));
 
     let config: ProjectConfig | null = null;
-    let matrix: MergedSkillsMatrix | null = null;
 
     if (configResult.status !== "fail") {
       const loaded = await loadProjectConfig(projectDir);
@@ -358,15 +359,8 @@ export default class Doctor extends BaseCommand {
 
     const sourceResult = await checkSourceReachable(flags.source, projectDir);
 
-    try {
-      const result = await loadSkillsMatrixFromSource({
-        sourceFlag: flags.source,
-        projectDir,
-      });
-      matrix = result.matrix;
-    } catch {
-      // Matrix unavailable
-    }
+    // loadSkillsMatrixFromSource (called by checkSourceReachable) populates the store automatically
+    const matrix = useMatrixStore.getState().matrix;
 
     if (config && matrix) {
       const skillsResult = await checkSkillsResolved(config, matrix, projectDir);

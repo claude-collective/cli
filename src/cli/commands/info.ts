@@ -2,12 +2,13 @@ import { Args, Flags } from "@oclif/core";
 import path from "path";
 import { BaseCommand } from "../base-command.js";
 import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import { findSkill, getMatrix } from "../stores/matrix-store";
 import { discoverLocalSkills } from "../lib/skills/index.js";
 import { fileExists, readFile } from "../utils/fs.js";
 import { CLI_BIN_NAME, STANDARD_FILES } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { STATUS_MESSAGES } from "../utils/messages.js";
-import type { ResolvedSkill, SkillSlug, SkillId, SkillRequirement } from "../types/index.js";
+import type { ResolvedSkill, SkillId, SkillSlug, SkillRequirement } from "../types/index.js";
 
 const CONTENT_PREVIEW_LINES = 10;
 const MAX_LINE_LENGTH = 80;
@@ -83,7 +84,7 @@ function findSuggestions(
     if (
       skill.id.toLowerCase().includes(lowerQuery) ||
       skill.displayName.toLowerCase().includes(lowerQuery) ||
-      skill.slug?.toLowerCase().includes(lowerQuery)
+      skill.slug.toLowerCase().includes(lowerQuery)
     ) {
       matches.push(skill.id);
     }
@@ -170,25 +171,17 @@ export default class Info extends BaseCommand {
     try {
       this.log(STATUS_MESSAGES.LOADING_SKILLS);
 
-      const { matrix, sourcePath, isLocal } = await loadSkillsMatrixFromSource({
+      const { sourcePath, isLocal } = await loadSkillsMatrixFromSource({
         sourceFlag: flags.source,
       });
 
       this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
 
       // CLI arg is an untyped string — cast at data boundary
-      let skill: ResolvedSkill | undefined = matrix.skills[args.skill as SkillId];
+      let skill = findSkill(args.skill as SkillId | SkillSlug);
 
       if (!skill) {
-        // Try slug lookup — CLI arg is an untyped string
-        const fullId = matrix.slugMap.slugToId[args.skill as SkillSlug];
-        if (fullId) {
-          skill = matrix.skills[fullId];
-        }
-      }
-
-      if (!skill) {
-        const suggestions = findSuggestions(matrix.skills, args.skill, MAX_SUGGESTIONS);
+        const suggestions = findSuggestions(getMatrix().skills, args.skill, MAX_SUGGESTIONS);
 
         this.log("");
         this.error(`Skill "${args.skill}" not found.`, { exit: false });

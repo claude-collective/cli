@@ -8,6 +8,7 @@ import path from "path";
 import { BaseCommand } from "../base-command.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
+import { getMatrix } from "../stores/matrix-store";
 import { recompileAgents } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
@@ -159,7 +160,8 @@ export default class Update extends BaseCommand {
       );
 
       const sourceSkills: Record<string, { path: string }> = {};
-      for (const [skillId, skill] of Object.entries(sourceResult.matrix.skills)) {
+      const matrix = getMatrix();
+      for (const [skillId, skill] of Object.entries(matrix.skills)) {
         if (!skill) continue;
         if (!skill.local) {
           sourceSkills[skillId] = { path: skill.path };

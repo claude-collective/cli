@@ -4,6 +4,7 @@ import { BaseCommand } from "../../base-command.js";
 import { writeFile, directoryExists, ensureDir } from "../../utils/fs.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import {
+  CLAUDE_SRC_DIR,
   CLI_BIN_NAME,
   KEBAB_CASE_PATTERN,
   PLUGIN_MANIFEST_DIR,
@@ -20,11 +21,11 @@ import {
   loadConfigTypesDataInBackground,
   regenerateConfigTypes,
 } from "../../lib/configuration/config-types-writer.js";
-import { saveProjectConfig } from "../../lib/configuration/config.js";
+import { generateConfigSource } from "../../lib/configuration/config-writer.js";
 import { generateMarketplace, writeMarketplace } from "../../lib/marketplace-generator.js";
 import { extendSchemasWithCustomValues } from "../../lib/schemas.js";
 import { generateSkillCategoriesTs, generateSkillRulesTs } from "./skill.js";
-import type { CategoryPath } from "../../types/index.js";
+import type { AgentName, Category, CategoryPath, SkillId } from "../../types/index.js";
 
 export function validateMarketplaceName(name: string): string | null {
   if (!name || name.trim() === "") {
@@ -222,10 +223,27 @@ export default class NewMarketplace extends BaseCommand {
       await writeFile(readmePath, readmeContent);
 
       // Create .claude-src/config.ts so the marketplace is a valid installation
-      await saveProjectConfig(marketplaceDir, {
+      const configDir = path.join(marketplaceDir, CLAUDE_SRC_DIR);
+      await ensureDir(configDir);
+      // Boundary cast: custom marketplace skill/agent/category not in standard unions
+      const configContent = generateConfigSource({
+        name: marketplaceName,
+        skills: [{ id: skillName as SkillId, scope: "project", source: "local" }],
+        agents: [],
         source: ".",
         marketplace: marketplaceName,
+        stack: {
+          ["web-developer" as AgentName]: {
+            [LOCAL_DEFAULTS.CATEGORY as Category]: [{ id: skillName as SkillId }],
+          },
+        },
       });
+      const marketplaceComment =
+        "// Marketplaces house skills only — agents are defined by consumer projects.\n\n";
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        marketplaceComment + configContent,
+      );
 
       this.log("");
       this.logSuccess(`Created ${STACKS_FILE_PATH}`);

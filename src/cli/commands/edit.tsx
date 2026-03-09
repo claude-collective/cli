@@ -27,6 +27,7 @@ import {
   deriveInstallMode,
 } from "../lib/installation/index.js";
 import { getMarketplaceLabel, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import { getMatrix, getSkill, useMatrixStore } from "../stores/matrix-store";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
 import type { SkillId } from "../types/index.js";
@@ -109,7 +110,7 @@ export default class Edit extends BaseCommand {
       const sourceInfo = sourceResult.isLocal ? "local" : sourceResult.sourceConfig.sourceOrigin;
       pushBufferMessage(
         "info",
-        `Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})`,
+        `Loaded ${Object.keys(getMatrix().skills).length} skills (${sourceInfo})`,
       );
     } catch (error) {
       disableBuffering();
@@ -152,9 +153,9 @@ export default class Edit extends BaseCommand {
       ? undefined
       : projectConfig?.config?.agents?.filter((a) => a.scope === "global").map((a) => a.name);
 
+    useMatrixStore.getState().setMatrix(sourceResult.matrix);
     const { waitUntilExit } = render(
       <Wizard
-        matrix={sourceResult.matrix}
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
         logo={ASCII_LOGO}
@@ -230,12 +231,10 @@ export default class Edit extends BaseCommand {
 
     this.log("\nChanges:");
     for (const skillId of addedSkills) {
-      const skill = sourceResult.matrix.skills[skillId];
-      this.log(`  + ${skill?.displayName || skillId}`);
+      this.log(`  + ${getSkill(skillId).displayName}`);
     }
     for (const skillId of removedSkills) {
-      const skill = sourceResult.matrix.skills[skillId];
-      this.log(`  - ${skill?.displayName || skillId}`);
+      this.log(`  - ${getSkill(skillId).displayName}`);
     }
     for (const [skillId, change] of sourceChanges) {
       const fromLabel = formatSourceDisplayName(change.from);
