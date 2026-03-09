@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.64.0] - 2026-03-10
+
+**Dual-installation scope splitting, config writer named variables, global defaults**
+
+- Scope-aware config splitting: global items write to `~/.claude-src/`, project items import from global (D-76/D-80)
+- Config writer extracts typed named variables above export default for readability (D-81)
+- Default scope changed to global; methodology skill auto-injection removed
+
+See [changelogs/0.64.0.md](./changelogs/0.64.0.md) for full details.
+
+---
+
 ## [0.63.0] - 2026-03-09
 
 **Wizard UX polish, hotkey registry, store-only matrix access**
