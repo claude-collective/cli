@@ -6,15 +6,13 @@
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | R-09 | Consolidate test fixtures — canonical skill registry, unified content generators, simplified matrix creation (see [implementation plan](./R-09-test-fixture-consolidation.md))                           | Ready for Dev |
 | R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                                                                                              | Refactor      |
-| R-02 | Flatten nested for-loops in `default-stacks.test.ts` — parameterize per (stack, agent, category) instead of nesting inside `it.each`                                                                    | Refactor     |
 | R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                                                                                        | Refactor     |
 | R-04 | Eliminate redundant central config — derive aliases from metadata, move perSkill relationships to group-based declarations                                                                              | Phase 1 Done |
-| R-05 | Centralize wizard hotkeys and labels — single source of truth for key bindings and their `[X]` display labels                                                                                           | Refactor     |
 | R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor     |
 | R-07 | Codegen `SkillSlug` union from metadata.yaml — auto-generate the type from skills source instead of manual maintenance                                                                                  | Refactor     |
 | R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor     |
-| R-10 | Replace direct `matrix.skills[id]` lookups with matrix store — eliminate accessor functions and redundant parameter threading                                                                           | Refactor     |
 | R-11 | Eliminate `ProjectSourceConfig` / `saveProjectConfig` — all config writes should produce full `ProjectConfig` with import + satisfies                                                                  | Refactor     |
+| R-12 | Enforce store-only matrix access — replace all `matrix.skills[id]` / `matrix.categories[id]` reads with store accessors, add `findCategory`/`getCategory` to store                                    | Refactor     |
 
 ---
 
@@ -837,3 +835,36 @@ All three do read-modify-write on a `ProjectSourceConfig`. They should instead l
 2. Remove `saveProjectConfig()` from `config.ts`
 3. Remove `ProjectSourceConfig` type if no other consumers remain (check `loadProjectSourceConfig` — it may need to become a `ProjectConfig` loader, or the load side can remain lenient since it's a parse boundary)
 4. Update tests that call `saveProjectConfig` to use the new path
+
+---
+
+## R-12: Enforce Store-Only Matrix Access
+
+**Priority:** Medium
+**Related:** D-89 (getSkill in buildSourceRows), the getDiscourageReason crash fix
+
+### Problem
+
+The matrix store (`matrix-store.ts`) provides `findSkill(id)` (returns undefined), `getSkill(id)` (throws), and `getMatrix()`. But ~30 production code sites still access `matrix.skills[id]` directly, and ~7 sites access `matrix.categories[id]` directly. This creates parallel access paths — some safe (store), some unsafe (direct with `!` assertion). The `getDiscourageReason` crash was caused by exactly this: `matrix.skills[id]!` on an unresolved reference.
+
+### Scope
+
+**Reader files to migrate** (use store accessors instead of direct access):
+- `matrix-resolver.ts` — ~20 `matrix.skills[id]` accesses
+- `matrix-health-check.ts` — 3 `matrix.skills[id]`, 1 `matrix.categories[id]`
+- `config-types-writer.ts` — 4 `matrix.skills[id]`, 2 `matrix.categories[id]`
+- `plugin-finder.ts` — 1 `matrix.skills[id]`
+- `skill-copier.ts` — 2 `matrix.skills[id]`
+
+**Builder files to KEEP** (they construct the matrix, not read from store):
+- `source-loader.ts` — writes `matrix.skills[id] = ...`, `matrix.categories[id] = ...`
+- `multi-source-loader.ts` — reads during matrix construction before store is set
+
+**Store API additions needed:**
+- `findCategory(id: CategoryPath): CategoryDefinition | undefined`
+- `getCategory(id: CategoryPath): CategoryDefinition` (throws)
+
+### Rules After Completion
+- Outside the store and matrix builders, `matrix.skills[id]` and `matrix.categories[id]` should never appear
+- `getMatrix()` should only be used for iteration (`typedEntries(matrix.skills)`) or passing to builders — not for individual lookups
+- Each access site uses `findSkill` (optional) or `getSkill` (required) based on whether the skill must exist

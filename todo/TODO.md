@@ -5,7 +5,6 @@
 | D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md)) | Ready for Dev |
 | D-74 | Per-agent scope toggle (project/global) — same as per-skill scope but for agents in the wizard                        | Needs Design  |
 | D-37 | Dual-installation resolution: global + project (see [design doc](./D-37-dual-installation.md))                        | Design        |
-| D-75 | Remove `--output` flag from compile command                                                                           | Ready for Dev |
 | D-76 | Init: generate project `config-types.ts` that imports from global `~/.claude-src/config-types.ts`                     | Ready for Dev |
 | D-77 | Wizard: show stack scope origin labels (global vs project) in build step                                              | Needs Design  |
 | D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))         | Has Open Qs   |
@@ -16,16 +15,14 @@
 | D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                       | Investigate   |
 | D-67 | Skill metadata as single source of truth — eliminate redundant central config for intrinsic skill properties          | Investigate   |
 | D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                      | Investigate   |
-| D-78 | `new marketplace` should render complete `config.ts` with commented-out empty properties                              | Ready for Dev |
 | D-79 | Agent selection step causes infinite re-render — screen scrolls/refreshes every millisecond                           | Bug           |
 | D-80 | Init with existing global install: project config-types doesn't import from global scope                             | Bug           |
 | D-81 | Config.ts: extract agents, skills, and stack into named variables above `export default`                             | Ready for Dev |
-| D-82 | Build step: always show [P]/[G] scope badge on every skill                                                           | Ready for Dev |
-| D-83 | Rename "Build" wizard step to "Skills"                                                                               | Ready for Dev |
-| D-84 | Domain selection: remove `matrix!` assertion and domain description fallback                                          | Ready for Dev |
 | D-85 | Create a proper `SkillId` union type from all known skills, enforce in tests                                         | Ready for Dev |
-| D-87 | Remove unsafe casts in wizard-store.test.ts — use complete mock data                                                 | Ready for Dev |
-| D-86 | Remove `label` prop from `SourceOption` — derive display name at render time                                         | Ready for Dev |
+| D-87 | Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries                                       | Ready for Dev |
+| D-88 | Audit and remove multi-tier resolution fallbacks — data should match or fail, not guess                              | Ready for Dev |
+| D-89 | Audit and remove silent fallbacks on required data — `findSkill` → `getSkill`, remove `?.`/`?? ""` patterns         | Ready for Dev |
+| D-90 | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths | Ready for Dev |
 
 ---
 
@@ -218,23 +215,6 @@ The current skill covers oclif command structure and Ink component patterns but 
 
 ---
 
-#### D-78: `new marketplace` should render complete `config.ts` with commented-out empty properties
-
-**Priority:** Low
-
-Currently `cc new marketplace` renders a minimal `config.ts` with only populated properties:
-
-```typescript
-export default {
-  "source": ".",
-  "marketplace": "test-consume-marketplace"
-};
-```
-
-It should render the **complete** config shape, with properties that don't have values included but commented out — so the user can see all available options and uncomment as needed.
-
----
-
 ### Bugs
 
 #### D-79: Agent selection step infinite re-render
@@ -255,25 +235,17 @@ When running `init` and a global installation is detected but the user chooses t
 
 ---
 
-#### D-87: Remove unsafe casts in wizard-store.test.ts
+#### D-87: Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries
 
 **Priority:** Medium
 
-`wizard-store.test.ts` has numerous `as Record<Category, CategoryDefinition>` casts on incomplete category objects (e.g., `{ "web-framework": { domain: "web" } }`). These hide missing required properties on `CategoryDefinition` and mask real type errors. The casts should be removed and replaced with proper mock data using `createMockCategory()` factories that provide all required fields.
+Throughout the codebase (production and test), there are `as` type casts that bypass TypeScript's type system. These hide missing required properties and mask real type errors.
 
-**Scope:** Audit all `as Record<Category, CategoryDefinition>` and similar casts throughout the file. Each one should use complete mock objects or factory functions from `__tests__/helpers.ts`.
+**Rule:** The only legitimate `as` casts are at data entry boundaries — immediately after `JSON.parse()`, `parseYaml()`, `safeLoadYamlFile()`, or a Zod `.parse()` / `.safeParse()` where the Zod output type is wider than the actual interface (due to `.passthrough()`). Every other `as` cast should be eliminated by fixing the data to be properly typed.
 
-**Related:** D-85 (proper SkillId union would also catch invalid skill IDs in this file)
+**Known example:** `wizard-store.test.ts` has numerous `as Record<Category, CategoryDefinition>` casts on incomplete category objects. These should use `createMockCategory()` factories that provide all required fields.
 
----
-
-#### D-86: Remove `label` from `SourceOption` — derive at render time
-
-**Priority:** Low
-
-`SourceOption` has a `label: string` prop that's computed by `formatSourceLabel()` in `wizard-store.ts` and passed through `buildSourceRows()`. The label is just a formatted source name (e.g., "✓ agents-inc", "local"). Instead of passing it as data, derive it at render time in `source-grid.tsx` from the source `id` + `installed` flag. This follows the same pattern as the skill `displayName` cleanup — don't pass derived data through props when it can be computed at the point of use.
-
-**Key files:** `src/cli/stores/wizard-store.ts` (`buildSourceRows`, `formatSourceLabel`), `src/cli/components/wizard/source-grid.tsx` (`SourceOption`, `SourceTag`)
+**Scope:** Grep for `\bas\b` casts across the entire codebase. Each site needs evaluation: is it at a parse boundary (keep), or is it papering over incomplete/wrong data (fix)?
 
 ---
 
@@ -292,33 +264,43 @@ Create a proper union type of all actual skill IDs (generated from the skills ma
 
 ---
 
-#### D-84: Domain selection: remove `matrix!` assertion and domain description fallback
+#### D-89: Audit and remove silent fallbacks on required data — `findSkill` → `getSkill`, remove `?.`/`?? ""` patterns
 
-**Priority:** Low
+**Priority:** Medium
 
-In `src/cli/components/wizard/domain-selection.tsx`:
-- `useMatrixStore((s) => s.matrix!)` — should use a throwing selector or non-null store accessor (same pattern as `getSkill()`)
-- `BUILT_IN_DOMAIN_DESCRIPTIONS[domain] ?? fallback` — the record is typed `Record<Domain, string>` so the fallback is dead code for built-in domains. Either move domain descriptions into the matrix store, or handle custom marketplace domains explicitly.
+Throughout the codebase, there are places where `findSkill(id)` (returns undefined) is used on data that **must** exist, followed by `?.` optional chaining and `?? ""` / `?? []` fallbacks. This silently hides bugs — if a skill doesn't exist when it should, we need to know immediately, not default to empty strings.
 
-**Related:** R-10 (replace direct `matrix.skills[id]` with store lookups)
+**Principle:** If the data must exist, use `getSkill(id)` (throws). Only use `findSkill(id)` when the data is genuinely optional (e.g., user input that might not match, search results).
 
----
+**Known example:** `buildSourceRows()` in `wizard-store.ts` (lines 936-960) calls `findSkill(skillId)` on skills from `selectedTechnologies` — these must exist. The `skill?.slug ?? ""` and `skill?.availableSources || []` fallbacks should be removed.
 
-#### D-82: Always show scope badge on every skill in build step
-
-**Priority:** Low
-
-Every skill in the build step should always display a `[P]` or `[G]` scope badge, not just when toggled. Users should see at a glance which skills are project-scoped vs global-scoped.
+**Scope:** Grep for `findSkill` calls followed by `?.` or `??` across the entire codebase. Each site needs evaluation: is the skill genuinely optional, or must it exist? Convert the "must exist" cases to `getSkill()`.
 
 ---
 
-#### D-83: Rename "Build" wizard step to "Skills"
+#### D-90: Add Sentry tracking for unresolved matrix references
 
-**Priority:** Low
+**Priority:** Medium
 
-The wizard step currently called "Build" should be renamed to "Skills" — it's where users select skills, so the name should reflect that.
+In `src/cli/lib/matrix/matrix-resolver.ts`, `getDiscourageReason()` (lines 213-227) and `validateSelection()` (lines 315, 342, 381, 444) use `findSkill(id)` with fallback to the raw ID when a skill referenced in `requires`, `conflictsWith`, or `providesSetupFor` doesn't exist in the matrix. This is intentionally graceful — crashing the wizard on bad matrix data is worse than degraded labels. But we need visibility into how often this happens.
 
-**Key files:** `src/cli/components/wizard/step-build.tsx`, `src/cli/components/wizard/wizard.tsx`, and any step label/enum references.
+Add Sentry `captureMessage` (or `captureException`) calls on every fallback path so we can track unresolved matrix references in production. Include the referencing skill ID, the missing referenced ID, and the relationship type (`requires`, `conflictsWith`, `providesSetupFor`) in the Sentry context.
+
+**Key file:** `src/cli/lib/matrix/matrix-resolver.ts`
+
+---
+
+#### D-88: Audit and remove multi-tier resolution fallbacks — data should match or fail, not guess
+
+**Priority:** Medium
+
+Throughout the codebase, there are multi-tier resolution patterns that silently guess when data doesn't match. Instead of trying progressively looser matches, data should be validated at the source — if it doesn't match, throw or warn and skip.
+
+**Principle:** Don't build fallback chains to compensate for bad data. Fix the data instead. If a lookup fails, that's an error, not an invitation to try a fuzzier match.
+
+**Known example:** `getPluginSkillIds()` in `plugin-finder.ts` (lines 73-135) has a three-tier fallback: (1) check if frontmatter `name` is a direct skill ID, (2) try slug/alias resolution, (3) fall back to directory name. The `name` field IS the canonical skill ID — if it doesn't match, that's a data error.
+
+**Scope:** Grep for multi-step resolution patterns, `aliasToId` maps, directory-name fallbacks, and similar guess-and-try logic across the codebase. Each site should be simplified to: validate → match or throw.
 
 ---
 
