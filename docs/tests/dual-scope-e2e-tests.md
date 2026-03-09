@@ -69,11 +69,11 @@ The `--output` flag is a debug/export shortcut that bypasses installation detect
 
 ### Files touched
 
-| File | Change |
-|------|--------|
-| `src/cli/commands/compile.ts` | Rewrite `run()`, add `runCompilePass`, remove `--output` flag and `runCustomOutputCompile` |
-| `src/cli/lib/installation/installation.ts` | No changes needed |
-| `src/cli/lib/agents/agent-recompiler.ts` | No changes needed |
+| File                                       | Change                                                                                     |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `src/cli/commands/compile.ts`              | Rewrite `run()`, add `runCompilePass`, remove `--output` flag and `runCustomOutputCompile` |
+| `src/cli/lib/installation/installation.ts` | No changes needed                                                                          |
+| `src/cli/lib/agents/agent-recompiler.ts`   | No changes needed                                                                          |
 
 ### Notes from code review
 
@@ -259,14 +259,14 @@ Reuses `createLocalSkill()` for skill creation. Config writing follows the `writ
 
 ## Summary
 
-| # | Test | Risk Mitigated |
-|---|------|---------------|
-| 1 | Compiles to both locations | Only one pass runs |
-| 2 | Global agents get global skills only | Cross-scope skill leakage |
-| 3 | Project agents get global + project skills | Project pass drops cross-scope skills |
-| 4 | Global-only still works | Single-installation regression |
-| 5 | Project-only still works | Dual-pass requires both |
-| 6 | Verbose shows both passes | UX gap in output |
+| #   | Test                                       | Risk Mitigated                        |
+| --- | ------------------------------------------ | ------------------------------------- |
+| 1   | Compiles to both locations                 | Only one pass runs                    |
+| 2   | Global agents get global skills only       | Cross-scope skill leakage             |
+| 3   | Project agents get global + project skills | Project pass drops cross-scope skills |
+| 4   | Global-only still works                    | Single-installation regression        |
+| 5   | Project-only still works                   | Dual-pass requires both               |
+| 6   | Verbose shows both passes                  | UX gap in output                      |
 
 ## Verification
 

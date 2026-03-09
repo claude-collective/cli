@@ -37,9 +37,7 @@ export const useMatrixStore = create<MatrixState>((set, get) => ({
   getMatrix: () => {
     const { matrix } = get();
     if (!matrix) {
-      throw new Error(
-        "Matrix store not initialized — call setMatrix() after loading the matrix",
-      );
+      throw new Error("Matrix store not initialized — call setMatrix() after loading the matrix");
     }
     return matrix;
   },
@@ -83,8 +81,8 @@ Outside React components, access via `getState()`:
 import { useMatrixStore } from "../stores/matrix-store.js";
 
 const skill = useMatrixStore.getState().getSkill("web-framework-react"); // by ID
-const skill = useMatrixStore.getState().getSkill("react");              // by slug
-const matrix = useMatrixStore.getState().getMatrix();                   // throws if not populated
+const skill = useMatrixStore.getState().getSkill("react"); // by slug
+const matrix = useMatrixStore.getState().getMatrix(); // throws if not populated
 ```
 
 Inside React components:
@@ -119,11 +117,11 @@ Any test file that calls `writeTestSkill` must populate the store first. This is
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/cli/stores/matrix-store.ts` | **New** — Zustand store |
-| `src/cli/lib/loading/source-loader.ts` | Import store, call `setMatrix()` after health check |
-| `src/cli/lib/source-validator.ts` | Refactor Phase 3 to use `loadSkillsMatrixFromSource()` instead of calling `mergeMatrixWithSkills()` directly |
+| File                                   | Change                                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/cli/stores/matrix-store.ts`       | **New** — Zustand store                                                                                      |
+| `src/cli/lib/loading/source-loader.ts` | Import store, call `setMatrix()` after health check                                                          |
+| `src/cli/lib/source-validator.ts`      | Refactor Phase 3 to use `loadSkillsMatrixFromSource()` instead of calling `mergeMatrixWithSkills()` directly |
 
 ## Future Use
 

@@ -16,6 +16,16 @@
 | D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                       | Investigate   |
 | D-67 | Skill metadata as single source of truth — eliminate redundant central config for intrinsic skill properties          | Investigate   |
 | D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                      | Investigate   |
+| D-78 | `new marketplace` should render complete `config.ts` with commented-out empty properties                              | Ready for Dev |
+| D-79 | Agent selection step causes infinite re-render — screen scrolls/refreshes every millisecond                           | Bug           |
+| D-80 | Init with existing global install: project config-types doesn't import from global scope                             | Bug           |
+| D-81 | Config.ts: extract agents, skills, and stack into named variables above `export default`                             | Ready for Dev |
+| D-82 | Build step: always show [P]/[G] scope badge on every skill                                                           | Ready for Dev |
+| D-83 | Rename "Build" wizard step to "Skills"                                                                               | Ready for Dev |
+| D-84 | Domain selection: remove `matrix!` assertion and domain description fallback                                          | Ready for Dev |
+| D-85 | Create a proper `SkillId` union type from all known skills, enforce in tests                                         | Ready for Dev |
+| D-87 | Remove unsafe casts in wizard-store.test.ts — use complete mock data                                                 | Ready for Dev |
+| D-86 | Remove `label` prop from `SourceOption` — derive display name at render time                                         | Ready for Dev |
 
 ---
 
@@ -205,6 +215,149 @@ The current skill covers oclif command structure and Ink component patterns but 
 - `e2e/helpers/test-utils.ts` — runCLI, createTempDir, etc.
 - `e2e/vitest.config.ts` — E2E test runner config
 - `src/cli/base-command.ts` — BaseCommand pattern
+
+---
+
+#### D-78: `new marketplace` should render complete `config.ts` with commented-out empty properties
+
+**Priority:** Low
+
+Currently `cc new marketplace` renders a minimal `config.ts` with only populated properties:
+
+```typescript
+export default {
+  "source": ".",
+  "marketplace": "test-consume-marketplace"
+};
+```
+
+It should render the **complete** config shape, with properties that don't have values included but commented out — so the user can see all available options and uncomment as needed.
+
+---
+
+### Bugs
+
+#### D-79: Agent selection step infinite re-render
+
+**Priority:** High
+
+The agent selection step in the wizard causes an infinite re-render loop — the screen scrolls and refreshes every millisecond. Needs investigation into which state change or effect is triggering the loop.
+
+---
+
+#### D-80: Project config-types doesn't import from global on init
+
+**Priority:** High
+
+When running `init` and a global installation is detected but the user chooses to create a project-level installation, the generated `config-types.ts` doesn't import from the global scope. It should automatically import everything from `~/.claude-src/config-types.ts` so project types extend global types.
+
+**Related:** D-76 (generate project config-types that imports from global)
+
+---
+
+#### D-87: Remove unsafe casts in wizard-store.test.ts
+
+**Priority:** Medium
+
+`wizard-store.test.ts` has numerous `as Record<Category, CategoryDefinition>` casts on incomplete category objects (e.g., `{ "web-framework": { domain: "web" } }`). These hide missing required properties on `CategoryDefinition` and mask real type errors. The casts should be removed and replaced with proper mock data using `createMockCategory()` factories that provide all required fields.
+
+**Scope:** Audit all `as Record<Category, CategoryDefinition>` and similar casts throughout the file. Each one should use complete mock objects or factory functions from `__tests__/helpers.ts`.
+
+**Related:** D-85 (proper SkillId union would also catch invalid skill IDs in this file)
+
+---
+
+#### D-86: Remove `label` from `SourceOption` — derive at render time
+
+**Priority:** Low
+
+`SourceOption` has a `label: string` prop that's computed by `formatSourceLabel()` in `wizard-store.ts` and passed through `buildSourceRows()`. The label is just a formatted source name (e.g., "✓ agents-inc", "local"). Instead of passing it as data, derive it at render time in `source-grid.tsx` from the source `id` + `installed` flag. This follows the same pattern as the skill `displayName` cleanup — don't pass derived data through props when it can be computed at the point of use.
+
+**Key files:** `src/cli/stores/wizard-store.ts` (`buildSourceRows`, `formatSourceLabel`), `src/cli/components/wizard/source-grid.tsx` (`SourceOption`, `SourceTag`)
+
+---
+
+#### D-85: Create proper `SkillId` union from all known skills
+
+**Priority:** Medium
+
+Currently `SkillId` is a loose template literal `` `${SkillIdPrefix}-${string}-${string}` `` which accepts any string matching the pattern (e.g., `"web-skill-a"`). This means `createMockSkill("web-skill-a")` compiles fine even though `"web-skill-a"` is not a real skill.
+
+Create a proper union type of all actual skill IDs (generated from the skills matrix or marketplace), similar to how `Domain`, `Category`, and `AgentName` are explicit unions. This would:
+- Catch invalid skill IDs at compile time in both production code and tests
+- Eliminate the need for the canonical skill registry in `__tests__/helpers.ts` — TypeScript itself enforces validity
+- Make `createMockSkill()` only accept real skill IDs
+
+**Approach:** The union could be auto-generated into `config-types.ts` (already done per-project), but the base set of all marketplace skills needs a generated union in `types/skills.ts` or similar. May need a codegen step that reads the skills matrix.
+
+---
+
+#### D-84: Domain selection: remove `matrix!` assertion and domain description fallback
+
+**Priority:** Low
+
+In `src/cli/components/wizard/domain-selection.tsx`:
+- `useMatrixStore((s) => s.matrix!)` — should use a throwing selector or non-null store accessor (same pattern as `getSkill()`)
+- `BUILT_IN_DOMAIN_DESCRIPTIONS[domain] ?? fallback` — the record is typed `Record<Domain, string>` so the fallback is dead code for built-in domains. Either move domain descriptions into the matrix store, or handle custom marketplace domains explicitly.
+
+**Related:** R-10 (replace direct `matrix.skills[id]` with store lookups)
+
+---
+
+#### D-82: Always show scope badge on every skill in build step
+
+**Priority:** Low
+
+Every skill in the build step should always display a `[P]` or `[G]` scope badge, not just when toggled. Users should see at a glance which skills are project-scoped vs global-scoped.
+
+---
+
+#### D-83: Rename "Build" wizard step to "Skills"
+
+**Priority:** Low
+
+The wizard step currently called "Build" should be renamed to "Skills" — it's where users select skills, so the name should reflect that.
+
+**Key files:** `src/cli/components/wizard/step-build.tsx`, `src/cli/components/wizard/wizard.tsx`, and any step label/enum references.
+
+---
+
+#### D-81: Config.ts should use named variables instead of one massive object
+
+**Priority:** Medium
+
+Currently `generateConfigSource()` produces a single monolithic `export default { ... } satisfies ProjectConfig` with everything inlined. Instead, agents, skills, and stack should be extracted into typed named variables defined above the export, with the export default referencing them:
+
+```typescript
+import type { ProjectConfig, SkillConfig, AgentScopeConfig, StackAgentConfig } from "./config-types";
+
+const skills: SkillConfig[] = [
+  { id: "web-framework-react", scope: "project", source: "agents-inc" },
+  // ...
+];
+
+const agents: AgentScopeConfig[] = [
+  { name: "web-developer", scope: "global" },
+  // ...
+];
+
+const stack: Record<string, StackAgentConfig> = {
+  "web-developer": { "web-framework": "web-framework-react" },
+  // ...
+};
+
+export default {
+  name: "my-project",
+  skills,
+  agents,
+  stack,
+  source: ".",
+} satisfies ProjectConfig;
+```
+
+This makes the config scannable at a glance — users see the shape of the export, then can jump to the section they want to edit.
+
+**Key files:** `src/cli/lib/configuration/config-writer.ts` — `generateConfigSource()` and `generateProjectConfigWithGlobalImport()`
 
 ---
 
