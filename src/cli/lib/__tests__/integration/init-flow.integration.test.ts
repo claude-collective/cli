@@ -1,6 +1,7 @@
+import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { readFile } from "fs/promises";
+import { readFile, rm } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS, INIT_SKILL_IDS } from "../mock-data/mock-skills";
@@ -50,6 +51,12 @@ const SELECTED_AGENTS_WITH_REVIEWER: AgentName[] = [
   "web-reviewer",
   "api-developer",
 ];
+
+// Clean global config files written by writeScopedConfigs to the mocked home dir
+afterEach(async () => {
+  const globalClaudeSrc = path.join(os.homedir(), CLAUDE_SRC_DIR);
+  await rm(globalClaudeSrc, { recursive: true, force: true }).catch(() => {});
+});
 
 // ── Test Suites ────────────────────────────────────────────────────────────────
 

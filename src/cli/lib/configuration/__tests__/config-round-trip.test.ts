@@ -24,13 +24,15 @@ afterEach(async () => {
 
 /**
  * Helper: write generated config source and load it back via jiti.
- * Strips the type-only import and `satisfies` (not needed at runtime).
+ * Strips the type-only import, type annotations, and `satisfies` (not needed at runtime).
  */
 async function writeAndLoad(config: ProjectConfig): Promise<unknown> {
   let source = generateConfigSource(config);
   // Remove type-only import and satisfies (not needed at runtime, jiti may not resolve the path)
-  source = source.replace(/import type \{ ProjectConfig \} from "\.\/config-types";\n/, "");
+  source = source.replace(/import type \{[^}]+\} from "\.\/config-types";\n/, "");
   source = source.replace(/ satisfies ProjectConfig/, "");
+  // Strip type annotations from const declarations
+  source = source.replace(/const (\w+): [^=]+=/g, "const $1 =");
 
   const configPath = path.join(tempDir, "config.ts");
   await writeFile(configPath, source);

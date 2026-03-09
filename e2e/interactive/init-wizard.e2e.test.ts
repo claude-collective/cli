@@ -307,10 +307,10 @@ describe("init wizard", () => {
         expect(configContent).toContain('"scope"');
         expect(configContent).toContain('"source"');
 
-        // Verify the skills array contains objects (not plain strings).
-        // JSON.stringify produces: "skills": [ { "id": "...", "scope": "...", "source": "..." } ]
-        // Match a skill object pattern inside the skills array.
-        expect(configContent).toMatch(/"skills":\s*\[[\s\S]*\{[\s\S]*"id":/);
+        // Verify the skills variable is a typed SkillConfig[] array with objects.
+        // Config writer now generates: const skills: SkillConfig[] = [ { "id": "...", ... } ];
+        // and the export default references the variable: skills,
+        expect(configContent).toMatch(/const skills: SkillConfig\[\] = \[/);
         expect(configContent).toMatch(/"scope":\s*"(project|global)"/);
         expect(configContent).toMatch(/"source":\s*"[^"]+"/);
       });

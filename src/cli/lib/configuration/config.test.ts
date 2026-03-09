@@ -16,7 +16,7 @@ import {
   resolveBranding,
   resolveSource,
   resolveAgentsSource,
-  saveProjectConfig,
+  writeProjectSourceConfig,
   SOURCE_ENV_VAR,
   validateSourceFormat,
 } from "./config";
@@ -433,18 +433,27 @@ describe("config", () => {
     });
   });
 
-  describe("saveProjectConfig", () => {
+  describe("writeProjectSourceConfig", () => {
     it("should create config directory if it does not exist", async () => {
-      await saveProjectConfig(tempDir, { source: "github:test/repo" });
+      await writeProjectSourceConfig(tempDir, { source: "github:test/repo" });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
       expect(parsed.source).toBe("github:test/repo");
     });
 
+    it("should write config with type annotation and satisfies clause", async () => {
+      await writeProjectSourceConfig(tempDir, { source: "github:test/repo" });
+
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const content = await readFile(configPath, "utf-8");
+      expect(content).toContain('import type { ProjectConfig } from "./config-types"');
+      expect(content).toContain("satisfies ProjectConfig");
+    });
+
     it("should overwrite existing config", async () => {
-      await saveProjectConfig(tempDir, { source: "github:first/repo" });
-      await saveProjectConfig(tempDir, { source: "github:second/repo" });
+      await writeProjectSourceConfig(tempDir, { source: "github:first/repo" });
+      await writeProjectSourceConfig(tempDir, { source: "github:second/repo" });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const content = await readFile(configPath, "utf-8");
@@ -453,7 +462,7 @@ describe("config", () => {
     });
 
     it("should save marketplace to project config", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeProjectSourceConfig(tempDir, {
         marketplace: "https://my-marketplace.com/plugins",
       });
 
@@ -463,7 +472,7 @@ describe("config", () => {
     });
 
     it("should save both source and marketplace", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeProjectSourceConfig(tempDir, {
         source: "github:myorg/skills",
         marketplace: "https://enterprise.example.com",
       });
@@ -826,9 +835,9 @@ describe("config", () => {
     });
   });
 
-  describe("saveProjectConfig with agentsSource", () => {
+  describe("writeProjectSourceConfig with agentsSource", () => {
     it("should save agentsSource to project config", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeProjectSourceConfig(tempDir, {
         agentsSource: "https://my-agents.example.com",
       });
 
@@ -838,7 +847,7 @@ describe("config", () => {
     });
 
     it("should save all config fields together", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeProjectSourceConfig(tempDir, {
         source: "github:myorg/skills",
         marketplace: "https://enterprise.example.com",
         agentsSource: "https://agents.enterprise.example.com",
@@ -887,9 +896,9 @@ describe("config", () => {
     });
   });
 
-  describe("saveProjectConfig with branding", () => {
+  describe("writeProjectSourceConfig with branding", () => {
     it("should save branding to project config", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeProjectSourceConfig(tempDir, {
         branding: { name: "Acme Dev Tools", tagline: "Build faster" },
       });
 

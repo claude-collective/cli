@@ -3,7 +3,8 @@ import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addSource, removeSource, getSourceSummary } from "./source-manager";
-import { loadProjectSourceConfig, saveProjectConfig } from "./config";
+import { loadProjectSourceConfig } from "./config";
+import { writeTestTsConfig } from "../__tests__/helpers";
 
 // Mock the source-fetcher module
 vi.mock("../loading/source-fetcher", async (importOriginal) => ({
@@ -69,7 +70,7 @@ describe("source-manager", () => {
 
     it("should throw if source name already exists", async () => {
       // Set up existing config
-      await saveProjectConfig(tempDir, {
+      await writeTestTsConfig(tempDir, {
         sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
       });
 
@@ -100,7 +101,7 @@ describe("source-manager", () => {
     });
 
     it("should add a source when config exists but has no sources array", async () => {
-      await saveProjectConfig(tempDir, { source: "github:custom/skills" });
+      await writeTestTsConfig(tempDir, { source: "github:custom/skills" });
 
       const { fetchMarketplace } = await import("../loading/source-fetcher");
       vi.mocked(fetchMarketplace).mockResolvedValue({
@@ -147,7 +148,7 @@ describe("source-manager", () => {
     });
 
     it("should not save config when duplicate check fails", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeTestTsConfig(tempDir, {
         sources: [{ name: "existing", url: "github:org/existing" }],
       });
 
@@ -174,7 +175,7 @@ describe("source-manager", () => {
 
   describe("removeSource", () => {
     it("should remove a source by name", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeTestTsConfig(tempDir, {
         sources: [
           { name: "acme-corp", url: "github:acme-corp/skills" },
           { name: "team-skills", url: "github:team/skills" },
@@ -194,7 +195,7 @@ describe("source-manager", () => {
     });
 
     it("should throw when source not found", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeTestTsConfig(tempDir, {
         sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
       });
 
@@ -204,7 +205,7 @@ describe("source-manager", () => {
     });
 
     it("should result in empty sources array when removing the last source", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeTestTsConfig(tempDir, {
         sources: [{ name: "only-source", url: "github:org/only" }],
       });
 
@@ -221,7 +222,7 @@ describe("source-manager", () => {
     });
 
     it("should throw when source not found and config has no sources array", async () => {
-      await saveProjectConfig(tempDir, { source: "github:custom/skills" });
+      await writeTestTsConfig(tempDir, { source: "github:custom/skills" });
 
       await expect(removeSource(tempDir, "nonexistent")).rejects.toThrow(
         'Source "nonexistent" not found',
@@ -244,7 +245,7 @@ describe("source-manager", () => {
     });
 
     it("should include configured sources", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeTestTsConfig(tempDir, {
         sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
       });
 
@@ -322,7 +323,7 @@ describe("source-manager", () => {
     });
 
     it("should use custom source URL from config for public source", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeTestTsConfig(tempDir, {
         source: "github:custom-org/custom-skills",
       });
 
@@ -336,7 +337,7 @@ describe("source-manager", () => {
     });
 
     it("should include multiple configured sources in order", async () => {
-      await saveProjectConfig(tempDir, {
+      await writeTestTsConfig(tempDir, {
         sources: [
           { name: "source-a", url: "github:org/source-a" },
           { name: "source-b", url: "github:org/source-b" },

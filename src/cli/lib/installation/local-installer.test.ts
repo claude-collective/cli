@@ -1,4 +1,5 @@
-import { mkdir, writeFile, readFile } from "fs/promises";
+import { mkdir, writeFile, readFile, rm } from "fs/promises";
+import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installLocal } from "./local-installer";
@@ -63,6 +64,8 @@ vi.mock("../configuration/config-generator", async (importOriginal) => {
     buildStackProperty: vi.fn().mockReturnValue({}),
     // Use real compactStackForYaml so configs with stack properties serialize correctly
     compactStackForYaml: original.compactStackForYaml,
+    // Use real splitConfigByScope for scope-aware config writing
+    splitConfigByScope: original.splitConfigByScope,
   };
 });
 
@@ -81,6 +84,9 @@ describe("local-installer", () => {
 
   afterEach(async () => {
     await cleanupTempDir(tempDir);
+    // Clean global config files written by writeScopedConfigs to the mocked home dir
+    const globalClaudeSrc = path.join(os.homedir(), CLAUDE_SRC_DIR);
+    await rm(globalClaudeSrc, { recursive: true, force: true }).catch(() => {});
   });
 
   describe("installLocal", () => {

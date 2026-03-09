@@ -1,6 +1,7 @@
+import os from "os";
 import path from "path";
 import { readFile } from "fs/promises";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installLocal } from "../../installation/local-installer";
@@ -40,12 +41,18 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     dirs = await createTestSource({ skills: ALL_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
+    // Mock os.homedir() to return the project dir so writeScopedConfigs treats this
+    // as a home-dir install (no scope splitting) and compileAndWriteAgents writes
+    // all agents to the project's .claude/agents/ instead of the real ~/.claude/agents/
+    vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
+
     matrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });
@@ -171,12 +178,18 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     dirs = await createTestSource({ skills: ALL_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
+    // Mock os.homedir() to return the project dir so writeScopedConfigs treats this
+    // as a home-dir install (no scope splitting) and compileAndWriteAgents writes
+    // all agents to the project's .claude/agents/ instead of the real ~/.claude/agents/
+    vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
+
     matrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });
@@ -280,12 +293,18 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
     dirs = await createTestSource({ skills: ALL_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
+    // Mock os.homedir() to return the project dir so writeScopedConfigs treats this
+    // as a home-dir install (no scope splitting) and compileAndWriteAgents writes
+    // all agents to the project's .claude/agents/ instead of the real ~/.claude/agents/
+    vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
+
     matrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });
@@ -387,12 +406,18 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     dirs = await createTestSource({ skills: ALL_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
+    // Mock os.homedir() to return the project dir so writeScopedConfigs treats this
+    // as a home-dir install (no scope splitting) and compileAndWriteAgents writes
+    // all agents to the project's .claude/agents/ instead of the real ~/.claude/agents/
+    vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
+
     matrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });
@@ -530,12 +555,18 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     dirs = await createTestSource({ skills: ALL_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
+    // Mock os.homedir() to return the project dir so writeScopedConfigs treats this
+    // as a home-dir install (no scope splitting) and compileAndWriteAgents writes
+    // all agents to the project's .claude/agents/ instead of the real ~/.claude/agents/
+    vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
+
     matrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });
@@ -548,8 +579,9 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
       "api-framework-hono",
       "api-database-drizzle",
     ];
+    const allSkills: SkillId[] = [...selectedSkills, ...DEFAULT_PRESELECTED_SKILLS];
 
-    simulateSkillSelections(selectedSkills, matrix, ["web", "api"]);
+    simulateSkillSelections(allSkills, matrix, ["web", "api", "shared"]);
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
@@ -620,8 +652,9 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
 
   it("should include methodology skills in all domain agents via the config", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
+    const allSkills: SkillId[] = [...selectedSkills, ...DEFAULT_PRESELECTED_SKILLS];
 
-    simulateSkillSelections(selectedSkills, matrix, ["web", "api"]);
+    simulateSkillSelections(allSkills, matrix, ["web", "api", "shared"]);
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
@@ -731,12 +764,18 @@ describe("Recompile Idempotency", () => {
     dirs = await createTestSource({ skills: ALL_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
+    // Mock os.homedir() to return the project dir so writeScopedConfigs treats this
+    // as a home-dir install (no scope splitting) and compileAndWriteAgents writes
+    // all agents to the project's .claude/agents/ instead of the real ~/.claude/agents/
+    vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
+
     matrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });
@@ -808,12 +847,18 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     dirs = await createTestSource({ skills: ALL_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
+    // Mock os.homedir() to return the project dir so writeScopedConfigs treats this
+    // as a home-dir install (no scope splitting) and compileAndWriteAgents writes
+    // all agents to the project's .claude/agents/ instead of the real ~/.claude/agents/
+    vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
+
     matrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });

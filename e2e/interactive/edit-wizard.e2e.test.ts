@@ -344,6 +344,15 @@ describe("edit wizard", () => {
   });
 
   describe("confirm step and completion", () => {
+    let sourceTempDir: string | undefined;
+
+    afterEach(async () => {
+      if (sourceTempDir) {
+        await cleanupTempDir(sourceTempDir);
+        sourceTempDir = undefined;
+      }
+    });
+
     it("should navigate to confirm step and show summary", async () => {
       tempDir = await createTempDir();
       const projectDir = await createEditableProject(tempDir, {
@@ -382,7 +391,7 @@ describe("edit wizard", () => {
       expect(screen).toContain("ESC");
     });
 
-    it("should complete full edit flow and recompile agents", async () => {
+    it("should complete full edit flow and recompile agents", { timeout: 60_000 }, async () => {
       tempDir = await createTempDir();
       const projectDir = await createEditableProject(tempDir, {
         skills: ["web-framework-react", "web-styling-tailwind"],
@@ -393,7 +402,15 @@ describe("edit wizard", () => {
       // Permissions file prevents the blocking permission prompt after recompile
       await createPermissionsFile(projectDir);
 
-      session = new TerminalSession(["edit"], projectDir, {
+      // Use a local E2E source to avoid triggering `claude plugin install/uninstall`
+      // commands that hang when a real `claude` binary is present on the system.
+      // The E2E source does not include web-styling-tailwind, so the wizard will
+      // skip that skill as unresolvable. This creates a "removed" change that
+      // triggers the recompile path.
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+
+      session = new TerminalSession(["edit", "--source", source.sourceDir], projectDir, {
         rows: 40,
         cols: 120,
       });

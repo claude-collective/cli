@@ -1,11 +1,12 @@
+import os from "os";
 import path from "path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile } from "fs/promises";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { useMatrixStore } from "../../../stores/matrix-store";
-import { DEFAULT_PRESELECTED_SKILLS, STANDARD_FILES } from "../../../consts";
+import { STANDARD_FILES } from "../../../consts";
 import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
@@ -36,6 +37,11 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
     dirs = await createTestSource({ skills: ALL_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
+    // Mock os.homedir() to return the project dir so writeScopedConfigs treats this
+    // as a home-dir install (no scope splitting) and compileAndWriteAgents writes
+    // all agents to the project's .claude/agents/ instead of the real ~/.claude/agents/
+    vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
+
     matrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
@@ -43,6 +49,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });
@@ -64,11 +71,6 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       const wizardResult = buildWizardResultFromStore(matrix);
 
-      // Verify methodology skills were added
-      for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(wizardResult.skills.map((s) => s.id)).toContain(methodSkill);
-      }
-
       // Verify agents were preselected from domains (sorted)
       expect(wizardResult.selectedAgents.length).toBeGreaterThan(0);
       const sortedAgents = [...wizardResult.selectedAgents].sort();
@@ -88,12 +90,6 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       // config.agents names should match the preselected agents (sorted)
       const configAgentNames = config.agents.map((a) => a.name);
       expect(configAgentNames).toEqual([...wizardResult.selectedAgents].sort());
-
-      // Methodology skills should appear in config.skills
-      const configSkillIds = config.skills.map((s) => s.id);
-      for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(configSkillIds).toContain(methodSkill);
-      }
     });
 
     it("should assign skills only to agents in the user's selection", async () => {
@@ -181,11 +177,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       // When selectedAgents is empty, no agents are assigned
       expect(config.agents).toEqual([]);
 
-      // Every skill in config.skills should be in selectedSkills + methodology skills
+      // Every skill in config.skills should be in selectedSkills
       for (const skillConfig of config.skills) {
-        const isSelected = selectedSkillIds.includes(skillConfig.id);
-        const isMethodology = DEFAULT_PRESELECTED_SKILLS.includes(skillConfig.id);
-        expect(isSelected || isMethodology).toBe(true);
+        expect(selectedSkillIds).toContain(skillConfig.id);
       }
     });
 
@@ -372,40 +366,6 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
     });
   });
 
-  describe("methodology skill injection", () => {
-    it("should add all DEFAULT_PRESELECTED_SKILLS to selectedSkills", () => {
-      const selectedSkillIds: SkillId[] = ["web-framework-react"];
-
-      simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
-      const wizardResult = buildWizardResultFromStore(matrix);
-
-      // All methodology skills should be present
-      for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(wizardResult.skills.map((s) => s.id)).toContain(methodSkill);
-      }
-
-      // Original selection should also be present
-      expect(wizardResult.skills.map((s) => s.id)).toContain("web-framework-react");
-    });
-
-    it("should not duplicate methodology skills if already selected", () => {
-      const selectedSkillIds: SkillId[] = [
-        "web-framework-react",
-        // Include one methodology skill explicitly
-        DEFAULT_PRESELECTED_SKILLS[0],
-      ];
-
-      simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
-      const wizardResult = buildWizardResultFromStore(matrix);
-
-      // Count occurrences of the first methodology skill
-      const occurrences = wizardResult.skills
-        .map((s) => s.id)
-        .filter((s) => s === DEFAULT_PRESELECTED_SKILLS[0]).length;
-      expect(occurrences).toBe(1);
-    });
-  });
-
   describe("preselectAgentsFromDomains behavior", () => {
     it("should select web domain agents when web domain is selected", () => {
       useWizardStore.setState({
@@ -497,12 +457,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       const wizardResult = buildWizardResultFromStore(matrix);
 
-      // Skills should come from stack.allSkillIds + methodology skills
+      // Skills should come from stack.allSkillIds
       for (const skillId of stack!.allSkillIds) {
         expect(wizardResult.skills.map((s) => s.id)).toContain(skillId);
-      }
-      for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(wizardResult.skills.map((s) => s.id)).toContain(methodSkill);
       }
 
       const result = await installLocal({
@@ -513,7 +470,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-      // Config should include all stack skills and methodology skills
+      // Config should include all stack skills
       for (const skillId of stack!.allSkillIds) {
         expect(config.skills.map((s) => s.id)).toContain(skillId);
       }

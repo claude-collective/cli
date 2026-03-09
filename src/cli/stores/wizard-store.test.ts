@@ -1,7 +1,6 @@
 import { afterEach, describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { useMatrixStore } from "./matrix-store";
-import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 import { createMockMatrix, getTestSkill } from "../lib/__tests__/helpers";
 import { TEST_SKILLS, TEST_CATEGORIES } from "../lib/__tests__/test-fixtures";
 import { typedKeys } from "../utils/typed-object";
@@ -535,7 +534,7 @@ describe("WizardStore", () => {
       expect(skillConfigs).toHaveLength(1);
       expect(skillConfigs[0]).toEqual({
         id: "web-framework-react",
-        scope: "project",
+        scope: "global",
         source: "agents-inc",
       });
     });
@@ -572,25 +571,25 @@ describe("WizardStore", () => {
       ]);
     });
 
-    it("should toggle skill scope between project and global", () => {
+    it("should toggle skill scope between global and project", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      store.toggleSkillScope("web-framework-react");
-
-      const { skillConfigs } = useWizardStore.getState();
-      expect(skillConfigs[0].scope).toBe("global");
-    });
-
-    it("should toggle skill scope back to project", () => {
-      const store = useWizardStore.getState();
-      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
-
-      store.toggleSkillScope("web-framework-react");
       store.toggleSkillScope("web-framework-react");
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs[0].scope).toBe("project");
+    });
+
+    it("should toggle skill scope back to global", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      store.toggleSkillScope("web-framework-react");
+      store.toggleSkillScope("web-framework-react");
+
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs[0].scope).toBe("global");
     });
 
     it("should update source via setSkillSource", () => {
@@ -646,7 +645,7 @@ describe("WizardStore", () => {
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(2);
       expect(skillConfigs.map((sc) => sc.id)).toEqual(["web-framework-react", "web-state-zustand"]);
-      expect(skillConfigs.every((sc) => sc.scope === "project")).toBe(true);
+      expect(skillConfigs.every((sc) => sc.scope === "global")).toBe(true);
       expect(skillConfigs.every((sc) => sc.source === "agents-inc")).toBe(true);
     });
 
@@ -763,16 +762,6 @@ describe("WizardStore", () => {
       expect(technologies).toContain("web-framework-react");
       expect(technologies).toContain("web-styling-scss-modules");
       expect(technologies).toContain("api-framework-hono");
-    });
-
-    it("should get default methodology skills", () => {
-      const store = useWizardStore.getState();
-
-      const skills = store.getDefaultMethodologySkills();
-
-      for (const skill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(skills).toContain(skill);
-      }
     });
 
     it("should get selected technologies per domain", () => {
@@ -1271,7 +1260,7 @@ describe("WizardStore", () => {
       store.toggleAgent("web-developer");
 
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "project" }]);
+      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "global" }]);
     });
 
     it("should remove from agentConfigs when agent is toggled off", () => {
@@ -1283,17 +1272,17 @@ describe("WizardStore", () => {
       expect(agentConfigs).toEqual([]);
     });
 
-    it("should toggle agent scope between project and global", () => {
+    it("should toggle agent scope between global and project", () => {
       const store = useWizardStore.getState();
       store.toggleAgent("web-developer");
       store.toggleAgentScope("web-developer");
 
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "global" }]);
+      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "project" }]);
 
       store.toggleAgentScope("web-developer");
       expect(useWizardStore.getState().agentConfigs).toEqual([
-        { name: "web-developer", scope: "project" },
+        { name: "web-developer", scope: "global" },
       ]);
     });
 
@@ -1324,7 +1313,7 @@ describe("WizardStore", () => {
 
       store.toggleAgentScope("web-developer");
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "project" }]);
+      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "global" }]);
     });
   });
 
