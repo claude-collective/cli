@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.0] - 2026-03-09
+
+**Wizard UX polish, hotkey registry, store-only matrix access**
+
+- Centralize wizard hotkeys into `hotkeys.ts` registry with `isHotkey()` helper
+- Remove `--output` flag from compile, remove `label` from `SourceOption`
+- Replace direct `matrix.skills[id]` with store accessors in 7 production files
+
+See [changelogs/0.63.0.md](./changelogs/0.63.0.md) for full details.
+
+---
+
 ## [0.62.0] - 2026-03-09
 
 **Matrix store — centralized skill lookups, remove parameter threading**
