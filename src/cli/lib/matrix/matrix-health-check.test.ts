@@ -28,22 +28,22 @@ const missingDomainStylingCategory = createMockCategory("web-styling", "Styling"
 // Skills
 // ---------------------------------------------------------------------------
 
-const zustandSkill = createMockSkill("web-state-zustand", "web-client-state", {
+const zustandSkill = createMockSkill("web-state-zustand", {
   isRecommended: true,
   recommendedReason: "Works well with React",
 });
 
-const orphanSkill = createMockSkill("web-framework-react", "nonexistent-category" as Category);
+const orphanSkill = createMockSkill("web-framework-react", { category: "nonexistent-category" as Category });
 
-const unresolvedCompatibleWithSkill = createMockSkill("web-state-zustand", "web-client-state", {
+const unresolvedCompatibleWithSkill = createMockSkill("web-state-zustand", {
   compatibleWith: ["web-framework-nonexistent"],
 });
 
-const unresolvedConflictsWithSkill = createMockSkill("web-framework-react", "web-framework", {
+const unresolvedConflictsWithSkill = createMockSkill("web-framework-react", {
   conflictsWith: [{ skillId: "web-framework-ghost", reason: "Conflicts" }],
 });
 
-const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-testing", {
+const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", {
   requires: [
     {
       skillIds: ["web-framework-missing"],
@@ -53,21 +53,21 @@ const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-
   ],
 });
 
-const unresolvedRequiresSetupSkill = createMockSkill("web-framework-react", "web-framework", {
+const unresolvedRequiresSetupSkill = createMockSkill("web-framework-react", {
   requiresSetup: ["infra-setup-missing"],
 });
 
-const unresolvedProvidesSetupForSkill = createMockSkill("infra-setup-env", "shared-tooling", {
+const unresolvedProvidesSetupForSkill = createMockSkill("infra-setup-env", {
   providesSetupFor: ["web-framework-missing"],
 });
 
-const multipleUnresolvedRefsSkill = createMockSkill("web-state-zustand", "web-client-state", {
+const multipleUnresolvedRefsSkill = createMockSkill("web-state-zustand", {
   compatibleWith: ["web-framework-missing"],
   conflictsWith: [{ skillId: "web-state-ghost", reason: "Conflicts" }],
   requiresSetup: ["infra-setup-missing"],
 });
 
-const allRefsResolvedSkill = createMockSkill("web-state-zustand", "web-client-state", {
+const allRefsResolvedSkill = createMockSkill("web-state-zustand", {
   conflictsWith: [{ skillId: "web-framework-react", reason: "Test" }],
   requires: [
     {
@@ -80,7 +80,7 @@ const allRefsResolvedSkill = createMockSkill("web-state-zustand", "web-client-st
   providesSetupFor: ["web-framework-react"],
 });
 
-const partialUnresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-testing", {
+const partialUnresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", {
   requires: [
     {
       skillIds: ["web-framework-react", "web-framework-missing"],
@@ -306,8 +306,7 @@ describe("matrix-health-check", () => {
       });
       const skillInSynthesizedCategory = createMockSkill(
         "web-custom-tool",
-        "web-custom" as Category,
-        {},
+        { category: "web-custom" as Category },
       );
       const matrixWithSynthesized = createMockMatrix(
         { "web-custom-tool": skillInSynthesizedCategory },

@@ -28,7 +28,8 @@ const mockGlob = vi.fn().mockResolvedValue([]);
 const mockParseFrontmatter = vi.fn();
 const mockLoadConfig = vi.fn();
 
-vi.mock("../../utils/fs", () => ({
+vi.mock("../../utils/fs", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/fs")>()),
   readFile: (...args: unknown[]) => mockReadFile(...args),
   fileExists: (...args: unknown[]) => mockFileExists(...args),
   glob: (...args: unknown[]) => mockGlob(...args),
@@ -36,11 +37,13 @@ vi.mock("../../utils/fs", () => ({
 
 vi.mock("../../utils/logger");
 
-vi.mock("../loading", () => ({
+vi.mock("../loading", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../loading")>()),
   parseFrontmatter: (...args: unknown[]) => mockParseFrontmatter(...args),
 }));
 
-vi.mock("../configuration/config-loader", () => ({
+vi.mock("../configuration/config-loader", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../configuration/config-loader")>()),
   loadConfig: (...args: unknown[]) => mockLoadConfig(...args),
 }));
 

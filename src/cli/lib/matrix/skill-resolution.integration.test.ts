@@ -46,6 +46,7 @@ import type {
   SkillSource,
   Category,
 } from "../../types";
+import { useMatrixStore } from "../../stores/matrix-store";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -91,7 +92,8 @@ function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): Merged
   const skills = mapValues(grouped, (entries) => {
     const first = entries[0]!;
     const sources = entries.map((e) => e.source);
-    return createMockMultiSourceSkill(first.id, first.category, sources, {
+    return createMockMultiSourceSkill(first.id, sources, {
+      category: first.category as CategoryPath,
       description: first.description,
     });
   });
@@ -108,6 +110,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 1: Skills from 3 sources resolve into unified matrix", () => {
     it("should create a matrix with unique skills from all sources", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Count unique skills from all 3 sources (15 total, minus overlaps)
       const uniqueSkillIds = new Set([
@@ -123,6 +126,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should annotate skills with all available sources", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // web-framework-react exists in all 3 sources
       const reactSkill = matrix.skills["web-framework-react"];
@@ -141,6 +145,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should annotate skills with single source when not duplicated", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // web-state-zustand is only in public source
       const zustandSkill = matrix.skills["web-state-zustand"];
@@ -151,6 +156,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should have correct activeSource defaulting to first available", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Skills without any installed source should have first source as active
       const reactSkill = matrix.skills["web-framework-react"];
@@ -162,6 +168,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 2: Active source wins when same skill ID exists in multiple sources", () => {
     it("should use installed source as activeSource over non-installed sources", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Simulate acme-corp version being installed
       const reactSkill = matrix.skills["web-framework-react"]!;
@@ -180,6 +187,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should respect sourceSelections when determining which source is preferred", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // sourceSelections maps SkillId -> source name (user's choice from wizard)
       const sourceSelections: Partial<Record<SkillId, string>> = {
@@ -198,6 +206,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should allow selecting 10 skills across different sources without conflicts", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Select 10 skills from different sources (no conflicts since no conflictsWith defined)
       const selectedSkills: SkillId[] = [
@@ -215,7 +224,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       expect(selectedSkills).toHaveLength(SELECTED_SKILL_COUNT);
 
-      const validation = validateSelection(selectedSkills, matrix);
+      const validation = validateSelection(selectedSkills);
       expect(validation.valid).toBe(true);
       expect(validation.errors).toHaveLength(0);
 
@@ -229,27 +238,30 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 3: Missing skill reference produces warning", () => {
     it("should throw when missing skill is selected", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Select a skill that doesn't exist in any source
       const selections: SkillId[] = ["web-framework-react", "web-nonexistent-skill"];
 
       // resolveAlias throws for unknown skill IDs — invalid input is a bug
-      expect(() => validateSelection(selections, matrix)).toThrow("Unknown skill ID");
+      expect(() => validateSelection(selections)).toThrow("Unknown skill ID");
     });
 
     it("should throw for unknown skill ID through alias lookup", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
-      expect(() => resolveAlias("web-nonexistent-skill", matrix)).toThrow("Unknown skill ID");
+      expect(() => resolveAlias("web-nonexistent-skill")).toThrow("Unknown skill ID");
     });
 
     it("should not include missing skill in getAvailableSkills for any category", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Check all categories -- missing skill should not appear
       const allCategories = Object.keys(matrix.categories) as Category[];
       for (const category of allCategories) {
-        const available = getAvailableSkills(category, [], matrix);
+        const available = getAvailableSkills(category, []);
         const ids = available.map((o) => o.id);
         expect(ids).not.toContain("web-nonexistent-skill");
       }
@@ -257,12 +269,13 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should detect missing requirement when dependency is not in matrix", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Add a skill that requires a non-existent skill
       matrix.skills["web-feature-advanced"] = createMockSkill(
         "web-feature-advanced",
-        "web-framework",
         {
+          category: "web-framework",
           requires: [
             {
               skillIds: ["web-nonexistent-dep"],
@@ -273,7 +286,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       );
 
-      const validation = validateSelection(["web-feature-advanced"], matrix);
+      const validation = validateSelection(["web-feature-advanced"]);
 
       expect(validation.valid).toBe(false);
       expect(validation.errors.some((e) => e.type === "missingRequirement")).toBe(true);
@@ -283,6 +296,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 4: Skill dependencies are correctly resolved across sources", () => {
     it("should validate when dependency from different source is selected", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Add dependency: drizzle (acme) requires hono (acme)
       const drizzleSkill = matrix.skills["api-database-drizzle"]!;
@@ -295,13 +309,14 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // Both selected -- should be valid
-      const validation = validateSelection(["api-database-drizzle", "api-framework-hono"], matrix);
+      const validation = validateSelection(["api-database-drizzle", "api-framework-hono"]);
       expect(validation.valid).toBe(true);
       expect(validation.errors).toHaveLength(0);
     });
 
     it("should fail validation when dependency from another source is not selected", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Add dependency: drizzle requires hono
       const drizzleSkill = matrix.skills["api-database-drizzle"]!;
@@ -314,7 +329,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // Only drizzle selected, hono missing
-      const validation = validateSelection(["api-database-drizzle"], matrix);
+      const validation = validateSelection(["api-database-drizzle"]);
       expect(validation.valid).toBe(false);
       expect(validation.errors[0].type).toBe("missingRequirement");
       expect(validation.errors[0].message).toContain("Hono");
@@ -322,6 +337,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should discourage dependent skill when requirement is not selected", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // auth-patterns requires hono
       const authSkill = matrix.skills["api-security-auth-patterns"]!;
@@ -334,16 +350,17 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // Nothing selected, auth should be discouraged
-      const discouraged = isDiscouraged("api-security-auth-patterns", [], matrix);
+      const discouraged = isDiscouraged("api-security-auth-patterns", []);
       expect(discouraged).toBe(true);
 
-      const reason = getDiscourageReason("api-security-auth-patterns", [], matrix);
+      const reason = getDiscourageReason("api-security-auth-patterns", []);
       expect(reason).toContain("Auth patterns need a backend framework");
       expect(reason).toContain("Hono");
     });
 
     it("should not discourage dependent skill when requirement is selected", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // auth-patterns requires hono
       const authSkill = matrix.skills["api-security-auth-patterns"]!;
@@ -359,13 +376,13 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const discouraged = isDiscouraged(
         "api-security-auth-patterns",
         ["api-framework-hono"],
-        matrix,
       );
       expect(discouraged).toBe(false);
     });
 
     it("should handle OR dependency across sources", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // sentry can work with either hono (acme) OR react (public/acme/internal)
       const sentrySkill = matrix.skills["api-monitoring-sentry"]!;
@@ -380,12 +397,11 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       // Select react (from public), sentry should be valid
       const validation = validateSelection(
         ["api-monitoring-sentry", "web-framework-react"],
-        matrix,
       );
       expect(validation.valid).toBe(true);
 
       // Without any framework, sentry should fail
-      const failValidation = validateSelection(["api-monitoring-sentry"], matrix);
+      const failValidation = validateSelection(["api-monitoring-sentry"]);
       expect(failValidation.valid).toBe(false);
     });
   });
@@ -393,6 +409,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 5: Conflict resolution across sources", () => {
     it("should detect conflicts between skills from different sources", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // react and vue conflict (both in framework category)
       const reactSkill = matrix.skills["web-framework-react"]!;
@@ -403,7 +420,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       ];
 
-      const validation = validateSelection(["web-framework-react", "web-framework-vue"], matrix);
+      const validation = validateSelection(["web-framework-react", "web-framework-vue"]);
       expect(validation.valid).toBe(false);
       expect(validation.errors[0].type).toBe("conflict");
       expect(validation.errors[0].message).toContain("Choose one frontend framework");
@@ -411,6 +428,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should discourage conflicting skill from another source", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       const reactSkill = matrix.skills["web-framework-react"]!;
       reactSkill.conflictsWith = [
@@ -421,15 +439,16 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // React selected, vue should be discouraged
-      const discouraged = isDiscouraged("web-framework-vue", ["web-framework-react"], matrix);
+      const discouraged = isDiscouraged("web-framework-vue", ["web-framework-react"]);
       expect(discouraged).toBe(true);
     });
 
     it("should enforce category exclusivity across multi-source skills", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // framework category is exclusive -- selecting both react and vue violates it
-      const validation = validateSelection(["web-framework-react", "web-framework-vue"], matrix);
+      const validation = validateSelection(["web-framework-react", "web-framework-vue"]);
       expect(validation.valid).toBe(false);
       expect(validation.errors.some((e) => e.type === "categoryExclusive")).toBe(true);
     });
@@ -438,6 +457,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 6: Large-scale selection with recommendations and warnings", () => {
     it("should validate 10 skills from 3 sources with recommendations", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // react is a recommended skill
       const reactSkill = matrix.skills["web-framework-react"]!;
@@ -447,7 +467,6 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       // Select zustand but not react -- should be valid with recommendation warning
       const validation = validateSelection(
         ["web-state-zustand", "api-framework-hono", "api-database-drizzle"],
-        matrix,
       );
       expect(validation.valid).toBe(true);
       expect(validation.warnings.some((w) => w.type === "missing_recommendation")).toBe(true);
@@ -456,6 +475,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should not warn about recommendation when recommended skill is selected", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // react is a recommended skill
       const reactSkill = matrix.skills["web-framework-react"]!;
@@ -463,7 +483,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       reactSkill.recommendedReason = "Zustand works best with React";
 
       // Select both zustand and react
-      const validation = validateSelection(["web-state-zustand", "web-framework-react"], matrix);
+      const validation = validateSelection(["web-state-zustand", "web-framework-react"]);
       expect(validation.valid).toBe(true);
       expect(validation.warnings.filter((w) => w.type === "missing_recommendation")).toHaveLength(
         0,
@@ -472,9 +492,10 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should handle getAvailableSkills with multi-source skills correctly", () => {
       const matrix = buildMultiSourceMatrix();
+      useMatrixStore.getState().setMatrix(matrix);
 
       // Get available framework skills
-      const available = getAvailableSkills("web-framework", [], matrix);
+      const available = getAvailableSkills("web-framework", []);
 
       // Should have react and vue
       const ids = available.map((o) => o.id);
@@ -497,7 +518,8 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     return createMockMatrix(
       mapToObj(RESOLUTION_PIPELINE_SKILLS, (skill) => [
         skill.id,
-        createMockSkill(skill.id, skill.category as CategoryPath, {
+        createMockSkill(skill.id, {
+          category: skill.category as CategoryPath,
           description: skill.description,
           tags: skill.tags ?? [],
           author: skill.author,
@@ -519,6 +541,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id);
 
     const matrix = buildPipelineMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
 
     const wizardResult = buildWizardResult(
       [
@@ -560,6 +583,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id);
 
     const matrix = buildPipelineMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
 
     const wizardResult = buildWizardResult(buildSkillConfigs(selectedSkills));
     const sourceResult = buildSourceResult(matrix, dirs.sourceDir, {
@@ -585,8 +609,9 @@ describe("Integration: Multi-Source Install Pipeline", () => {
 describe("Integration: Skill ID Resolution in Multi-Source Context", () => {
   it("should resolve skill IDs with multi-source metadata", () => {
     const matrix = buildMultiSourceMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
 
-    const resolved = resolveAlias("web-framework-react", matrix);
+    const resolved = resolveAlias("web-framework-react");
     expect(resolved).toBe("web-framework-react");
 
     // Resolved skill should have multi-source metadata
@@ -597,8 +622,9 @@ describe("Integration: Skill ID Resolution in Multi-Source Context", () => {
 
   it("should validate selection using skill IDs with multi-source skills", () => {
     const matrix = buildMultiSourceMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
 
-    const validation = validateSelection(["web-framework-react", "api-framework-hono"], matrix);
+    const validation = validateSelection(["web-framework-react", "api-framework-hono"]);
     expect(validation.valid).toBe(true);
   });
 });

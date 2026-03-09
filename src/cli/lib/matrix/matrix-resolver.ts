@@ -1,7 +1,6 @@
 import { groupBy } from "remeda";
 import type {
   CategoryPath,
-  MergedSkillsMatrix,
   ResolvedSkill,
   SelectionValidation,
   SkillId,
@@ -11,16 +10,15 @@ import type {
   ValidationWarning,
 } from "../../types";
 import { typedEntries } from "../../utils/typed-object";
+import { getMatrix } from "../../stores/matrix-store";
 
-function getLabel(
-  skill: Pick<ResolvedSkill, "displayName" | "id"> | undefined,
-  fallback: string,
-): string {
-  return skill?.displayName || skill?.id || fallback;
+function getLabel(skill: Pick<ResolvedSkill, "displayName">): string {
+  return skill.displayName;
 }
 
 /** Resolves a skill ID to its canonical SkillId. Throws if not found in the matrix. */
-export function resolveAlias(skillId: SkillId, matrix: MergedSkillsMatrix): SkillId {
+export function resolveAlias(skillId: SkillId): SkillId {
+  const matrix = getMatrix();
   if (matrix.skills[skillId]) return skillId;
   throw new Error(`Unknown skill ID: '${skillId}' — not found in the matrix`);
 }
@@ -32,9 +30,8 @@ type SelectionContext = {
 
 function initializeSelectionContext(
   currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): SelectionContext {
-  const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
+  const resolvedSelections = currentSelections.map((s) => resolveAlias(s));
   const selectedSet = new Set<SkillId>(resolvedSelections);
   return { resolvedSelections, selectedSet };
 }
@@ -49,19 +46,18 @@ function initializeSelectionContext(
  *
  * @param skillId - The skill to check dependents for (resolved via alias lookup)
  * @param currentSelections - Currently selected skill IDs in the wizard
- * @param matrix - Merged skills matrix with relationship data
  * @returns Skill IDs that would lose a required dependency if `skillId` were removed
  */
 export function getDependentSkills(
   skillId: SkillId,
   currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): SkillId[] {
-  const fullId = resolveAlias(skillId, matrix);
+  const matrix = getMatrix();
+  const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return [];
 
-  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections, matrix);
+  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections);
   const dependents: SkillId[] = [];
 
   for (const selectedId of resolvedSelections) {
@@ -100,19 +96,18 @@ export function getDependentSkills(
  *
  * @param skillId - The skill to check (resolved via alias lookup)
  * @param currentSelections - Currently selected skill IDs
- * @param matrix - Merged skills matrix with relationship data
  * @returns true if the skill should show a discouraged warning
  */
 export function isDiscouraged(
   skillId: SkillId,
   currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): boolean {
-  const fullId = resolveAlias(skillId, matrix);
+  const matrix = getMatrix();
+  const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return false;
 
-  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections, matrix);
+  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections);
 
   // Check discourages relationships (bidirectional)
   for (const selectedId of resolvedSelections) {
@@ -164,19 +159,18 @@ export function isDiscouraged(
  *
  * @param skillId - The skill to get the discourage reason for
  * @param currentSelections - Currently selected skill IDs
- * @param matrix - Merged skills matrix with relationship data
  * @returns Formatted reason string or undefined
  */
 export function getDiscourageReason(
   skillId: SkillId,
   currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): string | undefined {
-  const fullId = resolveAlias(skillId, matrix);
+  const matrix = getMatrix();
+  const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return undefined;
 
-  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections, matrix);
+  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections);
 
   // Check discourages relationships (bidirectional)
   for (const selectedId of resolvedSelections) {
@@ -198,15 +192,14 @@ export function getDiscourageReason(
   for (const selectedId of resolvedSelections) {
     const conflict = skill.conflictsWith.find((c) => c.skillId === selectedId);
     if (conflict) {
-      const selectedSkill = matrix.skills[selectedId];
-      return `${conflict.reason} (conflicts with ${getLabel(selectedSkill, selectedId)})`;
+      return `${conflict.reason} (conflicts with ${getLabel(matrix.skills[selectedId]!)})`;
     }
 
     const selectedSkill = matrix.skills[selectedId];
     if (selectedSkill) {
       const reverseConflict = selectedSkill.conflictsWith.find((c) => c.skillId === fullId);
       if (reverseConflict) {
-        return `${reverseConflict.reason} (conflicts with ${getLabel(selectedSkill, selectedId)})`;
+        return `${reverseConflict.reason} (conflicts with ${getLabel(selectedSkill)})`;
       }
     }
   }
@@ -217,14 +210,14 @@ export function getDiscourageReason(
       const hasAny = requirement.skillIds.some((reqId) => selectedSet.has(reqId));
       if (!hasAny) {
         const requiredNames = requirement.skillIds
-          .map((id) => getLabel(matrix.skills[id], id))
+          .map((id) => getLabel(matrix.skills[id]!))
           .join(" or ");
         return `${requirement.reason} (requires ${requiredNames})`;
       }
     } else {
       const missingIds = requirement.skillIds.filter((reqId) => !selectedSet.has(reqId));
       if (missingIds.length > 0) {
-        const missingNames = missingIds.map((id) => getLabel(matrix.skills[id], id)).join(", ");
+        const missingNames = missingIds.map((id) => getLabel(matrix.skills[id]!)).join(", ");
         return `${requirement.reason} (requires ${missingNames})`;
       }
     }
@@ -245,9 +238,9 @@ export function getDiscourageReason(
 export function isRecommended(
   skillId: SkillId,
   currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): boolean {
-  const fullId = resolveAlias(skillId, matrix);
+  const matrix = getMatrix();
+  const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return false;
 
@@ -260,7 +253,7 @@ export function isRecommended(
     return true;
   }
 
-  const { resolvedSelections } = initializeSelectionContext(currentSelections, matrix);
+  const { resolvedSelections } = initializeSelectionContext(currentSelections);
 
   // If the skill has no compatibility constraints, it's recommended unconditionally
   if (skill.compatibleWith.length === 0) {
@@ -281,9 +274,9 @@ export function isRecommended(
 export function getRecommendReason(
   skillId: SkillId,
   _currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): string | undefined {
-  const fullId = resolveAlias(skillId, matrix);
+  const matrix = getMatrix();
+  const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return undefined;
 
@@ -297,8 +290,8 @@ type ValidationPartial = {
 
 function validateConflicts(
   resolvedSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): ValidationPartial {
+  const matrix = getMatrix();
   const errors: ValidationError[] = [];
 
   for (let i = 0; i < resolvedSelections.length; i++) {
@@ -311,7 +304,7 @@ function validateConflicts(
       if (conflict) {
         errors.push({
           type: "conflict",
-          message: `${getLabel(skillA, skillA.id)} conflicts with ${getLabel(matrix.skills[skillBId], skillBId)}: ${conflict.reason}`,
+          message: `${getLabel(skillA)} conflicts with ${getLabel(matrix.skills[skillBId]!)}: ${conflict.reason}`,
           skills: [skillA.id, skillBId],
         });
       }
@@ -324,8 +317,8 @@ function validateConflicts(
 function validateRequirements(
   resolvedSelections: SkillId[],
   selectedSet: Set<SkillId>,
-  matrix: MergedSkillsMatrix,
 ): ValidationPartial {
+  const matrix = getMatrix();
   const errors: ValidationError[] = [];
 
   for (const skillId of resolvedSelections) {
@@ -338,7 +331,7 @@ function validateRequirements(
         if (!hasAny) {
           errors.push({
             type: "missingRequirement",
-            message: `${getLabel(skill, skillId)} requires one of: ${requirement.skillIds.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
+            message: `${getLabel(skill)} requires one of: ${requirement.skillIds.map((id) => getLabel(matrix.skills[id]!)).join(", ")}`,
             skills: [skillId, ...requirement.skillIds],
           });
         }
@@ -347,7 +340,7 @@ function validateRequirements(
         if (missingIds.length > 0) {
           errors.push({
             type: "missingRequirement",
-            message: `${getLabel(skill, skillId)} requires: ${missingIds.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
+            message: `${getLabel(skill)} requires: ${missingIds.map((id) => getLabel(matrix.skills[id]!)).join(", ")}`,
             skills: [skillId, ...missingIds],
           });
         }
@@ -360,8 +353,8 @@ function validateRequirements(
 
 function validateExclusivity(
   resolvedSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): ValidationPartial {
+  const matrix = getMatrix();
   const errors: ValidationError[] = [];
 
   const validSkills = resolvedSelections
@@ -377,7 +370,7 @@ function validateExclusivity(
       if (category?.exclusive) {
         errors.push({
           type: "categoryExclusive",
-          message: `Category "${category.displayName}" only allows one selection, but multiple selected: ${skillIds.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
+          message: `Category "${category.displayName}" only allows one selection, but multiple selected: ${skillIds.map((id) => getLabel(matrix.skills[id]!)).join(", ")}`,
           skills: skillIds,
         });
       }
@@ -394,8 +387,8 @@ function validateExclusivity(
 function validateRecommendations(
   resolvedSelections: SkillId[],
   selectedSet: Set<SkillId>,
-  matrix: MergedSkillsMatrix,
 ): ValidationPartial {
+  const matrix = getMatrix();
   const warnings: ValidationWarning[] = [];
 
   // Iterate the flat recommends list from relationships
@@ -417,7 +410,7 @@ function validateRecommendations(
 
     warnings.push({
       type: "missing_recommendation",
-      message: `${getLabel(skill, skill.id)} is recommended: ${skill.recommendedReason ?? ""}`,
+      message: `${getLabel(skill)} is recommended: ${skill.recommendedReason ?? ""}`,
       skills: [skill.id],
     });
   }
@@ -428,8 +421,8 @@ function validateRecommendations(
 function validateSetupUsage(
   resolvedSelections: SkillId[],
   selectedSet: Set<SkillId>,
-  matrix: MergedSkillsMatrix,
 ): ValidationPartial {
+  const matrix = getMatrix();
   const warnings: ValidationWarning[] = [];
 
   for (const skillId of resolvedSelections) {
@@ -440,7 +433,7 @@ function validateSetupUsage(
     if (!hasUsageSkill) {
       warnings.push({
         type: "unused_setup",
-        message: `Setup skill "${getLabel(skill, skillId)}" selected but no corresponding usage skills: ${skill.providesSetupFor.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
+        message: `Setup skill "${getLabel(skill)}" selected but no corresponding usage skills: ${skill.providesSetupFor.map((id) => getLabel(matrix.skills[id]!)).join(", ")}`,
         skills: [skillId, ...skill.providesSetupFor],
       });
     }
@@ -467,21 +460,19 @@ function mergeValidationResults(results: ValidationPartial[]): ValidationPartial
  * 5. **Setup usage** - Checks that setup-only skills have corresponding usage skills (warnings)
  *
  * @param selections - Complete list of selected skill IDs to validate
- * @param matrix - Merged skills matrix with all relationship rules
  * @returns Validation result with `valid` flag, error list, and warning list
  */
 export function validateSelection(
   selections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): SelectionValidation {
-  const { resolvedSelections, selectedSet } = initializeSelectionContext(selections, matrix);
+  const { resolvedSelections, selectedSet } = initializeSelectionContext(selections);
 
   const { errors, warnings } = mergeValidationResults([
-    validateConflicts(resolvedSelections, matrix),
-    validateRequirements(resolvedSelections, selectedSet, matrix),
-    validateExclusivity(resolvedSelections, matrix),
-    validateRecommendations(resolvedSelections, selectedSet, matrix),
-    validateSetupUsage(resolvedSelections, selectedSet, matrix),
+    validateConflicts(resolvedSelections),
+    validateRequirements(resolvedSelections, selectedSet),
+    validateExclusivity(resolvedSelections),
+    validateRecommendations(resolvedSelections, selectedSet),
+    validateSetupUsage(resolvedSelections, selectedSet),
   ]);
 
   return {
@@ -502,16 +493,15 @@ export function validateSelection(
  *
  * @param categoryId - Category path to filter skills by
  * @param currentSelections - Currently selected skill IDs
- * @param matrix - Merged skills matrix
  * @returns Array of skill options with state annotations and reasons
  */
 export function getAvailableSkills(
   categoryId: CategoryPath,
   currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): SkillOption[] {
+  const matrix = getMatrix();
   const skillOptions: SkillOption[] = [];
-  const { selectedSet } = initializeSelectionContext(currentSelections, matrix);
+  const { selectedSet } = initializeSelectionContext(currentSelections);
 
   for (const skill of Object.values(matrix.skills)) {
     if (!skill) continue;
@@ -519,21 +509,18 @@ export function getAvailableSkills(
       continue;
     }
 
-    const discouraged = isDiscouraged(skill.id, currentSelections, matrix);
-    const recommended = !discouraged && isRecommended(skill.id, currentSelections, matrix);
+    const discouraged = isDiscouraged(skill.id, currentSelections);
+    const recommended = !discouraged && isRecommended(skill.id, currentSelections);
 
     skillOptions.push({
       id: skill.id,
-      slug: skill.slug,
-      displayName: skill.displayName,
-      description: skill.description,
       discouraged,
       discouragedReason: discouraged
-        ? getDiscourageReason(skill.id, currentSelections, matrix)
+        ? getDiscourageReason(skill.id, currentSelections)
         : undefined,
       recommended,
       recommendedReason: recommended
-        ? getRecommendReason(skill.id, currentSelections, matrix)
+        ? getRecommendReason(skill.id, currentSelections)
         : undefined,
       selected: selectedSet.has(skill.id),
       alternatives: skill.alternatives.map((a) => a.skillId),
@@ -546,8 +533,8 @@ export function getAvailableSkills(
 /** Returns all resolved skills belonging to the given category. */
 export function getSkillsByCategory(
   categoryId: CategoryPath,
-  matrix: MergedSkillsMatrix,
 ): ResolvedSkill[] {
+  const matrix = getMatrix();
   const skills: ResolvedSkill[] = [];
 
   for (const skill of Object.values(matrix.skills)) {
