@@ -4,6 +4,14 @@ import { ThemeProvider } from "@inkjs/ui";
 import { cliTheme } from "../themes/default.js";
 import type { ResolvedSkill, SkillId } from "../../types/index.js";
 import { CLI_COLORS, UI_SYMBOLS, UI_LAYOUT } from "../../consts.js";
+import {
+  HOTKEY_COPY_LINK,
+  KEY_LABEL_ENTER,
+  KEY_LABEL_ESC,
+  KEY_LABEL_SPACE,
+  KEY_LABEL_VIM_VERT,
+  isHotkey,
+} from "../wizard/hotkeys.js";
 import { useTextInput } from "../hooks/use-text-input.js";
 import { useFilteredResults } from "../hooks/use-filtered-results.js";
 
@@ -204,21 +212,21 @@ const Footer: React.FC<FooterProps> = ({ hasSelection }) => {
       marginTop={1}
     >
       <Text dimColor>
-        <Text color={CLI_COLORS.UNFOCUSED}>j/k</Text> navigate
+        <Text color={CLI_COLORS.UNFOCUSED}>{KEY_LABEL_VIM_VERT}</Text> navigate
       </Text>
       <Text dimColor>
-        <Text color={CLI_COLORS.UNFOCUSED}>SPACE</Text> select
+        <Text color={CLI_COLORS.UNFOCUSED}>{KEY_LABEL_SPACE}</Text> select
       </Text>
       {hasSelection && (
         <Text dimColor>
-          <Text color={CLI_COLORS.SUCCESS}>ENTER</Text> import
+          <Text color={CLI_COLORS.SUCCESS}>{KEY_LABEL_ENTER}</Text> import
         </Text>
       )}
       <Text dimColor>
-        <Text color={CLI_COLORS.UNFOCUSED}>c</Text> copy link
+        <Text color={CLI_COLORS.UNFOCUSED}>{HOTKEY_COPY_LINK.label}</Text> copy link
       </Text>
       <Text dimColor>
-        <Text color={CLI_COLORS.WARNING}>ESC</Text> cancel
+        <Text color={CLI_COLORS.WARNING}>{KEY_LABEL_ESC}</Text> cancel
       </Text>
     </Box>
   );
@@ -302,7 +310,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
       return;
     }
 
-    if ((input === "c" || input === "C") && focusedSkill) {
+    if (isHotkey(input, HOTKEY_COPY_LINK) && focusedSkill) {
       void copySkillLink(focusedSkill);
       return;
     }

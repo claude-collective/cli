@@ -9,7 +9,7 @@ import type {
   Category,
 } from "../../types";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
-import { getMatrix } from "../../stores/matrix-store";
+import { findSkill, getMatrix } from "../../stores/matrix-store";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 
@@ -62,7 +62,7 @@ export function generateProjectConfigFromSkills(
   );
 
   const looked = selectedSkillIds.map((skillId) => {
-    const skill = matrix.skills[skillId];
+    const skill = findSkill(skillId);
     if (!skill) warn(`Skill '${skillId}' NOT FOUND in matrix`);
     return { skillId, skill };
   });

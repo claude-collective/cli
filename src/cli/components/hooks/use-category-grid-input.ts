@@ -3,6 +3,7 @@ import { useInput } from "ink";
 
 import type { Category, SkillId } from "../../types/index.js";
 import type { CategoryOption, CategoryRow } from "../wizard/category-grid.js";
+import { HOTKEY_TOGGLE_LABELS, isHotkey } from "../wizard/hotkeys.js";
 
 const FRAMEWORK_CATEGORY_ID = "web-framework";
 
@@ -130,7 +131,7 @@ export function useCategoryGridInput({
       return;
     }
 
-    if (input === "d" || input === "D") {
+    if (isHotkey(input, HOTKEY_TOGGLE_LABELS)) {
       onToggleLabels();
       return;
     }

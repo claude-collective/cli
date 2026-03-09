@@ -10,7 +10,7 @@ import type {
   ValidationWarning,
 } from "../../types";
 import { typedEntries } from "../../utils/typed-object";
-import { getMatrix } from "../../stores/matrix-store";
+import { findSkill, getMatrix, getSkill } from "../../stores/matrix-store";
 
 function getLabel(skill: Pick<ResolvedSkill, "displayName">): string {
   return skill.displayName;
@@ -210,14 +210,22 @@ export function getDiscourageReason(
       const hasAny = requirement.skillIds.some((reqId) => selectedSet.has(reqId));
       if (!hasAny) {
         const requiredNames = requirement.skillIds
-          .map((id) => getLabel(matrix.skills[id]!))
+          .map((id) => {
+            const s = findSkill(id);
+            return s ? getLabel(s) : id;
+          })
           .join(" or ");
         return `${requirement.reason} (requires ${requiredNames})`;
       }
     } else {
       const missingIds = requirement.skillIds.filter((reqId) => !selectedSet.has(reqId));
       if (missingIds.length > 0) {
-        const missingNames = missingIds.map((id) => getLabel(matrix.skills[id]!)).join(", ");
+        const missingNames = missingIds
+          .map((id) => {
+            const s = findSkill(id);
+            return s ? getLabel(s) : id;
+          })
+          .join(", ");
         return `${requirement.reason} (requires ${missingNames})`;
       }
     }
@@ -340,7 +348,7 @@ function validateRequirements(
         if (missingIds.length > 0) {
           errors.push({
             type: "missingRequirement",
-            message: `${getLabel(skill)} requires: ${missingIds.map((id) => getLabel(matrix.skills[id]!)).join(", ")}`,
+            message: `${getLabel(skill)} requires: ${missingIds.map((id) => getLabel(getSkill(id))).join(", ")}`,
             skills: [skillId, ...missingIds],
           });
         }

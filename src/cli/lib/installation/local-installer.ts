@@ -13,7 +13,7 @@ import type {
 } from "../../types";
 import type { InstallMode } from "./installation";
 import { deriveInstallMode } from "./installation";
-import { getMatrix } from "../../stores/matrix-store";
+import { findSkill } from "../../stores/matrix-store";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
@@ -130,16 +130,15 @@ async function deleteAndCopySkills(
 function buildLocalSkillsMap(
   copiedSkills: CopiedSkill[],
 ): Record<SkillId, LocalResolvedSkill> {
-  const matrix = getMatrix();
   // Boundary cast: Object.fromEntries returns { [k: string]: V }
   return Object.fromEntries(
     copiedSkills
-      .filter((cs) => matrix.skills[cs.skillId])
+      .filter((cs) => findSkill(cs.skillId))
       .map((cs) => [
         cs.skillId,
         {
           id: cs.skillId,
-          description: matrix.skills[cs.skillId]!.description,
+          description: findSkill(cs.skillId)!.description,
           path: cs.destPath,
           content: "", // Content not needed for skill references
         },
