@@ -10,13 +10,12 @@ import type { InstallMode } from "../lib/installation/index.js";
 import { deriveInstallMode as sharedDeriveInstallMode } from "../lib/installation/installation.js";
 import type { AgentScopeConfig, SkillConfig } from "../types/config.js";
 import { resolveAlias } from "../lib/matrix/index.js";
-import { getSkillDisplayLabel } from "../lib/wizard/build-step-logic.js";
+import { getMatrix } from "./matrix-store.js";
 import type {
   AgentName,
   BoundSkill,
   Domain,
   DomainSelections,
-  MergedSkillsMatrix,
   ResolvedSkill,
   SkillAlias,
   SkillAssignment,
@@ -97,9 +96,8 @@ export type SkillLookupEntry = Pick<ResolvedSkill, "category" | "displayName">;
 
 function resolveSkillForPopulation(
   skillId: SkillId,
-  skills: Partial<Record<SkillId, SkillLookupEntry>>,
-  categories: CategoryDomainMap,
 ): { domain: Domain; subcat: Category; techId: SkillId } | null {
+  const { skills, categories } = getMatrix();
   const skill = skills[skillId];
   if (!skill?.category) {
     warn(
@@ -137,15 +135,6 @@ function buildBoundSkillOptions(
     }));
 }
 
-function getSkillAlias(skillId: SkillId, matrix: MergedSkillsMatrix): SkillAlias {
-  const slug = matrix.slugMap.idToSlug[skillId];
-  if (slug) return slug;
-  // Fallback: use the last segment of the skill ID (e.g., "web-framework-react" -> "react")
-  const segments = skillId.split("-");
-  const fallback = segments[segments.length - 1] || skillId;
-  warn(`No slug found for skill '${skillId}', using fallback alias '${fallback}'`);
-  return fallback;
-}
 
 /**
  * Wizard step identifiers for the multi-step init/edit flow.
@@ -251,7 +240,6 @@ export type WizardState = {
    */
   populateFromStack: (
     stack: { agents: Record<string, Partial<Record<Category, SkillAssignment[]>>> },
-    categories: CategoryDomainMap,
   ) => void;
   /**
    * Pre-populate domainSelections from a flat list of installed skill IDs.
@@ -267,8 +255,6 @@ export type WizardState = {
    */
   populateFromSkillIds: (
     skillIds: SkillId[],
-    skills: Partial<Record<SkillId, SkillLookupEntry>>,
-    categories: CategoryDomainMap,
     savedConfigs?: SkillConfig[],
   ) => void;
   /**
@@ -451,7 +437,7 @@ export type WizardState = {
   /** Set all selected skills to "local" source. */
   setAllSourcesLocal: () => void;
   /** Set all selected skills to their first non-local (marketplace) source. */
-  setAllSourcesPlugin: (matrix: MergedSkillsMatrix) => void;
+  setAllSourcesPlugin: () => void;
 
   /**
    * Build the source selection rows for the sources step UI.
@@ -461,17 +447,12 @@ export type WizardState = {
    * which source is currently selected. Sources are sorted: local first, then public,
    * then private/other.
    *
-   * @param matrix - Merged skills matrix with resolved skills and their available sources
    * @returns Array of row objects, one per selected technology, each containing:
    *   - `skillId` - Canonical resolved skill ID
-   *   - `displayName` - Human-readable skill alias
-   *   - `alias` - Search-friendly display name used by source grid search
    *   - `options` - Available sources with selection state and install status
    */
-  buildSourceRows: (matrix: MergedSkillsMatrix) => {
+  buildSourceRows: () => {
     skillId: SkillId;
-    displayName: SkillAlias;
-    alias: SkillAlias;
     options: { id: string; label: string; selected: boolean; installed: boolean }[];
   }[];
 };
@@ -517,8 +498,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   setStackAction: (action) => set({ stackAction: action }),
 
-  populateFromStack: (stack, categories) =>
+  populateFromStack: (stack) =>
     set(() => {
+      const { categories } = getMatrix();
       const domainSelections: DomainSelections = {};
       const domains = new Set<Domain>();
       const allSkillIds = new Set<SkillId>();
@@ -563,14 +545,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       };
     }),
 
-  populateFromSkillIds: (skillIds, skills, categories, savedConfigs) =>
+  populateFromSkillIds: (skillIds, savedConfigs) =>
     set(() => {
       const domainSelections: DomainSelections = {};
       const resolvedSkillIds: SkillId[] = [];
       let skippedCount = 0;
 
       for (const skillId of skillIds) {
-        const resolved = resolveSkillForPopulation(skillId, skills, categories);
+        const resolved = resolveSkillForPopulation(skillId);
         if (!resolved) {
           skippedCount++;
           continue;
@@ -942,7 +924,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     }));
   },
 
-  setAllSourcesPlugin: (matrix) => {
+  setAllSourcesPlugin: () => {
+    const matrix = getMatrix();
     set((state) => ({
       skillConfigs: state.skillConfigs.map((sc) => {
         const skill = matrix.skills[sc.id];
@@ -957,19 +940,19 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     }));
   },
 
-  buildSourceRows: (matrix) => {
+  buildSourceRows: () => {
+    const matrix = getMatrix();
     const state = get();
     const selectedTechnologies = get().getAllSelectedTechnologies();
     const { skillConfigs, boundSkills } = state;
 
     return selectedTechnologies.map((tech) => {
-      const skillId = resolveAlias(tech, matrix);
+      const skillId = resolveAlias(tech);
       const skill = matrix.skills[skillId];
       const configEntry = skillConfigs.find((sc) => sc.id === skillId);
       const selectedSource =
         configEntry?.source || skill?.activeSource?.name || DEFAULT_PUBLIC_SOURCE_NAME;
-      const alias = getSkillAlias(skillId, matrix);
-      const displayLabel = skill ? getSkillDisplayLabel(skill) : skillId;
+      const slug = matrix.slugMap.idToSlug[skillId];
 
       const sortedSources = [...(skill?.availableSources || [])].sort(
         (a, b) => getSourceSortTier(a) - getSourceSortTier(b),
@@ -1004,9 +987,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         });
       }
 
-      options.push(...buildBoundSkillOptions(boundSkills, alias, selectedSource));
+      options.push(...buildBoundSkillOptions(boundSkills, slug, selectedSource));
 
-      return { skillId, displayName: displayLabel, alias, options };
+      return { skillId, options };
     });
   },
 }));

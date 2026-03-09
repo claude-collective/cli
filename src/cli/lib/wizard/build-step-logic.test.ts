@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   validateBuildStep,
   computeOptionState,
-  getSkillDisplayLabel,
   buildCategoriesForDomain,
 } from "./build-step-logic";
 import { createMockMatrix, TEST_SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
 import type { CategoryRow } from "../../components/wizard/category-grid";
 import type { SkillId, Category, CategorySelections } from "../../types";
+import { useMatrixStore } from "../../stores/matrix-store";
 
 describe("validateBuildStep", () => {
   const requiredCategory: CategoryRow = {
@@ -81,12 +81,6 @@ describe("computeOptionState", () => {
   });
 });
 
-describe("getSkillDisplayLabel", () => {
-  it("should return displayName", () => {
-    expect(getSkillDisplayLabel({ displayName: "React" })).toBe("React");
-  });
-});
-
 describe("buildCategoriesForDomain", () => {
   const frameworkCategory: Category = "web-framework";
   const stateCategory: Category = "web-client-state";
@@ -114,7 +108,8 @@ describe("buildCategoriesForDomain", () => {
 
   it("should return categories with options for the given domain", () => {
     const matrix = createMatrix();
-    const result = buildCategoriesForDomain("web", [], matrix, {});
+    useMatrixStore.getState().setMatrix(matrix);
+    const result = buildCategoriesForDomain("web", [], {});
 
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe(frameworkCategory);
@@ -130,14 +125,16 @@ describe("buildCategoriesForDomain", () => {
         } as Record<Category, import("../../types").CategoryDefinition>,
       },
     );
+    useMatrixStore.getState().setMatrix(emptyMatrix);
 
-    const result = buildCategoriesForDomain("web", [], emptyMatrix, {});
+    const result = buildCategoriesForDomain("web", [], {});
     expect(result).toHaveLength(0);
   });
 
   it("should sort categories by order", () => {
     const matrix = createMatrix();
-    const result = buildCategoriesForDomain("web", [], matrix, {});
+    useMatrixStore.getState().setMatrix(matrix);
+    const result = buildCategoriesForDomain("web", [], {});
 
     expect(result[0].id).toBe(frameworkCategory);
     expect(result[1].id).toBe(stateCategory);
@@ -145,10 +142,11 @@ describe("buildCategoriesForDomain", () => {
 
   it("should apply framework filtering for non-framework categories in web domain", () => {
     const matrix = createMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
 
     // With React selected as framework, only Zustand (compatible with React) should show
     const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
-    const result = buildCategoriesForDomain("web", [], matrix, selections);
+    const result = buildCategoriesForDomain("web", [], selections);
 
     const stateRow = result.find((r) => r.id === stateCategory);
     expect(stateRow).toBeDefined();
@@ -158,8 +156,9 @@ describe("buildCategoriesForDomain", () => {
 
   it("should not apply framework filtering when no framework is selected", () => {
     const matrix = createMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
 
-    const result = buildCategoriesForDomain("web", [], matrix, {});
+    const result = buildCategoriesForDomain("web", [], {});
 
     const stateRow = result.find((r) => r.id === stateCategory);
     expect(stateRow).toBeDefined();
@@ -168,9 +167,10 @@ describe("buildCategoriesForDomain", () => {
 
   it("should mark installed skills", () => {
     const matrix = createMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
     const installedSkillIds: SkillId[] = ["web-framework-react"];
 
-    const result = buildCategoriesForDomain("web", [], matrix, {}, installedSkillIds);
+    const result = buildCategoriesForDomain("web", [], {}, installedSkillIds);
 
     const frameworkRow = result.find((r) => r.id === frameworkCategory);
     const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");

@@ -2,13 +2,13 @@ import { sortBy } from "remeda";
 import type {
   CategoryDefinition,
   Domain,
-  MergedSkillsMatrix,
   SkillId,
   SkillOption,
   CategorySelections,
 } from "../../types/index.js";
 import type { SkillConfig } from "../../types/config.js";
 import { getAvailableSkills, resolveAlias } from "../matrix/index.js";
+import { getMatrix } from "../../stores/matrix-store.js";
 import type {
   CategoryRow,
   CategoryOption,
@@ -53,10 +53,6 @@ export function computeOptionState(
   return "normal";
 }
 
-export function getSkillDisplayLabel(skill: Pick<SkillOption, "displayName">): string {
-  return skill.displayName;
-}
-
 function getStateReason(
   skill: Pick<
     SkillOption,
@@ -79,17 +75,16 @@ function isFrameworkSelected(selections: CategorySelections): boolean {
 
 function getSelectedFrameworks(
   selections: CategorySelections,
-  matrix: MergedSkillsMatrix,
 ): SkillId[] {
   const frameworkSelections = selections[FRAMEWORK_CATEGORY_ID] ?? [];
-  return frameworkSelections.map((alias) => resolveAlias(alias, matrix));
+  return frameworkSelections.map((alias) => resolveAlias(alias));
 }
 
 function isCompatibleWithSelectedFrameworks(
   skillId: SkillId,
   selectedFrameworkIds: SkillId[],
-  matrix: MergedSkillsMatrix,
 ): boolean {
+  const matrix = getMatrix();
   const skill = matrix.skills[skillId];
   if (!skill) return false;
 
@@ -105,15 +100,15 @@ function isCompatibleWithSelectedFrameworks(
 export function buildCategoriesForDomain(
   domain: Domain,
   allSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
   selections: CategorySelections,
   installedSkillIds?: SkillId[],
   skillConfigs?: SkillConfig[],
 ): CategoryRow[] {
+  const matrix = getMatrix();
   const frameworkSource = selections;
   const frameworkSelected = isFrameworkSelected(frameworkSource);
   const selectedFrameworkIds = frameworkSelected
-    ? getSelectedFrameworks(frameworkSource, matrix)
+    ? getSelectedFrameworks(frameworkSource)
     : [];
 
   // Object.values() on a Partial record only yields values that exist — all are CategoryDefinition
@@ -125,19 +120,18 @@ export function buildCategoriesForDomain(
   );
 
   const categoryRows: CategoryRow[] = categories.map((cat) => {
-    const skillOptions = getAvailableSkills(cat.id, allSelections, matrix);
+    const skillOptions = getAvailableSkills(cat.id, allSelections);
 
     const useFrameworkFilter =
       domain === WEB_DOMAIN_ID && cat.id !== FRAMEWORK_CATEGORY_ID && frameworkSelected;
     const filteredSkillOptions = useFrameworkFilter
       ? skillOptions.filter((skill) =>
-          isCompatibleWithSelectedFrameworks(skill.id, selectedFrameworkIds, matrix),
+          isCompatibleWithSelectedFrameworks(skill.id, selectedFrameworkIds),
         )
       : skillOptions;
 
     const options: CategoryOption[] = filteredSkillOptions.map((skill) => ({
       id: skill.id,
-      label: getSkillDisplayLabel(skill),
       state: computeOptionState(skill),
       stateReason: getStateReason(skill),
       selected: skill.selected,
