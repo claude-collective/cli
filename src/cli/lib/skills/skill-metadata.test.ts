@@ -6,7 +6,8 @@ vi.mock("../../utils/fs");
 vi.mock("../../utils/logger");
 
 // Mock versioning
-vi.mock("../versioning", () => ({
+vi.mock("../versioning", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../versioning")>()),
   computeFileHash: vi.fn(),
   getCurrentDate: vi.fn().mockReturnValue("2026-01-15"),
 }));

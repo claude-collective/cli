@@ -6,8 +6,9 @@ import {
   copySkillsToLocalFlattened,
   validateSkillPath,
 } from "./skill-copier";
-import type { CategoryPath, SkillId, SkillSlug } from "../../types";
+import type { SkillId } from "../../types";
 import { CLAUDE_DIR, PROJECT_ROOT, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
+import { findSkill, useMatrixStore } from "../../stores/matrix-store";
 import {
   buildSourceResult,
   createMockSkill,
@@ -15,7 +16,6 @@ import {
   createTempDir,
   cleanupTempDir,
   writeTestSkill,
-  TEST_SKILLS,
 } from "../__tests__/helpers";
 
 /**
@@ -25,19 +25,16 @@ import {
 async function writeLocalSkillOnDisk(
   projectDir: string,
   skillId: SkillId,
-  options?: {
-    slug?: SkillSlug;
-    category?: CategoryPath;
-    description?: string;
-  },
 ): Promise<string> {
-  const description = options?.description ?? `${skillId} skill`;
+  const skill = findSkill(skillId);
+  if (!skill) {
+    throw new Error(
+      `writeLocalSkillOnDisk: "${skillId}" not found in matrix store`,
+    );
+  }
   const localSkillPath = `.claude/skills/${skillId}/`;
   await writeTestSkill(path.join(projectDir, ".claude/skills"), skillId, {
-    slug: options?.slug,
-    category: options?.category,
-    description,
-    skillContent: `---\nname: ${skillId} (@local)\ndescription: ${description}\n---\n${skillId} content`,
+    skillContent: `---\nname: ${skillId} (@local)\ndescription: ${skill.description}\n---\n${skillId} content`,
     skipMetadata: true,
   });
   return localSkillPath;
@@ -52,9 +49,6 @@ async function writeRemoteSkillOnDisk(
   relPath: string,
   config: {
     name: string;
-    description: string;
-    slug?: SkillSlug;
-    category?: CategoryPath;
     displayName?: string;
     author?: string;
   },
@@ -62,11 +56,14 @@ async function writeRemoteSkillOnDisk(
   const skillDir = path.join(projectDir, "src", relPath);
   // Boundary cast: path.basename extracts the skill ID directory name (e.g., "web-framework-react")
   const skillId = path.basename(relPath) as SkillId;
+  const skill = findSkill(skillId);
+  if (!skill) {
+    throw new Error(
+      `writeRemoteSkillOnDisk: "${skillId}" not found in matrix store`,
+    );
+  }
   await writeTestSkill(path.join(projectDir, "src", path.dirname(relPath)), skillId, {
-    slug: config.slug,
-    category: config.category,
-    description: config.description,
-    skillContent: `---\nname: ${config.name}\ndescription: ${config.description}\n---\n${config.description}`,
+    skillContent: `---\nname: ${config.name}\ndescription: ${skill.description}\n---\n${skill.description}`,
     extraMetadata: {
       displayName: config.displayName ?? config.name,
       author: config.author ?? "@vince",
@@ -154,6 +151,20 @@ describe("skill-copier", () => {
     projectDir = path.join(tempDir, "project");
     await mkdir(pluginDir, { recursive: true });
     await mkdir(projectDir, { recursive: true });
+    useMatrixStore.getState().setMatrix(createMockMatrix({
+      "web-testing-copier": createMockSkill("web-testing-copier"),
+      "web-testing-metadata": createMockSkill("web-testing-metadata"),
+      "web-styling-custom": createMockSkill("web-styling-custom"),
+      "web-framework-react": createMockSkill("web-framework-react", {
+        compatibleWith: ["web-framework-react"],
+      }),
+      "web-state-zustand": createMockSkill("web-state-zustand", {
+        compatibleWith: ["web-framework-react"],
+      }),
+      "api-framework-hono": createMockSkill("api-framework-hono"),
+      "web-testing-vitest": createMockSkill("web-testing-vitest"),
+      "web-tooling-vite": createMockSkill("web-tooling-vite"),
+    }));
   });
 
   afterEach(async () => {
@@ -163,12 +174,11 @@ describe("skill-copier", () => {
   describe("copySkillsToPluginFromSource", () => {
     it("skips local skills and does not copy them", async () => {
       // Create a local skill in the project's .claude/skills/ directory
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-testing-copier", {
-        description: "Local skill",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-testing-copier");
 
       const matrix = createMockMatrix({
-        "web-testing-copier": createMockSkill("web-testing-copier", "local", {
+        "web-testing-copier": createMockSkill("web-testing-copier", {
+          category: "local",
           path: localSkillPath,
           local: true,
           localPath: localSkillPath,
@@ -214,12 +224,11 @@ describe("skill-copier", () => {
     });
 
     it("returns correct metadata for local skills", async () => {
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-testing-metadata", {
-        description: "Test local",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-testing-metadata");
 
       const matrix = createMockMatrix({
-        "web-testing-metadata": createMockSkill("web-testing-metadata", "local", {
+        "web-testing-metadata": createMockSkill("web-testing-metadata", {
+          category: "local",
           path: localSkillPath,
           local: true,
           localPath: localSkillPath,
@@ -257,24 +266,27 @@ describe("skill-copier", () => {
 
     it("handles mix of local and remote skills", async () => {
       // Create local skill
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-styling-custom", {
-        description: "Local",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-styling-custom");
 
       // Create remote skill in source location (simulating fetched source)
       const remoteSkillRelPath = "skills/web/framework/web-framework-react/";
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
-        description: "React",
       });
 
       const matrix = createMockMatrix({
-        "web-styling-custom": createMockSkill("web-styling-custom", "local", {
+        "web-styling-custom": createMockSkill("web-styling-custom", {
+          category: "local",
           path: localSkillPath,
           local: true,
           localPath: localSkillPath,
         }),
-        "web-framework-react": { ...TEST_SKILLS.react, path: remoteSkillRelPath },
+        "web-framework-react": {
+          ...createMockSkill("web-framework-react", {
+            compatibleWith: ["web-framework-react"],
+          }),
+          path: remoteSkillRelPath,
+        },
       });
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
@@ -349,21 +361,20 @@ describe("skill-copier", () => {
 
     it("overrides local-skip when sourceSelections selects remote source", async () => {
       // Create local skill
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        description: "Local React",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react");
 
       // Create remote skill in source
       const remoteSkillRelPath = "skills/web/framework/web-framework-react/";
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
-        description: "Remote React",
         displayName: "React",
       });
 
       const matrix = createMockMatrix({
         "web-framework-react": {
-          ...TEST_SKILLS.react,
+          ...createMockSkill("web-framework-react", {
+            compatibleWith: ["web-framework-react"],
+          }),
           path: remoteSkillRelPath,
           local: true,
           localPath: localSkillPath,
@@ -396,13 +407,13 @@ describe("skill-copier", () => {
     });
 
     it("preserves local skill when sourceSelections selects local", async () => {
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        description: "Local React",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react");
 
       const matrix = createMockMatrix({
         "web-framework-react": {
-          ...TEST_SKILLS.react,
+          ...createMockSkill("web-framework-react", {
+            compatibleWith: ["web-framework-react"],
+          }),
           path: localSkillPath,
           local: true,
           localPath: localSkillPath,
@@ -441,7 +452,6 @@ describe("skill-copier", () => {
       const remoteSkillRelPath = "skills/web/client-state-management/web-state-zustand/";
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-state-zustand",
-        description: "Zustand state management",
         displayName: "Zustand",
       });
 
@@ -449,7 +459,12 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "web-state-zustand": { ...TEST_SKILLS.zustand, path: remoteSkillRelPath },
+        "web-state-zustand": {
+          ...createMockSkill("web-state-zustand", {
+            compatibleWith: ["web-framework-react"],
+          }),
+          path: remoteSkillRelPath,
+        },
       });
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
@@ -473,7 +488,7 @@ describe("skill-copier", () => {
         path.join(localSkillsDir, "web-state-zustand", STANDARD_FILES.SKILL_MD),
         "utf-8",
       );
-      expect(copiedSkillMd).toContain("Zustand state management");
+      expect(copiedSkillMd).toContain("web-state-zustand");
     });
 
     it("copies skills using extracted name when no alias", async () => {
@@ -481,7 +496,6 @@ describe("skill-copier", () => {
       const remoteSkillRelPath = "skills/api/api/api-framework-hono/";
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "api-framework-hono",
-        description: "Hono API",
         displayName: "Hono",
       });
 
@@ -489,7 +503,10 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "api-framework-hono": { ...TEST_SKILLS.hono, path: remoteSkillRelPath },
+        "api-framework-hono": {
+          ...createMockSkill("api-framework-hono"),
+          path: remoteSkillRelPath,
+        },
       });
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
@@ -510,14 +527,13 @@ describe("skill-copier", () => {
 
     it("skips local skills and does not copy them", async () => {
       // Create a local skill already in .claude/skills/
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-testing-copier", {
-        description: "Local skill",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-testing-copier");
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
       const matrix = createMockMatrix({
-        "web-testing-copier": createMockSkill("web-testing-copier", "local", {
+        "web-testing-copier": createMockSkill("web-testing-copier", {
+          category: "local",
           path: localSkillPath,
           local: true,
           localPath: localSkillPath,
@@ -552,27 +568,30 @@ describe("skill-copier", () => {
 
     it("handles mix of local and remote skills", async () => {
       // Create local skill
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-styling-custom", {
-        description: "Local",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-styling-custom");
 
       // Create remote skill
       const remoteSkillRelPath = "skills/web/framework/web-framework-react/";
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
-        description: "React",
         displayName: "React",
       });
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
       const matrix = createMockMatrix({
-        "web-styling-custom": createMockSkill("web-styling-custom", "local", {
+        "web-styling-custom": createMockSkill("web-styling-custom", {
+          category: "local",
           path: localSkillPath,
           local: true,
           localPath: localSkillPath,
         }),
-        "web-framework-react": { ...TEST_SKILLS.react, path: remoteSkillRelPath },
+        "web-framework-react": {
+          ...createMockSkill("web-framework-react", {
+            compatibleWith: ["web-framework-react"],
+          }),
+          path: remoteSkillRelPath,
+        },
       });
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
@@ -630,7 +649,6 @@ describe("skill-copier", () => {
       const deeplyNestedPath = "skills/web/framework/client-rendering/web-framework-react/";
       await writeRemoteSkillOnDisk(projectDir, deeplyNestedPath, {
         name: "web-framework-react",
-        description: "React content from deeply nested dir",
         displayName: "React",
       });
 
@@ -638,7 +656,12 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react, path: deeplyNestedPath },
+        "web-framework-react": {
+          ...createMockSkill("web-framework-react", {
+            compatibleWith: ["web-framework-react"],
+          }),
+          path: deeplyNestedPath,
+        },
       });
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
@@ -662,7 +685,7 @@ describe("skill-copier", () => {
         path.join(localSkillsDir, "web-framework-react", STANDARD_FILES.SKILL_MD),
         "utf-8",
       );
-      expect(copiedSkillMd).toContain("React content from deeply nested dir");
+      expect(copiedSkillMd).toContain("web-framework-react");
 
       // Verify the nested structure was NOT created
       const nestedPath = path.join(
@@ -687,21 +710,18 @@ describe("skill-copier", () => {
       const reactPath = "skills/web/framework/web-framework-react/";
       await writeRemoteSkillOnDisk(projectDir, reactPath, {
         name: "web-framework-react",
-        description: "React",
         displayName: "React",
       });
 
       const honoPath = "skills/api/api/api-framework-hono/";
       await writeRemoteSkillOnDisk(projectDir, honoPath, {
         name: "api-framework-hono",
-        description: "Hono",
         displayName: "Hono",
       });
 
       const vitestPath = "skills/testing/unit/web-testing-vitest/";
       await writeRemoteSkillOnDisk(projectDir, vitestPath, {
         name: "web-testing-vitest",
-        description: "Vitest",
         displayName: "Vitest",
       });
 
@@ -709,9 +729,20 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react, path: reactPath },
-        "api-framework-hono": { ...TEST_SKILLS.hono, path: honoPath },
-        "web-testing-vitest": { ...TEST_SKILLS.vitest, path: vitestPath },
+        "web-framework-react": {
+          ...createMockSkill("web-framework-react", {
+            compatibleWith: ["web-framework-react"],
+          }),
+          path: reactPath,
+        },
+        "api-framework-hono": {
+          ...createMockSkill("api-framework-hono"),
+          path: honoPath,
+        },
+        "web-testing-vitest": {
+          ...createMockSkill("web-testing-vitest"),
+          path: vitestPath,
+        },
       });
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
@@ -747,9 +778,9 @@ describe("skill-copier", () => {
         "utf-8",
       );
 
-      expect(reactContent).toContain("React");
-      expect(honoContent).toContain("Hono");
-      expect(vitestContent).toContain("Vitest");
+      expect(reactContent).toContain("web-framework-react");
+      expect(honoContent).toContain("api-framework-hono");
+      expect(vitestContent).toContain("web-testing-vitest");
     });
 
     it("uses skill ID name when no alias is provided", async () => {
@@ -757,8 +788,6 @@ describe("skill-copier", () => {
       const nestedPath = "skills/tooling/bundler/web-tooling-vite/";
       await writeRemoteSkillOnDisk(projectDir, nestedPath, {
         name: "web-tooling-vite",
-        description: "Vite bundler",
-        slug: "tooling",
         displayName: "Vite",
       });
 
@@ -766,7 +795,8 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "web-tooling-vite": createMockSkill("web-tooling-vite", "web-tooling", {
+        "web-tooling-vite": createMockSkill("web-tooling-vite", {
+          category: "web-tooling",
           path: nestedPath,
         }),
       });
@@ -789,15 +819,12 @@ describe("skill-copier", () => {
 
     it("overrides local-skip when sourceSelections selects remote source", async () => {
       // Create local skill
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        description: "Local React",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react");
 
       // Create remote skill in source
       const remoteSkillRelPath = "skills/web/framework/web-framework-react/";
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
-        description: "Remote React",
         displayName: "React",
       });
 
@@ -805,7 +832,9 @@ describe("skill-copier", () => {
 
       const matrix = createMockMatrix({
         "web-framework-react": {
-          ...TEST_SKILLS.react,
+          ...createMockSkill("web-framework-react", {
+            compatibleWith: ["web-framework-react"],
+          }),
           path: remoteSkillRelPath,
           local: true,
           localPath: localSkillPath,
@@ -833,27 +862,27 @@ describe("skill-copier", () => {
         expect(result[0].local).toBeUndefined();
         expect(result[0].destPath).toBe(path.join(localSkillsDir, "web-framework-react"));
 
-        // Verify the remote content was copied
+        // Verify the remote content was copied (not the local version with (@local) in name)
         const copiedContent = await readFile(
           path.join(localSkillsDir, "web-framework-react", STANDARD_FILES.SKILL_MD),
           "utf-8",
         );
-        expect(copiedContent).toContain("Remote React");
+        expect(copiedContent).not.toContain("(@local)");
       } finally {
         process.chdir(originalCwd);
       }
     });
 
     it("preserves local skill when sourceSelections selects local", async () => {
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        description: "Local React",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react");
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
       const matrix = createMockMatrix({
         "web-framework-react": {
-          ...TEST_SKILLS.react,
+          ...createMockSkill("web-framework-react", {
+            compatibleWith: ["web-framework-react"],
+          }),
           path: localSkillPath,
           local: true,
           localPath: localSkillPath,
@@ -886,15 +915,15 @@ describe("skill-copier", () => {
     });
 
     it("works without sourceSelections (backward compatible)", async () => {
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react", {
-        description: "Local React",
-      });
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-react");
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
       const matrix = createMockMatrix({
         "web-framework-react": {
-          ...TEST_SKILLS.react,
+          ...createMockSkill("web-framework-react", {
+            compatibleWith: ["web-framework-react"],
+          }),
           path: localSkillPath,
           local: true,
           localPath: localSkillPath,

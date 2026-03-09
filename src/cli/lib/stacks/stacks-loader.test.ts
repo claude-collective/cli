@@ -8,7 +8,8 @@ import {
   createMockStack,
 } from "../__tests__/helpers";
 
-vi.mock("../configuration/config-loader", () => ({
+vi.mock("../configuration/config-loader", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../configuration/config-loader")>()),
   loadConfig: vi.fn(),
 }));
 

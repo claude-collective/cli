@@ -21,22 +21,26 @@ vi.mock("fs/promises", () => ({
   readdir: vi.fn(),
 }));
 
-vi.mock("./plugin-finder", () => ({
+vi.mock("./plugin-finder", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./plugin-finder")>()),
   getProjectPluginsDir: vi.fn(),
 }));
 
-vi.mock("./plugin-discovery", () => ({
+vi.mock("./plugin-discovery", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./plugin-discovery")>()),
   listPluginNames: vi.fn(),
   discoverAllPluginSkills: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock("../../utils/fs");
 
-vi.mock("../installation", () => ({
+vi.mock("../installation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../installation")>()),
   detectInstallation: vi.fn(),
 }));
 
-vi.mock("../configuration", () => ({
+vi.mock("../configuration", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../configuration")>()),
   loadProjectConfig: vi.fn(),
 }));
 

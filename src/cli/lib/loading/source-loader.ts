@@ -57,6 +57,7 @@ import { fetchFromSource, fetchMarketplace } from "./source-fetcher";
 import { loadSkillsFromAllSources } from "./multi-source-loader";
 import { parseFrontmatter } from "./loader";
 import { loadStacks, resolveAgentConfigToSkills } from "../stacks";
+import { useMatrixStore } from "../../stores/matrix-store";
 
 export type SourceLoadOptions = {
   sourceFlag?: string;
@@ -129,6 +130,7 @@ export async function loadSkillsMatrixFromSource(
   }
 
   checkMatrixHealth(result.matrix);
+  useMatrixStore.getState().setMatrix(result.matrix);
 
   return result;
 }

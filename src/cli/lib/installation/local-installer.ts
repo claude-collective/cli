@@ -13,6 +13,7 @@ import type {
 } from "../../types";
 import type { InstallMode } from "./installation";
 import { deriveInstallMode } from "./installation";
+import { getMatrix } from "../../stores/matrix-store";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
@@ -128,8 +129,8 @@ async function deleteAndCopySkills(
 
 function buildLocalSkillsMap(
   copiedSkills: CopiedSkill[],
-  matrix: MergedSkillsMatrix,
 ): Record<SkillId, LocalResolvedSkill> {
+  const matrix = getMatrix();
   // Boundary cast: Object.fromEntries returns { [k: string]: V }
   return Object.fromEntries(
     copiedSkills
@@ -138,7 +139,7 @@ function buildLocalSkillsMap(
         cs.skillId,
         {
           id: cs.skillId,
-          description: matrix.skills[cs.skillId]!.description || "",
+          description: matrix.skills[cs.skillId]!.description,
           path: cs.destPath,
           content: "", // Content not needed for skill references
         },
@@ -199,7 +200,6 @@ async function buildLocalConfig(
       localConfig = generateProjectConfigFromSkills(
         DEFAULT_PLUGIN_NAME,
         skillIds,
-        sourceResult.matrix,
         agentOptions,
       );
 
@@ -247,7 +247,6 @@ async function buildLocalConfig(
     localConfig = generateProjectConfigFromSkills(
       DEFAULT_PLUGIN_NAME,
       skillIds,
-      sourceResult.matrix,
       agentOptions,
     );
   }
@@ -532,7 +531,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
       : [];
   const copiedSkills = [...projectCopied, ...globalCopied];
 
-  const localSkillsForResolution = buildLocalSkillsMap(copiedSkills, sourceResult.matrix);
+  const localSkillsForResolution = buildLocalSkillsMap(copiedSkills);
 
   const agents = await loadMergedAgents(sourceResult.sourcePath);
   const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);

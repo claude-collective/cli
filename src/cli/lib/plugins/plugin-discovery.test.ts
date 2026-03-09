@@ -14,19 +14,23 @@ const {
   mockGetErrorMessage: vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e))),
 }));
 
-vi.mock("../../utils/logger", () => ({
+vi.mock("../../utils/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/logger")>()),
   verbose: mockVerbose,
 }));
 
-vi.mock("../../utils/errors", () => ({
+vi.mock("../../utils/errors", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/errors")>()),
   getErrorMessage: mockGetErrorMessage,
 }));
 
-vi.mock("../loading", () => ({
+vi.mock("../loading", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../loading")>()),
   loadPluginSkills: mockLoadPluginSkills,
 }));
 
-vi.mock("./plugin-settings", () => ({
+vi.mock("./plugin-settings", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./plugin-settings")>()),
   getVerifiedPluginInstallPaths: mockGetVerifiedPluginInstallPaths,
 }));
 

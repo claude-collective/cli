@@ -6,17 +6,20 @@ import { addSource, removeSource, getSourceSummary } from "./source-manager";
 import { loadProjectSourceConfig, saveProjectConfig } from "./config";
 
 // Mock the source-fetcher module
-vi.mock("../loading/source-fetcher", () => ({
+vi.mock("../loading/source-fetcher", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../loading/source-fetcher")>()),
   fetchMarketplace: vi.fn(),
 }));
 
 // Mock the local-skill-loader module
-vi.mock("../skills/local-skill-loader", () => ({
+vi.mock("../skills/local-skill-loader", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../skills/local-skill-loader")>()),
   discoverLocalSkills: vi.fn(),
 }));
 
 // Mock the plugin-discovery module
-vi.mock("../plugins/plugin-discovery", () => ({
+vi.mock("../plugins/plugin-discovery", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../plugins/plugin-discovery")>()),
   discoverAllPluginSkills: vi.fn().mockResolvedValue({}),
 }));
 

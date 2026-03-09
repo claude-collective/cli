@@ -33,7 +33,8 @@ const __dirname = path.dirname(__filename);
 const FIXTURES_ROOT = path.resolve(__dirname, "__tests__/fixtures");
 
 // Mock resolver — returns a fixture CLAUDE.md path based on projectRoot
-vi.mock("./resolver", () => ({
+vi.mock("./resolver", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./resolver")>()),
   resolveClaudeMd: vi
     .fn()
     .mockImplementation(async (projectRoot: string) =>
@@ -42,13 +43,15 @@ vi.mock("./resolver", () => ({
 }));
 
 // Mock output-validator — compiler tests focus on compilation, not validation
-vi.mock("./output-validator", () => ({
+vi.mock("./output-validator", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./output-validator")>()),
   validateCompiledAgent: vi.fn().mockReturnValue({ valid: true, errors: [], warnings: [] }),
   printOutputValidationResult: vi.fn(),
 }));
 
 // Mock logger (suppress output during tests)
-vi.mock("../utils/logger", () => ({
+vi.mock("../utils/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../utils/logger")>()),
   verbose: vi.fn(),
   warn: vi.fn(),
   log: vi.fn(),

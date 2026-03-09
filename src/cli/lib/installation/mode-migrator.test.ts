@@ -18,7 +18,8 @@ vi.mock("../skills", () => ({
   copySkillsToLocalFlattened: vi.fn().mockResolvedValue([]),
 }));
 
-vi.mock("../../utils/exec", () => ({
+vi.mock("../../utils/exec", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/exec")>()),
   claudePluginInstall: vi.fn().mockResolvedValue(undefined),
   claudePluginUninstall: vi.fn().mockResolvedValue(undefined),
 }));
@@ -120,8 +121,8 @@ describe("mode-migrator", () => {
       tempDir = await createTempDir("mode-migrator-test-");
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
-        "web-state-zustand": createMockSkill("web-state-zustand", "web-client-state"),
+        "web-framework-react": createMockSkill("web-framework-react"),
+        "web-state-zustand": createMockSkill("web-state-zustand"),
       });
       sourceResult = buildSourceResult(matrix, "/test/source", {
         marketplace: "https://marketplace.example.com",

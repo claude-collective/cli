@@ -1,7 +1,6 @@
 import type {
   AgentName,
   CategoryPath,
-  MergedSkillsMatrix,
   ProjectConfig,
   SkillAssignment,
   SkillId,
@@ -10,6 +9,7 @@ import type {
   Category,
 } from "../../types";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
+import { getMatrix } from "../../stores/matrix-store";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 
@@ -38,7 +38,6 @@ function extractCategoryFromPath(categoryPath: CategoryPath): Category | undefin
  *
  * @param name - Project name for the config
  * @param selectedSkillIds - Skill IDs selected by the user in the wizard
- * @param matrix - Merged skills matrix (used to look up skill metadata)
  * @param options - Optional description, author, selectedAgents, and skillConfigs fields.
  *                  When skillConfigs is provided, it is used directly as `skills` in the config.
  *                  Otherwise, SkillConfig entries are synthesized from selectedSkillIds with defaults.
@@ -47,13 +46,13 @@ function extractCategoryFromPath(categoryPath: CategoryPath): Category | undefin
 export function generateProjectConfigFromSkills(
   name: string,
   selectedSkillIds: SkillId[],
-  matrix: MergedSkillsMatrix,
   options?: ProjectConfigOptions & {
     selectedAgents?: AgentName[];
     skillConfigs?: SkillConfig[];
     agentConfigs?: AgentScopeConfig[];
   },
 ): ProjectConfig {
+  const matrix = getMatrix();
   const agentList = options?.selectedAgents ? [...options.selectedAgents].sort() : [];
 
   verbose(

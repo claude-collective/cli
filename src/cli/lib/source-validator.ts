@@ -4,20 +4,15 @@ import { glob, readFile, fileExists, directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import {
   SKILL_CATEGORIES_PATH,
-  SKILL_RULES_PATH,
   SKILLS_DIR_PATH,
   STANDARD_FILES,
 } from "../consts";
-import { metadataValidationSchema, formatZodErrors, SKILL_ID_PATTERN } from "./schemas";
+import { metadataValidationSchema, SKILL_ID_PATTERN } from "./schemas";
 import { parseFrontmatter } from "./loading/loader";
 import { loadProjectSourceConfig } from "./configuration";
-import {
-  checkMatrixHealth,
-  extractAllSkills,
-  loadSkillCategories,
-  loadSkillRules,
-  mergeMatrixWithSkills,
-} from "./matrix";
+import { checkMatrixHealth } from "./matrix";
+import { loadSkillsMatrixFromSource } from "./loading/source-loader";
+import { useMatrixStore } from "../stores/matrix-store";
 
 export type SourceValidationIssue = {
   severity: "error" | "warning";
@@ -200,30 +195,11 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
 
   // Phase 3: Cross-reference validation via matrix health check
   try {
-    const categoriesPath = path.join(resolvedPath, SKILL_CATEGORIES_PATH);
-    const rulesPath = path.join(resolvedPath, SKILL_RULES_PATH);
+    await loadSkillsMatrixFromSource({ sourceFlag: resolvedPath, skipExtraSources: true });
+    const matrix = useMatrixStore.getState().matrix;
 
-    const hasCats = await fileExists(categoriesPath);
-    const hasRules = await fileExists(rulesPath);
-
-    if (hasCats || hasRules) {
-      const cats = hasCats ? await loadSkillCategories(categoriesPath) : {};
-      const defaultRelationships = {
-        conflicts: [],
-        discourages: [],
-        recommends: [],
-        requires: [],
-        alternatives: [],
-      };
-      const rules = hasRules
-        ? await loadSkillRules(rulesPath)
-        : {
-            version: "1.0.0",
-            relationships: defaultRelationships,
-          };
-      const skills = await extractAllSkills(skillsDir);
-      const mergedMatrix = await mergeMatrixWithSkills(cats, rules.relationships, skills);
-      const healthIssues = checkMatrixHealth(mergedMatrix);
+    if (matrix) {
+      const healthIssues = checkMatrixHealth(matrix);
 
       for (const healthIssue of healthIssues) {
         issues.push({
@@ -232,10 +208,6 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
           message: healthIssue.details,
         });
       }
-    } else {
-      verbose(
-        `No categories/rules files at '${resolvedPath}' — skipping cross-reference validation`,
-      );
     }
   } catch (error) {
     issues.push({

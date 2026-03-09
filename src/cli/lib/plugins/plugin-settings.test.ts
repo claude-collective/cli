@@ -15,20 +15,24 @@ const { mockFileExists, mockReadFileSafe, mockVerbose, mockGetErrorMessage } = v
   mockGetErrorMessage: vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e))),
 }));
 
-vi.mock("../../utils/fs", () => ({
+vi.mock("../../utils/fs", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/fs")>()),
   fileExists: mockFileExists,
   readFileSafe: mockReadFileSafe,
 }));
 
-vi.mock("../../utils/logger", () => ({
+vi.mock("../../utils/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/logger")>()),
   verbose: mockVerbose,
 }));
 
-vi.mock("../../utils/errors", () => ({
+vi.mock("../../utils/errors", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/errors")>()),
   getErrorMessage: mockGetErrorMessage,
 }));
 
-vi.mock("../../consts", () => ({
+vi.mock("../../consts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../consts")>()),
   CLAUDE_DIR: ".claude",
   PLUGINS_SUBDIR: "plugins",
   MAX_CONFIG_FILE_SIZE: 1048576,

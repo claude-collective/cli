@@ -21,7 +21,8 @@ import {
   warnUnknownFields,
 } from "./schemas";
 
-vi.mock("../utils/logger", () => ({
+vi.mock("../utils/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../utils/logger")>()),
   warn: vi.fn(),
 }));
 

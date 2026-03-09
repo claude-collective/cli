@@ -4,11 +4,13 @@ import type { AgentName, SkillId } from "../../types";
 import { createMockCompiledStackPlugin } from "../__tests__/helpers";
 
 // Mock dependencies before imports
-vi.mock("./stack-plugin-compiler", () => ({
+vi.mock("./stack-plugin-compiler", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./stack-plugin-compiler")>()),
   compileStackPlugin: vi.fn(),
 }));
 
-vi.mock("../../utils/exec", () => ({
+vi.mock("../../utils/exec", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/exec")>()),
   claudePluginInstall: vi.fn(),
   isClaudeCLIAvailable: vi.fn(),
 }));

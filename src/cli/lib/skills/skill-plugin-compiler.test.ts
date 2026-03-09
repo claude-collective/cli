@@ -6,7 +6,15 @@ import {
   compileAllSkillPlugins,
   printCompilationSummary,
 } from "./skill-plugin-compiler";
-import { createTempDir, cleanupTempDir, writeTestSkill } from "../__tests__/helpers";
+import {
+  createTempDir,
+  cleanupTempDir,
+  writeTestSkill,
+  createMockMatrix,
+  createMockSkill,
+  TEST_SKILLS,
+} from "../__tests__/helpers";
+import { useMatrixStore } from "../../stores/matrix-store";
 import { computeSkillFolderHash } from "../versioning";
 import { STANDARD_FILES } from "../../consts";
 
@@ -21,6 +29,19 @@ describe("skill-plugin-compiler", () => {
     outputDir = path.join(tempDir, "output");
     await mkdir(skillsDir, { recursive: true });
     await mkdir(outputDir, { recursive: true });
+
+    useMatrixStore.getState().setMatrix(createMockMatrix({
+      "web-framework-react": TEST_SKILLS.react,
+      "web-state-zustand": TEST_SKILLS.zustand,
+      "web-testing-vitest": TEST_SKILLS.vitest,
+      "web-styling-tailwind": createMockSkill("web-styling-tailwind"),
+      "web-state-mobx": createMockSkill("web-state-mobx"),
+      "web-data-fetching-react-query": createMockSkill("web-data-fetching-react-query"),
+      "web-framework-original": createMockSkill("web-framework-original"),
+      "web-framework-simple": createMockSkill("web-framework-simple"),
+      "web-framework-arbitrary": createMockSkill("web-framework-arbitrary"),
+      "api-framework-hono": TEST_SKILLS.hono,
+    }));
   });
 
   afterEach(async () => {
@@ -29,9 +50,7 @@ describe("skill-plugin-compiler", () => {
 
   describe("compileSkillPlugin", () => {
     it("should create plugin directory structure", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-framework-react", {
-        description: "React skills",
-      });
+      const skillPath = await writeTestSkill(skillsDir, "web-framework-react");
 
       const result = await compileSkillPlugin({
         skillPath,
@@ -48,10 +67,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should generate valid plugin.json", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-state-zustand", {
-        category: "web-client-state",
-        description: "State management with Zustand",
-      });
+      const skillPath = await writeTestSkill(skillsDir, "web-state-zustand");
 
       const result = await compileSkillPlugin({
         skillPath,
@@ -74,7 +90,6 @@ describe("skill-plugin-compiler", () => {
       const skillContent =
         "---\nname: web-styling-tailwind\ndescription: Tailwind CSS styling\ncategory: test\n---\n\n# Tailwind Content\n\nStyling guide.";
       const skillPath = await writeTestSkill(skillsDir, "web-styling-tailwind", {
-        description: "Tailwind CSS styling",
         skillContent,
       });
 
@@ -98,9 +113,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should copy examples directory when present", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-testing-vitest", {
-        description: "Testing with Vitest",
-      });
+      const skillPath = await writeTestSkill(skillsDir, "web-testing-vitest");
 
       // Create examples directory
       const examplesDir = path.join(skillPath, "examples");
@@ -126,10 +139,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should generate README.md", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-state-mobx", {
-        category: "web-client-state",
-        description: "State management with MobX",
-      });
+      const skillPath = await writeTestSkill(skillsDir, "web-state-mobx");
 
       const result = await compileSkillPlugin({
         skillPath,
@@ -140,16 +150,13 @@ describe("skill-plugin-compiler", () => {
       const content = await readFile(readmePath, "utf-8");
 
       expect(content).toContain("# web-state-mobx");
-      expect(content).toContain("State management with MobX");
+      expect(content).toContain("web-state-mobx skill");
       expect(content).toContain("## Installation");
       expect(content).toContain('"web-state-mobx"');
     });
 
     it("should include tags in README when metadata has tags", async () => {
       const skillPath = await writeTestSkill(skillsDir, "web-data-fetching-react-query", {
-        slug: "react-query",
-        category: "web-server-state",
-        description: "Data fetching with React Query",
         extraMetadata: { tags: ["web", "data", "async"] },
       });
 
@@ -168,10 +175,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should use custom skill name when provided", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-framework-original", {
-        slug: "react",
-        description: "Original skill",
-      });
+      const skillPath = await writeTestSkill(skillsDir, "web-framework-original");
 
       const result = await compileSkillPlugin({
         skillPath,
@@ -205,7 +209,6 @@ describe("skill-plugin-compiler", () => {
 
     it("should get author from metadata.yaml", async () => {
       const skillPath = await writeTestSkill(skillsDir, "web-framework-react", {
-        description: "React skills",
         extraMetadata: { author: "@vince" },
       });
 
@@ -220,7 +223,6 @@ describe("skill-plugin-compiler", () => {
 
     it("should succeed without metadata.yaml", async () => {
       const skillPath = await writeTestSkill(skillsDir, "web-framework-vue", {
-        description: "Vue skills",
         skipMetadata: true,
       });
 
@@ -237,8 +239,6 @@ describe("skill-plugin-compiler", () => {
       const skillContent1 =
         "---\nname: web-framework-simple\ndescription: Simple skill\n---\n\n# Simple version 1";
       const skillPath = await writeTestSkill(skillsDir, "web-framework-simple", {
-        slug: "react",
-        description: "Simple skill",
         skillContent: skillContent1,
       });
 
@@ -285,17 +285,9 @@ describe("skill-plugin-compiler", () => {
 
   describe("compileAllSkillPlugins", () => {
     it("should compile multiple skills from directory", async () => {
-      await writeTestSkill(skillsDir, "web-framework-react", {
-        description: "React skills",
-      });
-      await writeTestSkill(skillsDir, "web-state-zustand", {
-        category: "web-client-state",
-        description: "State management",
-      });
-      await writeTestSkill(skillsDir, "api-framework-hono", {
-        category: "api-api",
-        description: "API framework",
-      });
+      await writeTestSkill(skillsDir, "web-framework-react");
+      await writeTestSkill(skillsDir, "web-state-zustand");
+      await writeTestSkill(skillsDir, "api-framework-hono");
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 
@@ -307,13 +299,8 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should create plugin directories for each skill", async () => {
-      await writeTestSkill(skillsDir, "web-framework-react", {
-        description: "React skills",
-      });
-      await writeTestSkill(skillsDir, "api-framework-hono", {
-        category: "api-api",
-        description: "API framework",
-      });
+      await writeTestSkill(skillsDir, "web-framework-react");
+      await writeTestSkill(skillsDir, "api-framework-hono");
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 
@@ -330,8 +317,6 @@ describe("skill-plugin-compiler", () => {
 
     it("should use frontmatter.name as skill name (not directory name)", async () => {
       await writeTestSkill(skillsDir, "web-framework-arbitrary", {
-        slug: "react",
-        description: "Skill description",
         skillContent:
           "---\nname: actual-skill-name\ndescription: Skill description\n---\n\n# Content",
       });
@@ -345,9 +330,7 @@ describe("skill-plugin-compiler", () => {
 
     it("should continue compiling other skills when one fails", async () => {
       // Create valid skill
-      await writeTestSkill(skillsDir, "web-framework-react", {
-        description: "React skills",
-      });
+      await writeTestSkill(skillsDir, "web-framework-react");
 
       // Create invalid skill (no frontmatter) - intentionally raw for error testing
       const badSkillPath = path.join(skillsDir, "bad-skill");
@@ -355,10 +338,7 @@ describe("skill-plugin-compiler", () => {
       await writeFile(path.join(badSkillPath, "SKILL.md"), "# No frontmatter");
 
       // Create another valid skill
-      await writeTestSkill(skillsDir, "web-state-zustand", {
-        category: "web-client-state",
-        description: "State",
-      });
+      await writeTestSkill(skillsDir, "web-state-zustand");
 
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -377,9 +357,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should log success messages for compiled skills", async () => {
-      await writeTestSkill(skillsDir, "web-framework-react", {
-        description: "React skills",
-      });
+      await writeTestSkill(skillsDir, "web-framework-react");
 
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
@@ -392,13 +370,8 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should return correct manifest for each compiled skill", async () => {
-      await writeTestSkill(skillsDir, "web-framework-react", {
-        description: "React skills",
-      });
-      await writeTestSkill(skillsDir, "api-framework-hono", {
-        category: "api-api",
-        description: "API framework",
-      });
+      await writeTestSkill(skillsDir, "web-framework-react");
+      await writeTestSkill(skillsDir, "api-framework-hono");
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 

@@ -13,7 +13,8 @@ import {
   PLUGIN_MANIFEST_DIR,
   PLUGIN_MANIFEST_FILE,
 } from "../../consts";
-import type { MergedSkillsMatrix, PluginManifest, ResolvedSkill, SkillId } from "../../types";
+import type { PluginManifest, ResolvedSkill, SkillId } from "../../types";
+import { getMatrix } from "../../stores/matrix-store";
 import { typedEntries } from "../../utils/typed-object";
 import { pluginManifestSchema } from "../schemas";
 
@@ -71,8 +72,8 @@ export async function readPluginManifest(pluginDir: string): Promise<PluginManif
 
 export async function getPluginSkillIds(
   pluginSkillsDir: string,
-  matrix: MergedSkillsMatrix,
 ): Promise<SkillId[]> {
+  const matrix = getMatrix();
   const skillFiles = await glob("**/SKILL.md", pluginSkillsDir);
   const skillIds: SkillId[] = [];
 

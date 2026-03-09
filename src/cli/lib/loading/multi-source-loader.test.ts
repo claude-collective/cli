@@ -5,7 +5,8 @@ import type { ResolvedConfig, SourceEntry } from "../configuration";
 import { createMockMatrix, createMockExtractedSkill, TEST_SKILLS } from "../__tests__/helpers";
 
 // Mock external dependencies
-vi.mock("../../utils/logger", () => ({
+vi.mock("../../utils/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/logger")>()),
   verbose: vi.fn(),
   warn: vi.fn(),
 }));
@@ -18,7 +19,8 @@ vi.mock("../configuration", async () => {
   };
 });
 
-vi.mock("./source-fetcher", () => ({
+vi.mock("./source-fetcher", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./source-fetcher")>()),
   fetchFromSource: vi.fn(),
   fetchMarketplace: vi.fn(),
 }));
@@ -31,7 +33,8 @@ vi.mock("../matrix", async () => {
   };
 });
 
-vi.mock("../plugins", () => ({
+vi.mock("../plugins", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../plugins")>()),
   discoverAllPluginSkills: vi.fn().mockResolvedValue({}),
 }));
 

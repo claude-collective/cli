@@ -3,6 +3,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installLocal } from "./local-installer";
 import type { AgentConfig, AgentName, ProjectConfig, SkillId } from "../../types";
+import { useMatrixStore } from "../../stores/matrix-store";
 import {
   TEST_MATRICES,
   buildWizardResult,
@@ -16,11 +17,13 @@ import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from 
 import { generateConfigSource } from "../configuration/config-writer";
 
 // Mock heavy dependencies that involve file system operations outside our temp dir
-vi.mock("../skills/skill-copier", () => ({
+vi.mock("../skills/skill-copier", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../skills/skill-copier")>()),
   copySkillsToLocalFlattened: vi.fn().mockResolvedValue([]),
 }));
 
-vi.mock("../loading/loader", () => ({
+vi.mock("../loading/loader", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../loading/loader")>()),
   loadAllAgents: vi.fn().mockResolvedValue({}),
 }));
 
@@ -32,16 +35,19 @@ vi.mock("../stacks/stacks-loader", async (importOriginal) => {
   };
 });
 
-vi.mock("../resolver", () => ({
+vi.mock("../resolver", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../resolver")>()),
   resolveAgents: vi.fn().mockResolvedValue({}),
   buildSkillRefsFromConfig: vi.fn().mockReturnValue([]),
 }));
 
-vi.mock("../stacks/stack-plugin-compiler", () => ({
+vi.mock("../stacks/stack-plugin-compiler", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../stacks/stack-plugin-compiler")>()),
   compileAgentForPlugin: vi.fn().mockResolvedValue("# compiled agent content"),
 }));
 
-vi.mock("../compiler", () => ({
+vi.mock("../compiler", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../compiler")>()),
   createLiquidEngine: vi.fn().mockResolvedValue({}),
 }));
 
@@ -70,6 +76,7 @@ describe("local-installer", () => {
 
   beforeEach(async () => {
     tempDir = await createTempDir("cc-local-installer-test-");
+    useMatrixStore.getState().setMatrix(TEST_MATRICES.empty);
   });
 
   afterEach(async () => {

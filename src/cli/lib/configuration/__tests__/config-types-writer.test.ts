@@ -32,8 +32,8 @@ describe("generateConfigTypesSource", () => {
 
   it("generates SkillId union from matrix skills", () => {
     const matrix = createMockMatrix({
-      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
-      "api-framework-hono": createMockSkill("api-framework-hono", "api-api"),
+      "web-framework-react": createMockSkill("web-framework-react"),
+      "api-framework-hono": createMockSkill("api-framework-hono"),
     });
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain('"api-framework-hono"');
@@ -52,9 +52,9 @@ describe("generateConfigTypesSource", () => {
 
   it("sorts union members alphabetically", () => {
     const matrix = createMockMatrix({
-      "web-styling-scss-modules": createMockSkill("web-styling-scss-modules", "web-styling"),
-      "api-framework-hono": createMockSkill("api-framework-hono", "api-api"),
-      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+      "web-styling-scss-modules": createMockSkill("web-styling-scss-modules"),
+      "api-framework-hono": createMockSkill("api-framework-hono"),
+      "web-framework-react": createMockSkill("web-framework-react"),
     });
     const agentNames: AgentName[] = ["web-developer", "api-developer", "cli-developer"];
     const source = generateConfigTypesSource(matrix, agentNames);
@@ -162,7 +162,7 @@ describe("generateConfigTypesSource", () => {
 
   it("falls back to string for empty agents", () => {
     const matrix = createMockMatrix({
-      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+      "web-framework-react": createMockSkill("web-framework-react"),
     });
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain("export type AgentName = string;");
@@ -170,7 +170,7 @@ describe("generateConfigTypesSource", () => {
 
   it("falls back to string for empty domains", () => {
     const matrix = createMockMatrix(
-      { "web-framework-react": createMockSkill("web-framework-react", "web-framework") },
+      { "web-framework-react": createMockSkill("web-framework-react") },
       { categories: {} as Record<Category, CategoryDefinition> },
     );
     const source = generateConfigTypesSource(matrix, []);
@@ -179,8 +179,8 @@ describe("generateConfigTypesSource", () => {
 
   it("uses single-line format for 5 or fewer union members", () => {
     const matrix = createMockMatrix({
-      "api-framework-hono": createMockSkill("api-framework-hono", "api-api"),
-      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+      "api-framework-hono": createMockSkill("api-framework-hono"),
+      "web-framework-react": createMockSkill("web-framework-react"),
     });
     const source = generateConfigTypesSource(matrix, []);
     // 2 skills = single-line union
@@ -198,7 +198,7 @@ describe("generateConfigTypesSource", () => {
       "web-styling-scss-modules",
     ] as const;
     for (const id of ids) {
-      skills[id] = createMockSkill(id, "web-framework");
+      skills[id] = createMockSkill(id, { category: "web-framework" });
     }
     const matrix = createMockMatrix(skills);
     const source = generateConfigTypesSource(matrix, []);
@@ -213,14 +213,16 @@ describe("generateConfigTypesSource", () => {
       const acmeDeploy = "acme-deploy-pipeline" as SkillId;
       const acmeAudit = "acme-audit-runner" as SkillId;
       const matrix = createMockMatrix({
-        [acmeDeploy]: createMockSkill(acmeDeploy, "web-framework", {
+        [acmeDeploy]: createMockSkill(acmeDeploy, {
+          category: "web-framework",
           custom: true,
         }),
-        [acmeAudit]: createMockSkill(acmeAudit, "web-framework", {
+        [acmeAudit]: createMockSkill(acmeAudit, {
+          category: "web-framework",
           custom: true,
         }),
-        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
-        "web-styling-scss-modules": createMockSkill("web-styling-scss-modules", "web-styling"),
+        "web-framework-react": createMockSkill("web-framework-react"),
+        "web-styling-scss-modules": createMockSkill("web-styling-scss-modules"),
       });
       const source = generateConfigTypesSource(matrix, []);
 
@@ -250,7 +252,7 @@ describe("generateConfigTypesSource", () => {
 
     it("treats extra skill IDs as custom", () => {
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+        "web-framework-react": createMockSkill("web-framework-react"),
       });
       // Boundary cast: extra skill ID may not match built-in SkillId prefix patterns
       const source = generateConfigTypesSource(matrix, [], [], {
@@ -266,8 +268,8 @@ describe("generateConfigTypesSource", () => {
 
     it("omits comments when no custom skills exist", () => {
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
-        "api-framework-hono": createMockSkill("api-framework-hono", "api-api"),
+        "web-framework-react": createMockSkill("web-framework-react"),
+        "api-framework-hono": createMockSkill("api-framework-hono"),
       });
       const source = generateConfigTypesSource(matrix, []);
       expect(source).not.toContain("// Custom");
@@ -279,10 +281,12 @@ describe("generateConfigTypesSource", () => {
       const acmeDeploy = "acme-deploy-pipeline" as SkillId;
       const acmeAudit = "acme-audit-runner" as SkillId;
       const matrix = createMockMatrix({
-        [acmeDeploy]: createMockSkill(acmeDeploy, "web-framework", {
+        [acmeDeploy]: createMockSkill(acmeDeploy, {
+          category: "web-framework",
           custom: true,
         }),
-        [acmeAudit]: createMockSkill(acmeAudit, "web-framework", {
+        [acmeAudit]: createMockSkill(acmeAudit, {
+          category: "web-framework",
           custom: true,
         }),
       });
@@ -340,7 +344,8 @@ describe("generateConfigTypesSource", () => {
 
       const matrix = createMockMatrix(
         {
-          [acmeDeploy]: createMockSkill(acmeDeploy, "acme-deploy" as CategoryPath, {
+          [acmeDeploy]: createMockSkill(acmeDeploy, {
+            category: "acme-deploy" as CategoryPath,
             custom: true,
           }),
         },
@@ -372,7 +377,8 @@ describe("generateConfigTypesSource", () => {
 
       const matrix = createMockMatrix(
         {
-          [acmeCi]: createMockSkill(acmeCi, "devops-ci" as CategoryPath, {
+          [acmeCi]: createMockSkill(acmeCi, {
+            category: "devops-ci" as CategoryPath,
             custom: true,
           }),
         },
@@ -404,7 +410,8 @@ describe("generateConfigTypesSource", () => {
 
       const matrix = createMockMatrix(
         {
-          [acmeTool]: createMockSkill(acmeTool, "web-custom-tool", {
+          [acmeTool]: createMockSkill(acmeTool, {
+            category: "web-custom-tool",
             custom: true,
           }),
         },
@@ -425,10 +432,11 @@ describe("generateConfigTypesSource", () => {
       // Boundary cast: custom skill ID may not match built-in SkillId prefix patterns
       const acmeDeploy = "acme-deploy-pipeline" as SkillId;
       const matrix = createMockMatrix({
-        [acmeDeploy]: createMockSkill(acmeDeploy, "web-framework", {
+        [acmeDeploy]: createMockSkill(acmeDeploy, {
+          category: "web-framework",
           custom: true,
         }),
-        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+        "web-framework-react": createMockSkill("web-framework-react"),
       });
       const source = generateConfigTypesSource(matrix, []);
 
@@ -467,7 +475,7 @@ describe("regenerateConfigTypes", () => {
     await mkdir(claudeSrcDir, { recursive: true });
 
     const data = makeBackgroundData({
-      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+      "web-framework-react": createMockSkill("web-framework-react"),
     });
 
     await regenerateConfigTypes(tempDir, data);
@@ -481,7 +489,7 @@ describe("regenerateConfigTypes", () => {
   it("creates .claude-src/ and writes config-types.ts when data is provided", async () => {
     // When background data is non-null, writeFile creates directories as needed
     const data = makeBackgroundData({
-      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+      "web-framework-react": createMockSkill("web-framework-react"),
     });
 
     await regenerateConfigTypes(tempDir, data);
@@ -504,7 +512,7 @@ describe("regenerateConfigTypes", () => {
     await mkdir(claudeSrcDir, { recursive: true });
 
     const data = makeBackgroundData({
-      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+      "web-framework-react": createMockSkill("web-framework-react"),
     });
 
     await regenerateConfigTypes(tempDir, data, {
@@ -522,7 +530,7 @@ describe("regenerateConfigTypes", () => {
     await mkdir(claudeSrcDir, { recursive: true });
 
     const data = makeBackgroundData({
-      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+      "web-framework-react": createMockSkill("web-framework-react"),
     });
 
     await regenerateConfigTypes(tempDir, data, {

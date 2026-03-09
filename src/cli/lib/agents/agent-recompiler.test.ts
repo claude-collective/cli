@@ -8,7 +8,10 @@ import {
   cleanupTestDirs,
   writeTestSkill,
   fileExists,
+  createMockMatrix,
+  TEST_SKILLS,
 } from "../__tests__/helpers";
+import { useMatrixStore } from "../../stores/matrix-store";
 import type { PluginTestDirs } from "../__tests__/helpers";
 import type { AgentName, SkillId } from "../../types";
 
@@ -17,6 +20,12 @@ describe("agent-recompiler", () => {
 
   beforeEach(async () => {
     testDirs = await createTestDirs("cc-recompiler-test-");
+
+    useMatrixStore.getState().setMatrix(createMockMatrix({
+      "web-testing-vitest": TEST_SKILLS.vitest,
+      "web-framework-react": TEST_SKILLS.react,
+      "api-framework-hono": TEST_SKILLS.hono,
+    }));
   });
 
   afterEach(async () => {
@@ -95,9 +104,7 @@ describe("agent-recompiler", () => {
 
     it("compiles multiple agents", async () => {
       await writeTestSkill(testDirs.skillsDir, "web-framework-react");
-      await writeTestSkill(testDirs.skillsDir, "api-framework-hono", {
-        category: "api-api",
-      });
+      await writeTestSkill(testDirs.skillsDir, "api-framework-hono");
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,

@@ -7,12 +7,14 @@ import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 vi.mock("../../utils/logger");
 
 // Mock fetchFromSource (network call — must remain mocked)
-vi.mock("../loading", () => ({
+vi.mock("../loading", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../loading")>()),
   fetchFromSource: vi.fn(),
 }));
 
 // Mock configuration — avoids real filesystem reads for source config
-vi.mock("../configuration", () => ({
+vi.mock("../configuration", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../configuration")>()),
   loadProjectSourceConfig: vi.fn(),
 }));
 
