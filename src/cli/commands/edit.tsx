@@ -27,7 +27,7 @@ import {
   deriveInstallMode,
 } from "../lib/installation/index.js";
 import { getMarketplaceLabel, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
-import { getMatrix, getSkill, useMatrixStore } from "../stores/matrix-store";
+import { findSkill, getMatrix, getSkill, useMatrixStore } from "../stores/matrix-store";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
 import type { SkillId } from "../types/index.js";
@@ -234,7 +234,8 @@ export default class Edit extends BaseCommand {
       this.log(`  + ${getSkill(skillId).displayName}`);
     }
     for (const skillId of removedSkills) {
-      this.log(`  - ${getSkill(skillId).displayName}`);
+      const skill = findSkill(skillId);
+      this.log(`  - ${skill?.displayName ?? skillId}`);
     }
     for (const [skillId, change] of sourceChanges) {
       const fromLabel = formatSourceDisplayName(change.from);
