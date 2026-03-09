@@ -2,7 +2,6 @@ import { unique } from "remeda";
 import { create } from "zustand";
 import {
   BUILT_IN_DOMAIN_ORDER,
-  DEFAULT_PRESELECTED_SKILLS,
   DEFAULT_PUBLIC_SOURCE_NAME,
 } from "../consts.js";
 import type { InstallMode } from "../lib/installation/index.js";
@@ -30,7 +29,7 @@ import { typedEntries, typedKeys } from "../utils/typed-object.js";
 const BUILT_IN_DOMAINS: Domain[] = ["web", "api", "cli", "mobile", "shared"];
 
 function createDefaultSkillConfig(id: SkillId): SkillConfig {
-  return { id, scope: "project", source: DEFAULT_PUBLIC_SOURCE_NAME };
+  return { id, scope: "global", source: DEFAULT_PUBLIC_SOURCE_NAME };
 }
 
 /** Derive all unique domains from a categories map, preserving built-in order then appending custom. */
@@ -406,8 +405,6 @@ export type WizardState = {
    * @returns The domain at currentDomainIndex, or null if no domains are selected
    */
   getCurrentDomain: () => Domain | null;
-  /** Returns the foundational methodology skills that are always preselected (DEFAULT_PRESELECTED_SKILLS). */
-  getDefaultMethodologySkills: () => SkillId[];
   /**
    * Count total selected technologies across all domains.
    * @returns Number of selected skill IDs
@@ -567,7 +564,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         const saved = savedConfigs?.find((sc) => sc.id === id);
         return {
           id,
-          scope: saved?.scope ?? "project",
+          scope: saved?.scope ?? "global",
           source: saved?.source ?? DEFAULT_PUBLIC_SOURCE_NAME,
         };
       });
@@ -788,7 +785,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       }
       return {
         selectedAgents: [...state.selectedAgents, agent],
-        agentConfigs: [...state.agentConfigs, { name: agent, scope: "project" as const }],
+        agentConfigs: [...state.agentConfigs, { name: agent, scope: "global" as const }],
       };
     }),
 
@@ -819,7 +816,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const sorted = agents.sort();
       return {
         selectedAgents: sorted,
-        agentConfigs: sorted.map((name) => ({ name, scope: "project" as const })),
+        agentConfigs: sorted.map((name) => ({ name, scope: "global" as const })),
       };
     }),
 
@@ -860,10 +857,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   getCurrentDomain: () => {
     const state = get();
     return state.selectedDomains[state.currentDomainIndex] || null;
-  },
-
-  getDefaultMethodologySkills: () => {
-    return [...DEFAULT_PRESELECTED_SKILLS];
   },
 
   getTechnologyCount: () => {

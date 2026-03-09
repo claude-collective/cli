@@ -183,16 +183,9 @@ export const Wizard: React.FC<WizardProps> = ({
       allSkills = techNames.map((tech) => resolveAlias(tech));
     }
 
-    const methodologySkills = store.getDefaultMethodologySkills();
-    for (const skill of methodologySkills) {
-      if (!allSkills.includes(skill)) {
-        allSkills.push(skill);
-      }
-    }
-
     const skillConfigs: SkillConfig[] = allSkills.map((id) => {
       const existing = store.skillConfigs.find((sc) => sc.id === id);
-      return existing ?? { id, scope: "project" as const, source: "local" };
+      return existing ?? { id, scope: "global" as const, source: "local" };
     });
 
     const validation = validateSelection(allSkills);

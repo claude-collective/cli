@@ -163,7 +163,8 @@ function buildFocusableIds(groups: AgentGroup[]): FocusId[] {
 }
 
 export const StepAgents: React.FC = () => {
-  const store = useWizardStore();
+  const selectedAgents = useWizardStore((s) => s.selectedAgents);
+  const agentConfigs = useWizardStore((s) => s.agentConfigs);
   const matrix = useMatrixStore((s) => s.matrix!);
 
   const agentGroups = useMemo(() => buildAgentGroups(matrix), [matrix]);
@@ -185,7 +186,7 @@ export const StepAgents: React.FC = () => {
 
   useInput((input, key) => {
     if (key.escape) {
-      store.goBack();
+      useWizardStore.getState().goBack();
       return;
     }
 
@@ -204,21 +205,21 @@ export const StepAgents: React.FC = () => {
     }
 
     if (key.return) {
-      store.setStep("confirm");
+      useWizardStore.getState().setStep("confirm");
       return;
     }
 
     if (input === " " && focusedId !== "continue") {
-      store.toggleAgent(focusedId);
+      useWizardStore.getState().toggleAgent(focusedId);
     }
   });
 
   // Sync focusedAgentId so the wizard-level S key handler can toggle agent scope
   React.useEffect(() => {
-    store.setFocusedAgentId(focusedId === "continue" ? null : focusedId);
-  }, [focusedId, store]);
+    useWizardStore.getState().setFocusedAgentId(focusedId === "continue" ? null : focusedId);
+  }, [focusedId]);
 
-  const selectedCount = store.selectedAgents.length;
+  const selectedCount = selectedAgents.length;
   const continueLabel =
     selectedCount > 0 ? `Continue with ${selectedCount} agent(s)` : "Continue without agents";
 
@@ -243,10 +244,10 @@ export const StepAgents: React.FC = () => {
         );
       case "agent": {
         const isFocused = row.agent.id === focusedId;
-        const isSelected = store.selectedAgents.includes(row.agent.id);
+        const isSelected = selectedAgents.includes(row.agent.id);
         const checkbox = isSelected ? "[\u2713]" : "[ ]";
         const pointer = isFocused ? UI_SYMBOLS.CURRENT : " ";
-        const agentConfig = store.agentConfigs.find((ac) => ac.name === row.agent.id);
+        const agentConfig = agentConfigs.find((ac) => ac.name === row.agent.id);
         const scopeBadge =
           isSelected && agentConfig ? (agentConfig.scope === "global" ? " [G]" : " [P]") : "";
         return (

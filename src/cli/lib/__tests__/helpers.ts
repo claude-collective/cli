@@ -925,8 +925,7 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
  * builds the same WizardResultV2 that the real wizard produces:
  * 1. Collects all selected technologies from domainSelections
  * 2. Resolves aliases to canonical skill IDs
- * 3. Adds methodology skills (DEFAULT_PRESELECTED_SKILLS)
- * 4. Runs validation
+ * 3. Runs validation
  */
 export function buildWizardResultFromStore(
   matrix: MergedSkillsMatrix,
@@ -943,9 +942,6 @@ export function buildWizardResultFromStore(
     const techNames = store.getAllSelectedTechnologies();
     allSkills = techNames.map((tech) => resolveAlias(tech));
   }
-
-  const methodologySkills = store.getDefaultMethodologySkills();
-  allSkills = [...allSkills, ...methodologySkills.filter((s) => !allSkills.includes(s))];
 
   const validation = validateSelection(allSkills);
 
