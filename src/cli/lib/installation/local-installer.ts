@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 import type {
   AgentConfig,
@@ -24,8 +25,12 @@ import { defaultStacks } from "../configuration/default-stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills, buildStackProperty } from "../configuration";
+import { splitConfigByScope } from "../configuration/config-generator";
 import { generateConfigSource, type ConfigSourceOptions } from "../configuration/config-writer";
-import { generateConfigTypesSource } from "../configuration/config-types-writer";
+import {
+  generateConfigTypesSource,
+  generateProjectConfigTypesSource,
+} from "../configuration/config-types-writer";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -33,7 +38,6 @@ import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
   DEFAULT_PLUGIN_NAME,
-  GLOBAL_INSTALL_ROOT,
   LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
   STANDARD_FILES,
@@ -96,11 +100,13 @@ function resolveInstallPaths(
   projectDir: string,
   scope: "project" | "global" = "project",
 ): InstallPaths {
-  const baseDir = scope === "global" ? GLOBAL_INSTALL_ROOT : projectDir;
+  // Use os.homedir() at runtime for global scope so the path agrees with mocked
+  // home directories in tests (GLOBAL_INSTALL_ROOT is evaluated at import time)
+  const baseDir = scope === "global" ? os.homedir() : projectDir;
   return {
     skillsDir: path.join(baseDir, LOCAL_SKILLS_PATH),
     agentsDir: path.join(baseDir, CLAUDE_DIR, "agents"),
-    configPath: path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+    configPath: path.join(baseDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
   };
 }
 
@@ -350,7 +356,7 @@ function buildAgentScopeMap(config: ProjectConfig): Map<AgentName, "project" | "
   return map;
 }
 
-async function writeConfigTypes(
+async function writeStandaloneConfigTypes(
   configPath: string,
   matrix: MergedSkillsMatrix,
   agents: Record<AgentName, AgentDefinition>,
@@ -359,6 +365,75 @@ async function writeConfigTypes(
   const customAgentNames = typedKeys(agents).filter((name) => agents[name]?.custom === true);
   const source = generateConfigTypesSource(matrix, typedKeys(agents), customAgentNames);
   await writeFile(typesPath, source);
+}
+
+async function writeProjectConfigTypes(
+  projectConfigPath: string,
+  projectDir: string,
+): Promise<void> {
+  const typesPath = path.join(path.dirname(projectConfigPath), STANDARD_FILES.CONFIG_TYPES_TS);
+  const projectClaudeSrc = path.join(projectDir, CLAUDE_SRC_DIR);
+  const globalClaudeSrc = path.join(os.homedir(), CLAUDE_SRC_DIR);
+  const relativePath = path.relative(projectClaudeSrc, globalClaudeSrc);
+  // Convert to POSIX separators for TypeScript imports
+  const globalTypesImportPath = relativePath.split(path.sep).join("/");
+
+  const source = generateProjectConfigTypesSource({
+    globalTypesImportPath,
+    projectSkillIds: [],
+    projectAgentNames: [],
+    projectDomains: [],
+  });
+  await writeFile(typesPath, source);
+  verbose("Using project config-types.ts that imports from global");
+}
+
+/**
+ * Writes config.ts and config-types.ts split by scope.
+ * When installing into a project directory:
+ * - Global config/types go to ~/.claude-src/
+ * - Project config/types go to {projectDir}/.claude-src/ (with import from global)
+ * When installing from home directory, writes a single standalone config.
+ */
+async function writeScopedConfigs(
+  finalConfig: ProjectConfig,
+  matrix: MergedSkillsMatrix,
+  agents: Record<AgentName, AgentDefinition>,
+  projectDir: string,
+  projectConfigPath: string,
+): Promise<void> {
+  // Use os.homedir() at runtime (not GLOBAL_INSTALL_ROOT constant) so the path
+  // agrees with getGlobalConfigImportPath() which also calls os.homedir() at runtime
+  const homeDir = os.homedir();
+  const isProjectContext = path.resolve(projectDir) !== path.resolve(homeDir);
+
+  if (!isProjectContext) {
+    // Installing from ~/ — write directly to global config (no import preamble)
+    await writeConfigFile(finalConfig, projectConfigPath);
+    await writeStandaloneConfigTypes(projectConfigPath, matrix, agents);
+    return;
+  }
+
+  // Installing from project — split by scope and write to both locations
+  const { global: globalConfig, project: projectSplitConfig } = splitConfigByScope(finalConfig);
+  const globalConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+
+  // Write global config to ~/.claude-src/config.ts (standalone, no import preamble)
+  await ensureDir(path.dirname(globalConfigPath));
+  await writeConfigFile(globalConfig, globalConfigPath);
+  verbose(`Updated global config at ${globalConfigPath}`);
+
+  // Write global config-types.ts with actual types from the matrix
+  await writeStandaloneConfigTypes(globalConfigPath, matrix, agents);
+  verbose("Updated global config-types.ts with actual types");
+
+  // Write project config with import from global
+  await ensureDir(path.dirname(projectConfigPath));
+  await writeConfigFile(projectSplitConfig, projectConfigPath, { isProjectConfig: true });
+  verbose(`Updated project config at ${projectConfigPath}`);
+
+  // Write project config-types.ts that imports from global
+  await writeProjectConfigTypes(projectConfigPath, projectDir);
 }
 
 async function compileAndWriteAgents(
@@ -379,7 +454,7 @@ async function compileAndWriteAgents(
     sourceResult.sourcePath,
   );
 
-  const globalAgentsDir = path.join(GLOBAL_INSTALL_ROOT, CLAUDE_DIR, "agents");
+  const globalAgentsDir = path.join(os.homedir(), CLAUDE_DIR, "agents");
 
   const compiledAgentNames: AgentName[] = [];
   for (const [name, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
@@ -391,7 +466,7 @@ async function compileAndWriteAgents(
       installMode,
     );
 
-    // Route agent output by scope: global agents go to GLOBAL_INSTALL_ROOT, project agents to projectDir
+    // Route agent output by scope: global agents go to ~/. project agents to projectDir
     const scope = agentScopeMap?.get(name) ?? "project";
     const targetDir = scope === "global" ? globalAgentsDir : agentsDir;
     if (scope === "global") {
@@ -430,17 +505,21 @@ export async function installPluginConfig(
 ): Promise<PluginConfigResult> {
   const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
 
-  const paths = resolveInstallPaths(projectDir);
-  await ensureDir(paths.agentsDir);
-  await ensureDir(path.dirname(paths.configPath));
+  const projectPaths = resolveInstallPaths(projectDir, "project");
+
+  // Only create project directories if there are project-scoped agents
+  const hasProjectAgents = wizardResult.skills.some((s) => s.scope !== "global") ||
+    (wizardResult.agentConfigs ?? []).some((a) => a.scope !== "global");
+  if (hasProjectAgents) {
+    await ensureDir(projectPaths.agentsDir);
+  }
+  await ensureDir(path.dirname(projectPaths.configPath));
 
   const agents = await loadMergedAgents(sourceResult.sourcePath);
   const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
   const finalConfig = mergeResult.config;
 
-  await writeConfigFile(finalConfig, paths.configPath);
-
-  await writeConfigTypes(paths.configPath, sourceResult.matrix, agents);
+  await writeScopedConfigs(finalConfig, sourceResult.matrix, agents, projectDir, projectPaths.configPath);
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {
@@ -464,18 +543,18 @@ export async function installPluginConfig(
     skillsForCompilation,
     sourceResult,
     projectDir,
-    paths.agentsDir,
+    projectPaths.agentsDir,
     deriveInstallMode(finalConfig.skills),
     buildAgentScopeMap(finalConfig),
   );
 
   return {
     config: finalConfig,
-    configPath: paths.configPath,
+    configPath: projectPaths.configPath,
     compiledAgents: compiledAgentNames,
     wasMerged: mergeResult.merged,
     mergedConfigPath: mergeResult.existingConfigPath,
-    agentsDir: paths.agentsDir,
+    agentsDir: projectPaths.agentsDir,
   };
 }
 
@@ -513,8 +592,15 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const projectSkills = wizardResult.skills.filter((s) => s.scope !== "global");
   const globalSkills = wizardResult.skills.filter((s) => s.scope === "global");
 
-  // Prepare directories for each scope that has skills
-  await prepareDirectories(projectPaths);
+  // Only create project directories when there are project-scoped skills or agents
+  const hasProjectItems = projectSkills.length > 0 ||
+    (wizardResult.agentConfigs ?? []).some((a) => a.scope !== "global");
+  if (hasProjectItems) {
+    await prepareDirectories(projectPaths);
+  } else {
+    // Always ensure .claude-src/ exists for project config (it imports from global)
+    await ensureDir(path.dirname(projectPaths.configPath));
+  }
   if (globalSkills.length > 0) {
     await ensureDir(globalPaths.skillsDir);
   }
@@ -536,9 +622,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
   const finalConfig = mergeResult.config;
 
-  await writeConfigFile(finalConfig, projectPaths.configPath);
-
-  await writeConfigTypes(projectPaths.configPath, sourceResult.matrix, agents);
+  await writeScopedConfigs(finalConfig, sourceResult.matrix, agents, projectDir, projectPaths.configPath);
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {

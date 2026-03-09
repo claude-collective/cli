@@ -1,12 +1,41 @@
+import os from "os";
 import path from "path";
 import { unique } from "remeda";
 import type { AgentName, MergedSkillsMatrix, SkillId, Category } from "../../types";
-import { CLAUDE_SRC_DIR, CLI_BIN_NAME, PROJECT_ROOT, STANDARD_FILES } from "../../consts";
-import { directoryExists, writeFile } from "../../utils/fs";
+import { CLAUDE_SRC_DIR, CLI_BIN_NAME, GLOBAL_INSTALL_ROOT, PROJECT_ROOT, STANDARD_FILES } from "../../consts";
+import { directoryExists, fileExists, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedKeys } from "../../utils/typed-object";
 
 const MULTI_LINE_THRESHOLD = 6;
+
+/**
+ * Returns the absolute path to the global config-types.ts if it exists, or null.
+ * Used to determine whether a project config-types.ts should import from global.
+ */
+export async function getGlobalConfigTypesPath(): Promise<string | null> {
+  const globalConfigTypesPath = path.join(
+    GLOBAL_INSTALL_ROOT,
+    CLAUDE_SRC_DIR,
+    STANDARD_FILES.CONFIG_TYPES_TS,
+  );
+  if (await fileExists(globalConfigTypesPath)) {
+    return globalConfigTypesPath;
+  }
+  return null;
+}
+
+/**
+ * Computes a relative import path from a project's .claude-src/ to the global .claude-src/.
+ * Returns a POSIX-style relative path suitable for TypeScript import statements.
+ */
+function computeGlobalTypesImportPath(projectDir: string): string {
+  const projectClaudeSrc = path.join(projectDir, CLAUDE_SRC_DIR);
+  const globalClaudeSrc = path.join(GLOBAL_INSTALL_ROOT, CLAUDE_SRC_DIR);
+  const relativePath = path.relative(projectClaudeSrc, globalClaudeSrc);
+  // Convert to POSIX separators for TypeScript imports
+  return relativePath.split(path.sep).join("/");
+}
 
 /**
  * Shared ProjectConfig interface template used by both standalone and global-import config-types.ts.
@@ -141,12 +170,29 @@ export async function regenerateConfigTypes(
 
   const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
 
-  const source = generateConfigTypesSource(
-    data.matrix,
-    data.agentNames,
-    data.customAgentNames,
-    extras,
-  );
+  // When a global installation exists and we're regenerating for a project,
+  // generate a project config-types.ts that imports from the global one
+  const isProjectScope = path.resolve(projectDir) !== path.resolve(os.homedir());
+  const globalConfigTypes = isProjectScope ? await getGlobalConfigTypesPath() : null;
+
+  let source: string;
+  if (globalConfigTypes) {
+    source = generateProjectConfigTypesSource({
+      globalTypesImportPath: computeGlobalTypesImportPath(projectDir),
+      projectSkillIds: extras?.extraSkillIds ?? [],
+      projectAgentNames: extras?.extraAgentNames ?? [],
+      projectDomains: extras?.extraDomains ?? [],
+    });
+    verbose("Using project config-types.ts that imports from global");
+  } else {
+    source = generateConfigTypesSource(
+      data.matrix,
+      data.agentNames,
+      data.customAgentNames,
+      extras,
+    );
+  }
+
   const configTypesPath = path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TYPES_TS);
   await writeFile(configTypesPath, source);
   verbose(`Regenerated ${STANDARD_FILES.CONFIG_TYPES_TS}`);
