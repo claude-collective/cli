@@ -118,7 +118,11 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
           {" "}
           {getSkill(option.id).displayName}{" "}
         </Text>
-        {option.scope === "global" && <Text color={CLI_COLORS.WARNING}>G </Text>}
+        {option.scope === "global" ? (
+          <Text color={CLI_COLORS.WARNING}>G </Text>
+        ) : (
+          <Text color={CLI_COLORS.INFO}>P </Text>
+        )}
         {compatibilityLabel && <Text dimColor>{compatibilityLabel} </Text>}
       </>
     </Box>

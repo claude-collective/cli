@@ -17,7 +17,7 @@ const BUILT_IN_DOMAIN_DESCRIPTIONS: Record<Domain, string> = {
 
 export const DomainSelection: React.FC = () => {
   const { selectedDomains, toggleDomain, setStep, setApproach, selectStack } = useWizardStore();
-  const matrix = useMatrixStore((s) => s.matrix!);
+  const matrix = useMatrixStore((s) => s.getMatrix());
 
   const availableDomains = useMemo((): CheckboxItem<Domain>[] => {
     const matrixDomains = unique(
@@ -31,7 +31,7 @@ export const DomainSelection: React.FC = () => {
     return ordered.map((domain) => ({
       id: domain,
       label: getDomainDisplayName(domain),
-      description: BUILT_IN_DOMAIN_DESCRIPTIONS[domain] ?? `${getDomainDisplayName(domain)} skills`,
+      description: BUILT_IN_DOMAIN_DESCRIPTIONS[domain],
     }));
   }, [matrix]);
 

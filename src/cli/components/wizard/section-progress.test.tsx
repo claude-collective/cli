@@ -163,7 +163,7 @@ describe("SectionProgress component", () => {
   });
 
   describe("display variants from spec", () => {
-    it("should match multi-domain Build step format", () => {
+    it("should match multi-domain Skills step format", () => {
       // Domain: Web                                         [1/2] Next: API
       const { lastFrame, unmount } = render(
         <SectionProgress label="Domain" current="Web" index={1} total={2} next="API" />,
