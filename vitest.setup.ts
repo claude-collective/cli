@@ -1,7 +1,8 @@
 import os from "os";
 import path from "path";
 import { mkdtemp, rm } from "fs/promises";
-import { beforeAll, afterAll, vi } from "vitest";
+import { beforeAll, beforeEach, afterAll, vi } from "vitest";
+import { useMatrixStore } from "./src/cli/stores/matrix-store";
 
 // Prevent tests from finding the real ~/.claude-src/config.yaml via global fallback.
 // loadProjectConfig() falls back to os.homedir() when no project-level config exists,
@@ -21,6 +22,12 @@ beforeAll(async () => {
     }
     return testHomeDir;
   });
+});
+
+beforeEach(async () => {
+  useMatrixStore.getState().reset();
+  const { useWizardStore } = await import("./src/cli/stores/wizard-store");
+  useWizardStore.getState().reset();
 });
 
 afterAll(async () => {

@@ -354,11 +354,6 @@ export type BoundSkillCandidate = {
  */
 export type SkillOption = {
   id: SkillId;
-  /** Kebab-case short key for alias resolution and lookups */
-  slug: SkillSlug;
-  /** Title-cased label for UI display (e.g., "React", "Apollo Client") */
-  displayName: string;
-  description: string;
   /** True if a discourage rule, conflict, or unmet requirement applies (shown with warning indicator) */
   discouraged: boolean;
   /** Explains which discourage/conflict/requirement rule applies */
