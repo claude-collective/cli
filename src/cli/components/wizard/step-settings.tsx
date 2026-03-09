@@ -11,6 +11,14 @@ import { useSourceOperations } from "../hooks/use-source-operations.js";
 import { useTextInput } from "../hooks/use-text-input.js";
 import { verbose } from "../../utils/logger.js";
 import { getErrorMessage } from "../../utils/errors.js";
+import {
+  HOTKEY_ADD_SOURCE,
+  HOTKEY_SETTINGS,
+  KEY_LABEL_DEL,
+  KEY_LABEL_ENTER,
+  KEY_LABEL_ESC,
+  isHotkey,
+} from "./hotkeys.js";
 
 const DEFAULT_SOURCE_NAME = "public";
 
@@ -123,7 +131,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({
       return;
     }
 
-    if (input === "a" || input === "A") {
+    if (isHotkey(input, HOTKEY_ADD_SOURCE)) {
       addModal.open(true);
       setAddSourceInput("");
     }
@@ -212,7 +220,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({
 
       <Box marginTop={1}>
         <Text dimColor>
-          {addModal.isOpen ? "ENTER submit  ESC cancel" : "A add  DEL remove  ESC or G to close"}
+          {addModal.isOpen ? `${KEY_LABEL_ENTER} submit  ${KEY_LABEL_ESC} cancel` : `${HOTKEY_ADD_SOURCE.label} add  ${KEY_LABEL_DEL} remove  ${KEY_LABEL_ESC} or ${HOTKEY_SETTINGS.label} to close`}
         </Text>
       </Box>
     </Box>

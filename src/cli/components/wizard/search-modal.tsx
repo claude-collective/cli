@@ -3,6 +3,7 @@ import { Box, Text } from "ink";
 import type { BoundSkillCandidate } from "../../types/index.js";
 import { CLI_COLORS } from "../../consts.js";
 import { useKeyboardNavigation } from "../hooks/use-keyboard-navigation.js";
+import { KEY_LABEL_ARROWS_VERT, KEY_LABEL_ENTER, KEY_LABEL_ESC } from "./hotkeys.js";
 
 export type SearchModalProps = {
   results: BoundSkillCandidate[];
@@ -86,7 +87,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ results, alias, onBind
 
       <Text> </Text>
       <Text dimColor>
-        {"\u2191"}/{"\u2193"} navigate ENTER bind ESC close
+        {KEY_LABEL_ARROWS_VERT} navigate {KEY_LABEL_ENTER} bind {KEY_LABEL_ESC} close
       </Text>
     </Box>
   );

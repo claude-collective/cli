@@ -2,6 +2,18 @@ import { Box, Text } from "ink";
 import React from "react";
 import { CLI_COLORS } from "../../consts.js";
 import type { WizardStep } from "../../stores/wizard-store.js";
+import {
+  HOTKEY_ACCEPT_DEFAULTS,
+  HOTKEY_HELP,
+  HOTKEY_SCOPE,
+  HOTKEY_SETTINGS,
+  HOTKEY_TOGGLE_LABELS,
+  KEY_LABEL_ENTER,
+  KEY_LABEL_ESC,
+  KEY_LABEL_SPACE,
+  KEY_LABEL_TAB,
+  KEY_LABEL_VIM,
+} from "./hotkeys.js";
 
 type HelpSection = {
   title: string;
@@ -12,31 +24,31 @@ const GLOBAL_KEYS: HelpSection = {
   title: "Navigation",
   keys: [
     { key: "Arrow keys", description: "Move focus" },
-    { key: "SPACE", description: "Toggle selection" },
-    { key: "ENTER", description: "Confirm / continue" },
-    { key: "ESC", description: "Go back" },
-    { key: "TAB", description: "Jump to next section" },
+    { key: KEY_LABEL_SPACE, description: "Toggle selection" },
+    { key: KEY_LABEL_ENTER, description: "Confirm / continue" },
+    { key: KEY_LABEL_ESC, description: "Go back" },
+    { key: KEY_LABEL_TAB, description: "Jump to next section" },
   ],
 };
 
 const GLOBAL_TOGGLES: HelpSection = {
   title: "Toggles",
-  keys: [{ key: "?", description: "Toggle this help" }],
+  keys: [{ key: HOTKEY_HELP.label, description: "Toggle this help" }],
 };
 
 const BUILD_KEYS: HelpSection = {
-  title: "Build Step",
+  title: "Skills Step",
   keys: [
-    { key: "D", description: "Toggle compatibility labels" },
-    { key: "S", description: "Toggle skill scope (project/global)" },
-    { key: "A", description: "Accept stack defaults (stack path only)" },
-    { key: "h/j/k/l", description: "Vim-style navigation" },
+    { key: HOTKEY_TOGGLE_LABELS.label, description: "Toggle compatibility labels" },
+    { key: HOTKEY_SCOPE.label, description: "Toggle skill scope (project/global)" },
+    { key: HOTKEY_ACCEPT_DEFAULTS.label, description: "Accept stack defaults (stack path only)" },
+    { key: KEY_LABEL_VIM, description: "Vim-style navigation" },
   ],
 };
 
 const SOURCES_KEYS: HelpSection = {
   title: "Sources Step",
-  keys: [{ key: "S", description: "Toggle source settings" }],
+  keys: [{ key: HOTKEY_SETTINGS.label, description: "Toggle source settings" }],
 };
 
 const AGENTS_KEYS: HelpSection = {
@@ -98,7 +110,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ currentStep }) => {
       <HelpSectionView section={GLOBAL_TOGGLES} />
       {stepSection && <HelpSectionView section={stepSection} />}
 
-      <Text dimColor>Press ESC or ? to close</Text>
+      <Text dimColor>Press {KEY_LABEL_ESC} or {HOTKEY_HELP.label} to close</Text>
     </Box>
   );
 };

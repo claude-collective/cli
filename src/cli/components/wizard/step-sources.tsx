@@ -11,6 +11,13 @@ import type {
   SkillId,
 } from "../../types/index.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
+import {
+  HOTKEY_SET_ALL_LOCAL,
+  HOTKEY_SET_ALL_PLUGIN,
+  KEY_LABEL_ENTER,
+  KEY_LABEL_ESC,
+  isHotkey,
+} from "./hotkeys.js";
 import { SelectionCard } from "./selection-card.js";
 import { SourceGrid } from "./source-grid.js";
 import { ViewTitle } from "./view-title.js";
@@ -90,10 +97,10 @@ export const StepSources: React.FC<StepSourcesProps> = ({
     } else if (view === "customize") {
       if (isGridSearching) return;
 
-      if (input === "l" || input === "L") {
+      if (isHotkey(input, HOTKEY_SET_ALL_LOCAL)) {
         store.setAllSourcesLocal();
       }
-      if (input === "p" || input === "P") {
+      if (isHotkey(input, HOTKEY_SET_ALL_PLUGIN)) {
         store.setAllSourcesPlugin();
       }
       if (key.return) {
@@ -122,7 +129,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({
           />
         </Box>
         <Box marginTop={1}>
-          <Text dimColor>L set all local P set all plugin ENTER continue ESC back</Text>
+          <Text dimColor>{HOTKEY_SET_ALL_LOCAL.label} set all local {HOTKEY_SET_ALL_PLUGIN.label} set all plugin {KEY_LABEL_ENTER} continue {KEY_LABEL_ESC} back</Text>
         </Box>
       </Box>
     );

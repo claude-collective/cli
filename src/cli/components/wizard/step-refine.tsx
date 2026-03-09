@@ -1,6 +1,7 @@
 import { Box, Text, useInput } from "ink";
 import React from "react";
 import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
+import { KEY_LABEL_ENTER, KEY_LABEL_ESC, KEY_LABEL_ARROWS_VERT } from "./hotkeys.js";
 
 export type RefineAction = "all-recommended" | "customize" | null;
 
@@ -88,7 +89,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
 
       <Box marginTop={1}>
         <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate ENTER continue ESC back
+          {KEY_LABEL_ARROWS_VERT} navigate {KEY_LABEL_ENTER} continue {KEY_LABEL_ESC} back
         </Text>
       </Box>
     </Box>

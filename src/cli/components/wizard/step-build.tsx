@@ -12,6 +12,7 @@ import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { CategoryGrid } from "./category-grid.js";
+import { KEY_LABEL_ENTER, KEY_LABEL_ESC } from "./hotkeys.js";
 import { getDomainDisplayName, orderDomains } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -39,7 +40,7 @@ const Footer: React.FC<FooterProps> = ({ validationError }) => {
       {validationError && (
         <Box flexDirection="column" marginBottom={1}>
           <Text color={CLI_COLORS.WARNING}>{validationError}</Text>
-          <Text dimColor>Press ESC to go back, or select a skill and press ENTER to continue.</Text>
+          <Text dimColor>Press {KEY_LABEL_ESC} to go back, or select a skill and press {KEY_LABEL_ENTER} to continue.</Text>
         </Box>
       )}
     </Box>

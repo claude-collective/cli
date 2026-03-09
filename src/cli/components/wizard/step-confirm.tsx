@@ -3,6 +3,7 @@ import React from "react";
 import { CLI_COLORS } from "../../consts.js";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import type { Domain, DomainSelections } from "../../types/index.js";
+import { KEY_LABEL_ENTER, KEY_LABEL_ESC } from "./hotkeys.js";
 import { getDomainDisplayName } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -123,7 +124,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
       </Box>
 
       <Box marginTop={1}>
-        <Text dimColor>ENTER install ESC go back</Text>
+        <Text dimColor>{KEY_LABEL_ENTER} install {KEY_LABEL_ESC} go back</Text>
       </Box>
     </Box>
   );

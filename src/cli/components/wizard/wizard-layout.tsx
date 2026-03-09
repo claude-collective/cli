@@ -6,6 +6,18 @@ import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
 import { HelpModal } from "./help-modal.js";
+import {
+  HOTKEY_ACCEPT_DEFAULTS,
+  HOTKEY_HELP,
+  HOTKEY_SCOPE,
+  HOTKEY_SETTINGS,
+  HOTKEY_TOGGLE_LABELS,
+  KEY_LABEL_ARROWS,
+  KEY_LABEL_ARROWS_VERT,
+  KEY_LABEL_ENTER,
+  KEY_LABEL_ESC,
+  KEY_LABEL_SPACE,
+} from "./hotkeys.js";
 import { WIZARD_STEPS, WizardTabs } from "./wizard-tabs.js";
 
 type KeyHintProps = {
@@ -44,10 +56,10 @@ const DefinitionItem: React.FC<KeyHintProps> = ({
 };
 
 const HOT_KEYS: { label: string; values: string[] }[] = [
-  { label: "navigate", values: ["\u2190/\u2192", "\u2191/\u2193"] },
-  { label: "select", values: ["SPACE"] },
-  { label: "continue", values: ["ENTER"] },
-  { label: "back", values: ["ESC"] },
+  { label: "navigate", values: [KEY_LABEL_ARROWS, KEY_LABEL_ARROWS_VERT] },
+  { label: "select", values: [KEY_LABEL_SPACE] },
+  { label: "continue", values: [KEY_LABEL_ENTER] },
+  { label: "back", values: [KEY_LABEL_ESC] },
 ];
 
 const WizardFooter = () => {
@@ -67,7 +79,7 @@ const WizardFooter = () => {
     >
       <DefinitionItem
         label="Accept defaults"
-        values={["A"]}
+        values={[HOTKEY_ACCEPT_DEFAULTS.label]}
         isVisible={store.step === "build" && !!store.selectedStackId}
       />
       {HOT_KEYS.map((hotkey) => (
@@ -138,18 +150,22 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
             <Box paddingX={1} columnGap={2} marginTop={2}>
               <DefinitionItem
                 label="Labels"
-                values={["D"]}
+                values={[HOTKEY_TOGGLE_LABELS.label]}
                 isVisible={store.step === "build"}
                 isActive={store.showLabels}
               />
-              <DefinitionItem label="Scope" values={["S"]} isVisible={store.step === "build"} />
+              <DefinitionItem
+                label="Scope"
+                values={[HOTKEY_SCOPE.label]}
+                isVisible={store.step === "build"}
+              />
               <DefinitionItem
                 label="Settings"
-                values={["S"]}
+                values={[HOTKEY_SETTINGS.label]}
                 isVisible={store.step === "sources" && FEATURE_FLAGS.SOURCE_SEARCH}
                 isActive={store.showSettings}
               />
-              <DefinitionItem label="Help" values={["?"]} />
+              <DefinitionItem label="Help" values={[HOTKEY_HELP.label]} />
             </Box>
             <WizardFooter />
           </>

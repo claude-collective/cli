@@ -13,6 +13,13 @@ import { StepSettings } from "./step-settings.js";
 import { StepAgents } from "./step-agents.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
 import { getMatrix } from "../../stores/matrix-store.js";
+import {
+  HOTKEY_ACCEPT_DEFAULTS,
+  HOTKEY_HELP,
+  HOTKEY_SCOPE,
+  HOTKEY_SETTINGS,
+  isHotkey,
+} from "./hotkeys.js";
 import type {
   AgentName,
   Domain,
@@ -100,20 +107,20 @@ export const Wizard: React.FC<WizardProps> = ({
   useInput((input, key) => {
     // ESC is handled by step-settings.tsx's own useKeyboardNavigation hook
     if (store.showSettings) {
-      if (input === "s" || input === "S") {
+      if (isHotkey(input, HOTKEY_SETTINGS)) {
         store.toggleSettings();
       }
       return;
     }
 
     if (store.showHelp) {
-      if (key.escape || input === "?") {
+      if (key.escape || isHotkey(input, HOTKEY_HELP)) {
         store.toggleHelp();
       }
       return;
     }
 
-    if (input === "?") {
+    if (isHotkey(input, HOTKEY_HELP)) {
       store.toggleHelp();
       return;
     }
@@ -134,13 +141,13 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    if ((input === "a" || input === "A") && store.step === "build" && store.selectedStackId) {
+    if (isHotkey(input, HOTKEY_ACCEPT_DEFAULTS) && store.step === "build" && store.selectedStackId) {
       store.setStackAction("defaults");
       store.setStep("confirm");
       return;
     }
 
-    if ((input === "s" || input === "S") && store.step === "build") {
+    if (isHotkey(input, HOTKEY_SCOPE) && store.step === "build") {
       const focused = store.focusedSkillId;
       if (focused) {
         store.toggleSkillScope(focused);
@@ -148,7 +155,7 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    if ((input === "s" || input === "S") && store.step === "agents") {
+    if (isHotkey(input, HOTKEY_SCOPE) && store.step === "agents") {
       const focused = store.focusedAgentId;
       if (focused) {
         store.toggleAgentScope(focused);
@@ -156,7 +163,7 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    if ((input === "s" || input === "S") && store.step === "sources") {
+    if (isHotkey(input, HOTKEY_SETTINGS) && store.step === "sources") {
       store.toggleSettings();
       return;
     }
