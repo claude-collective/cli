@@ -15,9 +15,13 @@ export type ConfigSourceOptions = {
   isProjectConfig?: boolean;
 };
 
+/** Fields that are extracted into typed named variables below the export default */
+const EXTRACTED_FIELDS = new Set(["skills", "agents", "stack", "domains"]);
+
 /**
  * Generates a TypeScript config file source from a ProjectConfig object.
- * Output is a plain object literal with `satisfies ProjectConfig` for type safety.
+ * The export default sits at the top as a table of contents, with typed named
+ * variables (skills, agents, stack, domains) declared below it.
  *
  * When `options.isProjectConfig` is true, the generated config imports from the global
  * config and spreads global arrays into skills, agents, and domains.
@@ -28,25 +32,119 @@ export function generateConfigSource(config: ProjectConfig, options?: ConfigSour
     : { ...config };
 
   // JSON.parse(JSON.stringify(x)) removes undefined values
-  const cleaned = JSON.parse(JSON.stringify(serializable));
+  const cleaned: Record<string, unknown> = JSON.parse(JSON.stringify(serializable));
 
   if (options?.isProjectConfig) {
     return generateProjectConfigWithGlobalImport(cleaned, getGlobalConfigImportPath());
   }
 
-  const body = JSON.stringify(cleaned, null, 2);
+  return generateStandaloneConfig(cleaned);
+}
 
-  return [
-    `import type { ProjectConfig } from "./config-types";`,
-    ``,
-    `export default ${body} satisfies ProjectConfig;`,
-    ``,
-  ].join("\n");
+/**
+ * Generates a standalone config source with typed named variables above the export default.
+ * The export default at the bottom acts as a table of contents, referencing the named variables.
+ */
+function generateStandaloneConfig(cleaned: Record<string, unknown>): string {
+  // Boundary cast: cleaned comes from JSON.parse(JSON.stringify(...)) so arrays are plain JSON values
+  const skillsArr = (cleaned.skills as unknown[]) ?? [];
+  const agentsArr = (cleaned.agents as unknown[]) ?? [];
+  const stackObj = cleaned.stack as Record<string, unknown> | undefined;
+  const domainsArr = (cleaned.domains as unknown[]) ?? [];
+
+  const hasSkills = skillsArr.length > 0;
+  const hasAgents = agentsArr.length > 0;
+  const hasStack = stackObj != null && Object.keys(stackObj).length > 0;
+  const hasDomains = domainsArr.length > 0;
+
+  // Build type imports based on what's used
+  const typeImports = buildTypeImports({ hasSkills, hasAgents, hasStack, hasDomains });
+
+  const lines: string[] = [
+    `import type { ${typeImports} } from "./config-types";`,
+  ];
+
+  // Add named variable declarations above the export default
+  if (hasSkills) {
+    lines.push(``);
+    const items = skillsArr.map((s) => `  ${JSON.stringify(s)},`).join("\n");
+    lines.push(`const skills: SkillConfig[] = [`);
+    lines.push(items);
+    lines.push(`];`);
+  }
+
+  if (hasAgents) {
+    lines.push(``);
+    const items = agentsArr.map((a) => `  ${JSON.stringify(a)},`).join("\n");
+    lines.push(`const agents: AgentScopeConfig[] = [`);
+    lines.push(items);
+    lines.push(`];`);
+  }
+
+  if (hasStack) {
+    lines.push(``);
+    const stackBody = JSON.stringify(stackObj, null, 2);
+    lines.push(`const stack: Record<AgentName, StackAgentConfig> = ${stackBody};`);
+  }
+
+  if (hasDomains) {
+    lines.push(``);
+    const items = domainsArr.map((d) => JSON.stringify(d)).join(", ");
+    lines.push(`const domains: Domain[] = [${items}];`);
+  }
+
+  // Build export default fields
+  const exportFields: string[] = [];
+  for (const [key, value] of Object.entries(cleaned)) {
+    if (EXTRACTED_FIELDS.has(key)) {
+      if (key === "skills") {
+        exportFields.push(`  skills${hasSkills ? "" : ": []"},`);
+      } else if (key === "agents") {
+        exportFields.push(`  agents${hasAgents ? "" : ": []"},`);
+      } else if (key === "stack" && hasStack) {
+        exportFields.push(`  stack,`);
+      } else if (key === "domains") {
+        exportFields.push(`  domains${hasDomains ? "" : ": []"},`);
+      }
+    } else {
+      exportFields.push(`  ${JSON.stringify(key)}: ${JSON.stringify(value)},`);
+    }
+  }
+
+  lines.push(``);
+  lines.push(`export default {`);
+  lines.push(...exportFields);
+  lines.push(`} satisfies ProjectConfig;`);
+
+  lines.push(``);
+  return lines.join("\n");
+}
+
+/**
+ * Builds the type import list based on which extracted fields are present.
+ * ProjectConfig is always included. Other types are included only when used.
+ */
+function buildTypeImports(flags: {
+  hasSkills: boolean;
+  hasAgents: boolean;
+  hasStack: boolean;
+  hasDomains: boolean;
+}): string {
+  const types: string[] = [];
+  if (flags.hasStack) types.push("AgentName");
+  if (flags.hasAgents) types.push("AgentScopeConfig");
+  if (flags.hasDomains) types.push("Domain");
+  types.push("ProjectConfig");
+  if (flags.hasSkills) types.push("SkillConfig");
+  if (flags.hasStack) types.push("StackAgentConfig");
+  return types.join(", ");
 }
 
 /**
  * Generates a project config source that imports from the global config and extends it.
- * Arrays (skills, agents, domains) are spread with globalConfig first, then project items.
+ * Typed named variables are declared above the export default. The export default at
+ * the bottom acts as a table of contents. Arrays (skills, agents, domains) are spread
+ * with globalConfig first, then project items.
  */
 function generateProjectConfigWithGlobalImport(
   cleaned: Record<string, unknown>,
@@ -55,39 +153,90 @@ function generateProjectConfigWithGlobalImport(
   const importPath = `${globalImportPath}/config`;
 
   // Boundary cast: cleaned comes from JSON.parse(JSON.stringify(...)) so arrays are plain JSON values
-  const skillItems = ((cleaned.skills as unknown[]) ?? [])
-    .map((s) => `    ${JSON.stringify(s)},`)
-    .join("\n");
-  const agentItems = ((cleaned.agents as unknown[]) ?? [])
-    .map((a) => `    ${JSON.stringify(a)},`)
-    .join("\n");
+  const skillsArr = (cleaned.skills as unknown[]) ?? [];
+  const agentsArr = (cleaned.agents as unknown[]) ?? [];
+  const stackObj = cleaned.stack as Record<string, unknown> | undefined;
+  const domainsArr = (cleaned.domains as unknown[]) ?? [];
 
-  const domainsBlock = cleaned.domains
-    ? `  domains: [...(globalConfig.domains ?? []),\n${(cleaned.domains as unknown[]).map((d) => `    ${JSON.stringify(d)},`).join("\n")}\n  ],`
-    : "";
+  const hasProjectDomains = domainsArr.length > 0;
+  const hasStack = stackObj != null && Object.keys(stackObj).length > 0;
 
-  const arrayFields = new Set(["skills", "agents", "domains", "name"]);
+  // Build type imports
+  const typeImports = buildTypeImports({
+    hasSkills: true, // Always present (spread from global)
+    hasAgents: true, // Always present (spread from global)
+    hasStack,
+    hasDomains: hasProjectDomains,
+  });
+
+  const lines: string[] = [
+    `import globalConfig from "${importPath}";`,
+    `import type { ${typeImports} } from "./config-types";`,
+  ];
+
+  // Skills variable (always present with global spread)
+  lines.push(``);
+  const skillItems = skillsArr.map((s) => `  ${JSON.stringify(s)},`).join("\n");
+  lines.push(`const skills: SkillConfig[] = [`);
+  lines.push(`  ...globalConfig.skills,`);
+  if (skillItems) lines.push(skillItems);
+  lines.push(`];`);
+
+  // Agents variable (always present with global spread)
+  lines.push(``);
+  const agentItems = agentsArr.map((a) => `  ${JSON.stringify(a)},`).join("\n");
+  lines.push(`const agents: AgentScopeConfig[] = [`);
+  lines.push(`  ...globalConfig.agents,`);
+  if (agentItems) lines.push(agentItems);
+  lines.push(`];`);
+
+  // Stack variable (only if project has stack assignments)
+  if (hasStack) {
+    lines.push(``);
+    const stackBody = JSON.stringify(stackObj, null, 2);
+    lines.push(`const stack: Record<AgentName, StackAgentConfig> = ${stackBody};`);
+  }
+
+  // Domains variable (only if project has domains)
+  if (hasProjectDomains) {
+    lines.push(``);
+    const domainItems = domainsArr.map((d) => `  ${JSON.stringify(d)},`).join("\n");
+    lines.push(`const domains: Domain[] = [`);
+    lines.push(`  ...(globalConfig.domains ?? []),`);
+    if (domainItems) lines.push(domainItems);
+    lines.push(`];`);
+  }
+
+  // Build scalar fields (everything that isn't an extracted field or name)
   const scalarFields = Object.entries(cleaned)
-    .filter(([key]) => !arrayFields.has(key))
+    .filter(([key]) => !EXTRACTED_FIELDS.has(key) && key !== "name")
     .map(([key, value]) => `  ${JSON.stringify(key)}: ${JSON.stringify(value)},`)
     .join("\n");
 
-  const tail =
-    (domainsBlock ? `${domainsBlock}\n` : "") + (scalarFields ? `${scalarFields}\n` : "");
+  // Build export default (table of contents at bottom)
+  const exportFields: string[] = [`  ...globalConfig,`];
+  if (cleaned.name) {
+    exportFields.push(`  name: ${JSON.stringify(cleaned.name)},`);
+  }
+  exportFields.push(`  skills,`);
+  exportFields.push(`  agents,`);
+  if (hasStack) {
+    exportFields.push(`  stack,`);
+  }
+  if (hasProjectDomains) {
+    exportFields.push(`  domains,`);
+  }
+  if (scalarFields) {
+    exportFields.push(scalarFields);
+  }
 
-  return `import globalConfig from "${importPath}";
-import type { ProjectConfig } from "./config-types";
+  lines.push(``);
+  lines.push(`export default {`);
+  lines.push(...exportFields);
+  lines.push(`} satisfies ProjectConfig;`);
 
-export default {
-  ...globalConfig,
-${cleaned.name ? `  name: ${JSON.stringify(cleaned.name)},\n` : ""}  skills: [
-    ...globalConfig.skills,
-${skillItems ? `${skillItems}\n` : ""}  ],
-  agents: [
-    ...globalConfig.agents,
-${agentItems ? `${agentItems}\n` : ""}  ],
-${tail}} satisfies ProjectConfig;
-`;
+  lines.push(``);
+  return lines.join("\n");
 }
 
 /**
