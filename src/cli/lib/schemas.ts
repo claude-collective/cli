@@ -793,7 +793,7 @@ export const projectSourceConfigSchema = z
   .passthrough();
 
 /**
- * Strict schema for IDE validation of .claude-src/config.ts (ProjectSourceConfig).
+ * Strict schema for IDE validation of .claude-src/config.ts (ProjectConfig source fields).
  * Used to generate project-source-config.schema.json for IDE validation.
  * All fields optional (source configs may have any subset) but no unknown properties.
  */

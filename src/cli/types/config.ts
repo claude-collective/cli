@@ -1,7 +1,23 @@
 import type { AgentName } from "./agents";
-import type { Domain } from "./matrix";
+import type { BoundSkill, Domain } from "./matrix";
 import type { SkillId, SkillReference } from "./skills";
 import type { StackAgentConfig } from "./stacks";
+
+/** An additional skills source (private marketplace, custom repo) */
+export type SourceEntry = {
+  name: string;
+  url: string;
+  description?: string;
+  ref?: string;
+};
+
+/** Branding overrides for white-labeling the CLI */
+export type BrandingConfig = {
+  /** Custom CLI name (e.g., "Acme Dev Tools") */
+  name?: string;
+  /** Custom tagline shown in wizard header */
+  tagline?: string;
+};
 
 /** Per-skill configuration with scope and source */
 export type SkillConfig = {
@@ -103,4 +119,28 @@ export type ProjectConfig = {
    * Omitted when empty (sparse YAML output).
    */
   selectedAgents?: AgentName[];
+
+  /** Additional skill sources (private marketplaces, custom repos) */
+  sources?: SourceEntry[];
+
+  /** Skills explicitly bound to categories via search (from Step Sources) */
+  boundSkills?: BoundSkill[];
+
+  /** Branding overrides for white-labeling the CLI */
+  branding?: BrandingConfig;
+
+  /** Custom skills directory override (default: "src/skills") */
+  skillsDir?: string;
+
+  /** Custom agents directory override (default: "src/agents") */
+  agentsDir?: string;
+
+  /** Custom stacks file path override (default: "config/stacks.ts") */
+  stacksFile?: string;
+
+  /** Custom categories file path override (default: "config/skill-categories.ts") */
+  categoriesFile?: string;
+
+  /** Custom rules file path override (default: "config/skill-rules.ts") */
+  rulesFile?: string;
 };

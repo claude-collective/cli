@@ -5,43 +5,18 @@ import { verbose, warn } from "../../utils/logger";
 import { getErrorMessage } from "../../utils/errors";
 import { CLAUDE_SRC_DIR, DEFAULT_BRANDING, GITHUB_SOURCE, STANDARD_FILES } from "../../consts";
 import { projectSourceConfigSchema } from "../schemas";
-import type { BoundSkill } from "../../types";
+import type { ProjectConfig, SourceEntry } from "../../types";
 import { loadConfig } from "./config-loader";
 
 export const DEFAULT_SOURCE = `${GITHUB_SOURCE.GITHUB_PREFIX}agents-inc/skills`;
 export const SOURCE_ENV_VAR = "CC_SOURCE";
 export const PROJECT_CONFIG_FILE = STANDARD_FILES.CONFIG_TS;
 
-export type SourceEntry = {
-  name: string;
-  url: string;
-  description?: string;
-  ref?: string;
-};
+// Re-export types that moved to src/cli/types/config.ts for backward compatibility
+export type { SourceEntry, BrandingConfig } from "../../types/config";
 
-/** Branding overrides for white-labeling the CLI */
-export type BrandingConfig = {
-  /** Custom CLI name (e.g., "Acme Dev Tools") */
-  name?: string;
-  /** Custom tagline shown in wizard header */
-  tagline?: string;
-};
-
-export type ProjectSourceConfig = {
-  source?: string;
-  author?: string;
-  marketplace?: string;
-  agentsSource?: string;
-  sources?: SourceEntry[];
-  boundSkills?: BoundSkill[];
-  /** Branding overrides for white-labeling the CLI */
-  branding?: BrandingConfig;
-  skillsDir?: string; // default: src/skills (SKILLS_DIR_PATH)
-  agentsDir?: string; // default: src/agents (DIRS.agents)
-  stacksFile?: string; // default: config/stacks.ts (STACKS_FILE)
-  categoriesFile?: string; // default: config/skill-categories.ts (SKILL_CATEGORIES_PATH)
-  rulesFile?: string; // default: config/skill-rules.ts (SKILL_RULES_PATH)
-};
+/** @deprecated Use Partial<ProjectConfig> from types/config.ts instead */
+export type ProjectSourceConfig = Partial<ProjectConfig>;
 
 export type ResolvedConfig = {
   source: string;
@@ -55,7 +30,7 @@ export function getProjectConfigPath(projectDir: string): string {
 
 export async function loadProjectSourceConfig(
   projectDir: string,
-): Promise<ProjectSourceConfig | null> {
+): Promise<Partial<ProjectConfig> | null> {
   const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
   if (!(await fileExists(configPath))) {
@@ -63,9 +38,9 @@ export async function loadProjectSourceConfig(
     return null;
   }
 
-  let data: ProjectSourceConfig | null;
+  let data: Partial<ProjectConfig> | null;
   try {
-    data = await loadConfig<ProjectSourceConfig>(configPath, projectSourceConfigSchema);
+    data = await loadConfig<Partial<ProjectConfig>>(configPath, projectSourceConfigSchema);
   } catch (error) {
     verbose(`Failed to load project source config at ${configPath}: ${getErrorMessage(error)}`);
     return null;
@@ -77,7 +52,7 @@ export async function loadProjectSourceConfig(
 }
 
 /** Load source config from the global home directory (~/.claude-src/config.ts). */
-export async function loadGlobalSourceConfig(): Promise<ProjectSourceConfig | null> {
+export async function loadGlobalSourceConfig(): Promise<Partial<ProjectConfig> | null> {
   const homeDir = os.homedir();
   const globalConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
@@ -86,9 +61,9 @@ export async function loadGlobalSourceConfig(): Promise<ProjectSourceConfig | nu
     return null;
   }
 
-  let data: ProjectSourceConfig | null;
+  let data: Partial<ProjectConfig> | null;
   try {
-    data = await loadConfig<ProjectSourceConfig>(globalConfigPath, projectSourceConfigSchema);
+    data = await loadConfig<Partial<ProjectConfig>>(globalConfigPath, projectSourceConfigSchema);
   } catch (error) {
     verbose(
       `Failed to load global source config at ${globalConfigPath}: ${getErrorMessage(error)}`,
@@ -101,11 +76,17 @@ export async function loadGlobalSourceConfig(): Promise<ProjectSourceConfig | nu
   return data;
 }
 
-// ProjectSourceConfig is a simple source configuration file (source URL, marketplace, overrides).
-// It intentionally uses bare `export default` — defineConfig() is for full ProjectConfig only.
-export async function saveProjectConfig(
+/**
+ * Writes a ProjectConfig to disk using proper TypeScript format with
+ * `import type { ProjectConfig }` and `satisfies ProjectConfig` for type safety.
+ *
+ * Used by source-manager and config-saver for read-modify-write operations.
+ * Preserves all fields from the loaded config (skills, agents, name, sources, etc.)
+ * because loadProjectSourceConfig uses .passthrough() schema validation.
+ */
+export async function writeProjectSourceConfig(
   projectDir: string,
-  config: ProjectSourceConfig,
+  config: Partial<ProjectConfig>,
 ): Promise<void> {
   const configPath = getProjectConfigPath(projectDir);
   await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
@@ -113,13 +94,18 @@ export async function saveProjectConfig(
   // JSON.parse(JSON.stringify(x)) removes undefined values
   const cleaned = JSON.parse(JSON.stringify(config));
   const body = JSON.stringify(cleaned, null, 2);
-  const content = `export default ${body};\n`;
+  const content = [
+    `import type { ProjectConfig } from "./config-types";`,
+    ``,
+    `export default ${body} satisfies ProjectConfig;`,
+    ``,
+  ].join("\n");
 
   await writeFile(configPath, content);
   verbose(`Saved project config to ${configPath}`);
 }
 
-async function loadEffectiveSourceConfig(projectDir?: string): Promise<ProjectSourceConfig | null> {
+async function loadEffectiveSourceConfig(projectDir?: string): Promise<Partial<ProjectConfig> | null> {
   const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
   return projectConfig ?? (await loadGlobalSourceConfig());
 }

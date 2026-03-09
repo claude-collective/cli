@@ -12,7 +12,7 @@ import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { listPluginNames, getProjectPluginsDir } from "../lib/plugins";
 import { readForkedFromMetadata } from "../lib/skills";
 import { loadProjectSourceConfig } from "../lib/configuration/config";
-import type { ProjectSourceConfig } from "../lib/configuration/config";
+import type { ProjectConfig } from "../types";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, CLI_COLORS, DEFAULT_BRANDING } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { SUCCESS_MESSAGES, INFO_MESSAGES } from "../utils/messages";
@@ -30,14 +30,14 @@ type UninstallTarget = {
   claudeDir: string;
   claudeSrcDir: string;
   /** Resolved project source config from .claude-src/config.ts */
-  config: ProjectSourceConfig | null;
+  config: Partial<ProjectConfig> | null;
   /** All configured source URLs (primary + extras) */
   configuredSources: string[];
   /** Agent names from the generated config (e.g., ["web-developer"]) */
   configuredAgents: string[];
 };
 
-function collectConfiguredSources(config: ProjectSourceConfig | null): string[] {
+function collectConfiguredSources(config: Partial<ProjectConfig> | null): string[] {
   if (!config) return [];
   return [
     ...(config.source ? [config.source] : []),
@@ -45,12 +45,9 @@ function collectConfiguredSources(config: ProjectSourceConfig | null): string[] 
   ];
 }
 
-function collectConfiguredAgents(config: ProjectSourceConfig | null): string[] {
-  if (!config) return [];
-  // Boundary cast: config loaded via .passthrough() schema, agents preserved as AgentScopeConfig[]
-  const agents = (config as Record<string, unknown>).agents;
-  if (!Array.isArray(agents)) return [];
-  return agents.map((a: { name: string }) => a.name);
+function collectConfiguredAgents(config: Partial<ProjectConfig> | null): string[] {
+  if (!config?.agents) return [];
+  return config.agents.map((a) => a.name);
 }
 
 async function detectUninstallTarget(projectDir: string): Promise<UninstallTarget> {
