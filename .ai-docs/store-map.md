@@ -130,7 +130,6 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 | `getAllSelectedTechnologies`       | `SkillId[]`                          | Flat list of all selected skills |
 | `getSelectedTechnologiesPerDomain` | `Partial<Record<Domain, SkillId[]>>` | Skills grouped by domain         |
 | `getCurrentDomain`                 | `Domain                              | null`                            | Domain at currentDomainIndex |
-| `getDefaultMethodologySkills`      | `SkillId[]`                          | DEFAULT_PRESELECTED_SKILLS       |
 | `getTechnologyCount`               | `number`                             | Total selected count             |
 | `getStepProgress`                  | `{ completedSteps, skippedSteps }`   | For wizard tab indicators        |
 | `canGoToNextDomain`                | `boolean`                            | Has next domain                  |

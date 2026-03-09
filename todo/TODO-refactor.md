@@ -12,7 +12,7 @@
 | R-07 | Codegen `SkillSlug` union from metadata.yaml — auto-generate the type from skills source instead of manual maintenance                                                                                  | Refactor     |
 | R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor     |
 | R-11 | Eliminate `ProjectSourceConfig` / `saveProjectConfig` — all config writes should produce full `ProjectConfig` with import + satisfies                                                                  | Refactor     |
-| R-12 | Enforce store-only matrix access — replace all `matrix.skills[id]` / `matrix.categories[id]` reads with store accessors, add `findCategory`/`getCategory` to store                                    | Refactor     |
+| R-12 | Delete the matrix object from consumer code — only exists inside the store as private state, all reads via store accessors                                                                              | Refactor     |
 
 ---
 
@@ -838,33 +838,99 @@ All three do read-modify-write on a `ProjectSourceConfig`. They should instead l
 
 ---
 
-## R-12: Enforce Store-Only Matrix Access
+## R-12: Delete the Matrix Object from Consumer Code
 
 **Priority:** Medium
 **Related:** D-89 (getSkill in buildSourceRows), the getDiscourageReason crash fix
 
 ### Problem
 
-The matrix store (`matrix-store.ts`) provides `findSkill(id)` (returns undefined), `getSkill(id)` (throws), and `getMatrix()`. But ~30 production code sites still access `matrix.skills[id]` directly, and ~7 sites access `matrix.categories[id]` directly. This creates parallel access paths — some safe (store), some unsafe (direct with `!` assertion). The `getDiscourageReason` crash was caused by exactly this: `matrix.skills[id]!` on an unresolved reference.
+The `MergedSkillsMatrix` object is a god object. Consumer code grabs it via `getMatrix()` and reaches into `.skills[id]`, `.categories[id]`, `.slugMap`, `.suggestedStacks`, `.agentDefinedDomains`, etc. This makes the matrix shape a public API that everything couples to.
 
-### Scope
+The matrix should **only exist inside the store**. It is an internal implementation detail — the store's private state. Nothing outside `matrix-store.ts` should ever hold, pass, destructure, or reference a `MergedSkillsMatrix`.
 
-**Reader files to migrate** (use store accessors instead of direct access):
-- `matrix-resolver.ts` — ~20 `matrix.skills[id]` accesses
-- `matrix-health-check.ts` — 3 `matrix.skills[id]`, 1 `matrix.categories[id]`
-- `config-types-writer.ts` — 4 `matrix.skills[id]`, 2 `matrix.categories[id]`
-- `plugin-finder.ts` — 1 `matrix.skills[id]`
-- `skill-copier.ts` — 2 `matrix.skills[id]`
+### What "delete the matrix object" means
 
-**Builder files to KEEP** (they construct the matrix, not read from store):
-- `source-loader.ts` — writes `matrix.skills[id] = ...`, `matrix.categories[id] = ...`
-- `multi-source-loader.ts` — reads during matrix construction before store is set
+1. **Remove `getMatrix()` export** — no consumer can obtain the raw object
+2. **Remove `MergedSkillsMatrix` from all function signatures** — no function accepts or returns it
+3. **Remove all `const matrix = getMatrix()` / `const { skills, categories } = getMatrix()` patterns** — replace with individual store accessor calls
+4. **Remove `useMatrixStore((s) => s.matrix!)` selectors in React components** — replace with specific selectors like `useMatrixStore((s) => s.getAllCategories())`
+5. **Remove `useMatrixStore.getState().matrix` direct reads** — replace with store accessors
 
-**Store API additions needed:**
-- `findCategory(id: CategoryPath): CategoryDefinition | undefined`
-- `getCategory(id: CategoryPath): CategoryDefinition` (throws)
+The `matrix` field stays as internal state inside the store's `MatrixState` type, but it's never exposed.
+
+### Store API additions needed
+
+Based on actual consumer usage (21 production files):
+
+**Individual lookups:**
+- `findCategory(id: Category): CategoryDefinition | undefined`
+- `getCategory(id: Category): CategoryDefinition` (throws)
+
+**Collection accessors:**
+- `getAllSkills(): Partial<Record<SkillId, ResolvedSkill>>`
+- `getAllCategories(): CategoryMap`
+- `getSlugMap(): SkillSlugMap`
+- `getSuggestedStacks(): ResolvedStack[]`
+- `getAgentDefinedDomains(): Partial<Record<AgentName, Domain>> | undefined`
+- `getSkillCount(): number`
+- `getVersion(): string`
+
+**Convenience:**
+- `findStack(id: string): ResolvedStack | undefined`
+- `getSlugForId(id: SkillId): SkillSlug | undefined`
+- `getIdForSlug(slug: SkillSlug): SkillId | undefined`
+
+### Consumer migration map (21 files)
+
+**Heavy users (need multiple accessors):**
+- `matrix-resolver.ts` — 13 `getMatrix()` calls accessing `.skills`, `.categories`, `.slugMap`. Replace each with the specific accessor.
+- `wizard-store.ts` — destructures `{ skills, categories }`. Replace with `getAllSkills()`, `getAllCategories()`.
+- `build-step-logic.ts` — accesses `.categories`, `.skills`. Replace with `getCategory()`, `getSkill()`.
+
+**Stack lookups:**
+- `wizard.tsx` — `getMatrix().suggestedStacks.find(...)`. Replace with `findStack(id)`.
+- `utils.ts` — same pattern. Replace with `findStack(id)` and `getAllCategories()`.
+
+**Skill count / list:**
+- `edit.tsx` — `Object.keys(getMatrix().skills).length`. Replace with `getSkillCount()`.
+- `info.ts` — `getMatrix().skills` for fuzzy search. Replace with `getAllSkills()`.
+- `eject.ts` — iterates skills. Replace with `getAllSkills()`.
+- `update.tsx` — accesses matrix. Replace with specific accessors.
+
+**Category lookups:**
+- `use-build-step-props.ts` — `getMatrix().categories[id]`. Replace with `getCategory(id)`.
+- `config-generator.ts` — accesses categories. Replace with `getAllCategories()`.
+
+**Slug lookups:**
+- `use-source-grid-search-modal.ts` — `getMatrix().slugMap.idToSlug[id]`. Replace with `getSlugForId(id)`.
+- `plugin-finder.ts` — slug resolution. Replace with `getIdForSlug()`.
+
+**React component selectors (use `s.matrix!` pattern):**
+- `domain-selection.tsx` — `useMatrixStore((s) => s.getMatrix())`. Replace with specific selectors.
+- `stack-selection.tsx` — `useMatrixStore((s) => s.matrix!)`. Replace with `useMatrixStore((s) => s.getSuggestedStacks())` etc.
+- `step-agents.tsx` — `useMatrixStore((s) => s.matrix!)`. Replace with specific selectors.
+
+**Nullable checks (doctor, validator):**
+- `doctor.ts` — `useMatrixStore.getState().matrix` (null check). Replace with `isInitialized()` accessor.
+- `source-validator.ts` — same. Replace with `isInitialized()`.
+
+### Files that keep raw matrix access (pre-store construction)
+
+These files build the matrix before it's put into the store — they write to the object, not read from the store:
+- `source-loader.ts` — constructs and mutates `result.matrix`, then calls `setMatrix()`
+- `multi-source-loader.ts` — merges matrices during construction
+- `matrix-loader.ts`, `matrix-health-check.ts` — build/validate the matrix object
+- `config-types-writer.ts` — reads `sourceResult.matrix` before store is set
+- `local-installer.ts` — passes `sourceResult.matrix` to writers before store is set
+
+The `SourceLoadResult.matrix` field is fine — it's the construction pipeline. The rule is: after `setMatrix()` is called, no code should touch the raw object again.
 
 ### Rules After Completion
-- Outside the store and matrix builders, `matrix.skills[id]` and `matrix.categories[id]` should never appear
-- `getMatrix()` should only be used for iteration (`typedEntries(matrix.skills)`) or passing to builders — not for individual lookups
-- Each access site uses `findSkill` (optional) or `getSkill` (required) based on whether the skill must exist
+
+- `getMatrix()` does not exist as a public export
+- `MergedSkillsMatrix` does not appear in any consumer function signature (only in store internals and the source-loader construction pipeline)
+- No consumer code holds, passes, or destructures a `MergedSkillsMatrix` reference
+- All reads go through named store accessors
+- React components use specific selectors, not `s.matrix!`
+- The `matrix` field is internal to `MatrixState` — consumers never see it

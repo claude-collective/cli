@@ -3,8 +3,7 @@
 | ID   | Task                                                                                                                  | Status        |
 | ---- | --------------------------------------------------------------------------------------------------------------------- | ------------- |
 | D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md)) | Ready for Dev |
-| D-74 | Per-agent scope toggle (project/global) — same as per-skill scope but for agents in the wizard                        | Needs Design  |
-| D-37 | Dual-installation resolution: global + project (see [design doc](./D-37-dual-installation.md))                        | Design        |
+| D-74 | Per-agent scope toggle (project/global) — core done, edit-mode gaps remain (see [refinement](./D-74-per-agent-scope.md)) | Ready for Dev |
 | D-76 | Init: generate project `config-types.ts` that imports from global `~/.claude-src/config-types.ts`                     | Ready for Dev |
 | D-77 | Wizard: show stack scope origin labels (global vs project) in build step                                              | Needs Design  |
 | D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))         | Has Open Qs   |
@@ -60,18 +59,6 @@ Add per-agent scope toggle in the wizard's agents step, mirroring the per-skill 
 - Confirm step: show per-agent scope summary
 - Compilation: write agent `.md` files to the correct directory based on scope
 - Config persistence: save `agentConfigs` array to the correct `config.ts` (global or project)
-
----
-
-#### D-37: Dual-installation resolution (global + project)
-
-**Priority:** Medium
-**Depends on:** D-74
-**Design doc:** [`D-37-dual-installation.md`](./D-37-dual-installation.md)
-
-Two separate installations with their own configs. The project `config.ts` imports from global and extends it — standard TypeScript, no runtime merge. Both local and plugin global skills supported. Compiler resolves from both `~/.claude/` and `.claude/`. Auto-creates blank global on first init so the import is always valid.
-
-**Phases:** (1) local installer path routing by scope, (2) config splitting on save with import generation, (3) compiler resolves both directories, (4) per-agent scope (D-74), (5) edit flow with scope migration
 
 ---
 
@@ -304,42 +291,9 @@ Throughout the codebase, there are multi-tier resolution patterns that silently 
 
 ---
 
-#### D-81: Config.ts should use named variables instead of one massive object
+#### D-81: Config.ts: typed named variables above export default ~~DONE~~
 
-**Priority:** Medium
-
-Currently `generateConfigSource()` produces a single monolithic `export default { ... } satisfies ProjectConfig` with everything inlined. Instead, agents, skills, and stack should be extracted into typed named variables defined above the export, with the export default referencing them:
-
-```typescript
-import type { ProjectConfig, SkillConfig, AgentScopeConfig, StackAgentConfig } from "./config-types";
-
-const skills: SkillConfig[] = [
-  { id: "web-framework-react", scope: "project", source: "agents-inc" },
-  // ...
-];
-
-const agents: AgentScopeConfig[] = [
-  { name: "web-developer", scope: "global" },
-  // ...
-];
-
-const stack: Record<string, StackAgentConfig> = {
-  "web-developer": { "web-framework": "web-framework-react" },
-  // ...
-};
-
-export default {
-  name: "my-project",
-  skills,
-  agents,
-  stack,
-  source: ".",
-} satisfies ProjectConfig;
-```
-
-This makes the config scannable at a glance — users see the shape of the export, then can jump to the section they want to edit.
-
-**Key files:** `src/cli/lib/configuration/config-writer.ts` — `generateConfigSource()` and `generateProjectConfigWithGlobalImport()`
+Implemented in `config-writer.ts`. Named variables (`skills`, `agents`, `stack`, `domains`) are placed **above** the export default (not below) due to JavaScript's Temporal Dead Zone — `jiti` loads config files at runtime and `const` below `export default` causes `ReferenceError`. The export default at the bottom still reads as a table of contents. Import line dynamically includes only types that are used. All 910 configuration tests pass.
 
 ---
 
