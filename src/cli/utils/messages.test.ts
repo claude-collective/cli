@@ -32,7 +32,6 @@ describe("SUCCESS_MESSAGES", () => {
       "UNINSTALL_COMPLETE",
       "INIT_SUCCESS",
       "PLUGIN_COMPILE_COMPLETE",
-      "CUSTOM_COMPILE_COMPLETE",
       "ALL_SKILLS_UP_TO_DATE",
     ]);
   });
@@ -83,7 +82,6 @@ describe("INFO_MESSAGES", () => {
       "NO_CHANGES_MADE",
       "RUN_COMPILE",
       "NO_AGENTS_TO_RECOMPILE",
-      "NO_AGENTS_TO_COMPILE",
       "NO_PLUGIN_INSTALLATION",
       "NO_LOCAL_INSTALLATION",
       "NOT_INSTALLED",

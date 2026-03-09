@@ -6,17 +6,12 @@ import { setVerbose, verbose, warn } from "../utils/logger";
 import { discoverAllPluginSkills } from "../lib/plugins";
 import { getAgentDefinitions } from "../lib/agents";
 import { resolveSource } from "../lib/configuration";
-import { directoryExists, ensureDir, glob, readFile, fileExists } from "../utils/fs";
+import { directoryExists, glob, readFile, fileExists } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
 import { parseFrontmatter } from "../lib/loading";
 import { CLI_BIN_NAME, GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
-import {
-  ERROR_MESSAGES,
-  SUCCESS_MESSAGES,
-  STATUS_MESSAGES,
-  INFO_MESSAGES,
-} from "../utils/messages";
+import { ERROR_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages";
 import {
   detectGlobalInstallation,
   detectProjectInstallation,
@@ -108,12 +103,11 @@ export default class Compile extends BaseCommand {
   static summary = "Compile agents using local skills and agent definitions";
 
   static description =
-    "Compile agents with resolved skill references. By default, compiles to the Claude plugin directory. Use --output to compile to a custom directory.";
+    "Compile agents with resolved skill references. Compiles to the Claude plugin directory.";
 
   static examples = [
     "<%= config.bin %> <%= command.id %>",
     "<%= config.bin %> <%= command.id %> --verbose",
-    "<%= config.bin %> <%= command.id %> --output ./agents",
   ];
 
   static flags = {
@@ -126,24 +120,12 @@ export default class Compile extends BaseCommand {
     "agent-source": Flags.string({
       description: "Remote agent partials source (default: local CLI)",
     }),
-    output: Flags.string({
-      char: "o",
-      description: "Output directory for compiled agents (skips plugin mode)",
-    }),
   };
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Compile);
 
     setVerbose(flags.verbose);
-
-    if (flags.output) {
-      await this.runCustomOutputCompile({
-        ...flags,
-        output: flags.output,
-      });
-      return;
-    }
 
     const cwd = process.cwd();
     const homeDir = os.homedir();
@@ -329,71 +311,5 @@ export default class Compile extends BaseCommand {
       this.log(ERROR_MESSAGES.FAILED_LOAD_AGENT_PARTIALS);
       return this.handleError(error);
     }
-  }
-
-  private async runCustomOutputCompile(flags: CompileFlags & { output: string }): Promise<void> {
-    const outputDir = path.resolve(process.cwd(), flags.output);
-    this.log("");
-    this.log("Custom Output Compile");
-    this.log("");
-    this.log(`Output directory: ${outputDir}`);
-    this.log("");
-
-    await ensureDir(outputDir);
-
-    const { allSkills, totalSkillCount } = await this.discoverAllSkills();
-
-    if (totalSkillCount === 0) {
-      this.error(
-        `No skills found. Add skills with '${CLI_BIN_NAME} add <skill>' or create in .claude/skills/.`,
-        { exit: EXIT_CODES.ERROR },
-      );
-    }
-
-    await this.resolveSourceForCompile(flags);
-    const agentDefs = await this.loadAgentDefsForCompile(flags);
-
-    const projectDir = process.cwd();
-
-    this.log(STATUS_MESSAGES.COMPILING_AGENTS);
-    try {
-      const recompileResult = await recompileAgents({
-        pluginDir: projectDir,
-        sourcePath: agentDefs.sourcePath,
-        skills: allSkills,
-        outputDir,
-        projectDir,
-      });
-
-      if (recompileResult.failed.length > 0) {
-        this.log(
-          `Compiled ${recompileResult.compiled.length} agents (${recompileResult.failed.length} failed)`,
-        );
-        for (const warning of recompileResult.warnings) {
-          this.warn(warning);
-        }
-      } else if (recompileResult.compiled.length > 0) {
-        this.log(`Compiled ${recompileResult.compiled.length} agents`);
-      } else {
-        this.log(INFO_MESSAGES.NO_AGENTS_TO_COMPILE);
-      }
-
-      if (recompileResult.compiled.length > 0) {
-        verbose(`  Compiled: ${recompileResult.compiled.join(", ")}`);
-        this.log("");
-        this.log("Agents compiled to:");
-        this.log(`  ${outputDir}`);
-        for (const agentName of recompileResult.compiled) {
-          this.log(`    ${agentName}.md`);
-        }
-      }
-    } catch (error) {
-      this.log(ERROR_MESSAGES.FAILED_COMPILE_AGENTS);
-      this.handleError(error);
-    }
-
-    this.log("");
-    this.logSuccess(SUCCESS_MESSAGES.CUSTOM_COMPILE_COMPLETE);
-    this.log("");
   }
 }

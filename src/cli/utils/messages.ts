@@ -18,7 +18,6 @@ export const SUCCESS_MESSAGES = {
   UNINSTALL_COMPLETE: "Uninstall complete!",
   INIT_SUCCESS: `${DEFAULT_BRANDING.NAME} initialized successfully!`,
   PLUGIN_COMPILE_COMPLETE: "Plugin compile complete!",
-  CUSTOM_COMPILE_COMPLETE: "Custom output compile complete!",
   ALL_SKILLS_UP_TO_DATE: "All skills are up to date.",
 } as const;
 
@@ -41,7 +40,6 @@ export const INFO_MESSAGES = {
   NO_CHANGES_MADE: "No changes made.",
   RUN_COMPILE: `Run '${CLI_BIN_NAME} compile' to include imported skills in your agents.`,
   NO_AGENTS_TO_RECOMPILE: "No agents to recompile",
-  NO_AGENTS_TO_COMPILE: "No agents to compile",
   NO_PLUGIN_INSTALLATION: "No plugin installation found.",
   NO_LOCAL_INSTALLATION: "No local installation found.",
   NOT_INSTALLED: `${DEFAULT_BRANDING.NAME} is not installed in this project.`,
