@@ -4,13 +4,12 @@ import {
   BUILT_IN_DOMAIN_ORDER,
   DEFAULT_PRESELECTED_SKILLS,
   DEFAULT_PUBLIC_SOURCE_NAME,
-  SOURCE_DISPLAY_NAMES,
 } from "../consts.js";
 import type { InstallMode } from "../lib/installation/index.js";
 import { deriveInstallMode as sharedDeriveInstallMode } from "../lib/installation/installation.js";
 import type { AgentScopeConfig, SkillConfig } from "../types/config.js";
 import { resolveAlias } from "../lib/matrix/index.js";
-import { getMatrix } from "./matrix-store.js";
+import { findSkill, getMatrix } from "./matrix-store.js";
 import type {
   AgentName,
   BoundSkill,
@@ -86,12 +85,6 @@ function getSourceSortTier(source: SkillSource): number {
   return SOURCE_SORT_TIER_THIRD_PARTY;
 }
 
-function formatSourceLabel(source: { name: string; installed?: boolean }): string {
-  const displayName = SOURCE_DISPLAY_NAMES[source.name] ?? source.name;
-  const prefix = source.installed ? "\u2713 " : "";
-  return `${prefix}${displayName}`;
-}
-
 export type SkillLookupEntry = Pick<ResolvedSkill, "category" | "displayName">;
 
 function resolveSkillForPopulation(
@@ -126,10 +119,6 @@ function buildBoundSkillOptions(
     .filter((b) => b.boundTo === alias)
     .map((bound) => ({
       id: bound.sourceName,
-      label: formatSourceLabel({
-        name: bound.sourceName,
-        installed: false,
-      }),
       selected: selectedSource === bound.sourceName,
       installed: false,
     }));
@@ -453,7 +442,7 @@ export type WizardState = {
    */
   buildSourceRows: () => {
     skillId: SkillId;
-    options: { id: string; label: string; selected: boolean; installed: boolean }[];
+    options: SourceOption[];
   }[];
 };
 
@@ -925,10 +914,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   setAllSourcesPlugin: () => {
-    const matrix = getMatrix();
     set((state) => ({
       skillConfigs: state.skillConfigs.map((sc) => {
-        const skill = matrix.skills[sc.id];
+        const skill = findSkill(sc.id);
         if (skill?.availableSources) {
           const marketplaceSource = skill.availableSources.find((s) => s.type !== "local");
           if (marketplaceSource) {
@@ -941,18 +929,17 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   buildSourceRows: () => {
-    const matrix = getMatrix();
     const state = get();
     const selectedTechnologies = get().getAllSelectedTechnologies();
     const { skillConfigs, boundSkills } = state;
 
     return selectedTechnologies.map((tech) => {
       const skillId = resolveAlias(tech);
-      const skill = matrix.skills[skillId];
+      const skill = findSkill(skillId);
       const configEntry = skillConfigs.find((sc) => sc.id === skillId);
       const selectedSource =
         configEntry?.source || skill?.activeSource?.name || DEFAULT_PUBLIC_SOURCE_NAME;
-      const slug = matrix.slugMap.idToSlug[skillId];
+      const slug = skill?.slug ?? "";
 
       const sortedSources = [...(skill?.availableSources || [])].sort(
         (a, b) => getSourceSortTier(a) - getSourceSortTier(b),
@@ -962,17 +949,12 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         sortedSources.length > 0
           ? sortedSources.map((source) => ({
               id: source.name,
-              label: formatSourceLabel({
-                name: source.name,
-                installed: source.installed,
-              }),
               selected: selectedSource === source.name,
               installed: source.installed,
             }))
           : [
               {
                 id: DEFAULT_PUBLIC_SOURCE_NAME,
-                label: formatSourceLabel({ name: DEFAULT_PUBLIC_SOURCE_NAME, installed: false }),
                 selected: selectedSource === DEFAULT_PUBLIC_SOURCE_NAME,
                 installed: false,
               },
@@ -981,7 +963,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       if (!options.some((o) => o.id === "local")) {
         options.unshift({
           id: "local",
-          label: formatSourceLabel({ name: "local", installed: false }),
           selected: selectedSource === "local",
           installed: false,
         });

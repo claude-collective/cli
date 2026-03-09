@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import type { BoundSkillCandidate, SkillAlias, SkillId } from "../../types/index.js";
-import { CLI_COLORS } from "../../consts.js";
+import { CLI_COLORS, SOURCE_DISPLAY_NAMES } from "../../consts.js";
 import { getSkill } from "../../stores/matrix-store.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
 import { useSectionScroll } from "../hooks/use-section-scroll.js";
@@ -12,7 +12,6 @@ const SEARCH_PILL_LABEL = "\u2315 Search";
 
 export type SourceOption = {
   id: string;
-  label: string;
   selected: boolean;
   installed: boolean;
 };
@@ -62,6 +61,12 @@ type SourceSectionProps = {
   showSearchPill: boolean;
 };
 
+function formatSourceLabel(option: SourceOption): string {
+  const displayName = SOURCE_DISPLAY_NAMES[option.id] ?? option.id;
+  const prefix = option.installed ? "\u2713 " : "";
+  return `${prefix}${displayName}`;
+}
+
 const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
   option,
   isFocused,
@@ -85,7 +90,7 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
     >
       <Text color={textColor} bold={isBold} dimColor={false}>
         {" "}
-        {option.label}{" "}
+        {formatSourceLabel(option)}{" "}
       </Text>
     </Box>
   );

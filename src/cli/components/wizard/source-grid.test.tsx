@@ -19,11 +19,9 @@ import {
 
 const createSourceOption = (
   id: string,
-  label: string,
   overrides: Partial<SourceOption> = {},
 ): SourceOption => ({
   id,
-  label,
   selected: false,
   installed: false,
   ...overrides,
@@ -39,25 +37,25 @@ const createSourceRow = (
 
 const defaultRows: SourceRow[] = [
   createSourceRow("web-framework-react", [
-    createSourceOption("public", "Public", { selected: true }),
+    createSourceOption("public", { selected: true }),
   ]),
   createSourceRow("web-state-zustand", [
-    createSourceOption("public", "Public", { selected: true }),
+    createSourceOption("public", { selected: true }),
   ]),
   createSourceRow("web-testing-vitest", [
-    createSourceOption("public", "Public", { selected: true }),
+    createSourceOption("public", { selected: true }),
   ]),
 ];
 
 const multiSourceRows: SourceRow[] = [
   createSourceRow("web-framework-react", [
-    createSourceOption("public", "Public", { selected: true }),
-    createSourceOption("acme-corp", "Acme Corp"),
+    createSourceOption("public", { selected: true }),
+    createSourceOption("acme-corp"),
   ]),
   createSourceRow("web-state-zustand", [
-    createSourceOption("public", "Public", { selected: true }),
-    createSourceOption("acme-corp", "Acme Corp"),
-    createSourceOption("internal", "Internal"),
+    createSourceOption("public", { selected: true }),
+    createSourceOption("acme-corp"),
+    createSourceOption("internal"),
   ]),
 ];
 
@@ -117,7 +115,7 @@ describe("SourceGrid component", () => {
 
       const output = lastFrame();
       expect(output).toContain("Public");
-      expect(output).toContain("Acme Corp");
+      expect(output).toContain("acme-corp");
     });
 
     it("should handle empty rows array", () => {
@@ -131,7 +129,7 @@ describe("SourceGrid component", () => {
     it("should render single row", () => {
       const rows: SourceRow[] = [
         createSourceRow("web-framework-react", [
-          createSourceOption("public", "Public", { selected: true }),
+          createSourceOption("public", { selected: true }),
         ]),
       ];
 
@@ -388,7 +386,7 @@ describe("SourceGrid component", () => {
 
       const rows: SourceRow[] = skillIds.map((id) =>
         createSourceRow(id, [
-          createSourceOption("public", "Public", { selected: true }),
+          createSourceOption("public", { selected: true }),
         ]),
       );
 
