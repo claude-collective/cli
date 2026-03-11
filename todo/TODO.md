@@ -2,26 +2,28 @@
 
 | ID   | Task                                                                                                                     | Status        |
 | ---- | ------------------------------------------------------------------------------------------------------------------------ | ------------- |
-| D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))    | Ready for Dev |
-| D-74 | Per-agent scope toggle (project/global) — core done, edit-mode gaps remain (see [refinement](./D-74-per-agent-scope.md)) | Ready for Dev |
-| D-76 | Init: generate project `config-types.ts` that imports from global `~/.claude-src/config-types.ts`                        | Ready for Dev |
-| D-77 | Wizard: show stack scope origin labels (global vs project) in build step                                                 | Needs Design  |
-| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))            | Has Open Qs   |
-| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                | Ready for Dev |
-| D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                          | Ready for Dev |
-| D-62 | Review default stacks: include meta/methodology/reviewing skills                                                         | Ready for Dev |
-| D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                    | Ready for Dev |
-| D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                          | Investigate   |
-| D-67 | Skill metadata as single source of truth — eliminate redundant central config for intrinsic skill properties             | Investigate   |
-| D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                         | Investigate   |
-| D-79 | Agent selection step causes infinite re-render — screen scrolls/refreshes every millisecond                              | Bug           |
-| D-80 | Init with existing global install: project config-types doesn't import from global scope                                 | Bug           |
-| D-81 | Config.ts: extract agents, skills, and stack into named variables above `export default`                                 | Ready for Dev |
+| D-74 | Per-agent scope toggle (project/global) — edit-mode restoration, help modal, scope change detection                      | ✅ Done       |
+| D-76 | Init: generate project `config-types.ts` that imports from global `~/.claude-src/config-types.ts`                        | ✅ Done       |
+| D-77 | Wizard: show stack scope origin labels (global vs project) in build step                                                 | ✅ Done       |
+| D-67 | Skill metadata as single source of truth — eliminate redundant central config for intrinsic skill properties             | ✅ Done       |
+| D-79 | Agent selection step causes infinite re-render — screen scrolls/refreshes every millisecond                              | ✅ Done       |
+| D-80 | Init with existing global install: project config-types doesn't import from global scope                                 | ✅ Done       |
+| D-81 | Config.ts: extract agents, skills, and stack into named variables above `export default`                                 | ✅ Done       |
+
 | D-85 | Create a proper `SkillId` union type from all known skills, enforce in tests                                             | Ready for Dev |
 | D-87 | Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries                                           | Ready for Dev |
 | D-88 | Audit and remove multi-tier resolution fallbacks — data should match or fail, not guess                                  | Ready for Dev |
 | D-89 | Audit and remove silent fallbacks on required data — `findSkill` → `getSkill`, remove `?.`/`?? ""` patterns              | Ready for Dev |
+| D-62 | Review default stacks: include meta/methodology/reviewing skills                                                         | Ready for Dev |
+| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))            | Has Open Qs   |
+| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                | Ready for Dev |
 | D-90 | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths      | Ready for Dev |
+
+| D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                          | Ready for Dev |
+| D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))    | Ready for Dev |
+| D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                    | Ready for Dev |
+| D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                          | Investigate   |
+| D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                         | Investigate   |
 
 ---
 
@@ -39,28 +41,6 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
-
-### Per-Agent and Global Resolution
-
-#### D-74: Per-agent scope toggle (project/global)
-
-**Priority:** Medium
-**Depends on:** Per-skill scope (done in 0.57.0/0.58.0)
-
-Add per-agent scope toggle in the wizard's agents step, mirroring the per-skill S key toggle. Each agent can be scoped to `"project"` (compiled to `.claude/agents/`) or `"global"` (compiled to `~/.claude/agents/`).
-
-**Use case:** Meta agents (documenter, researcher, reviewer) are global — available in every project. Domain-specific agents (web-developer, api-developer) are project-scoped.
-
-**Implementation areas:**
-
-- Agents step UI: S key toggle on focused agent, [P]/[G] badge
-- `AgentConfig` type: `{ name: AgentName, scope: "project" | "global" }` (mirrors `SkillConfig`)
-- Wizard store: `agentConfigs: AgentConfig[]`, `toggleAgentScope`, `focusedAgentId`
-- Confirm step: show per-agent scope summary
-- Compilation: write agent `.md` files to the correct directory based on scope
-- Config persistence: save `agentConfigs` array to the correct `config.ts` (global or project)
-
----
 
 ### Framework Features
 

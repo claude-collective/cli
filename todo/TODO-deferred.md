@@ -2,36 +2,38 @@
 
 | ID    | Task                                                                                                                               | Status                      |
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| D-73  | Split `init-wizard.e2e.test.ts` into multiple files for parallel E2E execution                                                     | Deferred                    |
+| D-73  | Split `init-wizard.e2e.test.ts` into multiple files for parallel E2E execution                                                     | ✅ Done                     |
 | D-72  | Only show Agents Inc logo on the first init screen (not on edit or subsequent steps)                                               | Deferred                    |
 | D-71  | Audit Zod schemas for removal — config is now TypeScript (see [research](../docs/research/schema-removal-audit.md))                | Needs Research              |
-| D-28  | ~~Fix startup warning/error messages~~ (see [plan](./D-28-fix-startup-messages.md))                                                | Done                        |
-| D-05  | ~~Project dashboard — default command + already-initialized~~ (see [plan](./D-05-improve-init-existing.md))                        | Done                        |
-| P4-17 | `agentsinc new` supports multiple items (see [plan](./P4-17-new-multiple-items.md))                                                | Refined                     |
-| P4-18 | Test: multiple skill/agent creation (depends on P4-17)                                                                             | Deferred                    |
-| D-01  | Update skill documentation conventions                                                                                             | Needs Assistance            |
-| D-11  | Development hooks for type checking                                                                                                | Needs Assistance            |
-| D-12  | ~~Eject full agents from custom sources~~ — scrapped; agents are compiled, not plugins to be ejected                               | Deleted                     |
-| D-13  | Eject skills by domain/category (see [plan](./D-13-eject-skills-filtered.md))                                                      | Refined                     |
-| D-18  | ~~Template system documentation improvements~~ — deleted, not useful                                                               | Deleted                     |
-| D-19  | Improve template error messages (see [plan](./D-19-template-error-messages.md))                                                    | Deferred — nice to have     |
-| D-20  | Add Edit tool to documentor agent                                                                                                  | DONE                        |
-| D-22  | ~~Automated agent-tester~~ — scrapped; existing validation should be made stricter over time instead                               | Deleted                     |
-| D-24  | ~~Configurable documentation file locations~~ — convention-only, no code needed (see [plan](./D-24-configurable-doc-locations.md)) | Closed                      |
+
+| D-25  | Auto-version check + source staleness (see [plan](./D-25-auto-version-check.md))                                                   | Ready for Dev               |
 | D-14  | Import skills from third-party marketplaces                                                                                        | Needs Assistance            |
-| D-70  | ~~Re-enable source search~~ — runtime detection replaces static flag                                                               | Done                        |
 | UX-04 | Interactive skill search polish                                                                                                    | Needs Assistance            |
 | UX-05 | Refine step - skills.sh integration                                                                                                | Needs Assistance            |
-| UX-06 | Search with color highlighting                                                                                                     | Needs Assistance            |
-| UX-07 | Incompatibility tooltips                                                                                                           | Needs Assistance            |
-| UX-09 | Animations/transitions                                                                                                             | Needs Assistance            |
 | #5    | Agents command for skill assignment                                                                                                | Needs Assistance            |
+
+| D-01  | Update skill documentation conventions                                                                                             | Needs Assistance            |
+| D-11  | Development hooks for type checking                                                                                                | Needs Assistance            |
+| D-13  | Eject skills by domain/category (see [plan](./D-13-eject-skills-filtered.md))                                                      | Refined                     |
+
+| UX-06 | Search with color highlighting                                                                                                     | Needs Assistance            |
 | #19   | Sub-agent learning capture system                                                                                                  | Needs Assistance            |
-| D-25  | Auto-version check + source staleness (see [plan](./D-25-auto-version-check.md))                                                   | Ready for Dev               |
 | D-26  | Marketplace-specific uninstall (see [plan](./D-26-marketplace-uninstall.md))                                                       | Ready for Dev               |
 | D-08  | User-defined stacks in consumer projects (see [plan](./D-08-user-defined-stacks.md))                                               | Deferred                    |
-| D-40  | `agentsinc register` command — absorbed into D-41 (see [plan](./D-40-register-command.md))                                         | Deferred — replaced by D-41 |
 | D-47  | Eject standalone compile function (see [plan](./D-47-eject-compile-function.md))                                                   | Deferred — low priority     |
+
+| P4-18 | Test: multiple skill/agent creation (depends on P4-17)                                                                             | Deferred                    |
+| P4-17 | `agentsinc new` supports multiple items (see [plan](./P4-17-new-multiple-items.md))                                                | Refined                     |
+
+| UX-09 | Animations/transitions                                                                                                             | Needs Assistance            |
+| UX-07 | Incompatibility tooltips                                                                                                           | Needs Assistance            |
+| D-24  | ~~Configurable documentation file locations~~ — convention-only, no code needed (see [plan](./D-24-configurable-doc-locations.md)) | Closed                      |
+| D-22  | ~~Automated agent-tester~~ — scrapped; existing validation should be made stricter over time instead                               | Deleted                     |
+| D-19  | Improve template error messages (see [plan](./D-19-template-error-messages.md))                                                    | Deferred — nice to have     |
+| D-70  | ~~Re-enable source search~~ — runtime detection replaces static flag                                                               | Done                        |
+| D-28  | ~~Fix startup warning/error messages~~ (see [plan](./D-28-fix-startup-messages.md))                                                | Done                        |
+| D-05  | ~~Project dashboard — default command + already-initialized~~ (see [plan](./D-05-improve-init-existing.md))                        | Done                        |
+| D-20  | Add Edit tool to documentor agent                                                                                                  | DONE                        |
 
 ---
 
@@ -124,38 +126,6 @@ Add configurable development hooks that can run commands like `tsc --noEmit` aft
 - [ ] This repo has tsc hook enabled by default
 - [ ] Hook failures can either warn or block the action
 - [ ] Easy to disable hooks temporarily (env var or flag)
-
----
-
-## D-12: Eject Full Agents from Custom Sources
-
-**See refinement doc:** [D-12-eject-full-agents.md](./D-12-eject-full-agents.md)
-
----
-
-## D-13: Eject Skills by Domain/Category
-
-**S | D-13 | Filter ejected skills by domain or category**
-
-Add `--domain` and `--category` flags to `agentsinceject skills` to selectively eject skills from specific areas instead of all skills.
-
-```bash
-# Eject only frontend skills
-agentsinc eject skills --domain frontend
-
-# Eject only framework skills across all domains
-agentsinc eject skills --category framework
-
-# Combine filters
-agentsinc eject skills --domain backend --category api
-```
-
-### Implementation Notes
-
-- Use `matrix.categories` to filter skills by their category paths
-- Domain = top-level category (e.g., `frontend`, `backend`, `tooling`)
-- Category = category (e.g., `framework`, `state-management`, `testing`)
-- Skills have `category` field with format `domain/category`
 
 ---
 
