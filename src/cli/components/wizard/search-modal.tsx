@@ -1,8 +1,8 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { Box, Text } from "ink";
 import type { BoundSkillCandidate } from "../../types/index.js";
 import { CLI_COLORS } from "../../consts.js";
-import { useKeyboardNavigation } from "../hooks/use-keyboard-navigation.js";
+import { SelectList, type SelectListItem } from "../common/select-list.js";
 import { KEY_LABEL_ARROWS_VERT, KEY_LABEL_ENTER, KEY_LABEL_ESC } from "./hotkeys.js";
 
 export type SearchModalProps = {
@@ -10,56 +10,24 @@ export type SearchModalProps = {
   alias: string;
   onBind: (candidate: BoundSkillCandidate) => void;
   onClose: () => void;
+  active?: boolean;
 };
 
-const MARKER_FOCUSED = "\u25B8";
-const MARKER_SPACER = " ";
+function candidateToItem(candidate: BoundSkillCandidate): SelectListItem<BoundSkillCandidate> {
+  return {
+    label: `${candidate.sourceName}/${candidate.id}`,
+    value: candidate,
+  };
+}
 
-type ResultRowProps = {
-  candidate: BoundSkillCandidate;
-  isFocused: boolean;
-};
-
-const ResultRow: React.FC<ResultRowProps> = ({ candidate, isFocused }) => {
-  const marker = isFocused ? MARKER_FOCUSED : MARKER_SPACER;
-  const sourceLabel = `${candidate.sourceName}/${candidate.id}`;
-
-  return (
-    <Box>
-      <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
-        {marker}{" "}
-      </Text>
-      <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
-        {sourceLabel}
-      </Text>
-      {candidate.description && (
-        <Text dimColor>
-          {"   "}
-          {candidate.description}
-        </Text>
-      )}
-    </Box>
-  );
-};
-
-export const SearchModal: React.FC<SearchModalProps> = ({ results, alias, onBind, onClose }) => {
-  const handleEnter = useCallback(
-    (index: number) => {
-      if (results.length > 0) {
-        const selected = results[index];
-        if (selected) {
-          onBind(selected);
-        }
-      }
-    },
-    [results, onBind],
-  );
-
-  const { focusedIndex } = useKeyboardNavigation(
-    results.length,
-    { onEnter: handleEnter, onEscape: onClose },
-    { vimKeys: false },
-  );
+export const SearchModal: React.FC<SearchModalProps> = ({
+  results,
+  alias,
+  onBind,
+  onClose,
+  active,
+}) => {
+  const items = results.map(candidateToItem);
 
   return (
     <Box
@@ -76,13 +44,25 @@ export const SearchModal: React.FC<SearchModalProps> = ({ results, alias, onBind
       {results.length === 0 ? (
         <Text dimColor>No results found</Text>
       ) : (
-        results.map((candidate, index) => (
-          <ResultRow
-            key={`${candidate.sourceName}-${candidate.id}`}
-            candidate={candidate}
-            isFocused={index === focusedIndex}
-          />
-        ))
+        <SelectList
+          items={items}
+          onSelect={onBind}
+          onCancel={onClose}
+          active={active}
+          renderItem={(item, isFocused) => (
+            <>
+              <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
+                {item.label}
+              </Text>
+              {item.value.description && (
+                <Text dimColor>
+                  {"   "}
+                  {item.value.description}
+                </Text>
+              )}
+            </>
+          )}
+        />
       )}
 
       <Text> </Text>

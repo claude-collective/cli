@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 
 import { Flags } from "@oclif/core";
-import { render, Box, Text, useApp, useInput } from "ink";
+import { render, Box, Text, useApp } from "ink";
 import os from "os";
 import path from "path";
 
@@ -31,10 +31,15 @@ import {
   ASCII_LOGO,
   CLAUDE_SRC_DIR,
   CLI_BIN_NAME,
-  CLI_COLORS,
   DEFAULT_BRANDING,
   GLOBAL_INSTALL_ROOT,
 } from "../consts.js";
+import { SelectList, type SelectListItem } from "../components/common/select-list.js";
+import {
+  KEY_LABEL_ARROWS_VERT,
+  KEY_LABEL_ENTER,
+  KEY_LABEL_ESC,
+} from "../components/wizard/hotkeys.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { getSkill, useMatrixStore } from "../stores/matrix-store";
@@ -48,85 +53,57 @@ import {
 import { SUCCESS_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
 import { ensureBlankGlobalConfig } from "../lib/configuration/config-writer.js";
 
-type DashboardOption = {
-  label: string;
-  command: string;
-};
+/** Clears the visible terminal area so the next render starts clean. */
+function clearTerminalOutput(): void {
+  process.stdout.write("\x1b[2J\x1b[H");
+}
 
-const DASHBOARD_OPTIONS: DashboardOption[] = [
-  { label: "Edit", command: "edit" },
-  { label: "Compile", command: "compile" },
-  { label: "Doctor", command: "doctor" },
-  { label: "List", command: "list" },
+const DASHBOARD_OPTIONS: SelectListItem<string>[] = [
+  { label: "Edit", value: "edit" },
+  { label: "Compile", value: "compile" },
+  { label: "Doctor", value: "doctor" },
+  { label: "List", value: "list" },
 ];
 
-type DashboardProps = DashboardData & {
+type DashboardProps = {
   onSelect: (command: string) => void;
   onCancel: () => void;
 };
 
-const Dashboard: React.FC<DashboardProps> = ({
-  skillCount,
-  agentCount,
-  source,
-  mode,
-  onSelect,
-  onCancel,
-}) => {
+const Dashboard: React.FC<DashboardProps> = ({ onSelect, onCancel }) => {
   const { exit } = useApp();
-  const [focusIndex, setFocusIndex] = useState(0);
-
-  useInput((_input, key) => {
-    if (key.escape) {
-      onCancel();
-      exit();
-      return;
-    }
-    if (key.return) {
-      onSelect(DASHBOARD_OPTIONS[focusIndex].command);
-      exit();
-      return;
-    }
-    if (key.leftArrow) {
-      setFocusIndex((i) => (i > 0 ? i - 1 : DASHBOARD_OPTIONS.length - 1));
-    }
-    if (key.rightArrow) {
-      setFocusIndex((i) => (i < DASHBOARD_OPTIONS.length - 1 ? i + 1 : 0));
-    }
-  });
 
   return (
     <Box flexDirection="column">
       <Text bold>{DEFAULT_BRANDING.NAME}</Text>
       <Text> </Text>
-      <Text> Skills: {skillCount} installed</Text>
-      <Text> Agents: {agentCount} compiled</Text>
-      <Text> Mode: {mode === "plugin" ? "Plugin" : "Local"}</Text>
-      {source && <Text> Source: {source}</Text>}
+      <SelectList
+        items={DASHBOARD_OPTIONS}
+        onSelect={(command) => {
+          onSelect(command);
+          exit();
+        }}
+        onCancel={() => {
+          onCancel();
+          exit();
+        }}
+      />
       <Text> </Text>
-      <Box>
-        <Text> </Text>
-        {DASHBOARD_OPTIONS.map((option, index) => (
-          <Box key={option.command} marginRight={1}>
-            <Text
-              color={index === focusIndex ? CLI_COLORS.FOCUS : undefined}
-              bold={index === focusIndex}
-            >
-              [{option.label}]
-            </Text>
-          </Box>
-        ))}
-      </Box>
-      <Text dimColor> Use arrow keys to select, Enter to confirm, Esc to exit</Text>
+      <Text dimColor>
+        {" "}
+        {KEY_LABEL_ARROWS_VERT} Navigate {"  "}
+        {KEY_LABEL_ENTER} Confirm {"  "}
+        {KEY_LABEL_ESC} Exit
+      </Text>
     </Box>
   );
 };
 
 type GlobalConfigChoice = "edit-global" | "create-project";
 
-const GLOBAL_CONFIG_OPTIONS: { label: string; choice: GlobalConfigChoice }[] = [
-  { label: "Edit global installation", choice: "edit-global" },
-  { label: "Create new project installation", choice: "create-project" },
+const GLOBAL_CONFIG_OPTIONS: SelectListItem<GlobalConfigChoice>[] = [
+  { label: "Edit global installation", value: "edit-global" },
+  { label: "Create new project installation", value: "create-project" },
 ];
 
 type GlobalConfigPromptProps = {
@@ -141,46 +118,29 @@ const GlobalConfigPrompt: React.FC<GlobalConfigPromptProps> = ({
   onCancel,
 }) => {
   const { exit } = useApp();
-  const [focusIndex, setFocusIndex] = useState(0);
-
-  useInput((_input, key) => {
-    if (key.escape) {
-      onCancel();
-      exit();
-      return;
-    }
-    if (key.return) {
-      onSelect(GLOBAL_CONFIG_OPTIONS[focusIndex].choice);
-      exit();
-      return;
-    }
-    if (key.leftArrow) {
-      setFocusIndex((i) => (i > 0 ? i - 1 : GLOBAL_CONFIG_OPTIONS.length - 1));
-    }
-    if (key.rightArrow) {
-      setFocusIndex((i) => (i < GLOBAL_CONFIG_OPTIONS.length - 1 ? i + 1 : 0));
-    }
-  });
 
   return (
     <Box flexDirection="column">
       <Text>A global installation was found at {globalConfigDir}</Text>
-      <Text>What would you like to do?</Text>
       <Text> </Text>
-      <Box>
-        <Text> </Text>
-        {GLOBAL_CONFIG_OPTIONS.map((option, index) => (
-          <Box key={option.choice} marginRight={1}>
-            <Text
-              color={index === focusIndex ? CLI_COLORS.FOCUS : undefined}
-              bold={index === focusIndex}
-            >
-              [{option.label}]
-            </Text>
-          </Box>
-        ))}
-      </Box>
-      <Text dimColor> Use arrow keys to select, Enter to confirm, Esc to exit</Text>
+      <SelectList
+        items={GLOBAL_CONFIG_OPTIONS}
+        onSelect={(choice) => {
+          onSelect(choice);
+          exit();
+        }}
+        onCancel={() => {
+          onCancel();
+          exit();
+        }}
+      />
+      <Text> </Text>
+      <Text dimColor>
+        {" "}
+        {KEY_LABEL_ARROWS_VERT} Navigate {"  "}
+        {KEY_LABEL_ENTER} Confirm {"  "}
+        {KEY_LABEL_ESC} Exit
+      </Text>
     </Box>
   );
 };
@@ -246,10 +206,6 @@ export async function showDashboard(
 
   const { waitUntilExit } = render(
     <Dashboard
-      skillCount={data.skillCount}
-      agentCount={data.agentCount}
-      source={data.source}
-      mode={data.mode}
       onSelect={(command) => {
         selectedCommand = command;
       }}
@@ -260,6 +216,7 @@ export async function showDashboard(
   );
 
   await waitUntilExit();
+  clearTerminalOutput();
 
   return selectedCommand;
 }
@@ -330,6 +287,7 @@ export default class Init extends BaseCommand {
         );
 
         await waitForPrompt();
+        clearTerminalOutput();
 
         if (globalChoice === "edit-global") {
           const selectedCommand = await showDashboard(os.homedir(), (msg) => this.log(msg));
