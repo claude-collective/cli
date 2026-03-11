@@ -31,6 +31,7 @@ vi.mock("../../consts", async (importOriginal) => {
   };
 });
 
+import { CLAUDE_DIR } from "../../consts";
 import {
   getAgentDefinitions,
   getLocalAgentDefinitions,
@@ -92,11 +93,11 @@ describe("agent-fetcher", () => {
 
       // Create local templates in a separate project dir
       const projectDir = path.join(tempDir, "my-project");
-      await mkdir(path.join(projectDir, ".claude/templates"), { recursive: true });
+      await mkdir(path.join(projectDir, CLAUDE_DIR, "templates"), { recursive: true });
 
       const result = await getLocalAgentDefinitions({ projectDir });
 
-      expect(result.templatesDir).toBe(path.join(projectDir, ".claude", "templates"));
+      expect(result.templatesDir).toBe(path.join(projectDir, CLAUDE_DIR, "templates"));
       expect(result.agentsDir).toBe(path.join(tempDir, "src/agents"));
       expect(result.sourcePath).toBe(tempDir);
     });
@@ -411,11 +412,11 @@ describe("agent-fetcher", () => {
 
       // Create local templates in project dir
       const projectDir = path.join(tempDir, "my-project");
-      await mkdir(path.join(projectDir, ".claude/templates"), { recursive: true });
+      await mkdir(path.join(projectDir, CLAUDE_DIR, "templates"), { recursive: true });
 
       const result = await getAgentDefinitions(undefined, { projectDir });
 
-      expect(result.templatesDir).toBe(path.join(projectDir, ".claude", "templates"));
+      expect(result.templatesDir).toBe(path.join(projectDir, CLAUDE_DIR, "templates"));
     });
   });
 });

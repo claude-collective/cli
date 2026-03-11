@@ -10,20 +10,21 @@ import {
   getAvailableSkills,
 } from "./matrix-resolver";
 import type { CategoryDefinition, SkillId, Category } from "../../types";
-import { createMockSkill, createMockCategory, createMockMatrix } from "../__tests__/helpers";
+import { createMockSkill, createMockCategory, createMockMatrix, SKILLS } from "../__tests__/helpers";
+import { TEST_CATEGORIES } from "../__tests__/test-fixtures";
 import { useMatrixStore } from "../../stores/matrix-store";
 
 describe("resolveAlias", () => {
   it("when skill ID exists in matrix, should return it unchanged", () => {
-    const skill = createMockSkill("web-framework-react");
-    const matrix = createMockMatrix({ "web-framework-react": skill });
+    const skill = SKILLS.react;
+    const matrix = createMockMatrix(skill);
     useMatrixStore.getState().setMatrix(matrix);
     const result = resolveAlias("web-framework-react");
     expect(result).toBe("web-framework-react");
   });
 
   it("when skill ID does not exist in matrix, should throw", () => {
-    const matrix = createMockMatrix({});
+    const matrix = createMockMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     expect(() => resolveAlias("web-test-unknown")).toThrow("Unknown skill ID");
   });
@@ -32,7 +33,7 @@ describe("resolveAlias", () => {
 describe("isDiscouraged", () => {
   it("should return false for skill with no discourages", () => {
     const skill = createMockSkill("web-skill-a");
-    const matrix = createMockMatrix({ "web-skill-a": skill });
+    const matrix = createMockMatrix(skill);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isDiscouraged("web-skill-a", []);
@@ -44,7 +45,7 @@ describe("isDiscouraged", () => {
     const skillB = createMockSkill("web-skill-b", {
       discourages: [{ skillId: "web-skill-a", reason: "Not recommended" }],
     });
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isDiscouraged("web-skill-a", ["web-skill-b"]);
@@ -56,7 +57,7 @@ describe("isDiscouraged", () => {
       discourages: [{ skillId: "web-skill-b", reason: "Not recommended" }],
     });
     const skillB = createMockSkill("web-skill-b");
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isDiscouraged("web-skill-a", ["web-skill-b"]);
@@ -68,7 +69,7 @@ describe("isDiscouraged", () => {
       conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible" }],
     });
     const skillB = createMockSkill("web-skill-b");
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isDiscouraged("web-skill-a", ["web-skill-b"]);
@@ -80,7 +81,7 @@ describe("isDiscouraged", () => {
     const skillB = createMockSkill("web-skill-b", {
       conflictsWith: [{ skillId: "web-skill-a", reason: "Incompatible" }],
     });
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isDiscouraged("web-skill-a", ["web-skill-b"]);
@@ -95,11 +96,7 @@ describe("isDiscouraged", () => {
     });
     const skillB = createMockSkill("web-skill-b");
     const skillC = createMockSkill("web-skill-c");
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isDiscouraged("web-skill-a", ["web-skill-b"]);
@@ -114,11 +111,7 @@ describe("isDiscouraged", () => {
     });
     const skillB = createMockSkill("web-skill-b");
     const skillC = createMockSkill("web-skill-c");
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isDiscouraged("web-skill-a", ["web-skill-b", "web-skill-c"]);
@@ -129,11 +122,9 @@ describe("isDiscouraged", () => {
     const skillA = createMockSkill("web-skill-a", {
       requires: [{ skillIds: ["web-skill-b", "web-skill-c"], needsAny: true, reason: "Needs one" }],
     });
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": createMockSkill("web-skill-b"),
-      "web-skill-c": createMockSkill("web-skill-c"),
-    });
+    const skillB = createMockSkill("web-skill-b");
+    const skillC = createMockSkill("web-skill-c");
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isDiscouraged("web-skill-a", []);
@@ -144,11 +135,9 @@ describe("isDiscouraged", () => {
     const skillA = createMockSkill("web-skill-a", {
       requires: [{ skillIds: ["web-skill-b", "web-skill-c"], needsAny: true, reason: "Needs one" }],
     });
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": createMockSkill("web-skill-b"),
-      "web-skill-c": createMockSkill("web-skill-c"),
-    });
+    const skillB = createMockSkill("web-skill-b");
+    const skillC = createMockSkill("web-skill-c");
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isDiscouraged("web-skill-a", ["web-skill-c"]);
@@ -159,7 +148,7 @@ describe("isDiscouraged", () => {
 describe("isRecommended", () => {
   it("should return false for skill not in recommends list", () => {
     const skill = createMockSkill("web-skill-a");
-    const matrix = createMockMatrix({ "web-skill-a": skill });
+    const matrix = createMockMatrix(skill);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isRecommended("web-skill-a", []);
@@ -172,7 +161,7 @@ describe("isRecommended", () => {
       recommendedReason: "Works well together",
     });
     const skillB = createMockSkill("web-skill-b");
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isRecommended("web-skill-a", ["web-skill-b"]);
@@ -182,10 +171,7 @@ describe("isRecommended", () => {
   it("should return false if skill is not marked as recommended", () => {
     const skillA = createMockSkill("web-skill-a");
     const skillB = createMockSkill("web-skill-b");
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-    });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = isRecommended("web-skill-a", ["web-skill-b"]);
@@ -196,7 +182,7 @@ describe("isRecommended", () => {
 describe("getDiscourageReason", () => {
   it("should return undefined for non-discouraged skill", () => {
     const skill = createMockSkill("web-skill-a");
-    const matrix = createMockMatrix({ "web-skill-a": skill });
+    const matrix = createMockMatrix(skill);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getDiscourageReason("web-skill-a", []);
@@ -208,7 +194,7 @@ describe("getDiscourageReason", () => {
     const skillB = createMockSkill("web-skill-b", {
       discourages: [{ skillId: "web-skill-a", reason: "Not recommended together" }],
     });
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getDiscourageReason("web-skill-a", ["web-skill-b"]);
@@ -220,7 +206,7 @@ describe("getDiscourageReason", () => {
       conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible architectures" }],
     });
     const skillB = createMockSkill("web-skill-b");
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const reason = getDiscourageReason("web-skill-a", ["web-skill-b"]);
@@ -233,7 +219,7 @@ describe("getDiscourageReason", () => {
       requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Framework required" }],
     });
     const skillB = createMockSkill("web-skill-b");
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const reason = getDiscourageReason("web-skill-a", []);
@@ -244,7 +230,7 @@ describe("getDiscourageReason", () => {
 
 describe("validateSelection", () => {
   it("when no skills are selected, should return valid with no errors", () => {
-    const matrix = createMockMatrix({});
+    const matrix = createMockMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     const result = validateSelection([]);
     expect(result.valid).toBe(true);
@@ -252,10 +238,10 @@ describe("validateSelection", () => {
   });
 
   it("should return valid for non-conflicting selection", () => {
-    const matrix = createMockMatrix({
-      "web-skill-a": createMockSkill("web-skill-a"),
-      "web-skill-b": createMockSkill("web-skill-b"),
-    });
+    const matrix = createMockMatrix(
+      createMockSkill("web-skill-a"),
+      createMockSkill("web-skill-b"),
+    );
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = validateSelection(["web-skill-a", "web-skill-b"]);
@@ -267,7 +253,7 @@ describe("validateSelection", () => {
       conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible" }],
     });
     const skillB = createMockSkill("web-skill-b");
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = validateSelection(["web-skill-a", "web-skill-b"]);
@@ -281,7 +267,7 @@ describe("validateSelection", () => {
       requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs B" }],
     });
     const skillB = createMockSkill("web-skill-b");
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = validateSelection(["web-skill-a"]);
@@ -295,7 +281,7 @@ describe("validateSelection", () => {
       isRecommended: true,
       recommendedReason: "Works better together",
     });
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = validateSelection(["web-skill-a"]);
@@ -310,17 +296,11 @@ describe("validateSelection", () => {
     const skillB = createMockSkill("web-skill-b", {
       category: "web-framework",
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB },
-      {
-        categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", {
-            description: "Frameworks",
-            order: 1,
-          }),
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", order: 1 },
+      } as Record<Category, CategoryDefinition>,
+    });
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = validateSelection(["web-skill-a", "web-skill-b"]);
@@ -331,17 +311,11 @@ describe("validateSelection", () => {
 
 describe("getSkillsByCategory", () => {
   it("should return skills in the specified category", () => {
-    const matrix = createMockMatrix({
-      "web-skill-a": createMockSkill("web-skill-a", {
-        category: "web-framework",
-      }),
-      "web-skill-b": createMockSkill("web-skill-b", {
-        category: "web-styling",
-      }),
-      "web-skill-c": createMockSkill("web-skill-c", {
-        category: "web-framework",
-      }),
-    });
+    const matrix = createMockMatrix(
+      createMockSkill("web-skill-a", { category: "web-framework" }),
+      createMockSkill("web-skill-b", { category: "web-styling" }),
+      createMockSkill("web-skill-c", { category: "web-framework" }),
+    );
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getSkillsByCategory("web-framework");
@@ -351,11 +325,9 @@ describe("getSkillsByCategory", () => {
   });
 
   it("should return empty array for category with no skills", () => {
-    const matrix = createMockMatrix({
-      "web-skill-a": createMockSkill("web-skill-a", {
-        category: "web-framework",
-      }),
-    });
+    const matrix = createMockMatrix(
+      createMockSkill("web-skill-a", { category: "web-framework" }),
+    );
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getSkillsByCategory("web-nonexistent");
@@ -366,7 +338,7 @@ describe("getSkillsByCategory", () => {
 describe("Empty skill selection", () => {
   describe("validateSelection with empty skills", () => {
     it("should return valid=true for empty selection", () => {
-      const matrix = createMockMatrix({});
+      const matrix = createMockMatrix();
       useMatrixStore.getState().setMatrix(matrix);
       const result = validateSelection([]);
 
@@ -376,11 +348,11 @@ describe("Empty skill selection", () => {
     });
 
     it("should return valid=true even with skills available in matrix", () => {
-      const matrix = createMockMatrix({
-        "web-skill-a": createMockSkill("web-skill-a"),
-        "web-skill-b": createMockSkill("web-skill-b"),
-        "web-skill-c": createMockSkill("web-skill-c"),
-      });
+      const matrix = createMockMatrix(
+        createMockSkill("web-skill-a"),
+        createMockSkill("web-skill-b"),
+        createMockSkill("web-skill-c"),
+      );
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection([]);
@@ -397,7 +369,7 @@ describe("Empty skill selection", () => {
         recommendedReason: "Works well together",
         compatibleWith: ["web-skill-a"],
       });
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection([]);
@@ -412,11 +384,7 @@ describe("Empty skill selection", () => {
         {},
         {
           categories: {
-            "web-framework": createMockCategory("web-framework", "Framework", {
-              description: "Required framework",
-              required: true,
-              order: 1,
-            }),
+            "web-framework": { ...TEST_CATEGORIES.framework, description: "Required framework", required: true, order: 1 },
           } as Record<Category, CategoryDefinition>,
         },
       );
@@ -432,7 +400,7 @@ describe("Empty skill selection", () => {
   describe("isDiscouraged with empty current selections", () => {
     it("should not discourage skills when nothing is selected (no conflicts)", () => {
       const skill = createMockSkill("web-skill-a");
-      const matrix = createMockMatrix({ "web-skill-a": skill });
+      const matrix = createMockMatrix(skill);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = isDiscouraged("web-skill-a", []);
@@ -444,7 +412,7 @@ describe("Empty skill selection", () => {
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs B" }],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = isDiscouraged("web-skill-a", []);
@@ -458,7 +426,7 @@ describe("Empty skill selection", () => {
         isRecommended: true,
         recommendedReason: "Works well",
       });
-      const matrix = createMockMatrix({ "web-skill-a": skillA });
+      const matrix = createMockMatrix(skillA);
       useMatrixStore.getState().setMatrix(matrix);
 
       // With no selections, isRecommended alone is sufficient
@@ -468,7 +436,7 @@ describe("Empty skill selection", () => {
 
     it("should not recommend skill without isRecommended flag", () => {
       const skillA = createMockSkill("web-skill-a");
-      const matrix = createMockMatrix({ "web-skill-a": skillA });
+      const matrix = createMockMatrix(skillA);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = isRecommended("web-skill-a", []);
@@ -482,7 +450,7 @@ describe("Empty skill selection", () => {
       const skillB = createMockSkill("web-skill-b", {
         discourages: [{ skillId: "web-skill-a", reason: "Not recommended" }],
       });
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = isDiscouraged("web-skill-a", []);
@@ -498,7 +466,7 @@ describe("Conflicting skills", () => {
         conflictsWith: [{ skillId: "web-skill-b", reason: "These cannot work together" }],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a", "web-skill-b"]);
@@ -521,11 +489,7 @@ describe("Conflicting skills", () => {
       });
       const skillB = createMockSkill("web-skill-b");
       const skillC = createMockSkill("web-skill-c");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-      });
+      const matrix = createMockMatrix(skillA, skillB, skillC);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a", "web-skill-b", "web-skill-c"]);
@@ -539,7 +503,7 @@ describe("Conflicting skills", () => {
         conflictsWith: [{ skillId: "web-skill-b", reason: "A conflicts with B" }],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a", "web-skill-b"]);
@@ -557,7 +521,7 @@ describe("Conflicting skills", () => {
         conflictsWith: [{ skillId: "web-skill-b", reason: "A conflicts with B" }],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-b", "web-skill-a"]);
@@ -574,18 +538,11 @@ describe("Conflicting skills", () => {
     const skillB = createMockSkill("web-skill-b", {
       category: "web-framework",
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB },
-      {
-        categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", {
-            description: "Frameworks",
-            exclusive: false,
-            order: 1,
-          }),
-        },
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
       },
-    );
+    });
 
     beforeEach(() => {
       useMatrixStore.getState().setMatrix(matrix);
@@ -622,7 +579,7 @@ describe("Missing skill dependencies", () => {
         ],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a"]);
@@ -646,11 +603,7 @@ describe("Missing skill dependencies", () => {
       });
       const skillB = createMockSkill("web-skill-b");
       const skillC = createMockSkill("web-skill-c");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-      });
+      const matrix = createMockMatrix(skillA, skillB, skillC);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a"]);
@@ -675,11 +628,7 @@ describe("Missing skill dependencies", () => {
       });
       const skillB = createMockSkill("web-skill-b");
       const skillC = createMockSkill("web-skill-c");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-      });
+      const matrix = createMockMatrix(skillA, skillB, skillC);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a"]);
@@ -702,11 +651,7 @@ describe("Missing skill dependencies", () => {
       });
       const skillB = createMockSkill("web-skill-b");
       const skillC = createMockSkill("web-skill-c");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-      });
+      const matrix = createMockMatrix(skillA, skillB, skillC);
       useMatrixStore.getState().setMatrix(matrix);
 
       // Only skill-c selected (not skill-b), but that's enough
@@ -725,12 +670,7 @@ describe("Missing skill dependencies", () => {
       });
       const skillC = createMockSkill("web-skill-c");
       const skillD = createMockSkill("web-skill-d");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-        "web-skill-d": skillD,
-      });
+      const matrix = createMockMatrix(skillA, skillB, skillC, skillD);
       useMatrixStore.getState().setMatrix(matrix);
 
       // Both A and B are selected but their dependencies are not
@@ -748,7 +688,7 @@ describe("Missing skill dependencies", () => {
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs B" }],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a"]);
@@ -761,7 +701,7 @@ describe("Missing skill dependencies", () => {
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs B" }],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a"]);
@@ -782,11 +722,7 @@ describe("Missing skill dependencies", () => {
       });
       const skillB = createMockSkill("web-skill-b");
       const skillC = createMockSkill("web-skill-c");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-      });
+      const matrix = createMockMatrix(skillA, skillB, skillC);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a"]);
@@ -803,7 +739,7 @@ describe("Missing skill dependencies", () => {
         isRecommended: true,
         recommendedReason: "Better type safety",
       });
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a"]);
@@ -821,7 +757,7 @@ describe("Missing skill dependencies", () => {
         isRecommended: true,
         recommendedReason: "Recommended",
       });
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a"]);
@@ -837,11 +773,7 @@ describe("Missing skill dependencies", () => {
         conflictsWith: [{ skillId: "web-skill-c", reason: "Incompatible" }],
       });
       const skillC = createMockSkill("web-skill-c");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-      });
+      const matrix = createMockMatrix(skillA, skillB, skillC);
       useMatrixStore.getState().setMatrix(matrix);
 
       // B is recommended but conflicts with C which is selected
@@ -857,7 +789,7 @@ describe("Missing skill dependencies", () => {
         isRecommended: true,
         recommendedReason: "Recommended",
       });
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a", "web-skill-b"]);
@@ -872,7 +804,7 @@ describe("Missing skill dependencies", () => {
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs framework" }],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = isDiscouraged("web-skill-a", []);
@@ -885,7 +817,7 @@ describe("Missing skill dependencies", () => {
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs framework" }],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = isDiscouraged("web-skill-a", ["web-skill-b"]);
@@ -906,7 +838,7 @@ describe("Missing skill dependencies", () => {
         ],
       });
       const skillB = createMockSkill("web-skill-b");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const reason = getDiscourageReason("web-skill-a", []);
@@ -928,11 +860,7 @@ describe("Missing skill dependencies", () => {
       });
       const skillB = createMockSkill("web-skill-b");
       const skillC = createMockSkill("web-skill-c");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-      });
+      const matrix = createMockMatrix(skillA, skillB, skillC);
       useMatrixStore.getState().setMatrix(matrix);
 
       const reason = getDiscourageReason("web-skill-a", []);
@@ -953,11 +881,7 @@ describe("Missing skill dependencies", () => {
       });
       const skillB = createMockSkill("web-skill-b");
       const skillC = createMockSkill("web-skill-c");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-      });
+      const matrix = createMockMatrix(skillA, skillB, skillC);
       useMatrixStore.getState().setMatrix(matrix);
 
       const reason = getDiscourageReason("web-skill-a", []);
@@ -979,7 +903,7 @@ describe("Missing skill dependencies", () => {
         ],
       });
       const skillB = createMockSkill("web-skill-b-v");
-      const matrix = createMockMatrix({ "web-skill-a-v": skillA, "web-skill-b-v": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a-v"]);
@@ -999,7 +923,7 @@ describe("Missing skill dependencies", () => {
         ],
       });
       const skillB = createMockSkill("web-skill-b-v");
-      const matrix = createMockMatrix({ "web-skill-a-v": skillA, "web-skill-b-v": skillB });
+      const matrix = createMockMatrix(skillA, skillB);
       useMatrixStore.getState().setMatrix(matrix);
 
       const result = validateSelection(["web-skill-a-v", "web-skill-b-v"]);
@@ -1015,7 +939,7 @@ describe("getDependentSkills", () => {
   it("should return empty array when no skills depend on target", () => {
     const skillA = createMockSkill("web-skill-a");
     const skillB = createMockSkill("web-skill-b");
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b"]);
@@ -1023,7 +947,7 @@ describe("getDependentSkills", () => {
   });
 
   it("should throw when skill is not in matrix", () => {
-    const matrix = createMockMatrix({});
+    const matrix = createMockMatrix();
     useMatrixStore.getState().setMatrix(matrix);
 
     expect(() => getDependentSkills("web-skill-nonexistent", [])).toThrow(
@@ -1036,7 +960,7 @@ describe("getDependentSkills", () => {
     const skillB = createMockSkill("web-skill-b", {
       requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "Needs A" }],
     });
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b"]);
@@ -1051,11 +975,7 @@ describe("getDependentSkills", () => {
     const skillC = createMockSkill("web-skill-c", {
       requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "C needs A" }],
     });
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getDependentSkills(
@@ -1073,11 +993,7 @@ describe("getDependentSkills", () => {
     const skillC = createMockSkill("web-skill-c", {
       requires: [{ skillIds: ["web-skill-a", "web-skill-b"], needsAny: true, reason: "Needs one" }],
     });
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     // Only A and C selected, so A is the sole satisfier of C's OR requirement
@@ -1091,11 +1007,7 @@ describe("getDependentSkills", () => {
     const skillC = createMockSkill("web-skill-c", {
       requires: [{ skillIds: ["web-skill-a", "web-skill-b"], needsAny: true, reason: "Needs one" }],
     });
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     // Both A and B selected, so removing A would still leave B to satisfy C
@@ -1111,7 +1023,7 @@ describe("getDependentSkills", () => {
     const skillA = createMockSkill("web-skill-a", {
       requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "Self-ref" }],
     });
-    const matrix = createMockMatrix({ "web-skill-a": skillA });
+    const matrix = createMockMatrix(skillA);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getDependentSkills("web-skill-a", ["web-skill-a"]);
@@ -1128,11 +1040,7 @@ describe("getDependentSkills", () => {
     const skillC = createMockSkill("web-skill-c", {
       requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "C needs B" }],
     });
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     // getDependentSkills returns DIRECT dependents only
@@ -1152,7 +1060,7 @@ describe("getDependentSkills", () => {
     const skillB = createMockSkill("web-skill-b", {
       requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "B needs A" }],
     });
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     // Asking "who depends on A?" -> B depends on A
@@ -1169,7 +1077,7 @@ describe("getDependentSkills", () => {
     const skillB = createMockSkill("web-skill-b-v", {
       requires: [{ skillIds: ["web-skill-a-v"], needsAny: false, reason: "B needs A" }],
     });
-    const matrix = createMockMatrix({ "web-skill-a-v": skillA, "web-skill-b-v": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getDependentSkills("web-skill-a-v", ["web-skill-a-v", "web-skill-b-v"]);
@@ -1184,11 +1092,7 @@ describe("getDependentSkills", () => {
         { skillIds: ["web-skill-a", "web-skill-b"], needsAny: false, reason: "Needs both" },
       ],
     });
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     // C requires both A and B (AND), so C is dependent on A
@@ -1204,7 +1108,7 @@ describe("getDependentSkills", () => {
     const skillB = createMockSkill("web-skill-b", {
       requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "B needs A" }],
     });
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+    const matrix = createMockMatrix(skillA, skillB);
     useMatrixStore.getState().setMatrix(matrix);
 
     // A is not in selections — asking who depends on A among current selections
@@ -1217,18 +1121,10 @@ describe("getDependentSkills", () => {
 describe("getAvailableSkills edge cases", () => {
   it("should return empty array for category with no skills", () => {
     const matrix = createMockMatrix(
-      {
-        "web-skill-a": createMockSkill("web-skill-a", {
-          category: "web-framework",
-        }),
-      },
+      createMockSkill("web-skill-a", { category: "web-framework" }),
       {
         categories: {
-          "web-styling": createMockCategory("web-styling", "Styling", {
-            description: "Styling options",
-            exclusive: false,
-            order: 1,
-          }),
+          "web-styling": { ...TEST_CATEGORIES.styling, description: "Styling options", exclusive: false, order: 1 },
         } as Record<Category, CategoryDefinition>,
       },
     );
@@ -1276,18 +1172,11 @@ describe("getAvailableSkills edge cases", () => {
     const skillC = createMockSkill("web-skill-c", {
       category: "web-framework",
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-c": skillC },
-      {
-        categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", {
-            description: "Frameworks",
-            exclusive: false,
-            order: 1,
-          }),
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
+    const matrix = createMockMatrix(skillA, skillB, skillC, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+      } as Record<Category, CategoryDefinition>,
+    });
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getAvailableSkills("web-framework", []);
@@ -1303,18 +1192,11 @@ describe("getAvailableSkills edge cases", () => {
     const skillB = createMockSkill("web-skill-b", {
       category: "web-framework",
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB },
-      {
-        categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", {
-            description: "Frameworks",
-            exclusive: false,
-            order: 1,
-          }),
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+      } as Record<Category, CategoryDefinition>,
+    });
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getAvailableSkills("web-framework", ["web-skill-a"]);
@@ -1332,18 +1214,11 @@ describe("getAvailableSkills edge cases", () => {
     const skillB = createMockSkill("web-skill-b", {
       category: "web-framework",
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB },
-      {
-        categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", {
-            description: "Frameworks",
-            exclusive: false,
-            order: 1,
-          }),
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+      } as Record<Category, CategoryDefinition>,
+    });
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getAvailableSkills("web-framework", ["web-skill-a"]);
@@ -1361,18 +1236,11 @@ describe("getAvailableSkills edge cases", () => {
       isRecommended: true,
       recommendedReason: "Great combination",
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB },
-      {
-        categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", {
-            description: "Frameworks",
-            exclusive: false,
-            order: 1,
-          }),
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+      } as Record<Category, CategoryDefinition>,
+    });
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getAvailableSkills("web-framework", ["web-skill-a"]);
@@ -1390,18 +1258,11 @@ describe("getAvailableSkills edge cases", () => {
     const skillB = createMockSkill("web-skill-b", {
       category: "web-framework",
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB },
-      {
-        categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", {
-            description: "Frameworks",
-            exclusive: false,
-            order: 1,
-          }),
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+      } as Record<Category, CategoryDefinition>,
+    });
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getAvailableSkills("web-framework", ["web-skill-a"]);
@@ -1420,18 +1281,11 @@ describe("getAvailableSkills edge cases", () => {
       isRecommended: true,
       recommendedReason: "Good pairing",
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB },
-      {
-        categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", {
-            description: "Frameworks",
-            exclusive: false,
-            order: 1,
-          }),
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+      } as Record<Category, CategoryDefinition>,
+    });
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getAvailableSkills("web-framework", ["web-skill-a"]);
@@ -1444,7 +1298,7 @@ describe("getAvailableSkills edge cases", () => {
 
 describe("validateSelection edge cases", () => {
   it("when selected skill does not exist in matrix, should throw", () => {
-    const matrix = createMockMatrix({});
+    const matrix = createMockMatrix();
     useMatrixStore.getState().setMatrix(matrix);
 
     // Selecting a skill that doesn't exist in the matrix is a bug
@@ -1461,17 +1315,11 @@ describe("validateSelection edge cases", () => {
     const skillC = createMockSkill("web-skill-c", {
       category: "web-framework",
     });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-c": skillC },
-      {
-        categories: {
-          "web-framework": createMockCategory("web-framework", "Framework", {
-            description: "Frameworks",
-            order: 1,
-          }),
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
+    const matrix = createMockMatrix(skillA, skillB, skillC, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", order: 1 },
+      } as Record<Category, CategoryDefinition>,
+    });
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = validateSelection(["web-skill-a", "web-skill-b", "web-skill-c"]);
@@ -1484,10 +1332,7 @@ describe("validateSelection edge cases", () => {
       providesSetupFor: ["web-skill-usage"],
     });
     const usageSkill = createMockSkill("web-skill-usage", {});
-    const matrix = createMockMatrix({
-      "web-skill-setup": setupSkill,
-      "web-skill-usage": usageSkill,
-    });
+    const matrix = createMockMatrix(setupSkill, usageSkill);
     useMatrixStore.getState().setMatrix(matrix);
 
     // Select setup but not usage
@@ -1500,10 +1345,7 @@ describe("validateSelection edge cases", () => {
       providesSetupFor: ["web-skill-usage"],
     });
     const usageSkill = createMockSkill("web-skill-usage", {});
-    const matrix = createMockMatrix({
-      "web-skill-setup": setupSkill,
-      "web-skill-usage": usageSkill,
-    });
+    const matrix = createMockMatrix(setupSkill, usageSkill);
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = validateSelection(["web-skill-setup", "web-skill-usage"]);
@@ -1517,11 +1359,7 @@ describe("validateSelection edge cases", () => {
     });
     const skillB = createMockSkill("web-skill-b");
     const skillC = createMockSkill("web-skill-c");
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
+    const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
     // A conflicts with B AND requires C — selecting A+B should produce conflict error

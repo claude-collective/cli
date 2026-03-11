@@ -12,6 +12,7 @@ import {
 import { compileSkillPlugin, compileAllSkillPlugins } from "../../skills";
 import { validatePlugin } from "../../plugins";
 import { EXIT_CODES } from "../../exit-codes";
+import { LOCAL_SKILLS_PATH, STANDARD_DIRS, STANDARD_FILES, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../../consts";
 import {
   IMPORT_REACT_PATTERNS_SKILL,
   IMPORT_TESTING_UTILS_SKILL,
@@ -21,11 +22,7 @@ import {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const LOCAL_SKILLS_DIR = ".claude/skills";
-const SKILL_MD_FILE = "SKILL.md";
-const METADATA_YAML_FILE = "metadata.yaml";
-const PLUGIN_MANIFEST_DIR = ".claude-plugin";
-const PLUGIN_MANIFEST_FILE = "plugin.json";
+const LOCAL_SKILLS_DIR = LOCAL_SKILLS_PATH;
 
 // Plain directory name (no slashes/colons) so parseGitHubSource passes it
 // through as-is and fetchFromSource treats it as a local path relative to cwd
@@ -38,16 +35,16 @@ async function createLocalSource(
   skills: ImportSourceSkill[],
   options?: { subdir?: string },
 ): Promise<void> {
-  const subdir = options?.subdir ?? "skills";
+  const subdir = options?.subdir ?? STANDARD_DIRS.SKILLS;
   const skillsDir = path.join(projectDir, LOCAL_SOURCE_NAME, subdir);
 
   for (const skill of skills) {
     const skillDir = path.join(skillsDir, skill.name);
     await mkdir(skillDir, { recursive: true });
-    await writeFile(path.join(skillDir, SKILL_MD_FILE), skill.content);
+    await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), skill.content);
 
     if (skill.metadata) {
-      await writeFile(path.join(skillDir, METADATA_YAML_FILE), stringifyYaml(skill.metadata));
+      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(skill.metadata));
     }
   }
 }
@@ -91,7 +88,7 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
     // Step 3: Verify skill was imported to .claude/skills/
     const importedSkillDir = path.join(projectDir, LOCAL_SKILLS_DIR, "react-patterns");
     expect(await directoryExists(importedSkillDir)).toBe(true);
-    expect(await fileExists(path.join(importedSkillDir, SKILL_MD_FILE))).toBe(true);
+    expect(await fileExists(path.join(importedSkillDir, STANDARD_FILES.SKILL_MD))).toBe(true);
 
     // Step 4: Compile the imported skill as a plugin
     const outputDir = path.join(tempDir, "plugins");
@@ -118,7 +115,7 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
     expect(manifest.version).toBe("1.0.0");
 
     // Step 7: Verify compiled skill content is preserved
-    const compiledSkillMd = path.join(result.pluginPath, "skills", "react-patterns", SKILL_MD_FILE);
+    const compiledSkillMd = path.join(result.pluginPath, STANDARD_DIRS.SKILLS, "react-patterns", STANDARD_FILES.SKILL_MD);
     expect(await fileExists(compiledSkillMd)).toBe(true);
 
     const compiledContent = await readFile(compiledSkillMd, "utf-8");
@@ -290,7 +287,7 @@ Leverage Suspense for data fetching and code splitting.
     expect(secondError?.oclif?.exit).toBeUndefined();
 
     // Step 5: Verify updated content was imported
-    const skillMdContent = await readFile(path.join(importedSkillDir, SKILL_MD_FILE), "utf-8");
+    const skillMdContent = await readFile(path.join(importedSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
     expect(skillMdContent).toContain("React Patterns v2");
     expect(skillMdContent).toContain("Server Components");
 
@@ -306,9 +303,9 @@ Leverage Suspense for data fetching and code splitting.
     // Step 7: Verify compiled content reflects update
     const compiledSkillMd = path.join(
       secondResult.pluginPath,
-      "skills",
+      STANDARD_DIRS.SKILLS,
       "react-patterns",
-      SKILL_MD_FILE,
+      STANDARD_FILES.SKILL_MD,
     );
     const compiledContent = await readFile(compiledSkillMd, "utf-8");
     expect(compiledContent).toContain("React Patterns v2");
@@ -337,7 +334,7 @@ Leverage Suspense for data fetching and code splitting.
     });
 
     // Record original SKILL.md content
-    const originalContent = await readFile(path.join(importedSkillDir, SKILL_MD_FILE), "utf-8");
+    const originalContent = await readFile(path.join(importedSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
 
     // Try to import again WITHOUT --force
     const { error } = await runCliCommand([
@@ -350,7 +347,7 @@ Leverage Suspense for data fetching and code splitting.
     expect(error?.oclif?.exit).toBeUndefined();
 
     // Content should be unchanged (original preserved)
-    const afterContent = await readFile(path.join(importedSkillDir, SKILL_MD_FILE), "utf-8");
+    const afterContent = await readFile(path.join(importedSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
     expect(afterContent).toBe(originalContent);
 
     consoleSpy.mockRestore();
@@ -412,7 +409,7 @@ describe("Integration: Import with --subdir and Compile", () => {
     // Verify compiled output
     expect(result.skillName).toBe("api-security");
 
-    const compiledSkillMd = path.join(result.pluginPath, "skills", "api-security", SKILL_MD_FILE);
+    const compiledSkillMd = path.join(result.pluginPath, STANDARD_DIRS.SKILLS, "api-security", STANDARD_FILES.SKILL_MD);
     const content = await readFile(compiledSkillMd, "utf-8");
     expect(content).toContain("API Security");
     expect(content).toContain("Authentication");
@@ -461,7 +458,7 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
       projectDir,
       LOCAL_SKILLS_DIR,
       "react-patterns",
-      METADATA_YAML_FILE,
+      STANDARD_FILES.METADATA_YAML,
     );
     expect(await fileExists(metadataPath)).toBe(true);
 
@@ -499,7 +496,7 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
       projectDir,
       LOCAL_SKILLS_DIR,
       "api-security",
-      METADATA_YAML_FILE,
+      STANDARD_FILES.METADATA_YAML,
     );
     expect(await fileExists(metadataPath)).toBe(true);
 
@@ -582,7 +579,7 @@ describe("Integration: Import Error Recovery", () => {
     await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     // Add a directory without SKILL.md (invalid skill)
-    const invalidDir = path.join(projectDir, LOCAL_SOURCE_NAME, "skills", "invalid-skill");
+    const invalidDir = path.join(projectDir, LOCAL_SOURCE_NAME, STANDARD_DIRS.SKILLS, "invalid-skill");
     await mkdir(invalidDir, { recursive: true });
     await writeFile(path.join(invalidDir, "README.md"), "# Not a skill\n");
 

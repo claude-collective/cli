@@ -3,16 +3,10 @@ import { describe, it, expect, vi } from "vitest";
 import {
   createMockMatrixConfig,
   createMockExtractedSkill,
-  createMockCategory,
 } from "../__tests__/helpers";
+import { renderSkillMd } from "../__tests__/content-generators";
+import { STANDARD_FILES } from "../../consts";
 import { FRAMEWORK_CATEGORY } from "../__tests__/mock-data/mock-categories.js";
-import {
-  REACT_EXTRACTED,
-  REACT_EXTRACTED_BASIC,
-  VUE_EXTRACTED_BASIC,
-  ZUSTAND_EXTRACTED,
-  JOTAI_EXTRACTED,
-} from "../__tests__/mock-data/mock-skills.js";
 import {
   MERGE_BASIC_MATRIX,
   CONFLICT_MATRIX,
@@ -58,6 +52,34 @@ import { warn } from "../../utils/logger";
 import type { CategoryPath, Category } from "../../types";
 
 // ---------------------------------------------------------------------------
+// Extracted skills (single-consumer — only used in this test file)
+// ---------------------------------------------------------------------------
+
+const REACT_EXTRACTED = createMockExtractedSkill("web-framework-react", {
+  description: "React framework",
+  author: "@vince",
+  tags: ["react"],
+});
+
+const REACT_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-react", {
+  description: "React",
+});
+
+const VUE_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-vue", {
+  description: "Vue",
+});
+
+const ZUSTAND_EXTRACTED = createMockExtractedSkill("web-state-zustand", {
+  description: "Zustand",
+  category: "web-client-state",
+});
+
+const JOTAI_EXTRACTED = createMockExtractedSkill("web-state-jotai", {
+  description: "Jotai",
+  category: "web-client-state",
+});
+
+// ---------------------------------------------------------------------------
 // Top-level test data for mergeMatrixWithSkills tests
 // ---------------------------------------------------------------------------
 
@@ -73,10 +95,6 @@ const UNRESOLVED_CONFLICT_MATRIX = createMockMatrixConfig(
           reason: "Conflict with missing skill",
         },
       ],
-      discourages: [],
-      recommends: [],
-      requires: [],
-      alternatives: [],
     },
   },
 );
@@ -249,10 +267,10 @@ describe("matrix-loader", () => {
 
   describe("extractAllSkills", () => {
     it("extracts skills from metadata.yaml files with valid SKILL.md", async () => {
-      mockGlob.mockResolvedValue(["web-framework-react/metadata.yaml"]);
+      mockGlob.mockResolvedValue([`web-framework-react/${STANDARD_FILES.METADATA_YAML}`]);
       mockFileExists.mockResolvedValue(true);
       mockReadFile.mockImplementation(async (filePath: string) => {
-        if (filePath.includes("metadata.yaml")) {
+        if (filePath.includes(STANDARD_FILES.METADATA_YAML)) {
           return `
 category: web-framework
 domain: web
@@ -264,11 +282,7 @@ cliDescription: React framework
 `;
         }
         // SKILL.md content
-        return `---
-name: web-framework-react
-description: React framework
----
-# React`;
+        return renderSkillMd("web-framework-react", "React framework", "# React");
       });
       mockParseFrontmatter.mockReturnValue({
         name: "web-framework-react",
@@ -284,7 +298,7 @@ description: React framework
     });
 
     it("skips skills without SKILL.md", async () => {
-      mockGlob.mockResolvedValue(["orphan-skill/metadata.yaml"]);
+      mockGlob.mockResolvedValue([`orphan-skill/${STANDARD_FILES.METADATA_YAML}`]);
       mockFileExists.mockResolvedValue(false);
 
       const skills = await extractAllSkills("/project/src/skills");
@@ -293,14 +307,14 @@ description: React framework
     });
 
     it("skips skills with invalid metadata.yaml", async () => {
-      mockGlob.mockResolvedValue(["bad-skill/metadata.yaml"]);
+      mockGlob.mockResolvedValue([`bad-skill/${STANDARD_FILES.METADATA_YAML}`]);
       mockFileExists.mockResolvedValue(true);
       mockReadFile.mockImplementation(async (filePath: string) => {
-        if (filePath.includes("metadata.yaml")) {
+        if (filePath.includes(STANDARD_FILES.METADATA_YAML)) {
           // Missing required 'category' and 'author' fields
           return "invalid: true\n";
         }
-        return `---\nname: bad-skill\ndescription: test\n---\n# Bad`;
+        return renderSkillMd("bad-skill", "test", "# Bad");
       });
 
       const skills = await extractAllSkills("/project/src/skills");
@@ -309,10 +323,10 @@ description: React framework
     });
 
     it("throws when displayName is missing from metadata", async () => {
-      mockGlob.mockResolvedValue(["no-cli/metadata.yaml"]);
+      mockGlob.mockResolvedValue([`no-cli/${STANDARD_FILES.METADATA_YAML}`]);
       mockFileExists.mockResolvedValue(true);
       mockReadFile.mockImplementation(async (filePath: string) => {
-        if (filePath.includes("metadata.yaml")) {
+        if (filePath.includes(STANDARD_FILES.METADATA_YAML)) {
           return `
 category: web-framework
 domain: web
@@ -320,7 +334,7 @@ author: "@test"
 slug: "no-cli"
 `;
         }
-        return `---\nname: no-cli\ndescription: test\n---\n# Test`;
+        return renderSkillMd("no-cli", "test", "# Test");
       });
       mockParseFrontmatter.mockReturnValue({
         name: "no-cli",
@@ -333,10 +347,10 @@ slug: "no-cli"
     });
 
     it("skips skills with invalid SKILL.md frontmatter", async () => {
-      mockGlob.mockResolvedValue(["bad-fm/metadata.yaml"]);
+      mockGlob.mockResolvedValue([`bad-fm/${STANDARD_FILES.METADATA_YAML}`]);
       mockFileExists.mockResolvedValue(true);
       mockReadFile.mockImplementation(async (filePath: string) => {
-        if (filePath.includes("metadata.yaml")) {
+        if (filePath.includes(STANDARD_FILES.METADATA_YAML)) {
           return `
 category: web-framework
 domain: web
@@ -364,13 +378,13 @@ slug: bad-fm
     });
 
     it("warns when metadata.yaml has invalid YAML syntax", async () => {
-      mockGlob.mockResolvedValue(["broken-yaml/metadata.yaml"]);
+      mockGlob.mockResolvedValue([`broken-yaml/${STANDARD_FILES.METADATA_YAML}`]);
       mockFileExists.mockResolvedValue(true);
       mockReadFile.mockImplementation(async (filePath: string) => {
-        if (filePath.includes("metadata.yaml")) {
+        if (filePath.includes(STANDARD_FILES.METADATA_YAML)) {
           return "category: [unclosed bracket";
         }
-        return `---\nname: broken\ndescription: test\n---\n# Broken`;
+        return renderSkillMd("broken", "test", "# Broken");
       });
 
       // YAML parse error should propagate (metadata readFile succeeds but YAML is malformed)
@@ -378,10 +392,10 @@ slug: bad-fm
     });
 
     it("warns and skips when metadata.yaml has wrong field types", async () => {
-      mockGlob.mockResolvedValue(["wrong-types/metadata.yaml"]);
+      mockGlob.mockResolvedValue([`wrong-types/${STANDARD_FILES.METADATA_YAML}`]);
       mockFileExists.mockResolvedValue(true);
       mockReadFile.mockImplementation(async (filePath: string) => {
-        if (filePath.includes("metadata.yaml")) {
+        if (filePath.includes(STANDARD_FILES.METADATA_YAML)) {
           // category must be a valid CategoryPath string, not a number
           return `
 category: 12345
@@ -390,7 +404,7 @@ version: "1"
 displayName: wrong
 `;
         }
-        return `---\nname: wrong-types\ndescription: test\n---\n# Test`;
+        return renderSkillMd("wrong-types", "test", "# Test");
       });
 
       const skills = await extractAllSkills("/project/src/skills");
@@ -401,22 +415,22 @@ displayName: wrong
 
     it("extracts multiple skills and skips invalid ones in the same batch", async () => {
       mockGlob.mockResolvedValue([
-        "skill-valid/metadata.yaml",
-        "skill-no-skillmd/metadata.yaml",
-        "skill-bad-meta/metadata.yaml",
+        `skill-valid/${STANDARD_FILES.METADATA_YAML}`,
+        `skill-no-skillmd/${STANDARD_FILES.METADATA_YAML}`,
+        `skill-bad-meta/${STANDARD_FILES.METADATA_YAML}`,
       ]);
       mockFileExists.mockImplementation(async (filePath: string) => {
         // skill-no-skillmd has no SKILL.md
         return !filePath.includes("skill-no-skillmd");
       });
       mockReadFile.mockImplementation(async (filePath: string) => {
-        if (filePath.includes("skill-valid") && filePath.includes("metadata.yaml")) {
+        if (filePath.includes("skill-valid") && filePath.includes(STANDARD_FILES.METADATA_YAML)) {
           return `category: web-framework\ndomain: web\nauthor: "@test"\nversion: "1"\ndisplayName: valid\nslug: valid`;
         }
-        if (filePath.includes("skill-bad-meta") && filePath.includes("metadata.yaml")) {
+        if (filePath.includes("skill-bad-meta") && filePath.includes(STANDARD_FILES.METADATA_YAML)) {
           return "invalid: true\n";
         }
-        return `---\nname: skill-valid\ndescription: Valid skill\n---\n# Test`;
+        return renderSkillMd("skill-valid", "Valid skill", "# Test");
       });
       mockParseFrontmatter.mockReturnValue({
         name: "skill-valid",
@@ -542,11 +556,7 @@ displayName: wrong
         { "web-framework": FRAMEWORK_CATEGORY },
         {
           relationships: {
-            conflicts: [],
-            discourages: [],
             recommends: [{ skill: "web-state-zustand", reason: "Best state management" }],
-            requires: [],
-            alternatives: [],
           },
         },
       );

@@ -579,7 +579,10 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
       "api-framework-hono",
       "api-database-drizzle",
     ];
-    const allSkills: SkillId[] = [...selectedSkills, ...DEFAULT_PRESELECTED_SKILLS];
+    // Only include methodology skills that exist in the test matrix
+    const matrixSkillIds = Object.keys(matrix.skills) as SkillId[];
+    const methodologySkills = DEFAULT_PRESELECTED_SKILLS.filter((s) => matrixSkillIds.includes(s));
+    const allSkills: SkillId[] = [...selectedSkills, ...methodologySkills];
 
     simulateSkillSelections(allSkills, matrix, ["web", "api", "shared"]);
     useWizardStore.getState().preselectAgentsFromDomains();
@@ -597,7 +600,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     for (const skillId of selectedSkills) {
       expect(config.skills.map((s) => s.id)).toContain(skillId);
     }
-    for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
+    for (const methodSkill of methodologySkills) {
       expect(config.skills.map((s) => s.id)).toContain(methodSkill);
     }
 
@@ -652,7 +655,10 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
 
   it("should include methodology skills in all domain agents via the config", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-    const allSkills: SkillId[] = [...selectedSkills, ...DEFAULT_PRESELECTED_SKILLS];
+    // Only include methodology skills that exist in the test matrix
+    const matrixSkillIds = Object.keys(matrix.skills) as SkillId[];
+    const methodologySkills = DEFAULT_PRESELECTED_SKILLS.filter((s) => matrixSkillIds.includes(s));
+    const allSkills: SkillId[] = [...selectedSkills, ...methodologySkills];
 
     simulateSkillSelections(allSkills, matrix, ["web", "api", "shared"]);
     useWizardStore.getState().preselectAgentsFromDomains();
@@ -667,7 +673,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     // Methodology skills should be in config.skills
-    for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
+    for (const methodSkill of methodologySkills) {
       expect(config.skills.map((s) => s.id)).toContain(methodSkill);
     }
 

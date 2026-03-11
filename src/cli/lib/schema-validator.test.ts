@@ -4,6 +4,8 @@ import { mkdir, writeFile } from "fs/promises";
 import { validateAllSchemas, printValidationResults } from "./schema-validator";
 import type { FullValidationResult } from "./schema-validator";
 import { createTempDir, cleanupTempDir } from "./__tests__/helpers";
+import { renderAgentYaml } from "./__tests__/content-generators";
+import { CLAUDE_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../consts";
 
 describe("schema-validator", () => {
   let tempDir: string;
@@ -53,15 +55,8 @@ describe("schema-validator", () => {
       const agentDir = path.join(tempDir, "src", "agents", "test-agent");
       await mkdir(agentDir, { recursive: true });
       await writeFile(
-        path.join(agentDir, "metadata.yaml"),
-        [
-          "id: test-agent",
-          "title: Test Agent",
-          "description: A test agent for validation",
-          "tools:",
-          "  - Read",
-          "  - Write",
-        ].join("\n"),
+        path.join(agentDir, STANDARD_FILES.METADATA_YAML),
+        renderAgentYaml("test-agent", "A test agent for validation", { title: "Test Agent" }),
       );
 
       const result = await validateAllSchemas(tempDir);
@@ -80,7 +75,7 @@ describe("schema-validator", () => {
       const agentDir = path.join(tempDir, "src", "agents", "bad-agent");
       await mkdir(agentDir, { recursive: true });
       await writeFile(
-        path.join(agentDir, "metadata.yaml"),
+        path.join(agentDir, STANDARD_FILES.METADATA_YAML),
         ["id: bad-agent", "title: Bad Agent"].join("\n"),
       );
 
@@ -130,21 +125,15 @@ describe("schema-validator", () => {
         const dir = path.join(tempDir, "src", "agents", name);
         await mkdir(dir, { recursive: true });
         await writeFile(
-          path.join(dir, "metadata.yaml"),
-          [
-            `id: ${name}`,
-            `title: Agent ${name}`,
-            "description: Valid agent",
-            "tools:",
-            "  - Read",
-          ].join("\n"),
+          path.join(dir, STANDARD_FILES.METADATA_YAML),
+          renderAgentYaml(name, "Valid agent", { title: `Agent ${name}`, tools: ["Read"] }),
         );
       }
 
       const invalidDir = path.join(tempDir, "src", "agents", "agent-bad");
       await mkdir(invalidDir, { recursive: true });
       await writeFile(
-        path.join(invalidDir, "metadata.yaml"),
+        path.join(invalidDir, STANDARD_FILES.METADATA_YAML),
         ["id: agent-bad"].join("\n"), // missing required fields
       );
 
@@ -166,7 +155,7 @@ describe("schema-validator", () => {
       // Agent missing required fields (title, description, tools) will fail Zod validation
       const agentDir = path.join(tempDir, "src", "agents", "incomplete-agent");
       await mkdir(agentDir, { recursive: true });
-      await writeFile(path.join(agentDir, "metadata.yaml"), "id: incomplete-agent\n");
+      await writeFile(path.join(agentDir, STANDARD_FILES.METADATA_YAML), "id: incomplete-agent\n");
 
       const result = await validateAllSchemas(tempDir);
 
@@ -178,13 +167,13 @@ describe("schema-validator", () => {
       const validDir = path.join(tempDir, "src", "agents", "valid-agent");
       await mkdir(validDir, { recursive: true });
       await writeFile(
-        path.join(validDir, "metadata.yaml"),
-        "id: valid\ntitle: Valid\ndescription: Valid\ntools:\n  - Read\n",
+        path.join(validDir, STANDARD_FILES.METADATA_YAML),
+        renderAgentYaml("valid", "Valid", { title: "Valid", tools: ["Read"] }),
       );
 
       const invalidDir = path.join(tempDir, "src", "agents", "invalid-agent");
       await mkdir(invalidDir, { recursive: true });
-      await writeFile(path.join(invalidDir, "metadata.yaml"), "id: invalid\n");
+      await writeFile(path.join(invalidDir, STANDARD_FILES.METADATA_YAML), "id: invalid\n");
 
       const result = await validateAllSchemas(tempDir);
 
@@ -196,7 +185,7 @@ describe("schema-validator", () => {
     it("should handle YAML parse errors gracefully", async () => {
       const agentDir = path.join(tempDir, "src", "agents", "bad-yaml");
       await mkdir(agentDir, { recursive: true });
-      await writeFile(path.join(agentDir, "metadata.yaml"), "id: [invalid: yaml: :::");
+      await writeFile(path.join(agentDir, STANDARD_FILES.METADATA_YAML), "id: [invalid: yaml: :::");
 
       const result = await validateAllSchemas(tempDir);
 
@@ -212,10 +201,10 @@ describe("schema-validator", () => {
       // Required: name, description. Optional: model, disable-model-invocation, etc.
 
       // Create a SKILL.md with valid frontmatter in src/skills
-      const skillDir = path.join(tempDir, "src", "skills", "test-skill");
+      const skillDir = path.join(tempDir, "src", STANDARD_DIRS.SKILLS, "test-skill");
       await mkdir(skillDir, { recursive: true });
       await writeFile(
-        path.join(skillDir, "SKILL.md"),
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
         [
           "---",
           "name: test-skill",
@@ -239,10 +228,10 @@ describe("schema-validator", () => {
 
     it("should detect invalid skill frontmatter", async () => {
       // Create a SKILL.md with missing description (required by Zod schema)
-      const skillDir = path.join(tempDir, "src", "skills", "bad-skill");
+      const skillDir = path.join(tempDir, "src", STANDARD_DIRS.SKILLS, "bad-skill");
       await mkdir(skillDir, { recursive: true });
       await writeFile(
-        path.join(skillDir, "SKILL.md"),
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
         ["---", "name: bad-skill", "---", "", "# Bad Skill"].join("\n"),
       );
 
@@ -257,10 +246,10 @@ describe("schema-validator", () => {
     });
 
     it("should handle SKILL.md without frontmatter", async () => {
-      const skillDir = path.join(tempDir, "src", "skills", "no-frontmatter");
+      const skillDir = path.join(tempDir, "src", STANDARD_DIRS.SKILLS, "no-frontmatter");
       await mkdir(skillDir, { recursive: true });
       await writeFile(
-        path.join(skillDir, "SKILL.md"),
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
         "# No Frontmatter\n\nJust content without YAML.",
       );
 
@@ -274,10 +263,10 @@ describe("schema-validator", () => {
     });
 
     it("should validate skill metadata.yaml files", async () => {
-      const metadataDir = path.join(tempDir, "src", "skills", "web", "framework", "react");
+      const metadataDir = path.join(tempDir, "src", STANDARD_DIRS.SKILLS, "web", "framework", "react");
       await mkdir(metadataDir, { recursive: true });
       await writeFile(
-        path.join(metadataDir, "metadata.yaml"),
+        path.join(metadataDir, STANDARD_FILES.METADATA_YAML),
         [
           "author: '@test'",
           "category: web-framework",
@@ -298,10 +287,10 @@ describe("schema-validator", () => {
     });
 
     it("should detect invalid skill metadata.yaml", async () => {
-      const metadataDir = path.join(tempDir, "src", "skills", "invalid-skill");
+      const metadataDir = path.join(tempDir, "src", STANDARD_DIRS.SKILLS, "invalid-skill");
       await mkdir(metadataDir, { recursive: true });
       // Missing required fields: category, displayName, cliDescription, usageGuidance
-      await writeFile(path.join(metadataDir, "metadata.yaml"), "author: '@test'\n");
+      await writeFile(path.join(metadataDir, STANDARD_FILES.METADATA_YAML), "author: '@test'\n");
 
       const result = await validateAllSchemas(tempDir);
 
@@ -312,10 +301,10 @@ describe("schema-validator", () => {
     });
 
     it("should validate plugin manifest JSON files", async () => {
-      const pluginDir = path.join(tempDir, ".claude", "plugins", "test-plugin");
+      const pluginDir = path.join(tempDir, CLAUDE_DIR, "plugins", "test-plugin");
       await mkdir(pluginDir, { recursive: true });
       await writeFile(
-        path.join(pluginDir, "plugin.json"),
+        path.join(pluginDir, PLUGIN_MANIFEST_FILE),
         JSON.stringify({
           name: "test-plugin",
           version: "1.0.0",
@@ -333,9 +322,9 @@ describe("schema-validator", () => {
     });
 
     it("should detect invalid plugin manifest (invalid JSON)", async () => {
-      const pluginDir = path.join(tempDir, ".claude", "plugins", "bad-plugin");
+      const pluginDir = path.join(tempDir, CLAUDE_DIR, "plugins", "bad-plugin");
       await mkdir(pluginDir, { recursive: true });
-      await writeFile(path.join(pluginDir, "plugin.json"), "not valid json {{{");
+      await writeFile(path.join(pluginDir, PLUGIN_MANIFEST_FILE), "not valid json {{{");
 
       const result = await validateAllSchemas(tempDir);
 
@@ -371,10 +360,10 @@ describe("schema-validator", () => {
     });
 
     it("should validate stack skill frontmatter in src/stacks", async () => {
-      const stackSkillDir = path.join(tempDir, "src", "stacks", "my-stack", "skills", "react");
+      const stackSkillDir = path.join(tempDir, "src", "stacks", "my-stack", STANDARD_DIRS.SKILLS, "react");
       await mkdir(stackSkillDir, { recursive: true });
       await writeFile(
-        path.join(stackSkillDir, "SKILL.md"),
+        path.join(stackSkillDir, STANDARD_FILES.SKILL_MD),
         [
           "---",
           "name: web-framework-react",

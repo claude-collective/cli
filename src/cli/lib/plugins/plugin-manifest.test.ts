@@ -9,6 +9,7 @@ import {
   getPluginDir,
   getPluginManifestPath,
 } from "./plugin-manifest";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 
 describe("plugin-manifest", () => {
@@ -423,7 +424,7 @@ describe("plugin-manifest", () => {
 
       await writePluginManifest(tempDir, manifest);
 
-      const pluginDir = path.join(tempDir, ".claude-plugin");
+      const pluginDir = path.join(tempDir, PLUGIN_MANIFEST_DIR);
       const stats = await stat(pluginDir);
       expect(stats.isDirectory()).toBe(true);
     });
@@ -436,7 +437,7 @@ describe("plugin-manifest", () => {
 
       await writePluginManifest(tempDir, manifest);
 
-      const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
       const content = await readFile(manifestPath, "utf-8");
       const parsed = JSON.parse(content);
 
@@ -455,7 +456,7 @@ describe("plugin-manifest", () => {
       await writePluginManifest(tempDir, manifest1);
       await writePluginManifest(tempDir, manifest2);
 
-      const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
       const content = await readFile(manifestPath, "utf-8");
       const parsed = JSON.parse(content);
 
@@ -467,7 +468,7 @@ describe("plugin-manifest", () => {
 
       const result = await writePluginManifest(tempDir, manifest);
 
-      expect(result).toBe(path.join(tempDir, ".claude-plugin", "plugin.json"));
+      expect(result).toBe(path.join(tempDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE));
     });
 
     it("should preserve all manifest fields in written JSON", async () => {
@@ -484,7 +485,7 @@ describe("plugin-manifest", () => {
 
       await writePluginManifest(tempDir, manifest);
 
-      const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
       const content = await readFile(manifestPath, "utf-8");
       const parsed = JSON.parse(content);
 
@@ -507,7 +508,7 @@ describe("plugin-manifest", () => {
 
       await writePluginManifest(tempDir, manifest);
 
-      const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
       const content = await readFile(manifestPath, "utf-8");
 
       expect(content).toContain('  "name"');
@@ -531,7 +532,7 @@ describe("plugin-manifest", () => {
     it("should handle relative paths", () => {
       const result = getPluginDir("dist/plugins");
 
-      expect(result).toBe(path.join("dist/plugins", ".claude-plugin"));
+      expect(result).toBe(path.join("dist/plugins", PLUGIN_MANIFEST_DIR));
     });
   });
 
@@ -551,7 +552,7 @@ describe("plugin-manifest", () => {
     it("should handle relative paths", () => {
       const result = getPluginManifestPath("dist/plugins");
 
-      expect(result).toBe(path.join("dist/plugins", ".claude-plugin", "plugin.json"));
+      expect(result).toBe(path.join("dist/plugins", PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE));
     });
   });
 });

@@ -3,6 +3,7 @@ import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { loadSkillsMatrixFromSource } from "./source-loader";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
 import {
   createTestSource,
   cleanupTestSource,
@@ -11,6 +12,7 @@ import {
 } from "../__tests__/fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS, EXTRA_DOMAIN_TEST_SKILLS } from "../__tests__/mock-data/mock-skills";
 import type { CategoryDefinition, ResolvedSkill } from "../../types";
+import { renderConfigTs, renderSkillMd } from "../__tests__/content-generators";
 
 // ── Shared fixture ──────────────────────────────────────────────────────────────
 
@@ -168,16 +170,16 @@ describe("source-loader local skills integration", () => {
 
   it("should merge local skills into matrix when .claude/skills exists", async () => {
     // Create a local skill in the temp project
-    const skillsDir = path.join(tempDir, ".claude", "skills", "test-my-skill");
+    const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "test-my-skill");
     await mkdir(skillsDir, { recursive: true });
 
     await writeFile(
-      path.join(skillsDir, "metadata.yaml"),
+      path.join(skillsDir, STANDARD_FILES.METADATA_YAML),
       `displayName: My Local Skill\nslug: my-local-skill\ncliDescription: A local skill\ndomain: web\ncategory: dummy-category\ncustom: true`,
     );
     await writeFile(
-      path.join(skillsDir, "SKILL.md"),
-      `---\nname: my-local-skill\ndescription: A local skill\n---\nContent`,
+      path.join(skillsDir, STANDARD_FILES.SKILL_MD),
+      renderSkillMd("my-local-skill", "A local skill", "Content"),
     );
 
     const result = await loadSkillsMatrixFromSource({
@@ -199,15 +201,15 @@ describe("source-loader local skills integration", () => {
   });
 
   it("should not inject fake local category definitions into the matrix", async () => {
-    const skillsDir = path.join(tempDir, ".claude", "skills", "test-cat-skill");
+    const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "test-cat-skill");
     await mkdir(skillsDir, { recursive: true });
 
     await writeFile(
-      path.join(skillsDir, "metadata.yaml"),
+      path.join(skillsDir, STANDARD_FILES.METADATA_YAML),
       `displayName: Category Test\nslug: cat-skill\ndomain: web\ncategory: dummy-category\ncustom: true`,
     );
     await writeFile(
-      path.join(skillsDir, "SKILL.md"),
+      path.join(skillsDir, STANDARD_FILES.SKILL_MD),
       `---\nname: cat-skill (@local)\ndescription: Category test\n---\nContent`,
     );
 
@@ -244,16 +246,16 @@ describe("source-loader local skills integration", () => {
 
     // Create a local skill with the SAME ID but a different category in metadata
     // (source-loader preserves the remote skill's category when overwriting)
-    const skillsDir = path.join(tempDir, ".claude", "skills", "test-override-category");
+    const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "test-override-category");
     await mkdir(skillsDir, { recursive: true });
 
     await writeFile(
-      path.join(skillsDir, "metadata.yaml"),
+      path.join(skillsDir, STANDARD_FILES.METADATA_YAML),
       `displayName: Override Test\nslug: override-test\ndomain: web\ncategory: web-styling`,
     );
     await writeFile(
-      path.join(skillsDir, "SKILL.md"),
-      `---\nname: ${targetSkillId}\ndescription: Local override\n---\nContent`,
+      path.join(skillsDir, STANDARD_FILES.SKILL_MD),
+      renderSkillMd(targetSkillId, "Local override", "Content"),
     );
 
     // Load with the local skill override
@@ -272,16 +274,16 @@ describe("source-loader local skills integration", () => {
   });
 
   it("should preserve existing skills when merging local skills", async () => {
-    const skillsDir = path.join(tempDir, ".claude", "skills", "test-preserve");
+    const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "test-preserve");
     await mkdir(skillsDir, { recursive: true });
 
     await writeFile(
-      path.join(skillsDir, "metadata.yaml"),
+      path.join(skillsDir, STANDARD_FILES.METADATA_YAML),
       `displayName: Preserve Test\nslug: preserve-test\ndomain: web\ncategory: dummy-category\ncustom: true`,
     );
     await writeFile(
-      path.join(skillsDir, "SKILL.md"),
-      `---\nname: preserve-skill\ndescription: Preserve test\n---\nContent`,
+      path.join(skillsDir, STANDARD_FILES.SKILL_MD),
+      renderSkillMd("preserve-skill", "Preserve test", "Content"),
     );
 
     const result = await loadSkillsMatrixFromSource({
@@ -301,15 +303,15 @@ describe("source-loader local skills integration", () => {
   it("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
     // Create a source directory with a marketplace skill
     const sourceDir = path.join(tempDir, "precedence-source");
-    const skillDir = path.join(sourceDir, "src", "skills", "web", "testing", "web-testing-vitest");
+    const skillDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS, "web", "testing", "web-testing-vitest");
     await mkdir(skillDir, { recursive: true });
 
     await writeFile(
-      path.join(skillDir, "SKILL.md"),
-      "---\nname: web-testing-vitest\ndescription: Marketplace vitest configuration\n---\nMarketplace vitest skill content.",
+      path.join(skillDir, STANDARD_FILES.SKILL_MD),
+      renderSkillMd("web-testing-vitest", "Marketplace vitest configuration", "Marketplace vitest skill content."),
     );
     await writeFile(
-      path.join(skillDir, "metadata.yaml"),
+      path.join(skillDir, STANDARD_FILES.METADATA_YAML),
       'category: web-testing\nauthor: "@test"\ndisplayName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\ndomain: web\nslug: vitest\n',
     );
 
@@ -326,16 +328,16 @@ describe("source-loader local skills integration", () => {
     expect(existingSkill.description).toBe("Marketplace vitest configuration");
 
     // Create a local skill with the SAME ID to override it
-    const localSkillsDir = path.join(tempDir, ".claude", "skills", "local-vitest");
+    const localSkillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "local-vitest");
     await mkdir(localSkillsDir, { recursive: true });
 
     await writeFile(
-      path.join(localSkillsDir, "metadata.yaml"),
+      path.join(localSkillsDir, STANDARD_FILES.METADATA_YAML),
       `displayName: My Custom Vitest\nslug: vitest\ndomain: web\ncategory: web-testing`,
     );
     await writeFile(
-      path.join(localSkillsDir, "SKILL.md"),
-      `---\nname: web-testing-vitest\ndescription: My custom vitest configuration\n---\nThis is my local override of the vitest skill.`,
+      path.join(localSkillsDir, STANDARD_FILES.SKILL_MD),
+      renderSkillMd("web-testing-vitest", "My custom vitest configuration", "This is my local override of the vitest skill."),
     );
 
     // Load again with the local skill in place
@@ -376,19 +378,19 @@ describe("source-loader config-driven paths", () => {
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
     await writeFile(
-      path.join(configDir, "config.ts"),
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
       'export default { skillsDir: "lib/skills" };',
     );
 
     // Create skills in the custom directory
-    const skillsDir = path.join(sourceDir, "lib", "skills", "web", "framework", "react");
+    const skillsDir = path.join(sourceDir, "lib", STANDARD_DIRS.SKILLS, "web", "framework", "react");
     await mkdir(skillsDir, { recursive: true });
     await writeFile(
-      path.join(skillsDir, "SKILL.md"),
-      "---\nname: web-framework-react\ndescription: React framework\n---\nReact skill content",
+      path.join(skillsDir, STANDARD_FILES.SKILL_MD),
+      renderSkillMd("web-framework-react", "React framework", "React skill content"),
     );
     await writeFile(
-      path.join(skillsDir, "metadata.yaml"),
+      path.join(skillsDir, STANDARD_FILES.METADATA_YAML),
       'category: web-framework\nauthor: "@test"\ndisplayName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\ndomain: web\nslug: react\n',
     );
 
@@ -408,12 +410,12 @@ describe("source-loader config-driven paths", () => {
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
     await writeFile(
-      path.join(configDir, "config.ts"),
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
       'export default { categoriesFile: "data/categories.yaml" };',
     );
 
     // Do NOT create categories at data/categories.yaml — loader should fall back to CLI categories
-    await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
+    await mkdir(path.join(sourceDir, "src", STANDARD_DIRS.SKILLS), { recursive: true });
 
     const result = await loadSkillsMatrixFromSource({
       sourceFlag: sourceDir,
@@ -433,11 +435,11 @@ describe("source-loader config-driven paths", () => {
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
     await writeFile(
-      path.join(configDir, "config.ts"),
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
       'export default { rulesFile: "data/rules.yaml" };',
     );
 
-    await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
+    await mkdir(path.join(sourceDir, "src", STANDARD_DIRS.SKILLS), { recursive: true });
 
     const result = await loadSkillsMatrixFromSource({
       sourceFlag: sourceDir,
@@ -455,15 +457,16 @@ describe("source-loader config-driven paths", () => {
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
     await writeFile(
-      path.join(configDir, "config.ts"),
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
       'export default { stacksFile: "data/stacks.ts" };',
     );
 
     // Create stacks at the custom path
     const dataDir = path.join(sourceDir, "data");
     await mkdir(dataDir, { recursive: true });
-    const stacksTsContent = `export default ${JSON.stringify(
-      {
+    await writeFile(
+      path.join(dataDir, "stacks.ts"),
+      renderConfigTs({
         stacks: [
           {
             id: "custom-path-stack",
@@ -472,14 +475,11 @@ describe("source-loader config-driven paths", () => {
             agents: { "web-developer": { "web-framework": "web-framework-react" } },
           },
         ],
-      },
-      null,
-      2,
-    )};\n`;
-    await writeFile(path.join(dataDir, "stacks.ts"), stacksTsContent);
+      }),
+    );
 
     // Create empty skills dir
-    await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
+    await mkdir(path.join(sourceDir, "src", STANDARD_DIRS.SKILLS), { recursive: true });
 
     const result = await loadSkillsMatrixFromSource({
       sourceFlag: sourceDir,
@@ -495,7 +495,7 @@ describe("source-loader config-driven paths", () => {
     const sourceDir = path.join(tempDir, "no-config-source");
 
     // No .claude-src/config.ts — just create conventional paths
-    await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
+    await mkdir(path.join(sourceDir, "src", STANDARD_DIRS.SKILLS), { recursive: true });
 
     const result = await loadSkillsMatrixFromSource({
       sourceFlag: sourceDir,
@@ -514,11 +514,11 @@ describe("source-loader config-driven paths", () => {
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
     await writeFile(
-      path.join(configDir, "config.ts"),
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
       'export default { source: "github:myorg/skills" };',
     );
 
-    await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
+    await mkdir(path.join(sourceDir, "src", STANDARD_DIRS.SKILLS), { recursive: true });
 
     const result = await loadSkillsMatrixFromSource({
       sourceFlag: sourceDir,
@@ -584,8 +584,9 @@ describe("source-loader integration", () => {
     await mkdir(configDir, { recursive: true });
 
     // Write a minimal custom stacks.ts with a unique stack ID
-    const stacksTsContent = `export default ${JSON.stringify(
-      {
+    await writeFile(
+      path.join(configDir, "stacks.ts"),
+      renderConfigTs({
         stacks: [
           {
             id: "custom-test-stack",
@@ -594,14 +595,11 @@ describe("source-loader integration", () => {
             agents: { "web-developer": { "web-framework": "web-framework-react" } },
           },
         ],
-      },
-      null,
-      2,
-    )};\n`;
-    await writeFile(path.join(configDir, "stacks.ts"), stacksTsContent);
+      }),
+    );
 
     // Create an empty src/skills dir so extractAllSkills doesn't fail
-    await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
+    await mkdir(path.join(sourceDir, "src", STANDARD_DIRS.SKILLS), { recursive: true });
 
     const result = await loadSkillsMatrixFromSource({
       sourceFlag: sourceDir,
@@ -618,7 +616,7 @@ describe("source-loader integration", () => {
   it("should fall back to CLI stacks when source has no config/stacks.ts", async () => {
     // Create a source directory without stacks.ts
     const sourceDir = path.join(tempDir, "no-stacks-source");
-    await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
+    await mkdir(path.join(sourceDir, "src", STANDARD_DIRS.SKILLS), { recursive: true });
 
     const result = await loadSkillsMatrixFromSource({
       sourceFlag: sourceDir,

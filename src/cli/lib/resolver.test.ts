@@ -15,21 +15,14 @@ import {
 import { DIRS, STANDARD_FILES } from "../consts";
 import {
   createMockSkillEntry,
+  createMockSkillDefinition,
   createMockAgentConfig,
   createMockCompileConfig,
   createTempDir,
   cleanupTempDir,
+  buildProjectConfig,
 } from "./__tests__/helpers";
 import {
-  REACT_DEFINITION,
-  HONO_DEFINITION,
-  ZUSTAND_DEFINITION,
-  SCSS_DEFINITION,
-  DRIZZLE_DEFINITION,
-} from "./__tests__/mock-data/mock-skills.js";
-import {
-  WEB_DEVELOPER_DEFINITION,
-  API_DEVELOPER_DEFINITION,
   RESOLVE_AGENTS_DEFINITIONS,
 } from "./__tests__/mock-data/mock-agents.js";
 import {
@@ -39,7 +32,6 @@ import {
   WEB_SCSS_ONLY_STACK,
   API_HONO_ONLY_STACK,
   WEB_EMPTY_AGENT_STACK,
-  WEB_ONLY_PARTIAL_STACK,
 } from "./__tests__/mock-data/mock-stacks.js";
 import {
   WEB_AND_API_COMPILE_CONFIG,
@@ -48,7 +40,6 @@ import {
 import type {
   AgentName,
   CompiledAgentData,
-  ProjectConfig,
   Skill,
   SkillAssignment,
   SkillDefinition,
@@ -65,6 +56,35 @@ import type {
 function sa(id: SkillId, preloaded = false): SkillAssignment {
   return { id, preloaded };
 }
+
+// ---------------------------------------------------------------------------
+// Skill definitions (single-consumer — only used in this test file)
+// ---------------------------------------------------------------------------
+
+const REACT_DEFINITION = createMockSkillDefinition("web-framework-react", {
+  path: "skills/web/framework/react/",
+  description: "React component patterns",
+});
+
+const HONO_DEFINITION = createMockSkillDefinition("api-framework-hono", {
+  path: "skills/api/api/hono/",
+  description: "Hono API framework",
+});
+
+const ZUSTAND_DEFINITION = createMockSkillDefinition("web-state-zustand", {
+  path: "skills/web/client-state-management/zustand/",
+  description: "Lightweight state management",
+});
+
+const SCSS_DEFINITION = createMockSkillDefinition("web-styling-scss-modules", {
+  path: "skills/web/styling/scss-modules/",
+  description: "SCSS Modules styling",
+});
+
+const DRIZZLE_DEFINITION = createMockSkillDefinition("api-database-drizzle", {
+  path: "skills/api/database/drizzle/",
+  description: "Drizzle ORM",
+});
 
 // ---------------------------------------------------------------------------
 // Composite skill maps (test-specific groupings of shared definitions)
@@ -287,7 +307,7 @@ describe("resolveSkillReferences", () => {
 
 describe("convertStackToCompileConfig", () => {
   it("should convert a project config to a compile config", () => {
-    const config: ProjectConfig = {
+    const config = buildProjectConfig({
       name: "Test Stack",
       description: "A test stack",
       agents: [
@@ -295,7 +315,7 @@ describe("convertStackToCompileConfig", () => {
         { name: "api-developer", scope: "project" },
       ],
       skills: [],
-    };
+    });
 
     const result = convertStackToCompileConfig("test-stack", config);
 
@@ -311,11 +331,11 @@ describe("convertStackToCompileConfig", () => {
   });
 
   it("should handle empty agents array", () => {
-    const config: ProjectConfig = {
+    const config = buildProjectConfig({
       name: "Empty Stack",
       agents: [],
       skills: [],
-    };
+    });
 
     const result = convertStackToCompileConfig("empty-stack", config);
 
@@ -323,11 +343,11 @@ describe("convertStackToCompileConfig", () => {
   });
 
   it("when agent has no description field, should default to empty string", () => {
-    const config: ProjectConfig = {
+    const config = buildProjectConfig({
       name: "No Description",
       agents: [{ name: "test-agent" as AgentName, scope: "project" as const }],
       skills: [],
-    };
+    });
 
     const result = convertStackToCompileConfig("no-desc", config);
 
@@ -869,7 +889,7 @@ describe("resolveAgents with stack", () => {
       RESOLVE_AGENTS_SKILL_MAP,
       WEB_AND_API_COMPILE_CONFIG,
       "/test/path",
-      WEB_ONLY_PARTIAL_STACK,
+      WEB_REACT_ONLY_STACK,
     );
 
     expect(result["web-developer"].skills).toHaveLength(1);

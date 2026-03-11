@@ -4,7 +4,7 @@ import {
   computeOptionState,
   buildCategoriesForDomain,
 } from "./build-step-logic";
-import { createMockMatrix, TEST_SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
+import { createMockMatrix, SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
 import type { CategoryRow } from "../../components/wizard/category-grid";
 import type { SkillId, Category, CategorySelections } from "../../types";
 import { useMatrixStore } from "../../stores/matrix-store";
@@ -88,10 +88,10 @@ describe("buildCategoriesForDomain", () => {
   function createMatrix() {
     return createMockMatrix(
       {
-        "web-framework-react": TEST_SKILLS.react,
-        "web-framework-vue": TEST_SKILLS.vue,
-        "web-state-zustand": TEST_SKILLS.zustand,
-        "web-state-pinia": TEST_SKILLS.pinia,
+        "web-framework-react": SKILLS.react,
+        "web-framework-vue": SKILLS.vue,
+        "web-state-zustand": SKILLS.zustand,
+        "web-state-pinia": SKILLS.pinia,
       },
       {
         categories: {

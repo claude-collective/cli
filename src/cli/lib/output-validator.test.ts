@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { validateCompiledAgent, printOutputValidationResult } from "./output-validator";
-import type { AgentName, ValidationResult } from "../types";
+import type { ValidationResult } from "../types";
 
 function createValidAgentContent(overrides?: {
   name?: string;

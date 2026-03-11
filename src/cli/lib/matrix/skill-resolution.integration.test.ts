@@ -18,7 +18,7 @@ import {
   createMockSkill,
   createMockMultiSourceSkill,
   createMockMatrix,
-  createMockCategory,
+  testSkillToResolvedSkill,
   buildWizardResult,
   buildSkillConfigs,
   buildSourceResult,
@@ -29,24 +29,58 @@ import {
   ACME_SOURCE,
   INTERNAL_SOURCE,
 } from "../__tests__/mock-data/mock-sources.js";
-import {
-  RESOLUTION_PIPELINE_SKILLS,
-  PUBLIC_SKILLS,
-  ACME_SKILLS,
-  INTERNAL_SKILLS,
-  type SkillEntry,
-} from "../__tests__/mock-data/mock-skills";
+import { RESOLUTION_PIPELINE_SKILLS } from "../__tests__/mock-data/mock-skills.js";
+import { TEST_CATEGORIES } from "../__tests__/test-fixtures";
 import type {
   CategoryDefinition,
   CategoryPath,
   MergedSkillsMatrix,
   ProjectConfig,
-  ResolvedSkill,
   SkillId,
   SkillSource,
   Category,
 } from "../../types";
 import { useMatrixStore } from "../../stores/matrix-store";
+
+// ── Skill data (single-consumer, moved from mock-skills.ts) ─────────────────
+
+type SkillEntry = { id: SkillId; category: CategoryPath; description: string };
+
+const PUBLIC_SKILLS: SkillEntry[] = [
+  { id: "web-framework-react", category: "web-framework", description: "React framework" },
+  { id: "web-framework-vue", category: "web-framework", description: "Vue.js framework" },
+  {
+    id: "web-state-zustand",
+    category: "web-client-state",
+    description: "Zustand state management",
+  },
+  { id: "web-styling-scss-modules", category: "web-styling", description: "SCSS Modules styling" },
+  { id: "web-testing-vitest", category: "web-testing", description: "Vitest testing framework" },
+];
+
+const ACME_SKILLS: SkillEntry[] = [
+  { id: "web-framework-react", category: "web-framework", description: "React (acme custom fork)" },
+  { id: "api-framework-hono", category: "api-api", description: "Hono web framework" },
+  { id: "api-database-drizzle", category: "api-database", description: "Drizzle ORM" },
+  { id: "api-security-auth-patterns", category: "shared-security", description: "Auth patterns" },
+  { id: "web-testing-vitest", category: "web-testing", description: "Vitest (acme custom)" },
+];
+
+const INTERNAL_SKILLS: SkillEntry[] = [
+  { id: "web-framework-react", category: "web-framework", description: "React (internal build)" },
+  { id: "web-animation-framer", category: "web-animation", description: "Framer Motion" },
+  {
+    id: "meta-methodology-investigation",
+    category: "shared-methodology",
+    description: "Investigation first",
+  },
+  { id: "web-accessibility-a11y", category: "web-accessibility", description: "Web accessibility" },
+  {
+    id: "api-monitoring-sentry",
+    category: "api-observability",
+    description: "Sentry error tracking",
+  },
+];
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -60,20 +94,22 @@ type TaggedSkillEntry = SkillEntry & { source: SkillSource };
 // ── Category Fixtures ────────────────────────────────────────────────────────
 
 const MULTI_SOURCE_CATEGORIES = {
-  "web-framework": createMockCategory("web-framework", "Framework", {
-    exclusive: true,
-    required: true,
-  }),
-  "web-client-state": createMockCategory("web-client-state", "State", { order: 1 }),
-  "web-styling": createMockCategory("web-styling", "Styling", { order: 2 }),
-  "web-testing": createMockCategory("web-testing", "Testing", { exclusive: false, order: 3 }),
-  "api-api": createMockCategory("api-api", "Backend Framework", { exclusive: true, order: 4 }),
-  "api-database": createMockCategory("api-database", "Database", { order: 5 }),
-  "shared-security": createMockCategory("shared-security", "Security", { order: 6 }),
-  "web-animation": createMockCategory("web-animation", "Animation", { order: 7 }),
-  "shared-methodology": createMockCategory("shared-methodology", "Methodology", { order: 8 }),
-  "web-accessibility": createMockCategory("web-accessibility", "Accessibility", { order: 9 }),
-  "api-observability": createMockCategory("api-observability", "Observability", { order: 10 }),
+  "web-framework": { ...TEST_CATEGORIES.framework, exclusive: true, required: true },
+  "web-client-state": {
+    ...TEST_CATEGORIES.clientState,
+    displayName: "State",
+    description: "State category",
+    order: 1,
+  },
+  "web-styling": { ...TEST_CATEGORIES.styling, order: 2 },
+  "web-testing": { ...TEST_CATEGORIES.testing, exclusive: false, order: 3 },
+  "api-api": { ...TEST_CATEGORIES.api, exclusive: true, order: 4 },
+  "api-database": { ...TEST_CATEGORIES.database, order: 5 },
+  "shared-security": { ...TEST_CATEGORIES.security, order: 6 },
+  "web-animation": { ...TEST_CATEGORIES.animation, order: 7 },
+  "shared-methodology": { ...TEST_CATEGORIES.methodology, order: 8 },
+  "web-accessibility": { ...TEST_CATEGORIES.accessibility, order: 9 },
+  "api-observability": { ...TEST_CATEGORIES.observability, order: 10 },
 } as Partial<Record<Category, CategoryDefinition>> as Record<Category, CategoryDefinition>;
 
 // ── Matrix Builder ─────────────────────────────────────────────────────────────
@@ -515,13 +551,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     return createMockMatrix(
       mapToObj(RESOLUTION_PIPELINE_SKILLS, (skill) => [
         skill.id,
-        createMockSkill(skill.id, {
-          category: skill.category as CategoryPath,
-          description: skill.description,
-          tags: skill.tags ?? [],
-          author: skill.author,
-          path: `skills/${skill.category}/${skill.id}/`,
-        }),
+        testSkillToResolvedSkill(skill, { author: skill.author }),
       ]),
     );
   }

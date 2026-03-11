@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir } from "fs/promises";
-import { runCliCommand } from "../../helpers";
+import { mkdir } from "fs/promises";
+import { runCliCommand, createTempDir, cleanupTempDir } from "../../helpers";
 
 describe("build:plugins command", () => {
   let tempDir: string;
@@ -11,7 +10,7 @@ describe("build:plugins command", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-build-plugins-test-"));
+    tempDir = await createTempDir("cc-build-plugins-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -19,7 +18,7 @@ describe("build:plugins command", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("basic execution", () => {

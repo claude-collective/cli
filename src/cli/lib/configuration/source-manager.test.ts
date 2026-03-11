@@ -1,10 +1,7 @@
-import { mkdtemp, rm } from "fs/promises";
-import os from "os";
-import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addSource, removeSource, getSourceSummary } from "./source-manager";
 import { loadProjectSourceConfig } from "./config";
-import { writeTestTsConfig } from "../__tests__/helpers";
+import { writeTestTsConfig, createTempDir, cleanupTempDir } from "../__tests__/helpers";
 
 // Mock the source-fetcher module
 vi.mock("../loading/source-fetcher", async (importOriginal) => ({
@@ -28,12 +25,12 @@ describe("source-manager", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-source-mgr-test-"));
+    tempDir = await createTempDir("cc-source-mgr-test-");
     vi.resetAllMocks();
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("addSource", () => {

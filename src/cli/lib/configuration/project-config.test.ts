@@ -10,7 +10,8 @@ import {
   createTempDir,
   cleanupTempDir,
   writeTestTsConfig,
-  TEST_MATRICES,
+  createMockMatrix,
+  SKILLS,
 } from "../__tests__/helpers";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 
@@ -233,7 +234,7 @@ describe("round-trip tests", () => {
   });
 
   it("should round-trip minimal config (name and stack only)", async () => {
-    useMatrixStore.getState().setMatrix(TEST_MATRICES.reactAndZustand);
+    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand));
     const selectedAgents: AgentName[] = ["web-developer"];
 
     // Generate config
@@ -262,7 +263,7 @@ describe("round-trip tests", () => {
   });
 
   it("should round-trip config with options (description/author)", async () => {
-    useMatrixStore.getState().setMatrix(TEST_MATRICES.react);
+    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
     const selectedAgents: AgentName[] = ["web-developer"];
 
     // Generate config with options

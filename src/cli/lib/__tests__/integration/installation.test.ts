@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import {
+  CLAUDE_DIR,
   CLAUDE_SRC_DIR,
   DEFAULT_BRANDING,
   DEFAULT_PLUGIN_NAME,
@@ -13,13 +14,9 @@ import {
   cleanupTempDir,
   buildProjectConfig,
   buildSkillConfigs,
-  buildAgentConfigs,
 } from "../helpers";
 import { detectInstallation, getInstallationOrThrow } from "../../installation";
-
-function tsConfigContent(config: Record<string, unknown>): string {
-  return `export default ${JSON.stringify(config)};`;
-}
+import { renderConfigTs } from "../content-generators";
 
 describe("installation", () => {
   let tempDir: string;
@@ -38,7 +35,7 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(buildProjectConfig()),
+        renderConfigTs(buildProjectConfig()),
       );
 
       const result = await detectInstallation(tempDir);
@@ -54,7 +51,7 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(buildProjectConfig()),
+        renderConfigTs(buildProjectConfig()),
       );
 
       const result = await detectInstallation(tempDir);
@@ -65,11 +62,11 @@ describe("installation", () => {
 
     it("should use correct paths for agentsDir and skillsDir in local mode", async () => {
       const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      const claudeDir = path.join(tempDir, ".claude");
+      const claudeDir = path.join(tempDir, CLAUDE_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(buildProjectConfig()),
+        renderConfigTs(buildProjectConfig()),
       );
 
       const result = await detectInstallation(tempDir);
@@ -86,7 +83,7 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(
+        renderConfigTs(
           buildProjectConfig({
             skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
           }),
@@ -103,11 +100,11 @@ describe("installation", () => {
 
     it("should use correct plugin paths for agentsDir and skillsDir", async () => {
       const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      const claudeDir = path.join(tempDir, ".claude");
+      const claudeDir = path.join(tempDir, CLAUDE_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(
+        renderConfigTs(
           buildProjectConfig({
             skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
           }),
@@ -122,7 +119,7 @@ describe("installation", () => {
     });
 
     it("should return null when only plugin directory exists without config", async () => {
-      const pluginDir = path.join(tempDir, ".claude", "plugins", DEFAULT_PLUGIN_NAME);
+      const pluginDir = path.join(tempDir, CLAUDE_DIR, "plugins", DEFAULT_PLUGIN_NAME);
       await mkdir(pluginDir, { recursive: true });
 
       const result = await detectInstallation(tempDir);
@@ -139,7 +136,7 @@ describe("installation", () => {
     });
 
     it("should return null when .claude exists but no config.ts or plugin", async () => {
-      const claudeDir = path.join(tempDir, ".claude");
+      const claudeDir = path.join(tempDir, CLAUDE_DIR);
       await mkdir(claudeDir, { recursive: true });
 
       const result = await detectInstallation(tempDir);
@@ -151,11 +148,11 @@ describe("installation", () => {
   describe("detectInstallation - priority", () => {
     it("should detect local installation from config.ts", async () => {
       const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      const claudeDir = path.join(tempDir, ".claude");
+      const claudeDir = path.join(tempDir, CLAUDE_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(buildProjectConfig()),
+        renderConfigTs(buildProjectConfig()),
       );
 
       const pluginDir = path.join(claudeDir, "plugins", DEFAULT_PLUGIN_NAME);
@@ -184,7 +181,7 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(buildProjectConfig()),
+        renderConfigTs(buildProjectConfig()),
       );
 
       const result = await getInstallationOrThrow(tempDir);
@@ -199,7 +196,7 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(
+        renderConfigTs(
           buildProjectConfig({
             skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
           }),
@@ -220,7 +217,7 @@ describe("installation", () => {
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-        tsConfigContent(
+        renderConfigTs(
           buildProjectConfig({
             skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
           }),
@@ -261,7 +258,7 @@ describe("installation", () => {
         await mkdir(claudeSrcDir, { recursive: true });
         await writeFile(
           path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-          tsConfigContent(buildProjectConfig()),
+          renderConfigTs(buildProjectConfig()),
         );
 
         const result = await detectInstallation();

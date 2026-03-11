@@ -6,11 +6,11 @@ import { readTestTsConfig } from "../helpers";
 import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents/agent-recompiler";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
-import type { AgentName, CategoryPath, ProjectConfig, SkillId } from "../../../types";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../../consts";
+import type { AgentName, ProjectConfig } from "../../../types";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
 import {
-  createMockSkill,
   createMockMatrix,
+  testSkillToResolvedSkill,
   fileExists,
   directoryExists,
   buildWizardResult,
@@ -18,22 +18,13 @@ import {
   buildSourceResult,
 } from "../helpers";
 import { useMatrixStore } from "../../../stores/matrix-store";
-import { PIPELINE_TEST_SKILLS } from "../mock-data/mock-skills";
+import { PIPELINE_TEST_SKILLS } from "../mock-data/mock-skills.js";
 
 const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.id);
 
 const PIPELINE_MATRIX = createMockMatrix(
   Object.fromEntries(
-    PIPELINE_TEST_SKILLS.map((skill) => [
-      skill.id,
-      createMockSkill(skill.id, {
-        category: skill.category as CategoryPath,
-        description: skill.description,
-        tags: skill.tags ?? [],
-        author: skill.author,
-        path: `skills/${skill.category}/${skill.id}/`,
-      }),
-    ]),
+    PIPELINE_TEST_SKILLS.map((skill) => [skill.id, testSkillToResolvedSkill(skill)]),
   ),
 );
 
@@ -51,7 +42,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
     await cleanupTestSource(dirs);
   });
 
-  describe("Scenario 1: Full pipeline with 10 skills from scratch flow", () => {
+  describe("Scenario 1: Full pipeline with 7 skills from scratch flow", () => {
     it("should install skills, generate config, and compile agents", async () => {
       const wizardResult = buildWizardResult(buildSkillConfigs(SKILL_NAMES), {
         selectedAgents: PIPELINE_AGENTS,
@@ -88,7 +79,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       expect(Array.isArray(config.skills)).toBe(true);
       expect(config.agents).toBeDefined();
       expect(config.agents.length).toBeGreaterThan(0);
-      const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, "skills");
+      const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
       expect(await directoryExists(skillsDir)).toBe(true);
       expect(installResult.skillsDir).toBe(skillsDir);
 
@@ -273,7 +264,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         await fileExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS)),
       ).toBe(true);
 
-      const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, "skills");
+      const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
       expect(await directoryExists(skillsDir)).toBe(true);
 
       const skillDirs = await readdir(skillsDir);

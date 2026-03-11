@@ -1,14 +1,13 @@
-import { afterEach, describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { useMatrixStore } from "./matrix-store";
-import { createMockMatrix, getTestSkill } from "../lib/__tests__/helpers";
-import { TEST_SKILLS, TEST_CATEGORIES } from "../lib/__tests__/test-fixtures";
+import { createMockMatrix, SKILLS } from "../lib/__tests__/helpers";
+import { TEST_CATEGORIES } from "../lib/__tests__/test-fixtures";
 import { typedKeys } from "../utils/typed-object";
 import type {
   AgentName,
   Category,
   CategoryDefinition,
-  Domain,
   SkillAssignment,
   SkillId,
   SkillSource,
@@ -20,7 +19,7 @@ function sa(id: SkillId, preloaded = false): SkillAssignment {
 
 describe("WizardStore", () => {
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
       categories: TEST_CATEGORIES as unknown as Record<Category, CategoryDefinition>,
     }));
   });
@@ -241,7 +240,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "web-framework": { domain: "web" },
           "web-client-state": { domain: "web" },
@@ -265,10 +264,7 @@ describe("WizardStore", () => {
     it("should restore stack skills when re-toggling a domain ON after populateFromSkillIds", () => {
       const store = useWizardStore.getState();
 
-      useMatrixStore.getState().setMatrix(createMockMatrix({
-        "web-framework-react": TEST_SKILLS.react,
-        "api-framework-hono": TEST_SKILLS.hono,
-      }, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react, SKILLS.hono, {
         categories: {
           "web-framework": TEST_CATEGORIES.framework,
           "api-api": TEST_CATEGORIES.api,
@@ -313,7 +309,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "web-framework": { domain: "web" },
           "api-api": { domain: "api" },
@@ -633,7 +629,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "web-framework": { domain: "web" },
           "web-client-state": { domain: "web" },
@@ -652,10 +648,7 @@ describe("WizardStore", () => {
     it("should populate skillConfigs from populateFromSkillIds", () => {
       const store = useWizardStore.getState();
 
-      useMatrixStore.getState().setMatrix(createMockMatrix({
-        "web-framework-react": TEST_SKILLS.react,
-        "api-framework-hono": TEST_SKILLS.hono,
-      }, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react, SKILLS.hono, {
         categories: {
           "web-framework": TEST_CATEGORIES.framework,
           "api-api": TEST_CATEGORIES.api,
@@ -692,7 +685,7 @@ describe("WizardStore", () => {
           web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "web-framework": { domain: "web" },
         } as Record<Category, CategoryDefinition>,
@@ -738,10 +731,8 @@ describe("WizardStore", () => {
       store.setSourceSelection("web-framework-react", "local");
 
       useMatrixStore.getState().setMatrix(createMockMatrix({
-        "web-framework-react": {
-          ...getTestSkill("react"),
-          availableSources: [{ name: "Acme Corp", type: "private", installed: false }],
-        },
+        ...SKILLS.react,
+        availableSources: [{ name: "Acme Corp", type: "private", installed: false }],
       }));
 
       store.setAllSourcesPlugin();
@@ -879,7 +870,7 @@ describe("WizardStore", () => {
           web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "web-framework": { domain: "web" },
         } as Record<Category, CategoryDefinition>,
@@ -908,7 +899,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "web-framework": { domain: "web" },
           "web-client-state": { domain: "web" },
@@ -933,7 +924,7 @@ describe("WizardStore", () => {
           misc: { "shared-methodology": [sa("meta-methodology-vitest")] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "shared-methodology": {},
         } as Record<Category, CategoryDefinition>,
@@ -960,7 +951,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "shared-methodology": { domain: "shared" },
         } as Record<Category, CategoryDefinition>,
@@ -992,7 +983,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "web-framework": { domain: "web" },
           "shared-methodology": { domain: "shared" },
@@ -1031,7 +1022,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(TEST_SKILLS, {
+      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
         categories: {
           "shared-methodology": { domain: "shared" },
         } as Record<Category, CategoryDefinition>,
@@ -1120,14 +1111,14 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
 
       const skill = {
-        ...getTestSkill("react"),
+        ...SKILLS.react,
         availableSources: [
           makeSource({ name: "Acme Corp", type: "private", primary: true }),
           makeSource({ name: "local", type: "local", installed: true, installMode: "local" }),
         ],
       };
 
-      useMatrixStore.getState().setMatrix(createMockMatrix({ "web-framework-react": skill }));
+      useMatrixStore.getState().setMatrix(createMockMatrix(skill));
 
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
@@ -1141,14 +1132,14 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
 
       const skill = {
-        ...getTestSkill("react"),
+        ...SKILLS.react,
         availableSources: [
           makeSource({ name: "agents-inc", type: "public" }),
           makeSource({ name: "Acme Corp", type: "private", primary: true }),
         ],
       };
 
-      useMatrixStore.getState().setMatrix(createMockMatrix({ "web-framework-react": skill }));
+      useMatrixStore.getState().setMatrix(createMockMatrix(skill));
 
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
@@ -1163,14 +1154,14 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
 
       const skill = {
-        ...getTestSkill("react"),
+        ...SKILLS.react,
         availableSources: [
           makeSource({ name: "Extra Corp", type: "private" }),
           makeSource({ name: "agents-inc", type: "public" }),
         ],
       };
 
-      useMatrixStore.getState().setMatrix(createMockMatrix({ "web-framework-react": skill }));
+      useMatrixStore.getState().setMatrix(createMockMatrix(skill));
 
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
@@ -1185,7 +1176,7 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
 
       const skill = {
-        ...getTestSkill("react"),
+        ...SKILLS.react,
         availableSources: [
           makeSource({ name: "Extra Corp", type: "private" }),
           makeSource({ name: "agents-inc", type: "public" }),
@@ -1194,7 +1185,7 @@ describe("WizardStore", () => {
         ],
       };
 
-      useMatrixStore.getState().setMatrix(createMockMatrix({ "web-framework-react": skill }));
+      useMatrixStore.getState().setMatrix(createMockMatrix(skill));
 
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 

@@ -4,8 +4,9 @@ import { mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 import { validateSource } from "../../source-validator";
-import { STANDARD_FILES } from "../../../consts";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
 import type { TestSkill } from "../fixtures/create-test-source";
+import { renderConfigTs, renderSkillMd } from "../content-generators";
 
 describe("validate command", () => {
   let tempDir: string;
@@ -66,10 +67,10 @@ describe("validate command", () => {
 
     it("should validate plugin at current directory with valid structure", async () => {
       // Create a minimal plugin structure
-      const pluginManifestDir = path.join(projectDir, ".claude-plugin");
+      const pluginManifestDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
       await mkdir(pluginManifestDir, { recursive: true });
       await writeFile(
-        path.join(pluginManifestDir, "plugin.json"),
+        path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE),
         JSON.stringify({
           name: "test-plugin",
           version: "1.0.0",
@@ -88,11 +89,11 @@ describe("validate command", () => {
   describe("plugin validation (path argument)", () => {
     it("should accept path as first argument", async () => {
       const pluginPath = path.join(tempDir, "my-plugin");
-      const pluginManifestDir = path.join(pluginPath, ".claude-plugin");
+      const pluginManifestDir = path.join(pluginPath, PLUGIN_MANIFEST_DIR);
       await mkdir(pluginManifestDir, { recursive: true });
 
       await writeFile(
-        path.join(pluginManifestDir, "plugin.json"),
+        path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE),
         JSON.stringify({
           name: "my-plugin",
           version: "1.0.0",
@@ -109,18 +110,18 @@ describe("validate command", () => {
     it("should accept --all flag", async () => {
       // Create plugins directory with multiple plugins
       const pluginsDir = path.join(tempDir, "plugins");
-      const plugin1Dir = path.join(pluginsDir, "plugin1", ".claude-plugin");
-      const plugin2Dir = path.join(pluginsDir, "plugin2", ".claude-plugin");
+      const plugin1Dir = path.join(pluginsDir, "plugin1", PLUGIN_MANIFEST_DIR);
+      const plugin2Dir = path.join(pluginsDir, "plugin2", PLUGIN_MANIFEST_DIR);
 
       await mkdir(plugin1Dir, { recursive: true });
       await mkdir(plugin2Dir, { recursive: true });
 
       await writeFile(
-        path.join(plugin1Dir, "plugin.json"),
+        path.join(plugin1Dir, PLUGIN_MANIFEST_FILE),
         JSON.stringify({ name: "plugin1", version: "1.0.0" }),
       );
       await writeFile(
-        path.join(plugin2Dir, "plugin.json"),
+        path.join(plugin2Dir, PLUGIN_MANIFEST_FILE),
         JSON.stringify({ name: "plugin2", version: "1.0.0" }),
       );
 
@@ -163,10 +164,10 @@ describe("validate command", () => {
 
     it("should accept --verbose with --plugins", async () => {
       // Create valid plugin structure to avoid validation errors
-      const pluginManifestDir = path.join(projectDir, ".claude-plugin");
+      const pluginManifestDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
       await mkdir(pluginManifestDir, { recursive: true });
       await writeFile(
-        path.join(pluginManifestDir, "plugin.json"),
+        path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE),
         JSON.stringify({ name: "test-plugin", version: "1.0.0" }),
       );
 
@@ -223,7 +224,7 @@ async function writeValidSourceSkill(
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    `---\nname: ${config.id}\ndescription: ${config.description}\n---\n\n# ${config.id}\n\n${config.description}\n`,
+    renderSkillMd(config.id, config.description),
   );
 
   const domain = config.domain;
@@ -262,10 +263,7 @@ async function writeTestMatrix(
   }
 
   const categoriesData = { version: "1.0.0", categories: matrixCategories };
-  await writeFile(
-    path.join(configDir, "skill-categories.ts"),
-    `export default ${JSON.stringify(categoriesData, null, 2)};\n`,
-  );
+  await writeFile(path.join(configDir, "skill-categories.ts"), renderConfigTs(categoriesData));
 
   const rulesData = {
     version: "1.0.0",
@@ -277,10 +275,7 @@ async function writeTestMatrix(
       alternatives: [],
     },
   };
-  await writeFile(
-    path.join(configDir, "skill-rules.ts"),
-    `export default ${JSON.stringify(rulesData, null, 2)};\n`,
-  );
+  await writeFile(path.join(configDir, "skill-rules.ts"), renderConfigTs(rulesData));
 }
 
 describe("source validation (validateSource)", () => {
@@ -313,7 +308,7 @@ describe("source validation (validateSource)", () => {
 
   it("should pass validation for a valid source", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const configDir = path.join(sourceDir, "config");
     await mkdir(configDir, { recursive: true });
 
@@ -342,7 +337,7 @@ describe("source validation (validateSource)", () => {
 
   it("should report error when SKILL.md is missing", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const skillDir = path.join(skillsDir, "web", "framework", "react");
     await mkdir(skillDir, { recursive: true });
 
@@ -367,14 +362,14 @@ describe("source validation (validateSource)", () => {
 
   it("should report error when metadata.yaml is missing", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const skillDir = path.join(skillsDir, "web", "framework", "react");
     await mkdir(skillDir, { recursive: true });
 
     // Write SKILL.md without metadata.yaml
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      "---\nname: web-framework-react\ndescription: React\n---\n\n# React\n",
+      renderSkillMd("web-framework-react", "React"),
     );
 
     const result = await validateSource(sourceDir);
@@ -385,13 +380,13 @@ describe("source validation (validateSource)", () => {
 
   it("should report errors for invalid metadata schema violations", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const skillDir = path.join(skillsDir, "web", "framework", "react");
     await mkdir(skillDir, { recursive: true });
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      "---\nname: web-framework-react\ndescription: React\n---\n\n# React\n",
+      renderSkillMd("web-framework-react", "React"),
     );
 
     // Missing required fields: displayName, cliDescription, usageGuidance
@@ -410,13 +405,13 @@ describe("source validation (validateSource)", () => {
 
   it("should report error for snake_case keys in metadata", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const skillDir = path.join(skillsDir, "web", "framework", "react");
     await mkdir(skillDir, { recursive: true });
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      "---\nname: web-framework-react\ndescription: React\n---\n\n# React\n",
+      renderSkillMd("web-framework-react", "React"),
     );
 
     // Use snake_case key instead of camelCase
@@ -439,7 +434,7 @@ describe("source validation (validateSource)", () => {
 
   it("should report warning when displayName does not match directory name", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const configDir = path.join(sourceDir, "config");
     await mkdir(configDir, { recursive: true });
 
@@ -471,7 +466,7 @@ describe("source validation (validateSource)", () => {
 
   it("should report cross-reference errors for unresolved skill references", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const configDir = path.join(sourceDir, "config");
     await mkdir(configDir, { recursive: true });
 
@@ -481,7 +476,7 @@ describe("source validation (validateSource)", () => {
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      "---\nname: web-framework-react\ndescription: React\n---\n\n# React\n",
+      renderSkillMd("web-framework-react", "React"),
     );
 
     await writeFile(
@@ -511,10 +506,7 @@ describe("source validation (validateSource)", () => {
     };
 
     const categoriesData = { version: "1.0.0", categories: matrixCategories };
-    await writeFile(
-      path.join(configDir, "skill-categories.ts"),
-      `export default ${JSON.stringify(categoriesData, null, 2)};\n`,
-    );
+    await writeFile(path.join(configDir, "skill-categories.ts"), renderConfigTs(categoriesData));
 
     const rulesData = {
       version: "1.0.0",
@@ -531,10 +523,7 @@ describe("source validation (validateSource)", () => {
         alternatives: [],
       },
     };
-    await writeFile(
-      path.join(configDir, "skill-rules.ts"),
-      `export default ${JSON.stringify(rulesData, null, 2)};\n`,
-    );
+    await writeFile(path.join(configDir, "skill-rules.ts"), renderConfigTs(rulesData));
 
     const result = await validateSource(sourceDir);
 
@@ -544,7 +533,7 @@ describe("source validation (validateSource)", () => {
 
   it("should validate multiple skills and count them correctly", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const configDir = path.join(sourceDir, "config");
     await mkdir(configDir, { recursive: true });
 
@@ -600,7 +589,7 @@ describe("validate --source integration", () => {
 
   it("should accept --source flag and validate source", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const configDir = path.join(sourceDir, "config");
     await mkdir(configDir, { recursive: true });
 
@@ -630,13 +619,13 @@ describe("validate --source integration", () => {
 
   it("should exit with error when source has invalid metadata", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const skillDir = path.join(skillsDir, "web", "framework", "react");
     await mkdir(skillDir, { recursive: true });
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      "---\nname: web-framework-react\ndescription: React\n---\n\n# React\n",
+      renderSkillMd("web-framework-react", "React"),
     );
 
     // Missing required fields
@@ -661,7 +650,7 @@ describe("validate --source integration", () => {
 
   it("should accept -s shorthand for source flag", async () => {
     const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", "skills");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const configDir = path.join(sourceDir, "config");
     await mkdir(configDir, { recursive: true });
 

@@ -67,7 +67,7 @@ describe("generateConfigSource", () => {
     // Non-preloaded single skill should be compacted to a bare string
     expect(source).toContain('"web-framework": "web-framework-react"');
     // Stack should be extracted as named variable
-    expect(source).toContain("const stack: Record<AgentName, StackAgentConfig>");
+    expect(source).toContain("const stack: Partial<Record<AgentName, StackAgentConfig>>");
   });
 
   it("preserves preloaded flag as object in stack", () => {

@@ -10,7 +10,8 @@ import {
   buildSkillConfigs,
   buildAgentConfigs,
 } from "../../__tests__/helpers";
-import type { ProjectConfig, SkillId } from "../../../types";
+import type { ProjectConfig } from "../../../types";
+import { STANDARD_FILES } from "../../../consts";
 
 let tempDir: string;
 
@@ -34,7 +35,7 @@ async function writeAndLoad(config: ProjectConfig): Promise<unknown> {
   // Strip type annotations from const declarations
   source = source.replace(/const (\w+): [^=]+=/g, "const $1 =");
 
-  const configPath = path.join(tempDir, "config.ts");
+  const configPath = path.join(tempDir, STANDARD_FILES.CONFIG_TS);
   await writeFile(configPath, source);
 
   return loadConfig(configPath);

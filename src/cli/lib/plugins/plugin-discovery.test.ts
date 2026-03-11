@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SkillId } from "../../types";
 
 // Use vi.hoisted so mock fns are available when vi.mock factories run (hoisted to top)
 const {
@@ -37,6 +36,8 @@ vi.mock("./plugin-settings", async (importOriginal) => ({
 import { discoverAllPluginSkills, hasIndividualPlugins, listPluginNames } from "./plugin-discovery";
 
 describe("plugin-discovery", () => {
+  const REACT_SKILL_ID = "web-framework-react";
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -56,7 +57,7 @@ describe("plugin-discovery", () => {
         { pluginKey: "zustand@my-marketplace", installPath: "/cache/zustand" },
       ]);
 
-      const reactId = "web-framework-react";
+      const reactId = REACT_SKILL_ID;
       const zustandId = "web-state-zustand";
 
       mockLoadPluginSkills
@@ -90,7 +91,7 @@ describe("plugin-discovery", () => {
         { pluginKey: "react@marketplace-b", installPath: "/cache/react-b" },
       ]);
 
-      const skillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
 
       mockLoadPluginSkills
         .mockResolvedValueOnce({
@@ -119,7 +120,7 @@ describe("plugin-discovery", () => {
         { pluginKey: "good-plugin", installPath: "/cache/good" },
       ]);
 
-      const skillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
 
       mockLoadPluginSkills.mockRejectedValueOnce(new Error("Parse error")).mockResolvedValueOnce({
         [skillId]: {

@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
+import { mkdir, writeFile, readFile, stat } from "fs/promises";
 import {
   compileAgentPlugin,
   compileAllAgentPlugins,
   printAgentCompilationSummary,
 } from "./agent-plugin-compiler";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 
 describe("agent-plugin-compiler", () => {
   let tempDir: string;
@@ -14,7 +15,7 @@ describe("agent-plugin-compiler", () => {
   let outputDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "agent-compiler-test-"));
+    tempDir = await createTempDir("agent-compiler-test-");
     agentsDir = path.join(tempDir, "agents");
     outputDir = path.join(tempDir, "output");
     await mkdir(agentsDir, { recursive: true });
@@ -22,7 +23,7 @@ describe("agent-plugin-compiler", () => {
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   function createAgentMd(
@@ -63,7 +64,7 @@ describe("agent-plugin-compiler", () => {
       });
 
       // Check .claude-plugin/plugin.json exists
-      const manifestPath = path.join(result.pluginPath, ".claude-plugin", "plugin.json");
+      const manifestPath = path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
       const manifestStats = await stat(manifestPath);
       expect(manifestStats.isFile()).toBe(true);
 
@@ -82,7 +83,7 @@ describe("agent-plugin-compiler", () => {
         outputDir,
       });
 
-      const manifestPath = path.join(result.pluginPath, ".claude-plugin", "plugin.json");
+      const manifestPath = path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
       const content = await readFile(manifestPath, "utf-8");
       const manifest = JSON.parse(content);
 
@@ -224,7 +225,7 @@ describe("agent-plugin-compiler", () => {
         const stats = await stat(result.pluginPath);
         expect(stats.isDirectory()).toBe(true);
 
-        const manifestPath = path.join(result.pluginPath, ".claude-plugin", "plugin.json");
+        const manifestPath = path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
         const manifestStats = await stat(manifestPath);
         expect(manifestStats.isFile()).toBe(true);
       }

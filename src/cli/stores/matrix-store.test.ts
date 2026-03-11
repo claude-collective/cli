@@ -1,16 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { useMatrixStore, getSkill, getMatrix, findSkill } from "./matrix-store";
-import { createMockMatrix, createMockSkill } from "../lib/__tests__/helpers";
-import { TEST_SKILLS } from "../lib/__tests__/test-fixtures";
+import { createMockMatrix, SKILLS } from "../lib/__tests__/helpers";
 import type { SkillId, SkillSlug } from "../types";
 
 describe("MatrixStore", () => {
 
   describe("setMatrix and getMatrix", () => {
     it("should store and retrieve the matrix", () => {
-      const matrix = createMockMatrix({
-        "web-framework-react": TEST_SKILLS.react,
-      });
+      const matrix = createMockMatrix(SKILLS.react);
 
       useMatrixStore.getState().setMatrix(matrix);
 
@@ -21,9 +18,7 @@ describe("MatrixStore", () => {
 
   describe("reset", () => {
     it("should clear the matrix back to null", () => {
-      const matrix = createMockMatrix({
-        "web-framework-react": TEST_SKILLS.react,
-      });
+      const matrix = createMockMatrix(SKILLS.react);
 
       useMatrixStore.getState().setMatrix(matrix);
       useMatrixStore.getState().reset();
@@ -42,10 +37,8 @@ describe("MatrixStore", () => {
 
   describe("getSkill", () => {
     it("should return a skill by SkillId", () => {
-      const reactSkill = createMockSkill("web-framework-react");
-      const matrix = createMockMatrix({
-        "web-framework-react": reactSkill,
-      });
+      const reactSkill = SKILLS.react;
+      const matrix = createMockMatrix(reactSkill);
 
       useMatrixStore.getState().setMatrix(matrix);
 
@@ -54,21 +47,17 @@ describe("MatrixStore", () => {
     });
 
     it("should return a skill by SkillSlug via slugMap", () => {
-      const reactSkill = createMockSkill("web-framework-react");
-      const matrix = createMockMatrix({
-        "web-framework-react": reactSkill,
-      });
+      const reactSkill = SKILLS.react;
+      const matrix = createMockMatrix(reactSkill);
 
       useMatrixStore.getState().setMatrix(matrix);
 
-      const result = useMatrixStore.getState().getSkill("react" as SkillSlug);
+      const result = useMatrixStore.getState().getSkill("react");
       expect(result).toBe(reactSkill);
     });
 
     it("should return undefined for unknown ID", () => {
-      const matrix = createMockMatrix({
-        "web-framework-react": TEST_SKILLS.react,
-      });
+      const matrix = createMockMatrix(SKILLS.react);
 
       useMatrixStore.getState().setMatrix(matrix);
 
@@ -77,9 +66,7 @@ describe("MatrixStore", () => {
     });
 
     it("should return undefined for unknown slug", () => {
-      const matrix = createMockMatrix({
-        "web-framework-react": TEST_SKILLS.react,
-      });
+      const matrix = createMockMatrix(SKILLS.react);
 
       useMatrixStore.getState().setMatrix(matrix);
 
@@ -95,10 +82,8 @@ describe("MatrixStore", () => {
 
   describe("standalone selectors", () => {
     it("should look up a skill via the standalone getSkill selector", () => {
-      const reactSkill = createMockSkill("web-framework-react");
-      const matrix = createMockMatrix({
-        "web-framework-react": reactSkill,
-      });
+      const reactSkill = SKILLS.react;
+      const matrix = createMockMatrix(reactSkill);
 
       useMatrixStore.getState().setMatrix(matrix);
 
@@ -107,9 +92,7 @@ describe("MatrixStore", () => {
     });
 
     it("should return the matrix via the standalone getMatrix selector", () => {
-      const matrix = createMockMatrix({
-        "web-framework-react": TEST_SKILLS.react,
-      });
+      const matrix = createMockMatrix(SKILLS.react);
 
       useMatrixStore.getState().setMatrix(matrix);
 
@@ -118,9 +101,7 @@ describe("MatrixStore", () => {
     });
 
     it("should throw via the standalone getSkill selector for missing skill", () => {
-      const matrix = createMockMatrix({
-        "web-framework-react": TEST_SKILLS.react,
-      });
+      const matrix = createMockMatrix(SKILLS.react);
 
       useMatrixStore.getState().setMatrix(matrix);
 
@@ -130,9 +111,7 @@ describe("MatrixStore", () => {
     });
 
     it("should return undefined via findSkill for missing skill", () => {
-      const matrix = createMockMatrix({
-        "web-framework-react": TEST_SKILLS.react,
-      });
+      const matrix = createMockMatrix(SKILLS.react);
 
       useMatrixStore.getState().setMatrix(matrix);
 
@@ -141,10 +120,8 @@ describe("MatrixStore", () => {
     });
 
     it("should return a skill via findSkill when found", () => {
-      const reactSkill = createMockSkill("web-framework-react");
-      const matrix = createMockMatrix({
-        "web-framework-react": reactSkill,
-      });
+      const reactSkill = SKILLS.react;
+      const matrix = createMockMatrix(reactSkill);
 
       useMatrixStore.getState().setMatrix(matrix);
 

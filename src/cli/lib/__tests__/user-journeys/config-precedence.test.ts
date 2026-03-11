@@ -18,6 +18,8 @@ import {
   type TestDirs,
 } from "../fixtures/create-test-source";
 import { createTempDir, cleanupTempDir, readTestTsConfig } from "../helpers";
+import { renderConfigTs } from "../content-generators";
+import { STANDARD_FILES } from "../../../consts";
 
 const PROJECT_CONFIG_DIR = ".claude-src";
 
@@ -27,9 +29,8 @@ async function createProjectConfig(
 ): Promise<string> {
   const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
   await mkdir(configDir, { recursive: true });
-  const configPath = path.join(configDir, "config.ts");
-  const content = `export default ${JSON.stringify(config, null, 2)};`;
-  await writeFile(configPath, content);
+  const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
+  await writeFile(configPath, renderConfigTs(config));
   return configPath;
 }
 
@@ -183,7 +184,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
     it("should return null for invalid TypeScript in project config", async () => {
       const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.ts"), "invalid typescript content {{");
+      await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), "invalid typescript content {{");
 
       const config = await loadProjectSourceConfig(projectDir);
       expect(config).toBeNull();
@@ -374,7 +375,7 @@ describe("User Journey: Project Config Save and Load", () => {
 
     it("should return config path from getProjectConfigPath", () => {
       const configPath = getProjectConfigPath(projectDir);
-      expect(configPath).toBe(path.join(projectDir, PROJECT_CONFIG_DIR, "config.ts"));
+      expect(configPath).toBe(path.join(projectDir, PROJECT_CONFIG_DIR, STANDARD_FILES.CONFIG_TS));
     });
   });
 });
@@ -478,7 +479,7 @@ describe("User Journey: Config Edge Cases", () => {
     const projectDir = path.join(tempDir, "project");
     const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.ts"), "export default {};");
+    await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), "export default {};");
 
     const config = await loadProjectSourceConfig(projectDir);
     // Empty config object is valid — all fields are optional
@@ -492,12 +493,14 @@ describe("User Journey: Config Edge Cases", () => {
     const projectDir = path.join(tempDir, "project");
     const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
     await mkdir(configDir, { recursive: true });
-    const content = `export default ${JSON.stringify({
-      source: "github:valid/source",
-      unknown_field: "should_be_ignored",
-      another_unknown: "also_ignored",
-    })};`;
-    await writeFile(path.join(configDir, "config.ts"), content);
+    await writeFile(
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
+      renderConfigTs({
+        source: "github:valid/source",
+        unknown_field: "should_be_ignored",
+        another_unknown: "also_ignored",
+      }),
+    );
 
     const config = await loadProjectSourceConfig(projectDir);
     expect(config?.source).toBe("github:valid/source");

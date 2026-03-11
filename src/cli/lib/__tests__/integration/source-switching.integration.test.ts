@@ -12,10 +12,10 @@ import {
 } from "../fixtures/create-test-source";
 import { useMatrixStore } from "../../../stores/matrix-store";
 import type { ProjectConfig, SkillId } from "../../../types";
-import { LOCAL_SKILLS_PATH } from "../../../consts";
+import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 import {
-  createMockSkill,
   createMockMatrix,
+  testSkillToResolvedSkill,
   fileExists,
   directoryExists,
   readTestTsConfig,
@@ -23,46 +23,17 @@ import {
   buildSkillConfigs,
   buildSourceResult,
 } from "../helpers";
+import { SWITCHABLE_SKILLS, LOCAL_SKILL_VARIANTS } from "../mock-data/mock-skills.js";
 import type { SkillConfig } from "../../../types/config";
-import { SWITCHABLE_SKILLS, LOCAL_SKILL_VARIANTS } from "../mock-data/mock-skills";
 
 function buildMatrixFromTestSkills(skills: TestSkill[]) {
   const matrixSkills = Object.fromEntries(
-    skills.map((skill) => [
-      skill.id,
-      createMockSkill(skill.id, {
-        category: skill.category,
-        description: skill.description,
-        tags: skill.tags ?? [],
-        author: skill.author,
-        path: `skills/${skill.category}/${skill.id}/`,
-      }),
-    ]),
-  );
-  return createMockMatrix(matrixSkills);
-}
-
-function buildMatrixWithLocalOverrides(localSkillIds: SkillId[]) {
-  const matrixSkills = Object.fromEntries(
-    SWITCHABLE_SKILLS.map((skill) => [
-      skill.id,
-      createMockSkill(skill.id, {
-        category: skill.category,
-        description: skill.description,
-        tags: skill.tags ?? [],
-        author: skill.author,
-        path: `skills/${skill.category}/${skill.id}/`,
-        ...(localSkillIds.includes(skill.id)
-          ? { local: true, localPath: `.claude/skills/${skill.id}` }
-          : {}),
-      }),
-    ]),
+    skills.map((skill) => [skill.id, testSkillToResolvedSkill(skill)]),
   );
   return createMockMatrix(matrixSkills);
 }
 
 const REACT_SKILL_ID: SkillId = "web-framework-react";
-const ZUSTAND_SKILL_ID: SkillId = "web-state-zustand";
 const ALL_SKILL_NAMES = SWITCHABLE_SKILLS.map((s) => s.id);
 
 describe("Integration: Source Switching with Delete", () => {
@@ -85,7 +56,7 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Verify skill exists before deleting
       expect(await directoryExists(skillDir)).toBe(true);
-      expect(await fileExists(path.join(skillDir, "SKILL.md"))).toBe(true);
+      expect(await fileExists(path.join(skillDir, STANDARD_FILES.SKILL_MD))).toBe(true);
 
       // Delete
       await deleteLocalSkill(dirs.projectDir, REACT_SKILL_ID);
@@ -122,7 +93,7 @@ describe("Integration: Source Switching with Delete", () => {
       const skillDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH, REACT_SKILL_ID);
 
       // Read local content first (should contain "Local Version")
-      const localContent = await readFile(path.join(skillDir, "SKILL.md"), "utf-8");
+      const localContent = await readFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), "utf-8");
       expect(localContent).toContain("Local Version");
 
       // Delete the local skill
@@ -149,7 +120,7 @@ describe("Integration: Source Switching with Delete", () => {
       });
 
       // Read the re-copied content - should contain "Marketplace Version" (from source), NOT "Local Version"
-      const reCopiedContent = await readFile(path.join(skillDir, "SKILL.md"), "utf-8");
+      const reCopiedContent = await readFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), "utf-8");
       expect(reCopiedContent).toContain("Marketplace Version");
       expect(reCopiedContent).not.toContain("Local Version");
     });
@@ -195,7 +166,7 @@ describe("Integration: Source Switching with Delete", () => {
       const skillDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH, REACT_SKILL_ID);
 
       // Read original local content
-      const originalContent = await readFile(path.join(skillDir, "SKILL.md"), "utf-8");
+      const originalContent = await readFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), "utf-8");
       expect(originalContent).toContain("Local Version");
 
       // Delete (simulates local -> plugin switch)
@@ -222,7 +193,7 @@ describe("Integration: Source Switching with Delete", () => {
       });
 
       // Content should be marketplace version (NOT preserved local edits)
-      const reCopiedContent = await readFile(path.join(skillDir, "SKILL.md"), "utf-8");
+      const reCopiedContent = await readFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), "utf-8");
       expect(reCopiedContent).toContain("Marketplace Version");
       expect(reCopiedContent).not.toContain("Local Version");
     });

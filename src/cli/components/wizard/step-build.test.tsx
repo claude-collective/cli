@@ -20,10 +20,9 @@ import {
   delay,
 } from "../../lib/__tests__/test-constants";
 import {
-  createMockCategory,
   createMockSkill,
   createMockMatrix,
-  getTestSkill,
+  SKILLS,
 } from "../../lib/__tests__/helpers";
 import { useMatrixStore } from "../../stores/matrix-store";
 import {
@@ -32,29 +31,17 @@ import {
   WEB_STATE_CATEGORY,
   API_FRAMEWORK_CATEGORY,
   API_DATABASE_CATEGORY,
+  CLI_FRAMEWORK_CATEGORY,
 } from "../../lib/__tests__/mock-data/mock-categories.js";
 
-// Test data construction cast: indexBy returns generic Record
 const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill[]) =>
   createMockMatrix(
-    indexBy(skills, (s) => s.id),
+    ...skills,
     {
+      // Test data construction cast: indexBy returns generic Record
       categories: indexBy(categories, (c) => c.id) as Record<Category, CategoryDefinition>,
     },
   );
-
-const reactSkill = getTestSkill("react", { displayName: "react" });
-const vueSkill = getTestSkill("vue", { displayName: "vue" });
-const tailwindSkill = createMockSkill("web-styling-tailwind", {
-  displayName: "tailwind",
-});
-const scssSkill = getTestSkill("scss-modules", { displayName: "scss-modules" });
-const zustandSkill = getTestSkill("zustand", { displayName: "zustand" });
-const honoSkill = getTestSkill("hono", { displayName: "hono" });
-const expressSkill = createMockSkill("api-framework-express", {
-  displayName: "express",
-});
-const postgresSkill = createMockSkill("api-database-postgres");
 
 const defaultMatrix = buildTestMatrix(
   [
@@ -65,14 +52,13 @@ const defaultMatrix = buildTestMatrix(
     API_DATABASE_CATEGORY,
   ],
   [
-    reactSkill,
-    vueSkill,
-    tailwindSkill,
-    scssSkill,
-    zustandSkill,
-    honoSkill,
-    expressSkill,
-    postgresSkill,
+    SKILLS.react,
+    SKILLS.vue,
+    SKILLS.tailwind,
+    SKILLS.scss,
+    SKILLS.zustand,
+    SKILLS.hono,
+    SKILLS.drizzle,
   ],
 );
 
@@ -146,12 +132,12 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Framework skills (displayed as alias)
-      expect(output).toContain("react");
-      expect(output).toContain("vue");
+      // Framework skills
+      expect(output).toContain("React");
+      expect(output).toContain("Vue");
       // Styling skills (visible after framework selected)
-      expect(output).toContain("tailwind");
-      expect(output).toContain("scss-modules");
+      expect(output).toContain("Tailwind");
+      expect(output).toContain("Scss Modules");
     });
 
     it("should show required indicator (*) for required categories", () => {
@@ -302,8 +288,8 @@ describe("StepBuild component", () => {
 
       const output = lastFrame();
       // Should show selected option (no circle symbol anymore, uses background)
-      // Just verify the selected label is present (displayed as alias)
-      expect(output).toContain("react");
+      // Just verify the selected label is present
+      expect(output).toContain("React");
     });
 
     it("should pass showLabels to CategoryGrid", () => {
@@ -417,7 +403,7 @@ describe("StepBuild component", () => {
     it("should handle allSelections with skills from other domains", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
-        allSelections: ["api-framework-hono", "api-database-postgres"], // API skills in test matrix
+        allSelections: ["api-framework-hono", "api-database-drizzle"], // API skills in test matrix
         selections: { "web-framework": ["web-framework-react"] }, // Need framework to see other categories
       });
       cleanup = unmount;
@@ -454,12 +440,8 @@ describe("StepBuild component", () => {
 
     it("should show ViewTitle for current domain in three-domain flow", () => {
       // Add cli category to matrix
-      const cliFrameworkCategory = createMockCategory("cli-framework", "CLI Framework", {
-        domain: "cli",
-        required: true,
-        order: 0,
-      });
-      const commanderSkill = createMockSkill("cli-cli-framework-commander", {
+      const cliFrameworkCategory = { ...CLI_FRAMEWORK_CATEGORY, required: true, order: 0 };
+      const commanderSkill = createMockSkill("cli-framework-commander", {
         displayName: "commander",
       });
 
@@ -473,14 +455,13 @@ describe("StepBuild component", () => {
           cliFrameworkCategory,
         ],
         [
-          reactSkill,
-          vueSkill,
-          tailwindSkill,
-          scssSkill,
-          zustandSkill,
-          honoSkill,
-          expressSkill,
-          postgresSkill,
+          SKILLS.react,
+          SKILLS.vue,
+          SKILLS.tailwind,
+          SKILLS.scss,
+          SKILLS.zustand,
+          SKILLS.hono,
+          SKILLS.drizzle,
           commanderSkill,
         ],
       );

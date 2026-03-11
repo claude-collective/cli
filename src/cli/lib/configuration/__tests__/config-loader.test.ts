@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { z } from "zod";
 import { loadConfig } from "../config-loader";
 import { createTempDir, cleanupTempDir } from "../../__tests__/helpers";
+import { STANDARD_FILES } from "../../../consts";
 
 let tempDir: string;
 
@@ -22,7 +23,7 @@ describe("loadConfig", () => {
   });
 
   it("loads a valid config file with default export", async () => {
-    const configPath = path.join(tempDir, "config.ts");
+    const configPath = path.join(tempDir, STANDARD_FILES.CONFIG_TS);
     await writeFile(
       configPath,
       `export default { name: "my-project", agents: ["web-developer"], skills: [] };`,

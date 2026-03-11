@@ -10,20 +10,22 @@ import {
   buildWizardResult,
   buildSkillConfigs,
   buildSourceResult,
-  createMockSkill,
   createMockMatrix,
   parseTestFrontmatter,
   createTempDir,
   cleanupTempDir,
+  SKILLS,
 } from "../helpers";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
-import { DEFAULT_TEST_SKILLS, EJECT_INSTALLED_SKILL_IDS } from "../mock-data/mock-skills";
+import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { copySkillsToLocalFlattened } from "../../skills/skill-copier";
 import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 import { typedKeys } from "../../../utils/typed-object";
 import { useMatrixStore } from "../../../stores/matrix-store";
-import type { MergedSkillsMatrix, ProjectConfig, ResolvedSkill, SkillId } from "../../../types";
+import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
+
+const EJECT_INSTALLED_SKILL_IDS: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
 describe("eject command", () => {
   let tempDir: string;
@@ -238,7 +240,7 @@ describe("eject command", () => {
 
       // Manually create agents/ with an actual agent subdir to simulate a prior full eject
       await mkdir(path.join(agentsDir, "developer"), { recursive: true });
-      await writeFile(path.join(agentsDir, "developer", "metadata.yaml"), "id: developer");
+      await writeFile(path.join(agentsDir, "developer", STANDARD_FILES.AGENT_METADATA_YAML), "id: developer");
 
       // Second full eject without --force should be blocked
       const { stderr } = await runCliCommand(["eject", "agent-partials"]);
@@ -396,31 +398,15 @@ const NON_INSTALLED_SKILLS = DEFAULT_TEST_SKILLS.filter(
   (s) => !EJECT_INSTALLED_SKILL_IDS.includes(s.id),
 );
 
-/**
- * Build a MergedSkillsMatrix from DEFAULT_TEST_SKILLS with skill paths matching
- * the test source directory layout. Optionally marks some skills as local.
- */
 function buildEjectMatrix(localSkillIds: SkillId[] = []): MergedSkillsMatrix {
-  const skills: Record<string, ResolvedSkill> = {};
-
-  for (const testSkill of DEFAULT_TEST_SKILLS) {
-    const isLocal = localSkillIds.includes(testSkill.id);
-    skills[testSkill.id] = createMockSkill(testSkill.id, {
-      description: testSkill.description,
-      tags: testSkill.tags ?? [],
-      // path must match createTestSource layout: skills/<category>/<skillName>/
-      path: `skills/${testSkill.category}/${testSkill.id}/`,
-      // Mark installed skills as local so the eject filtering works
-      ...(isLocal
-        ? {
-            local: true,
-            localPath: `.claude/skills/${testSkill.id}/`,
-          }
-        : {}),
-    });
-  }
-
-  return createMockMatrix(skills);
+  const baseSkills = [SKILLS.react, SKILLS.zustand, SKILLS.vitest, SKILLS.hono];
+  return createMockMatrix(
+    ...baseSkills.map((skill) =>
+      localSkillIds.includes(skill.id)
+        ? { ...skill, local: true, localPath: `.claude/skills/${skill.id}/` }
+        : skill,
+    ),
+  );
 }
 
 /**

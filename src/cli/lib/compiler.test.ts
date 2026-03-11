@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { readFile as fsReadFile, stat } from "fs/promises";
 import type { AgentConfig, Skill } from "../types";
-import { DEFAULT_PLUGIN_NAME } from "../consts";
+import { DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../consts";
 import {
   createCompileContext,
   createMockAgentConfig,
@@ -12,11 +12,6 @@ import {
   createTempDir,
   cleanupTempDir,
 } from "./__tests__/helpers";
-import {
-  REACT_SKILL_PRELOADED,
-  REACT_SKILL,
-  VITEST_SINGLE_FILE_SKILL,
-} from "./__tests__/mock-data/mock-skills.js";
 import {
   WEB_DEV_NO_SKILLS,
   API_DEV_NO_SKILLS,
@@ -125,7 +120,7 @@ async function createProjectFromFixtures(): Promise<string> {
     path.join(FIXTURES_ROOT, "skills/web-framework-react/SKILL.md"),
     "utf-8",
   );
-  await fsWrite(path.join(reactSkillDir, "SKILL.md"), skillContent);
+  await fsWrite(path.join(reactSkillDir, STANDARD_FILES.SKILL_MD), skillContent);
 
   // Skills (single-file)
   const skillsDir = path.join(tempDir, "skills");
@@ -166,10 +161,6 @@ function contextForProject(projectRoot: string) {
 // Error-path / test-specific skill entries (not shared)
 // ---------------------------------------------------------------------------
 
-const REACT_SKILL_WITH_PATH: Skill = {
-  ...createMockSkillEntry("web-framework-react"),
-  path: "skills/web-framework-react/",
-};
 const MISSING_SKILL: Skill = {
   ...createMockSkillEntry("web-missing-skill"),
   path: "skills/missing.md",

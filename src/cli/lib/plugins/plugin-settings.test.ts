@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import path from "path";
 import os from "os";
 import {
@@ -6,6 +6,7 @@ import {
   resolvePluginInstallPaths,
   getVerifiedPluginInstallPaths,
 } from "./plugin-settings";
+import { CLAUDE_DIR, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts";
 
 // Use vi.hoisted so mock fns are available when vi.mock factories run (hoisted to top)
 const { mockFileExists, mockReadFileSafe, mockVerbose, mockGetErrorMessage } = vi.hoisted(() => ({
@@ -53,7 +54,7 @@ describe("plugin-settings", () => {
 
       expect(result).toEqual([]);
       expect(mockFileExists).toHaveBeenCalledWith(
-        path.join("/project", ".claude", "settings.json"),
+        path.join("/project", CLAUDE_DIR, "settings.json"),
       );
     });
 
@@ -152,7 +153,7 @@ describe("plugin-settings", () => {
 
   describe("resolvePluginInstallPaths", () => {
     const getRegistryPath = () =>
-      path.join(os.homedir(), ".claude", "plugins", "installed_plugins.json");
+      path.join(os.homedir(), CLAUDE_DIR, "plugins", "installed_plugins.json");
 
     it("should return empty array when pluginKeys is empty", async () => {
       const result = await resolvePluginInstallPaths([], "/project");
@@ -518,7 +519,7 @@ describe("plugin-settings", () => {
 
       expect(mockFileExists).toHaveBeenNthCalledWith(
         3,
-        path.join("/cache/web-framework-react/1.0.0", ".claude-plugin", "plugin.json"),
+        path.join("/cache/web-framework-react/1.0.0", PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE),
       );
       expect(result).toHaveLength(1);
     });

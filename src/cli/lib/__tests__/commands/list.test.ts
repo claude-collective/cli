@@ -8,10 +8,11 @@ import {
   writeTestSkill,
   buildAgentConfigs,
   createMockMatrix,
-  TEST_SKILLS,
+  SKILLS,
 } from "../helpers";
 import { useMatrixStore } from "../../../stores/matrix-store";
-import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
+import { renderConfigTs } from "../content-generators";
 
 describe("list command", () => {
   let tempDir: string;
@@ -26,9 +27,7 @@ describe("list command", () => {
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
 
-    useMatrixStore.getState().setMatrix(createMockMatrix({
-      "web-testing-vitest": TEST_SKILLS.vitest,
-    }));
+    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.vitest));
   });
 
   afterEach(async () => {
@@ -58,7 +57,7 @@ describe("list command", () => {
 
     it("should show installation info when local installation exists", async () => {
       // Create a minimal local installation
-      const claudeDir = path.join(projectDir, ".claude");
+      const claudeDir = path.join(projectDir, CLAUDE_DIR);
       const agentsDir = path.join(claudeDir, "agents");
       const skillsDir = path.join(claudeDir, "skills");
 
@@ -68,11 +67,13 @@ describe("list command", () => {
       // Write minimal config
       const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
-      const configContent = `export default ${JSON.stringify({
-        name: "test-project",
-        agents: buildAgentConfigs(["web-developer"]),
-      })};`;
-      await writeFile(path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS), configContent);
+      await writeFile(
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          name: "test-project",
+          agents: buildAgentConfigs(["web-developer"]),
+        }),
+      );
 
       // Write a test agent
       await writeFile(

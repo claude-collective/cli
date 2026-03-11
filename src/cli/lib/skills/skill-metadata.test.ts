@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import type { SkillId } from "../../types";
 
 // Mock file system and logger (manual mocks from __mocks__ directories)
 vi.mock("../../utils/fs");

@@ -11,12 +11,12 @@ import {
   cleanupTempDir,
   writeTestSkill,
   createMockMatrix,
-  createMockSkill,
-  TEST_SKILLS,
+  SKILLS,
 } from "../__tests__/helpers";
+import { renderSkillMd } from "../__tests__/content-generators";
 import { useMatrixStore } from "../../stores/matrix-store";
 import { computeSkillFolderHash } from "../versioning";
-import { STANDARD_FILES } from "../../consts";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
 
 describe("skill-plugin-compiler", () => {
   let tempDir: string;
@@ -25,23 +25,21 @@ describe("skill-plugin-compiler", () => {
 
   beforeEach(async () => {
     tempDir = await createTempDir("skill-compiler-test-");
-    skillsDir = path.join(tempDir, "skills");
+    skillsDir = path.join(tempDir, STANDARD_DIRS.SKILLS);
     outputDir = path.join(tempDir, "output");
     await mkdir(skillsDir, { recursive: true });
     await mkdir(outputDir, { recursive: true });
 
-    useMatrixStore.getState().setMatrix(createMockMatrix({
-      "web-framework-react": TEST_SKILLS.react,
-      "web-state-zustand": TEST_SKILLS.zustand,
-      "web-testing-vitest": TEST_SKILLS.vitest,
-      "web-styling-tailwind": createMockSkill("web-styling-tailwind"),
-      "web-state-mobx": createMockSkill("web-state-mobx"),
-      "web-data-fetching-react-query": createMockSkill("web-data-fetching-react-query"),
-      "web-framework-original": createMockSkill("web-framework-original"),
-      "web-framework-simple": createMockSkill("web-framework-simple"),
-      "web-framework-arbitrary": createMockSkill("web-framework-arbitrary"),
-      "api-framework-hono": TEST_SKILLS.hono,
-    }));
+    useMatrixStore.getState().setMatrix(createMockMatrix(
+      SKILLS.react,
+      SKILLS.vue,
+      SKILLS.zustand,
+      SKILLS.pinia,
+      SKILLS.scss,
+      SKILLS.vitest,
+      SKILLS.hono,
+      SKILLS.drizzle,
+    ));
   });
 
   afterEach(async () => {
@@ -61,7 +59,7 @@ describe("skill-plugin-compiler", () => {
       const stats = await stat(pluginDir);
       expect(stats.isDirectory()).toBe(true);
 
-      const skillsSubDir = path.join(pluginDir, "skills", "web-framework-react");
+      const skillsSubDir = path.join(pluginDir, STANDARD_DIRS.SKILLS, "web-framework-react");
       const skillsStats = await stat(skillsSubDir);
       expect(skillsStats.isDirectory()).toBe(true);
     });
@@ -74,7 +72,7 @@ describe("skill-plugin-compiler", () => {
         outputDir,
       });
 
-      const manifestPath = path.join(result.pluginPath, ".claude-plugin", "plugin.json");
+      const manifestPath = path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
       const content = await readFile(manifestPath, "utf-8");
       const manifest = JSON.parse(content);
 
@@ -88,8 +86,8 @@ describe("skill-plugin-compiler", () => {
 
     it("should copy SKILL.md with frontmatter", async () => {
       const skillContent =
-        "---\nname: web-styling-tailwind\ndescription: Tailwind CSS styling\ncategory: test\n---\n\n# Tailwind Content\n\nStyling guide.";
-      const skillPath = await writeTestSkill(skillsDir, "web-styling-tailwind", {
+        "---\nname: web-styling-scss-modules\ndescription: SCSS Modules styling\ncategory: test\n---\n\n# SCSS Modules Content\n\nStyling guide.";
+      const skillPath = await writeTestSkill(skillsDir, "web-styling-scss-modules", {
         skillContent,
       });
 
@@ -100,23 +98,23 @@ describe("skill-plugin-compiler", () => {
 
       const copiedSkillMd = path.join(
         result.pluginPath,
-        "skills",
-        "web-styling-tailwind",
-        "SKILL.md",
+        STANDARD_DIRS.SKILLS,
+        "web-styling-scss-modules",
+        STANDARD_FILES.SKILL_MD,
       );
       const content = await readFile(copiedSkillMd, "utf-8");
 
       expect(content).toContain("---");
-      expect(content).toContain("name: web-styling-tailwind");
-      expect(content).toContain("description: Tailwind CSS styling");
-      expect(content).toContain("# Tailwind Content");
+      expect(content).toContain("name: web-styling-scss-modules");
+      expect(content).toContain("description: SCSS Modules styling");
+      expect(content).toContain("# SCSS Modules Content");
     });
 
     it("should copy examples directory when present", async () => {
       const skillPath = await writeTestSkill(skillsDir, "web-testing-vitest");
 
       // Create examples directory
-      const examplesDir = path.join(skillPath, "examples");
+      const examplesDir = path.join(skillPath, STANDARD_DIRS.EXAMPLES);
       await mkdir(examplesDir, { recursive: true });
       await writeFile(path.join(examplesDir, "basic.test.ts"), "// test example");
 
@@ -127,9 +125,9 @@ describe("skill-plugin-compiler", () => {
 
       const copiedExamples = path.join(
         result.pluginPath,
-        "skills",
+        STANDARD_DIRS.SKILLS,
         "web-testing-vitest",
-        "examples",
+        STANDARD_DIRS.EXAMPLES,
       );
       const stats = await stat(copiedExamples);
       expect(stats.isDirectory()).toBe(true);
@@ -139,7 +137,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should generate README.md", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-state-mobx");
+      const skillPath = await writeTestSkill(skillsDir, "api-database-drizzle");
 
       const result = await compileSkillPlugin({
         skillPath,
@@ -149,14 +147,14 @@ describe("skill-plugin-compiler", () => {
       const readmePath = path.join(result.pluginPath, "README.md");
       const content = await readFile(readmePath, "utf-8");
 
-      expect(content).toContain("# web-state-mobx");
-      expect(content).toContain("web-state-mobx skill");
+      expect(content).toContain("# api-database-drizzle");
+      expect(content).toContain("api-database-drizzle skill");
       expect(content).toContain("## Installation");
-      expect(content).toContain('"web-state-mobx"');
+      expect(content).toContain('"api-database-drizzle"');
     });
 
     it("should include tags in README when metadata has tags", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-data-fetching-react-query", {
+      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue", {
         extraMetadata: { tags: ["web", "data", "async"] },
       });
 
@@ -175,7 +173,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should use custom skill name when provided", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-framework-original");
+      const skillPath = await writeTestSkill(skillsDir, "web-state-pinia");
 
       const result = await compileSkillPlugin({
         skillPath,
@@ -200,7 +198,7 @@ describe("skill-plugin-compiler", () => {
     it("should throw error when frontmatter is invalid", async () => {
       const skillPath = path.join(skillsDir, "bad-skill");
       await mkdir(skillPath, { recursive: true });
-      await writeFile(path.join(skillPath, "SKILL.md"), "# No frontmatter here");
+      await writeFile(path.join(skillPath, STANDARD_FILES.SKILL_MD), "# No frontmatter here");
 
       await expect(compileSkillPlugin({ skillPath, outputDir })).rejects.toThrow(
         /has invalid or missing YAML frontmatter/,
@@ -236,9 +234,8 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should use hash-based versioning on recompile", async () => {
-      const skillContent1 =
-        "---\nname: web-framework-simple\ndescription: Simple skill\n---\n\n# Simple version 1";
-      const skillPath = await writeTestSkill(skillsDir, "web-framework-simple", {
+      const skillContent1 = renderSkillMd("web-framework-vue", "Vue skill", "# Vue version 1");
+      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue", {
         skillContent: skillContent1,
       });
 
@@ -259,9 +256,8 @@ describe("skill-plugin-compiler", () => {
       expect(result2.manifest.version).toBe("1.0.0");
 
       // Modify the skill content
-      const newContent =
-        "---\nname: web-framework-simple\ndescription: Simple skill\n---\n\n# Simple version 2 - updated content";
-      await writeFile(path.join(skillPath, "SKILL.md"), newContent);
+      const newContent = renderSkillMd("web-framework-vue", "Vue skill", "# Vue version 2 - updated content");
+      await writeFile(path.join(skillPath, STANDARD_FILES.SKILL_MD), newContent);
 
       // Update metadata.yaml contentHash to reflect new SKILL.md content
       const newHash = await computeSkillFolderHash(skillPath);
@@ -316,9 +312,8 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should use frontmatter.name as skill name (not directory name)", async () => {
-      await writeTestSkill(skillsDir, "web-framework-arbitrary", {
-        skillContent:
-          "---\nname: actual-skill-name\ndescription: Skill description\n---\n\n# Content",
+      await writeTestSkill(skillsDir, "api-database-drizzle", {
+        skillContent: renderSkillMd("actual-skill-name", "Skill description", "# Content"),
       });
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
@@ -335,7 +330,7 @@ describe("skill-plugin-compiler", () => {
       // Create invalid skill (no frontmatter) - intentionally raw for error testing
       const badSkillPath = path.join(skillsDir, "bad-skill");
       await mkdir(badSkillPath, { recursive: true });
-      await writeFile(path.join(badSkillPath, "SKILL.md"), "# No frontmatter");
+      await writeFile(path.join(badSkillPath, STANDARD_FILES.SKILL_MD), "# No frontmatter");
 
       // Create another valid skill
       await writeTestSkill(skillsDir, "web-state-zustand");

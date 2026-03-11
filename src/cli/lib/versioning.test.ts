@@ -8,6 +8,7 @@ import {
   computeSkillFolderHash,
 } from "./versioning";
 import { createTempDir, cleanupTempDir } from "./__tests__/helpers";
+import { STANDARD_FILES } from "../consts";
 
 describe("getCurrentDate", () => {
   it("should return date in YYYY-MM-DD format", () => {
@@ -115,7 +116,7 @@ describe("computeSkillFolderHash", () => {
   });
 
   it("should hash SKILL.md content", async () => {
-    await writeFile(path.join(tempDir, "SKILL.md"), "# Test Skill\n\nThis is a test.");
+    await writeFile(path.join(tempDir, STANDARD_FILES.SKILL_MD), "# Test Skill\n\nThis is a test.");
 
     const hash = await computeSkillFolderHash(tempDir);
 
@@ -123,7 +124,7 @@ describe("computeSkillFolderHash", () => {
   });
 
   it("should return consistent hash for same content", async () => {
-    await writeFile(path.join(tempDir, "SKILL.md"), "# Test Skill");
+    await writeFile(path.join(tempDir, STANDARD_FILES.SKILL_MD), "# Test Skill");
 
     const hash1 = await computeSkillFolderHash(tempDir);
     const hash2 = await computeSkillFolderHash(tempDir);
@@ -132,17 +133,17 @@ describe("computeSkillFolderHash", () => {
   });
 
   it("should return different hash when content changes", async () => {
-    await writeFile(path.join(tempDir, "SKILL.md"), "# Version 1");
+    await writeFile(path.join(tempDir, STANDARD_FILES.SKILL_MD), "# Version 1");
     const hash1 = await computeSkillFolderHash(tempDir);
 
-    await writeFile(path.join(tempDir, "SKILL.md"), "# Version 2");
+    await writeFile(path.join(tempDir, STANDARD_FILES.SKILL_MD), "# Version 2");
     const hash2 = await computeSkillFolderHash(tempDir);
 
     expect(hash1).not.toBe(hash2);
   });
 
   it("should include reference.md in hash", async () => {
-    await writeFile(path.join(tempDir, "SKILL.md"), "# Test");
+    await writeFile(path.join(tempDir, STANDARD_FILES.SKILL_MD), "# Test");
 
     const hashWithoutRef = await computeSkillFolderHash(tempDir);
 
@@ -153,7 +154,7 @@ describe("computeSkillFolderHash", () => {
   });
 
   it("should include examples directory in hash", async () => {
-    await writeFile(path.join(tempDir, "SKILL.md"), "# Test");
+    await writeFile(path.join(tempDir, STANDARD_FILES.SKILL_MD), "# Test");
 
     const hashWithoutExamples = await computeSkillFolderHash(tempDir);
 

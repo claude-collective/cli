@@ -1,21 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { fetchFromSource, fetchMarketplace, sanitizeSourceForCache } from "./source-fetcher";
 import { isLocalSource } from "../configuration";
 import { CACHE_HASH_LENGTH, CACHE_READABLE_PREFIX_LENGTH, PLUGIN_MANIFEST_DIR } from "../../consts";
 import type { Marketplace } from "../../types";
+import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 
 describe("source-fetcher", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-source-fetcher-test-"));
+    tempDir = await createTempDir("cc-source-fetcher-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("fetchFromSource with local paths", () => {

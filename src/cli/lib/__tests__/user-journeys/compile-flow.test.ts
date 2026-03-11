@@ -10,6 +10,7 @@ import {
 } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS, COMPILE_LOCAL_SKILL } from "../mock-data/mock-skills";
 import { runCliCommand, parseTestFrontmatter, buildTestProjectConfig } from "../helpers";
+import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
 
 describe("User Journey: Compile Flow", () => {
   let dirs: TestDirs;
@@ -31,7 +32,7 @@ describe("User Journey: Compile Flow", () => {
       asPlugin: true,
     });
 
-    agentsDir = path.join(dirs.projectDir, ".claude", "agents");
+    agentsDir = path.join(dirs.projectDir, CLAUDE_DIR, "agents");
 
     // Change to project directory for the test
     process.chdir(dirs.projectDir);
@@ -196,7 +197,7 @@ describe("User Journey: Compile with Local Skills", () => {
       asPlugin: true,
     });
 
-    agentsDir = path.join(dirs.projectDir, ".claude", "agents");
+    agentsDir = path.join(dirs.projectDir, CLAUDE_DIR, "agents");
 
     process.chdir(dirs.projectDir);
   });
@@ -214,10 +215,10 @@ describe("User Journey: Compile with Local Skills", () => {
       // Verify local skill exists
       const localSkillPath = path.join(
         dirs.projectDir,
-        ".claude",
-        "skills",
+        CLAUDE_DIR,
+        STANDARD_DIRS.SKILLS,
         "web-tooling-local-skill",
-        "SKILL.md",
+        STANDARD_FILES.SKILL_MD,
       );
       expect(await fileExists(localSkillPath)).toBe(true);
 

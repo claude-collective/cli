@@ -5,11 +5,10 @@ import type { SourceLoadResult } from "../loading/source-loader";
 import type { MigrationPlan } from "./mode-migrator";
 import {
   buildSourceResult,
-  buildSkillConfigs,
   createMockMatrix,
-  createMockSkill,
   createTempDir,
   cleanupTempDir,
+  SKILLS,
 } from "../__tests__/helpers";
 
 // Mock dependencies before imports
@@ -120,10 +119,7 @@ describe("mode-migrator", () => {
     beforeEach(async () => {
       tempDir = await createTempDir("mode-migrator-test-");
 
-      const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react"),
-        "web-state-zustand": createMockSkill("web-state-zustand"),
-      });
+      const matrix = createMockMatrix(SKILLS.react, SKILLS.zustand);
       sourceResult = buildSourceResult(matrix, "/test/source", {
         marketplace: "https://marketplace.example.com",
       });

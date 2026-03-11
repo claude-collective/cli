@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { z } from "zod";
 import { safeLoadYamlFile } from "./yaml";
+import { createTempDir, cleanupTempDir } from "../lib/__tests__/test-fs-utils";
 
 const testSchema = z.object({
   name: z.string(),
@@ -16,11 +16,11 @@ describe("safeLoadYamlFile", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-yaml-test-"));
+    tempDir = await createTempDir("cc-yaml-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
     vi.restoreAllMocks();
   });
 

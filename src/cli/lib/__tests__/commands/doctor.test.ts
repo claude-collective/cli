@@ -1,12 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import { runCliCommand } from "../helpers";
-
-function tsConfigContent(config: Record<string, unknown>): string {
-  return `export default ${JSON.stringify(config, null, 2)};`;
-}
+import { mkdir, writeFile } from "fs/promises";
+import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import { renderConfigTs } from "../content-generators";
+import { CLAUDE_DIR, STANDARD_FILES } from "../../../consts";
 
 describe("doctor command", () => {
   let tempDir: string;
@@ -15,7 +12,7 @@ describe("doctor command", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-doctor-test-"));
+    tempDir = await createTempDir("cc-doctor-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -23,7 +20,7 @@ describe("doctor command", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("basic execution", () => {
@@ -49,8 +46,8 @@ describe("doctor command", () => {
       const claudeSrcDir = path.join(projectDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.ts"),
-        tsConfigContent({
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
           name: "test-project",
           agents: [],
         }),
@@ -103,7 +100,7 @@ describe("doctor command", () => {
     it("should fail when config.ts has syntax errors", async () => {
       const claudeSrcDir = path.join(projectDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
-      await writeFile(path.join(claudeSrcDir, "config.ts"), "invalid typescript content {{");
+      await writeFile(path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS), "invalid typescript content {{");
 
       const { error } = await runCliCommand(["doctor"]);
 
@@ -115,8 +112,8 @@ describe("doctor command", () => {
       const claudeSrcDir = path.join(projectDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.ts"),
-        tsConfigContent({
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
           name: "test-project",
         }),
       );
@@ -134,14 +131,14 @@ describe("doctor command", () => {
     it("should pass when agents are compiled", async () => {
       const claudeSrcDir = path.join(projectDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
-      const claudeDir = path.join(projectDir, ".claude");
+      const claudeDir = path.join(projectDir, CLAUDE_DIR);
       const agentsDir = path.join(claudeDir, "agents");
       await mkdir(agentsDir, { recursive: true });
 
       // Create config with one agent
       await writeFile(
-        path.join(claudeSrcDir, "config.ts"),
-        tsConfigContent({
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
           name: "test-project",
           agents: ["web-developer"],
         }),
@@ -166,8 +163,8 @@ describe("doctor command", () => {
 
       // Create config with agent but no compiled .md file
       await writeFile(
-        path.join(claudeSrcDir, "config.ts"),
-        tsConfigContent({
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
           name: "test-project",
           agents: ["web-developer"],
         }),
@@ -186,14 +183,14 @@ describe("doctor command", () => {
     it("should detect orphaned agent files", async () => {
       const claudeSrcDir = path.join(projectDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
-      const claudeDir = path.join(projectDir, ".claude");
+      const claudeDir = path.join(projectDir, CLAUDE_DIR);
       const agentsDir = path.join(claudeDir, "agents");
       await mkdir(agentsDir, { recursive: true });
 
       // Create config with no agents
       await writeFile(
-        path.join(claudeSrcDir, "config.ts"),
-        tsConfigContent({
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
           name: "test-project",
           agents: [],
         }),

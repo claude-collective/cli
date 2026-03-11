@@ -1,7 +1,7 @@
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { SearchModal, type SearchModalProps } from "./search-modal";
-import type { BoundSkillCandidate, SkillId } from "../../types";
+import type { BoundSkillCandidate } from "../../types";
 import {
   ARROW_UP,
   ARROW_DOWN,

@@ -12,10 +12,10 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-import { TEST_MATRICES } from "../../lib/__tests__/helpers";
+import { createMockMatrix, SKILLS } from "../../lib/__tests__/helpers";
 import { DEFAULT_BRANDING, UI_SYMBOLS } from "../../consts";
 
-const mockMatrix = TEST_MATRICES.reactAndZustand;
+const mockMatrix = createMockMatrix(SKILLS.react, SKILLS.zustand);
 
 const defaultProps: StepSourcesProps = {
   onContinue: vi.fn(),

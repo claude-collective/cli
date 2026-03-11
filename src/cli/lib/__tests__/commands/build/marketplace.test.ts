@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
-import { runCliCommand, fileExists } from "../../helpers";
+import { mkdir, writeFile, readFile } from "fs/promises";
+import { runCliCommand, fileExists, createTempDir, cleanupTempDir } from "../../helpers";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../../../consts";
 import type { Marketplace, PluginManifest } from "../../../../types";
 
 /** Creates a plugin directory with a valid plugin.json manifest */
@@ -12,9 +12,9 @@ async function createPluginDir(
   manifest: PluginManifest,
 ): Promise<string> {
   const pluginDir = path.join(pluginsDir, name);
-  const manifestDir = path.join(pluginDir, ".claude-plugin");
+  const manifestDir = path.join(pluginDir, PLUGIN_MANIFEST_DIR);
   await mkdir(manifestDir, { recursive: true });
-  await writeFile(path.join(manifestDir, "plugin.json"), JSON.stringify(manifest, null, 2));
+  await writeFile(path.join(manifestDir, PLUGIN_MANIFEST_FILE), JSON.stringify(manifest, null, 2));
   return pluginDir;
 }
 
@@ -31,7 +31,7 @@ describe("build:marketplace command", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-build-marketplace-test-"));
+    tempDir = await createTempDir("cc-build-marketplace-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -39,7 +39,7 @@ describe("build:marketplace command", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("basic execution", () => {

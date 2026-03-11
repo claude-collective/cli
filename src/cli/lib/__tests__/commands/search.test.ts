@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir } from "fs/promises";
-import { runCliCommand } from "../helpers";
+import { mkdir } from "fs/promises";
+import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 
 describe("search command", () => {
   let tempDir: string;
@@ -14,7 +13,7 @@ describe("search command", () => {
     originalCwd = process.cwd();
     originalEnv = { ...process.env };
 
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-search-test-"));
+    tempDir = await createTempDir("cc-search-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -23,7 +22,7 @@ describe("search command", () => {
   afterEach(async () => {
     process.chdir(originalCwd);
     process.env = originalEnv;
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("argument validation", () => {

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile, rm } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
-import { DEFAULT_TEST_SKILLS, INIT_SKILL_IDS } from "../mock-data/mock-skills";
+import { INIT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installLocal } from "../../installation/local-installer";
 import type { AgentName, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
@@ -17,7 +17,7 @@ import {
   buildWizardResult,
   buildSkillConfigs,
   buildSourceResult,
-  getTestSkill,
+  SKILLS,
 } from "../helpers";
 import { deriveInstallMode } from "../../installation/installation";
 import { useMatrixStore } from "../../../stores/matrix-store";
@@ -25,18 +25,14 @@ import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_SKILLS_SUBDIR, STANDARD_FILES } fro
 
 const AGENTS_SUBDIR = "agents";
 
-// Use the 3 skills needed for init flow tests, filtered from the shared fixture.
-// DEFAULT_TEST_SKILLS has 4 skills; init tests only need react, hono, vitest.
-const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => INIT_SKILL_IDS.includes(s.id));
-
 // Matrix whose skill.path values match the file system layout from createTestSource.
 // createMockSkill sets path to "skills/{category}/{id}/" and the copier resolves to
 // "{sourcePath}/src/skills/{category}/{id}/".
-const INIT_TEST_MATRIX = createMockMatrix({
-  "web-framework-react": getTestSkill("react"),
-  "api-framework-hono": getTestSkill("hono"),
-  "web-testing-vitest": getTestSkill("vitest"),
-});
+const INIT_TEST_MATRIX = createMockMatrix(
+  SKILLS.react,
+  SKILLS.hono,
+  SKILLS.vitest,
+);
 
 // Reusable selections for tests that need multiple skills and agents
 const SELECTED_SKILLS_REACT_HONO: SkillId[] = ["web-framework-react", "api-framework-hono"];
@@ -536,8 +532,8 @@ describe("Init Flow Integration: Skill Content Verification", () => {
       path.join(reactSkill!.destPath, STANDARD_FILES.SKILL_MD),
       "utf-8",
     );
-    expect(reactContent).toContain("React");
-    expect(reactContent).toContain("Component-based architecture");
+    expect(reactContent).toContain("web-framework-react");
+    expect(reactContent).toContain("React framework for building user interfaces");
 
     // Find the Hono skill
     const honoSkill = result.copiedSkills.find((s) => s.skillId === "api-framework-hono");
@@ -547,8 +543,8 @@ describe("Init Flow Integration: Skill Content Verification", () => {
       path.join(honoSkill!.destPath, STANDARD_FILES.SKILL_MD),
       "utf-8",
     );
-    expect(honoContent).toContain("Hono");
-    expect(honoContent).toContain("fast web framework");
+    expect(honoContent).toContain("api-framework-hono");
+    expect(honoContent).toContain("Lightweight web framework for the edge");
   });
 
   it("should inject forkedFrom metadata on copied skills", async () => {
@@ -559,7 +555,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
     });
 
     const copiedSkill = result.copiedSkills[0];
-    const metadataPath = path.join(copiedSkill.destPath, "metadata.yaml");
+    const metadataPath = path.join(copiedSkill.destPath, STANDARD_FILES.METADATA_YAML);
     expect(await fileExists(metadataPath)).toBe(true);
 
     const metadata = await readTestYaml<Record<string, unknown>>(metadataPath);

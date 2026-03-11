@@ -9,7 +9,7 @@ import {
   getMarketplaceStats,
 } from "../../marketplace-generator";
 import { validateAllPlugins, validatePlugin } from "../../plugins";
-import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME } from "../../../consts";
+import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../../consts";
 import type { Marketplace, PluginManifest } from "../../../types";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
@@ -17,7 +17,7 @@ import { createTempDir, cleanupTempDir } from "../helpers";
 import { COMPILATION_TEST_STACK } from "../mock-data/mock-stacks.js";
 
 async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
-  const manifestPath = path.join(pluginDir, ".claude-plugin", "plugin.json");
+  const manifestPath = path.join(pluginDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
   try {
     const content = await readFile(manifestPath, "utf-8");
     return JSON.parse(content) as PluginManifest;
@@ -185,7 +185,7 @@ describe("Integration: Full Stack Pipeline", () => {
 
     expect(await pathExists(result.pluginPath)).toBe(true);
     expect(await pathExists(path.join(result.pluginPath, "agents"))).toBe(true);
-    expect(await pathExists(path.join(result.pluginPath, ".claude-plugin", "plugin.json"))).toBe(
+    expect(await pathExists(path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE))).toBe(
       true,
     );
     expect(await pathExists(path.join(result.pluginPath, "README.md"))).toBe(true);

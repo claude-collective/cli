@@ -13,14 +13,18 @@ import {
   type TestDirs,
 } from "../__tests__/fixtures/create-test-source";
 import {
-  createMockSkillEntry,
   createMockAgentConfig,
   createMockCompiledStackPlugin,
 } from "../__tests__/helpers";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_FILES } from "../../consts";
 
-import type { SkillAssignment, SkillId, Stack, StackAgentConfig, Category } from "../../types";
+import type { SkillAssignment, Stack, StackAgentConfig, Category } from "../../types";
+import { renderAgentYaml, renderConfigTs, renderSkillMd } from "../__tests__/content-generators";
+import { REACT_SKILL_PRELOADED, VITEST_SKILL } from "../__tests__/mock-data/mock-skills";
 
 describe("stack-plugin-compiler", () => {
+  const REACT_SKILL_ID = "web-framework-react";
+
   let dirs: TestDirs;
   let projectRoot: string;
   let outputDir: string;
@@ -61,15 +65,15 @@ describe("stack-plugin-compiler", () => {
     await mkdir(agentDir, { recursive: true });
 
     await writeTestFile(
-      path.join(agentDir, "metadata.yaml"),
-      `id: ${agentId}\ntitle: ${config.title}\ndescription: ${config.description}\ntools:\n${config.tools.map((t) => `  - ${t}`).join("\n")}\n`,
+      path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML),
+      renderAgentYaml(agentId, config.description, { title: config.title, tools: config.tools }),
     );
     await writeTestFile(
-      path.join(agentDir, "intro.md"),
+      path.join(agentDir, STANDARD_FILES.INTRO_MD),
       config.intro || `# ${config.title}\n\nThis is the ${agentId} agent.`,
     );
     await writeTestFile(
-      path.join(agentDir, "workflow.md"),
+      path.join(agentDir, STANDARD_FILES.WORKFLOW_MD),
       config.workflow || `## Workflow\n\n1. Analyze\n2. Implement\n3. Test`,
     );
   }
@@ -109,8 +113,8 @@ describe("stack-plugin-compiler", () => {
     await mkdir(skillDir, { recursive: true });
 
     await writeTestFile(
-      path.join(skillDir, "SKILL.md"),
-      `---\nname: ${config.name}\ndescription: ${config.description}\n---\n\n${config.content || `# ${config.name}\n\nSkill content here.`}\n`,
+      path.join(skillDir, STANDARD_FILES.SKILL_MD),
+      renderSkillMd(config.name, config.description, config.content),
     );
   }
 
@@ -125,7 +129,7 @@ describe("stack-plugin-compiler", () => {
       // Create skill in src/skills/ (new architecture)
       // Directory path is where the files live, frontmatter name is the canonical ID
       const directoryPath = "web/framework/react (@vince)";
-      const frontmatterName = "web-framework-react";
+      const frontmatterName = REACT_SKILL_ID;
       await createSkillInSource(directoryPath, {
         name: frontmatterName,
         description: "React development skills",
@@ -181,7 +185,7 @@ describe("stack-plugin-compiler", () => {
         stack,
       });
 
-      const manifestPath = path.join(result.pluginPath, ".claude-plugin", "plugin.json");
+      const manifestPath = path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
       const manifestContent = await readFile(manifestPath, "utf-8");
       const manifest = JSON.parse(manifestContent);
 
@@ -323,7 +327,7 @@ describe("stack-plugin-compiler", () => {
     it("should return skill plugin references", async () => {
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
-      const reactCanonicalId = "web-framework-react";
+      const reactCanonicalId = REACT_SKILL_ID;
       const tsDirPath = "web/language/typescript (@vince)";
       const tsCanonicalId = "web-language-typescript";
 
@@ -618,7 +622,7 @@ describe("stack-plugin-compiler", () => {
     it("should include skill plugins in README when skills are present", async () => {
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
-      const reactCanonicalId = "web-framework-react";
+      const reactCanonicalId = REACT_SKILL_ID;
       const zustandDirPath = "web/client-state-management/zustand (@vince)";
       const zustandCanonicalId = "web-state-zustand";
 
@@ -684,10 +688,7 @@ describe("stack-plugin-compiler", () => {
           },
         ],
       };
-      await writeTestFile(
-        path.join(dir, "config", "stacks.ts"),
-        `export default ${JSON.stringify(stacksContent, null, 2)};\n`,
-      );
+      await writeTestFile(path.join(dir, "config", "stacks.ts"), renderConfigTs(stacksContent));
     }
 
     it("should load stack from projectRoot when not in CLI stacks.ts", async () => {
@@ -840,27 +841,15 @@ describe("stack-plugin-compiler", () => {
     // Use the real agent.liquid template (includes dynamic skills section)
     const realTemplateDir = path.resolve(__dirname, "../../../../src/agents/_templates");
 
-    const PRELOADED_REACT_SKILL = createMockSkillEntry("web-framework-react", true, {
-      path: "src/skills/web/framework/react",
-      description: "React patterns",
-      usage: "when working with framework",
-    });
-
-    const DYNAMIC_VITEST_SKILL = createMockSkillEntry("web-testing-vitest", false, {
-      path: "src/skills/web/testing/vitest",
-      description: "Vitest testing",
-      usage: "when working with testing",
-    });
-
     const AGENT_WITH_BOTH_SKILLS = createMockAgentConfig(
       "web-developer",
-      [PRELOADED_REACT_SKILL, DYNAMIC_VITEST_SKILL],
+      [REACT_SKILL_PRELOADED, VITEST_SKILL],
       { title: "Frontend Developer", description: "A frontend developer agent" },
     );
 
     const AGENT_WITH_PRELOADED_ONLY = createMockAgentConfig(
       "web-developer",
-      [PRELOADED_REACT_SKILL],
+      [REACT_SKILL_PRELOADED],
       { title: "Frontend Developer", description: "A frontend developer agent" },
     );
 

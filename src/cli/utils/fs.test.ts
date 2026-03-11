@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, writeFile as fsWriteFile } from "fs/promises";
+import { writeFile as fsWriteFile } from "fs/promises";
 import { readFileSafe } from "./fs";
+import { createTempDir, cleanupTempDir } from "../lib/__tests__/test-fs-utils";
 
 describe("fs utilities", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-fs-test-"));
+    tempDir = await createTempDir("cc-fs-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("readFileSafe", () => {

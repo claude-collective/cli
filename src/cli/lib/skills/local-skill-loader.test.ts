@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "fs/promises";
 import { discoverLocalSkills } from "./local-skill-loader";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { renderSkillMd } from "../__tests__/content-generators";
 
 describe("local-skill-loader", () => {
   let tempDir: string;
@@ -60,7 +61,7 @@ describe("local-skill-loader", () => {
     it("discovers skills regardless of name prefix", async () => {
       await writeLocalSkill("my-normal-skill", {
         metadata: `displayName: My Normal Skill\nslug: my-normal-skill\ncliDescription: A normal skill\ndomain: web\ncategory: web-framework`,
-        skillMd: `---\nname: my-normal-skill (@local)\ndescription: A normal skill\n---\nContent`,
+        skillMd: renderSkillMd("my-normal-skill (@local)", "A normal skill", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -76,7 +77,7 @@ describe("local-skill-loader", () => {
 
     it("skips skill without metadata.yaml", async () => {
       await writeLocalSkill("no-metadata", {
-        skillMd: `---\nname: no-metadata (@local)\ndescription: Missing metadata\n---\nContent`,
+        skillMd: renderSkillMd("no-metadata (@local)", "Missing metadata", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -98,7 +99,7 @@ describe("local-skill-loader", () => {
     it("skips skill when metadata.yaml is missing displayName", async () => {
       await writeLocalSkill("no-cli-name", {
         metadata: `slug: no-cli-name\ncliDescription: Just a description\ncategory: web-framework\ndomain: web`,
-        skillMd: `---\nname: no-cli-name (@local)\ndescription: Missing displayName\n---\nContent`,
+        skillMd: renderSkillMd("no-cli-name (@local)", "Missing displayName", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -120,7 +121,7 @@ describe("local-skill-loader", () => {
     it("uses cliDescription from metadata.yaml when provided", async () => {
       await writeLocalSkill("with-desc", {
         metadata: `displayName: Desc Skill\nslug: desc-skill\ncliDescription: Custom CLI description\ndomain: web\ncategory: web-framework`,
-        skillMd: `---\nname: desc-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
+        skillMd: renderSkillMd("desc-skill (@local)", "Frontmatter description", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -131,7 +132,7 @@ describe("local-skill-loader", () => {
     it("falls back to frontmatter description when cliDescription not provided", async () => {
       await writeLocalSkill("fallback-desc", {
         metadata: `displayName: Fallback Skill\nslug: fallback-skill\ndomain: web\ncategory: web-framework`,
-        skillMd: `---\nname: fallback-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
+        skillMd: renderSkillMd("fallback-skill (@local)", "Frontmatter description", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -142,11 +143,11 @@ describe("local-skill-loader", () => {
     it("discovers multiple valid skills", async () => {
       await writeLocalSkill("skill-one", {
         metadata: `displayName: Skill One\nslug: skill-one\ndomain: web\ncategory: web-framework`,
-        skillMd: `---\nname: skill-one (@local)\ndescription: First skill\n---\nContent`,
+        skillMd: renderSkillMd("skill-one (@local)", "First skill", "Content"),
       });
       await writeLocalSkill("skill-two", {
         metadata: `displayName: Skill Two\nslug: skill-two\ndomain: api\ncategory: api-api`,
-        skillMd: `---\nname: skill-two (@local)\ndescription: Second skill\n---\nContent`,
+        skillMd: renderSkillMd("skill-two (@local)", "Second skill", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -159,7 +160,7 @@ describe("local-skill-loader", () => {
     it("sets correct extracted metadata properties", async () => {
       await writeLocalSkill("full-skill", {
         metadata: `displayName: Full Skill\nslug: full-skill\ncliDescription: Complete skill for testing\ndomain: web\ncategory: web-framework`,
-        skillMd: `---\nname: full-skill (@local)\ndescription: Complete skill\n---\nContent`,
+        skillMd: renderSkillMd("full-skill (@local)", "Complete skill", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -185,7 +186,7 @@ describe("local-skill-loader", () => {
     it("uses category from metadata.yaml when provided", async () => {
       await writeLocalSkill("categorized-skill", {
         metadata: `displayName: Categorized Skill\nslug: categorized-skill\ncategory: web-framework\ndomain: web`,
-        skillMd: `---\nname: categorized-skill (@local)\ndescription: A categorized skill\n---\nContent`,
+        skillMd: renderSkillMd("categorized-skill (@local)", "A categorized skill", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -205,7 +206,7 @@ describe("local-skill-loader", () => {
           "  - frontend",
           "  - react",
         ].join("\n"),
-        skillMd: `---\nname: rich-skill (@local)\ndescription: A rich skill\n---\nContent`,
+        skillMd: renderSkillMd("rich-skill (@local)", "A rich skill", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -219,7 +220,7 @@ describe("local-skill-loader", () => {
       await writeLocalSkill("wrong-types", {
         // displayName must be a string, but providing a number via YAML
         metadata: "displayName: 123\ndomain: web\ntags: not-an-array",
-        skillMd: `---\nname: wrong-types (@local)\ndescription: Wrong types in metadata\n---\nContent`,
+        skillMd: renderSkillMd("wrong-types (@local)", "Wrong types in metadata", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -234,7 +235,7 @@ describe("local-skill-loader", () => {
       await writeLocalSkill("valid-skill", {
         metadata:
           "displayName: Valid Skill\nslug: valid-skill\ndomain: web\ncategory: web-framework",
-        skillMd: `---\nname: valid-skill (@local)\ndescription: A valid skill\n---\nContent`,
+        skillMd: renderSkillMd("valid-skill (@local)", "A valid skill", "Content"),
       });
 
       // Invalid skill (no SKILL.md)
@@ -252,7 +253,7 @@ describe("local-skill-loader", () => {
     it("skips skill with empty metadata.yaml", async () => {
       await writeLocalSkill("empty-meta", {
         metadata: "",
-        skillMd: `---\nname: empty-meta (@local)\ndescription: Has empty metadata\n---\nContent`,
+        skillMd: renderSkillMd("empty-meta (@local)", "Has empty metadata", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -264,7 +265,7 @@ describe("local-skill-loader", () => {
     it("skips skill with metadata.yaml containing only comments", async () => {
       await writeLocalSkill("comments-only", {
         metadata: "# This is a comment\n# No actual fields",
-        skillMd: `---\nname: comments-only (@local)\ndescription: Only comments\n---\nContent`,
+        skillMd: renderSkillMd("comments-only (@local)", "Only comments", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
@@ -277,7 +278,7 @@ describe("local-skill-loader", () => {
       await writeLocalSkill("bad-yaml", {
         // YAML that parses to a string instead of an object
         metadata: "just a plain string",
-        skillMd: `---\nname: bad-yaml (@local)\ndescription: Bad YAML\n---\nContent`,
+        skillMd: renderSkillMd("bad-yaml (@local)", "Bad YAML", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);

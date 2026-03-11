@@ -3,6 +3,7 @@ import path from "path";
 import { mkdir } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../../helpers";
 import { buildAgentPrompt } from "../../../../commands/new/agent";
+import { STANDARD_FILES } from "../../../../consts";
 
 describe("buildAgentPrompt", () => {
   it("should include agent name in prompt", () => {
@@ -23,12 +24,12 @@ describe("buildAgentPrompt", () => {
   it("should include custom: true instruction", () => {
     const result = buildAgentPrompt("my-agent", "test purpose", "/output/dir");
     expect(result).toContain("`custom: true`");
-    expect(result).toContain("metadata.yaml");
+    expect(result).toContain(STANDARD_FILES.AGENT_METADATA_YAML);
   });
 
   it("should include all required instructions", () => {
     const result = buildAgentPrompt("my-agent", "test purpose", "/output/dir");
-    expect(result).toContain("metadata.yaml");
+    expect(result).toContain(STANDARD_FILES.AGENT_METADATA_YAML);
     expect(result).toContain("intro.md");
     expect(result).toContain("workflow.md");
     expect(result).toContain("examples.md");

@@ -10,6 +10,7 @@ import {
   validateAllPlugins,
 } from "./plugin-validator";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
 
 describe("plugin-validator", () => {
   let tempDir: string;
@@ -24,8 +25,8 @@ describe("plugin-validator", () => {
 
   /** Write a plugin.json manifest at .claude-plugin/plugin.json */
   async function writePluginJson(dir: string, manifest: Record<string, unknown>) {
-    await mkdir(path.join(dir, ".claude-plugin"), { recursive: true });
-    await writeFile(path.join(dir, ".claude-plugin", "plugin.json"), JSON.stringify(manifest));
+    await mkdir(path.join(dir, PLUGIN_MANIFEST_DIR), { recursive: true });
+    await writeFile(path.join(dir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE), JSON.stringify(manifest));
   }
 
   describe("validatePluginStructure", () => {
@@ -55,7 +56,7 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if plugin.json is missing but .claude-plugin exists", async () => {
-      await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
+      await mkdir(path.join(tempDir, PLUGIN_MANIFEST_DIR), { recursive: true });
 
       const result = await validatePluginStructure(tempDir);
 
@@ -75,7 +76,7 @@ describe("plugin-validator", () => {
 
   describe("validatePluginManifest", () => {
     it("should pass for valid manifest", async () => {
-      const manifestPath = path.join(tempDir, "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_FILE);
       await writeFile(
         manifestPath,
         JSON.stringify({
@@ -99,7 +100,7 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if JSON is invalid", async () => {
-      const manifestPath = path.join(tempDir, "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_FILE);
       await writeFile(manifestPath, "{ invalid json }");
 
       const result = await validatePluginManifest(manifestPath);
@@ -109,7 +110,7 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if name missing", async () => {
-      const manifestPath = path.join(tempDir, "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_FILE);
       await writeFile(
         manifestPath,
         JSON.stringify({
@@ -124,7 +125,7 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if name not kebab-case", async () => {
-      const manifestPath = path.join(tempDir, "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_FILE);
       await writeFile(
         manifestPath,
         JSON.stringify({
@@ -139,7 +140,7 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if version is not valid semver", async () => {
-      const manifestPath = path.join(tempDir, "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_FILE);
       await writeFile(
         manifestPath,
         JSON.stringify({
@@ -155,7 +156,7 @@ describe("plugin-validator", () => {
     });
 
     it("should pass with valid semver version", async () => {
-      const manifestPath = path.join(tempDir, "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_FILE);
       await writeFile(
         manifestPath,
         JSON.stringify({
@@ -171,7 +172,7 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if version is invalid semver", async () => {
-      const manifestPath = path.join(tempDir, "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_FILE);
       await writeFile(
         manifestPath,
         JSON.stringify({
@@ -187,7 +188,7 @@ describe("plugin-validator", () => {
     });
 
     it("should warn if description missing", async () => {
-      const manifestPath = path.join(tempDir, "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_FILE);
       await writeFile(
         manifestPath,
         JSON.stringify({
@@ -203,7 +204,7 @@ describe("plugin-validator", () => {
 
     it("should fail if skills path does not exist", async () => {
       await writePluginJson(tempDir, { name: "test-plugin", skills: "./skills/" });
-      const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
 
       const result = await validatePluginManifest(manifestPath);
 
@@ -217,8 +218,8 @@ describe("plugin-validator", () => {
         description: "Test",
         skills: "./skills/",
       });
-      await mkdir(path.join(tempDir, "skills"), { recursive: true });
-      const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
+      await mkdir(path.join(tempDir, STANDARD_DIRS.SKILLS), { recursive: true });
+      const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
 
       const result = await validatePluginManifest(manifestPath);
 
@@ -228,7 +229,7 @@ describe("plugin-validator", () => {
 
   describe("validateSkillFrontmatter", () => {
     it("should pass for valid frontmatter", async () => {
-      const skillPath = path.join(tempDir, "SKILL.md");
+      const skillPath = path.join(tempDir, STANDARD_FILES.SKILL_MD);
       await writeFile(
         skillPath,
         `---
@@ -249,14 +250,14 @@ Content here.
     });
 
     it("should fail if file does not exist", async () => {
-      const result = await validateSkillFrontmatter(path.join(tempDir, "SKILL.md"));
+      const result = await validateSkillFrontmatter(path.join(tempDir, STANDARD_FILES.SKILL_MD));
 
       expect(result.valid).toBe(false);
       expect(result.errors[0]).toContain("not found");
     });
 
     it("should fail if frontmatter missing", async () => {
-      const skillPath = path.join(tempDir, "SKILL.md");
+      const skillPath = path.join(tempDir, STANDARD_FILES.SKILL_MD);
       await writeFile(skillPath, "# Test Skill\n\nNo frontmatter here.");
 
       const result = await validateSkillFrontmatter(skillPath);
@@ -266,7 +267,7 @@ Content here.
     });
 
     it("should fail if description missing", async () => {
-      const skillPath = path.join(tempDir, "SKILL.md");
+      const skillPath = path.join(tempDir, STANDARD_FILES.SKILL_MD);
       await writeFile(
         skillPath,
         `---
@@ -284,7 +285,7 @@ name: test-skill
     });
 
     it("should fail if using unrecognized fields", async () => {
-      const skillPath = path.join(tempDir, "SKILL.md");
+      const skillPath = path.join(tempDir, STANDARD_FILES.SKILL_MD);
       await writeFile(
         skillPath,
         `---
@@ -306,7 +307,7 @@ version: "1.0.0"
     });
 
     it("should pass with optional runtime fields", async () => {
-      const skillPath = path.join(tempDir, "SKILL.md");
+      const skillPath = path.join(tempDir, STANDARD_FILES.SKILL_MD);
       await writeFile(
         skillPath,
         `---
@@ -442,11 +443,11 @@ permissionMode: acceptEdits
         skills: "./skills/",
         agents: "./agents/",
       });
-      await mkdir(path.join(tempDir, "skills", "test-skill"), { recursive: true });
+      await mkdir(path.join(tempDir, STANDARD_DIRS.SKILLS, "test-skill"), { recursive: true });
       await mkdir(path.join(tempDir, "agents"), { recursive: true });
       await writeFile(path.join(tempDir, "README.md"), "# Test Plugin");
       await writeFile(
-        path.join(tempDir, "skills", "test-skill", "SKILL.md"),
+        path.join(tempDir, STANDARD_DIRS.SKILLS, "test-skill", STANDARD_FILES.SKILL_MD),
         `---
 name: test-skill
 description: A test skill
@@ -476,10 +477,10 @@ tools: Read, Write
 
     it("should aggregate errors from all validations", async () => {
       await writePluginJson(tempDir, { name: "BadName", skills: "./skills/" });
-      await mkdir(path.join(tempDir, "skills", "bad-skill"), { recursive: true });
+      await mkdir(path.join(tempDir, STANDARD_DIRS.SKILLS, "bad-skill"), { recursive: true });
 
       await writeFile(
-        path.join(tempDir, "skills", "bad-skill", "SKILL.md"),
+        path.join(tempDir, STANDARD_DIRS.SKILLS, "bad-skill", STANDARD_FILES.SKILL_MD),
         `---
 name: bad-skill
 ---
@@ -500,7 +501,7 @@ name: bad-skill
         description: "Test",
         skills: "./skills/",
       });
-      await mkdir(path.join(tempDir, "skills"), { recursive: true });
+      await mkdir(path.join(tempDir, STANDARD_DIRS.SKILLS), { recursive: true });
       await writeFile(path.join(tempDir, "README.md"), "# Test");
 
       const result = await validatePlugin(tempDir);

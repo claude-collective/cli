@@ -1,34 +1,35 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
+import { mkdir, writeFile, readFile } from "fs/promises";
 import {
   generateMarketplace,
   writeMarketplace,
   getMarketplaceStats,
 } from "./marketplace-generator";
 import type { Marketplace } from "../types";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../consts";
+import { createTempDir, cleanupTempDir } from "./__tests__/test-fs-utils";
 
 describe("marketplace-generator", () => {
   let tempDir: string;
   let pluginsDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "marketplace-test-"));
+    tempDir = await createTempDir("marketplace-test-");
     pluginsDir = path.join(tempDir, "plugins");
     await mkdir(pluginsDir, { recursive: true });
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   // Helper to create a plugin with manifest
   async function createPlugin(name: string, manifest: Record<string, unknown>): Promise<void> {
     const pluginDir = path.join(pluginsDir, name);
-    await mkdir(path.join(pluginDir, ".claude-plugin"), { recursive: true });
+    await mkdir(path.join(pluginDir, PLUGIN_MANIFEST_DIR), { recursive: true });
     await writeFile(
-      path.join(pluginDir, ".claude-plugin", "plugin.json"),
+      path.join(pluginDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE),
       JSON.stringify(manifest, null, 2),
     );
     await writeFile(path.join(pluginDir, "README.md"), `# ${name}`);

@@ -3,7 +3,8 @@ import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir, buildSkillConfigs } from "../helpers";
 import { getDashboardData, formatDashboardText } from "../../../commands/init";
-import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
+import { renderConfigTs } from "../content-generators";
 
 describe("init command", () => {
   let tempDir: string;
@@ -112,14 +113,14 @@ describe("init command", () => {
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify({
+        renderConfigTs({
           name: "test-project",
           skills: buildSkillConfigs(["web-framework-react", "web-state-zustand"]),
-        })};`,
+        }),
       );
 
       // Create compiled agents
-      const agentsDir = path.join(projectDir, ".claude", "agents");
+      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
       await mkdir(agentsDir, { recursive: true });
       await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer");
       await writeFile(path.join(agentsDir, "api-developer.md"), "# API Developer");
@@ -139,11 +140,11 @@ describe("init command", () => {
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify({
+        renderConfigTs({
           name: "test-project",
           skills: [],
           source: "github:agents-inc/skills",
-        })};`,
+        }),
       );
 
       const data = await getDashboardData(projectDir);
@@ -185,7 +186,7 @@ describe("init command", () => {
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, STANDARD_FILES.CONFIG_TS),
-        `export default ${JSON.stringify({ name: "test-project", skills: [] })};`,
+        renderConfigTs({ name: "test-project", skills: [] }),
       );
 
       const data = await getDashboardData(projectDir);

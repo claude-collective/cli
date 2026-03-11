@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { loadSkillsFromAllSources, searchExtraSources } from "./multi-source-loader";
 import type { SkillId } from "../../types";
 import type { ResolvedConfig, SourceEntry } from "../configuration";
-import { createMockMatrix, createMockExtractedSkill, TEST_SKILLS } from "../__tests__/helpers";
+import { createMockMatrix, createMockExtractedSkill, SKILLS } from "../__tests__/helpers";
 
 // Mock external dependencies
 vi.mock("../../utils/logger", async (importOriginal) => ({
@@ -56,10 +56,7 @@ describe("multi-source-loader", () => {
         extras: [],
       });
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-        "web-testing-vitest": { ...TEST_SKILLS.vitest },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react }, { ...SKILLS.vitest });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
@@ -91,10 +88,7 @@ describe("multi-source-loader", () => {
         marketplace: "Acme Corp",
       };
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-        "web-testing-vitest": { ...TEST_SKILLS.vitest },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react }, { ...SKILLS.vitest });
 
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
 
@@ -126,9 +120,7 @@ describe("multi-source-loader", () => {
         sourceOrigin: "flag",
       };
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react });
 
       // marketplace parameter (from marketplace.json) takes precedence
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test", false, "Acme Corp");
@@ -155,9 +147,7 @@ describe("multi-source-loader", () => {
         marketplace: "SomeMarketplace",
       };
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react });
 
       await loadSkillsFromAllSources(matrix, configWithMarketplace, "/tmp/test");
 
@@ -177,11 +167,9 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": {
-          ...TEST_SKILLS.react,
-          local: true,
-          localPath: ".claude/skills/react/",
-        },
+        ...SKILLS.react,
+        local: true,
+        localPath: ".claude/skills/react/",
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -215,11 +203,9 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": {
-          ...TEST_SKILLS.react,
-          local: true,
-          localPath: ".claude/skills/react/",
-        },
+        ...SKILLS.react,
+        local: true,
+        localPath: ".claude/skills/react/",
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -243,11 +229,9 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": {
-          ...TEST_SKILLS.react,
-          local: true,
-          localPath: ".claude/skills/react/",
-        },
+        ...SKILLS.react,
+        local: true,
+        localPath: ".claude/skills/react/",
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -265,9 +249,7 @@ describe("multi-source-loader", () => {
         extras: [],
       });
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
@@ -291,9 +273,7 @@ describe("multi-source-loader", () => {
       const { fetchFromSource } = await import("./source-fetcher");
       vi.mocked(fetchFromSource).mockRejectedValue(new Error("Network timeout"));
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react });
 
       // Should not throw
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -334,9 +314,7 @@ describe("multi-source-loader", () => {
         }),
       ]);
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
@@ -378,9 +356,7 @@ describe("multi-source-loader", () => {
         import("../../types").SkillDefinition
       >);
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
@@ -421,10 +397,7 @@ describe("multi-source-loader", () => {
         import("../../types").SkillDefinition
       >);
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-        "web-state-zustand": { ...TEST_SKILLS.zustand },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react }, { ...SKILLS.zustand });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
@@ -483,10 +456,7 @@ describe("multi-source-loader", () => {
         marketplace: "Acme Corp",
       };
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-        "web-testing-vitest": { ...TEST_SKILLS.vitest },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react }, { ...SKILLS.vitest });
 
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
 
@@ -523,9 +493,7 @@ describe("multi-source-loader", () => {
         extras: [],
       });
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
@@ -571,9 +539,7 @@ describe("multi-source-loader", () => {
         marketplace: "Acme Corp",
       };
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react });
 
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
 
@@ -606,9 +572,7 @@ describe("multi-source-loader", () => {
         marketplace: "Acme Corp",
       };
 
-      const matrix = createMockMatrix({
-        "web-framework-react": { ...TEST_SKILLS.react },
-      });
+      const matrix = createMockMatrix({ ...SKILLS.react });
 
       // Should not throw
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");

@@ -1,55 +1,30 @@
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { readFile, mkdir, writeFile } from "fs/promises";
+import { readFile, mkdir } from "fs/promises";
 import { compileStackPlugin } from "../../stacks";
 import {
   fileExists,
   directoryExists,
   parseTestFrontmatter,
-  createTempDir,
-  cleanupTempDir,
   createMockStack,
 } from "../helpers";
+import { STANDARD_DIRS, STANDARD_FILES, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../../consts";
+import {
+  createTestSource,
+  cleanupTestSource,
+  writeTestFile,
+  type TestDirs,
+} from "../fixtures/create-test-source";
+import { renderAgentYaml, renderSkillMd } from "../content-generators";
 
-const PLUGIN_MANIFEST_DIR = ".claude-plugin";
-const PLUGIN_MANIFEST_FILE = "plugin.json";
+let testCounter = 0;
 
-async function createProjectStructure(projectRoot: string) {
-  const agentsDir = path.join(projectRoot, "src/agents");
-  const templatesDir = path.join(projectRoot, "src/agents/_templates");
-  const configDir = path.join(projectRoot, "config");
-  const skillsDir = path.join(projectRoot, "src/skills");
-
-  await mkdir(agentsDir, { recursive: true });
-  await mkdir(templatesDir, { recursive: true });
-  await mkdir(configDir, { recursive: true });
-  await mkdir(skillsDir, { recursive: true });
-
-  // Create agent template (matches the pattern from stack-plugin-compiler.test.ts)
-  await writeFile(
-    path.join(templatesDir, "agent.liquid"),
-    `---
-name: {{ agent.name }}
-description: {{ agent.description }}
-tools: {{ agent.tools | join: ", " }}
-{%- if preloadedSkillIds.size > 0 %}
-skills: {{ preloadedSkillIds | join: ", " }}
-{%- endif %}
----
-
-{{ intro }}
-
-<core_principles>
-Core principles are embedded directly in the template.
-</core_principles>
-
-{{ workflow }}
-`,
-  );
-
-  return { agentsDir, templatesDir, configDir, skillsDir };
+function uniqueStackId(base = "test"): string {
+  testCounter++;
+  return `${base}-${testCounter}-${Date.now()}`;
 }
 
+/** Write agent files (metadata.yaml, intro.md, workflow.md) into the agents directory */
 async function createAgent(
   agentsDir: string,
   agentId: string,
@@ -64,75 +39,53 @@ async function createAgent(
   const agentDir = path.join(agentsDir, agentId);
   await mkdir(agentDir, { recursive: true });
 
-  await writeFile(
-    path.join(agentDir, "metadata.yaml"),
-    `id: ${agentId}
-title: ${config.title}
-description: ${config.description}
-tools:
-${config.tools.map((t) => `  - ${t}`).join("\n")}
-`,
+  await writeTestFile(
+    path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML),
+    renderAgentYaml(agentId, config.description, { title: config.title, tools: config.tools }),
   );
-
-  await writeFile(
-    path.join(agentDir, "intro.md"),
+  await writeTestFile(
+    path.join(agentDir, STANDARD_FILES.INTRO_MD),
     config.intro ?? `# ${config.title}\n\nThis is the ${agentId} agent.`,
   );
-
-  await writeFile(
-    path.join(agentDir, "workflow.md"),
+  await writeTestFile(
+    path.join(agentDir, STANDARD_FILES.WORKFLOW_MD),
     config.workflow ?? "## Workflow\n\n1. Analyze\n2. Implement\n3. Test",
   );
 }
 
+/** Write a SKILL.md file at the given path under the skills directory */
 async function createSkill(
-  projectRoot: string,
+  skillsDir: string,
   directoryPath: string,
   config: { name: string; description: string; content?: string },
 ) {
-  const skillDir = path.join(projectRoot, "src", "skills", directoryPath);
+  const skillDir = path.join(skillsDir, directoryPath);
   await mkdir(skillDir, { recursive: true });
 
-  await writeFile(
-    path.join(skillDir, "SKILL.md"),
-    `---
-name: ${config.name}
-description: ${config.description}
----
-
-${config.content ?? `# ${config.name}\n\nSkill content here.`}
-`,
+  await writeTestFile(
+    path.join(skillDir, STANDARD_FILES.SKILL_MD),
+    renderSkillMd(config.name, config.description, config.content),
   );
 }
 
+let dirs: TestDirs;
+let projectRoot: string;
+let outputDir: string;
+
+beforeEach(async () => {
+  dirs = await createTestSource({ skills: [], agents: [] });
+  projectRoot = dirs.sourceDir;
+  outputDir = path.join(dirs.tempDir, "output");
+  await mkdir(outputDir, { recursive: true });
+});
+
+afterEach(async () => {
+  await cleanupTestSource(dirs);
+});
+
 describe("User Journey: Install -> Compile -> Verify", () => {
-  let tempDir: string;
-  let projectRoot: string;
-  let outputDir: string;
-  let testCounter = 0;
-
-  function uniqueStackId(base = "test-stack"): string {
-    testCounter++;
-    return `${base}-${testCounter}-${Date.now()}`;
-  }
-
-  beforeEach(async () => {
-    tempDir = await createTempDir("install-compile-test-");
-    projectRoot = path.join(tempDir, "project");
-    outputDir = path.join(tempDir, "output");
-
-    await mkdir(projectRoot, { recursive: true });
-    await mkdir(outputDir, { recursive: true });
-  });
-
-  afterEach(async () => {
-    await cleanupTempDir(tempDir);
-  });
-
   it("should install stack plugin to correct location", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Full-stack web development specialist",
       tools: ["Read", "Write", "Edit"],
@@ -161,14 +114,12 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     expect(await directoryExists(agentsDirOutput)).toBe(true);
 
     // Skills subdirectory should exist
-    const skillsDirOutput = path.join(result.pluginPath, "skills");
+    const skillsDirOutput = path.join(result.pluginPath, STANDARD_DIRS.SKILLS);
     expect(await directoryExists(skillsDirOutput)).toBe(true);
   });
 
   it("should create valid plugin manifest after install", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Full-stack web development specialist",
       tools: ["Read", "Write", "Edit"],
@@ -204,9 +155,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
   });
 
   it("should compile stack agents with installed skills", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Full-stack web development specialist",
       tools: ["Read", "Write", "Edit"],
@@ -245,19 +194,17 @@ describe("User Journey: Install -> Compile -> Verify", () => {
   });
 
   it("should include stack skill content in compiled agents", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
     // Create skill in src/skills/
     const reactDirPath = "web/framework/react (@vince)";
     const reactCanonicalId = "web-framework-react";
-    await createSkill(projectRoot, reactDirPath, {
+    await createSkill(dirs.skillsDir, reactDirPath, {
       name: reactCanonicalId,
       description: "React development skills",
       content:
         "# React\n\nReact is a JavaScript library for building user interfaces.\n\n## Key Patterns\n\n- Component-based architecture\n- Hooks for state and effects",
     });
 
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Full-stack web development specialist",
       tools: ["Read", "Write", "Edit"],
@@ -280,13 +227,11 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     // Skills are only copied if they're referenced in the stack property
     // With an empty agent config {}, no skills are resolved via the stack
     // The skill directory structure should still exist
-    expect(await directoryExists(path.join(result.pluginPath, "skills"))).toBe(true);
+    expect(await directoryExists(path.join(result.pluginPath, STANDARD_DIRS.SKILLS))).toBe(true);
   });
 
   it("should handle stack with multiple agents", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Frontend development specialist",
       tools: ["Read", "Write", "Edit"],
@@ -294,7 +239,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
       workflow: "## Workflow\n\n1. Design components\n2. Implement UI",
     });
 
-    await createAgent(agentsDir, "api-developer", {
+    await createAgent(dirs.agentsDir, "api-developer", {
       title: "API Developer",
       description: "Backend API development specialist",
       tools: ["Read", "Write", "Edit", "Bash"],
@@ -302,7 +247,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
       workflow: "## Workflow\n\n1. Design API\n2. Implement endpoints",
     });
 
-    await createAgent(agentsDir, "web-tester", {
+    await createAgent(dirs.agentsDir, "web-tester", {
       title: "Test Engineer",
       description: "Testing and quality assurance specialist",
       tools: ["Read", "Write", "Bash"],
@@ -357,33 +302,8 @@ describe("User Journey: Install -> Compile -> Verify", () => {
 });
 
 describe("User Journey: Plugin Structure Verification", () => {
-  let tempDir: string;
-  let projectRoot: string;
-  let outputDir: string;
-  let testCounter = 0;
-
-  function uniqueStackId(base = "structure-test"): string {
-    testCounter++;
-    return `${base}-${testCounter}-${Date.now()}`;
-  }
-
-  beforeEach(async () => {
-    tempDir = await createTempDir("plugin-structure-test-");
-    projectRoot = path.join(tempDir, "project");
-    outputDir = path.join(tempDir, "output");
-
-    await mkdir(projectRoot, { recursive: true });
-    await mkdir(outputDir, { recursive: true });
-  });
-
-  afterEach(async () => {
-    await cleanupTempDir(tempDir);
-  });
-
   it("should create README.md with stack information", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Frontend specialist",
       tools: ["Read", "Write"],
@@ -416,9 +336,7 @@ describe("User Journey: Plugin Structure Verification", () => {
   });
 
   it("should generate manifest with correct version on first install", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Frontend specialist",
       tools: ["Read"],
@@ -447,15 +365,13 @@ describe("User Journey: Plugin Structure Verification", () => {
   });
 
   it("should bump version when stack config changes", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Frontend specialist",
       tools: ["Read"],
     });
 
-    await createAgent(agentsDir, "api-developer", {
+    await createAgent(dirs.agentsDir, "api-developer", {
       title: "API Developer",
       description: "Backend specialist",
       tools: ["Read", "Bash"],
@@ -498,9 +414,7 @@ describe("User Journey: Plugin Structure Verification", () => {
   });
 
   it("should keep version when recompiling unchanged stack", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Frontend specialist",
       tools: ["Read"],
@@ -538,32 +452,7 @@ describe("User Journey: Plugin Structure Verification", () => {
 });
 
 describe("User Journey: Agent Content Verification", () => {
-  let tempDir: string;
-  let projectRoot: string;
-  let outputDir: string;
-  let testCounter = 0;
-
-  function uniqueStackId(base = "content-test"): string {
-    testCounter++;
-    return `${base}-${testCounter}-${Date.now()}`;
-  }
-
-  beforeEach(async () => {
-    tempDir = await createTempDir("agent-content-test-");
-    projectRoot = path.join(tempDir, "project");
-    outputDir = path.join(tempDir, "output");
-
-    await mkdir(projectRoot, { recursive: true });
-    await mkdir(outputDir, { recursive: true });
-  });
-
-  afterEach(async () => {
-    await cleanupTempDir(tempDir);
-  });
-
   it("should include agent intro content in compiled output", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
     const customIntro = `# Custom Web Developer
 
 You are a specialized web developer with deep expertise in:
@@ -571,7 +460,7 @@ You are a specialized web developer with deep expertise in:
 - Server-side rendering
 - Performance optimization`;
 
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Specialized web developer",
       tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
@@ -602,8 +491,6 @@ You are a specialized web developer with deep expertise in:
   });
 
   it("should include agent workflow content in compiled output", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
     const customWorkflow = `## Development Workflow
 
 1. Read the requirements carefully
@@ -612,7 +499,7 @@ You are a specialized web developer with deep expertise in:
 4. Write comprehensive tests
 5. Verify all tests pass`;
 
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Methodical web developer",
       tools: ["Read", "Write"],
@@ -643,9 +530,7 @@ You are a specialized web developer with deep expertise in:
   });
 
   it("should produce valid frontmatter in compiled agents", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Frontend specialist",
       tools: ["Read", "Write", "Edit"],
@@ -681,9 +566,7 @@ You are a specialized web developer with deep expertise in:
   });
 
   it("should embed template core_principles section in output", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Web developer with core principles",
       tools: ["Read"],
@@ -714,32 +597,7 @@ You are a specialized web developer with deep expertise in:
 });
 
 describe("User Journey: Install -> Compile Error Handling", () => {
-  let tempDir: string;
-  let projectRoot: string;
-  let outputDir: string;
-  let testCounter = 0;
-
-  function uniqueStackId(base = "error-test"): string {
-    testCounter++;
-    return `${base}-${testCounter}-${Date.now()}`;
-  }
-
-  beforeEach(async () => {
-    tempDir = await createTempDir("error-handling-test-");
-    projectRoot = path.join(tempDir, "project");
-    outputDir = path.join(tempDir, "output");
-
-    await mkdir(projectRoot, { recursive: true });
-    await mkdir(outputDir, { recursive: true });
-  });
-
-  afterEach(async () => {
-    await cleanupTempDir(tempDir);
-  });
-
   it("should throw when stack references missing agent", async () => {
-    await createProjectStructure(projectRoot);
-
     const stackId = uniqueStackId();
     const stack = createMockStack(stackId, {
       name: "Broken Stack",
@@ -757,8 +615,6 @@ describe("User Journey: Install -> Compile Error Handling", () => {
   });
 
   it("should throw when no stack is provided and stacks.ts missing", async () => {
-    await createProjectStructure(projectRoot);
-
     // compileStackPlugin without a stack option will try to load from stacks.ts
     // which doesn't exist in our test project root
     await expect(
@@ -771,9 +627,7 @@ describe("User Journey: Install -> Compile Error Handling", () => {
   });
 
   it("should handle stack with no skills gracefully", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Minimal agent",
       tools: ["Read"],
@@ -802,9 +656,7 @@ describe("User Journey: Install -> Compile Error Handling", () => {
   });
 
   it("should handle stack with empty description", async () => {
-    const { agentsDir } = await createProjectStructure(projectRoot);
-
-    await createAgent(agentsDir, "web-developer", {
+    await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
       description: "Minimal agent",
       tools: ["Read"],

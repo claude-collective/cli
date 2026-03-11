@@ -4,11 +4,11 @@ import { StepStack } from "./step-stack";
 import { useWizardStore } from "../../stores/wizard-store";
 import { useMatrixStore } from "../../stores/matrix-store";
 import {
-  createMockCategory,
   createMockMatrix,
   createMockResolvedStack,
-  TEST_SKILLS,
+  SKILLS,
 } from "../../lib/__tests__/helpers";
+import { TEST_CATEGORIES } from "../../lib/__tests__/test-fixtures";
 
 import type { MergedSkillsMatrix } from "../../types";
 import {
@@ -22,12 +22,6 @@ import {
 } from "../../lib/__tests__/test-constants";
 
 const createMockStackWithSkills = (): MergedSkillsMatrix => {
-  const skills = {
-    ["web-framework-react"]: TEST_SKILLS.react,
-    ["web-state-zustand"]: TEST_SKILLS.zustand,
-    ["api-framework-hono"]: TEST_SKILLS.hono,
-  };
-
   const suggestedStacks = [
     createMockResolvedStack("react-fullstack", "React Fullstack", {
       description: "Full React stack with Zustand and Hono",
@@ -38,28 +32,13 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
     }),
   ];
 
-  return createMockMatrix(skills, {
+  return createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.hono, {
     suggestedStacks,
     categories: {
-      "web-framework": createMockCategory("web-framework", "Web Framework", {
-        domain: "web",
-        exclusive: false,
-      }),
-      "api-api": createMockCategory("api-api", "API Framework", {
-        domain: "api",
-        exclusive: false,
-        order: 1,
-      }),
-      "cli-framework": createMockCategory("cli-framework", "CLI Framework", {
-        domain: "cli",
-        exclusive: false,
-        order: 2,
-      }),
-      "mobile-framework": createMockCategory("mobile-framework", "Mobile Framework", {
-        domain: "mobile",
-        exclusive: false,
-        order: 3,
-      }),
+      "web-framework": { ...TEST_CATEGORIES.framework, domain: "web" as const, exclusive: false },
+      "api-api": { ...TEST_CATEGORIES.api, domain: "api" as const, exclusive: false, order: 1 },
+      "cli-framework": { ...TEST_CATEGORIES.cliFramework, domain: "cli" as const, exclusive: false, order: 2 },
+      "mobile-framework": { ...TEST_CATEGORIES.mobileFramework, domain: "mobile" as const, exclusive: false, order: 3 },
     },
   });
 };

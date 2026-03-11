@@ -15,7 +15,7 @@ import {
 import { createMockMatrix } from "../../lib/__tests__/helpers";
 
 const EXPECTED_AGENT_COUNT = 18;
-const EMPTY_MATRIX = createMockMatrix({});
+const EMPTY_MATRIX = createMockMatrix();
 
 describe("StepAgents component", () => {
   let cleanup: (() => void) | undefined;

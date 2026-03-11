@@ -7,7 +7,6 @@ import {
   cleanupTempDir,
   buildProjectConfig,
   buildSkillConfigs,
-  buildAgentConfigs,
 } from "../__tests__/helpers";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, PLUGINS_SUBDIR, STANDARD_FILES } from "../../consts";
 
@@ -19,10 +18,7 @@ import {
   detectProjectInstallation,
   getInstallationOrThrow,
 } from "./installation";
-
-function tsConfigContent(config: Record<string, unknown>): string {
-  return `export default ${JSON.stringify(config)};`;
-}
+import { renderConfigTs } from "../__tests__/content-generators";
 
 const LOCAL_CONFIG = buildProjectConfig({
   name: "my-project",
@@ -36,7 +32,7 @@ async function createLocalProject(
   const { configContent = LOCAL_CONFIG } = options;
   const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
   await mkdir(configDir, { recursive: true });
-  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), tsConfigContent(configContent));
+  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(configContent));
 }
 
 const PLUGIN_CONFIG = buildProjectConfig({
@@ -47,7 +43,7 @@ const PLUGIN_CONFIG = buildProjectConfig({
 async function createPluginProject(projectDir: string): Promise<void> {
   const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
   await mkdir(configDir, { recursive: true });
-  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), tsConfigContent(PLUGIN_CONFIG));
+  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(PLUGIN_CONFIG));
 }
 
 describe("installation", () => {

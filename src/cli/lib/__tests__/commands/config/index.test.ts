@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../../helpers";
-import { DEFAULT_BRANDING } from "../../../../consts";
+import { DEFAULT_BRANDING, STANDARD_FILES } from "../../../../consts";
+import { renderConfigTs } from "../../content-generators";
 
 describe("config commands", () => {
   let tempDir: string;
@@ -71,8 +72,8 @@ describe("config commands", () => {
       const projectConfigDir = path.join(projectDir, ".claude-src");
       await mkdir(projectConfigDir, { recursive: true });
       await writeFile(
-        path.join(projectConfigDir, "config.ts"),
-        `export default ${JSON.stringify({ source: "/project/source" })};`,
+        path.join(projectConfigDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({ source: "/project/source" }),
       );
 
       const { stdout } = await runCliCommand(["config:show"]);

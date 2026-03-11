@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import path from "path";
 import { mkdir, readFile, writeFile } from "fs/promises";
-import { writeSourceSkill } from "../helpers";
+import { writeSourceSkill, SKILLS } from "../helpers";
+import { STANDARD_FILES } from "../../../consts";
 
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal } from "../../installation/local-installer";
 import { useMatrixStore } from "../../../stores/matrix-store";
-import type { ProjectConfig } from "../../../types";
+import type { ProjectConfig, ResolvedSkill } from "../../../types";
 import {
   fileExists,
   directoryExists,
@@ -33,18 +34,23 @@ import {
   TOOLING_AND_FRAMEWORK_CONFIG,
   CI_CD_CONFIG,
   FRAMEWORK_AND_STYLING_CONFIG,
-  TOOLING_CONFIG,
   OBSERVABILITY_CONFIG,
   FRAMEWORK_AND_TESTING_CONFIG,
 } from "../mock-data/mock-matrices.js";
 import {
-  CONSUMER_MATRIX_SKILLS,
-  DOCKER_TOOLING_SKILL,
+  DISCOURAGES_RELATIONSHIP_SKILLS,
+  REQUIRES_RELATIONSHIP_SKILLS,
   CI_CD_SKILLS,
-  DISCOURAGES_TEST_SKILLS,
+  DOCKER_TOOLING_SKILL,
   DATADOG_OBSERVABILITY_SKILL,
-  REQUIRES_TEST_SKILLS,
 } from "../mock-data/mock-skills.js";
+import { renderConfigTs } from "../content-generators";
+
+const CONSUMER_MATRIX_SKILLS: Record<string, ResolvedSkill> = {
+  "web-framework-react": SKILLS.react,
+  "api-framework-hono": SKILLS.hono,
+  "web-testing-vitest": SKILLS.vitest,
+};
 
 function buildConsumerMatrix() {
   return createMockMatrix(CONSUMER_MATRIX_SKILLS);
@@ -233,7 +239,7 @@ describe("Integration: Marketplace Source Stacks", () => {
         dirs.skillsDir,
         "web-framework",
         "web-framework-react",
-        "SKILL.md",
+        STANDARD_FILES.SKILL_MD,
       );
       expect(await fileExists(reactSkillPath)).toBe(true);
 
@@ -372,7 +378,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const skillsDir = path.join(tempDir, "src", "skills");
 
       // Create the skills referenced in relationships
-      for (const skill of DISCOURAGES_TEST_SKILLS) {
+      for (const skill of DISCOURAGES_RELATIONSHIP_SKILLS) {
         const dir = skill.id.replace(`${skill.category}-`, "");
         const categoryPath = skill.category.replace(/\//g, path.sep);
         await writeSourceSkill(skillsDir, path.join(categoryPath, dir), skill);
@@ -386,21 +392,21 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       );
 
       // Verify discourages relationship is applied to both skills
-      const skillA = merged.skills["web-framework-custom-a"];
+      const skillA = merged.skills["web-framework-react"];
       expect(skillA).toBeDefined();
       expect(skillA!.discourages).toHaveLength(1);
-      expect(skillA!.discourages[0].skillId).toBe("web-styling-custom-b");
+      expect(skillA!.discourages[0].skillId).toBe("web-styling-scss-modules");
       expect(skillA!.discourages[0].reason).toBe(
         "These tools have conflicting design philosophies",
       );
 
-      const skillB = merged.skills["web-styling-custom-b"];
+      const skillB = merged.skills["web-styling-scss-modules"];
       expect(skillB).toBeDefined();
       expect(skillB!.discourages).toHaveLength(1);
-      expect(skillB!.discourages[0].skillId).toBe("web-framework-custom-a");
+      expect(skillB!.discourages[0].skillId).toBe("web-framework-react");
 
       // Verify recommended skill is marked as isRecommended
-      const skillC = merged.skills["web-styling-custom-c"];
+      const skillC = merged.skills["web-framework-vue"];
       expect(skillC).toBeDefined();
       expect(skillC!.isRecommended).toBe(true);
       expect(skillC!.recommendedReason).toBe("These work great together");
@@ -437,8 +443,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
         ],
       };
 
-      const stacksTsContent = `export default ${JSON.stringify(stacksContent, null, 2)};\n`;
-      await writeFile(path.join(configDir, "stacks.ts"), stacksTsContent);
+      await writeFile(path.join(configDir, "stacks.ts"), renderConfigTs(stacksContent));
 
       const stacks = await loadStacks(tempDir);
 
@@ -485,7 +490,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
         dirs.skillsDir,
         "web-framework",
         "web-framework-react",
-        "SKILL.md",
+        STANDARD_FILES.SKILL_MD,
       );
       expect(await fileExists(reactSkillPath)).toBe(true);
 
@@ -602,7 +607,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       const skillsDir = path.join(tempDir, "src", "skills");
 
       // Create the skills (use valid categoryPath prefixes — "shared" is not valid)
-      for (const skill of REQUIRES_TEST_SKILLS) {
+      for (const skill of REQUIRES_RELATIONSHIP_SKILLS) {
         const dir = skill.id.replace(`${skill.category}-`, "");
         const catPath = skill.category.replace(/\//g, path.sep);
         await writeSourceSkill(skillsDir, path.join(catPath, dir), skill);
@@ -616,10 +621,10 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       );
 
       // Verify requires relationship is applied
-      const rtlSkill = merged.skills["web-testing-custom-rtl"];
+      const rtlSkill = merged.skills["web-testing-vitest"];
       expect(rtlSkill).toBeDefined();
       expect(rtlSkill!.requires).toHaveLength(1);
-      expect(rtlSkill!.requires[0].skillIds).toContain("web-framework-custom-react");
+      expect(rtlSkill!.requires[0].skillIds).toContain("web-framework-react");
       expect(rtlSkill!.requires[0].reason).toBe("RTL requires React to function");
     } finally {
       await cleanupTempDir(tempDir);

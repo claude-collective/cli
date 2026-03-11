@@ -1,9 +1,13 @@
-import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mergeWithExistingConfig } from "./config-merger";
 import type { ProjectConfig, SkillAssignment, SkillId } from "../../types";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
-import { createTempDir, cleanupTempDir, writeTestTsConfig } from "../__tests__/helpers";
+import {
+  buildProjectConfig,
+  createTempDir,
+  cleanupTempDir,
+  writeTestTsConfig,
+} from "../__tests__/helpers";
 
 describe("config-merger", () => {
   let tempDir: string;
@@ -17,13 +21,17 @@ describe("config-merger", () => {
   });
 
   describe("mergeWithExistingConfig", () => {
+    async function writeFullConfig(config: ProjectConfig): Promise<void> {
+      // Boundary cast: ProjectConfig to generic record for writeTestTsConfig
+      await writeTestTsConfig(tempDir, config as unknown as Record<string, unknown>);
+    }
+
     it("should return new config unchanged when no existing config exists", async () => {
-      const newConfig: ProjectConfig = {
+      const newConfig = buildProjectConfig({
         name: "new-project",
-        agents: [{ name: "web-developer", scope: "project" }],
         skills: [],
         description: "A new project",
-      };
+      });
 
       const result = await mergeWithExistingConfig(newConfig, {
         projectDir: tempDir,
@@ -42,11 +50,7 @@ describe("config-merger", () => {
         author: "@vince",
       });
 
-      const newConfig: ProjectConfig = {
-        name: "new-project",
-        agents: [{ name: "web-developer", scope: "project" }],
-        skills: [],
-      };
+      const newConfig = buildProjectConfig({ name: "new-project", skills: [] });
 
       const result = await mergeWithExistingConfig(newConfig, {
         projectDir: tempDir,
@@ -64,11 +68,7 @@ describe("config-merger", () => {
         agentsSource: "github:my-org/agents",
       });
 
-      const newConfig: ProjectConfig = {
-        name: "new-project",
-        agents: [{ name: "web-developer", scope: "project" }],
-        skills: [],
-      };
+      const newConfig = buildProjectConfig({ name: "new-project", skills: [] });
 
       const result = await mergeWithExistingConfig(newConfig, {
         projectDir: tempDir,
@@ -79,10 +79,6 @@ describe("config-merger", () => {
     });
 
     describe("merge precedence rules", () => {
-      async function writeFullConfig(config: ProjectConfig): Promise<void> {
-        await writeTestTsConfig(tempDir, config as unknown as Record<string, unknown>);
-      }
-
       it.each([
         { field: "name" as const, existingValue: "existing-project", newValue: "new-project" },
         {
@@ -104,19 +100,15 @@ describe("config-merger", () => {
       ])(
         "should keep existing $field over new $field",
         async ({ field, existingValue, newValue }) => {
-          await writeFullConfig({
-            name: "project",
-            agents: [{ name: "web-developer", scope: "project" }],
-            skills: [],
-            [field]: existingValue,
-          });
+          await writeFullConfig(
+            buildProjectConfig({ name: "project", skills: [], [field]: existingValue }),
+          );
 
-          const newConfig: ProjectConfig = {
+          const newConfig = buildProjectConfig({
             name: "project",
-            agents: [{ name: "web-developer", scope: "project" }],
             skills: [],
             [field]: newValue,
-          };
+          });
 
           const result = await mergeWithExistingConfig(newConfig, {
             projectDir: tempDir,
@@ -129,28 +121,26 @@ describe("config-merger", () => {
     });
 
     describe("union of agents arrays", () => {
-      async function writeFullConfig(config: ProjectConfig): Promise<void> {
-        await writeTestTsConfig(tempDir, config as unknown as Record<string, unknown>);
-      }
-
       it("should union agents (existing + new, deduplicated)", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: [
-            { name: "web-developer", scope: "project" },
-            { name: "api-developer", scope: "project" },
-          ],
-          skills: [],
-        });
+        await writeFullConfig(
+          buildProjectConfig({
+            name: "project",
+            agents: [
+              { name: "web-developer", scope: "project" },
+              { name: "api-developer", scope: "project" },
+            ],
+            skills: [],
+          }),
+        );
 
-        const newConfig: ProjectConfig = {
+        const newConfig = buildProjectConfig({
           name: "project",
           agents: [
             { name: "web-developer", scope: "project" },
             { name: "cli-developer", scope: "project" },
           ], // web-developer is duplicate
           skills: [],
-        };
+        });
 
         const result = await mergeWithExistingConfig(newConfig, {
           projectDir: tempDir,
@@ -165,17 +155,9 @@ describe("config-merger", () => {
       });
 
       it("should use new config agents if existing has empty agents", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: [],
-          skills: [],
-        });
+        await writeFullConfig(buildProjectConfig({ name: "project", agents: [], skills: [] }));
 
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
-          skills: [],
-        };
+        const newConfig = buildProjectConfig({ name: "project", skills: [] });
 
         const result = await mergeWithExistingConfig(newConfig, {
           projectDir: tempDir,
@@ -188,31 +170,27 @@ describe("config-merger", () => {
     });
 
     describe("deep merge of stack", () => {
-      async function writeFullConfig(config: ProjectConfig): Promise<void> {
-        await writeTestTsConfig(tempDir, config as unknown as Record<string, unknown>);
-      }
-
       /** Shorthand: creates a SkillAssignment[] from an id */
       function sa(id: string): SkillAssignment[] {
         return [{ id: id as SkillId, preloaded: false }];
       }
 
       it("should deep merge stack with existing agent configs taking precedence", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
-          skills: [],
-          stack: {
-            "web-developer": {
-              "web-framework": sa("web-framework-react-existing"),
-              "web-styling": sa("web-styling-scss-existing"),
+        await writeFullConfig(
+          buildProjectConfig({
+            name: "project",
+            skills: [],
+            stack: {
+              "web-developer": {
+                "web-framework": sa("web-framework-react-existing"),
+                "web-styling": sa("web-styling-scss-existing"),
+              },
             },
-          },
-        });
+          }),
+        );
 
-        const newConfig: ProjectConfig = {
+        const newConfig = buildProjectConfig({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
           skills: [],
           stack: {
             "web-developer": {
@@ -220,7 +198,7 @@ describe("config-merger", () => {
               "web-client-state": sa("web-state-zustand-new"),
             },
           },
-        };
+        });
 
         const result = await mergeWithExistingConfig(newConfig, {
           projectDir: tempDir,
@@ -239,18 +217,19 @@ describe("config-merger", () => {
       });
 
       it("should add new agents to stack from new config", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
-          skills: [],
-          stack: {
-            "web-developer": {
-              "web-framework": sa("web-framework-react"),
+        await writeFullConfig(
+          buildProjectConfig({
+            name: "project",
+            skills: [],
+            stack: {
+              "web-developer": {
+                "web-framework": sa("web-framework-react"),
+              },
             },
-          },
-        });
+          }),
+        );
 
-        const newConfig: ProjectConfig = {
+        const newConfig = buildProjectConfig({
           name: "project",
           agents: [
             { name: "web-developer", scope: "project" },
@@ -265,7 +244,7 @@ describe("config-merger", () => {
               "api-api": sa("api-framework-hono"),
             },
           },
-        };
+        });
 
         const result = await mergeWithExistingConfig(newConfig, {
           projectDir: tempDir,
@@ -283,22 +262,17 @@ describe("config-merger", () => {
       });
 
       it("should use new config stack if existing has no stack", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
-          skills: [],
-        });
+        await writeFullConfig(buildProjectConfig({ name: "project", skills: [] }));
 
-        const newConfig: ProjectConfig = {
+        const newConfig = buildProjectConfig({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
           skills: [],
           stack: {
             "web-developer": {
               "web-framework": sa("web-framework-react"),
             },
           },
-        };
+        });
 
         const result = await mergeWithExistingConfig(newConfig, {
           projectDir: tempDir,
@@ -321,11 +295,11 @@ describe("config-merger", () => {
         author: "@existing",
       });
 
-      const newConfig: ProjectConfig = {
+      const newConfig = buildProjectConfig({
         name: "new-project",
         agents: [{ name: "api-developer", scope: "project" }],
         skills: [],
-      };
+      });
 
       await mergeWithExistingConfig(newConfig, { projectDir: tempDir });
 
@@ -341,11 +315,7 @@ describe("config-merger", () => {
         agents: [{ name: "web-developer", scope: "project" }],
       });
 
-      const newConfig: ProjectConfig = {
-        name: "new-project",
-        agents: [{ name: "web-developer", scope: "project" }],
-        skills: [],
-      };
+      const newConfig = buildProjectConfig({ name: "new-project", skills: [] });
 
       const result = await mergeWithExistingConfig(newConfig, {
         projectDir: tempDir,

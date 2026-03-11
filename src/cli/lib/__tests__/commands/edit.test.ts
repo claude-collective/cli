@@ -7,16 +7,15 @@ import {
   createTempDir,
   cleanupTempDir,
   createMockMatrix,
-  createMockCategory,
   createMockSkill,
   buildSourceResult,
   CLI_ROOT,
-  TEST_MATRICES,
+  SKILLS,
+  TEST_CATEGORIES,
 } from "../helpers";
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { useMatrixStore } from "../../../stores/matrix-store";
-import { TEST_SKILLS } from "../test-fixtures";
 import type { CategoryPath, SkillId } from "../../../types";
 import Edit from "../../../commands/edit.js";
 
@@ -179,17 +178,17 @@ describe("edit command", () => {
 
 // Explicit domain assignments — these tests verify domain filtering, so domains must be correct
 const EDIT_CATEGORIES = {
-  "web-framework": createMockCategory("web-framework", "Web Framework", { domain: "web" }),
-  "web-client-state": createMockCategory("web-client-state", "Client State", { domain: "web" }),
-  "api-api": createMockCategory("api-api", "API Framework", { domain: "api" }),
-  "web-testing": createMockCategory("web-testing", "Testing", { domain: "shared" }),
+  "web-framework": { ...TEST_CATEGORIES.framework, displayName: "Web Framework" },
+  "web-client-state": TEST_CATEGORIES.clientState,
+  "api-api": { ...TEST_CATEGORIES.api, displayName: "API Framework", domain: "api" as const },
+  "web-testing": { ...TEST_CATEGORIES.testing, domain: "shared" as const },
 };
 
 const EDIT_SKILLS = {
-  "web-framework-react": TEST_SKILLS.react,
-  "web-state-zustand": TEST_SKILLS.zustand,
-  "api-framework-hono": TEST_SKILLS.hono,
-  "web-testing-vitest": TEST_SKILLS.vitest,
+  "web-framework-react": SKILLS.react,
+  "web-state-zustand": SKILLS.zustand,
+  "api-framework-hono": SKILLS.hono,
+  "web-testing-vitest": SKILLS.vitest,
 };
 
 // The edit command uses populateFromSkillIds() on the Zustand wizard store
@@ -279,7 +278,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
   it("should skip skills missing a category", () => {
     const sparseSkills = {
-      "web-framework-react": TEST_SKILLS.react,
+      "web-framework-react": SKILLS.react,
       // Boundary cast: intentionally testing skill with no category
       "web-framework-unknown": createMockSkill("web-framework-unknown", {
         category: undefined as unknown as CategoryPath,
@@ -303,7 +302,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
   it("should skip skills whose category has no domain mapping", () => {
     const extraSkills = {
-      "web-framework-react": TEST_SKILLS.react,
+      "web-framework-react": SKILLS.react,
       // Boundary cast: intentionally testing unmapped category handling
       "infra-tooling-linter": createMockSkill("infra-tooling-linter"),
     };
@@ -473,7 +472,7 @@ describe("edit command local-mode skill fallback", () => {
     source: "local",
   }));
 
-  const testMatrix = TEST_MATRICES.reactAndHono;
+  const testMatrix = createMockMatrix(SKILLS.react, SKILLS.hono);
 
   const testSourceResult = buildSourceResult(testMatrix, "/test/source");
 

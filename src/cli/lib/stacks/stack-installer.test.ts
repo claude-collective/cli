@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import os from "os";
-import type { AgentName, SkillId } from "../../types";
 import { createMockCompiledStackPlugin } from "../__tests__/helpers";
 
 // Mock dependencies before imports

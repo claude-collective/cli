@@ -1,13 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
+import { mkdir, writeFile, readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
-import { runCliCommand, fileExists, directoryExists } from "../../helpers";
+import { runCliCommand, fileExists, directoryExists, createTempDir, cleanupTempDir } from "../../helpers";
 import { EXIT_CODES } from "../../../exit-codes";
+import { STANDARD_FILES } from "../../../../consts";
 const LOCAL_SKILLS_DIR = ".claude/skills";
-const SKILL_MD_FILE = "SKILL.md";
-const METADATA_YAML_FILE = "metadata.yaml";
 
 // Plain directory name (no slashes/colons) so parseGitHubSource passes it
 // through as-is and fetchFromSource treats it as a local path relative to cwd
@@ -25,12 +23,12 @@ async function createLocalSource(
     const skillDir = path.join(skillsDir, skillName);
     await mkdir(skillDir, { recursive: true });
     await writeFile(
-      path.join(skillDir, SKILL_MD_FILE),
+      path.join(skillDir, STANDARD_FILES.SKILL_MD),
       `# ${skillName}\n\nThis is the ${skillName} skill.\n`,
     );
 
     if (options?.withMetadata) {
-      await writeFile(path.join(skillDir, METADATA_YAML_FILE), `author: "@external"\n`);
+      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), `author: "@external"\n`);
     }
   }
 }
@@ -42,7 +40,7 @@ describe("import:skill command", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-import-skill-test-"));
+    tempDir = await createTempDir("cc-import-skill-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -50,7 +48,7 @@ describe("import:skill command", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("argument validation", () => {
@@ -216,7 +214,7 @@ describe("import:skill command", () => {
       // Verify skill was copied to the destination
       const destSkillDir = path.join(projectDir, LOCAL_SKILLS_DIR, "react-patterns");
       expect(await directoryExists(destSkillDir)).toBe(true);
-      expect(await fileExists(path.join(destSkillDir, SKILL_MD_FILE))).toBe(true);
+      expect(await fileExists(path.join(destSkillDir, STANDARD_FILES.SKILL_MD))).toBe(true);
     });
 
     it("should error when requested skill does not exist in source", async () => {
@@ -245,7 +243,7 @@ describe("import:skill command", () => {
       expect(error?.oclif?.exit).toBeUndefined();
 
       // Read the created metadata.yaml
-      const metadataPath = path.join(projectDir, LOCAL_SKILLS_DIR, "my-skill", METADATA_YAML_FILE);
+      const metadataPath = path.join(projectDir, LOCAL_SKILLS_DIR, "my-skill", STANDARD_FILES.METADATA_YAML);
       expect(await fileExists(metadataPath)).toBe(true);
 
       const content = await readFile(metadataPath, "utf-8");
@@ -270,7 +268,7 @@ describe("import:skill command", () => {
 
       expect(error?.oclif?.exit).toBeUndefined();
 
-      const metadataPath = path.join(projectDir, LOCAL_SKILLS_DIR, "my-skill", METADATA_YAML_FILE);
+      const metadataPath = path.join(projectDir, LOCAL_SKILLS_DIR, "my-skill", STANDARD_FILES.METADATA_YAML);
       const content = await readFile(metadataPath, "utf-8");
       const metadata = parseYaml(content);
 
@@ -295,7 +293,7 @@ describe("import:skill command", () => {
       for (const name of skillNames) {
         const destDir = path.join(projectDir, LOCAL_SKILLS_DIR, name);
         expect(await directoryExists(destDir)).toBe(true);
-        expect(await fileExists(path.join(destDir, SKILL_MD_FILE))).toBe(true);
+        expect(await fileExists(path.join(destDir, STANDARD_FILES.SKILL_MD))).toBe(true);
       }
     });
 
@@ -318,7 +316,7 @@ describe("import:skill command", () => {
       // Pre-create the destination skill directory
       const destSkillDir = path.join(projectDir, LOCAL_SKILLS_DIR, "existing-skill");
       await mkdir(destSkillDir, { recursive: true });
-      await writeFile(path.join(destSkillDir, SKILL_MD_FILE), "# Original content\n");
+      await writeFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), "# Original content\n");
 
       const { error } = await runCliCommand([
         "import:skill",
@@ -331,7 +329,7 @@ describe("import:skill command", () => {
       expect(error?.oclif?.exit).toBeUndefined();
 
       // Original content should be preserved (not overwritten)
-      const content = await readFile(path.join(destSkillDir, SKILL_MD_FILE), "utf-8");
+      const content = await readFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
       expect(content).toBe("# Original content\n");
     });
 
@@ -341,7 +339,7 @@ describe("import:skill command", () => {
       // Pre-create the destination skill directory with old content
       const destSkillDir = path.join(projectDir, LOCAL_SKILLS_DIR, "existing-skill");
       await mkdir(destSkillDir, { recursive: true });
-      await writeFile(path.join(destSkillDir, SKILL_MD_FILE), "# Original content\n");
+      await writeFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), "# Original content\n");
 
       const { error } = await runCliCommand([
         "import:skill",
@@ -354,7 +352,7 @@ describe("import:skill command", () => {
       expect(error?.oclif?.exit).toBeUndefined();
 
       // Content should be overwritten with the source version
-      const content = await readFile(path.join(destSkillDir, SKILL_MD_FILE), "utf-8");
+      const content = await readFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
       expect(content).toContain("existing-skill");
       expect(content).not.toBe("# Original content\n");
     });

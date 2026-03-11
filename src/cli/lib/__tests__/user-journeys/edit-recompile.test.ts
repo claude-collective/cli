@@ -13,6 +13,7 @@ import {
 } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { writeTestSkill, buildTestProjectConfig, createMockSkillDefinition } from "../helpers";
+import { STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
 import type { AgentName, SkillDefinitionMap } from "../../../types";
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
@@ -89,7 +90,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
   it("should detect and incorporate skill edits on recompile", async () => {
     const pluginDir = dirs.pluginDir!;
-    const pluginSkillsDir = path.join(pluginDir, "skills");
+    const pluginSkillsDir = path.join(pluginDir, STANDARD_DIRS.SKILLS);
 
     // Step 1: Initial compile with skills provided directly
     const reactSkillDef: SkillDefinitionMap = {
@@ -109,7 +110,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     const agentPath = path.join(outputDir, "web-pm.md");
 
     // Step 2: Edit a skill file in the plugin directory
-    const reactSkillPath = path.join(pluginSkillsDir, "web-framework-react", "SKILL.md");
+    const reactSkillPath = path.join(pluginSkillsDir, "web-framework-react", STANDARD_FILES.SKILL_MD);
     if (await fileExists(reactSkillPath)) {
       const originalSkill = await readTestFile(reactSkillPath);
       await writeTestFile(reactSkillPath, originalSkill + APPENDED_SKILL_SECTION);
@@ -155,7 +156,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
   it("should handle adding new skills to existing agents", async () => {
     const pluginDir = dirs.pluginDir!;
-    const pluginSkillsDir = path.join(pluginDir, "skills");
+    const pluginSkillsDir = path.join(pluginDir, STANDARD_DIRS.SKILLS);
 
     // Step 1: Initial compile with no skills provided (empty plugin skills)
     const initialOptions = buildRecompileOptions(dirs, outputDir, {

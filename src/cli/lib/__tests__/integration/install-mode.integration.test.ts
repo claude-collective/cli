@@ -17,8 +17,9 @@ import {
   createMockSkillSource,
   createTempDir,
   cleanupTempDir,
-  getTestSkill,
+  SKILLS,
   readTestTsConfig,
+  buildProjectConfig,
   buildWizardResult,
   buildSkillConfigs,
   buildSourceResult,
@@ -26,7 +27,7 @@ import {
   writeTestTsConfig,
 } from "../helpers";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
-import { DEFAULT_TEST_SKILLS, INIT_SKILL_IDS } from "../mock-data/mock-skills";
+import { INIT_SKILL_IDS, INIT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 import path from "path";
 
@@ -35,13 +36,11 @@ const ZUSTAND_SKILL_ID: SkillId = "web-state-zustand";
 const HONO_SKILL_ID: SkillId = "api-framework-hono";
 const VITEST_SKILL_ID: SkillId = "web-testing-vitest";
 
-const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => INIT_SKILL_IDS.includes(s.id));
-
-const INIT_TEST_MATRIX = createMockMatrix({
-  "web-framework-react": getTestSkill("react"),
-  "api-framework-hono": getTestSkill("hono"),
-  "web-testing-vitest": getTestSkill("vitest"),
-});
+const INIT_TEST_MATRIX = createMockMatrix(
+  SKILLS.react,
+  SKILLS.hono,
+  SKILLS.vitest,
+);
 
 describe("Integration: Install Mode Persistence", () => {
   let dirs: TestDirs;
@@ -469,12 +468,12 @@ describe("Integration: deriveInstallMode via Wizard Store", () => {
     expect(store.deriveInstallMode()).toBe("local");
 
     // Build a matrix with availableSources and set on store
-    useMatrixStore.getState().setMatrix(createMockMatrix({
-      "web-framework-react": createMockMultiSourceSkill(REACT_SKILL_ID, [
+    useMatrixStore.getState().setMatrix(createMockMatrix(
+      createMockMultiSourceSkill(REACT_SKILL_ID, [
         createMockSkillSource("local"),
         createMockSkillSource("public", { name: "agents-inc" }),
       ]),
-    }));
+    ));
 
     // Set all to plugin via matrix store lookup
     store.setAllSourcesPlugin();
@@ -503,14 +502,12 @@ describe("Integration: writeConfigFile Round-Trip", () => {
     await mkdir(configDir, { recursive: true });
     const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
 
-    const config: ProjectConfig = {
-      name: "test-project",
-      agents: [{ name: "web-developer", scope: "project" }],
+    const config = buildProjectConfig({
       skills: [
         { id: REACT_SKILL_ID, scope: "project", source: "local" },
         { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
       ],
-    };
+    });
 
     await writeConfigFile(config, configPath);
 
@@ -525,14 +522,12 @@ describe("Integration: writeConfigFile Round-Trip", () => {
     await mkdir(configDir, { recursive: true });
     const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
 
-    const config: ProjectConfig = {
-      name: "test-project",
-      agents: [{ name: "web-developer", scope: "project" }],
+    const config = buildProjectConfig({
       skills: [
         { id: REACT_SKILL_ID, scope: "project", source: "local" },
         { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
       ],
-    };
+    });
 
     await writeConfigFile(config, configPath);
 
@@ -549,11 +544,9 @@ describe("Integration: writeConfigFile Round-Trip", () => {
     await mkdir(configDir, { recursive: true });
     const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
 
-    const config: ProjectConfig = {
-      name: "test-project",
-      agents: [{ name: "web-developer", scope: "project" }],
+    const config = buildProjectConfig({
       skills: [{ id: REACT_SKILL_ID, scope: "project", source: "local" }],
-    };
+    });
 
     await writeConfigFile(config, configPath);
 

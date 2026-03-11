@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { saveSourceToProjectConfig } from "./config-saver";
 import { createTempDir, cleanupTempDir, readTestTsConfig } from "../__tests__/helpers";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
+import { renderConfigTs } from "../__tests__/content-generators";
 
 describe("config-saver", () => {
   let tempDir: string;
@@ -41,12 +42,14 @@ describe("config-saver", () => {
       // Write existing config as TS
       const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
-      const existingContent = `export default ${JSON.stringify({
-        name: "my-project",
-        agents: ["web-developer"],
-        author: "@vince",
-      })};`;
-      await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), existingContent);
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          name: "my-project",
+          agents: ["web-developer"],
+          author: "@vince",
+        }),
+      );
 
       await saveSourceToProjectConfig(tempDir, "github:new/source");
 
@@ -62,11 +65,13 @@ describe("config-saver", () => {
     it("overwrites existing source value", async () => {
       const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
-      const existingContent = `export default ${JSON.stringify({
-        source: "github:old/source",
-        name: "project",
-      })};`;
-      await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), existingContent);
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          source: "github:old/source",
+          name: "project",
+        }),
+      );
 
       await saveSourceToProjectConfig(tempDir, "github:new/source");
 

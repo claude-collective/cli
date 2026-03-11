@@ -21,6 +21,8 @@ describe("skill-fetcher", () => {
   const SKILLS_OUTPUT_DIR = path.join(OUTPUT_DIR, "skills");
 
   describe("fetchSkills", () => {
+    const REACT_SKILL_ID: SkillId = "web-framework-react";
+
     it("when fetching skills, should create skills output directory before resolution", async () => {
       const marketplace = createMockMarketplace();
 
@@ -28,7 +30,7 @@ describe("skill-fetcher", () => {
       mockDirectoryExists.mockResolvedValue(false);
 
       await expect(
-        fetchSkills(["web-framework-react"], marketplace, OUTPUT_DIR, SOURCE_PATH),
+        fetchSkills([REACT_SKILL_ID], marketplace, OUTPUT_DIR, SOURCE_PATH),
       ).rejects.toThrow("Skill not found: web-framework-react");
 
       // ensureDir should have been called for the skills output dir
@@ -46,7 +48,7 @@ describe("skill-fetcher", () => {
 
     it("when skillId has no slash, should find skill via glob pattern and copy it", async () => {
       const marketplace = createMockMarketplace();
-      const skillId: SkillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
       const skillSourceDir = path.join(SOURCE_PATH, "src", "skills");
 
       // findSkillPath: baseDir exists
@@ -87,7 +89,7 @@ describe("skill-fetcher", () => {
 
     it("should throw when skill base directory does not exist", async () => {
       const marketplace = createMockMarketplace();
-      const skillId: SkillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
 
       // findSkillPath: baseDir does not exist
       mockDirectoryExists.mockResolvedValueOnce(false);
@@ -99,7 +101,7 @@ describe("skill-fetcher", () => {
 
     it("should copy multiple skills", async () => {
       const marketplace = createMockMarketplace();
-      const skillIds: SkillId[] = ["web-framework-react", "api-framework-hono"];
+      const skillIds: SkillId[] = [REACT_SKILL_ID, "api-framework-hono"];
 
       // For each skill: baseDir exists, glob finds a match
       mockDirectoryExists
@@ -119,7 +121,7 @@ describe("skill-fetcher", () => {
     it("when second of three skills is missing, should throw after copying only the first", async () => {
       const marketplace = createMockMarketplace();
       const skillIds: SkillId[] = [
-        "web-framework-react",
+        REACT_SKILL_ID,
         "web-nonexistent-skill",
         "api-framework-hono",
       ];
@@ -143,12 +145,12 @@ describe("skill-fetcher", () => {
 
     it("should resolve plugin source URL from marketplace when plugin exists", async () => {
       const marketplace = createMockMarketplace([
-        createMockMarketplacePlugin("web-framework-react", {
+        createMockMarketplacePlugin(REACT_SKILL_ID, {
           source: "url",
           url: "https://example.com/react-skill.tar.gz",
         }),
       ]);
-      const skillId: SkillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
 
       // findSkillPath: baseDir exists, glob finds match
       mockDirectoryExists.mockResolvedValueOnce(true);
@@ -163,13 +165,13 @@ describe("skill-fetcher", () => {
 
     it("should resolve plugin source from github repo format", async () => {
       const marketplace = createMockMarketplace([
-        createMockMarketplacePlugin("web-framework-react", {
+        createMockMarketplacePlugin(REACT_SKILL_ID, {
           repo: "my-org/react-skill",
           ref: "v1.0.0",
           source: "github",
         }),
       ]);
-      const skillId: SkillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
 
       mockDirectoryExists.mockResolvedValueOnce(true);
       mockGlob.mockResolvedValueOnce(["web/framework/web-framework-react/SKILL.md"]);
@@ -181,9 +183,9 @@ describe("skill-fetcher", () => {
 
     it("should resolve plugin source from string source", async () => {
       const marketplace = createMockMarketplace([
-        createMockMarketplacePlugin("web-framework-react", "github:my-org/react-skill"),
+        createMockMarketplacePlugin(REACT_SKILL_ID, "github:my-org/react-skill"),
       ]);
-      const skillId: SkillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
 
       mockDirectoryExists.mockResolvedValueOnce(true);
       mockGlob.mockResolvedValueOnce(["web/framework/web-framework-react/SKILL.md"]);
@@ -195,12 +197,12 @@ describe("skill-fetcher", () => {
 
     it("should handle marketplace plugin with repo source but no ref", async () => {
       const marketplace = createMockMarketplace([
-        createMockMarketplacePlugin("web-framework-react", {
+        createMockMarketplacePlugin(REACT_SKILL_ID, {
           repo: "my-org/react-skill",
           source: "github",
         }),
       ]);
-      const skillId: SkillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
 
       mockDirectoryExists.mockResolvedValueOnce(true);
       mockGlob.mockResolvedValueOnce(["web/framework/web-framework-react/SKILL.md"]);
@@ -212,12 +214,12 @@ describe("skill-fetcher", () => {
 
     it("should use plugin name as fallback source when source is an object without url or repo", async () => {
       const marketplace = createMockMarketplace([
-        createMockMarketplacePlugin("web-framework-react", {
+        createMockMarketplacePlugin(REACT_SKILL_ID, {
           source: "github",
           // No url and no repo - falls through to plugin.name fallback
         } as MarketplacePlugin["source"]),
       ]);
-      const skillId: SkillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
 
       mockDirectoryExists.mockResolvedValueOnce(true);
       mockGlob.mockResolvedValueOnce(["web/framework/web-framework-react/SKILL.md"]);
@@ -231,7 +233,7 @@ describe("skill-fetcher", () => {
       const marketplace = createMockMarketplace([
         createMockMarketplacePlugin("other-plugin-name", "local"),
       ]);
-      const skillId: SkillId = "web-framework-react";
+      const skillId = REACT_SKILL_ID;
 
       mockDirectoryExists.mockResolvedValueOnce(true);
       mockGlob.mockResolvedValueOnce(["web/framework/web-framework-react/SKILL.md"]);

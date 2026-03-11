@@ -50,6 +50,7 @@ import { discoverAllPluginSkills, listPluginNames } from "./plugin-discovery";
 import { directoryExists } from "../../utils/fs";
 import { detectInstallation } from "../installation";
 import { loadProjectConfig } from "../configuration";
+import { buildProjectConfig } from "../__tests__/helpers";
 
 const mockedReaddir = vi.mocked(readdir);
 const mockedGetProjectPluginsDir = vi.mocked(getProjectPluginsDir);
@@ -164,6 +165,7 @@ describe("plugin-info", () => {
       mockedDetectInstallation.mockResolvedValue(installation);
       mockedDirectoryExists.mockResolvedValue(true);
 
+      // Boundary cast: mock readdir return type for each branch
       mockedReaddir.mockImplementation((dirPath) => {
         const dir = dirPath as string;
         if (dir.endsWith("/skills")) {
@@ -181,11 +183,7 @@ describe("plugin-info", () => {
       });
 
       mockedLoadProjectConfig.mockResolvedValue({
-        config: {
-          name: "my-local-project",
-          agents: [{ name: "web-developer", scope: "project" }],
-          skills: [],
-        },
+        config: buildProjectConfig({ name: "my-local-project", skills: [] }),
         configPath,
       });
 
@@ -215,11 +213,7 @@ describe("plugin-info", () => {
       mockedDirectoryExists.mockResolvedValue(true);
 
       mockedLoadProjectConfig.mockResolvedValue({
-        config: {
-          name: "my-plugin",
-          agents: [{ name: "web-developer", scope: "project" }],
-          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
-        },
+        config: buildProjectConfig({ name: "my-plugin", skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }] }),
         configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
       });
 
@@ -232,6 +226,7 @@ describe("plugin-info", () => {
         },
       } as Record<string, import("../../types").SkillDefinition>);
 
+      // Boundary cast: mock readdir return type for each branch
       mockedReaddir.mockImplementation((dirPath) => {
         const dir = dirPath as string;
         if (dir.endsWith("/agents")) {
@@ -266,11 +261,7 @@ describe("plugin-info", () => {
       mockedDetectInstallation.mockResolvedValue(installation);
       mockedDirectoryExists.mockResolvedValue(false);
       mockedLoadProjectConfig.mockResolvedValue({
-        config: {
-          name: "",
-          agents: [],
-          skills: [],
-        },
+        config: buildProjectConfig({ name: "", agents: [], skills: [] }),
         configPath: mockConfigPath,
       });
 
@@ -313,7 +304,7 @@ describe("plugin-info", () => {
       mockedDetectInstallation.mockResolvedValue(installation);
       mockedDirectoryExists.mockResolvedValue(true);
       mockedLoadProjectConfig.mockResolvedValue({
-        config: { name: "test", agents: [], skills: [] },
+        config: buildProjectConfig({ name: "test", agents: [], skills: [] }),
         configPath: mockConfigPath,
       });
 
@@ -393,6 +384,7 @@ describe("plugin-info", () => {
 });
 
 function createDirent(name: string, opts: { isDir?: boolean; isFile?: boolean }) {
+  // Boundary cast: mock Dirent for test — only implements methods used by production code
   return {
     name,
     isDirectory: () => opts.isDir ?? false,

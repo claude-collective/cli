@@ -55,11 +55,11 @@ const TEST_GRID_SKILLS: { id: SkillId; displayName: string; category: import("..
 ];
 
 function buildTestMatrix() {
-  const skills: Record<string, import("../../types").ResolvedSkill> = {};
-  for (const { id, displayName, category } of TEST_GRID_SKILLS) {
-    skills[id] = createMockSkill(id, { displayName, category });
-  }
-  return createMockMatrix(skills);
+  return createMockMatrix(
+    ...TEST_GRID_SKILLS.map(({ id, displayName, category }) =>
+      createMockSkill(id, { displayName, category }),
+    ),
+  );
 }
 
 const createOption = (

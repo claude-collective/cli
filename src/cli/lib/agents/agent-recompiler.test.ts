@@ -9,11 +9,13 @@ import {
   writeTestSkill,
   fileExists,
   createMockMatrix,
-  TEST_SKILLS,
+  SKILLS,
 } from "../__tests__/helpers";
 import { useMatrixStore } from "../../stores/matrix-store";
 import type { PluginTestDirs } from "../__tests__/helpers";
 import type { AgentName, SkillId } from "../../types";
+import { renderConfigTs } from "../__tests__/content-generators";
+import { CLAUDE_DIR, STANDARD_FILES } from "../../consts";
 
 describe("agent-recompiler", () => {
   let testDirs: PluginTestDirs;
@@ -21,11 +23,7 @@ describe("agent-recompiler", () => {
   beforeEach(async () => {
     testDirs = await createTestDirs("cc-recompiler-test-");
 
-    useMatrixStore.getState().setMatrix(createMockMatrix({
-      "web-testing-vitest": TEST_SKILLS.vitest,
-      "web-framework-react": TEST_SKILLS.react,
-      "api-framework-hono": TEST_SKILLS.hono,
-    }));
+    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.vitest, SKILLS.react, SKILLS.hono));
   });
 
   afterEach(async () => {
@@ -73,14 +71,16 @@ describe("agent-recompiler", () => {
     });
 
     it("uses config.ts agent list when present", async () => {
-      const configContent = `export default ${JSON.stringify({
-        name: "test-plugin",
-        description: "Test plugin",
-        agents: [{ name: "web-pm", scope: "project" }],
-      })};`;
       const configDir = path.join(testDirs.projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.ts"), configContent);
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          name: "test-plugin",
+          description: "Test plugin",
+          agents: [{ name: "web-pm", scope: "project" }],
+        }),
+      );
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
@@ -157,7 +157,7 @@ describe("agent-recompiler", () => {
     });
 
     it("respects projectDir for local template resolution", async () => {
-      const localTemplatesDir = path.join(testDirs.projectDir, ".claude", "templates");
+      const localTemplatesDir = path.join(testDirs.projectDir, CLAUDE_DIR, "templates");
       await mkdir(localTemplatesDir, { recursive: true });
 
       const result = await recompileAgents({
