@@ -1,16 +1,27 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { createTempDir } from "./test-utils.js";
-import { DIRS, SKILLS_DIR_PATH, STACKS_FILE_PATH, STANDARD_FILES } from "../../src/cli/consts.js";
+import {
+  DIRS,
+  SKILL_RULES_PATH,
+  SKILLS_DIR_PATH,
+  STACKS_FILE_PATH,
+  STANDARD_FILES,
+} from "../../src/cli/consts.js";
 import type {
   AgentName,
   CategoryPath,
+  RelationshipDefinitions,
   SkillId,
   Stack,
   StackAgentConfig,
 } from "../../src/cli/types/index.js";
 import { createMockSkillAssignment } from "../../src/cli/lib/__tests__/helpers.js";
-import { renderConfigTs, renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
+import {
+  renderConfigTs,
+  renderRulesTs,
+  renderSkillMd,
+} from "../../src/cli/lib/__tests__/content-generators.js";
 
 type E2ESkill = {
   category: CategoryPath;
@@ -142,6 +153,11 @@ permissionMode: {{ agent.permissionMode }}
 {% endfor %}
 `;
 
+type E2ESourceOptions = {
+  /** Custom relationship rules to write to config/skill-rules.ts */
+  relationships?: Partial<RelationshipDefinitions>;
+};
+
 /**
  * Creates a complete skills source directory for E2E init wizard tests.
  *
@@ -152,8 +168,12 @@ permissionMode: {{ agent.permissionMode }}
  * that references only skills present in the source. This ensures the full
  * init flow (select stack -> accept defaults -> install) can complete without
  * missing skill errors.
+ *
+ * When `options.relationships` is provided, a `config/skill-rules.ts` file is
+ * written to the source with those relationship rules. This enables E2E testing
+ * of slug-based relationship resolution via `cc validate --source` and `cc info`.
  */
-export async function createE2ESource(): Promise<{
+export async function createE2ESource(options?: E2ESourceOptions): Promise<{
   sourceDir: string;
   tempDir: string;
 }> {
@@ -163,6 +183,10 @@ export async function createE2ESource(): Promise<{
   await writeSkills(sourceDir, E2E_SKILLS);
   await writeStacks(sourceDir);
   await writeAgents(sourceDir);
+
+  if (options?.relationships) {
+    await writeSkillRules(sourceDir, options.relationships);
+  }
 
   return { sourceDir, tempDir };
 }
@@ -188,6 +212,29 @@ async function writeStacks(sourceDir: string): Promise<void> {
   const stacksFilePath = path.join(sourceDir, STACKS_FILE_PATH);
   await mkdir(path.dirname(stacksFilePath), { recursive: true });
   await writeFile(stacksFilePath, renderConfigTs({ stacks: [E2E_STACK] }));
+}
+
+async function writeSkillRules(
+  sourceDir: string,
+  relationships: Partial<RelationshipDefinitions>,
+): Promise<void> {
+  const rulesFilePath = path.join(sourceDir, SKILL_RULES_PATH);
+  await mkdir(path.dirname(rulesFilePath), { recursive: true });
+
+  const fullRelationships: RelationshipDefinitions = {
+    conflicts: relationships.conflicts ?? [],
+    discourages: relationships.discourages ?? [],
+    recommends: relationships.recommends ?? [],
+    requires: relationships.requires ?? [],
+    alternatives: relationships.alternatives ?? [],
+    ...(relationships.compatibleWith ? { compatibleWith: relationships.compatibleWith } : {}),
+    ...(relationships.setupPairs ? { setupPairs: relationships.setupPairs } : {}),
+  };
+
+  await writeFile(
+    rulesFilePath,
+    renderRulesTs({ version: "1.0.0", relationships: fullRelationships }),
+  );
 }
 
 async function writeAgents(sourceDir: string): Promise<void> {

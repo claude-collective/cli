@@ -321,7 +321,7 @@ describe("validate command", () => {
 };\n`,
       );
 
-      // Create skill-rules.ts with a conflict referencing a nonexistent skill ID.
+      // Create skill-rules.ts with a conflict referencing a slug not present in this source.
       // The matrix health check should detect the unresolved reference.
       await writeFile(
         path.join(sourceDir, SKILL_RULES_PATH),
@@ -331,7 +331,7 @@ describe("validate command", () => {
   relationships: {
     conflicts: [
       {
-        skills: ["web-framework-alpha", "web-nonexistent-skill"],
+        skills: ["react", "angular"],
         reason: "Testing unresolved reference detection",
       },
     ],
@@ -345,10 +345,10 @@ describe("validate command", () => {
 
       const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
-      // Matrix health check should detect the unresolved reference
+      // Matrix health check should detect the unresolved reference (angular not in source)
       expect(combined).toContain("Checked 2 skill(s)");
       expect(combined).toContain("unresolved reference");
-      expect(combined).toContain("web-nonexistent-skill");
+      expect(combined).toContain("angular");
     });
   });
 
