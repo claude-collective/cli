@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.66.0] - 2026-03-11
+
+**Slug-based relationship rules (R-04 Phase 2)**
+
+- All relationship rule types now reference skills by slug (`"react"`) instead of canonical ID (`"web-framework-react"`)
+- `slug` field now required in metadata.schema.json (Step 7 finalized)
+- 9 new E2E tests for slug-based relationship validation
+
+See [changelogs/0.66.0.md](./changelogs/0.66.0.md) for full details.
+
+---
+
 ## [0.65.0] - 2026-03-11
 
 **Narrowed config types, edit command refactor, test consolidation (R-09)**
