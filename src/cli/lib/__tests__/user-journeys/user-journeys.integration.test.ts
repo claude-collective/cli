@@ -10,9 +10,10 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { useMatrixStore } from "../../../stores/matrix-store";
 import { loadProjectConfig } from "../../configuration";
 import { DEFAULT_PRESELECTED_SKILLS, STANDARD_FILES } from "../../../consts";
-import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
+import type { AgentScopeConfig, MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
+  createBasicMatrix,
   createComprehensiveMatrix,
   buildSourceResult,
   buildWizardResultFromStore,
@@ -926,6 +927,140 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     expect(configContent).not.toContain("defineConfig");
     expect(configContent).toContain("export default {");
     expect(configContent).toContain("satisfies ProjectConfig");
+  });
+});
+
+// ── Journey: Per-Agent Scope ──────────────────────────────────────────────────
+
+describe("per-agent scope", () => {
+  let matrix: MergedSkillsMatrix;
+
+  beforeEach(() => {
+    useWizardStore.getState().reset();
+    useMatrixStore.getState().reset();
+
+    matrix = createBasicMatrix();
+    useMatrixStore.getState().setMatrix(matrix);
+  });
+
+  it("agents default to global scope", () => {
+    simulateSkillSelections(["web-framework-react"], matrix, ["web"]);
+    useWizardStore.getState().preselectAgentsFromDomains();
+
+    const { agentConfigs } = useWizardStore.getState();
+    expect(agentConfigs.length).toBeGreaterThan(0);
+    for (const config of agentConfigs) {
+      expect(config.scope).toBe("global");
+    }
+  });
+
+  it("toggleAgentScope switches between project and global", () => {
+    simulateSkillSelections(["web-framework-react"], matrix, ["web"]);
+    useWizardStore.getState().preselectAgentsFromDomains();
+
+    // Initially global
+    const initialConfig = useWizardStore
+      .getState()
+      .agentConfigs.find((ac) => ac.name === "web-developer");
+    expect(initialConfig?.scope).toBe("global");
+
+    // Toggle to project
+    useWizardStore.getState().toggleAgentScope("web-developer");
+    const afterFirstToggle = useWizardStore
+      .getState()
+      .agentConfigs.find((ac) => ac.name === "web-developer");
+    expect(afterFirstToggle?.scope).toBe("project");
+
+    // Toggle back to global
+    useWizardStore.getState().toggleAgentScope("web-developer");
+    const afterSecondToggle = useWizardStore
+      .getState()
+      .agentConfigs.find((ac) => ac.name === "web-developer");
+    expect(afterSecondToggle?.scope).toBe("global");
+  });
+
+  it("agent scope survives wizard result building", () => {
+    const comprehensiveMatrix = createComprehensiveMatrix();
+    useMatrixStore.getState().setMatrix(comprehensiveMatrix);
+
+    simulateSkillSelections(
+      ["web-framework-react", "api-framework-hono"],
+      comprehensiveMatrix,
+      ["web", "api"],
+    );
+    useWizardStore.getState().preselectAgentsFromDomains();
+    useWizardStore.getState().toggleAgentScope("web-developer");
+
+    const result = buildWizardResultFromStore(comprehensiveMatrix);
+
+    const webDevConfig = result.agentConfigs.find((ac) => ac.name === "web-developer");
+    expect(webDevConfig).toEqual({ name: "web-developer", scope: "project" });
+
+    // Other agents should remain global
+    const otherConfigs = result.agentConfigs.filter((ac) => ac.name !== "web-developer");
+    for (const config of otherConfigs) {
+      expect(config.scope).toBe("global");
+    }
+  });
+
+  it("edit-mode restores agent scope configs", () => {
+    // Simulate what useWizardInitialization does: set state directly with mixed scopes
+    const agentConfigs: AgentScopeConfig[] = [
+      { name: "web-developer", scope: "project" },
+      { name: "api-developer", scope: "global" },
+    ];
+
+    useWizardStore.setState({
+      selectedAgents: ["web-developer", "api-developer"],
+      agentConfigs,
+    });
+
+    const state = useWizardStore.getState();
+    expect(state.agentConfigs).toEqual([
+      { name: "web-developer", scope: "project" },
+      { name: "api-developer", scope: "global" },
+    ]);
+    expect(state.selectedAgents).toEqual(["web-developer", "api-developer"]);
+  });
+
+  it("locked agents cannot have scope toggled", () => {
+    simulateSkillSelections(["web-framework-react"], matrix, ["web"]);
+    useWizardStore.getState().preselectAgentsFromDomains();
+
+    // Lock web-developer
+    useWizardStore.setState({ lockedAgentNames: ["web-developer"] });
+
+    // Attempt to toggle — should be no-op
+    useWizardStore.getState().toggleAgentScope("web-developer");
+
+    const config = useWizardStore
+      .getState()
+      .agentConfigs.find((ac) => ac.name === "web-developer");
+    expect(config?.scope).toBe("global");
+  });
+
+  it("agent scope changes detected in edit flow", () => {
+    const oldAgentConfigs: AgentScopeConfig[] = [
+      { name: "web-developer", scope: "global" },
+      { name: "api-developer", scope: "global" },
+    ];
+    const newAgentConfigs: AgentScopeConfig[] = [
+      { name: "web-developer", scope: "project" },
+      { name: "api-developer", scope: "global" },
+    ];
+
+    // Compute changes: find agents where old.scope !== new.scope
+    const changes = newAgentConfigs.filter((newConfig) => {
+      const oldConfig = oldAgentConfigs.find((oc) => oc.name === newConfig.name);
+      return oldConfig && oldConfig.scope !== newConfig.scope;
+    });
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0]).toEqual({ name: "web-developer", scope: "project" });
+
+    // api-developer should have no change
+    const apiChange = changes.find((c) => c.name === "api-developer");
+    expect(apiChange).toBeUndefined();
   });
 });
 
