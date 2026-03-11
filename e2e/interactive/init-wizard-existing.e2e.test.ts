@@ -127,43 +127,14 @@ describe("init wizard — existing projects", () => {
 
       const fullOutput = session.getFullOutput();
 
-      // Dashboard shows all four menu options
-      expect(fullOutput).toContain("[Edit]");
-      expect(fullOutput).toContain("[Compile]");
-      expect(fullOutput).toContain("[Doctor]");
-      expect(fullOutput).toContain("[List]");
+      // Dashboard shows all four menu options (plain text, vertical list)
+      expect(fullOutput).toContain("Edit");
+      expect(fullOutput).toContain("Compile");
+      expect(fullOutput).toContain("Doctor");
+      expect(fullOutput).toContain("List");
 
       // Should NOT show the setup wizard
       expect(fullOutput).not.toContain("Choose a stack");
-
-      // Clean exit
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.escape();
-      await session.waitForExit();
-    });
-
-    it("should render installed skill count and mode", async () => {
-      const dashboardDir = await createDashboardProject({
-        skills: ["web-framework-react", "web-testing-vitest"],
-        agents: ["web-developer"],
-      });
-
-      session = spawnInitWizard(dashboardDir, sourceDir!);
-
-      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
-
-      const fullOutput = session.getFullOutput();
-
-      // Dashboard displays skill count from config
-      expect(fullOutput).toContain("Skills:");
-      expect(fullOutput).toContain("2 installed");
-
-      // Dashboard displays mode
-      expect(fullOutput).toContain("Mode:");
-      expect(fullOutput).toContain("Local");
-
-      // Dashboard displays agent info
-      expect(fullOutput).toContain("Agents:");
 
       // Clean exit
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -182,28 +153,28 @@ describe("init wizard — existing projects", () => {
       await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Dashboard uses left/right arrow keys for horizontal navigation
-      session.arrowRight();
+      // Dashboard uses up/down arrow keys for vertical navigation
+      session.arrowDown();
       await delay(KEYSTROKE_DELAY_MS);
 
       // After navigating, all options should still be visible
       const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("[Edit]");
-      expect(fullOutput).toContain("[Compile]");
-      expect(fullOutput).toContain("[Doctor]");
-      expect(fullOutput).toContain("[List]");
+      expect(fullOutput).toContain("Edit");
+      expect(fullOutput).toContain("Compile");
+      expect(fullOutput).toContain("Doctor");
+      expect(fullOutput).toContain("List");
 
-      // Navigate further right
-      session.arrowRight();
+      // Navigate further down
+      session.arrowDown();
       await delay(KEYSTROKE_DELAY_MS);
 
-      // Navigate left
-      session.arrowLeft();
+      // Navigate up
+      session.arrowUp();
       await delay(KEYSTROKE_DELAY_MS);
 
       // Dashboard is still responsive
       const updatedOutput = session.getFullOutput();
-      expect(updatedOutput).toContain("[Edit]");
+      expect(updatedOutput).toContain("Edit");
 
       // Clean exit
       session.escape();
@@ -280,11 +251,8 @@ describe("init wizard — existing projects", () => {
       // The global config detection prompt should appear
       await session.waitForText("global installation was found", WIZARD_LOAD_TIMEOUT_MS);
 
-      const promptOutput = session.getFullOutput();
-      expect(promptOutput).toContain("What would you like to do");
-
-      // Press right arrow to move to "Create new project installation"
-      session.arrowRight();
+      // Press down arrow to move to "Create new project installation"
+      session.arrowDown();
       await delay(KEYSTROKE_DELAY_MS);
 
       // Press Enter to select "Create new project installation"

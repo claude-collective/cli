@@ -89,8 +89,8 @@ describe("SearchModal component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // The focused marker should appear
-      expect(output).toContain("\u25B8");
+      // The focused marker should appear (UI_SYMBOLS.CHEVRON = U+276F)
+      expect(output).toContain("\u276F");
     });
 
     it("should show 'No results found' when results array is empty", () => {
