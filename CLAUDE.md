@@ -40,6 +40,11 @@ This file provides decision trees, behavioral rules, and conventions. For codeba
 - NEVER use inline regex to extract SKILL.md frontmatter fields. Use `parseFrontmatter()` from `lib/loading/loader.ts` — it handles YAML parsing and Zod validation.
 - NEVER use `git checkout`, `git restore`, or any command that discards working tree changes — these are irreversible. If working tree changes conflict with your task, ask the user how to proceed.
 - NEVER create custom mock skills (`createMockSkill("web-framework-react")`) when a canonical `SKILLS.*` entry from `test-fixtures.ts` would work. The canonical registry (`SKILLS.react`, `SKILLS.hono`, etc.) is the single source of truth — only use `createMockSkill()` for deliberately broken, exotic, or error-case skills that don't belong in the registry.
+- NEVER call `createMockMatrix(SKILLS.react)` or other `SKILLS.*` combinations inline when a pre-built constant exists in `mock-data/mock-matrices.ts`. Use `EMPTY_MATRIX`, `SINGLE_REACT_MATRIX`, `WEB_PAIR_MATRIX`, `FULLSTACK_PAIR_MATRIX`, `WEB_TRIO_MATRIX`, `FULLSTACK_TRIO_MATRIX`, `VITEST_MATRIX`, etc. Only call `createMockMatrix()` directly when using test-local variables (from `createMockSkill()`), dynamic paths, or custom overrides not covered by an existing constant.
+- NEVER pass the entire `SKILLS` registry object to `createMockMatrix` — `createMockMatrix(SKILLS, ...)` is a bug. Spread individual entries: `createMockMatrix(SKILLS.react, SKILLS.hono)` or all: `createMockMatrix(...Object.values(SKILLS), { ... })`.
+- NEVER construct `ProjectConfig` objects inline in tests — use `buildProjectConfig()` from helpers.ts with overrides. Same for `ProjectSourceConfig` — use `buildSourceConfig()`.
+- NEVER construct `AgentScopeConfig[]` arrays inline (`[{ name: "web-developer", scope: "project" }]`) — use `buildAgentConfigs(["web-developer"])` from helpers.ts.
+- NEVER repeat agent metadata strings (title, description, tools) inline in tests — use `AGENT_DEFS` from `mock-data/mock-agents.ts` (`AGENT_DEFS.webDev`, `AGENT_DEFS.apiDev`, `AGENT_DEFS.webTester`, `AGENT_DEFS.webReviewer`).
 - NEVER write inline SKILL.md frontmatter or agent YAML template strings in tests — use `renderSkillMd()`, `renderAgentYaml()`, `renderConfigTs()` from `__tests__/content-generators.ts`.
 - NEVER export constants that are only used within the same file — keep them file-private. Run grep before adding `export` to confirm cross-file usage.
 
@@ -55,6 +60,9 @@ This file provides decision trees, behavioral rules, and conventions. For codeba
 - ALWAYS use `createMockMatrix` spread syntax: `createMockMatrix(SKILLS.react, SKILLS.hono)` — not the old record syntax `createMockMatrix({ "web-framework-react": SKILLS.react })`. Exception: empty skills record (no skills) must use old syntax.
 - ALWAYS extract repeated skill ID string literals (3+ uses in a describe block) into describe-level constants: `const REACT_SKILL_ID: SkillId = "web-framework-react"`.
 - ALWAYS use spread isolation `{ ...SKILLS.react }` when passing canonical skills to functions that mutate objects in-place (e.g., `loadSkillsFromAllSources` adds `availableSources`/`activeSource`).
+- ALWAYS use pre-built matrix constants from `mock-data/mock-matrices.ts` instead of inline `createMockMatrix(SKILLS.*)` calls. If a new `SKILLS.*` combination appears 2+ times across test files, add it as a named constant to `mock-matrices.ts`.
+- ALWAYS use `buildProjectConfig()` for `ProjectConfig` objects, `buildSourceConfig()` for source configs, `buildAgentConfigs()` for agent scope arrays, and `buildSkillConfigs()` for skill config arrays. Only construct config objects inline when deliberately testing invalid/broken shapes for error-path validation.
+- ALWAYS use `AGENT_DEFS` from `mock-data/mock-agents.ts` for agent metadata (title, description, tools) instead of hardcoding strings like `"Frontend Developer"` or `"A frontend developer agent"` inline.
 
 ---
 
@@ -127,15 +135,15 @@ This means:
 - **Skills/agents/SKILL.md/metadata.yaml** → `createCLISkill()`, `createUserSkill()`, `writeTestSkill()`, `writeSourceSkill()`, `createTestSource()`
 - **Mock skill objects** → `createMockSkill()`, `createMockSkillSource()`, `createMockExtractedSkill()`, `createMockSkillDefinition()`, `createMockSkillEntry()`, `createMockMultiSourceSkill()`
 - **Shared `TestSkill[]` constants** → `mock-data/mock-skills.ts` (e.g., `DEFAULT_TEST_SKILLS`, `PIPELINE_TEST_SKILLS`, `SWITCHABLE_SKILLS`). NEVER define `TestSkill[]` arrays inline in test files.
-- **Mock matrices** → `createMockMatrix()`, `createBasicMatrix()`, `createComprehensiveMatrix()`, `createMockMatrixConfig()`
+- **Mock matrices** → Pre-built constants from `mock-data/mock-matrices.ts` (`EMPTY_MATRIX`, `SINGLE_REACT_MATRIX`, `WEB_PAIR_MATRIX`, `FULLSTACK_PAIR_MATRIX`, etc.). Only use `createMockMatrix()` for unique shapes with test-local variables or custom overrides. Also: `createBasicMatrix()`, `createComprehensiveMatrix()`, `createMockMatrixConfig()`
 - **Mock categories** → `createMockCategory()`
-- **Mock agents** → `createMockAgent()`, `createMockAgentConfig()`, `createMockCompiledAgentData()`
+- **Mock agents** → `AGENT_DEFS` from `mock-data/mock-agents.ts` for metadata (title, description, tools). Also: `createMockAgent()`, `createMockAgentConfig()`, `createMockCompiledAgentData()`
 - **Mock stacks** → `createMockStack()`, `createMockResolvedStack()`, `createMockRawStacksConfig()`, `createMockCompiledStackPlugin()`
 - **Mock marketplace** → `createMockMarketplace()`, `createMockMarketplacePlugin()`
 - **Full project directories** → `createTestSource()` from `fixtures/create-test-source.ts`
 - **All mock data is centralised** in `__tests__/mock-data/` — skills in `mock-skills.ts`, matrices in `mock-matrices.ts`, agents in `mock-agents.ts`, stacks in `mock-stacks.ts`, categories in `mock-categories.ts`, sources in `mock-sources.ts`. NEVER define shared mock constants inline in test files.
 - **Stacks** → Use `TestStack[]` via `createTestSource({ stacks })` or extend existing fixtures
-- **Configs** → `buildProjectConfig()`, `buildSkillConfigs()`, `buildAgentConfigs()`, `buildWizardResult()`, `buildWizardResultFromStore()`, `buildSourceResult()`, `buildTestProjectConfig()`, `writeProjectConfig()` (E2E disk configs)
+- **Configs** → `buildProjectConfig()`, `buildSourceConfig()`, `buildSkillConfigs()`, `buildAgentConfigs()`, `buildWizardResult()`, `buildWizardResultFromStore()`, `buildSourceResult()`, `buildTestProjectConfig()`, `writeProjectConfig()` (E2E disk configs). NEVER construct `{ name: "...", agents: [...] }` or `{ source: "github:..." }` inline — always use the factory.
 - **Compile context** → `createCompileContext()`, `createMockCompileConfig()`, `createMockSkillAssignment()`
 - **Content generators** → `renderSkillMd()`, `renderAgentYaml()`, `renderConfigTs()`, `renderCategoriesTs()`, `renderRulesTs()` from `content-generators.ts`. Legacy wrappers `createSkillContent()`/`createAgentYamlContent()` in helpers.ts delegate to these.
 - **Test utilities** → `parseTestFrontmatter()`, `simulateSkillSelections()`, `extractSkillIdsFromAssignment()`
@@ -272,9 +280,13 @@ this.error(message, { exit: 2 });
 - [ ] Import test helpers from `__tests__/helpers.ts` (don't redefine)
 - [ ] **ALL test data uses factories/fixtures** — no inline configs, matrices, skills, stacks, or agents
 - [ ] No raw `writeFile` for skill/agent/config test data — use `createCLISkill`, `createUserSkill`, `writeTestSkill`, `writeSourceSkill`, `createTestSource`, `writeProjectConfig`
-- [ ] No inline `SkillsMatrixConfig` or `MergedSkillsMatrix` construction — use `createMockMatrix()`, `createMockSkill()`
+- [ ] No inline `SkillsMatrixConfig` or `MergedSkillsMatrix` construction — use pre-built constants from `mock-matrices.ts` or `createMockMatrix()` with test-local variables
 - [ ] Prefer `SKILLS.*` from `test-fixtures.ts` over `createMockSkill()` for standard domain skills
+- [ ] Use pre-built matrix constants (`EMPTY_MATRIX`, `SINGLE_REACT_MATRIX`, etc.) instead of inline `createMockMatrix(SKILLS.*)` calls
 - [ ] Use `createMockMatrix` spread syntax (not record syntax) — `createMockMatrix(SKILLS.react, SKILLS.hono)`
+- [ ] No inline `ProjectConfig`/`ProjectSourceConfig` objects — use `buildProjectConfig()`/`buildSourceConfig()`
+- [ ] No inline `AgentScopeConfig[]` arrays — use `buildAgentConfigs(["web-developer"])`
+- [ ] No inline agent metadata strings — use `AGENT_DEFS` from `mock-agents.ts`
 - [ ] No inline SKILL.md/agent YAML template strings — use `renderSkillMd()`/`renderAgentYaml()` from `content-generators.ts`
 - [ ] No file-private constants exported — only export what is imported by other files
 - [ ] No inline `TestSkill[]` arrays — use constants from `mock-data/mock-skills.ts`
@@ -288,7 +300,7 @@ this.error(message, { exit: 2 });
 
 ### Before Submitting PR
 
-- [ ] All tests pass (2309+ tests)
+- [ ] All tests pass (3319+ tests)
 - [ ] No TypeScript errors
 - [ ] No new ESLint warnings
 - [ ] Code formatted
