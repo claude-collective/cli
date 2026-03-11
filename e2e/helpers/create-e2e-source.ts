@@ -10,6 +10,7 @@ import type {
   StackAgentConfig,
 } from "../../src/cli/types/index.js";
 import { createMockSkillAssignment } from "../../src/cli/lib/__tests__/helpers.js";
+import { renderConfigTs, renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 
 type E2ESkill = {
   category: CategoryPath;
@@ -173,7 +174,7 @@ async function writeSkills(sourceDir: string, skills: E2ESkill[]): Promise<void>
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      `---\nname: ${skill.id}\ndescription: ${skill.description}\n---\n\n# ${skill.id}\n\n${skill.description}\n`,
+      renderSkillMd(skill.id, skill.description),
     );
 
     await writeFile(
@@ -186,8 +187,7 @@ async function writeSkills(sourceDir: string, skills: E2ESkill[]): Promise<void>
 async function writeStacks(sourceDir: string): Promise<void> {
   const stacksFilePath = path.join(sourceDir, STACKS_FILE_PATH);
   await mkdir(path.dirname(stacksFilePath), { recursive: true });
-  const stacksTsContent = `export default ${JSON.stringify({ stacks: [E2E_STACK] }, null, 2)};\n`;
-  await writeFile(stacksFilePath, stacksTsContent);
+  await writeFile(stacksFilePath, renderConfigTs({ stacks: [E2E_STACK] }));
 }
 
 async function writeAgents(sourceDir: string): Promise<void> {

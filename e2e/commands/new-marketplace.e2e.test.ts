@@ -17,6 +17,7 @@ import {
   STACKS_FILE_PATH,
   STANDARD_FILES,
   PLUGIN_MANIFEST_DIR,
+  CLAUDE_SRC_DIR,
 } from "../../src/cli/consts.js";
 
 describe("new marketplace command", () => {
@@ -89,7 +90,7 @@ describe("new marketplace command", () => {
     expect(await fileExists(path.join(marketplaceDir, "README.md"))).toBe(true);
 
     // Verify .claude-src/config.ts exists (installation marker)
-    const configPath = path.join(marketplaceDir, ".claude-src", "config.ts");
+    const configPath = path.join(marketplaceDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
     expect(await fileExists(configPath)).toBe(true);
   });
 

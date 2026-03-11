@@ -23,6 +23,7 @@ import {
   EXIT_CODES,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 
 describe("init wizard", () => {
   let session: TerminalSession | undefined;
@@ -453,7 +454,7 @@ describe("init wizard", () => {
       expect(mdFiles.length).toBeGreaterThan(0);
 
       // Verify skills directory was created
-      const skillsDir = path.join(projectDir!, CLAUDE_DIR, "skills");
+      const skillsDir = path.join(projectDir!, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
       expect(await directoryExists(skillsDir)).toBe(true);
 
       const skillFolders = await listFiles(skillsDir);
@@ -1408,11 +1409,11 @@ describe("init wizard", () => {
       });
 
       // Create the skill directory for the global installation
-      const skillDir = path.join(projectDir, CLAUDE_DIR, "skills", "web-framework-react");
+      const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
       await mkdir(skillDir, { recursive: true });
       await writeFile(
         path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        "---\nname: web-framework-react\ndescription: React\n---\n\n# React\n",
+        renderSkillMd("web-framework-react", "React", "# React"),
       );
       await writeFile(
         path.join(skillDir, STANDARD_FILES.METADATA_YAML),

@@ -8,6 +8,7 @@ import {
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
+import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import {
   SKILL_CATEGORIES_PATH,
@@ -122,7 +123,7 @@ describe("validate command", () => {
 
       await writeFile(
         path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: web-valid-skill\ndescription: A fully valid test skill\n---\n\n# Valid Skill\n`,
+        renderSkillMd("web-valid-skill", "A fully valid test skill", "# Valid Skill"),
       );
 
       await writeFile(
@@ -154,7 +155,7 @@ describe("validate command", () => {
 
       await writeFile(
         path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: web-bad-skill\ndescription: A broken skill\n---\n\n# Bad Skill\n`,
+        renderSkillMd("web-bad-skill", "A broken skill", "# Bad Skill"),
       );
 
       await writeFile(
@@ -176,7 +177,7 @@ describe("validate command", () => {
 
       await writeFile(
         path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: web-incomplete-skill\ndescription: Missing fields\n---\n\n# Incomplete\n`,
+        renderSkillMd("web-incomplete-skill", "Missing fields", "# Incomplete"),
       );
 
       // metadata.yaml with no required fields
@@ -256,7 +257,7 @@ describe("validate command", () => {
 
       await writeFile(
         path.join(skillADir, STANDARD_FILES.SKILL_MD),
-        `---\nname: web-framework-alpha\ndescription: Alpha framework skill\n---\n\n# Alpha\n`,
+        renderSkillMd("web-framework-alpha", "Alpha framework skill", "# Alpha"),
       );
       await writeFile(
         path.join(skillADir, STANDARD_FILES.METADATA_YAML),
@@ -274,7 +275,7 @@ describe("validate command", () => {
 
       await writeFile(
         path.join(skillBDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: web-testing-beta\ndescription: Beta testing skill\n---\n\n# Beta\n`,
+        renderSkillMd("web-testing-beta", "Beta testing skill", "# Beta"),
       );
       await writeFile(
         path.join(skillBDir, STANDARD_FILES.METADATA_YAML),
@@ -374,7 +375,7 @@ describe("validate command", () => {
       // First occurrence under web-framework category
       await writeFile(
         path.join(skillDirA, STANDARD_FILES.SKILL_MD),
-        `---\nname: web-framework-react\ndescription: React in framework category\n---\n\n# React (framework)\n`,
+        renderSkillMd("web-framework-react", "React in framework category", "# React (framework)"),
       );
       await writeFile(
         path.join(skillDirA, STANDARD_FILES.METADATA_YAML),
@@ -392,7 +393,7 @@ describe("validate command", () => {
       // Second occurrence under web-testing category (same skill ID)
       await writeFile(
         path.join(skillDirB, STANDARD_FILES.SKILL_MD),
-        `---\nname: web-framework-react\ndescription: React in testing category\n---\n\n# React (testing)\n`,
+        renderSkillMd("web-framework-react", "React in testing category", "# React (testing)"),
       );
       await writeFile(
         path.join(skillDirB, STANDARD_FILES.METADATA_YAML),

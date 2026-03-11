@@ -22,6 +22,7 @@ import {
   EXIT_CODES,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { renderConfigTs } from "../../src/cli/lib/__tests__/content-generators.js";
 
 const COMPILE_TIMEOUT_MS = 30_000;
 
@@ -116,8 +117,9 @@ describe("build stack command", () => {
 
       // Overwrite stacks file with two stacks so arrow keys can move between them.
       // The second stack re-uses the same agents as the first (skills exist in source).
-      const twoStacksContent = `export default ${JSON.stringify(
-        {
+      await writeFile(
+        path.join(sourceDir, STACKS_FILE_PATH),
+        renderConfigTs({
           stacks: [
             {
               id: "alpha-stack",
@@ -132,11 +134,8 @@ describe("build stack command", () => {
               agents: {},
             },
           ],
-        },
-        null,
-        2,
-      )};\n`;
-      await writeFile(path.join(sourceDir, STACKS_FILE_PATH), twoStacksContent);
+        }),
+      );
 
       session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 

@@ -12,6 +12,7 @@ import {
 } from "../../src/cli/lib/__tests__/test-fs-utils.js";
 import { EXIT_CODES } from "../../src/cli/lib/exit-codes.js";
 import type { AgentName, Domain, ProjectConfig, SkillId } from "../../src/cli/types/index.js";
+import { renderConfigTs, renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 
 export { EXIT_CODES };
 
@@ -88,15 +89,7 @@ export async function createMinimalProject(tempDir: string): Promise<{
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    `---
-name: web-testing-e2e-compile
-description: E2E test skill for compile verification
----
-
-# Test E2E Skill
-
-This skill exists solely for E2E testing of the compile command.
-`,
+    renderSkillMd("web-testing-e2e-compile", "E2E test skill for compile verification", "# Test E2E Skill\n\nThis skill exists solely for E2E testing of the compile command."),
   );
 
   await writeFile(
@@ -135,10 +128,7 @@ export async function writeProjectConfig(
   const resolved: ProjectConfig = { skills: [], agents: [], ...config };
   const configDir = path.join(baseDir, CLAUDE_SRC_DIR);
   await mkdir(configDir, { recursive: true });
-  await writeFile(
-    path.join(configDir, STANDARD_FILES.CONFIG_TS),
-    `export default ${JSON.stringify(resolved, null, 2)};\n`,
-  );
+  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(resolved));
 }
 
 export async function ensureBinaryExists(): Promise<void> {
@@ -218,7 +208,7 @@ export async function createLocalSkill(
   const description = options?.description ?? `A test skill`;
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    `---\nname: ${skillId}\ndescription: ${description}\n---\n\n# ${skillId}\n`,
+    renderSkillMd(skillId, description, `# ${skillId}`),
   );
 
   if (options?.metadata) {
@@ -302,7 +292,7 @@ export async function createEditableProject(
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      `---\nname: ${skillId}\ndescription: Test skill for E2E\n---\n\n# ${skillId}\n\nTest content.\n`,
+      renderSkillMd(skillId, "Test skill for E2E", `# ${skillId}\n\nTest content.`),
     );
 
     // Derive category from skill ID (e.g., "web-framework-react" -> "web-framework")
@@ -488,15 +478,7 @@ export default {
   // Custom skill SKILL.md
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    `---
-name: web-custom-e2e-widget
-description: A custom test widget skill
----
-
-# Custom E2E Widget
-
-Custom skill for E2E testing of custom skill ID handling.
-`,
+    renderSkillMd("web-custom-e2e-widget", "A custom test widget skill", "# Custom E2E Widget\n\nCustom skill for E2E testing of custom skill ID handling."),
   );
 
   // Custom skill metadata.yaml with custom: true

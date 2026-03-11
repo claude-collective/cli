@@ -16,6 +16,7 @@ import {
   EXIT_CODES,
 } from "../helpers/test-utils.js";
 import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
+import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 
 const COMPILE_ENV = {
@@ -209,7 +210,7 @@ describe("compile command", () => {
       await mkdir(invalidSkillDir, { recursive: true });
       await writeFile(
         path.join(invalidSkillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: web-testing-e2e-no-metadata\ndescription: Missing metadata\n---\n\n# No Metadata\n`,
+        renderSkillMd("web-testing-e2e-no-metadata", "Missing metadata", "# No Metadata"),
       );
 
       const { exitCode, combined } = await runCLI(["compile"], projectDir, {

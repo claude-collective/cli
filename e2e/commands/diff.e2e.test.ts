@@ -11,6 +11,7 @@ import {
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { SKILLS_DIR_PATH, STANDARD_FILES } from "../../src/cli/consts.js";
+import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 
 describe("diff command", () => {
   let tempDir: string;
@@ -106,7 +107,7 @@ describe("diff command", () => {
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      `---\nname: ${localDirName}\ndescription: Locally modified content\n---\n\n# ${localDirName}\n\nThis content has been locally modified.\n`,
+      renderSkillMd(localDirName, "Locally modified content", `# ${localDirName}\n\nThis content has been locally modified.`),
     );
 
     const { exitCode, combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
@@ -178,7 +179,7 @@ describe("diff command", () => {
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      `---\nname: ${localDirName}\ndescription: Different content\n---\n\n# Changed\n`,
+      renderSkillMd(localDirName, "Different content", "# Changed"),
     );
 
     const { exitCode, stdout } = await runCLI(
@@ -338,7 +339,7 @@ describe("diff command", () => {
 
     await writeFile(
       path.join(reactDir, STANDARD_FILES.SKILL_MD),
-      `---\nname: ${reactFork}\ndescription: Locally modified react\n---\n\n# Modified React\n`,
+      renderSkillMd(reactFork, "Locally modified react", "# Modified React"),
     );
 
     const vitestDir = await createLocalSkill(tempDir, vitestFork, {
@@ -355,7 +356,7 @@ describe("diff command", () => {
 
     await writeFile(
       path.join(vitestDir, STANDARD_FILES.SKILL_MD),
-      `---\nname: ${vitestFork}\ndescription: Locally modified vitest\n---\n\n# Modified Vitest\n`,
+      renderSkillMd(vitestFork, "Locally modified vitest", "# Modified Vitest"),
     );
 
     const { combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
@@ -386,7 +387,7 @@ describe("diff command", () => {
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      `---\nname: ${localDirName}\ndescription: Locally modified\n---\n\n# Changed\n`,
+      renderSkillMd(localDirName, "Locally modified", "# Changed"),
     );
 
     const { combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);

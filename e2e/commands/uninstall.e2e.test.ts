@@ -13,6 +13,7 @@ import {
   EXIT_CODES,
 } from "../helpers/test-utils.js";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 
 const FORKED_FROM_METADATA =
   [
@@ -178,7 +179,7 @@ describe("uninstall command", () => {
     await mkdir(userSkillDir, { recursive: true });
     await writeFile(
       path.join(userSkillDir, STANDARD_FILES.SKILL_MD),
-      "---\nname: my-custom-skill\ndescription: User created\n---\n\n# My Custom Skill\n",
+      renderSkillMd("my-custom-skill", "User created", "# My Custom Skill"),
     );
     await writeFile(
       path.join(userSkillDir, STANDARD_FILES.METADATA_YAML),
@@ -216,7 +217,7 @@ describe("uninstall command", () => {
 
     await writeFile(
       path.join(userSkillDir, STANDARD_FILES.SKILL_MD),
-      "---\nname: my-custom-skill\ndescription: User created\n---\n\n# My Custom Skill\n",
+      renderSkillMd("my-custom-skill", "User created", "# My Custom Skill"),
     );
     await writeFile(
       path.join(userSkillDir, STANDARD_FILES.METADATA_YAML),
