@@ -220,7 +220,10 @@ export default class Edit extends BaseCommand {
       }
     }
 
-    const agentScopeChanges = new Map<AgentName, { from: "project" | "global"; to: "project" | "global" }>();
+    const agentScopeChanges = new Map<
+      AgentName,
+      { from: "project" | "global"; to: "project" | "global" }
+    >();
     if (projectConfig?.config?.agents) {
       for (const newAgent of result.agentConfigs) {
         const oldAgent = projectConfig.config.agents.find((a) => a.name === newAgent.name);

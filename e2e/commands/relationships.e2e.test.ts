@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import {
-  cleanupTempDir,
-  ensureBinaryExists,
-  runCLI,
-  EXIT_CODES,
-} from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists, runCLI, EXIT_CODES } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import type { SkillSlug } from "../../src/cli/types/index.js";
 
@@ -163,13 +158,7 @@ describe("slug-based relationship rules", () => {
       // that's truly not recommended. "anti-over-engineering" is a methodology skill
       // that has no recommend entry in either default or source rules.
       const { exitCode, stdout } = await runCLI(
-        [
-          "info",
-          "meta-methodology-anti-over-engineering",
-          "--source",
-          sourceDir,
-          "--no-preview",
-        ],
+        ["info", "meta-methodology-anti-over-engineering", "--source", sourceDir, "--no-preview"],
         tempDir,
       );
 

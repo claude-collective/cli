@@ -32,9 +32,7 @@ export const CONFLICT_MATRIX = createMockMatrixConfig(
   {},
   {
     relationships: {
-      conflicts: [
-        { skills: ["react", "vue"], reason: "Pick one framework" },
-      ],
+      conflicts: [{ skills: ["react", "vue"], reason: "Pick one framework" }],
     },
   },
 );

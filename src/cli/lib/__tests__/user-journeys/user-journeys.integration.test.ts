@@ -983,11 +983,10 @@ describe("per-agent scope", () => {
     const comprehensiveMatrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(comprehensiveMatrix);
 
-    simulateSkillSelections(
-      ["web-framework-react", "api-framework-hono"],
-      comprehensiveMatrix,
-      ["web", "api"],
-    );
+    simulateSkillSelections(["web-framework-react", "api-framework-hono"], comprehensiveMatrix, [
+      "web",
+      "api",
+    ]);
     useWizardStore.getState().preselectAgentsFromDomains();
     useWizardStore.getState().toggleAgentScope("web-developer");
 
@@ -1033,9 +1032,7 @@ describe("per-agent scope", () => {
     // Attempt to toggle — should be no-op
     useWizardStore.getState().toggleAgentScope("web-developer");
 
-    const config = useWizardStore
-      .getState()
-      .agentConfigs.find((ac) => ac.name === "web-developer");
+    const config = useWizardStore.getState().agentConfigs.find((ac) => ac.name === "web-developer");
     expect(config?.scope).toBe("global");
   });
 

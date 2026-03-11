@@ -27,9 +27,7 @@ describe("defaultRules", () => {
 
   it("has require rules", () => {
     expect(defaultRules.relationships.requires.length).toBeGreaterThan(0);
-    const zustandRequires = defaultRules.relationships.requires.find(
-      (r) => r.skill === "zustand",
-    );
+    const zustandRequires = defaultRules.relationships.requires.find((r) => r.skill === "zustand");
     expect(zustandRequires).toBeDefined();
     expect(zustandRequires!.needsAny).toBe(true);
   });
