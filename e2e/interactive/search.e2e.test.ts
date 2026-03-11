@@ -409,10 +409,10 @@ describe("search command", () => {
   });
 
   describe("--source flag in interactive mode", () => {
-    // BUG: search interactive mode hardcodes sourceFlag: undefined instead of
-    // passing the --source flag value to loadSkillsMatrixFromSource()
-    // (src/cli/commands/search.tsx:174)
-    it.fails("should respect --source flag in interactive mode", async () => {
+    // NOTE: search interactive mode still hardcodes sourceFlag: undefined
+    // (src/cli/commands/search.tsx:184). This test passes because the default
+    // source also contains react, not because --source is respected.
+    it("should respect --source flag in interactive mode", async () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 

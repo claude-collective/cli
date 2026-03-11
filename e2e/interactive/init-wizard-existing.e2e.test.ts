@@ -75,10 +75,8 @@ describe("init wizard — existing projects", () => {
       session = spawnInitWizard(projectDir!, sourceDir!);
 
       // The wizard should start fresh since there is no .claude-src/config.ts
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("E2E Test Stack");
+      // Wait for the actual stack name to render (not just the "Choose a stack" header)
+      await session.waitForText("E2E Test Stack", WIZARD_LOAD_TIMEOUT_MS);
     });
   });
 
