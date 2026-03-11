@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.67.0] - 2026-03-11
+
+**Split init-wizard E2E tests for parallel execution (D-73)**
+
+- Monolithic `init-wizard.e2e.test.ts` (55 tests) split into 7 independent files
+- ~3.8x speedup from parallel execution (~3.5min → ~55s)
+- TODO tracker cleanup: 8 tasks marked complete
+
+See [changelogs/0.67.0.md](./changelogs/0.67.0.md) for full details.
+
+---
+
 ## [0.66.0] - 2026-03-11
 
 **Slug-based relationship rules (R-04 Phase 2)**
