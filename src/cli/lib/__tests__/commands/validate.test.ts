@@ -518,7 +518,7 @@ describe("source validation (validateSource)", () => {
       relationships: {
         conflicts: [
           {
-            skills: ["web-framework-react", "web-state-nonexistent"],
+            skills: ["react", "angular"],
             reason: "Test conflict with nonexistent skill",
           },
         ],

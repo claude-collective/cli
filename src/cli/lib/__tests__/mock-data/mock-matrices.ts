@@ -33,7 +33,7 @@ export const CONFLICT_MATRIX = createMockMatrixConfig(
   {
     relationships: {
       conflicts: [
-        { skills: ["web-framework-react", "web-framework-vue"], reason: "Pick one framework" },
+        { skills: ["react", "vue"], reason: "Pick one framework" },
       ],
     },
   },
@@ -46,7 +46,7 @@ export const ALTERNATIVES_MATRIX = createMockMatrixConfig(
       alternatives: [
         {
           purpose: "State management",
-          skills: ["web-state-zustand", "web-state-jotai"],
+          skills: ["zustand", "jotai"],
         },
       ],
     },
@@ -59,8 +59,8 @@ export const REQUIRES_MATRIX = createMockMatrixConfig(
     relationships: {
       requires: [
         {
-          skill: "web-state-zustand",
-          needs: ["web-framework-react"],
+          skill: "zustand",
+          needs: ["react"],
           reason: "Zustand needs React",
         },
       ],
@@ -153,13 +153,13 @@ export const FRAMEWORK_AND_STYLING_CONFIG = createMockMatrixConfig(
     relationships: {
       discourages: [
         {
-          skills: ["web-framework-react", "web-styling-scss-modules"],
+          skills: ["react", "scss-modules"],
           reason: "These tools have conflicting design philosophies",
         },
       ],
       recommends: [
         {
-          skill: "web-framework-vue",
+          skill: "vue",
           reason: "These work great together",
         },
       ],
@@ -197,8 +197,8 @@ export const FRAMEWORK_AND_TESTING_CONFIG = createMockMatrixConfig(
     relationships: {
       requires: [
         {
-          skill: "web-testing-vitest",
-          needs: ["web-framework-react"],
+          skill: "vitest",
+          needs: ["react"],
           reason: "RTL requires React to function",
         },
       ],

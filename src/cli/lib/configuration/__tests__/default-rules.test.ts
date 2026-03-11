@@ -10,7 +10,7 @@ describe("defaultRules", () => {
   it("has conflict rules", () => {
     expect(defaultRules.relationships.conflicts.length).toBeGreaterThan(0);
     const frameworkConflict = defaultRules.relationships.conflicts.find((c) =>
-      c.skills.includes("web-framework-react"),
+      c.skills.includes("react"),
     );
     expect(frameworkConflict).toBeDefined();
     expect(frameworkConflict!.reason).toBe("Frameworks are mutually exclusive");
@@ -19,7 +19,7 @@ describe("defaultRules", () => {
   it("has recommend rules as flat picks with skill and reason", () => {
     expect(defaultRules.relationships.recommends.length).toBeGreaterThan(0);
     const zustandRecommend = defaultRules.relationships.recommends.find(
-      (r) => r.skill === "web-state-zustand",
+      (r) => r.skill === "zustand",
     );
     expect(zustandRecommend).toBeDefined();
     expect(zustandRecommend!.reason).toBe("Best-in-class React state management");
@@ -28,7 +28,7 @@ describe("defaultRules", () => {
   it("has require rules", () => {
     expect(defaultRules.relationships.requires.length).toBeGreaterThan(0);
     const zustandRequires = defaultRules.relationships.requires.find(
-      (r) => r.skill === "web-state-zustand",
+      (r) => r.skill === "zustand",
     );
     expect(zustandRequires).toBeDefined();
     expect(zustandRequires!.needsAny).toBe(true);
@@ -40,7 +40,7 @@ describe("defaultRules", () => {
       (a) => a.purpose === "Frontend Framework",
     );
     expect(frameworkAlts).toBeDefined();
-    expect(frameworkAlts!.skills).toContain("web-framework-react");
+    expect(frameworkAlts!.skills).toContain("react");
   });
 
   it("has discourage rules", () => {

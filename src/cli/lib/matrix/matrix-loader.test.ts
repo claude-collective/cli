@@ -88,7 +88,8 @@ const UNRESOLVED_CONFLICT_MATRIX = createMockMatrixConfig(
     relationships: {
       conflicts: [
         {
-          skills: ["web-framework-react", "web-framework-nonexistent"],
+          // Boundary cast: deliberately invalid slug to test unresolved reference handling
+          skills: ["react", "nonexistent" as import("../../types").SkillSlug],
           reason: "Conflict with missing skill",
         },
       ],
@@ -169,28 +170,28 @@ describe("matrix-loader", () => {
         relationships: {
           conflicts: [
             {
-              skills: ["web-framework-react", "web-framework-vue-composition-api"],
+              skills: ["react", "vue"],
               reason: "Frameworks are mutually exclusive",
             },
           ],
           discourages: [
             {
-              skills: ["web-state-zustand", "web-framework-react"],
+              skills: ["zustand", "react"],
               reason: "Test discourage rule",
             },
           ],
-          recommends: [{ skill: "web-state-zustand", reason: "Best React state management" }],
+          recommends: [{ skill: "zustand", reason: "Best React state management" }],
           requires: [
             {
-              skill: "web-state-zustand",
-              needs: ["web-framework-react"],
+              skill: "zustand",
+              needs: ["react"],
               reason: "Zustand requires React",
             },
           ],
           alternatives: [
             {
               purpose: "Frontend Framework",
-              skills: ["web-framework-react", "web-framework-vue-composition-api"],
+              skills: ["react", "vue"],
             },
           ],
         },
@@ -227,7 +228,7 @@ describe("matrix-loader", () => {
         relationships: {
           conflicts: [],
           discourages: [],
-          recommends: [{ skill: "web-framework-react", reason: "Recommended framework" }],
+          recommends: [{ skill: "react", reason: "Recommended framework" }],
           requires: [],
           alternatives: [],
         },
@@ -236,7 +237,7 @@ describe("matrix-loader", () => {
       const result = await loadSkillRules("/project/skill-rules.ts");
 
       expect(result.relationships.recommends).toHaveLength(1);
-      expect(result.relationships.recommends[0].skill).toBe("web-framework-react");
+      expect(result.relationships.recommends[0].skill).toBe("react");
     });
 
     it("returns default empty arrays when relationships are missing", async () => {
@@ -508,7 +509,7 @@ displayName: wrong
       const reactSkill = merged.skills["web-framework-react"];
       expect(reactSkill).toBeDefined();
       expect(reactSkill!.conflictsWith).toEqual(
-        expect.arrayContaining([expect.objectContaining({ skillId: "web-framework-nonexistent" })]),
+        expect.arrayContaining([expect.objectContaining({ skillId: "nonexistent" })]),
       );
     });
 
@@ -556,7 +557,7 @@ displayName: wrong
         { "web-framework": FRAMEWORK_CATEGORY },
         {
           relationships: {
-            recommends: [{ skill: "web-state-zustand", reason: "Best state management" }],
+            recommends: [{ skill: "zustand", reason: "Best state management" }],
           },
         },
       );
