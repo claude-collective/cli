@@ -2,20 +2,33 @@
 // Uses createMockAgent/createMockAgentConfig from helpers.ts.
 
 import type { AgentConfig, AgentDefinition } from "../../../types";
-import { createMockAgent, createMockAgentConfig, createMockSkillEntry } from "../helpers.js";
+import { createMockAgent, createMockAgentConfig } from "../helpers.js";
+import { REACT_SKILL, REACT_SKILL_PRELOADED, VITEST_SINGLE_FILE_SKILL } from "./mock-skills.js";
+
+// ---------------------------------------------------------------------------
+// Canonical agent definitions — reusable for both mock objects and disk-writing tests.
+// Use AGENT_DEFS.webDev.title etc. instead of repeating inline strings.
+// ---------------------------------------------------------------------------
+
+export const AGENT_DEFS = {
+  webDev: { name: "web-developer", title: "Frontend Developer", description: "A frontend developer agent", tools: ["Read", "Write", "Glob"] },
+  apiDev: { name: "api-developer", title: "Backend Developer", description: "A backend developer agent", tools: ["Read", "Write", "Bash"] },
+  webTester: { name: "web-tester", title: "Tester", description: "A testing agent", tools: ["Read", "Bash"] },
+  webReviewer: { name: "web-reviewer", title: "Code Reviewer", description: "A code review agent", tools: ["Read", "Grep", "Glob"] },
+};
 
 // ---------------------------------------------------------------------------
 // Agent definitions from resolver.test.ts
 // ---------------------------------------------------------------------------
 
-export const WEB_DEVELOPER_DEFINITION = createMockAgent("Web Developer", {
+const WEB_DEVELOPER_DEFINITION = createMockAgent("Web Developer", {
   description: "Frontend web developer",
   tools: ["Read", "Write", "Edit"],
   model: "opus",
   path: "web/web-developer",
 });
 
-export const API_DEVELOPER_DEFINITION = createMockAgent("API Developer", {
+const API_DEVELOPER_DEFINITION = createMockAgent("API Developer", {
   description: "Backend API developer",
   tools: ["Read", "Write", "Edit", "Bash"],
   model: "opus",
@@ -31,15 +44,9 @@ export const RESOLVE_AGENTS_DEFINITIONS: Record<string, AgentDefinition> = {
 // Agent config maps from compiler.test.ts
 // ---------------------------------------------------------------------------
 
-const REACT_SKILL_PRELOADED = createMockSkillEntry("web-framework-react", true);
-const REACT_SKILL = createMockSkillEntry("web-framework-react");
 const REACT_SKILL_WITH_PATH = {
-  ...createMockSkillEntry("web-framework-react"),
+  ...REACT_SKILL,
   path: "skills/web-framework-react/",
-};
-const VITEST_SINGLE_FILE_SKILL = {
-  ...createMockSkillEntry("web-testing-vitest"),
-  path: "skills/web-testing-vitest.md",
 };
 
 export const WEB_DEV_NO_SKILLS: Record<string, AgentConfig> = {

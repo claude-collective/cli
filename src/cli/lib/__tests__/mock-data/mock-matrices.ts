@@ -1,7 +1,6 @@
 // Shared matrix configs and compile configs for test files.
 // Uses createMockMatrixConfig/createMockCompileConfig from helpers.ts.
 
-import type { SkillId } from "../../../types";
 import {
   createMockMatrixConfig,
   createMockCompileConfig,
@@ -9,8 +8,19 @@ import {
   createMockMatrix,
   createMockSkill,
 } from "../helpers.js";
-import { TEST_SKILLS } from "../test-fixtures.js";
+import { SKILLS, TEST_CATEGORIES } from "../test-fixtures.js";
 import { FRAMEWORK_CATEGORY } from "./mock-categories.js";
+
+// ---------------------------------------------------------------------------
+// Canonical matrix shapes — use these instead of inline createMockMatrix() calls
+// ---------------------------------------------------------------------------
+
+export const EMPTY_MATRIX = createMockMatrix();
+export const SINGLE_REACT_MATRIX = createMockMatrix(SKILLS.react);
+export const WEB_PAIR_MATRIX = createMockMatrix(SKILLS.react, SKILLS.zustand);
+export const FULLSTACK_PAIR_MATRIX = createMockMatrix(SKILLS.react, SKILLS.hono);
+export const WEB_TRIO_MATRIX = createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.vitest);
+export const FULLSTACK_TRIO_MATRIX = createMockMatrix(SKILLS.react, SKILLS.hono, SKILLS.vitest);
 
 // ---------------------------------------------------------------------------
 // Matrix configs from matrix-loader.test.ts
@@ -25,10 +35,6 @@ export const CONFLICT_MATRIX = createMockMatrixConfig(
       conflicts: [
         { skills: ["web-framework-react", "web-framework-vue"], reason: "Pick one framework" },
       ],
-      discourages: [],
-      recommends: [],
-      requires: [],
-      alternatives: [],
     },
   },
 );
@@ -37,10 +43,6 @@ export const ALTERNATIVES_MATRIX = createMockMatrixConfig(
   {},
   {
     relationships: {
-      conflicts: [],
-      discourages: [],
-      recommends: [],
-      requires: [],
       alternatives: [
         {
           purpose: "State management",
@@ -55,9 +57,6 @@ export const REQUIRES_MATRIX = createMockMatrixConfig(
   {},
   {
     relationships: {
-      conflicts: [],
-      discourages: [],
-      recommends: [],
       requires: [
         {
           skill: "web-state-zustand",
@@ -65,7 +64,6 @@ export const REQUIRES_MATRIX = createMockMatrixConfig(
           reason: "Zustand needs React",
         },
       ],
-      alternatives: [],
     },
   },
 );
@@ -74,28 +72,24 @@ export const REQUIRES_MATRIX = createMockMatrixConfig(
 // MergedSkillsMatrix instances from config-generator.test.ts
 // ---------------------------------------------------------------------------
 
-export const LOCAL_SKILL_MATRIX = createMockMatrix({
-  "web-local-skill": createMockSkill("web-local-skill", {
+export const LOCAL_SKILL_MATRIX = createMockMatrix(
+  createMockSkill("web-local-skill", {
     local: true,
     localPath: ".claude/skills/my-local-skill/",
   }),
-});
+);
 
-export const MIXED_LOCAL_REMOTE_MATRIX = createMockMatrix({
-  "web-framework-react": TEST_SKILLS.react,
-  "meta-company-patterns": createMockSkill("meta-company-patterns", {
+export const MIXED_LOCAL_REMOTE_MATRIX = createMockMatrix(
+  SKILLS.react,
+  createMockSkill("meta-company-patterns", {
     local: true,
     localPath: ".claude/skills/company-patterns/",
   }),
-});
+);
 
-export const METHODOLOGY_MATRIX = createMockMatrix({
-  "meta-methodology-anti-over-engineering": TEST_SKILLS["anti-over-engineering"],
-});
+export const METHODOLOGY_MATRIX = createMockMatrix(SKILLS.antiOverEng);
 
-export const VITEST_MATRIX = createMockMatrix({
-  "web-testing-vitest": TEST_SKILLS.vitest,
-});
+export const VITEST_MATRIX = createMockMatrix(SKILLS.vitest);
 
 // ---------------------------------------------------------------------------
 // Compile configs from resolver.test.ts
@@ -115,20 +109,19 @@ export const WEB_ONLY_COMPILE_CONFIG = createMockCompileConfig({
 // ---------------------------------------------------------------------------
 
 export const TOOLING_AND_FRAMEWORK_CONFIG = createMockMatrixConfig({
-  "shared-tooling": createMockCategory("shared-tooling", "Tooling", {
+  "shared-tooling": {
+    ...TEST_CATEGORIES.tooling,
     description: "Development tooling and infrastructure",
-    domain: "shared",
+    domain: "shared" as const,
     exclusive: false,
-    required: false,
     order: 20,
-  }),
-  "web-framework": createMockCategory("web-framework", "Framework", {
+  },
+  "web-framework": {
+    ...TEST_CATEGORIES.framework,
     description: "UI Framework",
-    domain: "web",
-    exclusive: true,
     required: true,
     order: 1,
-  }),
+  },
 });
 
 export const CI_CD_CONFIG = createMockMatrixConfig({
@@ -143,51 +136,36 @@ export const CI_CD_CONFIG = createMockMatrixConfig({
 
 export const FRAMEWORK_AND_STYLING_CONFIG = createMockMatrixConfig(
   {
-    "web-framework": createMockCategory("web-framework", "Framework", {
+    "web-framework": {
+      ...TEST_CATEGORIES.framework,
       description: "UI Framework",
-      domain: "web",
-      exclusive: true,
       required: true,
       order: 1,
-    }),
-    "web-styling": createMockCategory("web-styling", "Styling", {
+    },
+    "web-styling": {
+      ...TEST_CATEGORIES.styling,
       description: "CSS approach",
-      domain: "web",
       exclusive: false,
-      required: false,
       order: 2,
-    }),
+    },
   },
   {
     relationships: {
-      conflicts: [],
       discourages: [
         {
-          skills: ["web-framework-custom-a", "web-styling-custom-b"],
+          skills: ["web-framework-react", "web-styling-scss-modules"],
           reason: "These tools have conflicting design philosophies",
         },
       ],
       recommends: [
         {
-          skill: "web-styling-custom-c" as SkillId,
+          skill: "web-framework-vue",
           reason: "These work great together",
         },
       ],
-      requires: [],
-      alternatives: [],
     },
   },
 );
-
-export const TOOLING_CONFIG = createMockMatrixConfig({
-  "shared-tooling": createMockCategory("shared-tooling", "Tooling", {
-    description: "Build and bundling tools",
-    domain: "web",
-    exclusive: false,
-    required: false,
-    order: 5,
-  }),
-});
 
 export const OBSERVABILITY_CONFIG = createMockMatrixConfig({
   "api-observability": createMockCategory("api-observability", "Observability", {
@@ -201,34 +179,29 @@ export const OBSERVABILITY_CONFIG = createMockMatrixConfig({
 
 export const FRAMEWORK_AND_TESTING_CONFIG = createMockMatrixConfig(
   {
-    "web-framework": createMockCategory("web-framework", "Framework", {
+    "web-framework": {
+      ...TEST_CATEGORIES.framework,
       description: "UI Framework",
-      domain: "web",
-      exclusive: true,
       required: true,
       order: 1,
-    }),
-    "web-testing": createMockCategory("web-testing", "Testing", {
+    },
+    "web-testing": {
+      ...TEST_CATEGORIES.testing,
       description: "Testing tools",
-      domain: "shared",
+      domain: "shared" as const,
       exclusive: false,
-      required: false,
       order: 10,
-    }),
+    },
   },
   {
     relationships: {
-      conflicts: [],
-      discourages: [],
-      recommends: [],
       requires: [
         {
-          skill: "web-testing-custom-rtl",
-          needs: ["web-framework-custom-react"],
+          skill: "web-testing-vitest",
+          needs: ["web-framework-react"],
           reason: "RTL requires React to function",
         },
       ],
-      alternatives: [],
     },
   },
 );

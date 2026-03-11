@@ -9,7 +9,7 @@ import {
   directoryExists,
   writeTestSkill,
   writeTestAgent,
-  TEST_SKILLS,
+  SKILLS,
 } from "./helpers";
 import type { PluginTestDirs } from "./helpers";
 import type { SkillId } from "../../types";
@@ -19,9 +19,7 @@ describe("test helpers", () => {
   let testDirs: PluginTestDirs | null = null;
 
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(createMockMatrix({
-      "web-testing-vitest": TEST_SKILLS.vitest,
-    }));
+    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.vitest));
   });
 
   afterEach(async () => {

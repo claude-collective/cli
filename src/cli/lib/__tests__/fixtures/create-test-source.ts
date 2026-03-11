@@ -1,7 +1,7 @@
 import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
-import { DEFAULT_PLUGIN_NAME } from "../../../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, PLUGINS_SUBDIR, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
 import type { ExtractedSkillMetadata } from "../../../types";
 import { computeSkillFolderHash } from "../../versioning";
 import {
@@ -11,6 +11,7 @@ import {
   createTempDir,
   cleanupTempDir,
 } from "../helpers";
+import { renderSkillMd, renderConfigTs } from "../content-generators";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 
 export type TestSkill = Pick<
@@ -286,7 +287,6 @@ Apply rate limiting to prevent abuse.
 };
 
 export {
-  METHODOLOGY_TEST_SKILLS,
   EXTRA_DOMAIN_TEST_SKILLS,
   COMPILE_LOCAL_SKILL,
   DEFAULT_TEST_SKILLS,
@@ -423,32 +423,19 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   await mkdir(agentsDir, { recursive: true });
   await mkdir(configDir, { recursive: true });
 
-  const categoriesTsContent = `export default ${JSON.stringify(diskCategories, null, 2)};\n`;
-  await writeFile(path.join(configDir, "skill-categories.ts"), categoriesTsContent);
-  const rulesTsContent = `export default ${JSON.stringify(diskRules, null, 2)};\n`;
-  await writeFile(path.join(configDir, "skill-rules.ts"), rulesTsContent);
+  await writeFile(path.join(configDir, "skill-categories.ts"), renderConfigTs(diskCategories));
+  await writeFile(path.join(configDir, "skill-rules.ts"), renderConfigTs(diskRules));
 
   if (options.stacks && options.stacks.length > 0) {
-    const stacksTsContent = `export default ${JSON.stringify({ stacks: options.stacks }, null, 2)};\n`;
-    await writeFile(path.join(configDir, "stacks.ts"), stacksTsContent);
+    await writeFile(path.join(configDir, "stacks.ts"), renderConfigTs({ stacks: options.stacks }));
   }
 
   for (const skill of skills) {
     const skillDir = path.join(skillsDir, skill.category, skill.id);
     await mkdir(skillDir, { recursive: true });
 
-    const content =
-      skill.content ??
-      `---
-name: ${skill.id}
-description: ${skill.description}
----
-
-# ${skill.id}
-
-${skill.description}
-`;
-    await writeFile(path.join(skillDir, "SKILL.md"), content);
+    const content = skill.content ?? renderSkillMd(skill.id, skill.description);
+    await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), content);
 
     const contentHash = await computeSkillFolderHash(skillDir);
     const domain = skill.domain;
@@ -463,7 +450,7 @@ ${skill.description}
       slug,
       contentHash,
     };
-    await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
+    await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
   }
 
   const templatesDir = path.join(agentsDir, "_templates");
@@ -498,7 +485,7 @@ permissionMode: {{ agent.permissionMode }}
       model: agent.model ?? "opus",
       permissionMode: agent.permissionMode ?? "default",
     };
-    await writeFile(path.join(agentDir, "metadata.yaml"), stringifyYaml(agentYaml));
+    await writeFile(path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML), stringifyYaml(agentYaml));
 
     await writeFile(
       path.join(agentDir, "intro.md"),
@@ -521,11 +508,11 @@ permissionMode: {{ agent.permissionMode }}
   };
 
   if (options.asPlugin) {
-    const pluginDir = path.join(projectDir, ".claude", "plugins", DEFAULT_PLUGIN_NAME);
+    const pluginDir = path.join(projectDir, CLAUDE_DIR, PLUGINS_SUBDIR, DEFAULT_PLUGIN_NAME);
     await mkdir(pluginDir, { recursive: true });
-    await mkdir(path.join(pluginDir, ".claude-plugin"), { recursive: true });
+    await mkdir(path.join(pluginDir, PLUGIN_MANIFEST_DIR), { recursive: true });
     await mkdir(path.join(pluginDir, "agents"), { recursive: true });
-    await mkdir(path.join(pluginDir, "skills"), { recursive: true });
+    await mkdir(path.join(pluginDir, STANDARD_DIRS.SKILLS), { recursive: true });
 
     const manifest = options.pluginManifest ?? {
       name: DEFAULT_PLUGIN_NAME,
@@ -533,58 +520,46 @@ permissionMode: {{ agent.permissionMode }}
       description: "Test plugin",
     };
     await writeFile(
-      path.join(pluginDir, ".claude-plugin", "plugin.json"),
+      path.join(pluginDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE),
       JSON.stringify(manifest, null, 2),
     );
 
     for (const skill of skills) {
       const categoryPath = skill.category;
       const srcSkillDir = path.join(skillsDir, categoryPath, skill.id);
-      const destSkillDir = path.join(pluginDir, "skills", skill.id);
+      const destSkillDir = path.join(pluginDir, STANDARD_DIRS.SKILLS, skill.id);
       await mkdir(destSkillDir, { recursive: true });
 
-      const skillMdContent = await readFile(path.join(srcSkillDir, "SKILL.md"), "utf-8");
-      await writeFile(path.join(destSkillDir, "SKILL.md"), skillMdContent);
+      const skillMdContent = await readFile(path.join(srcSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
+      await writeFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), skillMdContent);
 
-      const metadataContent = await readFile(path.join(srcSkillDir, "metadata.yaml"), "utf-8");
-      await writeFile(path.join(destSkillDir, "metadata.yaml"), metadataContent);
+      const metadataContent = await readFile(path.join(srcSkillDir, STANDARD_FILES.METADATA_YAML), "utf-8");
+      await writeFile(path.join(destSkillDir, STANDARD_FILES.METADATA_YAML), metadataContent);
     }
 
     if (options.projectConfig) {
-      const content = `export default ${JSON.stringify(options.projectConfig, null, 2)};`;
-      await writeFile(path.join(pluginDir, "config.ts"), content);
+      await writeFile(path.join(pluginDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(options.projectConfig));
     }
 
     dirs.pluginDir = pluginDir;
   }
 
   if (options.projectConfig) {
-    const projectClaudeSrcDir = path.join(projectDir, ".claude-src");
+    const projectClaudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
     await mkdir(projectClaudeSrcDir, { recursive: true });
-    const content = `export default ${JSON.stringify(options.projectConfig, null, 2)};`;
-    await writeFile(path.join(projectClaudeSrcDir, "config.ts"), content);
+    await writeFile(path.join(projectClaudeSrcDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(options.projectConfig));
   }
 
   if (options.localSkills && options.localSkills.length > 0) {
-    const localSkillsDir = path.join(projectDir, ".claude", "skills");
+    const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
     await mkdir(localSkillsDir, { recursive: true });
 
     for (const skill of options.localSkills) {
       const skillDir = path.join(localSkillsDir, skill.id);
       await mkdir(skillDir, { recursive: true });
 
-      const content =
-        skill.content ??
-        `---
-name: ${skill.id}
-description: ${skill.description}
----
-
-# ${skill.id}
-
-${skill.description}
-`;
-      await writeFile(path.join(skillDir, "SKILL.md"), content);
+      const content = skill.content ?? renderSkillMd(skill.id, skill.description);
+      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), content);
 
       if (!skill.skipMetadata) {
         const localDomain = skill.domain;
@@ -596,7 +571,7 @@ ${skill.description}
         if (skill.forkedFrom) {
           metadata.forkedFrom = skill.forkedFrom;
         }
-        await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
+        await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
       }
     }
   }

@@ -6,14 +6,17 @@ import { run, Errors } from "@oclif/core";
 import ansis from "ansis";
 import { createJiti } from "jiti";
 import {
+  CLAUDE_DIR,
   CLAUDE_SRC_DIR,
-  DEFAULT_BRANDING,
   DEFAULT_PLUGIN_NAME,
+  PLUGINS_SUBDIR,
+  STANDARD_DIRS,
   STANDARD_FILES,
 } from "../../consts";
-import { findSkill, useMatrixStore } from "../../stores/matrix-store";
+import { findSkill } from "../../stores/matrix-store";
 import { typedEntries } from "../../utils/typed-object";
 import { computeSkillFolderHash } from "../versioning";
+import { renderSkillMd, renderAgentYaml, renderConfigTs } from "./content-generators";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,43 +25,6 @@ export const CLI_ROOT = path.resolve(__dirname, "../../../..");
 
 /** Resolve @agents-inc/cli/config to the source config-exports.ts so jiti can load it in dev. */
 const CONFIG_EXPORTS_PATH = path.resolve(__dirname, "../../config-exports.ts");
-
-export const OUTPUT_STRINGS = {
-  CONFIG_HEADER: `${DEFAULT_BRANDING.NAME} Configuration`,
-  CONFIG_PATHS_HEADER: "Configuration File Paths",
-  CONFIG_LAYERS_HEADER: "Configuration Layers:",
-  CONFIG_PRECEDENCE: "Precedence: flag > env > project > global > default",
-  SOURCE_LABEL: "Source:",
-  MARKETPLACE_LABEL: "Marketplace:",
-  AGENTS_SOURCE_LABEL: "Agents Source:",
-  GLOBAL_LABEL: "Global:",
-  PROJECT_LABEL: "Project:",
-
-  // Setup/Init outputs
-  INIT_HEADER: `${DEFAULT_BRANDING.NAME} Setup`,
-  INIT_SUCCESS: `${DEFAULT_BRANDING.NAME} initialized successfully!`,
-  LOADING_MATRIX: "Loading skills matrix...",
-  LOADING_SKILLS: "Loading skills...",
-  LOADING_AGENTS: "Loading agent partials...",
-
-  // Plugin/installation outputs
-  NO_PLUGIN_FOUND: "No plugin found",
-  NO_INSTALLATION_FOUND: "No installation found",
-  NO_PLUGIN_INSTALLATION: "No plugin installation found",
-  NOT_INSTALLED: `${DEFAULT_BRANDING.NAME} is not installed`,
-  UNINSTALL_HEADER: `${DEFAULT_BRANDING.NAME} Uninstall`,
-  UNINSTALL_COMPLETE: `${DEFAULT_BRANDING.NAME} has been uninstalled`,
-  EJECT_HEADER: `${DEFAULT_BRANDING.NAME} Eject`,
-
-  // Doctor command outputs
-  DOCTOR_HEADER: `${DEFAULT_BRANDING.NAME} Doctor`,
-
-  // Error message patterns (lowercase for case-insensitive matching)
-  ERROR_MISSING_ARG: "missing required arg",
-  ERROR_UNEXPECTED_ARG: "unexpected argument",
-  ERROR_UNKNOWN_FLAG: "unknown flag",
-  ERROR_PARSE: "parse",
-} as const;
 
 /**
  * Run a CLI command and capture its output.
@@ -174,7 +140,7 @@ import type { ResolvedConfig } from "../configuration/config";
 import { useWizardStore } from "../../stores/wizard-store";
 import { resolveAlias, validateSelection } from "../matrix";
 import type { TestProjectConfig, TestSkill } from "./fixtures/create-test-source";
-import { getTestSkill, TEST_SKILLS, TEST_CATEGORIES } from "./test-fixtures";
+import { SKILLS, TEST_CATEGORIES } from "./test-fixtures";
 
 export { fileExists, directoryExists } from "./test-fs-utils";
 
@@ -206,8 +172,7 @@ export async function writeTestTsConfig(
 ): Promise<void> {
   const configDir = path.join(projectDir, configSubdir);
   await mkdir(configDir, { recursive: true });
-  const content = `export default ${JSON.stringify(config, null, 2)};`;
-  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), content);
+  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(config));
 }
 
 export function buildProjectConfig(overrides?: Partial<ProjectConfig>): ProjectConfig {
@@ -314,8 +279,8 @@ export interface PluginTestDirs {
 export async function createTestDirs(prefix = "ai-test-"): Promise<PluginTestDirs> {
   const tempDir = await createTempDir(prefix);
   const projectDir = path.join(tempDir, "project");
-  const pluginDir = path.join(projectDir, ".claude", "plugins", DEFAULT_PLUGIN_NAME);
-  const skillsDir = path.join(pluginDir, "skills");
+  const pluginDir = path.join(projectDir, CLAUDE_DIR, PLUGINS_SUBDIR, DEFAULT_PLUGIN_NAME);
+  const skillsDir = path.join(pluginDir, STANDARD_DIRS.SKILLS);
   const agentsDir = path.join(pluginDir, "agents");
 
   await mkdir(skillsDir, { recursive: true });
@@ -377,11 +342,13 @@ function getCanonicalSkillCategories(): Partial<Record<SkillId, CategoryPath>> {
       "api-framework-hono": "api-api",
       "api-framework-express": "api-api",
       "api-database-drizzle": "api-database",
-      "api-database-postgres": "api-database",
       "api-security-auth-patterns": "api-security",
-      "cli-cli-framework-commander": "cli-framework",
+      "cli-framework-commander": "cli-framework",
       "infra-setup-env": "shared-tooling",
       "infra-tooling-linter": "unmapped-category" as CategoryPath,
+      "web-accessibility-a11y": "web-accessibility",
+      "web-animation-framer": "web-animation",
+      "meta-methodology-investigation": "shared-methodology",
       "meta-methodology-success-criteria": "shared-methodology",
       "meta-methodology-investigation-requirements": "shared-methodology",
       "meta-methodology-anti-over-engineering": "shared-methodology",
@@ -392,6 +359,47 @@ function getCanonicalSkillCategories(): Partial<Record<SkillId, CategoryPath>> {
     };
   }
   return _canonicalSkillCategories;
+}
+
+/** Maps non-domain SkillIdPrefix values to their corresponding Domain */
+const DOMAIN_PREFIX_MAP: Record<string, Domain> = {
+  meta: "shared",
+  infra: "shared",
+  security: "shared",
+};
+
+/**
+ * Creates a TestSkill for disk-based integration tests (createTestSource).
+ * Derives slug, displayName, domain, and category from the skill ID,
+ * using the canonical category registry for correct category mapping.
+ */
+export function createTestSkill(
+  id: SkillId,
+  description: string,
+  overrides?: Partial<TestSkill>,
+): TestSkill {
+  const segments = id.split("-");
+  const rawPrefix = segments[0] ?? "web";
+  const domain = (DOMAIN_PREFIX_MAP[rawPrefix] ?? rawPrefix) as Domain;
+  const canonicalCategories = getCanonicalSkillCategories();
+  const category = canonicalCategories[id] ?? (`${segments[0]}-${segments[1]}` as CategoryPath);
+  const slug = (segments.length >= 3 ? segments.slice(2).join("-") : id) as SkillSlug;
+  const displayName = slug
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+  return {
+    id,
+    slug,
+    displayName,
+    description,
+    category,
+    author: "@test",
+    domain,
+    tags: [],
+    ...overrides,
+  };
 }
 
 export function createMockSkill(
@@ -486,23 +494,55 @@ export function createMockExtractedSkill(
 }
 
 export function createMockMatrix(
-  skills: Record<string, ResolvedSkill>,
-  overrides?: Partial<MergedSkillsMatrix>,
+  skillsOrFirstSkill?: Record<string, ResolvedSkill> | ResolvedSkill,
+  ...rest: (ResolvedSkill | Partial<MergedSkillsMatrix>)[]
 ): MergedSkillsMatrix {
+  let skillsRecord: Record<string, ResolvedSkill>;
+  let overrides: Partial<MergedSkillsMatrix> | undefined;
+
+  if (skillsOrFirstSkill === undefined) {
+    // Empty call: createMockMatrix()
+    skillsRecord = {};
+  } else if ("id" in skillsOrFirstSkill && typeof (skillsOrFirstSkill as ResolvedSkill).id === "string" && "slug" in skillsOrFirstSkill) {
+    // New spread syntax: createMockMatrix(skill1, skill2, ..., optionalOverrides?)
+    const allArgs = [skillsOrFirstSkill, ...rest];
+    const lastArg = allArgs[allArgs.length - 1];
+
+    // Detect if last arg is overrides (has no 'id' + 'slug' properties)
+    if (lastArg && !("id" in lastArg && "slug" in lastArg)) {
+      overrides = lastArg as Partial<MergedSkillsMatrix>;
+      const skills = allArgs.slice(0, -1) as ResolvedSkill[];
+      skillsRecord = {};
+      for (const skill of skills) {
+        skillsRecord[skill.id] = skill;
+      }
+    } else {
+      const skills = allArgs as ResolvedSkill[];
+      skillsRecord = {};
+      for (const skill of skills) {
+        skillsRecord[skill.id] = skill;
+      }
+    }
+  } else {
+    // Old record syntax: createMockMatrix({ "id": skill }, overrides?)
+    skillsRecord = skillsOrFirstSkill as Record<string, ResolvedSkill>;
+    overrides = rest[0] as Partial<MergedSkillsMatrix> | undefined;
+  }
+
   // Boundary cast: empty objects are populated in the loop below
   const autoSlugToId = {} as Record<SkillSlug, SkillId>;
   const autoIdToSlug = {} as Record<SkillId, SkillSlug>;
-  for (const [id, skill] of typedEntries(skills)) {
+  for (const [, skill] of typedEntries(skillsRecord)) {
     if (skill.slug) {
-      autoSlugToId[skill.slug] = id as SkillId;
-      autoIdToSlug[id as SkillId] = skill.slug;
+      autoSlugToId[skill.slug] = skill.id;
+      autoIdToSlug[skill.id] = skill.slug;
     }
   }
 
   return {
     version: "1.0.0",
     categories: {} as Record<Category, import("../../types").CategoryDefinition>,
-    skills,
+    skills: skillsRecord,
     suggestedStacks: [],
     slugMap: { slugToId: autoSlugToId, idToSlug: autoIdToSlug },
     generatedAt: new Date().toISOString(),
@@ -560,31 +600,9 @@ export function createCompileContext(overrides?: Partial<CompileContext>): Compi
     stackId: "test-stack",
     verbose: false,
     projectRoot: "/project",
-    outputDir: `/project/.claude/plugins/${DEFAULT_PLUGIN_NAME}`,
+    outputDir: `/project/${CLAUDE_DIR}/${PLUGINS_SUBDIR}/${DEFAULT_PLUGIN_NAME}`,
     ...overrides,
   };
-}
-
-export function createSkillContent(name: string, description = "A test skill"): string {
-  return `---
-name: ${name}
-description: ${description}
-category: test
----
-
-# ${name}
-
-This is a test skill.
-`;
-}
-
-export function createAgentYamlContent(name: string, description = `Test ${name} agent`): string {
-  return `id: ${name}
-title: ${name} Agent
-description: ${description}
-tools:
-  - Read
-  - Write`;
 }
 
 export async function writeTestSkill(
@@ -612,7 +630,7 @@ export async function writeTestSkill(
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    options?.skillContent ?? createSkillContent(skillId, skill?.description),
+    options?.skillContent ?? renderSkillMd(skillId, skill?.description),
   );
 
   if (!options?.skipMetadata && skill) {
@@ -627,17 +645,10 @@ export async function writeTestSkill(
       slug,
       contentHash,
     };
-    if (options?.extraMetadata) {
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        stringifyYaml({ ...baseMetadata, ...options.extraMetadata }),
-      );
-    } else {
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        stringifyYaml(baseMetadata),
-      );
-    }
+    await writeFile(
+      path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+      stringifyYaml({ ...baseMetadata, ...options?.extraMetadata }),
+    );
   }
 
   return skillDir;
@@ -660,7 +671,7 @@ export async function writeSourceSkill(
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    createSkillContent(config.id, config.description),
+    renderSkillMd(config.id, config.description),
   );
 
   const domain = config.domain;
@@ -671,10 +682,8 @@ export async function writeSourceSkill(
     category: config.category,
     domain,
     author: config.author ?? "@test",
+    ...(config.tags && { tags: config.tags }),
   };
-  if (config.tags) {
-    metadata.tags = config.tags;
-  }
 
   await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
 
@@ -691,7 +700,7 @@ export async function writeTestAgent(
 
   await writeFile(
     path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML),
-    createAgentYamlContent(agentName, options?.description),
+    renderAgentYaml(agentName, options?.description),
   );
 
   return agentDir;
@@ -731,10 +740,9 @@ export function createMockResolvedStack(
 }
 
 /**
- * Builds a comprehensive test matrix with 13 skills across 7 categories,
+ * Builds a comprehensive test matrix with 8 skills across 7 categories,
  * 2 suggested stacks, display name mappings, and relationship data
- * (conflicts, recommends). Includes all 6 DEFAULT_PRESELECTED_SKILLS
- * (methodology) so wizard handleComplete can resolve them.
+ * (conflicts, recommends). Includes anti-over-engineering methodology skill.
  * @returns A fully populated MergedSkillsMatrix with realistic test data
  */
 export function createComprehensiveMatrix(
@@ -743,25 +751,18 @@ export function createComprehensiveMatrix(
   // Skill categories use domain-prefixed Category IDs (matching production
   // metadata.yaml and the categories map keys, e.g., "web-framework", "api-api").
   const skills = {
-    "web-framework-react": getTestSkill("react", { category: "web-framework" }),
-    "web-framework-vue": getTestSkill("vue", {
-      category: "web-framework",
+    "web-framework-react": SKILLS.react,
+    "web-framework-vue": {
+      ...SKILLS.vue,
       conflictsWith: [{ skillId: "web-framework-react", reason: "Choose one framework" }],
-    }),
-    "web-state-zustand": getTestSkill("zustand", {
-      category: "web-client-state",
-    }),
-    "web-styling-scss-modules": getTestSkill("scss-modules", { category: "web-styling" }),
-    "api-framework-hono": getTestSkill("hono", { category: "api-api" }),
-    "api-database-drizzle": getTestSkill("drizzle", { category: "api-database" }),
-    "web-testing-vitest": getTestSkill("vitest", { category: "web-testing" }),
-    // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — auto-injected by wizard
-    "meta-methodology-investigation-requirements": TEST_SKILLS["investigation-requirements"],
-    "meta-methodology-anti-over-engineering": TEST_SKILLS["anti-over-engineering"],
-    "meta-methodology-success-criteria": TEST_SKILLS["success-criteria"],
-    "meta-methodology-write-verification": TEST_SKILLS["write-verification"],
-    "meta-methodology-improvement-protocol": TEST_SKILLS["improvement-protocol"],
-    "meta-methodology-context-management": TEST_SKILLS["context-management"],
+    } satisfies ResolvedSkill,
+    "web-state-zustand": SKILLS.zustand,
+    "web-styling-scss-modules": SKILLS.scss,
+    "api-framework-hono": SKILLS.hono,
+    "api-database-drizzle": SKILLS.drizzle,
+    "web-testing-vitest": SKILLS.vitest,
+    // Methodology skill
+    "meta-methodology-anti-over-engineering": SKILLS.antiOverEng,
   };
 
   const categories = {
@@ -834,12 +835,7 @@ export function createComprehensiveMatrix(
     hono: "api-framework-hono",
     drizzle: "api-database-drizzle",
     vitest: "web-testing-vitest",
-    "investigation-requirements": "meta-methodology-investigation-requirements",
     "anti-over-engineering": "meta-methodology-anti-over-engineering",
-    "success-criteria": "meta-methodology-success-criteria",
-    "write-verification": "meta-methodology-write-verification",
-    "improvement-protocol": "meta-methodology-improvement-protocol",
-    "context-management": "meta-methodology-context-management",
   } as unknown as Record<SkillSlug, SkillId>;
 
   // Boundary cast: Object.fromEntries returns { [k: string]: string }
@@ -856,24 +852,19 @@ export function createComprehensiveMatrix(
 }
 
 /**
- * Builds a lightweight test matrix with 4 skills, 4 categories, and 2 stacks.
+ * Builds a lightweight test matrix with 5 skills, 5 categories, and 2 stacks.
  * Use instead of createComprehensiveMatrix when relationship data is not needed.
  * @returns A minimal MergedSkillsMatrix for basic integration tests
  */
 export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
   // Domain-prefixed Category IDs — see createComprehensiveMatrix comment
   const skills = {
-    "web-framework-react": getTestSkill("react", { category: "web-framework" }),
-    "web-state-zustand": getTestSkill("zustand", { category: "web-client-state" }),
-    "api-framework-hono": getTestSkill("hono", { category: "api-api" }),
-    "web-testing-vitest": getTestSkill("vitest", { category: "web-testing" }),
-    // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — auto-injected by wizard
-    "meta-methodology-anti-over-engineering": TEST_SKILLS["anti-over-engineering"],
-    "meta-methodology-context-management": TEST_SKILLS["context-management"],
-    "meta-methodology-improvement-protocol": TEST_SKILLS["improvement-protocol"],
-    "meta-methodology-investigation-requirements": TEST_SKILLS["investigation-requirements"],
-    "meta-methodology-success-criteria": TEST_SKILLS["success-criteria"],
-    "meta-methodology-write-verification": TEST_SKILLS["write-verification"],
+    "web-framework-react": SKILLS.react,
+    "web-state-zustand": SKILLS.zustand,
+    "api-framework-hono": SKILLS.hono,
+    "web-testing-vitest": SKILLS.vitest,
+    // Methodology skill
+    "meta-methodology-anti-over-engineering": SKILLS.antiOverEng,
   };
 
   const suggestedStacks: ResolvedStack[] = [
@@ -1047,18 +1038,21 @@ export type MockMatrixConfig = {
 export function createMockMatrixConfig(
   categories: Record<string, CategoryDefinition>,
   overrides?: {
-    relationships?: RelationshipDefinitions;
+    relationships?: Partial<RelationshipDefinitions>;
   },
 ): MockMatrixConfig {
+  const defaultRelationships: RelationshipDefinitions = {
+    conflicts: [],
+    discourages: [],
+    recommends: [],
+    requires: [],
+    alternatives: [],
+  };
   return {
     categories,
-    relationships: overrides?.relationships ?? {
-      conflicts: [],
-      discourages: [],
-      recommends: [],
-      requires: [],
-      alternatives: [],
-    },
+    relationships: overrides?.relationships
+      ? { ...defaultRelationships, ...overrides.relationships }
+      : defaultRelationships,
   };
 }
 
@@ -1135,7 +1129,7 @@ export function createMockRawStacksConfig(): RawStacksConfig {
         description: "Vue single-page application",
         agents: {
           "web-developer": {
-            "web-framework": "web-framework-vue-composition-api",
+            "web-framework": "web-framework-vue",
             "web-styling": "web-styling-tailwind",
           },
         },
@@ -1214,6 +1208,18 @@ export function createMockMarketplacePlugin(
   };
 }
 
+/** Convert a TestSkill (disk-based) to a ResolvedSkill (in-memory) for matrix creation. */
+export function testSkillToResolvedSkill(
+  skill: TestSkill,
+  overrides?: Partial<ResolvedSkill>,
+): ResolvedSkill {
+  return createMockSkill(skill.id, {
+    description: skill.description,
+    ...(skill.tags?.length ? { tags: skill.tags } : {}),
+    ...overrides,
+  });
+}
+
 /**
  * Creates a ResolvedSkill with availableSources annotation for multi-source testing.
  * Simulates what multi-source-loader.ts does after tagging.
@@ -1253,5 +1259,7 @@ export function createMockCompiledAgentData(overrides?: Partial<AgentConfig>): C
   };
 }
 
-export { getTestSkill, TEST_SKILLS, TEST_CATEGORIES, TEST_MATRICES } from "./test-fixtures";
-export type { TestSkillName } from "./test-fixtures";
+export {
+  SKILLS,
+  TEST_CATEGORIES,
+} from "./test-fixtures";

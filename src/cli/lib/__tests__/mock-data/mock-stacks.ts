@@ -2,12 +2,29 @@
 // Each stack uses createMockStack/createMockSkillAssignment from helpers.ts.
 // TestStack arrays are used with createTestSource() for integration tests.
 
-import type { SkillId } from "../../../types";
+import type { SkillId, Stack } from "../../../types";
 import type { TestStack } from "../fixtures/create-test-source.js";
 import { createMockStack, createMockSkillAssignment } from "../helpers.js";
 
 /** Shorthand alias for createMockSkillAssignment */
 const sa = (id: SkillId, preloaded = false) => createMockSkillAssignment(id, preloaded);
+
+// ---------------------------------------------------------------------------
+// Stack templates — spread with a unique id per test:
+//   { id: "my-test-stack", ...SINGLE_AGENT_STACK_TEMPLATE }
+// ---------------------------------------------------------------------------
+
+export const SINGLE_AGENT_STACK_TEMPLATE: Omit<Stack, "id"> = {
+  name: "Test Stack",
+  description: "A test stack",
+  agents: { "web-developer": {} } as Stack["agents"],
+};
+
+export const MULTI_AGENT_STACK_TEMPLATE: Omit<Stack, "id"> = {
+  name: "Full Stack",
+  description: "A multi-agent stack",
+  agents: { "web-developer": {}, "api-developer": {}, "web-tester": {} } as Stack["agents"],
+};
 
 // ---------------------------------------------------------------------------
 // Stacks from resolver.test.ts
@@ -70,16 +87,6 @@ export const WEB_EMPTY_AGENT_STACK = createMockStack("test-stack", {
   },
 });
 
-export const WEB_ONLY_PARTIAL_STACK = createMockStack("web-only", {
-  name: "Web Stack",
-  description: "A web-only stack",
-  agents: {
-    "web-developer": {
-      "web-framework": [sa("web-framework-react", true)],
-    },
-  },
-});
-
 // ---------------------------------------------------------------------------
 // Stacks from config-generator.test.ts
 // ---------------------------------------------------------------------------
@@ -88,17 +95,6 @@ export const EMPTY_AGENTS_STACK = createMockStack("empty-stack", {
   name: "Empty Stack",
   description: "No agents",
   agents: {},
-});
-
-export const PRELOADED_FLAG_STACK = createMockStack("test-stack", {
-  name: "Test Stack",
-  description: "Test stack",
-  agents: {
-    "web-developer": {
-      "web-framework": [sa("web-framework-react", true)],
-      "web-styling": [sa("web-styling-scss-modules", false)],
-    },
-  },
 });
 
 export const SHARED_CATEGORY_STACK = createMockStack("test-stack", {
@@ -123,17 +119,6 @@ export const STACK_WITH_EMPTY_AGENTS = createMockStack("test-stack", {
     },
     "cli-tester": {},
     "web-pm": {},
-  },
-});
-
-export const SINGLE_AGENT_STACK = createMockStack("test-stack", {
-  name: "Test Stack",
-  description: "Test stack",
-  agents: {
-    "web-developer": {
-      "web-framework": [sa("web-framework-react", true)],
-      "web-styling": [sa("web-styling-tailwind")],
-    },
   },
 });
 
@@ -202,10 +187,10 @@ export const COMPILATION_TEST_STACK = createMockStack("test-stack", {
   description: "A test stack for integration testing",
   agents: {
     "web-developer": {
-      "web-framework": [{ id: "web-framework-react", preloaded: true }],
+      "web-framework": [sa("web-framework-react", true)],
     },
     "api-developer": {
-      "api-api": [{ id: "api-framework-hono", preloaded: true }],
+      "api-api": [sa("api-framework-hono", true)],
     },
   },
 });

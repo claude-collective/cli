@@ -1,49 +1,56 @@
 // Shared category definitions with domain overrides for test files.
-// Uses createMockCategory from helpers.ts.
+// Spreads from TEST_CATEGORIES in test-fixtures.ts.
 
-import { createMockCategory } from "../helpers.js";
+import { TEST_CATEGORIES } from "../test-fixtures.js";
 
 // ---------------------------------------------------------------------------
 // Categories from step-build.test.tsx (with domain overrides)
 // ---------------------------------------------------------------------------
 
-export const WEB_FRAMEWORK_CATEGORY = createMockCategory("web-framework", "Framework", {
-  domain: "web",
+export const WEB_FRAMEWORK_CATEGORY = {
+  ...TEST_CATEGORIES.framework,
   required: true,
-  order: 0,
-});
+};
 
-export const WEB_STYLING_CATEGORY = createMockCategory("web-styling", "Styling", {
-  domain: "web",
+export const WEB_STYLING_CATEGORY = {
+  ...TEST_CATEGORIES.styling,
   required: true,
   order: 1,
-});
+};
 
-export const WEB_STATE_CATEGORY = createMockCategory("web-client-state", "Client State", {
-  domain: "web",
-  required: false,
+export const WEB_STATE_CATEGORY = {
+  ...TEST_CATEGORIES.clientState,
   order: 2,
-});
+};
 
-export const API_FRAMEWORK_CATEGORY = createMockCategory("api-api", "API Framework", {
-  domain: "api",
+export const API_FRAMEWORK_CATEGORY = {
+  ...TEST_CATEGORIES.api,
+  displayName: "API Framework",
+  // Boundary cast: narrows string to Domain union
+  domain: "api" as const,
   required: true,
   order: 0,
-});
+};
 
-export const API_DATABASE_CATEGORY = createMockCategory("api-database", "Database", {
-  domain: "api",
-  required: false,
+export const API_DATABASE_CATEGORY = {
+  ...TEST_CATEGORIES.database,
+  // Boundary cast: narrows string to Domain union
+  domain: "api" as const,
   order: 1,
-});
+};
 
 // ---------------------------------------------------------------------------
 // Categories from matrix-loader.test.ts (basic, no domain override)
 // ---------------------------------------------------------------------------
 
-export const FRAMEWORK_CATEGORY = createMockCategory("web-framework", "Framework", {
+export const CLI_FRAMEWORK_CATEGORY = {
+  ...TEST_CATEGORIES.cliFramework,
+  domain: "cli" as const,
+  exclusive: false,
+};
+
+export const FRAMEWORK_CATEGORY = {
+  ...TEST_CATEGORIES.framework,
   description: "Web frameworks",
-  exclusive: true,
-  required: false,
   order: 1,
-});
+};
