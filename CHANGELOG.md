@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.68.0] - 2026-03-11
+
+**Per-agent scope in edit mode (D-74)**
+
+- Edit command detects and displays agent scope changes (project/global)
+- Agent scope configs restored when entering edit mode
+- Help modal shows `S` key for agent scope toggle
+
+See [changelogs/0.68.0.md](./changelogs/0.68.0.md) for full details.
+
+---
+
 ## [0.67.0] - 2026-03-11
 
 **Split init-wizard E2E tests for parallel execution (D-73)**
