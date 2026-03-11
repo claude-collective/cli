@@ -165,6 +165,7 @@ export default class Edit extends BaseCommand {
         installedSkillIds={currentSkillIds}
         installedSkillConfigs={projectConfig?.config?.skills}
         lockedSkillIds={lockedSkillIds}
+        installedAgentConfigs={projectConfig?.config?.agents}
         lockedAgentNames={lockedAgentNames}
         projectDir={projectDir}
         startupMessages={startupMessages}
@@ -219,11 +220,25 @@ export default class Edit extends BaseCommand {
       }
     }
 
+    const agentScopeChanges = new Map<AgentName, { from: "project" | "global"; to: "project" | "global" }>();
+    if (projectConfig?.config?.agents) {
+      for (const newAgent of result.agentConfigs) {
+        const oldAgent = projectConfig.config.agents.find((a) => a.name === newAgent.name);
+        if (oldAgent && oldAgent.scope !== newAgent.scope) {
+          agentScopeChanges.set(newAgent.name, {
+            from: oldAgent.scope,
+            to: newAgent.scope,
+          });
+        }
+      }
+    }
+
     const hasSourceChanges = sourceChanges.size > 0;
     const hasScopeChanges = scopeChanges.size > 0;
+    const hasAgentScopeChanges = agentScopeChanges.size > 0;
     const hasSkillChanges = addedSkills.length > 0 || removedSkills.length > 0;
 
-    if (!hasSkillChanges && !hasSourceChanges && !hasScopeChanges) {
+    if (!hasSkillChanges && !hasSourceChanges && !hasScopeChanges && !hasAgentScopeChanges) {
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       this.log("Plugin unchanged\n");
       return;
@@ -246,6 +261,11 @@ export default class Edit extends BaseCommand {
       const fromLabel = change.from === "global" ? "[G]" : "[P]";
       const toLabel = change.to === "global" ? "[G]" : "[P]";
       this.log(`  ~ ${skillId} (${fromLabel} \u2192 ${toLabel})`);
+    }
+    for (const [agentName, change] of agentScopeChanges) {
+      const fromLabel = change.from === "global" ? "[G]" : "[P]";
+      const toLabel = change.to === "global" ? "[G]" : "[P]";
+      this.log(`  ~ ${agentName} (${fromLabel} \u2192 ${toLabel})`);
     }
     this.log("");
 
@@ -410,8 +430,9 @@ export default class Edit extends BaseCommand {
     if (hasSourceChanges) {
       summaryParts.push(`${sourceChanges.size} source${sourceChanges.size > 1 ? "s" : ""} changed`);
     }
-    if (hasScopeChanges) {
-      summaryParts.push(`${scopeChanges.size} scope${scopeChanges.size > 1 ? "s" : ""} changed`);
+    if (hasScopeChanges || hasAgentScopeChanges) {
+      const totalScopeChanges = scopeChanges.size + agentScopeChanges.size;
+      summaryParts.push(`${totalScopeChanges} scope${totalScopeChanges > 1 ? "s" : ""} changed`);
     }
     this.log(`\n\u2713 Plugin updated! (${summaryParts.join(", ")})\n`);
   }

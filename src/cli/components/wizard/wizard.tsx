@@ -53,6 +53,7 @@ type WizardProps = {
   initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
   installedSkillConfigs?: SkillConfig[];
+  installedAgentConfigs?: AgentScopeConfig[];
   lockedSkillIds?: SkillId[];
   lockedAgentNames?: AgentName[];
   projectDir?: string;
@@ -73,6 +74,7 @@ export const Wizard: React.FC<WizardProps> = ({
   initialAgents,
   installedSkillIds,
   installedSkillConfigs,
+  installedAgentConfigs,
   lockedSkillIds,
   lockedAgentNames,
   projectDir,
@@ -93,6 +95,7 @@ export const Wizard: React.FC<WizardProps> = ({
     initialAgents,
     installedSkillIds,
     installedSkillConfigs,
+    installedAgentConfigs,
     lockedSkillIds,
     lockedAgentNames,
   });

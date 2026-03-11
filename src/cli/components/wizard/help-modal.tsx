@@ -53,7 +53,7 @@ const SOURCES_KEYS: HelpSection = {
 
 const AGENTS_KEYS: HelpSection = {
   title: "Agents Step",
-  keys: [],
+  keys: [{ key: HOTKEY_SCOPE.label, description: "Toggle agent scope (project/global)" }],
 };
 
 const STEP_SECTIONS: Partial<Record<WizardStep, HelpSection>> = {

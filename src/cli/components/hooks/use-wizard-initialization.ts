@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
-import type { SkillConfig } from "../../types/config.js";
+import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import type { AgentName, Domain, SkillId } from "../../types/index.js";
 
 type UseWizardInitializationOptions = {
@@ -9,6 +9,7 @@ type UseWizardInitializationOptions = {
   initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
   installedSkillConfigs?: SkillConfig[];
+  installedAgentConfigs?: AgentScopeConfig[];
   lockedSkillIds?: SkillId[];
   lockedAgentNames?: AgentName[];
 };
@@ -23,6 +24,7 @@ export function useWizardInitialization({
   initialAgents,
   installedSkillIds,
   installedSkillConfigs,
+  installedAgentConfigs,
   lockedSkillIds,
   lockedAgentNames,
 }: UseWizardInitializationOptions): void {
@@ -45,6 +47,10 @@ export function useWizardInitialization({
     // Restore saved agents from config, overriding the default empty array
     if (initialAgents?.length) {
       useWizardStore.setState({ selectedAgents: initialAgents });
+    }
+    // Restore saved agent scope configs (project vs global)
+    if (initialAgents?.length && installedAgentConfigs?.length) {
+      useWizardStore.setState({ agentConfigs: installedAgentConfigs });
     }
     // Set locked IDs (D9: global items read-only in project context)
     if (lockedSkillIds?.length || lockedAgentNames?.length) {
