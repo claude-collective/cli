@@ -4,6 +4,8 @@ import type { ProjectConfig, SkillAssignment, SkillId } from "../../types";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 import {
   buildProjectConfig,
+  buildAgentConfigs,
+  buildSourceConfig,
   createTempDir,
   cleanupTempDir,
   writeTestTsConfig,
@@ -45,10 +47,13 @@ describe("config-merger", () => {
     });
 
     it("should inherit author from simple project config when no full config exists", async () => {
-      await writeTestTsConfig(tempDir, {
-        source: "github:my-org/skills",
-        author: "@vince",
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          source: "github:my-org/skills",
+          author: "@vince",
+        }),
+      );
 
       const newConfig = buildProjectConfig({ name: "new-project", skills: [] });
 
@@ -63,10 +68,13 @@ describe("config-merger", () => {
     });
 
     it("should inherit agentsSource from existing config", async () => {
-      await writeTestTsConfig(tempDir, {
-        source: "github:my-org/skills",
-        agentsSource: "github:my-org/agents",
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          source: "github:my-org/skills",
+          agentsSource: "github:my-org/agents",
+        }),
+      );
 
       const newConfig = buildProjectConfig({ name: "new-project", skills: [] });
 
@@ -288,12 +296,15 @@ describe("config-merger", () => {
     });
 
     it("should not mutate the input config", async () => {
-      await writeTestTsConfig(tempDir, {
-        name: "existing",
-        agents: [{ name: "web-developer", scope: "project" }],
-        skills: [],
-        author: "@existing",
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildProjectConfig({
+          name: "existing",
+          agents: buildAgentConfigs(["web-developer"]),
+          skills: [],
+          author: "@existing",
+        }) as Record<string, unknown>,
+      );
 
       const newConfig = buildProjectConfig({
         name: "new-project",
@@ -310,10 +321,13 @@ describe("config-merger", () => {
     });
 
     it("should return existingConfigPath when merged", async () => {
-      await writeTestTsConfig(tempDir, {
-        name: "existing",
-        agents: [{ name: "web-developer", scope: "project" }],
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildProjectConfig({
+          name: "existing",
+          agents: buildAgentConfigs(["web-developer"]),
+        }) as Record<string, unknown>,
+      );
 
       const newConfig = buildProjectConfig({ name: "new-project", skills: [] });
 

@@ -9,7 +9,6 @@ import { installLocal } from "../../installation/local-installer";
 import type { AgentName, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
-  createMockMatrix,
   fileExists,
   directoryExists,
   readTestYaml,
@@ -17,8 +16,8 @@ import {
   buildWizardResult,
   buildSkillConfigs,
   buildSourceResult,
-  SKILLS,
 } from "../helpers";
+import { FULLSTACK_TRIO_MATRIX } from "../mock-data/mock-matrices";
 import { deriveInstallMode } from "../../installation/installation";
 import { useMatrixStore } from "../../../stores/matrix-store";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_SKILLS_SUBDIR, STANDARD_FILES } from "../../../consts";
@@ -28,7 +27,7 @@ const AGENTS_SUBDIR = "agents";
 // Matrix whose skill.path values match the file system layout from createTestSource.
 // createMockSkill sets path to "skills/{category}/{id}/" and the copier resolves to
 // "{sourcePath}/src/skills/{category}/{id}/".
-const INIT_TEST_MATRIX = createMockMatrix(SKILLS.react, SKILLS.hono, SKILLS.vitest);
+const INIT_TEST_MATRIX = FULLSTACK_TRIO_MATRIX;
 
 // Reusable selections for tests that need multiple skills and agents
 const SELECTED_SKILLS_REACT_HONO: SkillId[] = ["web-framework-react", "api-framework-hono"];

@@ -17,7 +17,6 @@ import {
   createMockSkillSource,
   createTempDir,
   cleanupTempDir,
-  SKILLS,
   readTestTsConfig,
   buildProjectConfig,
   buildWizardResult,
@@ -26,6 +25,7 @@ import {
   fileExists,
   writeTestTsConfig,
 } from "../helpers";
+import { FULLSTACK_TRIO_MATRIX } from "../mock-data/mock-matrices";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { INIT_SKILL_IDS, INIT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
@@ -36,7 +36,7 @@ const ZUSTAND_SKILL_ID: SkillId = "web-state-zustand";
 const HONO_SKILL_ID: SkillId = "api-framework-hono";
 const VITEST_SKILL_ID: SkillId = "web-testing-vitest";
 
-const INIT_TEST_MATRIX = createMockMatrix(SKILLS.react, SKILLS.hono, SKILLS.vitest);
+const INIT_TEST_MATRIX = FULLSTACK_TRIO_MATRIX;
 
 describe("Integration: Install Mode Persistence", () => {
   let dirs: TestDirs;
@@ -263,11 +263,12 @@ describe("Integration: buildAndMergeConfig Install Mode", () => {
 
   it("should merge with existing config preserving install mode from new wizard result", async () => {
     // Write initial config with "local" source skills
-    await writeTestTsConfig(dirs.projectDir, {
-      name: "test-project",
-      agents: [{ name: "web-developer", scope: "project" }],
-      skills: [{ id: REACT_SKILL_ID, scope: "project", source: "local" }],
-    });
+    await writeTestTsConfig(
+      dirs.projectDir,
+      buildProjectConfig({
+        skills: buildSkillConfigs([REACT_SKILL_ID]),
+      }) as Record<string, unknown>,
+    );
 
     // Build wizard result with "plugin" source skills
     const skills = buildSkillConfigs(INIT_SKILL_IDS, { source: "agents-inc" });

@@ -11,6 +11,7 @@ import {
   writeTestSkill,
   createMockMatrix,
   createMockSkill,
+  buildAgentConfigs,
   SKILLS,
 } from "../helpers";
 import { useMatrixStore } from "../../../stores/matrix-store";
@@ -413,7 +414,7 @@ describe("uninstall command", () => {
   describe("agent removal", () => {
     it("should remove compiled agents listed in config", async () => {
       await createProjectConfig(projectDir, {
-        agents: [{ name: "web-developer", scope: "project" }],
+        agents: buildAgentConfigs(["web-developer"]),
       });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
 
@@ -441,7 +442,7 @@ describe("uninstall command", () => {
 
     it("should only remove agents listed in config and preserve others", async () => {
       await createProjectConfig(projectDir, {
-        agents: [{ name: "web-developer", scope: "project" }],
+        agents: buildAgentConfigs(["web-developer"]),
       });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
 
@@ -638,7 +639,7 @@ describe("uninstall command", () => {
 
     it("should remove everything with --all flag", async () => {
       await createProjectConfig(projectDir, {
-        agents: [{ name: "web-developer", scope: "project" }],
+        agents: buildAgentConfigs(["web-developer"]),
       });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
       const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);

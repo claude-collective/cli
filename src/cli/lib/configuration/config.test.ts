@@ -6,6 +6,7 @@ import {
   cleanupTempDir,
   readTestTsConfig,
   writeTestTsConfig,
+  buildSourceConfig,
 } from "../__tests__/helpers";
 import {
   DEFAULT_SOURCE,
@@ -407,7 +408,7 @@ describe("config", () => {
     });
 
     it("should load config from .claude-src/config.ts", async () => {
-      await writeTestTsConfig(tempDir, { source: "github:mycompany/skills" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:mycompany/skills" }));
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config).toEqual({ source: "github:mycompany/skills" });
@@ -426,7 +427,10 @@ describe("config", () => {
     });
 
     it("should load marketplace from project config", async () => {
-      await writeTestTsConfig(tempDir, { marketplace: "https://custom-marketplace.io" });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({ marketplace: "https://custom-marketplace.io" }),
+      );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.marketplace).toBe("https://custom-marketplace.io");
@@ -435,7 +439,7 @@ describe("config", () => {
 
   describe("writeProjectSourceConfig", () => {
     it("should create config directory if it does not exist", async () => {
-      await writeProjectSourceConfig(tempDir, { source: "github:test/repo" });
+      await writeProjectSourceConfig(tempDir, buildSourceConfig({ source: "github:test/repo" }));
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
@@ -443,7 +447,7 @@ describe("config", () => {
     });
 
     it("should write config with type annotation and satisfies clause", async () => {
-      await writeProjectSourceConfig(tempDir, { source: "github:test/repo" });
+      await writeProjectSourceConfig(tempDir, buildSourceConfig({ source: "github:test/repo" }));
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const content = await readFile(configPath, "utf-8");
@@ -452,8 +456,8 @@ describe("config", () => {
     });
 
     it("should overwrite existing config", async () => {
-      await writeProjectSourceConfig(tempDir, { source: "github:first/repo" });
-      await writeProjectSourceConfig(tempDir, { source: "github:second/repo" });
+      await writeProjectSourceConfig(tempDir, buildSourceConfig({ source: "github:first/repo" }));
+      await writeProjectSourceConfig(tempDir, buildSourceConfig({ source: "github:second/repo" }));
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const content = await readFile(configPath, "utf-8");
@@ -462,9 +466,12 @@ describe("config", () => {
     });
 
     it("should save marketplace to project config", async () => {
-      await writeProjectSourceConfig(tempDir, {
-        marketplace: "https://my-marketplace.com/plugins",
-      });
+      await writeProjectSourceConfig(
+        tempDir,
+        buildSourceConfig({
+          marketplace: "https://my-marketplace.com/plugins",
+        }),
+      );
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
@@ -472,10 +479,13 @@ describe("config", () => {
     });
 
     it("should save both source and marketplace", async () => {
-      await writeProjectSourceConfig(tempDir, {
-        source: "github:myorg/skills",
-        marketplace: "https://enterprise.example.com",
-      });
+      await writeProjectSourceConfig(
+        tempDir,
+        buildSourceConfig({
+          source: "github:myorg/skills",
+          marketplace: "https://enterprise.example.com",
+        }),
+      );
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
@@ -504,7 +514,7 @@ describe("config", () => {
     });
 
     it("should return project config when no flag or env", async () => {
-      await writeTestTsConfig(tempDir, { source: "github:project/repo" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:project/repo" }));
 
       const result = await resolveSource(undefined, tempDir);
 
@@ -528,7 +538,7 @@ describe("config", () => {
 
     it("should prioritize flag over all other sources", async () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
-      await writeTestTsConfig(tempDir, { source: "github:project/repo" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:project/repo" }));
 
       const result = await resolveSource("github:flag/repo", tempDir);
 
@@ -538,7 +548,7 @@ describe("config", () => {
 
     it("should prioritize env over project config", async () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
-      await writeTestTsConfig(tempDir, { source: "github:project/repo" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:project/repo" }));
 
       const result = await resolveSource(undefined, tempDir);
 
@@ -594,7 +604,7 @@ describe("config", () => {
         const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         process.env[SOURCE_ENV_VAR] = "github:just-a-name";
 
-        await writeTestTsConfig(tempDir, { source: "github:project/repo" });
+        await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:project/repo" }));
 
         const result = await resolveSource(undefined, tempDir);
 
@@ -652,7 +662,10 @@ describe("config", () => {
 
     describe("marketplace resolution", () => {
       it("should return marketplace from project config", async () => {
-        await writeTestTsConfig(tempDir, { marketplace: "https://my-company.com/plugins" });
+        await writeTestTsConfig(
+          tempDir,
+          buildSourceConfig({ marketplace: "https://my-company.com/plugins" }),
+        );
 
         const result = await resolveSource(undefined, tempDir);
 
@@ -660,10 +673,13 @@ describe("config", () => {
       });
 
       it("should return marketplace alongside source from project config", async () => {
-        await writeTestTsConfig(tempDir, {
-          source: "github:mycompany/skills",
-          marketplace: "https://enterprise.example.com/plugins",
-        });
+        await writeTestTsConfig(
+          tempDir,
+          buildSourceConfig({
+            source: "github:mycompany/skills",
+            marketplace: "https://enterprise.example.com/plugins",
+          }),
+        );
 
         const result = await resolveSource(undefined, tempDir);
 
@@ -682,7 +698,10 @@ describe("config", () => {
 
   describe("resolveAgentsSource", () => {
     it("should return flag value with highest priority", async () => {
-      await writeTestTsConfig(tempDir, { agentsSource: "https://project.example.com/agents" });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({ agentsSource: "https://project.example.com/agents" }),
+      );
 
       const result = await resolveAgentsSource("https://flag.example.com/agents", tempDir);
 
@@ -691,7 +710,10 @@ describe("config", () => {
     });
 
     it("should return project config when no flag is provided", async () => {
-      await writeTestTsConfig(tempDir, { agentsSource: "https://project.example.com/agents" });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({ agentsSource: "https://project.example.com/agents" }),
+      );
 
       const result = await resolveAgentsSource(undefined, tempDir);
 
@@ -748,42 +770,45 @@ describe("config", () => {
 
   describe("loadProjectSourceConfig with path overrides", () => {
     it("should load skillsDir from project config", async () => {
-      await writeTestTsConfig(tempDir, { skillsDir: "lib/skills" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ skillsDir: "lib/skills" }));
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.skillsDir).toBe("lib/skills");
     });
 
     it("should load agentsDir from project config", async () => {
-      await writeTestTsConfig(tempDir, { agentsDir: "lib/agents" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ agentsDir: "lib/agents" }));
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.agentsDir).toBe("lib/agents");
     });
 
     it("should load stacksFile from project config", async () => {
-      await writeTestTsConfig(tempDir, { stacksFile: "data/stacks.ts" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ stacksFile: "data/stacks.ts" }));
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.stacksFile).toBe("data/stacks.ts");
     });
 
     it("should load categoriesFile from project config", async () => {
-      await writeTestTsConfig(tempDir, { categoriesFile: "data/categories.yaml" });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({ categoriesFile: "data/categories.yaml" }),
+      );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.categoriesFile).toBe("data/categories.yaml");
     });
 
     it("should load rulesFile from project config", async () => {
-      await writeTestTsConfig(tempDir, { rulesFile: "data/rules.yaml" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ rulesFile: "data/rules.yaml" }));
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.rulesFile).toBe("data/rules.yaml");
     });
 
     it("should return undefined for missing path fields (defaults applied by consumer)", async () => {
-      await writeTestTsConfig(tempDir, { source: "github:myorg/skills" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:myorg/skills" }));
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.skillsDir).toBeUndefined();
@@ -794,14 +819,17 @@ describe("config", () => {
     });
 
     it("should load all path fields together", async () => {
-      await writeTestTsConfig(tempDir, {
-        source: "github:myorg/skills",
-        skillsDir: "lib/skills",
-        agentsDir: "lib/agents",
-        stacksFile: "data/stacks.ts",
-        categoriesFile: "data/categories.yaml",
-        rulesFile: "data/rules.yaml",
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          source: "github:myorg/skills",
+          skillsDir: "lib/skills",
+          agentsDir: "lib/agents",
+          stacksFile: "data/stacks.ts",
+          categoriesFile: "data/categories.yaml",
+          rulesFile: "data/rules.yaml",
+        }),
+      );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.source).toBe("github:myorg/skills");
@@ -815,18 +843,24 @@ describe("config", () => {
 
   describe("loadProjectSourceConfig with agentsSource", () => {
     it("should load agentsSource from project config", async () => {
-      await writeTestTsConfig(tempDir, { agentsSource: "https://my-company.com/agents" });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({ agentsSource: "https://my-company.com/agents" }),
+      );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.agentsSource).toBe("https://my-company.com/agents");
     });
 
     it("should load all config fields together", async () => {
-      await writeTestTsConfig(tempDir, {
-        source: "github:myorg/skills",
-        marketplace: "https://market.example.com",
-        agentsSource: "https://agents.example.com",
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          source: "github:myorg/skills",
+          marketplace: "https://market.example.com",
+          agentsSource: "https://agents.example.com",
+        }),
+      );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.source).toBe("github:myorg/skills");
@@ -837,9 +871,12 @@ describe("config", () => {
 
   describe("writeProjectSourceConfig with agentsSource", () => {
     it("should save agentsSource to project config", async () => {
-      await writeProjectSourceConfig(tempDir, {
-        agentsSource: "https://my-agents.example.com",
-      });
+      await writeProjectSourceConfig(
+        tempDir,
+        buildSourceConfig({
+          agentsSource: "https://my-agents.example.com",
+        }),
+      );
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
@@ -847,11 +884,14 @@ describe("config", () => {
     });
 
     it("should save all config fields together", async () => {
-      await writeProjectSourceConfig(tempDir, {
-        source: "github:myorg/skills",
-        marketplace: "https://enterprise.example.com",
-        agentsSource: "https://agents.enterprise.example.com",
-      });
+      await writeProjectSourceConfig(
+        tempDir,
+        buildSourceConfig({
+          source: "github:myorg/skills",
+          marketplace: "https://enterprise.example.com",
+          agentsSource: "https://agents.enterprise.example.com",
+        }),
+      );
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
@@ -863,9 +903,12 @@ describe("config", () => {
 
   describe("loadProjectSourceConfig with branding", () => {
     it("should load branding name from project config", async () => {
-      await writeTestTsConfig(tempDir, {
-        branding: { name: "Acme Dev Tools", tagline: "Build faster with Acme" },
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          branding: { name: "Acme Dev Tools", tagline: "Build faster with Acme" },
+        }),
+      );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.branding?.name).toBe("Acme Dev Tools");
@@ -873,14 +916,14 @@ describe("config", () => {
     });
 
     it("should return undefined branding when not configured", async () => {
-      await writeTestTsConfig(tempDir, { source: "github:myorg/skills" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:myorg/skills" }));
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.branding).toBeUndefined();
     });
 
     it("should load partial branding (name only)", async () => {
-      await writeTestTsConfig(tempDir, { branding: { name: "My Company" } });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ branding: { name: "My Company" } }));
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.branding?.name).toBe("My Company");
@@ -888,7 +931,10 @@ describe("config", () => {
     });
 
     it("should load partial branding (tagline only)", async () => {
-      await writeTestTsConfig(tempDir, { branding: { tagline: "Custom tagline" } });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({ branding: { tagline: "Custom tagline" } }),
+      );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.branding?.name).toBeUndefined();
@@ -898,9 +944,12 @@ describe("config", () => {
 
   describe("writeProjectSourceConfig with branding", () => {
     it("should save branding to project config", async () => {
-      await writeProjectSourceConfig(tempDir, {
-        branding: { name: "Acme Dev Tools", tagline: "Build faster" },
-      });
+      await writeProjectSourceConfig(
+        tempDir,
+        buildSourceConfig({
+          branding: { name: "Acme Dev Tools", tagline: "Build faster" },
+        }),
+      );
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
@@ -924,9 +973,12 @@ describe("config", () => {
     });
 
     it("should return custom branding when configured", async () => {
-      await writeTestTsConfig(tempDir, {
-        branding: { name: "Acme Dev Tools", tagline: "Build faster with Acme" },
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          branding: { name: "Acme Dev Tools", tagline: "Build faster with Acme" },
+        }),
+      );
 
       const branding = await resolveBranding(tempDir);
       expect(branding.name).toBe("Acme Dev Tools");
@@ -934,7 +986,7 @@ describe("config", () => {
     });
 
     it("should merge custom branding with defaults for missing fields", async () => {
-      await writeTestTsConfig(tempDir, { branding: { name: "Acme Dev Tools" } });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ branding: { name: "Acme Dev Tools" } }));
 
       const branding = await resolveBranding(tempDir);
       expect(branding.name).toBe("Acme Dev Tools");
@@ -942,7 +994,10 @@ describe("config", () => {
     });
 
     it("should use default name when only tagline is configured", async () => {
-      await writeTestTsConfig(tempDir, { branding: { tagline: "Custom tagline" } });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({ branding: { tagline: "Custom tagline" } }),
+      );
 
       const branding = await resolveBranding(tempDir);
       expect(branding.name).toBe(DEFAULT_BRANDING.NAME);
@@ -950,7 +1005,7 @@ describe("config", () => {
     });
 
     it("should return default branding when config has no branding section", async () => {
-      await writeTestTsConfig(tempDir, { source: "github:myorg/skills" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:myorg/skills" }));
 
       const branding = await resolveBranding(tempDir);
       expect(branding.name).toBe(DEFAULT_BRANDING.NAME);

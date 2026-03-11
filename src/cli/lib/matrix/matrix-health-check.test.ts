@@ -7,6 +7,7 @@ import {
   SKILLS,
   TEST_CATEGORIES,
 } from "../__tests__/helpers";
+import { EMPTY_MATRIX } from "../__tests__/mock-data/mock-matrices";
 import type { SkillId, Category } from "../../types";
 
 vi.mock("../../utils/logger");
@@ -113,8 +114,6 @@ const singleSkillMatrix = createMockMatrix(SKILLS.react, {
     "web-framework": TEST_CATEGORIES.framework,
   },
 });
-
-const emptyMatrix = createMockMatrix();
 
 const missingDomainMatrix = createMockMatrix(SKILLS.react, {
   categories: {
@@ -381,7 +380,7 @@ describe("matrix-health-check", () => {
 
   describe("empty matrix", () => {
     it("returns no issues for empty matrix", () => {
-      const issues = checkMatrixHealth(emptyMatrix);
+      const issues = checkMatrixHealth(EMPTY_MATRIX);
 
       expect(issues).toEqual([]);
     });

@@ -13,6 +13,7 @@ import {
   SKILLS,
   TEST_CATEGORIES,
 } from "../helpers";
+import { FULLSTACK_PAIR_MATRIX } from "../mock-data/mock-matrices";
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { useMatrixStore } from "../../../stores/matrix-store";
@@ -482,7 +483,7 @@ describe("edit command local-mode skill fallback", () => {
     source: "local",
   }));
 
-  const testMatrix = createMockMatrix(SKILLS.react, SKILLS.hono);
+  const testMatrix = FULLSTACK_PAIR_MATRIX;
 
   const testSourceResult = buildSourceResult(testMatrix, "/test/source");
 

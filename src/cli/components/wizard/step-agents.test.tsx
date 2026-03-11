@@ -12,10 +12,9 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-import { createMockMatrix } from "../../lib/__tests__/helpers";
+import { EMPTY_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
 
 const EXPECTED_AGENT_COUNT = 18;
-const EMPTY_MATRIX = createMockMatrix();
 
 describe("StepAgents component", () => {
   let cleanup: (() => void) | undefined;

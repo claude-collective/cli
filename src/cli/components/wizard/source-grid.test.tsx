@@ -3,7 +3,8 @@ import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { SourceGrid, type SourceGridProps, type SourceRow, type SourceOption } from "./source-grid";
 import type { BoundSkillCandidate, SkillId } from "../../types";
 import { useMatrixStore } from "../../stores/matrix-store";
-import { createMockMatrix, createMockSkill, SKILLS } from "../../lib/__tests__/helpers";
+import { createMockMatrix, createMockSkill } from "../../lib/__tests__/helpers";
+import { WEB_TRIO_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
 import {
   ARROW_UP,
   ARROW_DOWN,
@@ -65,7 +66,7 @@ describe("SourceGrid component", () => {
   beforeEach(() => {
     useMatrixStore
       .getState()
-      .setMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.vitest));
+      .setMatrix(WEB_TRIO_MATRIX);
   });
 
   afterEach(() => {

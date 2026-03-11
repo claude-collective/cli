@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addSource, removeSource, getSourceSummary } from "./source-manager";
 import { loadProjectSourceConfig } from "./config";
-import { writeTestTsConfig, createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import {
+  writeTestTsConfig,
+  createTempDir,
+  cleanupTempDir,
+  buildSourceConfig,
+} from "../__tests__/helpers";
 
 // Mock the source-fetcher module
 vi.mock("../loading/source-fetcher", async (importOriginal) => ({
@@ -67,9 +72,12 @@ describe("source-manager", () => {
 
     it("should throw if source name already exists", async () => {
       // Set up existing config
-      await writeTestTsConfig(tempDir, {
-        sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
+        }),
+      );
 
       const { fetchMarketplace } = await import("../loading/source-fetcher");
       vi.mocked(fetchMarketplace).mockResolvedValue({
@@ -98,7 +106,7 @@ describe("source-manager", () => {
     });
 
     it("should add a source when config exists but has no sources array", async () => {
-      await writeTestTsConfig(tempDir, { source: "github:custom/skills" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:custom/skills" }));
 
       const { fetchMarketplace } = await import("../loading/source-fetcher");
       vi.mocked(fetchMarketplace).mockResolvedValue({
@@ -145,9 +153,12 @@ describe("source-manager", () => {
     });
 
     it("should not save config when duplicate check fails", async () => {
-      await writeTestTsConfig(tempDir, {
-        sources: [{ name: "existing", url: "github:org/existing" }],
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          sources: [{ name: "existing", url: "github:org/existing" }],
+        }),
+      );
 
       const { fetchMarketplace } = await import("../loading/source-fetcher");
       vi.mocked(fetchMarketplace).mockResolvedValue({
@@ -172,12 +183,15 @@ describe("source-manager", () => {
 
   describe("removeSource", () => {
     it("should remove a source by name", async () => {
-      await writeTestTsConfig(tempDir, {
-        sources: [
-          { name: "acme-corp", url: "github:acme-corp/skills" },
-          { name: "team-skills", url: "github:team/skills" },
-        ],
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          sources: [
+            { name: "acme-corp", url: "github:acme-corp/skills" },
+            { name: "team-skills", url: "github:team/skills" },
+          ],
+        }),
+      );
 
       await removeSource(tempDir, "acme-corp");
 
@@ -192,9 +206,12 @@ describe("source-manager", () => {
     });
 
     it("should throw when source not found", async () => {
-      await writeTestTsConfig(tempDir, {
-        sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
+        }),
+      );
 
       await expect(removeSource(tempDir, "nonexistent")).rejects.toThrow(
         'Source "nonexistent" not found',
@@ -202,9 +219,12 @@ describe("source-manager", () => {
     });
 
     it("should result in empty sources array when removing the last source", async () => {
-      await writeTestTsConfig(tempDir, {
-        sources: [{ name: "only-source", url: "github:org/only" }],
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          sources: [{ name: "only-source", url: "github:org/only" }],
+        }),
+      );
 
       await removeSource(tempDir, "only-source");
 
@@ -219,7 +239,7 @@ describe("source-manager", () => {
     });
 
     it("should throw when source not found and config has no sources array", async () => {
-      await writeTestTsConfig(tempDir, { source: "github:custom/skills" });
+      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:custom/skills" }));
 
       await expect(removeSource(tempDir, "nonexistent")).rejects.toThrow(
         'Source "nonexistent" not found',
@@ -242,9 +262,12 @@ describe("source-manager", () => {
     });
 
     it("should include configured sources", async () => {
-      await writeTestTsConfig(tempDir, {
-        sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
+        }),
+      );
 
       const { discoverLocalSkills } = await import("../skills/local-skill-loader");
       vi.mocked(discoverLocalSkills).mockResolvedValue(null);
@@ -320,9 +343,12 @@ describe("source-manager", () => {
     });
 
     it("should use custom source URL from config for public source", async () => {
-      await writeTestTsConfig(tempDir, {
-        source: "github:custom-org/custom-skills",
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          source: "github:custom-org/custom-skills",
+        }),
+      );
 
       const { discoverLocalSkills } = await import("../skills/local-skill-loader");
       vi.mocked(discoverLocalSkills).mockResolvedValue(null);
@@ -334,13 +360,16 @@ describe("source-manager", () => {
     });
 
     it("should include multiple configured sources in order", async () => {
-      await writeTestTsConfig(tempDir, {
-        sources: [
-          { name: "source-a", url: "github:org/source-a" },
-          { name: "source-b", url: "github:org/source-b" },
-          { name: "source-c", url: "github:org/source-c" },
-        ],
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({
+          sources: [
+            { name: "source-a", url: "github:org/source-a" },
+            { name: "source-b", url: "github:org/source-b" },
+            { name: "source-c", url: "github:org/source-c" },
+          ],
+        }),
+      );
 
       const { discoverLocalSkills } = await import("../skills/local-skill-loader");
       vi.mocked(discoverLocalSkills).mockResolvedValue(null);

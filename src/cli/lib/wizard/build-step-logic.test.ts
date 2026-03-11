@@ -86,24 +86,16 @@ describe("buildCategoriesForDomain", () => {
   const stateCategory: Category = "web-client-state";
 
   function createMatrix() {
-    return createMockMatrix(
-      {
-        "web-framework-react": SKILLS.react,
-        "web-framework-vue": SKILLS.vue,
-        "web-state-zustand": SKILLS.zustand,
-        "web-state-pinia": SKILLS.pinia,
-      },
-      {
-        categories: {
-          [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
-          [stateCategory]: {
-            ...TEST_CATEGORIES.clientState,
-            displayName: "State Management",
-            order: 1,
-          },
-        } as Record<Category, import("../../types").CategoryDefinition>,
-      },
-    );
+    return createMockMatrix(SKILLS.react, SKILLS.vue, SKILLS.zustand, SKILLS.pinia, {
+      categories: {
+        [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
+        [stateCategory]: {
+          ...TEST_CATEGORIES.clientState,
+          displayName: "State Management",
+          order: 1,
+        },
+      } as Record<Category, import("../../types").CategoryDefinition>,
+    });
   }
 
   it("should return categories with options for the given domain", () => {

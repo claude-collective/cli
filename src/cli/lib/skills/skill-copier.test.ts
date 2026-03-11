@@ -17,6 +17,7 @@ import {
   writeTestSkill,
   SKILLS,
 } from "../__tests__/helpers";
+import { EMPTY_MATRIX } from "../__tests__/mock-data/mock-matrices";
 import { renderSkillMd } from "../__tests__/content-generators";
 
 /**
@@ -319,7 +320,7 @@ describe("skill-copier", () => {
     it("warns about unknown skills and skips them", async () => {
       const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-      const matrix = createMockMatrix();
+      const matrix = EMPTY_MATRIX;
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -339,7 +340,7 @@ describe("skill-copier", () => {
     });
 
     it("handles empty skill selection", async () => {
-      const matrix = createMockMatrix();
+      const matrix = EMPTY_MATRIX;
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -606,7 +607,7 @@ describe("skill-copier", () => {
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
       await mkdir(localSkillsDir, { recursive: true });
 
-      const matrix = createMockMatrix();
+      const matrix = EMPTY_MATRIX;
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },

@@ -8,14 +8,13 @@ import {
   cleanupTestDirs,
   writeTestSkill,
   fileExists,
-  createMockMatrix,
-  SKILLS,
 } from "../__tests__/helpers";
 import { useMatrixStore } from "../../stores/matrix-store";
 import type { PluginTestDirs } from "../__tests__/helpers";
 import type { AgentName, SkillId } from "../../types";
 import { renderConfigTs } from "../__tests__/content-generators";
 import { CLAUDE_DIR, STANDARD_FILES } from "../../consts";
+import { VITEST_REACT_HONO_MATRIX } from "../__tests__/mock-data/mock-matrices";
 
 describe("agent-recompiler", () => {
   let testDirs: PluginTestDirs;
@@ -23,7 +22,7 @@ describe("agent-recompiler", () => {
   beforeEach(async () => {
     testDirs = await createTestDirs("cc-recompiler-test-");
 
-    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.vitest, SKILLS.react, SKILLS.hono));
+    useMatrixStore.getState().setMatrix(VITEST_REACT_HONO_MATRIX);
   });
 
   afterEach(async () => {

@@ -16,6 +16,7 @@ import {
   createMockMatrix,
   SKILLS,
 } from "../__tests__/helpers";
+import { EMPTY_MATRIX } from "../__tests__/mock-data/mock-matrices";
 import { TEST_CATEGORIES } from "../__tests__/test-fixtures";
 import { useMatrixStore } from "../../stores/matrix-store";
 
@@ -29,7 +30,7 @@ describe("resolveAlias", () => {
   });
 
   it("when skill ID does not exist in matrix, should throw", () => {
-    const matrix = createMockMatrix();
+    const matrix = EMPTY_MATRIX;
     useMatrixStore.getState().setMatrix(matrix);
     expect(() => resolveAlias("web-test-unknown")).toThrow("Unknown skill ID");
   });
@@ -235,7 +236,7 @@ describe("getDiscourageReason", () => {
 
 describe("validateSelection", () => {
   it("when no skills are selected, should return valid with no errors", () => {
-    const matrix = createMockMatrix();
+    const matrix = EMPTY_MATRIX;
     useMatrixStore.getState().setMatrix(matrix);
     const result = validateSelection([]);
     expect(result.valid).toBe(true);
@@ -338,7 +339,7 @@ describe("getSkillsByCategory", () => {
 describe("Empty skill selection", () => {
   describe("validateSelection with empty skills", () => {
     it("should return valid=true for empty selection", () => {
-      const matrix = createMockMatrix();
+      const matrix = EMPTY_MATRIX;
       useMatrixStore.getState().setMatrix(matrix);
       const result = validateSelection([]);
 
@@ -957,7 +958,7 @@ describe("getDependentSkills", () => {
   });
 
   it("should throw when skill is not in matrix", () => {
-    const matrix = createMockMatrix();
+    const matrix = EMPTY_MATRIX;
     useMatrixStore.getState().setMatrix(matrix);
 
     expect(() => getDependentSkills("web-skill-nonexistent", [])).toThrow("Unknown skill ID");
@@ -1326,7 +1327,7 @@ describe("getAvailableSkills edge cases", () => {
 
 describe("validateSelection edge cases", () => {
   it("when selected skill does not exist in matrix, should throw", () => {
-    const matrix = createMockMatrix();
+    const matrix = EMPTY_MATRIX;
     useMatrixStore.getState().setMatrix(matrix);
 
     // Selecting a skill that doesn't exist in the matrix is a bug

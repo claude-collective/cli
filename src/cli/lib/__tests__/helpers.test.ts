@@ -9,17 +9,17 @@ import {
   directoryExists,
   writeTestSkill,
   writeTestAgent,
-  SKILLS,
 } from "./helpers";
 import type { PluginTestDirs } from "./helpers";
 import type { SkillId } from "../../types";
 import { useMatrixStore } from "../../stores/matrix-store";
+import { VITEST_MATRIX } from "./mock-data/mock-matrices";
 
 describe("test helpers", () => {
   let testDirs: PluginTestDirs | null = null;
 
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.vitest));
+    useMatrixStore.getState().setMatrix(VITEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -68,7 +68,7 @@ describe("test helpers", () => {
   describe("createMockMatrix", () => {
     it("creates a valid matrix", () => {
       const skill = createMockSkill("web-framework-react");
-      const matrix = createMockMatrix({ "web-framework-react": skill });
+      const matrix = createMockMatrix(skill);
 
       expect(matrix.version).toBe("1.0.0");
       expect(matrix.skills["web-framework-react"]).toBe(skill);

@@ -7,12 +7,11 @@ import {
   cleanupTempDir,
   writeTestSkill,
   buildAgentConfigs,
-  createMockMatrix,
-  SKILLS,
 } from "../helpers";
 import { useMatrixStore } from "../../../stores/matrix-store";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 import { renderConfigTs } from "../content-generators";
+import { VITEST_MATRIX } from "../mock-data/mock-matrices";
 
 describe("list command", () => {
   let tempDir: string;
@@ -27,7 +26,7 @@ describe("list command", () => {
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
 
-    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.vitest));
+    useMatrixStore.getState().setMatrix(VITEST_MATRIX);
   });
 
   afterEach(async () => {

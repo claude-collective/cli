@@ -18,6 +18,7 @@ import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_FILES } from "../..
 import type { SkillAssignment, Stack, StackAgentConfig, Category } from "../../types";
 import { renderAgentYaml, renderConfigTs, renderSkillMd } from "../__tests__/content-generators";
 import { REACT_SKILL_PRELOADED, VITEST_SKILL } from "../__tests__/mock-data/mock-skills";
+import { AGENT_DEFS } from "../__tests__/mock-data/mock-agents";
 
 describe("stack-plugin-compiler", () => {
   const REACT_SKILL_ID = "web-framework-react";
@@ -118,9 +119,7 @@ describe("stack-plugin-compiler", () => {
   describe("compileStackPlugin", () => {
     it("should create plugin directory structure", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read", "Write", "Glob"],
+        ...AGENT_DEFS.webDev,
       });
 
       // Create skill in src/skills/ (new architecture)
@@ -163,8 +162,7 @@ describe("stack-plugin-compiler", () => {
 
     it("should generate valid plugin.json in .claude-plugin directory", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read", "Write"],
       });
 
@@ -198,8 +196,7 @@ describe("stack-plugin-compiler", () => {
 
     it("should compile agent markdown files to agents directory", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read", "Write"],
         intro: "# Frontend Developer\n\nThis is the intro.",
         workflow: "## Workflow\n\n1. Build components",
@@ -228,8 +225,7 @@ describe("stack-plugin-compiler", () => {
 
     it("should generate README.md with stack information", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -258,15 +254,12 @@ describe("stack-plugin-compiler", () => {
 
     it("should list agents in README", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read", "Write"],
       });
 
       await createAgent("api-developer", {
-        title: "Backend Developer",
-        description: "A backend developer agent",
-        tools: ["Read", "Write", "Bash"],
+        ...AGENT_DEFS.apiDev,
       });
 
       const stackId = uniqueStackId();
@@ -292,15 +285,12 @@ describe("stack-plugin-compiler", () => {
 
     it("should return compiled agents list", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
       await createAgent("web-tester", {
-        title: "Tester",
-        description: "A testing agent",
-        tools: ["Read", "Bash"],
+        ...AGENT_DEFS.webTester,
       });
 
       const stackId = uniqueStackId();
@@ -339,8 +329,7 @@ describe("stack-plugin-compiler", () => {
       });
 
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -372,8 +361,7 @@ describe("stack-plugin-compiler", () => {
 
     it("should return correct manifest structure", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -399,8 +387,7 @@ describe("stack-plugin-compiler", () => {
 
     it("should return stack name from config", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -457,8 +444,7 @@ describe("stack-plugin-compiler", () => {
   describe("compileStackPlugin - edge cases", () => {
     it("should handle stack with no skills (empty skillPlugins)", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -485,8 +471,7 @@ describe("stack-plugin-compiler", () => {
       ["principles", "## Principles"],
     ])("should omit %s section from README when stack has none", async (_field, readmeSection) => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -510,8 +495,7 @@ describe("stack-plugin-compiler", () => {
 
     it("should handle stack with no description", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -536,8 +520,7 @@ describe("stack-plugin-compiler", () => {
 
     it("should handle stack without CLAUDE.md", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -572,21 +555,17 @@ describe("stack-plugin-compiler", () => {
 
     it("should handle multiple agents in a single stack", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read", "Write"],
       });
 
       await createAgent("api-developer", {
-        title: "Backend Developer",
-        description: "A backend developer agent",
-        tools: ["Read", "Write", "Bash"],
+        ...AGENT_DEFS.apiDev,
       });
 
       await createAgent("web-tester", {
-        title: "Tester",
+        ...AGENT_DEFS.webTester,
         description: "A web-tester agent",
-        tools: ["Read", "Bash"],
       });
 
       const stackId = uniqueStackId();
@@ -634,8 +613,7 @@ describe("stack-plugin-compiler", () => {
       });
 
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -690,8 +668,7 @@ describe("stack-plugin-compiler", () => {
 
     it("should load stack from projectRoot when not in CLI stacks.ts", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read", "Write"],
       });
 
@@ -714,8 +691,7 @@ describe("stack-plugin-compiler", () => {
 
     it("should fall back to CLI matrix when projectRoot has no skills matrix", async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read"],
       });
 
@@ -841,13 +817,13 @@ describe("stack-plugin-compiler", () => {
     const AGENT_WITH_BOTH_SKILLS = createMockAgentConfig(
       "web-developer",
       [REACT_SKILL_PRELOADED, VITEST_SKILL],
-      { title: "Frontend Developer", description: "A frontend developer agent" },
+      { title: AGENT_DEFS.webDev.title, description: AGENT_DEFS.webDev.description },
     );
 
     const AGENT_WITH_PRELOADED_ONLY = createMockAgentConfig(
       "web-developer",
       [REACT_SKILL_PRELOADED],
-      { title: "Frontend Developer", description: "A frontend developer agent" },
+      { title: AGENT_DEFS.webDev.title, description: AGENT_DEFS.webDev.description },
     );
 
     // Shared Liquid engine — created per test via beforeEach
@@ -856,8 +832,7 @@ describe("stack-plugin-compiler", () => {
 
     beforeEach(async () => {
       await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
+        ...AGENT_DEFS.webDev,
         tools: ["Read", "Write"],
         intro: "# Frontend Dev\n\nIntro.",
         workflow: "## Workflow\n\n1. Build",

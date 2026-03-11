@@ -10,9 +10,10 @@ import {
   createTempDir,
   cleanupTempDir,
   writeTestTsConfig,
-  createMockMatrix,
-  SKILLS,
+  buildProjectConfig,
+  buildAgentConfigs,
 } from "../__tests__/helpers";
+import { SINGLE_REACT_MATRIX, WEB_PAIR_MATRIX } from "../__tests__/mock-data/mock-matrices";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 
 describe("project-config", () => {
@@ -33,13 +34,13 @@ describe("project-config", () => {
     });
 
     it("should load minimal config (just name and agents)", async () => {
-      await writeTestTsConfig(tempDir, {
-        name: "my-project",
-        agents: [
-          { name: "web-developer", scope: "project" },
-          { name: "api-developer", scope: "project" },
-        ],
-      });
+      await writeTestTsConfig(
+        tempDir,
+        buildProjectConfig({
+          name: "my-project",
+          agents: buildAgentConfigs(["web-developer", "api-developer"]),
+        }) as Record<string, unknown>,
+      );
 
       const result = await loadProjectConfig(tempDir);
 
@@ -54,15 +55,14 @@ describe("project-config", () => {
 
     it("should load config with stack (bare strings normalized to SkillAssignment[])", async () => {
       await writeTestTsConfig(tempDir, {
-        name: "my-project",
-        agents: [{ name: "web-developer", scope: "project" }],
+        ...buildProjectConfig({ name: "my-project" }),
         stack: {
           "web-developer": {
             "web-framework": "web-framework-react",
             "web-styling": "web-styling-scss-modules",
           },
         },
-      });
+      } as Record<string, unknown>);
 
       const result = await loadProjectConfig(tempDir);
 
@@ -78,8 +78,7 @@ describe("project-config", () => {
 
     it("should load config with mixed stack formats (array, object, string)", async () => {
       await writeTestTsConfig(tempDir, {
-        name: "my-project",
-        agents: [{ name: "web-developer", scope: "project" }],
+        ...buildProjectConfig({ name: "my-project" }),
         stack: {
           "web-developer": {
             "web-framework": "web-framework-react",
@@ -93,7 +92,7 @@ describe("project-config", () => {
             },
           },
         },
-      });
+      } as Record<string, unknown>);
 
       const result = await loadProjectConfig(tempDir);
 
@@ -115,11 +114,10 @@ describe("project-config", () => {
 
     it("should load config with extra fields (passthrough)", async () => {
       await writeTestTsConfig(tempDir, {
-        name: "my-stack",
+        ...buildProjectConfig({ name: "my-stack" }),
         author: "@vince",
         description: "A config with extra fields",
-        agents: [{ name: "web-developer", scope: "project" }],
-      });
+      } as Record<string, unknown>);
 
       const result = await loadProjectConfig(tempDir);
 
@@ -156,10 +154,7 @@ describe("project-config", () => {
 
   describe("validateProjectConfig", () => {
     it("should pass for minimal valid config", () => {
-      const result = validateProjectConfig({
-        name: "my-project",
-        agents: [{ name: "web-developer", scope: "project" }],
-      });
+      const result = validateProjectConfig(buildProjectConfig());
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -234,7 +229,7 @@ describe("round-trip tests", () => {
   });
 
   it("should round-trip minimal config (name and stack only)", async () => {
-    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand));
+    useMatrixStore.getState().setMatrix(WEB_PAIR_MATRIX);
     const selectedAgents: AgentName[] = ["web-developer"];
 
     // Generate config
@@ -263,7 +258,7 @@ describe("round-trip tests", () => {
   });
 
   it("should round-trip config with options (description/author)", async () => {
-    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
+    useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
     const selectedAgents: AgentName[] = ["web-developer"];
 
     // Generate config with options

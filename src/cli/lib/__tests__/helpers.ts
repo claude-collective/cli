@@ -175,6 +175,13 @@ export async function writeTestTsConfig(
   await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(config));
 }
 
+export function buildSourceConfig(overrides?: Record<string, unknown>): Record<string, unknown> {
+  return {
+    source: "github:test-org/skills",
+    ...overrides,
+  };
+}
+
 export function buildProjectConfig(overrides?: Partial<ProjectConfig>): ProjectConfig {
   return {
     name: "test-project",

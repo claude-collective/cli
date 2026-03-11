@@ -3,13 +3,8 @@ import type { SkillId } from "../../types";
 import type { SkillConfig } from "../../types/config";
 import type { SourceLoadResult } from "../loading/source-loader";
 import type { MigrationPlan } from "./mode-migrator";
-import {
-  buildSourceResult,
-  createMockMatrix,
-  createTempDir,
-  cleanupTempDir,
-  SKILLS,
-} from "../__tests__/helpers";
+import { buildSourceResult, createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { WEB_PAIR_MATRIX } from "../__tests__/mock-data/mock-matrices";
 
 // Mock dependencies before imports
 vi.mock("../skills", () => ({
@@ -119,7 +114,7 @@ describe("mode-migrator", () => {
     beforeEach(async () => {
       tempDir = await createTempDir("mode-migrator-test-");
 
-      const matrix = createMockMatrix(SKILLS.react, SKILLS.zustand);
+      const matrix = WEB_PAIR_MATRIX;
       sourceResult = buildSourceResult(matrix, "/test/source", {
         marketplace: "https://marketplace.example.com",
       });
