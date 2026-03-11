@@ -64,9 +64,7 @@ describe("SourceGrid component", () => {
   let cleanup: (() => void) | undefined;
 
   beforeEach(() => {
-    useMatrixStore
-      .getState()
-      .setMatrix(WEB_TRIO_MATRIX);
+    useMatrixStore.getState().setMatrix(WEB_TRIO_MATRIX);
   });
 
   afterEach(() => {

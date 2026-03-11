@@ -8,17 +8,18 @@
 
 Five types are manually maintained in two places each (union type + Zod schema):
 
-| Type | Union location | Zod location | Source of truth |
-| --- | --- | --- | --- |
-| `SkillId` | template literal in `types/skills.ts` (wide, no typo protection) | regex in `schemas.ts` | Skills repo: `SKILL.md` frontmatter `name` field |
-| `SkillSlug` | manual union in `types/skills.ts` (~85 values) | manual Zod enum in `schemas.ts` (~85 values) | Skills repo: `metadata.yaml` `slug` field |
-| `Category` | manual union in `types/matrix.ts` (38 values) | `CATEGORY_VALUES` const in `schemas.ts` (38 values) | Skills repo: `metadata.yaml` `category` field |
-| `AgentName` | manual union in `types/agents.ts` (17 values) | inline Zod enum in `schemas.ts` (17 values) | CLI repo: `src/agents/**/metadata.yaml` `id` field |
-| `Domain` | manual union in `types/matrix.ts` (5 values) | — | Skills repo: `metadata.yaml` `domain` field |
+| Type        | Union location                                                   | Zod location                                        | Source of truth                                    |
+| ----------- | ---------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------- |
+| `SkillId`   | template literal in `types/skills.ts` (wide, no typo protection) | regex in `schemas.ts`                               | Skills repo: `SKILL.md` frontmatter `name` field   |
+| `SkillSlug` | manual union in `types/skills.ts` (~85 values)                   | manual Zod enum in `schemas.ts` (~85 values)        | Skills repo: `metadata.yaml` `slug` field          |
+| `Category`  | manual union in `types/matrix.ts` (38 values)                    | `CATEGORY_VALUES` const in `schemas.ts` (38 values) | Skills repo: `metadata.yaml` `category` field      |
+| `AgentName` | manual union in `types/agents.ts` (17 values)                    | inline Zod enum in `schemas.ts` (17 values)         | CLI repo: `src/agents/**/metadata.yaml` `id` field |
+| `Domain`    | manual union in `types/matrix.ts` (5 values)                     | —                                                   | Skills repo: `metadata.yaml` `domain` field        |
 
 Adding a skill, category, or agent requires updating both the type union and the Zod schema. `SkillId` is worse — it's a template literal that accepts any matching pattern, so typos compile silently.
 
 **Current drift (source vs union):**
+
 - `Category`: 4 values in union but not in source (`cli-prompts`, `mobile-platform`, `shared`, `web-base-framework`)
 - `SkillSlug`: ~18 mismatches in each direction
 - `SkillId`: wide template literal, no drift possible (accepts everything)
@@ -77,13 +78,7 @@ export type Category = (typeof CATEGORIES)[number];
 
 // ── Domains ────────────────────────────────────────────────────
 
-export const DOMAINS = [
-  "api",
-  "cli",
-  "mobile",
-  "shared",
-  "web",
-] as const;
+export const DOMAINS = ["api", "cli", "mobile", "shared", "web"] as const;
 
 export type Domain = (typeof DOMAINS)[number];
 
@@ -132,6 +127,7 @@ export type AgentName = (typeof AGENT_NAMES)[number];
 ### 1. New file: `scripts/generate-source-types.ts`
 
 The codegen script (~100 lines). Uses only:
+
 - Node's `fs` and `path` (or `fast-glob` / `glob` for globbing)
 - `yaml` package (already a dependency)
 - Regex for SKILL.md frontmatter extraction
@@ -210,6 +206,7 @@ Delete: `CATEGORY_VALUES` const array (replaced by `CATEGORIES` from generated f
 ### 9. First-run drift cleanup
 
 The first codegen run will change several unions:
+
 - `Category`: removes 4 stale values (`cli-prompts`, `mobile-platform`, `shared`, `web-base-framework`)
 - `SkillSlug`: ~18 mismatches in each direction
 - `SkillId`: narrows from wide template literal to exact union
@@ -241,24 +238,24 @@ Simplify to `Category | "local"`. The `` `${SkillIdPrefix}-${string}` `` arm was
 
 ### Direct changes:
 
-| File | Action | Lines |
-| --- | --- | --- |
-| `scripts/generate-source-types.ts` | NEW | ~100 |
-| `src/cli/types/generated/source-types.ts` | NEW (generated) | ~220 |
-| `src/cli/types/skills.ts` | MODIFY | -110, +5 |
-| `src/cli/types/matrix.ts` | MODIFY | -45, +4 |
-| `src/cli/types/agents.ts` | MODIFY | -25, +3 |
-| `src/cli/lib/schemas.ts` | MODIFY | -120, +10 |
-| `package.json` | MODIFY | +1 |
+| File                                      | Action          | Lines     |
+| ----------------------------------------- | --------------- | --------- |
+| `scripts/generate-source-types.ts`        | NEW             | ~100      |
+| `src/cli/types/generated/source-types.ts` | NEW (generated) | ~220      |
+| `src/cli/types/skills.ts`                 | MODIFY          | -110, +5  |
+| `src/cli/types/matrix.ts`                 | MODIFY          | -45, +4   |
+| `src/cli/types/agents.ts`                 | MODIFY          | -25, +3   |
+| `src/cli/lib/schemas.ts`                  | MODIFY          | -120, +10 |
+| `package.json`                            | MODIFY          | +1        |
 
 ### Cascade changes:
 
-| File | Action | Reason |
-| --- | --- | --- |
-| `src/cli/lib/__tests__/test-fixtures.ts` | MODIFY | `SKILLS.vue` ID correction |
-| `src/cli/lib/__tests__/helpers.ts` | MODIFY | `getCanonicalSkillCategories()` vue entry |
-| ~15-20 test files | MODIFY | `as SkillId` casts for non-source IDs |
-| Test files using stale categories | MODIFY | Fix removed category values |
+| File                                     | Action | Reason                                    |
+| ---------------------------------------- | ------ | ----------------------------------------- |
+| `src/cli/lib/__tests__/test-fixtures.ts` | MODIFY | `SKILLS.vue` ID correction                |
+| `src/cli/lib/__tests__/helpers.ts`       | MODIFY | `getCanonicalSkillCategories()` vue entry |
+| ~15-20 test files                        | MODIFY | `as SkillId` casts for non-source IDs     |
+| Test files using stale categories        | MODIFY | Fix removed category values               |
 
 **Estimated total: ~25-30 files**, with test file changes being mechanical.
 

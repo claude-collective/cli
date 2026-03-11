@@ -8,6 +8,7 @@
 Both call sites of `loadStackById` duplicate the same fallback to `defaultStacks`:
 
 **`local-installer.ts:172-178`:**
+
 ```typescript
 loadedStack = await loadStackById(wizardResult.selectedStackId, sourceResult.sourcePath);
 if (!loadedStack) {
@@ -16,6 +17,7 @@ if (!loadedStack) {
 ```
 
 **`stack-plugin-compiler.ts:223-227`:**
+
 ```typescript
 const newStack =
   options.stack ||
@@ -99,9 +101,7 @@ const newStack =
   null;
 
 // After
-const newStack =
-  options.stack ||
-  (await loadStackById(stackId, projectRoot));
+const newStack = options.stack || (await loadStackById(stackId, projectRoot));
 ```
 
 Remove the `defaultStacks` import if no longer used in this file.
@@ -117,14 +117,15 @@ The "returns null when stack ID not found" and "returns null when no stacks file
 ### 5. Clean up unused imports
 
 After removing the fallback from both callers, check if `defaultStacks` is still imported in:
+
 - `local-installer.ts` — remove import if unused
 - `stack-plugin-compiler.ts` — remove import if unused
 
 ## Files Changed
 
-| File | Change |
-| --- | --- |
-| `src/cli/lib/stacks/stacks-loader.ts` | Add defaultStacks fallback inside loadStackById |
-| `src/cli/lib/installation/local-installer.ts` | Remove duplicated fallback + unused import |
-| `src/cli/lib/stacks/stack-plugin-compiler.ts` | Remove duplicated fallback + unused import |
-| `src/cli/lib/stacks/stacks-loader.test.ts` | Update/add tests for default fallback behavior |
+| File                                          | Change                                          |
+| --------------------------------------------- | ----------------------------------------------- |
+| `src/cli/lib/stacks/stacks-loader.ts`         | Add defaultStacks fallback inside loadStackById |
+| `src/cli/lib/installation/local-installer.ts` | Remove duplicated fallback + unused import      |
+| `src/cli/lib/stacks/stack-plugin-compiler.ts` | Remove duplicated fallback + unused import      |
+| `src/cli/lib/stacks/stacks-loader.test.ts`    | Update/add tests for default fallback behavior  |
