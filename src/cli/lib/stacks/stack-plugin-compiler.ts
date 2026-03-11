@@ -21,7 +21,6 @@ import { loadSkillsByIds, loadAllAgents } from "../loading";
 import { loadStackById, resolveAgentConfigToSkills, getStackSkillIds } from "./stacks-loader";
 import { resolveAgents, convertStackToCompileConfig } from "../resolver";
 import { buildStackProperty } from "../configuration";
-import { defaultStacks } from "../configuration/default-stacks";
 import type {
   AgentConfig,
   AgentDefinition,
@@ -220,11 +219,7 @@ export async function compileStackPlugin(
     `  Loaded ${Object.keys(localAgents).length} local agents, ${Object.keys(cliAgents).length} CLI agents`,
   );
 
-  const newStack =
-    options.stack ||
-    (await loadStackById(stackId, projectRoot)) ||
-    defaultStacks.find((s) => s.id === stackId) ||
-    null;
+  const newStack = options.stack || (await loadStackById(stackId, projectRoot));
 
   let stack: ProjectConfig;
   if (newStack) {

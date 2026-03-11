@@ -16,6 +16,7 @@ import { isValidSkillId, stacksConfigSchema } from "../schemas";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 import { STACKS_FILE_PATH } from "../../consts";
 import { loadConfig } from "../configuration/config-loader";
+import { defaultStacks } from "../configuration/default-stacks";
 
 const stacksCache = new Map<string, Stack[]>();
 
@@ -90,13 +91,19 @@ export async function loadStackById(stackId: string, configDir: string): Promise
   const stacks = await loadStacks(configDir);
   const stack = stacks.find((s) => s.id === stackId);
 
-  if (!stack) {
-    verbose(`Stack '${stackId}' not found`);
-    return null;
+  if (stack) {
+    verbose(`Found stack: ${stack.name} (${stackId})`);
+    return stack;
   }
 
-  verbose(`Found stack: ${stack.name} (${stackId})`);
-  return stack;
+  // Fall back to CLI's built-in default stacks
+  const defaultStack = defaultStacks.find((s) => s.id === stackId) ?? null;
+  if (defaultStack) {
+    verbose(`Found default stack: ${defaultStack.name} (${stackId})`);
+  } else {
+    verbose(`Stack '${stackId}' not found in source or defaults`);
+  }
+  return defaultStack;
 }
 
 // Converts a StackAgentConfig (category -> SkillAssignment[]) to an array of SkillReferences.

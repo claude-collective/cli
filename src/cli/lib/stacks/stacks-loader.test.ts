@@ -194,13 +194,26 @@ describe("stacks-loader", () => {
       expect(stack).toBeNull();
     });
 
-    it("returns null when no stacks file exists", async () => {
+    it("returns null when no stacks file exists and ID is not a default stack", async () => {
+      vi.mocked(loadConfig).mockResolvedValue(null);
+
+      const { loadStackById: freshLoadStackById } = await import("./stacks-loader");
+      const stack = await freshLoadStackById("nonexistent-stack", "/project");
+
+      expect(stack).toBeNull();
+    });
+
+    it("falls back to default stacks when source has no match", async () => {
+      // Source has no stacks file, so loadStacks returns []
       vi.mocked(loadConfig).mockResolvedValue(null);
 
       const { loadStackById: freshLoadStackById } = await import("./stacks-loader");
       const stack = await freshLoadStackById("nextjs-fullstack", "/project");
 
-      expect(stack).toBeNull();
+      // Should fall back to the built-in default stack
+      expect(stack).not.toBeNull();
+      expect(stack!.id).toBe("nextjs-fullstack");
+      expect(stack!.name).toBe("Next.js Fullstack");
     });
   });
 

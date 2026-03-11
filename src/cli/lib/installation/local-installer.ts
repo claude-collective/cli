@@ -22,7 +22,6 @@ import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "
 import { type MergeResult, mergeWithExistingConfig } from "../configuration";
 import { loadAllAgents, loadSkillsByIds, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
-import { defaultStacks } from "../configuration/default-stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills, buildStackProperty } from "../configuration";
@@ -172,10 +171,6 @@ async function buildLocalConfig(
   let loadedStack: Stack | null = null;
   if (wizardResult.selectedStackId) {
     loadedStack = await loadStackById(wizardResult.selectedStackId, sourceResult.sourcePath);
-    if (!loadedStack) {
-      // Fall back to CLI's built-in default stacks
-      loadedStack = defaultStacks.find((s) => s.id === wizardResult.selectedStackId) ?? null;
-    }
     verbose(
       `buildLocalConfig: loadedStack=${loadedStack ? `found (id='${loadedStack.id}')` : "NOT FOUND"}`,
     );
