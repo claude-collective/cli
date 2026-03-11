@@ -39,6 +39,9 @@ This file provides decision trees, behavioral rules, and conventions. For codeba
 - NEVER put machine-specific absolute paths in any file tracked by git. If a file needs private paths, gitignore it first.
 - NEVER use inline regex to extract SKILL.md frontmatter fields. Use `parseFrontmatter()` from `lib/loading/loader.ts` — it handles YAML parsing and Zod validation.
 - NEVER use `git checkout`, `git restore`, or any command that discards working tree changes — these are irreversible. If working tree changes conflict with your task, ask the user how to proceed.
+- NEVER create custom mock skills (`createMockSkill("web-framework-react")`) when a canonical `SKILLS.*` entry from `test-fixtures.ts` would work. The canonical registry (`SKILLS.react`, `SKILLS.hono`, etc.) is the single source of truth — only use `createMockSkill()` for deliberately broken, exotic, or error-case skills that don't belong in the registry.
+- NEVER write inline SKILL.md frontmatter or agent YAML template strings in tests — use `renderSkillMd()`, `renderAgentYaml()`, `renderConfigTs()` from `__tests__/content-generators.ts`.
+- NEVER export constants that are only used within the same file — keep them file-private. Run grep before adding `export` to confirm cross-file usage.
 
 ## ALWAYS do this
 
@@ -48,6 +51,10 @@ This file provides decision trees, behavioral rules, and conventions. For codeba
 - ALWAYS search for all call sites when removing a workaround.
 - When a task is deferred, ALWAYS move it to `TODO-deferred.md` — never delete.
 - When fixing test data, ALWAYS evaluate the construction pattern too, not just the values.
+- ALWAYS prefer `SKILLS.*` entries from `test-fixtures.ts` over `createMockSkill()` for standard domain skills (react, vue, hono, drizzle, zustand, pinia, scss, tailwind, vitest, antiOverEng).
+- ALWAYS use `createMockMatrix` spread syntax: `createMockMatrix(SKILLS.react, SKILLS.hono)` — not the old record syntax `createMockMatrix({ "web-framework-react": SKILLS.react })`. Exception: empty skills record (no skills) must use old syntax.
+- ALWAYS extract repeated skill ID string literals (3+ uses in a describe block) into describe-level constants: `const REACT_SKILL_ID: SkillId = "web-framework-react"`.
+- ALWAYS use spread isolation `{ ...SKILLS.react }` when passing canonical skills to functions that mutate objects in-place (e.g., `loadSkillsFromAllSources` adds `availableSources`/`activeSource`).
 
 ---
 
@@ -130,7 +137,7 @@ This means:
 - **Stacks** → Use `TestStack[]` via `createTestSource({ stacks })` or extend existing fixtures
 - **Configs** → `buildProjectConfig()`, `buildSkillConfigs()`, `buildAgentConfigs()`, `buildWizardResult()`, `buildWizardResultFromStore()`, `buildSourceResult()`, `buildTestProjectConfig()`, `writeProjectConfig()` (E2E disk configs)
 - **Compile context** → `createCompileContext()`, `createMockCompileConfig()`, `createMockSkillAssignment()`
-- **Content generators** → `createSkillContent()`, `createAgentYamlContent()`
+- **Content generators** → `renderSkillMd()`, `renderAgentYaml()`, `renderConfigTs()`, `renderCategoriesTs()`, `renderRulesTs()` from `content-generators.ts`. Legacy wrappers `createSkillContent()`/`createAgentYamlContent()` in helpers.ts delegate to these.
 - **Test utilities** → `parseTestFrontmatter()`, `simulateSkillSelections()`, `extractSkillIdsFromAssignment()`
 
 **If a factory doesn't exist for what you need, CREATE ONE in helpers.ts — do not inline the data.**
@@ -266,6 +273,10 @@ this.error(message, { exit: 2 });
 - [ ] **ALL test data uses factories/fixtures** — no inline configs, matrices, skills, stacks, or agents
 - [ ] No raw `writeFile` for skill/agent/config test data — use `createCLISkill`, `createUserSkill`, `writeTestSkill`, `writeSourceSkill`, `createTestSource`, `writeProjectConfig`
 - [ ] No inline `SkillsMatrixConfig` or `MergedSkillsMatrix` construction — use `createMockMatrix()`, `createMockSkill()`
+- [ ] Prefer `SKILLS.*` from `test-fixtures.ts` over `createMockSkill()` for standard domain skills
+- [ ] Use `createMockMatrix` spread syntax (not record syntax) — `createMockMatrix(SKILLS.react, SKILLS.hono)`
+- [ ] No inline SKILL.md/agent YAML template strings — use `renderSkillMd()`/`renderAgentYaml()` from `content-generators.ts`
+- [ ] No file-private constants exported — only export what is imported by other files
 - [ ] No inline `TestSkill[]` arrays — use constants from `mock-data/mock-skills.ts`
 - [ ] No `as SkillSlug` casts on test data — use valid union members only
 - [ ] No alias/mapping hacks to paper over wrong test data — fix the data at the source

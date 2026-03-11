@@ -176,8 +176,8 @@ try {
 | `readTestYaml`                                       | `__tests__/helpers.ts`                                      |
 | `buildWizardResult`, `buildSourceResult`             | `__tests__/helpers.ts`                                      |
 | `parseTestFrontmatter`                               | `__tests__/helpers.ts`                                      |
-| `getTestSkill(name, overrides?)`                     | `__tests__/test-fixtures.ts` (re-exported from helpers)     |
-| `createMockSkill(id, category, overrides?)`          | `__tests__/helpers.ts`                                      |
+| `SKILLS.react`, `SKILLS.hono`, etc.                  | `__tests__/test-fixtures.ts` (canonical skill registry)     |
+| `createMockSkill(id, overrides?)`                    | `__tests__/helpers.ts`                                      |
 | `createComprehensiveMatrix()`, `createBasicMatrix()` | `__tests__/helpers.ts`                                      |
 | `createTestDirs()`, `cleanupTestDirs()`              | `__tests__/helpers.ts`                                      |
 | `createTempDir()`, `cleanupTempDir()`                | `__tests__/helpers.ts`                                      |
@@ -194,7 +194,7 @@ async function expectFlagAccepted(args: string[]): Promise<void> {
 }
 ```
 
-**6.4** Use `getTestSkill(name, overrides?)` from `test-fixtures.ts` for standard skill fixtures. For custom skills not in the fixture list, use `createMockSkill(id, category, overrides?)` from `helpers.ts`. Do not define per-test skill factory functions. Available fixture names: `react`, `vue`, `zustand`, `hono`, `vitest`, `drizzle`, `scss-modules`, `auth-patterns`, `methodology`.
+**6.4** Use `SKILLS.*` from `test-fixtures.ts` for standard skill fixtures (e.g., `SKILLS.react`, `SKILLS.hono`). For custom skills not in the registry, use `createMockSkill(id, overrides?)` from `helpers.ts`. Do not define per-test skill factory functions. Available registry keys: `react`, `vue`, `zustand`, `pinia`, `scss`, `tailwind`, `vitest`, `hono`, `express`, `drizzle`, plus methodology skills.
 
 **6.5** Use named constants from `test-constants.ts` for keyboard input (`ARROW_UP`, `SPACE`, `ENTER`, `ESCAPE`) and timing (`RENDER_DELAY_MS`, `INPUT_DELAY_MS`, `STEP_TRANSITION_DELAY_MS`).
 
@@ -241,10 +241,9 @@ For dynamic test data (created/modified per test), use factory functions from `h
 // Pattern used by all factory functions in helpers.ts
 function createMockSkill(
   id: SkillId,
-  category: CategoryPath,
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
-  return { id, category, /* defaults */, ...overrides };
+  return { id, /* defaults */, ...overrides };
 }
 ```
 

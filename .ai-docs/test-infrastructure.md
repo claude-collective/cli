@@ -6,7 +6,7 @@
 
 **Runner:** Vitest
 **Config:** `vitest.config.ts` (project root)
-**Test Count:** 2309+ tests
+**Test Count:** 3312+ tests
 
 ## Test Projects
 
@@ -39,7 +39,7 @@ src/cli/lib/__tests__/
   helpers.ts                         # Shared test utilities (MANDATORY: use for all test data)
   helpers.test.ts                    # Tests for helpers themselves
   test-constants.ts                  # Keyboard constants, timing delays
-  test-fixtures.ts                   # Named skill fixtures (getTestSkill)
+  test-fixtures.ts                   # Canonical skill registry (SKILLS), test categories
   commands/                          # Command-level tests
     build/
       marketplace.test.ts
@@ -178,8 +178,8 @@ src/cli/components/wizard/wizard-tabs.test.tsx
 
 | Factory                | Purpose                          | Signature                                     |
 | ---------------------- | -------------------------------- | --------------------------------------------- |
-| `createMockSkill()`    | Create a ResolvedSkill mock      | `(id, category, overrides?) => ResolvedSkill` |
-| `createMockMatrix()`   | Create a MergedSkillsMatrix mock | `(skills, overrides?) => MergedSkillsMatrix`  |
+| `createMockSkill()`    | Create a ResolvedSkill mock      | `(id, overrides?) => ResolvedSkill`           |
+| `createMockMatrix()`   | Create a MergedSkillsMatrix mock | `(...skills) => MergedSkillsMatrix`           |
 | `createMockCategory()` | Create a CategoryDefinition mock | `(id, overrides?) => CategoryDefinition`      |
 | `createMockAgent()`    | Create an AgentYamlConfig mock   | `(name, overrides?) => AgentYamlConfig`       |
 | `buildWizardResult()`  | Create a WizardResultV2 mock     | `(overrides?) => WizardResultV2`              |
