@@ -112,6 +112,6 @@
       "type": "boolean"
     }
   },
-  "required": ["category", "author", "displayName", "cliDescription", "usageGuidance"],
+  "required": ["category", "author", "displayName", "cliDescription", "usageGuidance", "slug"],
   "additionalProperties": false
 }

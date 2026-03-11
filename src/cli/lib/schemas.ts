@@ -530,45 +530,45 @@ export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object(
   icon: z.string().optional(),
 });
 
-// Lenient: accepts both SkillId and SkillSlug, resolved to canonical IDs by matrix-loader
-const skillRefInYaml = z.string() as z.ZodType<SkillId>;
+// Skill references in relationship rules: slugs resolved to canonical IDs by matrix-loader
+const skillRefInRules = skillSlugSchema;
 
 export const conflictRuleSchema: z.ZodType<ConflictRule> = z.object({
-  skills: z.array(skillRefInYaml).min(2),
+  skills: z.array(skillRefInRules).min(2),
   reason: z.string(),
 });
 
 export const discourageRuleSchema: z.ZodType<DiscourageRule> = z.object({
-  skills: z.array(skillRefInYaml).min(2),
+  skills: z.array(skillRefInRules).min(2),
   reason: z.string(),
 });
 
 export const recommendationSchema: z.ZodType<Recommendation> = z.object({
-  skill: skillIdSchema,
+  skill: skillRefInRules,
   reason: z.string(),
 });
 
 export const compatibilityGroupSchema: z.ZodType<CompatibilityGroup> = z.object({
-  skills: z.array(skillIdSchema).min(2),
+  skills: z.array(skillRefInRules).min(2),
   reason: z.string(),
 });
 
 export const setupPairSchema: z.ZodType<SetupPair> = z.object({
-  setup: skillIdSchema,
-  configures: z.array(skillIdSchema).min(1),
+  setup: skillRefInRules,
+  configures: z.array(skillRefInRules).min(1),
   reason: z.string(),
 });
 
 export const requireRuleSchema: z.ZodType<RequireRule> = z.object({
-  skill: skillRefInYaml,
-  needs: z.array(skillRefInYaml).min(1),
+  skill: skillRefInRules,
+  needs: z.array(skillRefInRules).min(1),
   needsAny: z.boolean().optional(),
   reason: z.string(),
 });
 
 export const alternativeGroupSchema: z.ZodType<AlternativeGroup> = z.object({
   purpose: z.string(),
-  skills: z.array(skillRefInYaml).min(1),
+  skills: z.array(skillRefInRules).min(1),
 });
 
 export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> = z.object({

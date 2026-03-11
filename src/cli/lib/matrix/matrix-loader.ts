@@ -42,8 +42,8 @@ import type {
   Category,
 } from "../../types";
 
-/** Resolves a raw ID (which may be a slug or alias) to a canonical SkillId */
-type ResolveId = (id: SkillId, context?: string) => SkillId;
+/** Resolves a slug to a canonical SkillId */
+type ResolveId = (slug: SkillSlug, context?: string) => SkillId;
 
 const rawMetadataSchema = z.object({
   category: categoryPathSchema,
@@ -251,23 +251,24 @@ function buildDirectoryPathToIdMap(skills: ExtractedSkillMetadata[]): Record<str
 }
 
 function resolveToCanonicalId(
-  nameOrId: SkillId,
+  slug: SkillSlug,
   slugToId: SkillSlugMap["slugToId"],
   directoryPathToId: Record<string, SkillId> = {},
   context?: string,
 ): SkillId {
-  // Boundary cast: nameOrId may contain a slug from YAML — narrow to SkillSlug for lookup
-  const slugResult = slugToId[nameOrId as unknown as SkillSlug];
+  const slugResult = slugToId[slug];
   if (slugResult) {
     return slugResult;
   }
-  if (directoryPathToId[nameOrId]) {
-    return directoryPathToId[nameOrId];
+  // Fallback: check directory path mapping (unlikely for slugs, but keeps backward compat)
+  if (directoryPathToId[slug]) {
+    return directoryPathToId[slug];
   }
   if (context) {
-    verbose(`Unresolved ID '${nameOrId}' in ${context} — passing through as-is`);
+    verbose(`Unresolved slug '${slug}' in ${context} — passing through as-is`);
   }
-  return nameOrId;
+  // Boundary cast: unresolved slugs pass through as-is (will be caught by matrix health check)
+  return slug as unknown as SkillId;
 }
 
 /**
@@ -337,7 +338,7 @@ function resolveConflicts(
   const conflicts: SkillRelation[] = [];
 
   for (const rule of conflictRules) {
-    const resolved = rule.skills.map((id) => resolve(id, "conflicts"));
+    const resolved = rule.skills.map((slug) => resolve(slug, "conflicts"));
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
       if (other !== skillId && !conflicts.some((c) => c.skillId === other)) {
@@ -358,7 +359,7 @@ function resolveCompatibilityGroups(
   const compatible = new Set<SkillId>();
 
   for (const group of compatibilityGroups) {
-    const resolved = group.skills.map((id) => resolve(id, "compatibleWith"));
+    const resolved = group.skills.map((slug) => resolve(slug, "compatibleWith"));
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
       if (other !== skillId) {
@@ -381,7 +382,7 @@ function resolveSetupPairs(
 
   for (const pair of setupPairs) {
     const setupId = resolve(pair.setup, "setupPairs.setup");
-    const configuresIds = pair.configures.map((id) => resolve(id, "setupPairs.configures"));
+    const configuresIds = pair.configures.map((slug) => resolve(slug, "setupPairs.configures"));
 
     if (setupId === skillId) {
       // This skill is a setup skill — it provides setup for the configured skills
@@ -413,7 +414,7 @@ function resolveRequirements(
   for (const rule of requireRules) {
     if (resolve(rule.skill, "requires.skill") !== skillId) continue;
     requires.push({
-      skillIds: rule.needs.map((id) => resolve(id, "requires.needs")),
+      skillIds: rule.needs.map((slug) => resolve(slug, "requires.needs")),
       needsAny: rule.needsAny ?? false,
       reason: rule.reason,
     });
@@ -431,7 +432,7 @@ function resolveAlternatives(
   const alternatives: SkillAlternative[] = [];
 
   for (const group of alternativeGroups) {
-    const resolved = group.skills.map((id) => resolve(id, "alternatives"));
+    const resolved = group.skills.map((slug) => resolve(slug, "alternatives"));
     if (!resolved.includes(skillId)) continue;
     for (const alt of resolved) {
       if (alt !== skillId) {
@@ -453,7 +454,7 @@ function resolveDiscourages(
   const discourages: SkillRelation[] = [];
 
   for (const rule of discourageRules) {
-    const resolved = rule.skills.map((id) => resolve(id, "discourages"));
+    const resolved = rule.skills.map((slug) => resolve(slug, "discourages"));
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
       if (other !== skillId && !discourages.some((d) => d.skillId === other)) {
@@ -472,9 +473,9 @@ function buildResolvedSkill(
   slugMap: SkillSlugMap,
   directoryPathToId: Record<string, SkillId>,
 ): ResolvedSkill {
-  const resolve: ResolveId = (id, context) =>
+  const resolve: ResolveId = (slug, context) =>
     resolveToCanonicalId(
-      id,
+      slug,
       slugMap.slugToId,
       directoryPathToId,
       context ? `${skill.id} ${context}` : undefined,
@@ -482,8 +483,8 @@ function buildResolvedSkill(
 
   const slug = skill.slug;
 
-  // Look up isRecommended/recommendedReason from flat recommends list
-  const recommendation = relationships.recommends.find((r) => r.skill === skill.id);
+  // Look up isRecommended/recommendedReason from flat recommends list (now slug-based)
+  const recommendation = relationships.recommends.find((r) => r.skill === skill.slug);
 
   // Resolve setup pairs
   const { requiresSetup, providesSetupFor } = resolveSetupPairs(

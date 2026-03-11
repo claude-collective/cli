@@ -114,42 +114,42 @@ export type RelationshipDefinitions = {
 
 /** Mutual exclusion rule - selecting any one skill disables ALL others */
 export type ConflictRule = {
-  /** Canonical skill IDs (aliases resolved at YAML parse boundary) */
-  skills: SkillId[];
+  /** Skill slugs (resolved to canonical IDs by matrix-loader) */
+  skills: SkillSlug[];
   reason: string;
 };
 
 /** Soft conflict rule - selecting any one shows a warning for ALL others */
 export type DiscourageRule = {
-  /** Canonical skill IDs (aliases resolved at YAML parse boundary) */
-  skills: SkillId[];
+  /** Skill slugs (resolved to canonical IDs by matrix-loader) */
+  skills: SkillSlug[];
   reason: string;
 };
 
 /** Flat opinionated pick — skills we actively recommend */
 export type Recommendation = {
-  skill: SkillId;
+  skill: SkillSlug;
   reason: string;
 };
 
 /** Symmetric compatibility group — all skills in the group work together */
 export type CompatibilityGroup = {
-  skills: SkillId[];
+  skills: SkillSlug[];
   reason: string;
 };
 
 /** Bidirectional setup relationship — setup skill configures usage skills */
 export type SetupPair = {
-  setup: SkillId;
-  configures: SkillId[];
+  setup: SkillSlug;
+  configures: SkillSlug[];
   reason: string;
 };
 
 /** Dependency rule - skill A requires skill B to be selected first */
 export type RequireRule = {
-  skill: SkillId;
-  /** Skills that must be selected before this one */
-  needs: SkillId[];
+  skill: SkillSlug;
+  /** Skill slugs that must be selected before this one */
+  needs: SkillSlug[];
   /**
    * If true, only ONE of the `needs` skills is required (OR logic).
    * If false/undefined, ALL are required (AND logic).
@@ -162,7 +162,7 @@ export type RequireRule = {
 /** Group of interchangeable skills serving the same purpose */
 export type AlternativeGroup = {
   purpose: string;
-  skills: SkillId[];
+  skills: SkillSlug[];
 };
 
 /** Parsed configuration from skill-rules.ts */
