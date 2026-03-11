@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.71.0] - 2026-03-11
+
+**Reusable SelectList component, Dashboard and GlobalConfigPrompt UX overhaul**
+
+- New `SelectList<T>` component for vertical single-select lists
+- Dashboard simplified to vertical menu (no stats display)
+- Screen clears between successive Ink renders
+
+See [changelogs/0.71.0.md](./changelogs/0.71.0.md) for full details.
+
+---
+
 ## [0.70.0] - 2026-03-11
 
 **Centralize remaining test data (R-09b)**
