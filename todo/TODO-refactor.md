@@ -2,17 +2,18 @@
 
 > Refactoring tasks from [TODO.md](./TODO.md) are tracked here separately.
 
-| ID   | Task                                                                                                                                                                                                    | Status        |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| R-09 | Consolidate test fixtures — canonical skill registry, unified content generators, simplified matrix creation (see [implementation plan](./R-09-test-fixture-consolidation.md))                          | Ready for Dev |
-| R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                                                                                              | Refactor      |
-| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                                                                                        | Refactor      |
-| R-04 | Eliminate redundant central config — derive aliases from metadata, move perSkill relationships to group-based declarations                                                                              | ✅ Done       |
-| R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor      |
-| R-07 | Codegen `SkillSlug` union from metadata.yaml — auto-generate the type from skills source instead of manual maintenance                                                                                  | Refactor      |
-| R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor      |
-| R-11 | Eliminate `ProjectSourceConfig` / `saveProjectConfig` — all config writes should produce full `ProjectConfig` with import + satisfies                                                                   | Refactor      |
-| R-12 | Delete the matrix object from consumer code — only exists inside the store as private state, all reads via store accessors                                                                              | Refactor      |
+| ID   | Task                                                                                                                                                                                                    | Status   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                                                                                        | ✅ Done  |
+| R-04 | Eliminate redundant central config — derive aliases from metadata, move perSkill relationships to group-based declarations                                                                              | ✅ Done  |
+| R-05 | Centralize wizard hotkeys and labels into a single registry with `isHotkey()` helper                                                                                                                    | ✅ Done  |
+| R-09 | Consolidate test fixtures — canonical skill registry, unified content generators, simplified matrix creation (see [implementation plan](./R-09-test-fixture-consolidation.md))                          | ✅ Done  |
+| R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                                                                                              | Refactor |
+| R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor |
+| R-07 | Codegen `SkillId`, `SkillSlug`, `Category`, `Domain`, `AgentName` from source metadata — eliminate manual union + Zod duplication (see [plan](./R-07-codegen-skill-types.md))                            | Refactor |
+| R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor |
+| R-11 | Eliminate `ProjectSourceConfig` / `saveProjectConfig` — all config writes should produce full `ProjectConfig` with import + satisfies                                                                   | Refactor |
+| R-12 | Delete the matrix object from consumer code — only exists inside the store as private state, all reads via store accessors                                                                              | Refactor |
 
 ---
 
@@ -555,17 +556,17 @@ Pre-1.0. Source repos must update their `skill-rules.ts` files to match the new 
 
 Steps 1-5 are effectively atomic for compilation but can be committed separately for review. Step 6 is the bulk test update work.
 
-| Step        | What                                                             | Key Files                                                                                                                                                                                                | Status                                                                                 |
-| ----------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **0**       | Pre-work: allow `slug` in JSON schema (optional, additive)       | `metadata.schema.json`                                                                                                                                                                                   | ✅ Done                                                                                |
-| **1**       | Type foundation (atomic with 2-5 for compilation)                | `types/skills.ts`, `types/matrix.ts`                                                                                                                                                                     | ✅ Done                                                                                |
-| **2**       | Zod schema updates                                               | `schemas.ts`, `matrix-loader.ts` rawMetadataSchema                                                                                                                                                       | ✅ Done                                                                                |
-| **3**       | Core pipeline: loaders + resolver                                | `matrix-loader.ts`, `matrix-resolver.ts`, `source-loader.ts`, `multi-source-loader.ts`, `source-validator.ts`                                                                                            | ✅ Done                                                                                |
-| **4**       | Consumer commands + components                                   | `info.ts`, `search.tsx`, `edit.tsx`, `init.tsx`, `new/skill.ts`, `plugin-finder.ts`, `skill-plugin-compiler.ts`, `local-skill-loader.ts`, `build-step-logic.ts`, `skill-search.tsx`, `config-exports.ts` | ✅ Done                                                                                |
-| **5**       | Rule data: rewrite `default-rules.ts`                            | `default-rules.ts` — remove aliases/perSkill, flat recommends                                                                                                                                            | ✅ Done                                                                                |
-| **6**       | Test updates (bulk)                                              | `helpers.ts`, `mock-matrices.ts`, all test files listed above                                                                                                                                            | ✅ Done                                                                                |
-| **7**       | Schema finalization: `slug` required, remove relationship fields | `metadata.schema.json`                                                                                                                                                                                   | ✅ Done                                                                                |
-| **Phase 2** | Canonical IDs → slugs in rules (separate PR)                     | `default-rules.ts`, `matrix-loader.ts` slug resolution                                                                                                                                                   | ✅ Done                                                                                |
+| Step        | What                                                             | Key Files                                                                                                                                                                                                | Status  |
+| ----------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| **0**       | Pre-work: allow `slug` in JSON schema (optional, additive)       | `metadata.schema.json`                                                                                                                                                                                   | ✅ Done |
+| **1**       | Type foundation (atomic with 2-5 for compilation)                | `types/skills.ts`, `types/matrix.ts`                                                                                                                                                                     | ✅ Done |
+| **2**       | Zod schema updates                                               | `schemas.ts`, `matrix-loader.ts` rawMetadataSchema                                                                                                                                                       | ✅ Done |
+| **3**       | Core pipeline: loaders + resolver                                | `matrix-loader.ts`, `matrix-resolver.ts`, `source-loader.ts`, `multi-source-loader.ts`, `source-validator.ts`                                                                                            | ✅ Done |
+| **4**       | Consumer commands + components                                   | `info.ts`, `search.tsx`, `edit.tsx`, `init.tsx`, `new/skill.ts`, `plugin-finder.ts`, `skill-plugin-compiler.ts`, `local-skill-loader.ts`, `build-step-logic.ts`, `skill-search.tsx`, `config-exports.ts` | ✅ Done |
+| **5**       | Rule data: rewrite `default-rules.ts`                            | `default-rules.ts` — remove aliases/perSkill, flat recommends                                                                                                                                            | ✅ Done |
+| **6**       | Test updates (bulk)                                              | `helpers.ts`, `mock-matrices.ts`, all test files listed above                                                                                                                                            | ✅ Done |
+| **7**       | Schema finalization: `slug` required, remove relationship fields | `metadata.schema.json`                                                                                                                                                                                   | ✅ Done |
+| **Phase 2** | Canonical IDs → slugs in rules (separate PR)                     | `default-rules.ts`, `matrix-loader.ts` slug resolution                                                                                                                                                   | ✅ Done |
 
 ### E2E Tests
 
@@ -665,42 +666,29 @@ Consumers that need relationship data would look it up from the relationship ind
 
 ---
 
-## R-07: Codegen `SkillSlug` Union from Metadata
+## R-07: Codegen Skill Types, Categories, and Agent Names from Source
 
 **Priority:** Low
 **Status:** Refactor
 **Depends on:** R-04
+**See implementation plan:** [R-07-codegen-skill-types.md](./R-07-codegen-skill-types.md)
 
 ### Problem
 
-R-04 introduces `SkillSlug` as a manually maintained union type (~85 values). When a new skill is added to the skills repo, a developer must also add its slug to the union in the CLI repo. This is the same kind of manual sync that `aliases` required — just smaller (one union entry vs a map entry).
+Five types are manually maintained in two places each (union type in `types/` + Zod schema in `schemas.ts`): `SkillId`, `SkillSlug`, `Category`, `Domain`, `AgentName`. Adding a skill, category, or agent requires updating both locations. `SkillId` is worst — its template literal accepts any matching pattern, so typos compile silently.
 
 ### Proposed solution
 
-A codegen script that reads all `metadata.yaml` files from the skills source, extracts `slug` values, and generates the `SkillSlug` union type automatically.
-
-```bash
-# Run after adding/removing skills
-cc generate-types
-# or as a build step
-```
-
-Generates `src/cli/types/generated/skill-slugs.ts`:
+A codegen script that reads metadata from two sources (skills repo for skills/categories/domains, CLI repo for agents) and generates a single file with const arrays and derived union types. Zod schemas then derive from the generated arrays, eliminating all duplication.
 
 ```typescript
-// AUTO-GENERATED from metadata.yaml files — do not edit manually
-export type SkillSlug = "react" | "vue" | "angular";
-// ...
+// AUTO-GENERATED — do not edit manually
+export const SKILL_IDS = ["api-framework-hono", "web-framework-react", ...] as const;
+export type SkillId = (typeof SKILL_IDS)[number];
+// Same pattern for SkillSlug, Category, Domain, AgentName
 ```
 
-The generated file is committed to the repo. Re-run when skills change.
-
-### Implementation notes
-
-- Reuse `extractAllSkills()` or a lighter metadata reader
-- Output file is `.gitignored` or committed (decide based on CI needs)
-- Could be an oclif command (`cc generate-types`) or a standalone script
-- Validate that generated slugs match the uniqueness rules (no duplicates, no `SkillId` pattern collisions)
+`SkillIdPrefix` stays (used by `CategoryPath`). Generated file is committed to the repo.
 
 ---
 
