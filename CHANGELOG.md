@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.65.0] - 2026-03-11
+
+**Narrowed config types, edit command refactor, test consolidation (R-09)**
+
+- Generated config-types.ts unions now reflect only installed items, not the entire matrix
+- Edit command uses shared `writeScopedConfigs` instead of duplicated inline logic
+- ~90 test files migrated to canonical SKILLS registry and content generators (R-09)
+
+See [changelogs/0.65.0.md](./changelogs/0.65.0.md) for full details.
+
 ---
 
 ## [0.64.0] - 2026-03-10
