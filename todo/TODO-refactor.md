@@ -4,11 +4,6 @@
 
 | ID   | Task                                                                                                                                                                                                    | Status   |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                                                                                        | ✅ Done  |
-| R-04 | Eliminate redundant central config — derive aliases from metadata, move perSkill relationships to group-based declarations                                                                              | ✅ Done  |
-| R-05 | Centralize wizard hotkeys and labels into a single registry with `isHotkey()` helper                                                                                                                    | ✅ Done  |
-| R-09 | Consolidate test fixtures — canonical skill registry, unified content generators, simplified matrix creation (see [implementation plan](./R-09-test-fixture-consolidation.md))                          | ✅ Done  |
-| R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                                                                                              | Refactor |
 | R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor |
 | R-07 | Codegen `SkillId`, `SkillSlug`, `Category`, `Domain`, `AgentName` from source metadata — eliminate manual union + Zod duplication (see [plan](./R-07-codegen-skill-types.md))                            | Refactor |
 | R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor |
@@ -589,54 +584,6 @@ Non-interactive E2E tests (using `runCLI()` helper):
 
 ---
 
-## R-05: Centralize Wizard Hotkeys and Labels
-
-**Priority:** Low
-**Status:** Refactor
-
-### Problem
-
-Wizard hotkey letters (S, A, H, G, etc.) and their display labels (`[P]`, `[G]`, `[S]`) are scattered across multiple files as inline string literals. If a hotkey changes or a new one is added, you have to find every reference manually.
-
-**Current locations:**
-
-- `wizard.tsx` — `key === "s"` handlers, `key === "a"`, `key === "h"` etc.
-- `wizard-layout.tsx` — footer hotkey labels like `[S] Scope`, `[H] Help`, `[A] Accept`
-- `step-agents.tsx` — `[P]`/`[G]` scope badges
-- `step-build.tsx` — `[P]`/`[G]` scope badges (via SkillTag)
-- `step-confirm.tsx` — scope labels in summary
-- `wizard-store.ts` — references to scope values
-
-### Proposed solution
-
-Create a `WIZARD_HOTKEYS` constant (or similar) in `consts.ts` or a dedicated `wizard-keys.ts`:
-
-```typescript
-export const WIZARD_HOTKEYS = {
-  SCOPE_TOGGLE: { key: "s", label: "[S] Scope" },
-  ACCEPT: { key: "a", label: "[A] Accept" },
-  HELP: { key: "h", label: "[H] Help" },
-  SETTINGS: { key: "g", label: "[G] Settings" },
-  // ...
-} as const;
-
-export const SCOPE_BADGES = {
-  project: "[P]",
-  global: "[G]",
-} as const;
-```
-
-Then all key handlers use `WIZARD_HOTKEYS.SCOPE_TOGGLE.key` and all labels use `WIZARD_HOTKEYS.SCOPE_TOGGLE.label` or `SCOPE_BADGES[scope]`.
-
-### Scope
-
-- Mechanical refactor — no behavior change
-- Grep for all `key === "` patterns in wizard components
-- Grep for all `[P]`, `[G]`, `[S]`, `[A]`, `[H]` string literals
-- Replace with constant references
-
----
-
 ## R-06: Slim Down `ResolvedSkill`
 
 **Priority:** Low
@@ -738,58 +685,6 @@ function resolveRelationships(
 - Easier to add new relationship types (just add a field + handler)
 - Reduces function count from 5+ to 1
 - `buildResolvedSkill()` becomes a simple spread of the result
-
----
-
-## R-10: Replace Direct `matrix.skills[id]` Lookups with Matrix Store
-
-**Priority:** Low
-**Status:** Refactor
-**Depends on:** Matrix store (done — `src/cli/stores/matrix-store.ts`)
-
-### Problem
-
-Many functions accept a `matrix` parameter or call `getMatrix()` just to do `matrix.skills[skillId]` and extract a single field (`displayName`, `description`, `category`, `slug`, `local`, `compatibleWith`, `availableSources`). Some functions exist solely to wrap this pattern. Now that the matrix store provides `getSkill(id)` and `getMatrix()`, these can be simplified.
-
-### Instances to address
-
-**1. `getLabel()` in `matrix-resolver.ts:15-20`** — Private helper called 12+ times for `displayName || id` in error/warning messages. High-frequency pattern.
-
-**Proposed store method:** `getDisplayName(id: SkillId): string` — returns `displayName` or falls back to `id`. Add to matrix-store.ts. Replaces all `getLabel(matrix.skills[id], id)` calls.
-
-**2. `buildLocalSkillsMap()` in `local-installer.ts:130-148`** — Extracts `matrix.skills[skillId].description` to build compilation input. Replace with `getSkill(skillId)?.description`.
-
-**3. `generateProjectConfigFromSkills()` in `config-generator.ts:64-82`** — Extracts `matrix.skills[skillId].category`. Replace with `getSkill(skillId)?.category`.
-
-**4. `getPluginSkillIds()` in `plugin-finder.ts:73-91`** — Iterates all skills to build a slug-to-ID map. The store already has `matrix.slugMap` — use `getMatrix().slugMap.slugToId` directly.
-
-**5. `isCompatibleWithSelectedFrameworks()` in `build-step-logic.ts:87-101`** — Extracts `matrix.skills[skillId].compatibleWith`. Replace with `getSkill(skillId)?.compatibleWith`.
-
-**6. `buildCategoriesForDomain()` in `build-step-logic.ts:137-146`** — Extracts `matrix.skills[skill.id]?.local`. Replace with `getSkill(skill.id)?.local`.
-
-**7. `setAllSourcesPlugin()` / `buildSourceRows()` in `wizard-store.ts:942-1010`** — Multiple `matrix.skills[id]?.availableSources` lookups. Replace with `getSkill(id)?.availableSources`.
-
-**8. Eject command in `eject.ts:327-330`** — Filters `matrix.skills[skillId]?.local`. Replace with `getSkill(skillId)?.local`.
-
-### Proposed store methods
-
-If `getSkill(id)?.field` appears frequently enough, add convenience methods to `matrix-store.ts`:
-
-```typescript
-// High-frequency: used 12+ times in matrix-resolver.ts alone
-getDisplayName: (id: SkillId) => string;
-// Returns displayName or falls back to id. Replaces getLabel().
-```
-
-All other fields (`description`, `category`, `slug`, `local`, `compatibleWith`, `availableSources`) appear 1-3 times each — `getSkill(id)?.field` is sufficient, no dedicated method needed.
-
-### Approach
-
-1. Add `getDisplayName()` to matrix-store.ts
-2. Replace `getLabel()` calls in matrix-resolver.ts with `getDisplayName()`
-3. Replace remaining `matrix.skills[id]` one-field lookups with `getSkill(id)?.field`
-4. Remove functions that exist solely to wrap the lookup pattern
-5. Remove `matrix` parameters from functions that only used them for single-field lookups
 
 ---
 

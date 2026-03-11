@@ -85,3 +85,22 @@
 - **R-02** (2026-03-09): Flatten nested for-loops in default-stacks.test.ts -- Pre-computed flat array of `(stackId, agentName, category)` tuples via `flatMap` + `typedEntries`, passed to `it.each` for individual parameterized test cases.
 - **R-05** (2026-03-09): Centralize wizard hotkeys and labels -- Created `hotkeys.ts` registry with `HOTKEY_*` constants and `isHotkey()` helper. Updated 11 wizard components to import from registry. Fixed stale `G` label in step-settings (was `G to close`, corrected to `S to close`).
 - **R-10** (2026-03-09): Replace direct `matrix.skills[id]` lookups with matrix store -- Replaced `matrix.skills[id]` with `findSkill(id)` in 5 production files (eject.ts, wizard-store.ts, build-step-logic.ts, config-generator.ts, local-installer.ts). Fixed unsafe `matrix.skills[id]!` in matrix-resolver.ts with `getSkill(id)` (throws). Fixed pre-existing test crash in skill-resolution integration test.
+- **D-74** (2026-03-11): Per-agent scope toggle (project/global) -- Edit command detects agent scope changes, displays them in change summary. Agent scope configs restored from installed config in edit mode. Help modal shows `S` key for scope toggle on agents step.
+- **D-76** (2026-03-11): Init: generate project `config-types.ts` that imports from global `~/.claude-src/config-types.ts` -- Project config-types now imports from global scope when global installation exists.
+- **D-77** (2026-03-11): Wizard: show stack scope origin labels (global vs project) in build step -- Dimmed scope badges show origin of each skill in build step.
+- **D-67** (2026-03-11): Skill metadata as single source of truth -- Eliminated redundant central config for intrinsic skill properties. Aliases derived from metadata.yaml `slug` field, `perSkill` section removed. Completed as part of R-04.
+- **D-79** (2026-03-11): Agent selection step infinite re-render -- Fixed the infinite re-render loop in the agent selection wizard step.
+- **D-80** (2026-03-11): Project config-types doesn't import from global on init -- Fixed as part of D-76 (scope-aware config splitting).
+- **D-81** (2026-03-11): Config.ts: typed named variables above export default -- Implemented in `config-writer.ts`. Named variables placed above export default due to JavaScript's Temporal Dead Zone.
+- **D-73** (2026-03-11): Split init-wizard E2E into parallel files -- Split monolithic `init-wizard.e2e.test.ts` (55 tests) into 7 focused files for parallel vitest execution: stack, scratch, navigation, ui, existing, flags, sources.
+- **D-70** (2026-03-11): Re-enable source search -- Replaced static `FEATURE_FLAGS.SOURCE_SEARCH` boolean with runtime detection. Source grid search pill enables automatically when extra marketplace sources are configured.
+- **D-28** (2026-03-11): Fix startup warning/error messages -- Moved `this.log()` calls before `enableBuffering()` to after it, converting to `pushBufferMessage()` so they survive Ink's `clearTerminal`.
+- **D-05** (2026-03-11): Dashboard when `init` run on existing project -- Shows summary dashboard with skill count, agent names, config path, and next-step suggestions.
+- **D-20** (2026-03-11): Add Edit tool to documentor agent -- Already present in metadata.yaml. No change needed.
+- **D-24** (2026-03-11): Configurable documentation file locations -- Closed: convention-only, no code needed.
+- **D-22** (2026-03-11): Automated agent-tester -- Deleted: existing validation should be made stricter over time instead.
+- **R-03** (2026-03-11): Simplify `config-generator.ts` -- Reduced nested loops, intermediate maps, and function complexity.
+- **R-04** (2026-03-11): Eliminate redundant central config -- Killed `aliases` and `perSkill` sections from `default-rules.ts`. All relationships centralized in group-based `relationships` section. Phase 2 migrated all relationship rules from canonical IDs to slugs.
+- **R-05** (2026-03-11): Centralize wizard hotkeys and labels -- Created `hotkeys.ts` registry with `HOTKEY_*` constants and `isHotkey()` helper.
+- **R-09** (2026-03-11): Consolidate test fixtures -- Canonical skill registry (`SKILLS.*`), unified content generators (`renderSkillMd`, `renderAgentYaml`, `renderConfigTs`), simplified matrix creation (`createMockMatrix` spread syntax).
+- **R-01** (2026-03-11): `loadStackById` checks default stacks internally -- Moved `defaultStacks` fallback inside `loadStackById`. Removed duplicated fallback from `local-installer.ts` and `stack-plugin-compiler.ts`.

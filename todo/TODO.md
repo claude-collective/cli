@@ -2,14 +2,6 @@
 
 | ID   | Task                                                                                                         | Status  |
 | ---- | ------------------------------------------------------------------------------------------------------------ | ------- |
-| D-74 | Per-agent scope toggle (project/global) — edit-mode restoration, help modal, scope change detection          | ✅ Done |
-| D-76 | Init: generate project `config-types.ts` that imports from global `~/.claude-src/config-types.ts`            | ✅ Done |
-| D-77 | Wizard: show stack scope origin labels (global vs project) in build step                                     | ✅ Done |
-| D-67 | Skill metadata as single source of truth — eliminate redundant central config for intrinsic skill properties | ✅ Done |
-| D-79 | Agent selection step causes infinite re-render — screen scrolls/refreshes every millisecond                  | ✅ Done |
-| D-80 | Init with existing global install: project config-types doesn't import from global scope                     | ✅ Done |
-| D-81 | Config.ts: extract agents, skills, and stack into named variables above `export default`                     | ✅ Done |
-
 | D-85 | Create a proper `SkillId` union type from all known skills, enforce in tests | Ready for Dev |
 | D-87 | Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries | Ready for Dev |
 | D-88 | Audit and remove multi-tier resolution fallbacks — data should match or fail, not guess | Ready for Dev |
@@ -184,24 +176,6 @@ The current skill covers oclif command structure and Ink component patterns but 
 
 ### Bugs
 
-#### D-79: Agent selection step infinite re-render
-
-**Priority:** High
-
-The agent selection step in the wizard causes an infinite re-render loop — the screen scrolls and refreshes every millisecond. Needs investigation into which state change or effect is triggering the loop.
-
----
-
-#### D-80: Project config-types doesn't import from global on init
-
-**Priority:** High
-
-When running `init` and a global installation is detected but the user chooses to create a project-level installation, the generated `config-types.ts` doesn't import from the global scope. It should automatically import everything from `~/.claude-src/config-types.ts` so project types extend global types.
-
-**Related:** D-76 (generate project config-types that imports from global)
-
----
-
 #### D-87: Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries
 
 **Priority:** Medium
@@ -269,12 +243,6 @@ Throughout the codebase, there are multi-tier resolution patterns that silently 
 **Known example:** `getPluginSkillIds()` in `plugin-finder.ts` (lines 73-135) has a three-tier fallback: (1) check if frontmatter `name` is a direct skill ID, (2) try slug/alias resolution, (3) fall back to directory name. The `name` field IS the canonical skill ID — if it doesn't match, that's a data error.
 
 **Scope:** Grep for multi-step resolution patterns, `aliasToId` maps, directory-name fallbacks, and similar guess-and-try logic across the codebase. Each site should be simplified to: validate → match or throw.
-
----
-
-#### D-81: Config.ts: typed named variables above export default ~~DONE~~
-
-Implemented in `config-writer.ts`. Named variables (`skills`, `agents`, `stack`, `domains`) are placed **above** the export default (not below) due to JavaScript's Temporal Dead Zone — `jiti` loads config files at runtime and `const` below `export default` causes `ReferenceError`. The export default at the bottom still reads as a table of contents. Import line dynamically includes only types that are used. All 910 configuration tests pass.
 
 ---
 

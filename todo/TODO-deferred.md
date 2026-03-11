@@ -2,7 +2,6 @@
 
 | ID   | Task                                                                                                                | Status         |
 | ---- | ------------------------------------------------------------------------------------------------------------------- | -------------- |
-| D-73 | Split `init-wizard.e2e.test.ts` into multiple files for parallel E2E execution                                      | ✅ Done        |
 | D-72 | Only show Agents Inc logo on the first init screen (not on edit or subsequent steps)                                | Deferred       |
 | D-71 | Audit Zod schemas for removal — config is now TypeScript (see [research](../docs/research/schema-removal-audit.md)) | Needs Research |
 
@@ -27,49 +26,12 @@
 
 | UX-09 | Animations/transitions | Needs Assistance |
 | UX-07 | Incompatibility tooltips | Needs Assistance |
-| D-24 | ~~Configurable documentation file locations~~ — convention-only, no code needed (see [plan](./D-24-configurable-doc-locations.md)) | Closed |
-| D-22 | ~~Automated agent-tester~~ — scrapped; existing validation should be made stricter over time instead | Deleted |
 | D-19 | Improve template error messages (see [plan](./D-19-template-error-messages.md)) | Deferred — nice to have |
-| D-70 | ~~Re-enable source search~~ — runtime detection replaces static flag | Done |
-| D-28 | ~~Fix startup warning/error messages~~ (see [plan](./D-28-fix-startup-messages.md)) | Done |
-| D-05 | ~~Project dashboard — default command + already-initialized~~ (see [plan](./D-05-improve-init-existing.md)) | Done |
-| D-20 | Add Edit tool to documentor agent | DONE |
-
----
-
-## D-28: Fix Startup Warning/Error Messages
-
-**See research doc:** [docs/research/startup-message-persistence.md](../docs/research/startup-message-persistence.md)
-
-The CLI shows warning/error messages and the ASCII logo on startup that flash briefly then disappear. Ink's `clearTerminal` wipes all pre-Ink terminal output because `WizardLayout` uses `height={terminalHeight}`, triggering a full-screen clear on every render cycle.
-
-**Root cause:** Pre-Ink `this.log()` / `warn()` calls print to the terminal, then Ink's first render erases everything via `ansiEscapes.clearTerminal`.
-
-**Planned fix:** Buffer pre-Ink messages and render them via Ink's `<Static>` component (which survives `clearTerminal`).
-
-**Changes needed:**
-
-- `src/cli/commands/init.tsx`, `src/cli/commands/edit.tsx` — buffer messages instead of `this.log()` / `this.warn()`, pass buffer to `<Wizard>`
-- `src/cli/components/wizard/wizard-layout.tsx` — add `<Static>` block for startup messages
-- `src/cli/utils/logger.ts` + loading modules — support buffered output mode
-- Audit which warnings are actionable vs noise; downgrade informational messages to `verbose()`
 
 ---
 
 > This file contains deferred tasks moved from [TODO.md](./TODO.md) to keep the main file lean.
 > These tasks are not blocked but have been deprioritized for future implementation.
-
----
-
-## D-05: Improve `agentsinc init` When Already Initialized
-
-**See refinement doc:** [D-05-improve-init-existing.md](./D-05-improve-init-existing.md)
-
-When `agentsinc init` is run in a project that's already initialized, show a summary dashboard (mode, skill count, agent names, config path, source) and suggest next steps (`edit`, `compile`, `doctor`, `list`) instead of a terse warning.
-
-**Recommended approach:** Non-interactive summary (Option A). Single file change in `src/cli/commands/init.tsx` (~40 lines added, ~5 removed). Reuses existing `loadProjectConfig()` and `Installation` type.
-
-**Files:** `src/cli/commands/init.tsx`
 
 ---
 
@@ -135,114 +97,6 @@ When template compilation fails, show which variables are missing and suggest wh
 
 ---
 
-## D-20: Agent Tool Consistency
-
-**S | D-20 | Add Edit tool to documentor agent**
-
-The documentor agent has Write but no Edit tool, breaking the pattern where writers have Edit. This is a minor inconsistency to address later.
-
----
-
-## D-22: Agent Tester - Automated Quality Assurance
-
-**M | D-22 | Create automated agent-tester for quality assurance**
-
-Based on comprehensive testing performed in the Ralph Loop session (TESTER 51+), create an automated agent-tester that validates all agents against agent-summoner standards.
-
-### Test Categories (from Ralph Loop)
-
-1. **prompt-bible Essential Techniques (13 tests)**
-   - Self-reminder loop, investigation-first, emphatic repetition
-   - XML semantic tags, expansion modifiers, self-correction triggers
-   - Post-action reflection, progress tracking, positive framing
-   - "Think" alternatives, just-in-time loading, write verification, doc-first ordering
-
-2. **Canonical Agent Structure (7 tests)**
-   - Required files: metadata.yaml, intro.md, workflow.md, critical-requirements.md, critical-reminders.md, output-format.md, examples.md
-   - Template integration, XML nesting, compilation verification
-
-3. **Domain Scope and Boundaries (6 tests)**
-   - Handles vs deferrals, agent cross-references, integration documentation
-
-4. **Output Format and Examples Quality (7 tests)**
-   - Section alignment, XML tag matching, code blocks, tables, checklists
-
-5. **Tonality and Style (7 tests)**
-   - Sentence length, imperative mood, hedging language, specificity, positive framing
-
-6. **Anti-Over-Engineering (6 tests)**
-   - Minimal changes rule, scope control, self-correction triggers
-
-7. **Verbosity and Context Constraints (3 tests)**
-   - Filler words, redundancy, time estimates removal
-
-8. **Investigation-First Compliance (3 tests)**
-   - Enforcement points, self-correction trigger quality
-
-9. **Post-Action Reflection (3 tests)**
-   - Structure, integration with workflow
-
-10. **Write Verification (3 tests)**
-    - Rule quality, gate conditions
-
-11. **Progress Tracking (3 tests)**
-    - Structure, complexity protocol integration
-
-12. **Just-In-Time Loading (3 tests)**
-    - Retrieval strategy, tool guidance
-
-13. **Emphatic Repetition (3 tests)**
-    - Rule matching, template placement
-
-14. **XML Semantic Tags (3 tests)**
-    - Tag inventory, closure verification
-
-15. **Common Mistakes Documentation (3 tests)**
-    - Contrast format, coverage alignment
-
-16. **Agent Integration (3 tests)**
-    - Cross-references, help-seeking guidance
-
-17. **Extended Reasoning Guidance (3 tests)**
-    - Tiered complexity, "think" alternatives
-
-### Implementation Approach
-
-- Create `agent-tester` agent in `src/agents/meta/agent-tester/`
-- Use agent-summoner as the validation authority
-- Run automated checks via Grep, file comparison, pattern matching
-- Generate compliance report with pass/fail per test
-- Identify specific line numbers for failures
-- Suggest fixes based on patterns from compliant agents
-
-### Acceptance Criteria
-
-- [ ] Runs all 17 test categories against any agent
-- [ ] Produces detailed compliance report
-- [ ] Identifies specific violations with file:line references
-- [ ] Suggests fixes based on prompt-bible and canonical structure
-- [ ] Can run incrementally (single category) or full suite
-- [ ] Integrates with `agentsinccompile` to validate before compilation
-
----
-
-## D-24: Configurable Documentation File Locations for Agent Compilation
-
-**See refinement doc:** [D-24-configurable-doc-locations.md](./D-24-configurable-doc-locations.md)
-
-**S | D-24 | Configure documentation file locations in consumer projects**
-
-Agent markdown files reference documentation files by filename only (e.g., `claude-architecture-bible.md`, `prompt-bible.md`, `documentation-bible.md`). Consumer projects can configure where these files live so they can be resolved and included during agent compilation.
-
-### Acceptance Criteria
-
-- [ ] `config.yaml` supports a `documentation` mapping section
-- [ ] Compiler resolves doc filenames to configured paths
-- [ ] Missing/unconfigured docs are gracefully omitted
-- [ ] Existing agent compilation still works without the new config section
-
----
-
 ## D-14: Consume Third-Party Marketplace Skills
 
 **M | D-14 | Command to import skills from third-party marketplaces**
@@ -274,14 +128,6 @@ agentsinc import skill github:someuser/their-skills --skill react-patterns
   - How to extract key patterns from external skill
   - How to handle conflicts with existing skills
 - Consider licensing/attribution requirements
-
----
-
-## D-70: Re-enable Source Search — DONE
-
-Replaced the static `FEATURE_FLAGS.SOURCE_SEARCH` boolean with runtime detection. The source grid search pill and `searchExtraSources` integration now automatically enable when extra marketplace sources are configured in the project, and stay hidden when none exist.
-
-**Implementation:** `step-sources.tsx` resolves extra sources on mount via `useEffect` + `resolveAllSources(projectDir)`. The `hasExtraSources` state gates the `onSearch`/`onBind`/`onSearchStateChange` props. `feature-flags.ts` was deleted (it only contained this flag).
 
 ---
 
