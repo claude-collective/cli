@@ -84,7 +84,7 @@ function generateStandaloneConfig(cleaned: Record<string, unknown>): string {
   if (hasStack) {
     lines.push(``);
     const stackBody = JSON.stringify(stackObj, null, 2);
-    lines.push(`const stack: Record<AgentName, StackAgentConfig> = ${stackBody};`);
+    lines.push(`const stack: Partial<Record<AgentName, StackAgentConfig>> = ${stackBody};`);
   }
 
   if (hasDomains) {
@@ -194,7 +194,7 @@ function generateProjectConfigWithGlobalImport(
   if (hasStack) {
     lines.push(``);
     const stackBody = JSON.stringify(stackObj, null, 2);
-    lines.push(`const stack: Record<AgentName, StackAgentConfig> = ${stackBody};`);
+    lines.push(`const stack: Partial<Record<AgentName, StackAgentConfig>> = ${stackBody};`);
   }
 
   // Domains variable (only if project has domains)

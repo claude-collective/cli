@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
 import { unique } from "remeda";
-import type { AgentName, MergedSkillsMatrix, SkillId, Category } from "../../types";
+import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId, Category } from "../../types";
 import { CLAUDE_SRC_DIR, CLI_BIN_NAME, GLOBAL_INSTALL_ROOT, PROJECT_ROOT, STANDARD_FILES } from "../../consts";
 import { directoryExists, fileExists, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
@@ -204,6 +204,9 @@ export async function regenerateConfigTypes(
  *
  * @param customAgentNames Agent names that are custom (from sources with `custom: true`)
  * @param extras Optional extra skill IDs or agent names to include (for just-created entities)
+ * @param config Optional ProjectConfig to narrow unions to only installed items.
+ *               When provided, SkillId/AgentName/Category/Domain are derived from
+ *               the config's skills[] and agents[] rather than the full matrix.
  */
 export function generateConfigTypesSource(
   matrix: MergedSkillsMatrix,
@@ -215,6 +218,7 @@ export function generateConfigTypesSource(
     extraDomains?: string[];
     extraCategories?: string[];
   },
+  config?: ProjectConfig,
 ): string {
   // Boundary cast: extra IDs from CLI args may not match strict union patterns
   const extraSkillIds = (extras?.extraSkillIds ?? []) as SkillId[];
@@ -222,11 +226,33 @@ export function generateConfigTypesSource(
   const extraDomainsArr = extras?.extraDomains ?? [];
   const extraCategoriesArr = (extras?.extraCategories ?? []) as Category[];
 
-  const skillIds = unique([...typedKeys(matrix.skills), ...extraSkillIds]).sort();
-  const sortedAgents = unique([...agentNames, ...extraAgentNamesArr]).sort();
+  let skillIds: SkillId[];
+  let sortedAgents: AgentName[];
+  let domains: string[];
+  let categories: Category[];
 
-  const domains = unique([...extractDomains(matrix), ...extraDomainsArr]).sort();
-  const categories = unique([...typedKeys(matrix.categories), ...extraCategoriesArr]).sort();
+  if (config) {
+    // Narrow to only installed/configured items
+    const configSkillIds = config.skills.map((s) => s.id);
+    skillIds = unique([...configSkillIds, ...extraSkillIds]).sort();
+
+    const configAgentNames = config.agents.map((a) => a.name);
+    sortedAgents = unique([...configAgentNames, ...extraAgentNamesArr]).sort();
+
+    // Derive categories from installed skills via matrix lookup
+    const configCategories = deriveCategories(configSkillIds, matrix);
+    categories = unique([...configCategories, ...extraCategoriesArr]).sort();
+
+    // Derive domains from included categories via matrix lookup
+    const configDomains = deriveDomains(categories, matrix);
+    domains = unique([...configDomains, ...extraDomainsArr]).sort();
+  } else {
+    // Fall back to full matrix (e.g., blank global config)
+    skillIds = unique([...typedKeys(matrix.skills), ...extraSkillIds]).sort();
+    sortedAgents = unique([...agentNames, ...extraAgentNamesArr]).sort();
+    domains = unique([...extractDomains(matrix), ...extraDomainsArr]).sort();
+    categories = unique([...typedKeys(matrix.categories), ...extraCategoriesArr]).sort();
+  }
 
   // Determine which skills are custom
   const customSkillSet = new Set<SkillId>(extraSkillIds);
@@ -298,6 +324,37 @@ function extractDomains(matrix: MergedSkillsMatrix): string[] {
     }
   }
   return [...domainSet].sort();
+}
+
+/**
+ * Derives the set of categories that the given skill IDs belong to,
+ * by looking up each skill's category in the matrix.
+ */
+function deriveCategories(skillIds: SkillId[], matrix: MergedSkillsMatrix): Category[] {
+  const categorySet = new Set<Category>();
+  for (const id of skillIds) {
+    const skill = matrix.skills[id];
+    if (skill?.category && skill.category !== "local") {
+      // Boundary cast: CategoryPath to Category for matrix key lookup
+      categorySet.add(skill.category as Category);
+    }
+  }
+  return [...categorySet];
+}
+
+/**
+ * Derives the set of domains that the given categories belong to,
+ * by looking up each category's domain in the matrix.
+ */
+function deriveDomains(categories: Category[], matrix: MergedSkillsMatrix): string[] {
+  const domainSet = new Set<string>();
+  for (const cat of categories) {
+    const def = matrix.categories[cat];
+    if (def?.domain) {
+      domainSet.add(def.domain);
+    }
+  }
+  return [...domainSet];
 }
 
 /**
@@ -380,11 +437,14 @@ export type ProjectConfigTypesOptions = {
   projectAgentNames: string[];
   /** Project-only domains (not including global) */
   projectDomains: string[];
+  /** Project-only categories (not including global) */
+  projectCategories?: string[];
 };
 
 /**
  * Generates a project config-types.ts source that imports global types and extends them.
  * Each type union is `GlobalType | "project-item-1" | "project-item-2"`.
+ * When projectCategories are provided, Category extends GlobalCategory instead of being `string`.
  */
 export function generateProjectConfigTypesSource(options: ProjectConfigTypesOptions): string {
   const importPath = `${options.globalTypesImportPath}/config-types`;
@@ -393,13 +453,21 @@ export function generateProjectConfigTypesSource(options: ProjectConfigTypesOpti
   const agentNameUnion = formatExtendedUnion("GlobalAgentName", options.projectAgentNames);
   const domainUnion = formatExtendedUnion("GlobalDomain", options.projectDomains);
 
+  const hasProjectCategories = options.projectCategories && options.projectCategories.length > 0;
+  const categoryUnion = hasProjectCategories
+    ? formatExtendedUnion("GlobalCategory", options.projectCategories!)
+    : "GlobalCategory";
+
+  // Import Category as GlobalCategory when we have project categories or need to re-export it
+  const categoryImport = `  Category as GlobalCategory,\n`;
+
   return `// AUTO-GENERATED by agentsinc — DO NOT EDIT
 
 import type {
   SkillId as GlobalSkillId,
   AgentName as GlobalAgentName,
   Domain as GlobalDomain,
-} from "${importPath}";
+${categoryImport}} from "${importPath}";
 
 export type SkillId = ${skillIdUnion};
 
@@ -407,7 +475,7 @@ export type AgentName = ${agentNameUnion};
 
 export type Domain = ${domainUnion};
 
-export type Category = string;
+export type Category = ${categoryUnion};
 
 ${PROJECT_CONFIG_INTERFACE_TEMPLATE}`;
 }

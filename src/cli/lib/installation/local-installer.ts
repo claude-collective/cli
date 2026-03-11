@@ -4,6 +4,7 @@ import type {
   AgentConfig,
   AgentDefinition,
   AgentName,
+  Category,
   CompileAgentConfig,
   CompileConfig,
   MergedSkillsMatrix,
@@ -360,16 +361,25 @@ async function writeStandaloneConfigTypes(
   configPath: string,
   matrix: MergedSkillsMatrix,
   agents: Record<AgentName, AgentDefinition>,
+  finalConfig?: ProjectConfig,
 ): Promise<void> {
   const typesPath = path.join(path.dirname(configPath), STANDARD_FILES.CONFIG_TYPES_TS);
   const customAgentNames = typedKeys(agents).filter((name) => agents[name]?.custom === true);
-  const source = generateConfigTypesSource(matrix, typedKeys(agents), customAgentNames);
+  const source = generateConfigTypesSource(
+    matrix,
+    typedKeys(agents),
+    customAgentNames,
+    undefined,
+    finalConfig,
+  );
   await writeFile(typesPath, source);
 }
 
 async function writeProjectConfigTypes(
   projectConfigPath: string,
   projectDir: string,
+  projectConfig?: ProjectConfig,
+  matrix?: MergedSkillsMatrix,
 ): Promise<void> {
   const typesPath = path.join(path.dirname(projectConfigPath), STANDARD_FILES.CONFIG_TYPES_TS);
   const projectClaudeSrc = path.join(projectDir, CLAUDE_SRC_DIR);
@@ -378,11 +388,40 @@ async function writeProjectConfigTypes(
   // Convert to POSIX separators for TypeScript imports
   const globalTypesImportPath = relativePath.split(path.sep).join("/");
 
+  // Derive project-specific items from the project config when available
+  const projectSkillIds = projectConfig?.skills.map((s) => s.id) ?? [];
+  const projectAgentNames = projectConfig?.agents.map((a) => a.name) ?? [];
+
+  // Derive categories and domains from project skills via matrix lookup
+  let projectCategories: string[] = [];
+  let projectDomains: string[] = [];
+  if (matrix && projectSkillIds.length > 0) {
+    const categorySet = new Set<string>();
+    for (const id of projectSkillIds) {
+      const skill = matrix.skills[id];
+      if (skill?.category && skill.category !== "local") {
+        categorySet.add(skill.category);
+      }
+    }
+    projectCategories = [...categorySet].sort();
+
+    const domainSet = new Set<string>();
+    for (const cat of projectCategories) {
+      // Boundary cast: CategoryPath used as Category for matrix lookup
+      const def = matrix.categories[cat as Category];
+      if (def?.domain) {
+        domainSet.add(def.domain);
+      }
+    }
+    projectDomains = [...domainSet].sort();
+  }
+
   const source = generateProjectConfigTypesSource({
     globalTypesImportPath,
-    projectSkillIds: [],
-    projectAgentNames: [],
-    projectDomains: [],
+    projectSkillIds: projectSkillIds as string[],
+    projectAgentNames: projectAgentNames as string[],
+    projectDomains,
+    projectCategories,
   });
   await writeFile(typesPath, source);
   verbose("Using project config-types.ts that imports from global");
@@ -395,7 +434,7 @@ async function writeProjectConfigTypes(
  * - Project config/types go to {projectDir}/.claude-src/ (with import from global)
  * When installing from home directory, writes a single standalone config.
  */
-async function writeScopedConfigs(
+export async function writeScopedConfigs(
   finalConfig: ProjectConfig,
   matrix: MergedSkillsMatrix,
   agents: Record<AgentName, AgentDefinition>,
@@ -410,7 +449,7 @@ async function writeScopedConfigs(
   if (!isProjectContext) {
     // Installing from ~/ — write directly to global config (no import preamble)
     await writeConfigFile(finalConfig, projectConfigPath);
-    await writeStandaloneConfigTypes(projectConfigPath, matrix, agents);
+    await writeStandaloneConfigTypes(projectConfigPath, matrix, agents, finalConfig);
     return;
   }
 
@@ -423,8 +462,8 @@ async function writeScopedConfigs(
   await writeConfigFile(globalConfig, globalConfigPath);
   verbose(`Updated global config at ${globalConfigPath}`);
 
-  // Write global config-types.ts with actual types from the matrix
-  await writeStandaloneConfigTypes(globalConfigPath, matrix, agents);
+  // Write global config-types.ts narrowed to global-scoped items
+  await writeStandaloneConfigTypes(globalConfigPath, matrix, agents, globalConfig);
   verbose("Updated global config-types.ts with actual types");
 
   // Write project config with import from global
@@ -432,8 +471,11 @@ async function writeScopedConfigs(
   await writeConfigFile(projectSplitConfig, projectConfigPath, { isProjectConfig: true });
   verbose(`Updated project config at ${projectConfigPath}`);
 
-  // Write project config-types.ts that imports from global
-  await writeProjectConfigTypes(projectConfigPath, projectDir);
+  // Write project config-types.ts that extends global with ALL project items.
+  // Pass the full config (not just the project split) so the project types explicitly
+  // list every skill/agent available to the project, regardless of scope. Items that
+  // are already in GlobalSkillId create harmless redundancy in the union.
+  await writeProjectConfigTypes(projectConfigPath, projectDir, finalConfig, matrix);
 }
 
 async function compileAndWriteAgents(

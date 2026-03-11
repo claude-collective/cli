@@ -15,6 +15,7 @@ export {
   installPluginConfig,
   buildAndMergeConfig,
   writeConfigFile,
+  writeScopedConfigs,
   setConfigMetadata,
 } from "./local-installer";
 

@@ -1,5 +1,4 @@
 import os from "os";
-import path from "path";
 
 import { Flags } from "@oclif/core";
 import { render } from "ink";
@@ -9,28 +8,26 @@ import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import {
   ASCII_LOGO,
   CLI_BIN_NAME,
-  CLAUDE_SRC_DIR,
   GLOBAL_INSTALL_ROOT,
+  PROJECT_ROOT,
   SOURCE_DISPLAY_NAMES,
-  STANDARD_FILES,
 } from "../consts.js";
 import { getAgentDefinitions, recompileAgents } from "../lib/agents/index.js";
-import { splitConfigByScope } from "../lib/configuration/config-generator.js";
 import { loadProjectConfig } from "../lib/configuration/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
   detectInstallation,
   buildAndMergeConfig,
-  writeConfigFile,
+  writeScopedConfigs,
   detectMigrations,
   executeMigration,
   deriveInstallMode,
 } from "../lib/installation/index.js";
-import { getMarketplaceLabel, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import { getMarketplaceLabel, loadAllAgents, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { findSkill, getMatrix, getSkill, useMatrixStore } from "../stores/matrix-store";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
-import type { SkillId } from "../types/index.js";
+import type { AgentDefinition, AgentName, SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import {
@@ -38,7 +35,6 @@ import {
   drainBuffer,
   disableBuffering,
   pushBufferMessage,
-  verbose,
   type StartupMessage,
 } from "../utils/logger.js";
 import { ERROR_MESSAGES, INFO_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
@@ -338,40 +334,7 @@ export default class Edit extends BaseCommand {
       }
     }
 
-    // Persist wizard result to config.ts (split by scope when in project context)
-    const isGlobalContext = projectDir === GLOBAL_INSTALL_ROOT;
-    try {
-      const mergeResult = await buildAndMergeConfig(result, sourceResult, projectDir, flags.source);
-
-      if (isGlobalContext) {
-        // Editing from ~/ — write directly to global config (no import preamble)
-        await writeConfigFile(mergeResult.config, installation.configPath);
-        verbose(`Updated global config at ${installation.configPath}`);
-      } else {
-        // Editing from project — split by scope and write to both locations
-        const { global: globalConfig, project: projectSplitConfig } = splitConfigByScope(
-          mergeResult.config,
-        );
-
-        // Write global config to ~/.claude-src/config.ts
-        const globalConfigPath = path.join(
-          GLOBAL_INSTALL_ROOT,
-          CLAUDE_SRC_DIR,
-          STANDARD_FILES.CONFIG_TS,
-        );
-        await writeConfigFile(globalConfig, globalConfigPath);
-        verbose(`Updated global config at ${globalConfigPath}`);
-
-        // Write project config with import from global
-        await writeConfigFile(projectSplitConfig, installation.configPath, {
-          isProjectConfig: true,
-        });
-        verbose(`Updated project config at ${installation.configPath}`);
-      }
-    } catch (error) {
-      this.warn(`Could not update config: ${getErrorMessage(error)}`);
-    }
-
+    // Load agent definitions first — needed for both config-types.ts and recompilation
     let sourcePath: string;
     this.log(
       flags["agent-source"]
@@ -386,6 +349,27 @@ export default class Edit extends BaseCommand {
       this.log(flags["agent-source"] ? "✓ Agent partials fetched\n" : "✓ Agent partials loaded\n");
     } catch (error) {
       this.handleError(error);
+    }
+
+    // Persist wizard result to config.ts and config-types.ts (split by scope when in project context)
+    try {
+      const mergeResult = await buildAndMergeConfig(result, sourceResult, projectDir, flags.source);
+
+      // Load full agent definitions for config-types.ts generation
+      const cliAgents = await loadAllAgents(PROJECT_ROOT);
+      const sourceAgents = await loadAllAgents(sourcePath);
+      // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
+      const agents = { ...cliAgents, ...sourceAgents } as Record<AgentName, AgentDefinition>;
+
+      await writeScopedConfigs(
+        mergeResult.config,
+        sourceResult.matrix,
+        agents,
+        projectDir,
+        installation.configPath,
+      );
+    } catch (error) {
+      this.warn(`Could not update config: ${getErrorMessage(error)}`);
     }
 
     this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);

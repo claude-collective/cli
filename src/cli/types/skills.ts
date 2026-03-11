@@ -71,6 +71,7 @@ export type SkillSlug =
   | "resend"
   // Backend - CI/CD
   | "github-actions"
+  | "gitlab-ci"
   // Mobile
   | "react-native"
   | "expo"
