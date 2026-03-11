@@ -213,7 +213,10 @@ describe("plugin-info", () => {
       mockedDirectoryExists.mockResolvedValue(true);
 
       mockedLoadProjectConfig.mockResolvedValue({
-        config: buildProjectConfig({ name: "my-plugin", skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }] }),
+        config: buildProjectConfig({
+          name: "my-plugin",
+          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
+        }),
         configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
       });
 

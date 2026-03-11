@@ -16,7 +16,12 @@ import {
 import { renderSkillMd } from "../__tests__/content-generators";
 import { useMatrixStore } from "../../stores/matrix-store";
 import { computeSkillFolderHash } from "../versioning";
-import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
+import {
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+  STANDARD_DIRS,
+  STANDARD_FILES,
+} from "../../consts";
 
 describe("skill-plugin-compiler", () => {
   let tempDir: string;
@@ -30,16 +35,20 @@ describe("skill-plugin-compiler", () => {
     await mkdir(skillsDir, { recursive: true });
     await mkdir(outputDir, { recursive: true });
 
-    useMatrixStore.getState().setMatrix(createMockMatrix(
-      SKILLS.react,
-      SKILLS.vue,
-      SKILLS.zustand,
-      SKILLS.pinia,
-      SKILLS.scss,
-      SKILLS.vitest,
-      SKILLS.hono,
-      SKILLS.drizzle,
-    ));
+    useMatrixStore
+      .getState()
+      .setMatrix(
+        createMockMatrix(
+          SKILLS.react,
+          SKILLS.vue,
+          SKILLS.zustand,
+          SKILLS.pinia,
+          SKILLS.scss,
+          SKILLS.vitest,
+          SKILLS.hono,
+          SKILLS.drizzle,
+        ),
+      );
   });
 
   afterEach(async () => {
@@ -256,7 +265,11 @@ describe("skill-plugin-compiler", () => {
       expect(result2.manifest.version).toBe("1.0.0");
 
       // Modify the skill content
-      const newContent = renderSkillMd("web-framework-vue", "Vue skill", "# Vue version 2 - updated content");
+      const newContent = renderSkillMd(
+        "web-framework-vue",
+        "Vue skill",
+        "# Vue version 2 - updated content",
+      );
       await writeFile(path.join(skillPath, STANDARD_FILES.SKILL_MD), newContent);
 
       // Update metadata.yaml contentHash to reflect new SKILL.md content

@@ -70,9 +70,7 @@ export async function readPluginManifest(pluginDir: string): Promise<PluginManif
   }
 }
 
-export async function getPluginSkillIds(
-  pluginSkillsDir: string,
-): Promise<SkillId[]> {
+export async function getPluginSkillIds(pluginSkillsDir: string): Promise<SkillId[]> {
   const matrix = getMatrix();
   const skillFiles = await glob("**/SKILL.md", pluginSkillsDir);
   const skillIds: SkillId[] = [];

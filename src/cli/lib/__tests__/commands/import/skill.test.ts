@@ -2,7 +2,13 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
-import { runCliCommand, fileExists, directoryExists, createTempDir, cleanupTempDir } from "../../helpers";
+import {
+  runCliCommand,
+  fileExists,
+  directoryExists,
+  createTempDir,
+  cleanupTempDir,
+} from "../../helpers";
 import { EXIT_CODES } from "../../../exit-codes";
 import { STANDARD_FILES } from "../../../../consts";
 const LOCAL_SKILLS_DIR = ".claude/skills";
@@ -243,7 +249,12 @@ describe("import:skill command", () => {
       expect(error?.oclif?.exit).toBeUndefined();
 
       // Read the created metadata.yaml
-      const metadataPath = path.join(projectDir, LOCAL_SKILLS_DIR, "my-skill", STANDARD_FILES.METADATA_YAML);
+      const metadataPath = path.join(
+        projectDir,
+        LOCAL_SKILLS_DIR,
+        "my-skill",
+        STANDARD_FILES.METADATA_YAML,
+      );
       expect(await fileExists(metadataPath)).toBe(true);
 
       const content = await readFile(metadataPath, "utf-8");
@@ -268,7 +279,12 @@ describe("import:skill command", () => {
 
       expect(error?.oclif?.exit).toBeUndefined();
 
-      const metadataPath = path.join(projectDir, LOCAL_SKILLS_DIR, "my-skill", STANDARD_FILES.METADATA_YAML);
+      const metadataPath = path.join(
+        projectDir,
+        LOCAL_SKILLS_DIR,
+        "my-skill",
+        STANDARD_FILES.METADATA_YAML,
+      );
       const content = await readFile(metadataPath, "utf-8");
       const metadata = parseYaml(content);
 

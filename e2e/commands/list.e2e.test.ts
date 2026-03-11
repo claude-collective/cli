@@ -227,7 +227,12 @@ describe("list command", () => {
       });
 
       // Create skills directory with a skill folder so skill count > 0
-      const globalSkillsDir = path.join(globalHome, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
+      const globalSkillsDir = path.join(
+        globalHome,
+        CLAUDE_DIR,
+        STANDARD_DIRS.SKILLS,
+        "web-framework-react",
+      );
       await mkdir(globalSkillsDir, { recursive: true });
 
       // Create a project directory WITHOUT config (so detectInstallation falls back to global)

@@ -34,9 +34,13 @@ const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
 
 // Individual TestSkill constants — each skill defined exactly once
 
-const reactSkill = createTestSkill("web-framework-react", "React framework for building user interfaces", {
-  tags: ["react", "web", "ui"],
-});
+const reactSkill = createTestSkill(
+  "web-framework-react",
+  "React framework for building user interfaces",
+  {
+    tags: ["react", "web", "ui"],
+  },
+);
 
 const zustandSkill = createTestSkill("web-state-zustand", "Bear necessities state management", {
   tags: ["state", "react", "zustand"],
@@ -75,24 +79,38 @@ export const COMPILE_LOCAL_SKILL: TestSkill = createTestSkill(
 
 export const DEFAULT_TEST_SKILLS: TestSkill[] = [reactSkill, zustandSkill, vitestSkill, honoSkill];
 
-export const PIPELINE_TEST_SKILLS: TestSkill[] = [...DEFAULT_TEST_SKILLS, ...EXTRA_DOMAIN_TEST_SKILLS];
+export const PIPELINE_TEST_SKILLS: TestSkill[] = [
+  ...DEFAULT_TEST_SKILLS,
+  ...EXTRA_DOMAIN_TEST_SKILLS,
+];
 
 // TestSkill constants from consumer-stacks-matrix.integration.test.ts
 
 export const DOCKER_TOOLING_SKILL: TestSkill = createTestSkill(
   "infra-tooling-docker",
   "Docker containerization patterns",
-  { slug: "tooling", displayName: "Docker", domain: "shared", tags: ["docker", "devops", "containers"] },
+  {
+    slug: "tooling",
+    displayName: "Docker",
+    domain: "shared",
+    tags: ["docker", "devops", "containers"],
+  },
 );
 
 export const CI_CD_SKILLS: TestSkill[] = [
   createTestSkill("infra-ci-cd-github-actions", "github-actions CI/CD pipeline", {
-    slug: "github-actions", displayName: "GitHub Actions",
-    category: "infra-ci-cd", domain: "shared", tags: ["ci-cd", "github-actions"],
+    slug: "github-actions",
+    displayName: "GitHub Actions",
+    category: "infra-ci-cd",
+    domain: "shared",
+    tags: ["ci-cd", "github-actions"],
   }),
   createTestSkill("infra-ci-cd-gitlab-ci", "gitlab-ci CI/CD pipeline", {
-    slug: "gitlab-ci", displayName: "GitLab CI",
-    category: "infra-ci-cd", domain: "shared", tags: ["ci-cd", "gitlab-ci"],
+    slug: "gitlab-ci",
+    displayName: "GitLab CI",
+    category: "infra-ci-cd",
+    domain: "shared",
+    tags: ["ci-cd", "gitlab-ci"],
   }),
 ];
 
@@ -124,21 +142,47 @@ function contentSkill(
 }
 
 export const SWITCHABLE_SKILLS: TestSkill[] = [
-  contentSkill("web-framework-react", "React framework for building user interfaces",
-    ["react", "web"], "# React (Marketplace Version)\n\nReact is a JavaScript library for building user interfaces.\nUse component-based architecture with JSX."),
-  contentSkill("web-state-zustand", "Bear necessities state management",
-    ["state", "zustand"], "# Zustand (Marketplace Version)\n\nZustand is a minimal state management library for React."),
-  contentSkill("api-framework-hono", "Lightweight web framework for the edge",
-    ["api", "hono"], "# Hono (Marketplace Version)\n\nHono is a fast web framework for the edge."),
-  contentSkill("web-testing-vitest", "Next generation testing framework",
-    ["testing", "vitest"], "# Vitest (Marketplace Version)\n\nVitest is a fast unit test framework powered by Vite."),
+  contentSkill(
+    "web-framework-react",
+    "React framework for building user interfaces",
+    ["react", "web"],
+    "# React (Marketplace Version)\n\nReact is a JavaScript library for building user interfaces.\nUse component-based architecture with JSX.",
+  ),
+  contentSkill(
+    "web-state-zustand",
+    "Bear necessities state management",
+    ["state", "zustand"],
+    "# Zustand (Marketplace Version)\n\nZustand is a minimal state management library for React.",
+  ),
+  contentSkill(
+    "api-framework-hono",
+    "Lightweight web framework for the edge",
+    ["api", "hono"],
+    "# Hono (Marketplace Version)\n\nHono is a fast web framework for the edge.",
+  ),
+  contentSkill(
+    "web-testing-vitest",
+    "Next generation testing framework",
+    ["testing", "vitest"],
+    "# Vitest (Marketplace Version)\n\nVitest is a fast unit test framework powered by Vite.",
+  ),
 ];
 
 export const LOCAL_SKILL_VARIANTS: TestSkill[] = [
-  contentSkill("web-framework-react", "React framework (local customized version)",
-    ["react", "web"], "# React (Local Version)\n\nThis is my customized React skill with project-specific patterns.", "@local-user"),
-  contentSkill("web-state-zustand", "Zustand state management (local customized version)",
-    ["state", "zustand"], "# Zustand (Local Version)\n\nMy customized Zustand patterns with project-specific stores.", "@local-user"),
+  contentSkill(
+    "web-framework-react",
+    "React framework (local customized version)",
+    ["react", "web"],
+    "# React (Local Version)\n\nThis is my customized React skill with project-specific patterns.",
+    "@local-user",
+  ),
+  contentSkill(
+    "web-state-zustand",
+    "Zustand state management (local customized version)",
+    ["state", "zustand"],
+    "# Zustand (Local Version)\n\nMy customized Zustand patterns with project-specific stores.",
+    "@local-user",
+  ),
 ];
 
 export const RESOLUTION_PIPELINE_SKILLS: TestSkill[] = [
@@ -146,13 +190,18 @@ export const RESOLUTION_PIPELINE_SKILLS: TestSkill[] = [
     tags: ["react", "web"],
   }),
   createTestSkill("api-framework-hono", "Hono framework (acme source)", {
-    author: "@acme", tags: ["api", "hono"],
+    author: "@acme",
+    tags: ["api", "hono"],
   }),
   createTestSkill("web-animation-framer", "Framer Motion (internal source)", {
-    slug: "framer-motion", displayName: "Framer Motion", author: "@internal", tags: ["animation"],
+    slug: "framer-motion",
+    displayName: "Framer Motion",
+    author: "@internal",
+    tags: ["animation"],
   }),
   createTestSkill("api-database-drizzle", "Drizzle ORM (acme source)", {
-    author: "@acme", tags: ["database"],
+    author: "@acme",
+    tags: ["database"],
   }),
   createTestSkill("web-testing-vitest", "Vitest testing (public source)", {
     tags: ["testing"],

@@ -11,10 +11,30 @@ import { REACT_SKILL, REACT_SKILL_PRELOADED, VITEST_SINGLE_FILE_SKILL } from "./
 // ---------------------------------------------------------------------------
 
 export const AGENT_DEFS = {
-  webDev: { name: "web-developer", title: "Frontend Developer", description: "A frontend developer agent", tools: ["Read", "Write", "Glob"] },
-  apiDev: { name: "api-developer", title: "Backend Developer", description: "A backend developer agent", tools: ["Read", "Write", "Bash"] },
-  webTester: { name: "web-tester", title: "Tester", description: "A testing agent", tools: ["Read", "Bash"] },
-  webReviewer: { name: "web-reviewer", title: "Code Reviewer", description: "A code review agent", tools: ["Read", "Grep", "Glob"] },
+  webDev: {
+    name: "web-developer",
+    title: "Frontend Developer",
+    description: "A frontend developer agent",
+    tools: ["Read", "Write", "Glob"],
+  },
+  apiDev: {
+    name: "api-developer",
+    title: "Backend Developer",
+    description: "A backend developer agent",
+    tools: ["Read", "Write", "Bash"],
+  },
+  webTester: {
+    name: "web-tester",
+    title: "Tester",
+    description: "A testing agent",
+    tools: ["Read", "Bash"],
+  },
+  webReviewer: {
+    name: "web-reviewer",
+    title: "Code Reviewer",
+    description: "A code review agent",
+    tools: ["Read", "Grep", "Glob"],
+  },
 };
 
 // ---------------------------------------------------------------------------

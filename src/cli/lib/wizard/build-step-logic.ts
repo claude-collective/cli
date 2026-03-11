@@ -73,9 +73,7 @@ function isFrameworkSelected(selections: CategorySelections): boolean {
   return frameworkSelections.length > 0;
 }
 
-function getSelectedFrameworks(
-  selections: CategorySelections,
-): SkillId[] {
+function getSelectedFrameworks(selections: CategorySelections): SkillId[] {
   const frameworkSelections = selections[FRAMEWORK_CATEGORY_ID] ?? [];
   return frameworkSelections.map((alias) => resolveAlias(alias));
 }
@@ -106,9 +104,7 @@ export function buildCategoriesForDomain(
   const matrix = getMatrix();
   const frameworkSource = selections;
   const frameworkSelected = isFrameworkSelected(frameworkSource);
-  const selectedFrameworkIds = frameworkSelected
-    ? getSelectedFrameworks(frameworkSource)
-    : [];
+  const selectedFrameworkIds = frameworkSelected ? getSelectedFrameworks(frameworkSource) : [];
 
   // Object.values() on a Partial record only yields values that exist — all are CategoryDefinition
   const categories = sortBy(

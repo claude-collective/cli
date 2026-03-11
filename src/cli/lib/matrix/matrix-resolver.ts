@@ -28,9 +28,7 @@ type SelectionContext = {
   selectedSet: Set<SkillId>;
 };
 
-function initializeSelectionContext(
-  currentSelections: SkillId[],
-): SelectionContext {
+function initializeSelectionContext(currentSelections: SkillId[]): SelectionContext {
   const resolvedSelections = currentSelections.map((s) => resolveAlias(s));
   const selectedSet = new Set<SkillId>(resolvedSelections);
   return { resolvedSelections, selectedSet };
@@ -48,10 +46,7 @@ function initializeSelectionContext(
  * @param currentSelections - Currently selected skill IDs in the wizard
  * @returns Skill IDs that would lose a required dependency if `skillId` were removed
  */
-export function getDependentSkills(
-  skillId: SkillId,
-  currentSelections: SkillId[],
-): SkillId[] {
+export function getDependentSkills(skillId: SkillId, currentSelections: SkillId[]): SkillId[] {
   const matrix = getMatrix();
   const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
@@ -98,10 +93,7 @@ export function getDependentSkills(
  * @param currentSelections - Currently selected skill IDs
  * @returns true if the skill should show a discouraged warning
  */
-export function isDiscouraged(
-  skillId: SkillId,
-  currentSelections: SkillId[],
-): boolean {
+export function isDiscouraged(skillId: SkillId, currentSelections: SkillId[]): boolean {
   const matrix = getMatrix();
   const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
@@ -243,10 +235,7 @@ export function getDiscourageReason(
  * 2. It is compatible with the user's current selections (shares a compatibleWith
  *    group with at least one selected skill, or has no compatibility constraints)
  */
-export function isRecommended(
-  skillId: SkillId,
-  currentSelections: SkillId[],
-): boolean {
+export function isRecommended(skillId: SkillId, currentSelections: SkillId[]): boolean {
   const matrix = getMatrix();
   const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
@@ -296,9 +285,7 @@ type ValidationPartial = {
   warnings: ValidationWarning[];
 };
 
-function validateConflicts(
-  resolvedSelections: SkillId[],
-): ValidationPartial {
+function validateConflicts(resolvedSelections: SkillId[]): ValidationPartial {
   const matrix = getMatrix();
   const errors: ValidationError[] = [];
 
@@ -359,9 +346,7 @@ function validateRequirements(
   return { errors, warnings: [] };
 }
 
-function validateExclusivity(
-  resolvedSelections: SkillId[],
-): ValidationPartial {
+function validateExclusivity(resolvedSelections: SkillId[]): ValidationPartial {
   const matrix = getMatrix();
   const errors: ValidationError[] = [];
 
@@ -470,9 +455,7 @@ function mergeValidationResults(results: ValidationPartial[]): ValidationPartial
  * @param selections - Complete list of selected skill IDs to validate
  * @returns Validation result with `valid` flag, error list, and warning list
  */
-export function validateSelection(
-  selections: SkillId[],
-): SelectionValidation {
+export function validateSelection(selections: SkillId[]): SelectionValidation {
   const { resolvedSelections, selectedSet } = initializeSelectionContext(selections);
 
   const { errors, warnings } = mergeValidationResults([
@@ -523,13 +506,9 @@ export function getAvailableSkills(
     skillOptions.push({
       id: skill.id,
       discouraged,
-      discouragedReason: discouraged
-        ? getDiscourageReason(skill.id, currentSelections)
-        : undefined,
+      discouragedReason: discouraged ? getDiscourageReason(skill.id, currentSelections) : undefined,
       recommended,
-      recommendedReason: recommended
-        ? getRecommendReason(skill.id, currentSelections)
-        : undefined,
+      recommendedReason: recommended ? getRecommendReason(skill.id, currentSelections) : undefined,
       selected: selectedSet.has(skill.id),
       alternatives: skill.alternatives.map((a) => a.skillId),
     });
@@ -539,9 +518,7 @@ export function getAvailableSkills(
 }
 
 /** Returns all resolved skills belonging to the given category. */
-export function getSkillsByCategory(
-  categoryId: CategoryPath,
-): ResolvedSkill[] {
+export function getSkillsByCategory(categoryId: CategoryPath): ResolvedSkill[] {
   const matrix = getMatrix();
   const skills: ResolvedSkill[] = [];
 

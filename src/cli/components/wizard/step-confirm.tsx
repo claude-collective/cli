@@ -124,7 +124,9 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
       </Box>
 
       <Box marginTop={1}>
-        <Text dimColor>{KEY_LABEL_ENTER} install {KEY_LABEL_ESC} go back</Text>
+        <Text dimColor>
+          {KEY_LABEL_ENTER} install {KEY_LABEL_ESC} go back
+        </Text>
       </Box>
     </Box>
   );

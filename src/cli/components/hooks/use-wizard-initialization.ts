@@ -33,12 +33,7 @@ export function useWizardInitialization({
 
     if (initialStep) {
       if (installedSkillIds?.length) {
-        useWizardStore
-          .getState()
-          .populateFromSkillIds(
-            installedSkillIds,
-            installedSkillConfigs,
-          );
+        useWizardStore.getState().populateFromSkillIds(installedSkillIds, installedSkillConfigs);
       }
       useWizardStore.setState({ step: initialStep, approach: "scratch" });
     }

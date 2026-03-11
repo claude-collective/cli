@@ -163,10 +163,7 @@ describe("User Journey: Compile Flow", () => {
 
   describe("verbose mode", () => {
     it("should provide detailed output with --verbose flag", async () => {
-      const { stdout, error } = await runCliCommand([
-        "compile",
-        "--verbose",
-      ]);
+      const { stdout, error } = await runCliCommand(["compile", "--verbose"]);
 
       const output = stdout + (error?.message || "");
 
@@ -223,10 +220,7 @@ describe("User Journey: Compile with Local Skills", () => {
       expect(await fileExists(localSkillPath)).toBe(true);
 
       // Run compile
-      const { stdout, error } = await runCliCommand([
-        "compile",
-        "--verbose",
-      ]);
+      const { stdout, error } = await runCliCommand(["compile", "--verbose"]);
 
       const output = stdout + (error?.message || "");
 

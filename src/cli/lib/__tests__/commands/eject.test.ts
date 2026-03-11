@@ -240,7 +240,10 @@ describe("eject command", () => {
 
       // Manually create agents/ with an actual agent subdir to simulate a prior full eject
       await mkdir(path.join(agentsDir, "developer"), { recursive: true });
-      await writeFile(path.join(agentsDir, "developer", STANDARD_FILES.AGENT_METADATA_YAML), "id: developer");
+      await writeFile(
+        path.join(agentsDir, "developer", STANDARD_FILES.AGENT_METADATA_YAML),
+        "id: developer",
+      );
 
       // Second full eject without --force should be blocked
       const { stderr } = await runCliCommand(["eject", "agent-partials"]);

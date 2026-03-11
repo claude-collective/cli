@@ -55,4 +55,3 @@ export const TEST_CATEGORIES = {
   // Mobile domain
   mobileFramework: createMockCategory("mobile-framework", "Mobile Framework"),
 };
-

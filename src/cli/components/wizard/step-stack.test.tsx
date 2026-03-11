@@ -3,11 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepStack } from "./step-stack";
 import { useWizardStore } from "../../stores/wizard-store";
 import { useMatrixStore } from "../../stores/matrix-store";
-import {
-  createMockMatrix,
-  createMockResolvedStack,
-  SKILLS,
-} from "../../lib/__tests__/helpers";
+import { createMockMatrix, createMockResolvedStack, SKILLS } from "../../lib/__tests__/helpers";
 import { TEST_CATEGORIES } from "../../lib/__tests__/test-fixtures";
 
 import type { MergedSkillsMatrix } from "../../types";
@@ -37,8 +33,18 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
     categories: {
       "web-framework": { ...TEST_CATEGORIES.framework, domain: "web" as const, exclusive: false },
       "api-api": { ...TEST_CATEGORIES.api, domain: "api" as const, exclusive: false, order: 1 },
-      "cli-framework": { ...TEST_CATEGORIES.cliFramework, domain: "cli" as const, exclusive: false, order: 2 },
-      "mobile-framework": { ...TEST_CATEGORIES.mobileFramework, domain: "mobile" as const, exclusive: false, order: 3 },
+      "cli-framework": {
+        ...TEST_CATEGORIES.cliFramework,
+        domain: "cli" as const,
+        exclusive: false,
+        order: 2,
+      },
+      "mobile-framework": {
+        ...TEST_CATEGORIES.mobileFramework,
+        domain: "mobile" as const,
+        exclusive: false,
+        order: 3,
+      },
     },
   });
 };

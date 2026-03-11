@@ -18,9 +18,7 @@ export function getDomainDisplayName(domain: string): string {
   );
 }
 
-export function getStackName(
-  stackId: string | null,
-): string | undefined {
+export function getStackName(stackId: string | null): string | undefined {
   if (!stackId) return undefined;
   const stack = getMatrix().suggestedStacks.find((s) => s.id === stackId);
   return stack?.name;

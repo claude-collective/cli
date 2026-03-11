@@ -1,7 +1,16 @@
 import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, PLUGINS_SUBDIR, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  DEFAULT_PLUGIN_NAME,
+  PLUGINS_SUBDIR,
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+  STANDARD_DIRS,
+  STANDARD_FILES,
+} from "../../../consts";
 import type { ExtractedSkillMetadata } from "../../../types";
 import { computeSkillFolderHash } from "../../versioning";
 import {
@@ -485,7 +494,10 @@ permissionMode: {{ agent.permissionMode }}
       model: agent.model ?? "opus",
       permissionMode: agent.permissionMode ?? "default",
     };
-    await writeFile(path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML), stringifyYaml(agentYaml));
+    await writeFile(
+      path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML),
+      stringifyYaml(agentYaml),
+    );
 
     await writeFile(
       path.join(agentDir, "intro.md"),
@@ -530,15 +542,24 @@ permissionMode: {{ agent.permissionMode }}
       const destSkillDir = path.join(pluginDir, STANDARD_DIRS.SKILLS, skill.id);
       await mkdir(destSkillDir, { recursive: true });
 
-      const skillMdContent = await readFile(path.join(srcSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
+      const skillMdContent = await readFile(
+        path.join(srcSkillDir, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
       await writeFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), skillMdContent);
 
-      const metadataContent = await readFile(path.join(srcSkillDir, STANDARD_FILES.METADATA_YAML), "utf-8");
+      const metadataContent = await readFile(
+        path.join(srcSkillDir, STANDARD_FILES.METADATA_YAML),
+        "utf-8",
+      );
       await writeFile(path.join(destSkillDir, STANDARD_FILES.METADATA_YAML), metadataContent);
     }
 
     if (options.projectConfig) {
-      await writeFile(path.join(pluginDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(options.projectConfig));
+      await writeFile(
+        path.join(pluginDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs(options.projectConfig),
+      );
     }
 
     dirs.pluginDir = pluginDir;
@@ -547,7 +568,10 @@ permissionMode: {{ agent.permissionMode }}
   if (options.projectConfig) {
     const projectClaudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
     await mkdir(projectClaudeSrcDir, { recursive: true });
-    await writeFile(path.join(projectClaudeSrcDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(options.projectConfig));
+    await writeFile(
+      path.join(projectClaudeSrcDir, STANDARD_FILES.CONFIG_TS),
+      renderConfigTs(options.projectConfig),
+    );
   }
 
   if (options.localSkills && options.localSkills.length > 0) {

@@ -16,6 +16,7 @@ agentsinc new skill <name> --category <category-name>
 ```
 
 Each skill lives in `src/skills/<skill-name>/` with:
+
 - `SKILL.md` -- Skill content (what the skill teaches)
 - `metadata.yaml` -- Skill metadata (category, author, description, custom: true)
 

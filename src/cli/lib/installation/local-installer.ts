@@ -134,9 +134,7 @@ async function deleteAndCopySkills(
   return copySkillsToLocalFlattened(skillIds, skillsDir, sourceResult.matrix, sourceResult);
 }
 
-function buildLocalSkillsMap(
-  copiedSkills: CopiedSkill[],
-): Record<SkillId, LocalResolvedSkill> {
+function buildLocalSkillsMap(copiedSkills: CopiedSkill[]): Record<SkillId, LocalResolvedSkill> {
   // Boundary cast: Object.fromEntries returns { [k: string]: V }
   return Object.fromEntries(
     copiedSkills
@@ -203,11 +201,7 @@ async function buildLocalConfig(
   if (wizardResult.selectedStackId) {
     if (loadedStack) {
       // Use actual selections (may differ from stack defaults after user customization)
-      localConfig = generateProjectConfigFromSkills(
-        DEFAULT_PLUGIN_NAME,
-        skillIds,
-        agentOptions,
-      );
+      localConfig = generateProjectConfigFromSkills(DEFAULT_PLUGIN_NAME, skillIds, agentOptions);
 
       // Overlay preloaded flags from the stack definition — generateProjectConfigFromSkills
       // defaults all skills to preloaded: false; the stack YAML may define preloaded: true
@@ -250,11 +244,7 @@ async function buildLocalConfig(
       );
     }
   } else {
-    localConfig = generateProjectConfigFromSkills(
-      DEFAULT_PLUGIN_NAME,
-      skillIds,
-      agentOptions,
-    );
+    localConfig = generateProjectConfigFromSkills(DEFAULT_PLUGIN_NAME, skillIds, agentOptions);
   }
 
   verbose(
@@ -550,7 +540,8 @@ export async function installPluginConfig(
   const projectPaths = resolveInstallPaths(projectDir, "project");
 
   // Only create project directories if there are project-scoped agents
-  const hasProjectAgents = wizardResult.skills.some((s) => s.scope !== "global") ||
+  const hasProjectAgents =
+    wizardResult.skills.some((s) => s.scope !== "global") ||
     (wizardResult.agentConfigs ?? []).some((a) => a.scope !== "global");
   if (hasProjectAgents) {
     await ensureDir(projectPaths.agentsDir);
@@ -561,7 +552,13 @@ export async function installPluginConfig(
   const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
   const finalConfig = mergeResult.config;
 
-  await writeScopedConfigs(finalConfig, sourceResult.matrix, agents, projectDir, projectPaths.configPath);
+  await writeScopedConfigs(
+    finalConfig,
+    sourceResult.matrix,
+    agents,
+    projectDir,
+    projectPaths.configPath,
+  );
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {
@@ -635,8 +632,8 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const globalSkills = wizardResult.skills.filter((s) => s.scope === "global");
 
   // Only create project directories when there are project-scoped skills or agents
-  const hasProjectItems = projectSkills.length > 0 ||
-    (wizardResult.agentConfigs ?? []).some((a) => a.scope !== "global");
+  const hasProjectItems =
+    projectSkills.length > 0 || (wizardResult.agentConfigs ?? []).some((a) => a.scope !== "global");
   if (hasProjectItems) {
     await prepareDirectories(projectPaths);
   } else {
@@ -664,7 +661,13 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
   const finalConfig = mergeResult.config;
 
-  await writeScopedConfigs(finalConfig, sourceResult.matrix, agents, projectDir, projectPaths.configPath);
+  await writeScopedConfigs(
+    finalConfig,
+    sourceResult.matrix,
+    agents,
+    projectDir,
+    projectPaths.configPath,
+  );
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {

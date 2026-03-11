@@ -23,7 +23,11 @@ import {
   executeMigration,
   deriveInstallMode,
 } from "../lib/installation/index.js";
-import { getMarketplaceLabel, loadAllAgents, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import {
+  getMarketplaceLabel,
+  loadAllAgents,
+  loadSkillsMatrixFromSource,
+} from "../lib/loading/index.js";
 import { findSkill, getMatrix, getSkill, useMatrixStore } from "../stores/matrix-store";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";

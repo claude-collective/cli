@@ -10,7 +10,12 @@ import {
   validateAllPlugins,
 } from "./plugin-validator";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
-import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
+import {
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+  STANDARD_DIRS,
+  STANDARD_FILES,
+} from "../../consts";
 
 describe("plugin-validator", () => {
   let tempDir: string;
@@ -26,7 +31,10 @@ describe("plugin-validator", () => {
   /** Write a plugin.json manifest at .claude-plugin/plugin.json */
   async function writePluginJson(dir: string, manifest: Record<string, unknown>) {
     await mkdir(path.join(dir, PLUGIN_MANIFEST_DIR), { recursive: true });
-    await writeFile(path.join(dir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE), JSON.stringify(manifest));
+    await writeFile(
+      path.join(dir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE),
+      JSON.stringify(manifest),
+    );
   }
 
   describe("validatePluginStructure", () => {

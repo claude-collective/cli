@@ -4,7 +4,6 @@ import { createMockMatrix, SKILLS } from "../lib/__tests__/helpers";
 import type { SkillId, SkillSlug } from "../types";
 
 describe("MatrixStore", () => {
-
   describe("setMatrix and getMatrix", () => {
     it("should store and retrieve the matrix", () => {
       const matrix = createMockMatrix(SKILLS.react);
@@ -29,9 +28,7 @@ describe("MatrixStore", () => {
 
   describe("getMatrix", () => {
     it("should throw when store is not populated", () => {
-      expect(() => useMatrixStore.getState().getMatrix()).toThrow(
-        "Matrix store not initialized",
-      );
+      expect(() => useMatrixStore.getState().getMatrix()).toThrow("Matrix store not initialized");
     });
   });
 

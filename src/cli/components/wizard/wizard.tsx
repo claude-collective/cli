@@ -20,12 +20,7 @@ import {
   HOTKEY_SETTINGS,
   isHotkey,
 } from "./hotkeys.js";
-import type {
-  AgentName,
-  Domain,
-  DomainSelections,
-  SkillId,
-} from "../../types/index.js";
+import type { AgentName, Domain, DomainSelections, SkillId } from "../../types/index.js";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import { getStackName } from "./utils.js";
 import { warn, type StartupMessage } from "../../utils/logger.js";
@@ -141,7 +136,11 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    if (isHotkey(input, HOTKEY_ACCEPT_DEFAULTS) && store.step === "build" && store.selectedStackId) {
+    if (
+      isHotkey(input, HOTKEY_ACCEPT_DEFAULTS) &&
+      store.step === "build" &&
+      store.selectedStackId
+    ) {
       store.setStackAction("defaults");
       store.setStep("confirm");
       return;

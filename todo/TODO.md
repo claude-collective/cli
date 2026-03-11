@@ -1,27 +1,27 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                                                  | Status        |
-| ---- | --------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md)) | Ready for Dev |
+| ID   | Task                                                                                                                     | Status        |
+| ---- | ------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))    | Ready for Dev |
 | D-74 | Per-agent scope toggle (project/global) — core done, edit-mode gaps remain (see [refinement](./D-74-per-agent-scope.md)) | Ready for Dev |
-| D-76 | Init: generate project `config-types.ts` that imports from global `~/.claude-src/config-types.ts`                     | Ready for Dev |
-| D-77 | Wizard: show stack scope origin labels (global vs project) in build step                                              | Needs Design  |
-| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))         | Has Open Qs   |
-| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))             | Ready for Dev |
-| D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                       | Ready for Dev |
-| D-62 | Review default stacks: include meta/methodology/reviewing skills                                                      | Ready for Dev |
-| D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                 | Ready for Dev |
-| D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                       | Investigate   |
-| D-67 | Skill metadata as single source of truth — eliminate redundant central config for intrinsic skill properties          | Investigate   |
-| D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                      | Investigate   |
-| D-79 | Agent selection step causes infinite re-render — screen scrolls/refreshes every millisecond                           | Bug           |
-| D-80 | Init with existing global install: project config-types doesn't import from global scope                             | Bug           |
-| D-81 | Config.ts: extract agents, skills, and stack into named variables above `export default`                             | Ready for Dev |
-| D-85 | Create a proper `SkillId` union type from all known skills, enforce in tests                                         | Ready for Dev |
-| D-87 | Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries                                       | Ready for Dev |
-| D-88 | Audit and remove multi-tier resolution fallbacks — data should match or fail, not guess                              | Ready for Dev |
-| D-89 | Audit and remove silent fallbacks on required data — `findSkill` → `getSkill`, remove `?.`/`?? ""` patterns         | Ready for Dev |
-| D-90 | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths | Ready for Dev |
+| D-76 | Init: generate project `config-types.ts` that imports from global `~/.claude-src/config-types.ts`                        | Ready for Dev |
+| D-77 | Wizard: show stack scope origin labels (global vs project) in build step                                                 | Needs Design  |
+| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))            | Has Open Qs   |
+| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                | Ready for Dev |
+| D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                          | Ready for Dev |
+| D-62 | Review default stacks: include meta/methodology/reviewing skills                                                         | Ready for Dev |
+| D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                    | Ready for Dev |
+| D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                          | Investigate   |
+| D-67 | Skill metadata as single source of truth — eliminate redundant central config for intrinsic skill properties             | Investigate   |
+| D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                         | Investigate   |
+| D-79 | Agent selection step causes infinite re-render — screen scrolls/refreshes every millisecond                              | Bug           |
+| D-80 | Init with existing global install: project config-types doesn't import from global scope                                 | Bug           |
+| D-81 | Config.ts: extract agents, skills, and stack into named variables above `export default`                                 | Ready for Dev |
+| D-85 | Create a proper `SkillId` union type from all known skills, enforce in tests                                             | Ready for Dev |
+| D-87 | Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries                                           | Ready for Dev |
+| D-88 | Audit and remove multi-tier resolution fallbacks — data should match or fail, not guess                                  | Ready for Dev |
+| D-89 | Audit and remove silent fallbacks on required data — `findSkill` → `getSkill`, remove `?.`/`?? ""` patterns              | Ready for Dev |
+| D-90 | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths      | Ready for Dev |
 
 ---
 
@@ -243,6 +243,7 @@ Throughout the codebase (production and test), there are `as` type casts that by
 Currently `SkillId` is a loose template literal `` `${SkillIdPrefix}-${string}-${string}` `` which accepts any string matching the pattern (e.g., `"web-skill-a"`). This means `createMockSkill("web-skill-a")` compiles fine even though `"web-skill-a"` is not a real skill.
 
 Create a proper union type of all actual skill IDs (generated from the skills matrix or marketplace), similar to how `Domain`, `Category`, and `AgentName` are explicit unions. This would:
+
 - Catch invalid skill IDs at compile time in both production code and tests
 - Eliminate the need for the canonical skill registry in `__tests__/helpers.ts` — TypeScript itself enforces validity
 - Make `createMockSkill()` only accept real skill IDs

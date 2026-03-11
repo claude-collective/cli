@@ -308,19 +308,16 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       useMatrixStore.getState().setMatrix(matrix);
 
       // Add a skill that requires a non-existent skill
-      matrix.skills["web-feature-advanced"] = createMockSkill(
-        "web-feature-advanced",
-        {
-          category: "web-framework",
-          requires: [
-            {
-              skillIds: ["web-nonexistent-dep"],
-              needsAny: false,
-              reason: "Needs nonexistent dependency",
-            },
-          ],
-        },
-      );
+      matrix.skills["web-feature-advanced"] = createMockSkill("web-feature-advanced", {
+        category: "web-framework",
+        requires: [
+          {
+            skillIds: ["web-nonexistent-dep"],
+            needsAny: false,
+            reason: "Needs nonexistent dependency",
+          },
+        ],
+      });
 
       expect(() => validateSelection(["web-feature-advanced"])).toThrow();
     });
@@ -406,10 +403,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // hono selected, auth should not be discouraged
-      const discouraged = isDiscouraged(
-        "api-security-auth-patterns",
-        ["api-framework-hono"],
-      );
+      const discouraged = isDiscouraged("api-security-auth-patterns", ["api-framework-hono"]);
       expect(discouraged).toBe(false);
     });
 
@@ -428,9 +422,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // Select react (from public), sentry should be valid
-      const validation = validateSelection(
-        ["api-monitoring-sentry", "web-framework-react"],
-      );
+      const validation = validateSelection(["api-monitoring-sentry", "web-framework-react"]);
       expect(validation.valid).toBe(true);
 
       // Without any framework, sentry should fail
@@ -498,9 +490,11 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       reactSkill.recommendedReason = "Zustand works best with React";
 
       // Select zustand but not react -- should be valid with recommendation warning
-      const validation = validateSelection(
-        ["web-state-zustand", "api-framework-hono", "api-database-drizzle"],
-      );
+      const validation = validateSelection([
+        "web-state-zustand",
+        "api-framework-hono",
+        "api-database-drizzle",
+      ]);
       expect(validation.valid).toBe(true);
       expect(validation.warnings.some((w) => w.type === "missing_recommendation")).toBe(true);
       expect(validation.warnings[0].message).toContain("React");

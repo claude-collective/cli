@@ -2,7 +2,13 @@ import os from "os";
 import path from "path";
 import { unique } from "remeda";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId, Category } from "../../types";
-import { CLAUDE_SRC_DIR, CLI_BIN_NAME, GLOBAL_INSTALL_ROOT, PROJECT_ROOT, STANDARD_FILES } from "../../consts";
+import {
+  CLAUDE_SRC_DIR,
+  CLI_BIN_NAME,
+  GLOBAL_INSTALL_ROOT,
+  PROJECT_ROOT,
+  STANDARD_FILES,
+} from "../../consts";
 import { directoryExists, fileExists, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedKeys } from "../../utils/typed-object";
@@ -185,12 +191,7 @@ export async function regenerateConfigTypes(
     });
     verbose("Using project config-types.ts that imports from global");
   } else {
-    source = generateConfigTypesSource(
-      data.matrix,
-      data.agentNames,
-      data.customAgentNames,
-      extras,
-    );
+    source = generateConfigTypesSource(data.matrix, data.agentNames, data.customAgentNames, extras);
   }
 
   const configTypesPath = path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TYPES_TS);

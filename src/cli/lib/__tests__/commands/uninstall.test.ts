@@ -14,7 +14,15 @@ import {
   SKILLS,
 } from "../helpers";
 import { useMatrixStore } from "../../../stores/matrix-store";
-import { DEFAULT_BRANDING, STANDARD_FILES, STANDARD_DIRS, CLAUDE_DIR, CLAUDE_SRC_DIR, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../../consts";
+import {
+  DEFAULT_BRANDING,
+  STANDARD_FILES,
+  STANDARD_DIRS,
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+} from "../../../consts";
 import type { SkillId } from "../../../types";
 import { renderConfigTs } from "../content-generators";
 
@@ -190,16 +198,20 @@ describe("uninstall command", () => {
     process.chdir(projectDir);
     process.env.HOME = fakeHome;
 
-    useMatrixStore.getState().setMatrix(createMockMatrix(
-      SKILLS.react,
-      SKILLS.vue,
-      SKILLS.zustand,
-      SKILLS.hono,
-      createMockSkill("web-tooling-acme"),
-      createMockSkill("web-tooling-custom"),
-      createMockSkill("web-tooling-personal"),
-      createMockSkill("web-tooling-nometadata"),
-    ));
+    useMatrixStore
+      .getState()
+      .setMatrix(
+        createMockMatrix(
+          SKILLS.react,
+          SKILLS.vue,
+          SKILLS.zustand,
+          SKILLS.hono,
+          createMockSkill("web-tooling-acme"),
+          createMockSkill("web-tooling-custom"),
+          createMockSkill("web-tooling-personal"),
+          createMockSkill("web-tooling-nometadata"),
+        ),
+      );
   });
 
   afterEach(async () => {

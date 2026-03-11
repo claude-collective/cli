@@ -100,7 +100,10 @@ describe("doctor command", () => {
     it("should fail when config.ts has syntax errors", async () => {
       const claudeSrcDir = path.join(projectDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
-      await writeFile(path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS), "invalid typescript content {{");
+      await writeFile(
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        "invalid typescript content {{",
+      );
 
       const { error } = await runCliCommand(["doctor"]);
 

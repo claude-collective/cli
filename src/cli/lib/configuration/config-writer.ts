@@ -60,9 +60,7 @@ function generateStandaloneConfig(cleaned: Record<string, unknown>): string {
   // Build type imports based on what's used
   const typeImports = buildTypeImports({ hasSkills, hasAgents, hasStack, hasDomains });
 
-  const lines: string[] = [
-    `import type { ${typeImports} } from "./config-types";`,
-  ];
+  const lines: string[] = [`import type { ${typeImports} } from "./config-types";`];
 
   // Add named variable declarations above the export default
   if (hasSkills) {

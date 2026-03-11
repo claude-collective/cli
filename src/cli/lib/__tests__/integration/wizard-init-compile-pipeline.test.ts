@@ -7,7 +7,13 @@ import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents/agent-recompiler";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import type { AgentName, ProjectConfig } from "../../../types";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  DEFAULT_PLUGIN_NAME,
+  STANDARD_DIRS,
+  STANDARD_FILES,
+} from "../../../consts";
 import {
   createMockMatrix,
   testSkillToResolvedSkill,

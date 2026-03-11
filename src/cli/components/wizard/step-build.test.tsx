@@ -19,11 +19,7 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-import {
-  createMockSkill,
-  createMockMatrix,
-  SKILLS,
-} from "../../lib/__tests__/helpers";
+import { createMockSkill, createMockMatrix, SKILLS } from "../../lib/__tests__/helpers";
 import { useMatrixStore } from "../../stores/matrix-store";
 import {
   WEB_FRAMEWORK_CATEGORY,
@@ -35,13 +31,10 @@ import {
 } from "../../lib/__tests__/mock-data/mock-categories.js";
 
 const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill[]) =>
-  createMockMatrix(
-    ...skills,
-    {
-      // Test data construction cast: indexBy returns generic Record
-      categories: indexBy(categories, (c) => c.id) as Record<Category, CategoryDefinition>,
-    },
-  );
+  createMockMatrix(...skills, {
+    // Test data construction cast: indexBy returns generic Record
+    categories: indexBy(categories, (c) => c.id) as Record<Category, CategoryDefinition>,
+  });
 
 const defaultMatrix = buildTestMatrix(
   [
@@ -537,9 +530,7 @@ describe("StepBuild component", () => {
           displayName: "Framework",
           required: true,
           exclusive: true,
-          options: [
-            { id: "web-framework-react", state: "normal", selected: false },
-          ],
+          options: [{ id: "web-framework-react", state: "normal", selected: false }],
         },
       ];
       const selections: CategorySelections = {};
@@ -638,4 +629,3 @@ describe("StepBuild component", () => {
     });
   });
 });
-

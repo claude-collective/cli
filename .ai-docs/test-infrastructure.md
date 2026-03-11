@@ -176,14 +176,14 @@ src/cli/components/wizard/wizard-tabs.test.tsx
 
 **MANDATORY: All test data must use these factories. Never construct inline.**
 
-| Factory                | Purpose                          | Signature                                     |
-| ---------------------- | -------------------------------- | --------------------------------------------- |
-| `createMockSkill()`    | Create a ResolvedSkill mock      | `(id, overrides?) => ResolvedSkill`           |
-| `createMockMatrix()`   | Create a MergedSkillsMatrix mock | `(...skills) => MergedSkillsMatrix`           |
-| `createMockCategory()` | Create a CategoryDefinition mock | `(id, overrides?) => CategoryDefinition`      |
-| `createMockAgent()`    | Create an AgentYamlConfig mock   | `(name, overrides?) => AgentYamlConfig`       |
-| `buildWizardResult()`  | Create a WizardResultV2 mock     | `(overrides?) => WizardResultV2`              |
-| `buildSourceResult()`  | Create a SourceLoadResult mock   | `(overrides?) => SourceLoadResult`            |
+| Factory                | Purpose                          | Signature                                |
+| ---------------------- | -------------------------------- | ---------------------------------------- |
+| `createMockSkill()`    | Create a ResolvedSkill mock      | `(id, overrides?) => ResolvedSkill`      |
+| `createMockMatrix()`   | Create a MergedSkillsMatrix mock | `(...skills) => MergedSkillsMatrix`      |
+| `createMockCategory()` | Create a CategoryDefinition mock | `(id, overrides?) => CategoryDefinition` |
+| `createMockAgent()`    | Create an AgentYamlConfig mock   | `(name, overrides?) => AgentYamlConfig`  |
+| `buildWizardResult()`  | Create a WizardResultV2 mock     | `(overrides?) => WizardResultV2`         |
+| `buildSourceResult()`  | Create a SourceLoadResult mock   | `(overrides?) => SourceLoadResult`       |
 
 ### Skill File Creators
 

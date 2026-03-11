@@ -16,15 +16,15 @@ The test suite has sprawling mock data that makes tests hard to maintain and und
 
 ### Scale of Duplication
 
-| Artifact | Unique Definitions | Actual Distinct Concepts |
-|---|---|---|
-| Skill IDs | 39 | ~12 needed |
-| `TestSkill[]` arrays | 11 | ~3-4 needed (compose from registry) |
-| SKILL.md templates | 4 copies | 1 renderer |
-| Agent YAML templates | 3 copies | 1 renderer |
-| `JSON.stringify` config patterns | 25+ sites | 1 renderer |
-| File-writer functions | 10+ | ~4 composable primitives |
-| Pre-built matrices | 15+ | Inline `createMockMatrix(...)` calls |
+| Artifact                         | Unique Definitions | Actual Distinct Concepts             |
+| -------------------------------- | ------------------ | ------------------------------------ |
+| Skill IDs                        | 39                 | ~12 needed                           |
+| `TestSkill[]` arrays             | 11                 | ~3-4 needed (compose from registry)  |
+| SKILL.md templates               | 4 copies           | 1 renderer                           |
+| Agent YAML templates             | 3 copies           | 1 renderer                           |
+| `JSON.stringify` config patterns | 25+ sites          | 1 renderer                           |
+| File-writer functions            | 10+                | ~4 composable primitives             |
+| Pre-built matrices               | 15+                | Inline `createMockMatrix(...)` calls |
 
 ---
 
@@ -43,13 +43,13 @@ The test suite has sprawling mock data that makes tests hard to maintain and und
 
 External fixture libraries (fishery 742K/wk, factory.ts 239K/wk, @anatine/zod-mock, @mswjs/data, test-data-bot) were evaluated. None are worth adopting:
 
-| Library | Assessment |
-|---|---|
+| Library                  | Assessment                                                                                                                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **fishery** (thoughtbot) | Best-in-class factory lib, but our `createMockSkill(id, overrides)` + spread already provides 90% of what it offers. Adds `lodash.mergewith` dependency for zero benefit on our flat data shapes. |
-| **factory.ts** | Same conclusion — class-based API adds complexity without proportional benefit. |
-| **@anatine/zod-mock** | Generates random data from Zod schemas. Catastrophic for our tests — we assert on specific skill IDs like `"web-framework-react"`, not random strings. |
-| **@mswjs/data** | 13 dependencies (graphql, lodash, date-fns). Designed for API mocking, not file-system fixtures. |
-| **test-data-bot** | Unmaintained, depends on old faker. |
+| **factory.ts**           | Same conclusion — class-based API adds complexity without proportional benefit.                                                                                                                   |
+| **@anatine/zod-mock**    | Generates random data from Zod schemas. Catastrophic for our tests — we assert on specific skill IDs like `"web-framework-react"`, not random strings.                                            |
+| **@mswjs/data**          | 13 dependencies (graphql, lodash, date-fns). Designed for API mocking, not file-system fixtures.                                                                                                  |
+| **test-data-bot**        | Unmaintained, depends on old faker.                                                                                                                                                               |
 
 **Large project patterns surveyed:** webpack (11K fixture dirs), ESLint (238 fixture files per area), Prisma CLI (full fixture dirs), oclif (mini-CLI fixtures), Changesets (factory functions + overrides), pnpm (dedicated test-fixtures package).
 
@@ -92,18 +92,18 @@ Replace `SKILL_FIXTURES` and `TEST_SKILLS` in `test-fixtures.ts`, the 30+ skills
 ```ts
 // test-fixtures.ts
 export const SKILLS = {
-  react:           createMockSkill("web-framework-react"),
-  vue:             createMockSkill("web-framework-vue"),
-  zustand:         createMockSkill("web-state-zustand", { compatibleWith: ["web-framework-react"] }),
-  pinia:           createMockSkill("web-state-pinia", { compatibleWith: ["web-framework-vue"] }),
-  scss:            createMockSkill("web-styling-scss-modules"),
-  vitest:          createMockSkill("web-testing-vitest"),
-  hono:            createMockSkill("api-framework-hono"),
-  drizzle:         createMockSkill("api-database-drizzle"),
-  oclif:           createMockSkill("cli-framework-oclif"),
-  antiOverEng:     createMockSkill("meta-methodology-anti-over-engineering"),
-  investigation:   createMockSkill("meta-methodology-investigation-requirements"),
-  docker:          createMockSkill("infra-tooling-docker"),
+  react: createMockSkill("web-framework-react"),
+  vue: createMockSkill("web-framework-vue"),
+  zustand: createMockSkill("web-state-zustand", { compatibleWith: ["web-framework-react"] }),
+  pinia: createMockSkill("web-state-pinia", { compatibleWith: ["web-framework-vue"] }),
+  scss: createMockSkill("web-styling-scss-modules"),
+  vitest: createMockSkill("web-testing-vitest"),
+  hono: createMockSkill("api-framework-hono"),
+  drizzle: createMockSkill("api-database-drizzle"),
+  oclif: createMockSkill("cli-framework-oclif"),
+  antiOverEng: createMockSkill("meta-methodology-anti-over-engineering"),
+  investigation: createMockSkill("meta-methodology-investigation-requirements"),
+  docker: createMockSkill("infra-tooling-docker"),
 } satisfies Partial<Record<SkillSlug, ResolvedSkill>>;
 ```
 
@@ -134,11 +134,11 @@ const localReact = { ...SKILLS.react, author: "@local-user" };
 
 **Key files:**
 
-| File | Change |
-|---|---|
-| `src/cli/lib/__tests__/test-fixtures.ts` | Rewrite: `SKILLS` registry, derived collections, delete `SKILL_FIXTURES`/`getTestSkill`/`TEST_MATRICES` |
-| `src/cli/lib/__tests__/mock-data/mock-skills.ts` | Heavy reduction: delete redundant arrays and zero-reference skills |
-| Every test file importing from these | Update imports |
+| File                                             | Change                                                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `src/cli/lib/__tests__/test-fixtures.ts`         | Rewrite: `SKILLS` registry, derived collections, delete `SKILL_FIXTURES`/`getTestSkill`/`TEST_MATRICES` |
+| `src/cli/lib/__tests__/mock-data/mock-skills.ts` | Heavy reduction: delete redundant arrays and zero-reference skills                                      |
+| Every test file importing from these             | Update imports                                                                                          |
 
 ---
 
@@ -150,12 +150,12 @@ Create `src/cli/lib/__tests__/content-generators.ts` with pure functions that re
 
 ```ts
 // Pure renderers -- no disk I/O
-export function renderSkillMd(id: string, description?: string): string
-export function renderMetadataYaml(id: string, overrides?: Partial<RawMetadata>): string
-export function renderAgentYaml(name: string, overrides?: Partial<AgentMetadata>): string
-export function renderConfigTs(config: Record<string, unknown>): string
-export function renderCategoriesTs(categories: Record<string, unknown>): string
-export function renderRulesTs(rules: Record<string, unknown>): string
+export function renderSkillMd(id: string, description?: string): string;
+export function renderMetadataYaml(id: string, overrides?: Partial<RawMetadata>): string;
+export function renderAgentYaml(name: string, overrides?: Partial<AgentMetadata>): string;
+export function renderConfigTs(config: Record<string, unknown>): string;
+export function renderCategoriesTs(categories: Record<string, unknown>): string;
+export function renderRulesTs(rules: Record<string, unknown>): string;
 ```
 
 Then update all callers:
@@ -170,14 +170,14 @@ The `renderConfigTs` function consolidates the `export default ${JSON.stringify(
 
 **Key files:**
 
-| File | Change |
-|---|---|
-| `src/cli/lib/__tests__/content-generators.ts` | NEW: pure content renderers |
-| `src/cli/lib/__tests__/helpers.ts` | Replace `createSkillContent`/`createAgentYamlContent` with imports from content-generators |
-| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | Use shared renderers |
-| `e2e/helpers/test-utils.ts` | Use `renderConfigTs` |
-| `e2e/helpers/create-e2e-source.ts` | Use shared renderers |
-| `src/cli/lib/__tests__/commands/validate.test.ts` | Use `renderSkillMd`/`renderCategoriesTs`/`renderRulesTs` |
+| File                                                   | Change                                                                                     |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `src/cli/lib/__tests__/content-generators.ts`          | NEW: pure content renderers                                                                |
+| `src/cli/lib/__tests__/helpers.ts`                     | Replace `createSkillContent`/`createAgentYamlContent` with imports from content-generators |
+| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | Use shared renderers                                                                       |
+| `e2e/helpers/test-utils.ts`                            | Use `renderConfigTs`                                                                       |
+| `e2e/helpers/create-e2e-source.ts`                     | Use shared renderers                                                                       |
+| `src/cli/lib/__tests__/commands/validate.test.ts`      | Use `renderSkillMd`/`renderCategoriesTs`/`renderRulesTs`                                   |
 
 ---
 
@@ -191,20 +191,20 @@ Change `createMockMatrix` to accept a spread of `ResolvedSkill` objects instead 
 createMockMatrix({
   "web-framework-react": SKILLS.react,
   "api-framework-hono": SKILLS.hono,
-})
+});
 ```
 
 **After:**
 
 ```ts
-createMockMatrix(SKILLS.react, SKILLS.hono)
+createMockMatrix(SKILLS.react, SKILLS.hono);
 ```
 
 Naturally supports array spreads for derived collections:
 
 ```ts
-createMockMatrix(...WEB_SKILLS)
-createMockMatrix(...FULLSTACK_SKILLS, SKILLS.docker)
+createMockMatrix(...WEB_SKILLS);
+createMockMatrix(...FULLSTACK_SKILLS, SKILLS.docker);
 ```
 
 The function derives record keys from each skill's `.id` property. The old record-based overrides parameter moves to an optional trailing options object (detected by checking if the last arg lacks an `id` property).
@@ -221,12 +221,12 @@ const matrix = createMockMatrix(SKILLS.react, SKILLS.hono);
 
 **Key files:**
 
-| File | Change |
-|---|---|
-| `src/cli/lib/__tests__/helpers.ts` | Update `createMockMatrix` signature |
-| `src/cli/lib/__tests__/test-fixtures.ts` | Delete `TEST_MATRICES` |
-| `src/cli/lib/__tests__/mock-data/mock-matrices.ts` | Heavy reduction: delete pre-built matrices that were just record wrappers |
-| Every test file using `createMockMatrix` or pre-built matrices | Update calls to new spread syntax |
+| File                                                           | Change                                                                    |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `src/cli/lib/__tests__/helpers.ts`                             | Update `createMockMatrix` signature                                       |
+| `src/cli/lib/__tests__/test-fixtures.ts`                       | Delete `TEST_MATRICES`                                                    |
+| `src/cli/lib/__tests__/mock-data/mock-matrices.ts`             | Heavy reduction: delete pre-built matrices that were just record wrappers |
+| Every test file using `createMockMatrix` or pre-built matrices | Update calls to new spread syntax                                         |
 
 ---
 
@@ -247,6 +247,7 @@ writeTestProject(dir, { skills, agents?, config?, stacks? })
 `createTestSource` becomes a thin wrapper over `writeTestProject` with specific defaults. `createE2ESource` similarly composes from the same primitives.
 
 The split:
+
 - **Content generators** (Phase 2) produce strings -- pure, testable, no I/O.
 - **File writers** (this phase) call content generators and write to disk -- side effects only.
 
@@ -254,12 +255,12 @@ The split:
 
 **Key files:**
 
-| File | Change |
-|---|---|
-| `src/cli/lib/__tests__/helpers.ts` | Consolidate `writeTestSkill`, `writeSourceSkill`, `writeTestAgent` into composable primitives |
-| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | Use shared writers |
-| `e2e/helpers/test-utils.ts` | Use shared writers |
-| `e2e/helpers/create-e2e-source.ts` | Use shared writers |
+| File                                                   | Change                                                                                        |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `src/cli/lib/__tests__/helpers.ts`                     | Consolidate `writeTestSkill`, `writeSourceSkill`, `writeTestAgent` into composable primitives |
+| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | Use shared writers                                                                            |
+| `e2e/helpers/test-utils.ts`                            | Use shared writers                                                                            |
+| `e2e/helpers/create-e2e-source.ts`                     | Use shared writers                                                                            |
 
 ---
 
@@ -293,17 +294,17 @@ Delete all zero-reference skills, unused arrays, and orphaned constants:
 
 ## Key Files
 
-| File | Role | Phase |
-|---|---|---|
-| `src/cli/lib/__tests__/test-fixtures.ts` | Canonical skill registry, derived collections | 1, 3 |
-| `src/cli/lib/__tests__/mock-data/mock-skills.ts` | Skill array consolidation, dead code removal | 1, 5 |
-| `src/cli/lib/__tests__/content-generators.ts` | NEW: pure content renderers | 2 |
-| `src/cli/lib/__tests__/helpers.ts` | Factory updates, file writer consolidation | 2, 3, 4 |
-| `src/cli/lib/__tests__/mock-data/mock-matrices.ts` | Matrix constant reduction | 3, 5 |
-| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | Use shared writers and renderers | 2, 4 |
-| `e2e/helpers/test-utils.ts` | Use shared writers and renderers | 2, 4 |
-| `e2e/helpers/create-e2e-source.ts` | Use shared writers and renderers | 2, 4 |
-| `src/cli/lib/__tests__/commands/validate.test.ts` | Use shared renderers | 2 |
+| File                                                   | Role                                          | Phase   |
+| ------------------------------------------------------ | --------------------------------------------- | ------- |
+| `src/cli/lib/__tests__/test-fixtures.ts`               | Canonical skill registry, derived collections | 1, 3    |
+| `src/cli/lib/__tests__/mock-data/mock-skills.ts`       | Skill array consolidation, dead code removal  | 1, 5    |
+| `src/cli/lib/__tests__/content-generators.ts`          | NEW: pure content renderers                   | 2       |
+| `src/cli/lib/__tests__/helpers.ts`                     | Factory updates, file writer consolidation    | 2, 3, 4 |
+| `src/cli/lib/__tests__/mock-data/mock-matrices.ts`     | Matrix constant reduction                     | 3, 5    |
+| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | Use shared writers and renderers              | 2, 4    |
+| `e2e/helpers/test-utils.ts`                            | Use shared writers and renderers              | 2, 4    |
+| `e2e/helpers/create-e2e-source.ts`                     | Use shared writers and renderers              | 2, 4    |
+| `src/cli/lib/__tests__/commands/validate.test.ts`      | Use shared renderers                          | 2       |
 
 ---
 

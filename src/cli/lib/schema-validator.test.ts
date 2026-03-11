@@ -263,7 +263,14 @@ describe("schema-validator", () => {
     });
 
     it("should validate skill metadata.yaml files", async () => {
-      const metadataDir = path.join(tempDir, "src", STANDARD_DIRS.SKILLS, "web", "framework", "react");
+      const metadataDir = path.join(
+        tempDir,
+        "src",
+        STANDARD_DIRS.SKILLS,
+        "web",
+        "framework",
+        "react",
+      );
       await mkdir(metadataDir, { recursive: true });
       await writeFile(
         path.join(metadataDir, STANDARD_FILES.METADATA_YAML),
@@ -360,7 +367,14 @@ describe("schema-validator", () => {
     });
 
     it("should validate stack skill frontmatter in src/stacks", async () => {
-      const stackSkillDir = path.join(tempDir, "src", "stacks", "my-stack", STANDARD_DIRS.SKILLS, "react");
+      const stackSkillDir = path.join(
+        tempDir,
+        "src",
+        "stacks",
+        "my-stack",
+        STANDARD_DIRS.SKILLS,
+        "react",
+      );
       await mkdir(stackSkillDir, { recursive: true });
       await writeFile(
         path.join(stackSkillDir, STANDARD_FILES.SKILL_MD),

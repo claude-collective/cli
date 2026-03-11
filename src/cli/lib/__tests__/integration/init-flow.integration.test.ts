@@ -28,11 +28,7 @@ const AGENTS_SUBDIR = "agents";
 // Matrix whose skill.path values match the file system layout from createTestSource.
 // createMockSkill sets path to "skills/{category}/{id}/" and the copier resolves to
 // "{sourcePath}/src/skills/{category}/{id}/".
-const INIT_TEST_MATRIX = createMockMatrix(
-  SKILLS.react,
-  SKILLS.hono,
-  SKILLS.vitest,
-);
+const INIT_TEST_MATRIX = createMockMatrix(SKILLS.react, SKILLS.hono, SKILLS.vitest);
 
 // Reusable selections for tests that need multiple skills and agents
 const SELECTED_SKILLS_REACT_HONO: SkillId[] = ["web-framework-react", "api-framework-hono"];

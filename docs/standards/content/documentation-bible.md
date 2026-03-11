@@ -664,7 +664,7 @@ Load source config
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
 | `src/cli/lib/__tests__/helpers.ts`                     | Shared factories: `createMockSkill()`, `createMockAgent()`, `createMockCategory()`, temp dir helpers, `runCliCommand()` |
 | `src/cli/lib/__tests__/fixtures/create-test-source.ts` | Integration test source factory: `TestSkill`, `TestAgent`, `TestMatrix`, `TestProjectConfig` interfaces                 |
-| `src/cli/lib/__tests__/test-fixtures.ts`               | Canonical skill registry via `SKILLS.*`                                                                               |
+| `src/cli/lib/__tests__/test-fixtures.ts`               | Canonical skill registry via `SKILLS.*`                                                                                 |
 | `src/cli/lib/__tests__/test-constants.ts`              | Shared test constants                                                                                                   |
 
 **Factory pattern:**

@@ -402,10 +402,7 @@ export function createTestSkill(
   };
 }
 
-export function createMockSkill(
-  id: SkillId,
-  overrides?: Partial<ResolvedSkill>,
-): ResolvedSkill {
+export function createMockSkill(id: SkillId, overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   const category = overrides?.category ?? getCanonicalSkillCategories()[id];
 
   if (!category) {
@@ -503,7 +500,11 @@ export function createMockMatrix(
   if (skillsOrFirstSkill === undefined) {
     // Empty call: createMockMatrix()
     skillsRecord = {};
-  } else if ("id" in skillsOrFirstSkill && typeof (skillsOrFirstSkill as ResolvedSkill).id === "string" && "slug" in skillsOrFirstSkill) {
+  } else if (
+    "id" in skillsOrFirstSkill &&
+    typeof (skillsOrFirstSkill as ResolvedSkill).id === "string" &&
+    "slug" in skillsOrFirstSkill
+  ) {
     // New spread syntax: createMockMatrix(skill1, skill2, ..., optionalOverrides?)
     const allArgs = [skillsOrFirstSkill, ...rest];
     const lastArg = allArgs[allArgs.length - 1];
@@ -1259,7 +1260,4 @@ export function createMockCompiledAgentData(overrides?: Partial<AgentConfig>): C
   };
 }
 
-export {
-  SKILLS,
-  TEST_CATEGORIES,
-} from "./test-fixtures";
+export { SKILLS, TEST_CATEGORIES } from "./test-fixtures";

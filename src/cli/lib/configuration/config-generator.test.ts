@@ -1,8 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { generateProjectConfigFromSkills, buildStackProperty, splitConfigByScope } from "./config-generator";
+import {
+  generateProjectConfigFromSkills,
+  buildStackProperty,
+  splitConfigByScope,
+} from "./config-generator";
 import type { AgentName, SkillAssignment, SkillId } from "../../types";
 import { useMatrixStore } from "../../stores/matrix-store";
-import { createMockSkillAssignment, buildAgentConfigs, createMockMatrix, buildProjectConfig, SKILLS } from "../__tests__/helpers";
+import {
+  createMockSkillAssignment,
+  buildAgentConfigs,
+  createMockMatrix,
+  buildProjectConfig,
+  SKILLS,
+} from "../__tests__/helpers";
 import {
   FULLSTACK_STACK,
   EMPTY_AGENTS_STACK,
@@ -31,11 +41,9 @@ describe("config-generator", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
       const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
 
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        { selectedAgents },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], {
+        selectedAgents,
+      });
 
       expect(config.name).toBe("my-project");
       expect(config.agents).toEqual(buildAgentConfigs(["web-developer", "web-reviewer"]));
@@ -71,11 +79,9 @@ describe("config-generator", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
       const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
 
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        { selectedAgents },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], {
+        selectedAgents,
+      });
 
       expect(config.agents).toEqual(buildAgentConfigs(["web-developer", "web-reviewer"]));
       expect(config.stack).toBeDefined();
@@ -97,11 +103,9 @@ describe("config-generator", () => {
       useMatrixStore.getState().setMatrix(LOCAL_SKILL_MATRIX);
       const selectedAgents: AgentName[] = ["web-developer"];
 
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-local-skill"],
-        { selectedAgents },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-local-skill"], {
+        selectedAgents,
+      });
 
       // Local skills have category "local" which has no category
       // Agents are still set from selectedAgents
@@ -133,15 +137,11 @@ describe("config-generator", () => {
 
     it("includes optional fields when provided", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        {
-          description: "My awesome project",
-          author: "@vince",
-          selectedAgents: ["web-developer"],
-        },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], {
+        description: "My awesome project",
+        author: "@vince",
+        selectedAgents: ["web-developer"],
+      });
 
       expect(config.description).toBe("My awesome project");
       expect(config.author).toBe("@vince");
@@ -183,11 +183,9 @@ describe("config-generator", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
       const selectedAgents: AgentName[] = ["web-reviewer", "api-developer", "web-developer"];
 
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        { selectedAgents },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], {
+        selectedAgents,
+      });
 
       const sortedAgents = [...config.agents].sort();
       expect(config.agents).toEqual(sortedAgents);
@@ -243,11 +241,9 @@ describe("config-generator", () => {
       useMatrixStore.getState().setMatrix(VITEST_MATRIX);
       const selectedAgents: AgentName[] = ["web-tester"];
 
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-testing-vitest"],
-        { selectedAgents },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-testing-vitest"], {
+        selectedAgents,
+      });
 
       expect(config.stack).toBeDefined();
       expect(config.stack!["web-tester"]?.["web-testing"]?.[0]?.id).toBe("web-testing-vitest");
@@ -261,11 +257,9 @@ describe("config-generator", () => {
       ];
 
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react, SKILLS.scss, SKILLS.hono));
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        selectedSkills,
-        { selectedAgents: ["web-developer"] },
-      );
+      const config = generateProjectConfigFromSkills("my-project", selectedSkills, {
+        selectedAgents: ["web-developer"],
+      });
 
       expect(config.skills.map((s) => s.id)).toEqual(selectedSkills);
     });
@@ -283,10 +277,10 @@ describe("config-generator", () => {
 
     it("produces no stack when all skills are unknown", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix());
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-nonexistent-skill", "api-nonexistent-thing"],
-      );
+      const config = generateProjectConfigFromSkills("my-project", [
+        "web-nonexistent-skill",
+        "api-nonexistent-thing",
+      ]);
 
       expect(config.agents).toEqual([]);
       expect(config.stack).toBeUndefined();
@@ -298,11 +292,10 @@ describe("config-generator", () => {
 
     it("does not add description when options.description is empty string", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        { description: "", author: "@vince" },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], {
+        description: "",
+        author: "@vince",
+      });
 
       expect(config.description).toBeUndefined();
       expect(config.author).toBe("@vince");
@@ -310,11 +303,10 @@ describe("config-generator", () => {
 
     it("does not add author when options.author is empty string", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        { description: "A project", author: "" },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], {
+        description: "A project",
+        author: "",
+      });
 
       expect(config.description).toBe("A project");
       expect(config.author).toBeUndefined();
@@ -336,11 +328,9 @@ describe("config-generator", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
       const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
 
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        { selectedAgents },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], {
+        selectedAgents,
+      });
 
       // Both agents should have the skill
       expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
@@ -353,11 +343,9 @@ describe("config-generator", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
       const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
 
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        { selectedAgents },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], {
+        selectedAgents,
+      });
 
       const stackAgentIds = Object.keys(config.stack || {});
       for (const agentId of stackAgentIds) {
@@ -371,10 +359,7 @@ describe("config-generator", () => {
 
     it("returns empty agents when selectedAgents is not provided", () => {
       useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react));
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"]);
 
       expect(config.agents).toEqual([]);
       // No agents means no stack entries
@@ -531,9 +516,7 @@ describe("config-generator", () => {
 
     it("puts project-scoped skills and agents into the project partition", () => {
       const config = buildProjectConfig({
-        skills: [
-          { id: "web-framework-react", scope: "project", source: "local" },
-        ],
+        skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
       });
 
       const result = splitConfigByScope(config);

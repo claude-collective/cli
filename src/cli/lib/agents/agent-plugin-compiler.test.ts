@@ -225,7 +225,11 @@ describe("agent-plugin-compiler", () => {
         const stats = await stat(result.pluginPath);
         expect(stats.isDirectory()).toBe(true);
 
-        const manifestPath = path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
+        const manifestPath = path.join(
+          result.pluginPath,
+          PLUGIN_MANIFEST_DIR,
+          PLUGIN_MANIFEST_FILE,
+        );
         const manifestStats = await stat(manifestPath);
         expect(manifestStats.isFile()).toBe(true);
       }

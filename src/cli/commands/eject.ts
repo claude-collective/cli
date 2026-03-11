@@ -336,12 +336,7 @@ export default class Eject extends BaseCommand {
 
     await ensureDir(destDir);
 
-    const copiedSkills = await copySkillsToLocalFlattened(
-      skillIds,
-      destDir,
-      matrix,
-      sourceResult,
-    );
+    const copiedSkills = await copySkillsToLocalFlattened(skillIds, destDir, matrix, sourceResult);
 
     const sourceLabel = sourceResult.isLocal
       ? sourceResult.sourcePath

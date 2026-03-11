@@ -4,15 +4,15 @@
 
 | ID   | Task                                                                                                                                                                                                    | Status        |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| R-09 | Consolidate test fixtures — canonical skill registry, unified content generators, simplified matrix creation (see [implementation plan](./R-09-test-fixture-consolidation.md))                           | Ready for Dev |
+| R-09 | Consolidate test fixtures — canonical skill registry, unified content generators, simplified matrix creation (see [implementation plan](./R-09-test-fixture-consolidation.md))                          | Ready for Dev |
 | R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                                                                                              | Refactor      |
-| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                                                                                        | Refactor     |
-| R-04 | Eliminate redundant central config — derive aliases from metadata, move perSkill relationships to group-based declarations                                                                              | Phase 1 Done |
-| R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor     |
-| R-07 | Codegen `SkillSlug` union from metadata.yaml — auto-generate the type from skills source instead of manual maintenance                                                                                  | Refactor     |
-| R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor     |
-| R-11 | Eliminate `ProjectSourceConfig` / `saveProjectConfig` — all config writes should produce full `ProjectConfig` with import + satisfies                                                                  | Refactor     |
-| R-12 | Delete the matrix object from consumer code — only exists inside the store as private state, all reads via store accessors                                                                              | Refactor     |
+| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                                                                                        | Refactor      |
+| R-04 | Eliminate redundant central config — derive aliases from metadata, move perSkill relationships to group-based declarations                                                                              | Phase 1 Done  |
+| R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor      |
+| R-07 | Codegen `SkillSlug` union from metadata.yaml — auto-generate the type from skills source instead of manual maintenance                                                                                  | Refactor      |
+| R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor      |
+| R-11 | Eliminate `ProjectSourceConfig` / `saveProjectConfig` — all config writes should produce full `ProjectConfig` with import + satisfies                                                                   | Refactor      |
+| R-12 | Delete the matrix object from consumer code — only exists inside the store as private state, all reads via store accessors                                                                              | Refactor      |
 
 ---
 
@@ -821,11 +821,11 @@ After `init` writes a proper `ProjectConfig`, any subsequent `addSource`/`remove
 
 ### Production callers of `saveProjectConfig`
 
-| File | Function | What it does |
-|------|----------|-------------|
-| `source-manager.ts:38` | `addSource()` | Adds a source entry, writes back |
-| `source-manager.ts:61` | `removeSource()` | Removes a source entry, writes back |
-| `config-saver.ts:5` | `saveSourceToProjectConfig()` | Updates the source URL |
+| File                   | Function                      | What it does                        |
+| ---------------------- | ----------------------------- | ----------------------------------- |
+| `source-manager.ts:38` | `addSource()`                 | Adds a source entry, writes back    |
+| `source-manager.ts:61` | `removeSource()`              | Removes a source entry, writes back |
+| `config-saver.ts:5`    | `saveSourceToProjectConfig()` | Updates the source URL              |
 
 All three do read-modify-write on a `ProjectSourceConfig`. They should instead load the full `ProjectConfig`, mutate the relevant field, and write back via `generateConfigSource`.
 
@@ -864,10 +864,12 @@ The `matrix` field stays as internal state inside the store's `MatrixState` type
 Based on actual consumer usage (21 production files):
 
 **Individual lookups:**
+
 - `findCategory(id: Category): CategoryDefinition | undefined`
 - `getCategory(id: Category): CategoryDefinition` (throws)
 
 **Collection accessors:**
+
 - `getAllSkills(): Partial<Record<SkillId, ResolvedSkill>>`
 - `getAllCategories(): CategoryMap`
 - `getSlugMap(): SkillSlugMap`
@@ -877,6 +879,7 @@ Based on actual consumer usage (21 production files):
 - `getVersion(): string`
 
 **Convenience:**
+
 - `findStack(id: string): ResolvedStack | undefined`
 - `getSlugForId(id: SkillId): SkillSlug | undefined`
 - `getIdForSlug(slug: SkillSlug): SkillId | undefined`
@@ -884,40 +887,48 @@ Based on actual consumer usage (21 production files):
 ### Consumer migration map (21 files)
 
 **Heavy users (need multiple accessors):**
+
 - `matrix-resolver.ts` — 13 `getMatrix()` calls accessing `.skills`, `.categories`, `.slugMap`. Replace each with the specific accessor.
 - `wizard-store.ts` — destructures `{ skills, categories }`. Replace with `getAllSkills()`, `getAllCategories()`.
 - `build-step-logic.ts` — accesses `.categories`, `.skills`. Replace with `getCategory()`, `getSkill()`.
 
 **Stack lookups:**
+
 - `wizard.tsx` — `getMatrix().suggestedStacks.find(...)`. Replace with `findStack(id)`.
 - `utils.ts` — same pattern. Replace with `findStack(id)` and `getAllCategories()`.
 
 **Skill count / list:**
+
 - `edit.tsx` — `Object.keys(getMatrix().skills).length`. Replace with `getSkillCount()`.
 - `info.ts` — `getMatrix().skills` for fuzzy search. Replace with `getAllSkills()`.
 - `eject.ts` — iterates skills. Replace with `getAllSkills()`.
 - `update.tsx` — accesses matrix. Replace with specific accessors.
 
 **Category lookups:**
+
 - `use-build-step-props.ts` — `getMatrix().categories[id]`. Replace with `getCategory(id)`.
 - `config-generator.ts` — accesses categories. Replace with `getAllCategories()`.
 
 **Slug lookups:**
+
 - `use-source-grid-search-modal.ts` — `getMatrix().slugMap.idToSlug[id]`. Replace with `getSlugForId(id)`.
 - `plugin-finder.ts` — slug resolution. Replace with `getIdForSlug()`.
 
 **React component selectors (use `s.matrix!` pattern):**
+
 - `domain-selection.tsx` — `useMatrixStore((s) => s.getMatrix())`. Replace with specific selectors.
 - `stack-selection.tsx` — `useMatrixStore((s) => s.matrix!)`. Replace with `useMatrixStore((s) => s.getSuggestedStacks())` etc.
 - `step-agents.tsx` — `useMatrixStore((s) => s.matrix!)`. Replace with specific selectors.
 
 **Nullable checks (doctor, validator):**
+
 - `doctor.ts` — `useMatrixStore.getState().matrix` (null check). Replace with `isInitialized()` accessor.
 - `source-validator.ts` — same. Replace with `isInitialized()`.
 
 ### Files that keep raw matrix access (pre-store construction)
 
 These files build the matrix before it's put into the store — they write to the object, not read from the store:
+
 - `source-loader.ts` — constructs and mutates `result.matrix`, then calls `setMatrix()`
 - `multi-source-loader.ts` — merges matrices during construction
 - `matrix-loader.ts`, `matrix-health-check.ts` — build/validate the matrix object

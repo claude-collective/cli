@@ -12,10 +12,7 @@ import {
   writeTestFile,
   type TestDirs,
 } from "../__tests__/fixtures/create-test-source";
-import {
-  createMockAgentConfig,
-  createMockCompiledStackPlugin,
-} from "../__tests__/helpers";
+import { createMockAgentConfig, createMockCompiledStackPlugin } from "../__tests__/helpers";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_FILES } from "../../consts";
 
 import type { SkillAssignment, Stack, StackAgentConfig, Category } from "../../types";

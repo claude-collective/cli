@@ -101,36 +101,26 @@ const partialUnresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e"
 // Matrices
 // ---------------------------------------------------------------------------
 
-const healthyMatrix = createMockMatrix(
-  SKILLS.react,
-  zustandSkill,
-  {
-    categories: {
-      "web-framework": TEST_CATEGORIES.framework,
-      "web-client-state": TEST_CATEGORIES.clientState,
-    },
+const healthyMatrix = createMockMatrix(SKILLS.react, zustandSkill, {
+  categories: {
+    "web-framework": TEST_CATEGORIES.framework,
+    "web-client-state": TEST_CATEGORIES.clientState,
   },
-);
+});
 
-const singleSkillMatrix = createMockMatrix(
-  SKILLS.react,
-  {
-    categories: {
-      "web-framework": TEST_CATEGORIES.framework,
-    },
+const singleSkillMatrix = createMockMatrix(SKILLS.react, {
+  categories: {
+    "web-framework": TEST_CATEGORIES.framework,
   },
-);
+});
 
 const emptyMatrix = createMockMatrix();
 
-const missingDomainMatrix = createMockMatrix(
-  SKILLS.react,
-  {
-    categories: {
-      "web-framework": missingDomainFrameworkCategory,
-    },
+const missingDomainMatrix = createMockMatrix(SKILLS.react, {
+  categories: {
+    "web-framework": missingDomainFrameworkCategory,
   },
-);
+});
 
 const multipleMissingDomainsMatrix = createMockMatrix(
   {},
@@ -143,88 +133,60 @@ const multipleMissingDomainsMatrix = createMockMatrix(
   },
 );
 
-const unknownCategoryMatrix = createMockMatrix(
-  orphanSkill,
-  {
-    categories: {
-      "web-framework": TEST_CATEGORIES.framework,
-    },
+const unknownCategoryMatrix = createMockMatrix(orphanSkill, {
+  categories: {
+    "web-framework": TEST_CATEGORIES.framework,
   },
-);
+});
 
-const orphanSkillWithMissingDomainMatrix = createMockMatrix(
-  orphanSkill,
-  {
-    categories: {
-      "web-framework": missingDomainFrameworkCategory,
-    },
+const orphanSkillWithMissingDomainMatrix = createMockMatrix(orphanSkill, {
+  categories: {
+    "web-framework": missingDomainFrameworkCategory,
   },
-);
+});
 
-const unresolvedCompatibleWithMatrix = createMockMatrix(
-  unresolvedCompatibleWithSkill,
-  {
-    categories: {
-      "web-client-state": TEST_CATEGORIES.clientState,
-    },
+const unresolvedCompatibleWithMatrix = createMockMatrix(unresolvedCompatibleWithSkill, {
+  categories: {
+    "web-client-state": TEST_CATEGORIES.clientState,
   },
-);
+});
 
-const unresolvedConflictsWithMatrix = createMockMatrix(
-  unresolvedConflictsWithSkill,
-  {
-    categories: {
-      "web-framework": TEST_CATEGORIES.framework,
-    },
+const unresolvedConflictsWithMatrix = createMockMatrix(unresolvedConflictsWithSkill, {
+  categories: {
+    "web-framework": TEST_CATEGORIES.framework,
   },
-);
+});
 
-const unresolvedRequiresMatrix = createMockMatrix(
-  unresolvedRequiresSkill,
-  {
-    categories: {
-      "web-testing": TEST_CATEGORIES.testing,
-    },
+const unresolvedRequiresMatrix = createMockMatrix(unresolvedRequiresSkill, {
+  categories: {
+    "web-testing": TEST_CATEGORIES.testing,
   },
-);
+});
 
-const unresolvedRequiresSetupMatrix = createMockMatrix(
-  unresolvedRequiresSetupSkill,
-  {
-    categories: {
-      "web-framework": TEST_CATEGORIES.framework,
-    },
+const unresolvedRequiresSetupMatrix = createMockMatrix(unresolvedRequiresSetupSkill, {
+  categories: {
+    "web-framework": TEST_CATEGORIES.framework,
   },
-);
+});
 
-const unresolvedProvidesSetupForMatrix = createMockMatrix(
-  unresolvedProvidesSetupForSkill,
-  {
-    categories: {
-      "shared-tooling": TEST_CATEGORIES.tooling,
-    },
+const unresolvedProvidesSetupForMatrix = createMockMatrix(unresolvedProvidesSetupForSkill, {
+  categories: {
+    "shared-tooling": TEST_CATEGORIES.tooling,
   },
-);
+});
 
-const multipleUnresolvedRefsMatrix = createMockMatrix(
-  multipleUnresolvedRefsSkill,
-  {
-    categories: {
-      "web-client-state": TEST_CATEGORIES.clientState,
-    },
+const multipleUnresolvedRefsMatrix = createMockMatrix(multipleUnresolvedRefsSkill, {
+  categories: {
+    "web-client-state": TEST_CATEGORIES.clientState,
   },
-);
+});
 
-const allRefsResolvedMatrix = createMockMatrix(
-  SKILLS.react,
-  allRefsResolvedSkill,
-  {
-    categories: {
-      "web-framework": TEST_CATEGORIES.framework,
-      "web-client-state": TEST_CATEGORIES.clientState,
-    },
+const allRefsResolvedMatrix = createMockMatrix(SKILLS.react, allRefsResolvedSkill, {
+  categories: {
+    "web-framework": TEST_CATEGORIES.framework,
+    "web-client-state": TEST_CATEGORIES.clientState,
   },
-);
+});
 
 const partialUnresolvedRequiresMatrix = createMockMatrix(
   SKILLS.react,
@@ -305,19 +267,15 @@ describe("matrix-health-check", () => {
       const autoSynthesizedCategory = createMockCategory("web-custom" as Category, "Web Custom", {
         order: 999,
       });
-      const skillInSynthesizedCategory = createMockSkill(
-        "web-custom-tool",
-        { category: "web-custom" as Category },
-      );
-      const matrixWithSynthesized = createMockMatrix(
-        skillInSynthesizedCategory,
-        {
-          categories: {
-            // Boundary cast: custom category key
-            ["web-custom" as Category]: autoSynthesizedCategory,
-          } as Record<Category, import("../../types").CategoryDefinition>,
-        },
-      );
+      const skillInSynthesizedCategory = createMockSkill("web-custom-tool", {
+        category: "web-custom" as Category,
+      });
+      const matrixWithSynthesized = createMockMatrix(skillInSynthesizedCategory, {
+        categories: {
+          // Boundary cast: custom category key
+          ["web-custom" as Category]: autoSynthesizedCategory,
+        } as Record<Category, import("../../types").CategoryDefinition>,
+      });
 
       const issues = checkMatrixHealth(matrixWithSynthesized);
       const categoryIssues = issues.filter((i) => i.finding === "skill-unknown-category");

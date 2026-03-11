@@ -4,7 +4,12 @@ import { mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 import { validateSource } from "../../source-validator";
-import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
+import {
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+  STANDARD_DIRS,
+  STANDARD_FILES,
+} from "../../../consts";
 import type { TestSkill } from "../fixtures/create-test-source";
 import { renderConfigTs, renderSkillMd } from "../content-generators";
 

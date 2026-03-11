@@ -101,29 +101,18 @@ describe("compile command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
-
   });
 
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {
-      const { error } = await runCliCommand([
-        "compile",
-        "--verbose",
-        "--source",
-        "/custom/source",
-      ]);
+      const { error } = await runCliCommand(["compile", "--verbose", "--source", "/custom/source"]);
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
 
     it("should accept shorthand flags together", async () => {
-      const { error } = await runCliCommand([
-        "compile",
-        "-v",
-        "-s",
-        "/custom/source",
-      ]);
+      const { error } = await runCliCommand(["compile", "-v", "-s", "/custom/source"]);
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");

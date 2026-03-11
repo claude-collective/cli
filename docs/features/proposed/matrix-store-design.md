@@ -100,7 +100,9 @@ import { useMatrixStore } from "../../stores/matrix-store.js";
 
 beforeEach(() => {
   useMatrixStore.getState().reset();
-  useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.vitest, SKILLS.hono));
+  useMatrixStore
+    .getState()
+    .setMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.vitest, SKILLS.hono));
 });
 ```
 

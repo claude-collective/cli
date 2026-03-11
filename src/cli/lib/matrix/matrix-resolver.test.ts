@@ -10,7 +10,12 @@ import {
   getAvailableSkills,
 } from "./matrix-resolver";
 import type { CategoryDefinition, SkillId, Category } from "../../types";
-import { createMockSkill, createMockCategory, createMockMatrix, SKILLS } from "../__tests__/helpers";
+import {
+  createMockSkill,
+  createMockCategory,
+  createMockMatrix,
+  SKILLS,
+} from "../__tests__/helpers";
 import { TEST_CATEGORIES } from "../__tests__/test-fixtures";
 import { useMatrixStore } from "../../stores/matrix-store";
 
@@ -238,10 +243,7 @@ describe("validateSelection", () => {
   });
 
   it("should return valid for non-conflicting selection", () => {
-    const matrix = createMockMatrix(
-      createMockSkill("web-skill-a"),
-      createMockSkill("web-skill-b"),
-    );
+    const matrix = createMockMatrix(createMockSkill("web-skill-a"), createMockSkill("web-skill-b"));
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = validateSelection(["web-skill-a", "web-skill-b"]);
@@ -325,9 +327,7 @@ describe("getSkillsByCategory", () => {
   });
 
   it("should return empty array for category with no skills", () => {
-    const matrix = createMockMatrix(
-      createMockSkill("web-skill-a", { category: "web-framework" }),
-    );
+    const matrix = createMockMatrix(createMockSkill("web-skill-a", { category: "web-framework" }));
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getSkillsByCategory("web-nonexistent");
@@ -384,7 +384,12 @@ describe("Empty skill selection", () => {
         {},
         {
           categories: {
-            "web-framework": { ...TEST_CATEGORIES.framework, description: "Required framework", required: true, order: 1 },
+            "web-framework": {
+              ...TEST_CATEGORIES.framework,
+              description: "Required framework",
+              required: true,
+              order: 1,
+            },
           } as Record<Category, CategoryDefinition>,
         },
       );
@@ -540,7 +545,12 @@ describe("Conflicting skills", () => {
     });
     const matrix = createMockMatrix(skillA, skillB, {
       categories: {
-        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+        "web-framework": {
+          ...TEST_CATEGORIES.framework,
+          description: "Frameworks",
+          exclusive: false,
+          order: 1,
+        },
       },
     });
 
@@ -950,9 +960,7 @@ describe("getDependentSkills", () => {
     const matrix = createMockMatrix();
     useMatrixStore.getState().setMatrix(matrix);
 
-    expect(() => getDependentSkills("web-skill-nonexistent", [])).toThrow(
-      "Unknown skill ID",
-    );
+    expect(() => getDependentSkills("web-skill-nonexistent", [])).toThrow("Unknown skill ID");
   });
 
   it("should find single dependent with AND requirement", () => {
@@ -978,10 +986,7 @@ describe("getDependentSkills", () => {
     const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);
 
-    const result = getDependentSkills(
-      "web-skill-a",
-      ["web-skill-a", "web-skill-b", "web-skill-c"],
-    );
+    const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b", "web-skill-c"]);
     expect(result).toContain("web-skill-b");
     expect(result).toContain("web-skill-c");
     expect(result).toHaveLength(2);
@@ -1011,10 +1016,7 @@ describe("getDependentSkills", () => {
     useMatrixStore.getState().setMatrix(matrix);
 
     // Both A and B selected, so removing A would still leave B to satisfy C
-    const result = getDependentSkills(
-      "web-skill-a",
-      ["web-skill-a", "web-skill-b", "web-skill-c"],
-    );
+    const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b", "web-skill-c"]);
     expect(result).toEqual([]);
   });
 
@@ -1044,10 +1046,7 @@ describe("getDependentSkills", () => {
     useMatrixStore.getState().setMatrix(matrix);
 
     // getDependentSkills returns DIRECT dependents only
-    const result = getDependentSkills(
-      "web-skill-a",
-      ["web-skill-a", "web-skill-b", "web-skill-c"],
-    );
+    const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b", "web-skill-c"]);
     // Only B directly depends on A; C depends on B (transitive, not returned)
     expect(result).toEqual(["web-skill-b"]);
   });
@@ -1096,10 +1095,7 @@ describe("getDependentSkills", () => {
     useMatrixStore.getState().setMatrix(matrix);
 
     // C requires both A and B (AND), so C is dependent on A
-    const result = getDependentSkills(
-      "web-skill-a",
-      ["web-skill-a", "web-skill-b", "web-skill-c"],
-    );
+    const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b", "web-skill-c"]);
     expect(result).toEqual(["web-skill-c"]);
   });
 
@@ -1120,14 +1116,16 @@ describe("getDependentSkills", () => {
 
 describe("getAvailableSkills edge cases", () => {
   it("should return empty array for category with no skills", () => {
-    const matrix = createMockMatrix(
-      createMockSkill("web-skill-a", { category: "web-framework" }),
-      {
-        categories: {
-          "web-styling": { ...TEST_CATEGORIES.styling, description: "Styling options", exclusive: false, order: 1 },
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
+    const matrix = createMockMatrix(createMockSkill("web-skill-a", { category: "web-framework" }), {
+      categories: {
+        "web-styling": {
+          ...TEST_CATEGORIES.styling,
+          description: "Styling options",
+          exclusive: false,
+          order: 1,
+        },
+      } as Record<Category, CategoryDefinition>,
+    });
     useMatrixStore.getState().setMatrix(matrix);
 
     const result = getAvailableSkills("web-styling", []);
@@ -1174,7 +1172,12 @@ describe("getAvailableSkills edge cases", () => {
     });
     const matrix = createMockMatrix(skillA, skillB, skillC, {
       categories: {
-        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+        "web-framework": {
+          ...TEST_CATEGORIES.framework,
+          description: "Frameworks",
+          exclusive: false,
+          order: 1,
+        },
       } as Record<Category, CategoryDefinition>,
     });
     useMatrixStore.getState().setMatrix(matrix);
@@ -1194,7 +1197,12 @@ describe("getAvailableSkills edge cases", () => {
     });
     const matrix = createMockMatrix(skillA, skillB, {
       categories: {
-        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+        "web-framework": {
+          ...TEST_CATEGORIES.framework,
+          description: "Frameworks",
+          exclusive: false,
+          order: 1,
+        },
       } as Record<Category, CategoryDefinition>,
     });
     useMatrixStore.getState().setMatrix(matrix);
@@ -1216,7 +1224,12 @@ describe("getAvailableSkills edge cases", () => {
     });
     const matrix = createMockMatrix(skillA, skillB, {
       categories: {
-        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+        "web-framework": {
+          ...TEST_CATEGORIES.framework,
+          description: "Frameworks",
+          exclusive: false,
+          order: 1,
+        },
       } as Record<Category, CategoryDefinition>,
     });
     useMatrixStore.getState().setMatrix(matrix);
@@ -1238,7 +1251,12 @@ describe("getAvailableSkills edge cases", () => {
     });
     const matrix = createMockMatrix(skillA, skillB, {
       categories: {
-        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+        "web-framework": {
+          ...TEST_CATEGORIES.framework,
+          description: "Frameworks",
+          exclusive: false,
+          order: 1,
+        },
       } as Record<Category, CategoryDefinition>,
     });
     useMatrixStore.getState().setMatrix(matrix);
@@ -1260,7 +1278,12 @@ describe("getAvailableSkills edge cases", () => {
     });
     const matrix = createMockMatrix(skillA, skillB, {
       categories: {
-        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+        "web-framework": {
+          ...TEST_CATEGORIES.framework,
+          description: "Frameworks",
+          exclusive: false,
+          order: 1,
+        },
       } as Record<Category, CategoryDefinition>,
     });
     useMatrixStore.getState().setMatrix(matrix);
@@ -1283,7 +1306,12 @@ describe("getAvailableSkills edge cases", () => {
     });
     const matrix = createMockMatrix(skillA, skillB, {
       categories: {
-        "web-framework": { ...TEST_CATEGORIES.framework, description: "Frameworks", exclusive: false, order: 1 },
+        "web-framework": {
+          ...TEST_CATEGORIES.framework,
+          description: "Frameworks",
+          exclusive: false,
+          order: 1,
+        },
       } as Record<Category, CategoryDefinition>,
     });
     useMatrixStore.getState().setMatrix(matrix);

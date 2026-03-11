@@ -283,7 +283,9 @@ describe("plugin-finder", () => {
     });
 
     it("should handle multiple SKILL.md files", async () => {
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.hono));
+      useMatrixStore
+        .getState()
+        .setMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.hono));
       mockedGlob.mockResolvedValue([
         "web-framework-react/SKILL.md",
         "web-state-zustand/SKILL.md",

@@ -110,7 +110,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ currentStep }) => {
       <HelpSectionView section={GLOBAL_TOGGLES} />
       {stepSection && <HelpSectionView section={stepSection} />}
 
-      <Text dimColor>Press {KEY_LABEL_ESC} or {HOTKEY_HELP.label} to close</Text>
+      <Text dimColor>
+        Press {KEY_LABEL_ESC} or {HOTKEY_HELP.label} to close
+      </Text>
     </Box>
   );
 };

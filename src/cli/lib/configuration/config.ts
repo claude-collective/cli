@@ -105,7 +105,9 @@ export async function writeProjectSourceConfig(
   verbose(`Saved project config to ${configPath}`);
 }
 
-async function loadEffectiveSourceConfig(projectDir?: string): Promise<Partial<ProjectConfig> | null> {
+async function loadEffectiveSourceConfig(
+  projectDir?: string,
+): Promise<Partial<ProjectConfig> | null> {
   const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
   return projectConfig ?? (await loadGlobalSourceConfig());
 }

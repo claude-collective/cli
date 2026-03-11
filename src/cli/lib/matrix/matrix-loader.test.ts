@@ -1,9 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 
-import {
-  createMockMatrixConfig,
-  createMockExtractedSkill,
-} from "../__tests__/helpers";
+import { createMockMatrixConfig, createMockExtractedSkill } from "../__tests__/helpers";
 import { renderSkillMd } from "../__tests__/content-generators";
 import { STANDARD_FILES } from "../../consts";
 import { FRAMEWORK_CATEGORY } from "../__tests__/mock-data/mock-categories.js";
@@ -427,7 +424,10 @@ displayName: wrong
         if (filePath.includes("skill-valid") && filePath.includes(STANDARD_FILES.METADATA_YAML)) {
           return `category: web-framework\ndomain: web\nauthor: "@test"\nversion: "1"\ndisplayName: valid\nslug: valid`;
         }
-        if (filePath.includes("skill-bad-meta") && filePath.includes(STANDARD_FILES.METADATA_YAML)) {
+        if (
+          filePath.includes("skill-bad-meta") &&
+          filePath.includes(STANDARD_FILES.METADATA_YAML)
+        ) {
           return "invalid: true\n";
         }
         return renderSkillMd("skill-valid", "Valid skill", "# Test");

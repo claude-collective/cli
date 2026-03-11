@@ -1,9 +1,6 @@
 import { unique } from "remeda";
 import { create } from "zustand";
-import {
-  BUILT_IN_DOMAIN_ORDER,
-  DEFAULT_PUBLIC_SOURCE_NAME,
-} from "../consts.js";
+import { BUILT_IN_DOMAIN_ORDER, DEFAULT_PUBLIC_SOURCE_NAME } from "../consts.js";
 import type { InstallMode } from "../lib/installation/index.js";
 import { deriveInstallMode as sharedDeriveInstallMode } from "../lib/installation/installation.js";
 import type { AgentScopeConfig, SkillConfig } from "../types/config.js";
@@ -123,7 +120,6 @@ function buildBoundSkillOptions(
     }));
 }
 
-
 /**
  * Wizard step identifiers for the multi-step init/edit flow.
  *
@@ -226,9 +222,9 @@ export type WizardState = {
    *
    * Side effects: sets `domainSelections`, sets `selectedDomains` to ALL_DOMAINS
    */
-  populateFromStack: (
-    stack: { agents: Record<string, Partial<Record<Category, SkillAssignment[]>>> },
-  ) => void;
+  populateFromStack: (stack: {
+    agents: Record<string, Partial<Record<Category, SkillAssignment[]>>>;
+  }) => void;
   /**
    * Pre-populate domainSelections from a flat list of installed skill IDs.
    *
@@ -241,10 +237,7 @@ export type WizardState = {
    *
    * Side effects: sets `domainSelections`, sets `selectedDomains` to domains found in the provided skill IDs
    */
-  populateFromSkillIds: (
-    skillIds: SkillId[],
-    savedConfigs?: SkillConfig[],
-  ) => void;
+  populateFromSkillIds: (skillIds: SkillId[], savedConfigs?: SkillConfig[]) => void;
   /**
    * Toggle a domain on or off in the selectedDomains list.
    * @param domain - Domain to toggle

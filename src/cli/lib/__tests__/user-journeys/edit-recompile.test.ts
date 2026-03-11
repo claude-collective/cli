@@ -110,7 +110,11 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     const agentPath = path.join(outputDir, "web-pm.md");
 
     // Step 2: Edit a skill file in the plugin directory
-    const reactSkillPath = path.join(pluginSkillsDir, "web-framework-react", STANDARD_FILES.SKILL_MD);
+    const reactSkillPath = path.join(
+      pluginSkillsDir,
+      "web-framework-react",
+      STANDARD_FILES.SKILL_MD,
+    );
     if (await fileExists(reactSkillPath)) {
       const originalSkill = await readTestFile(reactSkillPath);
       await writeTestFile(reactSkillPath, originalSkill + APPENDED_SKILL_SECTION);

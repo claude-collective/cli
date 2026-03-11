@@ -19,9 +19,11 @@ function sa(id: SkillId, preloaded = false): SkillAssignment {
 
 describe("WizardStore", () => {
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-      categories: TEST_CATEGORIES as unknown as Record<Category, CategoryDefinition>,
-    }));
+    useMatrixStore.getState().setMatrix(
+      createMockMatrix(SKILLS, {
+        categories: TEST_CATEGORIES as unknown as Record<Category, CategoryDefinition>,
+      }),
+    );
   });
 
   describe("initial state", () => {
@@ -240,13 +242,15 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "web-framework": { domain: "web" },
-          "web-client-state": { domain: "web" },
-          "api-api": { domain: "api" },
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "web-framework": { domain: "web" },
+            "web-client-state": { domain: "web" },
+            "api-api": { domain: "api" },
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
 
@@ -264,12 +268,14 @@ describe("WizardStore", () => {
     it("should restore stack skills when re-toggling a domain ON after populateFromSkillIds", () => {
       const store = useWizardStore.getState();
 
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react, SKILLS.hono, {
-        categories: {
-          "web-framework": TEST_CATEGORIES.framework,
-          "api-api": TEST_CATEGORIES.api,
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS.react, SKILLS.hono, {
+          categories: {
+            "web-framework": TEST_CATEGORIES.framework,
+            "api-api": TEST_CATEGORIES.api,
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromSkillIds(["web-framework-react", "api-framework-hono"]);
 
@@ -309,12 +315,14 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "web-framework": { domain: "web" },
-          "api-api": { domain: "api" },
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "web-framework": { domain: "web" },
+            "api-api": { domain: "api" },
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
 
@@ -629,12 +637,14 @@ describe("WizardStore", () => {
           },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "web-framework": { domain: "web" },
-          "web-client-state": { domain: "web" },
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "web-framework": { domain: "web" },
+            "web-client-state": { domain: "web" },
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
 
@@ -648,12 +658,14 @@ describe("WizardStore", () => {
     it("should populate skillConfigs from populateFromSkillIds", () => {
       const store = useWizardStore.getState();
 
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS.react, SKILLS.hono, {
-        categories: {
-          "web-framework": TEST_CATEGORIES.framework,
-          "api-api": TEST_CATEGORIES.api,
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS.react, SKILLS.hono, {
+          categories: {
+            "web-framework": TEST_CATEGORIES.framework,
+            "api-api": TEST_CATEGORIES.api,
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromSkillIds(["web-framework-react", "api-framework-hono"]);
 
@@ -685,11 +697,13 @@ describe("WizardStore", () => {
           web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "web-framework": { domain: "web" },
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "web-framework": { domain: "web" },
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
       expect(useWizardStore.getState().skillConfigs).toHaveLength(1);
@@ -730,10 +744,12 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.setSourceSelection("web-framework-react", "local");
 
-      useMatrixStore.getState().setMatrix(createMockMatrix({
-        ...SKILLS.react,
-        availableSources: [{ name: "Acme Corp", type: "private", installed: false }],
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix({
+          ...SKILLS.react,
+          availableSources: [{ name: "Acme Corp", type: "private", installed: false }],
+        }),
+      );
 
       store.setAllSourcesPlugin();
 
@@ -870,11 +886,13 @@ describe("WizardStore", () => {
           web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "web-framework": { domain: "web" },
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "web-framework": { domain: "web" },
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
 
@@ -899,13 +917,15 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "web-framework": { domain: "web" },
-          "web-client-state": { domain: "web" },
-          "api-api": { domain: "api" },
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "web-framework": { domain: "web" },
+            "web-client-state": { domain: "web" },
+            "api-api": { domain: "api" },
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
 
@@ -924,11 +944,13 @@ describe("WizardStore", () => {
           misc: { "shared-methodology": [sa("meta-methodology-vitest")] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "shared-methodology": {},
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "shared-methodology": {},
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
 
@@ -951,11 +973,13 @@ describe("WizardStore", () => {
           },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "shared-methodology": { domain: "shared" },
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "shared-methodology": { domain: "shared" },
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
 
@@ -983,13 +1007,15 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "web-framework": { domain: "web" },
-          "shared-methodology": { domain: "shared" },
-          "api-api": { domain: "api" },
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "web-framework": { domain: "web" },
+            "shared-methodology": { domain: "shared" },
+            "api-api": { domain: "api" },
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
 
@@ -1022,11 +1048,13 @@ describe("WizardStore", () => {
           },
         },
       };
-      useMatrixStore.getState().setMatrix(createMockMatrix(SKILLS, {
-        categories: {
-          "shared-methodology": { domain: "shared" },
-        } as Record<Category, CategoryDefinition>,
-      }));
+      useMatrixStore.getState().setMatrix(
+        createMockMatrix(SKILLS, {
+          categories: {
+            "shared-methodology": { domain: "shared" },
+          } as Record<Category, CategoryDefinition>,
+        }),
+      );
 
       store.populateFromStack(stack);
 

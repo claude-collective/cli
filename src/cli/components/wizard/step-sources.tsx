@@ -5,11 +5,7 @@ import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { resolveAllSources } from "../../lib/configuration/index.js";
 import { searchExtraSources } from "../../lib/loading/multi-source-loader.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type {
-  BoundSkillCandidate,
-  SkillAlias,
-  SkillId,
-} from "../../types/index.js";
+import type { BoundSkillCandidate, SkillAlias, SkillId } from "../../types/index.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import {
   HOTKEY_SET_ALL_LOCAL,
@@ -30,11 +26,7 @@ export type StepSourcesProps = {
 
 type SourcesView = "choice" | "customize";
 
-export const StepSources: React.FC<StepSourcesProps> = ({
-  projectDir,
-  onContinue,
-  onBack,
-}) => {
+export const StepSources: React.FC<StepSourcesProps> = ({ projectDir, onContinue, onBack }) => {
   const store = useWizardStore();
   const [view, setView] = useState<SourcesView>("choice");
   const [choiceIndex, setChoiceIndex] = useState(0);
@@ -129,7 +121,10 @@ export const StepSources: React.FC<StepSourcesProps> = ({
           />
         </Box>
         <Box marginTop={1}>
-          <Text dimColor>{HOTKEY_SET_ALL_LOCAL.label} set all local {HOTKEY_SET_ALL_PLUGIN.label} set all plugin {KEY_LABEL_ENTER} continue {KEY_LABEL_ESC} back</Text>
+          <Text dimColor>
+            {HOTKEY_SET_ALL_LOCAL.label} set all local {HOTKEY_SET_ALL_PLUGIN.label} set all plugin{" "}
+            {KEY_LABEL_ENTER} continue {KEY_LABEL_ESC} back
+          </Text>
         </Box>
       </Box>
     );

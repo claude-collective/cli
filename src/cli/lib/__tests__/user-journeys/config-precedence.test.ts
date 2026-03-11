@@ -184,7 +184,10 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
     it("should return null for invalid TypeScript in project config", async () => {
       const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), "invalid typescript content {{");
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        "invalid typescript content {{",
+      );
 
       const config = await loadProjectSourceConfig(projectDir);
       expect(config).toBeNull();

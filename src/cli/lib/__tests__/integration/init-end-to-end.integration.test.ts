@@ -45,7 +45,6 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
     matrix = createComprehensiveMatrix();
     useMatrixStore.getState().setMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-
   });
 
   afterEach(async () => {

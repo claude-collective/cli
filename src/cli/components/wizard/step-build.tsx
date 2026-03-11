@@ -2,12 +2,7 @@ import { Box, Text, useInput } from "ink";
 import React, { useCallback, useMemo, useState } from "react";
 import { CLI_COLORS } from "../../consts.js";
 import { validateBuildStep } from "../../lib/wizard/index.js";
-import type {
-  Domain,
-  SkillId,
-  Category,
-  CategorySelections,
-} from "../../types/index.js";
+import type { Domain, SkillId, Category, CategorySelections } from "../../types/index.js";
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
@@ -40,7 +35,10 @@ const Footer: React.FC<FooterProps> = ({ validationError }) => {
       {validationError && (
         <Box flexDirection="column" marginBottom={1}>
           <Text color={CLI_COLORS.WARNING}>{validationError}</Text>
-          <Text dimColor>Press {KEY_LABEL_ESC} to go back, or select a skill and press {KEY_LABEL_ENTER} to continue.</Text>
+          <Text dimColor>
+            Press {KEY_LABEL_ESC} to go back, or select a skill and press {KEY_LABEL_ENTER} to
+            continue.
+          </Text>
         </Box>
       )}
     </Box>

@@ -9,12 +9,7 @@ import {
   DEFAULT_PLUGIN_NAME,
   STANDARD_FILES,
 } from "../../../consts";
-import {
-  createTempDir,
-  cleanupTempDir,
-  buildProjectConfig,
-  buildSkillConfigs,
-} from "../helpers";
+import { createTempDir, cleanupTempDir, buildProjectConfig, buildSkillConfigs } from "../helpers";
 import { detectInstallation, getInstallationOrThrow } from "../../installation";
 import { renderConfigTs } from "../content-generators";
 

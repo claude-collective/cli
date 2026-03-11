@@ -32,14 +32,14 @@ export const FULLSTACK_TRIO_MATRIX = createMockMatrix(SKILLS.react, SKILLS.hono,
 
 **Migration targets (by count):**
 
-| Pattern | Current calls | Replace with |
-|---------|--------------|--------------|
-| `createMockMatrix()` | 36 | `EMPTY_MATRIX` |
-| `createMockMatrix(SKILLS.react)` | 32 | `SINGLE_REACT_MATRIX` |
-| `createMockMatrix(SKILLS.react, SKILLS.zustand)` | 9 | `WEB_PAIR_MATRIX` |
-| `createMockMatrix(SKILLS.react, SKILLS.hono)` | 7 | `FULLSTACK_PAIR_MATRIX` |
-| `createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.vitest)` | 5 | `WEB_TRIO_MATRIX` |
-| `createMockMatrix(SKILLS.react, SKILLS.hono, SKILLS.vitest)` | 4 | `FULLSTACK_TRIO_MATRIX` |
+| Pattern                                                         | Current calls | Replace with            |
+| --------------------------------------------------------------- | ------------- | ----------------------- |
+| `createMockMatrix()`                                            | 36            | `EMPTY_MATRIX`          |
+| `createMockMatrix(SKILLS.react)`                                | 32            | `SINGLE_REACT_MATRIX`   |
+| `createMockMatrix(SKILLS.react, SKILLS.zustand)`                | 9             | `WEB_PAIR_MATRIX`       |
+| `createMockMatrix(SKILLS.react, SKILLS.hono)`                   | 7             | `FULLSTACK_PAIR_MATRIX` |
+| `createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.vitest)` | 5             | `WEB_TRIO_MATRIX`       |
+| `createMockMatrix(SKILLS.react, SKILLS.hono, SKILLS.vitest)`    | 4             | `FULLSTACK_TRIO_MATRIX` |
 
 **~93 calls replaced with 6 constants.**
 
@@ -53,21 +53,42 @@ Calls that add `{ categories: ... }`, `{ relationships: ... }`, or `{ suggestedS
 
 **File:** `src/cli/lib/__tests__/mock-data/mock-agents.ts`
 
-Current state: 7 exports, all `web-developer` variants with different skill arrays. Missing: canonical agent *definitions* (title, description, tools) that disk-writing tests can reuse.
+Current state: 7 exports, all `web-developer` variants with different skill arrays. Missing: canonical agent _definitions_ (title, description, tools) that disk-writing tests can reuse.
 
 **Add canonical agent definitions:**
 
 ```ts
 // Agent metadata — reusable for both mock objects and disk-writing tests
 export const AGENT_DEFS = {
-  webDev: { name: "web-developer", title: "Frontend Developer", description: "A frontend developer agent", tools: ["Read", "Write", "Glob"] },
-  apiDev: { name: "api-developer", title: "Backend Developer", description: "A backend developer agent", tools: ["Read", "Write", "Bash"] },
-  webTester: { name: "web-tester", title: "Tester", description: "A testing agent", tools: ["Read", "Bash"] },
-  webReviewer: { name: "web-reviewer", title: "Code Reviewer", description: "A code review agent", tools: ["Read", "Grep", "Glob"] },
+  webDev: {
+    name: "web-developer",
+    title: "Frontend Developer",
+    description: "A frontend developer agent",
+    tools: ["Read", "Write", "Glob"],
+  },
+  apiDev: {
+    name: "api-developer",
+    title: "Backend Developer",
+    description: "A backend developer agent",
+    tools: ["Read", "Write", "Bash"],
+  },
+  webTester: {
+    name: "web-tester",
+    title: "Tester",
+    description: "A testing agent",
+    tools: ["Read", "Bash"],
+  },
+  webReviewer: {
+    name: "web-reviewer",
+    title: "Code Reviewer",
+    description: "A code review agent",
+    tools: ["Read", "Grep", "Glob"],
+  },
 };
 ```
 
 **Migration targets:**
+
 - `stack-plugin-compiler.test.ts`: 22 `createAgent()` calls that repeat the same title/description/tools — replace with `AGENT_DEFS.webDev` spread
 - `agent-plugin-compiler.test.ts`: 3 inline agent definitions
 - `compiler.test.ts`: 4 `createMockAgentConfig` calls with repeated metadata
@@ -108,19 +129,23 @@ Tests use: `{ id: uniqueStackId(), ...SINGLE_AGENT_STACK_TEMPLATE }`
 ### Bug: wizard-store.test.ts passes entire SKILLS object
 
 Lines 22, 243, 312, 632, 688, 873, 902, 927, 954, 986, 1025 all do:
+
 ```ts
-createMockMatrix(SKILLS, { categories: TEST_CATEGORIES })
+createMockMatrix(SKILLS, { categories: TEST_CATEGORIES });
 ```
 
 This passes the **entire SKILLS registry object** as a single argument. It works by accident (detected as record syntax) but is semantically wrong. Should be:
+
 ```ts
-createMockMatrix(...Object.values(SKILLS), { categories: TEST_CATEGORIES })
+createMockMatrix(...Object.values(SKILLS), { categories: TEST_CATEGORIES });
 ```
+
 Or use a specific subset of skills appropriate for each test.
 
 ### Old record syntax remnants
 
 `build-step-logic.test.ts` line 89 still uses:
+
 ```ts
 createMockMatrix({ "web-framework-react": SKILLS.react, ... })
 ```
@@ -132,6 +157,7 @@ Convert to spread syntax. Also check for any other remaining old-syntax calls.
 ## Phase 5: Cleanup mock-data/index.ts
 
 The barrel file was deleted but verify no stale imports remain. Ensure all mock-data imports are direct:
+
 ```ts
 import { EMPTY_MATRIX } from "../mock-data/mock-matrices";
 import { AGENT_DEFS } from "../mock-data/mock-agents";
@@ -153,15 +179,15 @@ Each phase is independently shippable. Tests must pass after each.
 
 ## Key Files
 
-| File | Change | Phase |
-|------|--------|-------|
-| `src/cli/lib/__tests__/mock-data/mock-matrices.ts` | Add 6 canonical constants | 1 |
-| `src/cli/lib/__tests__/mock-data/mock-agents.ts` | Add AGENT_DEFS registry | 2 |
-| `src/cli/lib/__tests__/mock-data/mock-stacks.ts` | Add stack templates | 3 |
-| `src/cli/stores/wizard-store.test.ts` | Fix SKILLS object bug (11 calls) | 4 |
-| `src/cli/lib/wizard/build-step-logic.test.ts` | Fix old record syntax | 4 |
-| ~40 test files importing createMockMatrix | Replace inline calls with constants | 1 |
-| `src/cli/lib/stacks/stack-plugin-compiler.test.ts` | Use AGENT_DEFS + stack templates | 2, 3 |
+| File                                               | Change                              | Phase |
+| -------------------------------------------------- | ----------------------------------- | ----- |
+| `src/cli/lib/__tests__/mock-data/mock-matrices.ts` | Add 6 canonical constants           | 1     |
+| `src/cli/lib/__tests__/mock-data/mock-agents.ts`   | Add AGENT_DEFS registry             | 2     |
+| `src/cli/lib/__tests__/mock-data/mock-stacks.ts`   | Add stack templates                 | 3     |
+| `src/cli/stores/wizard-store.test.ts`              | Fix SKILLS object bug (11 calls)    | 4     |
+| `src/cli/lib/wizard/build-step-logic.test.ts`      | Fix old record syntax               | 4     |
+| ~40 test files importing createMockMatrix          | Replace inline calls with constants | 1     |
+| `src/cli/lib/stacks/stack-plugin-compiler.test.ts` | Use AGENT_DEFS + stack templates    | 2, 3  |
 
 ---
 

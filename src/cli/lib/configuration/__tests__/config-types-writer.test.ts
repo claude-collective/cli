@@ -175,10 +175,9 @@ describe("generateConfigTypesSource", () => {
   });
 
   it("falls back to string for empty domains", () => {
-    const matrix = createMockMatrix(
-      SKILLS.react,
-      { categories: {} as Record<Category, CategoryDefinition> },
-    );
+    const matrix = createMockMatrix(SKILLS.react, {
+      categories: {} as Record<Category, CategoryDefinition>,
+    });
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain("export type Domain = string;");
   });

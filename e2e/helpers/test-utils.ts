@@ -89,7 +89,11 @@ export async function createMinimalProject(tempDir: string): Promise<{
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    renderSkillMd("web-testing-e2e-compile", "E2E test skill for compile verification", "# Test E2E Skill\n\nThis skill exists solely for E2E testing of the compile command."),
+    renderSkillMd(
+      "web-testing-e2e-compile",
+      "E2E test skill for compile verification",
+      "# Test E2E Skill\n\nThis skill exists solely for E2E testing of the compile command.",
+    ),
   );
 
   await writeFile(
@@ -104,7 +108,10 @@ contentHash: "e2e-test-hash"
   await writeProjectConfig(projectDir, {
     name: "e2e-compile-test",
     skills: [{ id: "web-testing-e2e-compile" as SkillId, scope: "project", source: "local" }],
-    agents: [{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }],
+    agents: [
+      { name: "web-developer", scope: "project" },
+      { name: "api-developer", scope: "project" },
+    ],
   });
 
   return { projectDir, agentsDir };
@@ -478,7 +485,11 @@ export default {
   // Custom skill SKILL.md
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    renderSkillMd("web-custom-e2e-widget", "A custom test widget skill", "# Custom E2E Widget\n\nCustom skill for E2E testing of custom skill ID handling."),
+    renderSkillMd(
+      "web-custom-e2e-widget",
+      "A custom test widget skill",
+      "# Custom E2E Widget\n\nCustom skill for E2E testing of custom skill ID handling.",
+    ),
   );
 
   // Custom skill metadata.yaml with custom: true

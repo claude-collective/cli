@@ -199,9 +199,11 @@ const EDIT_SKILLS = {
 
 describe("edit wizard pre-selection via populateFromSkillIds", () => {
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(createMockMatrix(EDIT_SKILLS, {
-      categories: EDIT_CATEGORIES,
-    }));
+    useMatrixStore.getState().setMatrix(
+      createMockMatrix(EDIT_SKILLS, {
+        categories: EDIT_CATEGORIES,
+      }),
+    );
   });
 
   it("should pre-populate domainSelections from installed skill IDs", () => {
@@ -285,9 +287,11 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       }),
     };
 
-    useMatrixStore.getState().setMatrix(createMockMatrix(sparseSkills, {
-      categories: EDIT_CATEGORIES,
-    }));
+    useMatrixStore.getState().setMatrix(
+      createMockMatrix(sparseSkills, {
+        categories: EDIT_CATEGORIES,
+      }),
+    );
 
     const installedSkills: SkillId[] = ["web-framework-react", "web-framework-unknown"];
 
@@ -307,9 +311,11 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       "infra-tooling-linter": createMockSkill("infra-tooling-linter"),
     };
 
-    useMatrixStore.getState().setMatrix(createMockMatrix(extraSkills, {
-      categories: EDIT_CATEGORIES,
-    }));
+    useMatrixStore.getState().setMatrix(
+      createMockMatrix(extraSkills, {
+        categories: EDIT_CATEGORIES,
+      }),
+    );
 
     const installedSkills: SkillId[] = ["web-framework-react", "infra-tooling-linter"];
 
@@ -343,9 +349,11 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       "web-testing-playwright": createMockSkill("web-testing-playwright"),
     };
 
-    useMatrixStore.getState().setMatrix(createMockMatrix(multiSkills, {
-      categories: EDIT_CATEGORIES,
-    }));
+    useMatrixStore.getState().setMatrix(
+      createMockMatrix(multiSkills, {
+        categories: EDIT_CATEGORIES,
+      }),
+    );
 
     const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright"];
 
@@ -366,9 +374,11 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
 describe("edit wizard domain filtering", () => {
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(createMockMatrix(EDIT_SKILLS, {
-      categories: EDIT_CATEGORIES,
-    }));
+    useMatrixStore.getState().setMatrix(
+      createMockMatrix(EDIT_SKILLS, {
+        categories: EDIT_CATEGORIES,
+      }),
+    );
   });
 
   it("should report only web domain when only web skills are installed", () => {

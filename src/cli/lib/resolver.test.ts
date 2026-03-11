@@ -22,9 +22,7 @@ import {
   cleanupTempDir,
   buildProjectConfig,
 } from "./__tests__/helpers";
-import {
-  RESOLVE_AGENTS_DEFINITIONS,
-} from "./__tests__/mock-data/mock-agents.js";
+import { RESOLVE_AGENTS_DEFINITIONS } from "./__tests__/mock-data/mock-agents.js";
 import {
   FULLSTACK_STACK,
   WEB_REACT_AND_SCSS_STACK,

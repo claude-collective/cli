@@ -36,11 +36,7 @@ const ZUSTAND_SKILL_ID: SkillId = "web-state-zustand";
 const HONO_SKILL_ID: SkillId = "api-framework-hono";
 const VITEST_SKILL_ID: SkillId = "web-testing-vitest";
 
-const INIT_TEST_MATRIX = createMockMatrix(
-  SKILLS.react,
-  SKILLS.hono,
-  SKILLS.vitest,
-);
+const INIT_TEST_MATRIX = createMockMatrix(SKILLS.react, SKILLS.hono, SKILLS.vitest);
 
 describe("Integration: Install Mode Persistence", () => {
   let dirs: TestDirs;
@@ -468,12 +464,16 @@ describe("Integration: deriveInstallMode via Wizard Store", () => {
     expect(store.deriveInstallMode()).toBe("local");
 
     // Build a matrix with availableSources and set on store
-    useMatrixStore.getState().setMatrix(createMockMatrix(
-      createMockMultiSourceSkill(REACT_SKILL_ID, [
-        createMockSkillSource("local"),
-        createMockSkillSource("public", { name: "agents-inc" }),
-      ]),
-    ));
+    useMatrixStore
+      .getState()
+      .setMatrix(
+        createMockMatrix(
+          createMockMultiSourceSkill(REACT_SKILL_ID, [
+            createMockSkillSource("local"),
+            createMockSkillSource("public", { name: "agents-inc" }),
+          ]),
+        ),
+      );
 
     // Set all to plugin via matrix store lookup
     store.setAllSourcesPlugin();

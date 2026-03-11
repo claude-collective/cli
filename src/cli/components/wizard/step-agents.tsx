@@ -261,9 +261,7 @@ export const StepAgents: React.FC = () => {
                 {" "}
                 {checkbox} {row.agent.label}
               </Text>
-              <Text
-                color={scope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.INFO}
-              >
+              <Text color={scope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.INFO}>
                 {scopeBadge}
               </Text>
               <Text dimColor> - {row.agent.description}</Text>

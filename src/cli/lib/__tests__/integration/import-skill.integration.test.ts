@@ -12,7 +12,13 @@ import {
 import { compileSkillPlugin, compileAllSkillPlugins } from "../../skills";
 import { validatePlugin } from "../../plugins";
 import { EXIT_CODES } from "../../exit-codes";
-import { LOCAL_SKILLS_PATH, STANDARD_DIRS, STANDARD_FILES, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../../consts";
+import {
+  LOCAL_SKILLS_PATH,
+  STANDARD_DIRS,
+  STANDARD_FILES,
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+} from "../../../consts";
 import {
   IMPORT_REACT_PATTERNS_SKILL,
   IMPORT_TESTING_UTILS_SKILL,
@@ -44,7 +50,10 @@ async function createLocalSource(
     await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), skill.content);
 
     if (skill.metadata) {
-      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(skill.metadata));
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        stringifyYaml(skill.metadata),
+      );
     }
   }
 }
@@ -115,7 +124,12 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
     expect(manifest.version).toBe("1.0.0");
 
     // Step 7: Verify compiled skill content is preserved
-    const compiledSkillMd = path.join(result.pluginPath, STANDARD_DIRS.SKILLS, "react-patterns", STANDARD_FILES.SKILL_MD);
+    const compiledSkillMd = path.join(
+      result.pluginPath,
+      STANDARD_DIRS.SKILLS,
+      "react-patterns",
+      STANDARD_FILES.SKILL_MD,
+    );
     expect(await fileExists(compiledSkillMd)).toBe(true);
 
     const compiledContent = await readFile(compiledSkillMd, "utf-8");
@@ -287,7 +301,10 @@ Leverage Suspense for data fetching and code splitting.
     expect(secondError?.oclif?.exit).toBeUndefined();
 
     // Step 5: Verify updated content was imported
-    const skillMdContent = await readFile(path.join(importedSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
+    const skillMdContent = await readFile(
+      path.join(importedSkillDir, STANDARD_FILES.SKILL_MD),
+      "utf-8",
+    );
     expect(skillMdContent).toContain("React Patterns v2");
     expect(skillMdContent).toContain("Server Components");
 
@@ -334,7 +351,10 @@ Leverage Suspense for data fetching and code splitting.
     });
 
     // Record original SKILL.md content
-    const originalContent = await readFile(path.join(importedSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
+    const originalContent = await readFile(
+      path.join(importedSkillDir, STANDARD_FILES.SKILL_MD),
+      "utf-8",
+    );
 
     // Try to import again WITHOUT --force
     const { error } = await runCliCommand([
@@ -347,7 +367,10 @@ Leverage Suspense for data fetching and code splitting.
     expect(error?.oclif?.exit).toBeUndefined();
 
     // Content should be unchanged (original preserved)
-    const afterContent = await readFile(path.join(importedSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
+    const afterContent = await readFile(
+      path.join(importedSkillDir, STANDARD_FILES.SKILL_MD),
+      "utf-8",
+    );
     expect(afterContent).toBe(originalContent);
 
     consoleSpy.mockRestore();
@@ -409,7 +432,12 @@ describe("Integration: Import with --subdir and Compile", () => {
     // Verify compiled output
     expect(result.skillName).toBe("api-security");
 
-    const compiledSkillMd = path.join(result.pluginPath, STANDARD_DIRS.SKILLS, "api-security", STANDARD_FILES.SKILL_MD);
+    const compiledSkillMd = path.join(
+      result.pluginPath,
+      STANDARD_DIRS.SKILLS,
+      "api-security",
+      STANDARD_FILES.SKILL_MD,
+    );
     const content = await readFile(compiledSkillMd, "utf-8");
     expect(content).toContain("API Security");
     expect(content).toContain("Authentication");
@@ -579,7 +607,12 @@ describe("Integration: Import Error Recovery", () => {
     await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     // Add a directory without SKILL.md (invalid skill)
-    const invalidDir = path.join(projectDir, LOCAL_SOURCE_NAME, STANDARD_DIRS.SKILLS, "invalid-skill");
+    const invalidDir = path.join(
+      projectDir,
+      LOCAL_SOURCE_NAME,
+      STANDARD_DIRS.SKILLS,
+      "invalid-skill",
+    );
     await mkdir(invalidDir, { recursive: true });
     await writeFile(path.join(invalidDir, "README.md"), "# Not a skill\n");
 

@@ -246,7 +246,12 @@ describe("source-loader local skills integration", () => {
 
     // Create a local skill with the SAME ID but a different category in metadata
     // (source-loader preserves the remote skill's category when overwriting)
-    const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "test-override-category");
+    const skillsDir = path.join(
+      tempDir,
+      CLAUDE_DIR,
+      STANDARD_DIRS.SKILLS,
+      "test-override-category",
+    );
     await mkdir(skillsDir, { recursive: true });
 
     await writeFile(
@@ -303,12 +308,23 @@ describe("source-loader local skills integration", () => {
   it("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
     // Create a source directory with a marketplace skill
     const sourceDir = path.join(tempDir, "precedence-source");
-    const skillDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS, "web", "testing", "web-testing-vitest");
+    const skillDir = path.join(
+      sourceDir,
+      "src",
+      STANDARD_DIRS.SKILLS,
+      "web",
+      "testing",
+      "web-testing-vitest",
+    );
     await mkdir(skillDir, { recursive: true });
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-testing-vitest", "Marketplace vitest configuration", "Marketplace vitest skill content."),
+      renderSkillMd(
+        "web-testing-vitest",
+        "Marketplace vitest configuration",
+        "Marketplace vitest skill content.",
+      ),
     );
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
@@ -337,7 +353,11 @@ describe("source-loader local skills integration", () => {
     );
     await writeFile(
       path.join(localSkillsDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-testing-vitest", "My custom vitest configuration", "This is my local override of the vitest skill."),
+      renderSkillMd(
+        "web-testing-vitest",
+        "My custom vitest configuration",
+        "This is my local override of the vitest skill.",
+      ),
     );
 
     // Load again with the local skill in place
@@ -383,7 +403,14 @@ describe("source-loader config-driven paths", () => {
     );
 
     // Create skills in the custom directory
-    const skillsDir = path.join(sourceDir, "lib", STANDARD_DIRS.SKILLS, "web", "framework", "react");
+    const skillsDir = path.join(
+      sourceDir,
+      "lib",
+      STANDARD_DIRS.SKILLS,
+      "web",
+      "framework",
+      "react",
+    );
     await mkdir(skillsDir, { recursive: true });
     await writeFile(
       path.join(skillsDir, STANDARD_FILES.SKILL_MD),

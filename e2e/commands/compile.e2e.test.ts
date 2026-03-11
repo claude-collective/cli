@@ -92,11 +92,9 @@ describe("compile command", () => {
     tempDir = await createTempDir();
     const { projectDir, agentsDir } = await createMinimalProject(tempDir);
 
-    const { exitCode, combined } = await runCLI(
-      ["compile", "--verbose"],
-      projectDir,
-      { env: COMPILE_ENV },
-    );
+    const { exitCode, combined } = await runCLI(["compile", "--verbose"], projectDir, {
+      env: COMPILE_ENV,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(combined).toContain("Recompiled");
@@ -177,11 +175,9 @@ describe("compile command", () => {
       tempDir = await createTempDir();
       const { projectDir } = await createMinimalProject(tempDir);
 
-      const { exitCode, combined } = await runCLI(
-        ["compile", "--verbose"],
-        projectDir,
-        { env: COMPILE_ENV },
-      );
+      const { exitCode, combined } = await runCLI(["compile", "--verbose"], projectDir, {
+        env: COMPILE_ENV,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(combined).toContain("Loaded skill:");
@@ -419,11 +415,9 @@ describe("compile command", () => {
       sourceTempDir = srcTempDir;
 
       const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      const { exitCode, combined } = await runCLI(
-        ["compile", "--source", sourceDir],
-        projectDir,
-        { env: COMPILE_ENV },
-      );
+      const { exitCode, combined } = await runCLI(["compile", "--source", sourceDir], projectDir, {
+        env: COMPILE_ENV,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(combined).toContain("Discovered 1 local skills");

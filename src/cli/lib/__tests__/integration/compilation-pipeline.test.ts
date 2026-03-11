@@ -9,7 +9,12 @@ import {
   getMarketplaceStats,
 } from "../../marketplace-generator";
 import { validateAllPlugins, validatePlugin } from "../../plugins";
-import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../../consts";
+import {
+  DEFAULT_BRANDING,
+  DEFAULT_PLUGIN_NAME,
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+} from "../../../consts";
 import type { Marketplace, PluginManifest } from "../../../types";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
@@ -185,9 +190,9 @@ describe("Integration: Full Stack Pipeline", () => {
 
     expect(await pathExists(result.pluginPath)).toBe(true);
     expect(await pathExists(path.join(result.pluginPath, "agents"))).toBe(true);
-    expect(await pathExists(path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE))).toBe(
-      true,
-    );
+    expect(
+      await pathExists(path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE)),
+    ).toBe(true);
     expect(await pathExists(path.join(result.pluginPath, "README.md"))).toBe(true);
 
     const manifest = await readPluginManifest(result.pluginPath);

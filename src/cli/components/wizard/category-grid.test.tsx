@@ -20,15 +20,27 @@ import {
 import { createMockSkill, createMockMatrix } from "../../lib/__tests__/helpers";
 import { useMatrixStore } from "../../stores/matrix-store";
 
-const TEST_GRID_SKILLS: { id: SkillId; displayName: string; category: import("../../types").CategoryPath }[] = [
+const TEST_GRID_SKILLS: {
+  id: SkillId;
+  displayName: string;
+  category: import("../../types").CategoryPath;
+}[] = [
   { id: "web-framework-react", displayName: "React", category: "web-framework" },
   { id: "web-framework-vue-composition-api", displayName: "Vue", category: "web-framework" },
   { id: "web-framework-angular-standalone", displayName: "Angular", category: "web-framework" },
   { id: "web-framework-solidjs", displayName: "SolidJS", category: "web-framework" },
   { id: "web-framework-nuxt", displayName: "Nuxt", category: "web-framework" },
   { id: "web-framework-remix", displayName: "Remix", category: "web-framework" },
-  { id: "web-framework-nextjs-app-router", displayName: "Next.js App Router", category: "web-framework" },
-  { id: "web-framework-nextjs-server-actions", displayName: "Next.js Server Actions", category: "web-framework" },
+  {
+    id: "web-framework-nextjs-app-router",
+    displayName: "Next.js App Router",
+    category: "web-framework",
+  },
+  {
+    id: "web-framework-nextjs-server-actions",
+    displayName: "Next.js Server Actions",
+    category: "web-framework",
+  },
   { id: "web-styling-scss-modules", displayName: "SCSS Modules", category: "web-styling" },
   { id: "web-styling-tailwind", displayName: "Tailwind", category: "web-styling" },
   { id: "web-styling-cva", displayName: "CVA", category: "web-styling" },
@@ -47,7 +59,11 @@ const TEST_GRID_SKILLS: { id: SkillId; displayName: string; category: import("..
   { id: "web-testing-playwright-e2e", displayName: "Playwright", category: "web-testing" },
   { id: "web-testing-cypress-e2e", displayName: "Cypress", category: "web-testing" },
   { id: "web-mocks-msw", displayName: "MSW", category: "web-mocking" },
-  { id: "web-testing-react-testing-library", displayName: "React Testing Library", category: "web-testing" },
+  {
+    id: "web-testing-react-testing-library",
+    displayName: "React Testing Library",
+    category: "web-testing",
+  },
   { id: "web-testing-vue-test-utils", displayName: "Vue Test Utils", category: "web-testing" },
   { id: "web-i18n-next-intl", displayName: "Next Intl", category: "web-i18n" },
   { id: "web-i18n-react-intl", displayName: "React Intl", category: "web-i18n" },
@@ -62,10 +78,7 @@ function buildTestMatrix() {
   );
 }
 
-const createOption = (
-  id: SkillId,
-  overrides: Partial<CategoryOption> = {},
-): CategoryOption => ({
+const createOption = (id: SkillId, overrides: Partial<CategoryOption> = {}): CategoryOption => ({
   id,
   state: "normal",
   selected: false,
@@ -126,9 +139,7 @@ const defaultCategories: CategoryRow[] = [
     createOption("web-data-fetching-swr"),
     createOption("web-data-fetching-graphql-apollo"),
   ]),
-  createCategory("api-analytics", "Analytics", [
-    createOption("api-analytics-posthog-analytics"),
-  ]),
+  createCategory("api-analytics", "Analytics", [createOption("api-analytics-posthog-analytics")]),
 ];
 
 const categoriesWithFramework: CategoryRow[] = [
@@ -212,15 +223,9 @@ const manyCategories: CategoryRow[] = [
 const navCategories: CategoryRow[] = [
   createCategory("web-framework", "Category 0", [createOption("web-framework-react")]),
   createCategory("web-styling", "Category 1", [createOption("web-styling-tailwind")]),
-  createCategory("web-client-state", "Category 2", [
-    createOption("web-state-zustand"),
-  ]),
-  createCategory("web-server-state", "Category 3", [
-    createOption("web-server-state-react-query"),
-  ]),
-  createCategory("web-forms", "Category 4", [
-    createOption("web-forms-react-hook-form"),
-  ]),
+  createCategory("web-client-state", "Category 2", [createOption("web-state-zustand")]),
+  createCategory("web-server-state", "Category 3", [createOption("web-server-state-react-query")]),
+  createCategory("web-forms", "Category 4", [createOption("web-forms-react-hook-form")]),
   createCategory("web-testing", "Category 5", [createOption("web-testing-vitest")]),
 ];
 
@@ -1175,9 +1180,7 @@ describe("CategoryGrid component", () => {
   describe("edge cases", () => {
     it("should handle single category", () => {
       const categories: CategoryRow[] = [
-        createCategory("web-forms", "Single Category", [
-          createOption("web-forms-react-hook-form"),
-        ]),
+        createCategory("web-forms", "Single Category", [createOption("web-forms-react-hook-form")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -1190,9 +1193,7 @@ describe("CategoryGrid component", () => {
 
     it("should handle single option in category", () => {
       const categories: CategoryRow[] = [
-        createCategory("web-forms", "Single", [
-          createOption("web-forms-react-hook-form"),
-        ]),
+        createCategory("web-forms", "Single", [createOption("web-forms-react-hook-form")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -1250,9 +1251,7 @@ describe("CategoryGrid component", () => {
           createOption("web-forms-react-hook-form"),
           createOption("web-forms-vee-validate"),
         ]),
-        createCategory("web-styling", "Category 2", [
-          createOption("web-forms-zod-validation"),
-        ]),
+        createCategory("web-styling", "Category 2", [createOption("web-forms-zod-validation")]),
         createCategory("web-client-state", "Category 3", [
           createOption("web-testing-vitest"),
           createOption("web-testing-playwright-e2e"),
@@ -1284,9 +1283,7 @@ describe("CategoryGrid component", () => {
           ],
           { required: true },
         ),
-        createCategory("web-styling", "Category 2", [
-          createOption("web-testing-vitest"),
-        ]),
+        createCategory("web-styling", "Category 2", [createOption("web-testing-vitest")]),
       ];
 
       const { stdin, unmount } = renderGrid({
@@ -1412,10 +1409,7 @@ describe("CategoryGrid component", () => {
         createCategory(
           "web-framework",
           "Framework",
-          [
-            createOption("web-framework-react"),
-            createOption("web-framework-vue-composition-api"),
-          ],
+          [createOption("web-framework-react"), createOption("web-framework-vue-composition-api")],
           { exclusive: true },
         ),
       ];
@@ -1473,10 +1467,7 @@ describe("CategoryGrid component", () => {
         createCategory(
           "web-testing",
           "Testing",
-          [
-            createOption("web-testing-vitest"),
-            createOption("web-testing-playwright-e2e"),
-          ],
+          [createOption("web-testing-vitest"), createOption("web-testing-playwright-e2e")],
           { exclusive: false },
         ),
       ];

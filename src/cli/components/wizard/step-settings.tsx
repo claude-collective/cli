@@ -220,7 +220,9 @@ export const StepSettings: React.FC<StepSettingsProps> = ({
 
       <Box marginTop={1}>
         <Text dimColor>
-          {addModal.isOpen ? `${KEY_LABEL_ENTER} submit  ${KEY_LABEL_ESC} cancel` : `${HOTKEY_ADD_SOURCE.label} add  ${KEY_LABEL_DEL} remove  ${KEY_LABEL_ESC} or ${HOTKEY_SETTINGS.label} to close`}
+          {addModal.isOpen
+            ? `${KEY_LABEL_ENTER} submit  ${KEY_LABEL_ESC} cancel`
+            : `${HOTKEY_ADD_SOURCE.label} add  ${KEY_LABEL_DEL} remove  ${KEY_LABEL_ESC} or ${HOTKEY_SETTINGS.label} to close`}
         </Text>
       </Box>
     </Box>

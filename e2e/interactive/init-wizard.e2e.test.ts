@@ -1409,7 +1409,12 @@ describe("init wizard", () => {
       });
 
       // Create the skill directory for the global installation
-      const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
+      const skillDir = path.join(
+        projectDir,
+        CLAUDE_DIR,
+        STANDARD_DIRS.SKILLS,
+        "web-framework-react",
+      );
       await mkdir(skillDir, { recursive: true });
       await writeFile(
         path.join(skillDir, STANDARD_FILES.SKILL_MD),

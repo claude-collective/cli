@@ -107,7 +107,11 @@ describe("diff command", () => {
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd(localDirName, "Locally modified content", `# ${localDirName}\n\nThis content has been locally modified.`),
+      renderSkillMd(
+        localDirName,
+        "Locally modified content",
+        `# ${localDirName}\n\nThis content has been locally modified.`,
+      ),
     );
 
     const { exitCode, combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);

@@ -2,11 +2,7 @@ import path from "path";
 import { parse as parseYaml } from "yaml";
 import { glob, readFile, fileExists, directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import {
-  SKILL_CATEGORIES_PATH,
-  SKILLS_DIR_PATH,
-  STANDARD_FILES,
-} from "../consts";
+import { SKILL_CATEGORIES_PATH, SKILLS_DIR_PATH, STANDARD_FILES } from "../consts";
 import { metadataValidationSchema, SKILL_ID_PATTERN } from "./schemas";
 import { parseFrontmatter } from "./loading/loader";
 import { loadProjectSourceConfig } from "./configuration";
