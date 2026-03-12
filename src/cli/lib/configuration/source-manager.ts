@@ -1,8 +1,13 @@
+import path from "path";
 import type { SourceEntry } from "./config";
-import { loadProjectSourceConfig, writeProjectSourceConfig, DEFAULT_SOURCE } from "./config";
+import { loadProjectSourceConfig, getProjectConfigPath, DEFAULT_SOURCE } from "./config";
+import { generateConfigSource } from "./config-writer";
 import { fetchMarketplace } from "../loading/source-fetcher";
 import { discoverLocalSkills } from "../skills/local-skill-loader";
 import { discoverAllPluginSkills } from "../plugins/plugin-discovery";
+import { writeFile, ensureDir } from "../../utils/fs";
+import { CLAUDE_SRC_DIR } from "../../consts";
+import type { ProjectConfig } from "../../types";
 import { verbose } from "../../utils/logger";
 
 const DEFAULT_SOURCE_NAME = "public";
@@ -34,8 +39,8 @@ export async function addSource(
   }
 
   sources.push({ name, url });
-  config.sources = sources;
-  await writeProjectSourceConfig(projectDir, config);
+  const updated: Partial<ProjectConfig> = { ...config, sources };
+  await writeConfigFromPartial(projectDir, updated);
 
   verbose(`Added source "${name}" with ${skillCount} skills`);
   return { name, skillCount };
@@ -57,8 +62,8 @@ export async function removeSource(projectDir: string, name: string): Promise<vo
     throw new Error(`Source "${name}" not found`);
   }
 
-  config.sources = filtered;
-  await writeProjectSourceConfig(projectDir, config);
+  const updated: Partial<ProjectConfig> = { ...config, sources: filtered };
+  await writeConfigFromPartial(projectDir, updated);
 
   verbose(`Removed source "${name}"`);
 }
@@ -102,4 +107,25 @@ export async function getSourceSummary(projectDir: string): Promise<SourceSummar
   }
 
   return { sources, localSkillCount, pluginSkillCount };
+}
+
+/** Write a partial config to disk. Requires `name` to be present (config must already exist). */
+async function writeConfigFromPartial(
+  projectDir: string,
+  partial: Partial<ProjectConfig>,
+): Promise<void> {
+  if (!partial.name) {
+    throw new Error("Cannot write config: no project config found. Run `agentsinc init` first.");
+  }
+
+  const config: ProjectConfig = {
+    ...partial,
+    name: partial.name,
+    skills: partial.skills ?? [],
+    agents: partial.agents ?? [],
+  };
+
+  const configPath = getProjectConfigPath(projectDir);
+  await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
+  await writeFile(configPath, generateConfigSource(config));
 }

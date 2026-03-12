@@ -176,7 +176,7 @@ export default class Eject extends BaseCommand {
     }
 
     if (flags.source) {
-      await saveSourceToProjectConfig(projectDir, flags.source);
+      await saveSourceToProjectConfig(projectDir, flags.source, path.basename(projectDir));
       this.log(`Source saved to .claude-src/config.ts`);
     }
 

@@ -1,6 +1,6 @@
 import os from "os";
 import path from "path";
-import { writeFile, fileExists, ensureDir } from "../../utils/fs";
+import { fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { getErrorMessage } from "../../utils/errors";
 import { CLAUDE_SRC_DIR, DEFAULT_BRANDING, GITHUB_SOURCE, STANDARD_FILES } from "../../consts";
@@ -14,9 +14,6 @@ export const PROJECT_CONFIG_FILE = STANDARD_FILES.CONFIG_TS;
 
 // Re-export types that moved to src/cli/types/config.ts for backward compatibility
 export type { SourceEntry, BrandingConfig } from "../../types/config";
-
-/** @deprecated Use Partial<ProjectConfig> from types/config.ts instead */
-export type ProjectSourceConfig = Partial<ProjectConfig>;
 
 export type ResolvedConfig = {
   source: string;
@@ -74,35 +71,6 @@ export async function loadGlobalSourceConfig(): Promise<Partial<ProjectConfig> |
 
   verbose(`Loaded global config from ${homeDir}`);
   return data;
-}
-
-/**
- * Writes a ProjectConfig to disk using proper TypeScript format with
- * `import type { ProjectConfig }` and `satisfies ProjectConfig` for type safety.
- *
- * Used by source-manager and config-saver for read-modify-write operations.
- * Preserves all fields from the loaded config (skills, agents, name, sources, etc.)
- * because loadProjectSourceConfig uses .passthrough() schema validation.
- */
-export async function writeProjectSourceConfig(
-  projectDir: string,
-  config: Partial<ProjectConfig>,
-): Promise<void> {
-  const configPath = getProjectConfigPath(projectDir);
-  await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
-
-  // JSON.parse(JSON.stringify(x)) removes undefined values
-  const cleaned = JSON.parse(JSON.stringify(config));
-  const body = JSON.stringify(cleaned, null, 2);
-  const content = [
-    `import type { ProjectConfig } from "./config-types";`,
-    ``,
-    `export default ${body} satisfies ProjectConfig;`,
-    ``,
-  ].join("\n");
-
-  await writeFile(configPath, content);
-  verbose(`Saved project config to ${configPath}`);
 }
 
 async function loadEffectiveSourceConfig(
