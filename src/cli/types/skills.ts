@@ -1,130 +1,17 @@
 import type { Category, ModelName } from "./matrix";
+import type { SkillId } from "./generated/source-types";
 
-/** Prefix segments used in skill IDs, including non-domain prefixes (infra, meta, security) */
-export type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
-
-/** Skill ID format: prefix-category-name segments in kebab-case (at least 3 segments) */
-export type SkillId = `${SkillIdPrefix}-${string}-${string}`;
+export type { SkillId, SkillSlug } from "./generated/source-types";
+export { SKILL_MAP, SKILL_IDS, SKILL_SLUGS } from "./generated/source-types";
 
 /** Fully-qualified plugin skill reference: "plugin-name:skill-name" for Claude Code plugin resolution */
 export type PluginSkillRef = `${SkillId}:${SkillId}`;
 
-/** Kebab-case short key for alias resolution, search, and relationship rules */
-export type SkillSlug =
-  // Frameworks
-  | "react"
-  | "vue"
-  | "angular"
-  | "solidjs"
-  // Meta-frameworks
-  | "nextjs-app-router"
-  | "nextjs-server-actions"
-  | "remix"
-  | "nuxt"
-  // Styling
-  | "scss-modules"
-  | "cva"
-  | "tailwind"
-  // Client State
-  | "zustand"
-  | "redux-toolkit"
-  | "pinia"
-  | "ngrx-signalstore"
-  | "jotai"
-  | "mobx"
-  // Server State / Data Fetching
-  | "react-query"
-  | "swr"
-  | "graphql-apollo"
-  | "graphql-urql"
-  | "trpc"
-  // Forms & Validation
-  | "react-hook-form"
-  | "vee-validate"
-  | "zod-validation"
-  // Testing
-  | "vitest"
-  | "playwright-e2e"
-  | "cypress-e2e"
-  | "react-testing-library"
-  | "vue-test-utils"
-  | "msw"
-  // UI Components
-  | "shadcn-ui"
-  | "tanstack-table"
-  | "radix-ui"
-  // Backend - API Framework
-  | "hono"
-  | "express"
-  | "fastify"
-  // Backend - Database
-  | "drizzle"
-  | "prisma"
-  // Backend - Auth
-  | "better-auth"
-  // Backend - Observability
-  | "axiom-pino-sentry"
-  // Backend - Analytics
-  | "posthog"
-  | "posthog-flags"
-  // Backend - Email
-  | "resend"
-  // Backend - CI/CD
-  | "github-actions"
-  | "gitlab-ci"
-  // Mobile
-  | "react-native"
-  | "expo"
-  // Setup / Infrastructure
-  | "turborepo"
-  | "tooling"
-  | "posthog-setup"
-  | "env"
-  | "observability-setup"
-  | "email-setup"
-  // Animation / PWA / Realtime / etc.
-  | "framer-motion"
-  | "css-animations"
-  | "view-transitions"
-  | "storybook"
-  | "error-boundaries"
-  | "result-types"
-  | "accessibility"
-  | "websockets"
-  | "sse"
-  | "socket-io"
-  | "service-workers"
-  | "offline-first"
-  | "file-upload"
-  | "image-handling"
-  | "date-fns"
-  // Backend-specific category skills
-  | "api-performance"
-  | "web-performance"
-  // Security
-  | "security"
-  | "auth-patterns"
-  // CLI
-  | "commander"
-  | "cli-commander"
-  | "oclif"
-  // Reviewing / Meta
-  | "reviewing"
-  | "cli-reviewing"
-  | "research-methodology"
-  // Methodology
-  | "investigation-requirements"
-  | "anti-over-engineering"
-  | "success-criteria"
-  | "write-verification"
-  | "improvement-protocol"
-  | "context-management";
-
 /**
- * Either "prefix-category" (e.g., "web-framework"), a standalone category,
+ * Either a generated Category value (e.g., "web-framework"),
  * or "local" for user-defined local skills.
  */
-export type CategoryPath = `${SkillIdPrefix}-${string}` | Category | "local";
+export type CategoryPath = Category | "local";
 
 /**
  * Category-keyed selections mapping to arrays of canonical skill IDs.
@@ -147,8 +34,8 @@ export type SkillDefinition = {
   description: string;
 };
 
-/** Map of skill IDs to their definitions — index-signature semantics via template literal key */
-export type SkillDefinitionMap = Record<SkillId, SkillDefinition>;
+/** Map of skill IDs to their definitions — sparse map (not every skill ID will be present) */
+export type SkillDefinitionMap = Partial<Record<SkillId, SkillDefinition>>;
 
 /** Skill assignment in stack config.yaml, specifies preloaded (embedded) vs dynamic (Skill tool) */
 export type SkillAssignment = {

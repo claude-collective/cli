@@ -1,49 +1,11 @@
 import type { CategoryPath, SkillSlug, SkillId } from "./skills";
 import type { AgentName } from "./agents";
 
-/** Wizard domain grouping for skill categories */
-export type Domain = "web" | "api" | "cli" | "mobile" | "shared";
+export type { Category, Domain } from "./generated/source-types";
+export { CATEGORIES, DOMAINS } from "./generated/source-types";
 
-/** Keys in skill-categories.ts `categories` section */
-export type Category =
-  | "web-framework"
-  | "web-styling"
-  | "web-client-state"
-  | "web-server-state"
-  | "web-forms"
-  | "web-testing"
-  | "web-ui-components"
-  | "web-mocking"
-  | "web-error-handling"
-  | "web-i18n"
-  | "web-file-upload"
-  | "web-files"
-  | "web-utilities"
-  | "web-realtime"
-  | "web-animation"
-  | "web-pwa"
-  | "web-accessibility"
-  | "web-performance"
-  | "web-base-framework"
-  | "api-api"
-  | "api-database"
-  | "api-auth"
-  | "api-observability"
-  | "api-analytics"
-  | "api-email"
-  | "api-performance"
-  | "mobile-framework"
-  | "mobile-platform"
-  | "shared-monorepo"
-  | "shared-tooling"
-  | "shared-security"
-  | "shared-methodology"
-  | "shared-research"
-  | "shared-reviewing"
-  | "shared-ci-cd"
-  | "cli-framework"
-  | "cli-prompts"
-  | "cli-testing";
+// Import locally for use within this file
+import type { Category, Domain } from "./generated/source-types";
 
 /** Claude model selector for agent configuration */
 export type ModelName = "sonnet" | "opus" | "haiku" | "inherit";

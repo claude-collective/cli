@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { KEBAB_CASE_PATTERN } from "../consts";
 import { warn } from "../utils/logger";
+import { SKILL_SLUGS, CATEGORIES, DOMAINS, AGENT_NAMES } from "../types/generated/source-types";
 import type {
   AgentHookAction,
   AgentHookDefinition,
@@ -48,11 +49,11 @@ const customExtensions = {
   skillIds: new Set<string>(),
 };
 
-/** Raw domain values (before cast) — single source of truth for built-in domains */
-export const DOMAIN_VALUES = ["web", "api", "cli", "mobile", "shared"] as const;
+/** Built-in domain values — re-exported from generated source-types for backward compatibility */
+export { DOMAINS as DOMAIN_VALUES } from "../types/generated/source-types";
 
 // Bridge pattern: z.ZodType<ExistingType> ensures Zod output matches our union types
-export const domainSchema = z.enum(DOMAIN_VALUES) as z.ZodType<Domain>;
+export const domainSchema = z.enum(DOMAINS) as z.ZodType<Domain>;
 
 export const skillSourceTypeSchema = z.enum([
   "public",
@@ -68,73 +69,16 @@ export const boundSkillSchema: z.ZodType<BoundSkill> = z.object({
   description: z.string().optional(),
 });
 
-/** Raw category values (before cast) — single source of truth for built-in categories */
-export const CATEGORY_VALUES = [
-  "web-framework",
-  "web-styling",
-  "web-client-state",
-  "web-server-state",
-  "web-forms",
-  "web-testing",
-  "web-ui-components",
-  "web-mocking",
-  "web-error-handling",
-  "web-i18n",
-  "web-file-upload",
-  "web-files",
-  "web-utilities",
-  "web-realtime",
-  "web-animation",
-  "web-pwa",
-  "web-accessibility",
-  "web-performance",
-  "web-base-framework",
-  "api-api",
-  "api-database",
-  "api-auth",
-  "api-observability",
-  "api-analytics",
-  "api-email",
-  "api-performance",
-  "mobile-framework",
-  "mobile-platform",
-  "shared-monorepo",
-  "shared-tooling",
-  "shared-security",
-  "shared-methodology",
-  "shared-research",
-  "shared-reviewing",
-  "shared-ci-cd",
-  "cli-framework",
-  "cli-prompts",
-  "cli-testing",
-] as const;
+/** Built-in category values — re-exported from generated source-types for backward compatibility */
+export { CATEGORIES as CATEGORY_VALUES } from "../types/generated/source-types";
 
 // Bridge pattern: z.ZodType<ExistingType> ensures Zod output matches our union types
-export const categorySchema = z.enum(CATEGORY_VALUES) as z.ZodType<Category>;
+export const categorySchema = z.enum(CATEGORIES) as z.ZodType<Category>;
 
 /** Built-in category values as a Set — used for record key validation in stack and category schemas */
-const CATEGORY_VALUES_SET = new Set<Category>(CATEGORY_VALUES);
+const CATEGORY_VALUES_SET = new Set<Category>([...CATEGORIES]);
 
-export const agentNameSchema = z.enum([
-  "web-developer",
-  "api-developer",
-  "cli-developer",
-  "web-architecture",
-  "agent-summoner",
-  "documentor",
-  "skill-summoner",
-  "pattern-scout",
-  "web-pattern-critique",
-  "web-pm",
-  "api-researcher",
-  "web-researcher",
-  "api-reviewer",
-  "cli-reviewer",
-  "web-reviewer",
-  "cli-tester",
-  "web-tester",
-]) as z.ZodType<AgentName>;
+export const agentNameSchema = z.enum(AGENT_NAMES) as z.ZodType<AgentName>;
 
 export const modelNameSchema = z.enum([
   "sonnet",
@@ -152,91 +96,7 @@ export const permissionModeSchema = z.enum([
   "delegate",
 ]) as z.ZodType<PermissionMode>;
 
-export const skillSlugSchema = z.enum([
-  "react",
-  "vue",
-  "angular",
-  "solidjs",
-  "nextjs-app-router",
-  "nextjs-server-actions",
-  "remix",
-  "nuxt",
-  "scss-modules",
-  "cva",
-  "tailwind",
-  "zustand",
-  "redux-toolkit",
-  "pinia",
-  "ngrx-signalstore",
-  "jotai",
-  "mobx",
-  "react-query",
-  "swr",
-  "graphql-apollo",
-  "graphql-urql",
-  "trpc",
-  "react-hook-form",
-  "vee-validate",
-  "zod-validation",
-  "vitest",
-  "playwright-e2e",
-  "cypress-e2e",
-  "react-testing-library",
-  "vue-test-utils",
-  "msw",
-  "shadcn-ui",
-  "tanstack-table",
-  "radix-ui",
-  "hono",
-  "express",
-  "fastify",
-  "drizzle",
-  "prisma",
-  "better-auth",
-  "axiom-pino-sentry",
-  "posthog",
-  "posthog-flags",
-  "resend",
-  "github-actions",
-  "react-native",
-  "expo",
-  "turborepo",
-  "tooling",
-  "posthog-setup",
-  "env",
-  "observability-setup",
-  "email-setup",
-  "framer-motion",
-  "css-animations",
-  "view-transitions",
-  "storybook",
-  "error-boundaries",
-  "result-types",
-  "accessibility",
-  "websockets",
-  "sse",
-  "socket-io",
-  "service-workers",
-  "offline-first",
-  "file-upload",
-  "image-handling",
-  "date-fns",
-  "api-performance",
-  "web-performance",
-  "security",
-  "commander",
-  "cli-commander",
-  "oclif",
-  "reviewing",
-  "cli-reviewing",
-  "research-methodology",
-  "investigation-requirements",
-  "anti-over-engineering",
-  "success-criteria",
-  "write-verification",
-  "improvement-protocol",
-  "context-management",
-]) as z.ZodType<SkillSlug>;
+export const skillSlugSchema = z.enum(SKILL_SLUGS) as z.ZodType<SkillSlug>;
 
 /** Matches SkillId format: prefix-category-name (at least 3 dash-separated segments) */
 export const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+-.+$/;

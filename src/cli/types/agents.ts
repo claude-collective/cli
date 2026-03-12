@@ -1,32 +1,9 @@
 import type { Domain, ModelName, PermissionMode } from "./matrix";
 import type { PluginSkillRef, Skill, SkillId } from "./skills";
+import type { AgentName } from "./generated/source-types";
 
-/** Valid agent names for built-in agents */
-export type AgentName =
-  // Developers
-  | "web-developer"
-  | "api-developer"
-  | "cli-developer"
-  | "web-architecture"
-  // Meta
-  | "agent-summoner"
-  | "documentor"
-  | "skill-summoner"
-  // Pattern
-  | "pattern-scout"
-  | "web-pattern-critique"
-  // Planning
-  | "web-pm"
-  // Researchers
-  | "api-researcher"
-  | "web-researcher"
-  // Reviewers
-  | "api-reviewer"
-  | "cli-reviewer"
-  | "web-reviewer"
-  // Testers
-  | "cli-tester"
-  | "web-tester";
+export type { AgentName } from "./generated/source-types";
+export { AGENT_NAMES } from "./generated/source-types";
 
 /** Single hook action (command, script, or prompt) */
 export type AgentHookAction = {
