@@ -12,7 +12,7 @@
 
 # Project Memory for Claude
 
-This file provides decision trees, behavioral rules, and conventions. For codebase reference documentation, see `.ai-docs/`.
+This file provides behavioral rules and conventions. For codebase reference documentation, see `.ai-docs/`.
 
 ## Workspace Directories
 
@@ -24,294 +24,110 @@ This file provides decision trees, behavioral rules, and conventions. For codeba
 
 ## NEVER do this
 
-- NEVER run ANY git command that modifies the staging area or working tree (`git add`, `git reset`, `git stash`, `git checkout`, `git restore`, `git clean`) — the user curates their staging area intentionally
-- NEVER use git worktrees (`isolation: "worktree"`) — always work directly on the main branch
+### Git & Workflow
+- NEVER run ANY git command that modifies the staging area or working tree (`git add`, `git reset`, `git stash`, `git checkout`, `git restore`, `git clean`)
+- NEVER use git worktrees (`isolation: "worktree"`)
+- NEVER use `git checkout`, `git restore`, or any command that discards working tree changes — ask the user how to proceed
 - NEVER introduce new workflow patterns (tools, flags, strategies) that the user hasn't explicitly requested
-- NEVER construct test data inline — no inline configs, matrices, skills, stacks. Use factories from `helpers.ts` and fixtures from `create-test-source.ts`. If a factory doesn't exist, create one.
-- NEVER use `as SkillSlug` casts on test data — use valid values from the `SkillSlug` union in `types/skills.ts`. If a test needs a slug not in the union, the union is incomplete.
-- NEVER create redundant type aliases — reuse existing types with `Pick<>`, `Partial<>`, or intersection (`&`). Check `types/` before defining a new type.
-- NEVER derive `slug` from skill ID or directory path — `slug` is a required field in metadata, always pass it explicitly.
-- NEVER put TODO/task IDs (T1, T6, etc.) in test `describe()` blocks — test code is not a task tracker
-- NEVER add backward-compatibility shims, migration code, or legacy fallbacks. The project is pre-1.0 — backward compatibility is not a concern. Remove old code cleanly instead of maintaining two paths.
-- NEVER add unnecessary comments — only add comments when something is unintuitive, complex, or for edge cases. Self-explanatory code should not have comments. Do not add JSDoc to obvious functions.
-- NEVER reassign constants to other constants — use the original constant directly instead of creating aliases like `const FOO = BAR`
-- NEVER build intermediate data structures imperatively when the data is static or the rendering is straightforward. No `const arr = []; for (...) { arr.push(...) }` patterns. Use declarative const arrays, `.map()`, `.flatMap()`, or inline JSX. If data is known at write-time, write it as a literal. If it needs transforming, use functional array methods. Imperative accumulation into mutable arrays is never the answer.
-- NEVER put machine-specific absolute paths in any file tracked by git. If a file needs private paths, gitignore it first.
-- NEVER use inline regex to extract SKILL.md frontmatter fields. Use `parseFrontmatter()` from `lib/loading/loader.ts` — it handles YAML parsing and Zod validation.
-- NEVER use `git checkout`, `git restore`, or any command that discards working tree changes — these are irreversible. If working tree changes conflict with your task, ask the user how to proceed.
-- NEVER create custom mock skills (`createMockSkill("web-framework-react")`) when a canonical `SKILLS.*` entry from `test-fixtures.ts` would work. The canonical registry (`SKILLS.react`, `SKILLS.hono`, etc.) is the single source of truth — only use `createMockSkill()` for deliberately broken, exotic, or error-case skills that don't belong in the registry.
-- NEVER call `createMockMatrix(SKILLS.react)` or other `SKILLS.*` combinations inline when a pre-built constant exists in `mock-data/mock-matrices.ts`. Use `EMPTY_MATRIX`, `SINGLE_REACT_MATRIX`, `WEB_PAIR_MATRIX`, `FULLSTACK_PAIR_MATRIX`, `WEB_TRIO_MATRIX`, `FULLSTACK_TRIO_MATRIX`, `VITEST_MATRIX`, etc. Only call `createMockMatrix()` directly when using test-local variables (from `createMockSkill()`), dynamic paths, or custom overrides not covered by an existing constant.
-- NEVER pass the entire `SKILLS` registry object to `createMockMatrix` — `createMockMatrix(SKILLS, ...)` is a bug. Spread individual entries: `createMockMatrix(SKILLS.react, SKILLS.hono)` or all: `createMockMatrix(...Object.values(SKILLS), { ... })`.
-- NEVER construct `ProjectConfig` objects inline in tests — use `buildProjectConfig()` from helpers.ts with overrides. Same for `ProjectSourceConfig` — use `buildSourceConfig()`.
-- NEVER construct `AgentScopeConfig[]` arrays inline (`[{ name: "web-developer", scope: "project" }]`) — use `buildAgentConfigs(["web-developer"])` from helpers.ts.
-- NEVER repeat agent metadata strings (title, description, tools) inline in tests — use `AGENT_DEFS` from `mock-data/mock-agents.ts` (`AGENT_DEFS.webDev`, `AGENT_DEFS.apiDev`, `AGENT_DEFS.webTester`, `AGENT_DEFS.webReviewer`).
-- NEVER write inline SKILL.md frontmatter or agent YAML template strings in tests — use `renderSkillMd()`, `renderAgentYaml()`, `renderConfigTs()` from `__tests__/content-generators.ts`.
-- NEVER export constants that are only used within the same file — keep them file-private. Run grep before adding `export` to confirm cross-file usage.
+- NEVER put machine-specific absolute paths in any file tracked by git
+
+### Type Safety & Casts
+- NEVER use `as SkillId` or `as SkillSlug` casts on valid union members — the literal string IS the type. Only cast at parse boundaries (YAML, JSON, CLI args) or for deliberately invalid error-path test data where the cast is at the call site, not inside a factory.
+- NEVER use `as unknown as T` double casts — fix the upstream type instead
+- NEVER use `{} as Record<K, V>` — use `const x: Partial<Record<K, V>> = {}` with a type annotation
+- NEVER use `matrix.skills[id]!` non-null assertions — use `getSkillById(id)` from `matrix-provider.ts`
+
+### Data Integrity
+- NEVER use optional chaining (`?.`) or null coalescing (`?? ""`, `|| []`) on data that must exist — use asserting lookups. Silent fallbacks hide bugs.
+- NEVER build multi-tier resolution fallbacks (try exact → try alias → try directory name). Data matches on the first lookup or it's an error.
+- NEVER fall back to `path.basename(dir)` as a skill ID — use `frontmatter.name` from `parseFrontmatter()`
+- NEVER derive `slug` from skill ID or directory path — `slug` is a required field in metadata, always pass it explicitly
+- NEVER add backward-compatibility shims or legacy fallbacks — the project is pre-1.0. Remove old code cleanly.
+
+### Test Data
+- NEVER construct test data inline — use factories from `__tests__/helpers.ts` and fixtures from `create-test-source.ts`. If a factory doesn't exist, create one.
+- NEVER create custom mock skills when a canonical `SKILLS.*` entry from `test-fixtures.ts` would work
+- NEVER call `createMockMatrix(SKILLS.react)` inline when a pre-built constant exists in `mock-matrices.ts`
+- NEVER pass the entire `SKILLS` registry to `createMockMatrix` — spread individual entries
+- NEVER construct `ProjectConfig`, `ProjectSourceConfig`, or `AgentScopeConfig[]` inline — use `buildProjectConfig()`, `buildSourceConfig()`, `buildAgentConfigs()`
+- NEVER write inline SKILL.md frontmatter or agent YAML template strings — use `renderSkillMd()`, `renderAgentYaml()` from `content-generators.ts`
+- NEVER repeat agent metadata strings inline — use `AGENT_DEFS` from `mock-agents.ts`
+- NEVER put TODO/task IDs in test `describe()` blocks
+
+### Code Style
+- NEVER create redundant type aliases — use `Pick<>`, `Partial<>`, or `&`. Check `types/` first.
+- NEVER add unnecessary comments — only when unintuitive, complex, or for edge cases
+- NEVER reassign constants to other constants — use the original directly
+- NEVER build intermediate data structures imperatively — use `.map()`, `.flatMap()`, or literal arrays
+- NEVER export constants only used within the same file — run grep before adding `export`
 
 ## ALWAYS do this
 
-- ALWAYS delegate implementation and test code to sub-agents. Tell them to read CLAUDE.md before starting. Tell them: "Do NOT run any git commands."
-- ALWAYS trace ALL scenarios through the code after any fix — not just the one that prompted the fix.
-- ALWAYS grep for the old value when changing test data or renaming anything — find all references repo-wide.
-- ALWAYS search for all call sites when removing a workaround.
-- When a task is deferred, ALWAYS move it to `TODO-deferred.md` — never delete.
-- When fixing test data, ALWAYS evaluate the construction pattern too, not just the values.
-- ALWAYS prefer `SKILLS.*` entries from `test-fixtures.ts` over `createMockSkill()` for standard domain skills (react, vue, hono, drizzle, zustand, pinia, scss, tailwind, vitest, antiOverEng).
-- ALWAYS use `createMockMatrix` spread syntax: `createMockMatrix(SKILLS.react, SKILLS.hono)` — not the old record syntax `createMockMatrix({ "web-framework-react": SKILLS.react })`. Exception: empty skills record (no skills) must use old syntax.
-- ALWAYS extract repeated skill ID string literals (3+ uses in a describe block) into describe-level constants: `const REACT_SKILL_ID: SkillId = "web-framework-react"`.
-- ALWAYS use spread isolation `{ ...SKILLS.react }` when passing canonical skills to functions that mutate objects in-place (e.g., `loadSkillsFromAllSources` adds `availableSources`/`activeSource`).
-- ALWAYS use pre-built matrix constants from `mock-data/mock-matrices.ts` instead of inline `createMockMatrix(SKILLS.*)` calls. If a new `SKILLS.*` combination appears 2+ times across test files, add it as a named constant to `mock-matrices.ts`.
-- ALWAYS use `buildProjectConfig()` for `ProjectConfig` objects, `buildSourceConfig()` for source configs, `buildAgentConfigs()` for agent scope arrays, and `buildSkillConfigs()` for skill config arrays. Only construct config objects inline when deliberately testing invalid/broken shapes for error-path validation.
-- ALWAYS use `AGENT_DEFS` from `mock-data/mock-agents.ts` for agent metadata (title, description, tools) instead of hardcoding strings like `"Frontend Developer"` or `"A frontend developer agent"` inline.
+### Delegation & Process
+- ALWAYS delegate implementation and test code to sub-agents. Tell them to read CLAUDE.md. Tell them: "Do NOT run any git commands."
+- ALWAYS trace ALL scenarios through the code after any fix
+- ALWAYS grep for the old value when changing test data or renaming anything
+- ALWAYS search for all call sites when removing a workaround
+- When a task is deferred, ALWAYS move it to `TODO-deferred.md` — never delete
+
+### Type Safety
+- ALWAYS use type guards (`isCategory()`, `isDomain()`, `isAgentName()` from `utils/type-guards.ts`) instead of `as` casts for runtime narrowing
+- ALWAYS use `getSkillById(id)` or `getSkillBySlug(slug)` from `matrix-provider.ts` for skill lookups where the skill must exist. Only use `matrix.skills[id]` when genuinely optional.
+- ALWAYS use `parseFrontmatter()` from `lib/loading/loader.ts` for SKILL.md parsing
+- ALWAYS type factory function parameters with the narrowest union type (`SkillId`, not `string`). Error-path tests cast at the call site.
+- ALWAYS use `typedEntries()` / `typedKeys()` from `utils/typed-object.ts` (not raw `Object.entries()`)
+
+### Test Data
+- ALWAYS prefer `SKILLS.*` from `test-fixtures.ts` over `createMockSkill()` for standard domain skills
+- ALWAYS use `createMockMatrix` spread syntax: `createMockMatrix(SKILLS.react, SKILLS.hono)`
+- ALWAYS use spread isolation `{ ...SKILLS.react }` when passing to functions that mutate objects in-place
+- ALWAYS use pre-built matrix constants from `mock-matrices.ts` instead of inline `createMockMatrix(SKILLS.*)` calls
+- ALWAYS use config factories: `buildProjectConfig()`, `buildSourceConfig()`, `buildAgentConfigs()`, `buildSkillConfigs()`
+- ALWAYS use `AGENT_DEFS` from `mock-agents.ts` for agent metadata
+- When fixing test data, ALWAYS evaluate the construction pattern too, not just the values
 
 ---
 
-## Decision Trees
+## Test Data Factories
 
-### Test Helper Extraction
-
-```
-Is the same setup/assertion used in 2+ test cases?
-├─ YES → Extract a local helper in the test file
-└─ NO → Keep inline
-
-Is the helper used by 2+ test files?
-├─ YES → Move to __tests__/helpers.ts or test-fixtures.ts
-└─ NO → Keep as local helper
-
-Does it create test data (skills, agents, categories)?
-├─ YES → Add to __tests__/helpers.ts as createMock*() factory
-└─ NO → Does it manage temp directories?
-    ├─ YES → Use createTempDir()/cleanupTempDir() from helpers.ts
-    └─ NO → Does it read/parse test files?
-        ├─ YES → Add to helpers.ts as read*() or parse*() utility
-        └─ NO → Keep as local helper
-```
-
-### Type Narrowing
-
-```
-Is the value from a known, finite set (< 30 values)?
-├─ YES → Union type (e.g., type Domain = "web" | "api" | "cli")
-└─ NO → Does it follow a pattern with a finite prefix?
-    ├─ YES → Template literal type (e.g., type SkillId = `${Domain}-${string}`)
-    └─ NO → Is it user-extensible or open-ended?
-        ├─ YES → Keep as string
-        └─ NO → Can you enumerate all values?
-            ├─ YES → Union type
-            └─ NO → Keep as string
-
-Is it a Record with runtime-sparse keys?
-├─ YES → Partial<Record<UnionType, V>>
-└─ NO → Record<UnionType, V>
-```
-
-### Error Handling in CLI Commands
-
-```
-Is it a general catch-all error in a command?
-├─ YES → Use this.handleError(error) from BaseCommand
-└─ NO → Do you need a specific exit code?
-    ├─ YES → Use this.error(getErrorMessage(error), { exit: EXIT_CODES.X })
-    └─ NO → Is it validation/warning?
-        ├─ YES → Use this.warn(message) and continue
-        └─ NO → Use verbose() for diagnostic info
-
-Is the error from an unknown source?
-├─ YES → Use getErrorMessage(error) from utils/errors.ts
-└─ NO → Use error.message directly
-
-Should the operation continue after error?
-├─ YES → Log with verbose() or warn(), handle gracefully
-└─ NO → Exit with appropriate EXIT_CODES constant
-```
-
-### Fixture vs Inline Test Data
-
-**RULE: ALWAYS use factories and fixtures for test data. NEVER construct configs, matrices, skills, agents, or stacks inline in test files.**
-
-This means:
-
-- **Skills/agents/SKILL.md/metadata.yaml** → `createCLISkill()`, `createUserSkill()`, `writeTestSkill()`, `writeSourceSkill()`, `createTestSource()`
-- **Mock skill objects** → `createMockSkill()`, `createMockSkillSource()`, `createMockExtractedSkill()`, `createMockSkillDefinition()`, `createMockSkillEntry()`, `createMockMultiSourceSkill()`
-- **Shared `TestSkill[]` constants** → `mock-data/mock-skills.ts` (e.g., `DEFAULT_TEST_SKILLS`, `PIPELINE_TEST_SKILLS`, `SWITCHABLE_SKILLS`). NEVER define `TestSkill[]` arrays inline in test files.
-- **Mock matrices** → Pre-built constants from `mock-data/mock-matrices.ts` (`EMPTY_MATRIX`, `SINGLE_REACT_MATRIX`, `WEB_PAIR_MATRIX`, `FULLSTACK_PAIR_MATRIX`, etc.). Only use `createMockMatrix()` for unique shapes with test-local variables or custom overrides. Also: `createBasicMatrix()`, `createComprehensiveMatrix()`, `createMockMatrixConfig()`
-- **Mock categories** → `createMockCategory()`
-- **Mock agents** → `AGENT_DEFS` from `mock-data/mock-agents.ts` for metadata (title, description, tools). Also: `createMockAgent()`, `createMockAgentConfig()`, `createMockCompiledAgentData()`
-- **Mock stacks** → `createMockStack()`, `createMockResolvedStack()`, `createMockRawStacksConfig()`, `createMockCompiledStackPlugin()`
-- **Mock marketplace** → `createMockMarketplace()`, `createMockMarketplacePlugin()`
-- **Full project directories** → `createTestSource()` from `fixtures/create-test-source.ts`
-- **All mock data is centralised** in `__tests__/mock-data/` — skills in `mock-skills.ts`, matrices in `mock-matrices.ts`, agents in `mock-agents.ts`, stacks in `mock-stacks.ts`, categories in `mock-categories.ts`, sources in `mock-sources.ts`. NEVER define shared mock constants inline in test files.
-- **Stacks** → Use `TestStack[]` via `createTestSource({ stacks })` or extend existing fixtures
-- **Configs** → `buildProjectConfig()`, `buildSourceConfig()`, `buildSkillConfigs()`, `buildAgentConfigs()`, `buildWizardResult()`, `buildWizardResultFromStore()`, `buildSourceResult()`, `buildTestProjectConfig()`, `writeProjectConfig()` (E2E disk configs). NEVER construct `{ name: "...", agents: [...] }` or `{ source: "github:..." }` inline — always use the factory.
-- **Compile context** → `createCompileContext()`, `createMockCompileConfig()`, `createMockSkillAssignment()`
-- **Content generators** → `renderSkillMd()`, `renderAgentYaml()`, `renderConfigTs()`, `renderCategoriesTs()`, `renderRulesTs()` from `content-generators.ts`. Legacy wrappers `createSkillContent()`/`createAgentYamlContent()` in helpers.ts delegate to these.
-- **Test utilities** → `parseTestFrontmatter()`, `simulateSkillSelections()`, `extractSkillIdsFromAssignment()`
-
-**If a factory doesn't exist for what you need, CREATE ONE in helpers.ts — do not inline the data.**
-
-**RULE: Never create mapping/alias constants to translate incorrect test data to correct values.** Fix test data at the source instead. Do not add workarounds like lookup tables. Alias hacks mask real problems.
-
-**RULE: Never put TODO/task tracking IDs in test describe blocks.** Test describes should be purely descriptive (e.g., `"edit wizard pre-selection"`, not `"edit wizard pre-selection (T3)"`). Tracking IDs are for TODO files, not test code.
+Use factories from `__tests__/helpers.ts` and constants from `__tests__/mock-data/`. Grep for `createMock*`, `build*`, `SKILLS.*`, `AGENT_DEFS.*`, `render*` to find what's available. Never inline test data — if a factory doesn't exist, create one.
 
 ```
 Is it a complete skill/agent/category object?
 ├─ YES → Use factory from helpers.ts (createMockSkill, createMockAgent, createMockCategory)
 └─ NO → Is it a full project directory structure?
     ├─ YES → Use createTestSource() from fixtures/create-test-source.ts
-    └─ NO → Does it create skill files (SKILL.md, metadata.yaml)?
-        ├─ YES → Use helpers: createCLISkill(), createUserSkill(), writeTestSkill(), writeSourceSkill()
-        └─ NO → Does it create a config, matrix, or stack?
-            ├─ YES → Use a factory (createMockMatrix, buildWizardResult, etc.) — NEVER inline
-            └─ NO → Is it a partial object for one test case?
-                ├─ YES → Inline is fine
-                └─ NO → Use factory with overrides parameter
-```
-
-### Where to Place Utilities
-
-```
-Is it used by 3+ files?
-├─ YES → Is it test-specific?
-│   ├─ YES → __tests__/helpers.ts
-│   └─ NO → utils/{domain}.ts
-└─ NO → Is it used by 2 files in same domain?
-    ├─ YES → Extract to shared module in that domain
-    └─ NO → Keep as module-level function in the file
-
-Does it have zero instance state?
-├─ YES → Module-level function (not class method)
-└─ NO → Instance method or separate class
-
-Is it pure logic (no I/O, no side effects)?
-├─ YES → lib/{domain}/ for complex logic
-└─ NO → Belongs in utils/ or as helper
+    └─ NO → Does it create a config, matrix, or stack?
+        ├─ YES → Use a factory (createMockMatrix, buildWizardResult, etc.) — NEVER inline
+        └─ NO → Is it a partial object for one test case?
+            ├─ YES → Inline is fine
+            └─ NO → Use factory with overrides parameter
 ```
 
 ---
 
 ## Code Conventions
 
-### File and Directory Naming
-
-**MANDATORY: kebab-case for ALL files and directories**
-
-- Command files: `compile.ts` (NOT `Compile.ts`)
-- Test files: `loader.test.ts`
-- Utility files: `format-yaml.ts`
-- Directories: `lib/configuration/`, `utils/`
-
-### Import/Export Patterns
-
-**MANDATORY: Named exports ONLY (no default exports)**
-
-**Import ordering:**
-
-1. Node.js built-ins (`path`, `fs`, `os`)
-2. External dependencies (`zod`, `yaml`, `oclif`)
-3. Internal workspace paths (`../types`, `./utils`)
-4. Relative imports (`./loader`, `../helpers`)
-
-**Use `.js` extensions on relative imports in new files**
-
-```typescript
-// Example
-import path from "path";
-import { Command } from "@oclif/core";
-import { getErrorMessage } from "../utils/errors.js";
-import { loadMatrix } from "./matrix-loader.js";
-```
-
-### Constants and Magic Numbers
-
-**RULE: No magic numbers or hardcoded strings**
-
-- All numbers → named constants in `SCREAMING_SNAKE_CASE`
-- File names → `STANDARD_FILES.*` from `consts.ts`
-- Directory names → `STANDARD_DIRS.*` from `consts.ts`
-- Exit codes → `EXIT_CODES.*` from `lib/exit-codes.ts`
-- UI symbols → `UI_SYMBOLS.*` from `consts.ts`
-- Colors → `CLI_COLORS.*` from `consts.ts`
-
-```typescript
-// GOOD
-import { STANDARD_FILES, EXIT_CODES } from "./consts.js";
-const metadataPath = path.join(dir, STANDARD_FILES.METADATA_YAML);
-this.error(message, { exit: EXIT_CODES.INVALID_ARGS });
-
-// BAD
-const metadataPath = path.join(dir, "metadata.yaml");
-this.error(message, { exit: 2 });
-```
-
-### TypeScript Enforcement
-
-- Zero `any` without explicit justification comment
-- No `@ts-ignore` or `@ts-expect-error` without explaining comment
-- Use `typedEntries()` / `typedKeys()` from `utils/typed-object.ts` (NOT raw `Object.entries()`)
-- Boundary casts only at data entry points (YAML parse, JSON parse, CLI args) with comments
-- Use Zod schemas at parse boundaries (prefer `safeLoadYamlFile()` from `utils/yaml.ts`)
-- All remaining casts must have comments explaining why
-
-### Error Handling
-
-- Use `getErrorMessage(error)` from `utils/errors.ts` for unknown errors
-- Use `this.handleError(error)` in oclif commands for general errors
-- Use `EXIT_CODES.*` constants (never magic numbers)
-- No silent catch blocks (except existence checks)
-- Logging levels: `warn()` for user issues, `verbose()` for diagnostics, `log()` for always-visible
+- **File naming:** kebab-case for ALL files and directories
+- **Exports:** Named exports only (no default exports). Use `.js` extensions on relative imports in new files.
+- **Constants:** No magic numbers or hardcoded strings — use `STANDARD_FILES.*`, `STANDARD_DIRS.*`, `EXIT_CODES.*`, `UI_SYMBOLS.*`, `CLI_COLORS.*` from `consts.ts`
+- **Error handling:** `getErrorMessage(error)` for unknown errors, `this.handleError(error)` in commands, `EXIT_CODES.*` constants, no silent catch blocks
+- **Logging:** `warn()` for user issues, `verbose()` for diagnostics, `log()` for always-visible
+- **TypeScript:** Zero `any` without justification, no `@ts-ignore` without comment, Zod schemas at parse boundaries, all remaining casts must have comments explaining why
 
 ---
 
-## Quick Checklists
+## Pre-Commit Checklist
 
-### Before Committing Code
+Items not already covered by NEVER/ALWAYS rules above:
 
-- [ ] No `any` without justification
-- [ ] No magic numbers (use named constants from `consts.ts`)
-- [ ] No hardcoded file/dir names (use `STANDARD_FILES.*` / `STANDARD_DIRS.*`)
-- [ ] Named exports only (no default exports)
-- [ ] kebab-case file names
-- [ ] Use `getErrorMessage()` for unknown errors
-- [ ] Use `EXIT_CODES.*` constants
-- [ ] Use `typedEntries()` / `typedKeys()` (not raw Object methods)
-- [ ] Boundary casts have comments
-- [ ] Use `createTempDir()` / `cleanupTempDir()` in tests (not raw `mkdtemp`)
-- [ ] Import test helpers from `__tests__/helpers.ts` (don't redefine)
-- [ ] **ALL test data uses factories/fixtures** — no inline configs, matrices, skills, stacks, or agents
-- [ ] No raw `writeFile` for skill/agent/config test data — use `createCLISkill`, `createUserSkill`, `writeTestSkill`, `writeSourceSkill`, `createTestSource`, `writeProjectConfig`
-- [ ] No inline `SkillsMatrixConfig` or `MergedSkillsMatrix` construction — use pre-built constants from `mock-matrices.ts` or `createMockMatrix()` with test-local variables
-- [ ] Prefer `SKILLS.*` from `test-fixtures.ts` over `createMockSkill()` for standard domain skills
-- [ ] Use pre-built matrix constants (`EMPTY_MATRIX`, `SINGLE_REACT_MATRIX`, etc.) instead of inline `createMockMatrix(SKILLS.*)` calls
-- [ ] Use `createMockMatrix` spread syntax (not record syntax) — `createMockMatrix(SKILLS.react, SKILLS.hono)`
-- [ ] No inline `ProjectConfig`/`ProjectSourceConfig` objects — use `buildProjectConfig()`/`buildSourceConfig()`
-- [ ] No inline `AgentScopeConfig[]` arrays — use `buildAgentConfigs(["web-developer"])`
-- [ ] No inline agent metadata strings — use `AGENT_DEFS` from `mock-agents.ts`
-- [ ] No inline SKILL.md/agent YAML template strings — use `renderSkillMd()`/`renderAgentYaml()` from `content-generators.ts`
-- [ ] No file-private constants exported — only export what is imported by other files
-- [ ] No inline `TestSkill[]` arrays — use constants from `mock-data/mock-skills.ts`
-- [ ] No `as SkillSlug` casts on test data — use valid union members only
-- [ ] No alias/mapping hacks to paper over wrong test data — fix the data at the source
-- [ ] No TODO/task IDs in test describe blocks — describes are purely descriptive
 - [ ] Tests written and passing (`npm test`)
 - [ ] Type check passes (`tsc --noEmit`)
-- [ ] No TypeScript errors
-- [ ] No ESLint errors (if configured)
-
-### Before Submitting PR
-
-- [ ] All tests pass (3319+ tests)
-- [ ] No TypeScript errors
-- [ ] No new ESLint warnings
-- [ ] Code formatted
-- [ ] Branch up to date with main
-- [ ] Meaningful commit messages
-- [ ] PR description explains changes
+- [ ] No ESLint errors
 - [ ] No `console.log` left in code
 - [ ] No commented-out code
-- [ ] Related documentation updated (`docs/*.md`)
+- [ ] Use `createTempDir()` / `cleanupTempDir()` in tests (not raw `mkdtemp`)
 - [ ] Type definitions updated if public API changed
-- [ ] Added JSDoc to exported functions over 20 LOC
 
 ---
 

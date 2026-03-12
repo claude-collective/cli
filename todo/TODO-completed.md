@@ -105,3 +105,5 @@
 - **R-05** (2026-03-11): Centralize wizard hotkeys and labels -- Created `hotkeys.ts` registry with `HOTKEY_*` constants and `isHotkey()` helper.
 - **R-09** (2026-03-11): Consolidate test fixtures -- Canonical skill registry (`SKILLS.*`), unified content generators (`renderSkillMd`, `renderAgentYaml`, `renderConfigTs`), simplified matrix creation (`createMockMatrix` spread syntax).
 - **R-01** (2026-03-11): `loadStackById` checks default stacks internally -- Moved `defaultStacks` fallback inside `loadStackById`. Removed duplicated fallback from `local-installer.ts` and `stack-plugin-compiler.ts`.
+- **D-91** (2026-03-12): Per-category skill constraints in config-types.ts -- Subsumed by D-92.
+- **D-92** (2026-03-12): Generate static matrix from source (see [implementation plan](./D-92-generated-matrix.md)) -- Done.

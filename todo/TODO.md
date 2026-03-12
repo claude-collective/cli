@@ -2,9 +2,6 @@
 
 | ID   | Task                                                                                                                            | Status           |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| D-85 | Create a proper `SkillId` union type from all known skills, enforce in tests                                                    | Done (R-07)      |
-| D-91 | Generate per-category skill constraints in config-types.ts (see [plan](#d-91-per-category-skill-constraints-in-config-typests)) | Subsumed by D-92 |
-| D-92 | Generate static matrix from source (see [implementation plan](./D-92-generated-matrix.md))                                      | Draft            |
 | D-87 | Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries                                                  | Ready for Dev    |
 | D-88 | Audit and remove multi-tier resolution fallbacks — data should match or fail, not guess                                         | Ready for Dev    |
 | D-89 | Audit and remove silent fallbacks on required data — `findSkill` → `getSkill`, remove `?.`/`?? ""` patterns                     | Ready for Dev    |
@@ -120,45 +117,6 @@ Create a configuration **skill** (not a sub-agent) that gives Claude deep expert
 - [ ] Validates all output against schema rules (embedded knowledge)
 - [ ] Refuses to use bare category names (enforces domain-prefix)
 - [ ] Loads correctly via Skill tool for both users and other agents
-
----
-
-### Config Types
-
-#### D-91: Per-category skill constraints in config-types.ts
-
-**Priority:** Medium
-**Depends on:** R-07 (complete)
-
-The generated `.claude-src/config-types.ts` currently uses flat unions — any `SkillId` can be assigned under any `Category` in `StackAgentConfig`. Generate per-category skill types so TypeScript enforces that only valid skills appear under each category.
-
-**Current (loose):**
-
-```typescript
-export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;
-```
-
-**Proposed (constrained):**
-
-```typescript
-type SkillAssignment<S extends SkillId> = S | { id: S; preloaded: boolean };
-
-export type StackAgentConfig = {
-  "web-framework"?: SkillAssignment<"web-framework-react" | "web-framework-vue-composition-api" | ...>;
-  "web-state"?: SkillAssignment<"web-state-zustand" | "web-state-pinia" | ...>;
-  "api-framework"?: SkillAssignment<"api-framework-hono" | "api-framework-express" | ...>;
-  // ... one property per category, each constrained to its own skills
-};
-```
-
-**Key constraint:** Only generate types for categories and skills that are actually selected/installed in the project config. The writer already receives `ProjectConfig` and narrows unions to installed items — extend this to per-category grouping. Categories with no selected skills should not appear as properties.
-
-**Implementation:** Change is entirely within `config-types-writer.ts`. The `generateConfigTypesSource` function already has `matrix.skills` (with each skill's category) and `matrix.categories` (with domain info). Group skills by category and emit per-category types instead of one flat `SkillId` union feeding into `Partial<Record<Category, SkillAssignment>>`.
-
-**Key files:**
-
-- `src/cli/lib/configuration/config-types-writer.ts` — generation logic
-- `src/cli/lib/configuration/__tests__/config-types-writer.test.ts` — tests
 
 ---
 
