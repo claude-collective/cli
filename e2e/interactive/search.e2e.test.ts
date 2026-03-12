@@ -408,28 +408,6 @@ describe("search command", () => {
     });
   });
 
-  describe("--source flag in interactive mode", () => {
-    // NOTE: search interactive mode still hardcodes sourceFlag: undefined
-    // (src/cli/commands/search.tsx:184). This test passes because the default
-    // source also contains react, not because --source is respected.
-    it("should respect --source flag in interactive mode", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      session = new TerminalSession(["search", "--source", sourceDir!], tempDir, {
-        rows: 40,
-        cols: 120,
-      });
-
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
-
-      // If --source worked, the search would show skills from our E2E source
-      // (which includes web-framework-react, web-testing-vitest, etc.)
-      const screen = session.getScreen();
-      expect(screen).toContain("react");
-    });
-  });
-
   describe("cancellation", () => {
     it("should exit cleanly when Ctrl+C is pressed", async () => {
       tempDir = await createTempDir();

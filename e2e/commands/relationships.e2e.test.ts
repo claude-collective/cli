@@ -22,7 +22,7 @@ describe("slug-based relationship rules", () => {
         relationships: {
           conflicts: [
             {
-              skills: ["react" as SkillSlug, "angular" as SkillSlug],
+              skills: ["react", "angular-standalone"],
               reason: "React and Angular are mutually exclusive frameworks",
             },
           ],
@@ -34,7 +34,7 @@ describe("slug-based relationship rules", () => {
 
       // Matrix health check should detect that "angular" has no matching skill in the source
       expect(combined).toContain("unresolved reference");
-      expect(combined).toContain("angular");
+      expect(combined).toContain("angular-standalone");
     });
 
     it("should resolve conflict slugs to canonical IDs shown in info output", async () => {
@@ -43,7 +43,7 @@ describe("slug-based relationship rules", () => {
         relationships: {
           conflicts: [
             {
-              skills: ["react" as SkillSlug, "zustand" as SkillSlug],
+              skills: ["react", "zustand"],
               reason: "Test conflict between react and zustand",
             },
           ],
@@ -73,8 +73,8 @@ describe("slug-based relationship rules", () => {
         relationships: {
           requires: [
             {
-              skill: "zustand" as SkillSlug,
-              needs: ["angular" as SkillSlug],
+              skill: "zustand",
+              needs: ["angular-standalone"],
               reason: "Zustand needs Angular (testing unresolved reference)",
             },
           ],
@@ -85,7 +85,7 @@ describe("slug-based relationship rules", () => {
       const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
       expect(combined).toContain("unresolved reference");
-      expect(combined).toContain("angular");
+      expect(combined).toContain("angular-standalone");
     });
 
     it("should resolve require slugs to canonical IDs shown in info output", async () => {
@@ -94,8 +94,8 @@ describe("slug-based relationship rules", () => {
         relationships: {
           requires: [
             {
-              skill: "zustand" as SkillSlug,
-              needs: ["react" as SkillSlug],
+              skill: "zustand",
+              needs: ["react"],
               reason: "Zustand requires React as a framework",
             },
           ],
@@ -123,7 +123,7 @@ describe("slug-based relationship rules", () => {
         relationships: {
           recommends: [
             {
-              skill: "hono" as SkillSlug,
+              skill: "hono",
               reason: "Hono is the recommended API framework for E2E testing",
             },
           ],
@@ -146,7 +146,7 @@ describe("slug-based relationship rules", () => {
         relationships: {
           recommends: [
             {
-              skill: "hono" as SkillSlug,
+              skill: "hono",
               reason: "Hono is the recommended API framework for E2E testing",
             },
           ],
@@ -173,20 +173,20 @@ describe("slug-based relationship rules", () => {
         relationships: {
           conflicts: [
             {
-              skills: ["react" as SkillSlug, "hono" as SkillSlug],
+              skills: ["react", "hono"],
               reason: "Test conflict with valid slugs only",
             },
           ],
           requires: [
             {
-              skill: "zustand" as SkillSlug,
-              needs: ["react" as SkillSlug],
+              skill: "zustand",
+              needs: ["react"],
               reason: "Zustand requires React",
             },
           ],
           recommends: [
             {
-              skill: "vitest" as SkillSlug,
+              skill: "vitest",
               reason: "Vitest is recommended",
             },
           ],
@@ -234,7 +234,7 @@ describe("slug-based relationship rules", () => {
         relationships: {
           discourages: [
             {
-              skills: ["react" as SkillSlug, "vue" as SkillSlug],
+              skills: ["react", "vue-composition-api"],
               reason: "React and Vue are discouraged together",
             },
           ],
@@ -244,9 +244,9 @@ describe("slug-based relationship rules", () => {
 
       const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
-      // "vue" slug does not exist in the E2E source
+      // "vue-composition-api" slug does not exist in the E2E source
       expect(combined).toContain("unresolved reference");
-      expect(combined).toContain("vue");
+      expect(combined).toContain("vue-composition-api");
     });
   });
 
@@ -259,20 +259,20 @@ describe("slug-based relationship rules", () => {
         relationships: {
           conflicts: [
             {
-              skills: ["react" as SkillSlug, "hono" as SkillSlug],
+              skills: ["react", "hono"],
               reason: "Framework conflict for testing",
             },
           ],
           requires: [
             {
-              skill: "vitest" as SkillSlug,
-              needs: ["react" as SkillSlug],
+              skill: "vitest",
+              needs: ["react"],
               reason: "Vitest needs React in this test",
             },
           ],
           recommends: [
             {
-              skill: "hono" as SkillSlug,
+              skill: "hono",
               reason: "Hono is the best API framework",
             },
           ],

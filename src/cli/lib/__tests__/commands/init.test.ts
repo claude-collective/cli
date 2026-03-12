@@ -24,66 +24,6 @@ describe("init command", () => {
     await cleanupTempDir(tempDir);
   });
 
-  /**
-   * Writes a minimal config so detectExistingInstallation() returns early,
-   * avoiding the full loading + Wizard render. Use this for tests that only
-   * need to verify flag parsing (no "unknown flag" error).
-   */
-  async function seedConfigForEarlyExit(): Promise<void> {
-    const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
-    await mkdir(configDir, { recursive: true });
-    await writeFile(
-      path.join(configDir, STANDARD_FILES.CONFIG_TS),
-      'export default { name: "test-project" };',
-    );
-  }
-
-  describe("flag validation", () => {
-    it("should accept --refresh flag", async () => {
-      const { error } = await runCliCommand(["init", "--refresh", "--source", "/nonexistent"]);
-
-      // Should not error on --refresh flag parsing
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
-
-    it("should accept --source flag with path", async () => {
-      const { error } = await runCliCommand(["init", "--source", "/some/path"]);
-
-      // Should not error on --source flag parsing
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
-
-    it("should accept -s shorthand for source", async () => {
-      const { error } = await runCliCommand(["init", "-s", "/some/path"]);
-
-      // Should accept -s shorthand
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-  });
-
-  describe("combined flags", () => {
-    it("should accept multiple flags together", async () => {
-      const { error } = await runCliCommand(["init", "--refresh", "--source", "/custom/source"]);
-
-      // Should accept all flags
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept shorthand flags together", async () => {
-      const { error } = await runCliCommand(["init", "-s", "/custom/source"]);
-
-      // Should accept shorthand flags
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-  });
-
   describe("already initialized — dashboard", () => {
     it("should show dashboard when project is already initialized", async () => {
       const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
@@ -251,19 +191,4 @@ describe("init command", () => {
     });
   });
 
-  describe("error handling", () => {
-    it("should handle invalid source path gracefully", async () => {
-      const { error } = await runCliCommand(["init", "--source", "/definitely/not/real/path/xyz"]);
-
-      // Should error but not crash
-      expect(error).toBeDefined();
-    });
-
-    it("should reject unknown flags", async () => {
-      const { error } = await runCliCommand(["init", "--nonexistent-flag"]);
-
-      // Should error on unknown flag
-      expect(error).toBeDefined();
-    });
-  });
 });

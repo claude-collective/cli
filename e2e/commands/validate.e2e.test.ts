@@ -331,7 +331,7 @@ describe("validate command", () => {
   relationships: {
     conflicts: [
       {
-        skills: ["react", "angular"],
+        skills: ["react", "angular-standalone"],
         reason: "Testing unresolved reference detection",
       },
     ],
@@ -348,7 +348,7 @@ describe("validate command", () => {
       // Matrix health check should detect the unresolved reference (angular not in source)
       expect(combined).toContain("Checked 2 skill(s)");
       expect(combined).toContain("unresolved reference");
-      expect(combined).toContain("angular");
+      expect(combined).toContain("angular-standalone");
     });
   });
 
