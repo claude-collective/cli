@@ -48,9 +48,12 @@ async function loadSkillsFromDir(skillsDir: string, pathPrefix = ""): Promise<Sk
       const content = await readFile(skillPath);
       const frontmatter = parseFrontmatter(content, skillPath);
 
-      const skillName = frontmatter?.name || path.basename(skillDir);
-      // Boundary cast: skill name from frontmatter/directory is an untyped string
-      const canonicalId = skillName as SkillId;
+      if (!frontmatter?.name) {
+        warn(`Skipping skill in '${skillDirName}': missing or invalid frontmatter name`);
+        continue;
+      }
+
+      const canonicalId = frontmatter.name;
 
       const skill: SkillDefinition = {
         id: canonicalId,

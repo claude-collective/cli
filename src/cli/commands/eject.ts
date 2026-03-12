@@ -33,6 +33,10 @@ import {
 const EJECT_TYPES = ["agent-partials", "templates", "skills", "all"] as const;
 type EjectType = (typeof EJECT_TYPES)[number];
 
+function isEjectType(value: string): value is EjectType {
+  return (EJECT_TYPES as readonly string[]).includes(value);
+}
+
 export default class Eject extends BaseCommand {
   static summary = "Eject skills, agent partials, or templates for local customization";
   static description =
@@ -67,7 +71,7 @@ export default class Eject extends BaseCommand {
     type: Args.string({
       description: "What to eject: agent-partials, templates, skills, all",
       required: false,
-      options: EJECT_TYPES as unknown as string[],
+      options: [...EJECT_TYPES],
     }),
   };
 
@@ -98,7 +102,7 @@ export default class Eject extends BaseCommand {
       });
     }
 
-    if (!EJECT_TYPES.includes(args.type as EjectType)) {
+    if (!isEjectType(args.type)) {
       this.error(`Unknown eject type: ${args.type}`, {
         exit: EXIT_CODES.INVALID_ARGS,
       });
@@ -128,7 +132,7 @@ export default class Eject extends BaseCommand {
       this.log(`Output directory: ${outputBase}`);
     }
 
-    const ejectType = args.type as EjectType;
+    const ejectType = args.type;
     const directOutput = !!flags.output;
 
     let sourceResult: SourceLoadResult | undefined;

@@ -5,7 +5,7 @@ import type { InstallMode } from "../lib/installation/index.js";
 import { deriveInstallMode as sharedDeriveInstallMode } from "../lib/installation/installation.js";
 import type { AgentScopeConfig, SkillConfig } from "../types/config.js";
 import { resolveAlias } from "../lib/matrix/index.js";
-import { matrix } from "../lib/matrix/matrix-provider.js";
+import { matrix, getSkillById } from "../lib/matrix/matrix-provider.js";
 import type {
   AgentName,
   BoundSkill,
@@ -22,6 +22,7 @@ import type {
 import type { SourceOption } from "../components/wizard/source-grid.js";
 import { warn } from "../utils/logger.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
+import { isCategory } from "../utils/type-guards.js";
 
 const BUILT_IN_DOMAINS: Domain[] = ["web", "api", "cli", "mobile", "shared"];
 
@@ -95,8 +96,12 @@ function resolveSkillForPopulation(
     return null;
   }
 
-  // Boundary cast: category is a Category at the data boundary
-  const subcat = skill.category as Category;
+  if (!isCategory(skill.category)) {
+    warn(`Installed skill '${skillId}' has non-standard category '${skill.category}' — skipping`);
+    return null;
+  }
+
+  const subcat = skill.category;
   const domain = categories[subcat]?.domain;
   if (!domain) {
     warn(`Installed skill '${skillId}' has unknown category '${skill.category}' — skipping`);
@@ -436,30 +441,57 @@ export type WizardState = {
   }[];
 };
 
-const createInitialState = () => ({
-  step: "stack" as WizardStep,
-  approach: null as "stack" | "scratch" | null,
-  selectedStackId: null as string | null,
-  stackAction: null as "defaults" | "customize" | null,
-  selectedDomains: [] as Domain[],
+/** State-only fields from WizardState (excludes actions/getters). Used to type createInitialState(). */
+type WizardStateData = Pick<
+  WizardState,
+  | "step"
+  | "approach"
+  | "selectedStackId"
+  | "stackAction"
+  | "selectedDomains"
+  | "currentDomainIndex"
+  | "domainSelections"
+  | "_stackDomainSelections"
+  | "showLabels"
+  | "skillConfigs"
+  | "focusedSkillId"
+  | "customizeSources"
+  | "showSettings"
+  | "showHelp"
+  | "enabledSources"
+  | "selectedAgents"
+  | "agentConfigs"
+  | "focusedAgentId"
+  | "boundSkills"
+  | "lockedSkillIds"
+  | "lockedAgentNames"
+  | "history"
+>;
+
+const createInitialState = (): WizardStateData => ({
+  step: "stack",
+  approach: null,
+  selectedStackId: null,
+  stackAction: null,
+  selectedDomains: [],
   currentDomainIndex: 0,
-  domainSelections: {} as DomainSelections,
+  domainSelections: {},
   /** Snapshot of domainSelections from populateFromStack/populateFromSkillIds, used to restore on domain re-toggle */
-  _stackDomainSelections: null as DomainSelections | null,
+  _stackDomainSelections: null,
   showLabels: false,
-  skillConfigs: [] as SkillConfig[],
-  focusedSkillId: null as SkillId | null,
+  skillConfigs: [],
+  focusedSkillId: null,
   customizeSources: false,
   showSettings: false,
   showHelp: false,
-  enabledSources: {} as Record<string, boolean>,
-  selectedAgents: [] as AgentName[],
-  agentConfigs: [] as AgentScopeConfig[],
-  focusedAgentId: null as AgentName | null,
-  boundSkills: [] as BoundSkill[],
-  lockedSkillIds: [] as SkillId[],
-  lockedAgentNames: [] as AgentName[],
-  history: [] as WizardStep[],
+  enabledSources: {},
+  selectedAgents: [],
+  agentConfigs: [],
+  focusedAgentId: null,
+  boundSkills: [],
+  lockedSkillIds: [],
+  lockedAgentNames: [],
+  history: [],
 });
 
 export const useWizardStore = create<WizardState>((set, get) => ({
@@ -902,8 +934,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setAllSourcesPlugin: () => {
     set((state) => ({
       skillConfigs: state.skillConfigs.map((sc) => {
-        const skill = matrix.skills[sc.id];
-        if (skill?.availableSources) {
+        const skill = getSkillById(sc.id);
+        if (skill.availableSources) {
           const marketplaceSource = skill.availableSources.find((s) => s.type !== "local");
           if (marketplaceSource) {
             return { ...sc, source: marketplaceSource.name };
@@ -921,13 +953,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
     return selectedTechnologies.map((tech) => {
       const skillId = resolveAlias(tech);
-      const skill = matrix.skills[skillId];
+      const skill = getSkillById(skillId);
       const configEntry = skillConfigs.find((sc) => sc.id === skillId);
       const selectedSource =
-        configEntry?.source || skill?.activeSource?.name || DEFAULT_PUBLIC_SOURCE_NAME;
-      const slug = skill?.slug ?? "";
+        configEntry?.source || skill.activeSource?.name || DEFAULT_PUBLIC_SOURCE_NAME;
+      const slug = skill.slug;
 
-      const sortedSources = [...(skill?.availableSources || [])].sort(
+      const sortedSources = [...(skill.availableSources || [])].sort(
         (a, b) => getSourceSortTier(a) - getSourceSortTier(b),
       );
 

@@ -13,10 +13,10 @@ import {
   PLUGIN_MANIFEST_DIR,
   PLUGIN_MANIFEST_FILE,
 } from "../../consts";
-import type { PluginManifest, ResolvedSkill, SkillId } from "../../types";
+import type { PluginManifest, SkillId } from "../../types";
 import { matrix } from "../matrix/matrix-provider";
-import { typedEntries } from "../../utils/typed-object";
 import { pluginManifestSchema } from "../schemas";
+import { parseFrontmatter } from "../loading/loader";
 
 const MAX_SKILL_NAME_LENGTH = 100;
 
@@ -74,57 +74,32 @@ export async function getPluginSkillIds(pluginSkillsDir: string): Promise<SkillI
   const skillFiles = await glob("**/SKILL.md", pluginSkillsDir);
   const skillIds: SkillId[] = [];
 
-  const aliasToId = new Map<string, SkillId>();
-  for (const [id, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
-    if (!skill) continue;
-    if (skill.slug) {
-      aliasToId.set(skill.slug.toLowerCase(), id);
-    }
-  }
-
-  const dirToId = new Map<string, SkillId>();
-  for (const [id] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
-    dirToId.set(id.toLowerCase(), id);
-  }
-
   const fileContents = await Promise.all(
     skillFiles.map((skillFile) => readFile(path.join(pluginSkillsDir, skillFile))),
   );
 
   for (const [skillFile, content] of zip(skillFiles, fileContents)) {
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-    if (frontmatterMatch) {
-      const frontmatter = frontmatterMatch[1];
-      const nameMatch = frontmatter.match(/^name:\s*["']?(.+?)["']?\s*$/m);
-      if (nameMatch) {
-        const skillName = nameMatch[1].trim();
-        if (skillName.length === 0) {
-          warn(`Skipping plugin skill '${skillFile}': empty name in frontmatter`);
-          continue;
-        }
-        if (skillName.length > MAX_SKILL_NAME_LENGTH) {
-          warn(
-            `Skipping plugin skill '${skillFile}': name exceeds ${MAX_SKILL_NAME_LENGTH} characters`,
-          );
-          continue;
-        }
-        if (matrix.skills[skillName as SkillId]) {
-          skillIds.push(skillName as SkillId);
-          continue;
-        }
-        const skillId = aliasToId.get(skillName.toLowerCase());
-        if (skillId) {
-          skillIds.push(skillId);
-          continue;
-        }
-      }
+    const fullPath = path.join(pluginSkillsDir, skillFile);
+    const frontmatter = parseFrontmatter(content, fullPath);
+
+    if (!frontmatter?.name) {
+      warn(`Skipping plugin skill '${skillFile}': missing or invalid frontmatter name`);
+      continue;
     }
 
-    const dirPath = path.dirname(skillFile);
-    const dirName = path.basename(dirPath);
-    const skillId = dirToId.get(dirName.toLowerCase());
-    if (skillId) {
-      skillIds.push(skillId);
+    const skillName = frontmatter.name;
+
+    if (skillName.length > MAX_SKILL_NAME_LENGTH) {
+      warn(
+        `Skipping plugin skill '${skillFile}': name exceeds ${MAX_SKILL_NAME_LENGTH} characters`,
+      );
+      continue;
+    }
+
+    if (matrix.skills[skillName]) {
+      skillIds.push(skillName);
+    } else {
+      warn(`Skipping plugin skill '${skillFile}': '${skillName}' not found in skills matrix`);
     }
   }
 

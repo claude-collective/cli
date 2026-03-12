@@ -92,8 +92,8 @@ function buildCompileConfig(params: BuildCompileConfigParams): BuildCompileConfi
   const { agentNames, allAgents, projectConfig, pluginDir } = params;
   const warnings: string[] = [];
 
-  // Store initialization: accumulator filled below for each agent in agentNames
-  const compileAgents = {} as Record<AgentName, CompileAgentConfig>;
+  // Store initialization: accumulator populated below for each agent in agentNames
+  const compileAgents: Record<string, CompileAgentConfig> = {};
   for (const agentName of agentNames) {
     if (allAgents[agentName]) {
       const agentStack = projectConfig?.stack?.[agentName];
@@ -157,12 +157,11 @@ export async function recompileAgents(
   const builtinAgents = await loadAllAgents(sourcePath);
   const projectAgents = projectDir ? await loadProjectAgents(projectDir) : {};
 
-  // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
   // Priority: project agents > built-in agents
-  const allAgents = {
+  const allAgents: Record<AgentName, AgentDefinition> = {
     ...builtinAgents,
     ...projectAgents,
-  } as Record<AgentName, AgentDefinition>;
+  };
 
   const agentNames = await resolveAgentNames({
     specifiedAgents: options.agents,

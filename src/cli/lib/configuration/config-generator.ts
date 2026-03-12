@@ -25,7 +25,8 @@ export type ProjectConfigOptions = {
 
 function extractCategoryFromPath(categoryPath: CategoryPath): Category | undefined {
   if (categoryPath === "local") return undefined;
-  return categoryPath as Category;
+  // TypeScript narrows CategoryPath to Category after excluding "local"
+  return categoryPath;
 }
 
 /**
@@ -97,6 +98,7 @@ export function generateProjectConfigFromSkills(
       ? Object.fromEntries(
           agentList.map((agentId) => [
             agentId,
+            // Structural cast: Object.fromEntries returns Record<string, V>, narrowing to typed keys
             Object.fromEntries(
               validSkills.map(({ skillId, category }) => [
                 category,
@@ -138,6 +140,7 @@ export function generateProjectConfigFromSkills(
  * @returns Partial mapping of agent names to category-skill assignment mappings
  */
 export function buildStackProperty(stack: Stack): Partial<Record<AgentName, StackAgentConfig>> {
+  // Structural casts: Object.fromEntries returns Record<string, V>, narrowing to typed keys
   return Object.fromEntries(
     typedEntries<AgentName, StackAgentConfig>(stack.agents)
       .filter(([, agentConfig]) => agentConfig && typedKeys<Category>(agentConfig).length > 0)

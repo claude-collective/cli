@@ -3,6 +3,7 @@ import { BUILT_IN_DOMAIN_ORDER } from "../../consts.js";
 import { matrix, findStack } from "../../lib/matrix/matrix-provider.js";
 import type { Domain, ResolvedStack } from "../../types/index.js";
 import { typedKeys } from "../../utils/typed-object.js";
+import { isDomain } from "../../utils/type-guards.js";
 
 export function getDomainDisplayName(domain: string): string {
   const displayNames: Record<Domain, string> = {
@@ -13,7 +14,7 @@ export function getDomainDisplayName(domain: string): string {
     shared: "Shared",
   };
   return (
-    (domain in displayNames ? displayNames[domain as Domain] : null) ??
+    (isDomain(domain) ? displayNames[domain] : null) ??
     domain.charAt(0).toUpperCase() + domain.slice(1)
   );
 }

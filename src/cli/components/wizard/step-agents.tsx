@@ -6,6 +6,7 @@ import { useWizardStore } from "../../stores/wizard-store.js";
 import { matrix } from "../../lib/matrix/matrix-provider.js";
 import type { AgentName, MergedSkillsMatrix } from "../../types/index.js";
 import { typedKeys } from "../../utils/typed-object.js";
+import { isAgentName } from "../../utils/type-guards.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { getDomainDisplayName } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
@@ -128,13 +129,15 @@ function buildAgentGroups(matrix: MergedSkillsMatrix): AgentGroup[] {
   // Group custom agents by explicit domain (from metadata.yaml) or kebab prefix fallback
   const customGroupMap = new Map<string, AgentItem[]>();
   for (const agentId of customAgentIds) {
-    // Boundary cast: custom agent names from matrix stacks are not in the AgentName union
-    const explicitDomain = matrix.agentDefinedDomains?.[agentId as AgentName];
+    const explicitDomain = isAgentName(agentId)
+      ? matrix.agentDefinedDomains?.[agentId]
+      : undefined;
     const domainKey = explicitDomain ?? (agentId.split("-")[0] || "custom");
     const groupLabel = getDomainDisplayName(domainKey);
     if (!customGroupMap.has(groupLabel)) {
       customGroupMap.set(groupLabel, []);
     }
+    // Boundary cast: custom agent names from marketplace stacks are not in the AgentName union
     customGroupMap.get(groupLabel)!.push({
       id: agentId as AgentName,
       label: agentIdToLabel(agentId),

@@ -43,7 +43,7 @@ function hashStackConfig(stack: ProjectConfig): string {
     `name:${stack.name}`,
     `description:${stack.description ?? ""}`,
     `skills:${stackSkillIds.join(",")}`,
-    `agents:${(stack.agents || [])
+    `agents:${stack.agents
       .map((a) => a.name)
       .sort()
       .join(",")}`,
@@ -212,8 +212,7 @@ export async function compileStackPlugin(
 
   const cliAgents = await loadAllAgents(PROJECT_ROOT);
   const localAgents = await loadAllAgents(localAgentRoot);
-  // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
-  const agents = { ...cliAgents, ...localAgents } as Record<AgentName, AgentDefinition>;
+  const agents: Record<AgentName, AgentDefinition> = { ...cliAgents, ...localAgents };
 
   verbose(
     `  Loaded ${Object.keys(localAgents).length} local agents, ${Object.keys(cliAgents).length} CLI agents`,
@@ -243,6 +242,7 @@ export async function compileStackPlugin(
         scope: "project" as const,
       })),
       skills: [...agentSkillIds].map((id) => ({ id, scope: "project" as const, source: "local" })),
+      // Structural cast: Partial<Record<AgentName, V>> to Record<string, V> (no undefined values in practice)
       stack: buildStackProperty(newStack) as ProjectConfig["stack"],
     };
   } else {

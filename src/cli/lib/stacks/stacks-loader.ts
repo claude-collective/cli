@@ -29,6 +29,8 @@ const stacksCache = new Map<string, Stack[]>();
  *   3. array: `methodology: [{ id: ..., preloaded: true }, { id: ... }]`
  */
 export function normalizeAgentConfig(agentConfig: Record<string, unknown>): StackAgentConfig {
+  // Boundary casts: Zod-parsed config has loose types (bare strings, objects, arrays)
+  // that are normalized to typed SkillAssignment[] values
   return mapValues(agentConfig, (value) => {
     const items = Array.isArray(value) ? value : [value];
     return items.map(

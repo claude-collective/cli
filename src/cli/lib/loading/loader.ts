@@ -7,6 +7,7 @@ import { verbose, warn } from "../../utils/logger";
 import { CLAUDE_SRC_DIR, DIRS, STANDARD_FILES } from "../../consts";
 import type {
   AgentDefinition,
+  AgentName,
   SkillDefinition,
   SkillDefinitionMap,
   SkillFrontmatter,
@@ -32,7 +33,9 @@ export function parseFrontmatter(content: string, filePath?: string): SkillFront
   return parsed.data as SkillFrontmatter;
 }
 
-export async function loadAllAgents(projectRoot: string): Promise<Record<string, AgentDefinition>> {
+// Boundary cast: agent keys come from agentYamlConfigSchema which types config.id as AgentName;
+// custom agents (not in the union) are accepted by the schema's z.string() base
+export async function loadAllAgents(projectRoot: string): Promise<Record<AgentName, AgentDefinition>> {
   const agents: Record<string, AgentDefinition> = {};
   const agentSourcesDir = path.join(projectRoot, DIRS.agents);
 
@@ -65,9 +68,10 @@ export async function loadAllAgents(projectRoot: string): Promise<Record<string,
   return agents;
 }
 
+// Boundary cast: agent keys come from agentYamlConfigSchema which types config.id as AgentName
 export async function loadProjectAgents(
   projectRoot: string,
-): Promise<Record<string, AgentDefinition>> {
+): Promise<Record<AgentName, AgentDefinition>> {
   const agents: Record<string, AgentDefinition> = {};
   const projectAgentsDir = path.join(projectRoot, CLAUDE_SRC_DIR, "agents");
 

@@ -11,6 +11,7 @@ import { defaultRules } from "../configuration/default-rules";
 import { defaultStacks } from "../configuration/default-stacks";
 import { LOCAL_DEFAULTS } from "../metadata-keys";
 import type {
+  AgentDefinition,
   AgentName,
   CategoryMap,
   Domain,
@@ -277,10 +278,9 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   // Collect explicit domain definitions from agent metadata.yaml files
   const agents = await loadAllAgents(basePath);
   const agentDefinedDomains: Partial<Record<AgentName, Domain>> = {};
-  for (const [agentId, agentDef] of typedEntries(agents)) {
+  for (const [agentId, agentDef] of typedEntries<AgentName, AgentDefinition>(agents)) {
     if (agentDef.domain) {
-      // Boundary cast: agent IDs from YAML may not be in the AgentName union
-      agentDefinedDomains[agentId as AgentName] = agentDef.domain;
+      agentDefinedDomains[agentId] = agentDef.domain;
     }
   }
   if (typedKeys(agentDefinedDomains).length > 0) {
@@ -424,12 +424,10 @@ function mergeLocalSkillsIntoMatrix(
 
     // Ensure the skill's category exists in matrix.categories so that
     // config-types generation can discover its domain and category.
-    // Boundary cast: CategoryPath may not match Category for custom categories
-    const categoryKey = category as Category;
-    if (!matrix.categories[categoryKey] && metadata.domain) {
-      // Boundary cast: metadata.domain may be a custom domain not in the Domain union
-      matrix.categories[categoryKey] = {
-        id: categoryKey,
+    // Skip "local" — it is a pseudo-category, not a real Category union member.
+    if (category !== "local" && !matrix.categories[category] && metadata.domain) {
+      matrix.categories[category] = {
+        id: category,
         displayName: category,
         description: `Local skill category`,
         domain: metadata.domain,

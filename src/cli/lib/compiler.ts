@@ -38,15 +38,15 @@ const LIQUID_SYNTAX_PATTERN = /\{\{|\}\}|\{%|%\}/g;
  * @param fieldName - Name of the field (for warning messages)
  * @returns Sanitized string with Liquid delimiters removed
  */
-export function sanitizeLiquidSyntax(value: string, fieldName: string): string {
+export function sanitizeLiquidSyntax<T extends string>(value: T, fieldName: string): T {
   if (!LIQUID_SYNTAX_PATTERN.test(value)) return value;
   LIQUID_SYNTAX_PATTERN.lastIndex = 0;
   const sanitized = value.replace(LIQUID_SYNTAX_PATTERN, "");
   warn(`Stripped Liquid template syntax from '${fieldName}' — possible template injection attempt`);
-  return sanitized;
+  return sanitized as T;
 }
 
-function sanitizeString(value: string | undefined, fieldName: string): string | undefined {
+function sanitizeString<T extends string>(value: T | undefined, fieldName: string): T | undefined {
   if (value === undefined) return undefined;
   return sanitizeLiquidSyntax(value, fieldName);
 }
@@ -62,10 +62,10 @@ function sanitizeStringArray(
 function sanitizeSkills(skills: Skill[]): Skill[] {
   return skills.map((s) => ({
     ...s,
-    id: sanitizeLiquidSyntax(s.id, "skill.id") as Skill["id"],
+    id: sanitizeLiquidSyntax(s.id, "skill.id"),
     description: sanitizeLiquidSyntax(s.description, "skill.description"),
     usage: sanitizeLiquidSyntax(s.usage, "skill.usage"),
-    pluginRef: sanitizeString(s.pluginRef, "skill.pluginRef") as Skill["pluginRef"],
+    pluginRef: sanitizeString(s.pluginRef, "skill.pluginRef"),
   }));
 }
 
@@ -82,18 +82,15 @@ export function sanitizeCompiledAgentData(data: CompiledAgentData): CompiledAgen
     description: sanitizeLiquidSyntax(data.agent.description, "agent.description"),
     tools: sanitizeStringArray(data.agent.tools, "agent.tools") ?? data.agent.tools,
     disallowedTools: sanitizeStringArray(data.agent.disallowedTools, "agent.disallowedTools"),
-    model: sanitizeString(data.agent.model, "agent.model") as AgentConfig["model"],
-    permissionMode: sanitizeString(
-      data.agent.permissionMode,
-      "agent.permissionMode",
-    ) as AgentConfig["permissionMode"],
+    model: sanitizeString(data.agent.model, "agent.model"),
+    permissionMode: sanitizeString(data.agent.permissionMode, "agent.permissionMode"),
   };
 
   const sanitizedSkills = sanitizeSkills(data.skills);
   const sanitizedPreloaded = sanitizeSkills(data.preloadedSkills);
   const sanitizedDynamic = sanitizeSkills(data.dynamicSkills);
   const sanitizedPreloadedIds = data.preloadedSkillIds.map(
-    (id) => sanitizeLiquidSyntax(String(id), "preloadedSkillId") as typeof id,
+    (id) => sanitizeLiquidSyntax(id, "preloadedSkillId"),
   );
 
   return {

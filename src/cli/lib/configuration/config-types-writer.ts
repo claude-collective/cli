@@ -151,13 +151,11 @@ function buildSkillsByCategory(
 
   for (const id of skillIdSet) {
     const skill = matrix.skills[id];
-    if (!skill?.category) continue;
-    // Boundary cast: CategoryPath to Category for map key
-    const cat = skill.category as Category;
-    if (!categorySet.has(cat)) continue;
-    const existing = result.get(cat) ?? [];
+    if (!skill?.category || skill.category === "local") continue;
+    if (!categorySet.has(skill.category)) continue;
+    const existing = result.get(skill.category) ?? [];
     existing.push(id);
-    result.set(cat, existing);
+    result.set(skill.category, existing);
   }
 
   return result;
@@ -200,8 +198,7 @@ export function loadConfigTypesDataInBackground(
     const cliAgents = await loadAllAgents(PROJECT_ROOT);
     const sourceAgents = await loadAllAgents(sourceResult.sourcePath);
     const allAgents = { ...cliAgents, ...sourceAgents };
-    // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
-    const agentNames = Object.keys(allAgents) as AgentName[];
+    const agentNames = typedKeys<AgentName>(allAgents);
     const customAgentNames = agentNames.filter((name) => allAgents[name]?.custom === true);
 
     return { matrix: sourceResult.matrix, agentNames, customAgentNames };
@@ -330,9 +327,8 @@ export function generateConfigTypesSource(
   const customCategorySet = new Set<Category>(extraCategoriesArr);
   for (const id of typedKeys(matrix.skills)) {
     const skill = matrix.skills[id];
-    if (skill?.custom === true && skill.category) {
-      // Boundary cast: CategoryPath may not match Category, but categories are keyed by Category
-      customCategorySet.add(skill.category as Category);
+    if (skill?.custom === true && skill.category && skill.category !== "local") {
+      customCategorySet.add(skill.category);
     }
   }
 

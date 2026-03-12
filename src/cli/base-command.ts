@@ -19,7 +19,7 @@ export abstract class BaseCommand extends Command {
   };
 
   public get sourceConfig(): ResolvedConfig | undefined {
-    // Boundary cast: oclif Config doesn't declare sourceConfig; we attach it in the init hook
+    // Boundary cast: oclif Config is a class (not augmentable); we attach sourceConfig in the init hook
     return (this.config as unknown as ConfigWithSource).sourceConfig;
   }
 

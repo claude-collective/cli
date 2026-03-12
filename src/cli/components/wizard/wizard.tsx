@@ -23,7 +23,7 @@ import {
 import type { AgentName, Domain, DomainSelections, SkillId } from "../../types/index.js";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import { getStackName } from "./utils.js";
-import { warn, type StartupMessage } from "../../utils/logger.js";
+import type { StartupMessage } from "../../utils/logger.js";
 import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
 import { useBuildStepProps } from "../hooks/use-build-step-props.js";
 
@@ -175,11 +175,11 @@ export const Wizard: React.FC<WizardProps> = ({
     let allSkills: SkillId[];
 
     if (store.selectedStackId && store.stackAction === "defaults") {
-      const stack = findStack(store.selectedStackId!);
+      const stack = findStack(store.selectedStackId);
       if (!stack) {
-        warn(`Stack not found in matrix: '${store.selectedStackId}'`);
+        throw new Error(`Stack not found: ${store.selectedStackId}`);
       }
-      allSkills = [...(stack?.allSkillIds || [])];
+      allSkills = [...stack.allSkillIds];
     } else {
       const techNames = store.getAllSelectedTechnologies();
       allSkills = techNames.map((tech) => resolveAlias(tech));

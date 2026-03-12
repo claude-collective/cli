@@ -1,11 +1,11 @@
 import path from "path";
 
 import { copy, ensureDir } from "../../utils/fs";
-import { warn } from "../../utils/logger";
 import { computeFileHash } from "../versioning";
 import { STANDARD_FILES } from "../../consts";
 import type { MergedSkillsMatrix, ResolvedSkill, SkillId } from "../../types";
 import type { SourceLoadResult } from "../loading";
+import { getSkillById } from "../matrix/matrix-provider";
 import { injectForkedFromMetadata } from "./skill-metadata";
 
 export type CopiedSkill = {
@@ -139,14 +139,8 @@ export async function copySkillsToPluginFromSource(
   const total = selectedSkillIds.length;
   let completed = 0;
   const results = await Promise.all(
-    selectedSkillIds.map(async (skillId): Promise<CopiedSkill | null> => {
-      const skill = matrix.skills[skillId];
-      if (!skill) {
-        warn(`Skill not found in matrix: '${skillId}'`);
-        completed++;
-        onProgress?.(completed, total);
-        return null;
-      }
+    selectedSkillIds.map(async (skillId): Promise<CopiedSkill> => {
+      const skill = getSkillById(skillId);
 
       const selectedSource = sourceSelections?.[skillId];
       const userSelectedRemote = selectedSource && selectedSource !== "local";
@@ -173,7 +167,7 @@ export async function copySkillsToPluginFromSource(
     }),
   );
 
-  return results.filter((r): r is CopiedSkill => r !== null);
+  return results;
 }
 
 function getFlattenedSkillDestPath(skill: ResolvedSkill, localSkillsDir: string): string {
@@ -211,12 +205,8 @@ export async function copySkillsToLocalFlattened(
   sourceSelections?: Partial<Record<SkillId, string>>,
 ): Promise<CopiedSkill[]> {
   const results = await Promise.all(
-    selectedSkillIds.map(async (skillId): Promise<CopiedSkill | null> => {
-      const skill = matrix.skills[skillId];
-      if (!skill) {
-        warn(`Skill not found in matrix: '${skillId}'`);
-        return null;
-      }
+    selectedSkillIds.map(async (skillId): Promise<CopiedSkill> => {
+      const skill = getSkillById(skillId);
 
       const selectedSource = sourceSelections?.[skillId];
       const userSelectedRemote = selectedSource && selectedSource !== "local";
@@ -238,5 +228,5 @@ export async function copySkillsToLocalFlattened(
     }),
   );
 
-  return results.filter((r): r is CopiedSkill => r !== null);
+  return results;
 }

@@ -38,7 +38,7 @@ function matchesQuery(skill: ResolvedSkill, query: string): boolean {
   return skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery));
 }
 
-function matchesCategory(skill: ResolvedSkill, category: CategoryPath): boolean {
+function matchesCategory(skill: ResolvedSkill, category: string): boolean {
   const lowerCategory = category.toLowerCase();
   return skill.category.toLowerCase().includes(lowerCategory);
 }
@@ -84,7 +84,7 @@ async function fetchSkillsFromSource(
         // Boundary cast: directory name used as slug for third-party source skill
         slug: skillDir as SkillSlug,
         displayName: skillDir,
-        // Boundary cast: external source skills have no category metadata
+        // Boundary cast: external source skills have no real category; "imported" is a display-only placeholder
         category: "imported" as CategoryPath,
         tags: [],
         author: `@${source.name}`,
@@ -277,8 +277,7 @@ export default class Search extends BaseCommand {
       let results = allSkills.filter((skill) => matchesQuery(skill, query));
 
       if (flags.category) {
-        // CLI flag is an untyped string — cast at data boundary
-        results = results.filter((skill) => matchesCategory(skill, flags.category as CategoryPath));
+        results = results.filter((skill) => matchesCategory(skill, flags.category!));
       }
 
       results = sortBy(results, (r) => r.displayName.toLowerCase());

@@ -148,13 +148,12 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
   }
 
   const mdFiles = await glob("*.md", agentsDir);
-  const configAgentNames = new Set((config.agents ?? []).map((a) => a.name));
+  const configAgentNames: Set<string> = new Set((config.agents ?? []).map((a) => a.name));
 
   const orphanedFiles: string[] = [];
   for (const file of mdFiles) {
     const agentName = file.replace(/\.md$/, "");
-    // Boundary cast: filename from filesystem compared against typed config
-    if (!configAgentNames.has(agentName as AgentName)) {
+    if (!configAgentNames.has(agentName)) {
       orphanedFiles.push(agentName);
     }
   }

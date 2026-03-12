@@ -45,7 +45,7 @@ const hook: Hook<"init"> = async function (options) {
 
   try {
     const resolvedConfig = await resolveSource(sourceFlag, projectDir);
-    // Boundary cast: oclif Config doesn't declare sourceConfig; read in BaseCommand.sourceConfig
+    // Boundary cast: oclif Config is a class (not augmentable); read in BaseCommand.sourceConfig
     (options.config as unknown as ConfigWithSource).sourceConfig = resolvedConfig;
   } catch (error) {
     // Let the command handle config failures - commands can check if sourceConfig is undefined

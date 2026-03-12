@@ -250,7 +250,7 @@ export default class NewSkill extends BaseCommand {
       author = (await resolveAuthor(projectDir)) || LOCAL_DEFAULTS.AUTHOR;
     }
 
-    // CLI flag is an untyped string — cast at data boundary
+    // Boundary cast: CLI flag accepts custom category values not in the generated union
     const category = flags.category as CategoryPath;
 
     const domain = flags.domain ?? LOCAL_DEFAULTS.DOMAIN;

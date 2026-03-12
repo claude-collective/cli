@@ -24,7 +24,7 @@ import {
 import { generateConfigSource } from "../../lib/configuration/config-writer.js";
 import { generateMarketplace, writeMarketplace } from "../../lib/marketplace-generator.js";
 import { generateSkillCategoriesTs, generateSkillRulesTs } from "./skill.js";
-import type { AgentName, Category, CategoryPath, SkillId } from "../../types/index.js";
+import type { Category, SkillId } from "../../types/index.js";
 
 export function validateMarketplaceName(name: string): string | null {
   if (!name || name.trim() === "") {
@@ -198,7 +198,7 @@ export default class NewMarketplace extends BaseCommand {
 
       // Create config/skill-categories.ts
       const categoriesContent = generateSkillCategoriesTs(
-        LOCAL_DEFAULTS.CATEGORY as CategoryPath,
+        LOCAL_DEFAULTS.CATEGORY,
         LOCAL_DEFAULTS.DOMAIN,
       );
       const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_PATH);
@@ -224,7 +224,7 @@ export default class NewMarketplace extends BaseCommand {
       // Create .claude-src/config.ts so the marketplace is a valid installation
       const configDir = path.join(marketplaceDir, CLAUDE_SRC_DIR);
       await ensureDir(configDir);
-      // Boundary cast: custom marketplace skill/agent/category not in standard unions
+      // Boundary cast: custom marketplace dummy skill/category not in standard unions
       const configContent = generateConfigSource({
         name: marketplaceName,
         skills: [{ id: skillName as SkillId, scope: "project", source: "local" }],
@@ -232,7 +232,8 @@ export default class NewMarketplace extends BaseCommand {
         source: ".",
         marketplace: marketplaceName,
         stack: {
-          ["web-developer" as AgentName]: {
+          "web-developer": {
+            // Boundary cast: dummy-category is not in the generated Category union
             [LOCAL_DEFAULTS.CATEGORY as Category]: [{ id: skillName as SkillId }],
           },
         },

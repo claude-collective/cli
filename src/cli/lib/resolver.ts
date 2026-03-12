@@ -194,6 +194,7 @@ export async function resolveAgents(
     }),
   );
 
+  // Structural cast: Object.fromEntries returns Record<string, V>, narrowing to typed keys
   return Object.fromEntries(entries) as Record<AgentName, AgentConfig>;
 }
 
@@ -202,6 +203,7 @@ export function convertStackToCompileConfig(stackId: string, stack: ProjectConfi
     name: stack.name,
     description: stack.description || "",
     stack: stackId,
+    // Structural cast: Object.fromEntries returns Record<string, V>, narrowing to typed keys
     agents: Object.fromEntries(stack.agents.map((a) => [a.name, {}])) as Record<
       AgentName,
       CompileAgentConfig

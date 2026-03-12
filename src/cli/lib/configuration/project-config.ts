@@ -42,7 +42,8 @@ export async function loadProjectConfigFromDir(
     return null;
   }
 
-  // Normalize stack values to SkillAssignment[] (same as loadStacks does for stacks.ts)
+  // Boundary cast: Zod-parsed stack has unnormalized values (bare strings, objects, arrays)
+  // that normalizeStackRecord converts to typed SkillAssignment[] values
   if (config.stack) {
     config.stack = normalizeStackRecord(
       config.stack as unknown as Record<string, Record<string, unknown>>,

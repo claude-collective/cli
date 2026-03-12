@@ -22,7 +22,9 @@ function resolvePluginSource(plugin: MarketplacePlugin, _marketplace: Marketplac
     return `${GITHUB_SOURCE.GITHUB_PREFIX}${plugin.source.repo}${ref}`;
   }
 
-  return plugin.name;
+  throw new Error(
+    `Malformed marketplace plugin '${plugin.name}': source has neither url, repo, nor string value`,
+  );
 }
 
 export async function fetchSkills(

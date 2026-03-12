@@ -346,8 +346,7 @@ export default class Init extends BaseCommand {
         projectDir={projectDir}
         startupMessages={startupMessages}
         onComplete={(result) => {
-          // Boundary cast: Ink render callback returns unknown result type
-          wizardResult = result as WizardResultV2;
+          wizardResult = result;
         }}
         onCancel={() => {
           this.log("Setup cancelled");
@@ -357,8 +356,9 @@ export default class Init extends BaseCommand {
 
     await waitUntilExit();
 
-    // Boundary cast: re-narrow after Ink waitUntilExit()
+    // TypeScript can't track that onComplete callback mutates wizardResult before waitUntilExit resolves
     const result = wizardResult as WizardResultV2 | null;
+
     if (!result || result.cancelled) {
       this.exit(EXIT_CODES.CANCELLED);
     }

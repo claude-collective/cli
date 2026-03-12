@@ -4,7 +4,6 @@ import type {
   AgentConfig,
   AgentDefinition,
   AgentName,
-  Category,
   CompileAgentConfig,
   CompileConfig,
   MergedSkillsMatrix,
@@ -34,6 +33,7 @@ import {
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
+import { isCategory } from "../../utils/type-guards";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
@@ -155,8 +155,7 @@ function buildLocalSkillsMap(
 async function loadMergedAgents(sourcePath: string): Promise<Record<AgentName, AgentDefinition>> {
   const cliAgents = await loadAllAgents(PROJECT_ROOT);
   const sourceAgents = await loadAllAgents(sourcePath);
-  // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
-  return { ...cliAgents, ...sourceAgents } as Record<AgentName, AgentDefinition>;
+  return { ...cliAgents, ...sourceAgents };
 }
 
 async function buildLocalConfig(
@@ -309,16 +308,13 @@ export async function writeConfigFile(
 function buildCompileAgents(
   config: ProjectConfig,
   agents: Record<AgentName, AgentDefinition>,
-): Record<AgentName, CompileAgentConfig> {
+): Record<string, CompileAgentConfig> {
   // D7 cross-scope safety net: build set of global skill IDs so global agents only see global skills
   const globalSkillIds = new Set(
     config.skills.filter((s) => s.scope === "global").map((s) => s.id),
   );
 
-  const compileAgents: Record<AgentName, CompileAgentConfig> = {} as Record<
-    AgentName,
-    CompileAgentConfig
-  >;
+  const compileAgents: Record<string, CompileAgentConfig> = {};
   for (const agentConfig of config.agents) {
     if (agents[agentConfig.name]) {
       const agentStack = config.stack?.[agentConfig.name];
@@ -394,8 +390,8 @@ async function writeProjectConfigTypes(
 
     const domainSet = new Set<string>();
     for (const cat of projectCategories) {
-      // Boundary cast: CategoryPath used as Category for matrix lookup
-      const def = matrix.categories[cat as Category];
+      if (!isCategory(cat)) continue;
+      const def = matrix.categories[cat];
       if (def?.domain) {
         domainSet.add(def.domain);
       }
@@ -405,8 +401,8 @@ async function writeProjectConfigTypes(
 
   const source = generateProjectConfigTypesSource({
     globalTypesImportPath,
-    projectSkillIds: projectSkillIds as string[],
-    projectAgentNames: projectAgentNames as string[],
+    projectSkillIds,
+    projectAgentNames,
     projectDomains,
     projectCategories,
   });
@@ -539,7 +535,7 @@ export async function installPluginConfig(
   // Only create project directories if there are project-scoped agents
   const hasProjectAgents =
     wizardResult.skills.some((s) => s.scope !== "global") ||
-    (wizardResult.agentConfigs ?? []).some((a) => a.scope !== "global");
+    wizardResult.agentConfigs.some((a) => a.scope !== "global");
   if (hasProjectAgents) {
     await ensureDir(projectPaths.agentsDir);
   }
@@ -630,7 +626,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
 
   // Only create project directories when there are project-scoped skills or agents
   const hasProjectItems =
-    projectSkills.length > 0 || (wizardResult.agentConfigs ?? []).some((a) => a.scope !== "global");
+    projectSkills.length > 0 || wizardResult.agentConfigs.some((a) => a.scope !== "global");
   if (hasProjectItems) {
     await prepareDirectories(projectPaths);
   } else {

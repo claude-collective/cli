@@ -169,7 +169,7 @@ export default class Edit extends BaseCommand {
         projectDir={projectDir}
         startupMessages={startupMessages}
         onComplete={(result) => {
-          wizardResult = result as WizardResultV2;
+          wizardResult = result;
         }}
         onCancel={() => {
           this.log("\nEdit cancelled");
@@ -179,6 +179,7 @@ export default class Edit extends BaseCommand {
 
     await waitUntilExit();
 
+    // TypeScript can't track that onComplete callback mutates wizardResult before waitUntilExit resolves
     const result = wizardResult as WizardResultV2 | null;
 
     if (!result || result.cancelled) {
@@ -384,8 +385,7 @@ export default class Edit extends BaseCommand {
       // Load full agent definitions for config-types.ts generation
       const cliAgents = await loadAllAgents(PROJECT_ROOT);
       const sourceAgents = await loadAllAgents(sourcePath);
-      // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
-      const agents = { ...cliAgents, ...sourceAgents } as Record<AgentName, AgentDefinition>;
+      const agents: Record<AgentName, AgentDefinition> = { ...cliAgents, ...sourceAgents };
 
       await writeScopedConfigs(
         mergeResult.config,
