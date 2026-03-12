@@ -6,7 +6,43 @@
   "type": "object",
   "properties": {
     "category": {
-      "type": "string"
+      "type": "string",
+      "enum": [
+        "api-analytics",
+        "api-api",
+        "api-auth",
+        "api-database",
+        "api-email",
+        "api-observability",
+        "api-performance",
+        "cli-framework",
+        "mobile-framework",
+        "shared-ci-cd",
+        "shared-methodology",
+        "shared-monorepo",
+        "shared-research",
+        "shared-reviewing",
+        "shared-security",
+        "shared-tooling",
+        "web-accessibility",
+        "web-animation",
+        "web-client-state",
+        "web-error-handling",
+        "web-file-upload",
+        "web-files",
+        "web-forms",
+        "web-framework",
+        "web-i18n",
+        "web-mocking",
+        "web-performance",
+        "web-pwa",
+        "web-realtime",
+        "web-server-state",
+        "web-styling",
+        "web-testing",
+        "web-ui-components",
+        "web-utilities"
+      ]
     },
     "author": {
       "type": "string",
@@ -22,56 +58,106 @@
       "minLength": 1,
       "maxLength": 60
     },
-    "slug": {
-      "type": "string",
-      "pattern": "^[a-z][a-z0-9-]*$",
-      "minLength": 1,
-      "maxLength": 50
-    },
     "usageGuidance": {
       "type": "string",
       "minLength": 10
     },
-    "requires": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "compatibleWith": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "conflictsWith": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
+    "slug": {
+      "type": "string",
+      "enum": [
+        "angular-standalone",
+        "anti-over-engineering",
+        "api-performance",
+        "auth-security",
+        "axiom-pino-sentry",
+        "better-auth-drizzle-hono",
+        "cli-commander",
+        "cli-reviewing",
+        "context-management",
+        "css-animations",
+        "cva",
+        "cypress-e2e",
+        "date-fns",
+        "drizzle",
+        "error-boundaries",
+        "expo",
+        "express",
+        "fastify",
+        "file-upload-patterns",
+        "framer-motion",
+        "github-actions",
+        "graphql-apollo",
+        "graphql-urql",
+        "hono",
+        "image-handling",
+        "improvement-protocol",
+        "investigation-requirements",
+        "jotai",
+        "mobx",
+        "msw",
+        "native-js",
+        "next-intl",
+        "nextjs-app-router",
+        "nextjs-server-actions",
+        "ngrx-signalstore",
+        "nuxt",
+        "oclif-ink",
+        "offline-first",
+        "pinia",
+        "playwright-e2e",
+        "posthog-analytics",
+        "posthog-flags",
+        "prisma",
+        "radix-ui",
+        "react",
+        "react-hook-form",
+        "react-intl",
+        "react-native",
+        "react-query",
+        "react-testing-library",
+        "redux-toolkit",
+        "remix",
+        "research-methodology",
+        "resend-react-email",
+        "result-types",
+        "reviewing",
+        "scss-modules",
+        "service-workers",
+        "setup-axiom-pino-sentry",
+        "setup-env",
+        "setup-posthog",
+        "setup-resend",
+        "setup-tooling",
+        "shadcn-ui",
+        "socket-io",
+        "solidjs",
+        "sse",
+        "storybook",
+        "success-criteria",
+        "swr",
+        "tailwind",
+        "tanstack-table",
+        "trpc",
+        "turborepo",
+        "vee-validate",
+        "view-transitions",
+        "vitest",
+        "vue-composition-api",
+        "vue-i18n",
+        "vue-test-utils",
+        "web-accessibility",
+        "web-performance",
+        "websockets",
+        "write-verification",
+        "zod-validation",
+        "zustand"
+      ]
     },
     "tags": {
       "type": "array",
       "items": {
         "type": "string",
         "pattern": "^[a-z][a-z0-9-]*$"
-      }
-    },
-    "requiresSetup": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "providesSetupFor": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
       }
     },
     "contentHash": {

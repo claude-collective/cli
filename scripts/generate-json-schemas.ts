@@ -3,11 +3,13 @@
  * Run: npx tsx scripts/generate-json-schemas.ts
  */
 import { z } from "zod";
+import { execSync } from "child_process";
 import { writeFileSync, mkdirSync } from "fs";
 import path from "path";
 import {
   agentYamlGenerationSchema,
   agentFrontmatterValidationSchema,
+  customMetadataValidationSchema,
   strictHooksRecordSchema,
   marketplaceSchema,
   metadataValidationSchema,
@@ -16,13 +18,13 @@ import {
   skillFrontmatterValidationSchema,
   stackConfigValidationSchema,
   stacksConfigSchema,
-  CATEGORY_VALUES,
 } from "../src/cli/lib/schemas.ts";
+import { CATEGORIES } from "../src/cli/types/generated/source-types.ts";
 
 const SCHEMAS_DIR = path.resolve(import.meta.dirname, "../src/schemas");
 
 /** All valid category values for stack configs */
-const STACK_SUBCATEGORY_ENUM = [...CATEGORY_VALUES];
+const STACK_SUBCATEGORY_ENUM = [...CATEGORIES];
 
 type SchemaEntry = {
   filename: string;
@@ -129,6 +131,20 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     },
   },
   {
+    filename: "custom-metadata.schema.json",
+    schema: customMetadataValidationSchema,
+    metadata: {
+      $id: "schemas/custom-metadata.schema.json",
+      title: "Custom Skill Metadata",
+      description:
+        "Schema for custom skill metadata.yaml files with relaxed category and slug validation.",
+    },
+    // Custom skills may have extra fields — remove top-level additionalProperties: false
+    postProcess: (schema) => {
+      delete schema.additionalProperties;
+    },
+  },
+  {
     filename: "plugin.schema.json",
     schema: pluginManifestValidationSchema,
     metadata: {
@@ -206,6 +222,10 @@ function generate(): void {
   }
 
   console.log(`\n  Generated ${generated} schema files in src/schemas/\n`);
+
+  // Format generated files with prettier
+  console.log("Formatting schema files...\n");
+  execSync(`npx prettier --write "${SCHEMAS_DIR}/"`, { stdio: "inherit" });
 }
 
 generate();
