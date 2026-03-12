@@ -184,7 +184,7 @@ export function getDiscourageReason(
   for (const selectedId of resolvedSelections) {
     const conflict = skill.conflictsWith.find((c) => c.skillId === selectedId);
     if (conflict) {
-      return `${conflict.reason} (conflicts with ${getLabel(matrix.skills[selectedId]!)})`;
+      return `${conflict.reason} (conflicts with ${getLabel(getSkillById(selectedId))})`;
     }
 
     const selectedSkill = matrix.skills[selectedId];
@@ -299,7 +299,7 @@ function validateConflicts(resolvedSelections: SkillId[]): ValidationPartial {
       if (conflict) {
         errors.push({
           type: "conflict",
-          message: `${getLabel(skillA)} conflicts with ${getLabel(matrix.skills[skillBId]!)}: ${conflict.reason}`,
+          message: `${getLabel(skillA)} conflicts with ${getLabel(getSkillById(skillBId))}: ${conflict.reason}`,
           skills: [skillA.id, skillBId],
         });
       }
@@ -326,7 +326,7 @@ function validateRequirements(
         if (!hasAny) {
           errors.push({
             type: "missingRequirement",
-            message: `${getLabel(skill)} requires one of: ${requirement.skillIds.map((id) => getLabel(matrix.skills[id]!)).join(", ")}`,
+            message: `${getLabel(skill)} requires one of: ${requirement.skillIds.map((id) => getLabel(getSkillById(id))).join(", ")}`,
             skills: [skillId, ...requirement.skillIds],
           });
         }
@@ -358,12 +358,13 @@ function validateExclusivity(resolvedSelections: SkillId[]): ValidationPartial {
   for (const [categoryId, entries] of typedEntries(categorySelections)) {
     if (entries.length > 1) {
       const skillIds = entries.map((e) => e.skillId);
-      // CategoryPath -> Category: categories lookup uses bare category names
-      const category = matrix.categories[categoryId as Category];
+      // "local" is a pseudo-category without exclusivity rules
+      if (categoryId === "local") continue;
+      const category = matrix.categories[categoryId];
       if (category?.exclusive) {
         errors.push({
           type: "categoryExclusive",
-          message: `Category "${category.displayName}" only allows one selection, but multiple selected: ${skillIds.map((id) => getLabel(matrix.skills[id]!)).join(", ")}`,
+          message: `Category "${category.displayName}" only allows one selection, but multiple selected: ${skillIds.map((id) => getLabel(getSkillById(id))).join(", ")}`,
           skills: skillIds,
         });
       }
@@ -403,7 +404,7 @@ function validateRecommendations(
 
     warnings.push({
       type: "missing_recommendation",
-      message: `${getLabel(skill)} is recommended: ${skill.recommendedReason ?? ""}`,
+      message: `${getLabel(skill)} is recommended: ${skill.recommendedReason ?? "Recommended for this stack"}`,
       skills: [skill.id],
     });
   }

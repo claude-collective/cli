@@ -3,7 +3,6 @@ import type {
   AlternativeGroup,
   CategoryDefinition,
   CategoryMap,
-  CategoryPath,
   CompatibilityGroup,
   ConflictRule,
   DiscourageRule,
@@ -22,8 +21,8 @@ import type {
   Category,
 } from "../../types";
 
-/** Resolves a slug to a canonical SkillId */
-type ResolveId = (slug: SkillSlug, context?: string) => SkillId;
+/** Resolves a slug to a canonical SkillId, or null if unresolvable */
+type ResolveId = (slug: SkillSlug, context?: string) => SkillId | null;
 
 const AUTO_SYNTH_ORDER = 999;
 
@@ -32,16 +31,16 @@ const AUTO_SYNTH_ORDER = 999;
  * skill-categories.ts. This is a safety net — the preferred path is for
  * skill authors to maintain proper skill-categories.ts entries.
  */
-export function synthesizeCategory(categoryPath: CategoryPath, domain: Domain): CategoryDefinition {
-  const displayName = categoryPath
+export function synthesizeCategory(category: Category, domain: Domain): CategoryDefinition {
+  const displayName = category
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
   return {
-    id: categoryPath as Category,
+    id: category,
     displayName,
-    description: `Auto-generated category for ${categoryPath}`,
+    description: `Auto-generated category for ${category}`,
     domain,
     exclusive: true,
     required: false,
@@ -54,9 +53,8 @@ export function synthesizeCategory(categoryPath: CategoryPath, domain: Domain): 
  * Warns on duplicate slugs (first one wins).
  */
 function buildSlugMap(skills: ExtractedSkillMetadata[]): SkillSlugMap {
-  // Boundary cast: empty objects are populated in the loop below
-  const slugToId = {} as Record<SkillSlug, SkillId>;
-  const idToSlug = {} as Record<SkillId, SkillSlug>;
+  const slugToId: Partial<Record<SkillSlug, SkillId>> = {};
+  const idToSlug: Partial<Record<SkillId, SkillSlug>> = {};
 
   for (const skill of skills) {
     const existingId = slugToId[skill.slug];
@@ -74,35 +72,18 @@ function buildSlugMap(skills: ExtractedSkillMetadata[]): SkillSlugMap {
   return { slugToId, idToSlug };
 }
 
-function buildDirectoryPathToIdMap(skills: ExtractedSkillMetadata[]): Record<string, SkillId> {
-  const map: Record<string, SkillId> = {};
-  for (const skill of skills) {
-    if (skill.directoryPath && skill.directoryPath !== skill.id) {
-      map[skill.directoryPath] = skill.id;
-    }
-  }
-  return map;
-}
-
 function resolveToCanonicalId(
   slug: SkillSlug,
   slugToId: SkillSlugMap["slugToId"],
-  directoryPathToId: Record<string, SkillId> = {},
   context?: string,
-): SkillId {
+): SkillId | null {
   const slugResult = slugToId[slug];
   if (slugResult) {
     return slugResult;
   }
-  // Fallback: check directory path mapping (unlikely for slugs, but keeps backward compat)
-  if (directoryPathToId[slug]) {
-    return directoryPathToId[slug];
-  }
-  if (context) {
-    verbose(`Unresolved slug '${slug}' in ${context} — passing through as-is`);
-  }
-  // Boundary cast: unresolved slugs pass through as-is (will be caught by matrix health check)
-  return slug as unknown as SkillId;
+  const location = context ? ` in ${context}` : "";
+  warn(`Unresolved slug '${slug}'${location} — skipping`);
+  return null;
 }
 
 /**
@@ -124,7 +105,6 @@ export function mergeMatrixWithSkills(
   skills: ExtractedSkillMetadata[],
 ): MergedSkillsMatrix {
   const slugMap = buildSlugMap(skills);
-  const directoryPathToId = buildDirectoryPathToIdMap(skills);
   const resolvedSkills: Partial<Record<SkillId, ResolvedSkill>> = {};
 
   for (const skill of skills) {
@@ -133,7 +113,6 @@ export function mergeMatrixWithSkills(
       categories,
       relationships,
       slugMap,
-      directoryPathToId,
     );
     resolvedSkills[skill.id] = resolved;
   }
@@ -141,10 +120,11 @@ export function mergeMatrixWithSkills(
   // Auto-synthesize missing categories for skills that reference undefined categories
   const synthesizedCategories = { ...categories };
   for (const skill of skills) {
-    const category = skill.category as Category;
-    if (!synthesizedCategories[category]) {
+    // Skip "local" pseudo-category — it's not a real Category union member
+    if (skill.category === "local") continue;
+    if (!synthesizedCategories[skill.category]) {
       const synthesized = synthesizeCategory(skill.category, skill.domain);
-      synthesizedCategories[category] = synthesized;
+      synthesizedCategories[skill.category] = synthesized;
       verbose(`Auto-synthesized category '${skill.category}' for skill '${skill.id}'`);
     }
   }
@@ -170,7 +150,7 @@ function resolveConflicts(
   const conflicts: SkillRelation[] = [];
 
   for (const rule of conflictRules) {
-    const resolved = rule.skills.map((slug) => resolve(slug, "conflicts"));
+    const resolved = rule.skills.map((slug) => resolve(slug, "conflicts")).filter((id): id is SkillId => id !== null);
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
       if (other !== skillId && !conflicts.some((c) => c.skillId === other)) {
@@ -191,7 +171,7 @@ function resolveCompatibilityGroups(
   const compatible = new Set<SkillId>();
 
   for (const group of compatibilityGroups) {
-    const resolved = group.skills.map((slug) => resolve(slug, "compatibleWith"));
+    const resolved = group.skills.map((slug) => resolve(slug, "compatibleWith")).filter((id): id is SkillId => id !== null);
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
       if (other !== skillId) {
@@ -212,9 +192,12 @@ function resolveRequirements(
   const requires: SkillRequirement[] = [];
 
   for (const rule of requireRules) {
-    if (resolve(rule.skill, "requires.skill") !== skillId) continue;
+    const ruleSkillId = resolve(rule.skill, "requires.skill");
+    if (ruleSkillId !== skillId) continue;
+    const resolvedNeeds = rule.needs.map((slug) => resolve(slug, "requires.needs")).filter((id): id is SkillId => id !== null);
+    if (resolvedNeeds.length === 0) continue;
     requires.push({
-      skillIds: rule.needs.map((slug) => resolve(slug, "requires.needs")),
+      skillIds: resolvedNeeds,
       needsAny: rule.needsAny ?? false,
       reason: rule.reason,
     });
@@ -232,7 +215,7 @@ function resolveAlternatives(
   const alternatives: SkillAlternative[] = [];
 
   for (const group of alternativeGroups) {
-    const resolved = group.skills.map((slug) => resolve(slug, "alternatives"));
+    const resolved = group.skills.map((slug) => resolve(slug, "alternatives")).filter((id): id is SkillId => id !== null);
     if (!resolved.includes(skillId)) continue;
     for (const alt of resolved) {
       if (alt !== skillId) {
@@ -254,7 +237,7 @@ function resolveDiscourages(
   const discourages: SkillRelation[] = [];
 
   for (const rule of discourageRules) {
-    const resolved = rule.skills.map((slug) => resolve(slug, "discourages"));
+    const resolved = rule.skills.map((slug) => resolve(slug, "discourages")).filter((id): id is SkillId => id !== null);
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
       if (other !== skillId && !discourages.some((d) => d.skillId === other)) {
@@ -271,13 +254,11 @@ function buildResolvedSkill(
   _categories: CategoryMap,
   relationships: RelationshipDefinitions,
   slugMap: SkillSlugMap,
-  directoryPathToId: Record<string, SkillId>,
 ): ResolvedSkill {
   const resolve: ResolveId = (slug, context) =>
     resolveToCanonicalId(
       slug,
       slugMap.slugToId,
-      directoryPathToId,
       context ? `${skill.id} ${context}` : undefined,
     );
 

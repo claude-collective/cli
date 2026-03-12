@@ -135,12 +135,12 @@ export type SuggestedStack = {
   philosophy: string;
 };
 
-/** Bidirectional slug <-> skill ID mapping. */
+/** Bidirectional slug <-> skill ID mapping. Partial because only extracted skills are present. */
 export type SkillSlugMap = {
   /** Forward: slug -> canonical skill ID */
-  slugToId: Record<SkillSlug, SkillId>;
+  slugToId: Partial<Record<SkillSlug, SkillId>>;
   /** Reverse: canonical skill ID -> slug */
-  idToSlug: Record<SkillId, SkillSlug>;
+  idToSlug: Partial<Record<SkillId, SkillSlug>>;
 };
 
 /**

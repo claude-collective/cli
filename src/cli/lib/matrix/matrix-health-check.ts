@@ -45,7 +45,9 @@ function checkCategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealthIs
 function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
   for (const [skillId, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     if (!skill) continue;
-    const category = matrix.categories[skill.category as Category];
+    // "local" is a pseudo-category that won't exist in matrix.categories — skip it
+    if (skill.category === "local") continue;
+    const category = matrix.categories[skill.category];
     if (!category) {
       issues.push({
         severity: "warning",
