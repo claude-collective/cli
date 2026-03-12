@@ -2,7 +2,7 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StepAgents } from "./step-agents";
 import { useWizardStore } from "../../stores/wizard-store";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../../lib/matrix/matrix-provider";
 import {
   ARROW_DOWN,
   ENTER,
@@ -20,7 +20,7 @@ describe("StepAgents component", () => {
   let cleanup: (() => void) | undefined;
 
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(EMPTY_MATRIX);
+    initializeMatrix(EMPTY_MATRIX);
   });
 
   afterEach(() => {

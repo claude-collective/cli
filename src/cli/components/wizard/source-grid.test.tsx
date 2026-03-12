@@ -2,7 +2,8 @@ import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { SourceGrid, type SourceGridProps, type SourceRow, type SourceOption } from "./source-grid";
 import type { BoundSkillCandidate, SkillId } from "../../types";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../../lib/matrix/matrix-provider";
+import { BUILT_IN_MATRIX } from "../../types/generated/matrix";
 import { createMockMatrix, createMockSkill } from "../../lib/__tests__/helpers";
 import { WEB_TRIO_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
 import {
@@ -64,13 +65,13 @@ describe("SourceGrid component", () => {
   let cleanup: (() => void) | undefined;
 
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(WEB_TRIO_MATRIX);
+    initializeMatrix(WEB_TRIO_MATRIX);
   });
 
   afterEach(() => {
     cleanup?.();
     cleanup = undefined;
-    useMatrixStore.getState().reset();
+    initializeMatrix(BUILT_IN_MATRIX);
   });
 
   describe("rendering", () => {
@@ -361,7 +362,7 @@ describe("SourceGrid component", () => {
         "web-tooling-vite" as SkillId,
       ];
       const skills = Object.fromEntries(skillIds.map((id) => [id, createMockSkill(id)]));
-      useMatrixStore.getState().setMatrix(createMockMatrix(skills));
+      initializeMatrix(createMockMatrix(skills));
 
       const rows: SourceRow[] = skillIds.map((id) =>
         createSourceRow(id, [createSourceOption("public", { selected: true })]),

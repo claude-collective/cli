@@ -8,7 +8,7 @@ import {
   writeTestSkill,
   buildAgentConfigs,
 } from "../helpers";
-import { useMatrixStore } from "../../../stores/matrix-store";
+import { initializeMatrix } from "../../matrix/matrix-provider";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 import { renderConfigTs } from "../content-generators";
 import { VITEST_MATRIX } from "../mock-data/mock-matrices";
@@ -26,7 +26,7 @@ describe("list command", () => {
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
 
-    useMatrixStore.getState().setMatrix(VITEST_MATRIX);
+    initializeMatrix(VITEST_MATRIX);
   });
 
   afterEach(async () => {

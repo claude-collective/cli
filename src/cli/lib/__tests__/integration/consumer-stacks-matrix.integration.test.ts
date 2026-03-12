@@ -6,7 +6,7 @@ import { STANDARD_FILES } from "../../../consts";
 
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal } from "../../installation/local-installer";
-import { useMatrixStore } from "../../../stores/matrix-store";
+import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { ProjectConfig, ResolvedSkill, SkillId } from "../../../types";
 import {
   fileExists,
@@ -91,7 +91,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
 
   it("should install with custom stack skills reflected in config.ts", async () => {
     const consumerMatrix = buildConsumerMatrix();
-    useMatrixStore.getState().setMatrix(consumerMatrix);
+    initializeMatrix(consumerMatrix);
     const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
 
     const result = await installLocal({
@@ -281,7 +281,7 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
 
   it("should install all skills from source and compile agents", async () => {
     const consumerMatrix = buildConsumerMatrix();
-    useMatrixStore.getState().setMatrix(consumerMatrix);
+    initializeMatrix(consumerMatrix);
     const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
 
     const result = await installLocal({
@@ -316,7 +316,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
 
       // Extract skills from filesystem and merge with matrix config
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(
+      const merged = mergeMatrixWithSkills(
         TOOLING_AND_FRAMEWORK_CONFIG.categories,
         TOOLING_AND_FRAMEWORK_CONFIG.relationships,
         skills,
@@ -353,7 +353,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       }
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(
+      const merged = mergeMatrixWithSkills(
         CI_CD_CONFIG.categories,
         CI_CD_CONFIG.relationships,
         skills,
@@ -386,7 +386,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       }
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(
+      const merged = mergeMatrixWithSkills(
         FRAMEWORK_AND_STYLING_CONFIG.categories,
         FRAMEWORK_AND_STYLING_CONFIG.relationships,
         skills,
@@ -501,7 +501,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
 
       // 4. Install with the custom stack skills
       const consumerMatrix = buildConsumerMatrix();
-      useMatrixStore.getState().setMatrix(consumerMatrix);
+      initializeMatrix(consumerMatrix);
       const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
       const result = await installLocal({
         wizardResult: buildWizardResult(
@@ -587,7 +587,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       );
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(
+      const merged = mergeMatrixWithSkills(
         OBSERVABILITY_CONFIG.categories,
         OBSERVABILITY_CONFIG.relationships,
         skills,
@@ -616,7 +616,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       }
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(
+      const merged = mergeMatrixWithSkills(
         FRAMEWORK_AND_TESTING_CONFIG.categories,
         FRAMEWORK_AND_TESTING_CONFIG.relationships,
         skills,

@@ -12,14 +12,14 @@ import {
 } from "./helpers";
 import type { PluginTestDirs } from "./helpers";
 import type { SkillId } from "../../types";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../matrix/matrix-provider";
 import { VITEST_MATRIX } from "./mock-data/mock-matrices";
 
 describe("test helpers", () => {
   let testDirs: PluginTestDirs | null = null;
 
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(VITEST_MATRIX);
+    initializeMatrix(VITEST_MATRIX);
   });
 
   afterEach(async () => {

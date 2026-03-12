@@ -1,202 +1,26 @@
 import { describe, it, expect, vi } from "vitest";
 import { checkMatrixHealth } from "./matrix-health-check";
+import { createMockSkill, createMockCategory, createMockMatrix } from "../__tests__/helpers";
 import {
-  createMockSkill,
-  createMockCategory,
-  createMockMatrix,
-  SKILLS,
-  TEST_CATEGORIES,
-} from "../__tests__/helpers";
-import { EMPTY_MATRIX } from "../__tests__/mock-data/mock-matrices";
-import type { SkillId, Category } from "../../types";
+  EMPTY_MATRIX,
+  HEALTH_HEALTHY_MATRIX,
+  HEALTH_SINGLE_SKILL_MATRIX,
+  HEALTH_MISSING_DOMAIN_MATRIX,
+  HEALTH_MULTIPLE_MISSING_DOMAINS_MATRIX,
+  HEALTH_UNKNOWN_CATEGORY_MATRIX,
+  HEALTH_ORPHAN_SKILL_WITH_MISSING_DOMAIN_MATRIX,
+  HEALTH_UNRESOLVED_COMPATIBLE_WITH_MATRIX,
+  HEALTH_UNRESOLVED_CONFLICTS_WITH_MATRIX,
+  HEALTH_UNRESOLVED_REQUIRES_MATRIX,
+  HEALTH_MULTIPLE_UNRESOLVED_REFS_MATRIX,
+  HEALTH_ALL_REFS_RESOLVED_MATRIX,
+  HEALTH_PARTIAL_UNRESOLVED_REQUIRES_MATRIX,
+} from "../__tests__/mock-data/mock-matrices";
+import type { Category } from "../../types";
 
 vi.mock("../../utils/logger");
 
 import { warn } from "../../utils/logger";
-
-// ---------------------------------------------------------------------------
-// Categories
-// ---------------------------------------------------------------------------
-
-const missingDomainFrameworkCategory = { ...TEST_CATEGORIES.framework, domain: undefined };
-const missingDomainStylingCategory = { ...TEST_CATEGORIES.styling, domain: undefined };
-
-// ---------------------------------------------------------------------------
-// Skills
-// ---------------------------------------------------------------------------
-
-const zustandSkill = {
-  ...SKILLS.zustand,
-  isRecommended: true,
-  recommendedReason: "Works well with React",
-};
-
-const orphanSkill = { ...SKILLS.react, category: "nonexistent-category" as Category };
-
-const unresolvedCompatibleWithSkill = {
-  ...SKILLS.zustand,
-  // Boundary cast: fake SkillId for unresolved-ref testing
-  compatibleWith: ["web-framework-nonexistent" as SkillId],
-};
-
-const unresolvedConflictsWithSkill = {
-  ...SKILLS.react,
-  // Boundary cast: fake SkillId for unresolved-ref testing
-  conflictsWith: [{ skillId: "web-framework-ghost" as SkillId, reason: "Conflicts" }],
-};
-
-const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", {
-  requires: [
-    {
-      skillIds: ["web-framework-missing" as SkillId],
-      needsAny: false,
-      reason: "Needs a framework",
-    },
-  ],
-});
-
-const unresolvedRequiresSetupSkill = {
-  ...SKILLS.react,
-  // Boundary cast: fake SkillId for unresolved-ref testing
-  requiresSetup: ["infra-setup-missing" as SkillId],
-};
-
-const unresolvedProvidesSetupForSkill = createMockSkill("infra-setup-env", {
-  providesSetupFor: ["web-framework-missing" as SkillId],
-});
-
-const multipleUnresolvedRefsSkill = {
-  ...SKILLS.zustand,
-  // Boundary casts: fake SkillIds for unresolved-ref testing
-  compatibleWith: ["web-framework-missing" as SkillId],
-  conflictsWith: [{ skillId: "web-state-ghost" as SkillId, reason: "Conflicts" }],
-  requiresSetup: ["infra-setup-missing" as SkillId],
-};
-
-const allRefsResolvedSkill = {
-  ...SKILLS.zustand,
-  // Boundary casts: spread widens template literals to string, cast re-narrows to SkillId
-  conflictsWith: [{ skillId: "web-framework-react" as SkillId, reason: "Test" }],
-  requires: [
-    {
-      skillIds: ["web-framework-react" as SkillId],
-      needsAny: false,
-      reason: "Needs React",
-    },
-  ],
-  requiresSetup: ["web-framework-react" as SkillId],
-  providesSetupFor: ["web-framework-react" as SkillId],
-};
-
-const partialUnresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", {
-  requires: [
-    {
-      skillIds: ["web-framework-react", "web-framework-missing" as SkillId],
-      needsAny: true,
-      reason: "Needs one framework",
-    },
-  ],
-});
-
-// ---------------------------------------------------------------------------
-// Matrices
-// ---------------------------------------------------------------------------
-
-const healthyMatrix = createMockMatrix(SKILLS.react, zustandSkill, {
-  categories: {
-    "web-framework": TEST_CATEGORIES.framework,
-    "web-client-state": TEST_CATEGORIES.clientState,
-  },
-});
-
-const singleSkillMatrix = createMockMatrix(SKILLS.react, {
-  categories: {
-    "web-framework": TEST_CATEGORIES.framework,
-  },
-});
-
-const missingDomainMatrix = createMockMatrix(SKILLS.react, {
-  categories: {
-    "web-framework": missingDomainFrameworkCategory,
-  },
-});
-
-const multipleMissingDomainsMatrix = createMockMatrix(
-  {},
-  {
-    categories: {
-      "web-framework": missingDomainFrameworkCategory,
-      "web-styling": missingDomainStylingCategory,
-      "web-client-state": TEST_CATEGORIES.clientState,
-    },
-  },
-);
-
-const unknownCategoryMatrix = createMockMatrix(orphanSkill, {
-  categories: {
-    "web-framework": TEST_CATEGORIES.framework,
-  },
-});
-
-const orphanSkillWithMissingDomainMatrix = createMockMatrix(orphanSkill, {
-  categories: {
-    "web-framework": missingDomainFrameworkCategory,
-  },
-});
-
-const unresolvedCompatibleWithMatrix = createMockMatrix(unresolvedCompatibleWithSkill, {
-  categories: {
-    "web-client-state": TEST_CATEGORIES.clientState,
-  },
-});
-
-const unresolvedConflictsWithMatrix = createMockMatrix(unresolvedConflictsWithSkill, {
-  categories: {
-    "web-framework": TEST_CATEGORIES.framework,
-  },
-});
-
-const unresolvedRequiresMatrix = createMockMatrix(unresolvedRequiresSkill, {
-  categories: {
-    "web-testing": TEST_CATEGORIES.testing,
-  },
-});
-
-const unresolvedRequiresSetupMatrix = createMockMatrix(unresolvedRequiresSetupSkill, {
-  categories: {
-    "web-framework": TEST_CATEGORIES.framework,
-  },
-});
-
-const unresolvedProvidesSetupForMatrix = createMockMatrix(unresolvedProvidesSetupForSkill, {
-  categories: {
-    "shared-tooling": TEST_CATEGORIES.tooling,
-  },
-});
-
-const multipleUnresolvedRefsMatrix = createMockMatrix(multipleUnresolvedRefsSkill, {
-  categories: {
-    "web-client-state": TEST_CATEGORIES.clientState,
-  },
-});
-
-const allRefsResolvedMatrix = createMockMatrix(SKILLS.react, allRefsResolvedSkill, {
-  categories: {
-    "web-framework": TEST_CATEGORIES.framework,
-    "web-client-state": TEST_CATEGORIES.clientState,
-  },
-});
-
-const partialUnresolvedRequiresMatrix = createMockMatrix(
-  SKILLS.react,
-  partialUnresolvedRequiresSkill,
-  {
-    categories: {
-      "web-framework": TEST_CATEGORIES.framework,
-      "web-testing": TEST_CATEGORIES.testing,
-    },
-  },
-);
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -205,13 +29,13 @@ const partialUnresolvedRequiresMatrix = createMockMatrix(
 describe("matrix-health-check", () => {
   describe("healthy matrix", () => {
     it("returns no issues for a valid matrix", () => {
-      const issues = checkMatrixHealth(healthyMatrix);
+      const issues = checkMatrixHealth(HEALTH_HEALTHY_MATRIX);
 
       expect(issues).toEqual([]);
     });
 
     it("does not warn when matrix is structurally valid", () => {
-      checkMatrixHealth(singleSkillMatrix);
+      checkMatrixHealth(HEALTH_SINGLE_SKILL_MATRIX);
 
       expect(warn).not.toHaveBeenCalled();
     });
@@ -219,7 +43,7 @@ describe("matrix-health-check", () => {
 
   describe("category domains", () => {
     it("detects category missing domain field", () => {
-      const issues = checkMatrixHealth(missingDomainMatrix);
+      const issues = checkMatrixHealth(HEALTH_MISSING_DOMAIN_MATRIX);
 
       const domainIssues = issues.filter((i) => i.finding === "category-missing-domain");
       expect(domainIssues).toHaveLength(1);
@@ -229,14 +53,14 @@ describe("matrix-health-check", () => {
     });
 
     it("does not flag categories with valid domain", () => {
-      const issues = checkMatrixHealth(singleSkillMatrix);
+      const issues = checkMatrixHealth(HEALTH_SINGLE_SKILL_MATRIX);
       const domainIssues = issues.filter((i) => i.finding === "category-missing-domain");
 
       expect(domainIssues).toHaveLength(0);
     });
 
     it("detects multiple categories missing domains", () => {
-      const issues = checkMatrixHealth(multipleMissingDomainsMatrix);
+      const issues = checkMatrixHealth(HEALTH_MULTIPLE_MISSING_DOMAINS_MATRIX);
       const domainIssues = issues.filter((i) => i.finding === "category-missing-domain");
 
       expect(domainIssues).toHaveLength(2);
@@ -245,7 +69,7 @@ describe("matrix-health-check", () => {
 
   describe("skill categories", () => {
     it("detects skill referencing unknown category", () => {
-      const issues = checkMatrixHealth(unknownCategoryMatrix);
+      const issues = checkMatrixHealth(HEALTH_UNKNOWN_CATEGORY_MATRIX);
       const categoryIssues = issues.filter((i) => i.finding === "skill-unknown-category");
 
       expect(categoryIssues).toHaveLength(1);
@@ -255,7 +79,7 @@ describe("matrix-health-check", () => {
     });
 
     it("does not flag skill with valid category", () => {
-      const issues = checkMatrixHealth(singleSkillMatrix);
+      const issues = checkMatrixHealth(HEALTH_SINGLE_SKILL_MATRIX);
       const categoryIssues = issues.filter((i) => i.finding === "skill-unknown-category");
 
       expect(categoryIssues).toHaveLength(0);
@@ -285,7 +109,7 @@ describe("matrix-health-check", () => {
 
   describe("logging", () => {
     it("warns for each issue found", () => {
-      const issues = checkMatrixHealth(orphanSkillWithMissingDomainMatrix);
+      const issues = checkMatrixHealth(HEALTH_ORPHAN_SKILL_WITH_MISSING_DOMAIN_MATRIX);
 
       expect(issues.length).toBeGreaterThan(0);
       expect(warn).toHaveBeenCalledTimes(issues.length);
@@ -297,7 +121,7 @@ describe("matrix-health-check", () => {
 
   describe("skill relation refs", () => {
     it("detects unresolved compatibleWith reference", () => {
-      const issues = checkMatrixHealth(unresolvedCompatibleWithMatrix);
+      const issues = checkMatrixHealth(HEALTH_UNRESOLVED_COMPATIBLE_WITH_MATRIX);
       const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
 
       expect(refIssues).toHaveLength(1);
@@ -308,7 +132,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects unresolved conflictsWith reference", () => {
-      const issues = checkMatrixHealth(unresolvedConflictsWithMatrix);
+      const issues = checkMatrixHealth(HEALTH_UNRESOLVED_CONFLICTS_WITH_MATRIX);
       const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
 
       expect(refIssues).toHaveLength(1);
@@ -318,7 +142,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects unresolved requires reference", () => {
-      const issues = checkMatrixHealth(unresolvedRequiresMatrix);
+      const issues = checkMatrixHealth(HEALTH_UNRESOLVED_REQUIRES_MATRIX);
       const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
 
       expect(refIssues).toHaveLength(1);
@@ -327,49 +151,29 @@ describe("matrix-health-check", () => {
       expect(refIssues[0].details).toContain("requires");
     });
 
-    it("detects unresolved requiresSetup reference", () => {
-      const issues = checkMatrixHealth(unresolvedRequiresSetupMatrix);
-      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
-
-      expect(refIssues).toHaveLength(1);
-      expect(refIssues[0].details).toContain("web-framework-react");
-      expect(refIssues[0].details).toContain("infra-setup-missing");
-      expect(refIssues[0].details).toContain("requiresSetup");
-    });
-
-    it("detects unresolved providesSetupFor reference", () => {
-      const issues = checkMatrixHealth(unresolvedProvidesSetupForMatrix);
-      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
-
-      expect(refIssues).toHaveLength(1);
-      expect(refIssues[0].details).toContain("infra-setup-env");
-      expect(refIssues[0].details).toContain("web-framework-missing");
-      expect(refIssues[0].details).toContain("providesSetupFor");
-    });
-
     it("detects multiple unresolved references across fields", () => {
-      const issues = checkMatrixHealth(multipleUnresolvedRefsMatrix);
+      const issues = checkMatrixHealth(HEALTH_MULTIPLE_UNRESOLVED_REFS_MATRIX);
       const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
 
-      expect(refIssues).toHaveLength(3);
+      expect(refIssues).toHaveLength(2);
     });
 
     it("does not flag references that resolve to existing skills", () => {
-      const issues = checkMatrixHealth(allRefsResolvedMatrix);
+      const issues = checkMatrixHealth(HEALTH_ALL_REFS_RESOLVED_MATRIX);
       const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
 
       expect(refIssues).toHaveLength(0);
     });
 
     it("does not flag skills with empty relation arrays", () => {
-      const issues = checkMatrixHealth(singleSkillMatrix);
+      const issues = checkMatrixHealth(HEALTH_SINGLE_SKILL_MATRIX);
       const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
 
       expect(refIssues).toHaveLength(0);
     });
 
     it("detects unresolved refs in requires with multiple skillIds", () => {
-      const issues = checkMatrixHealth(partialUnresolvedRequiresMatrix);
+      const issues = checkMatrixHealth(HEALTH_PARTIAL_UNRESOLVED_REQUIRES_MATRIX);
       const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
 
       expect(refIssues).toHaveLength(1);
@@ -386,7 +190,7 @@ describe("matrix-health-check", () => {
     });
 
     it("returns no issues for matrix with skills but no structural problems", () => {
-      const issues = checkMatrixHealth(singleSkillMatrix);
+      const issues = checkMatrixHealth(HEALTH_SINGLE_SKILL_MATRIX);
 
       expect(issues).toEqual([]);
     });

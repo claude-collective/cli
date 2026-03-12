@@ -22,7 +22,7 @@ import { installLocal, installPluginConfig } from "../../installation/local-inst
 import { copySkillsToLocalFlattened } from "../../skills/skill-copier";
 import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 import { typedKeys } from "../../../utils/typed-object";
-import { useMatrixStore } from "../../../stores/matrix-store";
+import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 
 const EJECT_INSTALLED_SKILL_IDS: SkillId[] = ["web-framework-react", "api-framework-hono"];
@@ -446,7 +446,7 @@ describe("eject skills from initialized project", () => {
 
     // Run installLocal to create a real initialized project with 2 skills
     const installMatrix = buildEjectMatrix();
-    useMatrixStore.getState().setMatrix(installMatrix);
+    initializeMatrix(installMatrix);
     const installSource = buildSourceResult(installMatrix, dirs.sourceDir);
     await installLocal({
       wizardResult: buildWizardResult(buildSkillConfigs(EJECT_INSTALLED_SKILL_IDS)),
@@ -578,7 +578,7 @@ describe("eject in plugin mode", () => {
     // Use installPluginConfig for plugin mode: writes config and agents
     // but does NOT copy skills to .claude/skills/ (skills live in plugins)
     const installMatrix = buildEjectMatrix();
-    useMatrixStore.getState().setMatrix(installMatrix);
+    initializeMatrix(installMatrix);
     const installSource = buildSourceResult(installMatrix, dirs.sourceDir);
     await installPluginConfig({
       wizardResult: buildWizardResult(

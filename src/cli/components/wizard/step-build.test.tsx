@@ -20,7 +20,7 @@ import {
   delay,
 } from "../../lib/__tests__/test-constants";
 import { createMockSkill, createMockMatrix, SKILLS } from "../../lib/__tests__/helpers";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../../lib/matrix/matrix-provider";
 import {
   WEB_FRAMEWORK_CATEGORY,
   WEB_STYLING_CATEGORY,
@@ -75,7 +75,7 @@ describe("StepBuild component", () => {
   let cleanup: (() => void) | undefined;
 
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(defaultMatrix);
+    initializeMatrix(defaultMatrix);
   });
 
   afterEach(() => {
@@ -459,7 +459,7 @@ describe("StepBuild component", () => {
         ],
       );
 
-      useMatrixStore.getState().setMatrix(matrixWithCli);
+      initializeMatrix(matrixWithCli);
       const { lastFrame, unmount } = renderStepBuild({
         domain: "api",
         selectedDomains: ["web", "api", "cli"],

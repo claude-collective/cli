@@ -14,7 +14,7 @@ import {
   SKILLS,
 } from "../__tests__/helpers";
 import { renderSkillMd } from "../__tests__/content-generators";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../matrix/matrix-provider";
 import { computeSkillFolderHash } from "../versioning";
 import {
   PLUGIN_MANIFEST_DIR,
@@ -35,20 +35,18 @@ describe("skill-plugin-compiler", () => {
     await mkdir(skillsDir, { recursive: true });
     await mkdir(outputDir, { recursive: true });
 
-    useMatrixStore
-      .getState()
-      .setMatrix(
-        createMockMatrix(
-          SKILLS.react,
-          SKILLS.vue,
-          SKILLS.zustand,
-          SKILLS.pinia,
-          SKILLS.scss,
-          SKILLS.vitest,
-          SKILLS.hono,
-          SKILLS.drizzle,
-        ),
-      );
+    initializeMatrix(
+      createMockMatrix(
+        SKILLS.react,
+        SKILLS.vue,
+        SKILLS.zustand,
+        SKILLS.pinia,
+        SKILLS.scss,
+        SKILLS.vitest,
+        SKILLS.hono,
+        SKILLS.drizzle,
+      ),
+    );
   });
 
   afterEach(async () => {

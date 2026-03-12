@@ -9,7 +9,7 @@ import {
   writeTestSkill,
   fileExists,
 } from "../__tests__/helpers";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../matrix/matrix-provider";
 import type { PluginTestDirs } from "../__tests__/helpers";
 import type { AgentName, SkillId } from "../../types";
 import { renderConfigTs } from "../__tests__/content-generators";
@@ -22,7 +22,7 @@ describe("agent-recompiler", () => {
   beforeEach(async () => {
     testDirs = await createTestDirs("cc-recompiler-test-");
 
-    useMatrixStore.getState().setMatrix(VITEST_REACT_HONO_MATRIX);
+    initializeMatrix(VITEST_REACT_HONO_MATRIX);
   });
 
   afterEach(async () => {

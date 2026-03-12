@@ -1,16 +1,41 @@
 // Shared matrix configs and compile configs for test files.
 // Uses createMockMatrixConfig/createMockCompileConfig from helpers.ts.
 
+import { groupBy, mapValues } from "remeda";
+
 import {
   createMockMatrixConfig,
   createMockCompileConfig,
   createMockCategory,
   createMockMatrix,
+  createMockMultiSourceSkill,
   createMockSkill,
+  testSkillToResolvedSkill,
 } from "../helpers.js";
 import { SKILLS, TEST_CATEGORIES } from "../test-fixtures.js";
-import { FRAMEWORK_CATEGORY } from "./mock-categories.js";
-import type { Category, CategoryDefinition } from "../../../types";
+import { FRAMEWORK_CATEGORY, MULTI_SOURCE_CATEGORIES } from "./mock-categories.js";
+import {
+  CATEGORY_GRID_SKILLS,
+  HEALTH_ALL_REFS_RESOLVED_SKILL,
+  HEALTH_MULTIPLE_UNRESOLVED_REFS_SKILL,
+  HEALTH_ORPHAN_SKILL,
+  HEALTH_PARTIAL_UNRESOLVED_REQUIRES_SKILL,
+  HEALTH_UNRESOLVED_COMPATIBLE_WITH_SKILL,
+  HEALTH_UNRESOLVED_CONFLICTS_WITH_SKILL,
+  HEALTH_UNRESOLVED_REQUIRES_SKILL,
+  HEALTH_ZUSTAND_RECOMMENDED,
+  MULTI_SOURCE_PUBLIC_SKILLS,
+  MULTI_SOURCE_ACME_SKILLS,
+  MULTI_SOURCE_INTERNAL_SKILLS,
+  PIPELINE_TEST_SKILLS,
+} from "./mock-skills.js";
+import type { MultiSourceSkillEntry } from "./mock-skills.js";
+import {
+  PUBLIC_SOURCE,
+  ACME_SOURCE,
+  INTERNAL_SOURCE,
+} from "./mock-sources.js";
+import type { Category, CategoryDefinition, CategoryPath, MergedSkillsMatrix, SkillSlug, SkillSource } from "../../../types";
 
 // ---------------------------------------------------------------------------
 // Canonical matrix shapes — use these instead of inline createMockMatrix() calls
@@ -31,6 +56,12 @@ export const REACT_ZUSTAND_HONO_MATRIX = createMockMatrix(
   SKILLS.react,
   SKILLS.zustand,
   SKILLS.hono,
+);
+
+export const CATEGORY_GRID_MATRIX = createMockMatrix(
+  ...CATEGORY_GRID_SKILLS.map(({ id, displayName, category }) =>
+    createMockSkill(id, { displayName, category }),
+  ),
 );
 
 // ---------------------------------------------------------------------------
@@ -277,3 +308,176 @@ export const FRAMEWORK_AND_TESTING_CONFIG = createMockMatrixConfig(
     },
   },
 );
+
+// ---------------------------------------------------------------------------
+// Matrix configs from skill-resolution.test.ts
+// ---------------------------------------------------------------------------
+
+export const EMPTY_MATRIX_CONFIG = createMockMatrixConfig({});
+
+export const UNRESOLVED_CONFLICT_MATRIX = createMockMatrixConfig(
+  {},
+  {
+    relationships: {
+      conflicts: [
+        {
+          // Boundary cast: deliberately invalid slug to test unresolved reference handling
+          skills: ["react", "nonexistent" as SkillSlug],
+          reason: "Conflict with missing skill",
+        },
+      ],
+    },
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Pipeline matrix from wizard-init-compile-pipeline.test.ts
+// ---------------------------------------------------------------------------
+
+export const PIPELINE_MATRIX = createMockMatrix(
+  Object.fromEntries(
+    PIPELINE_TEST_SKILLS.map((skill) => [skill.id, testSkillToResolvedSkill(skill)]),
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// Health-check matrices from matrix-health-check.test.ts
+// ---------------------------------------------------------------------------
+
+const HEALTH_MISSING_DOMAIN_FRAMEWORK_CATEGORY = {
+  ...TEST_CATEGORIES.framework,
+  domain: undefined,
+};
+
+const HEALTH_MISSING_DOMAIN_STYLING_CATEGORY = {
+  ...TEST_CATEGORIES.styling,
+  domain: undefined,
+};
+
+export const HEALTH_HEALTHY_MATRIX = createMockMatrix(SKILLS.react, HEALTH_ZUSTAND_RECOMMENDED, {
+  categories: {
+    "web-framework": TEST_CATEGORIES.framework,
+    "web-client-state": TEST_CATEGORIES.clientState,
+  },
+});
+
+export const HEALTH_SINGLE_SKILL_MATRIX = createMockMatrix(SKILLS.react, {
+  categories: {
+    "web-framework": TEST_CATEGORIES.framework,
+  },
+});
+
+export const HEALTH_MISSING_DOMAIN_MATRIX = createMockMatrix(SKILLS.react, {
+  categories: {
+    "web-framework": HEALTH_MISSING_DOMAIN_FRAMEWORK_CATEGORY,
+  },
+});
+
+export const HEALTH_MULTIPLE_MISSING_DOMAINS_MATRIX = createMockMatrix(
+  {},
+  {
+    categories: {
+      "web-framework": HEALTH_MISSING_DOMAIN_FRAMEWORK_CATEGORY,
+      "web-styling": HEALTH_MISSING_DOMAIN_STYLING_CATEGORY,
+      "web-client-state": TEST_CATEGORIES.clientState,
+    },
+  },
+);
+
+export const HEALTH_UNKNOWN_CATEGORY_MATRIX = createMockMatrix(HEALTH_ORPHAN_SKILL, {
+  categories: {
+    "web-framework": TEST_CATEGORIES.framework,
+  },
+});
+
+export const HEALTH_ORPHAN_SKILL_WITH_MISSING_DOMAIN_MATRIX = createMockMatrix(
+  HEALTH_ORPHAN_SKILL,
+  {
+    categories: {
+      "web-framework": HEALTH_MISSING_DOMAIN_FRAMEWORK_CATEGORY,
+    },
+  },
+);
+
+export const HEALTH_UNRESOLVED_COMPATIBLE_WITH_MATRIX = createMockMatrix(
+  HEALTH_UNRESOLVED_COMPATIBLE_WITH_SKILL,
+  {
+    categories: {
+      "web-client-state": TEST_CATEGORIES.clientState,
+    },
+  },
+);
+
+export const HEALTH_UNRESOLVED_CONFLICTS_WITH_MATRIX = createMockMatrix(
+  HEALTH_UNRESOLVED_CONFLICTS_WITH_SKILL,
+  {
+    categories: {
+      "web-framework": TEST_CATEGORIES.framework,
+    },
+  },
+);
+
+export const HEALTH_UNRESOLVED_REQUIRES_MATRIX = createMockMatrix(HEALTH_UNRESOLVED_REQUIRES_SKILL, {
+  categories: {
+    "web-testing": TEST_CATEGORIES.testing,
+  },
+});
+
+export const HEALTH_MULTIPLE_UNRESOLVED_REFS_MATRIX = createMockMatrix(
+  HEALTH_MULTIPLE_UNRESOLVED_REFS_SKILL,
+  {
+    categories: {
+      "web-client-state": TEST_CATEGORIES.clientState,
+    },
+  },
+);
+
+export const HEALTH_ALL_REFS_RESOLVED_MATRIX = createMockMatrix(
+  SKILLS.react,
+  HEALTH_ALL_REFS_RESOLVED_SKILL,
+  {
+    categories: {
+      "web-framework": TEST_CATEGORIES.framework,
+      "web-client-state": TEST_CATEGORIES.clientState,
+    },
+  },
+);
+
+export const HEALTH_PARTIAL_UNRESOLVED_REQUIRES_MATRIX = createMockMatrix(
+  SKILLS.react,
+  HEALTH_PARTIAL_UNRESOLVED_REQUIRES_SKILL,
+  {
+    categories: {
+      "web-framework": TEST_CATEGORIES.framework,
+      "web-testing": TEST_CATEGORIES.testing,
+    },
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Multi-source matrix from skill-resolution.integration.test.ts
+// ---------------------------------------------------------------------------
+
+type TaggedMultiSourceEntry = MultiSourceSkillEntry & { source: SkillSource };
+
+export function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
+  const taggedEntries: TaggedMultiSourceEntry[] = [
+    ...MULTI_SOURCE_PUBLIC_SKILLS.map((s) => ({ ...s, source: { ...PUBLIC_SOURCE } })),
+    ...MULTI_SOURCE_ACME_SKILLS.map((s) => ({ ...s, source: { ...ACME_SOURCE } })),
+    ...MULTI_SOURCE_INTERNAL_SKILLS.map((s) => ({ ...s, source: { ...INTERNAL_SOURCE } })),
+  ];
+  const grouped = groupBy(taggedEntries, (e) => e.id);
+  const skills = mapValues(grouped, (entries) => {
+    const first = entries[0]!;
+    const sources = entries.map((e) => e.source);
+    return createMockMultiSourceSkill(first.id, sources, {
+      category: first.category as CategoryPath,
+      description: first.description,
+    });
+  });
+
+  return createMockMatrix(skills, {
+    categories: MULTI_SOURCE_CATEGORIES,
+    ...overrides,
+  });
+}

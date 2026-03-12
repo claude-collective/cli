@@ -2,7 +2,7 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepStack } from "./step-stack";
 import { useWizardStore } from "../../stores/wizard-store";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../../lib/matrix/matrix-provider";
 import { createMockMatrix, createMockResolvedStack, SKILLS } from "../../lib/__tests__/helpers";
 import { TEST_CATEGORIES } from "../../lib/__tests__/test-fixtures";
 
@@ -55,7 +55,7 @@ describe("StepStack component", () => {
 
   beforeEach(() => {
     mockMatrix = createMockStackWithSkills();
-    useMatrixStore.getState().setMatrix(mockMatrix);
+    initializeMatrix(mockMatrix);
   });
 
   afterEach(() => {
@@ -267,7 +267,7 @@ describe("StepStack component", () => {
     describe("empty state", () => {
       it("should still show scratch option with no stacks available", () => {
         const emptyMatrix = createMockMatrix({}, { suggestedStacks: [] });
-        useMatrixStore.getState().setMatrix(emptyMatrix);
+        initializeMatrix(emptyMatrix);
 
         const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;

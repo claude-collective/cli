@@ -2,7 +2,7 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Wizard } from "../../../components/wizard/wizard";
 import { useWizardStore } from "../../../stores/wizard-store";
-import { useMatrixStore } from "../../../stores/matrix-store";
+import { initializeMatrix } from "../../matrix/matrix-provider";
 import { createComprehensiveMatrix, createBasicMatrix } from "../helpers";
 import {
   ARROW_DOWN,
@@ -39,7 +39,7 @@ describe("Wizard integration", () => {
   let cleanup: (() => void) | undefined;
 
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(createBasicMatrix());
+    initializeMatrix(createBasicMatrix());
   });
 
   afterEach(() => {
@@ -113,7 +113,7 @@ describe("Wizard integration", () => {
 
   describe("Flow A2: Stack path with customize", () => {
     it("should navigate stack -> domain -> build step (pre-populated from stack)", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -141,7 +141,7 @@ describe("Wizard integration", () => {
 
   describe("Flow B: Scratch path with single domain (Web)", () => {
     it("should start scratch flow from unified stack selection", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -171,7 +171,7 @@ describe("Wizard integration", () => {
     });
 
     it("should complete scratch flow from domain selection to build", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -201,7 +201,7 @@ describe("Wizard integration", () => {
     });
 
     it("should allow selecting web technologies in Skills step", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -235,7 +235,7 @@ describe("Wizard integration", () => {
 
   describe("Flow C: Scratch path with multi-domain (Web + API)", () => {
     it("should correctly set approach when selecting scratch", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -260,7 +260,7 @@ describe("Wizard integration", () => {
     });
 
     it("should navigate through multi-domain build with pre-selected domains", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -290,7 +290,7 @@ describe("Wizard integration", () => {
     });
 
     it("should show domain tabs for multi-domain build", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -314,7 +314,7 @@ describe("Wizard integration", () => {
     });
 
     it("should advance to next domain when validation passes", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -344,7 +344,7 @@ describe("Wizard integration", () => {
     });
 
     it("should allow navigation between domains using escape", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -413,7 +413,7 @@ describe("Wizard integration", () => {
     });
 
     it("should preserve domain selections when navigating back in scratch flow", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -825,7 +825,7 @@ describe("Wizard integration", () => {
     });
 
     it("should show domain selection hint when no domains selected on scratch path", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -878,7 +878,7 @@ describe("Wizard integration", () => {
 
   describe("Flow F: Edit mode pre-selection (local mode)", () => {
     it("should pre-select skills from installedSkillIds in edit mode", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -914,7 +914,7 @@ describe("Wizard integration", () => {
     });
 
     it("should not pre-select when installedSkillIds is empty (regression: local mode bug)", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -940,7 +940,7 @@ describe("Wizard integration", () => {
     });
 
     it("should include pre-selected skills in final wizard result", async () => {
-      useMatrixStore.getState().setMatrix(createComprehensiveMatrix());
+      initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 

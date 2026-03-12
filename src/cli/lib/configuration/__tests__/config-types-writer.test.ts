@@ -136,20 +136,86 @@ describe("generateConfigTypesSource", () => {
     expect(source).toContain('export type InstallMode = "local" | "plugin" | "mixed";');
   });
 
-  it("generates SkillAssignment type with string and object forms", () => {
+  it("generates generic SkillAssignment type with default type parameter", () => {
     const matrix = EMPTY_MATRIX;
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain(
-      "export type SkillAssignment = SkillId | { id: SkillId; preloaded: boolean };",
+      "export type SkillAssignment<S extends SkillId = SkillId> = S | { id: S; preloaded: boolean };",
     );
   });
 
-  it("generates StackAgentConfig type with Category keys", () => {
+  it("falls back to loose StackAgentConfig when no categories have skills", () => {
     const matrix = EMPTY_MATRIX;
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain(
       "export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;",
     );
+  });
+
+  it("generates per-category constrained StackAgentConfig with single skill", () => {
+    const categories = {
+      "web-framework": TEST_CATEGORIES.framework,
+    } as Record<Category, CategoryDefinition>;
+    const matrix = createMockMatrix(SKILLS.react, { categories });
+    const source = generateConfigTypesSource(matrix, []);
+    expect(source).toContain("export type StackAgentConfig = {");
+    expect(source).toContain(
+      '  "web-framework"?: SkillAssignment<"web-framework-react">;',
+    );
+    expect(source).toContain("};");
+  });
+
+  it("generates per-category constrained StackAgentConfig with multiple categories", () => {
+    const categories = {
+      "web-framework": TEST_CATEGORIES.framework,
+      "web-styling": TEST_CATEGORIES.styling,
+      "api-api": { ...TEST_CATEGORIES.api, displayName: "API", domain: "api" },
+    } as Record<Category, CategoryDefinition>;
+    const matrix = createMockMatrix(SKILLS.react, SKILLS.scss, SKILLS.hono, { categories });
+    const source = generateConfigTypesSource(matrix, []);
+    expect(source).toContain("export type StackAgentConfig = {");
+    expect(source).toContain(
+      '  "api-api"?: SkillAssignment<"api-framework-hono">;',
+    );
+    expect(source).toContain(
+      '  "web-framework"?: SkillAssignment<"web-framework-react">;',
+    );
+    expect(source).toContain(
+      '  "web-styling"?: SkillAssignment<"web-styling-scss-modules">;',
+    );
+  });
+
+  it("generates multi-line union for categories with more than 3 skills", () => {
+    const categories = {
+      "web-framework": TEST_CATEGORIES.framework,
+    } as Record<Category, CategoryDefinition>;
+    const matrix = createMockMatrix(
+      createMockSkill("web-framework-react"),
+      createMockSkill("web-framework-vue-composition-api"),
+      createMockSkill("web-framework-original"),
+      createMockSkill("web-framework-simple"),
+      { categories },
+    );
+    const source = generateConfigTypesSource(matrix, []);
+    expect(source).toContain('  "web-framework"?: SkillAssignment<');
+    expect(source).toContain('    | "web-framework-original"');
+    expect(source).toContain('    | "web-framework-react"');
+    expect(source).toContain('    | "web-framework-simple"');
+    expect(source).toContain('    | "web-framework-vue-composition-api"');
+    expect(source).toContain("  >;");
+  });
+
+  it("omits categories that have no matching skills from StackAgentConfig", () => {
+    const categories = {
+      "web-framework": TEST_CATEGORIES.framework,
+      "web-styling": TEST_CATEGORIES.styling,
+    } as Record<Category, CategoryDefinition>;
+    // Only add a React skill (web-framework), no styling skills
+    const matrix = createMockMatrix(SKILLS.react, { categories });
+    const source = generateConfigTypesSource(matrix, []);
+    expect(source).toContain("export type StackAgentConfig = {");
+    expect(source).toContain('"web-framework"?:');
+    expect(source).not.toContain('"web-styling"?:');
   });
 
   it("generates ProjectConfig interface with AgentName stack keys", () => {

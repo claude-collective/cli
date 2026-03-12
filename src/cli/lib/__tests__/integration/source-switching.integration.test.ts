@@ -10,7 +10,7 @@ import {
   type TestDirs,
   type TestSkill,
 } from "../fixtures/create-test-source";
-import { useMatrixStore } from "../../../stores/matrix-store";
+import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { ProjectConfig, SkillId } from "../../../types";
 import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 import {
@@ -103,7 +103,7 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Re-copy from source using installLocal
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
       const skillConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
         id: id as SkillId,
         scope: "project" as const,
@@ -132,7 +132,7 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Run installLocal with all skills
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
       const wizardResult = buildWizardResult(buildSkillConfigs(ALL_SKILL_NAMES), {
         selectedAgents: ["web-developer"],
       });
@@ -176,7 +176,7 @@ describe("Integration: Source Switching with Delete", () => {
 
       // Re-copy from source (simulates plugin -> local switch)
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
       const roundTripConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
         id: id as SkillId,
         scope: "project" as const,

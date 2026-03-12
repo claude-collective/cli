@@ -5,7 +5,7 @@ import { loadProjectConfig, validateProjectConfig } from "./project-config";
 import { generateProjectConfigFromSkills } from "./config-generator";
 import { generateConfigSource } from "./config-writer";
 import type { AgentName } from "../../types";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../matrix/matrix-provider";
 import {
   createTempDir,
   cleanupTempDir,
@@ -229,7 +229,7 @@ describe("round-trip tests", () => {
   });
 
   it("should round-trip minimal config (name and stack only)", async () => {
-    useMatrixStore.getState().setMatrix(WEB_PAIR_MATRIX);
+    initializeMatrix(WEB_PAIR_MATRIX);
     const selectedAgents: AgentName[] = ["web-developer"];
 
     // Generate config
@@ -258,7 +258,7 @@ describe("round-trip tests", () => {
   });
 
   it("should round-trip config with options (description/author)", async () => {
-    useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
+    initializeMatrix(SINGLE_REACT_MATRIX);
     const selectedAgents: AgentName[] = ["web-developer"];
 
     // Generate config with options

@@ -1,9 +1,15 @@
 // Shared skill entries and TestSkill arrays for test files.
 // Uses createMockSkillEntry from helpers.ts.
 
-import type { Skill, SkillId } from "../../../types";
+import type { Category, CategoryPath, Skill, SkillId } from "../../../types";
 import type { TestSkill } from "../fixtures/create-test-source";
-import { createMockSkillEntry, createTestSkill } from "../helpers.js";
+import {
+  createMockExtractedSkill,
+  createMockSkill,
+  createMockSkillEntry,
+  createTestSkill,
+  SKILLS,
+} from "../helpers.js";
 import { renderSkillMd } from "../content-generators";
 
 // Skill entries from compiler.test.ts
@@ -229,3 +235,182 @@ export const INIT_SKILL_IDS: SkillId[] = [
 export const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) =>
   INIT_SKILL_IDS.includes(s.id as SkillId),
 );
+
+// ExtractedSkillMetadata constants for skill-resolution tests
+
+export const REACT_EXTRACTED = createMockExtractedSkill("web-framework-react", {
+  description: "React framework",
+  author: "@vince",
+  tags: ["react"],
+});
+
+export const REACT_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-react", {
+  description: "React",
+});
+
+export const VUE_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-vue-composition-api", {
+  description: "Vue",
+});
+
+export const ZUSTAND_EXTRACTED = createMockExtractedSkill("web-state-zustand", {
+  description: "Zustand",
+  category: "web-client-state",
+});
+
+export const JOTAI_EXTRACTED = createMockExtractedSkill("web-state-jotai", {
+  description: "Jotai",
+  category: "web-client-state",
+});
+
+// ---------------------------------------------------------------------------
+// Health-check skill variants (matrix-health-check.test.ts)
+// ---------------------------------------------------------------------------
+
+export const HEALTH_ZUSTAND_RECOMMENDED = {
+  ...SKILLS.zustand,
+  isRecommended: true,
+  recommendedReason: "Works well with React",
+};
+
+export const HEALTH_ORPHAN_SKILL = {
+  ...SKILLS.react,
+  category: "nonexistent-category" as Category,
+};
+
+export const HEALTH_UNRESOLVED_COMPATIBLE_WITH_SKILL = {
+  ...SKILLS.zustand,
+  // Boundary cast: fake SkillId for unresolved-ref testing
+  compatibleWith: ["web-framework-nonexistent" as SkillId],
+};
+
+export const HEALTH_UNRESOLVED_CONFLICTS_WITH_SKILL = {
+  ...SKILLS.react,
+  // Boundary cast: fake SkillId for unresolved-ref testing
+  conflictsWith: [{ skillId: "web-framework-ghost" as SkillId, reason: "Conflicts" }],
+};
+
+export const HEALTH_UNRESOLVED_REQUIRES_SKILL = createMockSkill("web-testing-cypress-e2e", {
+  requires: [
+    {
+      skillIds: ["web-framework-missing" as SkillId],
+      needsAny: false,
+      reason: "Needs a framework",
+    },
+  ],
+});
+
+export const HEALTH_MULTIPLE_UNRESOLVED_REFS_SKILL = {
+  ...SKILLS.zustand,
+  // Boundary casts: fake SkillIds for unresolved-ref testing
+  compatibleWith: ["web-framework-missing" as SkillId],
+  conflictsWith: [{ skillId: "web-state-ghost" as SkillId, reason: "Conflicts" }],
+};
+
+export const HEALTH_ALL_REFS_RESOLVED_SKILL = {
+  ...SKILLS.zustand,
+  // Boundary casts: spread widens template literals to string, cast re-narrows to SkillId
+  conflictsWith: [{ skillId: "web-framework-react" as SkillId, reason: "Test" }],
+  requires: [
+    {
+      skillIds: ["web-framework-react" as SkillId],
+      needsAny: false,
+      reason: "Needs React",
+    },
+  ],
+};
+
+export const HEALTH_PARTIAL_UNRESOLVED_REQUIRES_SKILL = createMockSkill("web-testing-cypress-e2e", {
+  requires: [
+    {
+      skillIds: ["web-framework-react", "web-framework-missing" as SkillId],
+      needsAny: true,
+      reason: "Needs one framework",
+    },
+  ],
+});
+
+// ---------------------------------------------------------------------------
+// Category grid test skills (category-grid.test.tsx)
+// ---------------------------------------------------------------------------
+
+export const CATEGORY_GRID_SKILLS: {
+  id: SkillId;
+  displayName: string;
+  category: CategoryPath;
+}[] = [
+  { id: "web-framework-react", displayName: "React", category: "web-framework" },
+  { id: "web-framework-vue-composition-api", displayName: "Vue", category: "web-framework" },
+  { id: "web-framework-angular-standalone", displayName: "Angular", category: "web-framework" },
+  { id: "web-framework-solidjs", displayName: "SolidJS", category: "web-framework" },
+  { id: "web-framework-nuxt", displayName: "Nuxt", category: "web-framework" },
+  { id: "web-framework-remix", displayName: "Remix", category: "web-framework" },
+  {
+    id: "web-framework-nextjs-app-router",
+    displayName: "Next.js App Router",
+    category: "web-framework",
+  },
+  {
+    id: "web-framework-nextjs-server-actions",
+    displayName: "Next.js Server Actions",
+    category: "web-framework",
+  },
+  { id: "web-styling-scss-modules", displayName: "SCSS Modules", category: "web-styling" },
+  { id: "web-styling-tailwind", displayName: "Tailwind", category: "web-styling" },
+  { id: "web-styling-cva", displayName: "CVA", category: "web-styling" },
+  { id: "web-state-zustand", displayName: "Zustand", category: "web-client-state" },
+  { id: "web-state-jotai", displayName: "Jotai", category: "web-client-state" },
+  { id: "web-state-redux-toolkit", displayName: "Redux", category: "web-client-state" },
+  { id: "web-state-mobx", displayName: "MobX", category: "web-client-state" },
+  { id: "web-server-state-react-query", displayName: "React Query", category: "web-server-state" },
+  { id: "web-data-fetching-swr", displayName: "SWR", category: "web-server-state" },
+  { id: "web-data-fetching-graphql-apollo", displayName: "Apollo", category: "web-server-state" },
+  { id: "api-analytics-posthog-analytics", displayName: "PostHog", category: "api-analytics" },
+  { id: "web-forms-react-hook-form", displayName: "React Hook Form", category: "web-forms" },
+  { id: "web-forms-vee-validate", displayName: "Vee Validate", category: "web-forms" },
+  { id: "web-forms-zod-validation", displayName: "Zod Validation", category: "web-forms" },
+  { id: "web-testing-vitest", displayName: "Vitest", category: "web-testing" },
+  { id: "web-testing-playwright-e2e", displayName: "Playwright", category: "web-testing" },
+  { id: "web-testing-cypress-e2e", displayName: "Cypress", category: "web-testing" },
+  { id: "web-mocks-msw", displayName: "MSW", category: "web-mocking" },
+  {
+    id: "web-testing-react-testing-library",
+    displayName: "React Testing Library",
+    category: "web-testing",
+  },
+  { id: "web-testing-vue-test-utils", displayName: "Vue Test Utils", category: "web-testing" },
+  { id: "web-i18n-next-intl", displayName: "Next Intl", category: "web-i18n" },
+  { id: "web-i18n-react-intl", displayName: "React Intl", category: "web-i18n" },
+  { id: "web-i18n-vue-i18n", displayName: "Vue I18n", category: "web-i18n" },
+];
+
+// ---------------------------------------------------------------------------
+// Multi-source integration test skill entries (skill-resolution.integration.test.ts)
+// ---------------------------------------------------------------------------
+
+type MultiSourceSkillEntry = { id: string; category: string; description: string };
+
+export const MULTI_SOURCE_PUBLIC_SKILLS: MultiSourceSkillEntry[] = [
+  { id: "web-framework-react", category: "web-framework", description: "React framework" },
+  { id: "web-framework-vue-composition-api", category: "web-framework", description: "Vue.js framework" },
+  { id: "web-state-zustand", category: "web-client-state", description: "Zustand state management" },
+  { id: "web-styling-scss-modules", category: "web-styling", description: "SCSS Modules styling" },
+  { id: "web-testing-vitest", category: "web-testing", description: "Vitest testing framework" },
+];
+
+export const MULTI_SOURCE_ACME_SKILLS: MultiSourceSkillEntry[] = [
+  { id: "web-framework-react", category: "web-framework", description: "React (acme custom fork)" },
+  { id: "api-framework-hono", category: "api-api", description: "Hono web framework" },
+  { id: "api-database-drizzle", category: "api-database", description: "Drizzle ORM" },
+  { id: "api-security-auth-patterns", category: "shared-security", description: "Auth patterns" },
+  { id: "web-testing-vitest", category: "web-testing", description: "Vitest (acme custom)" },
+];
+
+export const MULTI_SOURCE_INTERNAL_SKILLS: MultiSourceSkillEntry[] = [
+  { id: "web-framework-react", category: "web-framework", description: "React (internal build)" },
+  { id: "web-animation-framer", category: "web-animation", description: "Framer Motion" },
+  { id: "meta-methodology-investigation", category: "shared-methodology", description: "Investigation first" },
+  { id: "web-accessibility-a11y", category: "web-accessibility", description: "Web accessibility" },
+  { id: "api-monitoring-sentry", category: "api-observability", description: "Sentry error tracking" },
+];
+
+export type { MultiSourceSkillEntry };

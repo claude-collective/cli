@@ -2,7 +2,7 @@ import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { StepSources, type StepSourcesProps } from "./step-sources";
 import { useWizardStore } from "../../stores/wizard-store";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../../lib/matrix/matrix-provider";
 import {
   ENTER,
   ESCAPE,
@@ -30,7 +30,7 @@ describe("StepSources component", () => {
   let cleanup: (() => void) | undefined;
 
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(mockMatrix);
+    initializeMatrix(mockMatrix);
     // Set up some selected technologies so the step has data to display
     useWizardStore.setState({
       domainSelections: {

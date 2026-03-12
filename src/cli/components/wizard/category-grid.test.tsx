@@ -17,66 +17,9 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-import { createMockSkill, createMockMatrix } from "../../lib/__tests__/helpers";
-import { useMatrixStore } from "../../stores/matrix-store";
-
-const TEST_GRID_SKILLS: {
-  id: SkillId;
-  displayName: string;
-  category: import("../../types").CategoryPath;
-}[] = [
-  { id: "web-framework-react", displayName: "React", category: "web-framework" },
-  { id: "web-framework-vue-composition-api", displayName: "Vue", category: "web-framework" },
-  { id: "web-framework-angular-standalone", displayName: "Angular", category: "web-framework" },
-  { id: "web-framework-solidjs", displayName: "SolidJS", category: "web-framework" },
-  { id: "web-framework-nuxt", displayName: "Nuxt", category: "web-framework" },
-  { id: "web-framework-remix", displayName: "Remix", category: "web-framework" },
-  {
-    id: "web-framework-nextjs-app-router",
-    displayName: "Next.js App Router",
-    category: "web-framework",
-  },
-  {
-    id: "web-framework-nextjs-server-actions",
-    displayName: "Next.js Server Actions",
-    category: "web-framework",
-  },
-  { id: "web-styling-scss-modules", displayName: "SCSS Modules", category: "web-styling" },
-  { id: "web-styling-tailwind", displayName: "Tailwind", category: "web-styling" },
-  { id: "web-styling-cva", displayName: "CVA", category: "web-styling" },
-  { id: "web-state-zustand", displayName: "Zustand", category: "web-client-state" },
-  { id: "web-state-jotai", displayName: "Jotai", category: "web-client-state" },
-  { id: "web-state-redux-toolkit", displayName: "Redux", category: "web-client-state" },
-  { id: "web-state-mobx", displayName: "MobX", category: "web-client-state" },
-  { id: "web-server-state-react-query", displayName: "React Query", category: "web-server-state" },
-  { id: "web-data-fetching-swr", displayName: "SWR", category: "web-server-state" },
-  { id: "web-data-fetching-graphql-apollo", displayName: "Apollo", category: "web-server-state" },
-  { id: "api-analytics-posthog-analytics", displayName: "PostHog", category: "api-analytics" },
-  { id: "web-forms-react-hook-form", displayName: "React Hook Form", category: "web-forms" },
-  { id: "web-forms-vee-validate", displayName: "Vee Validate", category: "web-forms" },
-  { id: "web-forms-zod-validation", displayName: "Zod Validation", category: "web-forms" },
-  { id: "web-testing-vitest", displayName: "Vitest", category: "web-testing" },
-  { id: "web-testing-playwright-e2e", displayName: "Playwright", category: "web-testing" },
-  { id: "web-testing-cypress-e2e", displayName: "Cypress", category: "web-testing" },
-  { id: "web-mocks-msw", displayName: "MSW", category: "web-mocking" },
-  {
-    id: "web-testing-react-testing-library",
-    displayName: "React Testing Library",
-    category: "web-testing",
-  },
-  { id: "web-testing-vue-test-utils", displayName: "Vue Test Utils", category: "web-testing" },
-  { id: "web-i18n-next-intl", displayName: "Next Intl", category: "web-i18n" },
-  { id: "web-i18n-react-intl", displayName: "React Intl", category: "web-i18n" },
-  { id: "web-i18n-vue-i18n", displayName: "Vue I18n", category: "web-i18n" },
-];
-
-function buildTestMatrix() {
-  return createMockMatrix(
-    ...TEST_GRID_SKILLS.map(({ id, displayName, category }) =>
-      createMockSkill(id, { displayName, category }),
-    ),
-  );
-}
+import { initializeMatrix } from "../../lib/matrix/matrix-provider";
+import { CATEGORY_GRID_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
+import { BUILT_IN_MATRIX } from "../../types/generated/matrix";
 
 const createOption = (id: SkillId, overrides: Partial<CategoryOption> = {}): CategoryOption => ({
   id,
@@ -247,13 +190,13 @@ describe("CategoryGrid component", () => {
   let cleanup: (() => void) | undefined;
 
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(buildTestMatrix());
+    initializeMatrix(CATEGORY_GRID_MATRIX);
   });
 
   afterEach(() => {
     cleanup?.();
     cleanup = undefined;
-    useMatrixStore.getState().reset();
+    initializeMatrix(BUILT_IN_MATRIX);
   });
 
   describe("rendering", () => {

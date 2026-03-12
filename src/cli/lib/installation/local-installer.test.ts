@@ -4,7 +4,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installLocal } from "./local-installer";
 import type { AgentConfig, AgentName, ProjectConfig } from "../../types";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../matrix/matrix-provider";
 import {
   buildWizardResult,
   buildSkillConfigs,
@@ -80,7 +80,7 @@ describe("local-installer", () => {
 
   beforeEach(async () => {
     tempDir = await createTempDir("cc-local-installer-test-");
-    useMatrixStore.getState().setMatrix(EMPTY_MATRIX);
+    initializeMatrix(EMPTY_MATRIX);
   });
 
   afterEach(async () => {

@@ -12,7 +12,7 @@ import {
   getPluginSkillIds,
 } from "./plugin-finder";
 import type { PluginManifest } from "../../types";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../matrix/matrix-provider";
 import { DEFAULT_PLUGIN_NAME, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts";
 import {
   EMPTY_MATRIX,
@@ -231,7 +231,7 @@ describe("plugin-finder", () => {
 
   describe("getPluginSkillIds", () => {
     it("should return empty array when no SKILL.md files exist", async () => {
-      useMatrixStore.getState().setMatrix(EMPTY_MATRIX);
+      initializeMatrix(EMPTY_MATRIX);
       mockedGlob.mockResolvedValue([]);
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
@@ -240,7 +240,7 @@ describe("plugin-finder", () => {
     });
 
     it("should match skill by frontmatter name as direct skill ID", async () => {
-      useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["web-framework-react/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue(
@@ -254,7 +254,7 @@ describe("plugin-finder", () => {
 
     it("should match skill by display name alias", async () => {
       const matrix = SINGLE_REACT_MATRIX;
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
       mockedGlob.mockResolvedValue(["react/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue(`---\nname: React\ndescription: React skill\n---\nContent`);
@@ -265,7 +265,7 @@ describe("plugin-finder", () => {
     });
 
     it("should match skill by directory name when frontmatter has no name", async () => {
-      useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["web-framework-react/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue("# React\n\nA skill for React development.");
@@ -276,7 +276,7 @@ describe("plugin-finder", () => {
     });
 
     it("should match skill by directory name using last part of ID", async () => {
-      useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["subdir/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue("# No frontmatter match");
@@ -287,7 +287,7 @@ describe("plugin-finder", () => {
     });
 
     it("should handle multiple SKILL.md files", async () => {
-      useMatrixStore.getState().setMatrix(REACT_ZUSTAND_HONO_MATRIX);
+      initializeMatrix(REACT_ZUSTAND_HONO_MATRIX);
       mockedGlob.mockResolvedValue([
         "web-framework-react/SKILL.md",
         "web-state-zustand/SKILL.md",
@@ -316,7 +316,7 @@ describe("plugin-finder", () => {
     });
 
     it("should skip skills with no matching frontmatter name and no matching directory", async () => {
-      useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["unknown-skill/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue(
@@ -330,7 +330,7 @@ describe("plugin-finder", () => {
 
     it("should handle case-insensitive display name matching", async () => {
       const matrix = SINGLE_REACT_MATRIX;
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
       mockedGlob.mockResolvedValue(["react/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue("---\nname: react\ndescription: React\n---\nContent");
@@ -341,7 +341,7 @@ describe("plugin-finder", () => {
     });
 
     it("should handle case-insensitive directory name matching", async () => {
-      useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["Web-Framework-React/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue("# No frontmatter");
@@ -352,7 +352,7 @@ describe("plugin-finder", () => {
     });
 
     it("should handle frontmatter with quoted name values", async () => {
-      useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["react/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue(
@@ -365,7 +365,7 @@ describe("plugin-finder", () => {
     });
 
     it("should handle frontmatter with double-quoted name values", async () => {
-      useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["react/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue(
@@ -378,7 +378,7 @@ describe("plugin-finder", () => {
     });
 
     it("should handle nested directory paths in SKILL.md glob results", async () => {
-      useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["framework/web-framework-react/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue("# No frontmatter");

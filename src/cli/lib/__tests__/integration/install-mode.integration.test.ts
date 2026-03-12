@@ -10,7 +10,7 @@ import {
 import { detectMigrations } from "../../installation/mode-migrator";
 import { deriveInstallMode } from "../../installation/installation";
 import { useWizardStore } from "../../../stores/wizard-store";
-import { useMatrixStore } from "../../../stores/matrix-store";
+import { initializeMatrix } from "../../matrix/matrix-provider";
 import {
   createMockMatrix,
   createMockMultiSourceSkill,
@@ -45,7 +45,7 @@ describe("Integration: Install Mode Persistence", () => {
   beforeEach(async () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
-    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
+    initializeMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -146,7 +146,7 @@ describe("Integration: Install Mode Config Round-Trip", () => {
   beforeEach(async () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
-    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
+    initializeMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -211,7 +211,7 @@ describe("Integration: buildAndMergeConfig Install Mode", () => {
   beforeEach(async () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
-    useMatrixStore.getState().setMatrix(INIT_TEST_MATRIX);
+    initializeMatrix(INIT_TEST_MATRIX);
   });
 
   afterEach(async () => {
@@ -465,16 +465,14 @@ describe("Integration: deriveInstallMode via Wizard Store", () => {
     expect(store.deriveInstallMode()).toBe("local");
 
     // Build a matrix with availableSources and set on store
-    useMatrixStore
-      .getState()
-      .setMatrix(
-        createMockMatrix(
-          createMockMultiSourceSkill(REACT_SKILL_ID, [
-            createMockSkillSource("local"),
-            createMockSkillSource("public", { name: "agents-inc" }),
-          ]),
-        ),
-      );
+    initializeMatrix(
+      createMockMatrix(
+        createMockMultiSourceSkill(REACT_SKILL_ID, [
+          createMockSkillSource("local"),
+          createMockSkillSource("public", { name: "agents-inc" }),
+        ]),
+      ),
+    );
 
     // Set all to plugin via matrix store lookup
     store.setAllSourcesPlugin();

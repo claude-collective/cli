@@ -15,24 +15,17 @@ import {
   STANDARD_FILES,
 } from "../../../consts";
 import {
-  createMockMatrix,
-  testSkillToResolvedSkill,
   fileExists,
   directoryExists,
   buildWizardResult,
   buildSkillConfigs,
   buildSourceResult,
 } from "../helpers";
-import { useMatrixStore } from "../../../stores/matrix-store";
+import { initializeMatrix } from "../../matrix/matrix-provider";
 import { PIPELINE_TEST_SKILLS } from "../mock-data/mock-skills.js";
+import { PIPELINE_MATRIX } from "../mock-data/mock-matrices.js";
 
 const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.id);
-
-const PIPELINE_MATRIX = createMockMatrix(
-  Object.fromEntries(
-    PIPELINE_TEST_SKILLS.map((skill) => [skill.id, testSkillToResolvedSkill(skill)]),
-  ),
-);
 
 const PIPELINE_AGENTS: AgentName[] = ["web-developer", "api-developer"];
 
@@ -41,7 +34,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   beforeEach(async () => {
     dirs = await createTestSource({ skills: PIPELINE_TEST_SKILLS });
-    useMatrixStore.getState().setMatrix(PIPELINE_MATRIX);
+    initializeMatrix(PIPELINE_MATRIX);
   });
 
   afterEach(async () => {

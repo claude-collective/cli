@@ -8,7 +8,7 @@ import {
 } from "./skill-copier";
 import type { SkillId } from "../../types";
 import { CLAUDE_DIR, PROJECT_ROOT, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
-import { findSkill, useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix, matrix } from "../matrix/matrix-provider";
 import {
   buildSourceResult,
   createMockMatrix,
@@ -25,7 +25,7 @@ import { renderSkillMd } from "../__tests__/content-generators";
  * Returns the relative local skill path (e.g., ".claude/skills/web-framework-react/").
  */
 async function writeLocalSkillOnDisk(projectDir: string, skillId: SkillId): Promise<string> {
-  const skill = findSkill(skillId);
+  const skill = matrix.skills[skillId];
   if (!skill) {
     throw new Error(`writeLocalSkillOnDisk: "${skillId}" not found in matrix store`);
   }
@@ -53,7 +53,7 @@ async function writeRemoteSkillOnDisk(
   const skillDir = path.join(projectDir, "src", relPath);
   // Boundary cast: path.basename extracts the skill ID directory name (e.g., "web-framework-react")
   const skillId = path.basename(relPath) as SkillId;
-  const skill = findSkill(skillId);
+  const skill = matrix.skills[skillId];
   if (!skill) {
     throw new Error(`writeRemoteSkillOnDisk: "${skillId}" not found in matrix store`);
   }
@@ -146,20 +146,18 @@ describe("skill-copier", () => {
     projectDir = path.join(tempDir, "project");
     await mkdir(pluginDir, { recursive: true });
     await mkdir(projectDir, { recursive: true });
-    useMatrixStore
-      .getState()
-      .setMatrix(
-        createMockMatrix(
-          SKILLS.vue,
-          SKILLS.scss,
-          SKILLS.tailwind,
-          SKILLS.react,
-          SKILLS.zustand,
-          SKILLS.hono,
-          SKILLS.vitest,
-          SKILLS.drizzle,
-        ),
-      );
+    initializeMatrix(
+      createMockMatrix(
+        SKILLS.vue,
+        SKILLS.scss,
+        SKILLS.tailwind,
+        SKILLS.react,
+        SKILLS.zustand,
+        SKILLS.hono,
+        SKILLS.vitest,
+        SKILLS.drizzle,
+      ),
+    );
   });
 
   afterEach(async () => {

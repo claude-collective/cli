@@ -13,7 +13,7 @@ import {
   STANDARD_DIRS,
   STANDARD_FILES,
 } from "../../consts";
-import { findSkill } from "../../stores/matrix-store";
+import { matrix } from "../matrix/matrix-provider";
 import { typedEntries } from "../../utils/typed-object";
 import { computeSkillFolderHash } from "../versioning";
 import { renderSkillMd, renderAgentYaml, renderConfigTs } from "./content-generators";
@@ -475,8 +475,6 @@ export function createMockSkill(id: string, overrides?: Partial<ResolvedSkill>):
     alternatives: [],
     discourages: [],
     compatibleWith: [],
-    requiresSetup: [],
-    providesSetupFor: [],
     path: `skills/${category}/${id}/`,
     ...overrides,
   };
@@ -662,7 +660,7 @@ export async function writeTestSkill(
   },
 ): Promise<string> {
   // Boundary cast: test factory accepts arbitrary skill IDs
-  const skill = findSkill(skillId as SkillId);
+  const skill = matrix.skills[skillId as SkillId];
 
   if (!options?.skipMetadata && !skill) {
     throw new Error(

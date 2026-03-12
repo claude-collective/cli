@@ -18,7 +18,6 @@ vi.mock("../../utils/logger");
 import { resolveAgentConfigToSkills, resolveStackSkills } from "./stacks-loader";
 import { loadConfig } from "../configuration/config-loader";
 import { warn } from "../../utils/logger";
-import { extendSchemasWithCustomValues, resetSchemaExtensions } from "../schemas";
 
 describe("stacks-loader", () => {
   beforeEach(() => {
@@ -379,26 +378,8 @@ describe("stacks-loader", () => {
       expect(dynamicSkill!.preloaded).toBe(false);
     });
 
-    it("accepts custom skill IDs registered via extendSchemasWithCustomValues()", () => {
-      extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
-
-      // Boundary cast: custom skill IDs bypass the SkillId template literal type
-      const agentConfig = {
-        "web-framework": [{ id: "acme-pipeline-deploy", preloaded: true }],
-      } as unknown as StackAgentConfig;
-
-      const skills = resolveAgentConfigToSkills(agentConfig);
-
-      expect(skills).toHaveLength(1);
-      expect(skills[0].id).toBe("acme-pipeline-deploy");
-      expect(skills[0].preloaded).toBe(true);
-      expect(warn).not.toHaveBeenCalled();
-
-      resetSchemaExtensions();
-    });
-
-    it("rejects custom skill IDs not registered via extendSchemasWithCustomValues()", () => {
-      // Boundary cast: custom skill IDs bypass the SkillId template literal type
+    it("rejects skill IDs that don't match SKILL_ID_PATTERN", () => {
+      // Boundary cast: intentionally invalid skill ID to test validation
       const agentConfig = {
         "web-framework": [{ id: "acme-pipeline-deploy", preloaded: true }],
       } as unknown as StackAgentConfig;

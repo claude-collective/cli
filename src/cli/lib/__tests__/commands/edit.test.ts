@@ -16,7 +16,7 @@ import {
 import { FULLSTACK_PAIR_MATRIX } from "../mock-data/mock-matrices";
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
-import { useMatrixStore } from "../../../stores/matrix-store";
+import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { CategoryPath, SkillId } from "../../../types";
 import Edit from "../../../commands/edit.js";
 
@@ -200,7 +200,7 @@ const EDIT_SKILLS = {
 
 describe("edit wizard pre-selection via populateFromSkillIds", () => {
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(
+    initializeMatrix(
       createMockMatrix(EDIT_SKILLS, {
         categories: EDIT_CATEGORIES,
       }),
@@ -288,7 +288,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       }),
     };
 
-    useMatrixStore.getState().setMatrix(
+    initializeMatrix(
       createMockMatrix(sparseSkills, {
         categories: EDIT_CATEGORIES,
       }),
@@ -313,7 +313,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       "infra-tooling-linter": createMockSkill("infra-tooling-linter"),
     };
 
-    useMatrixStore.getState().setMatrix(
+    initializeMatrix(
       createMockMatrix(extraSkills, {
         categories: EDIT_CATEGORIES,
       }),
@@ -352,7 +352,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       "web-testing-playwright": createMockSkill("web-testing-playwright"),
     };
 
-    useMatrixStore.getState().setMatrix(
+    initializeMatrix(
       createMockMatrix(multiSkills, {
         categories: EDIT_CATEGORIES,
       }),
@@ -378,7 +378,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
 describe("edit wizard domain filtering", () => {
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(
+    initializeMatrix(
       createMockMatrix(EDIT_SKILLS, {
         categories: EDIT_CATEGORIES,
       }),
@@ -519,7 +519,7 @@ describe("edit command local-mode skill fallback", () => {
     });
 
     mockLoadSkillsMatrixFromSource.mockResolvedValue(testSourceResult);
-    useMatrixStore.getState().setMatrix(testSourceResult.matrix);
+    initializeMatrix(testSourceResult.matrix);
     mockGetMarketplaceLabel.mockReturnValue(undefined);
   });
 

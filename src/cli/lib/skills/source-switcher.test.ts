@@ -7,7 +7,6 @@ vi.mock("../../utils/logger");
 import { deleteLocalSkill } from "./source-switcher";
 import { remove } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
-import { extendSchemasWithCustomValues, resetSchemaExtensions } from "../schemas";
 
 describe("source-switcher", () => {
   beforeEach(() => {
@@ -81,15 +80,12 @@ describe("source-switcher", () => {
       expect(remove).not.toHaveBeenCalled();
     });
 
-    it("accepts custom skill IDs registered via extendSchemasWithCustomValues()", async () => {
-      extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
-
+    it("rejects skill IDs without a valid domain prefix", async () => {
+      // "acme-pipeline-deploy" doesn't match SKILL_ID_PATTERN (acme is not a valid domain prefix)
       await deleteLocalSkill("/project", "acme-pipeline-deploy" as SkillId);
 
-      expect(remove).toHaveBeenCalledWith("/project/.claude/skills/acme-pipeline-deploy");
-      expect(verbose).toHaveBeenCalledWith(expect.stringContaining("Deleted"));
-
-      resetSchemaExtensions();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
+      expect(remove).not.toHaveBeenCalled();
     });
   });
 });

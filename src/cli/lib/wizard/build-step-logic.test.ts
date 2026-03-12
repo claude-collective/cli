@@ -7,7 +7,7 @@ import {
 import { createMockMatrix, SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
 import type { CategoryRow } from "../../components/wizard/category-grid";
 import type { SkillId, Category, CategorySelections } from "../../types";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "../matrix/matrix-provider";
 
 describe("validateBuildStep", () => {
   const requiredCategory: CategoryRow = {
@@ -100,7 +100,7 @@ describe("buildCategoriesForDomain", () => {
 
   it("should return categories with options for the given domain", () => {
     const matrix = createMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     const result = buildCategoriesForDomain("web", [], {});
 
     expect(result).toHaveLength(2);
@@ -117,7 +117,7 @@ describe("buildCategoriesForDomain", () => {
         } as Record<Category, import("../../types").CategoryDefinition>,
       },
     );
-    useMatrixStore.getState().setMatrix(emptyMatrix);
+    initializeMatrix(emptyMatrix);
 
     const result = buildCategoriesForDomain("web", [], {});
     expect(result).toHaveLength(0);
@@ -125,7 +125,7 @@ describe("buildCategoriesForDomain", () => {
 
   it("should sort categories by order", () => {
     const matrix = createMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     const result = buildCategoriesForDomain("web", [], {});
 
     expect(result[0].id).toBe(frameworkCategory);
@@ -134,7 +134,7 @@ describe("buildCategoriesForDomain", () => {
 
   it("should apply framework filtering for non-framework categories in web domain", () => {
     const matrix = createMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
 
     // With React selected as framework, only Zustand (compatible with React) should show
     const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
@@ -148,7 +148,7 @@ describe("buildCategoriesForDomain", () => {
 
   it("should not apply framework filtering when no framework is selected", () => {
     const matrix = createMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
 
     const result = buildCategoriesForDomain("web", [], {});
 
@@ -159,7 +159,7 @@ describe("buildCategoriesForDomain", () => {
 
   it("should mark installed skills", () => {
     const matrix = createMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     const installedSkillIds: SkillId[] = ["web-framework-react"];
 
     const result = buildCategoriesForDomain("web", [], {}, installedSkillIds);

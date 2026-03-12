@@ -7,7 +7,8 @@ import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents";
 import { useWizardStore } from "../../../stores/wizard-store";
-import { useMatrixStore } from "../../../stores/matrix-store";
+import { initializeMatrix } from "../../matrix/matrix-provider";
+import { BUILT_IN_MATRIX } from "../../../types/generated/matrix";
 import { loadProjectConfig } from "../../configuration";
 import { DEFAULT_PRESELECTED_SKILLS, STANDARD_FILES } from "../../../consts";
 import type { AgentScopeConfig, MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
@@ -48,7 +49,7 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
@@ -185,7 +186,7 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
@@ -300,7 +301,7 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
     vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
@@ -413,7 +414,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
@@ -562,7 +563,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
@@ -777,7 +778,7 @@ describe("Recompile Idempotency", () => {
     vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
@@ -860,7 +861,7 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     vi.spyOn(os, "homedir").mockReturnValue(dirs.projectDir);
 
     matrix = createComprehensiveMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
     sourceResult = buildSourceResult(matrix, dirs.sourceDir);
   });
 
@@ -937,10 +938,10 @@ describe("per-agent scope", () => {
 
   beforeEach(() => {
     useWizardStore.getState().reset();
-    useMatrixStore.getState().reset();
+    initializeMatrix(BUILT_IN_MATRIX);
 
     matrix = createBasicMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
   });
 
   it("agents default to global scope", () => {
@@ -981,7 +982,7 @@ describe("per-agent scope", () => {
 
   it("agent scope survives wizard result building", () => {
     const comprehensiveMatrix = createComprehensiveMatrix();
-    useMatrixStore.getState().setMatrix(comprehensiveMatrix);
+    initializeMatrix(comprehensiveMatrix);
 
     simulateSkillSelections(["web-framework-react", "api-framework-hono"], comprehensiveMatrix, [
       "web",

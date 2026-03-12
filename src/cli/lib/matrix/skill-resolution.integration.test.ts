@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { groupBy, mapToObj, mapValues } from "remeda";
+import { mapToObj } from "remeda";
 
 import {
   createTestSource,
@@ -16,7 +16,6 @@ import {
 } from ".";
 import {
   createMockSkill,
-  createMockMultiSourceSkill,
   createMockMatrix,
   testSkillToResolvedSkill,
   buildWizardResult,
@@ -25,22 +24,19 @@ import {
   readTestTsConfig,
 } from "../__tests__/helpers";
 import {
-  PUBLIC_SOURCE,
-  ACME_SOURCE,
-  INTERNAL_SOURCE,
-} from "../__tests__/mock-data/mock-sources.js";
-import { RESOLUTION_PIPELINE_SKILLS } from "../__tests__/mock-data/mock-skills.js";
-import { TEST_CATEGORIES } from "../__tests__/test-fixtures";
+  MULTI_SOURCE_PUBLIC_SKILLS,
+  MULTI_SOURCE_ACME_SKILLS,
+  MULTI_SOURCE_INTERNAL_SKILLS,
+  RESOLUTION_PIPELINE_SKILLS,
+} from "../__tests__/mock-data/mock-skills.js";
+import { buildMultiSourceMatrix } from "../__tests__/mock-data/mock-matrices.js";
 import type {
-  CategoryDefinition,
-  CategoryPath,
   MergedSkillsMatrix,
   ProjectConfig,
   SkillId,
-  SkillSource,
   Category,
 } from "../../types";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix } from "./matrix-provider";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -49,108 +45,13 @@ const AUTH_PATTERNS = "api-security-auth-patterns" as SkillId;
 const ANIMATION_FRAMER = "web-animation-framer" as SkillId;
 const A11Y = "web-accessibility-a11y" as SkillId;
 const MONITORING_SENTRY = "api-monitoring-sentry" as SkillId;
-const METHODOLOGY_INVESTIGATION = "meta-methodology-investigation" as SkillId;
 const NONEXISTENT_SKILL = "web-nonexistent-skill" as SkillId;
 const FEATURE_ADVANCED = "web-feature-advanced" as SkillId;
 const NONEXISTENT_DEP = "web-nonexistent-dep" as SkillId;
 const VUE_ID = "web-framework-vue-composition-api" as SkillId;
 
-// ── Skill data (single-consumer, moved from mock-skills.ts) ─────────────────
-
-// Boundary widening: test fixtures use arbitrary skill IDs and categories for test isolation
-type SkillEntry = { id: string; category: string; description: string };
-
-const PUBLIC_SKILLS: SkillEntry[] = [
-  { id: "web-framework-react", category: "web-framework", description: "React framework" },
-  { id: VUE_ID, category: "web-framework", description: "Vue.js framework" },
-  {
-    id: "web-state-zustand",
-    category: "web-client-state",
-    description: "Zustand state management",
-  },
-  { id: "web-styling-scss-modules", category: "web-styling", description: "SCSS Modules styling" },
-  { id: "web-testing-vitest", category: "web-testing", description: "Vitest testing framework" },
-];
-
-const ACME_SKILLS: SkillEntry[] = [
-  { id: "web-framework-react", category: "web-framework", description: "React (acme custom fork)" },
-  { id: "api-framework-hono", category: "api-api", description: "Hono web framework" },
-  { id: "api-database-drizzle", category: "api-database", description: "Drizzle ORM" },
-  { id: AUTH_PATTERNS, category: "shared-security", description: "Auth patterns" },
-  { id: "web-testing-vitest", category: "web-testing", description: "Vitest (acme custom)" },
-];
-
-const INTERNAL_SKILLS: SkillEntry[] = [
-  { id: "web-framework-react", category: "web-framework", description: "React (internal build)" },
-  { id: ANIMATION_FRAMER, category: "web-animation", description: "Framer Motion" },
-  {
-    id: METHODOLOGY_INVESTIGATION,
-    category: "shared-methodology",
-    description: "Investigation first",
-  },
-  { id: A11Y, category: "web-accessibility", description: "Web accessibility" },
-  {
-    id: MONITORING_SENTRY,
-    category: "api-observability",
-    description: "Sentry error tracking",
-  },
-];
-
 const TOTAL_SOURCE_COUNT = 3;
 const SELECTED_SKILL_COUNT = 10;
-
-// ── Test Data: 15 skills across 3 sources ──────────────────────────────────────
-
-type TaggedSkillEntry = SkillEntry & { source: SkillSource };
-
-// ── Category Fixtures ────────────────────────────────────────────────────────
-
-const MULTI_SOURCE_CATEGORIES = {
-  "web-framework": { ...TEST_CATEGORIES.framework, exclusive: true, required: true },
-  "web-client-state": {
-    ...TEST_CATEGORIES.clientState,
-    displayName: "State",
-    description: "State category",
-    order: 1,
-  },
-  "web-styling": { ...TEST_CATEGORIES.styling, order: 2 },
-  "web-testing": { ...TEST_CATEGORIES.testing, exclusive: false, order: 3 },
-  "api-api": { ...TEST_CATEGORIES.api, exclusive: true, order: 4 },
-  "api-database": { ...TEST_CATEGORIES.database, order: 5 },
-  "shared-security": { ...TEST_CATEGORIES.security, order: 6 },
-  "web-animation": { ...TEST_CATEGORIES.animation, order: 7 },
-  "shared-methodology": { ...TEST_CATEGORIES.methodology, order: 8 },
-  "web-accessibility": { ...TEST_CATEGORIES.accessibility, order: 9 },
-  "api-observability": { ...TEST_CATEGORIES.observability, order: 10 },
-} as Partial<Record<Category, CategoryDefinition>> as Record<Category, CategoryDefinition>;
-
-// ── Matrix Builder ─────────────────────────────────────────────────────────────
-
-/**
- * Builds a MergedSkillsMatrix with skills annotated with multi-source metadata.
- * Simulates the output of multi-source-loader after tagging all sources.
- */
-function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
-  const taggedEntries: TaggedSkillEntry[] = [
-    ...PUBLIC_SKILLS.map((s) => ({ ...s, source: { ...PUBLIC_SOURCE } })),
-    ...ACME_SKILLS.map((s) => ({ ...s, source: { ...ACME_SOURCE } })),
-    ...INTERNAL_SKILLS.map((s) => ({ ...s, source: { ...INTERNAL_SOURCE } })),
-  ];
-  const grouped = groupBy(taggedEntries, (e) => e.id);
-  const skills = mapValues(grouped, (entries) => {
-    const first = entries[0]!;
-    const sources = entries.map((e) => e.source);
-    return createMockMultiSourceSkill(first.id, sources, {
-      category: first.category as CategoryPath,
-      description: first.description,
-    });
-  });
-
-  return createMockMatrix(skills, {
-    categories: MULTI_SOURCE_CATEGORIES,
-    ...overrides,
-  });
-}
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
@@ -158,13 +59,13 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 1: Skills from 3 sources resolve into unified matrix", () => {
     it("should create a matrix with unique skills from all sources", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Count unique skills from all 3 sources (15 total, minus overlaps)
       const uniqueSkillIds = new Set([
-        ...PUBLIC_SKILLS.map((s) => s.id),
-        ...ACME_SKILLS.map((s) => s.id),
-        ...INTERNAL_SKILLS.map((s) => s.id),
+        ...MULTI_SOURCE_PUBLIC_SKILLS.map((s) => s.id),
+        ...MULTI_SOURCE_ACME_SKILLS.map((s) => s.id),
+        ...MULTI_SOURCE_INTERNAL_SKILLS.map((s) => s.id),
       ]);
       const EXPECTED_UNIQUE_COUNT = uniqueSkillIds.size;
 
@@ -174,7 +75,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should annotate skills with all available sources", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // web-framework-react exists in all 3 sources
       const reactSkill = matrix.skills["web-framework-react"];
@@ -193,7 +94,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should annotate skills with single source when not duplicated", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // web-state-zustand is only in public source
       const zustandSkill = matrix.skills["web-state-zustand"];
@@ -204,7 +105,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should have correct activeSource defaulting to first available", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Skills without any installed source should have first source as active
       const reactSkill = matrix.skills["web-framework-react"];
@@ -216,7 +117,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 2: Active source wins when same skill ID exists in multiple sources", () => {
     it("should use installed source as activeSource over non-installed sources", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Simulate acme-corp version being installed
       const reactSkill = matrix.skills["web-framework-react"]!;
@@ -235,7 +136,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should respect sourceSelections when determining which source is preferred", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // sourceSelections maps SkillId -> source name (user's choice from wizard)
       const sourceSelections: Partial<Record<SkillId, string>> = {
@@ -254,7 +155,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should allow selecting 10 skills across different sources without conflicts", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Select 10 skills from different sources (no conflicts since no conflictsWith defined)
       const selectedSkills: SkillId[] = [
@@ -286,7 +187,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 3: Missing skill reference produces warning", () => {
     it("should throw when missing skill is selected", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Select a skill that doesn't exist in any source
       const selections: SkillId[] = ["web-framework-react", NONEXISTENT_SKILL];
@@ -297,14 +198,14 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should throw for unknown skill ID through alias lookup", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       expect(() => resolveAlias(NONEXISTENT_SKILL)).toThrow("Unknown skill ID");
     });
 
     it("should not include missing skill in getAvailableSkills for any category", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Check all categories -- missing skill should not appear
       const allCategories = Object.keys(matrix.categories) as Category[];
@@ -317,7 +218,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should detect missing requirement when dependency is not in matrix", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Add a skill that requires a non-existent skill
       matrix.skills[FEATURE_ADVANCED] = createMockSkill(FEATURE_ADVANCED, {
@@ -338,7 +239,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 4: Skill dependencies are correctly resolved across sources", () => {
     it("should validate when dependency from different source is selected", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Add dependency: drizzle (acme) requires hono (acme)
       const drizzleSkill = matrix.skills["api-database-drizzle"]!;
@@ -358,7 +259,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should fail validation when dependency from another source is not selected", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Add dependency: drizzle requires hono
       const drizzleSkill = matrix.skills["api-database-drizzle"]!;
@@ -379,7 +280,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should discourage dependent skill when requirement is not selected", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // auth-patterns requires hono
       const authSkill = matrix.skills[AUTH_PATTERNS]!;
@@ -402,7 +303,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should not discourage dependent skill when requirement is selected", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // auth-patterns requires hono
       const authSkill = matrix.skills[AUTH_PATTERNS]!;
@@ -421,7 +322,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should handle OR dependency across sources", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // sentry can work with either hono (acme) OR react (public/acme/internal)
       const sentrySkill = matrix.skills[MONITORING_SENTRY]!;
@@ -446,7 +347,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 5: Conflict resolution across sources", () => {
     it("should detect conflicts between skills from different sources", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // react and vue conflict (both in framework category)
       const reactSkill = matrix.skills["web-framework-react"]!;
@@ -465,7 +366,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should discourage conflicting skill from another source", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       const reactSkill = matrix.skills["web-framework-react"]!;
       reactSkill.conflictsWith = [
@@ -482,7 +383,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should enforce category exclusivity across multi-source skills", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // framework category is exclusive -- selecting both react and vue violates it
       const validation = validateSelection(["web-framework-react", VUE_ID]);
@@ -494,7 +395,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 6: Large-scale selection with recommendations and warnings", () => {
     it("should validate 10 skills from 3 sources with recommendations", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // react is a recommended skill
       const reactSkill = matrix.skills["web-framework-react"]!;
@@ -514,7 +415,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should not warn about recommendation when recommended skill is selected", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // react is a recommended skill
       const reactSkill = matrix.skills["web-framework-react"]!;
@@ -531,7 +432,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
     it("should handle getAvailableSkills with multi-source skills correctly", () => {
       const matrix = buildMultiSourceMatrix();
-      useMatrixStore.getState().setMatrix(matrix);
+      initializeMatrix(matrix);
 
       // Get available framework skills
       const available = getAvailableSkills("web-framework", []);
@@ -574,7 +475,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id);
 
     const matrix = buildPipelineMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
 
     const wizardResult = buildWizardResult(
       [
@@ -616,7 +517,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id);
 
     const matrix = buildPipelineMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
 
     const wizardResult = buildWizardResult(buildSkillConfigs(selectedSkills));
     const sourceResult = buildSourceResult(matrix, dirs.sourceDir, {
@@ -642,7 +543,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
 describe("Integration: Skill ID Resolution in Multi-Source Context", () => {
   it("should resolve skill IDs with multi-source metadata", () => {
     const matrix = buildMultiSourceMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
 
     const resolved = resolveAlias("web-framework-react");
     expect(resolved).toBe("web-framework-react");
@@ -655,7 +556,7 @@ describe("Integration: Skill ID Resolution in Multi-Source Context", () => {
 
   it("should validate selection using skill IDs with multi-source skills", () => {
     const matrix = buildMultiSourceMatrix();
-    useMatrixStore.getState().setMatrix(matrix);
+    initializeMatrix(matrix);
 
     const validation = validateSelection(["web-framework-react", "api-framework-hono"]);
     expect(validation.valid).toBe(true);
