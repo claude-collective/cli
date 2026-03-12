@@ -7,6 +7,19 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.73.0] - 2026-03-12
+
+**Matrix extraction, schema hardening, setup removal**
+
+- Extract matrix-provider and skill-resolution from matrix-store/matrix-loader
+- Remove extensible schema infrastructure — generated enums replace runtime extension
+- Remove unused SetupPair/requiresSetup/providesSetupFor infrastructure
+- Add strict and custom metadata JSON schema variants
+
+See [changelogs/0.73.0.md](./changelogs/0.73.0.md) for full details.
+
+---
+
 ## [0.72.0] - 2026-03-12
 
 **Generated source types codegen**
