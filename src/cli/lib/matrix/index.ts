@@ -21,4 +21,10 @@ export {
 
 export { type MatrixHealthIssue, checkMatrixHealth } from "./matrix-health-check";
 
-export { matrix, initializeMatrix, getSkillById, getSkillBySlug, findStack } from "./matrix-provider";
+export {
+  matrix,
+  initializeMatrix,
+  getSkillById,
+  getSkillBySlug,
+  findStack,
+} from "./matrix-provider";

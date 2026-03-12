@@ -5,10 +5,7 @@ import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 import { fileExists, ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { compactStackForYaml } from "./config-generator";
-import {
-  PROJECT_CONFIG_TYPES_BEFORE,
-  PROJECT_CONFIG_INTERFACE_AFTER,
-} from "./config-types-writer";
+import { PROJECT_CONFIG_TYPES_BEFORE, PROJECT_CONFIG_INTERFACE_AFTER } from "./config-types-writer";
 
 export type ConfigSourceOptions = {
   /**

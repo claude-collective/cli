@@ -307,7 +307,10 @@ describe("uninstall command", () => {
       const skillsDir = path.join(claudeDir, STANDARD_DIRS.SKILLS);
       await mkdir(skillsDir, { recursive: true });
 
-      const noMetaSkillDir = await createSkillWithoutMetadata(skillsDir, "web-tooling-nometadata" as SkillId);
+      const noMetaSkillDir = await createSkillWithoutMetadata(
+        skillsDir,
+        "web-tooling-nometadata" as SkillId,
+      );
 
       const { stdout, stderr } = await runCliCommand(["uninstall", "--yes"]);
 
@@ -367,7 +370,11 @@ describe("uninstall command", () => {
       // Skill from primary source
       const primarySkillDir = await createCLISkill(skillsDir, "web-framework-react", TEST_SOURCE);
       // Skill from extra source
-      const extraSkillDir = await createCLISkill(skillsDir, "web-tooling-acme" as SkillId, TEST_EXTRA_SOURCE);
+      const extraSkillDir = await createCLISkill(
+        skillsDir,
+        "web-tooling-acme" as SkillId,
+        TEST_EXTRA_SOURCE,
+      );
       // User skill
       const userSkillDir = await createUserSkill(skillsDir, "web-tooling-personal" as SkillId);
 

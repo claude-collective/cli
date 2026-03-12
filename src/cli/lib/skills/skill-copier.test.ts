@@ -625,7 +625,12 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const result = await copySkillsToLocalFlattened([], localSkillsDir, EMPTY_MATRIX, sourceResult);
+      const result = await copySkillsToLocalFlattened(
+        [],
+        localSkillsDir,
+        EMPTY_MATRIX,
+        sourceResult,
+      );
 
       expect(result).toEqual([]);
     });

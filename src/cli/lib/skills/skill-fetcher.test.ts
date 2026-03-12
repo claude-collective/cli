@@ -226,9 +226,9 @@ describe("skill-fetcher", () => {
       mockDirectoryExists.mockResolvedValueOnce(true);
       mockGlob.mockResolvedValueOnce(["web/framework/web-framework-react/SKILL.md"]);
 
-      await expect(
-        fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH),
-      ).rejects.toThrow("Malformed marketplace plugin");
+      await expect(fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH)).rejects.toThrow(
+        "Malformed marketplace plugin",
+      );
     });
 
     it("should not match marketplace plugin when plugin name does not match skillId", async () => {

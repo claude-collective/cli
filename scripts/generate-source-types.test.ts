@@ -218,10 +218,7 @@ describe("extractSkills", () => {
   it("skips directories missing metadata.yaml", () => {
     const skillDir = path.join(tempDir, "src/skills/no-metadata");
     mkdirSync(skillDir, { recursive: true });
-    writeFileSync(
-      path.join(skillDir, "SKILL.md"),
-      renderSkillMd("web-framework-test", "Test"),
-    );
+    writeFileSync(path.join(skillDir, "SKILL.md"), renderSkillMd("web-framework-test", "Test"));
 
     const result = extractSkills(tempDir);
 
@@ -296,9 +293,7 @@ describe("extractSkills", () => {
       renderSkillMd("web-framework-nodesc", "test"),
     );
 
-    expect(() => extractSkills(tempDir)).toThrow(
-      "missing required 'cliDescription'",
-    );
+    expect(() => extractSkills(tempDir)).toThrow("missing required 'cliDescription'");
   });
 
   it("throws on missing displayName", () => {
@@ -313,9 +308,7 @@ describe("extractSkills", () => {
       renderSkillMd("web-framework-noname", "test"),
     );
 
-    expect(() => extractSkills(tempDir)).toThrow(
-      "missing required 'displayName'",
-    );
+    expect(() => extractSkills(tempDir)).toThrow("missing required 'displayName'");
   });
 
   it("handles optional usageGuidance", () => {
@@ -564,9 +557,7 @@ describe("generatePhase1", () => {
   });
 
   it("deduplicates agent names", () => {
-    const skills = [
-      createMockExtractedSkill("web-framework-react", { slug: "react" as any }),
-    ];
+    const skills = [createMockExtractedSkill("web-framework-react", { slug: "react" as any })];
     const agents: AgentEntry[] = [
       { id: "web-developer", domain: "web" },
       { id: "web-developer", domain: "web" },

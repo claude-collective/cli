@@ -128,10 +128,7 @@ function generateStackAgentConfig(skillsByCategory: Map<Category, SkillId[]>): s
 
   const properties = [...skillsByCategory.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(
-      ([category, skills]) =>
-        `  "${category}"?: SkillAssignment<${formatSkillUnion(skills)}>;`,
-    );
+    .map(([category, skills]) => `  "${category}"?: SkillAssignment<${formatSkillUnion(skills)}>;`);
 
   return ["export type StackAgentConfig = {", ...properties, "};"].join("\n");
 }

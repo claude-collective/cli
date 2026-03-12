@@ -18,7 +18,6 @@ function getLabel(skill: Pick<ResolvedSkill, "displayName">): string {
 
 /** Resolves a skill ID to its canonical SkillId. Throws if not found in the matrix. */
 export function resolveAlias(skillId: SkillId): SkillId {
-
   if (matrix.skills[skillId]) return skillId;
   throw new Error(`Unknown skill ID: '${skillId}' — not found in the matrix`);
 }
@@ -47,7 +46,6 @@ function initializeSelectionContext(currentSelections: SkillId[]): SelectionCont
  * @returns Skill IDs that would lose a required dependency if `skillId` were removed
  */
 export function getDependentSkills(skillId: SkillId, currentSelections: SkillId[]): SkillId[] {
-
   const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return [];
@@ -94,7 +92,6 @@ export function getDependentSkills(skillId: SkillId, currentSelections: SkillId[
  * @returns true if the skill should show a discouraged warning
  */
 export function isDiscouraged(skillId: SkillId, currentSelections: SkillId[]): boolean {
-
   const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return false;
@@ -157,7 +154,6 @@ export function getDiscourageReason(
   skillId: SkillId,
   currentSelections: SkillId[],
 ): string | undefined {
-
   const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return undefined;
@@ -236,7 +232,6 @@ export function getDiscourageReason(
  *    group with at least one selected skill, or has no compatibility constraints)
  */
 export function isRecommended(skillId: SkillId, currentSelections: SkillId[]): boolean {
-
   const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return false;
@@ -272,7 +267,6 @@ export function getRecommendReason(
   skillId: SkillId,
   _currentSelections: SkillId[],
 ): string | undefined {
-
   const fullId = resolveAlias(skillId);
   const skill = matrix.skills[fullId];
   if (!skill) return undefined;
@@ -286,7 +280,6 @@ type ValidationPartial = {
 };
 
 function validateConflicts(resolvedSelections: SkillId[]): ValidationPartial {
-
   const errors: ValidationError[] = [];
 
   for (let i = 0; i < resolvedSelections.length; i++) {
@@ -313,7 +306,6 @@ function validateRequirements(
   resolvedSelections: SkillId[],
   selectedSet: Set<SkillId>,
 ): ValidationPartial {
-
   const errors: ValidationError[] = [];
 
   for (const skillId of resolvedSelections) {
@@ -347,7 +339,6 @@ function validateRequirements(
 }
 
 function validateExclusivity(resolvedSelections: SkillId[]): ValidationPartial {
-
   const errors: ValidationError[] = [];
 
   const validSkills = resolvedSelections
@@ -382,7 +373,6 @@ function validateRecommendations(
   resolvedSelections: SkillId[],
   selectedSet: Set<SkillId>,
 ): ValidationPartial {
-
   const warnings: ValidationWarning[] = [];
 
   // Iterate the flat recommends list from relationships
@@ -465,7 +455,6 @@ export function getAvailableSkills(
   categoryId: CategoryPath,
   currentSelections: SkillId[],
 ): SkillOption[] {
-
   const skillOptions: SkillOption[] = [];
   const { selectedSet } = initializeSelectionContext(currentSelections);
 
@@ -494,7 +483,6 @@ export function getAvailableSkills(
 
 /** Returns all resolved skills belonging to the given category. */
 export function getSkillsByCategory(categoryId: CategoryPath): ResolvedSkill[] {
-
   const skills: ResolvedSkill[] = [];
 
   for (const skill of Object.values(matrix.skills)) {

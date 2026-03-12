@@ -129,9 +129,7 @@ function buildAgentGroups(matrix: MergedSkillsMatrix): AgentGroup[] {
   // Group custom agents by explicit domain (from metadata.yaml) or kebab prefix fallback
   const customGroupMap = new Map<string, AgentItem[]>();
   for (const agentId of customAgentIds) {
-    const explicitDomain = isAgentName(agentId)
-      ? matrix.agentDefinedDomains?.[agentId]
-      : undefined;
+    const explicitDomain = isAgentName(agentId) ? matrix.agentDefinedDomains?.[agentId] : undefined;
     const domainKey = explicitDomain ?? (agentId.split("-")[0] || "custom");
     const groupLabel = getDomainDisplayName(domainKey);
     if (!customGroupMap.has(groupLabel)) {

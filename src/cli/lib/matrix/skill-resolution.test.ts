@@ -141,11 +141,10 @@ describe("skill-resolution", () => {
         },
       );
 
-      const merged = mergeMatrixWithSkills(
-        matrixConfig.categories,
-        matrixConfig.relationships,
-        [REACT_EXTRACTED_BASIC, ZUSTAND_EXTRACTED],
-      );
+      const merged = mergeMatrixWithSkills(matrixConfig.categories, matrixConfig.relationships, [
+        REACT_EXTRACTED_BASIC,
+        ZUSTAND_EXTRACTED,
+      ]);
 
       const zustand = merged.skills["web-state-zustand"];
       expect(zustand).toBeDefined();

@@ -35,7 +35,9 @@ export function parseFrontmatter(content: string, filePath?: string): SkillFront
 
 // Boundary cast: agent keys come from agentYamlConfigSchema which types config.id as AgentName;
 // custom agents (not in the union) are accepted by the schema's z.string() base
-export async function loadAllAgents(projectRoot: string): Promise<Record<AgentName, AgentDefinition>> {
+export async function loadAllAgents(
+  projectRoot: string,
+): Promise<Record<AgentName, AgentDefinition>> {
   const agents: Record<string, AgentDefinition> = {};
   const agentSourcesDir = path.join(projectRoot, DIRS.agents);
 

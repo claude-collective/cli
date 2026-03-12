@@ -179,8 +179,9 @@ export default class Info extends BaseCommand {
 
       // CLI arg is an untyped string — try as skill ID first, then as slug
       const slugResolvedId = matrix.slugMap.slugToId[args.skill as SkillSlug];
-      let skill = matrix.skills[args.skill as SkillId]
-        ?? (slugResolvedId ? matrix.skills[slugResolvedId] : undefined);
+      let skill =
+        matrix.skills[args.skill as SkillId] ??
+        (slugResolvedId ? matrix.skills[slugResolvedId] : undefined);
 
       if (!skill) {
         const suggestions = findSuggestions(matrix.skills, args.skill, MAX_SUGGESTIONS);

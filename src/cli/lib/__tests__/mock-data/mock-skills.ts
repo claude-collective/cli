@@ -396,8 +396,16 @@ type MultiSourceSkillEntry = { id: string; category: string; description: string
 
 export const MULTI_SOURCE_PUBLIC_SKILLS: MultiSourceSkillEntry[] = [
   { id: "web-framework-react", category: "web-framework", description: "React framework" },
-  { id: "web-framework-vue-composition-api", category: "web-framework", description: "Vue.js framework" },
-  { id: "web-state-zustand", category: "web-client-state", description: "Zustand state management" },
+  {
+    id: "web-framework-vue-composition-api",
+    category: "web-framework",
+    description: "Vue.js framework",
+  },
+  {
+    id: "web-state-zustand",
+    category: "web-client-state",
+    description: "Zustand state management",
+  },
   { id: "web-styling-scss-modules", category: "web-styling", description: "SCSS Modules styling" },
   { id: "web-testing-vitest", category: "web-testing", description: "Vitest testing framework" },
 ];
@@ -413,9 +421,17 @@ export const MULTI_SOURCE_ACME_SKILLS: MultiSourceSkillEntry[] = [
 export const MULTI_SOURCE_INTERNAL_SKILLS: MultiSourceSkillEntry[] = [
   { id: "web-framework-react", category: "web-framework", description: "React (internal build)" },
   { id: "web-animation-framer", category: "web-animation", description: "Framer Motion" },
-  { id: "meta-methodology-investigation", category: "shared-methodology", description: "Investigation first" },
+  {
+    id: "meta-methodology-investigation",
+    category: "shared-methodology",
+    description: "Investigation first",
+  },
   { id: "web-accessibility-a11y", category: "web-accessibility", description: "Web accessibility" },
-  { id: "api-monitoring-sentry", category: "api-observability", description: "Sentry error tracking" },
+  {
+    id: "api-monitoring-sentry",
+    category: "api-observability",
+    description: "Sentry error tracking",
+  },
 ];
 
 export type { MultiSourceSkillEntry };

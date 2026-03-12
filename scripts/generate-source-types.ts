@@ -131,7 +131,11 @@ export function extractAgents(cliRootPath: string): AgentEntry[] {
 
 // -- Phase 1: Generate source-types.ts ---------------------------------------
 
-export function generatePhase1(skills: ExtractedSkillMetadata[], agentEntries: AgentEntry[], outDir: string): {
+export function generatePhase1(
+  skills: ExtractedSkillMetadata[],
+  agentEntries: AgentEntry[],
+  outDir: string,
+): {
   outPath: string;
   skillIdSet: Set<string>;
 } {
@@ -261,13 +265,20 @@ export function sortedGroupBy<T>(
     (groups[key] ??= []).push(id);
   }
   return Object.fromEntries(
-    Object.keys(groups).sort().map((k) => [k, groups[k].sort()]),
+    Object.keys(groups)
+      .sort()
+      .map((k) => [k, groups[k].sort()]),
   );
 }
 
 // -- Phase 2: Generate matrix.ts ---------------------------------------------
 
-export function generatePhase2(skills: ExtractedSkillMetadata[], agentEntries: AgentEntry[], skillIdSet: Set<string>, outDir: string): void {
+export function generatePhase2(
+  skills: ExtractedSkillMetadata[],
+  agentEntries: AgentEntry[],
+  skillIdSet: Set<string>,
+  outDir: string,
+): void {
   console.log("Generating matrix...\n");
 
   // Call the pure resolution function
@@ -295,7 +306,10 @@ export function generatePhase2(skills: ExtractedSkillMetadata[], agentEntries: A
   );
 
   const sortedCategoriesByDomain = sortedGroupBy(
-    Object.entries(matrix.categories).filter(([, d]) => d?.domain != null) as [string, CategoryDefinition][],
+    Object.entries(matrix.categories).filter(([, d]) => d?.domain != null) as [
+      string,
+      CategoryDefinition,
+    ][],
     (cat) => cat.domain!,
   );
 
@@ -311,9 +325,9 @@ export function generatePhase2(skills: ExtractedSkillMetadata[], agentEntries: A
     "  ResolvedStack,",
     "  SkillSlugMap,",
     '} from "../matrix";',
-    "import type { AgentName } from \"../agents\";",
-    "import type { SkillId, SkillSlug } from \"../skills\";",
-    "import type { Category, Domain } from \"./source-types\";",
+    'import type { AgentName } from "../agents";',
+    'import type { SkillId, SkillSlug } from "../skills";',
+    'import type { Category, Domain } from "./source-types";',
     "",
     "// ── Built-in Matrix ───────────────────────────────────────────",
     "",
@@ -335,9 +349,7 @@ export function generatePhase2(skills: ExtractedSkillMetadata[], agentEntries: A
   const stackCount = matrix.suggestedStacks.length;
 
   console.log(`  ✓ ${outPath}`);
-  console.log(
-    `\n  Matrix: ${skillCount} skills, ${catCount} categories, ${stackCount} stacks\n`,
-  );
+  console.log(`\n  Matrix: ${skillCount} skills, ${catCount} categories, ${stackCount} stacks\n`);
 }
 
 // -- Stack resolution --------------------------------------------------------
@@ -348,7 +360,7 @@ export function generatePhase2(skills: ExtractedSkillMetadata[], agentEntries: A
  * instead of isValidSkillId() from schemas.ts (no schema dependency).
  */
 export function resolveStack(
-  stack: typeof defaultStacks[number],
+  stack: (typeof defaultStacks)[number],
   skillIdSet: Set<string>,
 ): ResolvedStack {
   const skills: Record<string, Record<string, string[]>> = {};

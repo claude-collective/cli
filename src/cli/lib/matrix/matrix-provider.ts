@@ -1,5 +1,11 @@
 import { BUILT_IN_MATRIX } from "../../types/generated/matrix";
-import type { MergedSkillsMatrix, ResolvedSkill, ResolvedStack, SkillId, SkillSlug } from "../../types";
+import type {
+  MergedSkillsMatrix,
+  ResolvedSkill,
+  ResolvedStack,
+  SkillId,
+  SkillSlug,
+} from "../../types";
 
 /** The current matrix — starts as BUILT_IN_MATRIX, replaced after local skill merge on startup */
 export let matrix: MergedSkillsMatrix = BUILT_IN_MATRIX;

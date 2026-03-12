@@ -89,8 +89,8 @@ export function sanitizeCompiledAgentData(data: CompiledAgentData): CompiledAgen
   const sanitizedSkills = sanitizeSkills(data.skills);
   const sanitizedPreloaded = sanitizeSkills(data.preloadedSkills);
   const sanitizedDynamic = sanitizeSkills(data.dynamicSkills);
-  const sanitizedPreloadedIds = data.preloadedSkillIds.map(
-    (id) => sanitizeLiquidSyntax(id, "preloadedSkillId"),
+  const sanitizedPreloadedIds = data.preloadedSkillIds.map((id) =>
+    sanitizeLiquidSyntax(id, "preloadedSkillId"),
   );
 
   return {

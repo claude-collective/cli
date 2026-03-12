@@ -108,12 +108,7 @@ export function mergeMatrixWithSkills(
   const resolvedSkills: Partial<Record<SkillId, ResolvedSkill>> = {};
 
   for (const skill of skills) {
-    const resolved = buildResolvedSkill(
-      skill,
-      categories,
-      relationships,
-      slugMap,
-    );
+    const resolved = buildResolvedSkill(skill, categories, relationships, slugMap);
     resolvedSkills[skill.id] = resolved;
   }
 
@@ -150,7 +145,9 @@ function resolveConflicts(
   const conflicts: SkillRelation[] = [];
 
   for (const rule of conflictRules) {
-    const resolved = rule.skills.map((slug) => resolve(slug, "conflicts")).filter((id): id is SkillId => id !== null);
+    const resolved = rule.skills
+      .map((slug) => resolve(slug, "conflicts"))
+      .filter((id): id is SkillId => id !== null);
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
       if (other !== skillId && !conflicts.some((c) => c.skillId === other)) {
@@ -171,7 +168,9 @@ function resolveCompatibilityGroups(
   const compatible = new Set<SkillId>();
 
   for (const group of compatibilityGroups) {
-    const resolved = group.skills.map((slug) => resolve(slug, "compatibleWith")).filter((id): id is SkillId => id !== null);
+    const resolved = group.skills
+      .map((slug) => resolve(slug, "compatibleWith"))
+      .filter((id): id is SkillId => id !== null);
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
       if (other !== skillId) {
@@ -194,7 +193,9 @@ function resolveRequirements(
   for (const rule of requireRules) {
     const ruleSkillId = resolve(rule.skill, "requires.skill");
     if (ruleSkillId !== skillId) continue;
-    const resolvedNeeds = rule.needs.map((slug) => resolve(slug, "requires.needs")).filter((id): id is SkillId => id !== null);
+    const resolvedNeeds = rule.needs
+      .map((slug) => resolve(slug, "requires.needs"))
+      .filter((id): id is SkillId => id !== null);
     if (resolvedNeeds.length === 0) continue;
     requires.push({
       skillIds: resolvedNeeds,
@@ -215,7 +216,9 @@ function resolveAlternatives(
   const alternatives: SkillAlternative[] = [];
 
   for (const group of alternativeGroups) {
-    const resolved = group.skills.map((slug) => resolve(slug, "alternatives")).filter((id): id is SkillId => id !== null);
+    const resolved = group.skills
+      .map((slug) => resolve(slug, "alternatives"))
+      .filter((id): id is SkillId => id !== null);
     if (!resolved.includes(skillId)) continue;
     for (const alt of resolved) {
       if (alt !== skillId) {
@@ -237,7 +240,9 @@ function resolveDiscourages(
   const discourages: SkillRelation[] = [];
 
   for (const rule of discourageRules) {
-    const resolved = rule.skills.map((slug) => resolve(slug, "discourages")).filter((id): id is SkillId => id !== null);
+    const resolved = rule.skills
+      .map((slug) => resolve(slug, "discourages"))
+      .filter((id): id is SkillId => id !== null);
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
       if (other !== skillId && !discourages.some((d) => d.skillId === other)) {
@@ -256,11 +261,7 @@ function buildResolvedSkill(
   slugMap: SkillSlugMap,
 ): ResolvedSkill {
   const resolve: ResolveId = (slug, context) =>
-    resolveToCanonicalId(
-      slug,
-      slugMap.slugToId,
-      context ? `${skill.id} ${context}` : undefined,
-    );
+    resolveToCanonicalId(slug, slugMap.slugToId, context ? `${skill.id} ${context}` : undefined);
 
   const slug = skill.slug;
 

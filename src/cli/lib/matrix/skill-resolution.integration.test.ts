@@ -30,12 +30,7 @@ import {
   RESOLUTION_PIPELINE_SKILLS,
 } from "../__tests__/mock-data/mock-skills.js";
 import { buildMultiSourceMatrix } from "../__tests__/mock-data/mock-matrices.js";
-import type {
-  MergedSkillsMatrix,
-  ProjectConfig,
-  SkillId,
-  Category,
-} from "../../types";
+import type { MergedSkillsMatrix, ProjectConfig, SkillId, Category } from "../../types";
 import { initializeMatrix } from "./matrix-provider";
 
 // ── Constants ──────────────────────────────────────────────────────────────────

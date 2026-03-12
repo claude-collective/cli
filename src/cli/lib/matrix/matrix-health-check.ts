@@ -58,9 +58,7 @@ function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIs
   }
 }
 
-const RELATION_FIELDS_SKILL_ID_ARRAY = [
-  "compatibleWith",
-] as const;
+const RELATION_FIELDS_SKILL_ID_ARRAY = ["compatibleWith"] as const;
 
 function checkSkillRelationRefs(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
   for (const [skillId, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {

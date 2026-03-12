@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { matrix, initializeMatrix, getSkillById, getSkillBySlug, findStack } from "./matrix-provider";
+import {
+  matrix,
+  initializeMatrix,
+  getSkillById,
+  getSkillBySlug,
+  findStack,
+} from "./matrix-provider";
 import { BUILT_IN_MATRIX } from "../../types/generated/matrix";
 import { createMockMatrix, createMockResolvedStack, SKILLS } from "../__tests__/helpers";
 import type { SkillId, SkillSlug } from "../../types";

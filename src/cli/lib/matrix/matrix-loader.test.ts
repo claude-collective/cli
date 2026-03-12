@@ -30,11 +30,7 @@ vi.mock("../configuration/config-loader", async (importOriginal) => ({
   loadConfig: (...args: unknown[]) => mockLoadConfig(...args),
 }));
 
-import {
-  loadSkillCategories,
-  loadSkillRules,
-  extractAllSkills,
-} from "./matrix-loader";
+import { loadSkillCategories, loadSkillRules, extractAllSkills } from "./matrix-loader";
 import { warn } from "../../utils/logger";
 
 describe("matrix-loader", () => {
@@ -385,5 +381,4 @@ displayName: wrong
       expect(skills[0].id).toBe("skill-valid");
     });
   });
-
 });

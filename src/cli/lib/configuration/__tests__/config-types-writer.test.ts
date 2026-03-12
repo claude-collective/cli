@@ -159,9 +159,7 @@ describe("generateConfigTypesSource", () => {
     const matrix = createMockMatrix(SKILLS.react, { categories });
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain("export type StackAgentConfig = {");
-    expect(source).toContain(
-      '  "web-framework"?: SkillAssignment<"web-framework-react">;',
-    );
+    expect(source).toContain('  "web-framework"?: SkillAssignment<"web-framework-react">;');
     expect(source).toContain("};");
   });
 
@@ -174,15 +172,9 @@ describe("generateConfigTypesSource", () => {
     const matrix = createMockMatrix(SKILLS.react, SKILLS.scss, SKILLS.hono, { categories });
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain("export type StackAgentConfig = {");
-    expect(source).toContain(
-      '  "api-api"?: SkillAssignment<"api-framework-hono">;',
-    );
-    expect(source).toContain(
-      '  "web-framework"?: SkillAssignment<"web-framework-react">;',
-    );
-    expect(source).toContain(
-      '  "web-styling"?: SkillAssignment<"web-styling-scss-modules">;',
-    );
+    expect(source).toContain('  "api-api"?: SkillAssignment<"api-framework-hono">;');
+    expect(source).toContain('  "web-framework"?: SkillAssignment<"web-framework-react">;');
+    expect(source).toContain('  "web-styling"?: SkillAssignment<"web-styling-scss-modules">;');
   });
 
   it("generates multi-line union for categories with more than 3 skills", () => {

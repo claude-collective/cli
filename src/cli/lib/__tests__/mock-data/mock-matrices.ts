@@ -30,12 +30,16 @@ import {
   PIPELINE_TEST_SKILLS,
 } from "./mock-skills.js";
 import type { MultiSourceSkillEntry } from "./mock-skills.js";
-import {
-  PUBLIC_SOURCE,
-  ACME_SOURCE,
-  INTERNAL_SOURCE,
-} from "./mock-sources.js";
-import type { Category, CategoryDefinition, CategoryPath, MergedSkillsMatrix, SkillId, SkillSlug, SkillSource } from "../../../types";
+import { PUBLIC_SOURCE, ACME_SOURCE, INTERNAL_SOURCE } from "./mock-sources.js";
+import type {
+  Category,
+  CategoryDefinition,
+  CategoryPath,
+  MergedSkillsMatrix,
+  SkillId,
+  SkillSlug,
+  SkillSource,
+} from "../../../types";
 
 // ---------------------------------------------------------------------------
 // Canonical matrix shapes — use these instead of inline createMockMatrix() calls
@@ -419,11 +423,14 @@ export const HEALTH_UNRESOLVED_CONFLICTS_WITH_MATRIX = createMockMatrix(
   },
 );
 
-export const HEALTH_UNRESOLVED_REQUIRES_MATRIX = createMockMatrix(HEALTH_UNRESOLVED_REQUIRES_SKILL, {
-  categories: {
-    "web-testing": TEST_CATEGORIES.testing,
+export const HEALTH_UNRESOLVED_REQUIRES_MATRIX = createMockMatrix(
+  HEALTH_UNRESOLVED_REQUIRES_SKILL,
+  {
+    categories: {
+      "web-testing": TEST_CATEGORIES.testing,
+    },
   },
-});
+);
 
 export const HEALTH_MULTIPLE_UNRESOLVED_REFS_MATRIX = createMockMatrix(
   HEALTH_MULTIPLE_UNRESOLVED_REFS_SKILL,
@@ -462,7 +469,9 @@ export const HEALTH_PARTIAL_UNRESOLVED_REQUIRES_MATRIX = createMockMatrix(
 
 type TaggedMultiSourceEntry = MultiSourceSkillEntry & { source: SkillSource };
 
-export function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
+export function buildMultiSourceMatrix(
+  overrides?: Partial<MergedSkillsMatrix>,
+): MergedSkillsMatrix {
   const taggedEntries: TaggedMultiSourceEntry[] = [
     ...MULTI_SOURCE_PUBLIC_SKILLS.map((s) => ({ ...s, source: { ...PUBLIC_SOURCE } })),
     ...MULTI_SOURCE_ACME_SKILLS.map((s) => ({ ...s, source: { ...ACME_SOURCE } })),
