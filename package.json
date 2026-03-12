@@ -79,6 +79,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit && echo '✓ No TypeScript errors'",
     "prepare": "husky",
+    "generate:types": "bun scripts/generate-source-types.ts",
     "generate:schemas": "npx tsx scripts/generate-json-schemas.ts",
     "generate:schemas:check": "npm run generate:schemas && git diff --exit-code src/schemas/",
     "prepublishOnly": "npm run format:check && npm run build && npm run test"
