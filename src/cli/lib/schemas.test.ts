@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { buildAgentConfigs } from "./__tests__/helpers";
 import {
   agentYamlConfigSchema,
-  brandingConfigSchema,
-  categoryDefinitionSchema,
   categoryPathSchema,
   localRawMetadataSchema,
   metadataValidationSchema,
@@ -295,44 +293,51 @@ describe("projectConfigLoaderSchema", () => {
   });
 });
 
-describe("brandingConfigSchema", () => {
+describe("branding via projectSourceConfigSchema", () => {
   it("should accept full branding config", () => {
-    const result = brandingConfigSchema.safeParse({
-      name: "Acme Dev Tools",
-      tagline: "Build faster with Acme",
+    const result = projectSourceConfigSchema.safeParse({
+      branding: { name: "Acme Dev Tools", tagline: "Build faster with Acme" },
     });
     expect(result.success).toBe(true);
-    expect(result.data).toEqual({
+    expect(result.data?.branding).toEqual({
       name: "Acme Dev Tools",
       tagline: "Build faster with Acme",
     });
   });
 
   it("should accept partial branding (name only)", () => {
-    const result = brandingConfigSchema.safeParse({ name: "My Company" });
+    const result = projectSourceConfigSchema.safeParse({
+      branding: { name: "My Company" },
+    });
     expect(result.success).toBe(true);
-    expect(result.data?.name).toBe("My Company");
-    expect(result.data?.tagline).toBeUndefined();
+    expect(result.data?.branding?.name).toBe("My Company");
+    expect(result.data?.branding?.tagline).toBeUndefined();
   });
 
   it("should accept partial branding (tagline only)", () => {
-    const result = brandingConfigSchema.safeParse({ tagline: "Custom tagline" });
+    const result = projectSourceConfigSchema.safeParse({
+      branding: { tagline: "Custom tagline" },
+    });
     expect(result.success).toBe(true);
-    expect(result.data?.tagline).toBe("Custom tagline");
+    expect(result.data?.branding?.tagline).toBe("Custom tagline");
   });
 
   it("should accept empty branding object", () => {
-    const result = brandingConfigSchema.safeParse({});
+    const result = projectSourceConfigSchema.safeParse({ branding: {} });
     expect(result.success).toBe(true);
   });
 
-  it("should reject non-string name", () => {
-    const result = brandingConfigSchema.safeParse({ name: 123 });
+  it("should reject non-string branding name", () => {
+    const result = projectSourceConfigSchema.safeParse({
+      branding: { name: 123 },
+    });
     expect(result.success).toBe(false);
   });
 
-  it("should reject non-string tagline", () => {
-    const result = brandingConfigSchema.safeParse({ tagline: true });
+  it("should reject non-string branding tagline", () => {
+    const result = projectSourceConfigSchema.safeParse({
+      branding: { tagline: true },
+    });
     expect(result.success).toBe(false);
   });
 });
@@ -418,15 +423,20 @@ describe("custom: true in schemas", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should accept valid categoryDefinitionSchema", () => {
-    const result = categoryDefinitionSchema.safeParse({
-      id: "web-framework",
-      displayName: "Framework",
-      description: "Web frameworks",
-      domain: "web",
-      exclusive: true,
-      required: false,
-      order: 1,
+  it("should accept valid category definition via skillCategoriesFileSchema", () => {
+    const result = skillCategoriesFileSchema.safeParse({
+      version: "1.0.0",
+      categories: {
+        "web-framework": {
+          id: "web-framework",
+          displayName: "Framework",
+          description: "Web frameworks",
+          domain: "web",
+          exclusive: true,
+          required: false,
+          order: 1,
+        },
+      },
     });
     expect(result.success).toBe(true);
   });

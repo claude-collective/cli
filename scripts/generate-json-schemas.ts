@@ -14,7 +14,6 @@ import {
   marketplaceSchema,
   metadataValidationSchema,
   pluginManifestValidationSchema,
-  projectSourceConfigValidationSchema,
   skillFrontmatterValidationSchema,
   stackConfigValidationSchema,
   stacksConfigSchema,
@@ -151,15 +150,6 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
       $id: "schemas/plugin.schema.json",
       title: "Plugin Manifest",
       description: "Schema for plugin.json manifest files.",
-    },
-  },
-  {
-    filename: "project-source-config.schema.json",
-    schema: projectSourceConfigValidationSchema,
-    metadata: {
-      $id: "schemas/project-source-config.schema.json",
-      title: "Project Source Configuration",
-      description: "Schema for .claude-src/config.yaml marketplace source configuration files.",
     },
   },
   {

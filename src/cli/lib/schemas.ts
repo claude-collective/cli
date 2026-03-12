@@ -290,7 +290,7 @@ export const projectConfigLoaderSchema = z
   })
   .passthrough();
 
-export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object({
+const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object({
   id: z.string() as z.ZodType<Category>,
   displayName: z.string(),
   description: z.string(),
@@ -304,17 +304,17 @@ export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object(
 // Skill references in relationship rules: slugs resolved to canonical IDs by matrix-loader
 const skillRefInRules = skillSlugSchema;
 
-export const conflictRuleSchema: z.ZodType<ConflictRule> = z.object({
+const conflictRuleSchema: z.ZodType<ConflictRule> = z.object({
   skills: z.array(skillRefInRules).min(2),
   reason: z.string(),
 });
 
-export const discourageRuleSchema: z.ZodType<DiscourageRule> = z.object({
+const discourageRuleSchema: z.ZodType<DiscourageRule> = z.object({
   skills: z.array(skillRefInRules).min(2),
   reason: z.string(),
 });
 
-export const recommendationSchema: z.ZodType<Recommendation> = z.object({
+const recommendationSchema: z.ZodType<Recommendation> = z.object({
   skill: skillRefInRules,
   reason: z.string(),
 });
@@ -324,19 +324,19 @@ export const compatibilityGroupSchema: z.ZodType<CompatibilityGroup> = z.object(
   reason: z.string(),
 });
 
-export const requireRuleSchema: z.ZodType<RequireRule> = z.object({
+const requireRuleSchema: z.ZodType<RequireRule> = z.object({
   skill: skillRefInRules,
   needs: z.array(skillRefInRules).min(1),
   needsAny: z.boolean().optional(),
   reason: z.string(),
 });
 
-export const alternativeGroupSchema: z.ZodType<AlternativeGroup> = z.object({
+const alternativeGroupSchema: z.ZodType<AlternativeGroup> = z.object({
   purpose: z.string(),
   skills: z.array(skillRefInRules).min(1),
 });
 
-export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> = z.object({
+const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> = z.object({
   conflicts: z.array(conflictRuleSchema),
   discourages: z.array(discourageRuleSchema),
   recommends: z.array(recommendationSchema),
@@ -407,7 +407,7 @@ export const localSkillMetadataSchema = z
   })
   .passthrough();
 
-export const stackSchema = z.object({
+const stackSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string(),
@@ -423,14 +423,14 @@ export const stacksConfigSchema = z.object({
   stacks: z.array(stackSchema).min(1),
 });
 
-export const marketplaceRemoteSourceSchema: z.ZodType<MarketplaceRemoteSource> = z.object({
+const marketplaceRemoteSourceSchema: z.ZodType<MarketplaceRemoteSource> = z.object({
   source: z.enum(["github", "url"]),
   repo: z.string().optional(),
   url: z.string().optional(),
   ref: z.string().optional(),
 });
 
-export const marketplacePluginSchema: z.ZodType<MarketplacePlugin> = z.object({
+const marketplacePluginSchema: z.ZodType<MarketplacePlugin> = z.object({
   name: z.string().min(1),
   /** Local directory path (relative to pluginRoot) or remote source config */
   source: z.union([z.string(), marketplaceRemoteSourceSchema]),
@@ -442,12 +442,12 @@ export const marketplacePluginSchema: z.ZodType<MarketplacePlugin> = z.object({
   keywords: z.array(z.string()).optional(),
 });
 
-export const marketplaceOwnerSchema: z.ZodType<MarketplaceOwner> = z.object({
+const marketplaceOwnerSchema: z.ZodType<MarketplaceOwner> = z.object({
   name: z.string().min(1),
   email: z.string().optional(),
 });
 
-export const marketplaceMetadataSchema: z.ZodType<MarketplaceMetadata> = z.object({
+const marketplaceMetadataSchema: z.ZodType<MarketplaceMetadata> = z.object({
   /** Base directory for resolving plugin source paths (e.g., "plugins/") */
   pluginRoot: z.string().optional(),
 });
@@ -463,7 +463,7 @@ export const marketplaceSchema: z.ZodType<Marketplace> = z.object({
 });
 
 /** Tool permission overrides (allow/deny lists for Claude Code tool access) */
-export const permissionConfigSchema = z.object({
+const permissionConfigSchema = z.object({
   /** Tool names or patterns to explicitly allow */
   allow: z.array(z.string()).optional(),
   /** Tool names or patterns to explicitly deny */
@@ -496,7 +496,7 @@ export const importedSkillMetadataSchema = z
   .passthrough();
 
 /** Branding overrides for white-labeling the CLI */
-export const brandingConfigSchema = z.object({
+const brandingConfigSchema = z.object({
   /** Custom CLI name (e.g., "Acme Dev Tools") */
   name: z.string().optional(),
   /** Custom tagline shown in wizard header */
@@ -547,35 +547,6 @@ export const projectSourceConfigSchema = z
     rulesFile: z.string().optional(),
   })
   .passthrough();
-
-/**
- * Strict schema for IDE validation of .claude-src/config.ts (ProjectConfig source fields).
- * Used to generate project-source-config.schema.json for IDE validation.
- * All fields optional (source configs may have any subset) but no unknown properties.
- */
-export const projectSourceConfigValidationSchema = z.object({
-  source: z.string().optional(),
-  author: z.string().optional(),
-  marketplace: z.string().optional(),
-  agentsSource: z.string().optional(),
-  sources: z
-    .array(
-      z.object({
-        name: z.string(),
-        url: z.string(),
-        description: z.string().optional(),
-        ref: z.string().optional(),
-      }),
-    )
-    .optional(),
-  boundSkills: z.array(boundSkillSchema).optional(),
-  branding: brandingConfigSchema.optional(),
-  skillsDir: z.string().optional(),
-  agentsDir: z.string().optional(),
-  stacksFile: z.string().optional(),
-  categoriesFile: z.string().optional(),
-  rulesFile: z.string().optional(),
-});
 
 // Strict validation schemas enforce all constraints and use .strict() to reject unknown fields,
 // unlike the lenient loader schemas above which use .passthrough() for forward compatibility at parse boundaries
