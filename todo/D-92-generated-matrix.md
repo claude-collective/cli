@@ -377,6 +377,7 @@ All of the following are deleted entirely:
 10. Verify local skills still parse and merge correctly on top of `BUILT_IN_MATRIX`
 
 **Additional Phase 4 cleanup (beyond original spec):**
+
 - Removed `extendSchemasWithCustomValues` call from `project-config.ts` (loadProjectConfigFromDir)
 - Removed `extendSchemasWithCustomValues` call from `marketplace.ts` (buildMarketplace)
 - Updated `matrix-loader.ts` to replace `extensibleDomainSchema` with `z.string() as z.ZodType<Domain>`

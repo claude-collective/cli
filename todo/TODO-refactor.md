@@ -5,10 +5,8 @@
 | ID   | Task                                                                                                                                                                                                    | Status   |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor |
-| R-07 | Codegen `SkillId`, `SkillSlug`, `Category`, `Domain`, `AgentName` from source metadata — eliminate manual union + Zod duplication (see [plan](./R-07-codegen-skill-types.md))                           | Refactor |
 | R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor |
 | R-11 | Eliminate `ProjectSourceConfig` / `saveProjectConfig` — all config writes should produce full `ProjectConfig` with import + satisfies                                                                   | Refactor |
-| R-12 | Delete the matrix object from consumer code — only exists inside the store as private state, all reads via store accessors                                                                              | Refactor |
 
 ---
 
@@ -613,32 +611,6 @@ Consumers that need relationship data would look it up from the relationship ind
 
 ---
 
-## R-07: Codegen Skill Types, Categories, and Agent Names from Source
-
-**Priority:** Low
-**Status:** Refactor
-**Depends on:** R-04
-**See implementation plan:** [R-07-codegen-skill-types.md](./R-07-codegen-skill-types.md)
-
-### Problem
-
-Five types are manually maintained in two places each (union type in `types/` + Zod schema in `schemas.ts`): `SkillId`, `SkillSlug`, `Category`, `Domain`, `AgentName`. Adding a skill, category, or agent requires updating both locations. `SkillId` is worst — its template literal accepts any matching pattern, so typos compile silently.
-
-### Proposed solution
-
-A codegen script that reads metadata from two sources (skills repo for skills/categories/domains, CLI repo for agents) and generates a single file with const arrays and derived union types. Zod schemas then derive from the generated arrays, eliminating all duplication.
-
-```typescript
-// AUTO-GENERATED — do not edit manually
-export const SKILL_IDS = ["api-framework-hono", "web-framework-react", ...] as const;
-export type SkillId = (typeof SKILL_IDS)[number];
-// Same pattern for SkillSlug, Category, Domain, AgentName
-```
-
-`SkillIdPrefix` stays (used by `CategoryPath`). Generated file is committed to the repo.
-
----
-
 ## R-08: Unify Relationship Resolution Functions
 
 **Priority:** Medium
@@ -718,113 +690,3 @@ All three do read-modify-write on a `ProjectSourceConfig`. They should instead l
 2. Remove `saveProjectConfig()` from `config.ts`
 3. Remove `ProjectSourceConfig` type if no other consumers remain (check `loadProjectSourceConfig` — it may need to become a `ProjectConfig` loader, or the load side can remain lenient since it's a parse boundary)
 4. Update tests that call `saveProjectConfig` to use the new path
-
----
-
-## R-12: Delete the Matrix Object from Consumer Code
-
-**Priority:** Medium
-**Related:** D-89 (getSkill in buildSourceRows), the getDiscourageReason crash fix
-
-### Problem
-
-The `MergedSkillsMatrix` object is a god object. Consumer code grabs it via `getMatrix()` and reaches into `.skills[id]`, `.categories[id]`, `.slugMap`, `.suggestedStacks`, `.agentDefinedDomains`, etc. This makes the matrix shape a public API that everything couples to.
-
-The matrix should **only exist inside the store**. It is an internal implementation detail — the store's private state. Nothing outside `matrix-store.ts` should ever hold, pass, destructure, or reference a `MergedSkillsMatrix`.
-
-### What "delete the matrix object" means
-
-1. **Remove `getMatrix()` export** — no consumer can obtain the raw object
-2. **Remove `MergedSkillsMatrix` from all function signatures** — no function accepts or returns it
-3. **Remove all `const matrix = getMatrix()` / `const { skills, categories } = getMatrix()` patterns** — replace with individual store accessor calls
-4. **Remove `useMatrixStore((s) => s.matrix!)` selectors in React components** — replace with specific selectors like `useMatrixStore((s) => s.getAllCategories())`
-5. **Remove `useMatrixStore.getState().matrix` direct reads** — replace with store accessors
-
-The `matrix` field stays as internal state inside the store's `MatrixState` type, but it's never exposed.
-
-### Store API additions needed
-
-Based on actual consumer usage (21 production files):
-
-**Individual lookups:**
-
-- `findCategory(id: Category): CategoryDefinition | undefined`
-- `getCategory(id: Category): CategoryDefinition` (throws)
-
-**Collection accessors:**
-
-- `getAllSkills(): Partial<Record<SkillId, ResolvedSkill>>`
-- `getAllCategories(): CategoryMap`
-- `getSlugMap(): SkillSlugMap`
-- `getSuggestedStacks(): ResolvedStack[]`
-- `getAgentDefinedDomains(): Partial<Record<AgentName, Domain>> | undefined`
-- `getSkillCount(): number`
-- `getVersion(): string`
-
-**Convenience:**
-
-- `findStack(id: string): ResolvedStack | undefined`
-- `getSlugForId(id: SkillId): SkillSlug | undefined`
-- `getIdForSlug(slug: SkillSlug): SkillId | undefined`
-
-### Consumer migration map (21 files)
-
-**Heavy users (need multiple accessors):**
-
-- `matrix-resolver.ts` — 13 `getMatrix()` calls accessing `.skills`, `.categories`, `.slugMap`. Replace each with the specific accessor.
-- `wizard-store.ts` — destructures `{ skills, categories }`. Replace with `getAllSkills()`, `getAllCategories()`.
-- `build-step-logic.ts` — accesses `.categories`, `.skills`. Replace with `getCategory()`, `getSkill()`.
-
-**Stack lookups:**
-
-- `wizard.tsx` — `getMatrix().suggestedStacks.find(...)`. Replace with `findStack(id)`.
-- `utils.ts` — same pattern. Replace with `findStack(id)` and `getAllCategories()`.
-
-**Skill count / list:**
-
-- `edit.tsx` — `Object.keys(getMatrix().skills).length`. Replace with `getSkillCount()`.
-- `info.ts` — `getMatrix().skills` for fuzzy search. Replace with `getAllSkills()`.
-- `eject.ts` — iterates skills. Replace with `getAllSkills()`.
-- `update.tsx` — accesses matrix. Replace with specific accessors.
-
-**Category lookups:**
-
-- `use-build-step-props.ts` — `getMatrix().categories[id]`. Replace with `getCategory(id)`.
-- `config-generator.ts` — accesses categories. Replace with `getAllCategories()`.
-
-**Slug lookups:**
-
-- `use-source-grid-search-modal.ts` — `getMatrix().slugMap.idToSlug[id]`. Replace with `getSlugForId(id)`.
-- `plugin-finder.ts` — slug resolution. Replace with `getIdForSlug()`.
-
-**React component selectors (use `s.matrix!` pattern):**
-
-- `domain-selection.tsx` — `useMatrixStore((s) => s.getMatrix())`. Replace with specific selectors.
-- `stack-selection.tsx` — `useMatrixStore((s) => s.matrix!)`. Replace with `useMatrixStore((s) => s.getSuggestedStacks())` etc.
-- `step-agents.tsx` — `useMatrixStore((s) => s.matrix!)`. Replace with specific selectors.
-
-**Nullable checks (doctor, validator):**
-
-- `doctor.ts` — `useMatrixStore.getState().matrix` (null check). Replace with `isInitialized()` accessor.
-- `source-validator.ts` — same. Replace with `isInitialized()`.
-
-### Files that keep raw matrix access (pre-store construction)
-
-These files build the matrix before it's put into the store — they write to the object, not read from the store:
-
-- `source-loader.ts` — constructs and mutates `result.matrix`, then calls `setMatrix()`
-- `multi-source-loader.ts` — merges matrices during construction
-- `matrix-loader.ts`, `matrix-health-check.ts` — build/validate the matrix object
-- `config-types-writer.ts` — reads `sourceResult.matrix` before store is set
-- `local-installer.ts` — passes `sourceResult.matrix` to writers before store is set
-
-The `SourceLoadResult.matrix` field is fine — it's the construction pipeline. The rule is: after `setMatrix()` is called, no code should touch the raw object again.
-
-### Rules After Completion
-
-- `getMatrix()` does not exist as a public export
-- `MergedSkillsMatrix` does not appear in any consumer function signature (only in store internals and the source-loader construction pipeline)
-- No consumer code holds, passes, or destructures a `MergedSkillsMatrix` reference
-- All reads go through named store accessors
-- React components use specific selectors, not `s.matrix!`
-- The `matrix` field is internal to `MatrixState` — consumers never see it

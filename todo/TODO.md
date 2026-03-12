@@ -1,14 +1,11 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                                                            | Status           |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| D-87 | Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries                                                  | Ready for Dev    |
-| D-88 | Audit and remove multi-tier resolution fallbacks — data should match or fail, not guess                                         | Ready for Dev    |
-| D-89 | Audit and remove silent fallbacks on required data — `findSkill` → `getSkill`, remove `?.`/`?? ""` patterns                     | Ready for Dev    |
-| D-62 | Review default stacks: include meta/methodology/reviewing skills                                                                | Ready for Dev    |
-| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                   | Has Open Qs      |
-| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                       | Ready for Dev    |
-| D-90 | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths             | Ready for Dev    |
+| ID   | Task                                                                                                                | Status        |
+| ---- | ------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D-62 | Review default stacks: include meta/methodology/reviewing skills                                                    | Ready for Dev |
+| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))       | Has Open Qs   |
+| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))           | Ready for Dev |
+| D-90 | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths | Ready for Dev |
 
 | D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md)) | Ready for Dev |
 | D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md)) | Ready for Dev |
@@ -175,34 +172,6 @@ The current skill covers oclif command structure and Ink component patterns but 
 
 ### Bugs
 
-#### D-87: Audit and remove unsafe `as` casts — only allowed at Zod/YAML parse boundaries
-
-**Priority:** Medium
-
-Throughout the codebase (production and test), there are `as` type casts that bypass TypeScript's type system. These hide missing required properties and mask real type errors.
-
-**Rule:** The only legitimate `as` casts are at data entry boundaries — immediately after `JSON.parse()`, `parseYaml()`, `safeLoadYamlFile()`, or a Zod `.parse()` / `.safeParse()` where the Zod output type is wider than the actual interface (due to `.passthrough()`). Every other `as` cast should be eliminated by fixing the data to be properly typed.
-
-**Known example:** `wizard-store.test.ts` has numerous `as Record<Category, CategoryDefinition>` casts on incomplete category objects. These should use `createMockCategory()` factories that provide all required fields.
-
-**Scope:** Grep for `\bas\b` casts across the entire codebase. Each site needs evaluation: is it at a parse boundary (keep), or is it papering over incomplete/wrong data (fix)?
-
----
-
-#### D-89: Audit and remove silent fallbacks on required data — `findSkill` → `getSkill`, remove `?.`/`?? ""` patterns
-
-**Priority:** Medium
-
-Throughout the codebase, there are places where `findSkill(id)` (returns undefined) is used on data that **must** exist, followed by `?.` optional chaining and `?? ""` / `?? []` fallbacks. This silently hides bugs — if a skill doesn't exist when it should, we need to know immediately, not default to empty strings.
-
-**Principle:** If the data must exist, use `getSkill(id)` (throws). Only use `findSkill(id)` when the data is genuinely optional (e.g., user input that might not match, search results).
-
-**Known example:** `buildSourceRows()` in `wizard-store.ts` (lines 936-960) calls `findSkill(skillId)` on skills from `selectedTechnologies` — these must exist. The `skill?.slug ?? ""` and `skill?.availableSources || []` fallbacks should be removed.
-
-**Scope:** Grep for `findSkill` calls followed by `?.` or `??` across the entire codebase. Each site needs evaluation: is the skill genuinely optional, or must it exist? Convert the "must exist" cases to `getSkill()`.
-
----
-
 #### D-90: Add Sentry tracking for unresolved matrix references
 
 **Priority:** Medium
@@ -212,20 +181,6 @@ In `src/cli/lib/matrix/matrix-resolver.ts`, `getDiscourageReason()` (lines 213-2
 Add Sentry `captureMessage` (or `captureException`) calls on every fallback path so we can track unresolved matrix references in production. Include the referencing skill ID, the missing referenced ID, and the relationship type (`requires`, `conflictsWith`, `providesSetupFor`) in the Sentry context.
 
 **Key file:** `src/cli/lib/matrix/matrix-resolver.ts`
-
----
-
-#### D-88: Audit and remove multi-tier resolution fallbacks — data should match or fail, not guess
-
-**Priority:** Medium
-
-Throughout the codebase, there are multi-tier resolution patterns that silently guess when data doesn't match. Instead of trying progressively looser matches, data should be validated at the source — if it doesn't match, throw or warn and skip.
-
-**Principle:** Don't build fallback chains to compensate for bad data. Fix the data instead. If a lookup fails, that's an error, not an invitation to try a fuzzier match.
-
-**Known example:** `getPluginSkillIds()` in `plugin-finder.ts` (lines 73-135) has a three-tier fallback: (1) check if frontmatter `name` is a direct skill ID, (2) try slug/alias resolution, (3) fall back to directory name. The `name` field IS the canonical skill ID — if it doesn't match, that's a data error.
-
-**Scope:** Grep for multi-step resolution patterns, `aliasToId` maps, directory-name fallbacks, and similar guess-and-try logic across the codebase. Each site should be simplified to: validate → match or throw.
 
 ---
 
