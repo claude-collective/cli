@@ -34,6 +34,7 @@ A single codegen script that reads from two sources:
 2. **CLI repo** (`src/agents/**/metadata.yaml`) → `AgentName`
 
 Generates one file with:
+
 - A **`SKILL_MAP`** object mapping slug → skill ID (encodes the relationship at the type level)
 - Derived `SkillSlug` and `SkillId` types from the map
 - Derived `SKILL_SLUGS` and `SKILL_IDS` arrays for Zod enum compatibility
@@ -42,6 +43,7 @@ Generates one file with:
 The Zod schemas in `schemas.ts` then derive from the generated arrays, eliminating all duplication.
 
 **Key design choice: `SKILL_MAP` instead of separate arrays.** The slug↔ID relationship is currently reconstructed at runtime by `buildSlugMap()` in `matrix-loader.ts` from extracted skill metadata. With `SKILL_MAP`, the built-in slug↔ID mapping is available at import time as a typed constant. This:
+
 - Encodes the relationship in the type system (no way to have a slug without its ID)
 - Provides a compile-time lookup map (`SKILL_MAP["react"]` → `"web-framework-react"`)
 - Eliminates the need to build slug maps from scratch for built-in skills
@@ -60,8 +62,8 @@ The Zod schemas in `schemas.ts` then derive from the generated arrays, eliminati
 export const SKILL_MAP = {
   "angular-standalone": "web-framework-angular-standalone",
   "anti-over-engineering": "meta-methodology-anti-over-engineering",
-  "hono": "api-framework-hono",
-  "react": "web-framework-react",
+  hono: "api-framework-hono",
+  react: "web-framework-react",
   "vue-composition-api": "web-framework-vue-composition-api",
   // ... all 86 entries, sorted alphabetically by slug
 } as const;
@@ -197,7 +199,13 @@ export { AGENT_NAMES } from "./generated/source-types";
 Replace all manually maintained Zod enums with derivations from generated const arrays:
 
 ```typescript
-import { SKILL_IDS, SKILL_SLUGS, CATEGORIES, DOMAINS, AGENT_NAMES } from "../../types/generated/source-types";
+import {
+  SKILL_IDS,
+  SKILL_SLUGS,
+  CATEGORIES,
+  DOMAINS,
+  AGENT_NAMES,
+} from "../../types/generated/source-types";
 
 // Replace DOMAIN_VALUES and domainSchema
 export const domainSchema = z.enum(DOMAINS) as z.ZodType<Domain>;

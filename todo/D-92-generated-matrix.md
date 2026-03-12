@@ -1,6 +1,6 @@
 # D-92: Generate Static Matrix from Source
 
-**Status:** Draft — iterating on design
+**Status:** Done
 **Complexity:** High (codegen restructure + module-level matrix provider)
 **Depends on:** R-07 (complete)
 **Supersedes:** D-91 (per-category skill constraints become a subset of this work)
@@ -106,6 +106,7 @@ src/cli/lib/matrix/
 ```
 
 **What stays in `matrix-loader.ts`** (depends on schemas.ts):
+
 - `loadSkillCategories()` — uses `skillCategoriesFileSchema`
 - `loadSkillRules()` — uses `skillRulesFileSchema`
 - `extractAllSkills()` — uses `rawMetadataSchema` (inline schema using `categoryPathSchema`, `domainSchema`)
@@ -113,6 +114,7 @@ src/cli/lib/matrix/
 - `rawMetadataSchema` definition (lines 48-58)
 
 **What moves to `skill-resolution.ts`** (pure logic, no schema dependency):
+
 - `mergeMatrixWithSkills()`
 - `buildResolvedSkill()`
 - `resolveConflicts()`
@@ -127,6 +129,7 @@ src/cli/lib/matrix/
 - `synthesizeCategory()`
 
 These functions import only from:
+
 - `types/` — type imports only, erased at runtime (safe)
 - `utils/logger` — `verbose()` and `warn()` (safe — no dependency on generated types)
 
@@ -143,6 +146,7 @@ The codegen script (`scripts/generate-source-types.ts`) is extended with a Phase
 **Phase 1 (already exists):** Read metadata.yaml + SKILL.md from source → extract flat data → write `source-types.ts`
 
 **Phase 2 (new):** Generate the matrix:
+
 1. Import `defaultCategories` from `src/cli/lib/configuration/default-categories.ts` — this is a plain TypeScript constant, no schema dependency
 2. Import `defaultRules` from `src/cli/lib/configuration/default-rules.ts` — same, plain TypeScript constant
 3. Import `defaultStacks` from `src/cli/lib/configuration/default-stacks.ts` — same
@@ -198,7 +202,7 @@ export function getSkillBySlug(slug: SkillSlug): ResolvedSkill {
 
 /** Optional stack lookup by ID. */
 export function findStack(stackId: string): ResolvedStack | undefined {
-  return matrix.suggestedStacks.find(s => s.id === stackId);
+  return matrix.suggestedStacks.find((s) => s.id === stackId);
 }
 ```
 
@@ -215,6 +219,7 @@ export function findStack(stackId: string): ResolvedStack | undefined {
 - React components that previously used `useMatrixStore` selectors now import `matrix` directly. This removes reactivity intentionally — the matrix is always fully initialized before any React components mount (`source-loader.ts` completes before `render()` is called in `init.tsx` and `edit.tsx`)
 
 ### Current flow (every run — before this change)
+
 ```
 source-loader.ts → loadAndMergeFromBasePath() → 200 file reads → mergeMatrixWithSkills()
   → loadStacks() → convertStackToResolvedStack() → loadAllAgents()
@@ -222,6 +227,7 @@ source-loader.ts → loadAndMergeFromBasePath() → 200 file reads → mergeMatr
 ```
 
 ### New flow (default source)
+
 ```
 source-loader.ts → import { BUILT_IN_MATRIX } from "generated/matrix"
   → discover local skills → parse metadata.yaml → build ResolvedSkill objects
@@ -231,6 +237,7 @@ source-loader.ts → import { BUILT_IN_MATRIX } from "generated/matrix"
 ```
 
 ### New flow (non-default source)
+
 ```
 source-loader.ts → loadAndMergeFromBasePath() → full runtime loading as today
   → parse metadata.yaml → build matrix (no membership validation)
@@ -297,7 +304,7 @@ All of the following are deleted entirely:
 
 ## Order of Operations
 
-### Phase 1: Extract skill-resolution.ts
+### Phase 1: Extract skill-resolution.ts (DONE)
 
 1. Create `src/cli/lib/matrix/skill-resolution.ts` with all pure resolution functions
 2. Remove dead `KNOWN_DOMAINS` and no-op `resolveSuggestedStacks()` from matrix-loader.ts
@@ -307,7 +314,7 @@ All of the following are deleted entirely:
 6. `mergeMatrixWithSkills()` is currently declared `async` but contains no `await` calls — remove the `async` wrapper during extraction to make the function synchronous
 7. Verify all existing tests pass — pure refactor, no behavior change
 
-### Phase 2: Extend codegen to generate matrix
+### Phase 2: Extend codegen to generate matrix (DONE)
 
 1. Add Phase 2 to `generate-source-types.ts`:
    - Import `defaultCategories`, `defaultRules`, `defaultStacks`
@@ -321,7 +328,7 @@ All of the following are deleted entirely:
 
 ### Phase 3: Replace matrix store with matrix provider + wire up source-loader
 
-**3a: Create `matrix-provider.ts`, delete `matrix-store.ts`**
+**3a: Create `matrix-provider.ts`, delete `matrix-store.ts`** (DONE)
 
 1. Create `src/cli/lib/matrix/matrix-provider.ts` with:
    - `export let matrix: MergedSkillsMatrix = BUILT_IN_MATRIX` — consumers import `matrix` directly for property access
@@ -342,7 +349,7 @@ All of the following are deleted entirely:
 6. Add tests for the codegen script: verify generated matrix matches a runtime-built matrix for the default source
 7. Add integration tests for source-loader.ts: verify default-source shortcut produces the same result as the full pipeline
 
-**3b: Wire up the shortcut in source-loader**
+**3b: Wire up the shortcut in source-loader** (DONE)
 
 1. Update `source-loader.ts`: for the default source, use `BUILT_IN_MATRIX` instead of running `loadAndMergeFromBasePath()`
 2. Discover local skills from `.claude/skills/` — parse metadata.yaml, build `ResolvedSkill` objects
@@ -351,7 +358,7 @@ All of the following are deleted entirely:
 5. Multi-source enrichment (`loadSkillsFromAllSources`) continues as-is
 6. Keep full runtime loading path for non-default sources — ends with `initializeMatrix(result.matrix)`
 
-### Phase 4: Remove extensible schema machinery + clean up
+### Phase 4: Remove extensible schema machinery + clean up (DONE)
 
 1. Remove `extensible*Schema` wrappers from `schemas.ts` (`extensibleDomainSchema`, `extensibleSkillIdSchema`, `extensibleCategorySchema`, `extensibleAgentNameSchema`)
 2. Remove `customExtensions` Sets (`customDomains`, `customCategories`, `customSkillIds`, `customAgentNames`) from `schemas.ts`
@@ -359,17 +366,25 @@ All of the following are deleted entirely:
 4. Remove `discoverAndExtendFromSource()` and `discoverAndExtendFromLocalSkills()` from `source-loader.ts`
 5. Remove the membership validation from Zod schemas used for local/custom skill parsing — these fields no longer need to be checked against known sets
 6. Remove `isValidSkillId()` from `schemas.ts` and update its 3 production call sites:
-   - `stacks-loader.ts:115` — replace with matrix skills key lookup (`id in matrix.skills`)
-   - `source-switcher.ts:16` — replace with matrix skills key lookup (`id in matrix.skills`)
-   - `source-loader.ts:314` — replace with matrix skills key lookup (`id in matrix.skills`)
+   - `stacks-loader.ts:115` — replaced with `SKILL_ID_PATTERN.test()` (format validation)
+   - `source-switcher.ts:16` — replaced with `SKILL_ID_PATTERN.test()` (security: filesystem path safety check)
+   - `source-loader.ts:314` — replaced with `id in currentMatrix.skills` (matrix lookup)
    - Remove `isValidSkillId` tests from `schemas.test.ts`
-   - `SKILL_ID_PATTERN` (the regex constant backing `isValidSkillId()`) also has a consumer in `source-validator.ts` — determine during implementation whether it's still needed there or should also be replaced with a matrix lookup
+   - `SKILL_ID_PATTERN` kept in `schemas.ts` — still needed by `source-validator.ts` and the two call sites above
 7. Remove all `resetSchemaExtensions()` calls from test setup/teardown
 8. Verify the default source loading path uses `BUILT_IN_MATRIX` and no longer calls `loadAndMergeFromBasePath()`
 9. Verify non-default source loading path still works (full runtime pipeline, no membership validation)
 10. Verify local skills still parse and merge correctly on top of `BUILT_IN_MATRIX`
 
-### Phase 5: Config-types writer (D-91)
+**Additional Phase 4 cleanup (beyond original spec):**
+- Removed `extendSchemasWithCustomValues` call from `project-config.ts` (loadProjectConfigFromDir)
+- Removed `extendSchemasWithCustomValues` call from `marketplace.ts` (buildMarketplace)
+- Updated `matrix-loader.ts` to replace `extensibleDomainSchema` with `z.string() as z.ZodType<Domain>`
+- Updated `generate-json-schemas.ts` to import `CATEGORIES` from `source-types.ts` instead of removed `CATEGORY_VALUES` re-export
+- Updated `schemas.test.ts`: removed `isValidSkillId`, `extendSchemasWithCustomValues`, `resetSchemaExtensions` tests; updated category validation tests for lenient behavior
+- Updated `stacks-loader.test.ts` and `source-switcher.test.ts`: removed `extendSchemasWithCustomValues`/`resetSchemaExtensions` imports and tests
+
+### Phase 5: Config-types writer (D-91) (DONE)
 
 1. Update `config-types-writer.ts` to use `SKILL_IDS_BY_CATEGORY` for per-category constrained types
 2. Update `generate-json-schemas.ts` to use `SKILL_IDS_BY_CATEGORY` for category→skill enums
