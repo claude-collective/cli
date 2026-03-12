@@ -2,6 +2,7 @@
 
 > Completed tasks from [TODO.md](./TODO.md) are archived here to keep the main file lean.
 
+- **D-85**: Create proper `SkillId` union from all known skills -- Completed by R-07 (codegen skill types). `SkillId` is now an exact union of 86 values generated from source metadata, replacing the wide template literal. `SkillSlug`, `Category`, `Domain`, `AgentName` also codegen'd.
 - **D-16**: Populate config defaults on `init` -- Added commented-out `source`, `marketplace`, and `agents_source` options to generated config.yaml.
 - **R-1**: Consolidate agent-skill mappings into YAML -- Demoted `SKILL_TO_AGENTS` and `AGENT_SKILL_PREFIXES` to private fallbacks; YAML is now the primary source via `getCachedDefaults()`. Tests updated to verify YAML-loaded values.
 - **U-STACK-DESC**: Shorten default stack descriptions -- All stack descriptions in `config/stacks.yaml` shortened to 3-5 words.
