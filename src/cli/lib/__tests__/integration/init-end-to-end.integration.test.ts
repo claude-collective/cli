@@ -426,7 +426,10 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
     it("should detect conflicts for react + vue selection", () => {
       // React and Vue conflict with each other in the comprehensive matrix
-      const selectedSkillIds: SkillId[] = ["web-framework-react", "web-framework-vue-composition-api"];
+      const selectedSkillIds: SkillId[] = [
+        "web-framework-react",
+        "web-framework-vue-composition-api",
+      ];
 
       simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
       const wizardResult = buildWizardResultFromStore(matrix);

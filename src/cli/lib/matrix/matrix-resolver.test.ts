@@ -109,9 +109,7 @@ describe("isDiscouraged", () => {
 
   it("should return true if required skills are not selected (AND logic)", () => {
     const skillA = createMockSkill(SKILL_A, {
-      requires: [
-        { skillIds: [SKILL_B, SKILL_C], needsAny: false, reason: "Needs both" },
-      ],
+      requires: [{ skillIds: [SKILL_B, SKILL_C], needsAny: false, reason: "Needs both" }],
     });
     const skillB = createMockSkill(SKILL_B);
     const skillC = createMockSkill(SKILL_C);
@@ -124,9 +122,7 @@ describe("isDiscouraged", () => {
 
   it("should return false if required skills are all selected (AND logic)", () => {
     const skillA = createMockSkill(SKILL_A, {
-      requires: [
-        { skillIds: [SKILL_B, SKILL_C], needsAny: false, reason: "Needs both" },
-      ],
+      requires: [{ skillIds: [SKILL_B, SKILL_C], needsAny: false, reason: "Needs both" }],
     });
     const skillB = createMockSkill(SKILL_B);
     const skillC = createMockSkill(SKILL_C);
@@ -1101,9 +1097,7 @@ describe("getDependentSkills", () => {
     const skillA = createMockSkill(SKILL_A);
     const skillB = createMockSkill(SKILL_B);
     const skillC = createMockSkill(SKILL_C, {
-      requires: [
-        { skillIds: [SKILL_A, SKILL_B], needsAny: false, reason: "Needs both" },
-      ],
+      requires: [{ skillIds: [SKILL_A, SKILL_B], needsAny: false, reason: "Needs both" }],
     });
     const matrix = createMockMatrix(skillA, skillB, skillC);
     useMatrixStore.getState().setMatrix(matrix);

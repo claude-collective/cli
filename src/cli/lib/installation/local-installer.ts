@@ -133,7 +133,9 @@ async function deleteAndCopySkills(
   return copySkillsToLocalFlattened(skillIds, skillsDir, sourceResult.matrix, sourceResult);
 }
 
-function buildLocalSkillsMap(copiedSkills: CopiedSkill[]): Partial<Record<SkillId, LocalResolvedSkill>> {
+function buildLocalSkillsMap(
+  copiedSkills: CopiedSkill[],
+): Partial<Record<SkillId, LocalResolvedSkill>> {
   // Boundary cast: Object.fromEntries returns { [k: string]: V }
   return Object.fromEntries(
     copiedSkills

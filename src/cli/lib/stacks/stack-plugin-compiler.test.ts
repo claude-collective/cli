@@ -752,7 +752,11 @@ describe("stack-plugin-compiler", () => {
 
       printStackCompilationSummary(
         createMockCompiledStackPlugin({
-          skillPlugins: ["web-framework-react", "web-state-zustand", "web-language-typescript" as SkillId],
+          skillPlugins: [
+            "web-framework-react",
+            "web-state-zustand",
+            "web-language-typescript" as SkillId,
+          ],
         }),
       );
 

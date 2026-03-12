@@ -24,7 +24,10 @@ import { renderSkillMd, renderConfigTs } from "../content-generators";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 
 // Boundary widening: test fixtures use arbitrary skill IDs, slugs, and categories for test isolation
-export type TestSkill = Pick<ExtractedSkillMetadata, "description" | "author" | "displayName" | "usageGuidance"> & {
+export type TestSkill = Pick<
+  ExtractedSkillMetadata,
+  "description" | "author" | "displayName" | "usageGuidance"
+> & {
   id: string;
   slug: string;
   category: string;

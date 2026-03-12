@@ -469,7 +469,9 @@ displayName: wrong
       const reactSkill = merged.skills["web-framework-react"];
       expect(reactSkill).toBeDefined();
       expect(reactSkill!.conflictsWith).toEqual(
-        expect.arrayContaining([expect.objectContaining({ skillId: "web-framework-vue-composition-api" })]),
+        expect.arrayContaining([
+          expect.objectContaining({ skillId: "web-framework-vue-composition-api" }),
+        ]),
       );
     });
 

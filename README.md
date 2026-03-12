@@ -166,8 +166,6 @@ agentsinc import skill github:your-org/skills --all
 | Compilation  | LiquidJS                              |
 | Testing      | Vitest                                |
 
-
-
 ```
 src/cli/
   commands/       # oclif command definitions

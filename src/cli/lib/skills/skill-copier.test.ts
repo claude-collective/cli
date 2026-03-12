@@ -169,7 +169,10 @@ describe("skill-copier", () => {
   describe("copySkillsToPluginFromSource", () => {
     it("skips local skills and does not copy them", async () => {
       // Create a local skill in the project's .claude/skills/ directory
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-vue-composition-api");
+      const localSkillPath = await writeLocalSkillOnDisk(
+        projectDir,
+        "web-framework-vue-composition-api",
+      );
 
       const matrix = createMockMatrix({
         ...SKILLS.vue,
@@ -203,7 +206,11 @@ describe("skill-copier", () => {
         expect(result[0].destPath).toBe(localSkillPath);
 
         // Verify skill was NOT copied to plugin dir
-        const copiedSkillDir = path.join(pluginDir, STANDARD_DIRS.SKILLS, "web-framework-vue-composition-api");
+        const copiedSkillDir = path.join(
+          pluginDir,
+          STANDARD_DIRS.SKILLS,
+          "web-framework-vue-composition-api",
+        );
         let exists = false;
         try {
           await readFile(path.join(copiedSkillDir, STANDARD_FILES.SKILL_MD));
@@ -505,7 +512,10 @@ describe("skill-copier", () => {
 
     it("skips local skills and does not copy them", async () => {
       // Create a local skill already in .claude/skills/
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-vue-composition-api");
+      const localSkillPath = await writeLocalSkillOnDisk(
+        projectDir,
+        "web-framework-vue-composition-api",
+      );
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 

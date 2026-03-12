@@ -190,5 +190,4 @@ describe("init command", () => {
       expect(text).toContain("Plugin");
     });
   });
-
 });

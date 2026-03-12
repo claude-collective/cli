@@ -9,7 +9,15 @@ export const defaultRules: SkillRulesConfig = {
   relationships: {
     conflicts: [
       {
-        skills: ["react", "vue-composition-api", "angular-standalone", "solidjs", "nextjs-app-router", "remix", "nuxt"],
+        skills: [
+          "react",
+          "vue-composition-api",
+          "angular-standalone",
+          "solidjs",
+          "nextjs-app-router",
+          "remix",
+          "nuxt",
+        ],
         reason: "Frameworks are mutually exclusive",
       },
       {
@@ -187,7 +195,14 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         skill: "graphql-apollo",
-        needs: ["react", "vue-composition-api", "angular-standalone", "nextjs-app-router", "remix", "nuxt"],
+        needs: [
+          "react",
+          "vue-composition-api",
+          "angular-standalone",
+          "nextjs-app-router",
+          "remix",
+          "nuxt",
+        ],
         needsAny: true,
         reason: "Apollo Client requires a UI framework",
       },
@@ -201,7 +216,15 @@ export const defaultRules: SkillRulesConfig = {
     alternatives: [
       {
         purpose: "Frontend Framework",
-        skills: ["react", "vue-composition-api", "angular-standalone", "solidjs", "nextjs-app-router", "remix", "nuxt"],
+        skills: [
+          "react",
+          "vue-composition-api",
+          "angular-standalone",
+          "solidjs",
+          "nextjs-app-router",
+          "remix",
+          "nuxt",
+        ],
       },
       {
         purpose: "Styling",

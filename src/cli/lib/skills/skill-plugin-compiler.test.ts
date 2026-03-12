@@ -243,7 +243,11 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should use hash-based versioning on recompile", async () => {
-      const skillContent1 = renderSkillMd("web-framework-vue-composition-api", "Vue skill", "# Vue version 1");
+      const skillContent1 = renderSkillMd(
+        "web-framework-vue-composition-api",
+        "Vue skill",
+        "# Vue version 1",
+      );
       const skillPath = await writeTestSkill(skillsDir, "web-framework-vue-composition-api", {
         skillContent: skillContent1,
       });

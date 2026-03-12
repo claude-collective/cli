@@ -54,9 +54,13 @@ const honoSkill = createTestSkill("api-framework-hono", "Lightweight web framewo
   tags: ["api", "hono", "edge"],
 });
 
-const vueSkill = createTestSkill("web-framework-vue-composition-api", "Progressive JavaScript framework", {
-  tags: ["vue", "web"],
-});
+const vueSkill = createTestSkill(
+  "web-framework-vue-composition-api",
+  "Progressive JavaScript framework",
+  {
+    tags: ["vue", "web"],
+  },
+);
 
 const scssSkill = createTestSkill("web-styling-scss-modules", "CSS Modules with SCSS", {
   displayName: "SCSS Modules",

@@ -440,7 +440,9 @@ export function createMockSkill(id: string, overrides?: Partial<ResolvedSkill>):
   // Boundary cast: test factory accepts arbitrary string IDs for test isolation
   const skillId = id as SkillId;
   // Boundary cast: test factory maps to arbitrary category strings
-  const category = (overrides?.category ?? getCanonicalSkillCategories()[skillId]) as CategoryPath | undefined;
+  const category = (overrides?.category ?? getCanonicalSkillCategories()[skillId]) as
+    | CategoryPath
+    | undefined;
 
   if (!category) {
     throw new Error(

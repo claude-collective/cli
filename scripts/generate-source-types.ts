@@ -151,11 +151,7 @@ function generate(): void {
     lines.push(`  "${entry.slug}",`);
   }
 
-  lines.push(
-    "] as const satisfies readonly SkillSlug[];",
-    "",
-    "export const SKILL_IDS = [",
-  );
+  lines.push("] as const satisfies readonly SkillSlug[];", "", "export const SKILL_IDS = [");
 
   for (const id of skillIds) {
     lines.push(`  "${id}",`);
@@ -201,12 +197,7 @@ function generate(): void {
     lines.push(`  "${a}",`);
   }
 
-  lines.push(
-    "] as const;",
-    "",
-    "export type AgentName = (typeof AGENT_NAMES)[number];",
-    "",
-  );
+  lines.push("] as const;", "", "export type AgentName = (typeof AGENT_NAMES)[number];", "");
 
   const outPath = path.join(outDir, "source-types.ts");
   writeFileSync(outPath, lines.join("\n"));

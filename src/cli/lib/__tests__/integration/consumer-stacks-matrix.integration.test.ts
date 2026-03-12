@@ -332,9 +332,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       // Boundary cast: test-only skill ID not in generated SkillId union
       const dockerId = "infra-tooling-docker" as SkillId;
       expect(merged.skills[dockerId]).toBeDefined();
-      expect(merged.skills[dockerId]!.description).toBe(
-        "Docker containerization patterns",
-      );
+      expect(merged.skills[dockerId]!.description).toBe("Docker containerization patterns");
       expect(merged.skills[dockerId]!.tags).toContain("docker");
       expect(merged.skills[dockerId]!.category).toBe("shared-tooling");
     } finally {
