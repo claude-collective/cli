@@ -192,8 +192,9 @@ describe("generateConfigTypesSource", () => {
     const matrix = createMockMatrix(
       createMockSkill("web-framework-react"),
       createMockSkill("web-framework-vue-composition-api"),
-      createMockSkill("web-framework-original"),
-      createMockSkill("web-framework-simple"),
+      // Boundary casts: fictional skill IDs for testing multi-line union generation
+      createMockSkill("web-framework-original" as SkillId),
+      createMockSkill("web-framework-simple" as SkillId),
       { categories },
     );
     const source = generateConfigTypesSource(matrix, []);

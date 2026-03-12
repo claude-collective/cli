@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { fileURLToPath } from "url";
 import { readFile as fsReadFile, stat } from "fs/promises";
-import type { AgentConfig, Skill } from "../types";
+import type { AgentConfig, Skill, SkillId } from "../types";
 import { DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../consts";
 import {
   createCompileContext,
@@ -162,7 +162,8 @@ function contextForProject(projectRoot: string) {
 // ---------------------------------------------------------------------------
 
 const MISSING_SKILL: Skill = {
-  ...createMockSkillEntry("web-missing-skill"),
+  // Boundary cast: fictional skill ID for testing missing-skill error paths
+  ...createMockSkillEntry("web-missing-skill" as SkillId),
   path: "skills/missing.md",
 };
 

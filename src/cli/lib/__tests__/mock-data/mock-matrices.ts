@@ -35,7 +35,7 @@ import {
   ACME_SOURCE,
   INTERNAL_SOURCE,
 } from "./mock-sources.js";
-import type { Category, CategoryDefinition, CategoryPath, MergedSkillsMatrix, SkillSlug, SkillSource } from "../../../types";
+import type { Category, CategoryDefinition, CategoryPath, MergedSkillsMatrix, SkillId, SkillSlug, SkillSource } from "../../../types";
 
 // ---------------------------------------------------------------------------
 // Canonical matrix shapes — use these instead of inline createMockMatrix() calls
@@ -176,7 +176,8 @@ export const REQUIRES_MATRIX = createMockMatrixConfig(
 // ---------------------------------------------------------------------------
 
 export const LOCAL_SKILL_MATRIX = createMockMatrix(
-  createMockSkill("web-local-skill", {
+  // Boundary cast: fictional skill ID for testing local skill matrix
+  createMockSkill("web-local-skill" as SkillId, {
     local: true,
     localPath: ".claude/skills/my-local-skill/",
   }),
@@ -184,7 +185,8 @@ export const LOCAL_SKILL_MATRIX = createMockMatrix(
 
 export const MIXED_LOCAL_REMOTE_MATRIX = createMockMatrix(
   SKILLS.react,
-  createMockSkill("meta-company-patterns", {
+  // Boundary cast: fictional skill ID for testing mixed local/remote matrix
+  createMockSkill("meta-company-patterns" as SkillId, {
     local: true,
     localPath: ".claude/skills/company-patterns/",
   }),
@@ -470,7 +472,8 @@ export function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>):
   const skills = mapValues(grouped, (entries) => {
     const first = entries[0]!;
     const sources = entries.map((e) => e.source);
-    return createMockMultiSourceSkill(first.id, sources, {
+    // Boundary cast: MultiSourceSkillEntry.id is string, but contains valid skill IDs
+    return createMockMultiSourceSkill(first.id as SkillId, sources, {
       category: first.category as CategoryPath,
       description: first.description,
     });

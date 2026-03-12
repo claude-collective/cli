@@ -11,6 +11,7 @@ import type {
   ResolvedSkill,
   Category,
   CategorySelections,
+  SkillId,
 } from "../../types";
 import {
   ENTER,
@@ -434,7 +435,8 @@ describe("StepBuild component", () => {
     it("should show ViewTitle for current domain in three-domain flow", () => {
       // Add cli category to matrix
       const cliFrameworkCategory = { ...CLI_FRAMEWORK_CATEGORY, required: true, order: 0 };
-      const commanderSkill = createMockSkill("cli-framework-commander", {
+      // Boundary cast: fictional skill ID for testing CLI domain display
+      const commanderSkill = createMockSkill("cli-framework-commander" as SkillId, {
         displayName: "commander",
       });
 

@@ -48,7 +48,7 @@ const MONITORING_SENTRY = "api-monitoring-sentry" as SkillId;
 const NONEXISTENT_SKILL = "web-nonexistent-skill" as SkillId;
 const FEATURE_ADVANCED = "web-feature-advanced" as SkillId;
 const NONEXISTENT_DEP = "web-nonexistent-dep" as SkillId;
-const VUE_ID = "web-framework-vue-composition-api" as SkillId;
+const VUE_ID: SkillId = "web-framework-vue-composition-api";
 
 const TOTAL_SOURCE_COUNT = 3;
 const SELECTED_SKILL_COUNT = 10;
@@ -472,7 +472,8 @@ describe("Integration: Multi-Source Install Pipeline", () => {
   });
 
   it("should install skills from multiple sources and produce compiled agents", async () => {
-    const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id);
+    // Boundary cast: TestSkill.id is string, but RESOLUTION_PIPELINE_SKILLS contains valid SkillIds
+    const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id) as SkillId[];
 
     const matrix = buildPipelineMatrix();
     initializeMatrix(matrix);
@@ -514,7 +515,8 @@ describe("Integration: Multi-Source Install Pipeline", () => {
   });
 
   it("should preserve source selections through the config write", async () => {
-    const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id);
+    // Boundary cast: TestSkill.id is string, but RESOLUTION_PIPELINE_SKILLS contains valid SkillIds
+    const selectedSkills = RESOLUTION_PIPELINE_SKILLS.map((s) => s.id) as SkillId[];
 
     const matrix = buildPipelineMatrix();
     initializeMatrix(matrix);

@@ -34,7 +34,8 @@ function buildMatrixFromTestSkills(skills: TestSkill[]) {
 }
 
 const REACT_SKILL_ID: SkillId = "web-framework-react";
-const ALL_SKILL_NAMES = SWITCHABLE_SKILLS.map((s) => s.id);
+// Boundary cast: TestSkill.id is string, but SWITCHABLE_SKILLS contains valid SkillIds
+const ALL_SKILL_NAMES = SWITCHABLE_SKILLS.map((s) => s.id) as SkillId[];
 
 describe("Integration: Source Switching with Delete", () => {
   let dirs: TestDirs;

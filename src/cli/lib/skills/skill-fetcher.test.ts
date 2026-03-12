@@ -214,11 +214,11 @@ describe("skill-fetcher", () => {
       expect(result).toEqual([skillId]);
     });
 
-    it("should use plugin name as fallback source when source is an object without url or repo", async () => {
+    it("should throw when marketplace plugin source has neither url nor repo", async () => {
       const marketplace = createMockMarketplace([
         createMockMarketplacePlugin(REACT_SKILL_ID, {
           source: "github",
-          // No url and no repo - falls through to plugin.name fallback
+          // No url and no repo - malformed marketplace data
         } as MarketplacePlugin["source"]),
       ]);
       const skillId = REACT_SKILL_ID;
@@ -226,9 +226,9 @@ describe("skill-fetcher", () => {
       mockDirectoryExists.mockResolvedValueOnce(true);
       mockGlob.mockResolvedValueOnce(["web/framework/web-framework-react/SKILL.md"]);
 
-      const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
-
-      expect(result).toEqual([skillId]);
+      await expect(
+        fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH),
+      ).rejects.toThrow("Malformed marketplace plugin");
     });
 
     it("should not match marketplace plugin when plugin name does not match skillId", async () => {

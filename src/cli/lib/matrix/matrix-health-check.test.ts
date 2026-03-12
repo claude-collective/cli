@@ -16,7 +16,7 @@ import {
   HEALTH_ALL_REFS_RESOLVED_MATRIX,
   HEALTH_PARTIAL_UNRESOLVED_REQUIRES_MATRIX,
 } from "../__tests__/mock-data/mock-matrices";
-import type { Category } from "../../types";
+import type { Category, SkillId } from "../../types";
 
 vi.mock("../../utils/logger");
 
@@ -90,7 +90,8 @@ describe("matrix-health-check", () => {
       const autoSynthesizedCategory = createMockCategory("web-custom" as Category, "Web Custom", {
         order: 999,
       });
-      const skillInSynthesizedCategory = createMockSkill("web-custom-tool", {
+      // Boundary cast: fictional skill ID for testing auto-synthesized categories
+      const skillInSynthesizedCategory = createMockSkill("web-custom-tool" as SkillId, {
         category: "web-custom" as Category,
       });
       const matrixWithSynthesized = createMockMatrix(skillInSynthesizedCategory, {

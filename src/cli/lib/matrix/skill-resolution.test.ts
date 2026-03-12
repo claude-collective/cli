@@ -21,7 +21,7 @@ import {
 vi.mock("../../utils/logger");
 
 import { mergeMatrixWithSkills, synthesizeCategory } from "./skill-resolution";
-import type { CategoryPath, Category } from "../../types";
+import type { CategoryPath, Category, SkillId } from "../../types";
 
 describe("skill-resolution", () => {
   describe("mergeMatrixWithSkills", () => {
@@ -79,7 +79,7 @@ describe("skill-resolution", () => {
       expect(merged.slugMap.idToSlug["web-framework-react"]).toBe("react");
     });
 
-    it("passes through unresolved conflict references as-is", () => {
+    it("drops unresolved conflict references instead of passing through", () => {
       const merged = mergeMatrixWithSkills(
         UNRESOLVED_CONFLICT_MATRIX.categories,
         UNRESOLVED_CONFLICT_MATRIX.relationships,
@@ -88,9 +88,8 @@ describe("skill-resolution", () => {
 
       const reactSkill = merged.skills["web-framework-react"];
       expect(reactSkill).toBeDefined();
-      expect(reactSkill!.conflictsWith).toEqual(
-        expect.arrayContaining([expect.objectContaining({ skillId: "nonexistent" })]),
-      );
+      // Unresolved "nonexistent" slug should be dropped, not passed through as-is
+      expect(reactSkill!.conflictsWith).toEqual([]);
     });
 
     it("resolves alternative groups correctly between skills", () => {
@@ -175,7 +174,7 @@ describe("skill-resolution", () => {
   describe("auto-synthesis", () => {
     it("synthesizes missing categories for skills with unknown category", () => {
       // Boundary cast: intentionally custom category not in built-in union
-      const skill = createMockExtractedSkill("web-custom-tool", {
+      const skill = createMockExtractedSkill("web-custom-tool" as SkillId, {
         category: "devops-iac" as CategoryPath,
         domain: "web",
       });
@@ -193,7 +192,7 @@ describe("skill-resolution", () => {
 
     it("uses skill domain field for synthesized category domain", () => {
       // Boundary cast: intentionally custom category not in built-in union
-      const skill = createMockExtractedSkill("web-custom-tool", {
+      const skill = createMockExtractedSkill("web-custom-tool" as SkillId, {
         category: "devops-iac" as CategoryPath,
         domain: "api",
       });
@@ -204,7 +203,7 @@ describe("skill-resolution", () => {
     });
 
     it("passes skill domain to synthesized category regardless of prefix", () => {
-      const skill = createMockExtractedSkill("web-custom-tool", {
+      const skill = createMockExtractedSkill("web-custom-tool" as SkillId, {
         // Boundary cast: intentionally custom category not in built-in union
         category: "web-custom" as CategoryPath,
         domain: "cli",
@@ -217,7 +216,7 @@ describe("skill-resolution", () => {
 
     it("synthesized category uses skill domain even for unknown prefixes", () => {
       // Boundary cast: intentionally custom category not in built-in union
-      const skill = createMockExtractedSkill("web-custom-tool", {
+      const skill = createMockExtractedSkill("web-custom-tool" as SkillId, {
         category: "devops-iac" as CategoryPath,
         domain: "shared",
       });
@@ -243,20 +242,20 @@ describe("skill-resolution", () => {
   describe("synthesizeCategory", () => {
     it("creates category with provided domain", () => {
       // Boundary cast: custom category not in built-in union
-      const cat = synthesizeCategory("web-custom" as CategoryPath, "web");
+      const cat = synthesizeCategory("web-custom" as Category, "web");
       expect(cat.domain).toBe("web");
       expect(cat.displayName).toBe("Web Custom");
     });
 
     it("creates category with explicit domain override", () => {
       // Boundary cast: custom category not in built-in union
-      const cat = synthesizeCategory("devops-iac" as CategoryPath, "api");
+      const cat = synthesizeCategory("devops-iac" as Category, "api");
       expect(cat.domain).toBe("api");
     });
 
     it("uses the provided domain regardless of category prefix", () => {
       // Boundary cast: custom category not in built-in union
-      const cat = synthesizeCategory("devops-iac" as CategoryPath, "cli");
+      const cat = synthesizeCategory("devops-iac" as Category, "cli");
       expect(cat.domain).toBe("cli");
     });
   });

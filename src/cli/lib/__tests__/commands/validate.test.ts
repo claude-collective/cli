@@ -469,7 +469,7 @@ describe("source validation (validateSource)", () => {
     expect(mismatchIssues[0].severity).toBe("warning");
   });
 
-  it("should report cross-reference errors for unresolved skill references", async () => {
+  it("should drop unresolved skill references during resolution (no dangling refs in matrix)", async () => {
     const sourceDir = path.join(tempDir, "source");
     const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
     const configDir = path.join(sourceDir, "config");
@@ -497,7 +497,7 @@ describe("source validation (validateSource)", () => {
       }),
     );
 
-    // Add a conflict rule referencing a non-existent skill to trigger cross-reference error
+    // Add a conflict rule referencing a non-existent skill
     const matrixCategories = {
       "web-framework": {
         id: "web-framework",
@@ -532,8 +532,10 @@ describe("source validation (validateSource)", () => {
 
     const result = await validateSource(sourceDir);
 
+    // Unresolved slugs are now dropped during resolution (with a warning),
+    // so no dangling references appear in the matrix health check
     const crossRefIssues = result.issues.filter((i) => i.message.includes("unresolved reference"));
-    expect(crossRefIssues.length).toBeGreaterThan(0);
+    expect(crossRefIssues).toHaveLength(0);
   });
 
   it("should validate multiple skills and count them correctly", async () => {

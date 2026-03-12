@@ -283,7 +283,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const sparseSkills = {
       "web-framework-react": SKILLS.react,
       // Boundary cast: intentionally testing skill with no category
-      "web-framework-unknown": createMockSkill("web-framework-unknown", {
+      // Boundary cast: fictional skill ID for testing missing-category handling
+      "web-framework-unknown": createMockSkill("web-framework-unknown" as SkillId, {
         category: undefined as unknown as CategoryPath,
       }),
     };
@@ -310,7 +311,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const extraSkills = {
       "web-framework-react": SKILLS.react,
       // Boundary cast: intentionally testing unmapped category handling
-      "infra-tooling-linter": createMockSkill("infra-tooling-linter"),
+      // Boundary cast: fictional skill ID for testing unmapped-category handling
+      "infra-tooling-linter": createMockSkill("infra-tooling-linter" as SkillId),
     };
 
     initializeMatrix(
@@ -349,7 +351,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     // testing category is non-exclusive, so multiple selections are valid
     const multiSkills = {
       ...EDIT_SKILLS,
-      "web-testing-playwright": createMockSkill("web-testing-playwright"),
+      // Boundary cast: fictional skill ID for testing multi-skill category population
+      "web-testing-playwright": createMockSkill("web-testing-playwright" as SkillId),
     };
 
     initializeMatrix(

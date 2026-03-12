@@ -6,7 +6,7 @@ import { readTestTsConfig } from "../helpers";
 import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents/agent-recompiler";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
-import type { AgentName, ProjectConfig } from "../../../types";
+import type { AgentName, ProjectConfig, SkillId } from "../../../types";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
@@ -25,7 +25,8 @@ import { initializeMatrix } from "../../matrix/matrix-provider";
 import { PIPELINE_TEST_SKILLS } from "../mock-data/mock-skills.js";
 import { PIPELINE_MATRIX } from "../mock-data/mock-matrices.js";
 
-const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.id);
+// Boundary cast: TestSkill.id is string, but PIPELINE_TEST_SKILLS contains valid SkillIds
+const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.id) as SkillId[];
 
 const PIPELINE_AGENTS: AgentName[] = ["web-developer", "api-developer"];
 

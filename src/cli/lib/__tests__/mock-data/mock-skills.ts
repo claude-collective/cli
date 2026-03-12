@@ -1,7 +1,7 @@
 // Shared skill entries and TestSkill arrays for test files.
 // Uses createMockSkillEntry from helpers.ts.
 
-import type { Category, CategoryPath, Skill, SkillId } from "../../../types";
+import type { Category, CategoryPath, ResolvedSkill, Skill, SkillId } from "../../../types";
 import type { TestSkill } from "../fixtures/create-test-source";
 import {
   createMockExtractedSkill,
@@ -82,7 +82,8 @@ const drizzleSkill = createTestSkill("api-database-drizzle", "TypeScript ORM for
 export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [vueSkill, scssSkill, drizzleSkill];
 
 export const COMPILE_LOCAL_SKILL: TestSkill = createTestSkill(
-  "web-tooling-local-skill",
+  // Boundary cast: fictional skill ID for testing local skill compilation
+  "web-tooling-local-skill" as SkillId,
   "A local project skill",
   { slug: "tooling", displayName: "Local Skill", tags: ["local", "custom"] },
 );
@@ -97,7 +98,8 @@ export const PIPELINE_TEST_SKILLS: TestSkill[] = [
 // TestSkill constants from consumer-stacks-matrix.integration.test.ts
 
 export const DOCKER_TOOLING_SKILL: TestSkill = createTestSkill(
-  "infra-tooling-docker",
+  // Boundary cast: fictional skill ID for testing infra tooling
+  "infra-tooling-docker" as SkillId,
   "Docker containerization patterns",
   {
     slug: "tooling",
@@ -108,14 +110,16 @@ export const DOCKER_TOOLING_SKILL: TestSkill = createTestSkill(
 );
 
 export const CI_CD_SKILLS: TestSkill[] = [
-  createTestSkill("infra-ci-cd-github-actions", "github-actions CI/CD pipeline", {
+  // Boundary cast: fictional skill ID for testing CI/CD skills
+  createTestSkill("infra-ci-cd-github-actions" as SkillId, "github-actions CI/CD pipeline", {
     slug: "github-actions",
     displayName: "GitHub Actions",
     category: "infra-ci-cd",
     domain: "shared",
     tags: ["ci-cd", "github-actions"],
   }),
-  createTestSkill("infra-ci-cd-gitlab-ci", "gitlab-ci CI/CD pipeline", {
+  // Boundary cast: fictional skill ID for testing CI/CD skills
+  createTestSkill("infra-ci-cd-gitlab-ci" as SkillId, "gitlab-ci CI/CD pipeline", {
     slug: "gitlab-ci",
     displayName: "GitLab CI",
     category: "infra-ci-cd",
@@ -127,7 +131,8 @@ export const CI_CD_SKILLS: TestSkill[] = [
 export const DISCOURAGES_RELATIONSHIP_SKILLS: TestSkill[] = [reactSkill, scssSkill, vueSkill];
 
 export const DATADOG_OBSERVABILITY_SKILL: TestSkill = createTestSkill(
-  "api-observability-datadog",
+  // Boundary cast: fictional skill ID for testing observability skills
+  "api-observability-datadog" as SkillId,
   "Datadog APM integration",
   { tags: ["monitoring", "observability", "apm", "custom-tag"] },
 );
@@ -138,7 +143,7 @@ export const REQUIRES_RELATIONSHIP_SKILLS: TestSkill[] = [reactSkill, vitestSkil
 
 /** Creates a TestSkill with rendered SKILL.md content for source-switching tests */
 function contentSkill(
-  id: string,
+  id: SkillId,
   description: string,
   tags: string[],
   body: string,
@@ -203,7 +208,8 @@ export const RESOLUTION_PIPELINE_SKILLS: TestSkill[] = [
     author: "@acme",
     tags: ["api", "hono"],
   }),
-  createTestSkill("web-animation-framer", "Framer Motion (internal source)", {
+  // Boundary cast: fictional skill ID for testing multi-source resolution
+  createTestSkill("web-animation-framer" as SkillId, "Framer Motion (internal source)", {
     slug: "framer-motion",
     displayName: "Framer Motion",
     author: "@internal",
@@ -306,13 +312,12 @@ export const HEALTH_MULTIPLE_UNRESOLVED_REFS_SKILL = {
   conflictsWith: [{ skillId: "web-state-ghost" as SkillId, reason: "Conflicts" }],
 };
 
-export const HEALTH_ALL_REFS_RESOLVED_SKILL = {
+export const HEALTH_ALL_REFS_RESOLVED_SKILL: ResolvedSkill = {
   ...SKILLS.zustand,
-  // Boundary casts: spread widens template literals to string, cast re-narrows to SkillId
-  conflictsWith: [{ skillId: "web-framework-react" as SkillId, reason: "Test" }],
+  conflictsWith: [{ skillId: "web-framework-react", reason: "Test" }],
   requires: [
     {
-      skillIds: ["web-framework-react" as SkillId],
+      skillIds: ["web-framework-react"],
       needsAny: false,
       reason: "Needs React",
     },

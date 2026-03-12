@@ -210,12 +210,11 @@ export function buildWizardResult(
 
 /** Build a SkillConfig array from skill IDs with default scope and source */
 export function buildSkillConfigs(
-  skillIds: string[],
+  skillIds: SkillId[],
   overrides?: Partial<Omit<SkillConfig, "id">>,
 ): SkillConfig[] {
   return skillIds.map((id) => ({
-    // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
-    id: id as SkillId,
+    id,
     scope: overrides?.scope ?? "project",
     source: overrides?.source ?? "local",
   }));
@@ -405,17 +404,15 @@ const DOMAIN_PREFIX_MAP: Record<string, Domain> = {
  * using the canonical category registry for correct category mapping.
  */
 export function createTestSkill(
-  id: string,
+  id: SkillId,
   description: string,
   overrides?: Partial<TestSkill>,
 ): TestSkill {
-  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
-  const skillId = id as SkillId;
   const segments = id.split("-");
   const rawPrefix = segments[0] ?? "web";
   const domain = (DOMAIN_PREFIX_MAP[rawPrefix] ?? rawPrefix) as Domain;
   const canonicalCategories = getCanonicalSkillCategories();
-  // Boundary cast: test factory maps to arbitrary category strings
+  // Boundary cast: category registry returns arbitrary strings for non-canonical IDs
   const category = (canonicalCategories[id] ?? `${segments[0]}-${segments[1]}`) as CategoryPath;
   const slug = (segments.length >= 3 ? segments.slice(2).join("-") : id) as SkillSlug;
   const displayName = slug
@@ -424,7 +421,7 @@ export function createTestSkill(
     .join(" ");
 
   return {
-    id: skillId,
+    id,
     slug,
     displayName,
     description,
@@ -436,11 +433,9 @@ export function createTestSkill(
   };
 }
 
-export function createMockSkill(id: string, overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  // Boundary cast: test factory accepts arbitrary string IDs for test isolation
-  const skillId = id as SkillId;
-  // Boundary cast: test factory maps to arbitrary category strings
-  const category = (overrides?.category ?? getCanonicalSkillCategories()[skillId]) as
+export function createMockSkill(id: SkillId, overrides?: Partial<ResolvedSkill>): ResolvedSkill {
+  // Boundary cast: category registry returns arbitrary strings for non-canonical IDs
+  const category = (overrides?.category ?? getCanonicalSkillCategories()[id]) as
     | CategoryPath
     | undefined;
 
@@ -462,7 +457,7 @@ export function createMockSkill(id: string, overrides?: Partial<ResolvedSkill>):
     .join(" ");
 
   return {
-    id: skillId,
+    id,
     slug: defaultSlug,
     displayName: defaultDisplayName,
     description: `${id} skill`,
@@ -502,11 +497,9 @@ export function createMockSkillSource(
  * Used when mocking extractAllSkills() return values.
  */
 export function createMockExtractedSkill(
-  id: string,
+  id: SkillId,
   overrides?: Partial<ExtractedSkillMetadata>,
 ): ExtractedSkillMetadata {
-  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
-  const skillId = id as SkillId;
   // Derive directory path and category from the skill ID convention: "domain-category-name"
   const segments = id.split("-");
   const domain = segments[0] ?? "web";
@@ -515,7 +508,7 @@ export function createMockExtractedSkill(
   const directoryPath = `${domain}/${category}/${name}`;
 
   return {
-    id: skillId,
+    id,
     directoryPath,
     description: `${id} skill`,
     category: `${domain}-${category}` as CategoryPath,
@@ -621,14 +614,12 @@ export function createMockAgentConfig(
 }
 
 export function createMockSkillEntry(
-  id: string,
+  id: SkillId,
   preloaded = false,
   overrides?: Partial<Skill>,
 ): Skill {
-  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
-  const skillId = id as SkillId;
   return {
-    id: skillId,
+    id,
     path: `skills/${id}/`,
     description: `${id} skill`,
     usage: `when working with ${id}`,
@@ -649,7 +640,7 @@ export function createCompileContext(overrides?: Partial<CompileContext>): Compi
 
 export async function writeTestSkill(
   skillsDir: string,
-  skillId: string,
+  skillId: SkillId,
   options?: {
     /** Extra fields to merge into metadata.yaml (e.g., forkedFrom, displayName) */
     extraMetadata?: Record<string, unknown>;
@@ -659,8 +650,7 @@ export async function writeTestSkill(
     skillContent?: string;
   },
 ): Promise<string> {
-  // Boundary cast: test factory accepts arbitrary skill IDs
-  const skill = matrix.skills[skillId as SkillId];
+  const skill = matrix.skills[skillId];
 
   if (!options?.skipMetadata && !skill) {
     throw new Error(
@@ -1062,13 +1052,11 @@ export function buildTestProjectConfig(
 }
 
 export function createMockSkillDefinition(
-  id: string,
+  id: SkillId,
   overrides?: Partial<SkillDefinition>,
 ): SkillDefinition {
-  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
-  const skillId = id as SkillId;
   return {
-    id: skillId,
+    id,
     path: `skills/${id}/`,
     description: `${id} skill`,
     ...overrides,
@@ -1147,9 +1135,8 @@ export function createMockCompiledStackPlugin(
   };
 }
 
-export function createMockSkillAssignment(id: string, preloaded = false): SkillAssignment {
-  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
-  return { id: id as SkillId, preloaded };
+export function createMockSkillAssignment(id: SkillId, preloaded = false): SkillAssignment {
+  return { id, preloaded };
 }
 
 export function createMockRawStacksConfig(): RawStacksConfig {
@@ -1260,7 +1247,8 @@ export function testSkillToResolvedSkill(
   skill: TestSkill,
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
-  return createMockSkill(skill.id, {
+  // Boundary cast: TestSkill.id is string, but in practice always a valid SkillId
+  return createMockSkill(skill.id as SkillId, {
     description: skill.description,
     ...(skill.tags?.length ? { tags: skill.tags } : {}),
     ...overrides,
@@ -1272,7 +1260,7 @@ export function testSkillToResolvedSkill(
  * Simulates what multi-source-loader.ts does after tagging.
  */
 export function createMockMultiSourceSkill(
-  id: string,
+  id: SkillId,
   sources: SkillSource[],
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {

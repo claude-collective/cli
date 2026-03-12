@@ -605,13 +605,13 @@ describe("multi-source-loader", () => {
       });
 
       vi.mocked(extractAllSkills).mockResolvedValue([
-        createMockExtractedSkill("web-framework-react-pro", {
+        createMockExtractedSkill("web-framework-react-pro" as SkillId, {
           directoryPath: "web/framework/react",
           description: "Opinionated React with strict TS",
           author: "@acme",
           path: "skills/web/framework/react/",
         }),
-        createMockExtractedSkill("web-framework-vue-pro", {
+        createMockExtractedSkill("web-framework-vue-pro" as SkillId, {
           directoryPath: "web/framework/vue",
           author: "@acme",
           path: "skills/web/framework/vue/",
@@ -648,14 +648,14 @@ describe("multi-source-loader", () => {
 
       vi.mocked(extractAllSkills)
         .mockResolvedValueOnce([
-          createMockExtractedSkill("web-framework-react-pro", {
+          createMockExtractedSkill("web-framework-react-pro" as SkillId, {
             directoryPath: "web/framework/react",
             author: "@acme",
             path: "skills/web/framework/react/",
           }),
         ])
         .mockResolvedValueOnce([
-          createMockExtractedSkill("web-framework-react-strict", {
+          createMockExtractedSkill("web-framework-react-strict" as SkillId, {
             directoryPath: "web/framework/react",
             author: "@team-xyz",
             path: "skills/web/framework/react/",
@@ -690,7 +690,7 @@ describe("multi-source-loader", () => {
         });
 
       vi.mocked(extractAllSkills).mockResolvedValueOnce([
-        createMockExtractedSkill("web-framework-react-strict", {
+        createMockExtractedSkill("web-framework-react-strict" as SkillId, {
           directoryPath: "web/framework/react",
           author: "@team-xyz",
           path: "skills/web/framework/react/",
@@ -725,7 +725,7 @@ describe("multi-source-loader", () => {
       });
 
       vi.mocked(extractAllSkills).mockResolvedValue([
-        createMockExtractedSkill("web-framework-vue-pro", {
+        createMockExtractedSkill("web-framework-vue-pro" as SkillId, {
           directoryPath: "web/framework/vue",
           author: "@acme",
           path: "skills/web/framework/vue/",
@@ -749,7 +749,7 @@ describe("multi-source-loader", () => {
       });
 
       vi.mocked(extractAllSkills).mockResolvedValue([
-        createMockExtractedSkill("web-framework-react-pro", {
+        createMockExtractedSkill("web-framework-react-pro" as SkillId, {
           directoryPath: "web/framework/React",
           author: "@acme",
           path: "skills/web/framework/React/",

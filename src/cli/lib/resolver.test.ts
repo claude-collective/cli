@@ -746,7 +746,7 @@ describe("resolveAgentSkillRefs", () => {
     const agentConfig = {
       skills: [
         {
-          id: "web-styling-scss-modules" as SkillId,
+          id: "web-styling-scss-modules" as const,
           usage: "when styling",
           preloaded: true,
         },

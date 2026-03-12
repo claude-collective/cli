@@ -123,7 +123,7 @@ async function createPluginDir(projectDir: string, fakeHome: string): Promise<st
 /** Creates a skill with forkedFrom.source matching a configured source (CLI-installed) */
 async function createCLISkill(
   skillsDir: string,
-  skillId: string,
+  skillId: SkillId,
   source = TEST_SOURCE,
 ): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
@@ -140,14 +140,14 @@ async function createCLISkill(
 }
 
 /** Creates a skill directory WITHOUT forkedFrom (user-created skill) */
-async function createUserSkill(skillsDir: string, skillId: string): Promise<string> {
+async function createUserSkill(skillsDir: string, skillId: SkillId): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
     extraMetadata: { displayName: skillId },
   });
 }
 
 /** Creates a skill directory with no metadata.yaml at all */
-async function createSkillWithoutMetadata(skillsDir: string, skillId: string): Promise<string> {
+async function createSkillWithoutMetadata(skillsDir: string, skillId: SkillId): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
     skipMetadata: true,
   });
@@ -205,10 +205,11 @@ describe("uninstall command", () => {
         SKILLS.vue,
         SKILLS.zustand,
         SKILLS.hono,
-        createMockSkill("web-tooling-acme"),
-        createMockSkill("web-tooling-custom"),
-        createMockSkill("web-tooling-personal"),
-        createMockSkill("web-tooling-nometadata"),
+        // Boundary casts: fictional skill IDs for testing uninstall scenarios
+        createMockSkill("web-tooling-acme" as SkillId),
+        createMockSkill("web-tooling-custom" as SkillId),
+        createMockSkill("web-tooling-personal" as SkillId),
+        createMockSkill("web-tooling-nometadata" as SkillId),
       ),
     );
   });
@@ -289,7 +290,7 @@ describe("uninstall command", () => {
       const skillsDir = path.join(claudeDir, STANDARD_DIRS.SKILLS);
       await mkdir(skillsDir, { recursive: true });
 
-      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-custom");
+      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-custom" as SkillId);
 
       const { stdout, stderr } = await runCliCommand(["uninstall", "--yes"]);
 
@@ -306,7 +307,7 @@ describe("uninstall command", () => {
       const skillsDir = path.join(claudeDir, STANDARD_DIRS.SKILLS);
       await mkdir(skillsDir, { recursive: true });
 
-      const noMetaSkillDir = await createSkillWithoutMetadata(skillsDir, "web-tooling-nometadata");
+      const noMetaSkillDir = await createSkillWithoutMetadata(skillsDir, "web-tooling-nometadata" as SkillId);
 
       const { stdout, stderr } = await runCliCommand(["uninstall", "--yes"]);
 
@@ -323,7 +324,7 @@ describe("uninstall command", () => {
       await mkdir(skillsDir, { recursive: true });
 
       const cliSkillDir = await createCLISkill(skillsDir, "web-framework-react");
-      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-custom");
+      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-custom" as SkillId);
 
       const { stdout, stderr } = await runCliCommand(["uninstall", "--yes"]);
 
@@ -366,9 +367,9 @@ describe("uninstall command", () => {
       // Skill from primary source
       const primarySkillDir = await createCLISkill(skillsDir, "web-framework-react", TEST_SOURCE);
       // Skill from extra source
-      const extraSkillDir = await createCLISkill(skillsDir, "web-tooling-acme", TEST_EXTRA_SOURCE);
+      const extraSkillDir = await createCLISkill(skillsDir, "web-tooling-acme" as SkillId, TEST_EXTRA_SOURCE);
       // User skill
-      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-personal");
+      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-personal" as SkillId);
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
@@ -504,7 +505,7 @@ describe("uninstall command", () => {
 
       const skillsDir = path.join(claudeDir, STANDARD_DIRS.SKILLS);
       await mkdir(skillsDir, { recursive: true });
-      await createUserSkill(skillsDir, "web-tooling-custom");
+      await createUserSkill(skillsDir, "web-tooling-custom" as SkillId);
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
@@ -596,7 +597,7 @@ describe("uninstall command", () => {
       const skillsDir = path.join(claudeDir, STANDARD_DIRS.SKILLS);
       await mkdir(skillsDir, { recursive: true });
       const cliSkillDir = await createCLISkill(skillsDir, "web-framework-react");
-      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-personal");
+      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-personal" as SkillId);
       const mcpPath = await createUserMcpConfig(claudeDir);
       const settingsPath = await createUserSettings(claudeDir);
       const claudeMdPath = await createUserClaudeMd(claudeDir);

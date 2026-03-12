@@ -179,6 +179,7 @@ describe("skill-copier", () => {
         local: true,
         localPath: localSkillPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -232,6 +233,7 @@ describe("skill-copier", () => {
         local: true,
         localPath: localSkillPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -285,6 +287,7 @@ describe("skill-copier", () => {
           path: remoteSkillRelPath,
         },
       );
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -322,36 +325,31 @@ describe("skill-copier", () => {
       }
     });
 
-    it("warns about unknown skills and skips them", async () => {
-      const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    it("throws for unknown skills", async () => {
+      initializeMatrix(EMPTY_MATRIX);
 
-      const matrix = EMPTY_MATRIX;
-
-      const sourceResult = buildSourceResult(matrix, projectDir, {
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const result = await copySkillsToPluginFromSource(
-        ["web-unknown-skill" as SkillId],
-        pluginDir,
-        matrix,
-        sourceResult,
-      );
-
-      expect(result).toEqual([]);
-      expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("web-unknown-skill"));
-
-      consoleWarn.mockRestore();
+      await expect(
+        copySkillsToPluginFromSource(
+          ["web-unknown-skill" as SkillId],
+          pluginDir,
+          EMPTY_MATRIX,
+          sourceResult,
+        ),
+      ).rejects.toThrow("Skill not found: web-unknown-skill");
     });
 
     it("handles empty skill selection", async () => {
-      const matrix = EMPTY_MATRIX;
+      initializeMatrix(EMPTY_MATRIX);
 
-      const sourceResult = buildSourceResult(matrix, projectDir, {
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const result = await copySkillsToPluginFromSource([], pluginDir, matrix, sourceResult);
+      const result = await copySkillsToPluginFromSource([], pluginDir, EMPTY_MATRIX, sourceResult);
 
       expect(result).toEqual([]);
     });
@@ -373,6 +371,7 @@ describe("skill-copier", () => {
         local: true,
         localPath: localSkillPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -408,6 +407,7 @@ describe("skill-copier", () => {
         local: true,
         localPath: localSkillPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -451,6 +451,7 @@ describe("skill-copier", () => {
         ...SKILLS.zustand,
         path: remoteSkillRelPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -491,6 +492,7 @@ describe("skill-copier", () => {
         ...SKILLS.hono,
         path: remoteSkillRelPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -524,6 +526,7 @@ describe("skill-copier", () => {
         local: true,
         localPath: localSkillPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -577,6 +580,7 @@ describe("skill-copier", () => {
           path: remoteSkillRelPath,
         },
       );
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -615,13 +619,13 @@ describe("skill-copier", () => {
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
       await mkdir(localSkillsDir, { recursive: true });
 
-      const matrix = EMPTY_MATRIX;
+      initializeMatrix(EMPTY_MATRIX);
 
-      const sourceResult = buildSourceResult(matrix, projectDir, {
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const result = await copySkillsToLocalFlattened([], localSkillsDir, matrix, sourceResult);
+      const result = await copySkillsToLocalFlattened([], localSkillsDir, EMPTY_MATRIX, sourceResult);
 
       expect(result).toEqual([]);
     });
@@ -643,6 +647,7 @@ describe("skill-copier", () => {
         ...SKILLS.react,
         path: deeplyNestedPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -722,6 +727,7 @@ describe("skill-copier", () => {
           path: vitestPath,
         },
       );
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -776,6 +782,7 @@ describe("skill-copier", () => {
         ...SKILLS.drizzle,
         path: nestedPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -812,6 +819,7 @@ describe("skill-copier", () => {
         local: true,
         localPath: localSkillPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -856,6 +864,7 @@ describe("skill-copier", () => {
         local: true,
         localPath: localSkillPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
@@ -893,6 +902,7 @@ describe("skill-copier", () => {
         local: true,
         localPath: localSkillPath,
       });
+      initializeMatrix(matrix);
 
       const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },

@@ -252,19 +252,18 @@ describe("plugin-finder", () => {
       expect(result).toEqual(["web-framework-react"]);
     });
 
-    it("should match skill by display name alias", async () => {
-      const matrix = SINGLE_REACT_MATRIX;
-      initializeMatrix(matrix);
+    it("should skip skill when frontmatter name does not match any matrix skill ID", async () => {
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["react/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue(`---\nname: React\ndescription: React skill\n---\nContent`);
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual(["web-framework-react"]);
+      expect(result).toEqual([]);
     });
 
-    it("should match skill by directory name when frontmatter has no name", async () => {
+    it("should skip skill when frontmatter has no name", async () => {
       initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["web-framework-react/SKILL.md"]);
 
@@ -272,7 +271,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual(["web-framework-react"]);
+      expect(result).toEqual([]);
     });
 
     it("should match skill by directory name using last part of ID", async () => {
@@ -328,19 +327,18 @@ describe("plugin-finder", () => {
       expect(result).toEqual([]);
     });
 
-    it("should handle case-insensitive display name matching", async () => {
-      const matrix = SINGLE_REACT_MATRIX;
-      initializeMatrix(matrix);
+    it("should not match skill by case-insensitive name (exact ID required)", async () => {
+      initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["react/SKILL.md"]);
 
       mockedReadFile.mockResolvedValue("---\nname: react\ndescription: React\n---\nContent");
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual(["web-framework-react"]);
+      expect(result).toEqual([]);
     });
 
-    it("should handle case-insensitive directory name matching", async () => {
+    it("should skip skill with no frontmatter regardless of directory name", async () => {
       initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["Web-Framework-React/SKILL.md"]);
 
@@ -348,7 +346,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual(["web-framework-react"]);
+      expect(result).toEqual([]);
     });
 
     it("should handle frontmatter with quoted name values", async () => {
@@ -377,7 +375,7 @@ describe("plugin-finder", () => {
       expect(result).toEqual(["web-framework-react"]);
     });
 
-    it("should handle nested directory paths in SKILL.md glob results", async () => {
+    it("should skip nested directory when frontmatter is missing", async () => {
       initializeMatrix(SINGLE_REACT_MATRIX);
       mockedGlob.mockResolvedValue(["framework/web-framework-react/SKILL.md"]);
 
@@ -385,7 +383,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual(["web-framework-react"]);
+      expect(result).toEqual([]);
     });
   });
 });

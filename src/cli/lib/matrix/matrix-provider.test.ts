@@ -52,7 +52,7 @@ describe("matrix-provider", () => {
       const custom = createMockMatrix(SKILLS.react);
       initializeMatrix(custom);
 
-      const skill = getSkillBySlug("react" as SkillSlug);
+      const skill = getSkillBySlug("react");
       expect(skill).toBe(custom.skills["web-framework-react"]);
     });
 
