@@ -5,8 +5,8 @@ import {
   resolveSource,
   resolveAgentsSource,
   loadProjectSourceConfig,
-  writeProjectSourceConfig,
   getProjectConfigPath,
+  saveSourceToProjectConfig,
   SOURCE_ENV_VAR,
   DEFAULT_SOURCE,
 } from "../../configuration";
@@ -323,9 +323,9 @@ describe("User Journey: Project Config Save and Load", () => {
     await cleanupTempDir(tempDir);
   });
 
-  describe("writeProjectSourceConfig", () => {
+  describe("saveSourceToProjectConfig", () => {
     it("should create config directory if it does not exist", async () => {
-      await writeProjectSourceConfig(projectDir, { source: "github:test/repo" });
+      await saveSourceToProjectConfig(projectDir, "github:test/repo", "test-project");
 
       const configPath = getProjectConfigPath(projectDir);
       expect(await fileExists(configPath)).toBe(true);
@@ -335,9 +335,9 @@ describe("User Journey: Project Config Save and Load", () => {
       expect(config.source).toBe("github:test/repo");
     });
 
-    it("should overwrite existing config", async () => {
-      await writeProjectSourceConfig(projectDir, { source: "github:first/repo" });
-      await writeProjectSourceConfig(projectDir, { source: "github:second/repo" });
+    it("should overwrite existing source", async () => {
+      await saveSourceToProjectConfig(projectDir, "github:first/repo", "test-project");
+      await saveSourceToProjectConfig(projectDir, "github:second/repo", "test-project");
 
       const configPath = getProjectConfigPath(projectDir);
       // Boundary cast: config parse returns `unknown`
@@ -345,30 +345,19 @@ describe("User Journey: Project Config Save and Load", () => {
 
       expect(config.source).toBe("github:second/repo");
     });
-
-    it("should save all config fields", async () => {
-      await writeProjectSourceConfig(projectDir, {
-        source: "github:myorg/skills",
-        marketplace: "https://marketplace.example.com",
-        agentsSource: "https://agents.example.com",
-      });
-
-      const configPath = getProjectConfigPath(projectDir);
-      // Boundary cast: config parse returns `unknown`
-      const config = await readTestTsConfig<ProjectConfig>(configPath);
-
-      expect(config.source).toBe("github:myorg/skills");
-      expect(config.marketplace).toBe("https://marketplace.example.com");
-      expect(config.agentsSource).toBe("https://agents.example.com");
-    });
   });
 
   describe("loadProjectSourceConfig", () => {
     it("should load saved config correctly", async () => {
-      await writeProjectSourceConfig(projectDir, {
-        source: "github:company/private-skills",
-        marketplace: "https://internal-marketplace.company.com",
-      });
+      const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          source: "github:company/private-skills",
+          marketplace: "https://internal-marketplace.company.com",
+        }),
+      );
 
       const config = await loadProjectSourceConfig(projectDir);
 

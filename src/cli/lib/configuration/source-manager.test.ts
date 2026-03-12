@@ -40,6 +40,8 @@ describe("source-manager", () => {
 
   describe("addSource", () => {
     it("should add a source after validating via fetchMarketplace", async () => {
+      await writeTestTsConfig(tempDir, buildSourceConfig({ name: "test-project" }));
+
       const { fetchMarketplace } = await import("../loading/source-fetcher");
       vi.mocked(fetchMarketplace).mockResolvedValue({
         marketplace: {
@@ -106,7 +108,10 @@ describe("source-manager", () => {
     });
 
     it("should add a source when config exists but has no sources array", async () => {
-      await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:custom/skills" }));
+      await writeTestTsConfig(
+        tempDir,
+        buildSourceConfig({ name: "test-project", source: "github:custom/skills" }),
+      );
 
       const { fetchMarketplace } = await import("../loading/source-fetcher");
       vi.mocked(fetchMarketplace).mockResolvedValue({
@@ -130,7 +135,7 @@ describe("source-manager", () => {
       expect(config?.source).toBe("github:custom/skills");
     });
 
-    it("should add a source when no config file exists at all", async () => {
+    it("should throw when no config file exists", async () => {
       const { fetchMarketplace } = await import("../loading/source-fetcher");
       vi.mocked(fetchMarketplace).mockResolvedValue({
         marketplace: {
@@ -143,13 +148,9 @@ describe("source-manager", () => {
         fromCache: false,
       });
 
-      const result = await addSource(tempDir, "github:owner/new-source");
-
-      expect(result.name).toBe("new-source");
-      expect(result.skillCount).toBe(0);
-
-      const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.sources).toEqual([{ name: "new-source", url: "github:owner/new-source" }]);
+      await expect(addSource(tempDir, "github:owner/new-source")).rejects.toThrow(
+        "no project config found",
+      );
     });
 
     it("should not save config when duplicate check fails", async () => {
@@ -186,6 +187,7 @@ describe("source-manager", () => {
       await writeTestTsConfig(
         tempDir,
         buildSourceConfig({
+          name: "test-project",
           sources: [
             { name: "acme-corp", url: "github:acme-corp/skills" },
             { name: "team-skills", url: "github:team/skills" },
@@ -209,6 +211,7 @@ describe("source-manager", () => {
       await writeTestTsConfig(
         tempDir,
         buildSourceConfig({
+          name: "test-project",
           sources: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
         }),
       );
@@ -222,6 +225,7 @@ describe("source-manager", () => {
       await writeTestTsConfig(
         tempDir,
         buildSourceConfig({
+          name: "test-project",
           sources: [{ name: "only-source", url: "github:org/only" }],
         }),
       );

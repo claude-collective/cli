@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -17,7 +17,6 @@ import {
   resolveBranding,
   resolveSource,
   resolveAgentsSource,
-  writeProjectSourceConfig,
   SOURCE_ENV_VAR,
   validateSourceFormat,
 } from "./config";
@@ -437,63 +436,6 @@ describe("config", () => {
     });
   });
 
-  describe("writeProjectSourceConfig", () => {
-    it("should create config directory if it does not exist", async () => {
-      await writeProjectSourceConfig(tempDir, buildSourceConfig({ source: "github:test/repo" }));
-
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
-      expect(parsed.source).toBe("github:test/repo");
-    });
-
-    it("should write config with type annotation and satisfies clause", async () => {
-      await writeProjectSourceConfig(tempDir, buildSourceConfig({ source: "github:test/repo" }));
-
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const content = await readFile(configPath, "utf-8");
-      expect(content).toContain('import type { ProjectConfig } from "./config-types"');
-      expect(content).toContain("satisfies ProjectConfig");
-    });
-
-    it("should overwrite existing config", async () => {
-      await writeProjectSourceConfig(tempDir, buildSourceConfig({ source: "github:first/repo" }));
-      await writeProjectSourceConfig(tempDir, buildSourceConfig({ source: "github:second/repo" }));
-
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("github:second/repo");
-      expect(content).not.toContain("github:first/repo");
-    });
-
-    it("should save marketplace to project config", async () => {
-      await writeProjectSourceConfig(
-        tempDir,
-        buildSourceConfig({
-          marketplace: "https://my-marketplace.com/plugins",
-        }),
-      );
-
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
-      expect(parsed.marketplace).toBe("https://my-marketplace.com/plugins");
-    });
-
-    it("should save both source and marketplace", async () => {
-      await writeProjectSourceConfig(
-        tempDir,
-        buildSourceConfig({
-          source: "github:myorg/skills",
-          marketplace: "https://enterprise.example.com",
-        }),
-      );
-
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
-      expect(parsed.source).toBe("github:myorg/skills");
-      expect(parsed.marketplace).toBe("https://enterprise.example.com");
-    });
-  });
-
   describe("resolveSource", () => {
     it("should return flag value with highest priority", async () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
@@ -869,38 +811,6 @@ describe("config", () => {
     });
   });
 
-  describe("writeProjectSourceConfig with agentsSource", () => {
-    it("should save agentsSource to project config", async () => {
-      await writeProjectSourceConfig(
-        tempDir,
-        buildSourceConfig({
-          agentsSource: "https://my-agents.example.com",
-        }),
-      );
-
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
-      expect(parsed.agentsSource).toBe("https://my-agents.example.com");
-    });
-
-    it("should save all config fields together", async () => {
-      await writeProjectSourceConfig(
-        tempDir,
-        buildSourceConfig({
-          source: "github:myorg/skills",
-          marketplace: "https://enterprise.example.com",
-          agentsSource: "https://agents.enterprise.example.com",
-        }),
-      );
-
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
-      expect(parsed.source).toBe("github:myorg/skills");
-      expect(parsed.marketplace).toBe("https://enterprise.example.com");
-      expect(parsed.agentsSource).toBe("https://agents.enterprise.example.com");
-    });
-  });
-
   describe("loadProjectSourceConfig with branding", () => {
     it("should load branding name from project config", async () => {
       await writeTestTsConfig(
@@ -939,23 +849,6 @@ describe("config", () => {
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.branding?.name).toBeUndefined();
       expect(config?.branding?.tagline).toBe("Custom tagline");
-    });
-  });
-
-  describe("writeProjectSourceConfig with branding", () => {
-    it("should save branding to project config", async () => {
-      await writeProjectSourceConfig(
-        tempDir,
-        buildSourceConfig({
-          branding: { name: "Acme Dev Tools", tagline: "Build faster" },
-        }),
-      );
-
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
-      const branding = parsed.branding as Record<string, unknown>;
-      expect(branding.name).toBe("Acme Dev Tools");
-      expect(branding.tagline).toBe("Build faster");
     });
   });
 

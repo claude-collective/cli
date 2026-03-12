@@ -19,16 +19,17 @@ describe("config-saver", () => {
 
   describe("saveSourceToProjectConfig", () => {
     it("creates config file with source when no config exists", async () => {
-      await saveSourceToProjectConfig(tempDir, "github:my-org/skills");
+      await saveSourceToProjectConfig(tempDir, "github:my-org/skills", "my-project");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
       expect(config.source).toBe("github:my-org/skills");
+      expect(config.name).toBe("my-project");
     });
 
     it("creates .claude-src directory if it does not exist", async () => {
-      await saveSourceToProjectConfig(tempDir, "github:test/repo");
+      await saveSourceToProjectConfig(tempDir, "github:test/repo", "test-project");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const content = await readFile(configPath, "utf-8");
@@ -36,10 +37,11 @@ describe("config-saver", () => {
       expect(content).toBeDefined();
       expect(content.length).toBeGreaterThan(0);
       expect(content).toContain("export default");
+      expect(content).toContain('import type { ProjectConfig } from "./config-types"');
+      expect(content).toContain("satisfies ProjectConfig");
     });
 
     it("preserves existing config fields when adding source", async () => {
-      // Write existing config as TS
       const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
@@ -51,7 +53,7 @@ describe("config-saver", () => {
         }),
       );
 
-      await saveSourceToProjectConfig(tempDir, "github:new/source");
+      await saveSourceToProjectConfig(tempDir, "github:new/source", "fallback-name");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
@@ -73,7 +75,7 @@ describe("config-saver", () => {
         }),
       );
 
-      await saveSourceToProjectConfig(tempDir, "github:new/source");
+      await saveSourceToProjectConfig(tempDir, "github:new/source", "fallback-name");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
@@ -82,7 +84,7 @@ describe("config-saver", () => {
       expect(config.name).toBe("project");
     });
 
-    it("handles invalid config gracefully by starting with empty config", async () => {
+    it("uses provided name when config file is invalid", async () => {
       const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
@@ -90,38 +92,38 @@ describe("config-saver", () => {
         "invalid typescript content {{",
       );
 
-      await saveSourceToProjectConfig(tempDir, "github:my-org/skills");
+      await saveSourceToProjectConfig(tempDir, "github:my-org/skills", "recovered-project");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
       expect(config.source).toBe("github:my-org/skills");
+      expect(config.name).toBe("recovered-project");
     });
 
-    it("handles empty config file gracefully", async () => {
+    it("uses provided name when config file is empty", async () => {
       const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), "");
 
-      await saveSourceToProjectConfig(tempDir, "github:my-org/skills");
+      await saveSourceToProjectConfig(tempDir, "github:my-org/skills", "empty-project");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
       expect(config.source).toBe("github:my-org/skills");
+      expect(config.name).toBe("empty-project");
     });
 
-    it("writes valid config output", async () => {
-      await saveSourceToProjectConfig(tempDir, "github:my-org/skills");
+    it("writes valid config output with type annotation and satisfies clause", async () => {
+      await saveSourceToProjectConfig(tempDir, "github:my-org/skills", "test-project");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const content = await readFile(configPath, "utf-8");
 
-      // Should be valid config format
       expect(content).toContain("export default");
-      const config = await readTestTsConfig<Record<string, unknown>>(configPath);
-      expect(config).toBeDefined();
-      expect(typeof config).toBe("object");
+      expect(content).toContain('import type { ProjectConfig } from "./config-types"');
+      expect(content).toContain("satisfies ProjectConfig");
     });
   });
 });
