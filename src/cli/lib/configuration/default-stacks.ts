@@ -357,8 +357,10 @@ export const defaultStacks: Stack[] = [
     philosophy: "Progressive Vue with Nuxt power",
     agents: {
       "web-developer": {
-        "web-framework": [{ id: "web-framework-nuxt", preloaded: true }],
-        "web-base-framework": [{ id: "web-framework-vue-composition-api", preloaded: true }],
+        "web-framework": [
+          { id: "web-framework-nuxt", preloaded: true },
+          { id: "web-framework-vue-composition-api", preloaded: true },
+        ],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
@@ -372,8 +374,10 @@ export const defaultStacks: Stack[] = [
       },
       "web-reviewer": {
         "shared-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
-        "web-framework": [{ id: "web-framework-nuxt", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-nuxt", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
@@ -387,8 +391,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pm": {
-        "web-framework": [{ id: "web-framework-nuxt", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-nuxt", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -405,8 +411,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-researcher": {
-        "web-framework": [{ id: "web-framework-nuxt", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-nuxt", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
@@ -419,8 +427,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "pattern-scout": {
-        "web-framework": [{ id: "web-framework-nuxt", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-nuxt", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -430,8 +440,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pattern-critique": {
-        "web-framework": [{ id: "web-framework-nuxt", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-nuxt", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -442,8 +454,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "agent-summoner": {
-        "web-framework": [{ id: "web-framework-nuxt", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-nuxt", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -454,8 +468,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "skill-summoner": {
-        "web-framework": [{ id: "web-framework-nuxt", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-nuxt", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -466,8 +482,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       documentor: {
-        "web-framework": [{ id: "web-framework-nuxt", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-nuxt", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -493,8 +511,10 @@ export const defaultStacks: Stack[] = [
     philosophy: "Web standards and excellent forms handling",
     agents: {
       "web-developer": {
-        "web-framework": [{ id: "web-framework-remix", preloaded: true }],
-        "web-base-framework": [{ id: "web-framework-react", preloaded: true }],
+        "web-framework": [
+          { id: "web-framework-remix", preloaded: true },
+          { id: "web-framework-react", preloaded: true },
+        ],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -507,8 +527,10 @@ export const defaultStacks: Stack[] = [
       },
       "web-reviewer": {
         "shared-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
-        "web-framework": [{ id: "web-framework-remix", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-react", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-remix", preloaded: false },
+          { id: "web-framework-react", preloaded: false },
+        ],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -521,8 +543,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pm": {
-        "web-framework": [{ id: "web-framework-remix", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-react", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-remix", preloaded: false },
+          { id: "web-framework-react", preloaded: false },
+        ],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -538,8 +562,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-researcher": {
-        "web-framework": [{ id: "web-framework-remix", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-react", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-remix", preloaded: false },
+          { id: "web-framework-react", preloaded: false },
+        ],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -551,8 +577,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "pattern-scout": {
-        "web-framework": [{ id: "web-framework-remix", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-react", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-remix", preloaded: false },
+          { id: "web-framework-react", preloaded: false },
+        ],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -561,8 +589,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pattern-critique": {
-        "web-framework": [{ id: "web-framework-remix", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-react", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-remix", preloaded: false },
+          { id: "web-framework-react", preloaded: false },
+        ],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -572,8 +602,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "agent-summoner": {
-        "web-framework": [{ id: "web-framework-remix", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-react", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-remix", preloaded: false },
+          { id: "web-framework-react", preloaded: false },
+        ],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -583,8 +615,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "skill-summoner": {
-        "web-framework": [{ id: "web-framework-remix", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-react", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-remix", preloaded: false },
+          { id: "web-framework-react", preloaded: false },
+        ],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -594,8 +628,10 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       documentor: {
-        "web-framework": [{ id: "web-framework-remix", preloaded: false }],
-        "web-base-framework": [{ id: "web-framework-react", preloaded: false }],
+        "web-framework": [
+          { id: "web-framework-remix", preloaded: false },
+          { id: "web-framework-react", preloaded: false },
+        ],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],

@@ -9,7 +9,7 @@ export const defaultRules: SkillRulesConfig = {
   relationships: {
     conflicts: [
       {
-        skills: ["react", "vue", "angular", "solidjs", "nextjs-app-router", "remix", "nuxt"],
+        skills: ["react", "vue-composition-api", "angular-standalone", "solidjs", "nextjs-app-router", "remix", "nuxt"],
         reason: "Frameworks are mutually exclusive",
       },
       {
@@ -49,7 +49,7 @@ export const defaultRules: SkillRulesConfig = {
         reason: "Both are ORMs serving similar purposes",
       },
       {
-        skills: ["cli-commander", "oclif"],
+        skills: ["cli-commander", "oclif-ink"],
         reason: "CLI frameworks are mutually exclusive",
       },
     ],
@@ -94,12 +94,12 @@ export const defaultRules: SkillRulesConfig = {
       { skill: "ngrx-signalstore", reason: "Angular Signals-based state management" },
       { skill: "tailwind", reason: "Utility-first CSS framework" },
       { skill: "drizzle", reason: "Modern TypeScript-first ORM" },
-      { skill: "better-auth", reason: "Full-featured auth solution" },
+      { skill: "better-auth-drizzle-hono", reason: "Full-featured auth solution" },
       { skill: "radix-ui", reason: "Accessible unstyled component primitives" },
       { skill: "cva", reason: "Type-safe variant management for Tailwind" },
       { skill: "msw", reason: "Network-level API mocking for tests" },
       { skill: "playwright-e2e", reason: "Cross-browser E2E testing" },
-      { skill: "posthog", reason: "Product analytics and feature flags" },
+      { skill: "posthog-analytics", reason: "Product analytics and feature flags" },
       { skill: "prisma", reason: "Mature database ORM with great DX" },
     ],
     requires: [
@@ -147,29 +147,29 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         skill: "pinia",
-        needs: ["vue", "nuxt"],
+        needs: ["vue-composition-api", "nuxt"],
         needsAny: true,
         reason: "Pinia is Vue only",
       },
       {
         skill: "vee-validate",
-        needs: ["vue", "nuxt"],
+        needs: ["vue-composition-api", "nuxt"],
         needsAny: true,
         reason: "VeeValidate is Vue only",
       },
       {
         skill: "vue-test-utils",
-        needs: ["vue", "nuxt"],
+        needs: ["vue-composition-api", "nuxt"],
         needsAny: true,
         reason: "Vue Test Utils is Vue only",
       },
       {
         skill: "ngrx-signalstore",
-        needs: ["angular"],
+        needs: ["angular-standalone"],
         reason: "NgRx SignalStore is Angular only",
       },
       {
-        skill: "better-auth",
+        skill: "better-auth-drizzle-hono",
         needs: ["drizzle", "prisma"],
         needsAny: true,
         reason: "Better Auth requires a database adapter",
@@ -187,13 +187,13 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         skill: "graphql-apollo",
-        needs: ["react", "vue", "angular", "nextjs-app-router", "remix", "nuxt"],
+        needs: ["react", "vue-composition-api", "angular-standalone", "nextjs-app-router", "remix", "nuxt"],
         needsAny: true,
         reason: "Apollo Client requires a UI framework",
       },
       {
         skill: "graphql-urql",
-        needs: ["react", "vue", "solidjs", "nextjs-app-router", "remix", "nuxt"],
+        needs: ["react", "vue-composition-api", "solidjs", "nextjs-app-router", "remix", "nuxt"],
         needsAny: true,
         reason: "URQL supports React, Vue, and Solid",
       },
@@ -201,7 +201,7 @@ export const defaultRules: SkillRulesConfig = {
     alternatives: [
       {
         purpose: "Frontend Framework",
-        skills: ["react", "vue", "angular", "solidjs", "nextjs-app-router", "remix", "nuxt"],
+        skills: ["react", "vue-composition-api", "angular-standalone", "solidjs", "nextjs-app-router", "remix", "nuxt"],
       },
       {
         purpose: "Styling",
@@ -241,7 +241,7 @@ export const defaultRules: SkillRulesConfig = {
       { purpose: "Mobile", skills: ["react-native"] },
       {
         purpose: "CLI Framework",
-        skills: ["cli-commander", "oclif"],
+        skills: ["cli-commander", "oclif-ink"],
       },
     ],
   },

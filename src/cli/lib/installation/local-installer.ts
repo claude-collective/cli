@@ -133,7 +133,7 @@ async function deleteAndCopySkills(
   return copySkillsToLocalFlattened(skillIds, skillsDir, sourceResult.matrix, sourceResult);
 }
 
-function buildLocalSkillsMap(copiedSkills: CopiedSkill[]): Record<SkillId, LocalResolvedSkill> {
+function buildLocalSkillsMap(copiedSkills: CopiedSkill[]): Partial<Record<SkillId, LocalResolvedSkill>> {
   // Boundary cast: Object.fromEntries returns { [k: string]: V }
   return Object.fromEntries(
     copiedSkills
@@ -466,7 +466,7 @@ export async function writeScopedConfigs(
 async function compileAndWriteAgents(
   compileConfig: CompileConfig,
   agents: Record<AgentName, AgentDefinition>,
-  localSkills: Record<SkillId, LocalResolvedSkill>,
+  localSkills: Partial<Record<SkillId, LocalResolvedSkill>>,
   sourceResult: SourceLoadResult,
   projectDir: string,
   agentsDir: string,
@@ -569,7 +569,7 @@ export async function installPluginConfig(
   const skillsForCompilation = (await loadSkillsByIds(
     stackSkillIds.map((id) => ({ id })),
     sourceResult.sourcePath,
-  )) as Record<SkillId, LocalResolvedSkill>;
+  )) as Partial<Record<SkillId, LocalResolvedSkill>>;
 
   const compiledAgentNames = await compileAndWriteAgents(
     compileConfig,

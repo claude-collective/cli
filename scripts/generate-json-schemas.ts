@@ -16,13 +16,13 @@ import {
   skillFrontmatterValidationSchema,
   stackConfigValidationSchema,
   stacksConfigSchema,
-  SUBCATEGORY_VALUES,
+  CATEGORY_VALUES,
 } from "../src/cli/lib/schemas.ts";
 
 const SCHEMAS_DIR = path.resolve(import.meta.dirname, "../src/schemas");
 
 /** All valid category values for stack configs */
-const STACK_SUBCATEGORY_ENUM = [...SUBCATEGORY_VALUES];
+const STACK_SUBCATEGORY_ENUM = [...CATEGORY_VALUES];
 
 type SchemaEntry = {
   filename: string;
