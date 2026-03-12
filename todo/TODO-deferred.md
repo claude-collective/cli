@@ -3,7 +3,6 @@
 | ID    | Task                                                                                                                | Status                  |
 | ----- | ------------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | D-72  | Only show Agents Inc logo on the first init screen (not on edit or subsequent steps)                                | Deferred                |
-| D-71  | Audit Zod schemas for removal — config is now TypeScript (see [research](../docs/research/schema-removal-audit.md)) | Needs Research          |
 | D-25  | Auto-version check + source staleness (see [plan](./D-25-auto-version-check.md))                                    | Ready for Dev           |
 | D-14  | Import skills from third-party marketplaces                                                                         | Needs Assistance        |
 | UX-04 | Interactive skill search polish                                                                                     | Needs Assistance        |

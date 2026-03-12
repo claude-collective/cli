@@ -6,7 +6,6 @@
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor |
 | R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor |
-| R-11 | Eliminate `ProjectSourceConfig` / `saveProjectConfig` — all config writes should produce full `ProjectConfig` with import + satisfies                                                                   | Refactor |
 
 ---
 
@@ -658,35 +657,3 @@ function resolveRelationships(
 - Reduces function count from 5+ to 1
 - `buildResolvedSkill()` becomes a simple spread of the result
 
----
-
-## R-11: Eliminate `ProjectSourceConfig` / `saveProjectConfig`
-
-**Priority:** Medium
-**Status:** Refactor
-
-### Problem
-
-Two config formats coexist:
-
-1. **`ProjectConfig`** (full) — `{name, skills, agents, source, marketplace, ...}`, written by `generateConfigSource()` with `import type { ProjectConfig }` + `satisfies ProjectConfig`
-2. **`ProjectSourceConfig`** (legacy) — `{source, marketplace, branding, ...}`, written by `saveProjectConfig()` as bare `export default {...};\n`
-
-After `init` writes a proper `ProjectConfig`, any subsequent `addSource`/`removeSource`/`saveSourceToProjectConfig` call **overwrites** the file with a bare `ProjectSourceConfig`, losing `skills`, `agents`, `name`, and the type annotation.
-
-### Production callers of `saveProjectConfig`
-
-| File                   | Function                      | What it does                        |
-| ---------------------- | ----------------------------- | ----------------------------------- |
-| `source-manager.ts:38` | `addSource()`                 | Adds a source entry, writes back    |
-| `source-manager.ts:61` | `removeSource()`              | Removes a source entry, writes back |
-| `config-saver.ts:5`    | `saveSourceToProjectConfig()` | Updates the source URL              |
-
-All three do read-modify-write on a `ProjectSourceConfig`. They should instead load the full `ProjectConfig`, mutate the relevant field, and write back via `generateConfigSource`.
-
-### Fix
-
-1. Change `source-manager.ts` and `config-saver.ts` to load `ProjectConfig` (not `ProjectSourceConfig`), mutate, and write via `generateConfigSource` + `writeFile`
-2. Remove `saveProjectConfig()` from `config.ts`
-3. Remove `ProjectSourceConfig` type if no other consumers remain (check `loadProjectSourceConfig` — it may need to become a `ProjectConfig` loader, or the load side can remain lenient since it's a parse boundary)
-4. Update tests that call `saveProjectConfig` to use the new path
