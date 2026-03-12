@@ -70,8 +70,6 @@ export type RelationshipDefinitions = {
   alternatives: AlternativeGroup[];
   /** Symmetric compatibility groups — all skills in each group work together */
   compatibleWith?: CompatibilityGroup[];
-  /** Bidirectional setup relationships — setup skills configure usage skills */
-  setupPairs?: SetupPair[];
 };
 
 /** Mutual exclusion rule - selecting any one skill disables ALL others */
@@ -97,13 +95,6 @@ export type Recommendation = {
 /** Symmetric compatibility group — all skills in the group work together */
 export type CompatibilityGroup = {
   skills: SkillSlug[];
-  reason: string;
-};
-
-/** Bidirectional setup relationship — setup skill configures usage skills */
-export type SetupPair = {
-  setup: SkillSlug;
-  configures: SkillSlug[];
   reason: string;
 };
 
@@ -207,10 +198,6 @@ export type ResolvedSkill = {
    * only skills listing that framework in compatibleWith (or with an empty list) are shown.
    */
   compatibleWith: SkillId[];
-  /** Setup skills that must be installed before this skill can function (e.g., "infra-env-setup") */
-  requiresSetup: SkillId[];
-  /** Usage skills that this setup skill configures (inverse of requiresSetup) */
-  providesSetupFor: SkillId[];
   /** Relative path to skill directory from src/ */
   path: string;
   /** True if from .claude/skills/ (user-defined local skill) */
@@ -346,7 +333,7 @@ export type ValidationError = {
 
 /** Non-blocking validation warning for user awareness */
 export type ValidationWarning = {
-  type: "missing_recommendation" | "unused_setup";
+  type: "missing_recommendation";
   message: string;
   skills: SkillId[];
 };

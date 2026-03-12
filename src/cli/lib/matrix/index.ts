@@ -2,10 +2,10 @@ export {
   loadSkillCategories,
   loadSkillRules,
   extractAllSkills,
-  mergeMatrixWithSkills,
   loadAndMergeSkillsMatrix,
-  synthesizeCategory,
 } from "./matrix-loader";
+
+export { mergeMatrixWithSkills, synthesizeCategory } from "./skill-resolution";
 
 export {
   resolveAlias,
@@ -20,3 +20,5 @@ export {
 } from "./matrix-resolver";
 
 export { type MatrixHealthIssue, checkMatrixHealth } from "./matrix-health-check";
+
+export { matrix, initializeMatrix, getSkillById, getSkillBySlug, findStack } from "./matrix-provider";

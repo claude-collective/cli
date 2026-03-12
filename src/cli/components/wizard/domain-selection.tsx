@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { unique } from "remeda";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import { useMatrixStore } from "../../stores/matrix-store.js";
+import { matrix } from "../../lib/matrix/matrix-provider.js";
 import type { Domain } from "../../types/index.js";
 import { typedEntries } from "../../utils/typed-object.js";
 import { CheckboxGrid, type CheckboxItem } from "./checkbox-grid.js";
@@ -17,7 +17,6 @@ const BUILT_IN_DOMAIN_DESCRIPTIONS: Record<Domain, string> = {
 
 export const DomainSelection: React.FC = () => {
   const { selectedDomains, toggleDomain, setStep, setApproach, selectStack } = useWizardStore();
-  const matrix = useMatrixStore((s) => s.getMatrix());
 
   const availableDomains = useMemo((): CheckboxItem<Domain>[] => {
     const matrixDomains = unique(

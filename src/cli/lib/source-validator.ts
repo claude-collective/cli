@@ -8,7 +8,7 @@ import { parseFrontmatter } from "./loading/loader";
 import { loadProjectSourceConfig } from "./configuration";
 import { checkMatrixHealth } from "./matrix";
 import { loadSkillsMatrixFromSource } from "./loading/source-loader";
-import { useMatrixStore } from "../stores/matrix-store";
+import { matrix } from "./matrix/matrix-provider";
 
 export type SourceValidationIssue = {
   severity: "error" | "warning";
@@ -192,18 +192,14 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
   // Phase 3: Cross-reference validation via matrix health check
   try {
     await loadSkillsMatrixFromSource({ sourceFlag: resolvedPath, skipExtraSources: true });
-    const matrix = useMatrixStore.getState().matrix;
+    const healthIssues = checkMatrixHealth(matrix);
 
-    if (matrix) {
-      const healthIssues = checkMatrixHealth(matrix);
-
-      for (const healthIssue of healthIssues) {
-        issues.push({
-          severity: healthIssue.severity,
-          file: SKILL_CATEGORIES_PATH,
-          message: healthIssue.details,
-        });
-      }
+    for (const healthIssue of healthIssues) {
+      issues.push({
+        severity: healthIssue.severity,
+        file: SKILL_CATEGORIES_PATH,
+        message: healthIssue.details,
+      });
     }
   } catch (error) {
     issues.push({

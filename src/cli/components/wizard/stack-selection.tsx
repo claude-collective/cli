@@ -2,7 +2,7 @@ import { Box, useInput } from "ink";
 import React, { useState } from "react";
 import { DEFAULT_SCRATCH_DOMAINS } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import { useMatrixStore } from "../../stores/matrix-store.js";
+import { matrix } from "../../lib/matrix/matrix-provider.js";
 import { useSectionScroll } from "../hooks/use-section-scroll.js";
 import { SelectionCard } from "./selection-card.js";
 
@@ -25,7 +25,6 @@ export const StackSelection: React.FC<StackSelectionProps> = ({
 }) => {
   const { selectStack, setApproach, setStackAction, populateFromSkillIds, toggleDomain } =
     useWizardStore();
-  const matrix = useMatrixStore((s) => s.matrix!);
 
   const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
 

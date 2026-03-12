@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
-import { useMatrixStore } from "./matrix-store";
+import { initializeMatrix } from "../lib/matrix/matrix-provider";
 import { createMockMatrix, SKILLS } from "../lib/__tests__/helpers";
 import { typedKeys } from "../utils/typed-object";
 import {
@@ -22,7 +22,7 @@ function sa(id: SkillId, preloaded = false): SkillAssignment {
 
 describe("WizardStore", () => {
   beforeEach(() => {
-    useMatrixStore.getState().setMatrix(ALL_SKILLS_TEST_CATEGORIES_MATRIX);
+    initializeMatrix(ALL_SKILLS_TEST_CATEGORIES_MATRIX);
   });
 
   describe("initial state", () => {
@@ -241,7 +241,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
 
       store.populateFromStack(stack);
 
@@ -259,7 +259,7 @@ describe("WizardStore", () => {
     it("should restore stack skills when re-toggling a domain ON after populateFromSkillIds", () => {
       const store = useWizardStore.getState();
 
-      useMatrixStore.getState().setMatrix(REACT_HONO_FRAMEWORK_API_MATRIX);
+      initializeMatrix(REACT_HONO_FRAMEWORK_API_MATRIX);
 
       store.populateFromSkillIds(["web-framework-react", "api-framework-hono"]);
 
@@ -299,7 +299,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_WEB_AND_API_MATRIX);
+      initializeMatrix(ALL_SKILLS_WEB_AND_API_MATRIX);
 
       store.populateFromStack(stack);
 
@@ -614,7 +614,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_WEB_PAIR_CATEGORIES_MATRIX);
+      initializeMatrix(ALL_SKILLS_WEB_PAIR_CATEGORIES_MATRIX);
 
       store.populateFromStack(stack);
 
@@ -628,7 +628,7 @@ describe("WizardStore", () => {
     it("should populate skillConfigs from populateFromSkillIds", () => {
       const store = useWizardStore.getState();
 
-      useMatrixStore.getState().setMatrix(REACT_HONO_FRAMEWORK_API_MATRIX);
+      initializeMatrix(REACT_HONO_FRAMEWORK_API_MATRIX);
 
       store.populateFromSkillIds(["web-framework-react", "api-framework-hono"]);
 
@@ -660,7 +660,7 @@ describe("WizardStore", () => {
           web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_WEB_FRAMEWORK_MATRIX);
+      initializeMatrix(ALL_SKILLS_WEB_FRAMEWORK_MATRIX);
 
       store.populateFromStack(stack);
       expect(useWizardStore.getState().skillConfigs).toHaveLength(1);
@@ -701,7 +701,7 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.setSourceSelection("web-framework-react", "local");
 
-      useMatrixStore.getState().setMatrix(
+      initializeMatrix(
         createMockMatrix({
           ...SKILLS.react,
           availableSources: [{ name: "Acme Corp", type: "private", installed: false }],
@@ -843,7 +843,7 @@ describe("WizardStore", () => {
           web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_WEB_FRAMEWORK_MATRIX);
+      initializeMatrix(ALL_SKILLS_WEB_FRAMEWORK_MATRIX);
 
       store.populateFromStack(stack);
 
@@ -868,7 +868,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
 
       store.populateFromStack(stack);
 
@@ -887,7 +887,7 @@ describe("WizardStore", () => {
           misc: { "shared-methodology": [sa("meta-methodology-vitest" as SkillId)] },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_METHODOLOGY_BARE_MATRIX);
+      initializeMatrix(ALL_SKILLS_METHODOLOGY_BARE_MATRIX);
 
       store.populateFromStack(stack);
 
@@ -910,7 +910,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_METHODOLOGY_MATRIX);
+      initializeMatrix(ALL_SKILLS_METHODOLOGY_MATRIX);
 
       store.populateFromStack(stack);
 
@@ -938,7 +938,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_MULTI_DOMAIN_MATRIX);
+      initializeMatrix(ALL_SKILLS_MULTI_DOMAIN_MATRIX);
 
       store.populateFromStack(stack);
 
@@ -971,7 +971,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      useMatrixStore.getState().setMatrix(ALL_SKILLS_METHODOLOGY_MATRIX);
+      initializeMatrix(ALL_SKILLS_METHODOLOGY_MATRIX);
 
       store.populateFromStack(stack);
 
@@ -1063,7 +1063,7 @@ describe("WizardStore", () => {
         ],
       };
 
-      useMatrixStore.getState().setMatrix(createMockMatrix(skill));
+      initializeMatrix(createMockMatrix(skill));
 
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
@@ -1084,7 +1084,7 @@ describe("WizardStore", () => {
         ],
       };
 
-      useMatrixStore.getState().setMatrix(createMockMatrix(skill));
+      initializeMatrix(createMockMatrix(skill));
 
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
@@ -1106,7 +1106,7 @@ describe("WizardStore", () => {
         ],
       };
 
-      useMatrixStore.getState().setMatrix(createMockMatrix(skill));
+      initializeMatrix(createMockMatrix(skill));
 
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
@@ -1130,7 +1130,7 @@ describe("WizardStore", () => {
         ],
       };
 
-      useMatrixStore.getState().setMatrix(createMockMatrix(skill));
+      initializeMatrix(createMockMatrix(skill));
 
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 

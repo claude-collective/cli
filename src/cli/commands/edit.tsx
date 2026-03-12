@@ -28,7 +28,7 @@ import {
   loadAllAgents,
   loadSkillsMatrixFromSource,
 } from "../lib/loading/index.js";
-import { findSkill, getMatrix, getSkill, useMatrixStore } from "../stores/matrix-store";
+import { matrix, getSkillById } from "../lib/matrix/matrix-provider";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
 import type { AgentDefinition, AgentName, SkillId } from "../types/index.js";
@@ -110,7 +110,7 @@ export default class Edit extends BaseCommand {
       const sourceInfo = sourceResult.isLocal ? "local" : sourceResult.sourceConfig.sourceOrigin;
       pushBufferMessage(
         "info",
-        `Loaded ${Object.keys(getMatrix().skills).length} skills (${sourceInfo})`,
+        `Loaded ${Object.keys(matrix.skills).length} skills (${sourceInfo})`,
       );
     } catch (error) {
       disableBuffering();
@@ -153,7 +153,6 @@ export default class Edit extends BaseCommand {
       ? undefined
       : projectConfig?.config?.agents?.filter((a) => a.scope === "global").map((a) => a.name);
 
-    useMatrixStore.getState().setMatrix(sourceResult.matrix);
     const { waitUntilExit } = render(
       <Wizard
         version={this.config.version}
@@ -249,10 +248,10 @@ export default class Edit extends BaseCommand {
 
     this.log("\nChanges:");
     for (const skillId of addedSkills) {
-      this.log(`  + ${getSkill(skillId).displayName}`);
+      this.log(`  + ${getSkillById(skillId).displayName}`);
     }
     for (const skillId of removedSkills) {
-      const skill = findSkill(skillId);
+      const skill = matrix.skills[skillId];
       this.log(`  - ${skill?.displayName ?? skillId}`);
     }
     for (const [skillId, change] of sourceChanges) {

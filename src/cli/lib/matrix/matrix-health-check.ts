@@ -58,8 +58,6 @@ function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIs
 
 const RELATION_FIELDS_SKILL_ID_ARRAY = [
   "compatibleWith",
-  "requiresSetup",
-  "providesSetupFor",
 ] as const;
 
 function checkSkillRelationRefs(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {

@@ -1,14 +1,10 @@
 import os from "os";
 import path from "path";
-import { unique } from "remeda";
 import {
-  DIRS,
-  LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
   SKILL_CATEGORIES_PATH,
   SKILL_RULES_PATH,
   SKILLS_DIR_PATH,
-  STANDARD_FILES,
 } from "../../consts";
 import { defaultCategories } from "../configuration/default-categories";
 import { defaultRules } from "../configuration/default-rules";
@@ -27,7 +23,7 @@ import type {
   Stack,
   Category,
 } from "../../types";
-import { directoryExists, fileExists, glob, listDirectories, readFile } from "../../utils/fs";
+import { fileExists } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 import {
@@ -46,18 +42,11 @@ import {
   mergeMatrixWithSkills,
 } from "../matrix";
 import { loadAllAgents } from "./loader";
-import {
-  agentNameSchema,
-  DOMAIN_VALUES,
-  extendSchemasWithCustomValues,
-  isValidSkillId,
-  CATEGORY_VALUES,
-} from "../schemas";
 import { fetchFromSource, fetchMarketplace } from "./source-fetcher";
 import { loadSkillsFromAllSources } from "./multi-source-loader";
-import { parseFrontmatter } from "./loader";
 import { loadStacks, resolveAgentConfigToSkills } from "../stacks";
-import { useMatrixStore } from "../../stores/matrix-store";
+import { initializeMatrix, matrix as currentMatrix } from "../matrix/matrix-provider";
+import { BUILT_IN_MATRIX } from "../../types/generated/matrix";
 
 export type SourceLoadOptions = {
   sourceFlag?: string;
@@ -86,19 +75,33 @@ export async function loadSkillsMatrixFromSource(
 
   verbose(`Loading skills from source: ${source}`);
 
-  const isLocal = isLocalSource(source) || devMode === true;
-
   let result: SourceLoadResult;
-  if (isLocal) {
-    result = await loadFromLocal(source, sourceConfig);
+
+  if (source === DEFAULT_SOURCE && !devMode) {
+    // Default source: use pre-computed BUILT_IN_MATRIX instead of loading from disk
+    result = {
+      matrix: {
+        ...BUILT_IN_MATRIX,
+        skills: { ...BUILT_IN_MATRIX.skills },
+        categories: { ...BUILT_IN_MATRIX.categories },
+        suggestedStacks: [...BUILT_IN_MATRIX.suggestedStacks],
+      },
+      sourceConfig,
+      sourcePath: "",
+      isLocal: false,
+      marketplace: sourceConfig.marketplace,
+    };
   } else {
-    result = await loadFromRemote(source, sourceConfig, forceRefresh);
+    const isLocal = isLocalSource(source) || devMode === true;
+
+    if (isLocal) {
+      result = await loadFromLocal(source, sourceConfig);
+    } else {
+      result = await loadFromRemote(source, sourceConfig, forceRefresh);
+    }
   }
 
   const resolvedProjectDir = projectDir || process.cwd();
-
-  // Pre-scan local skills for custom values before schema validation
-  await discoverAndExtendFromLocalSkills(resolvedProjectDir);
 
   let localSkillsResult = await discoverLocalSkills(resolvedProjectDir);
 
@@ -108,7 +111,6 @@ export async function loadSkillsMatrixFromSource(
     (!localSkillsResult || localSkillsResult.skills.length === 0) &&
     resolvedProjectDir !== homeDir
   ) {
-    await discoverAndExtendFromLocalSkills(homeDir);
     localSkillsResult = await discoverLocalSkills(homeDir);
   }
 
@@ -130,7 +132,7 @@ export async function loadSkillsMatrixFromSource(
   }
 
   checkMatrixHealth(result.matrix);
-  useMatrixStore.getState().setMatrix(result.matrix);
+  initializeMatrix(result.matrix);
 
   return result;
 }
@@ -206,9 +208,6 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   let categories: CategoryMap = defaultCategories;
   let relationships: RelationshipDefinitions = defaultRules.relationships;
 
-  // Discover custom values from source entities BEFORE strict schema validation
-  await discoverAndExtendFromSource(basePath);
-
   // Load source categories and rules (if they exist)
   const sourceCategoriesPath = path.join(basePath, SKILL_CATEGORIES_PATH);
   const sourceRulesPath = path.join(basePath, SKILL_RULES_PATH);
@@ -250,10 +249,6 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
           ...(defaultRules.relationships.compatibleWith ?? []),
           ...(sourceRules.relationships.compatibleWith ?? []),
         ],
-        setupPairs: [
-          ...(defaultRules.relationships.setupPairs ?? []),
-          ...(sourceRules.relationships.setupPairs ?? []),
-        ],
       };
 
       verbose(`Loaded source rules: ${sourceRulesPath}`);
@@ -268,7 +263,7 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   verbose(`Skills from source: ${skillsDir}`);
 
   const skills = await extractAllSkills(skillsDir);
-  const mergedMatrix = await mergeMatrixWithSkills(categories, relationships, skills);
+  const mergedMatrix = mergeMatrixWithSkills(categories, relationships, skills);
 
   // Load stacks from source first, fall back to CLI's built-in defaults
   const sourceStacks = await loadStacks(basePath, stacksRelFile);
@@ -311,7 +306,7 @@ function convertStackToResolvedStack(stack: Stack): ResolvedStack {
 
     for (const [category, assignments] of typedEntries<Category, SkillAssignment[]>(agentConfig)) {
       if (!assignments || assignments.length === 0) continue;
-      const validIds = assignments.filter((a) => isValidSkillId(a.id)).map((a) => a.id);
+      const validIds = assignments.filter((a) => a.id in currentMatrix.skills).map((a) => a.id);
       if (validIds.length > 0) {
         agentSkills[category] = validIds;
       }
@@ -385,214 +380,6 @@ export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | un
   return marketplace;
 }
 
-/** Extract custom values from a single agent metadata.yaml if it declares `custom: true`. */
-async function discoverCustomAgentValues(
-  agentsDir: string,
-  file: string,
-  parseYaml: (content: string) => unknown,
-  builtinDomains: Set<string>,
-): Promise<{ agentName?: string; domain?: string }> {
-  const content = await readFile(path.join(agentsDir, file));
-  // Boundary cast: raw YAML parse for lightweight pre-scan
-  const raw = parseYaml(content) as Record<string, unknown>;
-  if (raw?.custom !== true) return {};
-
-  const result: { agentName?: string; domain?: string } = {};
-
-  if (typeof raw?.id === "string" && !agentNameSchema.safeParse(raw.id).success) {
-    result.agentName = raw.id;
-  }
-
-  if (typeof raw?.domain === "string" && !builtinDomains.has(raw.domain)) {
-    result.domain = raw.domain;
-  }
-
-  return result;
-}
-
-/** Extract custom skill ID, category, and domain from a single skill directory if it declares `custom: true`. */
-async function discoverCustomSkillValues(
-  skillsDir: string,
-  file: string,
-  parseYaml: (content: string) => unknown,
-  builtinCategories: Set<string>,
-  builtinDomains: Set<string>,
-): Promise<{ skillId?: string; category?: string; domain?: string }> {
-  const content = await readFile(path.join(skillsDir, file));
-  const frontmatter = parseFrontmatter(content);
-  if (!frontmatter) return {};
-
-  const skillId = frontmatter.name;
-  const skillDir = path.dirname(path.join(skillsDir, file));
-  const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
-  if (!(await fileExists(metadataPath))) return {};
-
-  const metadataContent = await readFile(metadataPath);
-  // Boundary cast: raw YAML parse for lightweight pre-scan
-  const metadataRaw = parseYaml(metadataContent) as Record<string, unknown>;
-  if (metadataRaw?.custom !== true) return {};
-
-  const result: { skillId?: string; category?: string; domain?: string } = {};
-
-  result.skillId = skillId;
-
-  const category = metadataRaw.category;
-  if (typeof category === "string" && !builtinCategories.has(category)) {
-    result.category = category;
-  }
-
-  const domain = metadataRaw.domain;
-  if (typeof domain === "string" && !builtinDomains.has(domain)) {
-    result.domain = domain;
-  }
-
-  return result;
-}
-
-/**
- * Pre-scans .claude/skills/ for custom values (domains, categories, skill IDs)
- * and extends schemas before discoverLocalSkills() runs schema validation.
- */
-async function discoverAndExtendFromLocalSkills(projectDir: string): Promise<void> {
-  const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
-  if (!(await directoryExists(localSkillsDir))) return;
-
-  const { parse: parseYaml } = await import("yaml");
-
-  const builtinCategories = new Set<string>(CATEGORY_VALUES);
-  const builtinDomains = new Set<string>(DOMAIN_VALUES);
-  const customCategories: string[] = [];
-  const customDomains: string[] = [];
-  const customSkillIds: string[] = [];
-
-  const skillDirs = await listDirectories(localSkillsDir);
-
-  for (const skillDirName of skillDirs) {
-    try {
-      const skillDir = path.join(localSkillsDir, skillDirName);
-      const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
-      if (!(await fileExists(metadataPath))) continue;
-
-      const metadataContent = await readFile(metadataPath);
-      // Boundary cast: raw YAML parse for lightweight pre-scan
-      const metadataRaw = parseYaml(metadataContent) as Record<string, unknown>;
-      if (metadataRaw?.custom !== true) continue;
-
-      const domain = metadataRaw.domain;
-      if (typeof domain === "string" && !builtinDomains.has(domain)) {
-        customDomains.push(domain);
-      }
-
-      const category = metadataRaw.category;
-      if (typeof category === "string" && !builtinCategories.has(category)) {
-        customCategories.push(category);
-      }
-
-      // Read SKILL.md to extract the skill ID from frontmatter
-      const skillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
-      if (await fileExists(skillMdPath)) {
-        const skillMdContent = await readFile(skillMdPath);
-        const frontmatter = parseFrontmatter(skillMdContent);
-        if (frontmatter?.name) {
-          customSkillIds.push(frontmatter.name);
-        }
-      }
-    } catch {
-      // Skip unreadable files — discoverLocalSkills() will handle errors
-    }
-  }
-
-  const hasCustomValues =
-    customCategories.length > 0 || customDomains.length > 0 || customSkillIds.length > 0;
-
-  if (hasCustomValues) {
-    extendSchemasWithCustomValues({
-      categories: unique(customCategories),
-      domains: unique(customDomains),
-      skillIds: customSkillIds,
-    });
-    verbose(
-      `Extended schemas from local skills: ${unique(customCategories).length} custom categories, ${unique(customDomains).length} custom domains, ${customSkillIds.length} custom skill IDs`,
-    );
-  }
-}
-
-/**
- * Pre-scans the source's agents/ and skills/ directories for custom values
- * and extends schemas before the full load.
- *
- * Discovers:
- * - Custom agent names from agents with `custom: true` in metadata.yaml
- * - Custom domains from `domain` field of agents/skills with `custom: true`
- * - Custom skill IDs from skills with `custom: true` in metadata.yaml
- * - Custom categories from `category` field of skills with `custom: true`
- */
-async function discoverAndExtendFromSource(basePath: string): Promise<void> {
-  const { parse: parseYaml } = await import("yaml");
-
-  const builtinCategories = new Set<string>(CATEGORY_VALUES);
-  const builtinDomains = new Set<string>(DOMAIN_VALUES);
-  const customCategories: string[] = [];
-  const customDomains: string[] = [];
-  const customAgentNames: string[] = [];
-  const customSkillIds: string[] = [];
-
-  // Discover custom agent names and domains (only from agents that declare custom: true)
-  const agentsDir = path.join(basePath, DIRS.agents);
-  if (await directoryExists(agentsDir)) {
-    const agentFiles = await glob(`**/${STANDARD_FILES.AGENT_METADATA_YAML}`, agentsDir);
-    for (const file of agentFiles) {
-      try {
-        const result = await discoverCustomAgentValues(agentsDir, file, parseYaml, builtinDomains);
-        if (result.agentName) customAgentNames.push(result.agentName);
-        if (result.domain) customDomains.push(result.domain);
-      } catch {
-        // Skip unreadable files — full loader will handle errors
-      }
-    }
-  }
-
-  // Discover custom skill IDs, categories, and domains from skills that declare custom: true in metadata.yaml
-  const skillsDir = path.join(basePath, DIRS.skills);
-  if (await directoryExists(skillsDir)) {
-    const skillFiles = await glob(`**/${STANDARD_FILES.SKILL_MD}`, skillsDir);
-    for (const file of skillFiles) {
-      try {
-        const result = await discoverCustomSkillValues(
-          skillsDir,
-          file,
-          parseYaml,
-          builtinCategories,
-          builtinDomains,
-        );
-        if (result.skillId) customSkillIds.push(result.skillId);
-        if (result.category) customCategories.push(result.category);
-        if (result.domain) customDomains.push(result.domain);
-      } catch {
-        // Skip unreadable files
-      }
-    }
-  }
-
-  const hasCustomValues =
-    customCategories.length > 0 ||
-    customDomains.length > 0 ||
-    customAgentNames.length > 0 ||
-    customSkillIds.length > 0;
-
-  if (hasCustomValues) {
-    extendSchemasWithCustomValues({
-      categories: unique(customCategories),
-      domains: unique(customDomains),
-      agentNames: customAgentNames,
-      skillIds: customSkillIds,
-    });
-    verbose(
-      `Extended schemas with ${unique(customCategories).length} custom categories, ${unique(customDomains).length} custom domains, ${customAgentNames.length} custom agents, ${customSkillIds.length} custom skill IDs`,
-    );
-  }
-}
-
 function mergeLocalSkillsIntoMatrix(
   matrix: MergedSkillsMatrix,
   localResult: LocalSkillDiscoveryResult,
@@ -625,9 +412,6 @@ function mergeLocalSkillsIntoMatrix(
       alternatives: existingSkill?.alternatives ?? [],
       discourages: existingSkill?.discourages ?? [],
       compatibleWith: existingSkill?.compatibleWith ?? [],
-
-      requiresSetup: existingSkill?.requiresSetup ?? [],
-      providesSetupFor: existingSkill?.providesSetupFor ?? [],
 
       path: metadata.path,
 

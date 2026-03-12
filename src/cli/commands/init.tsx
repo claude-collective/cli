@@ -42,7 +42,7 @@ import {
 } from "../components/wizard/hotkeys.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { getSkill, useMatrixStore } from "../stores/matrix-store";
+import { getSkillById } from "../lib/matrix/matrix-provider";
 import { loadProjectConfig } from "../lib/configuration/project-config.js";
 import {
   enableBuffering,
@@ -338,7 +338,6 @@ export default class Init extends BaseCommand {
     let wizardResult: WizardResultV2 | null = null;
 
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
-    useMatrixStore.getState().setMatrix(sourceResult.matrix);
     const { waitUntilExit } = render(
       <Wizard
         version={this.config.version}
@@ -512,7 +511,7 @@ export default class Init extends BaseCommand {
       this.log("Skills copied to:");
       this.log(`  ${installResult.skillsDir}`);
       for (const copiedSkill of installResult.copiedSkills) {
-        const displayName = getSkill(copiedSkill.skillId).displayName;
+        const displayName = getSkillById(copiedSkill.skillId).displayName;
         this.log(`    ${displayName}/`);
       }
       this.log("");

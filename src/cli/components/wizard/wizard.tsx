@@ -12,7 +12,7 @@ import { StepSources } from "./step-sources.js";
 import { StepSettings } from "./step-settings.js";
 import { StepAgents } from "./step-agents.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
-import { getMatrix } from "../../stores/matrix-store.js";
+import { matrix, findStack } from "../../lib/matrix/matrix-provider.js";
 import {
   HOTKEY_ACCEPT_DEFAULTS,
   HOTKEY_HELP,
@@ -175,7 +175,7 @@ export const Wizard: React.FC<WizardProps> = ({
     let allSkills: SkillId[];
 
     if (store.selectedStackId && store.stackAction === "defaults") {
-      const stack = getMatrix().suggestedStacks.find((s) => s.id === store.selectedStackId);
+      const stack = findStack(store.selectedStackId!);
       if (!stack) {
         warn(`Stack not found in matrix: '${store.selectedStackId}'`);
       }

@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useRef } from "react";
 import { Box, Text } from "ink";
 
 import { CLI_COLORS } from "../../consts.js";
-import { getSkill } from "../../stores/matrix-store.js";
+import { getSkillById } from "../../lib/matrix/matrix-provider.js";
 import type { SkillId, Category } from "../../types/index.js";
 import { isSectionLocked, useCategoryGridInput } from "../hooks/use-category-grid-input.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
@@ -116,7 +116,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
       <>
         <Text color={textColor} bold>
           {" "}
-          {getSkill(option.id).displayName}{" "}
+          {getSkillById(option.id).displayName}{" "}
         </Text>
         {option.scope && <Text dimColor>{option.scope === "global" ? "G " : "P "}</Text>}
         {compatibilityLabel && <Text dimColor>{compatibilityLabel} </Text>}

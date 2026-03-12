@@ -94,8 +94,6 @@ async function fetchSkillsFromSource(
         alternatives: [],
         discourages: [],
         compatibleWith: [],
-        requiresSetup: [],
-        providesSetupFor: [],
         sourceName: source.name,
         sourceUrl: source.url,
         path: path.join(skillsDir, skillDir),

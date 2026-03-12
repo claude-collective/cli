@@ -5,7 +5,10 @@ import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 import { fileExists, ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { compactStackForYaml } from "./config-generator";
-import { PROJECT_CONFIG_INTERFACE_TEMPLATE } from "./config-types-writer";
+import {
+  PROJECT_CONFIG_TYPES_BEFORE,
+  PROJECT_CONFIG_INTERFACE_AFTER,
+} from "./config-types-writer";
 
 export type ConfigSourceOptions = {
   /**
@@ -273,7 +276,10 @@ export type Domain = never;
 
 export type Category = never;
 
-${PROJECT_CONFIG_INTERFACE_TEMPLATE}`;
+${PROJECT_CONFIG_TYPES_BEFORE}
+export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;
+
+${PROJECT_CONFIG_INTERFACE_AFTER}`;
 }
 
 /**

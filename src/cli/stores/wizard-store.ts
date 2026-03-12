@@ -5,7 +5,7 @@ import type { InstallMode } from "../lib/installation/index.js";
 import { deriveInstallMode as sharedDeriveInstallMode } from "../lib/installation/installation.js";
 import type { AgentScopeConfig, SkillConfig } from "../types/config.js";
 import { resolveAlias } from "../lib/matrix/index.js";
-import { findSkill, getMatrix } from "./matrix-store.js";
+import { matrix } from "../lib/matrix/matrix-provider.js";
 import type {
   AgentName,
   BoundSkill,
@@ -86,7 +86,7 @@ export type SkillLookupEntry = Pick<ResolvedSkill, "category" | "displayName">;
 function resolveSkillForPopulation(
   skillId: SkillId,
 ): { domain: Domain; subcat: Category; techId: SkillId } | null {
-  const { skills, categories } = getMatrix();
+  const { skills, categories } = matrix;
   const skill = skills[skillId];
   if (!skill?.category) {
     warn(
@@ -479,7 +479,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   populateFromStack: (stack) =>
     set(() => {
-      const { categories } = getMatrix();
+      const { categories } = matrix;
       const domainSelections: DomainSelections = {};
       const domains = new Set<Domain>();
       const allSkillIds = new Set<SkillId>();
@@ -902,7 +902,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setAllSourcesPlugin: () => {
     set((state) => ({
       skillConfigs: state.skillConfigs.map((sc) => {
-        const skill = findSkill(sc.id);
+        const skill = matrix.skills[sc.id];
         if (skill?.availableSources) {
           const marketplaceSource = skill.availableSources.find((s) => s.type !== "local");
           if (marketplaceSource) {
@@ -921,7 +921,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
     return selectedTechnologies.map((tech) => {
       const skillId = resolveAlias(tech);
-      const skill = findSkill(skillId);
+      const skill = matrix.skills[skillId];
       const configEntry = skillConfigs.find((sc) => sc.id === skillId);
       const selectedSource =
         configEntry?.source || skill?.activeSource?.name || DEFAULT_PUBLIC_SOURCE_NAME;

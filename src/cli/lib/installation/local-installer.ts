@@ -15,7 +15,7 @@ import type {
 } from "../../types";
 import type { InstallMode } from "./installation";
 import { deriveInstallMode } from "./installation";
-import { findSkill } from "../../stores/matrix-store";
+import { matrix } from "../matrix/matrix-provider";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
@@ -139,12 +139,12 @@ function buildLocalSkillsMap(
   // Boundary cast: Object.fromEntries returns { [k: string]: V }
   return Object.fromEntries(
     copiedSkills
-      .filter((cs) => findSkill(cs.skillId))
+      .filter((cs) => matrix.skills[cs.skillId])
       .map((cs) => [
         cs.skillId,
         {
           id: cs.skillId,
-          description: findSkill(cs.skillId)!.description,
+          description: matrix.skills[cs.skillId]!.description,
           path: cs.destPath,
           content: "", // Content not needed for skill references
         },

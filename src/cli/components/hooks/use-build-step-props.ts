@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { Domain, SkillId } from "../../types/index.js";
 import type { WizardState } from "../../stores/wizard-store.js";
-import { getMatrix } from "../../stores/matrix-store.js";
+import { matrix } from "../../lib/matrix/matrix-provider.js";
 import type { StepBuildProps } from "../wizard/step-build.js";
 
 type UseBuildStepPropsOptions = {
@@ -25,7 +25,7 @@ export function useBuildStepProps({
   const onToggle = useCallback(
     (categoryId: Parameters<StepBuildProps["onToggle"]>[0], techId: SkillId) => {
       const domain: Domain = store.getCurrentDomain() || "web";
-      const cat = getMatrix().categories[categoryId];
+      const cat = matrix.categories[categoryId];
       store.toggleTechnology(domain, categoryId, techId, cat?.exclusive ?? true);
     },
     [store],

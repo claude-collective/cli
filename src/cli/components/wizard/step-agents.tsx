@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
 import { useRowScroll } from "../hooks/use-row-scroll.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import { useMatrixStore } from "../../stores/matrix-store.js";
+import { matrix } from "../../lib/matrix/matrix-provider.js";
 import type { AgentName, MergedSkillsMatrix } from "../../types/index.js";
 import { typedKeys } from "../../utils/typed-object.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
@@ -165,9 +165,7 @@ function buildFocusableIds(groups: AgentGroup[]): FocusId[] {
 export const StepAgents: React.FC = () => {
   const selectedAgents = useWizardStore((s) => s.selectedAgents);
   const agentConfigs = useWizardStore((s) => s.agentConfigs);
-  const matrix = useMatrixStore((s) => s.matrix!);
-
-  const agentGroups = useMemo(() => buildAgentGroups(matrix), [matrix]);
+  const agentGroups = useMemo(() => buildAgentGroups(matrix), []);
   const flatRows = useMemo(() => buildFlatRows(agentGroups), [agentGroups]);
   const focusableIds = useMemo(() => buildFocusableIds(agentGroups), [agentGroups]);
 

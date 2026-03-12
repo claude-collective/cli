@@ -3,17 +3,16 @@ import path from "path";
 import { copy, ensureDir, remove } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH } from "../../consts";
-import { isValidSkillId } from "../schemas";
+import { SKILL_ID_PATTERN } from "../schemas";
 import type { SkillId } from "../../types";
 
 /**
  * Validates a skill ID is safe for use in filesystem paths.
  * Checks format, traversal sequences, and null bytes at runtime
  * since TypeScript template literal types don't prevent malformed data from YAML/JSON.
- * Accepts built-in skill ID patterns and custom IDs registered via extendSchemasWithCustomValues().
  */
 function validateSkillId(skillId: SkillId): boolean {
-  if (!isValidSkillId(skillId)) {
+  if (!SKILL_ID_PATTERN.test(skillId)) {
     return false;
   }
   // Block null bytes and path traversal sequences

@@ -20,7 +20,7 @@ import {
 } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
-import { findSkill, getMatrix } from "../stores/matrix-store";
+import { matrix } from "../lib/matrix/matrix-provider";
 import { copySkillsToLocalFlattened } from "../lib/skills/index.js";
 import type { SkillId } from "../types/index.js";
 import { typedKeys } from "../utils/typed-object.js";
@@ -324,9 +324,8 @@ export default class Eject extends BaseCommand {
       return;
     }
 
-    const matrix = getMatrix();
     const skillIds = typedKeys<SkillId>(matrix.skills).filter(
-      (skillId) => !findSkill(skillId)?.local,
+      (skillId) => !matrix.skills[skillId]?.local,
     );
 
     if (skillIds.length === 0) {

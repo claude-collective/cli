@@ -8,7 +8,7 @@ import type {
 } from "../../types/index.js";
 import type { SkillConfig } from "../../types/config.js";
 import { getAvailableSkills, resolveAlias } from "../matrix/index.js";
-import { findSkill, getMatrix } from "../../stores/matrix-store.js";
+import { matrix } from "../matrix/matrix-provider.js";
 import type {
   CategoryRow,
   CategoryOption,
@@ -82,7 +82,7 @@ function isCompatibleWithSelectedFrameworks(
   skillId: SkillId,
   selectedFrameworkIds: SkillId[],
 ): boolean {
-  const skill = findSkill(skillId);
+  const skill = matrix.skills[skillId];
   if (!skill) return false;
 
   // No compatibleWith = compatible with all (allows legacy skills to appear)
@@ -101,7 +101,6 @@ export function buildCategoriesForDomain(
   installedSkillIds?: SkillId[],
   skillConfigs?: SkillConfig[],
 ): CategoryRow[] {
-  const matrix = getMatrix();
   const frameworkSource = selections;
   const frameworkSelected = isFrameworkSelected(frameworkSource);
   const selectedFrameworkIds = frameworkSelected ? getSelectedFrameworks(frameworkSource) : [];
@@ -130,7 +129,7 @@ export function buildCategoriesForDomain(
       state: computeOptionState(skill),
       stateReason: getStateReason(skill),
       selected: skill.selected,
-      local: findSkill(skill.id)?.local,
+      local: matrix.skills[skill.id]?.local,
       installed: installedSkillIds?.includes(skill.id) || false,
       scope: skillConfigs?.find((sc) => sc.id === skill.id)?.scope,
     }));

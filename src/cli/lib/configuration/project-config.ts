@@ -6,7 +6,7 @@ import { getErrorMessage } from "../../utils/errors";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 import type { ProjectConfig, ValidationResult } from "../../types";
 import { normalizeStackRecord } from "../stacks/stacks-loader";
-import { extendSchemasWithCustomValues, projectConfigLoaderSchema } from "../schemas";
+import { projectConfigLoaderSchema } from "../schemas";
 import { loadConfig } from "./config-loader";
 
 export type LoadedProjectConfig = {
@@ -27,25 +27,10 @@ export async function loadProjectConfigFromDir(
 
   let config: ProjectConfig | null;
   try {
-    // Step 1: Load raw object (no schema) — values come from config-types.ts via satisfies
+    // Load raw object and validate with Zod (lenient schema accepts custom values via z.string() casts)
     const raw = await loadConfig<ProjectConfig>(configPath);
     if (!raw || typeof raw !== "object") return null;
 
-    // Step 2: Extend Zod schemas with values from the config itself
-    // Extract skill IDs from SkillConfig[] entries (skills are now objects with id/scope/source)
-    const skillIds: string[] = Array.isArray(raw.skills)
-      ? raw.skills.map((s: { id?: string }) => s.id).filter((id): id is string => id != null)
-      : [];
-    extendSchemasWithCustomValues({
-      skillIds,
-      agentNames: Array.isArray(raw.agents)
-        ? raw.agents.map((a: { name?: string }) => a.name).filter((n): n is string => n != null)
-        : [],
-      domains: raw.domains ?? [],
-      categories: Object.values(raw.stack ?? {}).flatMap(Object.keys),
-    });
-
-    // Step 3: Validate with Zod (now accepts all values from config-types.ts)
     const result = projectConfigLoaderSchema.safeParse(raw);
     if (!result.success) {
       verbose(`Config validation failed at ${configPath}: ${JSON.stringify(result.error)}`);

@@ -2,7 +2,7 @@ import { Args, Flags } from "@oclif/core";
 import path from "path";
 import { BaseCommand } from "../base-command.js";
 import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
-import { findSkill, getMatrix } from "../stores/matrix-store";
+import { matrix } from "../lib/matrix/matrix-provider";
 import { discoverLocalSkills } from "../lib/skills/index.js";
 import { fileExists, readFile } from "../utils/fs.js";
 import { CLI_BIN_NAME, STANDARD_FILES } from "../consts.js";
@@ -177,11 +177,13 @@ export default class Info extends BaseCommand {
 
       this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
 
-      // CLI arg is an untyped string — cast at data boundary
-      let skill = findSkill(args.skill as SkillId | SkillSlug);
+      // CLI arg is an untyped string — try as skill ID first, then as slug
+      const slugResolvedId = matrix.slugMap.slugToId[args.skill as SkillSlug];
+      let skill = matrix.skills[args.skill as SkillId]
+        ?? (slugResolvedId ? matrix.skills[slugResolvedId] : undefined);
 
       if (!skill) {
-        const suggestions = findSuggestions(getMatrix().skills, args.skill, MAX_SUGGESTIONS);
+        const suggestions = findSuggestions(matrix.skills, args.skill, MAX_SUGGESTIONS);
 
         this.log("");
         this.error(`Skill "${args.skill}" not found.`, { exit: false });

@@ -23,7 +23,6 @@ import {
 } from "../../lib/configuration/config-types-writer.js";
 import { generateConfigSource } from "../../lib/configuration/config-writer.js";
 import { generateMarketplace, writeMarketplace } from "../../lib/marketplace-generator.js";
-import { extendSchemasWithCustomValues } from "../../lib/schemas.js";
 import { generateSkillCategoriesTs, generateSkillRulesTs } from "./skill.js";
 import type { AgentName, Category, CategoryPath, SkillId } from "../../types/index.js";
 
@@ -285,12 +284,6 @@ export default class NewMarketplace extends BaseCommand {
     );
 
     try {
-      // Register custom values so schema validation accepts marketplace-specific domains/categories
-      extendSchemasWithCustomValues({
-        categories: [LOCAL_DEFAULTS.CATEGORY],
-        domains: [LOCAL_DEFAULTS.DOMAIN],
-      });
-
       this.log("Building plugins...");
       const results = await compileAllSkillPlugins(skillsDir, pluginsOutputDir);
       this.logSuccess(`Built ${results.length} skill plugins.`);

@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import type { BoundSkillCandidate, SkillAlias, SkillId } from "../../types/index.js";
 import { CLI_COLORS, SOURCE_DISPLAY_NAMES } from "../../consts.js";
-import { getSkill } from "../../stores/matrix-store.js";
+import { getSkillById } from "../../lib/matrix/matrix-provider.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
 import { useSectionScroll } from "../hooks/use-section-scroll.js";
 import { useSourceGridSearchModal } from "../hooks/use-source-grid-search-modal.js";
@@ -107,7 +107,7 @@ const SourceSection: React.FC<SourceSectionProps> = ({
   return (
     <Box flexDirection="column" marginTop={1}>
       <Box flexDirection="row">
-        <Text>{getSkill(row.skillId).displayName}</Text>
+        <Text>{getSkillById(row.skillId).displayName}</Text>
       </Box>
 
       <Box flexDirection="row" flexWrap="wrap" marginTop={0}>
