@@ -42,13 +42,27 @@ import type {
 } from "../../types";
 import { useMatrixStore } from "../../stores/matrix-store";
 
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+// Boundary cast: test-only fake skill IDs for test isolation
+const AUTH_PATTERNS = "api-security-auth-patterns" as SkillId;
+const ANIMATION_FRAMER = "web-animation-framer" as SkillId;
+const A11Y = "web-accessibility-a11y" as SkillId;
+const MONITORING_SENTRY = "api-monitoring-sentry" as SkillId;
+const METHODOLOGY_INVESTIGATION = "meta-methodology-investigation" as SkillId;
+const NONEXISTENT_SKILL = "web-nonexistent-skill" as SkillId;
+const FEATURE_ADVANCED = "web-feature-advanced" as SkillId;
+const NONEXISTENT_DEP = "web-nonexistent-dep" as SkillId;
+const VUE_ID = "web-framework-vue-composition-api" as SkillId;
+
 // ── Skill data (single-consumer, moved from mock-skills.ts) ─────────────────
 
-type SkillEntry = { id: SkillId; category: CategoryPath; description: string };
+// Boundary widening: test fixtures use arbitrary skill IDs and categories for test isolation
+type SkillEntry = { id: string; category: string; description: string };
 
 const PUBLIC_SKILLS: SkillEntry[] = [
   { id: "web-framework-react", category: "web-framework", description: "React framework" },
-  { id: "web-framework-vue", category: "web-framework", description: "Vue.js framework" },
+  { id: VUE_ID, category: "web-framework", description: "Vue.js framework" },
   {
     id: "web-state-zustand",
     category: "web-client-state",
@@ -62,27 +76,25 @@ const ACME_SKILLS: SkillEntry[] = [
   { id: "web-framework-react", category: "web-framework", description: "React (acme custom fork)" },
   { id: "api-framework-hono", category: "api-api", description: "Hono web framework" },
   { id: "api-database-drizzle", category: "api-database", description: "Drizzle ORM" },
-  { id: "api-security-auth-patterns", category: "shared-security", description: "Auth patterns" },
+  { id: AUTH_PATTERNS, category: "shared-security", description: "Auth patterns" },
   { id: "web-testing-vitest", category: "web-testing", description: "Vitest (acme custom)" },
 ];
 
 const INTERNAL_SKILLS: SkillEntry[] = [
   { id: "web-framework-react", category: "web-framework", description: "React (internal build)" },
-  { id: "web-animation-framer", category: "web-animation", description: "Framer Motion" },
+  { id: ANIMATION_FRAMER, category: "web-animation", description: "Framer Motion" },
   {
-    id: "meta-methodology-investigation",
+    id: METHODOLOGY_INVESTIGATION,
     category: "shared-methodology",
     description: "Investigation first",
   },
-  { id: "web-accessibility-a11y", category: "web-accessibility", description: "Web accessibility" },
+  { id: A11Y, category: "web-accessibility", description: "Web accessibility" },
   {
-    id: "api-monitoring-sentry",
+    id: MONITORING_SENTRY,
     category: "api-observability",
     description: "Sentry error tracking",
   },
 ];
-
-// ── Constants ──────────────────────────────────────────────────────────────────
 
 const TOTAL_SOURCE_COUNT = 3;
 const SELECTED_SKILL_COUNT = 10;
@@ -252,10 +264,10 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         "web-testing-vitest", // from 2 sources
         "api-framework-hono", // acme only
         "api-database-drizzle", // acme only
-        "api-security-auth-patterns", // acme only
-        "web-animation-framer", // internal only
-        "web-accessibility-a11y", // internal only
-        "api-monitoring-sentry", // internal only
+        AUTH_PATTERNS, // acme only
+        ANIMATION_FRAMER, // internal only
+        A11Y, // internal only
+        MONITORING_SENTRY, // internal only
       ];
 
       expect(selectedSkills).toHaveLength(SELECTED_SKILL_COUNT);
@@ -277,7 +289,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       useMatrixStore.getState().setMatrix(matrix);
 
       // Select a skill that doesn't exist in any source
-      const selections: SkillId[] = ["web-framework-react", "web-nonexistent-skill"];
+      const selections: SkillId[] = ["web-framework-react", NONEXISTENT_SKILL];
 
       // resolveAlias throws for unknown skill IDs — invalid input is a bug
       expect(() => validateSelection(selections)).toThrow("Unknown skill ID");
@@ -287,7 +299,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const matrix = buildMultiSourceMatrix();
       useMatrixStore.getState().setMatrix(matrix);
 
-      expect(() => resolveAlias("web-nonexistent-skill")).toThrow("Unknown skill ID");
+      expect(() => resolveAlias(NONEXISTENT_SKILL)).toThrow("Unknown skill ID");
     });
 
     it("should not include missing skill in getAvailableSkills for any category", () => {
@@ -299,7 +311,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       for (const category of allCategories) {
         const available = getAvailableSkills(category, []);
         const ids = available.map((o) => o.id);
-        expect(ids).not.toContain("web-nonexistent-skill");
+        expect(ids).not.toContain(NONEXISTENT_SKILL);
       }
     });
 
@@ -308,18 +320,18 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       useMatrixStore.getState().setMatrix(matrix);
 
       // Add a skill that requires a non-existent skill
-      matrix.skills["web-feature-advanced"] = createMockSkill("web-feature-advanced", {
+      matrix.skills[FEATURE_ADVANCED] = createMockSkill(FEATURE_ADVANCED, {
         category: "web-framework",
         requires: [
           {
-            skillIds: ["web-nonexistent-dep"],
+            skillIds: [NONEXISTENT_DEP],
             needsAny: false,
             reason: "Needs nonexistent dependency",
           },
         ],
       });
 
-      expect(() => validateSelection(["web-feature-advanced"])).toThrow();
+      expect(() => validateSelection([FEATURE_ADVANCED])).toThrow();
     });
   });
 
@@ -370,7 +382,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       useMatrixStore.getState().setMatrix(matrix);
 
       // auth-patterns requires hono
-      const authSkill = matrix.skills["api-security-auth-patterns"]!;
+      const authSkill = matrix.skills[AUTH_PATTERNS]!;
       authSkill.requires = [
         {
           skillIds: ["api-framework-hono"],
@@ -380,10 +392,10 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // Nothing selected, auth should be discouraged
-      const discouraged = isDiscouraged("api-security-auth-patterns", []);
+      const discouraged = isDiscouraged(AUTH_PATTERNS, []);
       expect(discouraged).toBe(true);
 
-      const reason = getDiscourageReason("api-security-auth-patterns", []);
+      const reason = getDiscourageReason(AUTH_PATTERNS, []);
       expect(reason).toContain("Auth patterns need a backend framework");
       expect(reason).toContain("Hono");
     });
@@ -393,7 +405,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       useMatrixStore.getState().setMatrix(matrix);
 
       // auth-patterns requires hono
-      const authSkill = matrix.skills["api-security-auth-patterns"]!;
+      const authSkill = matrix.skills[AUTH_PATTERNS]!;
       authSkill.requires = [
         {
           skillIds: ["api-framework-hono"],
@@ -403,7 +415,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // hono selected, auth should not be discouraged
-      const discouraged = isDiscouraged("api-security-auth-patterns", ["api-framework-hono"]);
+      const discouraged = isDiscouraged(AUTH_PATTERNS, ["api-framework-hono"]);
       expect(discouraged).toBe(false);
     });
 
@@ -412,7 +424,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       useMatrixStore.getState().setMatrix(matrix);
 
       // sentry can work with either hono (acme) OR react (public/acme/internal)
-      const sentrySkill = matrix.skills["api-monitoring-sentry"]!;
+      const sentrySkill = matrix.skills[MONITORING_SENTRY]!;
       sentrySkill.requires = [
         {
           skillIds: ["api-framework-hono", "web-framework-react"],
@@ -422,11 +434,11 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // Select react (from public), sentry should be valid
-      const validation = validateSelection(["api-monitoring-sentry", "web-framework-react"]);
+      const validation = validateSelection([MONITORING_SENTRY, "web-framework-react"]);
       expect(validation.valid).toBe(true);
 
       // Without any framework, sentry should fail
-      const failValidation = validateSelection(["api-monitoring-sentry"]);
+      const failValidation = validateSelection([MONITORING_SENTRY]);
       expect(failValidation.valid).toBe(false);
     });
   });
@@ -440,12 +452,12 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const reactSkill = matrix.skills["web-framework-react"]!;
       reactSkill.conflictsWith = [
         {
-          skillId: "web-framework-vue",
+          skillId: VUE_ID,
           reason: "Choose one frontend framework",
         },
       ];
 
-      const validation = validateSelection(["web-framework-react", "web-framework-vue"]);
+      const validation = validateSelection(["web-framework-react", VUE_ID]);
       expect(validation.valid).toBe(false);
       expect(validation.errors[0].type).toBe("conflict");
       expect(validation.errors[0].message).toContain("Choose one frontend framework");
@@ -458,13 +470,13 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const reactSkill = matrix.skills["web-framework-react"]!;
       reactSkill.conflictsWith = [
         {
-          skillId: "web-framework-vue",
+          skillId: VUE_ID,
           reason: "Choose one frontend framework",
         },
       ];
 
       // React selected, vue should be discouraged
-      const discouraged = isDiscouraged("web-framework-vue", ["web-framework-react"]);
+      const discouraged = isDiscouraged(VUE_ID, ["web-framework-react"]);
       expect(discouraged).toBe(true);
     });
 
@@ -473,7 +485,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       useMatrixStore.getState().setMatrix(matrix);
 
       // framework category is exclusive -- selecting both react and vue violates it
-      const validation = validateSelection(["web-framework-react", "web-framework-vue"]);
+      const validation = validateSelection(["web-framework-react", VUE_ID]);
       expect(validation.valid).toBe(false);
       expect(validation.errors.some((e) => e.type === "categoryExclusive")).toBe(true);
     });
@@ -527,7 +539,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       // Should have react and vue
       const ids = available.map((o) => o.id);
       expect(ids).toContain("web-framework-react");
-      expect(ids).toContain("web-framework-vue");
+      expect(ids).toContain(VUE_ID);
 
       // None should be discouraged or selected initially
       expect(available.every((o) => !o.discouraged)).toBe(true);
@@ -568,7 +580,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       [
         { id: "web-framework-react", scope: "project", source: "public" },
         { id: "api-framework-hono", scope: "project", source: "acme-corp" },
-        { id: "web-animation-framer", scope: "project", source: "internal" },
+        { id: ANIMATION_FRAMER, scope: "project", source: "internal" },
         { id: "api-database-drizzle", scope: "project", source: "acme-corp" },
         { id: "web-testing-vitest", scope: "project", source: "public" },
       ],

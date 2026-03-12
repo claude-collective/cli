@@ -294,7 +294,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       }),
     );
 
-    const installedSkills: SkillId[] = ["web-framework-react", "web-framework-unknown"];
+    // Boundary cast: fake ID to test unknown-skill handling
+    const installedSkills: SkillId[] = ["web-framework-react", "web-framework-unknown" as SkillId];
 
     useWizardStore.getState().populateFromSkillIds(installedSkills);
 
@@ -318,7 +319,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       }),
     );
 
-    const installedSkills: SkillId[] = ["web-framework-react", "infra-tooling-linter"];
+    // Boundary cast: fake ID to test unmapped-category handling
+    const installedSkills: SkillId[] = ["web-framework-react", "infra-tooling-linter" as SkillId];
 
     useWizardStore.getState().populateFromSkillIds(installedSkills);
 
@@ -356,7 +358,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       }),
     );
 
-    const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright"];
+    // Boundary cast: fake ID to test multi-selection in same category
+    const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright" as SkillId];
 
     useWizardStore.getState().populateFromSkillIds(installedSkills);
 

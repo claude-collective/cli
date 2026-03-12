@@ -7,7 +7,7 @@ import { STANDARD_FILES } from "../../../consts";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal } from "../../installation/local-installer";
 import { useMatrixStore } from "../../../stores/matrix-store";
-import type { ProjectConfig, ResolvedSkill } from "../../../types";
+import type { ProjectConfig, ResolvedSkill, SkillId } from "../../../types";
 import {
   fileExists,
   directoryExists,
@@ -329,12 +329,14 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       expect(merged.categories["shared-tooling"]!.exclusive).toBe(false);
 
       // Assert the custom skill is present
-      expect(merged.skills["infra-tooling-docker"]).toBeDefined();
-      expect(merged.skills["infra-tooling-docker"]!.description).toBe(
+      // Boundary cast: test-only skill ID not in generated SkillId union
+      const dockerId = "infra-tooling-docker" as SkillId;
+      expect(merged.skills[dockerId]).toBeDefined();
+      expect(merged.skills[dockerId]!.description).toBe(
         "Docker containerization patterns",
       );
-      expect(merged.skills["infra-tooling-docker"]!.tags).toContain("docker");
-      expect(merged.skills["infra-tooling-docker"]!.category).toBe("infra-tooling");
+      expect(merged.skills[dockerId]!.tags).toContain("docker");
+      expect(merged.skills[dockerId]!.category).toBe("shared-tooling");
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -364,8 +366,9 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       expect(merged.categories["shared-ci-cd"]!.exclusive).toBe(true);
 
       // Verify both skills are loaded
-      expect(merged.skills["infra-ci-cd-github-actions"]).toBeDefined();
-      expect(merged.skills["infra-ci-cd-gitlab-ci"]).toBeDefined();
+      // Boundary cast: test-only skill IDs not in generated SkillId union
+      expect(merged.skills["infra-ci-cd-github-actions" as SkillId]).toBeDefined();
+      expect(merged.skills["infra-ci-cd-gitlab-ci" as SkillId]).toBeDefined();
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -406,7 +409,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       expect(skillB!.discourages[0].skillId).toBe("web-framework-react");
 
       // Verify recommended skill is marked as isRecommended
-      const skillC = merged.skills["web-framework-vue"];
+      const skillC = merged.skills["web-framework-vue-composition-api"];
       expect(skillC).toBeDefined();
       expect(skillC!.isRecommended).toBe(true);
       expect(skillC!.recommendedReason).toBe("These work great together");
@@ -592,7 +595,8 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
         skills,
       );
 
-      const datadogSkill = merged.skills["api-observability-datadog"];
+      // Boundary cast: test-only skill ID not in generated SkillId union
+      const datadogSkill = merged.skills["api-observability-datadog" as SkillId];
       expect(datadogSkill).toBeDefined();
       expect(datadogSkill!.tags).toEqual(DATADOG_OBSERVABILITY_SKILL.tags);
     } finally {

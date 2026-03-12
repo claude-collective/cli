@@ -265,7 +265,7 @@ describe("resolveSkillReference", () => {
 
   it("when skill ID does not exist in skills map, should return null", () => {
     const ref: SkillReference = {
-      id: "web-nonexistent-skill",
+      id: "web-nonexistent-skill" as SkillId,
       usage: "never",
     };
 
@@ -596,7 +596,7 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
     it("should include Use when: guidance for each dynamic skill", async () => {
       const skills = [
         makeSkill("web-testing-vitest", false, "when working with vitest"),
-        makeSkill("web-build-turborepo", false, "when working with turborepo"),
+        makeSkill("web-build-turborepo" as SkillId, false, "when working with turborepo"),
       ];
 
       const output = await compileAgentWithSkills(skills);
@@ -631,7 +631,7 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       makeSkill("web-framework-react", true, "when building React components"),
       makeSkill("web-state-zustand", true, "when managing state"),
       makeSkill("web-testing-vitest", false, "when working with vitest"),
-      makeSkill("web-build-turborepo", false, "when working with turborepo"),
+      makeSkill("web-build-turborepo" as SkillId, false, "when working with turborepo"),
     ];
 
     it("when mixed skills exist, should include only preloaded skills in frontmatter", async () => {

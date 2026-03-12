@@ -123,7 +123,7 @@ async function createPluginDir(projectDir: string, fakeHome: string): Promise<st
 /** Creates a skill with forkedFrom.source matching a configured source (CLI-installed) */
 async function createCLISkill(
   skillsDir: string,
-  skillId: SkillId,
+  skillId: string,
   source = TEST_SOURCE,
 ): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
@@ -140,14 +140,14 @@ async function createCLISkill(
 }
 
 /** Creates a skill directory WITHOUT forkedFrom (user-created skill) */
-async function createUserSkill(skillsDir: string, skillId: SkillId): Promise<string> {
+async function createUserSkill(skillsDir: string, skillId: string): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
     extraMetadata: { displayName: skillId },
   });
 }
 
 /** Creates a skill directory with no metadata.yaml at all */
-async function createSkillWithoutMetadata(skillsDir: string, skillId: SkillId): Promise<string> {
+async function createSkillWithoutMetadata(skillsDir: string, skillId: string): Promise<string> {
   return writeTestSkill(skillsDir, skillId, {
     skipMetadata: true,
   });
@@ -391,11 +391,11 @@ describe("uninstall command", () => {
       await mkdir(skillsDir, { recursive: true });
 
       // Create a legacy skill with forkedFrom but no source
-      const legacySkillDir = await writeTestSkill(skillsDir, "web-framework-vue", {
+      const legacySkillDir = await writeTestSkill(skillsDir, "web-framework-vue-composition-api", {
         extraMetadata: {
-          displayName: "web-framework-vue",
+          displayName: "web-framework-vue-composition-api",
           forkedFrom: {
-            skillId: "web-framework-vue",
+            skillId: "web-framework-vue-composition-api",
             contentHash: "def5678",
             date: "2026-01-01",
             // Note: no source field (legacy)

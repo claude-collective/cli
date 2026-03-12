@@ -54,7 +54,7 @@ const honoSkill = createTestSkill("api-framework-hono", "Lightweight web framewo
   tags: ["api", "hono", "edge"],
 });
 
-const vueSkill = createTestSkill("web-framework-vue", "Progressive JavaScript framework", {
+const vueSkill = createTestSkill("web-framework-vue-composition-api", "Progressive JavaScript framework", {
   tags: ["vue", "web"],
 });
 
@@ -128,7 +128,7 @@ export const REQUIRES_RELATIONSHIP_SKILLS: TestSkill[] = [reactSkill, vitestSkil
 
 /** Creates a TestSkill with rendered SKILL.md content for source-switching tests */
 function contentSkill(
-  id: SkillId,
+  id: string,
   description: string,
   tags: string[],
   body: string,
@@ -222,4 +222,6 @@ export const INIT_SKILL_IDS: SkillId[] = [
   "web-testing-vitest",
 ];
 
-export const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => INIT_SKILL_IDS.includes(s.id));
+export const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) =>
+  INIT_SKILL_IDS.includes(s.id as SkillId),
+);

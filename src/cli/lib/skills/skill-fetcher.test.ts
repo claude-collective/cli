@@ -76,7 +76,8 @@ describe("skill-fetcher", () => {
 
     it("should throw when skill is not found", async () => {
       const marketplace = createMockMarketplace();
-      const skillId = "web-nonexistent-skill";
+      // Boundary cast: fake skill ID for error-path testing
+      const skillId = "web-nonexistent-skill" as SkillId;
 
       // findSkillPath: baseDir exists but no matches
       mockDirectoryExists.mockResolvedValueOnce(true);
@@ -120,7 +121,8 @@ describe("skill-fetcher", () => {
 
     it("when second of three skills is missing, should throw after copying only the first", async () => {
       const marketplace = createMockMarketplace();
-      const skillIds: SkillId[] = [REACT_SKILL_ID, "web-nonexistent-skill", "api-framework-hono"];
+      // Boundary cast: fake skill ID for error-path testing
+      const skillIds: SkillId[] = [REACT_SKILL_ID, "web-nonexistent-skill" as SkillId, "api-framework-hono"];
 
       // First skill found
       mockDirectoryExists

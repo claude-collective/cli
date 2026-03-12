@@ -106,7 +106,7 @@ describe("config-generator", () => {
       useMatrixStore.getState().setMatrix(LOCAL_SKILL_MATRIX);
       const selectedAgents: AgentName[] = ["web-developer"];
 
-      const config = generateProjectConfigFromSkills("my-project", ["web-local-skill"], {
+      const config = generateProjectConfigFromSkills("my-project", ["web-local-skill" as SkillId], {
         selectedAgents,
       });
 
@@ -127,7 +127,7 @@ describe("config-generator", () => {
 
       const config = generateProjectConfigFromSkills(
         "my-project",
-        ["web-framework-react", "meta-company-patterns"],
+        ["web-framework-react", "meta-company-patterns" as SkillId],
         { selectedAgents },
       );
 
@@ -156,7 +156,7 @@ describe("config-generator", () => {
 
       const config = generateProjectConfigFromSkills(
         "my-project",
-        ["web-framework-react", "web-unknown-skill"],
+        ["web-framework-react", "web-unknown-skill" as SkillId],
         { selectedAgents },
       );
 
@@ -271,7 +271,7 @@ describe("config-generator", () => {
       useMatrixStore.getState().setMatrix(SINGLE_REACT_MATRIX);
       const config = generateProjectConfigFromSkills(
         "my-project",
-        ["web-framework-react", "web-unknown-skill"],
+        ["web-framework-react", "web-unknown-skill" as SkillId],
         { selectedAgents: ["web-developer"] },
       );
 
@@ -281,8 +281,8 @@ describe("config-generator", () => {
     it("produces no stack when all skills are unknown", () => {
       useMatrixStore.getState().setMatrix(EMPTY_MATRIX);
       const config = generateProjectConfigFromSkills("my-project", [
-        "web-nonexistent-skill",
-        "api-nonexistent-thing",
+        "web-nonexistent-skill" as SkillId,
+        "api-nonexistent-thing" as SkillId,
       ]);
 
       expect(config.agents).toEqual([]);

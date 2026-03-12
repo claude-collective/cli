@@ -15,7 +15,7 @@ import {
 import { createMockAgentConfig, createMockCompiledStackPlugin } from "../__tests__/helpers";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_FILES } from "../../consts";
 
-import type { SkillAssignment, Stack, StackAgentConfig, Category } from "../../types";
+import type { SkillAssignment, SkillId, Stack, StackAgentConfig, Category } from "../../types";
 import { renderAgentYaml, renderConfigTs, renderSkillMd } from "../__tests__/content-generators";
 import { REACT_SKILL_PRELOADED, VITEST_SKILL } from "../__tests__/mock-data/mock-skills";
 import { AGENT_DEFS } from "../__tests__/mock-data/mock-agents";
@@ -316,7 +316,8 @@ describe("stack-plugin-compiler", () => {
       const reactDirPath = "web/framework/react (@vince)";
       const reactCanonicalId = REACT_SKILL_ID;
       const tsDirPath = "web/language/typescript (@vince)";
-      const tsCanonicalId = "web-language-typescript";
+      // Boundary cast: fake skill ID for test isolation
+      const tsCanonicalId = "web-language-typescript" as SkillId;
 
       await createSkillInSource(reactDirPath, {
         name: reactCanonicalId,
@@ -751,7 +752,7 @@ describe("stack-plugin-compiler", () => {
 
       printStackCompilationSummary(
         createMockCompiledStackPlugin({
-          skillPlugins: ["web-framework-react", "web-state-zustand", "web-language-typescript"],
+          skillPlugins: ["web-framework-react", "web-state-zustand", "web-language-typescript" as SkillId],
         }),
       );
 

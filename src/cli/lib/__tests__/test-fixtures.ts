@@ -9,12 +9,12 @@ import { createMockSkill, createMockCategory } from "./helpers";
 export const SKILLS = {
   // Web domain
   react: createMockSkill("web-framework-react"),
-  vue: createMockSkill("web-framework-vue"),
+  vue: createMockSkill("web-framework-vue-composition-api"),
   zustand: createMockSkill("web-state-zustand", {
     compatibleWith: ["web-framework-react"],
   }),
   pinia: createMockSkill("web-state-pinia", {
-    compatibleWith: ["web-framework-vue"],
+    compatibleWith: ["web-framework-vue-composition-api"],
   }),
   scss: createMockSkill("web-styling-scss-modules"),
   tailwind: createMockSkill("web-styling-tailwind"),

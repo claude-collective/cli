@@ -62,7 +62,7 @@ const REACT_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-react", {
   description: "React",
 });
 
-const VUE_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-vue", {
+const VUE_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-vue-composition-api", {
   description: "Vue",
 });
 
@@ -469,7 +469,7 @@ displayName: wrong
       const reactSkill = merged.skills["web-framework-react"];
       expect(reactSkill).toBeDefined();
       expect(reactSkill!.conflictsWith).toEqual(
-        expect.arrayContaining([expect.objectContaining({ skillId: "web-framework-vue" })]),
+        expect.arrayContaining([expect.objectContaining({ skillId: "web-framework-vue-composition-api" })]),
       );
     });
 
@@ -627,7 +627,8 @@ displayName: wrong
 
     it("passes skill domain to synthesized category regardless of prefix", async () => {
       const skill = createMockExtractedSkill("web-custom-tool", {
-        category: "web-custom",
+        // Boundary cast: intentionally custom category not in built-in union
+        category: "web-custom" as CategoryPath,
         domain: "cli",
       });
 
@@ -664,7 +665,7 @@ displayName: wrong
   describe("synthesizeCategory", () => {
     it("creates category with provided domain", () => {
       // Boundary cast: custom category not in built-in union
-      const cat = synthesizeCategory("web-custom", "web");
+      const cat = synthesizeCategory("web-custom" as CategoryPath, "web");
       expect(cat.domain).toBe("web");
       expect(cat.displayName).toBe("Web Custom");
     });

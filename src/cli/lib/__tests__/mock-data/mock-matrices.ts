@@ -106,7 +106,7 @@ export const CONFLICT_MATRIX = createMockMatrixConfig(
   {},
   {
     relationships: {
-      conflicts: [{ skills: ["react", "vue"], reason: "Pick one framework" }],
+      conflicts: [{ skills: ["react", "vue-composition-api"], reason: "Pick one framework" }],
     },
   },
 );
@@ -231,7 +231,7 @@ export const FRAMEWORK_AND_STYLING_CONFIG = createMockMatrixConfig(
       ],
       recommends: [
         {
-          skill: "vue",
+          skill: "vue-composition-api",
           reason: "These work great together",
         },
       ],

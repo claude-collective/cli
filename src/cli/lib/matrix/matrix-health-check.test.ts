@@ -48,7 +48,7 @@ const unresolvedConflictsWithSkill = {
 const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", {
   requires: [
     {
-      skillIds: ["web-framework-missing"],
+      skillIds: ["web-framework-missing" as SkillId],
       needsAny: false,
       reason: "Needs a framework",
     },
@@ -62,7 +62,7 @@ const unresolvedRequiresSetupSkill = {
 };
 
 const unresolvedProvidesSetupForSkill = createMockSkill("infra-setup-env", {
-  providesSetupFor: ["web-framework-missing"],
+  providesSetupFor: ["web-framework-missing" as SkillId],
 });
 
 const multipleUnresolvedRefsSkill = {
@@ -91,7 +91,7 @@ const allRefsResolvedSkill = {
 const partialUnresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", {
   requires: [
     {
-      skillIds: ["web-framework-react", "web-framework-missing"],
+      skillIds: ["web-framework-react", "web-framework-missing" as SkillId],
       needsAny: true,
       reason: "Needs one framework",
     },

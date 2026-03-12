@@ -70,7 +70,8 @@ describe("Integration: Source Switching with Delete", () => {
     });
 
     it("should handle deleting a non-existent skill silently", async () => {
-      const nonExistentSkill = "web-framework-nonexistent";
+      // Boundary cast: intentionally testing nonexistent skill ID
+      const nonExistentSkill = "web-framework-nonexistent" as SkillId;
 
       // Should not throw
       await deleteLocalSkill(dirs.projectDir, nonExistentSkill);
@@ -104,7 +105,7 @@ describe("Integration: Source Switching with Delete", () => {
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
       useMatrixStore.getState().setMatrix(matrix);
       const skillConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
-        id,
+        id: id as SkillId,
         scope: "project" as const,
         source: id === REACT_SKILL_ID ? "local" : "local",
       }));
@@ -177,7 +178,7 @@ describe("Integration: Source Switching with Delete", () => {
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
       useMatrixStore.getState().setMatrix(matrix);
       const roundTripConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
-        id,
+        id: id as SkillId,
         scope: "project" as const,
         source: id === REACT_SKILL_ID ? "local" : "local",
       }));

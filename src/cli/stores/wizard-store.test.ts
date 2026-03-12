@@ -330,10 +330,10 @@ describe("WizardStore", () => {
     it("should replace technology in exclusive mode", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
-      store.toggleTechnology("web", "web-framework", "web-framework-vue", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-vue-composition-api", true);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-vue"]);
+      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-vue-composition-api"]);
     });
 
     it("should toggle off technology in exclusive mode", () => {
@@ -532,11 +532,11 @@ describe("WizardStore", () => {
     it("should replace skillConfigs entry in exclusive mode", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
-      store.toggleTechnology("web", "web-framework", "web-framework-vue", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-vue-composition-api", true);
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(1);
-      expect(skillConfigs[0].id).toBe("web-framework-vue");
+      expect(skillConfigs[0].id).toBe("web-framework-vue-composition-api");
     });
 
     it("should accumulate skillConfigs in non-exclusive mode", () => {
@@ -884,7 +884,7 @@ describe("WizardStore", () => {
 
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
-          misc: { "shared-methodology": [sa("meta-methodology-vitest")] },
+          misc: { "shared-methodology": [sa("meta-methodology-vitest" as SkillId)] },
         },
       };
       useMatrixStore.getState().setMatrix(ALL_SKILLS_METHODOLOGY_BARE_MATRIX);

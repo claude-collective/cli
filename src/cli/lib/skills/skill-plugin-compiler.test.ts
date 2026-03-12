@@ -163,7 +163,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should include tags in README when metadata has tags", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue", {
+      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue-composition-api", {
         extraMetadata: { tags: ["web", "data", "async"] },
       });
 
@@ -229,7 +229,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should succeed without metadata.yaml", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue", {
+      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue-composition-api", {
         skipMetadata: true,
       });
 
@@ -243,8 +243,8 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should use hash-based versioning on recompile", async () => {
-      const skillContent1 = renderSkillMd("web-framework-vue", "Vue skill", "# Vue version 1");
-      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue", {
+      const skillContent1 = renderSkillMd("web-framework-vue-composition-api", "Vue skill", "# Vue version 1");
+      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue-composition-api", {
         skillContent: skillContent1,
       });
 
@@ -266,7 +266,7 @@ describe("skill-plugin-compiler", () => {
 
       // Modify the skill content
       const newContent = renderSkillMd(
-        "web-framework-vue",
+        "web-framework-vue-composition-api",
         "Vue skill",
         "# Vue version 2 - updated content",
       );

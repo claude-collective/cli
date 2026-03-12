@@ -350,15 +350,15 @@ describe("SourceGrid component", () => {
     it("should handle many rows", () => {
       const skillIds: SkillId[] = [
         "web-framework-react",
-        "web-framework-vue",
+        "web-framework-vue-composition-api",
         "web-styling-tailwind",
         "web-styling-scss-modules",
         "web-state-zustand",
         "web-state-mobx",
         "web-testing-vitest",
-        "web-testing-playwright",
-        "web-data-fetching-react-query",
-        "web-tooling-vite",
+        "web-testing-playwright-e2e",
+        "web-server-state-react-query",
+        "web-tooling-vite" as SkillId,
       ];
       const skills = Object.fromEntries(skillIds.map((id) => [id, createMockSkill(id)]));
       useMatrixStore.getState().setMatrix(createMockMatrix(skills));
@@ -383,13 +383,13 @@ describe("SourceGrid component", () => {
 
     const searchCandidates: BoundSkillCandidate[] = [
       {
-        id: "web-framework-react-pro",
+        id: "web-framework-react-pro" as SkillId,
         sourceUrl: "github:awesome-dev/skills",
         sourceName: "awesome-dev",
         alias: "react",
       },
       {
-        id: "web-framework-react-strict",
+        id: "web-framework-react-strict" as SkillId,
         sourceUrl: "github:team-xyz/skills",
         sourceName: "team-xyz",
         alias: "react",

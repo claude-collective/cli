@@ -390,7 +390,7 @@ describe("generateConfigTypesSource", () => {
 
       const matrix = createMockMatrix(
         createMockSkill(acmeTool, {
-          category: "web-custom-tool",
+          category: "web-custom-tool" as CategoryPath,
           custom: true,
         }),
         { categories },

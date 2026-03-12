@@ -166,7 +166,7 @@ describe("buildCategoriesForDomain", () => {
 
     const frameworkRow = result.find((r) => r.id === frameworkCategory);
     const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
-    const vueOption = frameworkRow?.options.find((o) => o.id === "web-framework-vue");
+    const vueOption = frameworkRow?.options.find((o) => o.id === "web-framework-vue-composition-api");
 
     expect(reactOption?.installed).toBe(true);
     expect(vueOption?.installed).toBe(false);

@@ -36,28 +36,32 @@ describe("source-switcher", () => {
     });
 
     it("blocks path traversal in skill ID", async () => {
-      await deleteLocalSkill("/project", "web-traversal-../../dangerous");
+      // Boundary cast: deliberately invalid skill ID for security testing
+      await deleteLocalSkill("/project", "web-traversal-../../dangerous" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(remove).not.toHaveBeenCalled();
     });
 
     it("blocks skill ID with forward slashes", async () => {
-      await deleteLocalSkill("/project", "web-framework-react/../../etc");
+      // Boundary cast: deliberately invalid skill ID for security testing
+      await deleteLocalSkill("/project", "web-framework-react/../../etc" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(remove).not.toHaveBeenCalled();
     });
 
     it("blocks skill ID with backslashes", async () => {
-      await deleteLocalSkill("/project", "web-framework-react\\..\\..\\etc");
+      // Boundary cast: deliberately invalid skill ID for security testing
+      await deleteLocalSkill("/project", "web-framework-react\\..\\..\\etc" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(remove).not.toHaveBeenCalled();
     });
 
     it("blocks null byte injection", async () => {
-      await deleteLocalSkill("/project", "web-skill-name\0../../passwd");
+      // Boundary cast: deliberately invalid skill ID for security testing
+      await deleteLocalSkill("/project", "web-skill-name\0../../passwd" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(remove).not.toHaveBeenCalled();

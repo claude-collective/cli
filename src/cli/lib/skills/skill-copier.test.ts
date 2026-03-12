@@ -169,7 +169,7 @@ describe("skill-copier", () => {
   describe("copySkillsToPluginFromSource", () => {
     it("skips local skills and does not copy them", async () => {
       // Create a local skill in the project's .claude/skills/ directory
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-vue");
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-vue-composition-api");
 
       const matrix = createMockMatrix({
         ...SKILLS.vue,
@@ -189,7 +189,7 @@ describe("skill-copier", () => {
 
       try {
         const result = await copySkillsToPluginFromSource(
-          ["web-framework-vue"],
+          ["web-framework-vue-composition-api"],
           pluginDir,
           matrix,
           sourceResult,
@@ -197,13 +197,13 @@ describe("skill-copier", () => {
 
         // Local skill should be returned but marked as local
         expect(result).toHaveLength(1);
-        expect(result[0].skillId).toBe("web-framework-vue");
+        expect(result[0].skillId).toBe("web-framework-vue-composition-api");
         expect(result[0].local).toBe(true);
         expect(result[0].sourcePath).toBe(localSkillPath);
         expect(result[0].destPath).toBe(localSkillPath);
 
         // Verify skill was NOT copied to plugin dir
-        const copiedSkillDir = path.join(pluginDir, STANDARD_DIRS.SKILLS, "web-framework-vue");
+        const copiedSkillDir = path.join(pluginDir, STANDARD_DIRS.SKILLS, "web-framework-vue-composition-api");
         let exists = false;
         try {
           await readFile(path.join(copiedSkillDir, STANDARD_FILES.SKILL_MD));
@@ -327,7 +327,7 @@ describe("skill-copier", () => {
       });
 
       const result = await copySkillsToPluginFromSource(
-        ["web-unknown-skill"],
+        ["web-unknown-skill" as SkillId],
         pluginDir,
         matrix,
         sourceResult,
@@ -505,7 +505,7 @@ describe("skill-copier", () => {
 
     it("skips local skills and does not copy them", async () => {
       // Create a local skill already in .claude/skills/
-      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-vue");
+      const localSkillPath = await writeLocalSkillOnDisk(projectDir, "web-framework-vue-composition-api");
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
@@ -526,7 +526,7 @@ describe("skill-copier", () => {
 
       try {
         const result = await copySkillsToLocalFlattened(
-          ["web-framework-vue"],
+          ["web-framework-vue-composition-api"],
           localSkillsDir,
           matrix,
           sourceResult,
@@ -534,7 +534,7 @@ describe("skill-copier", () => {
 
         // Local skill should be returned but marked as local
         expect(result).toHaveLength(1);
-        expect(result[0].skillId).toBe("web-framework-vue");
+        expect(result[0].skillId).toBe("web-framework-vue-composition-api");
         expect(result[0].local).toBe(true);
         expect(result[0].sourcePath).toBe(localSkillPath);
         expect(result[0].destPath).toBe(localSkillPath);

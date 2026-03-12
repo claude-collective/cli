@@ -398,7 +398,7 @@ describe("eject command", () => {
 
 // Skills that exist in the source but are NOT installed locally (eligible for eject)
 const NON_INSTALLED_SKILLS = DEFAULT_TEST_SKILLS.filter(
-  (s) => !EJECT_INSTALLED_SKILL_IDS.includes(s.id),
+  (s) => !EJECT_INSTALLED_SKILL_IDS.includes(s.id as SkillId),
 );
 
 function buildEjectMatrix(localSkillIds: SkillId[] = []): MergedSkillsMatrix {

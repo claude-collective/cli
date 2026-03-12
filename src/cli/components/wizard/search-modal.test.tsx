@@ -1,7 +1,7 @@
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { SearchModal, type SearchModalProps } from "./search-modal";
-import type { BoundSkillCandidate } from "../../types";
+import type { BoundSkillCandidate, SkillId } from "../../types";
 import {
   ARROW_UP,
   ARROW_DOWN,
@@ -14,21 +14,21 @@ import {
 
 const candidates: BoundSkillCandidate[] = [
   {
-    id: "web-framework-react-pro",
+    id: "web-framework-react-pro" as SkillId,
     sourceUrl: "github:awesome-dev/skills",
     sourceName: "awesome-dev",
     alias: "react",
     description: "Opinionated React with strict TS",
   },
   {
-    id: "web-framework-react-strict",
+    id: "web-framework-react-strict" as SkillId,
     sourceUrl: "github:team-xyz/skills",
     sourceName: "team-xyz",
     alias: "react",
     description: "Strict mode React",
   },
   {
-    id: "web-framework-react-minimal",
+    id: "web-framework-react-minimal" as SkillId,
     sourceUrl: "github:solo-dev/skills",
     sourceName: "solo-dev",
     alias: "react",

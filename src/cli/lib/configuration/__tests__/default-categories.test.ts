@@ -3,7 +3,7 @@ import { defaultCategories } from "../default-categories";
 import type { Category } from "../../../types";
 import { typedKeys } from "../../../utils/typed-object";
 
-const EXPECTED_CATEGORY_COUNT = 38;
+const EXPECTED_CATEGORY_COUNT = 34;
 
 describe("defaultCategories", () => {
   it("has the expected number of categories", () => {

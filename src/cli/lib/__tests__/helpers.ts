@@ -210,22 +210,24 @@ export function buildWizardResult(
 
 /** Build a SkillConfig array from skill IDs with default scope and source */
 export function buildSkillConfigs(
-  skillIds: SkillId[],
+  skillIds: string[],
   overrides?: Partial<Omit<SkillConfig, "id">>,
 ): SkillConfig[] {
   return skillIds.map((id) => ({
-    id,
+    // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
+    id: id as SkillId,
     scope: overrides?.scope ?? "project",
     source: overrides?.source ?? "local",
   }));
 }
 
 export function buildAgentConfigs(
-  agentNames: AgentName[],
+  agentNames: string[],
   overrides?: Partial<Omit<AgentScopeConfig, "name">>,
 ): AgentScopeConfig[] {
   return agentNames.map((name) => ({
-    name,
+    // Boundary cast: test factory accepts arbitrary agent names for test isolation
+    name: name as AgentName,
     scope: overrides?.scope ?? "project",
   }));
 }
@@ -310,12 +312,13 @@ export async function cleanupTestDirs(dirs: PluginTestDirs): Promise<void> {
  * and ESM hoists all imports before evaluating any `const` declarations.
  */
 // eslint-disable-next-line no-var -- `var` avoids TDZ in circular ESM imports (let/const would throw)
-var _canonicalSkillCategories: Partial<Record<SkillId, CategoryPath>> | undefined;
-function getCanonicalSkillCategories(): Partial<Record<SkillId, CategoryPath>> {
+// Boundary cast: test factory maps arbitrary skill IDs to category strings (not all are valid Category union members)
+var _canonicalSkillCategories: Record<string, string> | undefined;
+function getCanonicalSkillCategories(): Record<string, string> {
   if (!_canonicalSkillCategories) {
     _canonicalSkillCategories = {
       "web-framework-react": "web-framework",
-      "web-framework-vue": "web-framework",
+      "web-framework-vue-composition-api": "web-framework",
       "web-framework-original": "web-framework",
       "web-framework-simple": "web-framework",
       "web-framework-arbitrary": "web-framework",
@@ -331,12 +334,20 @@ function getCanonicalSkillCategories(): Partial<Record<SkillId, CategoryPath>> {
       "web-testing-metadata": "web-testing",
       "web-testing-playwright": "web-testing",
       "web-testing-cypress-e2e": "web-testing",
+      "web-testing-playwright-e2e": "web-testing",
+      "web-server-state-react-query": "web-server-state",
       "web-data-fetching-react-query": "web-server-state",
       "web-tooling-vite": "shared-tooling",
       "web-tooling-acme": "web-tooling",
       "web-tooling-custom": "web-tooling",
       "web-tooling-nometadata": "web-tooling",
       "web-tooling-personal": "web-tooling",
+      "web-tooling-valid": "web-tooling",
+      "web-tooling-incomplete": "web-tooling",
+      "web-tooling-my-skill": "web-tooling",
+      "web-tooling-forked-skill": "web-tooling",
+      "web-tooling-test-minimal": "web-tooling",
+      "web-tooling-local-skill": "web-tooling",
       "web-skill-a": "web-framework",
       "web-skill-a-v": "web-framework",
       "web-skill-b": "web-framework",
@@ -346,13 +357,21 @@ function getCanonicalSkillCategories(): Partial<Record<SkillId, CategoryPath>> {
       "web-skill-setup": "web-framework",
       "web-skill-usage": "web-framework",
       "web-local-skill": "local",
+      "web-custom-skill": "web-framework",
+      "web-missing-skill": "web-framework",
+      "web-unknown-skill": "web-framework",
+      "web-nonexistent-skill": "web-framework",
       "api-framework-hono": "api-api",
       "api-framework-express": "api-api",
       "api-database-drizzle": "api-database",
       "api-security-auth-patterns": "api-security",
+      "api-observability-datadog": "api-observability",
       "cli-framework-commander": "cli-framework",
       "infra-setup-env": "shared-tooling",
-      "infra-tooling-linter": "unmapped-category" as CategoryPath,
+      "infra-tooling-linter": "unmapped-category",
+      "infra-tooling-docker": "shared-tooling",
+      "infra-ci-cd-github-actions": "shared-ci-cd",
+      "infra-ci-cd-gitlab-ci": "shared-ci-cd",
       "web-accessibility-a11y": "web-accessibility",
       "web-animation-framer": "web-animation",
       "meta-methodology-investigation": "shared-methodology",
@@ -363,6 +382,11 @@ function getCanonicalSkillCategories(): Partial<Record<SkillId, CategoryPath>> {
       "meta-methodology-improvement-protocol": "shared-methodology",
       "meta-methodology-context-management": "shared-methodology",
       "meta-company-patterns": "local",
+      "meta-test-skill": "shared-methodology",
+      "web-framework-nonexistent": "web-framework",
+      "web-framework-react-pro": "web-framework",
+      "web-framework-react-strict": "web-framework",
+      "web-framework-react-minimal": "web-framework",
     };
   }
   return _canonicalSkillCategories;
@@ -381,15 +405,18 @@ const DOMAIN_PREFIX_MAP: Record<string, Domain> = {
  * using the canonical category registry for correct category mapping.
  */
 export function createTestSkill(
-  id: SkillId,
+  id: string,
   description: string,
   overrides?: Partial<TestSkill>,
 ): TestSkill {
+  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
+  const skillId = id as SkillId;
   const segments = id.split("-");
   const rawPrefix = segments[0] ?? "web";
   const domain = (DOMAIN_PREFIX_MAP[rawPrefix] ?? rawPrefix) as Domain;
   const canonicalCategories = getCanonicalSkillCategories();
-  const category = canonicalCategories[id] ?? (`${segments[0]}-${segments[1]}` as CategoryPath);
+  // Boundary cast: test factory maps to arbitrary category strings
+  const category = (canonicalCategories[id] ?? `${segments[0]}-${segments[1]}`) as CategoryPath;
   const slug = (segments.length >= 3 ? segments.slice(2).join("-") : id) as SkillSlug;
   const displayName = slug
     .split("-")
@@ -397,7 +424,7 @@ export function createTestSkill(
     .join(" ");
 
   return {
-    id,
+    id: skillId,
     slug,
     displayName,
     description,
@@ -409,8 +436,11 @@ export function createTestSkill(
   };
 }
 
-export function createMockSkill(id: SkillId, overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  const category = overrides?.category ?? getCanonicalSkillCategories()[id];
+export function createMockSkill(id: string, overrides?: Partial<ResolvedSkill>): ResolvedSkill {
+  // Boundary cast: test factory accepts arbitrary string IDs for test isolation
+  const skillId = id as SkillId;
+  // Boundary cast: test factory maps to arbitrary category strings
+  const category = (overrides?.category ?? getCanonicalSkillCategories()[skillId]) as CategoryPath | undefined;
 
   if (!category) {
     throw new Error(
@@ -430,7 +460,7 @@ export function createMockSkill(id: SkillId, overrides?: Partial<ResolvedSkill>)
     .join(" ");
 
   return {
-    id,
+    id: skillId,
     slug: defaultSlug,
     displayName: defaultDisplayName,
     description: `${id} skill`,
@@ -472,9 +502,11 @@ export function createMockSkillSource(
  * Used when mocking extractAllSkills() return values.
  */
 export function createMockExtractedSkill(
-  id: SkillId,
+  id: string,
   overrides?: Partial<ExtractedSkillMetadata>,
 ): ExtractedSkillMetadata {
+  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
+  const skillId = id as SkillId;
   // Derive directory path and category from the skill ID convention: "domain-category-name"
   const segments = id.split("-");
   const domain = segments[0] ?? "web";
@@ -483,7 +515,7 @@ export function createMockExtractedSkill(
   const directoryPath = `${domain}/${category}/${name}`;
 
   return {
-    id,
+    id: skillId,
     directoryPath,
     description: `${id} skill`,
     category: `${domain}-${category}` as CategoryPath,
@@ -589,12 +621,14 @@ export function createMockAgentConfig(
 }
 
 export function createMockSkillEntry(
-  id: SkillId,
+  id: string,
   preloaded = false,
   overrides?: Partial<Skill>,
 ): Skill {
+  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
+  const skillId = id as SkillId;
   return {
-    id,
+    id: skillId,
     path: `skills/${id}/`,
     description: `${id} skill`,
     usage: `when working with ${id}`,
@@ -615,7 +649,7 @@ export function createCompileContext(overrides?: Partial<CompileContext>): Compi
 
 export async function writeTestSkill(
   skillsDir: string,
-  skillId: SkillId,
+  skillId: string,
   options?: {
     /** Extra fields to merge into metadata.yaml (e.g., forkedFrom, displayName) */
     extraMetadata?: Record<string, unknown>;
@@ -625,7 +659,8 @@ export async function writeTestSkill(
     skillContent?: string;
   },
 ): Promise<string> {
-  const skill = findSkill(skillId);
+  // Boundary cast: test factory accepts arbitrary skill IDs
+  const skill = findSkill(skillId as SkillId);
 
   if (!options?.skipMetadata && !skill) {
     throw new Error(
@@ -715,12 +750,13 @@ export async function writeTestAgent(
 }
 
 export function createMockCategory(
-  id: Category,
+  id: string,
   displayName: string,
   overrides?: Partial<CategoryDefinition>,
 ): CategoryDefinition {
+  // Boundary cast: test factory accepts arbitrary category IDs for test isolation
   return {
-    id,
+    id: id as Category,
     displayName,
     description: `${displayName} category`,
     domain: "web",
@@ -760,7 +796,7 @@ export function createComprehensiveMatrix(
   // metadata.yaml and the categories map keys, e.g., "web-framework", "api-api").
   const skills = {
     "web-framework-react": SKILLS.react,
-    "web-framework-vue": {
+    "web-framework-vue-composition-api": {
       ...SKILLS.vue,
       conflictsWith: [{ skillId: "web-framework-react", reason: "Choose one framework" }],
     } satisfies ResolvedSkill,
@@ -826,10 +862,10 @@ export function createComprehensiveMatrix(
       description: "Vue.js frontend stack",
       skills: {
         "web-developer": {
-          "web-framework": ["web-framework-vue"],
+          "web-framework": ["web-framework-vue-composition-api"],
         },
       } as ResolvedStack["skills"],
-      allSkillIds: ["web-framework-vue"],
+      allSkillIds: ["web-framework-vue-composition-api"],
       philosophy: "Progressive framework approach",
     }),
   ];
@@ -837,7 +873,7 @@ export function createComprehensiveMatrix(
   // Boundary cast: test matrix only contains a subset of all possible slugs
   const slugToId = {
     react: "web-framework-react",
-    vue: "web-framework-vue",
+    "vue-composition-api": "web-framework-vue-composition-api",
     zustand: "web-state-zustand",
     "scss-modules": "web-styling-scss-modules",
     hono: "api-framework-hono",
@@ -1026,11 +1062,13 @@ export function buildTestProjectConfig(
 }
 
 export function createMockSkillDefinition(
-  id: SkillId,
+  id: string,
   overrides?: Partial<SkillDefinition>,
 ): SkillDefinition {
+  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
+  const skillId = id as SkillId;
   return {
-    id,
+    id: skillId,
     path: `skills/${id}/`,
     description: `${id} skill`,
     ...overrides,
@@ -1109,8 +1147,9 @@ export function createMockCompiledStackPlugin(
   };
 }
 
-export function createMockSkillAssignment(id: SkillId, preloaded = false): SkillAssignment {
-  return { id, preloaded };
+export function createMockSkillAssignment(id: string, preloaded = false): SkillAssignment {
+  // Boundary cast: test factory accepts arbitrary skill IDs for test isolation
+  return { id: id as SkillId, preloaded };
 }
 
 export function createMockRawStacksConfig(): RawStacksConfig {
@@ -1137,7 +1176,7 @@ export function createMockRawStacksConfig(): RawStacksConfig {
         description: "Vue single-page application",
         agents: {
           "web-developer": {
-            "web-framework": "web-framework-vue",
+            "web-framework": "web-framework-vue-composition-api",
             "web-styling": "web-styling-tailwind",
           },
         },
@@ -1233,7 +1272,7 @@ export function testSkillToResolvedSkill(
  * Simulates what multi-source-loader.ts does after tagging.
  */
 export function createMockMultiSourceSkill(
-  id: SkillId,
+  id: string,
   sources: SkillSource[],
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
