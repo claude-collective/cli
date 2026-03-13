@@ -1,7 +1,6 @@
 import { Hook } from "@oclif/core";
 import { resolveSource } from "../lib/configuration/index.js";
 import { detectInstallation } from "../lib/installation/installation.js";
-import { hasIndividualPlugins } from "../lib/plugins/index.js";
 import { showDashboard } from "../commands/init.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import type { ConfigWithSource } from "../base-command.js";
@@ -11,12 +10,9 @@ const hook: Hook<"init"> = async function (options) {
 
   // When no command is given and project is already initialized, show dashboard
   if (options.id === undefined) {
-    const [installation, individualPlugins] = await Promise.all([
-      detectInstallation(projectDir),
-      hasIndividualPlugins(projectDir),
-    ]);
+    const installation = await detectInstallation(projectDir);
 
-    if (installation || individualPlugins) {
+    if (installation) {
       const selectedCommand = await showDashboard(projectDir);
       if (selectedCommand) {
         await options.config.runCommand(selectedCommand);

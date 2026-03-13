@@ -23,7 +23,6 @@ import {
 } from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";
 import { getInstallationInfo } from "../lib/plugins/plugin-info.js";
-import { hasIndividualPlugins } from "../lib/plugins/index.js";
 import {
   claudePluginInstall,
   claudePluginMarketplaceExists,
@@ -256,10 +255,9 @@ export default class Init extends BaseCommand {
     const projectDir = process.cwd();
 
     // For "already initialized" check, only look at the target directory (no global fallback)
-    const individualPluginsExist = await hasIndividualPlugins(projectDir);
     const existingInstallation = await detectProjectInstallation(projectDir);
 
-    if (individualPluginsExist || existingInstallation) {
+    if (existingInstallation) {
       const selectedCommand = await showDashboard(projectDir, (msg) => this.log(msg));
       if (selectedCommand) {
         await this.config.runCommand(selectedCommand);
