@@ -14,6 +14,7 @@ import type {
 } from "../../types";
 import { SKILL_ID_PATTERN, stacksConfigSchema } from "../schemas";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
+import { getCustomSkillIds } from "../matrix/matrix-provider";
 import { STACKS_FILE_PATH } from "../../consts";
 import { loadConfig } from "../configuration/config-loader";
 import { defaultStacks } from "../configuration/default-stacks";
@@ -114,13 +115,12 @@ export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): Skill
   return typedEntries<Category, SkillAssignment[]>(agentConfig).flatMap(([category, assignments]) =>
     (assignments ?? [])
       .filter((assignment) => {
-        if (!SKILL_ID_PATTERN.test(assignment.id)) {
-          warn(
-            `Invalid skill ID '${assignment.id}' for category '${category}' in stack config. Skipping.`,
-          );
-          return false;
-        }
-        return true;
+        if (SKILL_ID_PATTERN.test(assignment.id)) return true;
+        if (getCustomSkillIds().has(assignment.id)) return true;
+        warn(
+          `Invalid skill ID '${assignment.id}' for category '${category}' in stack config. Skipping.`,
+        );
+        return false;
       })
       .map(
         (assignment): SkillReference => ({

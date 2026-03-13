@@ -6,6 +6,7 @@ import type {
   SkillId,
   SkillSlug,
 } from "../../types";
+import { typedEntries } from "../../utils/typed-object";
 
 /** The current matrix — starts as BUILT_IN_MATRIX, replaced after local skill merge on startup */
 export let matrix: MergedSkillsMatrix = BUILT_IN_MATRIX;
@@ -27,6 +28,15 @@ export function getSkillBySlug(slug: SkillSlug): ResolvedSkill {
   const id = matrix.slugMap.slugToId[slug];
   if (!id) throw new Error(`Skill not found for slug: ${slug}`);
   return getSkillById(id);
+}
+
+/** Returns IDs of all custom skills in the current matrix. */
+export function getCustomSkillIds(): Set<SkillId> {
+  return new Set(
+    typedEntries(matrix.skills)
+      .filter(([_, skill]) => skill?.custom)
+      .map(([id]) => id),
+  );
 }
 
 /** Optional stack lookup by ID. */
