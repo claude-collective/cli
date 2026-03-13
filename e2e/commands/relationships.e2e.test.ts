@@ -32,8 +32,8 @@ describe("slug-based relationship rules", () => {
 
       const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
-      // Matrix health check should detect that "angular" has no matching skill in the source
-      expect(combined).toContain("unresolved reference");
+      // Slug resolution should detect that "angular-standalone" has no matching skill in the source
+      expect(combined).toContain("Unresolved slug");
       expect(combined).toContain("angular-standalone");
     });
 
@@ -84,7 +84,7 @@ describe("slug-based relationship rules", () => {
 
       const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
-      expect(combined).toContain("unresolved reference");
+      expect(combined).toContain("Unresolved slug");
       expect(combined).toContain("angular-standalone");
     });
 
@@ -245,7 +245,7 @@ describe("slug-based relationship rules", () => {
       const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
       // "vue-composition-api" slug does not exist in the E2E source
-      expect(combined).toContain("unresolved reference");
+      expect(combined).toContain("Unresolved slug");
       expect(combined).toContain("vue-composition-api");
     });
   });

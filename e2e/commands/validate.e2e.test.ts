@@ -345,9 +345,9 @@ describe("validate command", () => {
 
       const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
-      // Matrix health check should detect the unresolved reference (angular not in source)
+      // Slug resolution should detect the unresolved slug (angular-standalone not in source)
       expect(combined).toContain("Checked 2 skill(s)");
-      expect(combined).toContain("unresolved reference");
+      expect(combined).toContain("Unresolved slug");
       expect(combined).toContain("angular-standalone");
     });
   });

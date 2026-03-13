@@ -266,7 +266,7 @@ describe("init wizard — existing projects", () => {
       await session.waitForExit(EXIT_TIMEOUT_MS);
     });
 
-    it("should show dashboard when selecting edit global", async () => {
+    it("should show edit wizard when selecting edit global", async () => {
       const source = await createE2ESource();
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
@@ -286,11 +286,11 @@ describe("init wizard — existing projects", () => {
       session.enter();
       await delay(KEYSTROKE_DELAY_MS);
 
-      // The dashboard should appear showing the branding name
-      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
+      // The edit wizard should appear showing skill selection tabs
+      await session.waitForText("Skills", WIZARD_LOAD_TIMEOUT_MS);
 
-      // Dismiss the dashboard
-      session.escape();
+      // Dismiss the edit wizard
+      session.ctrlC();
       await session.waitForExit(EXIT_TIMEOUT_MS);
     });
   });
