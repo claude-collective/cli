@@ -11,6 +11,7 @@ import {
   printPluginValidationResult,
 } from "../lib/plugins/index.js";
 import { validateSource } from "../lib/source-validator.js";
+import { setVerbose } from "../utils/logger.js";
 
 export default class Validate extends BaseCommand {
   static summary =
@@ -79,6 +80,7 @@ export default class Validate extends BaseCommand {
     const { args, flags } = await this.parse(Validate);
 
     if (flags.source) {
+      setVerbose(flags.verbose);
       await this.validateSkillsSource(flags.source);
     } else if (args.path || flags.plugins) {
       await this.validatePlugins(args.path, flags.verbose, flags.all);
