@@ -60,11 +60,11 @@ describe("init wizard — flags and permissions", () => {
       await createProjectAndSource();
       session = spawnInitWizard(projectDir!, sourceDir!);
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      // The E2E source defines an "E2E Test Stack" — wait for it to render
+      await session.waitForText("E2E Test Stack", WIZARD_LOAD_TIMEOUT_MS);
 
-      // The E2E source defines an "E2E Test Stack" — verify it appears
       const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("E2E Test Stack");
+      expect(fullOutput).toContain("Choose a stack");
       expect(fullOutput).toContain("Minimal stack for E2E testing");
     });
   });
