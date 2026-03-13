@@ -1,5 +1,7 @@
 import { BUILT_IN_MATRIX } from "../../types/generated/matrix";
 import type {
+  Category,
+  Domain,
   MergedSkillsMatrix,
   ResolvedSkill,
   ResolvedStack,
@@ -37,6 +39,12 @@ export function getCustomSkillIds(): Set<SkillId> {
       .filter(([_, skill]) => skill?.custom)
       .map(([id]) => id),
   );
+}
+
+/** Look up a category's domain from the matrix (handles auto-synthesized categories for custom skills). */
+export function getCategoryDomain(category: string): Domain | undefined {
+  // Boundary cast: matrix categories include auto-synthesized entries for custom skills
+  return matrix.categories[category as Category]?.domain;
 }
 
 /** Optional stack lookup by ID. */

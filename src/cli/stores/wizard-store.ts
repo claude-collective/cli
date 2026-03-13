@@ -5,7 +5,7 @@ import type { InstallMode } from "../lib/installation/index.js";
 import { deriveInstallMode as sharedDeriveInstallMode } from "../lib/installation/installation.js";
 import type { AgentScopeConfig, SkillConfig } from "../types/config.js";
 import { resolveAlias } from "../lib/matrix/index.js";
-import { matrix, getSkillById } from "../lib/matrix/matrix-provider.js";
+import { matrix, getSkillById, getCategoryDomain } from "../lib/matrix/matrix-provider.js";
 import type {
   AgentName,
   BoundSkill,
@@ -22,12 +22,13 @@ import type {
 import type { SourceOption } from "../components/wizard/source-grid.js";
 import { warn } from "../utils/logger.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
-import { isCategory } from "../utils/type-guards.js";
 
 const BUILT_IN_DOMAINS: Domain[] = ["web", "api", "cli", "mobile", "shared"];
 
 function createDefaultSkillConfig(id: SkillId): SkillConfig {
-  return { id, scope: "global", source: DEFAULT_PUBLIC_SOURCE_NAME };
+  const skill = matrix.skills[id];
+  const primarySource = skill?.availableSources?.find((s) => s.primary)?.name;
+  return { id, scope: "global", source: primarySource ?? DEFAULT_PUBLIC_SOURCE_NAME };
 }
 
 /** Derive all unique domains from a categories map, preserving built-in order then appending custom. */
@@ -87,7 +88,7 @@ export type SkillLookupEntry = Pick<ResolvedSkill, "category" | "displayName">;
 function resolveSkillForPopulation(
   skillId: SkillId,
 ): { domain: Domain; subcat: Category; techId: SkillId } | null {
-  const { skills, categories } = matrix;
+  const { skills } = matrix;
   const skill = skills[skillId];
   if (!skill?.category) {
     warn(
@@ -96,18 +97,14 @@ function resolveSkillForPopulation(
     return null;
   }
 
-  if (!isCategory(skill.category)) {
-    warn(`Installed skill '${skillId}' has non-standard category '${skill.category}' — skipping`);
-    return null;
-  }
-
-  const subcat = skill.category;
-  const domain = categories[subcat]?.domain;
+  const domain = getCategoryDomain(skill.category);
   if (!domain) {
     warn(`Installed skill '${skillId}' has unknown category '${skill.category}' — skipping`);
     return null;
   }
 
+  // Boundary cast: domain lookup confirmed category exists in matrix
+  const subcat = skill.category as Category;
   return { domain, subcat, techId: skillId };
 }
 
@@ -587,10 +584,12 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       const skillConfigs: SkillConfig[] = resolvedSkillIds.map((id) => {
         const saved = savedConfigs?.find((sc) => sc.id === id);
+        const skill = matrix.skills[id];
+        const primarySource = skill?.availableSources?.find((s) => s.primary)?.name;
         return {
           id,
           scope: saved?.scope ?? "global",
-          source: saved?.source ?? DEFAULT_PUBLIC_SOURCE_NAME,
+          source: primarySource ?? saved?.source ?? DEFAULT_PUBLIC_SOURCE_NAME,
         };
       });
 

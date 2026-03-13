@@ -14,7 +14,7 @@ import type {
 } from "../../types";
 import type { InstallMode } from "./installation";
 import { deriveInstallMode } from "./installation";
-import { matrix } from "../matrix/matrix-provider";
+import { matrix, getCategoryDomain } from "../matrix/matrix-provider";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
@@ -33,7 +33,6 @@ import {
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
-import { isCategory } from "../../utils/type-guards";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
@@ -390,10 +389,9 @@ async function writeProjectConfigTypes(
 
     const domainSet = new Set<string>();
     for (const cat of projectCategories) {
-      if (!isCategory(cat)) continue;
-      const def = matrix.categories[cat];
-      if (def?.domain) {
-        domainSet.add(def.domain);
+      const domain = getCategoryDomain(cat);
+      if (domain) {
+        domainSet.add(domain);
       }
     }
     projectDomains = [...domainSet].sort();
