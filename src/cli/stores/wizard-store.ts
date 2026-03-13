@@ -955,8 +955,12 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const skillId = resolveAlias(tech);
       const skill = getSkillById(skillId);
       const configEntry = skillConfigs.find((sc) => sc.id === skillId);
+      const primarySource = skill.availableSources?.find((s) => s.primary)?.name;
       const selectedSource =
-        configEntry?.source || skill.activeSource?.name || DEFAULT_PUBLIC_SOURCE_NAME;
+        configEntry?.source ||
+        skill.activeSource?.name ||
+        primarySource ||
+        DEFAULT_PUBLIC_SOURCE_NAME;
       const slug = skill.slug;
 
       const sortedSources = [...(skill.availableSources || [])].sort(
