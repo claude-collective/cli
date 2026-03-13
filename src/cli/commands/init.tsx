@@ -10,6 +10,7 @@ import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import {
   loadSkillsMatrixFromSource,
   getMarketplaceLabel,
+  fetchMarketplace,
   type SourceLoadResult,
 } from "../lib/loading/index.js";
 import {
@@ -290,10 +291,14 @@ export default class Init extends BaseCommand {
         clearTerminalOutput();
 
         if (globalChoice === "edit-global") {
-          const selectedCommand = await showDashboard(os.homedir(), (msg) => this.log(msg));
-          if (selectedCommand) {
-            await this.config.runCommand(selectedCommand);
+          const editArgs: string[] = [];
+          if (flags.source) {
+            editArgs.push("--source", flags.source);
           }
+          if (flags.refresh) {
+            editArgs.push("--refresh");
+          }
+          await this.config.runCommand("edit", editArgs);
           return;
         }
 
@@ -385,14 +390,7 @@ export default class Init extends BaseCommand {
     );
 
     if (installMode === "plugin") {
-      if (sourceResult.marketplace) {
-        await this.installIndividualPlugins(result, sourceResult, flags, projectDir);
-      } else {
-        this.warn("Plugin Mode requires a marketplace for individual skill installation.");
-        this.log(`Falling back to Local Mode (copying to .claude/skills/)...`);
-        this.log("To use Plugin Mode, either select a stack or configure a marketplace source.\n");
-        await this.installLocalMode(result, sourceResult, flags, projectDir);
-      }
+      await this.installIndividualPlugins(result, sourceResult, flags, projectDir);
       return;
     }
 
@@ -405,26 +403,39 @@ export default class Init extends BaseCommand {
     flags: { source?: string },
     projectDir: string,
   ): Promise<void> {
-    if (sourceResult.marketplace) {
-      const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
+    // Lazily resolve marketplace name if not already set (e.g. BUILT_IN_MATRIX skips fetch)
+    if (!sourceResult.marketplace) {
+      try {
+        const marketplaceResult = await fetchMarketplace(sourceResult.sourceConfig.source, {});
+        sourceResult.marketplace = marketplaceResult.marketplace.name;
+      } catch {
+        this.warn("Could not resolve marketplace. Falling back to Local Mode...");
+        await this.installLocalMode(result, sourceResult, flags, projectDir);
+        return;
+      }
+    }
 
-      if (!marketplaceExists) {
-        this.log(`Registering marketplace "${sourceResult.marketplace}"...`);
-        try {
-          const marketplaceSource = sourceResult.sourceConfig.source.replace(/^github:/, "");
-          await claudePluginMarketplaceAdd(marketplaceSource);
-          this.log(`Registered marketplace: ${sourceResult.marketplace}`);
-        } catch (error) {
-          this.error(getErrorMessage(error), {
-            exit: EXIT_CODES.ERROR,
-          });
-        }
+    // After lazy resolution, marketplace is guaranteed to be set (or we returned above)
+    const marketplace = sourceResult.marketplace;
+
+    const marketplaceExists = await claudePluginMarketplaceExists(marketplace);
+
+    if (!marketplaceExists) {
+      this.log(`Registering marketplace "${marketplace}"...`);
+      try {
+        const marketplaceSource = sourceResult.sourceConfig.source.replace(/^github:/, "");
+        await claudePluginMarketplaceAdd(marketplaceSource);
+        this.log(`Registered marketplace: ${marketplace}`);
+      } catch (error) {
+        this.error(getErrorMessage(error), {
+          exit: EXIT_CODES.ERROR,
+        });
       }
     }
 
     this.log("Installing skill plugins...");
     for (const skill of result.skills.filter((s) => s.source !== "local")) {
-      const pluginRef = `${skill.id}@${sourceResult.marketplace}`;
+      const pluginRef = `${skill.id}@${marketplace}`;
       const pluginScope = skill.scope === "global" ? "user" : "project";
       try {
         await claudePluginInstall(pluginRef, pluginScope, projectDir);

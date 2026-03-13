@@ -6,7 +6,6 @@ import { render } from "ink";
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import {
-  ASCII_LOGO,
   CLI_BIN_NAME,
   GLOBAL_INSTALL_ROOT,
   PROJECT_ROOT,
@@ -157,7 +156,6 @@ export default class Edit extends BaseCommand {
       <Wizard
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
-        logo={ASCII_LOGO}
         initialStep="build"
         initialDomains={projectConfig?.config?.domains}
         initialAgents={projectConfig?.config?.selectedAgents}
