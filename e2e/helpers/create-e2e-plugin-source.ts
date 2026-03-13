@@ -1,0 +1,51 @@
+import path from "path";
+import { createE2ESource } from "./create-e2e-source.js";
+import { runCLI } from "./test-utils.js";
+import type { RelationshipDefinitions } from "../../src/cli/types/index.js";
+
+export type E2EPluginSource = {
+  sourceDir: string;
+  tempDir: string;
+  marketplaceName: string;
+  pluginsDir: string;
+};
+
+/**
+ * Creates a complete plugin source for E2E tests: builds the E2E source,
+ * compiles skill plugins, and generates marketplace.json.
+ *
+ * This is the canonical setup helper for all plugin-mode E2E tests.
+ * The build chain is: createE2ESource() -> build plugins -> build marketplace.
+ *
+ * @throws if either build step fails (non-zero exit code)
+ */
+export async function createE2EPluginSource(options?: {
+  marketplaceName?: string;
+  relationships?: Partial<RelationshipDefinitions>;
+}): Promise<E2EPluginSource> {
+  const { sourceDir, tempDir } = await createE2ESource(
+    options?.relationships ? { relationships: options.relationships } : undefined,
+  );
+
+  const buildPluginsResult = await runCLI(["build", "plugins"], sourceDir);
+  if (buildPluginsResult.exitCode !== 0) {
+    throw new Error(
+      `build plugins failed (exit ${buildPluginsResult.exitCode}):\n${buildPluginsResult.combined}`,
+    );
+  }
+
+  const marketplaceName = options?.marketplaceName ?? `e2e-test-${Date.now()}`;
+  const buildMarketplaceResult = await runCLI(
+    ["build", "marketplace", "--name", marketplaceName],
+    sourceDir,
+  );
+  if (buildMarketplaceResult.exitCode !== 0) {
+    throw new Error(
+      `build marketplace failed (exit ${buildMarketplaceResult.exitCode}):\n${buildMarketplaceResult.combined}`,
+    );
+  }
+
+  const pluginsDir = path.join(sourceDir, "dist", "plugins");
+
+  return { sourceDir, tempDir, marketplaceName, pluginsDir };
+}

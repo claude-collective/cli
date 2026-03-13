@@ -12,6 +12,7 @@ import {
 } from "../../src/cli/lib/__tests__/test-fs-utils.js";
 import { EXIT_CODES } from "../../src/cli/lib/exit-codes.js";
 import type { AgentName, Domain, ProjectConfig, SkillId } from "../../src/cli/types/index.js";
+import type { TerminalSession } from "./terminal-session.js";
 import { renderConfigTs, renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 
 export { EXIT_CODES };
@@ -48,15 +49,166 @@ export const KEYSTROKE_DELAY_MS = 150;
 /** Time to wait for a PTY process to exit after sending a signal */
 export const EXIT_TIMEOUT_MS = 10_000;
 
+/** Timeout for plugin installation (longer than standard INSTALL_TIMEOUT_MS) */
+export const PLUGIN_INSTALL_TIMEOUT_MS = 60_000;
+
+/** Timeout for waiting for a process to exit in lifecycle tests */
+export const EXIT_WAIT_TIMEOUT_MS = 30_000;
+
+/** Standard timeout for beforeAll hooks in E2E tests */
+export const SETUP_TIMEOUT_MS = 60_000;
+
+/** Standard timeout for long-running lifecycle E2E tests */
+export const LIFECYCLE_TEST_TIMEOUT_MS = 180_000;
+
+/** Standard timeout for interactive wizard E2E tests */
+export const INTERACTIVE_TEST_TIMEOUT_MS = 120_000;
+
 /** General-purpose delay for waiting on async terminal updates */
 export const delay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Environment override to disable remote source lookups during E2E compilation tests */
+export const COMPILE_ENV = {
+  AGENTSINC_SOURCE: undefined,
+};
+
+/**
+ * Standard forkedFrom metadata block for E2E plugin/uninstall tests.
+ * Represents a skill forked from web-framework-react in the E2E source.
+ */
+export const FORKED_FROM_METADATA =
+  [
+    'author: "@agents-inc"',
+    'contentHash: "e2e-hash"',
+    "forkedFrom:",
+    "  skillId: web-framework-react",
+    '  contentHash: "e2e-hash"',
+    "  date: 2026-01-01",
+  ].join("\n") + "\n";
+
+/**
+ * Navigates the edit wizard from build step through completion without changing skills.
+ * Build -> Sources -> Agents -> Confirm -> Complete
+ *
+ * Intended for edit-command E2E tests that need to advance through the wizard
+ * without modifying skill selections.
+ */
+export async function navigateEditWizardToCompletion(
+  session: TerminalSession,
+  timeoutMs = 30_000,
+): Promise<void> {
+  // Build step -> Sources step
+  session.enter();
+  await session.waitForText("technologies", timeoutMs);
+  await delay(STEP_TRANSITION_DELAY_MS);
+
+  // Sources step -> Agents step
+  session.enter();
+  await session.waitForText("Select agents to compile", timeoutMs);
+  await delay(STEP_TRANSITION_DELAY_MS);
+
+  // Agents step -> Confirm step
+  session.enter();
+  await session.waitForText("Ready to install", timeoutMs);
+  await delay(STEP_TRANSITION_DELAY_MS);
+
+  // Confirm step -> Complete
+  session.enter();
+}
+
+/**
+ * Waits for text in the raw PTY output (not the xterm buffer).
+ * The xterm buffer has limited scrollback (1000 lines) which gets exceeded
+ * by relationship resolution warnings during matrix loading. Raw output
+ * captures everything the process wrote, regardless of scrollback limits.
+ */
+export async function waitForRawText(
+  session: TerminalSession,
+  text: string,
+  timeoutMs: number,
+): Promise<void> {
+  const POLL_INTERVAL_MS = 50;
+  const start = Date.now();
+  while (!session.getRawOutput().includes(text)) {
+    if (Date.now() - start > timeoutMs) {
+      const rawTail = session.getRawOutput().slice(-2000);
+      throw new Error(
+        `Timeout waiting for "${text}" in raw output after ${timeoutMs}ms.\n` +
+          `Raw output tail:\n${rawTail}`,
+      );
+    }
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+  }
+}
+
+/**
+ * Navigates the init wizard from Stack selection through completion with defaults.
+ * Stack -> Domain -> Build("a" accepts all) -> Confirm -> Wait for success.
+ *
+ * Intended for lifecycle E2E tests that use the standard E2E source with
+ * a single stack. Assumes the wizard is already loaded (session was spawned
+ * with `init --source <dir>`).
+ */
+export async function navigateInitWizardToCompletion(
+  session: TerminalSession,
+  timeoutMs = INSTALL_TIMEOUT_MS,
+): Promise<void> {
+  // Step 1: Stack selection — accept first stack (E2E Test Stack)
+  await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+  await delay(STEP_TRANSITION_DELAY_MS);
+  session.enter();
+
+  // Step 2: Domain selection — accept pre-selected domains
+  await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+  await delay(STEP_TRANSITION_DELAY_MS);
+  session.enter();
+
+  // Step 3: Build step — "a" accepts all stack defaults
+  await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+  await delay(STEP_TRANSITION_DELAY_MS);
+  session.write("a");
+
+  // Step 4: Confirmation — Enter to confirm installation
+  await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
+  await delay(STEP_TRANSITION_DELAY_MS);
+  session.enter();
+
+  // Wait for installation to complete
+  await session.waitForText("initialized successfully", timeoutMs);
+}
+
+/**
+ * Passes through all 3 domain build steps (Web, API, Shared) without changes.
+ * Used in edit wizard and multi-domain lifecycle tests where the E2E source
+ * defines 3 domains.
+ */
+export async function passThroughAllBuildDomains(
+  session: TerminalSession,
+  timeoutMs = WIZARD_LOAD_TIMEOUT_MS,
+): Promise<void> {
+  // Build step — Web domain
+  await session.waitForText("Customize your Web stack", timeoutMs);
+  await delay(STEP_TRANSITION_DELAY_MS);
+  session.enter();
+
+  // Build step — API domain
+  await session.waitForText("Customize your API stack", timeoutMs);
+  await delay(STEP_TRANSITION_DELAY_MS);
+  session.enter();
+
+  // Build step — Shared domain
+  await session.waitForText("Customize your Shared stack", timeoutMs);
+  await delay(STEP_TRANSITION_DELAY_MS);
+  session.enter();
+}
 
 export async function createTempDir(): Promise<string> {
   return createTempDirBase(E2E_TEMP_PREFIX);
 }
 
 export { cleanupTempDir, fileExists, directoryExists };
+export { renderConfigTs, renderSkillMd };
 
 /**
  * Creates a minimal project directory with a single local skill.
@@ -505,4 +657,9 @@ contentHash: "e5f6a7b"
   );
 
   return { projectDir, agentsDir };
+}
+
+/** Returns the path to the ejected agent.liquid template in a project. */
+export function getEjectedTemplatePath(projectDir: string): string {
+  return path.join(projectDir, CLAUDE_SRC_DIR, "agents", "_templates", "agent.liquid");
 }

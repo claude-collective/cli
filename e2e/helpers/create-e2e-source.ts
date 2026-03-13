@@ -13,6 +13,7 @@ import type {
   CategoryPath,
   RelationshipDefinitions,
   SkillId,
+  SkillSlug,
   Stack,
   StackAgentConfig,
 } from "../../src/cli/types/index.js";
@@ -26,7 +27,7 @@ import {
 type E2ESkill = {
   category: CategoryPath;
   id: SkillId;
-  slug: string;
+  slug: SkillSlug;
   description: string;
   domain: string;
   displayName: string;
