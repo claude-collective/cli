@@ -43,6 +43,7 @@ export function useSourceGridSearchModal({
       if (!row || !onSearch) return;
 
       const alias = matrix.slugMap.idToSlug[row.skillId];
+      if (!alias) return;
       setSearchAlias(alias);
       searchModal.open(rowIndex);
       onSearchStateChange?.(true);
