@@ -270,7 +270,9 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   const sourceStacks = await loadStacks(basePath, stacksRelFile);
   const stacks = sourceStacks.length > 0 ? sourceStacks : defaultStacks;
   if (stacks.length > 0) {
-    mergedMatrix.suggestedStacks = stacks.map((stack) => convertStackToResolvedStack(stack));
+    mergedMatrix.suggestedStacks = stacks.map((stack) =>
+      convertStackToResolvedStack(stack),
+    );
     const stackSource = sourceStacks.length > 0 ? "source" : "CLI";
     verbose(`Loaded ${stacks.length} stacks from ${stackSource}`);
   }

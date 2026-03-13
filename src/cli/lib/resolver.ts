@@ -1,11 +1,10 @@
 import path from "path";
-import { fileExists } from "../utils/fs";
 import { DIRS, STANDARD_FILES } from "../consts";
-import { verbose } from "../utils/logger";
 import type {
   AgentConfig,
   AgentDefinition,
   AgentName,
+  Category,
   CompileAgentConfig,
   CompileConfig,
   ProjectConfig,
@@ -14,8 +13,9 @@ import type {
   SkillReference,
   Stack,
   StackAgentConfig,
-  Category,
 } from "../types";
+import { fileExists } from "../utils/fs";
+import { verbose } from "../utils/logger";
 import { typedKeys } from "../utils/typed-object";
 import { resolveAgentConfigToSkills } from "./stacks/stacks-loader";
 
