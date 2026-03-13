@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.74.7] - 2026-03-13
+
+**E2E test suite expansion and code quality audit**
+
+- 25 new E2E test files (485 tests across 56 files) covering commands, wizards, lifecycle, and integration
+- Shared E2E helpers, assertion utilities, and timing constants extracted from duplicated code
+- Unit test fixture refactoring into dedicated mock-data modules
+
+See [changelogs/0.74.7.md](./changelogs/0.74.7.md) for full details.
+
+---
+
 ## [0.74.6] - 2026-03-13
 
 **Fix init dashboard, custom skill pre-selection, and edit marketplace registration**
