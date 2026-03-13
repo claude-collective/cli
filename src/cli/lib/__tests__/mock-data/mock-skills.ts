@@ -1,7 +1,14 @@
 // Shared skill entries and TestSkill arrays for test files.
 // Uses createMockSkillEntry from helpers.ts.
 
-import type { Category, CategoryPath, ResolvedSkill, Skill, SkillId, SkillSlug } from "../../../types";
+import type {
+  Category,
+  CategoryPath,
+  ResolvedSkill,
+  Skill,
+  SkillId,
+  SkillSlug,
+} from "../../../types";
 import type { TestSkill } from "../fixtures/create-test-source";
 import {
   createMockExtractedSkill,

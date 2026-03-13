@@ -89,12 +89,7 @@ describe("build pipeline (plugin chain)", () => {
       expect(pluginDirs.length).toBeGreaterThanOrEqual(1);
 
       for (const pluginDirName of pluginDirs) {
-        const manifestPath = path.join(
-          pluginsDir,
-          pluginDirName,
-          ".claude-plugin",
-          "plugin.json",
-        );
+        const manifestPath = path.join(pluginsDir, pluginDirName, ".claude-plugin", "plugin.json");
 
         if (!(await fileExists(manifestPath))) continue;
 

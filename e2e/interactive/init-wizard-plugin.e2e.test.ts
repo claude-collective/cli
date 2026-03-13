@@ -79,10 +79,7 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
    * Runs the full init wizard flow from stack selection through installation.
    * Same navigation pattern as init-wizard-stack.e2e.test.ts.
    */
-  async function runFullPluginInitFlow(
-    project: string,
-    source: string,
-  ): Promise<TerminalSession> {
+  async function runFullPluginInitFlow(project: string, source: string): Promise<TerminalSession> {
     await createPermissionsFile(project);
 
     const wizardSession = spawnInitWizard(project, source);

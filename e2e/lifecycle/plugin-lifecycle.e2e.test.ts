@@ -6,10 +6,7 @@ import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
-import {
-  verifyConfig,
-  verifyAgentCompiled,
-} from "../helpers/plugin-assertions.js";
+import { verifyConfig, verifyAgentCompiled } from "../helpers/plugin-assertions.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
   createTempDir,
@@ -80,11 +77,9 @@ describe.skipIf(!claudeAvailable)("plugin mode lifecycle: init -> uninstall", ()
 
       await createPermissionsFile(projectDir);
 
-      session = new TerminalSession(
-        ["init", "--source", fixture.sourceDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+      session = new TerminalSession(["init", "--source", fixture.sourceDir], projectDir, {
+        env: { AGENTSINC_SOURCE: undefined },
+      });
 
       // Navigate through init wizard (slower timeout for plugin installation)
       await navigateInitWizardToCompletion(session, PLUGIN_INSTALL_TIMEOUT_MS);

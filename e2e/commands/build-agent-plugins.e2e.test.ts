@@ -88,14 +88,7 @@ describe("build agent plugins", () => {
       await mkdir(skillsDir, { recursive: true });
 
       buildResult = await runCLI(
-        [
-          "build",
-          "plugins",
-          "--agents-dir",
-          agentsDir,
-          "--skills-dir",
-          skillsDir,
-        ],
+        ["build", "plugins", "--agents-dir", agentsDir, "--skills-dir", skillsDir],
         sourceDir,
       );
     }, SETUP_TIMEOUT_MS);
@@ -105,9 +98,7 @@ describe("build agent plugins", () => {
     });
 
     it("should report compiled agent count in output", () => {
-      expect(buildResult.stdout).toContain(
-        `Compiled ${EXPECTED_AGENT_COUNT} agent plugins`,
-      );
+      expect(buildResult.stdout).toContain(`Compiled ${EXPECTED_AGENT_COUNT} agent plugins`);
     });
 
     it("should produce a plugin directory for each agent", async () => {
@@ -115,13 +106,8 @@ describe("build agent plugins", () => {
 
       for (const agentName of AGENT_NAMES) {
         const agentPluginDir = path.join(pluginsDir, `agent-${agentName}`);
-        const exists = await fileExists(
-          path.join(agentPluginDir, ".claude-plugin", "plugin.json"),
-        );
-        expect(
-          exists,
-          `Missing plugin manifest for agent-${agentName}`,
-        ).toBe(true);
+        const exists = await fileExists(path.join(agentPluginDir, ".claude-plugin", "plugin.json"));
+        expect(exists, `Missing plugin manifest for agent-${agentName}`).toBe(true);
       }
     });
 
@@ -156,10 +142,7 @@ describe("build agent plugins", () => {
           `${agentName}.md`,
         );
         const exists = await fileExists(copiedAgentPath);
-        expect(
-          exists,
-          `Missing copied agent .md for ${agentName}`,
-        ).toBe(true);
+        expect(exists, `Missing copied agent .md for ${agentName}`).toBe(true);
 
         const content = await readTestFile(copiedAgentPath);
         expect(content).toContain(`name: ${agentName}`);
@@ -219,14 +202,7 @@ describe("build agent plugins", () => {
 
       try {
         const result = await runCLI(
-          [
-            "build",
-            "plugins",
-            "--agents-dir",
-            edgeAgentsDir,
-            "--skills-dir",
-            edgeSkillsDir,
-          ],
+          ["build", "plugins", "--agents-dir", edgeAgentsDir, "--skills-dir", edgeSkillsDir],
           edgeSourceDir,
         );
 
@@ -240,15 +216,8 @@ describe("build agent plugins", () => {
         expect(result.stdout).toContain("Compiled 1 agent plugins");
 
         // The valid agent's plugin directory should exist
-        const pluginDir = path.join(
-          edgeSourceDir,
-          "dist",
-          "plugins",
-          "agent-good-agent",
-        );
-        expect(await fileExists(
-          path.join(pluginDir, ".claude-plugin", "plugin.json"),
-        )).toBe(true);
+        const pluginDir = path.join(edgeSourceDir, "dist", "plugins", "agent-good-agent");
+        expect(await fileExists(path.join(pluginDir, ".claude-plugin", "plugin.json"))).toBe(true);
       } finally {
         await cleanupTempDir(edgeTempDir);
       }
@@ -264,14 +233,7 @@ describe("build agent plugins", () => {
 
       try {
         const result = await runCLI(
-          [
-            "build",
-            "plugins",
-            "--agents-dir",
-            emptyAgentsDir,
-            "--skills-dir",
-            emptySkillsDir,
-          ],
+          ["build", "plugins", "--agents-dir", emptyAgentsDir, "--skills-dir", emptySkillsDir],
           emptySourceDir,
         );
 

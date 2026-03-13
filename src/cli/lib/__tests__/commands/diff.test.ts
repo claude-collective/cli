@@ -2,11 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
-import {
-  createTestSource,
-  cleanupTestSource,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import {
   LOCAL_SKILL_BASIC,
   LOCAL_SKILL_FORKED,

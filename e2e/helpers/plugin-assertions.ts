@@ -77,10 +77,7 @@ export async function verifySkillCopiedLocally(
  *
  * Reference: init.tsx:468-476 (logs compiled agents)
  */
-export async function verifyAgentCompiled(
-  projectDir: string,
-  agentName: string,
-): Promise<boolean> {
+export async function verifyAgentCompiled(projectDir: string, agentName: string): Promise<boolean> {
   const agentPath = path.join(projectDir, CLAUDE_DIR, "agents", `${agentName}.md`);
   if (!(await fileExists(agentPath))) return false;
   const content = await readFile(agentPath, "utf-8");

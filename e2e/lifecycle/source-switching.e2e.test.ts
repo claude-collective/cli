@@ -110,11 +110,9 @@ async function initLocal(
 ): Promise<{ exitCode: number; output: string }> {
   await createPermissionsFile(projectDir);
 
-  const session = new TerminalSession(
-    ["init", "--source", sourceDir],
-    projectDir,
-    { env: { AGENTSINC_SOURCE: undefined } },
-  );
+  const session = new TerminalSession(["init", "--source", sourceDir], projectDir, {
+    env: { AGENTSINC_SOURCE: undefined },
+  });
 
   try {
     // Stack selection
@@ -188,11 +186,9 @@ async function initPlugin(
 ): Promise<{ exitCode: number; output: string }> {
   await createPermissionsFile(projectDir);
 
-  const session = new TerminalSession(
-    ["init", "--source", sourceDir],
-    projectDir,
-    { env: { AGENTSINC_SOURCE: undefined } },
-  );
+  const session = new TerminalSession(["init", "--source", sourceDir], projectDir, {
+    env: { AGENTSINC_SOURCE: undefined },
+  });
 
   try {
     // Stack selection
@@ -284,11 +280,9 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle", () => {
         await injectMarketplaceIntoConfig(projectDir, fixture.marketplaceName);
 
         // Phase 2: Edit — switch ALL to plugin via "p" hotkey in Sources customize
-        session = new TerminalSession(
-          ["edit", "--source", fixture.sourceDir],
-          projectDir,
-          { env: { AGENTSINC_SOURCE: undefined } },
-        );
+        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
         // Build step — pass through all three domains (init created Web, API, Shared)
         await waitForRawText(session, "Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
@@ -381,11 +375,9 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle", () => {
         expect(await verifyAgentCompiled(projectDir, "web-developer")).toBe(true);
 
         // Phase 2: Edit — switch ALL to local via "l" hotkey
-        session = new TerminalSession(
-          ["edit", "--source", fixture.sourceDir],
-          projectDir,
-          { env: { AGENTSINC_SOURCE: undefined } },
-        );
+        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
         // Build step — pass through all three domains (init created Web, API, Shared)
         await waitForRawText(session, "Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
@@ -491,15 +483,11 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle", () => {
         // The SourceGrid in step-sources.tsx shows rows per skill, with columns for
         // each available source (local, marketplace). Focus enters at row 0, col 0.
         // Arrow right moves to the marketplace column, space selects it.
-        session = new TerminalSession(
-          ["edit", "--source", fixture.sourceDir],
-          projectDir,
-          {
-            env: { AGENTSINC_SOURCE: undefined },
-            rows: 60,
-            cols: 120,
-          },
-        );
+        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+          rows: 60,
+          cols: 120,
+        });
 
         // Build step — pass through all three domains (init created Web, API, Shared)
         await waitForRawText(session, "Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);

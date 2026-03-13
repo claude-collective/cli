@@ -100,16 +100,12 @@ describe("cross-scope lifecycle: init global -> edit global from project", () =>
       // Create permissions file at fake HOME to prevent permission prompt hang
       await createPermissionsFile(fakeHome);
 
-      session = new TerminalSession(
-        ["init", "--source", sourceDir],
-        fakeHome,
-        {
-          env: {
-            HOME: fakeHome,
-            AGENTSINC_SOURCE: undefined,
-          },
+      session = new TerminalSession(["init", "--source", sourceDir], fakeHome, {
+        env: {
+          HOME: fakeHome,
+          AGENTSINC_SOURCE: undefined,
         },
-      );
+      });
 
       await navigateInitWizardToCompletion(session);
       const initExitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
@@ -163,16 +159,12 @@ describe("cross-scope lifecycle: init global -> edit global from project", () =>
       // Create permissions file at project dir too (for potential permission checks)
       await createPermissionsFile(projectDir);
 
-      session = new TerminalSession(
-        ["init", "--source", sourceDir],
-        projectDir,
-        {
-          env: {
-            HOME: fakeHome,
-            AGENTSINC_SOURCE: undefined,
-          },
+      session = new TerminalSession(["init", "--source", sourceDir], projectDir, {
+        env: {
+          HOME: fakeHome,
+          AGENTSINC_SOURCE: undefined,
         },
-      );
+      });
 
       // GlobalConfigPrompt should appear with text about global installation
       // init.tsx:125 renders: "A global installation was found at {globalConfigDir}"

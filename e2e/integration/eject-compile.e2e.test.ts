@@ -268,10 +268,7 @@ describe("template ejection + custom compilation", () => {
 
       // Replace template with broken Liquid syntax (mismatched if/endfor)
       const ejectedTemplatePath = getEjectedTemplatePath(projectDir);
-      await writeFile(
-        ejectedTemplatePath,
-        "{% if agent.name %}{{ agent.name }{% endfor %}",
-      );
+      await writeFile(ejectedTemplatePath, "{% if agent.name %}{{ agent.name }{% endfor %}");
 
       // Compile should fail with a useful error, but currently exits 0
       const compileResult = await runCLI(["compile"], projectDir, {

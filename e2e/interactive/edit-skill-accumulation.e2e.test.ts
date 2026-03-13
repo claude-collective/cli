@@ -125,16 +125,12 @@ describe("project config does not accumulate global skills after edit", () => {
       const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
       // --- Action: run edit wizard, navigate through without changes ---
-      session = new TerminalSession(
-        ["edit", "--source", sourceDir],
-        projectDir,
-        {
-          env: {
-            HOME: tempHOME,
-            AGENTSINC_SOURCE: undefined,
-          },
+      session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
+        env: {
+          HOME: tempHOME,
+          AGENTSINC_SOURCE: undefined,
         },
-      );
+      });
 
       // Wait for the build step to render
       await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
@@ -161,11 +157,9 @@ describe("project config does not accumulate global skills after edit", () => {
       //
       // Match the pattern of an inline skill config object with the global skill ID.
       // This would look like: {"id":"web-framework-react","scope":"...","source":"..."}
-      const hasInlineGlobalSkill = updatedProjectConfig.includes(
-        '"id":"web-framework-react"',
-      ) || updatedProjectConfig.includes(
-        '"id": "web-framework-react"',
-      );
+      const hasInlineGlobalSkill =
+        updatedProjectConfig.includes('"id":"web-framework-react"') ||
+        updatedProjectConfig.includes('"id": "web-framework-react"');
       expect(
         hasInlineGlobalSkill,
         "Global skill 'web-framework-react' should not appear as an inline skill config in the project config",

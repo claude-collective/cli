@@ -74,11 +74,9 @@ describe("local mode lifecycle: init -> compile -> uninstall", () => {
 
       await createPermissionsFile(projectDir);
 
-      session = new TerminalSession(
-        ["init", "--source", sourceDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+      session = new TerminalSession(["init", "--source", sourceDir], projectDir, {
+        env: { AGENTSINC_SOURCE: undefined },
+      });
 
       await navigateInitWizardToCompletion(session);
       const initExitCode = await session.waitForExit(INSTALL_TIMEOUT_MS);

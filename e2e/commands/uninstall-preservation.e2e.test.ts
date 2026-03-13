@@ -65,7 +65,13 @@ describe("uninstall preservation behavior", () => {
     expect(ejectResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Verify ejected template exists before uninstall
-    const templatePath = path.join(projectDir, CLAUDE_SRC_DIR, "agents", "_templates", "agent.liquid");
+    const templatePath = path.join(
+      projectDir,
+      CLAUDE_SRC_DIR,
+      "agents",
+      "_templates",
+      "agent.liquid",
+    );
     expect(await fileExists(templatePath)).toBe(true);
 
     // Run uninstall --yes (without --all)
@@ -121,7 +127,7 @@ describe("uninstall preservation behavior", () => {
     await mkdir(customAgentSrcDir, { recursive: true });
     await writeFile(
       path.join(customAgentSrcDir, STANDARD_FILES.AGENT_METADATA_YAML),
-      'id: my-custom-agent\ntitle: My Custom Agent\ndescription: A user-defined agent\ntools:\n  - Read\n',
+      "id: my-custom-agent\ntitle: My Custom Agent\ndescription: A user-defined agent\ntools:\n  - Read\n",
     );
     await writeFile(
       path.join(customAgentSrcDir, STANDARD_FILES.INTRO_MD),
@@ -154,7 +160,9 @@ describe("uninstall preservation behavior", () => {
 
     // Custom agent SOURCE in .claude-src/ should be preserved (--yes does not touch .claude-src/)
     expect(await directoryExists(customAgentSrcDir)).toBe(true);
-    expect(await fileExists(path.join(customAgentSrcDir, STANDARD_FILES.AGENT_METADATA_YAML))).toBe(true);
+    expect(await fileExists(path.join(customAgentSrcDir, STANDARD_FILES.AGENT_METADATA_YAML))).toBe(
+      true,
+    );
     expect(await fileExists(path.join(customAgentSrcDir, STANDARD_FILES.INTRO_MD))).toBe(true);
 
     // Compiled agent artifact in .claude/agents/ should be removed (it was in config)

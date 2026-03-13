@@ -11,19 +11,19 @@ This document identifies 10 E2E testing gaps, analyzed against existing coverage
 
 ### Existing Coverage Summary
 
-| Area | Existing Tests | Files |
-|------|---------------|-------|
-| Eject command | 12 tests (basic flags, output dirs, --force, skills, all) | `commands/eject.e2e.test.ts` |
-| Compile command | 16 tests (basic, verbose, multiple skills, custom skills, flags, errors) | `commands/compile.e2e.test.ts` |
-| Uninstall command | 8 tests (help, nothing found, --yes, --all, preserve user content) | `commands/uninstall.e2e.test.ts` |
-| Edit wizard (local) | ~15 tests (no installation, basic flow, navigation, cancellation) | `interactive/edit-wizard.e2e.test.ts` |
-| Edit wizard (plugin) | 8 tests (remove, add, mode migration, cancellation) | `interactive/edit-wizard-plugin.e2e.test.ts` |
-| Init wizard (plugin) | ~5 tests (plugin mode init with marketplace) | `interactive/init-wizard-plugin.e2e.test.ts` |
-| Init wizard (local) | ~20+ tests across navigation, stack, scratch, sources, UI, flags, existing | `interactive/init-wizard-*.e2e.test.ts` |
-| Local lifecycle | 1 test (init -> compile -> uninstall) | `lifecycle/local-lifecycle.e2e.test.ts` |
-| Plugin lifecycle | 1 test (init -> uninstall) | `lifecycle/plugin-lifecycle.e2e.test.ts` |
-| Dual-scope edit | 9 tests (7 `it.fails`) | `lifecycle/dual-scope-edit.e2e.test.ts` |
-| Build pipeline | 5 tests (build plugins, build marketplace) | `commands/plugin-build.e2e.test.ts` |
+| Area                 | Existing Tests                                                             | Files                                        |
+| -------------------- | -------------------------------------------------------------------------- | -------------------------------------------- |
+| Eject command        | 12 tests (basic flags, output dirs, --force, skills, all)                  | `commands/eject.e2e.test.ts`                 |
+| Compile command      | 16 tests (basic, verbose, multiple skills, custom skills, flags, errors)   | `commands/compile.e2e.test.ts`               |
+| Uninstall command    | 8 tests (help, nothing found, --yes, --all, preserve user content)         | `commands/uninstall.e2e.test.ts`             |
+| Edit wizard (local)  | ~15 tests (no installation, basic flow, navigation, cancellation)          | `interactive/edit-wizard.e2e.test.ts`        |
+| Edit wizard (plugin) | 8 tests (remove, add, mode migration, cancellation)                        | `interactive/edit-wizard-plugin.e2e.test.ts` |
+| Init wizard (plugin) | ~5 tests (plugin mode init with marketplace)                               | `interactive/init-wizard-plugin.e2e.test.ts` |
+| Init wizard (local)  | ~20+ tests across navigation, stack, scratch, sources, UI, flags, existing | `interactive/init-wizard-*.e2e.test.ts`      |
+| Local lifecycle      | 1 test (init -> compile -> uninstall)                                      | `lifecycle/local-lifecycle.e2e.test.ts`      |
+| Plugin lifecycle     | 1 test (init -> uninstall)                                                 | `lifecycle/plugin-lifecycle.e2e.test.ts`     |
+| Dual-scope edit      | 9 tests (7 `it.fails`)                                                     | `lifecycle/dual-scope-edit.e2e.test.ts`      |
+| Build pipeline       | 5 tests (build plugins, build marketplace)                                 | `commands/plugin-build.e2e.test.ts`          |
 
 ---
 
@@ -48,10 +48,12 @@ The progressive customization flow where a user ejects Liquid templates or agent
 ### Test Approach
 
 **Test 1a: Eject templates, modify, compile — verify custom template used**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a minimal project with `createMinimalProject()`
 2. `runCLI(["eject", "templates"], projectDir)` -- ejects `agent.liquid` to `.claude-src/agents/_templates/`
 3. Read the ejected `agent.liquid`, append a unique marker string (e.g., `<!-- E2E-CUSTOM-TEMPLATE-MARKER -->`)
@@ -60,10 +62,12 @@ Steps:
 6. Read compiled agent `.md` files -- verify the marker string appears in each
 
 **Test 1b: Eject agent-partials, modify intro.md, compile — verify custom intro**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a minimal project
 2. `runCLI(["eject", "agent-partials"], projectDir)` -- ejects intro.md, workflow.md, etc. per agent
 3. Modify `.claude-src/agents/web-developer/intro.md` to contain `"E2E-CUSTOM-INTRO-CONTENT"`
@@ -71,10 +75,12 @@ Steps:
 5. Read `web-developer.md` -- verify it contains `"E2E-CUSTOM-INTRO-CONTENT"`
 
 **Test 1c: Eject templates + have mixed local skills, compile — Liquid resolves correctly**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a project with 2+ local skills
 2. Eject templates
 3. Modify the template to add a custom section
@@ -112,16 +118,18 @@ User-created agents placed in `.claude-src/agents/` with `metadata.yaml` + `intr
 
 ### What Already Exists
 
-- `commands/compile.e2e.test.ts` has a `createProjectWithCustomSkill()` test that exercises custom *skills* in the stack config, but no custom *agent* creation.
+- `commands/compile.e2e.test.ts` has a `createProjectWithCustomSkill()` test that exercises custom _skills_ in the stack config, but no custom _agent_ creation.
 - `loader.test.ts` has unit tests for `loadProjectAgents()` but no E2E integration.
 
 ### Test Approach
 
 **Test 2a: Create custom agent, compile, verify it appears in output**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a minimal project
 2. Manually create `.claude-src/agents/my-custom-agent/metadata.yaml` with `id: my-custom-agent`, `title`, `description`, `tools`, `domain`
 3. Create `.claude-src/agents/my-custom-agent/intro.md` with custom content
@@ -131,10 +139,12 @@ Steps:
 7. Verify `.claude/agents/my-custom-agent.md` exists with valid frontmatter and custom content
 
 **Test 2b: Custom agent referencing both global and project-scoped skills**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a dual-scope project with `createDualScopeProject()`
 2. Add a custom agent in the project that references both the global skill and the project skill
 3. Update config with the custom agent and its stack assignments
@@ -142,10 +152,12 @@ Steps:
 5. Verify the compiled custom agent references both skills
 
 **Test 2c: Custom agent with same name as built-in agent — override behavior**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a minimal project
 2. Create `.claude-src/agents/web-developer/metadata.yaml` (overriding the built-in web-developer)
 3. Create custom intro.md and workflow.md with distinctive content
@@ -191,10 +203,12 @@ The edit wizard flow for local-mode installations: adding a new skill during edi
 ### Test Approach
 
 **Test 3a: Add a skill during local edit**
+
 - `TerminalSession` (interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create an editable project with 1 skill (`web-framework-react`) using `createEditableProject()`
 2. Start edit wizard with `--source` pointing to E2E source (which has more skills)
 3. Navigate to the build step, arrow down to an unselected category/skill, press Space to select it
@@ -204,10 +218,12 @@ Steps:
 7. Verify: compiled agents updated (if the new skill is assigned to an agent)
 
 **Test 3b: Remove a skill during local edit**
+
 - `TerminalSession` (interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create an editable project with 2+ skills (e.g., `web-framework-react` + `web-testing-vitest`)
 2. Use the "unresolvable skill" trick: include a skill in config that doesn't exist in the E2E source
 3. The wizard drops the unresolvable skill automatically, creating a "removed" change
@@ -262,10 +278,12 @@ None of these test deselecting a domain, deselecting an individual skill, desele
 ### Test Approach
 
 **Test 4a: Domain deselection**
+
 - `TerminalSession` (interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Start init wizard with `--source` to E2E source
 2. Select stack
 3. On "Select domains to configure" step, all domains are pre-selected by the stack
@@ -275,20 +293,24 @@ Steps:
 7. Verify: agents associated only with the deselected domain are not compiled
 
 **Test 4b: Skill deselection within a domain**
+
 - `TerminalSession` (interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Start init wizard, select stack, accept domains
 2. On build step for a domain, press Space on a pre-selected skill to deselect it
 3. Continue through wizard
 4. Verify: deselected skill not in config, not copied to `.claude/skills/`
 
 **Test 4c: Agent deselection**
+
 - `TerminalSession` (interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Start init wizard, select stack, accept domains, accept skills
 2. On agents step, press Space on a pre-selected agent to deselect it
 3. Continue to confirm and install
@@ -296,10 +318,12 @@ Steps:
 5. Verify: deselected agent not in config.ts
 
 **Test 4d: Scope toggling via S hotkey during init**
+
 - `TerminalSession` (interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Start init wizard, select stack, accept domains
 2. On build step, focus on a skill, press `s` to toggle scope
 3. Verify: the toggled skill appears with different scope indicator
@@ -344,10 +368,12 @@ Running `cc edit` multiple times on the same installation to verify config stabi
 ### Test Approach
 
 **Test 5a: Init -> Edit -> Edit -> verify no config corruption**
+
 - `TerminalSession` (interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Init with E2E source: `TerminalSession(["init", "--source", sourceDir], projectDir)`
 2. Navigate wizard, complete installation
 3. Read config.ts, note skill count and content
@@ -360,10 +386,12 @@ Steps:
 10. Verify: no duplicate entries in skills array, agents array, domains array
 
 **Test 5b: Init -> Edit (add skill) -> Edit (remove that skill) -> verify clean state**
+
 - `TerminalSession` (interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Init with limited skills
 2. First edit: add a skill
 3. Verify skill present in config and filesystem
@@ -408,10 +436,12 @@ The `cc compile` command in scenarios not already covered by the 16 tests in `co
 ### Test Approach
 
 **Test 6a: Compile with manually-edited config (custom stack assignments)**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a project with a valid config
 2. Manually edit config.ts to add a custom category in the stack mapping
 3. Create a local skill matching that custom category
@@ -419,22 +449,26 @@ Steps:
 5. Verify the custom skill appears in the correct agent's compiled output
 
 **Test 6b: Compile after adding custom agent to .claude-src/agents/**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 (Same as Gap 2, Test 2a -- these overlap. This gap just notes the compile-specific angle.)
 
 **Test 6c: Compile with ejected templates**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 (Same as Gap 1, Test 1a -- overlap.)
 
 **Test 6d: Compile with broken YAML in metadata**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a minimal project
 2. Replace a skill's `metadata.yaml` with invalid YAML (e.g., unbalanced quotes)
 3. Compile
@@ -442,10 +476,12 @@ Steps:
 5. Verify: other valid skills still compile correctly (graceful degradation)
 
 **Test 6e: Compile with missing skill directory referenced in config**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a config that references a skill ID
 2. Do NOT create the corresponding skill directory
 3. Compile
@@ -487,10 +523,12 @@ The eject command's integration with the compile pipeline. The existing eject te
 ### Test Approach
 
 **Test 7a: Eject templates -> verify file locations match Liquid engine expectations**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a temp directory
 2. `runCLI(["eject", "templates"], tempDir)`
 3. Verify: `agent.liquid` exists at the path that `createLiquidEngine()` checks:
@@ -498,25 +536,30 @@ Steps:
 4. This is a structural assertion, not a content assertion -- it verifies the eject output path aligns with the Liquid engine's template root.
 
 **Test 7b: Eject agent-partials -> verify file structure matches agent compilation expectations**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. `runCLI(["eject", "agent-partials"], tempDir)`
 2. Verify directory structure contains agent subdirectories (e.g., `web-developer/intro.md`, `web-developer/workflow.md`)
 3. Verify the structure matches what `readAgentFiles()` in `compiler.ts:124-165` expects
 
 **Test 7c: Eject -> compile -> verify ejected content appears in output**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 (This is essentially Gap 1's tests. Grouping them here for completeness.)
 
 **Test 7d: No clobbering of existing customizations**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Eject templates to `.claude-src/agents/_templates/`
 2. Modify `agent.liquid` with custom content
 3. Eject templates again WITHOUT --force
@@ -560,10 +603,12 @@ Building custom agents into plugin packages via `compileAgentPlugin()`. The E2E 
 ### Test Approach
 
 **Test 8a: Build plugins with a custom agent in the source**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create an E2E source with `createE2ESource()`
 2. Add a custom agent directory to the source: `<sourceDir>/src/agents/my-custom-agent/metadata.yaml` + `intro.md` + `workflow.md`
 3. `runCLI(["build", "plugins"], sourceDir)`
@@ -606,10 +651,12 @@ The complete flow: init with local mode -> edit to switch some skills to plugin 
 ### Test Approach
 
 **Test 9a: Init local -> edit to switch ONE skill to plugin -> compile -> verify**
+
 - `TerminalSession` (interactive)
 - Needs Claude CLI (`skipIf(!claudeAvailable)`)
 
 Steps:
+
 1. Init in local mode with E2E source (all skills local)
 2. Edit: navigate to Sources step, enter customize view, select ONE specific skill, switch it to plugin mode, leave others as local
 3. Complete the edit
@@ -619,10 +666,12 @@ Steps:
 7. Verify: compiled agents include both local and plugin skills correctly
 
 **Test 9b: Init plugin -> edit to switch ONE skill to local -> compile -> verify**
+
 - `TerminalSession` (interactive)
 - Needs Claude CLI (`skipIf(!claudeAvailable)`)
 
 Steps:
+
 1. Init in plugin mode with E2E plugin source
 2. Edit: navigate to Sources, customize, switch ONE skill to local
 3. Complete
@@ -666,10 +715,12 @@ What happens to user-authored files (custom agents, ejected templates) when `cc 
 ### Test Approach
 
 **Test 10a: Uninstall preserves ejected templates**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create an editable project
 2. Run `eject templates` to create `.claude-src/agents/_templates/`
 3. Run `uninstall --yes`
@@ -678,10 +729,12 @@ Steps:
 6. Verify: `.claude-src/` is removed entirely (including templates)
 
 **Test 10b: Uninstall preserves custom agents in .claude-src/agents/**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create an editable project
 2. Create a custom agent at `.claude-src/agents/my-custom-agent/metadata.yaml` + partials
 3. Run `uninstall --yes`
@@ -693,10 +746,12 @@ Wait -- looking at the uninstall code more carefully:
 The `removeMatchingAgents()` method at `uninstall.tsx:394-420` only removes agents whose names appear in `target.configuredAgents` (derived from `config.agents`). If the custom agent IS in the config, its compiled `.md` gets removed. If it's NOT in the config (user just created files in `.claude-src/agents/` but didn't add to config), its compiled `.md` is preserved.
 
 **Test 10c: Uninstall with custom agent in config vs not in config**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create a project with config that has `agents: [{ name: "web-developer" }, { name: "my-custom-agent" }]`
 2. Create compiled agent files for both in `.claude/agents/`
 3. Also create an agent file NOT in config: `extra-agent.md`
@@ -706,10 +761,12 @@ Steps:
 7. Verify: `extra-agent.md` preserved (not in config)
 
 **Test 10d: Uninstall preserves .claude/ directory when non-CLI content exists**
+
 - `runCLI` (non-interactive)
 - Does NOT need Claude CLI
 
 Steps:
+
 1. Create an editable project
 2. Add a file to `.claude/` that's not managed by the CLI (e.g., `settings.json`, a custom directory)
 3. Run `uninstall --yes`
@@ -741,18 +798,18 @@ Steps:
 
 ## Priority Assessment
 
-| Gap | Impact | Complexity | Existing Coverage | Priority |
-|-----|--------|------------|-------------------|----------|
-| 1: Template Ejection + Compile | High (core customization) | Medium (runCLI) | Low (eject tested, not integration) | **High** |
-| 2: Custom Sub-Agents | High (power-user feature) | Medium (runCLI) | None | **High** |
-| 3: Edit Wizard Local | High (default mode) | High (TerminalSession) | Partial (basic flow only) | **High** |
-| 4: Init Wizard Local | Medium (specific interactions) | High (TerminalSession) | Partial (happy paths only) | **Medium** |
-| 5: Re-Edit / Multi-Cycle | High (config corruption risk) | High (TerminalSession x3) | None | **High** |
-| 6: Compile Standalone | Medium (edge cases) | Low (runCLI) | Good (16 tests) | **Low** |
-| 7: Eject Integration | Medium (structural) | Low (runCLI) | Good (12 tests) | **Medium** |
-| 8: Build Custom Agent Plugins | Low (may not apply) | Medium | Partial (standard agents) | **Low** |
-| 9: Source Switching Lifecycle | High (mixed mode) | High (TerminalSession + Claude CLI) | Partial (dual-scope has it.fails) | **Medium** |
-| 10: Uninstall Preservation | Medium (user trust) | Low (runCLI) | Good (preservation tested) | **Medium** |
+| Gap                            | Impact                         | Complexity                          | Existing Coverage                   | Priority   |
+| ------------------------------ | ------------------------------ | ----------------------------------- | ----------------------------------- | ---------- |
+| 1: Template Ejection + Compile | High (core customization)      | Medium (runCLI)                     | Low (eject tested, not integration) | **High**   |
+| 2: Custom Sub-Agents           | High (power-user feature)      | Medium (runCLI)                     | None                                | **High**   |
+| 3: Edit Wizard Local           | High (default mode)            | High (TerminalSession)              | Partial (basic flow only)           | **High**   |
+| 4: Init Wizard Local           | Medium (specific interactions) | High (TerminalSession)              | Partial (happy paths only)          | **Medium** |
+| 5: Re-Edit / Multi-Cycle       | High (config corruption risk)  | High (TerminalSession x3)           | None                                | **High**   |
+| 6: Compile Standalone          | Medium (edge cases)            | Low (runCLI)                        | Good (16 tests)                     | **Low**    |
+| 7: Eject Integration           | Medium (structural)            | Low (runCLI)                        | Good (12 tests)                     | **Medium** |
+| 8: Build Custom Agent Plugins  | Low (may not apply)            | Medium                              | Partial (standard agents)           | **Low**    |
+| 9: Source Switching Lifecycle  | High (mixed mode)              | High (TerminalSession + Claude CLI) | Partial (dual-scope has it.fails)   | **Medium** |
+| 10: Uninstall Preservation     | Medium (user trust)            | Low (runCLI)                        | Good (preservation tested)          | **Medium** |
 
 ### Recommended Implementation Order
 

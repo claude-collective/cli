@@ -85,12 +85,8 @@ describe("eject command integration", () => {
       for (const subdir of subdirs) {
         const agentPath = path.join(groupPath, subdir);
 
-        const hasIntro = await fileExists(
-          path.join(agentPath, STANDARD_FILES.INTRO_MD),
-        );
-        const hasWorkflow = await fileExists(
-          path.join(agentPath, STANDARD_FILES.WORKFLOW_MD),
-        );
+        const hasIntro = await fileExists(path.join(agentPath, STANDARD_FILES.INTRO_MD));
+        const hasWorkflow = await fileExists(path.join(agentPath, STANDARD_FILES.WORKFLOW_MD));
         const hasMetadata = await fileExists(
           path.join(agentPath, STANDARD_FILES.AGENT_METADATA_YAML),
         );

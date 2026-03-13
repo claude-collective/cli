@@ -941,6 +941,7 @@ All 5 questions answered YES:
 5. `installed_plugins.json` contains the entry with `scope: "project"` after install
 
 **Infrastructure created:**
+
 - `e2e/helpers/create-e2e-plugin-source.ts` — `createE2EPluginSource()` helper (builds source + plugins + marketplace.json)
 - `e2e/helpers/plugin-assertions.ts` — 7 verification helpers for plugin state
 
@@ -984,6 +985,7 @@ export async function createPermissionsFile(projectDir: string): Promise<void> {
 **Test file:** `e2e/blockers/home-isolation.e2e.test.ts` (4 tests, all passing)
 
 All Claude CLI plugin commands work with `HOME=<tempDir>`:
+
 - `claude --version`: exit code 0, version string returned
 - `claude plugin marketplace list --json`: completes, returns data (no auth error)
 - `claude plugin marketplace add <dir>`: completes without auth error
@@ -1075,32 +1077,32 @@ E2E test marketplace names like `"e2e-test-1710300000000"` satisfy all patterns.
 
 **Phase 1: Infrastructure + Blockers — COMPLETE (13 tests)**
 
-| File | Tests | Status |
-|------|-------|--------|
-| `e2e/helpers/create-e2e-plugin-source.ts` | helper | Created |
-| `e2e/helpers/plugin-assertions.ts` | helper (7 functions) | Created |
-| `e2e/blockers/plugin-chain-poc.e2e.test.ts` | 5 | All passing |
-| `e2e/blockers/home-isolation.e2e.test.ts` | 4 | All passing |
+| File                                        | Tests                | Status      |
+| ------------------------------------------- | -------------------- | ----------- |
+| `e2e/helpers/create-e2e-plugin-source.ts`   | helper               | Created     |
+| `e2e/helpers/plugin-assertions.ts`          | helper (7 functions) | Created     |
+| `e2e/blockers/plugin-chain-poc.e2e.test.ts` | 5                    | All passing |
+| `e2e/blockers/home-isolation.e2e.test.ts`   | 4                    | All passing |
 
 **Phase 2: Build Pipeline + Uninstall — COMPLETE (20 tests)**
 
-| File | Tests | Status |
-|------|-------|--------|
-| `e2e/commands/plugin-build.e2e.test.ts` | 8 (P-BUILD-1: 4, P-BUILD-2: 4) | All passing |
+| File                                        | Tests                                   | Status      |
+| ------------------------------------------- | --------------------------------------- | ----------- |
+| `e2e/commands/plugin-build.e2e.test.ts`     | 8 (P-BUILD-1: 4, P-BUILD-2: 4)          | All passing |
 | `e2e/commands/plugin-uninstall.e2e.test.ts` | 12 (P-UNINSTALL-1: 8, P-UNINSTALL-3: 4) | All passing |
 
 **Phase 3: Interactive Plugin Init — COMPLETE (6 tests)**
 
-| File | Tests | Status |
-|------|-------|--------|
+| File                                             | Tests                                       | Status             |
+| ------------------------------------------------ | ------------------------------------------- | ------------------ |
 | `e2e/interactive/init-wizard-plugin.e2e.test.ts` | 6 (P-INIT-1: 4, P-INIT-2/3: 1, P-INIT-4: 1) | All passing (~45s) |
 
 **P-INIT-4 investigation finding:** The fallback warning path (`"Could not resolve marketplace. Falling back to Local Mode..."` at init.tsx:412) is NOT testable with temp dirs. It requires a remote source (github:...) without marketplace.json. With local sources, `isLocalSource()` returns true, skills are tagged `source: "local"`, and `deriveInstallMode()` returns `"local"` — `installIndividualPlugins()` is never entered. The test verifies the observable behavior: source without marketplace installs locally.
 
 **Phase 4: Interactive Plugin Edit — COMPLETE (6 tests)**
 
-| File | Tests | Status |
-|------|-------|--------|
+| File                                             | Tests                                                                           | Status      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------- | ----------- |
 | `e2e/interactive/edit-wizard-plugin.e2e.test.ts` | 8 (P-EDIT-2: 3, P-EDIT-1: 1, P-EDIT-3: 1, P-EDIT-4: 1, no-change: 1, cancel: 1) | All passing |
 
 **Critical finding — `marketplace` field in config:** The `createPluginProject()` helper MUST set the top-level `marketplace` field in config.ts. Without it, `resolveSource()` returns `sourceResult.marketplace = undefined`, and the `if (sourceResult.marketplace)` guard at `edit.tsx:334` silently skips all plugin install/uninstall operations.
@@ -1118,28 +1120,26 @@ E2E test marketplace names like `"e2e-test-1710300000000"` satisfy all patterns.
 
 **Phase 5: Lifecycle Tests — COMPLETE (2 tests)**
 
-| File | Tests | Status |
-|------|-------|--------|
-| `e2e/lifecycle/local-lifecycle.e2e.test.ts` | 1 (4 phases: init → compile → uninstall → verify) | Passing (~6.4s) |
-| `e2e/lifecycle/plugin-lifecycle.e2e.test.ts` | 1 (2 phases: plugin init → uninstall) | Passing (~10.3s) |
+| File                                         | Tests                                             | Status           |
+| -------------------------------------------- | ------------------------------------------------- | ---------------- |
+| `e2e/lifecycle/local-lifecycle.e2e.test.ts`  | 1 (4 phases: init → compile → uninstall → verify) | Passing (~6.4s)  |
+| `e2e/lifecycle/plugin-lifecycle.e2e.test.ts` | 1 (2 phases: plugin init → uninstall)             | Passing (~10.3s) |
 
 **Lifecycle test design decisions:**
+
 - **Simplified from design doc:** The original Section 3.1 designed a 5-phase cross-scope test (global init → project init → edit global from project → compile → uninstall). Implemented as pragmatic single-scope tests instead because: (1) UX for editing global scope from project context is undefined (Section 8 open question), (2) Bug A (agent scope routing) needs fixing first, (3) cross-scope editing will be added once the UX and fix are in place.
 - **Local lifecycle (4 phases):** Init via TerminalSession → verify config/agents/skills → Compile via runCLI → verify agents recompiled → Uninstall --yes → verify clean state (skills/agents removed, config preserved).
 - **Plugin lifecycle (2 phases):** Plugin init via TerminalSession → verify config with marketplace source, agents compiled, settings file exists → Uninstall --yes → verify agents removed, config preserved.
 - **No state leakage:** Both tests use isolated temp directories. Session is destroyed before non-interactive commands.
 
-**Phase 5 Learnings:**
-7. **Lifecycle tests work as single sequential `it()` blocks:** Each phase depends on the previous, so a single `it()` with inline comments per phase is cleaner than nested `describe()` blocks that can't share state.
-8. **Session cleanup between phases:** `session.destroy()` must be called before non-interactive `runCLI()` commands to avoid PTY process interference.
-9. **Config persistence after uninstall:** `uninstall --yes` (without `--all`) preserves `.claude-src/config.ts`. This is correct behavior — only `--all` removes the config directory.
+**Phase 5 Learnings:** 7. **Lifecycle tests work as single sequential `it()` blocks:** Each phase depends on the previous, so a single `it()` with inline comments per phase is cleaner than nested `describe()` blocks that can't share state. 8. **Session cleanup between phases:** `session.destroy()` must be called before non-interactive `runCLI()` commands to avoid PTY process interference. 9. **Config persistence after uninstall:** `uninstall --yes` (without `--all`) preserves `.claude-src/config.ts`. This is correct behavior — only `--all` removes the config directory.
 
 **Phase 6: Bug Reproduction Tests — COMPLETE (2 tests)**
 
-| File | Tests | Status |
-|------|-------|--------|
-| `e2e/bugs/edit-skill-accumulation.e2e.test.ts` | 1 (Bug B: skill scope isolation) | Passing (~4s) |
-| `e2e/bugs/edit-agent-scope-routing.e2e.test.ts` | 1 (Bug A: agent scope routing) | Passing (~4s) |
+| File                                            | Tests                            | Status        |
+| ----------------------------------------------- | -------------------------------- | ------------- |
+| `e2e/bugs/edit-skill-accumulation.e2e.test.ts`  | 1 (Bug B: skill scope isolation) | Passing (~4s) |
+| `e2e/bugs/edit-agent-scope-routing.e2e.test.ts` | 1 (Bug A: agent scope routing)   | Passing (~4s) |
 
 **Bug A finding:** The bug appears to be already fixed. `agent-recompiler.ts:128-154` has correct scope routing logic: `scope = agentScopeMap?.get(agentName) ?? "project"` with `targetDir = scope === "global" ? globalAgentsDir : agentsDir`. The edit command at `edit.tsx:405` correctly builds the scope map from `result.agentConfigs`. The test serves as a regression guard.
 
@@ -1148,20 +1148,18 @@ E2E test marketplace names like `"e2e-test-1710300000000"` satisfy all patterns.
 **Bug A test technique — "unresolvable skill" trigger:** The edit command at `edit.tsx:242-246` exits early with "No changes made" if skills are unchanged. To force the full edit flow (config write + agent recompilation), include `web-styling-tailwind` in the config — a skill NOT in the E2E source. The wizard drops it, creating a "removed" change that triggers the full flow.
 
 **Bug B test technique — dual HOME isolation:** Both tests set `HOME=<tempHOME>` separate from the project dir. This allows verifying that:
+
 - Global config at `<HOME>/.claude-src/config.ts` is written/preserved correctly
 - Project config at `<projectDir>/.claude-src/config.ts` doesn't leak global items
 - Global agents at `<HOME>/.claude/agents/` are routed correctly
 - No cross-contamination between scope directories
 
-**Phase 6 Learnings:**
-10. **`loadProjectConfig()` does NOT merge scopes:** It loads ONLY one config — project first, global fallback (`project-config.ts:75-86`). The edit command never sees both configs simultaneously.
-11. **`selectedAgents` in config prevents scope reset:** Without `selectedAgents`, `preselectAgentsFromDomains()` in `use-wizard-initialization.ts:48-53` resets all agent scopes to "global". Including `selectedAgents` preserves the intended scope assignment.
-12. **`--agent-source` flag needed for E2E agents:** The recompile step needs to find agent definitions. Without `--agent-source` pointing to the E2E source, the CLI loads built-in agents which don't include the test agents.
+**Phase 6 Learnings:** 10. **`loadProjectConfig()` does NOT merge scopes:** It loads ONLY one config — project first, global fallback (`project-config.ts:75-86`). The edit command never sees both configs simultaneously. 11. **`selectedAgents` in config prevents scope reset:** Without `selectedAgents`, `preselectAgentsFromDomains()` in `use-wizard-initialization.ts:48-53` resets all agent scopes to "global". Including `selectedAgents` preserves the intended scope assignment. 12. **`--agent-source` flag needed for E2E agents:** The recompile step needs to find agent definitions. Without `--agent-source` pointing to the E2E source, the CLI loads built-in agents which don't include the test agents.
 
 **Phase 7: Additional Uninstall Scenarios — COMPLETE (3 tests)**
 
-| File | Tests | Status |
-|------|-------|--------|
+| File                                        | Tests                                   | Status  |
+| ------------------------------------------- | --------------------------------------- | ------- |
 | `e2e/commands/plugin-uninstall.e2e.test.ts` | +2 (P-UNINSTALL-2) +1 (CLI unavailable) | Passing |
 
 **P-UNINSTALL-2 (preserves non-CLI plugins):** Two tests verify that `enabledPlugins` entries NOT matching config skills survive uninstall. The `cliPluginNames` intersection at `uninstall.tsx:88` correctly filters to only config-tracked plugins. Manual entries remain in settings.json.
@@ -1170,10 +1168,10 @@ E2E test marketplace names like `"e2e-test-1710300000000"` satisfy all patterns.
 
 **Phase 8: Previously Deferred Scenarios — COMPLETE (3 tests)**
 
-| File | Tests | Status |
-|------|-------|--------|
+| File                                             | Tests                       | Status  |
+| ------------------------------------------------ | --------------------------- | ------- |
 | `e2e/interactive/edit-wizard-plugin.e2e.test.ts` | +1 (P-EDIT-3) +1 (P-EDIT-4) | Passing |
-| `e2e/interactive/init-wizard-plugin.e2e.test.ts` | +1 (P-INIT-6) | Passing |
+| `e2e/interactive/init-wizard-plugin.e2e.test.ts` | +1 (P-INIT-6)               | Passing |
 
 **P-EDIT-3 (local → plugin migration):** Creates a local project with `createLocalProjectWithMarketplace()` helper. Navigates Sources step: Arrow Down to "Customize skill sources" → Enter → press `p` hotkey (bulk set all to plugin) → Enter. Verifies migration message in output and config updated with marketplace source.
 
@@ -1181,35 +1179,30 @@ E2E test marketplace names like `"e2e-test-1710300000000"` satisfy all patterns.
 
 **P-INIT-6 (mixed install mode):** Navigates the init wizard with the Sources customize view. Sets first skill to "local" via Spacebar while leaving others as plugin. Verifies `deriveInstallMode()` returns "mixed" which falls through to `installLocalMode()` — output shows "Local (copy to .claude/skills/)" and all skills are copied locally regardless of source.
 
-**Phase 8 Learnings:**
-13. **`L`/`P` hotkeys are reliable for mode migration:** Bulk source switching via hotkeys avoids fragile per-skill SourceGrid column navigation. The hotkeys call `setAllSourcesLocal()`/`setAllSourcesPlugin()` on the wizard store directly.
-14. **`waitForText("set all local")` confirms Sources customize view:** The hotkey footer text rendered by `step-sources.tsx` is a reliable marker that the SourceGrid has rendered.
-15. **P-EDIT-5 (marketplace A→B) is a code gap, not a test gap:** `edit.tsx:323-332` only handles `change.from === "local"` — non-local→non-local source changes are silently ignored. No test can verify behavior that doesn't exist.
-16. ~~**Cross-scope editing has no UX path**~~ **CORRECTED:** The `GlobalConfigPrompt` in `init.tsx` IS the UX path. When running `cc init` from a project dir with an existing global installation, the CLI asks "Edit global installation" vs "Create new project installation". Selecting "Edit global" launches the edit wizard targeting the global config. This was missed in earlier investigation.
+**Phase 8 Learnings:** 13. **`L`/`P` hotkeys are reliable for mode migration:** Bulk source switching via hotkeys avoids fragile per-skill SourceGrid column navigation. The hotkeys call `setAllSourcesLocal()`/`setAllSourcesPlugin()` on the wizard store directly. 14. **`waitForText("set all local")` confirms Sources customize view:** The hotkey footer text rendered by `step-sources.tsx` is a reliable marker that the SourceGrid has rendered. 15. **P-EDIT-5 (marketplace A→B) is a code gap, not a test gap:** `edit.tsx:323-332` only handles `change.from === "local"` — non-local→non-local source changes are silently ignored. No test can verify behavior that doesn't exist. 16. ~~**Cross-scope editing has no UX path**~~ **CORRECTED:** The `GlobalConfigPrompt` in `init.tsx` IS the UX path. When running `cc init` from a project dir with an existing global installation, the CLI asks "Edit global installation" vs "Create new project installation". Selecting "Edit global" launches the edit wizard targeting the global config. This was missed in earlier investigation.
 
 **Phase 9: Cross-Scope Lifecycle — COMPLETE (1 test)**
 
-| File | Tests | Status |
-|------|-------|--------|
+| File                                              | Tests                       | Status          |
+| ------------------------------------------------- | --------------------------- | --------------- |
 | `e2e/lifecycle/cross-scope-lifecycle.e2e.test.ts` | 1 (3 phases, 14 assertions) | Passing (~9.4s) |
 
 **Test flow:**
+
 1. Phase 1: Init globally from `<HOME>` — verify config, agents, skills created
 2. Phase 2: Run `init` from `<HOME>/project/` — `GlobalConfigPrompt` renders "global installation was found", select "Edit global installation" (first option, Enter), navigate the edit wizard through 3 domains (Web, API, Shared)
 3. Phase 3: Verify global config/agents preserved, NO project-level config or agents created
 
-**Phase 9 Learnings:**
-17. **`GlobalConfigPrompt` is the cross-scope UX:** Running `init` from a project dir when a global config exists triggers the prompt. "Edit global installation" delegates to the edit command targeting the global config. No `--scope` flag needed.
-18. **Multi-domain build navigation differs from single-domain:** `navigateEditWizardToCompletion()` presses Enter once for the Build step, which only works for single-domain configs (web only). Multi-domain configs (web + api + shared) need one Enter per domain. The cross-scope test navigates each domain individually.
-19. **No bugs found in the edit-global-from-project flow:** Global config preserved correctly, no leakage into project directory. The `GlobalConfigPrompt` → edit delegation works as expected.
+**Phase 9 Learnings:** 17. **`GlobalConfigPrompt` is the cross-scope UX:** Running `init` from a project dir when a global config exists triggers the prompt. "Edit global installation" delegates to the edit command targeting the global config. No `--scope` flag needed. 18. **Multi-domain build navigation differs from single-domain:** `navigateEditWizardToCompletion()` presses Enter once for the Build step, which only works for single-domain configs (web only). Multi-domain configs (web + api + shared) need one Enter per domain. The cross-scope test navigates each domain individually. 19. **No bugs found in the edit-global-from-project flow:** Global config preserved correctly, no leakage into project directory. The `GlobalConfigPrompt` → edit delegation works as expected.
 
 **Phase 10: Plugin Scope Lifecycle — Agent Content & Scope Verification — COMPLETE (1 test, FAILING — exposes 3 bugs)**
 
-| File | Tests | Status |
-|------|-------|--------|
+| File                                               | Tests                        | Status                                            |
+| -------------------------------------------------- | ---------------------------- | ------------------------------------------------- |
 | `e2e/lifecycle/plugin-scope-lifecycle.e2e.test.ts` | 1 (3 phases, ~27 assertions) | **FAILING — 11 assertions fail, exposing 3 bugs** |
 
 **Test flow:**
+
 1. Phase 1: Init with `--source` plugin source. Toggle web-framework-react to global scope (`S` on Build step). Toggle web-developer agent to global scope (`S` on Agents step). Complete.
 2. Phase 2: Strict assertions on agent scope routing (must be in correct directory), config scope split (correct agents in correct config), and compiled agent content (correct skills per agent).
 3. Phase 3: Run `compile --source` non-interactively, re-verify scope routing and agent content preserved.
@@ -1222,20 +1215,18 @@ E2E test marketplace names like `"e2e-test-1710300000000"` satisfy all patterns.
 
 3. **Config scope split mismatch:** Global config's `selectedAgents` includes `api-developer` but NOT `web-developer`. Expected the opposite based on the `S` toggle.
 
-**Phase 10 Learnings:**
-20. **"Resilient" assertions mask bugs.** The initial test used `exists || exists` fallback logic to pass regardless of where agents landed. Strict assertions (`MUST be here, MUST NOT be there`) immediately exposed scope routing inversion.
-21. **The `S` hotkey toggle may not be reaching the intended target.** The focus position on the Agents step may not be on `web-developer` when `S` is pressed. Need to investigate focus management in `step-agents.tsx`.
-22. **Stack skill routing needs investigation.** The compiled agents have incorrect skill assignments — this may be independent of the scope toggle bug.
+**Phase 10 Learnings:** 20. **"Resilient" assertions mask bugs.** The initial test used `exists || exists` fallback logic to pass regardless of where agents landed. Strict assertions (`MUST be here, MUST NOT be there`) immediately exposed scope routing inversion. 21. **The `S` hotkey toggle may not be reaching the intended target.** The focus position on the Agents step may not be on `web-developer` when `S` is pressed. Need to investigate focus management in `step-agents.tsx`. 22. **Stack skill routing needs investigation.** The compiled agents have incorrect skill assignments — this may be independent of the scope toggle bug.
 
 **Phase 11: Dual-Scope Edit Lifecycle — COMPLETE (9 tests, 7 expected-fail)**
 
-| File | Tests | Status |
-|------|-------|--------|
+| File                                        | Tests                          | Status   |
+| ------------------------------------------- | ------------------------------ | -------- |
 | `e2e/lifecycle/dual-scope-edit.e2e.test.ts` | 9 (7 expected-fail, 2 passing) | Complete |
 
 **Spec:** `todo/e2e-dual-scope-edit-spec.md`
 
 **Test flow:** Every test follows a 4-phase pattern:
+
 - **Phase A:** Init globally from `<HOME>` (all skills global-scoped, default)
 - **Phase B:** Init project from `<HOME>/project/` via GlobalConfigPrompt → "Create new project installation" (Arrow Down + Enter). Selects API domain skills + api-developer agent.
 - **Phase C:** Edit from project dir — each test makes one specific change
@@ -1243,17 +1234,17 @@ E2E test marketplace names like `"e2e-test-1710300000000"` satisfy all patterns.
 
 **Test breakdown:**
 
-| # | Test | Status | Bug exposed |
-|---|------|--------|-------------|
-| 1 | Global items locked, project items editable (display) | **expected-fail** | Scope indicators (G/P prefixes, [G]/[P] badges) not rendering in output |
-| 2 | Toggle project skill scope to global (S hotkey) | **expected-fail** | Scope routing: skill ends up in wrong config after toggle |
-| 3 | Toggle project agent scope to global (S hotkey) | **expected-fail** | Agent file routed to wrong directory after scope toggle |
-| 4 | Local → plugin source change (Sources customize) | **expected-fail** | Local skill files not removed after source switch to plugin |
-| 5 | Plugin → local source change (Sources customize) | **PASSING** | — |
-| 6 | Compiled agents contain only assigned skills | **expected-fail** | Agent skill cross-contamination between web-developer and api-developer |
-| 7 | Config split preserves source fields after edit | **expected-fail** | Source fields lost or defaulted during splitConfigByScope() |
-| 8 | Mixed source coexistence (plugin + local in same project) | **PASSING** | — |
-| 9 | Agent compilation from mixed-source skills | **expected-fail** | Plugin-mode compilation produces empty preloadedSkills list |
+| #   | Test                                                      | Status            | Bug exposed                                                             |
+| --- | --------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------- |
+| 1   | Global items locked, project items editable (display)     | **expected-fail** | Scope indicators (G/P prefixes, [G]/[P] badges) not rendering in output |
+| 2   | Toggle project skill scope to global (S hotkey)           | **expected-fail** | Scope routing: skill ends up in wrong config after toggle               |
+| 3   | Toggle project agent scope to global (S hotkey)           | **expected-fail** | Agent file routed to wrong directory after scope toggle                 |
+| 4   | Local → plugin source change (Sources customize)          | **expected-fail** | Local skill files not removed after source switch to plugin             |
+| 5   | Plugin → local source change (Sources customize)          | **PASSING**       | —                                                                       |
+| 6   | Compiled agents contain only assigned skills              | **expected-fail** | Agent skill cross-contamination between web-developer and api-developer |
+| 7   | Config split preserves source fields after edit           | **expected-fail** | Source fields lost or defaulted during splitConfigByScope()             |
+| 8   | Mixed source coexistence (plugin + local in same project) | **PASSING**       | —                                                                       |
+| 9   | Agent compilation from mixed-source skills                | **expected-fail** | Plugin-mode compilation produces empty preloadedSkills list             |
 
 **Bugs discovered:**
 
@@ -1263,10 +1254,7 @@ E2E test marketplace names like `"e2e-test-1710300000000"` satisfy all patterns.
 
 3. **Plugin-mode compilation produces empty skill content (Test 9):** Compiled agent .md files are missing skill references. `preloadedSkills` list is empty when compiling from plugin source.
 
-**Phase 11 Learnings:**
-23. **Dual-scope init requires domain deselection or the "a" accept-all path.** The `initGlobal()` helper uses "a" to accept all stack defaults, which creates all skills as global-scoped. `initProject()` uses the GlobalConfigPrompt → "Create new project" → selects API domain specifically.
-24. **`waitForRaw()` custom helper needed.** The `waitForText()` helper strips ANSI codes, but scope indicators may be rendered as ANSI-colored prefixes. A `waitForRaw()` alternative was added for raw output matching.
-25. **The `it.fails` pattern works well for known-bug exposure.** 7 of 9 tests expose real bugs via strict assertions. When bugs are fixed, these tests will start failing (because the expected failure no longer occurs), signaling that the `it.fails` wrapper should be removed.
+**Phase 11 Learnings:** 23. **Dual-scope init requires domain deselection or the "a" accept-all path.** The `initGlobal()` helper uses "a" to accept all stack defaults, which creates all skills as global-scoped. `initProject()` uses the GlobalConfigPrompt → "Create new project" → selects API domain specifically. 24. **`waitForRaw()` custom helper needed.** The `waitForText()` helper strips ANSI codes, but scope indicators may be rendered as ANSI-colored prefixes. A `waitForRaw()` alternative was added for raw output matching. 25. **The `it.fails` pattern works well for known-bug exposure.** 7 of 9 tests expose real bugs via strict assertions. When bugs are fixed, these tests will start failing (because the expected failure no longer occurs), signaling that the `it.fails` wrapper should be removed.
 
 ---
 
@@ -1274,13 +1262,13 @@ E2E test marketplace names like `"e2e-test-1710300000000"` satisfy all patterns.
 
 The following scenarios from the design documents are deferred and NOT implemented:
 
-| Scenario | Reason | Source |
-|----------|--------|--------|
-| P-EDIT-5: Source change marketplace A → B | Current code doesn't handle non-local→non-local source changes (edit.tsx:323-332 only handles `change.from === "local"`) | Section 5 |
-| Bug C: Domain duplication across edits | Deferred per user | Section 4.3 |
-| P-INIT-5: Partial installation failure | Requires simulating a mid-install failure; not a priority since installs usually succeed | Section 4.1 |
-| ~~Full cross-scope lifecycle (Section 3.1)~~ | **IMPLEMENTED** — `GlobalConfigPrompt` in init provides the UX path. See Phase 9. | Section 8 |
-| Multiple marketplaces, --refresh | Advanced scenarios requiring multiple source registrations | Section 5 |
+| Scenario                                     | Reason                                                                                                                   | Source      |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| P-EDIT-5: Source change marketplace A → B    | Current code doesn't handle non-local→non-local source changes (edit.tsx:323-332 only handles `change.from === "local"`) | Section 5   |
+| Bug C: Domain duplication across edits       | Deferred per user                                                                                                        | Section 4.3 |
+| P-INIT-5: Partial installation failure       | Requires simulating a mid-install failure; not a priority since installs usually succeed                                 | Section 4.1 |
+| ~~Full cross-scope lifecycle (Section 3.1)~~ | **IMPLEMENTED** — `GlobalConfigPrompt` in init provides the UX path. See Phase 9.                                        | Section 8   |
+| Multiple marketplaces, --refresh             | Advanced scenarios requiring multiple source registrations                                                               | Section 5   |
 
 ---
 
@@ -1288,24 +1276,24 @@ The following scenarios from the design documents are deferred and NOT implement
 
 **Total E2E test count: 62 tests across 13 test files (8 expected-fail)**
 
-| Phase | File | Tests |
-|-------|------|-------|
-| 1 | `e2e/blockers/plugin-chain-poc.e2e.test.ts` | 5 |
-| 1 | `e2e/blockers/home-isolation.e2e.test.ts` | 4 |
-| 2 | `e2e/commands/plugin-build.e2e.test.ts` | 8 |
-| 2 | `e2e/commands/plugin-uninstall.e2e.test.ts` | 15 |
-| 3 | `e2e/interactive/init-wizard-plugin.e2e.test.ts` | 7 |
-| 4 | `e2e/interactive/edit-wizard-plugin.e2e.test.ts` | 8 |
-| 5 | `e2e/lifecycle/local-lifecycle.e2e.test.ts` | 1 |
-| 5 | `e2e/lifecycle/plugin-lifecycle.e2e.test.ts` | 1 |
-| 6 | `e2e/bugs/edit-skill-accumulation.e2e.test.ts` | 1 |
-| 6 | `e2e/bugs/edit-agent-scope-routing.e2e.test.ts` | 1 |
-| 9 | `e2e/lifecycle/cross-scope-lifecycle.e2e.test.ts` | 1 |
-| 10 | `e2e/lifecycle/plugin-scope-lifecycle.e2e.test.ts` | 1 (expected-fail) |
-| 11 | `e2e/lifecycle/dual-scope-edit.e2e.test.ts` | 9 (7 expected-fail, 2 passing) |
-| **Helpers** | `e2e/helpers/create-e2e-plugin-source.ts` | — |
-| **Helpers** | `e2e/helpers/plugin-assertions.ts` (7 functions) | — |
-| **Total** | | **62** |
+| Phase       | File                                               | Tests                          |
+| ----------- | -------------------------------------------------- | ------------------------------ |
+| 1           | `e2e/blockers/plugin-chain-poc.e2e.test.ts`        | 5                              |
+| 1           | `e2e/blockers/home-isolation.e2e.test.ts`          | 4                              |
+| 2           | `e2e/commands/plugin-build.e2e.test.ts`            | 8                              |
+| 2           | `e2e/commands/plugin-uninstall.e2e.test.ts`        | 15                             |
+| 3           | `e2e/interactive/init-wizard-plugin.e2e.test.ts`   | 7                              |
+| 4           | `e2e/interactive/edit-wizard-plugin.e2e.test.ts`   | 8                              |
+| 5           | `e2e/lifecycle/local-lifecycle.e2e.test.ts`        | 1                              |
+| 5           | `e2e/lifecycle/plugin-lifecycle.e2e.test.ts`       | 1                              |
+| 6           | `e2e/bugs/edit-skill-accumulation.e2e.test.ts`     | 1                              |
+| 6           | `e2e/bugs/edit-agent-scope-routing.e2e.test.ts`    | 1                              |
+| 9           | `e2e/lifecycle/cross-scope-lifecycle.e2e.test.ts`  | 1                              |
+| 10          | `e2e/lifecycle/plugin-scope-lifecycle.e2e.test.ts` | 1 (expected-fail)              |
+| 11          | `e2e/lifecycle/dual-scope-edit.e2e.test.ts`        | 9 (7 expected-fail, 2 passing) |
+| **Helpers** | `e2e/helpers/create-e2e-plugin-source.ts`          | —                              |
+| **Helpers** | `e2e/helpers/plugin-assertions.ts` (7 functions)   | —                              |
+| **Total**   |                                                    | **62**                         |
 
 ---
 
@@ -1322,6 +1310,7 @@ An audit of all 10 test files identified 12 quality issues. Four high-impact fix
 4. **Timeout propagation** — all `waitForText()` calls in bug reproduction tests now receive explicit timeouts via the shared helper.
 
 **Remaining audit items (not fixed, lower priority):**
+
 - Output timing race in TerminalSession (getRawOutput after waitForExit may miss late PTY data)
 - `verifyConfig()` in plugin-assertions.ts uses loose `content.includes(id)` instead of JSON structure validation
 - `navigateToCompletion()` in edit-wizard-plugin.e2e.test.ts still local (different navigation context)

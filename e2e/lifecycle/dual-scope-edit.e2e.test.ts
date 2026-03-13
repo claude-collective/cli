@@ -97,16 +97,12 @@ async function initGlobal(
   sourceDir: string,
   homeDir: string,
 ): Promise<{ exitCode: number; output: string }> {
-  const session = new TerminalSession(
-    ["init", "--source", sourceDir],
-    homeDir,
-    {
-      env: {
-        HOME: homeDir,
-        AGENTSINC_SOURCE: undefined,
-      },
+  const session = new TerminalSession(["init", "--source", sourceDir], homeDir, {
+    env: {
+      HOME: homeDir,
+      AGENTSINC_SOURCE: undefined,
     },
-  );
+  });
 
   try {
     // Stack selection — accept first stack (E2E Test Stack)
@@ -174,16 +170,12 @@ async function initProject(
   homeDir: string,
   projectDir: string,
 ): Promise<{ exitCode: number; output: string }> {
-  const session = new TerminalSession(
-    ["init", "--source", sourceDir],
-    projectDir,
-    {
-      env: {
-        HOME: homeDir,
-        AGENTSINC_SOURCE: undefined,
-      },
+  const session = new TerminalSession(["init", "--source", sourceDir], projectDir, {
+    env: {
+      HOME: homeDir,
+      AGENTSINC_SOURCE: undefined,
     },
-  );
+  });
 
   try {
     // GlobalConfigPrompt — "Create new project installation" is the second option
@@ -348,18 +340,14 @@ describe("dual-scope edit lifecycle", () => {
           await setupDualScope(sourceDir, fakeHome, projectDir);
 
           // Phase C: Edit from project dir — navigate through without changes
-          const session = new TerminalSession(
-            ["edit", "--source", sourceDir],
-            projectDir,
-            {
-              env: {
-                HOME: fakeHome,
-                AGENTSINC_SOURCE: undefined,
-              },
-              rows: 60,
-              cols: 120,
+          const session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
+            env: {
+              HOME: fakeHome,
+              AGENTSINC_SOURCE: undefined,
             },
-          );
+            rows: 60,
+            cols: 120,
+          });
 
           try {
             // Build step — pass through all three domains
@@ -400,7 +388,11 @@ describe("dual-scope edit lifecycle", () => {
 
             // D-4: Config files unchanged — both still exist
             const globalConfigPath = path.join(fakeHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-            const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+            const projectConfigPath = path.join(
+              projectDir,
+              CLAUDE_SRC_DIR,
+              STANDARD_FILES.CONFIG_TS,
+            );
             expect(await fileExists(globalConfigPath)).toBe(true);
             expect(await fileExists(projectConfigPath)).toBe(true);
 
@@ -432,18 +424,14 @@ describe("dual-scope edit lifecycle", () => {
           await setupDualScope(sourceDir, fakeHome, projectDir);
 
           // Phase C: Edit — toggle api-framework-hono from project to global scope
-          const session = new TerminalSession(
-            ["edit", "--source", sourceDir],
-            projectDir,
-            {
-              env: {
-                HOME: fakeHome,
-                AGENTSINC_SOURCE: undefined,
-              },
-              rows: 60,
-              cols: 120,
+          const session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
+            env: {
+              HOME: fakeHome,
+              AGENTSINC_SOURCE: undefined,
             },
-          );
+            rows: 60,
+            cols: 120,
+          });
 
           try {
             // Build step — Web domain (pass through)
@@ -515,18 +503,14 @@ describe("dual-scope edit lifecycle", () => {
           await setupDualScope(sourceDir, fakeHome, projectDir);
 
           // Phase C: Edit — toggle api-developer from project to global scope
-          const session = new TerminalSession(
-            ["edit", "--source", sourceDir],
-            projectDir,
-            {
-              env: {
-                HOME: fakeHome,
-                AGENTSINC_SOURCE: undefined,
-              },
-              rows: 60,
-              cols: 120,
+          const session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
+            env: {
+              HOME: fakeHome,
+              AGENTSINC_SOURCE: undefined,
             },
-          );
+            rows: 60,
+            cols: 120,
+          });
 
           try {
             // Build step — pass through all three domains
@@ -571,7 +555,12 @@ describe("dual-scope edit lifecycle", () => {
             ).toBe(true);
 
             // D-2: api-developer.md does NOT exist at project scope
-            const projectApiDevPath = path.join(projectDir, CLAUDE_DIR, "agents", "api-developer.md");
+            const projectApiDevPath = path.join(
+              projectDir,
+              CLAUDE_DIR,
+              "agents",
+              "api-developer.md",
+            );
             expect(
               await fileExists(projectApiDevPath),
               "api-developer.md must NOT exist in project agents dir after scope toggle to global",

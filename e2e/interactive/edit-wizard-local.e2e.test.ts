@@ -84,15 +84,11 @@ describe("edit wizard — local mode", () => {
 
         await createPermissionsFile(projectDir);
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceFixture.sourceDir],
-          projectDir,
-          {
-            env: { HOME: projectDir },
-            rows: 60,
-            cols: 120,
-          },
-        );
+        session = new TerminalSession(["edit", "--source", sourceFixture.sourceDir], projectDir, {
+          env: { HOME: projectDir },
+          rows: 60,
+          cols: 120,
+        });
 
         // Wait for the build step to render with pre-selected skills
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
@@ -140,15 +136,11 @@ describe("edit wizard — local mode", () => {
 
         await createPermissionsFile(projectDir);
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceFixture.sourceDir],
-          projectDir,
-          {
-            env: { HOME: projectDir },
-            rows: 60,
-            cols: 120,
-          },
-        );
+        session = new TerminalSession(["edit", "--source", sourceFixture.sourceDir], projectDir, {
+          env: { HOME: projectDir },
+          rows: 60,
+          cols: 120,
+        });
 
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
@@ -187,15 +179,11 @@ describe("edit wizard — local mode", () => {
 
         await createPermissionsFile(projectDir);
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceFixture.sourceDir],
-          projectDir,
-          {
-            env: { HOME: projectDir },
-            rows: 60,
-            cols: 120,
-          },
-        );
+        session = new TerminalSession(["edit", "--source", sourceFixture.sourceDir], projectDir, {
+          env: { HOME: projectDir },
+          rows: 60,
+          cols: 120,
+        });
 
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
@@ -232,25 +220,18 @@ describe("edit wizard — local mode", () => {
         // resolve tailwind from the E2E source, so it drops it automatically.
         // This creates a "removed" change detected by edit.tsx:196.
         const projectDir = await createEditableProject(tempDir, {
-          skills: [
-            "web-framework-react",
-            "web-styling-tailwind",
-          ],
+          skills: ["web-framework-react", "web-styling-tailwind"],
           agents: ["web-developer"],
           domains: ["web"],
         });
 
         await createPermissionsFile(projectDir);
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceFixture.sourceDir],
-          projectDir,
-          {
-            env: { HOME: projectDir },
-            rows: 60,
-            cols: 120,
-          },
-        );
+        session = new TerminalSession(["edit", "--source", sourceFixture.sourceDir], projectDir, {
+          env: { HOME: projectDir },
+          rows: 60,
+          cols: 120,
+        });
 
         // Build step — tailwind is unresolvable, only react resolves
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
@@ -279,49 +260,38 @@ describe("edit wizard — local mode", () => {
       },
     );
 
-    it(
-      "should show removal in changes summary",
-      { timeout: EDIT_TEST_TIMEOUT_MS },
-      async () => {
-        tempDir = await createTempDir();
+    it("should show removal in changes summary", { timeout: EDIT_TEST_TIMEOUT_MS }, async () => {
+      tempDir = await createTempDir();
 
-        const projectDir = await createEditableProject(tempDir, {
-          skills: [
-            "web-framework-react",
-            "web-styling-tailwind",
-          ],
-          agents: ["web-developer"],
-          domains: ["web"],
-        });
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react", "web-styling-tailwind"],
+        agents: ["web-developer"],
+        domains: ["web"],
+      });
 
-        await createPermissionsFile(projectDir);
+      await createPermissionsFile(projectDir);
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceFixture.sourceDir],
-          projectDir,
-          {
-            env: { HOME: projectDir },
-            rows: 60,
-            cols: 120,
-          },
-        );
+      session = new TerminalSession(["edit", "--source", sourceFixture.sourceDir], projectDir, {
+        env: { HOME: projectDir },
+        rows: 60,
+        cols: 120,
+      });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
-        await navigateEditWizardToCompletion(session);
-        await session.waitForText("Plugin updated", EDIT_COMPLETION_TIMEOUT_MS);
+      await navigateEditWizardToCompletion(session);
+      await session.waitForText("Plugin updated", EDIT_COMPLETION_TIMEOUT_MS);
 
-        const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
-        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-        const rawOutput = session.getRawOutput();
+      const rawOutput = session.getRawOutput();
 
-        // The changes summary should mention removals
-        expect(rawOutput).toMatch(/\d+ removed/);
-        // The "Changes:" section should list the removal
-        expect(rawOutput).toContain("Changes:");
-      },
-    );
+      // The changes summary should mention removals
+      expect(rawOutput).toMatch(/\d+ removed/);
+      // The "Changes:" section should list the removal
+      expect(rawOutput).toContain("Changes:");
+    });
 
     it(
       "should recompile agents after removing a skill",
@@ -330,25 +300,18 @@ describe("edit wizard — local mode", () => {
         tempDir = await createTempDir();
 
         const projectDir = await createEditableProject(tempDir, {
-          skills: [
-            "web-framework-react",
-            "web-styling-tailwind",
-          ],
+          skills: ["web-framework-react", "web-styling-tailwind"],
           agents: ["web-developer"],
           domains: ["web"],
         });
 
         await createPermissionsFile(projectDir);
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceFixture.sourceDir],
-          projectDir,
-          {
-            env: { HOME: projectDir },
-            rows: 60,
-            cols: 120,
-          },
-        );
+        session = new TerminalSession(["edit", "--source", sourceFixture.sourceDir], projectDir, {
+          env: { HOME: projectDir },
+          rows: 60,
+          cols: 120,
+        });
 
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
@@ -372,25 +335,18 @@ describe("edit wizard — local mode", () => {
         tempDir = await createTempDir();
 
         const projectDir = await createEditableProject(tempDir, {
-          skills: [
-            "web-framework-react",
-            "web-styling-tailwind",
-          ],
+          skills: ["web-framework-react", "web-styling-tailwind"],
           agents: ["web-developer"],
           domains: ["web"],
         });
 
         await createPermissionsFile(projectDir);
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceFixture.sourceDir],
-          projectDir,
-          {
-            env: { HOME: projectDir },
-            rows: 60,
-            cols: 120,
-          },
-        );
+        session = new TerminalSession(["edit", "--source", sourceFixture.sourceDir], projectDir, {
+          env: { HOME: projectDir },
+          rows: 60,
+          cols: 120,
+        });
 
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
@@ -403,5 +359,4 @@ describe("edit wizard — local mode", () => {
       },
     );
   });
-
 });

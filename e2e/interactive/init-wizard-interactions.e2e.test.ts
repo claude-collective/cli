@@ -165,9 +165,7 @@ describe("init wizard — interactions", () => {
           // At minimum, config should not contain API skills.
           if (hasApiDev) {
             // If the agent was compiled, verify it doesn't reference API skills
-            const apiDevContent = await readTestFile(
-              path.join(agentsDir, "api-developer.md"),
-            );
+            const apiDevContent = await readTestFile(path.join(agentsDir, "api-developer.md"));
             expect(apiDevContent).not.toContain("api-framework-hono");
           }
         }

@@ -403,15 +403,15 @@ e2e/
 
 ### Implemented Tests
 
-| Section | Scenario | Test File | Status |
-|---------|----------|-----------|--------|
-| 2.1 | Blocker 7.1: Plugin Chain | `e2e/blockers/plugin-chain-poc.e2e.test.ts` | RESOLVED (5 tests) |
-| 2.2 | Blocker 7.6: HOME Isolation | `e2e/blockers/home-isolation.e2e.test.ts` | RESOLVED (4 tests) |
-| 3.1 | Full Lifecycle (local mode, simplified) | `e2e/lifecycle/local-lifecycle.e2e.test.ts` | COMPLETE (1 test, 4 phases) |
-| 3.2 | Full Lifecycle (plugin mode, simplified) | `e2e/lifecycle/plugin-lifecycle.e2e.test.ts` | COMPLETE (1 test, 2 phases) |
-| 4.1 | Bug A: Agent Scope Routing | `e2e/bugs/edit-agent-scope-routing.e2e.test.ts` | COMPLETE (1 test, bug appears fixed) |
-| 4.2 | Bug B: Skill Accumulation | `e2e/bugs/edit-skill-accumulation.e2e.test.ts` | COMPLETE (1 test, confirms correct behavior) |
-| 4.3 | Bug C: Domain Duplication | — | DEFERRED (per user) |
+| Section | Scenario                                 | Test File                                       | Status                                       |
+| ------- | ---------------------------------------- | ----------------------------------------------- | -------------------------------------------- |
+| 2.1     | Blocker 7.1: Plugin Chain                | `e2e/blockers/plugin-chain-poc.e2e.test.ts`     | RESOLVED (5 tests)                           |
+| 2.2     | Blocker 7.6: HOME Isolation              | `e2e/blockers/home-isolation.e2e.test.ts`       | RESOLVED (4 tests)                           |
+| 3.1     | Full Lifecycle (local mode, simplified)  | `e2e/lifecycle/local-lifecycle.e2e.test.ts`     | COMPLETE (1 test, 4 phases)                  |
+| 3.2     | Full Lifecycle (plugin mode, simplified) | `e2e/lifecycle/plugin-lifecycle.e2e.test.ts`    | COMPLETE (1 test, 2 phases)                  |
+| 4.1     | Bug A: Agent Scope Routing               | `e2e/bugs/edit-agent-scope-routing.e2e.test.ts` | COMPLETE (1 test, bug appears fixed)         |
+| 4.2     | Bug B: Skill Accumulation                | `e2e/bugs/edit-skill-accumulation.e2e.test.ts`  | COMPLETE (1 test, confirms correct behavior) |
+| 4.3     | Bug C: Domain Duplication                | —                                               | DEFERRED (per user)                          |
 
 ### Key Findings
 

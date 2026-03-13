@@ -103,18 +103,14 @@ describe.skipIf(!claudeAvailable)(
         await createPermissionsFile(fakeHome);
         await createPermissionsFile(projectDir);
 
-        session = new TerminalSession(
-          ["init", "--source", fixture.sourceDir],
-          projectDir,
-          {
-            env: {
-              HOME: fakeHome,
-              AGENTSINC_SOURCE: undefined,
-            },
-            rows: 60,
-            cols: 120,
+        session = new TerminalSession(["init", "--source", fixture.sourceDir], projectDir, {
+          env: {
+            HOME: fakeHome,
+            AGENTSINC_SOURCE: undefined,
           },
-        );
+          rows: 60,
+          cols: 120,
+        });
 
         // Step 1: Stack selection — accept first stack (E2E Test Stack)
         await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
@@ -204,7 +200,9 @@ describe.skipIf(!claudeAvailable)(
 
         // P2-B: Global config exists (scope split writes global config to <HOME>/.claude-src/)
         const globalConfigPath = path.join(fakeHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-        expect(await fileExists(globalConfigPath), "Global config must exist (scope split)").toBe(true);
+        expect(await fileExists(globalConfigPath), "Global config must exist (scope split)").toBe(
+          true,
+        );
 
         // P2-C: Read both configs
         const globalConfigContent = await readTestFile(globalConfigPath);
@@ -287,12 +285,12 @@ describe.skipIf(!claudeAvailable)(
         // Phase 3: Run compile to recompile agents and verify scope preserved
         // ================================================================
 
-        const compileResult = await runCLI(
-          ["compile", "--source", fixture.sourceDir],
-          projectDir,
-          { env: { HOME: fakeHome, AGENTSINC_SOURCE: undefined } },
+        const compileResult = await runCLI(["compile", "--source", fixture.sourceDir], projectDir, {
+          env: { HOME: fakeHome, AGENTSINC_SOURCE: undefined },
+        });
+        expect(compileResult.exitCode, `compile failed: ${compileResult.combined}`).toBe(
+          EXIT_CODES.SUCCESS,
         );
-        expect(compileResult.exitCode, `compile failed: ${compileResult.combined}`).toBe(EXIT_CODES.SUCCESS);
 
         // Re-verify: agents still in correct scope directories after recompilation
         expect(

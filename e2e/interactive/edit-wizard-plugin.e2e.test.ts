@@ -224,20 +224,15 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode", () => {
       // tailwind from the E2E source, so it drops it from the result. This creates
       // a "removed" change that triggers claudePluginUninstall().
       const projectDir = await createPluginProject(tempDir, {
-        skills: [
-          "web-framework-react",
-          "web-styling-tailwind",
-        ],
+        skills: ["web-framework-react", "web-styling-tailwind"],
         marketplace: fixture.marketplaceName,
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(
-        ["edit", "--source", fixture.sourceDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+      session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+        env: { AGENTSINC_SOURCE: undefined },
+      });
 
       // Build step — tailwind is unresolvable (not in E2E source), only react resolves
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
@@ -264,169 +259,169 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode", () => {
       expect(rawOutput).toContain("removed");
     });
 
-    it("should update config after removing a plugin skill", { timeout: PLUGIN_TEST_TIMEOUT_MS }, async () => {
-      tempDir = await createTempDir();
+    it(
+      "should update config after removing a plugin skill",
+      { timeout: PLUGIN_TEST_TIMEOUT_MS },
+      async () => {
+        tempDir = await createTempDir();
 
-      // Same approach as above: include an unresolvable skill (tailwind) that gets
-      // dropped by the wizard, triggering the removal path and config update.
-      const projectDir = await createPluginProject(tempDir, {
-        skills: [
-          "web-framework-react",
-          "web-styling-tailwind",
-        ],
-        marketplace: fixture.marketplaceName,
-        agents: ["web-developer"],
-        domains: ["web"],
-      });
+        // Same approach as above: include an unresolvable skill (tailwind) that gets
+        // dropped by the wizard, triggering the removal path and config update.
+        const projectDir = await createPluginProject(tempDir, {
+          skills: ["web-framework-react", "web-styling-tailwind"],
+          marketplace: fixture.marketplaceName,
+          agents: ["web-developer"],
+          domains: ["web"],
+        });
 
-      session = new TerminalSession(
-        ["edit", "--source", fixture.sourceDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
-      // Navigate straight through — tailwind is unresolvable so it drops automatically
-      await navigateEditWizardToCompletion(session);
-      await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
-      await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+        // Navigate straight through — tailwind is unresolvable so it drops automatically
+        await navigateEditWizardToCompletion(session);
+        await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
+        await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
 
-      // Config should still reference the marketplace and retain only the surviving skill
-      await verifyConfig(projectDir, {
-        skillIds: ["web-framework-react"],
-        source: fixture.marketplaceName,
-      });
+        // Config should still reference the marketplace and retain only the surviving skill
+        await verifyConfig(projectDir, {
+          skillIds: ["web-framework-react"],
+          source: fixture.marketplaceName,
+        });
 
-      // NOTE: config may still reference web-styling-tailwind at this point —
-      // the edit wizard drops unresolvable skills from compilation but does not
-      // always remove them from the persisted config. This is a known gap.
-    });
+        // NOTE: config may still reference web-styling-tailwind at this point —
+        // the edit wizard drops unresolvable skills from compilation but does not
+        // always remove them from the persisted config. This is a known gap.
+      },
+    );
 
-    it("should recompile agents after removing a plugin skill", { timeout: PLUGIN_TEST_TIMEOUT_MS }, async () => {
-      tempDir = await createTempDir();
+    it(
+      "should recompile agents after removing a plugin skill",
+      { timeout: PLUGIN_TEST_TIMEOUT_MS },
+      async () => {
+        tempDir = await createTempDir();
 
-      // Same approach: unresolvable skill triggers removal and agent recompilation
-      const projectDir = await createPluginProject(tempDir, {
-        skills: [
-          "web-framework-react",
-          "web-styling-tailwind",
-        ],
-        marketplace: fixture.marketplaceName,
-        agents: ["web-developer"],
-        domains: ["web"],
-      });
+        // Same approach: unresolvable skill triggers removal and agent recompilation
+        const projectDir = await createPluginProject(tempDir, {
+          skills: ["web-framework-react", "web-styling-tailwind"],
+          marketplace: fixture.marketplaceName,
+          agents: ["web-developer"],
+          domains: ["web"],
+        });
 
-      session = new TerminalSession(
-        ["edit", "--source", fixture.sourceDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
-      await navigateEditWizardToCompletion(session);
-      await session.waitForText("Recompiling agents", PLUGIN_INSTALL_TIMEOUT_MS);
-      await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+        await navigateEditWizardToCompletion(session);
+        await session.waitForText("Recompiling agents", PLUGIN_INSTALL_TIMEOUT_MS);
+        await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
 
-      // Agents should be recompiled after the edit
-      expect(await verifyAgentCompiled(projectDir, "web-developer")).toBe(true);
-    });
+        // Agents should be recompiled after the edit
+        expect(await verifyAgentCompiled(projectDir, "web-developer")).toBe(true);
+      },
+    );
   });
 
   describe("add skill triggers plugin install", () => {
-    it("should install added plugin skills when navigating to a new skill", { timeout: PLUGIN_TEST_TIMEOUT_MS }, async () => {
-      tempDir = await createTempDir();
+    it(
+      "should install added plugin skills when navigating to a new skill",
+      { timeout: PLUGIN_TEST_TIMEOUT_MS },
+      async () => {
+        tempDir = await createTempDir();
 
-      // Create project with ONLY web-framework-react. The E2E source also has
-      // web-testing-vitest and web-state-zustand in the Web domain. We will
-      // navigate down in the build step to select an additional skill.
-      const projectDir = await createPluginProject(tempDir, {
-        skills: ["web-framework-react"],
-        marketplace: fixture.marketplaceName,
-        agents: ["web-developer"],
-        domains: ["web"],
-      });
+        // Create project with ONLY web-framework-react. The E2E source also has
+        // web-testing-vitest and web-state-zustand in the Web domain. We will
+        // navigate down in the build step to select an additional skill.
+        const projectDir = await createPluginProject(tempDir, {
+          skills: ["web-framework-react"],
+          marketplace: fixture.marketplaceName,
+          agents: ["web-developer"],
+          domains: ["web"],
+        });
 
-      session = new TerminalSession(
-        ["edit", "--source", fixture.sourceDir],
-        projectDir,
-        {
+        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
           env: { AGENTSINC_SOURCE: undefined },
           rows: 60,
           cols: 120,
-        },
-      );
+        });
 
-      // Wait for the build step to render with pre-selected skills
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
-      await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+        // Wait for the build step to render with pre-selected skills
+        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
 
-      // The build step shows categories vertically. Framework (react) is at the top.
-      // Arrow down to reach the Testing category (or its vitest skill tag).
-      // The exact number of arrow-downs depends on the Ink layout. We try 1 down
-      // to reach the next category, then space to select the first skill in it.
-      session.arrowDown();
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // The build step shows categories vertically. Framework (react) is at the top.
+        // Arrow down to reach the Testing category (or its vitest skill tag).
+        // The exact number of arrow-downs depends on the Ink layout. We try 1 down
+        // to reach the next category, then space to select the first skill in it.
+        session.arrowDown();
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Press space to select the skill at the new cursor position
-      session.space();
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Press space to select the skill at the new cursor position
+        session.space();
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Navigate through: build -> sources -> agents -> confirm -> complete
-      await navigateEditWizardToCompletion(session);
-      await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
+        // Navigate through: build -> sources -> agents -> confirm -> complete
+        await navigateEditWizardToCompletion(session);
+        await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
 
-      const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+        const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Use getRawOutput for comprehensive text search
-      const rawOutput = session.getRawOutput();
+        // Use getRawOutput for comprehensive text search
+        const rawOutput = session.getRawOutput();
 
-      // edit.tsx:342 — logs "Installing plugin: <skillId>@<marketplace>..." for added skills
-      // We check for the "Installing plugin:" prefix which confirms plugin install was triggered
-      expect(rawOutput).toContain("Installing plugin:");
+        // edit.tsx:342 — logs "Installing plugin: <skillId>@<marketplace>..." for added skills
+        // We check for the "Installing plugin:" prefix which confirms plugin install was triggered
+        expect(rawOutput).toContain("Installing plugin:");
 
-      // The summary should reflect additions
-      expect(rawOutput).toMatch(/\d+ added/);
-    });
+        // The summary should reflect additions
+        expect(rawOutput).toMatch(/\d+ added/);
+      },
+    );
   });
 
   describe("plugin mode completion without skill changes", () => {
-    it("should complete edit without triggering plugin install/uninstall when skills are unchanged", { timeout: PLUGIN_TEST_TIMEOUT_MS }, async () => {
-      tempDir = await createTempDir();
+    it(
+      "should complete edit without triggering plugin install/uninstall when skills are unchanged",
+      { timeout: PLUGIN_TEST_TIMEOUT_MS },
+      async () => {
+        tempDir = await createTempDir();
 
-      // Create project with web-framework-react which IS in the E2E source.
-      // Don't modify any skills in the wizard — navigate straight through.
-      const projectDir = await createPluginProject(tempDir, {
-        skills: ["web-framework-react"],
-        marketplace: fixture.marketplaceName,
-        agents: ["web-developer"],
-        domains: ["web"],
-      });
+        // Create project with web-framework-react which IS in the E2E source.
+        // Don't modify any skills in the wizard — navigate straight through.
+        const projectDir = await createPluginProject(tempDir, {
+          skills: ["web-framework-react"],
+          marketplace: fixture.marketplaceName,
+          agents: ["web-developer"],
+          domains: ["web"],
+        });
 
-      session = new TerminalSession(
-        ["edit", "--source", fixture.sourceDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
-      // Navigate through without changing skills
-      await navigateEditWizardToCompletion(session);
+        // Navigate through without changing skills
+        await navigateEditWizardToCompletion(session);
 
-      // Wait for the flow to complete — may show "unchanged" or "Plugin updated" with
-      // only scope changes (the wizard may adjust agent scopes from the E2E source).
-      // Either way, wait for the process to exit.
-      const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+        // Wait for the flow to complete — may show "unchanged" or "Plugin updated" with
+        // only scope changes (the wizard may adjust agent scopes from the E2E source).
+        // Either way, wait for the process to exit.
+        const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const rawOutput = session.getRawOutput();
-      // No plugin install/uninstall should have been triggered for skills
-      expect(rawOutput).not.toContain("Installing plugin:");
-      expect(rawOutput).not.toContain("Uninstalling plugin:");
-    });
+        const rawOutput = session.getRawOutput();
+        // No plugin install/uninstall should have been triggered for skills
+        expect(rawOutput).not.toContain("Installing plugin:");
+        expect(rawOutput).not.toContain("Uninstalling plugin:");
+      },
+    );
   });
 
   describe("cancellation in plugin mode", () => {
@@ -434,20 +429,15 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode", () => {
       tempDir = await createTempDir();
 
       const projectDir = await createPluginProject(tempDir, {
-        skills: [
-          "web-framework-react",
-          "web-testing-vitest",
-        ],
+        skills: ["web-framework-react", "web-testing-vitest"],
         marketplace: fixture.marketplaceName,
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(
-        ["edit", "--source", fixture.sourceDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+      session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+        env: { AGENTSINC_SOURCE: undefined },
+      });
 
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
@@ -465,147 +455,151 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode", () => {
   });
 
   describe("mode migration local -> plugin", () => {
-    it("should switch skills from local to plugin mode", { timeout: PLUGIN_TEST_TIMEOUT_MS }, async () => {
-      tempDir = await createTempDir();
+    it(
+      "should switch skills from local to plugin mode",
+      { timeout: PLUGIN_TEST_TIMEOUT_MS },
+      async () => {
+        tempDir = await createTempDir();
 
-      // Create a project with local skills but marketplace configured.
-      // The marketplace field is required so resolveSource() populates
-      // sourceResult.marketplace, which gates plugin install in mode-migrator.ts:129.
-      const projectDir = await createLocalProjectWithMarketplace(tempDir, {
-        skills: ["web-framework-react"],
-        marketplace: fixture.marketplaceName,
-        agents: ["web-developer"],
-        domains: ["web"],
-      });
+        // Create a project with local skills but marketplace configured.
+        // The marketplace field is required so resolveSource() populates
+        // sourceResult.marketplace, which gates plugin install in mode-migrator.ts:129.
+        const projectDir = await createLocalProjectWithMarketplace(tempDir, {
+          skills: ["web-framework-react"],
+          marketplace: fixture.marketplaceName,
+          agents: ["web-developer"],
+          domains: ["web"],
+        });
 
-      session = new TerminalSession(
-        ["edit", "--source", fixture.sourceDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
-      // Build step
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        // Build step
+        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
-      // Build -> Sources (choice view)
-      session.enter();
-      await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Build -> Sources (choice view)
+        session.enter();
+        await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Arrow Down to "Customize skill sources", then Enter to open customize view
-      session.arrowDown();
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.enter();
-      await session.waitForText("set all local", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Arrow Down to "Customize skill sources", then Enter to open customize view
+        session.arrowDown();
+        await delay(STEP_TRANSITION_DELAY_MS);
+        session.enter();
+        await session.waitForText("set all local", WIZARD_LOAD_TIMEOUT_MS);
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Press "p" hotkey to set ALL skills to plugin mode
-      session.write("p");
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Press "p" hotkey to set ALL skills to plugin mode
+        session.write("p");
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Enter to continue from customize view -> Agents step
-      session.enter();
-      await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Enter to continue from customize view -> Agents step
+        session.enter();
+        await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Agents -> Confirm
-      session.enter();
-      await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Agents -> Confirm
+        session.enter();
+        await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Confirm -> Complete
-      session.enter();
+        // Confirm -> Complete
+        session.enter();
 
-      // Wait for migration and plugin operations to complete
-      await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
+        // Wait for migration and plugin operations to complete
+        await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
 
-      const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+        const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const rawOutput = session.getRawOutput();
+        const rawOutput = session.getRawOutput();
 
-      // edit.tsx:286 — logs migration message for skills switching to plugin
-      expect(rawOutput).toContain("Switching");
-      expect(rawOutput).toContain("to plugin");
+        // edit.tsx:286 — logs migration message for skills switching to plugin
+        expect(rawOutput).toContain("Switching");
+        expect(rawOutput).toContain("to plugin");
 
-      // Config should now reference the marketplace source instead of "local"
-      await verifyConfig(projectDir, {
-        skillIds: ["web-framework-react"],
-        source: fixture.marketplaceName,
-      });
-    });
+        // Config should now reference the marketplace source instead of "local"
+        await verifyConfig(projectDir, {
+          skillIds: ["web-framework-react"],
+          source: fixture.marketplaceName,
+        });
+      },
+    );
   });
 
   describe("mode migration plugin -> local", () => {
-    it("should switch skills from plugin to local mode", { timeout: PLUGIN_TEST_TIMEOUT_MS }, async () => {
-      tempDir = await createTempDir();
+    it(
+      "should switch skills from plugin to local mode",
+      { timeout: PLUGIN_TEST_TIMEOUT_MS },
+      async () => {
+        tempDir = await createTempDir();
 
-      // Create a project with plugin-mode skills (source = marketplace)
-      const projectDir = await createPluginProject(tempDir, {
-        skills: ["web-framework-react"],
-        marketplace: fixture.marketplaceName,
-        agents: ["web-developer"],
-        domains: ["web"],
-      });
+        // Create a project with plugin-mode skills (source = marketplace)
+        const projectDir = await createPluginProject(tempDir, {
+          skills: ["web-framework-react"],
+          marketplace: fixture.marketplaceName,
+          agents: ["web-developer"],
+          domains: ["web"],
+        });
 
-      session = new TerminalSession(
-        ["edit", "--source", fixture.sourceDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
-      // Build step
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        // Build step
+        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
-      // Build -> Sources (choice view)
-      session.enter();
-      await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Build -> Sources (choice view)
+        session.enter();
+        await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Arrow Down to "Customize skill sources", then Enter to open customize view
-      session.arrowDown();
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.enter();
-      await session.waitForText("set all local", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Arrow Down to "Customize skill sources", then Enter to open customize view
+        session.arrowDown();
+        await delay(STEP_TRANSITION_DELAY_MS);
+        session.enter();
+        await session.waitForText("set all local", WIZARD_LOAD_TIMEOUT_MS);
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Press "l" hotkey to set ALL skills to local mode
-      session.write("l");
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Press "l" hotkey to set ALL skills to local mode
+        session.write("l");
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Enter to continue from customize view -> Agents step
-      session.enter();
-      await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Enter to continue from customize view -> Agents step
+        session.enter();
+        await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Agents -> Confirm
-      session.enter();
-      await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+        // Agents -> Confirm
+        session.enter();
+        await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Confirm -> Complete
-      session.enter();
+        // Confirm -> Complete
+        session.enter();
 
-      // Wait for migration and operations to complete
-      await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
+        // Wait for migration and operations to complete
+        await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
 
-      const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+        const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const rawOutput = session.getRawOutput();
+        const rawOutput = session.getRawOutput();
 
-      // edit.tsx:280 — logs migration message for skills switching to local
-      expect(rawOutput).toContain("Switching");
-      expect(rawOutput).toContain("to local");
+        // edit.tsx:280 — logs migration message for skills switching to local
+        expect(rawOutput).toContain("Switching");
+        expect(rawOutput).toContain("to local");
 
-      // Skills should be copied to .claude/skills/ directory
-      expect(await verifySkillCopiedLocally(projectDir, "web-framework-react")).toBe(true);
+        // Skills should be copied to .claude/skills/ directory
+        expect(await verifySkillCopiedLocally(projectDir, "web-framework-react")).toBe(true);
 
-      // Config should now reference "local" source
-      await verifyConfig(projectDir, {
-        skillIds: ["web-framework-react"],
-        source: "local",
-      });
-    });
+        // Config should now reference "local" source
+        await verifyConfig(projectDir, {
+          skillIds: ["web-framework-react"],
+          source: "local",
+        });
+      },
+    );
   });
 });

@@ -229,11 +229,9 @@ describe("re-edit cycles: config stability across multiple edits", () => {
 
         await createPermissionsFile(projectDir);
 
-        session = new TerminalSession(
-          ["init", "--source", sourceDir],
-          projectDir,
-          { env: { AGENTSINC_SOURCE: undefined } },
-        );
+        session = new TerminalSession(["init", "--source", sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
         // Navigate init wizard: Stack -> Domain -> Build("a") -> Confirm -> Success
         await navigateInitWizardToCompletion(session);
@@ -256,11 +254,9 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         // Phase 2: First edit -- navigate through without changes
         // ================================================================
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceDir],
-          projectDir,
-          { env: { AGENTSINC_SOURCE: undefined } },
-        );
+        session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
@@ -289,11 +285,9 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         // Phase 3: Second edit -- navigate through without changes again
         // ================================================================
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceDir],
-          projectDir,
-          { env: { AGENTSINC_SOURCE: undefined } },
-        );
+        session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+        });
 
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
@@ -374,15 +368,11 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         // We arrow down to reach the next category, then space to toggle.
         // ================================================================
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceDir],
-          projectDir,
-          {
-            env: { AGENTSINC_SOURCE: undefined },
-            rows: 60,
-            cols: 120,
-          },
-        );
+        session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+          rows: 60,
+          cols: 120,
+        });
 
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
@@ -424,15 +414,11 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         // Phase 3: Second edit -- navigate through without changes
         // ================================================================
 
-        session = new TerminalSession(
-          ["edit", "--source", sourceDir],
-          projectDir,
-          {
-            env: { AGENTSINC_SOURCE: undefined },
-            rows: 60,
-            cols: 120,
-          },
-        );
+        session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
+          env: { AGENTSINC_SOURCE: undefined },
+          rows: 60,
+          cols: 120,
+        });
 
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
