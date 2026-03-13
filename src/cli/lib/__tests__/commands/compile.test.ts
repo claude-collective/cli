@@ -5,11 +5,13 @@ import { runCliCommand, createTempDir, cleanupTempDir, buildTestProjectConfig } 
 import {
   createTestSource,
   cleanupTestSource,
+  type TestDirs,
+} from "../fixtures/create-test-source";
+import {
   VALID_LOCAL_SKILL,
   SKILL_WITHOUT_METADATA,
   SKILL_WITHOUT_METADATA_CUSTOM,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+} from "../mock-data/mock-skills";
 
 describe("compile command", () => {
   let tempDir: string;

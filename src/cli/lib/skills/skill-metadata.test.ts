@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { SkillId } from "../../types";
 
 // Mock file system and logger (manual mocks from __mocks__ directories)
 vi.mock("../../utils/fs");
@@ -24,7 +25,7 @@ import {
   readLocalSkillMetadata,
 } from "./skill-metadata";
 
-function createValidMetadataYaml(skillId: string, contentHash: string, date: string): string {
+function createValidMetadataYaml(skillId: SkillId, contentHash: string, date: string): string {
   return stringifyYaml({
     forkedFrom: {
       skillId: skillId,
@@ -40,7 +41,7 @@ function createMetadataWithoutForkedFrom(): string {
   });
 }
 
-function createMetadataWithSchemaComment(skillId: string, contentHash: string): string {
+function createMetadataWithSchemaComment(skillId: SkillId, contentHash: string): string {
   return `# yaml-language-server: $schema=../schema.json\n${createValidMetadataYaml(skillId, contentHash, "2026-01-01")}`;
 }
 
@@ -400,7 +401,8 @@ describe("skill-metadata", () => {
 
     it("updates existing forkedFrom metadata", async () => {
       vi.mocked(readFile).mockResolvedValue(
-        createValidMetadataYaml("old-skill-id", "old-hash", "2025-01-01"),
+        // Boundary cast: fictional skill ID for testing metadata update
+        createValidMetadataYaml("old-skill-id" as SkillId, "old-hash", "2025-01-01"),
       );
 
       await injectForkedFromMetadata("/dest", "web-framework-react", "new-hash");

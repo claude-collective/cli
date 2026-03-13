@@ -11,7 +11,7 @@ import {
   STANDARD_DIRS,
   STANDARD_FILES,
 } from "../../../consts";
-import type { ExtractedSkillMetadata } from "../../../types";
+import type { ExtractedSkillMetadata, SkillId, SkillSlug } from "../../../types";
 import { computeSkillFolderHash } from "../../versioning";
 import {
   fileExists,
@@ -22,14 +22,16 @@ import {
 } from "../helpers";
 import { renderSkillMd, renderConfigTs } from "../content-generators";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
+import { DEFAULT_TEST_AGENTS } from "../mock-data/mock-agents";
 
-// Boundary widening: test fixtures use arbitrary skill IDs, slugs, and categories for test isolation
+// Boundary widening: test fixtures use arbitrary skill IDs, categories, and domains for test isolation.
+// Slugs and forkedFrom.skillId are narrowed to SkillSlug / SkillId; fictional values cast at definition site.
 export type TestSkill = Pick<
   ExtractedSkillMetadata,
   "description" | "author" | "displayName" | "usageGuidance"
 > & {
   id: string;
-  slug: string;
+  slug: SkillSlug;
   category: string;
   domain: string;
 } & {
@@ -39,7 +41,7 @@ export type TestSkill = Pick<
   /** Skip metadata.yaml creation for this local skill (for testing missing-metadata warnings) */
   skipMetadata?: boolean;
   forkedFrom?: {
-    skillId: string;
+    skillId: SkillId;
     contentHash: string;
     date: string;
   };
@@ -113,222 +115,6 @@ export type TestDirs = {
   pluginDir?: string;
   configDir?: string;
 };
-
-const TEST_AUTHOR = "@test";
-
-/** Valid local skill with SKILL.md and metadata.yaml */
-export const VALID_LOCAL_SKILL: TestSkill = {
-  id: "web-tooling-valid",
-  slug: "tooling",
-  displayName: "Valid",
-  description: "A valid skill",
-  category: "web-tooling",
-  author: TEST_AUTHOR,
-  domain: "web",
-};
-
-/** Skill created WITHOUT metadata.yaml (for testing missing-metadata warnings) */
-export const SKILL_WITHOUT_METADATA: TestSkill = {
-  id: "web-tooling-incomplete",
-  slug: "storybook",
-  displayName: "Incomplete",
-  description: "Missing metadata",
-  category: "web-tooling",
-  author: TEST_AUTHOR,
-  domain: "web",
-  skipMetadata: true,
-};
-
-/** Another skill without metadata.yaml (for path warning tests) */
-export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = {
-  id: "web-tooling-custom",
-  slug: "security",
-  displayName: "Custom",
-  description: "No metadata",
-  category: "web-tooling",
-  author: TEST_AUTHOR,
-  domain: "web",
-  skipMetadata: true,
-};
-
-/** A basic local-only skill (no forkedFrom) with SKILL.md and metadata.yaml */
-export const LOCAL_SKILL_BASIC: TestSkill = {
-  id: "web-tooling-my-skill",
-  slug: "tooling",
-  displayName: "My Skill",
-  description: "A test skill",
-  category: "web-tooling",
-  author: TEST_AUTHOR,
-  domain: "web",
-  content: `---
-name: my-skill
-description: A test skill
-category: test
----
-
-# My Skill
-
-Test content here.
-`,
-};
-
-/** A forked local skill with forkedFrom metadata for diff/update/outdated commands */
-export const LOCAL_SKILL_FORKED: TestSkill = {
-  id: "web-tooling-forked-skill",
-  slug: "tooling",
-  displayName: "Forked Skill",
-  description: "A forked skill",
-  category: "web-tooling",
-  author: TEST_AUTHOR,
-  domain: "web",
-  content: `---
-name: forked-skill
-description: A forked skill
-category: test
----
-
-# Forked Skill
-
-Local modifications here.
-`,
-  forkedFrom: {
-    skillId: "web-framework-react",
-    contentHash: "abc123",
-    date: "2025-01-01",
-  },
-};
-
-/** A minimal local skill for error handling tests (with forkedFrom) */
-export const LOCAL_SKILL_FORKED_MINIMAL: TestSkill = {
-  id: "web-tooling-test-minimal",
-  slug: "env",
-  displayName: "Test Minimal",
-  description: "Test skill",
-  category: "web-tooling",
-  author: TEST_AUTHOR,
-  domain: "web",
-  content: `---
-name: test
----
-# Test`,
-  forkedFrom: {
-    skillId: "web-framework-react",
-    contentHash: "abc",
-    date: "2025-01-01",
-  },
-};
-
-/**
- * Skills used by import:skill integration tests with richer content.
- * These use a plain object type (not TestSkill) because import sources use
- * simple directory names that don't follow the SkillId pattern.
- */
-export type ImportSourceSkill = {
-  name: string;
-  content: string;
-  metadata?: Record<string, unknown>;
-};
-
-/** React patterns skill with metadata for import integration tests */
-export const IMPORT_REACT_PATTERNS_SKILL: ImportSourceSkill = {
-  name: "react-patterns",
-  content: `---
-name: react-patterns
-description: React design patterns and best practices
----
-
-# React Patterns
-
-## Component Composition
-
-Use composition over inheritance for flexible component design.
-
-## Hooks Patterns
-
-- Custom hooks for shared logic
-- useReducer for complex state
-- useMemo for expensive computations
-`,
-  metadata: {
-    author: "@external-author",
-    tags: ["react", "patterns", "web"],
-    category: "web-framework",
-  },
-};
-
-/** Testing utils skill with metadata for import integration tests */
-export const IMPORT_TESTING_UTILS_SKILL: ImportSourceSkill = {
-  name: "testing-utils",
-  content: `---
-name: testing-utils
-description: Testing utilities and best practices
----
-
-# Testing Utilities
-
-## Unit Testing
-
-Write focused tests that verify single behaviors.
-
-## Integration Testing
-
-Test component interactions and data flow.
-`,
-  metadata: {
-    author: "@external-author",
-    tags: ["testing", "vitest"],
-    category: "web-testing",
-  },
-};
-
-/** API security skill without metadata for import integration tests */
-export const IMPORT_API_SECURITY_SKILL: ImportSourceSkill = {
-  name: "api-security",
-  content: `---
-name: api-security
-description: API security patterns and middleware
----
-
-# API Security
-
-## Authentication
-
-Implement JWT-based authentication with refresh tokens.
-
-## Rate Limiting
-
-Apply rate limiting to prevent abuse.
-`,
-};
-
-export {
-  EXTRA_DOMAIN_TEST_SKILLS,
-  COMPILE_LOCAL_SKILL,
-  DEFAULT_TEST_SKILLS,
-} from "../mock-data/mock-skills";
-
-export const DEFAULT_TEST_AGENTS: TestAgent[] = [
-  {
-    name: "web-developer",
-    title: "Web Developer",
-    description: "Full-stack web development specialist",
-    tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
-    model: "opus",
-    permissionMode: "default",
-    introContent: "You are a web developer agent.",
-    workflowContent: "## Workflow\n\n1. Analyze requirements\n2. Implement solution",
-  },
-  {
-    name: "api-developer",
-    title: "API Developer",
-    description: "Backend API development specialist",
-    tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
-    model: "opus",
-    permissionMode: "default",
-    introContent: "You are an API developer agent.",
-    workflowContent: "## Workflow\n\n1. Design API\n2. Implement endpoints",
-  },
-];
 
 export { fileExists, directoryExists };
 

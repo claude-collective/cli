@@ -2,6 +2,7 @@
 // Uses createMockAgent/createMockAgentConfig from helpers.ts.
 
 import type { AgentConfig, AgentDefinition } from "../../../types";
+import type { TestAgent } from "../fixtures/create-test-source";
 import { createMockAgent, createMockAgentConfig } from "../helpers.js";
 import { REACT_SKILL, REACT_SKILL_PRELOADED, VITEST_SINGLE_FILE_SKILL } from "./mock-skills.js";
 
@@ -93,3 +94,30 @@ export const TWO_AGENTS_SHARED_SKILL: Record<string, AgentConfig> = {
   "web-developer": createMockAgentConfig("web-developer", [REACT_SKILL_WITH_PATH]),
   "web-reviewer": createMockAgentConfig("web-reviewer", [REACT_SKILL_WITH_PATH]),
 };
+
+// ---------------------------------------------------------------------------
+// Default test agents for createTestSource (from create-test-source.ts)
+// ---------------------------------------------------------------------------
+
+export const DEFAULT_TEST_AGENTS: TestAgent[] = [
+  {
+    name: "web-developer",
+    title: "Web Developer",
+    description: "Full-stack web development specialist",
+    tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
+    model: "opus",
+    permissionMode: "default",
+    introContent: "You are a web developer agent.",
+    workflowContent: "## Workflow\n\n1. Analyze requirements\n2. Implement solution",
+  },
+  {
+    name: "api-developer",
+    title: "API Developer",
+    description: "Backend API development specialist",
+    tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
+    model: "opus",
+    permissionMode: "default",
+    introContent: "You are an API developer agent.",
+    workflowContent: "## Workflow\n\n1. Design API\n2. Implement endpoints",
+  },
+];

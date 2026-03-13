@@ -1,7 +1,7 @@
 // Shared skill entries and TestSkill arrays for test files.
 // Uses createMockSkillEntry from helpers.ts.
 
-import type { Category, CategoryPath, ResolvedSkill, Skill, SkillId } from "../../../types";
+import type { Category, CategoryPath, ResolvedSkill, Skill, SkillId, SkillSlug } from "../../../types";
 import type { TestSkill } from "../fixtures/create-test-source";
 import {
   createMockExtractedSkill,
@@ -85,7 +85,7 @@ export const COMPILE_LOCAL_SKILL: TestSkill = createTestSkill(
   // Boundary cast: fictional skill ID for testing local skill compilation
   "web-tooling-local-skill" as SkillId,
   "A local project skill",
-  { slug: "tooling", displayName: "Local Skill", tags: ["local", "custom"] },
+  { slug: "tooling" as SkillSlug, displayName: "Local Skill", tags: ["local", "custom"] },
 );
 
 export const DEFAULT_TEST_SKILLS: TestSkill[] = [reactSkill, zustandSkill, vitestSkill, honoSkill];
@@ -102,7 +102,7 @@ export const DOCKER_TOOLING_SKILL: TestSkill = createTestSkill(
   "infra-tooling-docker" as SkillId,
   "Docker containerization patterns",
   {
-    slug: "tooling",
+    slug: "tooling" as SkillSlug,
     displayName: "Docker",
     domain: "shared",
     tags: ["docker", "devops", "containers"],
@@ -120,7 +120,8 @@ export const CI_CD_SKILLS: TestSkill[] = [
   }),
   // Boundary cast: fictional skill ID for testing CI/CD skills
   createTestSkill("infra-ci-cd-gitlab-ci" as SkillId, "gitlab-ci CI/CD pipeline", {
-    slug: "gitlab-ci",
+    // Boundary cast: fictional slug for test isolation
+    slug: "gitlab-ci" as SkillSlug,
     displayName: "GitLab CI",
     category: "infra-ci-cd",
     domain: "shared",
@@ -435,3 +436,185 @@ export const MULTI_SOURCE_INTERNAL_SKILLS: MultiSourceSkillEntry[] = [
 ];
 
 export type { MultiSourceSkillEntry };
+
+// ---------------------------------------------------------------------------
+// Local/compile skill constants (from create-test-source.ts)
+// ---------------------------------------------------------------------------
+
+/** Valid local skill with SKILL.md and metadata.yaml */
+export const VALID_LOCAL_SKILL: TestSkill = createTestSkill(
+  // Boundary cast: fictional skill ID for test isolation
+  "web-tooling-valid" as SkillId,
+  "A valid skill",
+  { slug: "tooling" as SkillSlug, displayName: "Valid" },
+);
+
+/** Skill created WITHOUT metadata.yaml (for testing missing-metadata warnings) */
+export const SKILL_WITHOUT_METADATA: TestSkill = createTestSkill(
+  // Boundary cast: fictional skill ID for test isolation
+  "web-tooling-incomplete" as SkillId,
+  "Missing metadata",
+  { slug: "storybook", displayName: "Incomplete", skipMetadata: true },
+);
+
+/** Another skill without metadata.yaml (for path warning tests) */
+export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = createTestSkill(
+  // Boundary cast: fictional skill ID for test isolation
+  "web-tooling-custom" as SkillId,
+  "No metadata",
+  { slug: "security" as SkillSlug, displayName: "Custom", skipMetadata: true },
+);
+
+/** A basic local-only skill (no forkedFrom) with SKILL.md and metadata.yaml */
+export const LOCAL_SKILL_BASIC: TestSkill = createTestSkill(
+  // Boundary cast: fictional skill ID for test isolation
+  "web-tooling-my-skill" as SkillId,
+  "A test skill",
+  {
+    slug: "tooling" as SkillSlug,
+    displayName: "My Skill",
+    content: `---
+name: my-skill
+description: A test skill
+category: test
+---
+
+# My Skill
+
+Test content here.
+`,
+  },
+);
+
+/** A forked local skill with forkedFrom metadata for diff/update/outdated commands */
+export const LOCAL_SKILL_FORKED: TestSkill = createTestSkill(
+  // Boundary cast: fictional skill ID for test isolation
+  "web-tooling-forked-skill" as SkillId,
+  "A forked skill",
+  {
+    slug: "tooling" as SkillSlug,
+    displayName: "Forked Skill",
+    content: `---
+name: forked-skill
+description: A forked skill
+category: test
+---
+
+# Forked Skill
+
+Local modifications here.
+`,
+    forkedFrom: {
+      skillId: "web-framework-react",
+      contentHash: "abc123",
+      date: "2025-01-01",
+    },
+  },
+);
+
+/** A minimal local skill for error handling tests (with forkedFrom) */
+export const LOCAL_SKILL_FORKED_MINIMAL: TestSkill = createTestSkill(
+  // Boundary cast: fictional skill ID for test isolation
+  "web-tooling-test-minimal" as SkillId,
+  "Test skill",
+  {
+    slug: "env" as SkillSlug,
+    displayName: "Test Minimal",
+    content: `---
+name: test
+---
+# Test`,
+    forkedFrom: {
+      skillId: "web-framework-react",
+      contentHash: "abc",
+      date: "2025-01-01",
+    },
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Import source skill constants (import-skill.integration.test.ts)
+// ---------------------------------------------------------------------------
+
+/**
+ * Skills used by import:skill integration tests with richer content.
+ * These use a plain object type (not TestSkill) because import sources use
+ * simple directory names that don't follow the SkillId pattern.
+ */
+export type ImportSourceSkill = {
+  name: string;
+  content: string;
+  metadata?: Record<string, unknown>;
+};
+
+/** React patterns skill with metadata for import integration tests */
+export const IMPORT_REACT_PATTERNS_SKILL: ImportSourceSkill = {
+  name: "react-patterns",
+  content: `---
+name: react-patterns
+description: React design patterns and best practices
+---
+
+# React Patterns
+
+## Component Composition
+
+Use composition over inheritance for flexible component design.
+
+## Hooks Patterns
+
+- Custom hooks for shared logic
+- useReducer for complex state
+- useMemo for expensive computations
+`,
+  metadata: {
+    author: "@external-author",
+    tags: ["react", "patterns", "web"],
+    category: "web-framework",
+  },
+};
+
+/** Testing utils skill with metadata for import integration tests */
+export const IMPORT_TESTING_UTILS_SKILL: ImportSourceSkill = {
+  name: "testing-utils",
+  content: `---
+name: testing-utils
+description: Testing utilities and best practices
+---
+
+# Testing Utilities
+
+## Unit Testing
+
+Write focused tests that verify single behaviors.
+
+## Integration Testing
+
+Test component interactions and data flow.
+`,
+  metadata: {
+    author: "@external-author",
+    tags: ["testing", "vitest"],
+    category: "web-testing",
+  },
+};
+
+/** API security skill without metadata for import integration tests */
+export const IMPORT_API_SECURITY_SKILL: ImportSourceSkill = {
+  name: "api-security",
+  content: `---
+name: api-security
+description: API security patterns and middleware
+---
+
+# API Security
+
+## Authentication
+
+Implement JWT-based authentication with refresh tokens.
+
+## Rate Limiting
+
+Apply rate limiting to prevent abuse.
+`,
+};

@@ -9,8 +9,8 @@ import {
   readTestFile,
   writeTestFile,
   type TestDirs,
-  DEFAULT_TEST_AGENTS,
 } from "../fixtures/create-test-source";
+import { DEFAULT_TEST_AGENTS } from "../mock-data/mock-agents";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { writeTestSkill, buildTestProjectConfig, createMockSkillDefinition } from "../helpers";
 import { STANDARD_DIRS, STANDARD_FILES } from "../../../consts";

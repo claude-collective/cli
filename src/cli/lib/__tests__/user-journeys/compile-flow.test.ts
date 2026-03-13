@@ -6,9 +6,9 @@ import {
   fileExists,
   readTestFile,
   type TestDirs,
-  DEFAULT_TEST_AGENTS,
 } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS, COMPILE_LOCAL_SKILL } from "../mock-data/mock-skills";
+import { DEFAULT_TEST_AGENTS } from "../mock-data/mock-agents";
 import { runCliCommand, parseTestFrontmatter, buildTestProjectConfig } from "../helpers";
 import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
 

@@ -24,7 +24,7 @@ import {
   IMPORT_TESTING_UTILS_SKILL,
   IMPORT_API_SECURITY_SKILL,
   type ImportSourceSkill,
-} from "../fixtures/create-test-source";
+} from "../mock-data/mock-skills";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 

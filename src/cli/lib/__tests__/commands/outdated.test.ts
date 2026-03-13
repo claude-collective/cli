@@ -5,11 +5,13 @@ import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 import {
   createTestSource,
   cleanupTestSource,
+  type TestDirs,
+} from "../fixtures/create-test-source";
+import {
   LOCAL_SKILL_BASIC,
   LOCAL_SKILL_FORKED,
   LOCAL_SKILL_FORKED_MINIMAL,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+} from "../mock-data/mock-skills";
 
 describe("outdated command", () => {
   let tempDir: string;
