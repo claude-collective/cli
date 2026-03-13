@@ -3,6 +3,7 @@ import React from "react";
 import { Flags } from "@oclif/core";
 import { render, Box, Text, useApp } from "ink";
 import path from "path";
+import os from "os";
 
 import { BaseCommand } from "../base-command";
 import { Confirm } from "../components/common/confirm";
@@ -288,7 +289,8 @@ export default class Uninstall extends BaseCommand {
         for (const pluginName of target.pluginNames) {
           if (cliAvailable) {
             try {
-              await claudePluginUninstall(pluginName, "project", projectDir);
+              const pluginScope = projectDir === os.homedir() ? "user" : "project";
+              await claudePluginUninstall(pluginName, pluginScope, projectDir);
             } catch {
               // Best-effort: plugin may not be registered with Claude CLI
             }
