@@ -42,7 +42,7 @@ export function synthesizeCategory(category: Category, domain: Domain): Category
     displayName,
     description: `Auto-generated category for ${category}`,
     domain,
-    exclusive: true,
+    exclusive: false,
     required: false,
     order: AUTO_SYNTH_ORDER,
   };

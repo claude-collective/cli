@@ -184,7 +184,7 @@ describe("skill-resolution", () => {
       const synthesized = merged.categories["devops-iac" as Category];
       expect(synthesized).toBeDefined();
       expect(synthesized!.displayName).toBe("Devops Iac");
-      expect(synthesized!.exclusive).toBe(true);
+      expect(synthesized!.exclusive).toBe(false);
       expect(synthesized!.required).toBe(false);
       expect(synthesized!.order).toBe(999);
     });
