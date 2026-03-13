@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.74.6] - 2026-03-13
+
+**Fix init dashboard, custom skill pre-selection, and edit marketplace registration**
+
+- Only show dashboard when project CLI config exists (not from Claude Code plugin settings)
+- Resolve custom skill categories from matrix provider instead of static type guard
+- Register marketplace before plugin installation in edit command
+
+See [changelogs/0.74.6.md](./changelogs/0.74.6.md) for full details.
+
+---
+
 ## [0.74.5] - 2026-03-13
 
 **Fix custom skill warnings and multi-select for synthesized categories**
