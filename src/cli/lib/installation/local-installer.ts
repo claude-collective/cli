@@ -454,11 +454,9 @@ export async function writeScopedConfigs(
   await writeConfigFile(projectSplitConfig, projectConfigPath, { isProjectConfig: true });
   verbose(`Updated project config at ${projectConfigPath}`);
 
-  // Write project config-types.ts that extends global with ALL project items.
-  // Pass the full config (not just the project split) so the project types explicitly
-  // list every skill/agent available to the project, regardless of scope. Items that
-  // are already in GlobalSkillId create harmless redundancy in the union.
-  await writeProjectConfigTypes(projectConfigPath, projectDir, finalConfig, matrix);
+  // Write project config-types.ts that extends global with only project-scoped items.
+  // Global items are already available via GlobalSkillId/GlobalAgentName imports.
+  await writeProjectConfigTypes(projectConfigPath, projectDir, projectSplitConfig, matrix);
 }
 
 async function compileAndWriteAgents(

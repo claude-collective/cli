@@ -21,6 +21,8 @@ import { SUCCESS_MESSAGES, INFO_MESSAGES } from "../utils/messages";
 type UninstallTarget = {
   hasPlugins: boolean;
   pluginNames: string[];
+  /** Plugin names filtered to only those installed by this CLI (matched against config skills) */
+  cliPluginNames: string[];
   hasLocalSkills: boolean;
   hasLocalAgents: boolean;
   hasClaudeDir: boolean;
@@ -51,6 +53,11 @@ function collectConfiguredAgents(config: Partial<ProjectConfig> | null): string[
   return config.agents.map((a) => a.name);
 }
 
+function getCliInstalledPluginKeys(config: Partial<ProjectConfig> | null): Set<string> {
+  if (!config?.skills) return new Set();
+  return new Set(config.skills.map((skill) => `${skill.id}@${skill.source}`));
+}
+
 async function detectUninstallTarget(projectDir: string): Promise<UninstallTarget> {
   const pluginsDir = getProjectPluginsDir(projectDir);
   const skillsDir = path.join(projectDir, CLAUDE_DIR, "skills");
@@ -77,10 +84,13 @@ async function detectUninstallTarget(projectDir: string): Promise<UninstallTarge
 
   const configuredSources = collectConfiguredSources(config);
   const configuredAgents = collectConfiguredAgents(config);
+  const cliInstalledKeys = getCliInstalledPluginKeys(config);
+  const cliPluginNames = pluginNames.filter((name) => cliInstalledKeys.has(name));
 
   return {
-    hasPlugins: pluginNames.length > 0,
+    hasPlugins: cliPluginNames.length > 0,
     pluginNames,
+    cliPluginNames,
     hasLocalSkills,
     hasLocalAgents,
     hasClaudeDir,
@@ -119,7 +129,9 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
       {target.hasPlugins && (
         <Box flexDirection="column">
           <Text color={CLI_COLORS.ERROR}> Plugins:</Text>
-          <Text dimColor> {target.pluginsDir}</Text>
+          {target.cliPluginNames.map((name) => (
+            <Text key={name} dimColor> {name}</Text>
+          ))}
         </Box>
       )}
 
@@ -259,7 +271,9 @@ export default class Uninstall extends BaseCommand {
 
       if (target.hasPlugins) {
         this.log("  Plugins:");
-        this.log(`    ${target.pluginsDir}`);
+        for (const pluginName of target.cliPluginNames) {
+          this.log(`    ${pluginName}`);
+        }
       }
 
       if (target.hasLocalSkills || target.hasLocalAgents) {
@@ -286,7 +300,7 @@ export default class Uninstall extends BaseCommand {
       try {
         const cliAvailable = await isClaudeCLIAvailable();
 
-        for (const pluginName of target.pluginNames) {
+        for (const pluginName of target.cliPluginNames) {
           if (cliAvailable) {
             try {
               const pluginScope = projectDir === os.homedir() ? "user" : "project";
@@ -302,7 +316,7 @@ export default class Uninstall extends BaseCommand {
         }
 
         this.logSuccess(
-          `Uninstalled ${target.pluginNames.length} ${target.pluginNames.length === 1 ? "plugin" : "plugins"}`,
+          `Uninstalled ${target.cliPluginNames.length} ${target.cliPluginNames.length === 1 ? "plugin" : "plugins"}`,
         );
       } catch (error) {
         this.log("Plugin uninstall failed");

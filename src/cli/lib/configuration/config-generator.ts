@@ -221,12 +221,23 @@ export function splitConfigByScope(config: ProjectConfig): SplitConfigResult {
     }
   }
 
+  // Split selectedAgents by scope: global agents go to global config, project agents to project config
+  const globalAgentNames = new Set(globalAgents.map((a) => a.name));
+  const globalSelectedAgents = config.selectedAgents?.filter((a) => globalAgentNames.has(a)) ?? [];
+  const projectSelectedAgents = config.selectedAgents?.filter((a) => !globalAgentNames.has(a)) ?? [];
+
+  // Split domains: global gets all, project gets only domains not already in global
+  const globalDomains = config.domains ?? [];
+  const globalDomainSet = new Set(globalDomains);
+  const projectOnlyDomains = (config.domains ?? []).filter((d) => !globalDomainSet.has(d));
+
   const globalConfig: ProjectConfig = {
     name: "global",
     agents: globalAgents,
     skills: globalSkills,
     ...(Object.keys(globalStack).length > 0 && { stack: globalStack }),
-    ...(config.domains && config.domains.length > 0 && { domains: config.domains }),
+    ...(globalDomains.length > 0 && { domains: globalDomains }),
+    ...(globalSelectedAgents.length > 0 && { selectedAgents: globalSelectedAgents }),
   };
 
   const projectConfig: ProjectConfig = {
@@ -239,9 +250,8 @@ export function splitConfigByScope(config: ProjectConfig): SplitConfigResult {
     ...(config.source && { source: config.source }),
     ...(config.marketplace && { marketplace: config.marketplace }),
     ...(config.agentsSource && { agentsSource: config.agentsSource }),
-    ...(config.domains && config.domains.length > 0 && { domains: config.domains }),
-    ...(config.selectedAgents &&
-      config.selectedAgents.length > 0 && { selectedAgents: config.selectedAgents }),
+    ...(projectOnlyDomains.length > 0 && { domains: projectOnlyDomains }),
+    ...(projectSelectedAgents.length > 0 && { selectedAgents: projectSelectedAgents }),
   };
 
   return { global: globalConfig, project: projectConfig };

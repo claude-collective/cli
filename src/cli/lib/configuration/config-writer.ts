@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
 import type { ProjectConfig } from "../../types";
-import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
+import { CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../consts";
 import { fileExists, ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { compactStackForYaml } from "./config-generator";
@@ -155,9 +155,11 @@ function generateProjectConfigWithGlobalImport(
   const agentsArr = (cleaned.agents as unknown[]) ?? [];
   const stackObj = cleaned.stack as Record<string, unknown> | undefined;
   const domainsArr = (cleaned.domains as unknown[]) ?? [];
+  const selectedAgentsArr = (cleaned.selectedAgents as string[]) ?? [];
 
   const hasProjectDomains = domainsArr.length > 0;
   const hasStack = stackObj != null && Object.keys(stackObj).length > 0;
+  const hasProjectSelectedAgents = selectedAgentsArr.length > 0;
 
   // Build type imports
   const typeImports = buildTypeImports({
@@ -205,17 +207,18 @@ function generateProjectConfigWithGlobalImport(
     lines.push(`];`);
   }
 
-  // Build scalar fields (everything that isn't an extracted field or name)
+  // Build scalar fields (everything that isn't an extracted field, name, or selectedAgents)
   const scalarFields = Object.entries(cleaned)
-    .filter(([key]) => !EXTRACTED_FIELDS.has(key) && key !== "name")
+    .filter(([key]) => !EXTRACTED_FIELDS.has(key) && key !== "name" && key !== "selectedAgents")
     .map(([key, value]) => `  ${JSON.stringify(key)}: ${JSON.stringify(value)},`)
     .join("\n");
 
   // Build export default (table of contents at bottom)
   const exportFields: string[] = [`  ...globalConfig,`];
-  if (cleaned.name) {
-    exportFields.push(`  name: ${JSON.stringify(cleaned.name)},`);
-  }
+  // Ensure project config never inherits "global" as its name from the globalConfig spread
+  const projectName =
+    cleaned.name && cleaned.name !== "global" ? cleaned.name : DEFAULT_PLUGIN_NAME;
+  exportFields.push(`  name: ${JSON.stringify(projectName)},`);
   exportFields.push(`  skills,`);
   exportFields.push(`  agents,`);
   if (hasStack) {
@@ -223,6 +226,13 @@ function generateProjectConfigWithGlobalImport(
   }
   if (hasProjectDomains) {
     exportFields.push(`  domains,`);
+  }
+  // selectedAgents: spread global + project-scoped agents
+  if (hasProjectSelectedAgents) {
+    const projectAgentItems = selectedAgentsArr.map((a) => `${JSON.stringify(a)}`).join(", ");
+    exportFields.push(
+      `  "selectedAgents": [...(globalConfig.selectedAgents ?? []), ${projectAgentItems}],`,
+    );
   }
   if (scalarFields) {
     exportFields.push(scalarFields);

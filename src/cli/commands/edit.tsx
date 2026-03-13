@@ -400,6 +400,12 @@ export default class Edit extends BaseCommand {
     try {
       const recompileSkills = await discoverAllPluginSkills(projectDir);
 
+      // Build scope map so recompileAgents routes agents to the correct directory:
+      // global agents -> ~/.claude/agents/, project agents -> installation.agentsDir
+      const agentScopeMap = new Map(
+        result.agentConfigs.map((a) => [a.name, a.scope] as const),
+      );
+
       const recompileResult = await recompileAgents({
         pluginDir: projectDir,
         sourcePath,
@@ -407,6 +413,7 @@ export default class Edit extends BaseCommand {
         projectDir,
         outputDir: installation.agentsDir,
         installMode: deriveInstallMode(result.skills),
+        agentScopeMap,
       });
 
       if (recompileResult.failed.length > 0) {

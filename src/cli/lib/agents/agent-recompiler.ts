@@ -1,4 +1,5 @@
 import type { Liquid } from "liquidjs";
+import os from "os";
 import path from "path";
 
 import { getErrorMessage } from "../../utils/errors";
@@ -12,6 +13,7 @@ import type {
   SkillDefinitionMap,
 } from "../../types";
 import { type InstallMode, deriveInstallMode } from "../installation/installation";
+import { CLAUDE_DIR } from "../../consts";
 import { glob, writeFile, ensureDir } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -31,6 +33,8 @@ export type RecompileAgentsOptions = {
   projectDir?: string;
   outputDir?: string;
   installMode?: InstallMode;
+  /** When provided, routes agents by scope: global agents to ~/.claude/agents/, project agents to outputDir */
+  agentScopeMap?: Map<AgentName, "project" | "global">;
 };
 
 export type RecompileAgentsResult = {
@@ -118,20 +122,30 @@ type CompileAndWriteParams = {
   sourcePath: string;
   engine: Liquid;
   installMode?: InstallMode;
+  agentScopeMap?: Map<AgentName, "project" | "global">;
 };
 
 async function compileAndWriteAgents(
   params: CompileAndWriteParams,
   result: RecompileAgentsResult,
 ): Promise<void> {
-  const { resolvedAgents, agentsDir, sourcePath, engine, installMode } = params;
+  const { resolvedAgents, agentsDir, sourcePath, engine, installMode, agentScopeMap } = params;
+
+  const globalAgentsDir = path.join(os.homedir(), CLAUDE_DIR, "agents");
 
   for (const [agentName, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
     try {
       const output = await compileAgentForPlugin(agentName, agent, sourcePath, engine, installMode);
-      await writeFile(path.join(agentsDir, `${agentName}.md`), output);
+
+      // Route agent output by scope: global agents go to ~/.claude/agents/, project agents to agentsDir
+      const scope = agentScopeMap?.get(agentName) ?? "project";
+      const targetDir = scope === "global" ? globalAgentsDir : agentsDir;
+      if (scope === "global") {
+        await ensureDir(targetDir);
+      }
+      await writeFile(path.join(targetDir, `${agentName}.md`), output);
       result.compiled.push(agentName);
-      verbose(`  Recompiled: ${agentName}`);
+      verbose(`  Recompiled: ${agentName} (${scope} -> ${targetDir})`);
     } catch (error) {
       result.failed.push(agentName);
       result.warnings.push(`Failed to compile ${agentName}: ${getErrorMessage(error)}`);
@@ -207,6 +221,7 @@ export async function recompileAgents(
       sourcePath,
       engine,
       installMode: options.installMode ?? deriveInstallMode(projectConfig?.skills ?? []),
+      agentScopeMap: options.agentScopeMap,
     },
     result,
   );

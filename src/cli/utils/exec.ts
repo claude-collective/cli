@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import os from "os";
 import { getErrorMessage } from "./errors";
 import { warn } from "./logger";
 
@@ -128,6 +129,11 @@ export async function execCommand(
   });
 }
 
+/** User-scoped plugins run from home dir so Claude CLI only writes to ~/.claude/settings.json */
+function resolvePluginCwd(scope: "project" | "user", projectDir: string): string {
+  return scope === "user" ? os.homedir() : projectDir;
+}
+
 export async function claudePluginInstall(
   pluginPath: string,
   scope: "project" | "user",
@@ -135,8 +141,9 @@ export async function claudePluginInstall(
 ): Promise<void> {
   validatePluginPath(pluginPath);
 
+  const cwd = resolvePluginCwd(scope, projectDir);
   const args = ["plugin", "install", pluginPath, "--scope", scope];
-  const result = await execCommand("claude", args, { cwd: projectDir });
+  const result = await execCommand("claude", args, { cwd });
 
   if (result.exitCode !== 0) {
     const errorMessage = result.stderr || result.stdout || "Unknown error";
@@ -219,8 +226,9 @@ export async function claudePluginUninstall(
 ): Promise<void> {
   validatePluginName(pluginName);
 
+  const cwd = resolvePluginCwd(scope, projectDir);
   const args = ["plugin", "uninstall", pluginName, "--scope", scope];
-  const result = await execCommand("claude", args, { cwd: projectDir });
+  const result = await execCommand("claude", args, { cwd });
 
   if (result.exitCode !== 0) {
     const errorMessage = result.stderr || result.stdout || "Unknown error";

@@ -46,6 +46,7 @@ async function createProjectConfig(
     source?: string;
     extraSources?: Array<{ name: string; url: string }>;
     agents?: Array<{ name: string; scope: string }>;
+    skills?: Array<{ id: string; scope: string; source: string }>;
   },
 ): Promise<string> {
   const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
@@ -61,6 +62,10 @@ async function createProjectConfig(
 
   if (options?.agents) {
     config.agents = options.agents;
+  }
+
+  if (options?.skills) {
+    config.skills = options.skills;
   }
 
   const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
@@ -523,6 +528,9 @@ describe("uninstall command", () => {
 
   describe("plugin removal", () => {
     it("should remove plugin directory", async () => {
+      await createProjectConfig(projectDir, {
+        skills: [{ id: "test-plugin", scope: "project", source: "marketplace" }],
+      });
       const pluginDir = await createPluginDir(projectDir, fakeHome);
 
       expect(await directoryExists(pluginDir)).toBe(true);
@@ -534,6 +542,9 @@ describe("uninstall command", () => {
     });
 
     it("should show what will be removed", async () => {
+      await createProjectConfig(projectDir, {
+        skills: [{ id: "test-plugin", scope: "project", source: "marketplace" }],
+      });
       await createPluginDir(projectDir, fakeHome);
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
@@ -543,6 +554,9 @@ describe("uninstall command", () => {
     });
 
     it("should show uninstall complete message", async () => {
+      await createProjectConfig(projectDir, {
+        skills: [{ id: "test-plugin", scope: "project", source: "marketplace" }],
+      });
       await createPluginDir(projectDir, fakeHome);
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
@@ -627,7 +641,9 @@ describe("uninstall command", () => {
 
   describe("combined plugin and local removal", () => {
     it("should remove both plugins and CLI-managed local artifacts", async () => {
-      await createProjectConfig(projectDir);
+      await createProjectConfig(projectDir, {
+        skills: [{ id: "test-plugin", scope: "project", source: "marketplace" }],
+      });
       const pluginDir = await createPluginDir(projectDir, fakeHome);
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
 
