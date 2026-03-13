@@ -32,7 +32,12 @@ import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
 import type { AgentDefinition, AgentName, SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
-import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
+import {
+  claudePluginInstall,
+  claudePluginUninstall,
+  claudePluginMarketplaceExists,
+  claudePluginMarketplaceAdd,
+} from "../utils/exec.js";
 import {
   enableBuffering,
   drainBuffer,
@@ -332,6 +337,14 @@ export default class Edit extends BaseCommand {
     }
 
     if (sourceResult.marketplace) {
+      const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
+      if (!marketplaceExists) {
+        this.log(`Registering marketplace "${sourceResult.marketplace}"...`);
+        const marketplaceSource = sourceResult.sourceConfig.source.replace(/^github:/, "");
+        await claudePluginMarketplaceAdd(marketplaceSource);
+        this.log(`Registered marketplace: ${sourceResult.marketplace}`);
+      }
+
       for (const skillId of addedSkills) {
         // Find the skill config to get its scope
         const skillConfig = result.skills.find((s) => s.id === skillId);
