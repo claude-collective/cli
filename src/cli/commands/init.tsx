@@ -317,8 +317,7 @@ export default class Init extends BaseCommand {
     // Resolve both paths through realpathSync — on macOS /var is a symlink to
     // /private/var, so os.homedir() and process.cwd() can return different
     // prefixes for the same directory.
-    const isGlobalRoot =
-      fs.realpathSync(projectDir) === fs.realpathSync(GLOBAL_INSTALL_ROOT);
+    const isGlobalRoot = fs.realpathSync(projectDir) === fs.realpathSync(GLOBAL_INSTALL_ROOT);
     if (!isGlobalRoot) {
       const created = await ensureBlankGlobalConfig();
       if (created) {

@@ -78,12 +78,7 @@ export async function createMinimalProject(tempDir: string): Promise<{
 }> {
   const projectDir = path.join(tempDir, "project");
   const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-  const skillDir = path.join(
-    projectDir,
-    CLAUDE_DIR,
-    STANDARD_DIRS.SKILLS,
-    "web-testing-vitest",
-  );
+  const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-testing-vitest");
 
   await mkdir(skillDir, { recursive: true });
 

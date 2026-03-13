@@ -224,7 +224,8 @@ export function splitConfigByScope(config: ProjectConfig): SplitConfigResult {
   // Split selectedAgents by scope: global agents go to global config, project agents to project config
   const globalAgentNames = new Set(globalAgents.map((a) => a.name));
   const globalSelectedAgents = config.selectedAgents?.filter((a) => globalAgentNames.has(a)) ?? [];
-  const projectSelectedAgents = config.selectedAgents?.filter((a) => !globalAgentNames.has(a)) ?? [];
+  const projectSelectedAgents =
+    config.selectedAgents?.filter((a) => !globalAgentNames.has(a)) ?? [];
 
   // Split domains: global gets all, project gets only domains not already in global
   const globalDomains = config.domains ?? [];

@@ -656,4 +656,3 @@ function resolveRelationships(
 - Easier to add new relationship types (just add a field + handler)
 - Reduces function count from 5+ to 1
 - `buildResolvedSkill()` becomes a simple spread of the result
-

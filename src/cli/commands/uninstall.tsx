@@ -130,7 +130,10 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
         <Box flexDirection="column">
           <Text color={CLI_COLORS.ERROR}> Plugins:</Text>
           {target.cliPluginNames.map((name) => (
-            <Text key={name} dimColor> {name}</Text>
+            <Text key={name} dimColor>
+              {" "}
+              {name}
+            </Text>
           ))}
         </Box>
       )}
