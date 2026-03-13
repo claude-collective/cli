@@ -82,7 +82,7 @@ function resolveToCanonicalId(
     return slugResult;
   }
   const location = context ? ` in ${context}` : "";
-  warn(`Unresolved slug '${slug}'${location} — skipping`);
+  verbose(`Unresolved slug '${slug}'${location} — skipping`);
   return null;
 }
 
