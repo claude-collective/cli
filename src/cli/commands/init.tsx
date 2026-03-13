@@ -2,6 +2,7 @@ import React from "react";
 
 import { Flags } from "@oclif/core";
 import { render, Box, Text, useApp } from "ink";
+import fs from "fs";
 import os from "os";
 import path from "path";
 
@@ -313,7 +314,12 @@ export default class Init extends BaseCommand {
 
     // Auto-create blank global config on first init from a project directory.
     // This ensures the project config can always import from global.
-    if (projectDir !== GLOBAL_INSTALL_ROOT) {
+    // Resolve both paths through realpathSync — on macOS /var is a symlink to
+    // /private/var, so os.homedir() and process.cwd() can return different
+    // prefixes for the same directory.
+    const isGlobalRoot =
+      fs.realpathSync(projectDir) === fs.realpathSync(GLOBAL_INSTALL_ROOT);
+    if (!isGlobalRoot) {
       const created = await ensureBlankGlobalConfig();
       if (created) {
         this.log("Created blank global config at ~/" + CLAUDE_SRC_DIR);
