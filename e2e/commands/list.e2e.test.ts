@@ -169,7 +169,7 @@ describe("list command", () => {
       });
 
       // Add a user-created skill (custom: true, no forkedFrom)
-      await createLocalSkill(projectDir, "web-my-custom-helper", {
+      await createLocalSkill(projectDir, "web-utilities-date-fns", {
         description: "A user-created custom skill",
         metadata: `custom: true\nauthor: "@local"\ndisplayName: My Custom Helper\ncategory: web-utilities\ncontentHash: "custom-hash"\n`,
       });
@@ -180,7 +180,7 @@ describe("list command", () => {
       // The output should show individual skills with some kind of type indicator
       expect(stdout).toContain("web-framework-react");
       expect(stdout).toContain("web-testing-vitest");
-      expect(stdout).toContain("web-my-custom-helper");
+      expect(stdout).toContain("web-utilities-date-fns");
       // There should be a visible distinction between managed and custom skills
       expect(stdout).toMatch(/custom|user|local/i);
     });
@@ -193,7 +193,7 @@ describe("list command", () => {
       // Create .claude/skills/ with a skill but no config.ts
       const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
       await mkdir(skillsDir, { recursive: true });
-      await createLocalSkill(tempDir, "web-testing-orphan-skill");
+      await createLocalSkill(tempDir, "web-animation-css-animations");
 
       const { exitCode, stdout } = await runCLI(["list"], tempDir);
 

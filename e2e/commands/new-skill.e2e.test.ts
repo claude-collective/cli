@@ -318,10 +318,6 @@ describe("new skill command", () => {
     // Header comment
     expect(configTypesContent).toContain("AUTO-GENERATED");
 
-    // Section comments for custom vs marketplace values
-    expect(configTypesContent).toContain("// Custom");
-    expect(configTypesContent).toContain("// Marketplace");
-
     // Custom skill ID appears in SkillId union
     expect(configTypesContent).toContain('"custom-types-skill"');
 

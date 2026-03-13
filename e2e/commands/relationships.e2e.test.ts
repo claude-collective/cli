@@ -30,7 +30,7 @@ describe("slug-based relationship rules", () => {
       });
       tempDir = sourceTempDir;
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
 
       // Slug resolution should detect that "angular-standalone" has no matching skill in the source
       expect(combined).toContain("Unresolved slug");
@@ -82,7 +82,7 @@ describe("slug-based relationship rules", () => {
       });
       tempDir = sourceTempDir;
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
 
       expect(combined).toContain("Unresolved slug");
       expect(combined).toContain("angular-standalone");
@@ -194,7 +194,7 @@ describe("slug-based relationship rules", () => {
       });
       tempDir = sourceTempDir;
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
 
       expect(combined).toContain("Checked 10 skill(s)");
 
@@ -242,7 +242,7 @@ describe("slug-based relationship rules", () => {
       });
       tempDir = sourceTempDir;
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
 
       // "vue-composition-api" slug does not exist in the E2E source
       expect(combined).toContain("Unresolved slug");

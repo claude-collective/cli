@@ -50,7 +50,7 @@ describe("diff command", () => {
 
   it("should report no forkedFrom metadata for skills without it (message only)", async () => {
     tempDir = await createTempDir();
-    await createLocalSkill(tempDir, "web-testing-e2e-skill", {
+    await createLocalSkill(tempDir, "web-testing-playwright-e2e", {
       metadata: 'author: "@test"\ncontentHash: "abc123"\ndisplayName: my-test-skill\n',
     });
 
@@ -64,7 +64,7 @@ describe("diff command", () => {
   // (src/cli/commands/diff.ts:261-267)
   it.fails("should exit code 0 when no forkedFrom metadata and no diffs", async () => {
     tempDir = await createTempDir();
-    await createLocalSkill(tempDir, "web-testing-e2e-skill", {
+    await createLocalSkill(tempDir, "web-testing-playwright-e2e", {
       metadata: 'author: "@test"\ncontentHash: "abc123"\ndisplayName: my-test-skill\n',
     });
 
@@ -75,7 +75,7 @@ describe("diff command", () => {
 
   it("should report error when specifying a nonexistent skill name", async () => {
     tempDir = await createTempDir();
-    await createLocalSkill(tempDir, "web-testing-e2e-skill", {
+    await createLocalSkill(tempDir, "web-testing-playwright-e2e", {
       metadata: 'author: "@test"\ndisplayName: my-test-skill\n',
     });
 
@@ -91,7 +91,7 @@ describe("diff command", () => {
     tempDir = await createTempDir();
 
     const sourceSkillId = "web-testing-vitest";
-    const localDirName = "web-testing-vitest-local" as const;
+    const localDirName = "web-styling-tailwind";
 
     const skillDir = await createLocalSkill(tempDir, localDirName, {
       description: "Modified local version of the skill",
@@ -128,8 +128,8 @@ describe("diff command", () => {
     sourceTempDir = e2e.tempDir;
     tempDir = await createTempDir();
 
-    const targetLocalDir = "web-framework-react-fork" as const;
-    const otherLocalDir = "web-testing-vitest-fork" as const;
+    const targetLocalDir = "web-framework-nextjs-app-router";
+    const otherLocalDir = "web-testing-cypress-e2e";
 
     await createLocalSkill(tempDir, targetLocalDir, {
       description: "Modified react skill",
@@ -167,7 +167,7 @@ describe("diff command", () => {
     sourceTempDir = e2e.tempDir;
     tempDir = await createTempDir();
 
-    const localDirName = "web-testing-vitest-fork" as const;
+    const localDirName = "web-testing-cypress-e2e";
 
     const skillDir = await createLocalSkill(tempDir, localDirName, {
       description: "Modified skill",
@@ -201,7 +201,7 @@ describe("diff command", () => {
     tempDir = await createTempDir();
 
     const sourceSkillId = "web-testing-vitest";
-    const localDirName = "web-testing-vitest-fork" as const;
+    const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       e2e.sourceDir,
       SKILLS_DIR_PATH,
@@ -241,7 +241,7 @@ describe("diff command", () => {
     tempDir = await createTempDir();
 
     const sourceSkillId = "web-testing-vitest";
-    const localDirName = "web-testing-vitest-fork" as const;
+    const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       e2e.sourceDir,
       SKILLS_DIR_PATH,
@@ -280,7 +280,7 @@ describe("diff command", () => {
     tempDir = await createTempDir();
 
     const sourceSkillId = "web-testing-vitest";
-    const localDirName = "web-testing-vitest-fork" as const;
+    const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       e2e.sourceDir,
       SKILLS_DIR_PATH,
@@ -326,8 +326,8 @@ describe("diff command", () => {
     sourceTempDir = e2e.tempDir;
     tempDir = await createTempDir();
 
-    const reactFork = "web-framework-react-fork" as const;
-    const vitestFork = "web-testing-vitest-fork" as const;
+    const reactFork = "web-framework-nextjs-app-router";
+    const vitestFork = "web-testing-cypress-e2e";
 
     const reactDir = await createLocalSkill(tempDir, reactFork, {
       description: "Modified react skill",
@@ -375,7 +375,7 @@ describe("diff command", () => {
     sourceTempDir = e2e.tempDir;
     tempDir = await createTempDir();
 
-    const localDirName = "web-testing-vitest-fork" as const;
+    const localDirName = "web-testing-cypress-e2e";
 
     const skillDir = await createLocalSkill(tempDir, localDirName, {
       description: "Modified skill",
@@ -411,7 +411,7 @@ describe("diff command", () => {
     sourceTempDir = e2e.tempDir;
     tempDir = await createTempDir();
 
-    const localDirName = "web-deleted-skill-fork" as const;
+    const localDirName = "web-pwa-offline-first";
 
     await createLocalSkill(tempDir, localDirName, {
       description: "Fork of a skill that was removed from source",

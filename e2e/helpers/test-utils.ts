@@ -68,7 +68,7 @@ export { cleanupTempDir, fileExists, directoryExists };
  *       config.ts
  *     .claude/
  *       skills/
- *         web-testing-e2e-compile/
+ *         web-testing-vitest/
  *           SKILL.md
  *           metadata.yaml
  */
@@ -82,7 +82,7 @@ export async function createMinimalProject(tempDir: string): Promise<{
     projectDir,
     CLAUDE_DIR,
     STANDARD_DIRS.SKILLS,
-    "web-testing-e2e-compile",
+    "web-testing-vitest",
   );
 
   await mkdir(skillDir, { recursive: true });
@@ -90,7 +90,7 @@ export async function createMinimalProject(tempDir: string): Promise<{
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
     renderSkillMd(
-      "web-testing-e2e-compile",
+      "web-testing-vitest",
       "E2E test skill for compile verification",
       "# Test E2E Skill\n\nThis skill exists solely for E2E testing of the compile command.",
     ),
@@ -99,15 +99,17 @@ export async function createMinimalProject(tempDir: string): Promise<{
   await writeFile(
     path.join(skillDir, STANDARD_FILES.METADATA_YAML),
     `author: "@test"
-displayName: web-testing-e2e-compile
-slug: e2e-compile
-contentHash: "e2e-test-hash"
+displayName: web-testing-vitest
+slug: vitest
+cliDescription: "E2E test skill"
+usageGuidance: "Use when testing E2E scenarios"
+contentHash: "a1b2c3d"
 `,
   );
 
   await writeProjectConfig(projectDir, {
     name: "e2e-compile-test",
-    skills: [{ id: "web-testing-e2e-compile" as SkillId, scope: "project", source: "local" }],
+    skills: [{ id: "web-testing-vitest", scope: "project", source: "local" }],
     agents: [
       { name: "web-developer", scope: "project" },
       { name: "api-developer", scope: "project" },
@@ -309,7 +311,7 @@ export async function createEditableProject(
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@test"\ndisplayName: ${skillId}\ncategory: ${category}\nslug: ${slug}\ncontentHash: "e2e-hash-${skillId}"\n`,
+      `author: "@test"\ndisplayName: ${skillId}\ncategory: ${category}\nslug: ${slug}\ncliDescription: "E2E test skill"\nusageGuidance: "Use when testing E2E scenarios"\ncontentHash: "b2c3d4e"\n`,
     );
   }
 
@@ -323,10 +325,10 @@ export async function createEditableProject(
  *   <tempDir>/
  *     global-home/                        <- fake HOME
  *       .claude-src/config.ts             <- global config
- *       .claude/skills/web-testing-e2e-global/
+ *       .claude/skills/web-testing-cypress-e2e/
  *     project/                            <- project dir (cwd)
  *       .claude-src/config.ts             <- project config
- *       .claude/skills/web-testing-e2e-local/
+ *       .claude/skills/web-testing-playwright-e2e/
  */
 export async function createDualScopeProject(tempDir: string): Promise<{
   globalHome: string;
@@ -338,41 +340,41 @@ export async function createDualScopeProject(tempDir: string): Promise<{
   // --- Global installation ---
   await writeProjectConfig(globalHome, {
     name: "global-test",
-    skills: [{ id: "web-testing-e2e-global", scope: "global", source: "local" }],
+    skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
     agents: [{ name: "web-developer", scope: "global" }],
     domains: ["web"],
     stack: {
       "web-developer": {
-        "web-testing": [{ id: "web-testing-e2e-global", preloaded: true }],
+        "web-testing": [{ id: "web-testing-cypress-e2e", preloaded: true }],
       },
     },
   });
 
-  await createLocalSkill(globalHome, "web-testing-e2e-global", {
+  await createLocalSkill(globalHome, "web-testing-cypress-e2e", {
     description: "Global E2E skill for dual-scope testing",
-    metadata: `author: "@test"\ncontentHash: "hash-global"\n`,
+    metadata: `author: "@test"\ndisplayName: web-testing-cypress-e2e\ncliDescription: "E2E test skill"\nusageGuidance: "Use when testing E2E scenarios"\ncontentHash: "c3d4e5f"\n`,
   });
 
   // --- Project installation ---
   await writeProjectConfig(projectDir, {
     name: "project-test",
     skills: [
-      { id: "web-testing-e2e-local", scope: "project", source: "local" },
-      { id: "web-testing-e2e-global", scope: "global", source: "local" },
+      { id: "web-testing-playwright-e2e", scope: "project", source: "local" },
+      { id: "web-testing-cypress-e2e", scope: "global", source: "local" },
     ],
     agents: [{ name: "api-developer", scope: "project" }],
     domains: ["web"],
     stack: {
       "api-developer": {
-        "web-testing": [{ id: "web-testing-e2e-global", preloaded: true }],
-        "web-mocking": [{ id: "web-testing-e2e-local", preloaded: true }],
+        "web-testing": [{ id: "web-testing-cypress-e2e", preloaded: true }],
+        "web-mocking": [{ id: "web-testing-playwright-e2e", preloaded: true }],
       },
     },
   });
 
-  await createLocalSkill(projectDir, "web-testing-e2e-local", {
+  await createLocalSkill(projectDir, "web-testing-playwright-e2e", {
     description: "Project-local E2E skill for dual-scope testing",
-    metadata: `author: "@test"\ncontentHash: "hash-local"\n`,
+    metadata: `author: "@test"\ndisplayName: web-testing-playwright-e2e\ncliDescription: "E2E test skill"\nusageGuidance: "Use when testing E2E scenarios"\ncontentHash: "d4e5f6a"\n`,
   });
 
   return { globalHome, projectDir };
@@ -501,7 +503,9 @@ category: web-custom-e2e
 slug: e2e-widget
 author: "@test"
 displayName: Custom E2E Widget
-contentHash: "e2e-custom-hash"
+cliDescription: "E2E custom test skill"
+usageGuidance: "Use when testing custom skill scenarios"
+contentHash: "e5f6a7b"
 `,
   );
 

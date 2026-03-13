@@ -61,8 +61,8 @@ describe("dual-scope compile", () => {
     const globalAgentPath = path.join(globalHome, CLAUDE_DIR, "agents", "web-developer.md");
     const content = await readTestFile(globalAgentPath);
 
-    expect(content).toContain("web-testing-e2e-global");
-    expect(content).not.toContain("web-testing-e2e-local");
+    expect(content).toContain("web-testing-cypress-e2e");
+    expect(content).not.toContain("web-testing-playwright-e2e");
   });
 
   it("should compile project agents referencing both global and project skills", async () => {
@@ -78,8 +78,8 @@ describe("dual-scope compile", () => {
     const projectAgentPath = path.join(projectDir, CLAUDE_DIR, "agents", "api-developer.md");
     const content = await readTestFile(projectAgentPath);
 
-    expect(content).toContain("web-testing-e2e-local");
-    expect(content).toContain("web-testing-e2e-global");
+    expect(content).toContain("web-testing-playwright-e2e");
+    expect(content).toContain("web-testing-cypress-e2e");
   });
 
   it("should work with global-only installation", async () => {
@@ -92,17 +92,17 @@ describe("dual-scope compile", () => {
 
     await writeProjectConfig(globalHome, {
       name: "global-test",
-      skills: [{ id: "web-testing-e2e-global", scope: "global", source: "local" }],
+      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
       agents: [{ name: "web-developer", scope: "global" }],
       domains: ["web"],
       stack: {
         "web-developer": {
-          "web-testing": [{ id: "web-testing-e2e-global", preloaded: true }],
+          "web-testing": [{ id: "web-testing-cypress-e2e", preloaded: true }],
         },
       },
     });
 
-    await createLocalSkill(globalHome, "web-testing-e2e-global", {
+    await createLocalSkill(globalHome, "web-testing-cypress-e2e", {
       description: "Global skill for single-scope test",
       metadata: `author: "@test"\ncontentHash: "hash-global"\n`,
     });
@@ -131,17 +131,17 @@ describe("dual-scope compile", () => {
 
     await writeProjectConfig(projectDir, {
       name: "project-test",
-      skills: [{ id: "web-testing-e2e-local", scope: "project", source: "local" }],
+      skills: [{ id: "web-testing-playwright-e2e", scope: "project", source: "local" }],
       agents: [{ name: "api-developer", scope: "project" }],
       domains: ["web"],
       stack: {
         "api-developer": {
-          "web-testing": [{ id: "web-testing-e2e-local", preloaded: true }],
+          "web-testing": [{ id: "web-testing-playwright-e2e", preloaded: true }],
         },
       },
     });
 
-    await createLocalSkill(projectDir, "web-testing-e2e-local", {
+    await createLocalSkill(projectDir, "web-testing-playwright-e2e", {
       description: "Project skill for single-scope test",
       metadata: `author: "@test"\ncontentHash: "hash-local"\n`,
     });
@@ -172,7 +172,7 @@ describe("dual-scope compile", () => {
     expect(combined).toContain("Compiling global agents");
     expect(combined).toContain("Compiling project agents");
     expect(combined).toContain("Loaded skill:");
-    expect(combined).toContain("web-testing-e2e-global");
-    expect(combined).toContain("web-testing-e2e-local");
+    expect(combined).toContain("web-testing-cypress-e2e");
+    expect(combined).toContain("web-testing-playwright-e2e");
   });
 });

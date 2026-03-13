@@ -29,6 +29,7 @@ type E2ESkill = {
   slug: string;
   description: string;
   domain: string;
+  displayName: string;
 };
 
 const E2E_SKILLS: E2ESkill[] = [
@@ -38,6 +39,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "react",
     description: "React framework for building user interfaces",
     domain: "web",
+    displayName: "web-framework-react",
   },
   {
     category: "web-testing",
@@ -45,6 +47,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "vitest",
     description: "Next generation testing framework",
     domain: "web",
+    displayName: "web-testing-vitest",
   },
   {
     category: "web-client-state",
@@ -52,6 +55,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "zustand",
     description: "Bear necessities state management",
     domain: "web",
+    displayName: "web-state-zustand",
   },
   {
     category: "api-api",
@@ -59,6 +63,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "hono",
     description: "Lightweight web framework for the edge",
     domain: "api",
+    displayName: "api-framework-hono",
   },
   {
     category: "shared-methodology",
@@ -66,6 +71,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "anti-over-engineering",
     description: "Surgical implementation, not architectural innovation",
     domain: "shared",
+    displayName: "Anti Over-Engineering",
   },
   {
     category: "shared-methodology",
@@ -73,6 +79,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "context-management",
     description: "Maintain project continuity across sessions",
     domain: "shared",
+    displayName: "Context Management",
   },
   {
     category: "shared-methodology",
@@ -80,6 +87,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "improvement-protocol",
     description: "Evidence-based self-improvement",
     domain: "shared",
+    displayName: "Improvement Protocol",
   },
   {
     category: "shared-methodology",
@@ -87,6 +95,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "investigation-requirements",
     description: "Never speculate - read actual code first",
     domain: "shared",
+    displayName: "Investigation Requirements",
   },
   {
     category: "shared-methodology",
@@ -94,6 +103,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "success-criteria",
     description: "Explicit, measurable criteria defining done",
     domain: "shared",
+    displayName: "Success Criteria",
   },
   {
     category: "shared-methodology",
@@ -101,6 +111,7 @@ const E2E_SKILLS: E2ESkill[] = [
     slug: "write-verification",
     description: "Verify work was actually saved",
     domain: "shared",
+    displayName: "Write Verification",
   },
 ];
 
@@ -203,7 +214,7 @@ async function writeSkills(sourceDir: string, skills: E2ESkill[]): Promise<void>
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@agents-inc"\ncategory: ${skill.category}\ndomain: ${skill.domain}\nslug: ${skill.slug}\ntags: []\ndisplayName: ${skill.id}\ncontentHash: "e2e-hash"\n`,
+      `author: "@agents-inc"\ncategory: ${skill.category}\ndomain: ${skill.domain}\nslug: ${skill.slug}\ntags: []\ndisplayName: ${skill.displayName}\ncliDescription: "${skill.description}"\nusageGuidance: "Use when testing E2E scenarios"\ncontentHash: "a1b2c3d"\n`,
     );
   }
 }
@@ -228,7 +239,6 @@ async function writeSkillRules(
     requires: relationships.requires ?? [],
     alternatives: relationships.alternatives ?? [],
     ...(relationships.compatibleWith ? { compatibleWith: relationships.compatibleWith } : {}),
-    ...(relationships.setupPairs ? { setupPairs: relationships.setupPairs } : {}),
   };
 
   await writeFile(

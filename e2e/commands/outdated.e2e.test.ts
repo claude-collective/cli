@@ -69,7 +69,7 @@ describe("outdated command", () => {
     const sourceDir = e2e.sourceDir;
 
     const sourceSkillId = "web-testing-vitest";
-    const localDirName = "web-testing-vitest-fork" as const;
+    const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       sourceDir,
       SKILLS_DIR_PATH,
@@ -114,7 +114,7 @@ describe("outdated command", () => {
     const sourceDir = e2e.sourceDir;
 
     const sourceSkillId = "web-framework-react";
-    const localDirName = "web-framework-react-fork" as const;
+    const localDirName = "web-framework-nextjs-server-actions";
 
     // Use a different local directory name to avoid overwriting the source skill in the matrix.
     await createLocalSkill(tempDir, localDirName, {
@@ -144,7 +144,7 @@ describe("outdated command", () => {
     const sourceDir = e2e.sourceDir;
 
     const sourceSkillId = "web-framework-react";
-    const localDirName = "web-framework-react-fork" as const;
+    const localDirName = "web-framework-nextjs-server-actions";
 
     // Use a different local directory name to avoid overwriting the source skill in the matrix.
     await createLocalSkill(tempDir, localDirName, {
@@ -183,8 +183,8 @@ describe("outdated command", () => {
     const sourceDir = e2e.sourceDir;
 
     // Create a local skill without forkedFrom metadata
-    await createLocalSkill(tempDir, "web-custom-local-skill", {
-      metadata: 'author: "@test"\ndisplayName: web-custom-local-skill\n',
+    await createLocalSkill(tempDir, "web-utilities-native-js", {
+      metadata: 'author: "@test"\ndisplayName: web-utilities-native-js\n',
     });
 
     const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
@@ -215,7 +215,7 @@ describe("outdated command", () => {
     const sourceDir = e2e.sourceDir;
 
     const sourceSkillId = "web-testing-vitest";
-    const localDirName = "web-testing-vitest-fork" as const;
+    const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       sourceDir,
       SKILLS_DIR_PATH,
@@ -269,10 +269,10 @@ describe("outdated command", () => {
     const sourceDir = e2e.sourceDir;
 
     // Create one outdated skill (distinct dir name to preserve source entry in matrix)
-    await createLocalSkill(tempDir, "web-framework-react-fork" as const, {
+    await createLocalSkill(tempDir, "web-framework-nextjs-server-actions", {
       metadata: [
         'author: "@agents-inc"',
-        "displayName: web-framework-react-fork",
+        "displayName: web-framework-nextjs-server-actions",
         "forkedFrom:",
         "  skillId: web-framework-react",
         '  contentHash: "0000000"',
@@ -281,8 +281,8 @@ describe("outdated command", () => {
     });
 
     // Create one local-only skill (no forkedFrom)
-    await createLocalSkill(tempDir, "web-custom-local-skill", {
-      metadata: 'author: "@test"\ndisplayName: web-custom-local-skill\n',
+    await createLocalSkill(tempDir, "web-utilities-native-js", {
+      metadata: 'author: "@test"\ndisplayName: web-utilities-native-js\n',
     });
 
     const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
@@ -301,8 +301,8 @@ describe("outdated command", () => {
     await mkdir(emptySourceDir, { recursive: true });
 
     // Create a local skill so we get past the "no local skills" guard
-    await createLocalSkill(tempDir, "web-custom-local-skill", {
-      metadata: 'author: "@test"\ndisplayName: web-custom-local-skill\n',
+    await createLocalSkill(tempDir, "web-utilities-native-js", {
+      metadata: 'author: "@test"\ndisplayName: web-utilities-native-js\n',
     });
 
     const { exitCode, combined } = await runCLI(["outdated", "--source", emptySourceDir], tempDir);
@@ -321,7 +321,7 @@ describe("outdated command", () => {
 
     // 1. Create a CURRENT skill (matching contentHash)
     const currentSourceId = "web-testing-vitest";
-    const currentLocalDir = "web-testing-vitest-fork" as const;
+    const currentLocalDir = "web-testing-cypress-e2e";
     const currentSourceMdPath = path.join(
       sourceDir,
       SKILLS_DIR_PATH,
@@ -348,7 +348,7 @@ describe("outdated command", () => {
 
     // 2. Create an OUTDATED skill (stale contentHash)
     const outdatedSourceId = "web-framework-react";
-    const outdatedLocalDir = "web-framework-react-fork" as const;
+    const outdatedLocalDir = "web-framework-nextjs-server-actions";
 
     await createLocalSkill(tempDir, outdatedLocalDir, {
       metadata: [
@@ -362,8 +362,8 @@ describe("outdated command", () => {
     });
 
     // 3. Create a LOCAL-ONLY skill (no forkedFrom)
-    await createLocalSkill(tempDir, "web-custom-local-skill", {
-      metadata: 'author: "@test"\ndisplayName: web-custom-local-skill\n',
+    await createLocalSkill(tempDir, "web-utilities-native-js", {
+      metadata: 'author: "@test"\ndisplayName: web-utilities-native-js\n',
     });
 
     // Verify human-readable output contains all three statuses

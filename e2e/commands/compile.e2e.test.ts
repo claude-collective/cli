@@ -120,15 +120,15 @@ describe("compile command", () => {
       const projectDir = path.join(tempDir, "project");
       await writeProjectConfig(projectDir, { name: "e2e-test", skills: [], agents: [] });
 
-      await createLocalSkill(projectDir, "web-testing-e2e-first", {
+      await createLocalSkill(projectDir, "web-testing-react-testing-library", {
         description: "First test skill",
         metadata: `author: "@test"\ncontentHash: "hash-first"\n`,
       });
-      await createLocalSkill(projectDir, "web-testing-e2e-second", {
+      await createLocalSkill(projectDir, "web-testing-vue-test-utils", {
         description: "Second test skill",
         metadata: `author: "@test"\ncontentHash: "hash-second"\n`,
       });
-      await createLocalSkill(projectDir, "web-testing-e2e-third", {
+      await createLocalSkill(projectDir, "web-mocks-msw", {
         description: "Third test skill",
         metadata: `author: "@test"\ncontentHash: "hash-third"\n`,
       });
@@ -151,7 +151,7 @@ describe("compile command", () => {
       const projectDir = path.join(tempDir, "project");
       await writeProjectConfig(projectDir, { name: "e2e-test", skills: [], agents: [] });
 
-      await createLocalSkill(projectDir, "web-testing-e2e-content", {
+      await createLocalSkill(projectDir, "web-forms-zod-validation", {
         description: "Skill for compile listing verification",
         metadata: `author: "@test"\ncontentHash: "hash-content"\n`,
       });
@@ -181,7 +181,7 @@ describe("compile command", () => {
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(combined).toContain("Loaded skill:");
-      expect(combined).toContain("web-testing-e2e-compile");
+      expect(combined).toContain("web-testing-vitest");
     });
   });
 
@@ -192,7 +192,7 @@ describe("compile command", () => {
       await writeProjectConfig(projectDir, { name: "e2e-test", skills: [], agents: [] });
 
       // Create a valid skill
-      await createLocalSkill(projectDir, "web-testing-e2e-valid", {
+      await createLocalSkill(projectDir, "web-state-jotai", {
         description: "Valid skill",
         metadata: `author: "@test"\ncontentHash: "hash-valid"\n`,
       });
@@ -201,12 +201,12 @@ describe("compile command", () => {
         projectDir,
         CLAUDE_DIR,
         STANDARD_DIRS.SKILLS,
-        "web-testing-e2e-no-metadata",
+        "web-state-mobx",
       );
       await mkdir(invalidSkillDir, { recursive: true });
       await writeFile(
         path.join(invalidSkillDir, STANDARD_FILES.SKILL_MD),
-        renderSkillMd("web-testing-e2e-no-metadata", "Missing metadata", "# No Metadata"),
+        renderSkillMd("web-state-mobx", "Missing metadata", "# No Metadata"),
       );
 
       const { exitCode, combined } = await runCLI(["compile"], projectDir, {
@@ -405,7 +405,7 @@ describe("compile command", () => {
       await writeProjectConfig(projectDir, { name: "e2e-test", skills: [], agents: [] });
 
       // Create a local skill in the project
-      await createLocalSkill(projectDir, "web-testing-e2e-source-flag", {
+      await createLocalSkill(projectDir, "web-state-pinia", {
         description: "Skill for --source flag verification",
         metadata: `author: "@test"\ncontentHash: "hash-source-flag"\n`,
       });
@@ -445,7 +445,7 @@ describe("compile command", () => {
       await writeProjectConfig(projectDir, { name: "e2e-test", skills: [], agents: [] });
 
       // Create a local skill in the project
-      await createLocalSkill(projectDir, "web-testing-e2e-agent-source", {
+      await createLocalSkill(projectDir, "web-state-redux-toolkit", {
         description: "Skill for --agent-source flag verification",
         metadata: `author: "@test"\ncontentHash: "hash-agent-source"\n`,
       });
@@ -483,12 +483,12 @@ describe("compile command", () => {
       const globalHome = path.join(tempDir, "global-home");
       await writeProjectConfig(globalHome, {
         name: "global-test",
-        skills: [{ id: "web-testing-e2e-global", scope: "project", source: "local" }],
+        skills: [{ id: "web-testing-cypress-e2e", scope: "project", source: "local" }],
         agents: [{ name: "web-developer", scope: "project" }],
       });
 
       // Create a local skill in the global home directory
-      await createLocalSkill(globalHome, "web-testing-e2e-global", {
+      await createLocalSkill(globalHome, "web-testing-cypress-e2e", {
         description: "Global skill for compile fallback",
         metadata: `author: "@test"\ncontentHash: "hash-global"\n`,
       });

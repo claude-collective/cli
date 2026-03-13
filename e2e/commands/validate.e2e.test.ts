@@ -97,9 +97,8 @@ describe("validate command", () => {
 
       const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
-      // E2E source metadata is incomplete (missing cliDescription, usageGuidance),
-      // so validate correctly reports errors and exits 1
-      expect(exitCode).toBe(EXIT_CODES.ERROR);
+      // E2E source metadata is complete — only displayName mismatch warnings for methodology skills
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(combined).toContain("Validating source:");
       expect(combined).toMatch(/Checked \d+ skill\(s\)/);
     });
@@ -110,9 +109,9 @@ describe("validate command", () => {
 
       const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
-      // E2E source has validation errors from incomplete metadata
-      expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toMatch(/Result: \d+ error\(s\), \d+ warning\(s\)/);
+      // E2E source metadata is complete — methodology skills have displayName mismatches (warnings only)
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(combined).toMatch(/Result: 0 error\(s\), \d+ warning\(s\)/);
     });
 
     it("should report zero errors for a fully valid source", async () => {
@@ -343,7 +342,7 @@ describe("validate command", () => {
 };\n`,
       );
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
 
       // Slug resolution should detect the unresolved slug (angular-standalone not in source)
       expect(combined).toContain("Checked 2 skill(s)");

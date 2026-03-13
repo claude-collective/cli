@@ -172,12 +172,12 @@ describe("update command", () => {
       });
 
       // Create a local-only skill with no forkedFrom metadata
-      await createLocalSkill(projectDir, "cli-custom-local-skill", {
+      await createLocalSkill(projectDir, "cli-framework-cli-commander", {
         description: "A purely local skill with no source link",
       });
 
       const { exitCode, combined } = await runCLI(
-        ["update", "cli-custom-local-skill", "--source", source.sourceDir],
+        ["update", "cli-framework-cli-commander", "--source", source.sourceDir],
         projectDir,
       );
 
@@ -224,10 +224,10 @@ describe("update command", () => {
       });
 
       // Add two skills with stale forkedFrom hashes
-      await createLocalSkill(projectDir, "web-framework-react-fork", {
+      await createLocalSkill(projectDir, "web-framework-nextjs-app-router", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-framework-react-fork",
+          "displayName: web-framework-nextjs-app-router",
           "forkedFrom:",
           "  skillId: web-framework-react",
           '  contentHash: "0000000"',
@@ -235,10 +235,10 @@ describe("update command", () => {
         ].join("\n"),
       });
 
-      await createLocalSkill(projectDir, "web-testing-vitest-fork", {
+      await createLocalSkill(projectDir, "web-testing-cypress-e2e", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-testing-vitest-fork",
+          "displayName: web-testing-cypress-e2e",
           "forkedFrom:",
           "  skillId: web-testing-vitest",
           '  contentHash: "0000000"',
@@ -270,10 +270,10 @@ describe("update command", () => {
       });
 
       // Create a local skill forked from web-framework-react with a stale hash
-      await createLocalSkill(projectDir, "web-framework-react-fork", {
+      await createLocalSkill(projectDir, "web-framework-nextjs-app-router", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-framework-react-fork",
+          "displayName: web-framework-nextjs-app-router",
           "forkedFrom:",
           "  skillId: web-framework-react",
           '  contentHash: "0000000"',
@@ -303,10 +303,10 @@ describe("update command", () => {
       });
 
       // Create a skill with stale forkedFrom hash so it's detected as outdated
-      await createLocalSkill(projectDir, "web-framework-react-fork", {
+      await createLocalSkill(projectDir, "web-framework-nextjs-app-router", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-framework-react-fork",
+          "displayName: web-framework-nextjs-app-router",
           "forkedFrom:",
           "  skillId: web-framework-react",
           '  contentHash: "0000000"',
@@ -342,10 +342,10 @@ describe("update command", () => {
       });
 
       // Create two skills with stale forkedFrom hashes
-      await createLocalSkill(projectDir, "web-framework-react-fork", {
+      await createLocalSkill(projectDir, "web-framework-nextjs-app-router", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-framework-react-fork",
+          "displayName: web-framework-nextjs-app-router",
           "forkedFrom:",
           "  skillId: web-framework-react",
           '  contentHash: "0000000"',
@@ -353,10 +353,10 @@ describe("update command", () => {
         ].join("\n"),
       });
 
-      await createLocalSkill(projectDir, "web-testing-vitest-fork", {
+      await createLocalSkill(projectDir, "web-testing-cypress-e2e", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-testing-vitest-fork",
+          "displayName: web-testing-cypress-e2e",
           "forkedFrom:",
           "  skillId: web-testing-vitest",
           '  contentHash: "0000000"',
