@@ -241,6 +241,7 @@ export async function regenerateConfigTypes(
       projectSkillIds: extras?.extraSkillIds ?? [],
       projectAgentNames: extras?.extraAgentNames ?? [],
       projectDomains: extras?.extraDomains ?? [],
+      projectCategories: extras?.extraCategories ?? [],
     });
     verbose("Using project config-types.ts that imports from global");
   } else {
