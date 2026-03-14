@@ -8,10 +8,9 @@ Rules and conventions for developers and content authors.
 
 #### Code Standards (For CLI Developers)
 
-| Document                                                            | Content                                     |
-| ------------------------------------------------------------------- | ------------------------------------------- |
-| [clean-code-standards.md](./standards/code/clean-code-standards.md) | Enforceable code quality rules              |
-| [type-conventions.md](./standards/code/type-conventions.md)         | Type narrowing patterns and cast guidelines |
+| Document                                                            | Content                                                   |
+| ------------------------------------------------------------------- | --------------------------------------------------------- |
+| [clean-code-standards.md](./standards/code/clean-code-standards.md) | Enforceable code quality rules and boundary cast taxonomy |
 
 #### Content Standards (For Agent & Skill Authors)
 
