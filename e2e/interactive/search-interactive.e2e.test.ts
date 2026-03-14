@@ -5,7 +5,6 @@ import {
   cleanupTempDir,
   ensureBinaryExists,
   delay,
-  runCLI,
   WIZARD_LOAD_TIMEOUT_MS,
   STEP_TRANSITION_DELAY_MS,
   KEYSTROKE_DELAY_MS,
@@ -15,18 +14,14 @@ import {
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 
 /**
- * E2E tests for the `search` command.
+ * E2E tests for the `search` command — interactive mode.
  *
- * The search command runs in two modes:
- *   - Interactive (no query arg or -i flag): renders an Ink search UI
- *   - Static (with query arg): prints a table of matching skills
+ * Interactive mode is triggered by running `search` without a query argument
+ * or with the -i flag. It renders an Ink search UI.
  *
- * Interactive tests use CC_SOURCE env var to point to a local source,
- * avoiding network calls to the marketplace.
- *
- * These tests spawn the actual CLI binary via PTY (zero mocks).
+ * Tests use CC_SOURCE env var to point to a local source, avoiding network calls.
  */
-describe("search command", () => {
+describe("search command — interactive mode", () => {
   let tempDir: string;
   let session: TerminalSession | undefined;
   let sourceDir: string | undefined;
@@ -52,19 +47,6 @@ describe("search command", () => {
     sourceDir = source.sourceDir;
     sourceTempDir = source.tempDir;
   }
-
-  describe("search --help", () => {
-    it("should display help text with command description", async () => {
-      tempDir = await createTempDir();
-
-      const { exitCode, stdout } = await runCLI(["search", "--help"], tempDir);
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Search available skills");
-      expect(stdout).toContain("USAGE");
-      expect(stdout).toContain("query");
-    });
-  });
 
   describe("interactive search launch", () => {
     it("should render the search UI with loading message", async () => {
@@ -115,68 +97,6 @@ describe("search command", () => {
 
       const screen = session.getScreen();
       expect(screen).toContain("react");
-    });
-  });
-
-  describe("static search with query argument", () => {
-    it("should display a table of matching skills", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      const { exitCode, stdout } = await runCLI(
-        ["search", "react", "--source", sourceDir!],
-        tempDir,
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("react");
-      expect(stdout).toContain("Category");
-      expect(stdout).toContain("Description");
-    });
-
-    it("should show no results message for unmatched query", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      const { exitCode, combined } = await runCLI(
-        ["search", "zzz-nonexistent-skill-xyz", "--source", sourceDir!],
-        tempDir,
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("No skills found");
-    });
-
-    it("should filter results by category flag", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      const { exitCode, stdout } = await runCLI(
-        ["search", "framework", "-c", "web-framework", "--source", sourceDir!],
-        tempDir,
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("react");
-      expect(stdout).toContain("Category filter");
-    });
-
-    it("should only show skills matching the category filter", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      // Search for a broad term but filter to api-api category
-      const { exitCode, stdout } = await runCLI(
-        ["search", "framework", "-c", "api-api", "--source", sourceDir!],
-        tempDir,
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // api-api category should show hono, not react
-      expect(stdout).toContain("hono");
-      expect(stdout).toContain("Category filter");
-      // React is in web-framework, not api-api, so it should not appear
-      expect(stdout).not.toContain("react");
     });
   });
 
@@ -324,8 +244,7 @@ describe("search command", () => {
     });
 
     // BUG: Enter triggers import but copy() receives a relative skill.path from
-    // the matrix instead of an absolute path, causing the import to fail with
-    // exit code 1 (src/cli/commands/search.tsx:232-236)
+    // the matrix instead of an absolute path, causing the import to fail
     it.fails("should import selected skill when pressing Enter", async () => {
       tempDir = await createTempDir();
       await createSourceFixture();
@@ -367,7 +286,6 @@ describe("search command", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Navigate down through multiple results (the E2E source has 10 skills)
-      // and select skills along the way to prove navigation works
       for (let i = 0; i < 5; i++) {
         session.arrowDown();
         await delay(KEYSTROKE_DELAY_MS);
@@ -379,32 +297,9 @@ describe("search command", () => {
 
       const afterScrollScreen = session.getScreen();
 
-      // The results list should still be visible with status bar
       expect(afterScrollScreen).toMatch(/\d+ results?/);
 
-      // The selection should be registered
       expect(afterScrollScreen).toContain("1 selected");
-    });
-  });
-
-  describe("--source flag in non-interactive mode", () => {
-    it("should load skills from the custom source path", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      const { exitCode, stdout, combined } = await runCLI(
-        ["search", "methodology", "--source", sourceDir!],
-        tempDir,
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      // Verify the source was loaded from the local path
-      expect(combined).toContain("Loaded from local:");
-      expect(combined).toContain(sourceDir!);
-
-      // The E2E source contains methodology skills — verify they appear in results
-      expect(stdout).toContain("methodology");
     });
   });
 
