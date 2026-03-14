@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.74.8] - 2026-03-14
+
+**Edit command scope fixes, unit test coverage expansion**
+
+- Fix edit command using `installation.projectDir` instead of `cwd` for writes (D-92/D-93)
+- Fix stack selection not resetting previous skill selections (D-94)
+- 211 new unit tests for 29 previously untested pure functions
+
+See [changelogs/0.74.8.md](./changelogs/0.74.8.md) for full details.
+
+---
+
 ## [0.74.7] - 2026-03-13
 
 **E2E test suite expansion and code quality audit**
