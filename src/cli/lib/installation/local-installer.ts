@@ -89,7 +89,7 @@ export type LocalInstallResult = {
   agentsDir: string;
 };
 
-export type InstallPaths = {
+type InstallPaths = {
   skillsDir: string;
   agentsDir: string;
   configPath: string;

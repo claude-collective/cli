@@ -654,7 +654,7 @@ describe("compiler", () => {
     it("should extract preloaded skill IDs", () => {
       const preloaded1 = createMockSkillEntry("web-framework-react", true);
       const preloaded2 = createMockSkillEntry("web-testing-vitest", true);
-      const dynamic = createMockSkillEntry("web-state-zustand" as SkillId, false);
+      const dynamic = createMockSkillEntry("web-state-zustand", false);
       const agent = createMockAgentConfig("web-developer", [preloaded1, preloaded2, dynamic]);
 
       const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
