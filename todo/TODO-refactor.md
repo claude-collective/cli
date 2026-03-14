@@ -5,7 +5,7 @@
 | ID   | Task                                                                                                                                                                                                    | Status   |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | R-06 | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity/metadata to reduce type bloat                                                                                       | Refactor |
-| R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Refactor |
+| R-08 | Unify resolve\* functions in matrix-loader — single function for resolving relationships (conflicts, compatibility, setup, requirements) instead of 5 separate functions with duplicate iteration logic | Done     |
 
 ---
 
