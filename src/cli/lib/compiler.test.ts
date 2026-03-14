@@ -62,10 +62,11 @@ import {
   removeCompiledOutputDirs,
   sanitizeLiquidSyntax,
   sanitizeCompiledAgentData,
+  buildAgentTemplateContext,
 } from "./compiler";
 import { validateCompiledAgent } from "./output-validator";
 import { warn } from "../utils/logger";
-import type { CompiledAgentData } from "../types";
+import type { AgentName, CompiledAgentData } from "../types";
 
 /**
  * Copies fixture files into a temp directory matching the project layout
@@ -599,6 +600,105 @@ describe("compiler", () => {
       expect(renderCall.agent.name).not.toContain("}}");
       expect(renderCall.agent.title).not.toContain("{%");
       expect(renderCall.agent.title).not.toContain("%}");
+    });
+  });
+
+  describe("buildAgentTemplateContext", () => {
+    const agentFiles = {
+      intro: "Test intro content",
+      workflow: "Test workflow content",
+      examples: "Test examples content",
+      criticalRequirementsTop: "Test requirements",
+      criticalReminders: "Test reminders",
+      outputFormat: "Test output format",
+    };
+
+    it("should build template context with all file content", () => {
+      const agent = createMockAgentConfig("web-developer", []);
+
+      const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
+
+      expect(result.agent).toBe(agent);
+      expect(result.intro).toBe("Test intro content");
+      expect(result.workflow).toBe("Test workflow content");
+      expect(result.examples).toBe("Test examples content");
+      expect(result.criticalRequirementsTop).toBe("Test requirements");
+      expect(result.criticalReminders).toBe("Test reminders");
+      expect(result.outputFormat).toBe("Test output format");
+    });
+
+    it("should include all skills from agent config", () => {
+      const skills = [
+        createMockSkillEntry("web-framework-react", true),
+        createMockSkillEntry("web-testing-vitest", false),
+      ];
+      const agent = createMockAgentConfig("web-developer", skills);
+
+      const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
+
+      expect(result.skills).toEqual(skills);
+      expect(result.skills).toHaveLength(2);
+    });
+
+    it("should separate preloaded from dynamic skills", () => {
+      const preloadedSkill = createMockSkillEntry("web-framework-react", true);
+      const dynamicSkill = createMockSkillEntry("web-testing-vitest", false);
+      const agent = createMockAgentConfig("web-developer", [preloadedSkill, dynamicSkill]);
+
+      const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
+
+      expect(result.preloadedSkills).toEqual([preloadedSkill]);
+      expect(result.dynamicSkills).toEqual([dynamicSkill]);
+    });
+
+    it("should extract preloaded skill IDs", () => {
+      const preloaded1 = createMockSkillEntry("web-framework-react", true);
+      const preloaded2 = createMockSkillEntry("web-testing-vitest", true);
+      const dynamic = createMockSkillEntry("web-state-zustand" as SkillId, false);
+      const agent = createMockAgentConfig("web-developer", [preloaded1, preloaded2, dynamic]);
+
+      const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
+
+      expect(result.preloadedSkillIds).toEqual(["web-framework-react", "web-testing-vitest"]);
+    });
+
+    it("should handle agent with no skills", () => {
+      const agent = createMockAgentConfig("web-developer", []);
+
+      const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
+
+      expect(result.skills).toEqual([]);
+      expect(result.preloadedSkills).toEqual([]);
+      expect(result.dynamicSkills).toEqual([]);
+      expect(result.preloadedSkillIds).toEqual([]);
+    });
+
+    it("should handle agent with only preloaded skills", () => {
+      const skills = [
+        createMockSkillEntry("web-framework-react", true),
+        createMockSkillEntry("web-testing-vitest", true),
+      ];
+      const agent = createMockAgentConfig("web-developer", skills);
+
+      const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
+
+      expect(result.preloadedSkills).toHaveLength(2);
+      expect(result.dynamicSkills).toHaveLength(0);
+      expect(result.preloadedSkillIds).toHaveLength(2);
+    });
+
+    it("should handle agent with only dynamic skills", () => {
+      const skills = [
+        createMockSkillEntry("web-framework-react", false),
+        createMockSkillEntry("web-testing-vitest", false),
+      ];
+      const agent = createMockAgentConfig("web-developer", skills);
+
+      const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
+
+      expect(result.preloadedSkills).toHaveLength(0);
+      expect(result.dynamicSkills).toHaveLength(2);
+      expect(result.preloadedSkillIds).toHaveLength(0);
     });
   });
 });

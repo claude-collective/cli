@@ -164,7 +164,7 @@ async function readAgentFiles(
   return { intro, workflow, examples, criticalRequirementsTop, criticalReminders, outputFormat };
 }
 
-function buildAgentTemplateContext(
+export function buildAgentTemplateContext(
   name: AgentName,
   agent: AgentConfig,
   files: AgentFiles,

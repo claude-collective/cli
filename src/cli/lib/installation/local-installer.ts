@@ -89,13 +89,13 @@ export type LocalInstallResult = {
   agentsDir: string;
 };
 
-type InstallPaths = {
+export type InstallPaths = {
   skillsDir: string;
   agentsDir: string;
   configPath: string;
 };
 
-function resolveInstallPaths(
+export function resolveInstallPaths(
   projectDir: string,
   scope: "project" | "global" = "project",
 ): InstallPaths {
@@ -132,7 +132,7 @@ async function deleteAndCopySkills(
   return copySkillsToLocalFlattened(skillIds, skillsDir, sourceResult.matrix, sourceResult);
 }
 
-function buildLocalSkillsMap(
+export function buildLocalSkillsMap(
   copiedSkills: CopiedSkill[],
 ): Partial<Record<SkillId, LocalResolvedSkill>> {
   // Boundary cast: Object.fromEntries returns { [k: string]: V }
@@ -255,26 +255,30 @@ export function setConfigMetadata(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
   sourceFlag?: string,
-): void {
+): ProjectConfig {
+  const result = { ...config };
+
   // Only persist domains when non-empty (sparse output)
   if (wizardResult.selectedDomains && wizardResult.selectedDomains.length > 0) {
-    config.domains = wizardResult.selectedDomains;
+    result.domains = wizardResult.selectedDomains;
   }
 
   // Only persist selectedAgents when non-empty (sparse output)
   if (wizardResult.selectedAgents && wizardResult.selectedAgents.length > 0) {
-    config.selectedAgents = wizardResult.selectedAgents;
+    result.selectedAgents = wizardResult.selectedAgents;
   }
 
   if (sourceFlag) {
-    config.source = sourceFlag;
+    result.source = sourceFlag;
   } else if (sourceResult.sourceConfig.source) {
-    config.source = sourceResult.sourceConfig.source;
+    result.source = sourceResult.sourceConfig.source;
   }
 
   if (sourceResult.marketplace) {
-    config.marketplace = sourceResult.marketplace;
+    result.marketplace = sourceResult.marketplace;
   }
+
+  return result;
 }
 
 export async function buildAndMergeConfig(
@@ -287,8 +291,8 @@ export async function buildAndMergeConfig(
   verbose(
     `buildAndMergeConfig: before merge — stack=${config.stack ? Object.keys(config.stack).length + " agents" : "UNDEFINED"}`,
   );
-  setConfigMetadata(config, wizardResult, sourceResult, sourceFlag);
-  const result = await mergeWithExistingConfig(config, { projectDir });
+  const configWithMetadata = setConfigMetadata(config, wizardResult, sourceResult, sourceFlag);
+  const result = await mergeWithExistingConfig(configWithMetadata, { projectDir });
   verbose(
     `buildAndMergeConfig: after merge — stack=${result.config.stack ? Object.keys(result.config.stack).length + " agents" : "UNDEFINED"}, merged=${result.merged}`,
   );
@@ -304,7 +308,7 @@ export async function writeConfigFile(
   await writeFile(configPath, source);
 }
 
-function buildCompileAgents(
+export function buildCompileAgents(
   config: ProjectConfig,
   agents: Record<AgentName, AgentDefinition>,
 ): Record<string, CompileAgentConfig> {
@@ -331,7 +335,7 @@ function buildCompileAgents(
   return compileAgents;
 }
 
-function buildAgentScopeMap(config: ProjectConfig): Map<AgentName, "project" | "global"> {
+export function buildAgentScopeMap(config: ProjectConfig): Map<AgentName, "project" | "global"> {
   const map = new Map<AgentName, "project" | "global">();
   for (const agent of config.agents) {
     map.set(agent.name, agent.scope);
@@ -421,6 +425,7 @@ export async function writeScopedConfigs(
   agents: Record<AgentName, AgentDefinition>,
   projectDir: string,
   projectConfigPath: string,
+  projectInstallationExists: boolean,
 ): Promise<void> {
   // Use os.homedir() at runtime (not GLOBAL_INSTALL_ROOT constant) so the path
   // agrees with getGlobalConfigImportPath() which also calls os.homedir() at runtime
@@ -447,14 +452,26 @@ export async function writeScopedConfigs(
   await writeStandaloneConfigTypes(globalConfigPath, matrix, agents, globalConfig);
   verbose("Updated global config-types.ts with actual types");
 
-  // Write project config with import from global
-  await ensureDir(path.dirname(projectConfigPath));
-  await writeConfigFile(projectSplitConfig, projectConfigPath, { isProjectConfig: true });
-  verbose(`Updated project config at ${projectConfigPath}`);
+  // Write project config if the project installation already exists OR if there are project-scoped items.
+  // Skip only when no existing project installation AND no project-scoped items — creating an empty
+  // project config with just `import globalConfig` and `{ ...globalConfig }` is pointless.
+  const hasProjectItems =
+    projectSplitConfig.skills.length > 0 || projectSplitConfig.agents.length > 0;
 
-  // Write project config-types.ts that extends global with only project-scoped items.
-  // Global items are already available via GlobalSkillId/GlobalAgentName imports.
-  await writeProjectConfigTypes(projectConfigPath, projectDir, projectSplitConfig, matrix);
+  if (projectInstallationExists || hasProjectItems) {
+    // Write project config with import from global
+    await ensureDir(path.dirname(projectConfigPath));
+    await writeConfigFile(projectSplitConfig, projectConfigPath, { isProjectConfig: true });
+    verbose(`Updated project config at ${projectConfigPath}`);
+
+    // Write project config-types.ts that extends global with only project-scoped items.
+    // Global items are already available via GlobalSkillId/GlobalAgentName imports.
+    await writeProjectConfigTypes(projectConfigPath, projectDir, projectSplitConfig, matrix);
+  } else {
+    verbose(
+      "Skipped project config — no existing project installation and no project-scoped items",
+    );
+  }
 }
 
 async function compileAndWriteAgents(
@@ -477,6 +494,10 @@ async function compileAndWriteAgents(
 
   const globalAgentsDir = path.join(os.homedir(), CLAUDE_DIR, "agents");
 
+  // Ensure both directories exist before writing agents.
+  // ensureDir is idempotent (mkdir -p), so calling it when dirs already exist is safe.
+  await ensureDir(globalAgentsDir);
+
   const compiledAgentNames: AgentName[] = [];
   for (const [name, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
     const output = await compileAgentForPlugin(
@@ -490,9 +511,6 @@ async function compileAndWriteAgents(
     // Route agent output by scope: global agents go to ~/. project agents to projectDir
     const scope = agentScopeMap?.get(name) ?? "project";
     const targetDir = scope === "global" ? globalAgentsDir : agentsDir;
-    if (scope === "global") {
-      await ensureDir(targetDir);
-    }
     await writeFile(path.join(targetDir, `${name}.md`), output);
     compiledAgentNames.push(name);
   }
@@ -528,11 +546,10 @@ export async function installPluginConfig(
 
   const projectPaths = resolveInstallPaths(projectDir, "project");
 
-  // Only create project directories if there are project-scoped agents
-  const hasProjectAgents =
-    wizardResult.skills.some((s) => s.scope !== "global") ||
-    wizardResult.agentConfigs.some((a) => a.scope !== "global");
-  if (hasProjectAgents) {
+  // Create directories based on installation context, not data content.
+  // ensureDir is idempotent (mkdir -p), so calling it when dirs already exist is safe.
+  const isProjectInstall = path.resolve(projectDir) !== path.resolve(os.homedir());
+  if (isProjectInstall) {
     await ensureDir(projectPaths.agentsDir);
   }
   await ensureDir(path.dirname(projectPaths.configPath));
@@ -541,12 +558,16 @@ export async function installPluginConfig(
   const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
   const finalConfig = mergeResult.config;
 
+  // During init, the project installation is being created — it exists if we're in a project context
+  const projectInstallationExists = path.resolve(projectDir) !== path.resolve(os.homedir());
+
   await writeScopedConfigs(
     finalConfig,
     sourceResult.matrix,
     agents,
     projectDir,
     projectPaths.configPath,
+    projectInstallationExists,
   );
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
@@ -620,18 +641,18 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const projectSkills = wizardResult.skills.filter((s) => s.scope !== "global");
   const globalSkills = wizardResult.skills.filter((s) => s.scope === "global");
 
-  // Only create project directories when there are project-scoped skills or agents
-  const hasProjectItems =
-    projectSkills.length > 0 || wizardResult.agentConfigs.some((a) => a.scope !== "global");
-  if (hasProjectItems) {
+  // Create directories based on installation context, not data content.
+  // ensureDir is idempotent (mkdir -p), so calling it when dirs already exist is safe.
+  const homeDir = os.homedir();
+  const isProjectInstall = path.resolve(projectDir) !== path.resolve(homeDir);
+  if (isProjectInstall) {
     await prepareDirectories(projectPaths);
   } else {
-    // Always ensure .claude-src/ exists for project config (it imports from global)
+    // Always ensure .claude-src/ exists for config (even when installing from ~/)
     await ensureDir(path.dirname(projectPaths.configPath));
   }
-  if (globalSkills.length > 0) {
-    await ensureDir(globalPaths.skillsDir);
-  }
+  // Always ensure global skills directory exists when there is a global installation context
+  await ensureDir(globalPaths.skillsDir);
 
   // Copy skills to their scope-appropriate directories
   const projectCopied =
@@ -650,12 +671,16 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
   const finalConfig = mergeResult.config;
 
+  // During init, the project installation is being created — it exists if we're in a project context
+  const isProjectContext = path.resolve(projectDir) !== path.resolve(os.homedir());
+
   await writeScopedConfigs(
     finalConfig,
     sourceResult.matrix,
     agents,
     projectDir,
     projectPaths.configPath,
+    isProjectContext,
   );
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);

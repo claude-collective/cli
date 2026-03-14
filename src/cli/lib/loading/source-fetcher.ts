@@ -104,7 +104,7 @@ async function fetchFromLocalSource(source: string, subdir?: string): Promise<Fe
  * where templateName is `repo.replace("/", "-")` sanitized to `[a-zA-Z0-9-]`.
  * Returns undefined if the source format doesn't match giget's git URI pattern.
  */
-function getGigetCacheDir(source: string): string | undefined {
+export function getGigetCacheDir(source: string): string | undefined {
   let providerName = "github";
   let rawSource = source;
 

@@ -274,12 +274,12 @@ export function getRecommendReason(
   return skill.recommendedReason;
 }
 
-type ValidationPartial = {
+export type ValidationPartial = {
   errors: ValidationError[];
   warnings: ValidationWarning[];
 };
 
-function validateConflicts(resolvedSelections: SkillId[]): ValidationPartial {
+export function validateConflicts(resolvedSelections: SkillId[]): ValidationPartial {
   const errors: ValidationError[] = [];
 
   for (let i = 0; i < resolvedSelections.length; i++) {
@@ -302,7 +302,7 @@ function validateConflicts(resolvedSelections: SkillId[]): ValidationPartial {
   return { errors, warnings: [] };
 }
 
-function validateRequirements(
+export function validateRequirements(
   resolvedSelections: SkillId[],
   selectedSet: Set<SkillId>,
 ): ValidationPartial {
@@ -338,7 +338,7 @@ function validateRequirements(
   return { errors, warnings: [] };
 }
 
-function validateExclusivity(resolvedSelections: SkillId[]): ValidationPartial {
+export function validateExclusivity(resolvedSelections: SkillId[]): ValidationPartial {
   const errors: ValidationError[] = [];
 
   const validSkills = resolvedSelections
@@ -369,7 +369,7 @@ function validateExclusivity(resolvedSelections: SkillId[]): ValidationPartial {
  * Validates recommendations: for each recommended skill that is NOT selected
  * but IS compatible with current selections, produce a missing_recommendation warning.
  */
-function validateRecommendations(
+export function validateRecommendations(
   resolvedSelections: SkillId[],
   selectedSet: Set<SkillId>,
 ): ValidationPartial {

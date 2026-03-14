@@ -1,13 +1,14 @@
-# Unit Test Gap Analysis
+# Unit Test Gap Analysis — COMPLETED (2026-03-14)
 
-> Functions that should have unit tests but currently don't.
-> Prioritized by: complexity, call frequency, and purity (pure functions first).
+> All 29 functions now have direct unit tests (211 new tests total).
+> See [unit-test-tracker.md](./unit-test-tracker.md) for per-function details.
+> Archived to [TODO-completed.md](./TODO-completed.md).
 
 ## Priority Legend
 
-- **P1** — Pure, complex, widely called. Should be tested immediately.
-- **P2** — Pure, medium complexity or moderate usage. High value tests.
-- **P3** — Impure but contains extractable pure logic. Refactor then test.
+- **P1** — Pure, complex, widely called. ~~Should be tested immediately.~~ DONE
+- **P2** — Pure, medium complexity or moderate usage. ~~High value tests.~~ DONE
+- **P3** — Impure but contains extractable pure logic. ~~Refactor then test.~~ DONE
 
 ---
 

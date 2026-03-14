@@ -17,6 +17,10 @@ export {
   writeConfigFile,
   writeScopedConfigs,
   setConfigMetadata,
+  resolveInstallPaths,
+  buildLocalSkillsMap,
+  buildCompileAgents,
+  buildAgentScopeMap,
 } from "./local-installer";
 
 export {

@@ -28,7 +28,12 @@ export {
   compactStackForYaml,
 } from "./config-generator";
 
-export { type MergeContext, type MergeResult, mergeWithExistingConfig } from "./config-merger";
+export {
+  type MergeContext,
+  type MergeResult,
+  mergeConfigs,
+  mergeWithExistingConfig,
+} from "./config-merger";
 
 export { saveSourceToProjectConfig } from "./config-saver";
 

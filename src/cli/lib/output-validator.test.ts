@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { validateCompiledAgent, printOutputValidationResult } from "./output-validator";
+import {
+  validateCompiledAgent,
+  printOutputValidationResult,
+  checkXmlTagBalance,
+  checkTemplateArtifacts,
+  checkRequiredPatterns,
+  validateFrontmatter,
+} from "./output-validator";
 import type { ValidationResult } from "../types";
 
 function createValidAgentContent(overrides?: {
@@ -382,6 +389,326 @@ describe("output-validator", () => {
       expect(result.errors).toContain("Frontmatter missing required field: name");
       // Should have warnings for missing role, missing core principles, short output, template artifacts, missing tools
       expect(result.warnings.length).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  describe("checkXmlTagBalance", () => {
+    it("should return empty array for content with no XML tags", () => {
+      const errors = checkXmlTagBalance("Plain text with no tags.");
+      expect(errors).toEqual([]);
+    });
+
+    it("should return empty array for balanced tags", () => {
+      const errors = checkXmlTagBalance("<role>content</role>");
+      expect(errors).toEqual([]);
+    });
+
+    it("should detect multiple unclosed tags of different names", () => {
+      const errors = checkXmlTagBalance("<role>text\n<section>more text");
+      expect(errors).toHaveLength(2);
+      expect(errors).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining("Unclosed XML tag: <role>"),
+          expect.stringContaining("Unclosed XML tag: <section>"),
+        ]),
+      );
+    });
+
+    it("should detect multiple extra closing tags", () => {
+      const errors = checkXmlTagBalance("</role>\n</section>");
+      expect(errors).toHaveLength(2);
+      expect(errors).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining("Extra closing tag: </role>"),
+          expect.stringContaining("Extra closing tag: </section>"),
+        ]),
+      );
+    });
+
+    it("should report count of unclosed tags when same tag opened multiple times", () => {
+      const errors = checkXmlTagBalance("<item>\n<item>\n<item>");
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("3 unclosed");
+    });
+
+    it("should handle tags with hyphens and underscores in names", () => {
+      const errors = checkXmlTagBalance("<my-tag>content</my-tag>\n<my_tag>content</my_tag>");
+      expect(errors).toEqual([]);
+    });
+
+    it("should be case-insensitive when matching tags", () => {
+      const errors = checkXmlTagBalance("<Role>content</ROLE>");
+      expect(errors).toEqual([]);
+    });
+
+    it("should skip tags preceded by a backtick within 10 characters", () => {
+      const errors = checkXmlTagBalance("use the `<tag>` syntax");
+      expect(errors).toEqual([]);
+    });
+
+    it("should skip tags followed by a backtick within 10 characters", () => {
+      const errors = checkXmlTagBalance("use <tag>` in code");
+      expect(errors).toEqual([]);
+    });
+
+    it("should count tags that are far from backticks", () => {
+      // The backtick is more than 10 characters away, so it should NOT be skipped
+      const errors = checkXmlTagBalance("some long padding text <role> more content");
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("Unclosed XML tag: <role>");
+    });
+
+    it("should return empty array for empty string", () => {
+      const errors = checkXmlTagBalance("");
+      expect(errors).toEqual([]);
+    });
+
+    it("should handle mixed balanced and unbalanced tags", () => {
+      const errors = checkXmlTagBalance("<a>text</a>\n<b>unclosed");
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("Unclosed XML tag: <b>");
+    });
+  });
+
+  describe("checkTemplateArtifacts", () => {
+    it("should return empty array when no template artifacts exist", () => {
+      const warnings = checkTemplateArtifacts("Clean content with no templates.");
+      expect(warnings).toEqual([]);
+    });
+
+    it("should count multiple {{ }} tags accurately", () => {
+      const warnings = checkTemplateArtifacts("{{ a }} and {{ b }} and {{ c }}");
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("3 unprocessed {{ }} tags");
+    });
+
+    it("should count multiple {% %} tags accurately", () => {
+      const warnings = checkTemplateArtifacts("{% if x %}{% endif %}{% for y %}{% endfor %}");
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("4 unprocessed {% %} tags");
+    });
+
+    it("should report both {{ }} and {% %} warnings when both present", () => {
+      const warnings = checkTemplateArtifacts("{{ var }} and {% if cond %}{% endif %}");
+      expect(warnings).toHaveLength(2);
+      expect(warnings[0]).toContain("1 unprocessed {{ }} tags");
+      expect(warnings[1]).toContain("2 unprocessed {% %} tags");
+    });
+
+    it("should return empty array for empty string", () => {
+      const warnings = checkTemplateArtifacts("");
+      expect(warnings).toEqual([]);
+    });
+
+    it("should detect {{ }} with content inside", () => {
+      const warnings = checkTemplateArtifacts("Hello {{ user.name | capitalize }}!");
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("1 unprocessed {{ }} tags");
+    });
+  });
+
+  describe("checkRequiredPatterns", () => {
+    it("should return empty array when all patterns are present and content is long enough", () => {
+      const lines = [
+        "---",
+        "name: test",
+        "---",
+        "<role>content</role>",
+        "Core Principles here",
+        ...Array.from({ length: 50 }, () => "line"),
+      ];
+      const warnings = checkRequiredPatterns(lines.join("\n"));
+      expect(warnings).toEqual([]);
+    });
+
+    it("should warn when content does not start with ---", () => {
+      const warnings = checkRequiredPatterns("no frontmatter\n<role>test</role>\nCore Principles");
+      expect(warnings).toContain("Missing YAML frontmatter at start of file");
+    });
+
+    it("should warn when <role> section is missing", () => {
+      const lines = [
+        "---",
+        "name: test",
+        "---",
+        "Core Principles",
+        ...Array.from({ length: 50 }, () => "line"),
+      ];
+      const warnings = checkRequiredPatterns(lines.join("\n"));
+      expect(warnings).toContain("Missing <role> section");
+    });
+
+    it("should warn when neither Core Principles nor core_principles is present", () => {
+      const lines = [
+        "---",
+        "name: test",
+        "---",
+        "<role>test</role>",
+        ...Array.from({ length: 50 }, () => "line"),
+      ];
+      const warnings = checkRequiredPatterns(lines.join("\n"));
+      expect(warnings).toContain("Missing Core Principles section");
+    });
+
+    it("should accept core_principles as alternative", () => {
+      const lines = [
+        "---",
+        "name: test",
+        "---",
+        "<role>test</role>",
+        "core_principles",
+        ...Array.from({ length: 50 }, () => "line"),
+      ];
+      const warnings = checkRequiredPatterns(lines.join("\n"));
+      const principleWarnings = warnings.filter((w) => w.includes("Core Principles"));
+      expect(principleWarnings).toHaveLength(0);
+    });
+
+    it("should warn at exactly 49 lines (below threshold)", () => {
+      // Build exactly 49 lines: 3 header lines + 46 filler = 49
+      const lines = [
+        "---",
+        "<role>test</role>",
+        "Core Principles",
+        ...Array.from({ length: 46 }, () => "line"),
+      ];
+      const content = lines.join("\n");
+      expect(content.trim().split("\n")).toHaveLength(49);
+      const warnings = checkRequiredPatterns(content);
+      expect(warnings).toEqual(
+        expect.arrayContaining([expect.stringMatching(/Suspiciously short output/)]),
+      );
+    });
+
+    it("should not warn at exactly 50 lines", () => {
+      // Build exactly 50 lines: 4 header lines + 46 filler = 50
+      const lines = [
+        "---",
+        "<role>test</role>",
+        "Core Principles",
+        "extra",
+        ...Array.from({ length: 46 }, () => "line"),
+      ];
+      const content = lines.join("\n");
+      expect(content.trim().split("\n")).toHaveLength(50);
+      const warnings = checkRequiredPatterns(content);
+      const shortWarnings = warnings.filter((w) => w.includes("Suspiciously short"));
+      expect(shortWarnings).toHaveLength(0);
+    });
+
+    it("should return empty array for empty string (multiple warnings)", () => {
+      const warnings = checkRequiredPatterns("");
+      // Empty string triggers: missing frontmatter, missing role, missing core principles, short output
+      expect(warnings).toContain("Missing YAML frontmatter at start of file");
+      expect(warnings).toContain("Missing <role> section");
+      expect(warnings).toContain("Missing Core Principles section");
+      expect(warnings).toEqual(
+        expect.arrayContaining([expect.stringMatching(/Suspiciously short/)]),
+      );
+    });
+
+    it("should include line count in short output warning", () => {
+      const warnings = checkRequiredPatterns("---\nonly two lines");
+      const shortWarning = warnings.find((w) => w.includes("Suspiciously short"));
+      expect(shortWarning).toContain("only 2 lines");
+    });
+  });
+
+  describe("validateFrontmatter", () => {
+    it("should return no errors and no warnings when all fields are present and valid", () => {
+      const content = [
+        "---",
+        "name: web-developer",
+        "description: A web developer agent",
+        "tools: Read, Write, Glob",
+        "---",
+        "body content",
+      ].join("\n");
+
+      const result = validateFrontmatter(content);
+
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toEqual([]);
+    });
+
+    it("should return parse error when frontmatter is absent", () => {
+      const result = validateFrontmatter("No frontmatter here");
+
+      expect(result.errors).toContain("Failed to parse YAML frontmatter");
+      expect(result.warnings).toEqual([]);
+    });
+
+    it("should return parse error when frontmatter YAML is malformed", () => {
+      const content = "---\nname: [unclosed\n---\nbody";
+
+      const result = validateFrontmatter(content);
+
+      expect(result.errors).toContain("Failed to parse YAML frontmatter");
+    });
+
+    it("should return error when name is a non-string type", () => {
+      const content = "---\nname: 123\ndescription: test\ntools: Read\n---\nbody";
+
+      const result = validateFrontmatter(content);
+
+      // name is present but is a number, not a string
+      expect(result.errors).toContain("Frontmatter missing required field: name");
+    });
+
+    it("should return warning when description is a non-string type", () => {
+      const content = "---\nname: web-dev\ndescription: true\ntools: Read\n---\nbody";
+
+      const result = validateFrontmatter(content);
+
+      expect(result.warnings).toContain("Frontmatter missing field: description");
+    });
+
+    it("should return warning when tools is a non-string type", () => {
+      const content =
+        "---\nname: web-dev\ndescription: test\ntools:\n  - Read\n  - Write\n---\nbody";
+
+      const result = validateFrontmatter(content);
+
+      expect(result.warnings).toContain("Frontmatter missing field: tools");
+    });
+
+    it("should not fail on extra unknown fields in frontmatter", () => {
+      const content =
+        "---\nname: web-dev\ndescription: test\ntools: Read\nextra: value\ncustom: 42\n---\nbody";
+
+      const result = validateFrontmatter(content);
+
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toEqual([]);
+    });
+
+    it("should return error and warnings when all fields are missing from valid YAML", () => {
+      const content = "---\nsome_other_field: value\n---\nbody";
+
+      const result = validateFrontmatter(content);
+
+      expect(result.errors).toContain("Frontmatter missing required field: name");
+      expect(result.warnings).toContain("Frontmatter missing field: description");
+      expect(result.warnings).toContain("Frontmatter missing field: tools");
+    });
+
+    it("should return parse error for empty frontmatter block", () => {
+      const content = "---\n---\nbody";
+
+      const result = validateFrontmatter(content);
+
+      // extractFrontmatter returns null for empty frontmatter (match[1] is empty)
+      expect(result.errors).toContain("Failed to parse YAML frontmatter");
+    });
+
+    it("should early return on parse failure without adding field warnings", () => {
+      const content = "no frontmatter";
+
+      const result = validateFrontmatter(content);
+
+      // Should only have the parse error, no field-level warnings
+      expect(result.errors).toEqual(["Failed to parse YAML frontmatter"]);
+      expect(result.warnings).toEqual([]);
     });
   });
 

@@ -24,8 +24,100 @@ export type SourceValidationResult = {
 };
 
 /** Checks if a key uses snake_case (has underscore between lowercase letters) */
-function isSnakeCase(key: string): boolean {
+export function isSnakeCase(key: string): boolean {
   return /[a-z]_[a-z]/.test(key);
+}
+
+/**
+ * Validates metadata conventions (pure function, no I/O).
+ *
+ * Checks:
+ * - snake_case keys (should be camelCase)
+ * - displayName/directory name mismatch
+ * - category follows domain-prefixed pattern
+ */
+export function validateMetadataConventions(
+  rawMetadata: unknown,
+  validatedMetadata: { displayName: string; category: string },
+  relPath: string,
+  dirName: string,
+): SourceValidationIssue[] {
+  const issues: SourceValidationIssue[] = [];
+
+  // Check for snake_case keys
+  if (rawMetadata && typeof rawMetadata === "object" && !Array.isArray(rawMetadata)) {
+    for (const key of Object.keys(rawMetadata as Record<string, unknown>)) {
+      if (isSnakeCase(key)) {
+        issues.push({
+          severity: "error",
+          file: relPath,
+          message: `Key '${key}' uses snake_case — use camelCase instead`,
+        });
+      }
+    }
+  }
+
+  // Check displayName matches directory name
+  if (validatedMetadata.displayName !== dirName) {
+    issues.push({
+      severity: "warning",
+      file: relPath,
+      message: `displayName '${validatedMetadata.displayName}' does not match directory name '${dirName}'`,
+    });
+  }
+
+  // Check category follows domain-prefixed pattern
+  if (
+    validatedMetadata.category &&
+    !/^(web|api|cli|mobile|infra|meta|security|shared)-.+$/.test(validatedMetadata.category)
+  ) {
+    issues.push({
+      severity: "warning",
+      file: relPath,
+      message: `Category '${validatedMetadata.category}' does not follow domain-prefixed pattern (e.g., 'web-framework', 'api-database')`,
+    });
+  }
+
+  return issues;
+}
+
+/**
+ * Finds missing SKILL.md / metadata.yaml pairs (pure function, no I/O).
+ *
+ * Returns issues for:
+ * - Directories with SKILL.md but no metadata.yaml
+ * - Directories with metadata.yaml but no SKILL.md
+ */
+export function validateSkillFilePairs(
+  skillMdDirs: Set<string>,
+  metadataDirs: Set<string>,
+  skillsDir: string,
+): SourceValidationIssue[] {
+  const issues: SourceValidationIssue[] = [];
+
+  // Dirs with SKILL.md but no metadata.yaml
+  for (const dir of skillMdDirs) {
+    if (!metadataDirs.has(dir)) {
+      issues.push({
+        severity: "error",
+        file: path.join(skillsDir, dir),
+        message: `Missing ${STANDARD_FILES.METADATA_YAML} — skill directory has ${STANDARD_FILES.SKILL_MD} but no metadata`,
+      });
+    }
+  }
+
+  // Dirs with metadata.yaml but no SKILL.md
+  for (const dir of metadataDirs) {
+    if (!skillMdDirs.has(dir)) {
+      issues.push({
+        severity: "error",
+        file: path.join(skillsDir, dir),
+        message: `Missing ${STANDARD_FILES.SKILL_MD} — skill directory has ${STANDARD_FILES.METADATA_YAML} but no SKILL.md`,
+      });
+    }
+  }
+
+  return issues;
 }
 
 /**
@@ -73,27 +165,7 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
   const skillMdDirs = new Set(skillMdFiles.map((f) => path.dirname(f)));
   const metadataDirs = new Set(metadataFiles.map((f) => path.dirname(f)));
 
-  // Dirs with SKILL.md but no metadata.yaml
-  for (const dir of skillMdDirs) {
-    if (!metadataDirs.has(dir)) {
-      issues.push({
-        severity: "error",
-        file: path.join(skillsDir, dir),
-        message: `Missing ${STANDARD_FILES.METADATA_YAML} — skill directory has ${STANDARD_FILES.SKILL_MD} but no metadata`,
-      });
-    }
-  }
-
-  // Dirs with metadata.yaml but no SKILL.md
-  for (const dir of metadataDirs) {
-    if (!skillMdDirs.has(dir)) {
-      issues.push({
-        severity: "error",
-        file: path.join(skillsDir, dir),
-        message: `Missing ${STANDARD_FILES.SKILL_MD} — skill directory has ${STANDARD_FILES.METADATA_YAML} but no SKILL.md`,
-      });
-    }
-  }
+  issues.push(...validateSkillFilePairs(skillMdDirs, metadataDirs, skillsDir));
 
   // Phase 2: Validate each metadata.yaml against strict schema and conventions
   let skillCount = 0;
@@ -124,22 +196,19 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
       continue;
     }
 
-    // Check for snake_case keys
-    if (rawMetadata && typeof rawMetadata === "object" && !Array.isArray(rawMetadata)) {
-      for (const key of Object.keys(rawMetadata as Record<string, unknown>)) {
-        if (isSnakeCase(key)) {
-          issues.push({
-            severity: "error",
-            file: relPath,
-            message: `Key '${key}' uses snake_case — use camelCase instead`,
-          });
-        }
-      }
-    }
-
     // Validate against strict metadata schema
     const result = metadataValidationSchema.safeParse(rawMetadata);
     if (!result.success) {
+      // Check for snake_case keys even on schema failure (useful diagnostics)
+      issues.push(
+        ...validateMetadataConventions(
+          rawMetadata,
+          { displayName: "", category: "" },
+          relPath,
+          path.basename(skillDir),
+        ).filter((i) => i.message.includes("snake_case")),
+      );
+
       for (const issue of result.error.issues) {
         const fieldPath = issue.path.join(".");
         issues.push({
@@ -152,16 +221,9 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
     }
 
     const metadata = result.data;
-
-    // Check displayName matches directory name
     const dirName = path.basename(skillDir);
-    if (metadata.displayName !== dirName) {
-      issues.push({
-        severity: "warning",
-        file: relPath,
-        message: `displayName '${metadata.displayName}' does not match directory name '${dirName}'`,
-      });
-    }
+
+    issues.push(...validateMetadataConventions(rawMetadata, metadata, relPath, dirName));
 
     // Parse SKILL.md frontmatter and check name matches displayName
     const skillMdContent = await readFile(skillMdPath);
@@ -174,18 +236,6 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
           message: `SKILL.md name '${frontmatter.name}' does not match expected skill ID pattern (domain-category-name)`,
         });
       }
-    }
-
-    // Check category follows domain-prefixed pattern
-    if (
-      metadata.category &&
-      !/^(web|api|cli|mobile|infra|meta|security|shared)-.+$/.test(metadata.category)
-    ) {
-      issues.push({
-        severity: "warning",
-        file: relPath,
-        message: `Category '${metadata.category}' does not follow domain-prefixed pattern (e.g., 'web-framework', 'api-database')`,
-      });
     }
   }
 

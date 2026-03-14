@@ -2,20 +2,39 @@ import { mkdir, writeFile, readFile, rm } from "fs/promises";
 import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { installLocal } from "./local-installer";
-import type { AgentConfig, AgentName, ProjectConfig, SkillId } from "../../types";
+import {
+  installLocal,
+  writeScopedConfigs,
+  resolveInstallPaths,
+  buildLocalSkillsMap,
+  buildCompileAgents,
+  buildAgentScopeMap,
+  setConfigMetadata,
+} from "./local-installer";
+import type { AgentConfig, AgentDefinition, AgentName, ProjectConfig, SkillId } from "../../types";
 import { initializeMatrix } from "../matrix/matrix-provider";
 import {
   buildWizardResult,
   buildSkillConfigs,
   buildProjectConfig,
   buildSourceResult,
+  createMockSkill,
+  createMockAgent,
   createTempDir,
   cleanupTempDir,
   readTestTsConfig,
+  buildAgentConfigs,
+  createMockMatrix,
 } from "../__tests__/helpers";
-import { EMPTY_MATRIX } from "../__tests__/mock-data/mock-matrices";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../consts";
+import { SKILLS } from "../__tests__/test-fixtures";
+import { EMPTY_MATRIX, SINGLE_REACT_MATRIX } from "../__tests__/mock-data/mock-matrices";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  DEFAULT_PLUGIN_NAME,
+  LOCAL_SKILLS_PATH,
+  STANDARD_FILES,
+} from "../../consts";
 import { generateConfigSource } from "../configuration/config-writer";
 
 // Mock heavy dependencies that involve file system operations outside our temp dir
@@ -456,6 +475,452 @@ describe("local-installer", () => {
         id: "web-framework-react",
         preloaded: true,
       });
+    });
+  });
+
+  describe("writeScopedConfigs", () => {
+    // Boundary cast: empty agents record for tests that don't need agent definitions
+    const emptyAgents = {} as Record<AgentName, AgentDefinition>;
+
+    it("should skip project config when no existing project installation and no project-scoped items", async () => {
+      // Setup: all items are global-scoped, so project split will be empty.
+      // No project installation exists, so project config should be skipped.
+      const config = buildProjectConfig({
+        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        agents: [{ name: "web-developer", scope: "global" }],
+      });
+
+      const projectDir = path.join(tempDir, "project-dir");
+      const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+
+      // Ensure project .claude-src/ directory exists but do NOT create config.ts
+      await mkdir(path.dirname(projectConfigPath), { recursive: true });
+
+      await writeScopedConfigs(
+        config,
+        EMPTY_MATRIX,
+        emptyAgents,
+        projectDir,
+        projectConfigPath,
+        false, // no existing project installation
+      );
+
+      // Global config should be written
+      const globalConfigPath = path.join(os.homedir(), CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const { fileExists } = await import("../../utils/fs");
+      expect(await fileExists(globalConfigPath)).toBe(true);
+
+      // Project config should NOT be written (no existing config and no project-scoped items)
+      expect(await fileExists(projectConfigPath)).toBe(false);
+    });
+
+    it("should write project config when project split has skills", async () => {
+      const config = buildProjectConfig({
+        skills: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+          { id: "web-testing-vitest", scope: "project", source: "local" },
+        ],
+        agents: [
+          { name: "web-developer", scope: "global" },
+          { name: "web-reviewer", scope: "project" },
+        ],
+      });
+
+      const projectDir = path.join(tempDir, "project-dir");
+      const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      await mkdir(path.dirname(projectConfigPath), { recursive: true });
+
+      await writeScopedConfigs(
+        config,
+        EMPTY_MATRIX,
+        emptyAgents,
+        projectDir,
+        projectConfigPath,
+        false, // no existing project installation, but project-scoped items exist
+      );
+
+      // Both global and project configs should be written
+      const globalConfigPath = path.join(os.homedir(), CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const { fileExists } = await import("../../utils/fs");
+      expect(await fileExists(globalConfigPath)).toBe(true);
+      expect(await fileExists(projectConfigPath)).toBe(true);
+
+      // Project config should contain the project-scoped skill
+      const projectContent = await readFile(projectConfigPath, "utf-8");
+      expect(projectContent).toContain("web-testing-vitest");
+    });
+  });
+
+  describe("resolveInstallPaths", () => {
+    it("should resolve project-scope paths relative to projectDir", () => {
+      const result = resolveInstallPaths("/my/project", "project");
+
+      expect(result.skillsDir).toBe(`/my/project/${LOCAL_SKILLS_PATH}`);
+      expect(result.agentsDir).toBe(`/my/project/${CLAUDE_DIR}/agents`);
+      expect(result.configPath).toBe(`/my/project/${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS}`);
+    });
+
+    it("should resolve global-scope paths relative to home directory", () => {
+      const homeDir = os.homedir();
+      const result = resolveInstallPaths("/my/project", "global");
+
+      expect(result.skillsDir).toBe(path.join(homeDir, LOCAL_SKILLS_PATH));
+      expect(result.agentsDir).toBe(path.join(homeDir, CLAUDE_DIR, "agents"));
+      expect(result.configPath).toBe(path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS));
+    });
+
+    it("should default to project scope when no scope argument provided", () => {
+      const result = resolveInstallPaths("/my/project");
+
+      expect(result.skillsDir).toBe(`/my/project/${LOCAL_SKILLS_PATH}`);
+      expect(result.agentsDir).toBe(`/my/project/${CLAUDE_DIR}/agents`);
+      expect(result.configPath).toBe(`/my/project/${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS}`);
+    });
+  });
+
+  describe("buildLocalSkillsMap", () => {
+    it("should map copied skills that exist in the matrix", () => {
+      initializeMatrix(SINGLE_REACT_MATRIX);
+
+      const copiedSkills = [
+        {
+          skillId: "web-framework-react" as SkillId,
+          contentHash: "abc123",
+          sourcePath: "/source/skills/react",
+          destPath: "/project/.claude/skills/web-framework-react",
+        },
+      ];
+
+      const result = buildLocalSkillsMap(copiedSkills);
+
+      expect(result["web-framework-react"]).toBeDefined();
+      expect(result["web-framework-react"]!.id).toBe("web-framework-react");
+      expect(result["web-framework-react"]!.description).toBe(
+        SINGLE_REACT_MATRIX.skills["web-framework-react"]!.description,
+      );
+      expect(result["web-framework-react"]!.path).toBe(
+        "/project/.claude/skills/web-framework-react",
+      );
+      expect(result["web-framework-react"]!.content).toBe("");
+    });
+
+    it("should filter out copied skills not in the matrix", () => {
+      initializeMatrix(EMPTY_MATRIX);
+
+      const copiedSkills = [
+        {
+          skillId: "web-nonexistent-skill" as SkillId,
+          contentHash: "abc123",
+          sourcePath: "/source/skills/nonexistent",
+          destPath: "/project/.claude/skills/web-nonexistent-skill",
+        },
+      ];
+
+      const result = buildLocalSkillsMap(copiedSkills);
+
+      expect(Object.keys(result)).toHaveLength(0);
+    });
+
+    it("should return empty map when no skills are copied", () => {
+      initializeMatrix(SINGLE_REACT_MATRIX);
+
+      const result = buildLocalSkillsMap([]);
+
+      expect(Object.keys(result)).toHaveLength(0);
+    });
+
+    it("should handle mixed copied skills — some in matrix, some not", () => {
+      initializeMatrix(SINGLE_REACT_MATRIX);
+
+      const copiedSkills = [
+        {
+          skillId: "web-framework-react" as SkillId,
+          contentHash: "abc123",
+          sourcePath: "/source/skills/react",
+          destPath: "/project/.claude/skills/web-framework-react",
+        },
+        {
+          skillId: "web-nonexistent-skill" as SkillId,
+          contentHash: "def456",
+          sourcePath: "/source/skills/nonexistent",
+          destPath: "/project/.claude/skills/web-nonexistent-skill",
+        },
+      ];
+
+      const result = buildLocalSkillsMap(copiedSkills);
+
+      expect(Object.keys(result)).toHaveLength(1);
+      expect(result["web-framework-react"]).toBeDefined();
+      expect(result["web-nonexistent-skill" as SkillId]).toBeUndefined();
+    });
+  });
+
+  describe("buildCompileAgents", () => {
+    it("should build compile agents for agents in the definition record", () => {
+      const config = buildProjectConfig({
+        agents: buildAgentConfigs(["web-developer"]),
+        skills: buildSkillConfigs(["web-framework-react"]),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+      const agents: Record<AgentName, AgentDefinition> = {
+        "web-developer": createMockAgent("web-developer"),
+      } as Record<AgentName, AgentDefinition>;
+
+      const result = buildCompileAgents(config, agents);
+
+      expect(result["web-developer"]).toBeDefined();
+      expect(result["web-developer"].skills).toBeDefined();
+    });
+
+    it("should skip agents not in the definition record", () => {
+      const config = buildProjectConfig({
+        agents: buildAgentConfigs(["web-developer", "api-developer"]),
+        skills: buildSkillConfigs(["web-framework-react"]),
+      });
+      // Only web-developer has a definition
+      const agents: Record<AgentName, AgentDefinition> = {
+        "web-developer": createMockAgent("web-developer"),
+      } as Record<AgentName, AgentDefinition>;
+
+      const result = buildCompileAgents(config, agents);
+
+      expect(result["web-developer"]).toBeDefined();
+      expect(result["api-developer"]).toBeUndefined();
+    });
+
+    it("should return empty skills when agent has no stack mapping", () => {
+      const config = buildProjectConfig({
+        agents: buildAgentConfigs(["web-developer"]),
+        skills: buildSkillConfigs(["web-framework-react"]),
+        // No stack property
+      });
+      const agents: Record<AgentName, AgentDefinition> = {
+        "web-developer": createMockAgent("web-developer"),
+      } as Record<AgentName, AgentDefinition>;
+
+      const result = buildCompileAgents(config, agents);
+
+      expect(result["web-developer"]).toEqual({});
+    });
+
+    it("should filter global agent skills to only global-scoped skills (cross-scope safety net)", async () => {
+      // Set up buildSkillRefsFromConfig mock to return both skills
+      const mockBuildSkillRefs = vi.mocked((await import("../resolver")).buildSkillRefsFromConfig);
+      mockBuildSkillRefs.mockReturnValueOnce([
+        { id: "web-framework-react" as SkillId, usage: "when working with web-framework" },
+        { id: "web-testing-vitest" as SkillId, usage: "when working with web-testing" },
+      ]);
+
+      const config = buildProjectConfig({
+        agents: [{ name: "web-developer" as AgentName, scope: "global" }],
+        skills: [
+          { id: "web-framework-react" as SkillId, scope: "project", source: "local" },
+          { id: "web-testing-vitest" as SkillId, scope: "global", source: "local" },
+        ],
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+            "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+          },
+        },
+      });
+      const agents: Record<AgentName, AgentDefinition> = {
+        "web-developer": createMockAgent("web-developer"),
+      } as Record<AgentName, AgentDefinition>;
+
+      const result = buildCompileAgents(config, agents);
+
+      // Global agent should only see web-testing-vitest (global scope), not web-framework-react (project scope)
+      const skills = result["web-developer"].skills ?? [];
+      const skillIds = skills.map((s) => s.id);
+      expect(skillIds).toContain("web-testing-vitest");
+      expect(skillIds).not.toContain("web-framework-react");
+    });
+
+    it("should not filter project-scoped agent skills", async () => {
+      // Set up buildSkillRefsFromConfig mock to return both skills
+      const mockBuildSkillRefs = vi.mocked((await import("../resolver")).buildSkillRefsFromConfig);
+      mockBuildSkillRefs.mockReturnValueOnce([
+        { id: "web-framework-react" as SkillId, usage: "when working with web-framework" },
+        { id: "web-testing-vitest" as SkillId, usage: "when working with web-testing" },
+      ]);
+
+      const config = buildProjectConfig({
+        agents: [{ name: "web-developer" as AgentName, scope: "project" }],
+        skills: [
+          { id: "web-framework-react" as SkillId, scope: "project", source: "local" },
+          { id: "web-testing-vitest" as SkillId, scope: "global", source: "local" },
+        ],
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+            "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+          },
+        },
+      });
+      const agents: Record<AgentName, AgentDefinition> = {
+        "web-developer": createMockAgent("web-developer"),
+      } as Record<AgentName, AgentDefinition>;
+
+      const result = buildCompileAgents(config, agents);
+
+      // Project agent should see all skills regardless of scope
+      const skills = result["web-developer"].skills ?? [];
+      const skillIds = skills.map((s) => s.id);
+      expect(skillIds).toContain("web-framework-react");
+      expect(skillIds).toContain("web-testing-vitest");
+    });
+  });
+
+  describe("buildAgentScopeMap", () => {
+    it("should build a map from agent names to their scopes", () => {
+      const config = buildProjectConfig({
+        agents: [
+          { name: "web-developer" as AgentName, scope: "project" },
+          { name: "api-developer" as AgentName, scope: "global" },
+        ],
+      });
+
+      const result = buildAgentScopeMap(config);
+
+      expect(result.get("web-developer" as AgentName)).toBe("project");
+      expect(result.get("api-developer" as AgentName)).toBe("global");
+    });
+
+    it("should return empty map for config with no agents", () => {
+      const config = buildProjectConfig({ agents: [] });
+
+      const result = buildAgentScopeMap(config);
+
+      expect(result.size).toBe(0);
+    });
+
+    it("should handle single agent", () => {
+      const config = buildProjectConfig({
+        agents: buildAgentConfigs(["web-developer"]),
+      });
+
+      const result = buildAgentScopeMap(config);
+
+      expect(result.size).toBe(1);
+      expect(result.get("web-developer" as AgentName)).toBe("project");
+    });
+  });
+
+  describe("setConfigMetadata", () => {
+    it("should return a new config with domains when selectedDomains is non-empty", () => {
+      const config = buildProjectConfig();
+      const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]), {
+        selectedDomains: ["web", "api"],
+      });
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir);
+
+      const result = setConfigMetadata(config, wizardResult, sourceResult);
+
+      expect(result.domains).toEqual(["web", "api"]);
+    });
+
+    it("should not set domains when selectedDomains is empty", () => {
+      const config = buildProjectConfig();
+      const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]), {
+        selectedDomains: [],
+      });
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir);
+
+      const result = setConfigMetadata(config, wizardResult, sourceResult);
+
+      expect(result.domains).toBeUndefined();
+    });
+
+    it("should set selectedAgents when non-empty", () => {
+      const config = buildProjectConfig();
+      const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]), {
+        selectedAgents: ["web-developer" as AgentName, "api-developer" as AgentName],
+      });
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir);
+
+      const result = setConfigMetadata(config, wizardResult, sourceResult);
+
+      expect(result.selectedAgents).toEqual(["web-developer", "api-developer"]);
+    });
+
+    it("should not set selectedAgents when empty", () => {
+      const config = buildProjectConfig();
+      const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]), {
+        selectedAgents: [],
+      });
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir);
+
+      const result = setConfigMetadata(config, wizardResult, sourceResult);
+
+      expect(result.selectedAgents).toBeUndefined();
+    });
+
+    it("should prefer sourceFlag over sourceResult.sourceConfig.source", () => {
+      const config = buildProjectConfig();
+      const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir, {
+        sourceConfig: { source: "github:default/source", sourceOrigin: "project" },
+      });
+
+      const result = setConfigMetadata(config, wizardResult, sourceResult, "github:my-org/skills");
+
+      expect(result.source).toBe("github:my-org/skills");
+    });
+
+    it("should use sourceResult.sourceConfig.source when no sourceFlag", () => {
+      const config = buildProjectConfig();
+      const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir, {
+        sourceConfig: { source: "github:default/source", sourceOrigin: "project" },
+      });
+
+      const result = setConfigMetadata(config, wizardResult, sourceResult);
+
+      expect(result.source).toBe("github:default/source");
+    });
+
+    it("should set marketplace when available", () => {
+      const config = buildProjectConfig();
+      const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir, {
+        marketplace: "my-marketplace",
+      });
+
+      const result = setConfigMetadata(config, wizardResult, sourceResult);
+
+      expect(result.marketplace).toBe("my-marketplace");
+    });
+
+    it("should not mutate the original config object", () => {
+      const config = buildProjectConfig();
+      const originalName = config.name;
+      const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]), {
+        selectedDomains: ["web"],
+        selectedAgents: ["web-developer" as AgentName],
+      });
+      const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir, {
+        marketplace: "my-marketplace",
+      });
+
+      const result = setConfigMetadata(config, wizardResult, sourceResult, "github:my/repo");
+
+      // Original config should not be mutated
+      expect(config.domains).toBeUndefined();
+      expect(config.selectedAgents).toBeUndefined();
+      expect(config.source).toBeUndefined();
+      expect(config.marketplace).toBeUndefined();
+      expect(config.name).toBe(originalName);
+
+      // Result should have the new values
+      expect(result.domains).toEqual(["web"]);
+      expect(result.selectedAgents).toEqual(["web-developer"]);
+      expect(result.source).toBe("github:my/repo");
+      expect(result.marketplace).toBe("my-marketplace");
     });
   });
 });

@@ -6,6 +6,10 @@ import {
   getDiscourageReason,
   isRecommended,
   validateSelection,
+  validateConflicts,
+  validateRequirements,
+  validateExclusivity,
+  validateRecommendations,
   getSkillsByCategory,
   getAvailableSkills,
 } from "./matrix-resolver";
@@ -1377,5 +1381,544 @@ describe("validateSelection edge cases", () => {
     expect(result.errors.some((e) => e.type === "conflict")).toBe(true);
     // Also reports missing requirement for C
     expect(result.errors.some((e) => e.type === "missingRequirement")).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Focused unit tests for validation sub-functions
+// ---------------------------------------------------------------------------
+
+describe("validateConflicts", () => {
+  it("should return no errors for empty selections", () => {
+    initializeMatrix(EMPTY_MATRIX);
+
+    const result = validateConflicts([]);
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("should return no errors for a single skill", () => {
+    initializeMatrix(createMockMatrix(SKILLS.react));
+
+    const result = validateConflicts([REACT_ID]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should return no errors when skills do not conflict", () => {
+    initializeMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand));
+
+    const result = validateConflicts([REACT_ID, ZUSTAND_ID]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should detect conflict declared on first skill against second", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      conflictsWith: [{ skillId: VUE_ID, reason: "Choose one framework" }],
+    });
+    const skillB = createMockSkill(VUE_ID);
+    initializeMatrix(createMockMatrix(skillA, skillB));
+
+    const result = validateConflicts([REACT_ID, VUE_ID]);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].type).toBe("conflict");
+    expect(result.errors[0].skills).toEqual([REACT_ID, VUE_ID]);
+  });
+
+  it("should not detect conflict when declaration is only on second skill (order-dependent)", () => {
+    // validateConflicts only checks skillA.conflictsWith for skillB where i < j
+    // If the conflict is declared on B against A, and A comes first, it won't find it
+    const skillA = createMockSkill(REACT_ID);
+    const skillB = createMockSkill(VUE_ID, {
+      conflictsWith: [{ skillId: REACT_ID, reason: "Choose one framework" }],
+    });
+    initializeMatrix(createMockMatrix(skillA, skillB));
+
+    const result = validateConflicts([REACT_ID, VUE_ID]);
+    // B declares conflict with A, but since A (index 0) is checked first against B (index 1),
+    // and A has no conflicts, nothing is found. Then B is never the "outer" loop skill
+    // because j starts at i+1, so B's conflicts are not checked.
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("should detect multiple conflicts in one selection set", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      conflictsWith: [
+        { skillId: VUE_ID, reason: "Framework conflict" },
+        { skillId: ZUSTAND_ID, reason: "State conflict" },
+      ],
+    });
+    const skillB = createMockSkill(VUE_ID);
+    const skillC = createMockSkill(ZUSTAND_ID);
+    initializeMatrix(createMockMatrix(skillA, skillB, skillC));
+
+    const result = validateConflicts([REACT_ID, VUE_ID, ZUSTAND_ID]);
+    expect(result.errors).toHaveLength(2);
+    expect(result.errors.every((e) => e.type === "conflict")).toBe(true);
+  });
+
+  it("should skip skills not found in the matrix gracefully", () => {
+    initializeMatrix(createMockMatrix(SKILLS.react));
+
+    // VUE_ID is not in the matrix — should not throw, just skip
+    const result = validateConflicts([REACT_ID, VUE_ID]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should include conflict reason in error message", () => {
+    const reason = "Only one framework per project";
+    const skillA = createMockSkill(REACT_ID, {
+      conflictsWith: [{ skillId: VUE_ID, reason }],
+    });
+    const skillB = createMockSkill(VUE_ID);
+    initializeMatrix(createMockMatrix(skillA, skillB));
+
+    const result = validateConflicts([REACT_ID, VUE_ID]);
+    expect(result.errors[0].message).toContain(reason);
+  });
+
+  it("should always return empty warnings array", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      conflictsWith: [{ skillId: VUE_ID, reason: "Conflict" }],
+    });
+    const skillB = createMockSkill(VUE_ID);
+    initializeMatrix(createMockMatrix(skillA, skillB));
+
+    const result = validateConflicts([REACT_ID, VUE_ID]);
+    expect(result.warnings).toEqual([]);
+  });
+});
+
+describe("validateRequirements", () => {
+  it("should return no errors for empty selections", () => {
+    initializeMatrix(EMPTY_MATRIX);
+
+    const result = validateRequirements([], new Set());
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("should return no errors for skill with no requirements", () => {
+    initializeMatrix(createMockMatrix(SKILLS.react));
+
+    const result = validateRequirements([REACT_ID], new Set([REACT_ID]));
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should return error when AND requirement is not satisfied", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      requires: [{ skillIds: [ZUSTAND_ID], needsAny: false, reason: "Needs state" }],
+    });
+    const skillC = createMockSkill(ZUSTAND_ID);
+    initializeMatrix(createMockMatrix(skillA, skillC));
+
+    const result = validateRequirements([REACT_ID], new Set([REACT_ID]));
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].type).toBe("missingRequirement");
+    expect(result.errors[0].skills).toContain(REACT_ID);
+    expect(result.errors[0].skills).toContain(ZUSTAND_ID);
+  });
+
+  it("should return no error when AND requirement is fully satisfied", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      requires: [{ skillIds: [ZUSTAND_ID], needsAny: false, reason: "Needs state" }],
+    });
+    const skillC = createMockSkill(ZUSTAND_ID);
+    initializeMatrix(createMockMatrix(skillA, skillC));
+
+    const selectedSet = new Set<SkillId>([REACT_ID, ZUSTAND_ID]);
+    const result = validateRequirements([REACT_ID, ZUSTAND_ID], selectedSet);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should return error listing all missing skills for multi-skill AND requirement", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      requires: [{ skillIds: [ZUSTAND_ID, HONO_ID], needsAny: false, reason: "Needs both" }],
+    });
+    const skillC = createMockSkill(ZUSTAND_ID);
+    const skillD = createMockSkill(HONO_ID);
+    initializeMatrix(createMockMatrix(skillA, skillC, skillD));
+
+    const result = validateRequirements([REACT_ID], new Set([REACT_ID]));
+    expect(result.errors).toHaveLength(1);
+    // Should include both missing IDs
+    expect(result.errors[0].skills).toContain(ZUSTAND_ID);
+    expect(result.errors[0].skills).toContain(HONO_ID);
+  });
+
+  it("should return error for partially satisfied AND requirement", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      requires: [{ skillIds: [ZUSTAND_ID, HONO_ID], needsAny: false, reason: "Needs both" }],
+    });
+    const skillC = createMockSkill(ZUSTAND_ID);
+    const skillD = createMockSkill(HONO_ID);
+    initializeMatrix(createMockMatrix(skillA, skillC, skillD));
+
+    // Only ZUSTAND_ID is selected, HONO_ID is missing
+    const selectedSet = new Set<SkillId>([REACT_ID, ZUSTAND_ID]);
+    const result = validateRequirements([REACT_ID, ZUSTAND_ID], selectedSet);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].skills).toContain(HONO_ID);
+    expect(result.errors[0].skills).not.toContain(ZUSTAND_ID);
+  });
+
+  it("should return error when OR requirement has no satisfying skill selected", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      requires: [{ skillIds: [ZUSTAND_ID, HONO_ID], needsAny: true, reason: "Needs one of these" }],
+    });
+    const skillC = createMockSkill(ZUSTAND_ID);
+    const skillD = createMockSkill(HONO_ID);
+    initializeMatrix(createMockMatrix(skillA, skillC, skillD));
+
+    const result = validateRequirements([REACT_ID], new Set([REACT_ID]));
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].type).toBe("missingRequirement");
+  });
+
+  it("should return no error when OR requirement has at least one satisfying skill", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      requires: [{ skillIds: [ZUSTAND_ID, HONO_ID], needsAny: true, reason: "Needs one of these" }],
+    });
+    const skillC = createMockSkill(ZUSTAND_ID);
+    const skillD = createMockSkill(HONO_ID);
+    initializeMatrix(createMockMatrix(skillA, skillC, skillD));
+
+    const selectedSet = new Set<SkillId>([REACT_ID, HONO_ID]);
+    const result = validateRequirements([REACT_ID, HONO_ID], selectedSet);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should return errors for multiple skills with unmet requirements", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      requires: [{ skillIds: [ZUSTAND_ID], needsAny: false, reason: "Needs state" }],
+    });
+    const skillB = createMockSkill(VUE_ID, {
+      requires: [{ skillIds: [HONO_ID], needsAny: false, reason: "Needs API" }],
+    });
+    const skillC = createMockSkill(ZUSTAND_ID);
+    const skillD = createMockSkill(HONO_ID);
+    initializeMatrix(createMockMatrix(skillA, skillB, skillC, skillD));
+
+    const selectedSet = new Set<SkillId>([REACT_ID, VUE_ID]);
+    const result = validateRequirements([REACT_ID, VUE_ID], selectedSet);
+    expect(result.errors).toHaveLength(2);
+  });
+
+  it("should handle skill with multiple requirement groups", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      requires: [
+        { skillIds: [ZUSTAND_ID], needsAny: false, reason: "Needs state" },
+        { skillIds: [HONO_ID], needsAny: false, reason: "Needs API" },
+      ],
+    });
+    const skillC = createMockSkill(ZUSTAND_ID);
+    const skillD = createMockSkill(HONO_ID);
+    initializeMatrix(createMockMatrix(skillA, skillC, skillD));
+
+    const result = validateRequirements([REACT_ID], new Set([REACT_ID]));
+    // Two separate requirement groups, both unmet
+    expect(result.errors).toHaveLength(2);
+  });
+
+  it("should skip skills not found in the matrix", () => {
+    initializeMatrix(createMockMatrix(SKILLS.react));
+
+    // VUE_ID is not in the matrix — should not throw
+    const result = validateRequirements([VUE_ID], new Set([VUE_ID]));
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should always return empty warnings array", () => {
+    const skillA = createMockSkill(REACT_ID, {
+      requires: [{ skillIds: [ZUSTAND_ID], needsAny: false, reason: "Needs state" }],
+    });
+    const skillC = createMockSkill(ZUSTAND_ID);
+    initializeMatrix(createMockMatrix(skillA, skillC));
+
+    const result = validateRequirements([REACT_ID], new Set([REACT_ID]));
+    expect(result.warnings).toEqual([]);
+  });
+});
+
+describe("validateExclusivity", () => {
+  it("should return no errors for empty selections", () => {
+    initializeMatrix(EMPTY_MATRIX);
+
+    const result = validateExclusivity([]);
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("should return no errors for single skill in exclusive category", () => {
+    const matrix = createMockMatrix(SKILLS.react, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, exclusive: true },
+      } as Record<Category, CategoryDefinition>,
+    });
+    initializeMatrix(matrix);
+
+    const result = validateExclusivity([REACT_ID]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should return error for multiple skills in exclusive category", () => {
+    const skillA = createMockSkill(REACT_ID, { category: "web-framework" });
+    const skillB = createMockSkill(VUE_ID, { category: "web-framework" });
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, exclusive: true },
+      } as Record<Category, CategoryDefinition>,
+    });
+    initializeMatrix(matrix);
+
+    const result = validateExclusivity([REACT_ID, VUE_ID]);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].type).toBe("categoryExclusive");
+    expect(result.errors[0].skills).toContain(REACT_ID);
+    expect(result.errors[0].skills).toContain(VUE_ID);
+  });
+
+  it("should allow multiple skills in non-exclusive category", () => {
+    const skillA = createMockSkill(REACT_ID, { category: "web-testing" });
+    const skillB = createMockSkill(VUE_ID, { category: "web-testing" });
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-testing": { ...TEST_CATEGORIES.testing, exclusive: false },
+      } as Record<Category, CategoryDefinition>,
+    });
+    initializeMatrix(matrix);
+
+    const result = validateExclusivity([REACT_ID, VUE_ID]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should skip the 'local' pseudo-category even with multiple skills", () => {
+    const skillA = createMockSkill(REACT_ID, { category: "local" as CategoryPath });
+    const skillB = createMockSkill(VUE_ID, { category: "local" as CategoryPath });
+    initializeMatrix(createMockMatrix(skillA, skillB));
+
+    const result = validateExclusivity([REACT_ID, VUE_ID]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should handle mixed exclusive and non-exclusive categories", () => {
+    const skillA = createMockSkill(REACT_ID, { category: "web-framework" });
+    const skillB = createMockSkill(VUE_ID, { category: "web-framework" });
+    const skillC = createMockSkill(ZUSTAND_ID, { category: "web-testing" });
+    const skillD = createMockSkill(HONO_ID, { category: "web-testing" });
+    const matrix = createMockMatrix(skillA, skillB, skillC, skillD, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, exclusive: true },
+        "web-testing": { ...TEST_CATEGORIES.testing, exclusive: false },
+      } as Record<Category, CategoryDefinition>,
+    });
+    initializeMatrix(matrix);
+
+    const result = validateExclusivity([REACT_ID, VUE_ID, ZUSTAND_ID, HONO_ID]);
+    // Only framework is exclusive, so only one error
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].type).toBe("categoryExclusive");
+    expect(result.errors[0].message).toContain("Framework");
+  });
+
+  it("should skip skills not found in the matrix", () => {
+    initializeMatrix(createMockMatrix(SKILLS.react));
+
+    // VUE_ID not in matrix — should not throw
+    const result = validateExclusivity([REACT_ID, VUE_ID]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should detect exclusivity violation with 3+ skills in same category", () => {
+    const skillA = createMockSkill(REACT_ID, { category: "web-framework" });
+    const skillB = createMockSkill(VUE_ID, { category: "web-framework" });
+    const skillC = createMockSkill(ZUSTAND_ID, { category: "web-framework" });
+    const matrix = createMockMatrix(skillA, skillB, skillC, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, exclusive: true },
+      } as Record<Category, CategoryDefinition>,
+    });
+    initializeMatrix(matrix);
+
+    const result = validateExclusivity([REACT_ID, VUE_ID, ZUSTAND_ID]);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].skills).toHaveLength(3);
+  });
+
+  it("should include category display name in error message", () => {
+    const skillA = createMockSkill(REACT_ID, { category: "web-framework" });
+    const skillB = createMockSkill(VUE_ID, { category: "web-framework" });
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": {
+          ...TEST_CATEGORIES.framework,
+          displayName: "Framework",
+          exclusive: true,
+        },
+      } as Record<Category, CategoryDefinition>,
+    });
+    initializeMatrix(matrix);
+
+    const result = validateExclusivity([REACT_ID, VUE_ID]);
+    expect(result.errors[0].message).toContain("Framework");
+  });
+
+  it("should always return empty warnings array", () => {
+    const skillA = createMockSkill(REACT_ID, { category: "web-framework" });
+    const skillB = createMockSkill(VUE_ID, { category: "web-framework" });
+    const matrix = createMockMatrix(skillA, skillB, {
+      categories: {
+        "web-framework": { ...TEST_CATEGORIES.framework, exclusive: true },
+      } as Record<Category, CategoryDefinition>,
+    });
+    initializeMatrix(matrix);
+
+    const result = validateExclusivity([REACT_ID, VUE_ID]);
+    expect(result.warnings).toEqual([]);
+  });
+});
+
+describe("validateRecommendations", () => {
+  it("should return no warnings for empty selections", () => {
+    initializeMatrix(EMPTY_MATRIX);
+
+    const result = validateRecommendations([], new Set());
+    expect(result.warnings).toEqual([]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("should return no warnings when no skills are recommended", () => {
+    initializeMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand));
+
+    const selectedSet = new Set<SkillId>([REACT_ID]);
+    const result = validateRecommendations([REACT_ID], selectedSet);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("should return warning for recommended skill not selected", () => {
+    const recommendedSkill = createMockSkill(ZUSTAND_ID, {
+      isRecommended: true,
+      recommendedReason: "Great state management",
+      compatibleWith: [REACT_ID],
+    });
+    initializeMatrix(createMockMatrix(SKILLS.react, recommendedSkill));
+
+    const selectedSet = new Set<SkillId>([REACT_ID]);
+    const result = validateRecommendations([REACT_ID], selectedSet);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0].type).toBe("missing_recommendation");
+    expect(result.warnings[0].skills).toEqual([ZUSTAND_ID]);
+  });
+
+  it("should not warn when recommended skill is already selected", () => {
+    const recommendedSkill = createMockSkill(ZUSTAND_ID, {
+      isRecommended: true,
+      recommendedReason: "Great state management",
+      compatibleWith: [REACT_ID],
+    });
+    initializeMatrix(createMockMatrix(SKILLS.react, recommendedSkill));
+
+    const selectedSet = new Set<SkillId>([REACT_ID, ZUSTAND_ID]);
+    const result = validateRecommendations([REACT_ID, ZUSTAND_ID], selectedSet);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("should not warn when recommended skill is incompatible with selections", () => {
+    const recommendedSkill = createMockSkill(ZUSTAND_ID, {
+      isRecommended: true,
+      recommendedReason: "Great state management",
+      compatibleWith: [VUE_ID], // Only compatible with Vue, not React
+    });
+    initializeMatrix(createMockMatrix(SKILLS.react, recommendedSkill));
+
+    const selectedSet = new Set<SkillId>([REACT_ID]);
+    const result = validateRecommendations([REACT_ID], selectedSet);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("should warn for recommended skill with no compatibility constraints (unconditional)", () => {
+    const recommendedSkill = createMockSkill(ZUSTAND_ID, {
+      isRecommended: true,
+      recommendedReason: "Always recommended",
+      compatibleWith: [], // No constraints — recommended for everyone
+    });
+    initializeMatrix(createMockMatrix(SKILLS.react, recommendedSkill));
+
+    const selectedSet = new Set<SkillId>([REACT_ID]);
+    const result = validateRecommendations([REACT_ID], selectedSet);
+    expect(result.warnings).toHaveLength(1);
+  });
+
+  it("should not warn when recommended skill conflicts with a selected skill", () => {
+    const recommendedSkill = createMockSkill(ZUSTAND_ID, {
+      isRecommended: true,
+      recommendedReason: "Great state management",
+      compatibleWith: [],
+      conflictsWith: [{ skillId: REACT_ID, reason: "Incompatible" }],
+    });
+    initializeMatrix(createMockMatrix(SKILLS.react, recommendedSkill));
+
+    const selectedSet = new Set<SkillId>([REACT_ID]);
+    const result = validateRecommendations([REACT_ID], selectedSet);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("should include recommendation reason in warning message", () => {
+    const reason = "Essential for modern React apps";
+    const recommendedSkill = createMockSkill(ZUSTAND_ID, {
+      isRecommended: true,
+      recommendedReason: reason,
+      compatibleWith: [REACT_ID],
+    });
+    initializeMatrix(createMockMatrix(SKILLS.react, recommendedSkill));
+
+    const selectedSet = new Set<SkillId>([REACT_ID]);
+    const result = validateRecommendations([REACT_ID], selectedSet);
+    expect(result.warnings[0].message).toContain(reason);
+  });
+
+  it("should use default reason when recommendedReason is undefined", () => {
+    const recommendedSkill = createMockSkill(ZUSTAND_ID, {
+      isRecommended: true,
+      compatibleWith: [REACT_ID],
+    });
+    initializeMatrix(createMockMatrix(SKILLS.react, recommendedSkill));
+
+    const selectedSet = new Set<SkillId>([REACT_ID]);
+    const result = validateRecommendations([REACT_ID], selectedSet);
+    expect(result.warnings[0].message).toContain("Recommended for this stack");
+  });
+
+  it("should return multiple warnings for multiple unselected recommendations", () => {
+    const rec1 = createMockSkill(ZUSTAND_ID, {
+      isRecommended: true,
+      recommendedReason: "State management",
+      compatibleWith: [REACT_ID],
+    });
+    const rec2 = createMockSkill(SCSS_ID, {
+      isRecommended: true,
+      recommendedReason: "Styling solution",
+      compatibleWith: [REACT_ID],
+    });
+    initializeMatrix(createMockMatrix(SKILLS.react, rec1, rec2));
+
+    const selectedSet = new Set<SkillId>([REACT_ID]);
+    const result = validateRecommendations([REACT_ID], selectedSet);
+    expect(result.warnings).toHaveLength(2);
+    const warnedSkills = result.warnings.flatMap((w) => w.skills);
+    expect(warnedSkills).toContain(ZUSTAND_ID);
+    expect(warnedSkills).toContain(SCSS_ID);
+  });
+
+  it("should always return empty errors array", () => {
+    const recommendedSkill = createMockSkill(ZUSTAND_ID, {
+      isRecommended: true,
+      recommendedReason: "Great state management",
+      compatibleWith: [REACT_ID],
+    });
+    initializeMatrix(createMockMatrix(SKILLS.react, recommendedSkill));
+
+    const selectedSet = new Set<SkillId>([REACT_ID]);
+    const result = validateRecommendations([REACT_ID], selectedSet);
+    expect(result.errors).toEqual([]);
   });
 });

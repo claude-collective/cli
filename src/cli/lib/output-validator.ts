@@ -2,7 +2,7 @@ import type { AgentName, ValidationResult } from "../types";
 import { extractFrontmatter } from "../utils/frontmatter";
 import { log } from "../utils/logger";
 
-function checkXmlTagBalance(content: string): string[] {
+export function checkXmlTagBalance(content: string): string[] {
   const errors: string[] = [];
   const tagRegex = /<\/?([a-z_][a-z0-9_-]*)\s*>/gi;
   const tagCounts = new Map<string, number>();
@@ -34,7 +34,7 @@ function checkXmlTagBalance(content: string): string[] {
   return errors;
 }
 
-function checkTemplateArtifacts(content: string): string[] {
+export function checkTemplateArtifacts(content: string): string[] {
   const warnings: string[] = [];
 
   const variableMatches = content.match(/\{\{[^}]*\}\}/g);
@@ -50,7 +50,7 @@ function checkTemplateArtifacts(content: string): string[] {
   return warnings;
 }
 
-function checkRequiredPatterns(content: string): string[] {
+export function checkRequiredPatterns(content: string): string[] {
   const warnings: string[] = [];
 
   if (!content.startsWith("---")) {
@@ -73,7 +73,7 @@ function checkRequiredPatterns(content: string): string[] {
   return warnings;
 }
 
-function validateFrontmatter(content: string): {
+export function validateFrontmatter(content: string): {
   errors: string[];
   warnings: string[];
 } {

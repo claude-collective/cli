@@ -293,7 +293,7 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
 }
 
 // Stack values are already skill IDs — no alias resolution needed
-function convertStackToResolvedStack(stack: Stack): ResolvedStack {
+export function convertStackToResolvedStack(stack: Stack): ResolvedStack {
   const allSkillIds: SkillId[] = [];
   const seenSkillIds = new Set<SkillId>();
   const skills: Partial<Record<AgentName, Partial<Record<Category, SkillId[]>>>> = {};
@@ -341,7 +341,7 @@ function convertStackToResolvedStack(stack: Stack): ResolvedStack {
  * e.g. "github:agents-inc/skills" -> "agents-inc"
  *      "github:acme-corp/claude-skills" -> "acme-corp"
  */
-function extractSourceName(source: string): string {
+export function extractSourceName(source: string): string {
   // Strip protocol prefix (github:, gh:, https://, etc.)
   const withoutProtocol = source.replace(/^(?:github|gh|gitlab|bitbucket|sourcehut):/, "");
   const withoutUrl = withoutProtocol.replace(/^https?:\/\/[^/]+\//, "");
@@ -381,7 +381,7 @@ export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | un
   return marketplace;
 }
 
-function mergeLocalSkillsIntoMatrix(
+export function mergeLocalSkillsIntoMatrix(
   matrix: MergedSkillsMatrix,
   localResult: LocalSkillDiscoveryResult,
 ): MergedSkillsMatrix {

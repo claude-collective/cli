@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { z } from "zod";
 import { buildAgentConfigs } from "./__tests__/helpers";
 import {
   agentYamlConfigSchema,
   categoryPathSchema,
+  formatZodErrors,
   localRawMetadataSchema,
   metadataValidationSchema,
   projectConfigLoaderSchema,
@@ -686,5 +688,48 @@ describe("lenient schemas accept custom values without pre-registration", () => 
 
   it("should still reject uppercase categories", () => {
     expect(categoryPathSchema.safeParse("Acme-Pipeline").success).toBe(false);
+  });
+});
+
+describe("formatZodErrors", () => {
+  it("should format a single issue with path and message", () => {
+    const issues: z.ZodIssue[] = [
+      {
+        code: "invalid_type" as const,
+        expected: "string",
+        path: ["name"],
+        message: "Expected string",
+      },
+    ];
+    expect(formatZodErrors(issues)).toBe("name: Expected string");
+  });
+
+  it("should join multiple issues with semicolons", () => {
+    const issues: z.ZodIssue[] = [
+      { code: "invalid_type" as const, expected: "string", path: ["name"], message: "Required" },
+      { code: "invalid_type" as const, expected: "string", path: ["email"], message: "Required" },
+    ];
+    expect(formatZodErrors(issues)).toBe("name: Required; email: Required");
+  });
+
+  it("should handle nested paths", () => {
+    const issues: z.ZodIssue[] = [
+      {
+        code: "invalid_type" as const,
+        expected: "string",
+        path: ["author", "name"],
+        message: "Expected string",
+      },
+    ];
+    expect(formatZodErrors(issues)).toBe("author.name: Expected string");
+  });
+
+  it("should handle empty path", () => {
+    const issues: z.ZodIssue[] = [{ code: "custom" as const, path: [], message: "Invalid input" }];
+    expect(formatZodErrors(issues)).toBe(": Invalid input");
+  });
+
+  it("should handle empty issues array", () => {
+    expect(formatZodErrors([])).toBe("");
   });
 });

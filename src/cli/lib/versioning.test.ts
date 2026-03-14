@@ -6,6 +6,8 @@ import {
   computeStringHash,
   computeFileHash,
   computeSkillFolderHash,
+  parseMajorVersion,
+  bumpMajorVersion,
 } from "./versioning";
 import { createTempDir, cleanupTempDir } from "./__tests__/helpers";
 import { STANDARD_FILES } from "../consts";
@@ -171,5 +173,28 @@ describe("computeSkillFolderHash", () => {
 
     // Should still return a valid hash (hash of empty content)
     expect(hash).toMatch(/^[a-f0-9]{7}$/);
+  });
+});
+
+describe("parseMajorVersion", () => {
+  it("should extract major version from semver string", () => {
+    expect(parseMajorVersion("1.0.0")).toBe(1);
+    expect(parseMajorVersion("3.2.1")).toBe(3);
+    expect(parseMajorVersion("10.0.0")).toBe(10);
+  });
+
+  it("should return 1 for non-semver strings", () => {
+    expect(parseMajorVersion("latest")).toBe(1);
+  });
+});
+
+describe("bumpMajorVersion", () => {
+  it("should increment major version and reset minor/patch", () => {
+    expect(bumpMajorVersion("1.0.0")).toBe("2.0.0");
+    expect(bumpMajorVersion("3.2.1")).toBe("4.0.0");
+  });
+
+  it("should handle non-semver by bumping from default 1", () => {
+    expect(bumpMajorVersion("latest")).toBe("2.0.0");
   });
 });

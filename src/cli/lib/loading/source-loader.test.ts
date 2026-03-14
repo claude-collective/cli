@@ -1,8 +1,22 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { loadSkillsMatrixFromSource } from "./source-loader";
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import {
+  loadSkillsMatrixFromSource,
+  convertStackToResolvedStack,
+  extractSourceName,
+  mergeLocalSkillsIntoMatrix,
+} from "./source-loader";
+import {
+  createTempDir,
+  cleanupTempDir,
+  createMockSkill,
+  createMockMatrix,
+  createMockStack,
+  createMockSkillAssignment,
+  createMockExtractedSkill,
+  createMockCategory,
+} from "../__tests__/helpers";
 import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
 import {
   createTestSource,
@@ -11,8 +25,17 @@ import {
   type TestStack,
 } from "../__tests__/fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS, EXTRA_DOMAIN_TEST_SKILLS } from "../__tests__/mock-data/mock-skills";
-import type { CategoryDefinition, ResolvedSkill } from "../../types";
+import type {
+  CategoryDefinition,
+  CategoryPath,
+  ResolvedSkill,
+  SkillId,
+  SkillSlug,
+} from "../../types";
 import { renderConfigTs, renderSkillMd } from "../__tests__/content-generators";
+import { initializeMatrix } from "../matrix/matrix-provider";
+import { LOCAL_DEFAULTS } from "../metadata-keys";
+import type { LocalSkillDiscoveryResult } from "../skills";
 
 // ── Shared fixture ──────────────────────────────────────────────────────────────
 
@@ -664,5 +687,448 @@ describe("source-loader integration", () => {
     const categoryCount = Object.keys(result.matrix.categories).length;
     // Categories come from the CLI's built-in matrix (all defined categories)
     expect(categoryCount).toBeGreaterThan(10);
+  });
+});
+
+// ── Unit tests for pure/exported functions ──────────────────────────────────────
+
+describe("extractSourceName", () => {
+  it("should strip github: protocol and return org name", () => {
+    expect(extractSourceName("github:agents-inc/skills")).toBe("agents-inc");
+  });
+
+  it("should strip gh: protocol and return org name", () => {
+    expect(extractSourceName("gh:acme-corp/claude-skills")).toBe("acme-corp");
+  });
+
+  it("should strip gitlab: protocol and return org name", () => {
+    expect(extractSourceName("gitlab:myorg/repo")).toBe("myorg");
+  });
+
+  it("should strip bitbucket: protocol and return org name", () => {
+    expect(extractSourceName("bitbucket:team/repo")).toBe("team");
+  });
+
+  it("should strip sourcehut: protocol and return org name", () => {
+    expect(extractSourceName("sourcehut:user/project")).toBe("user");
+  });
+
+  it("should strip https:// URL and return org name", () => {
+    expect(extractSourceName("https://github.com/acme-corp/repo")).toBe("acme-corp");
+  });
+
+  it("should strip https:// URL with .git suffix", () => {
+    expect(extractSourceName("https://github.com/org/repo.git")).toBe("org");
+  });
+
+  it("should return first segment of plain path", () => {
+    expect(extractSourceName("org/repo")).toBe("org");
+  });
+
+  it("should return the source itself when no slash is present", () => {
+    expect(extractSourceName("single-segment")).toBe("single-segment");
+  });
+
+  it("should return full source for empty string", () => {
+    expect(extractSourceName("")).toBe("");
+  });
+
+  it("should handle http:// URLs", () => {
+    expect(extractSourceName("http://gitlab.example.com/team/repo")).toBe("team");
+  });
+
+  it("should handle complex paths after protocol stripping", () => {
+    expect(extractSourceName("github:deep-org/nested-repo/subdir")).toBe("deep-org");
+  });
+});
+
+describe("convertStackToResolvedStack", () => {
+  const reactSkill = createMockSkill("web-framework-react");
+  const zustandSkill = createMockSkill("web-state-zustand");
+  const honoSkill = createMockSkill("api-framework-hono");
+
+  beforeEach(() => {
+    // convertStackToResolvedStack reads from the module-level currentMatrix
+    // via `a.id in currentMatrix.skills`, so we must seed it
+    const testMatrix = createMockMatrix(reactSkill, zustandSkill, honoSkill);
+    initializeMatrix(testMatrix);
+  });
+
+  it("should convert an empty stack", () => {
+    const stack = createMockStack("empty", {
+      name: "Empty Stack",
+      agents: {},
+    });
+
+    const resolved = convertStackToResolvedStack(stack);
+
+    expect(resolved.id).toBe("empty");
+    expect(resolved.name).toBe("Empty Stack");
+    expect(resolved.allSkillIds).toEqual([]);
+    expect(resolved.skills).toEqual({});
+    expect(resolved.philosophy).toBe("");
+  });
+
+  it("should convert a single-agent stack", () => {
+    const stack = createMockStack("single", {
+      name: "Single Agent",
+      agents: {
+        "web-developer": {
+          "web-framework": [createMockSkillAssignment("web-framework-react")],
+        },
+      },
+    });
+
+    const resolved = convertStackToResolvedStack(stack);
+
+    expect(resolved.id).toBe("single");
+    expect(resolved.name).toBe("Single Agent");
+    expect(resolved.allSkillIds).toContain("web-framework-react");
+    expect(resolved.skills["web-developer"]).toBeDefined();
+    // Boundary cast: branded Category key widened to string for test indexing
+    const agentSkills = resolved.skills["web-developer"] as Record<string, SkillId[]>;
+    expect(agentSkills["web-framework"]).toEqual(["web-framework-react"]);
+  });
+
+  it("should convert a multi-agent stack with shared skills", () => {
+    const stack = createMockStack("multi", {
+      name: "Multi Agent",
+      agents: {
+        "web-developer": {
+          "web-framework": [createMockSkillAssignment("web-framework-react")],
+          "web-client-state": [createMockSkillAssignment("web-state-zustand")],
+        },
+        "api-developer": {
+          "api-api": [createMockSkillAssignment("api-framework-hono")],
+        },
+      },
+    });
+
+    const resolved = convertStackToResolvedStack(stack);
+
+    expect(resolved.allSkillIds).toHaveLength(3);
+    expect(resolved.allSkillIds).toContain("web-framework-react");
+    expect(resolved.allSkillIds).toContain("web-state-zustand");
+    expect(resolved.allSkillIds).toContain("api-framework-hono");
+
+    expect(resolved.skills["web-developer"]).toBeDefined();
+    expect(resolved.skills["api-developer"]).toBeDefined();
+  });
+
+  it("should deduplicate skill IDs across agents", () => {
+    const stack = createMockStack("shared", {
+      name: "Shared Skills",
+      agents: {
+        "web-developer": {
+          "web-framework": [createMockSkillAssignment("web-framework-react")],
+        },
+        "web-reviewer": {
+          "web-framework": [createMockSkillAssignment("web-framework-react")],
+        },
+      },
+    });
+
+    const resolved = convertStackToResolvedStack(stack);
+
+    // The same skill appears in both agents, but allSkillIds should be deduplicated
+    expect(resolved.allSkillIds).toHaveLength(1);
+    expect(resolved.allSkillIds).toEqual(["web-framework-react"]);
+  });
+
+  it("should filter out skills not present in the current matrix", () => {
+    const stack = createMockStack("filtered", {
+      name: "Filtered",
+      agents: {
+        "web-developer": {
+          "web-framework": [
+            createMockSkillAssignment("web-framework-react"),
+            // Boundary cast: deliberately invalid skill ID for test
+            createMockSkillAssignment("web-framework-nonexistent" as SkillId),
+          ],
+        },
+      },
+    });
+
+    const resolved = convertStackToResolvedStack(stack);
+
+    // Only the valid skill should appear in the per-agent category mapping
+    const agentSkills = resolved.skills["web-developer"] as Record<string, SkillId[]>;
+    expect(agentSkills["web-framework"]).toEqual(["web-framework-react"]);
+  });
+
+  it("should preserve stack philosophy", () => {
+    const stack = createMockStack("with-philosophy", {
+      name: "Philosophical",
+      agents: {},
+      philosophy: "Modern type-safe development",
+    });
+
+    const resolved = convertStackToResolvedStack(stack);
+
+    expect(resolved.philosophy).toBe("Modern type-safe development");
+  });
+
+  it("should skip empty assignment arrays", () => {
+    const stack = createMockStack("empty-assignments", {
+      name: "Empty Assignments",
+      agents: {
+        "web-developer": {
+          "web-framework": [],
+        },
+      },
+    });
+
+    const resolved = convertStackToResolvedStack(stack);
+
+    // Empty category should not appear in agent skills
+    const agentSkills = resolved.skills["web-developer"] as Record<string, SkillId[]> | undefined;
+    expect(agentSkills?.["web-framework"]).toBeUndefined();
+    expect(resolved.allSkillIds).toHaveLength(0);
+  });
+});
+
+describe("mergeLocalSkillsIntoMatrix", () => {
+  it("should add a local skill to an empty matrix", () => {
+    const matrix = createMockMatrix();
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-tooling-custom" as SkillId, {
+          local: true,
+          localPath: ".claude/skills/custom-skill/",
+          domain: "web",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    // Boundary cast: branded SkillId key widened to string for test indexing
+    const skills = result.skills as Record<string, ResolvedSkill>;
+    expect(skills["web-tooling-custom"]).toBeDefined();
+    expect(skills["web-tooling-custom"].local).toBe(true);
+    expect(skills["web-tooling-custom"].author).toBe(LOCAL_DEFAULTS.AUTHOR);
+  });
+
+  it("should inherit category from existing remote skill when overwriting", () => {
+    const remoteSkill = createMockSkill("web-framework-react");
+    const matrix = createMockMatrix(remoteSkill);
+
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-framework-react", {
+          local: true,
+          localPath: ".claude/skills/react-override/",
+          // Local skill declares different category, but remote's should be preserved
+          category: "web-styling",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    const skills = result.skills as Record<string, ResolvedSkill>;
+    // Should inherit the remote skill's category, not the local's declaration
+    expect(skills["web-framework-react"].category).toBe("web-framework");
+    expect(skills["web-framework-react"].local).toBe(true);
+  });
+
+  it("should use local skill category when no remote skill exists", () => {
+    const matrix = createMockMatrix();
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-tooling-custom" as SkillId, {
+          local: true,
+          localPath: ".claude/skills/custom/",
+          // Boundary cast: custom category not in generated union
+          category: "web-tooling" as CategoryPath,
+          domain: "web",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    const skills = result.skills as Record<string, ResolvedSkill>;
+    expect(skills["web-tooling-custom"].category).toBe("web-tooling");
+  });
+
+  it("should inherit slug and displayName from existing remote skill", () => {
+    const remoteSkill = createMockSkill("web-framework-react", {
+      slug: "react",
+      displayName: "React",
+    });
+    const matrix = createMockMatrix(remoteSkill);
+
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-framework-react", {
+          local: true,
+          localPath: ".claude/skills/react/",
+          // Boundary cast: test slug not in generated union
+          slug: "local-react" as SkillSlug,
+          displayName: "Local React",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    const skills = result.skills as Record<string, ResolvedSkill>;
+    // Should preserve slug and displayName from the remote skill
+    expect(skills["web-framework-react"].slug).toBe("react");
+    expect(skills["web-framework-react"].displayName).toBe("React");
+  });
+
+  it("should preserve existing skills when adding new local skills", () => {
+    const existingSkill = createMockSkill("web-framework-react");
+    const matrix = createMockMatrix(existingSkill);
+
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-tooling-custom" as SkillId, {
+          local: true,
+          localPath: ".claude/skills/custom/",
+          domain: "web",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    const skills = result.skills as Record<string, ResolvedSkill>;
+    // Both existing and new skill should be present
+    expect(skills["web-framework-react"]).toBeDefined();
+    expect(skills["web-tooling-custom"]).toBeDefined();
+    // Existing skill should not be marked as local
+    expect(skills["web-framework-react"].local).toBeUndefined();
+  });
+
+  it("should add category definition for local skill when category does not exist", () => {
+    const matrix = createMockMatrix();
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-tooling-custom" as SkillId, {
+          local: true,
+          localPath: ".claude/skills/custom/",
+          // Boundary cast: custom category not in generated union
+          category: "web-tooling" as CategoryPath,
+          domain: "web",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    // Should have created a category definition for web-tooling
+    // Boundary cast: branded Category key widened to string for test indexing
+    const categories = result.categories as Record<string, CategoryDefinition>;
+    expect(categories["web-tooling"]).toBeDefined();
+    expect(categories["web-tooling"].domain).toBe("web");
+  });
+
+  it("should NOT add category definition when category is 'local'", () => {
+    const matrix = createMockMatrix();
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-local-skill" as SkillId, {
+          local: true,
+          localPath: ".claude/skills/custom/",
+          category: "local",
+          domain: "web",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    const categories = result.categories as Record<string, CategoryDefinition>;
+    expect(categories["local"]).toBeUndefined();
+  });
+
+  it("should handle multiple local skills", () => {
+    const matrix = createMockMatrix();
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-tooling-custom" as SkillId, {
+          local: true,
+          localPath: ".claude/skills/custom/",
+          domain: "web",
+        }),
+        createMockExtractedSkill("api-database-drizzle", {
+          local: true,
+          localPath: ".claude/skills/drizzle/",
+          domain: "api",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    const skills = result.skills as Record<string, ResolvedSkill>;
+    expect(skills["web-tooling-custom"]).toBeDefined();
+    expect(skills["api-database-drizzle"]).toBeDefined();
+    expect(skills["web-tooling-custom"].local).toBe(true);
+    expect(skills["api-database-drizzle"].local).toBe(true);
+  });
+
+  it("should inherit conflict and relationship data from existing remote skill", () => {
+    const remoteSkill = createMockSkill("web-framework-react", {
+      conflictsWith: [{ skillId: "web-framework-vue-composition-api", reason: "Choose one" }],
+      isRecommended: true,
+      recommendedReason: "Most popular",
+      requires: [{ skillIds: ["web-state-zustand"], needsAny: false, reason: "State needed" }],
+    });
+    const matrix = createMockMatrix(remoteSkill);
+
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-framework-react", {
+          local: true,
+          localPath: ".claude/skills/react/",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    const skills = result.skills as Record<string, ResolvedSkill>;
+    const mergedSkill = skills["web-framework-react"];
+    expect(mergedSkill.conflictsWith).toEqual([
+      { skillId: "web-framework-vue-composition-api", reason: "Choose one" },
+    ]);
+    expect(mergedSkill.isRecommended).toBe(true);
+    expect(mergedSkill.recommendedReason).toBe("Most popular");
+    expect(mergedSkill.requires).toEqual([
+      { skillIds: ["web-state-zustand"], needsAny: false, reason: "State needed" },
+    ]);
+  });
+
+  it("should mark custom local skills with their custom flag", () => {
+    const matrix = createMockMatrix();
+    const localResult: LocalSkillDiscoveryResult = {
+      skills: [
+        createMockExtractedSkill("web-tooling-custom" as SkillId, {
+          local: true,
+          localPath: ".claude/skills/custom/",
+          custom: true,
+          domain: "web",
+        }),
+      ],
+      localSkillsPath: "/project/.claude/skills",
+    };
+
+    const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
+
+    const skills = result.skills as Record<string, ResolvedSkill>;
+    expect(skills["web-tooling-custom"].custom).toBe(true);
   });
 });

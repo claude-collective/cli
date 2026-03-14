@@ -61,12 +61,12 @@ export async function computeSkillFolderHash(skillPath: string): Promise<string>
 
 const CONTENT_HASH_FILE = ".content-hash";
 
-function parseMajorVersion(version: string): number {
+export function parseMajorVersion(version: string): number {
   const match = version.match(/^(\d+)\./);
   return match ? parseInt(match[1], 10) : 1;
 }
 
-function bumpMajorVersion(version: string): string {
+export function bumpMajorVersion(version: string): string {
   const major = parseMajorVersion(version);
   return `${major + 1}.0.0`;
 }
