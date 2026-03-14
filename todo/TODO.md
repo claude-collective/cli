@@ -5,9 +5,9 @@
 | D-92 | Global config missing `source`, `marketplace`, `selectedAgents` when init writes global-scoped skills                 | Investigate   |
 | D-93 | Global-scoped plugins double-installed to both project and global `settings.json`                                     | Investigate   |
 | D-91 | `uninstall --all` only removes CLI-installed plugins, not all skills in config                                        | Investigate   |
-| D-94 | Stack change or "start from scratch" doesn't reset previously selected skills                                         | Ready for Dev |
+| D-94 | Stack change or "start from scratch" doesn't reset previously selected skills                                         | Done          |
 | D-95 | Create a reusable view title component for wizard steps                                                               | Ready for Dev |
-| D-96 | Remove redundant left/right arrow navigation description below views                                                  | Ready for Dev |
+| D-96 | Remove redundant left/right arrow navigation description below views                                                  | Done          |
 | D-97 | Improve startup time — lazy-load matrix, only generate custom skills on startup                                       | Investigate   |
 | D-62 | Review default stacks: include meta/methodology/reviewing skills                                                      | Ready for Dev |
 | D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))         | Has Open Qs   |
@@ -67,18 +67,6 @@ When running `cc init` from a project directory and selecting global-scoped skil
 **Detection heuristic:** A plugin in `settings.json` is CLI-installed if the config's `skills` array contains a matching `{ id, source }` where `${id}@${source}` equals the settings key.
 
 **See plan:** [D-91-uninstall-all-filter.md](./D-91-uninstall-all-filter.md)
-
----
-
-#### D-94: Stack change or "start from scratch" doesn't reset previously selected skills
-
-**Priority:** Medium
-
-When a user selects a stack (which auto-selects skills), then goes back to the stack selection step and either chooses a different stack or chooses "start from scratch," the previously selected skills are not reset. Skills that were auto-selected by the prior stack or manually selected by the user persist into the new selection context.
-
-**Expected behavior:** Every time the user returns to the stack selection step and makes a new choice (different stack or "start from scratch"), all skill selections should be cleared — both stack-auto-selected and manually-selected skills.
-
-**Reproduction:** Run `cc init`, select a stack (e.g., "Full-Stack Web"), observe skills are auto-selected, go back to stack selection, choose "Start from scratch" — previously selected skills are still checked.
 
 ---
 
@@ -176,14 +164,6 @@ Create a configuration **skill** (not a sub-agent) that gives Claude deep expert
 **Priority:** Medium
 
 Create a shared `ViewTitle` component that wizard steps can use for consistent step headers. Currently each view renders its own title/heading ad hoc. A reusable component would standardize the look and reduce duplication.
-
----
-
-#### D-96: Remove redundant left/right arrow navigation description below views
-
-**Priority:** Low
-
-Many wizard views display a left/right arrow navigation hint below the content. This is redundant — the navigation is self-evident from the UI and takes up vertical space unnecessarily. Remove these descriptions to reduce clutter.
 
 ---
 
