@@ -1,6 +1,6 @@
 # Store / State Map
 
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-03-14
 
 ## State Management Library
 
@@ -12,11 +12,11 @@
 
 | Store          | File                                 | Purpose                  |
 | -------------- | ------------------------------------ | ------------------------ |
-| useWizardStore | `src/cli/stores/wizard-store.ts:431` | Entire wizard flow state |
+| useWizardStore | `src/cli/stores/wizard-store.ts:494` | Entire wizard flow state |
 
 There is exactly **one** Zustand store in the codebase.
 
-## WizardState Shape (`src/cli/stores/wizard-store.ts:157-408`)
+## WizardState Shape (`src/cli/stores/wizard-store.ts:149-439`)
 
 ### Navigation State
 
@@ -31,38 +31,43 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 
 ### Approach State
 
-| Field             | Type        | Purpose     |
-| ----------------- | ----------- | ----------- | ----------------- | --------------------------------- |
-| `approach`        | `"stack"    | "scratch"   | null`             | Stack-based or build-from-scratch |
-| `selectedStackId` | `string     | null`       | Selected stack ID |
-| `stackAction`     | `"defaults" | "customize" | null`             | Use stack as-is or customize      |
+| Field             | Type                                    | Purpose                           |
+| ----------------- | --------------------------------------- | --------------------------------- |
+| `approach`        | `"stack" \| "scratch" \| null`          | Stack-based or build-from-scratch |
+| `selectedStackId` | `string \| null`                        | Selected stack ID                 |
+| `stackAction`     | `"defaults" \| "customize" \| null`     | Use stack as-is or customize      |
 
 ### Selection State
 
-| Field                | Type               | Purpose                                  |
-| -------------------- | ------------------ | ---------------------------------------- |
-| `selectedDomains`    | `Domain[]`         | Active domains                           |
-| `currentDomainIndex` | `number`           | Currently visible domain in build step   |
-| `domainSelections`   | `DomainSelections` | Full skill selections by domain/category |
-| `selectedAgents`     | `AgentName[]`      | Selected agents for compilation          |
-| `boundSkills`        | `BoundSkill[]`     | Foreign skills bound via search          |
+| Field                     | Type                        | Purpose                                               |
+| ------------------------- | --------------------------- | ----------------------------------------------------- |
+| `selectedDomains`         | `Domain[]`                  | Active domains                                        |
+| `currentDomainIndex`      | `number`                    | Currently visible domain in build step                |
+| `domainSelections`        | `DomainSelections`          | Full skill selections by domain/category              |
+| `_stackDomainSelections`  | `DomainSelections \| null`  | Snapshot for restoring stack selections on re-toggle   |
+| `selectedAgents`          | `AgentName[]`               | Selected agents for compilation                       |
+| `agentConfigs`            | `AgentScopeConfig[]`        | Per-agent scope configuration (project/global)        |
+| `boundSkills`             | `BoundSkill[]`              | Foreign skills bound via search                       |
+| `skillConfigs`            | `SkillConfig[]`             | Per-skill source and scope configuration              |
+| `lockedSkillIds`          | `SkillId[]`                 | Skills that cannot be toggled (existing global items)  |
+| `lockedAgentNames`        | `AgentName[]`               | Agents that cannot be toggled (existing global agents) |
 
 ### UI State
 
-| Field          | Type      | Purpose                                 |
-| -------------- | --------- | --------------------------------------- |
-| `showLabels`   | `boolean` | Show compatibility labels on skill tags |
-| `showSettings` | `boolean` | Settings overlay visible                |
-| `showHelp`     | `boolean` | Help overlay visible                    |
+| Field            | Type                  | Purpose                                 |
+| ---------------- | --------------------- | --------------------------------------- |
+| `showLabels`     | `boolean`             | Show compatibility labels on skill tags |
+| `showSettings`   | `boolean`             | Settings overlay visible                |
+| `showHelp`       | `boolean`             | Help overlay visible                    |
+| `focusedSkillId` | `SkillId \| null`     | Currently focused skill (for S hotkey)  |
+| `focusedAgentId` | `AgentName \| null`   | Currently focused agent (for S hotkey)  |
 
-### Installation State
+### Source State
 
-| Field              | Type                               | Purpose                       |
-| ------------------ | ---------------------------------- | ----------------------------- | ------------------- |
-| `installMode`      | `"plugin"                          | "local"`                      | Install mode toggle |
-| `sourceSelections` | `Partial<Record<SkillId, string>>` | Per-skill source selection    |
-| `customizeSources` | `boolean`                          | Show per-skill source pickers |
-| `enabledSources`   | `Record<string, boolean>`          | Source enable/disable state   |
+| Field              | Type                      | Purpose                       |
+| ------------------ | ------------------------- | ----------------------------- |
+| `customizeSources` | `boolean`                 | Show per-skill source pickers |
+| `enabledSources`   | `Record<string, boolean>` | Source enable/disable state   |
 
 ## All Actions
 
@@ -75,31 +80,40 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 
 ### Approach / Stack
 
-| Action           | Signature            | Effect                |
-| ---------------- | -------------------- | --------------------- | ---------------------------- | ------------------- |
-| `setApproach`    | `(approach: "stack"  | "scratch"             | null) => void`               | Set wizard approach |
-| `selectStack`    | `(stackId: string    | null) => void`        | Select or deselect a stack   |
-| `setStackAction` | `(action: "defaults" | "customize") => void` | Use stack as-is or customize |
+| Action           | Signature                                              | Effect                                               |
+| ---------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| `setApproach`    | `(approach: "stack" \| "scratch" \| null) => void`     | Set wizard approach                                  |
+| `selectStack`    | `(stackId: string \| null) => void`                    | Select/deselect stack; resets all selections          |
+| `setStackAction` | `(action: "defaults" \| "customize") => void`          | Use stack as-is or customize                         |
 
 ### Selection
 
 | Action             | Signature                                           | Effect                                  |
 | ------------------ | --------------------------------------------------- | --------------------------------------- |
-| `toggleDomain`     | `(domain: Domain) => void`                          | Add/remove domain, clears selections    |
+| `toggleDomain`     | `(domain: Domain) => void`                          | Add/remove domain, manages selections   |
 | `toggleTechnology` | `(domain, category, technology, exclusive) => void` | Radio (exclusive) or checkbox toggle    |
-| `toggleAgent`      | `(agent: AgentName) => void`                        | Add/remove agent                        |
+| `toggleAgent`      | `(agent: AgentName) => void`                        | Add/remove agent, syncs agentConfigs    |
 | `bindSkill`        | `(skill: BoundSkill) => void`                       | Add foreign skill from search           |
 | `nextDomain`       | `() => boolean`                                     | Advance to next domain, returns success |
 | `prevDomain`       | `() => boolean`                                     | Go to previous domain, returns success  |
 
+### Scope / Source Per-Skill
+
+| Action              | Signature                                    | Effect                            |
+| ------------------- | -------------------------------------------- | --------------------------------- |
+| `toggleSkillScope`  | `(skillId: SkillId) => void`                 | Toggle skill scope project/global |
+| `setSkillSource`    | `(skillId: SkillId, source: string) => void` | Set source for a skill in configs |
+| `setFocusedSkillId` | `(id: SkillId \| null) => void`              | Set focused skill for S hotkey    |
+| `toggleAgentScope`  | `(agentName: AgentName) => void`             | Toggle agent scope project/global |
+| `setFocusedAgentId` | `(id: AgentName \| null) => void`            | Set focused agent for S hotkey    |
+
 ### UI Toggles
 
-| Action              | Signature    | Effect                                 |
-| ------------------- | ------------ | -------------------------------------- |
-| `toggleShowLabels`  | `() => void` | Toggle compatibility labels visibility |
-| `toggleInstallMode` | `() => void` | Toggle between "plugin" and "local"    |
-| `toggleSettings`    | `() => void` | Toggle settings overlay                |
-| `toggleHelp`        | `() => void` | Toggle help overlay                    |
+| Action             | Signature    | Effect                                 |
+| ------------------ | ------------ | -------------------------------------- |
+| `toggleShowLabels` | `() => void` | Toggle compatibility labels visibility |
+| `toggleSettings`   | `() => void` | Toggle settings overlay                |
+| `toggleHelp`       | `() => void` | Toggle help overlay                    |
 
 ### Source Management
 
@@ -108,14 +122,22 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 | `setSourceSelection`  | `(skillId: SkillId, sourceId: string) => void` | Set source for a specific skill  |
 | `setCustomizeSources` | `(customize: boolean) => void`                 | Toggle per-skill source pickers  |
 | `setEnabledSources`   | `(sources: Record<string, boolean>) => void`   | Replace enabled/disabled sources |
+| `setAllSourcesLocal`  | `() => void`                                   | Set all skills to "local" source |
+| `setAllSourcesPlugin` | `() => void`                                   | Set all skills to marketplace    |
+
+### Derived
+
+| Action             | Signature          | Effect                                        |
+| ------------------ | ------------------ | --------------------------------------------- |
+| `deriveInstallMode`| `() => InstallMode` | Derive install mode from skillConfigs sources |
 
 ### Population (Hydrating from Config/Stack)
 
-| Action                       | Signature                                | When Used                              |
-| ---------------------------- | ---------------------------------------- | -------------------------------------- |
-| `populateFromStack`          | `(stack, categories) => void`            | Stack selection in init wizard         |
-| `populateFromSkillIds`       | `(skillIds, skills, categories) => void` | Edit mode: restore from project config |
-| `preselectAgentsFromDomains` | `() => void`                             | After domain selection                 |
+| Action                       | Signature                                          | When Used                              |
+| ---------------------------- | -------------------------------------------------- | -------------------------------------- |
+| `populateFromStack`          | `(stack) => void`                                  | Stack selection in init wizard         |
+| `populateFromSkillIds`       | `(skillIds, savedConfigs?) => void`                | Edit mode: restore from project config |
+| `preselectAgentsFromDomains` | `() => void`                                       | After domain selection                 |
 
 ### Reset
 
@@ -125,16 +147,16 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 
 ### Computed Getters
 
-| Getter                             | Returns                              | Purpose                          |
-| ---------------------------------- | ------------------------------------ | -------------------------------- | ---------------------------- |
-| `getAllSelectedTechnologies`       | `SkillId[]`                          | Flat list of all selected skills |
-| `getSelectedTechnologiesPerDomain` | `Partial<Record<Domain, SkillId[]>>` | Skills grouped by domain         |
-| `getCurrentDomain`                 | `Domain                              | null`                            | Domain at currentDomainIndex |
-| `getTechnologyCount`               | `number`                             | Total selected count             |
-| `getStepProgress`                  | `{ completedSteps, skippedSteps }`   | For wizard tab indicators        |
-| `canGoToNextDomain`                | `boolean`                            | Has next domain                  |
-| `canGoToPreviousDomain`            | `boolean`                            | Has previous domain              |
-| `buildSourceRows`                  | `(matrix) => SourceRow[]`            | Sources step UI data             |
+| Getter                             | Returns                              | Purpose                      |
+| ---------------------------------- | ------------------------------------ | ---------------------------- |
+| `getAllSelectedTechnologies`        | `SkillId[]`                          | Flat list of all selected skills |
+| `getSelectedTechnologiesPerDomain` | `Partial<Record<Domain, SkillId[]>>` | Skills grouped by domain     |
+| `getCurrentDomain`                 | `Domain \| null`                     | Domain at currentDomainIndex |
+| `getTechnologyCount`               | `number`                             | Total selected count         |
+| `getStepProgress`                  | `{ completedSteps, skippedSteps }`   | For wizard tab indicators    |
+| `canGoToNextDomain`                | `boolean`                            | Has next domain              |
+| `canGoToPreviousDomain`            | `boolean`                            | Has previous domain          |
+| `buildSourceRows`                  | `{ skillId, options }[]`             | Sources step UI data         |
 
 ## Usage Pattern
 
@@ -150,23 +172,21 @@ const selectedDomains = useWizardStore((s) => s.selectedDomains);
 const store = useWizardStore();
 ```
 
-**Files using the store:**
+**Files using the store (production only):**
 
 - `src/cli/components/wizard/wizard.tsx` - Main wizard orchestrator
+- `src/cli/components/wizard/wizard-layout.tsx` - Layout wrapper
 - `src/cli/components/wizard/step-stack.tsx` - Stack selection step
 - `src/cli/components/wizard/step-build.tsx` - Technology selection step
 - `src/cli/components/wizard/step-sources.tsx` - Source selection step
 - `src/cli/components/wizard/step-agents.tsx` - Agent selection step
-- `src/cli/components/wizard/step-confirm.tsx` - Confirmation step
-- `src/cli/components/wizard/step-settings.tsx` - Settings overlay
-- `src/cli/components/wizard/wizard-tabs.tsx` - Step progress tabs
-- `src/cli/components/wizard/wizard-layout.tsx` - Layout wrapper
+- `src/cli/components/wizard/stack-selection.tsx` - Stack list component
+- `src/cli/components/wizard/domain-selection.tsx` - Domain tab selector
 - `src/cli/components/hooks/use-wizard-initialization.ts` - Init hook
-- `src/cli/components/hooks/use-build-step-props.ts` - Build step props
 
 ## Internal Constants
 
-**Domain-to-agent mapping** (`wizard-store.ts:37-48`):
+**Domain-to-agent mapping** (`wizard-store.ts:54-65`):
 
 ```typescript
 DOMAIN_AGENTS = {
@@ -192,11 +212,16 @@ DOMAIN_AGENTS = {
 
 ## State Reset
 
-`reset()` action restores all state to `createInitialState()` defaults (`wizard-store.ts:410-429`).
+`reset()` action restores all state to `createInitialState()` defaults (`wizard-store.ts:468-492`).
+
+`selectStack()` also resets: domainSelections, _stackDomainSelections, selectedDomains, skillConfigs, selectedAgents, agentConfigs, boundSkills, currentDomainIndex, stackAction.
 
 Initial state:
 
-- `step: "stack"`, `approach: null`, `selectedStackId: null`
-- `selectedDomains: []`, `currentDomainIndex: 0`, `domainSelections: {}`
-- `installMode: "local"`
-- `history: []`, `selectedAgents: []`, `boundSkills: []`
+- `step: "stack"`, `approach: null`, `selectedStackId: null`, `stackAction: null`
+- `selectedDomains: []`, `currentDomainIndex: 0`, `domainSelections: {}`, `_stackDomainSelections: null`
+- `showLabels: false`, `showSettings: false`, `showHelp: false`
+- `skillConfigs: []`, `focusedSkillId: null`, `customizeSources: false`
+- `enabledSources: {}`, `selectedAgents: []`, `agentConfigs: []`, `focusedAgentId: null`
+- `boundSkills: []`, `lockedSkillIds: []`, `lockedAgentNames: []`
+- `history: []`

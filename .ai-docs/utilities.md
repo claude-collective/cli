@@ -1,21 +1,22 @@
 # Utilities Reference
 
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-03-14
 
 ## Utility Files
 
 All utilities in `src/cli/utils/`.
 
-| File              | Path                            | Purpose                       |
-| ----------------- | ------------------------------- | ----------------------------- |
-| `errors.ts`       | `src/cli/utils/errors.ts`       | Error message extraction      |
-| `exec.ts`         | `src/cli/utils/exec.ts`         | Shell command execution       |
-| `frontmatter.ts`  | `src/cli/utils/frontmatter.ts`  | YAML frontmatter extraction   |
-| `fs.ts`           | `src/cli/utils/fs.ts`           | File system wrappers          |
-| `logger.ts`       | `src/cli/utils/logger.ts`       | Logging: log, warn, verbose   |
-| `messages.ts`     | `src/cli/utils/messages.ts`     | User-facing message constants |
-| `typed-object.ts` | `src/cli/utils/typed-object.ts` | Type-safe Object.entries/keys |
-| `yaml.ts`         | `src/cli/utils/yaml.ts`         | Zod-validated YAML loading    |
+| File              | Path                            | Purpose                                  |
+| ----------------- | ------------------------------- | ---------------------------------------- |
+| `errors.ts`       | `src/cli/utils/errors.ts`       | Error message extraction                 |
+| `exec.ts`         | `src/cli/utils/exec.ts`         | Shell command execution                  |
+| `frontmatter.ts`  | `src/cli/utils/frontmatter.ts`  | YAML frontmatter extraction              |
+| `fs.ts`           | `src/cli/utils/fs.ts`           | File system wrappers                     |
+| `logger.ts`       | `src/cli/utils/logger.ts`       | Logging: log, warn, verbose              |
+| `messages.ts`     | `src/cli/utils/messages.ts`     | User-facing message constants            |
+| `type-guards.ts`  | `src/cli/utils/type-guards.ts`  | Runtime type narrowing for union types   |
+| `typed-object.ts` | `src/cli/utils/typed-object.ts` | Type-safe Object.entries/keys            |
+| `yaml.ts`         | `src/cli/utils/yaml.ts`         | Zod-validated YAML loading               |
 
 ## Error Handling
 
@@ -31,7 +32,7 @@ Extracts human-readable message from unknown error value. Returns `error.message
 
 ## Shell Execution
 
-### `execCommand()` (`src/cli/utils/exec.ts:94-129`)
+### `execCommand()` (`src/cli/utils/exec.ts:95`)
 
 ```typescript
 function execCommand(
@@ -99,6 +100,21 @@ Wraps `fs-extra` and `fast-glob`:
 | `verbose(msg)` | Only if enabled | Diagnostic/debug info         |
 | `setVerbose()` | N/A             | Enable/disable verbose mode   |
 
+### Startup Message Buffering
+
+Before Ink takes over the terminal, `warn()` messages would be overwritten. Buffering captures them for display in Ink's `<Static>` component.
+
+| Function              | Purpose                                    |
+| --------------------- | ------------------------------------------ |
+| `enableBuffering()`   | Start capturing warn() messages in buffer  |
+| `drainBuffer()`       | Return captured messages and clear buffer  |
+| `disableBuffering()`  | Stop buffering and clear buffer            |
+| `pushBufferMessage()` | Manually add a message to buffer           |
+
+**Type:** `StartupMessage = { level: "info" | "warn" | "error"; text: string }`
+
+**Used by:** `init.tsx` and `edit.tsx` to capture loading messages before wizard renders.
+
 **Style guide** (from logger.ts comments):
 
 - Start with capital letter
@@ -107,6 +123,21 @@ Wraps `fs-extra` and `fast-glob`:
 - Do NOT prefix warn messages with "Warning:" (added automatically)
 - After colon use lowercase
 - Use em dash for supplemental info
+
+## Type Guards
+
+### `src/cli/utils/type-guards.ts`
+
+Runtime type narrowing functions for generated union types. Imports union arrays from `types/generated/source-types.ts`.
+
+| Function           | Signature                                     | Purpose                                |
+| ------------------ | --------------------------------------------- | -------------------------------------- |
+| `isCategory()`     | `(value: string) => value is Category`        | Check if string is a valid Category    |
+| `isDomain()`       | `(value: string) => value is Domain`          | Check if string is a valid Domain      |
+| `isAgentName()`    | `(value: string) => value is AgentName`       | Check if string is a valid AgentName   |
+| `isCategoryPath()` | `(value: string) => value is CategoryPath`    | Check Category or `"local"` literal    |
+
+**Mandatory:** Use these instead of `as` casts for runtime narrowing at data boundaries (YAML/JSON parse, CLI args).
 
 ## Type-Safe Object Utilities
 
@@ -134,7 +165,7 @@ function safeLoadYamlFile<T>(
 Combines: file read (with size limit) -> YAML parse -> Zod validation.
 Returns validated data or null (with warning on failure).
 
-Default size limit: `MAX_CONFIG_FILE_SIZE` (1MB from `src/cli/consts.ts:140`).
+Default size limit: `MAX_CONFIG_FILE_SIZE` (1MB from `src/cli/consts.ts:145`).
 
 ## User-Facing Messages
 
@@ -145,29 +176,30 @@ All user-facing strings centralized in constant objects:
 | Object             | Count | Examples                                                              |
 | ------------------ | ----- | --------------------------------------------------------------------- |
 | `ERROR_MESSAGES`   | 10    | NO_INSTALLATION, NO_SKILLS_FOUND, VALIDATION_FAILED, SKILL_NOT_FOUND  |
-| `SUCCESS_MESSAGES` | 6     | INIT_SUCCESS, PLUGIN_COMPILE_COMPLETE                                 |
+| `SUCCESS_MESSAGES` | 5     | INIT_SUCCESS, PLUGIN_COMPILE_COMPLETE, ALL_SKILLS_UP_TO_DATE          |
 | `STATUS_MESSAGES`  | 12    | LOADING_SKILLS, COMPILING_AGENTS, FETCHING_REPOSITORY, COPYING_SKILLS |
-| `INFO_MESSAGES`    | 7     | NO_CHANGES_MADE, RUN_COMPILE, NOT_INSTALLED, NO_AGENTS_TO_COMPILE     |
-| `DRY_RUN_MESSAGES` | 5     | PREVIEW_NO_FILES_CREATED, COMPLETE_NO_FILES_WRITTEN                   |
+| `INFO_MESSAGES`    | 6     | NO_CHANGES_MADE, RUN_COMPILE, NOT_INSTALLED, NO_PLUGIN_INSTALLATION   |
 
 ## Constants Reference (`src/cli/consts.ts`)
 
 ### Paths
 
-| Constant               | Value                       | Purpose                      |
-| ---------------------- | --------------------------- | ---------------------------- |
-| `PROJECT_ROOT`         | CLI package root            | Base for template resolution |
-| `CLAUDE_DIR`           | `.claude`                   | Claude config directory      |
-| `CLAUDE_SRC_DIR`       | `.claude-src`               | Source config directory      |
-| `PLUGINS_SUBDIR`       | `plugins`                   | Plugins subdirectory         |
-| `PLUGIN_MANIFEST_DIR`  | `.claude-plugin`            | Plugin manifest directory    |
-| `PLUGIN_MANIFEST_FILE` | `plugin.json`               | Plugin manifest filename     |
-| `DEFAULT_PLUGIN_NAME`  | `agents-inc`                | Default plugin name          |
-| `CACHE_DIR`            | `~/.cache/agents-inc`       | Source cache directory       |
-| `SKILLS_MATRIX_PATH`   | `config/skills-matrix.yaml` | Matrix config file           |
-| `STACKS_FILE_PATH`     | `config/stacks.ts`          | Stacks config file           |
-| `SKILLS_DIR_PATH`      | `src/skills`                | Skills source directory      |
-| `LOCAL_SKILLS_PATH`    | `.claude/skills`            | Local skills directory       |
+| Constant                 | Value                  | Purpose                        |
+| ------------------------ | ---------------------- | ------------------------------ |
+| `PROJECT_ROOT`           | CLI package root       | Base for template resolution   |
+| `GLOBAL_INSTALL_ROOT`    | `os.homedir()`         | Root for global installations  |
+| `CLAUDE_DIR`             | `.claude`              | Claude config directory        |
+| `CLAUDE_SRC_DIR`         | `.claude-src`          | Source config directory        |
+| `PLUGINS_SUBDIR`         | `plugins`              | Plugins subdirectory           |
+| `PLUGIN_MANIFEST_DIR`    | `.claude-plugin`       | Plugin manifest directory      |
+| `PLUGIN_MANIFEST_FILE`   | `plugin.json`          | Plugin manifest filename       |
+| `DEFAULT_PLUGIN_NAME`    | `agents-inc`           | Default plugin name            |
+| `CACHE_DIR`              | `~/.cache/agents-inc`  | Source cache directory         |
+| `SKILL_CATEGORIES_PATH`  | `config/skill-categories.ts` | Skill categories config file |
+| `SKILL_RULES_PATH`       | `config/skill-rules.ts`      | Skill rules config file      |
+| `STACKS_FILE_PATH`       | `config/stacks.ts`     | Stacks config file             |
+| `SKILLS_DIR_PATH`        | `src/skills`           | Skills source directory        |
+| `LOCAL_SKILLS_PATH`      | `.claude/skills`       | Local skills directory         |
 
 ### Standard Files and Dirs
 
@@ -178,6 +210,8 @@ All user-facing strings centralized in constant objects:
 | `STANDARD_FILES.SKILL_MD`            | `SKILL.md`      |
 | `STANDARD_FILES.METADATA_YAML`       | `metadata.yaml` |
 | `STANDARD_FILES.CONFIG_YAML`         | `config.yaml`   |
+| `STANDARD_FILES.CONFIG_TS`           | `config.ts`     |
+| `STANDARD_FILES.CONFIG_TYPES_TS`     | `config-types.ts`|
 | `STANDARD_FILES.AGENT_METADATA_YAML` | `metadata.yaml` |
 | `STANDARD_FILES.PLUGIN_JSON`         | `plugin.json`   |
 | `STANDARD_FILES.CLAUDE_MD`           | `CLAUDE.md`     |

@@ -1,91 +1,105 @@
 # Type System
 
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-03-14
 
 ## Type Module Structure
 
 All types are defined in `src/cli/types/` and re-exported through `src/cli/types/index.ts`.
 
-| Module  | File                       | Purpose                                             |
-| ------- | -------------------------- | --------------------------------------------------- |
-| Skills  | `src/cli/types/skills.ts`  | SkillId, SkillFrontmatter, SkillAssignment          |
-| Agents  | `src/cli/types/agents.ts`  | AgentName, AgentConfig, CompiledAgentData           |
-| Matrix  | `src/cli/types/matrix.ts`  | Domain, Category, ResolvedSkill, MergedSkillsMatrix |
-| Config  | `src/cli/types/config.ts`  | ProjectConfig, CompileConfig, ValidationResult      |
-| Stacks  | `src/cli/types/stacks.ts`  | Stack, StackAgentConfig, StacksConfig               |
-| Plugins | `src/cli/types/plugins.ts` | PluginManifest, Marketplace, MarketplacePlugin      |
+| Module    | File                                    | Purpose                                                  |
+| --------- | --------------------------------------- | -------------------------------------------------------- |
+| Generated | `src/cli/types/generated/source-types.ts` | Generated union types: SkillId, SkillSlug, Category, Domain, AgentName |
+| Generated | `src/cli/types/generated/matrix.ts`     | Generated built-in matrix data (BUILT_IN_MATRIX constant) |
+| Skills    | `src/cli/types/skills.ts`               | SkillId (re-export), SkillFrontmatter, SkillAssignment, CategoryPath |
+| Agents    | `src/cli/types/agents.ts`               | AgentName (re-export), AgentConfig, CompiledAgentData    |
+| Matrix    | `src/cli/types/matrix.ts`               | Domain (re-export), Category (re-export), ResolvedSkill, MergedSkillsMatrix |
+| Config    | `src/cli/types/config.ts`               | ProjectConfig, CompileConfig, ValidationResult           |
+| Stacks    | `src/cli/types/stacks.ts`               | Stack, StackAgentConfig, StacksConfig                    |
+| Plugins   | `src/cli/types/plugins.ts`              | PluginManifest, Marketplace, MarketplacePlugin           |
 
-## Union Types (Single Source of Truth: `src/cli/types/`)
+## Union Types (Single Source of Truth: `src/cli/types/generated/source-types.ts`)
 
-### SkillId (`src/cli/types/skills.ts:7`)
+Union types for Domain, Category, AgentName, SkillId, and SkillSlug are **auto-generated** from the skills source and agent metadata. Run `bun run generate:types` to regenerate.
+
+### SkillId (`src/cli/types/generated/source-types.ts:96`)
 
 ```typescript
-type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
-type SkillId = `${SkillIdPrefix}-${string}-${string}`;
+export const SKILL_MAP = {
+  "react": "web-framework-react",
+  "zustand": "web-state-zustand",
+  // ... 86 entries total
+} as const;
+
+export type SkillSlug = keyof typeof SKILL_MAP;
+export type SkillId = (typeof SKILL_MAP)[SkillSlug];
 ```
 
-- Template literal type: always dashes, never `(@author)` suffix
-- Minimum 3 segments enforced (prefix-category-name)
+- Derived from `SKILL_MAP` constant (slug-to-ID mapping), not a template literal
+- Runtime validation still uses `SKILL_ID_PATTERN` in `schemas.ts:79`: `/^(web|api|cli|mobile|infra|meta|security)-.+-.+$/`
+- 86 skill IDs, 86 skill slugs
+- Re-exported from `src/cli/types/skills.ts:4`
 - Examples: `"web-framework-react"`, `"meta-methodology-anti-over-engineering"`, `"api-database-drizzle"`
 
-### AgentName (`src/cli/types/agents.ts:5-31`)
+### SkillSlug (`src/cli/types/generated/source-types.ts:95`)
 
 ```typescript
-type AgentName =
-  | "web-developer"
-  | "api-developer"
-  | "cli-developer"
-  | "web-architecture"
-  | "agent-summoner"
-  | "documentor"
-  | "skill-summoner"
-  | "pattern-scout"
-  | "web-pattern-critique"
-  | "web-pm"
-  | "api-researcher"
-  | "web-researcher"
-  | "api-reviewer"
-  | "cli-reviewer"
-  | "web-reviewer"
-  | "cli-tester"
-  | "web-tester";
+type SkillSlug = keyof typeof SKILL_MAP;
 ```
 
-18 members total.
+- 86 members (one per skill): `"react"`, `"zustand"`, `"vitest"`, `"drizzle"`, etc.
+- Used in relationship rules (conflicts, recommends, requires) instead of full SkillId
+- Re-exported from `src/cli/types/skills.ts:4`
 
-### Domain (`src/cli/types/matrix.ts:5`)
+### AgentName (`src/cli/types/generated/source-types.ts:347`)
 
 ```typescript
-type Domain = "web" | "api" | "cli" | "mobile" | "shared";
+export const AGENT_NAMES = [
+  "agent-summoner", "api-developer", "api-researcher", "api-reviewer",
+  "cli-developer", "cli-reviewer", "cli-tester", "documentor",
+  "pattern-scout", "skill-summoner", "web-architecture", "web-developer",
+  "web-pattern-critique", "web-pm", "web-researcher", "web-reviewer",
+  "web-tester",
+] as const;
+
+export type AgentName = (typeof AGENT_NAMES)[number];
 ```
 
-### Category (`src/cli/types/matrix.ts:8-46`)
+17 members total. Re-exported from `src/cli/types/agents.ts:5`.
 
-38 values covering all skill categories across domains:
-
-- web-\*: framework, styling, client-state, server-state, forms, testing, ui-components, mocking, error-handling, i18n, file-upload, files, utilities, realtime, animation, pwa, accessibility, performance, base-framework (19)
-- api-\*: api, database, auth, observability, analytics, email, performance (7)
-- mobile-\*: framework, platform (2)
-- shared-\*: monorepo, tooling, security, methodology, research, reviewing, ci-cd (7)
-- cli-\*: framework, prompts, testing (3)
-
-### CategoryPath (`src/cli/types/skills.ts:124`)
+### Domain (`src/cli/types/generated/source-types.ts:323`)
 
 ```typescript
-type CategoryPath = `${SkillIdPrefix}-${string}` | Category | "local";
+export const DOMAINS = ["api", "cli", "mobile", "shared", "web"] as const;
+export type Domain = (typeof DOMAINS)[number];
 ```
 
-### SkillDisplayName (`src/cli/types/skills.ts:13-118`)
+5 members. Re-exported from `src/cli/types/matrix.ts:4`.
 
-82 literal string values (e.g., `"react"`, `"zustand"`, `"vitest"`, `"drizzle"`).
+### Category (`src/cli/types/generated/source-types.ts:317`)
 
-### ModelName (`src/cli/types/matrix.ts:49`)
+34 values covering all skill categories across domains:
+
+- api-\*: analytics, api, auth, database, email, observability, performance (7)
+- cli-\*: framework (1)
+- mobile-\*: framework (1)
+- shared-\*: ci-cd, methodology, monorepo, research, reviewing, security, tooling (7)
+- web-\*: accessibility, animation, client-state, error-handling, file-upload, files, forms, framework, i18n, mocking, performance, pwa, realtime, server-state, styling, testing, ui-components, utilities (18)
+
+Re-exported from `src/cli/types/matrix.ts:4`.
+
+### CategoryPath (`src/cli/types/skills.ts:14`)
+
+```typescript
+type CategoryPath = Category | "local";
+```
+
+### ModelName (`src/cli/types/matrix.ts:11`)
 
 ```typescript
 type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
 ```
 
-### PermissionMode (`src/cli/types/matrix.ts:52-58`)
+### PermissionMode (`src/cli/types/matrix.ts:14-20`)
 
 ```typescript
 type PermissionMode =
@@ -99,32 +113,36 @@ type PermissionMode =
 
 ## Named Aliases (Composite Types)
 
-| Alias                       | Definition                                                      | File:Line       |
-| --------------------------- | --------------------------------------------------------------- | --------------- |
-| `SubcategorySelections`     | `Partial<Record<Category, SkillId[]>>`                          | `skills.ts:131` |
-| `DomainSelections`          | `Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>` | `matrix.ts:76`  |
-| `CategoryMap`               | `Partial<Record<Category, CategoryDefinition>>`                 | `matrix.ts:65`  |
-| `ResolvedSubcategorySkills` | `Partial<Record<Category, SkillId>>`                            | `skills.ts:138` |
-| `StackAgentConfig`          | `Partial<Record<Category, SkillAssignment[]>>`                  | `stacks.ts:6`   |
-| `PluginSkillRef`            | `` `${SkillId}:${SkillId}` ``                                   | `skills.ts:10`  |
+| Alias                    | Definition                                                      | File:Line       |
+| ------------------------ | --------------------------------------------------------------- | --------------- |
+| `CategorySelections`     | `Partial<Record<Category, SkillId[]>>`                          | `skills.ts:21`  |
+| `ResolvedCategorySkills` | `Partial<Record<Category, SkillId>>`                            | `skills.ts:28`  |
+| `DomainSelections`       | `Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>` | `matrix.ts:41`  |
+| `CategoryMap`            | `Partial<Record<Category, CategoryDefinition>>`                 | `matrix.ts:27`  |
+| `CategoryDomainMap`      | `Partial<Record<Category, { domain?: Domain }>>`                | `matrix.ts:30`  |
+| `SkillSlugMap`           | `{ slugToId: Partial<Record<SkillSlug, SkillId>>; idToSlug: Partial<Record<SkillId, SkillSlug>> }` | `matrix.ts:139-144` |
+| `StackAgentConfig`       | `Partial<Record<Category, SkillAssignment[]>>`                  | `stacks.ts:6`   |
+| `PluginSkillRef`         | `` `${SkillId}:${SkillId}` ``                                   | `skills.ts:8`   |
+| `SkillDefinitionMap`     | `Partial<Record<SkillId, SkillDefinition>>`                     | `skills.ts:38`  |
+| `SkillAlias`             | `string`                                                        | `matrix.ts:252` |
 
-Note: There is no `SkillRef` type alias. The type at `skills.ts:163` is `SkillReference` (an object type, not an alias).
+Note: There is no `SkillRef` type alias. The type at `skills.ts:56` is `SkillReference` (an object type, not an alias).
 
 ## Core Data Structures
 
-### ResolvedSkill (`src/cli/types/matrix.ts:196-240`)
+### ResolvedSkill (`src/cli/types/matrix.ts:169-213`)
 
 The primary skill representation after matrix merge. Contains:
 
-- Identity: `id`, `displayName`, `description`, `category`, `path`
-- Relationships: `conflictsWith`, `recommends`, `requires`, `alternatives`, `discourages`
-- Metadata: `tags`, `author`, `compatibleWith`
-- Setup: `requiresSetup`, `providesSetupFor`
-- Sources: `availableSources`, `activeSource`
-- Local: `local`, `localPath`
+- Identity: `id`, `slug`, `displayName`, `description`, `category`, `path`
 - Guidance: `usageGuidance`
+- Relationships: `conflictsWith`, `requires`, `alternatives`, `discourages`, `compatibleWith`
+- Recommendation: `isRecommended`, `recommendedReason`
+- Metadata: `tags`, `author`
+- Local: `local`, `custom`, `localPath`
+- Sources: `availableSources`, `activeSource`
 
-### MergedSkillsMatrix (`src/cli/types/matrix.ts:175-190`)
+### MergedSkillsMatrix (`src/cli/types/matrix.ts:150-163`)
 
 The primary read model for the wizard and CLI commands:
 
@@ -132,24 +150,27 @@ The primary read model for the wizard and CLI commands:
 - `categories: CategoryMap` - Category definitions
 - `skills: Partial<Record<SkillId, ResolvedSkill>>` - All resolved skills
 - `suggestedStacks: ResolvedStack[]` - Pre-configured stacks
-- `displayNameToId` / `displayNames` - Bidirectional alias maps
+- `slugMap: SkillSlugMap` - Bidirectional slug-to-ID mapping
 - `agentDefinedDomains` - Domain overrides from agent metadata
 - `generatedAt: string` - ISO timestamp
 
-### ProjectConfig (`src/cli/types/config.ts:37-108`)
+### ProjectConfig (`src/cli/types/config.ts:66-146`)
 
-Unified project configuration stored at `.claude-src/config.yaml`:
+Unified project configuration stored at `.claude-src/config.ts`:
 
 - `version?: "1"`
 - `name`, `description`, `author`
-- `agents: AgentName[]`
-- `skills: SkillId[]`
-- `installMode: "local" | "plugin"`
+- `agents: AgentScopeConfig[]` - Per-agent scope config (`{ name, scope }`)
+- `skills: SkillConfig[]` - Per-skill scope+source config (`{ id, scope, source }`)
 - `stack?: Record<string, StackAgentConfig>`
 - `source`, `marketplace`, `agentsSource`
 - `domains?: Domain[]`, `selectedAgents?: AgentName[]`
+- `sources?: SourceEntry[]` - Additional skill sources
+- `boundSkills?: BoundSkill[]` - Skills bound via search
+- `branding?: BrandingConfig` - White-label overrides
+- Directory overrides: `skillsDir`, `agentsDir`, `stacksFile`, `categoriesFile`, `rulesFile`
 
-### CompileConfig (`src/cli/types/config.ts:12-19`)
+### CompileConfig (`src/cli/types/config.ts:41-48`)
 
 Compile configuration derived from stack:
 
@@ -157,19 +178,19 @@ Compile configuration derived from stack:
 - `stack?: string`
 - `agents: Record<string, CompileAgentConfig>`
 
-### CompileContext (`src/cli/types/config.ts:22-27`)
+### CompileContext (`src/cli/types/config.ts:51-56`)
 
 Compilation context passed through pipeline:
 
 - `stackId`, `verbose`, `projectRoot`, `outputDir`
 
-### ValidationResult (`src/cli/types/config.ts:30-34`)
+### ValidationResult (`src/cli/types/config.ts:59-63`)
 
 Generic validation result:
 
 - `valid: boolean`, `errors: string[]`, `warnings: string[]`
 
-### AgentConfig (`src/cli/types/agents.ts:78-82`)
+### AgentConfig (`src/cli/types/agents.ts:55-59`)
 
 Fully resolved agent for compilation:
 
@@ -177,7 +198,7 @@ Fully resolved agent for compilation:
 - `name: string`
 - `skills: Skill[]` - Unified skills list
 
-### CompiledAgentData (`src/cli/types/agents.ts:112-129`)
+### CompiledAgentData (`src/cli/types/agents.ts:89-106`)
 
 Template context for Liquid rendering:
 
@@ -186,60 +207,93 @@ Template context for Liquid rendering:
 - `skills: Skill[]` - All skills
 - Skill splits: `preloadedSkills`, `dynamicSkills`, `preloadedSkillIds`
 
-### ExtractedSkillMetadata (`src/cli/types/matrix.ts:381-416`)
+### ExtractedSkillMetadata (`src/cli/types/matrix.ts:347-372`)
 
 Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix merge:
 
-- Identity: `id`, `directoryPath`, `description`, `category`, `path`
+- Identity: `id`, `directoryPath`, `description`, `category`, `path`, `slug`, `displayName`
 - Metadata: `author`, `tags`, `usageGuidance`
-- Relationships (may contain display names at this stage): `compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor`
 - Flags: `local`, `localPath`, `domain`, `custom`
 
 ### Wizard/UI Types in `matrix.ts`
 
-| Type                  | Lines   | Purpose                                                               |
-| --------------------- | ------- | --------------------------------------------------------------------- | --------- | -------- |
-| `SkillOption`         | 331-351 | Skill as displayed in wizard (discouraged/recommended/selected state) |
-| `SelectionValidation` | 354-358 | Result of validating skill selections                                 |
-| `ValidationError`     | 361-365 | Blocking validation error                                             |
-| `ValidationWarning`   | 368-372 | Non-blocking validation warning                                       |
-| `SkillSource`         | 285-297 | Source from which a skill can be obtained                             |
-| `SkillSourceType`     | 282     | `"public"                                                             | "private" | "local"` |
-| `BoundSkill`          | 300-311 | Foreign skill bound to category via search                            |
-| `BoundSkillCandidate` | 314-325 | Search result candidate before binding                                |
-| `ResolvedStack`       | 267-276 | Stack with resolved skill IDs                                         |
+| Type                  | Lines   | Purpose                                                              |
+| --------------------- | ------- | -------------------------------------------------------------------- |
+| `SkillOption`         | 304-318 | Skill as displayed in wizard (discouraged/recommended/selected state) |
+| `SelectionValidation` | 321-325 | Result of validating skill selections                                |
+| `ValidationError`     | 328-332 | Blocking validation error                                            |
+| `ValidationWarning`   | 335-339 | Non-blocking validation warning                                      |
+| `SkillSource`         | 258-270 | Source from which a skill can be obtained                            |
+| `SkillSourceType`     | 255     | `"public" \| "private" \| "local"`                                   |
+| `BoundSkill`          | 273-284 | Foreign skill bound to category via search                           |
+| `BoundSkillCandidate` | 287-298 | Search result candidate before binding                               |
+| `ResolvedStack`       | 240-249 | Stack with resolved skill IDs                                        |
+| `SuggestedStack`      | 129-136 | Pre-configured stack from stacks.ts (before resolution)              |
 
 ## Type Narrowing Rules
 
 **From CLAUDE.md and memory:**
 
-1. Use union types for finite sets (< 30 values)
-2. Use template literal types for patterned IDs (`SkillId`)
+1. Union types are generated from source (`bun run generate:types`) for finite sets
+2. Template literal pattern still enforced at runtime via `SKILL_ID_PATTERN` in schemas.ts
 3. Boundary casts only at data entry points (YAML parse, JSON parse, CLI args) with comments
 4. Use `typedEntries()` / `typedKeys()` from `src/cli/utils/typed-object.ts` instead of raw `Object.entries()`/`Object.keys()`
 5. Zod schemas at parse boundaries; post-safeParse `as T` casts are intentional (`.passthrough()` widens type)
+6. Use type guards (`isCategory()`, `isDomain()`, `isAgentName()`, `isCategoryPath()`) from `src/cli/utils/type-guards.ts` for runtime narrowing
+
+## Type Guards (`src/cli/utils/type-guards.ts`)
+
+| Function          | Signature                                       | Purpose                              |
+| ----------------- | ----------------------------------------------- | ------------------------------------ |
+| `isCategory()`    | `(value: string) => value is Category`          | Validates against generated CATEGORIES array |
+| `isDomain()`      | `(value: string) => value is Domain`            | Validates against generated DOMAINS array    |
+| `isAgentName()`   | `(value: string) => value is AgentName`         | Validates against generated AGENT_NAMES array |
+| `isCategoryPath()`| `(value: string) => value is CategoryPath`      | Validates: `"local"` or valid Category       |
+
+All guards import from `src/cli/types/generated/source-types.ts` and check against the generated const arrays.
+
+## Typed Object Helpers (`src/cli/utils/typed-object.ts`)
+
+| Function         | Signature                                                    | Purpose                                    |
+| ---------------- | ------------------------------------------------------------ | ------------------------------------------ |
+| `typedEntries()` | `<K extends string, V>(obj: Partial<Record<K, V>>) => [K, V][]` | Type-safe `Object.entries` preserving key types |
+| `typedKeys()`    | `<K extends string>(obj: Partial<Record<K, unknown>>) => K[]`   | Type-safe `Object.keys` preserving key types   |
 
 ## Zod Schemas
 
 All schemas in `src/cli/lib/schemas.ts`. Key schemas:
 
-| Schema                         | Validates                  | Pattern          |
-| ------------------------------ | -------------------------- | ---------------- |
-| `domainSchema`                 | Domain union               | `z.enum()`       |
-| `subcategorySchema`            | Category union             | `z.enum()`       |
-| `skillIdSchema`                | SkillId format             | `z.string()`     |
-| `categoryPathSchema`           | CategoryPath               | Custom + enum    |
-| `skillFrontmatterLoaderSchema` | SKILL.md frontmatter       | `.passthrough()` |
-| `skillMetadataLoaderSchema`    | metadata.yaml              | `.passthrough()` |
-| `projectConfigLoaderSchema`    | .claude-src/config.yaml    | `.passthrough()` |
-| `projectSourceConfigSchema`    | Source config              | `.passthrough()` |
-| `skillsMatrixConfigSchema`     | skills-matrix.yaml         | `.passthrough()` |
-| `stacksConfigSchema`           | stacks.ts                  | `.passthrough()` |
-| `marketplaceSchema`            | marketplace.json           | `.passthrough()` |
-| `pluginManifestSchema`         | plugin.json                | `.passthrough()` |
-| `agentYamlConfigSchema`        | agent metadata.yaml        | `.passthrough()` |
-| `boundSkillSchema`             | BoundSkill                 | `z.object()`     |
-| `settingsFileSchema`           | settings.json              | `.passthrough()` |
-| `metadataValidationSchema`     | Strict metadata validation | Strict schema    |
+| Schema                              | Validates                  | Pattern          |
+| ----------------------------------- | -------------------------- | ---------------- |
+| `domainSchema`                      | Domain union               | `z.enum(DOMAINS)` bridge |
+| `categorySchema`                    | Category union             | `z.enum(CATEGORIES)` bridge |
+| `agentNameSchema`                   | AgentName union            | `z.enum(AGENT_NAMES)` bridge |
+| `skillSlugSchema`                   | SkillSlug union            | `z.enum(SKILL_SLUGS)` bridge |
+| `skillIdSchema`                     | SkillId format             | `z.string().regex(SKILL_ID_PATTERN)` |
+| `categoryPathSchema`               | CategoryPath               | Custom refine + enum |
+| `skillFrontmatterLoaderSchema`      | SKILL.md frontmatter       | Lenient object   |
+| `skillMetadataLoaderSchema`         | metadata.yaml              | `.passthrough()` + superRefine |
+| `projectConfigLoaderSchema`         | .claude-src/config.ts      | `.passthrough()` |
+| `projectSourceConfigSchema`         | Source config              | `.passthrough()` |
+| `skillCategoriesFileSchema`         | skill-categories.ts        | `z.object()`     |
+| `skillRulesFileSchema`              | skill-rules.ts             | `z.object()`     |
+| `stacksConfigSchema`               | stacks.ts                  | `z.object()`     |
+| `marketplaceSchema`                 | marketplace.json           | Bridge pattern   |
+| `pluginManifestSchema`              | plugin.json                | Bridge pattern   |
+| `agentYamlConfigSchema`             | agent metadata.yaml        | Bridge pattern   |
+| `boundSkillSchema`                  | BoundSkill                 | Bridge pattern   |
+| `settingsFileSchema`                | settings.yaml              | `.passthrough()` |
+| `importedSkillMetadataSchema`       | Imported skill metadata    | `.passthrough()` |
+| `localRawMetadataSchema`            | Local skill metadata.yaml  | `.passthrough()` + superRefine |
+| `localSkillMetadataSchema`          | Local skill forkedFrom     | `.passthrough()` |
+| `metadataValidationSchema`          | Strict metadata validation | `.strict()`      |
+| `customMetadataValidationSchema`    | Custom skill metadata      | `z.object()`     |
+| `agentYamlGenerationSchema`         | Compiled agent output      | `.strict()`      |
+| `agentFrontmatterValidationSchema`  | AGENT.md frontmatter       | `.strict()`      |
+| `skillFrontmatterValidationSchema`  | SKILL.md frontmatter       | `.strict()`      |
+| `pluginManifestValidationSchema`    | plugin.json strict         | `.strict()`      |
+| `stackConfigValidationSchema`       | Published stack config     | `.strict()`      |
 
-Schemas support runtime extension via `customExtensions` object for custom categories/domains/agents discovered from source matrices.
+Schema bridge pattern: `z.enum(GENERATED_ARRAY) as z.ZodType<UnionType>` ensures Zod output matches TypeScript union types from generated source.
+
+Utility functions: `formatZodErrors()`, `validateNestingDepth()`, `warnUnknownFields()`.

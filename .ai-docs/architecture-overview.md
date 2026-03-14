@@ -1,14 +1,14 @@
 # Architecture Overview
 
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-03-14
 
 ## Project Identity
 
 | Field       | Value                                                                    |
 | ----------- | ------------------------------------------------------------------------ |
 | Package     | `@agents-inc/cli`                                                        |
-| Version     | 0.47.0                                                                   |
-| Binary      | `agentsinc` (also `CLI_BIN_NAME` in `src/cli/consts.ts:24`)              |
+| Version     | 0.74.10                                                                  |
+| Binary      | `agentsinc` (also `CLI_BIN_NAME` in `src/cli/consts.ts:27`)             |
 | Type        | ESM (`"type": "module"` in package.json)                                 |
 | Entry Point | `src/cli/index.ts` (runs oclif with `run()`)                             |
 | Build       | tsup -> `dist/`                                                          |
@@ -24,6 +24,7 @@
 | State Management  | Zustand              | v5          | Wizard state store                           |
 | Schema Validation | Zod                  | v4.3.6      | YAML/JSON parse boundaries                   |
 | Template Engine   | LiquidJS             | -           | Agent prompt compilation                     |
+| Config Loader     | jiti                 | -           | TypeScript config file loading at runtime    |
 | YAML              | yaml                 | -           | Config/matrix/metadata parsing               |
 | Utilities         | Remeda               | v2.33.6     | Functional array/object utilities            |
 | File System       | fs-extra + fast-glob | -           | File operations and globbing                 |
@@ -35,16 +36,17 @@
 src/cli/
   index.ts                  # CLI entry: oclif run()
   base-command.ts           # BaseCommand class (shared flags, error handling)
+  config-exports.ts         # Public API re-exports for @agents-inc/cli/config
   consts.ts                 # ALL global constants (paths, colors, symbols, limits)
   commands/                 # oclif command classes (one per CLI command)
     build/                  # Build subcommands (marketplace, plugins, stack)
-    config/                 # Config subcommands (get, set-project, show, path, unset-project)
+    config/                 # Config subcommands (show, path)
     import/                 # Import subcommands (skill)
     new/                    # New subcommands (agent, marketplace, skill)
     compile.ts              # Compile agents from installed skills
     diff.ts                 # Show skill differences
     doctor.ts               # Health check
-    edit.tsx                # Edit installed skills (wizard re-entry)
+    edit.tsx                # Edit installed skills (wizard re-entry, per-agent scope)
     eject.ts                # Eject to local mode
     info.ts                 # Show installation info
     init.tsx                # Initialize project (wizard)
@@ -55,7 +57,7 @@ src/cli/
     update.tsx              # Update skills
     validate.ts             # Validate installation
   components/               # Ink React components
-    common/                 # Shared UI: confirm, message, spinner
+    common/                 # Shared UI: confirm, message, select-list, spinner
     hooks/                  # React hooks for wizard behavior
     skill-search/           # Skill search modal
     themes/                 # Ink theme (CLI_COLORS -> theme)
@@ -64,16 +66,19 @@ src/cli/
     init.ts                 # oclif init hook: resolves source, attaches to config
   lib/                      # Core business logic (no UI)
     agents/                 # Agent fetching, compilation, recompilation
-    configuration/          # Config loading/saving/merging/source management
-    installation/           # Install mode detection, local installer
+    configuration/          # Config loading/saving/merging/source management/config-writer
+    installation/           # Install mode detection, local installer, mode migrator
     loading/                # YAML/frontmatter loading, source fetching, multi-source
     matrix/                 # Skills matrix loading, resolving, health checks
+      matrix-provider.ts    # getSkillById(), getSkillBySlug() lookups
+      skill-resolution.ts   # resolveRelationships() — unified resolution
     plugins/                # Plugin discovery, validation, manifest, settings
     skills/                 # Skill fetching, copying, metadata, source switching
     stacks/                 # Stack loading, installing, plugin compilation
     wizard/                 # Build step logic (pure functions)
     compiler.ts             # Liquid template engine, agent/skill compilation
     exit-codes.ts           # Named EXIT_CODES constants
+    feature-flags.ts        # Runtime feature flags (e.g., SOURCE_SEARCH)
     metadata-keys.ts        # Metadata key constants
     output-validator.ts     # Compiled agent output validation
     permission-checker.tsx  # Claude Code permissions check
@@ -94,6 +99,9 @@ src/cli/
     plugins.ts              # Plugin types (PluginManifest, Marketplace)
     skills.ts               # Skill types (SkillId, SkillFrontmatter, etc.)
     stacks.ts               # Stack types (Stack, StackAgentConfig)
+    generated/              # Auto-generated types from skills source
+      source-types.ts       # SkillId, SkillSlug, Category, Domain, AgentName unions + arrays
+      matrix.ts             # BUILT_IN_MATRIX constant with full category/skill data
   utils/                    # Cross-cutting utilities
     errors.ts               # getErrorMessage()
     exec.ts                 # Shell command execution (claude plugin install/uninstall)
@@ -101,6 +109,7 @@ src/cli/
     fs.ts                   # File system wrappers (fs-extra + fast-glob)
     logger.ts               # log(), warn(), verbose(), setVerbose()
     messages.ts             # All user-facing message constants
+    type-guards.ts          # isCategory(), isDomain(), isAgentName(), isCategoryPath()
     typed-object.ts         # typedEntries(), typedKeys()
     yaml.ts                 # safeLoadYamlFile() (Zod-validated YAML loading)
     __mocks__/              # Vitest mocks for fs and logger
@@ -117,11 +126,12 @@ oclif init hook (hooks/init.ts)
   |
   v
 Command.run() (commands/init.tsx)
-  -> loadSkillsMatrixFromSource() -> MergedSkillsMatrix
-  -> render(<Wizard matrix={matrix} />)
+  -> loadSkillsMatrixFromSource() -> SourceLoadResult (matrix + sourceConfig)
+  -> render(<Wizard projectDir={...} marketplaceLabel={...} />)
   |
   v
 Wizard (Ink/React UI)
+  -> Imports matrix from matrix-provider.ts (not via props)
   -> Zustand store (useWizardStore) manages step-by-step state
   -> Steps: stack -> build -> sources -> agents -> confirm
   -> Returns WizardResultV2
@@ -129,7 +139,8 @@ Wizard (Ink/React UI)
   v
 Installation
   -> installLocal() or installPluginConfig()
-  -> Copies skills, generates config, compiles agents
+  -> Copies skills, generates config via generateConfigSource(), compiles agents
+  -> writeScopedConfigs() splits config into global + project scopes
   |
   v
 Compilation (lib/compiler.ts)
@@ -144,11 +155,11 @@ Compilation (lib/compiler.ts)
 
 ### 1. oclif Command Pattern
 
-Every command extends `BaseCommand` (`src/cli/base-command.ts:11`).
+Every command extends `BaseCommand` (`src/cli/base-command.ts:12`).
 
 ```
 BaseCommand provides:
-  - baseFlags: --dry-run, --source
+  - baseFlags: --source
   - sourceConfig getter (from init hook)
   - handleError() -> this.error() with EXIT_CODES.ERROR
   - logSuccess(), logWarning(), logInfo()
@@ -165,19 +176,21 @@ Runs before every command. Extracts `--source` / `-s` from raw argv (before ocli
 ### 3. Source Resolution Precedence
 
 ```
---source flag > CC_SOURCE env var > .claude-src/config.yaml source > default (github:agents-inc/skills)
+--source flag > CC_SOURCE env var > .claude-src/config.ts (project) > ~/.claude-src/config.ts (global) > default (github:agents-inc/skills)
 ```
 
-Implemented in: `src/cli/lib/configuration/config.ts:100-148`
+Implemented in: `src/cli/lib/configuration/config.ts:84-132`
 
 ### 4. Install Modes
 
-| Mode   | Skills Location     | Agents Location   | Config Location           |
-| ------ | ------------------- | ----------------- | ------------------------- |
-| local  | `.claude/skills/`   | `.claude/agents/` | `.claude-src/config.yaml` |
-| plugin | Claude plugin cache | `.claude/agents/` | `.claude-src/config.yaml` |
+| Mode   | Skills Location     | Agents Location   | Config Location       |
+| ------ | ------------------- | ----------------- | --------------------- |
+| local  | `.claude/skills/`   | `.claude/agents/` | `.claude-src/config.ts` |
+| plugin | Claude plugin cache | `.claude/agents/` | `.claude-src/config.ts` |
 
-Detection: `src/cli/lib/installation/installation.ts:23-60`
+Detection: `src/cli/lib/installation/installation.ts` — `detectInstallation()` at line 103, `detectProjectInstallation()` at line 35
+
+Scope-aware config splitting: `writeScopedConfigs()` in `src/cli/lib/installation/local-installer.ts:422` splits config into global and project-scoped files.
 
 ### 5. Liquid Template Compilation
 
@@ -189,7 +202,7 @@ Template root resolution order (first match wins):
 2. `{project}/.claude/templates/` (legacy)
 3. `{CLI_ROOT}/templates/` (built-in)
 
-Implemented in: `src/cli/lib/compiler.ts:412-437`
+Implemented in: `src/cli/lib/compiler.ts:400-434`
 
 ### 6. Zod Schema Validation
 
@@ -199,12 +212,34 @@ Pattern: Lenient "loader" schemas with `.passthrough()` at parse boundaries, str
 
 Helper: `safeLoadYamlFile()` from `src/cli/utils/yaml.ts` combines file read + parse + Zod validate.
 
-### 7. Security Measures
+### 7. Generated Types
 
-- Source validation: `validateSourceFormat()` in `src/cli/lib/configuration/config.ts:307-445`
+Union types (`SkillId`, `SkillSlug`, `Category`, `Domain`, `AgentName`) are auto-generated from the skills source into `src/cli/types/generated/source-types.ts`. Run `bun run generate:types` to regenerate.
+
+Runtime type guards in `src/cli/utils/type-guards.ts` (`isCategory()`, `isDomain()`, `isAgentName()`, `isCategoryPath()`) validate strings against these generated arrays.
+
+The `src/cli/types/generated/matrix.ts` file contains the full `BUILT_IN_MATRIX` constant with all category and skill data.
+
+### 8. Matrix Provider and Skill Resolution
+
+`src/cli/lib/matrix/matrix-provider.ts` provides safe skill lookups:
+- `getSkillById(id)` — asserting lookup by SkillId
+- `getSkillBySlug(slug)` — asserting lookup by SkillSlug
+
+`src/cli/lib/matrix/skill-resolution.ts` contains `resolveRelationships()` (line 147) — a single unified function that resolves all skill relationships (replaces 5 separate resolve functions).
+
+### 9. Security Measures
+
+- Source validation: `validateSourceFormat()` in `src/cli/lib/configuration/config.ts:291-320` (with helper functions through line 447)
   - Blocks null bytes, UNC paths, private IPs, path traversal
   - Validates remote and local source formats
-- Liquid injection prevention: `sanitizeCompiledAgentData()` in `src/cli/lib/compiler.ts:77-115`
+- Liquid injection prevention: `sanitizeCompiledAgentData()` in `src/cli/lib/compiler.ts:77-112`
   - Strips `{{`, `}}`, `{%`, `%}` from all user-controlled fields
-- File size limits: `MAX_MARKETPLACE_FILE_SIZE`, `MAX_PLUGIN_FILE_SIZE`, `MAX_CONFIG_FILE_SIZE` in `src/cli/consts.ts:137-140`
-- Command injection prevention: Input validation in `src/cli/utils/exec.ts:19-86`
+- File size limits: `MAX_MARKETPLACE_FILE_SIZE`, `MAX_PLUGIN_FILE_SIZE`, `MAX_CONFIG_FILE_SIZE` in `src/cli/consts.ts:143-145`
+- Command injection prevention: Input validation in `src/cli/utils/exec.ts:7-87`
+
+### 10. Config Writer
+
+`src/cli/lib/configuration/config-writer.ts` — `generateConfigSource()` generates TypeScript config files from `ProjectConfig` objects. Supports standalone configs and project configs that import/extend global configs.
+
+Key function: `generateConfigSource(config, options?)` at line 29. When `options.isProjectConfig` is true, generates config that imports from the global `~/.claude-src/config` and spreads global arrays.

@@ -1,6 +1,6 @@
 # Plugin System
 
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-03-14
 
 ## Overview
 
@@ -66,10 +66,18 @@ All location functions are in `src/cli/lib/plugins/plugin-finder.ts`:
 | `getPluginSkillsDir()`     | Skills subdirectory within a plugin       |
 | `getPluginAgentsDir()`     | Agents subdirectory within a plugin       |
 | `getPluginManifestPath()`  | Path to plugin.json within a plugin dir   |
+| `readPluginManifest()`     | Read and parse plugin.json from a dir     |
+| `getPluginSkillIds()`      | Extract SkillIds from plugin SKILL.md files |
 
 Note: `getPluginManifestPath()` also exists in `plugin-manifest.ts` (for output manifest path during compilation).
 
 Plugin manifest directory: `.claude-plugin/` (`PLUGIN_MANIFEST_DIR` from `src/cli/consts.ts:18`)
+
+## Plugin Manifest Finder
+
+**File:** `src/cli/lib/plugins/plugin-manifest-finder.ts`
+
+**Function:** `findPluginManifest(startDir)` - Walks up from `startDir` looking for `.claude-plugin/plugin.json`. Returns the manifest path or `null`.
 
 ## Plugin Discovery
 
@@ -77,25 +85,50 @@ Plugin manifest directory: `.claude-plugin/` (`PLUGIN_MANIFEST_DIR` from `src/cl
 
 Discovers all installed skill plugins in a project directory:
 
-1. Scans project plugins directory
-2. Reads each plugin manifest
-3. Extracts skill definitions from SKILL.md frontmatter
-4. Returns `Partial<Record<SkillId, SkillDefinition>>`
+1. Reads `.claude/settings.json` to find enabled plugins
+2. Looks up install paths in global plugin registry
+3. Loads skills from plugin cache directories
+4. Returns `SkillDefinitionMap` (alias for `Partial<Record<SkillId, SkillDefinition>>`)
 
 **Function:** `hasIndividualPlugins()` - Checks if any plugins exist (for init guard).
 
 **Function:** `listPluginNames()` - List all plugin names.
 
+## Plugin Info
+
+**File:** `src/cli/lib/plugins/plugin-info.ts`
+
+| Function                    | Purpose                                          |
+| --------------------------- | ------------------------------------------------ |
+| `getPluginInfo()`           | Get plugin info (name, version, skill/agent count) |
+| `formatPluginDisplay()`     | Format plugin info for terminal display          |
+| `getInstallationInfo()`     | Get installation info (mode, paths, counts)      |
+| `formatInstallationDisplay()` | Format installation info for terminal display  |
+
+Types:
+
+- `PluginInfo` - Plugin metadata with name, version, skill/agent counts, path
+- `InstallationInfo` - Installation metadata with mode, paths, counts
+
 ## Plugin Validation
 
-**Function:** `validatePlugin()` at `src/cli/lib/plugins/plugin-validator.ts:359`
+**Function:** `validatePlugin()` at `src/cli/lib/plugins/plugin-validator.ts:350`
 
 Validates:
 
-- Plugin structure via `validatePluginStructure()` (manifest dir exists)
-- Plugin manifest via `validatePluginManifest()` (valid JSON, required fields)
+- Plugin structure via `validatePluginStructure()` (manifest dir exists, line `:63`)
+- Plugin manifest via `validatePluginManifest()` (valid JSON, required fields, line `:113`)
 - Skill files via `validatePluginSkillFiles()` (SKILL.md has valid frontmatter)
 - Agent files via `validatePluginAgentFiles()` (agent .md files have valid frontmatter)
+
+Individual frontmatter validators (exported):
+
+- `validateSkillFrontmatter()` at `:184` - Validate a single SKILL.md file
+- `validateAgentFrontmatter()` at `:220` - Validate a single agent .md file
+
+**Function:** `validateAllPlugins()` - Validate all plugins in a directory.
+
+**Function:** `printPluginValidationResult()` - Format validation results for display.
 
 ## Manifest Generation
 
@@ -105,6 +138,7 @@ Validates:
 | `generateAgentPluginManifest()` | Generate manifest for an agent plugin |
 | `generateStackPluginManifest()` | Generate manifest for a stack plugin  |
 | `writePluginManifest()`         | Write plugin.json to disk             |
+| `getPluginDir()`                | Get plugin output directory path      |
 
 Options types:
 
@@ -155,13 +189,13 @@ Executed through `src/cli/utils/exec.ts`:
 
 | Function                          | Shell Command                                    |
 | --------------------------------- | ------------------------------------------------ |
-| `claudePluginInstall()`           | `claude plugin install {ref} --scope {scope}`    |
+| `claudePluginInstall()`           | `claude plugin install {path} --scope {scope}`   |
 | `claudePluginUninstall()`         | `claude plugin uninstall {name} --scope {scope}` |
-| `claudePluginMarketplaceList()`   | `claude plugin marketplace list --json`          |
-| `claudePluginMarketplaceExists()` | Checks if marketplace is registered              |
-| `claudePluginMarketplaceAdd()`    | `claude plugin marketplace add {source}`         |
+| `claudePluginMarketplaceList()`   | `claude plugin marketplace list --json`           |
+| `claudePluginMarketplaceExists()` | Checks if marketplace is registered               |
+| `claudePluginMarketplaceAdd()`    | `claude plugin marketplace add {source}`          |
 
-All inputs validated for injection prevention before execution.
+`claudePluginInstall()` and `claudePluginUninstall()` accept `scope: "project" | "user"` and `projectDir` parameters. All inputs validated for injection prevention before execution.
 
 ## Installation Modes
 
@@ -169,24 +203,51 @@ All inputs validated for injection prevention before execution.
 
 Skills copied to `.claude/skills/`, agents compiled to `.claude/agents/`.
 
-**Function:** `installLocal()` at `src/cli/lib/installation/local-installer.ts:511`
+**Function:** `installLocal()` at `src/cli/lib/installation/local-installer.ts:634`
 (Re-exported from `src/cli/lib/installation/index.ts`)
 
 ### Plugin Mode
 
 Skills installed as Claude Code plugins, agents compiled to `.claude/agents/`.
 
-**Function:** `installPluginConfig()` at `src/cli/lib/installation/local-installer.ts:435`
+**Function:** `installPluginConfig()` at `src/cli/lib/installation/local-installer.ts:542`
 (Re-exported from `src/cli/lib/installation/index.ts`)
+
+### Scope-Aware Installation
+
+Both `installLocal()` and `installPluginConfig()` use `writeScopedConfigs()` (line `:422`) to split config by scope:
+
+- Global-scoped skills/agents go to `~/.claude-src/config.ts` and `~/.claude/agents/`
+- Project-scoped skills/agents go to `{projectDir}/.claude-src/config.ts` and `{projectDir}/.claude/agents/`
+
+Key helper functions in `local-installer.ts`:
+
+| Function                 | Line  | Purpose                                         |
+| ------------------------ | ----- | ----------------------------------------------- |
+| `resolveInstallPaths()`  | `:98` | Resolve skill/agent/config paths for a scope    |
+| `buildAndMergeConfig()`  | `:284`| Build config from wizard and merge with existing|
+| `writeConfigFile()`      | `:302`| Write config.ts using `generateConfigSource()`  |
+| `writeScopedConfigs()`   | `:422`| Split and write configs by scope                |
+| `buildCompileAgents()`   | `:311`| Build agent compile config from ProjectConfig   |
+| `buildAgentScopeMap()`   | `:338`| Map agent names to their scope                  |
+| `setConfigMetadata()`    | `:253`| Set source/marketplace/domains on config        |
 
 ### Detection
 
-**Function:** `detectInstallation()` at `src/cli/lib/installation/installation.ts:23-60`
+**Function:** `detectInstallation()` at `src/cli/lib/installation/installation.ts:103`
 
 Returns `Installation` type with `mode`, `configPath`, `agentsDir`, `skillsDir`, `projectDir`.
 
 Detection logic:
 
-1. Check for `.claude-src/config.yaml` or `.claude/config.yaml`
-2. Load project config to determine mode
-3. Return appropriate paths for the mode
+1. Check for project-level installation via `detectProjectInstallation()` (line `:35`)
+2. If not found, fall back to global installation via `detectGlobalInstallation()` (line `:68`)
+3. Each checks for `.claude-src/config.ts` and loads config to determine mode
+
+Install mode is derived at runtime from the skills array via `deriveInstallMode()` (line `:26`):
+- Empty skills array = `"local"` mode (default)
+- All `source: "local"` = `"local"` mode
+- All non-local sources = `"plugin"` mode
+- Mixed = `"mixed"` mode
+
+**Function:** `getInstallationOrThrow()` at `src/cli/lib/installation/installation.ts:114` - Same as `detectInstallation()` but throws if no installation found.
