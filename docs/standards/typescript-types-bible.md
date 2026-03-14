@@ -127,9 +127,9 @@ Not all casts are bad. Classify them:
 
 **Every legitimate boundary cast should have a comment explaining why.**
 
-For the full boundary cast guide with real codebase examples (7 categories, acceptable vs
+For the full boundary cast taxonomy with real codebase examples (6 categories, acceptable vs
 unacceptable patterns, post-safeParse conventions), see
-[`docs/standards/code/type-conventions.md` -- Boundary Cast Patterns](docs/standards/code/type-conventions.md#boundary-cast-patterns).
+[`clean-code-standards.md` Section 7.2](docs/standards/clean-code-standards.md).
 
 **Double cast through `unknown` for branded Record keys.** When constructing a Record whose keys and values are both branded template literal types (e.g., `SkillDisplayName`, `SkillId`), a single `as` cast fails because object literal string keys are not assignable to branded types. Use `as unknown as Record<BrandedKey, BrandedValue>` with a comment:
 

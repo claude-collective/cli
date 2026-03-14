@@ -2,7 +2,7 @@
 
 **Version:** 2.0
 **Date:** November 2025
-**Target Model:** Claude Sonnet 4.5 / Opus 4.5
+**Target Model:** Claude Sonnet 4.6 / Opus 4.6
 
 **Purpose:** This document provides universal prompt engineering techniques that work for any Claude agent system. These techniques are validated by Anthropic research, production systems achieving 72.7%+ on SWE-bench, academic research, and community consensus.
 
@@ -19,7 +19,7 @@
 | Emphatic repetition         | 70%+ ↓ scope creep                    | Aider production data           |
 | XML tags                    | 30%+ ↑ accuracy, 60% ↓ format errors  | Anthropic training data         |
 | Documents first, query last | 30% ↑ performance                     | Anthropic research (75K tokens) |
-| Expansion modifiers         | Unlocks full Sonnet 4.5 capability    | Required for Claude 4.x         |
+| Expansion modifiers         | Unlocks full Sonnet 4.6 capability    | Required for Claude 4.6         |
 | Self-correction triggers    | 74.4% SWE-bench with mid-run guidance | Refact.ai production            |
 | Post-action reflection      | Improved long-horizon reasoning       | Anthropic context engineering   |
 | Progress tracking           | 30+ hour session focus                | Anthropic experiments           |

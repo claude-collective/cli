@@ -118,7 +118,7 @@ path.join(dir, ".claude", "agents")               path.join(dir, CLAUDE_DIR, "ag
 
 **4.4 Group related constants in `as const` objects.** See `YAML_FORMATTING`, `UI_SYMBOLS`, `UI_LAYOUT` in `consts.ts`.
 
-**4.5 User-facing message strings go in `utils/messages.ts`.** Grouped by category: `ERROR_MESSAGES`, `SUCCESS_MESSAGES`, `STATUS_MESSAGES`, `INFO_MESSAGES`, `DRY_RUN_MESSAGES`. One-off messages used in a single location can remain inline.
+**4.5 User-facing message strings go in `utils/messages.ts`.** Grouped by category: `ERROR_MESSAGES`, `SUCCESS_MESSAGES`, `STATUS_MESSAGES`, `INFO_MESSAGES`. One-off messages used in a single location can remain inline.
 
 **4.6 Watch for trailing punctuation in branding constants.** `DEFAULT_BRANDING.NAME` is `"Agents Inc."` (ends with a period). Do not add a period after it in sentences — it produces a double period.
 
@@ -222,15 +222,16 @@ afterEach(async () => {
 });
 ```
 
-**6.8** Place static fixture files (YAML configs, matrix definitions, plugin structures) in `test/fixtures/` with domain subdirectories. Use for data that tests validate against but don't modify.
+**6.8** Place static fixture files (YAML configs, plugin structures, skill files) in `src/cli/lib/__tests__/fixtures/` with domain subdirectories. Use for data that tests validate against but don't modify.
 
 ```
-test/fixtures/
-+-- matrix/          # skills-matrix.yaml variants
-+-- configs/         # config.yaml variants
+src/cli/lib/__tests__/fixtures/
++-- agents/          # agent partials and templates
++-- commands/        # command test fixtures
 +-- plugins/         # complete plugin directory structures
 +-- skills/          # SKILL.md files
-+-- agents/          # agent partials and templates
++-- stacks/          # stack definition files
++-- create-test-source.ts  # factory for dynamic fixture directories
 ```
 
 For dynamic test data (created/modified per test), use factory functions from `helpers.ts` or `create-test-source.ts` instead.
@@ -247,6 +248,8 @@ function createMockSkill(
 }
 ```
 
+**6.10** No `as` casts in tests. Use valid typed literals -- if a value doesn't type-check, fix the value or the type. Two exceptions require a `// Boundary cast:` comment: (1) intentionally invalid data for error-path testing (`const invalidId = "bad" as SkillId`), and (2) partial mock data at test fixture boundaries (`{ "web-developer": mockAgent } as Record<AgentName, AgentDefinition>`).
+
 ---
 
 ## 7. Type Safety
@@ -258,13 +261,27 @@ function createMockSkill(
 (Object.entries(obj) as [AgentName, AgentConfig][])       typedEntries<AgentName, AgentConfig>(obj)
 ```
 
-**7.2** Boundary casts only at data entry points (JSON.parse, YAML parse, fs reads). Add a comment explaining why. No mid-pipeline casts. See `docs/standards/code/type-conventions.md` for the full boundary cast taxonomy.
+**7.2** Boundary casts (`as T`) are acceptable **only** at data entry points where typed code meets untyped data. Every cast requires a `// Boundary cast: <reason>` comment. If you cannot write the reason, the cast should not exist. The six acceptable categories:
+
+1. **YAML/JSON parse** -- after Zod validation of parsed data. The Zod schema validates structure; the cast narrows the output type (especially with `.passthrough()`, see 7.5). Examples: `project-config.ts:39`, `loader.ts:33`.
+
+2. **Filesystem** -- directory names and filenames are untyped strings that correspond to typed identifiers by convention. Example: `loader.ts:155` casts keys from a directory-name-keyed map to `SkillId`.
+
+3. **Type narrowing after runtime validation** -- a value's compile-time type is wider than what runtime checks have established. The cast narrows to the validated subset. Example: `wizard-store.ts:107` casts `CategoryPath` to `Category` after domain lookup confirms existence.
+
+4. **Data definition** -- literal data structures where TypeScript can verify the values but the container type is wider than the union. Example: `metadata-keys.ts:21` casts `"imported"` to `CategoryPath` in a constant definition.
+
+5. **Framework (oclif)** -- framework types don't declare custom properties attached at runtime. Example: `base-command.ts:23` casts oclif's `Config` to access `sourceConfig` attached in the init hook.
+
+6. **Test fixtures** -- test helpers that construct mock data are data entry boundaries. Partial mocks and intentionally invalid data are acceptable with a comment. Example: `mock-skills.ts` casts fictional skill IDs for test isolation.
+
+Boundary casts are **NOT** acceptable for: mid-pipeline workarounds (fix the upstream return type instead), consumer code casts (fix the library's return type so all consumers benefit), or convenience casts to silence type errors without investigation.
 
 **7.3** Use Zod schemas at JSON/YAML parse boundaries. No `JSON.parse(...) as T` in production code. For YAML files, prefer `safeLoadYamlFile(path, schema)` from `utils/yaml.ts` -- it combines `readFileSafe()` (size limit), YAML parsing, and Zod validation in one call. For JSON, parse then validate with `schema.safeParse()`.
 
 **7.4** Use `formatZodErrors(issues)` from `schemas.ts` for Zod error display. Pass `result.error.issues` (not the full error object). No inline `issues.map(...)`. Note: `plugin-validator.ts` has a local `formatZodErrors(error)` variant that takes the full `z.ZodError` for multi-error validation output.
 
-**7.5** Post-safeParse `as T` is acceptable when `.passthrough()` widens Zod output. Add a comment.
+**7.5** Post-safeParse `as T` is acceptable when `.passthrough()` widens Zod output. The `.passthrough()` option preserves unknown fields for forward compatibility, widening the output type to `{ ...fields... } & { [k: string]: unknown }`. The cast narrows back to the validated interface. Add a `// Boundary cast:` comment.
 
 ---
 
