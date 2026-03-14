@@ -502,7 +502,19 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   setApproach: (approach) => set({ approach }),
 
-  selectStack: (stackId) => set({ selectedStackId: stackId }),
+  selectStack: (stackId) =>
+    set({
+      selectedStackId: stackId,
+      domainSelections: {},
+      _stackDomainSelections: null,
+      selectedDomains: [],
+      skillConfigs: [],
+      selectedAgents: [],
+      agentConfigs: [],
+      boundSkills: [],
+      currentDomainIndex: 0,
+      stackAction: null,
+    }),
 
   setStackAction: (action) => set({ stackAction: action }),
 

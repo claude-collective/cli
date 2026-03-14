@@ -137,13 +137,41 @@ describe("WizardStore", () => {
       expect(selectedStackId).toBe("nextjs-fullstack");
     });
 
-    it("when selectStack is called with null, should clear previously selected stack", () => {
+    it("when selectStack is called with null, should clear previously selected stack and selections", () => {
       const store = useWizardStore.getState();
       store.selectStack("nextjs-fullstack");
+      store.toggleDomain("web");
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.selectStack(null);
 
-      const { selectedStackId } = useWizardStore.getState();
-      expect(selectedStackId).toBeNull();
+      const state = useWizardStore.getState();
+      expect(state.selectedStackId).toBeNull();
+      expect(state.domainSelections).toEqual({});
+      expect(state.selectedDomains).toEqual([]);
+      expect(state.skillConfigs).toEqual([]);
+      expect(state.selectedAgents).toEqual([]);
+      expect(state.boundSkills).toEqual([]);
+      expect(state.currentDomainIndex).toBe(0);
+      expect(state.stackAction).toBeNull();
+    });
+
+    it("should clear previous selections when changing from one stack to another", () => {
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      // Simulate selecting a stack and populating
+      store.populateFromSkillIds(["web-framework-react", "api-framework-hono"]);
+
+      const stateAfterFirst = useWizardStore.getState();
+      expect(Object.keys(stateAfterFirst.domainSelections).length).toBeGreaterThan(0);
+
+      // Simulate going back and selecting "start from scratch"
+      store.selectStack(null);
+
+      const stateAfterClear = useWizardStore.getState();
+      expect(stateAfterClear.domainSelections).toEqual({});
+      expect(stateAfterClear.selectedDomains).toEqual([]);
+      expect(stateAfterClear.skillConfigs).toEqual([]);
     });
   });
 
