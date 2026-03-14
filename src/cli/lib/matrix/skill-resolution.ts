@@ -1,16 +1,11 @@
 import { verbose, warn } from "../../utils/logger";
 import type {
-  AlternativeGroup,
   CategoryDefinition,
   CategoryMap,
-  CompatibilityGroup,
-  ConflictRule,
-  DiscourageRule,
   Domain,
   ExtractedSkillMetadata,
   MergedSkillsMatrix,
   RelationshipDefinitions,
-  RequireRule,
   ResolvedSkill,
   SkillAlternative,
   SkillId,
@@ -136,38 +131,60 @@ export function mergeMatrixWithSkills(
   return merged;
 }
 
-/** Resolves conflicts from centralized conflict rules */
-function resolveConflicts(
-  skillId: SkillId,
-  conflictRules: ConflictRule[],
-  resolve: ResolveId,
-): SkillRelation[] {
-  const conflicts: SkillRelation[] = [];
+/** All resolved relationship data for a single skill */
+type ResolvedRelationships = {
+  conflictsWith: SkillRelation[];
+  discourages: SkillRelation[];
+  compatibleWith: SkillId[];
+  requires: SkillRequirement[];
+  alternatives: SkillAlternative[];
+};
 
-  for (const rule of conflictRules) {
+/**
+ * Resolves all relationship data for a single skill in one pass across all
+ * relationship rule types (conflicts, discourages, compatibility, requirements, alternatives).
+ */
+function resolveRelationships(
+  skillId: SkillId,
+  relationships: RelationshipDefinitions,
+  resolve: ResolveId,
+): ResolvedRelationships {
+  const conflictsWith: SkillRelation[] = [];
+  const discourages: SkillRelation[] = [];
+  const compatible = new Set<SkillId>();
+  const requires: SkillRequirement[] = [];
+  const alternatives: SkillAlternative[] = [];
+
+  // Conflicts — symmetric group, collect other members with dedup
+  for (const rule of relationships.conflicts) {
     const resolved = rule.skills
       .map((slug) => resolve(slug, "conflicts"))
       .filter((id): id is SkillId => id !== null);
     if (!resolved.includes(skillId)) continue;
     for (const other of resolved) {
-      if (other !== skillId && !conflicts.some((c) => c.skillId === other)) {
-        conflicts.push({ skillId: other, reason: rule.reason });
+      if (other !== skillId && !conflictsWith.some((c) => c.skillId === other)) {
+        conflictsWith.push({ skillId: other, reason: rule.reason });
       }
     }
   }
 
-  return conflicts;
-}
+  // Discourages — symmetric group, collect other members with dedup
+  if (relationships.discourages) {
+    for (const rule of relationships.discourages) {
+      const resolved = rule.skills
+        .map((slug) => resolve(slug, "discourages"))
+        .filter((id): id is SkillId => id !== null);
+      if (!resolved.includes(skillId)) continue;
+      for (const other of resolved) {
+        if (other !== skillId && !discourages.some((d) => d.skillId === other)) {
+          discourages.push({ skillId: other, reason: rule.reason });
+        }
+      }
+    }
+  }
 
-/** Resolves compatibility from CompatibilityGroup[] — collects all co-members across all groups */
-function resolveCompatibilityGroups(
-  skillId: SkillId,
-  compatibilityGroups: CompatibilityGroup[],
-  resolve: ResolveId,
-): SkillId[] {
-  const compatible = new Set<SkillId>();
-
-  for (const group of compatibilityGroups) {
+  // Compatibility — symmetric group, collect all co-members
+  for (const group of relationships.compatibleWith ?? []) {
     const resolved = group.skills
       .map((slug) => resolve(slug, "compatibleWith"))
       .filter((id): id is SkillId => id !== null);
@@ -179,18 +196,8 @@ function resolveCompatibilityGroups(
     }
   }
 
-  return [...compatible];
-}
-
-/** Resolves requirements from centralized require rules */
-function resolveRequirements(
-  skillId: SkillId,
-  requireRules: RequireRule[],
-  resolve: ResolveId,
-): SkillRequirement[] {
-  const requires: SkillRequirement[] = [];
-
-  for (const rule of requireRules) {
+  // Requirements — directional, skill field identifies the dependent
+  for (const rule of relationships.requires) {
     const ruleSkillId = resolve(rule.skill, "requires.skill");
     if (ruleSkillId !== skillId) continue;
     const resolvedNeeds = rule.needs
@@ -204,18 +211,8 @@ function resolveRequirements(
     });
   }
 
-  return requires;
-}
-
-/** Resolves alternatives from matrix alternative groups */
-function resolveAlternatives(
-  skillId: SkillId,
-  alternativeGroups: AlternativeGroup[],
-  resolve: ResolveId,
-): SkillAlternative[] {
-  const alternatives: SkillAlternative[] = [];
-
-  for (const group of alternativeGroups) {
+  // Alternatives — symmetric group, collect other members with purpose
+  for (const group of relationships.alternatives) {
     const resolved = group.skills
       .map((slug) => resolve(slug, "alternatives"))
       .filter((id): id is SkillId => id !== null);
@@ -227,31 +224,13 @@ function resolveAlternatives(
     }
   }
 
-  return alternatives;
-}
-
-/** Resolves discourages from matrix discourage rules */
-function resolveDiscourages(
-  skillId: SkillId,
-  discourageRules: DiscourageRule[] | undefined,
-  resolve: ResolveId,
-): SkillRelation[] {
-  if (!discourageRules) return [];
-  const discourages: SkillRelation[] = [];
-
-  for (const rule of discourageRules) {
-    const resolved = rule.skills
-      .map((slug) => resolve(slug, "discourages"))
-      .filter((id): id is SkillId => id !== null);
-    if (!resolved.includes(skillId)) continue;
-    for (const other of resolved) {
-      if (other !== skillId && !discourages.some((d) => d.skillId === other)) {
-        discourages.push({ skillId: other, reason: rule.reason });
-      }
-    }
-  }
-
-  return discourages;
+  return {
+    conflictsWith,
+    discourages,
+    compatibleWith: [...compatible],
+    requires,
+    alternatives,
+  };
 }
 
 function buildResolvedSkill(
@@ -268,6 +247,8 @@ function buildResolvedSkill(
   // Look up isRecommended/recommendedReason from flat recommends list (now slug-based)
   const recommendation = relationships.recommends.find((r) => r.skill === skill.slug);
 
+  const resolved = resolveRelationships(skill.id, relationships, resolve);
+
   return {
     id: skill.id,
     slug,
@@ -277,17 +258,9 @@ function buildResolvedSkill(
     category: skill.category,
     tags: skill.tags,
     author: skill.author,
-    conflictsWith: resolveConflicts(skill.id, relationships.conflicts, resolve),
+    ...resolved,
     isRecommended: recommendation != null,
     recommendedReason: recommendation?.reason,
-    requires: resolveRequirements(skill.id, relationships.requires, resolve),
-    alternatives: resolveAlternatives(skill.id, relationships.alternatives, resolve),
-    discourages: resolveDiscourages(skill.id, relationships.discourages, resolve),
-    compatibleWith: resolveCompatibilityGroups(
-      skill.id,
-      relationships.compatibleWith ?? [],
-      resolve,
-    ),
     path: skill.path,
     ...(skill.custom === true ? { custom: true } : {}),
   };
