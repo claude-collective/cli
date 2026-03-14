@@ -29,23 +29,23 @@ import {
 } from "../helpers/test-utils.js";
 
 /**
- * Cross-scope lifecycle E2E test: Init Global -> Init from Project (edit global).
+ * Cross-scope lifecycle E2E test: Init Global -> Edit from Project.
  *
  * This test exercises the cross-scope scenario where a user:
  *
  * Phase 1: Runs `cc init` from HOME to create a global installation
  *          (~/.claude-src/config.ts, ~/.claude/agents/)
  *
- * Phase 2: Runs `cc init` from a project subdirectory. The CLI detects
- *          the global installation and shows GlobalConfigPrompt with choices:
- *            - "Edit global installation"
- *            - "Create new project installation"
- *          User selects "Edit global installation", which delegates to `cc edit`.
+ * Phase 2: Runs `cc edit` from a project subdirectory. The CLI detects
+ *          the global installation (no project config in cwd), falls back
+ *          to the global config, and launches the edit wizard.
+ *          The edit command now uses cwd for writes, so project-scoped items
+ *          are written to the project directory.
  *
  * Phase 3: Verify that:
  *          - Global config and agents still exist and are valid
- *          - Project directory does NOT have .claude-src/config.ts
- *          - Project directory does NOT have .claude/agents/
+ *          - Project directory has .claude-src/config.ts (project-scoped items written to cwd)
+ *          - Project directory has .claude/agents/ (agents compiled to cwd)
  *
  * This is a local-mode test (no Claude CLI / marketplace needed).
  *
@@ -57,7 +57,8 @@ import {
  *       .claude/skills/             <- global skills (copied by Phase 1 init)
  *       .claude/settings.json       <- permissions file (pre-created)
  *       project/                    <- project directory (CWD for Phase 2)
- *         (should remain EMPTY after Phase 2 — no project config created)
+ *         .claude-src/config.ts     <- project config (created by Phase 2 edit)
+ *         .claude/agents/           <- project agents (compiled by Phase 2 edit)
  */
 
 describe("cross-scope lifecycle: init global -> edit global from project", () => {
@@ -142,42 +143,25 @@ describe("cross-scope lifecycle: init global -> edit global from project", () =>
       session = undefined;
 
       // ================================================================
-      // Phase 2: Init from project dir — should show GlobalConfigPrompt
+      // Phase 2: Edit from project dir — uses global config
       //
-      // When running init from <fakeHome>/project/:
-      //   - detectProjectInstallation(projectDir) returns null (no project config)
-      //   - detectGlobalInstallation() finds <fakeHome>/.claude-src/config.ts
-      //   - GlobalConfigPrompt renders with two choices:
-      //     1. "Edit global installation" (first item, already focused)
-      //     2. "Create new project installation"
-      //   - We press Enter to select "Edit global installation"
-      //   - This delegates to `cc edit` which detects the global config
+      // When running edit from <fakeHome>/project/:
+      //   - detectInstallation() falls back to global (no project config)
       //   - The edit wizard shows the build step for the existing global skills
       //   - We navigate through the edit wizard without changes and confirm
+      //   - Global items are locked (cwd !== HOME), no project config created
       // ================================================================
 
       // Create permissions file at project dir too (for potential permission checks)
       await createPermissionsFile(projectDir);
 
-      session = new TerminalSession(["init", "--source", sourceDir], projectDir, {
+      session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
         env: {
           HOME: fakeHome,
           AGENTSINC_SOURCE: undefined,
         },
       });
 
-      // GlobalConfigPrompt should appear with text about global installation
-      // init.tsx:125 renders: "A global installation was found at {globalConfigDir}"
-      await session.waitForText("global installation was found", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // The first option is "Edit global installation" — press Enter to select it
-      session.enter();
-
-      // After selecting "edit global", the edit command runs.
-      // edit.tsx detects the global installation (no project config at CWD,
-      // falls back to HOME) and launches the edit wizard.
-      //
       // The edit wizard starts at the build step with existing skills pre-selected.
       // The E2E stack has 3 domains (Web, API, Shared), so we need to press Enter
       // 3 times to advance through all domains before reaching Sources.
@@ -225,17 +209,18 @@ describe("cross-scope lifecycle: init global -> edit global from project", () =>
       expect(await directoryExists(globalAgentsDir)).toBe(true);
       expect(await verifyAgentCompiled(fakeHome, "web-developer")).toBe(true);
 
-      // P3-D: Project directory does NOT have .claude-src/config.ts
-      // (We chose "edit global", not "create project")
+      // P3-D: Project directory has .claude-src/config.ts
+      // The edit command now uses cwd for writes, so project-scoped items
+      // (skills default to scope: "project") are written to the project directory.
       const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const projectConfigExists = await fileExists(projectConfigPath);
-      expect(projectConfigExists).toBe(false);
+      expect(projectConfigExists).toBe(true);
 
-      // P3-E: Project directory does NOT have .claude/agents/
-      // (Agents should only exist at the global scope)
+      // P3-E: Project directory has .claude/agents/
+      // Agents are compiled to cwd (the project directory) by the edit command.
       const projectAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
       const projectAgentsExist = await directoryExists(projectAgentsDir);
-      expect(projectAgentsExist).toBe(false);
+      expect(projectAgentsExist).toBe(true);
 
       // P3-F: Global skills still exist after edit
       expect(await verifySkillCopiedLocally(fakeHome, "web-framework-react")).toBe(true);

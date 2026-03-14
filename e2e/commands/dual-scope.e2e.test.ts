@@ -156,8 +156,11 @@ describe("dual-scope compile", () => {
     const projectMdFiles = projectAgents.filter((f) => f.endsWith(".md"));
     expect(projectMdFiles.length).toBeGreaterThan(0);
 
-    const globalAgentsExist = await directoryExists(path.join(globalHome, CLAUDE_DIR, "agents"));
-    expect(globalAgentsExist).toBe(false);
+    // The global agents directory is now always created (ensureDir is unconditional),
+    // but for a project-only install no agent .md files should be written there.
+    const globalAgentFiles = await listFiles(path.join(globalHome, CLAUDE_DIR, "agents"));
+    const globalMdFiles = globalAgentFiles.filter((f) => f.endsWith(".md"));
+    expect(globalMdFiles.length).toBe(0);
   });
 
   it("should show both passes in verbose output", async () => {

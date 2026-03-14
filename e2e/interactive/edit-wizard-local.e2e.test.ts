@@ -329,7 +329,7 @@ describe("edit wizard — local mode", () => {
     );
 
     it(
-      "should preserve remaining skill files on disk after removal",
+      "should delete local skill files when source changes during edit",
       { timeout: EDIT_TEST_TIMEOUT_MS },
       async () => {
         tempDir = await createTempDir();
@@ -354,8 +354,11 @@ describe("edit wizard — local mode", () => {
         await session.waitForText("Plugin updated", EDIT_COMPLETION_TIMEOUT_MS);
         await session.waitForExit(EXIT_TIMEOUT_MS);
 
-        // The surviving skill (web-framework-react) should still have its files
-        expect(await verifySkillCopiedLocally(projectDir, "web-framework-react")).toBe(true);
+        // The edit command detects that web-framework-react's source changed from
+        // "local" (config) to the E2E source's default. This triggers a local-to-plugin
+        // migration which deletes the local skill files (even though the E2E source has
+        // no marketplace, so plugin install is skipped with a warning).
+        expect(await verifySkillCopiedLocally(projectDir, "web-framework-react")).toBe(false);
       },
     );
   });

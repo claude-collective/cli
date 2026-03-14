@@ -700,7 +700,7 @@ describe("edit wizard", () => {
   });
 
   describe("global installation fallback", () => {
-    it("should fall back to global installation when no project config exists", async () => {
+    it("should load wizard using global config when no project config exists", async () => {
       tempDir = await createTempDir();
 
       // Create a "global home" directory with a valid installation
@@ -721,14 +721,14 @@ describe("edit wizard", () => {
         env: { HOME: projectDir },
       });
 
-      // The edit command should detect the global installation and show
-      // the "No project installation found. Using global installation..." message
-      // in the startup buffer, then launch the wizard.
+      // The edit command falls back to global config and launches the wizard
+      // at the build step with pre-selected skills from the global installation.
       await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
 
-      // The raw output should contain the global fallback message
       const raw = session.getRawOutput();
-      expect(raw).toContain("global installation");
+      // Verify the wizard loaded with skills from the global config
+      expect(raw).toContain("Loaded");
+      expect(raw).toContain("skills");
     });
   });
 });

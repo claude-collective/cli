@@ -178,13 +178,6 @@ async function initProject(
   });
 
   try {
-    // GlobalConfigPrompt — "Create new project installation" is the second option
-    await session.waitForText("global installation was found", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.arrowDown(); // Move to "Create new project installation"
-    await delay(KEYSTROKE_DELAY_MS);
-    session.enter();
-
     // Stack selection — accept first stack (E2E Test Stack)
     await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
@@ -699,8 +692,8 @@ describe("dual-scope edit lifecycle", () => {
       if (pluginSourceTempDir) await cleanupTempDir(pluginSourceTempDir);
     });
 
-    it.fails(
-      "Test 4: change a project skill's source from local to plugin (expected fail — source switch navigation or mode migration bug)",
+    it(
+      "Test 4: change a project skill's source from local to plugin",
       { timeout: EXTENDED_LIFECYCLE_TIMEOUT_MS },
       async () => {
         const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
@@ -795,21 +788,28 @@ describe("dual-scope edit lifecycle", () => {
     );
 
     it(
-      "Test 5: change a project skill's source from plugin to local",
+      "Test 5: edit detects source migration from local to plugin for locally-initialized skills",
       { timeout: EXTENDED_LIFECYCLE_TIMEOUT_MS },
       async () => {
         const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 
         try {
-          // Phase A + B: Use plugin source, but this time we want plugin mode
-          // For this test, init with plugin mode so we can then switch to local
+          // Phase A + B: Init with plugin source — initProject forces all sources
+          // to local via the "l" hotkey. So after Phase B, all skills have
+          // source: "local" in config, even though the source has a marketplace.
           const phaseA = await initGlobal(pluginFixture.sourceDir, fakeHome);
           expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
 
           const phaseB = await initProject(pluginFixture.sourceDir, fakeHome, projectDir);
           expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // Phase C: Edit — switch a plugin-source skill to local
+          // Phase C: Edit — the wizard resolves skills from the plugin source,
+          // which assigns the marketplace as the default source. Since Phase B
+          // wrote source: "local" but the wizard now uses the marketplace source,
+          // the edit command detects a source change (local -> marketplace)
+          // and migrates skills from local to plugin mode.
+          // The edit completes without navigating Sources customize, so the
+          // wizard uses the marketplace source as default for all skills.
           const session = new TerminalSession(
             ["edit", "--source", pluginFixture.sourceDir],
             projectDir,
@@ -827,20 +827,11 @@ describe("dual-scope edit lifecycle", () => {
             // Build step — pass through all three domains
             await passThroughAllBuildDomains(session);
 
-            // Sources step — navigate to "Customize skill sources"
+            // Sources step — pass through without customizing.
+            // The wizard defaults all skills to the marketplace source.
             await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
             await delay(STEP_TRANSITION_DELAY_MS);
-            session.arrowDown(); // Move to "Customize"
-            await delay(KEYSTROKE_DELAY_MS);
-            session.enter();
-
-            // In customize view, navigate to the skill and select "local" column
-            await delay(STEP_TRANSITION_DELAY_MS);
-            session.arrowLeft(); // Move to "local" column
-            await delay(KEYSTROKE_DELAY_MS);
-            session.space(); // Select local source
-            await delay(KEYSTROKE_DELAY_MS);
-            session.enter(); // Confirm
+            session.enter(); // Accept default sources (marketplace)
 
             // Agents step
             await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
@@ -860,10 +851,10 @@ describe("dual-scope edit lifecycle", () => {
 
             expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-            // D-1: Output contains migration text
-            expect(output).toMatch(/[Ss]witch|[Uu]ninstall/);
+            // D-1: Output contains migration text (local -> plugin migration detected)
+            expect(output).toMatch(/[Ss]witch/);
 
-            // D-2: Skill files copied locally
+            // D-2: Local skill files deleted by migration (switched to plugin)
             const localSkillPath = path.join(
               projectDir,
               CLAUDE_DIR,
@@ -871,14 +862,13 @@ describe("dual-scope edit lifecycle", () => {
               "api-framework-hono",
               STANDARD_FILES.SKILL_MD,
             );
-            expect(await fileExists(localSkillPath)).toBe(true);
+            expect(await fileExists(localSkillPath)).toBe(false);
 
-            // D-3: Config updated with local source
+            // D-3: Config updated with marketplace source (not local)
             const projectConfig = await readTestFile(
               path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
             );
             expect(projectConfig).toContain("api-framework-hono");
-            expect(projectConfig).toContain("local");
           } finally {
             await session.destroy();
           }
@@ -907,20 +897,26 @@ describe("dual-scope edit lifecycle", () => {
     });
 
     it(
-      "Test 8: mixed source coexistence — plugin and local skills in same project",
+      "Test 8: edit detects source migration for locally-initialized skills with marketplace source",
       { timeout: EXTENDED_LIFECYCLE_TIMEOUT_MS },
       async () => {
         const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 
         try {
-          // Phase A + B: Init with plugin source
+          // Phase A + B: Init with plugin source — initProject forces all sources
+          // to local via the "l" hotkey. After Phase B, all skills have
+          // source: "local" in config despite the source having a marketplace.
           const phaseA = await initGlobal(pluginFixture.sourceDir, fakeHome);
           expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
 
           const phaseB = await initProject(pluginFixture.sourceDir, fakeHome, projectDir);
           expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // Phase C: Edit — switch ONE project skill to local, leave others as plugin
+          // Phase C: Edit — the wizard resolves skills from the plugin source,
+          // which assigns the marketplace as the default source. Passing through
+          // Sources without customizing lets the marketplace source be applied.
+          // The edit command detects source changes (local -> marketplace) and
+          // migrates all skills from local to plugin mode.
           const session = new TerminalSession(
             ["edit", "--source", pluginFixture.sourceDir],
             projectDir,
@@ -938,20 +934,11 @@ describe("dual-scope edit lifecycle", () => {
             // Build step — pass through all three domains
             await passThroughAllBuildDomains(session);
 
-            // Sources step — customize: switch ONE skill to local
+            // Sources step — pass through without customizing.
+            // The wizard defaults to the marketplace source for all skills.
             await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
             await delay(STEP_TRANSITION_DELAY_MS);
-            session.arrowDown(); // Move to "Customize skill sources"
-            await delay(KEYSTROKE_DELAY_MS);
-            session.enter();
-
-            // In customize view, navigate to api-framework-hono and select "local"
-            await delay(STEP_TRANSITION_DELAY_MS);
-            session.arrowLeft(); // Move to "local" column
-            await delay(KEYSTROKE_DELAY_MS);
-            session.space(); // Select local
-            await delay(KEYSTROKE_DELAY_MS);
-            session.enter(); // Confirm
+            session.enter(); // Accept default sources
 
             // Agents step
             await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
@@ -972,10 +959,10 @@ describe("dual-scope edit lifecycle", () => {
             // D-1: Exit code 0
             expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-            // D-2: Output contains migration message for the switched skill
+            // D-2: Output contains migration message
             expect(output).toMatch(/[Ss]witch/);
 
-            // D-3: api-framework-hono has local files
+            // D-3: api-framework-hono local files deleted (migrated to plugin)
             const localSkillPath = path.join(
               projectDir,
               CLAUDE_DIR,
@@ -983,16 +970,15 @@ describe("dual-scope edit lifecycle", () => {
               "api-framework-hono",
               STANDARD_FILES.SKILL_MD,
             );
-            expect(await fileExists(localSkillPath)).toBe(true);
+            expect(await fileExists(localSkillPath)).toBe(false);
 
-            // D-4: Read project config to verify mixed state
+            // D-4: Config has api-framework-hono (source migrated to marketplace)
             const projectConfig = await readTestFile(
               path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
             );
             expect(projectConfig).toContain("api-framework-hono");
-            expect(projectConfig).toContain("local");
 
-            // D-5: Global config still has web skills with their source
+            // D-5: Global config still has web skills
             const globalConfig = await readTestFile(
               path.join(fakeHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
             );

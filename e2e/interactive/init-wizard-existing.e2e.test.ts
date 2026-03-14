@@ -235,7 +235,7 @@ describe("init wizard — existing projects", () => {
       return { tempDir, workDir };
     }
 
-    it("should prompt when global config exists but no project config", async () => {
+    it("should go straight to wizard when global config exists but no project config", async () => {
       const source = await createE2ESource();
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
@@ -248,55 +248,17 @@ describe("init wizard — existing projects", () => {
         env: { HOME: tempDir, AGENTSINC_SOURCE: undefined },
       });
 
-      // The global config detection prompt should appear
-      await session.waitForText("global installation was found", WIZARD_LOAD_TIMEOUT_MS);
-
-      // Press down arrow to move to "Create new project installation"
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-
-      // Press Enter to select "Create new project installation"
-      session.enter();
-
-      // The wizard should start — "Choose a stack" confirms the create-project path works
+      // With GlobalConfigPrompt removed, init goes straight to the wizard
       await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
 
       // Cancel the wizard
       session.escape();
       await session.waitForExit(EXIT_TIMEOUT_MS);
     });
-
-    it("should show edit wizard when selecting edit global", async () => {
-      const source = await createE2ESource();
-      sourceDir = source.sourceDir;
-      sourceTempDir = source.tempDir;
-
-      const { tempDir, workDir } = await createGlobalConfigSetup();
-      projectDir = tempDir;
-
-      // Spawn init from workDir (no project config) with HOME pointing to tempDir (has global config)
-      session = new TerminalSession(["init", "--source", sourceDir!], workDir, {
-        env: { HOME: tempDir, AGENTSINC_SOURCE: undefined },
-      });
-
-      // The global config detection prompt should appear
-      await session.waitForText("global installation was found", WIZARD_LOAD_TIMEOUT_MS);
-
-      // Press Enter to select "Edit global installation" (the default/first option)
-      session.enter();
-      await delay(KEYSTROKE_DELAY_MS);
-
-      // The edit wizard should appear showing skill selection tabs
-      await session.waitForText("Skills", WIZARD_LOAD_TIMEOUT_MS);
-
-      // Dismiss the edit wizard
-      session.ctrlC();
-      await session.waitForExit(EXIT_TIMEOUT_MS);
-    });
   });
 
   describe("startup message buffering", () => {
-    it("should show global fallback message when edit falls back to global config", async () => {
+    it("should load wizard using global config when no project config exists", async () => {
       projectDir = await createTempDir();
 
       // Create a global config at HOME/.claude-src/config.ts
@@ -335,13 +297,13 @@ describe("init wizard — existing projects", () => {
         env: { HOME: projectDir },
       });
 
-      // The edit command should detect no project config and fall back to global.
-      // It should show a message about using global installation.
+      // The edit command falls back to global config and launches the wizard.
+      // Verify the wizard loaded successfully with skills from the global config.
       await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
 
       const rawOutput = session.getRawOutput();
-      expect(rawOutput).toContain("No project installation found");
-      expect(rawOutput).toContain("global installation");
+      expect(rawOutput).toContain("Loaded");
+      expect(rawOutput).toContain("skills");
     });
   });
 });
