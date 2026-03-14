@@ -7,10 +7,7 @@ import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
-import {
-  verifyConfig,
-  verifyAgentCompiled,
-} from "../helpers/plugin-assertions.js";
+import { verifyConfig, verifyAgentCompiled } from "../helpers/plugin-assertions.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
   createTempDir,

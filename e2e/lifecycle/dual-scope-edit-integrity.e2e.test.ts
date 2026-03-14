@@ -249,10 +249,9 @@ describe("dual-scope edit lifecycle — agent content and config integrity", () 
 
         // D-4: Read api-developer.md from project path
         const projectApiDevPath = path.join(projectDir, CLAUDE_DIR, "agents", "api-developer.md");
-        expect(
-          await fileExists(projectApiDevPath),
-          "api-developer.md must exist in project",
-        ).toBe(true);
+        expect(await fileExists(projectApiDevPath), "api-developer.md must exist in project").toBe(
+          true,
+        );
         const apiDevContent = await readTestFile(projectApiDevPath);
 
         // D-5: api-developer contains its assigned skill
@@ -307,202 +306,205 @@ describe("dual-scope edit lifecycle — agent content and config integrity", () 
 // Test Suite — Source Changes via Sources Step (Requires Claude CLI)
 // =====================================================================
 
-describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle — source changes via Sources step", () => {
-  let pluginFixture: E2EPluginSource;
-  let pluginSourceTempDir: string;
+describe.skipIf(!claudeAvailable)(
+  "dual-scope edit lifecycle — source changes via Sources step",
+  () => {
+    let pluginFixture: E2EPluginSource;
+    let pluginSourceTempDir: string;
 
-  beforeAll(async () => {
-    await ensureBinaryExists();
-    pluginFixture = await createE2EPluginSource();
-    pluginSourceTempDir = pluginFixture.tempDir;
-  }, SETUP_TIMEOUT_MS * 2);
+    beforeAll(async () => {
+      await ensureBinaryExists();
+      pluginFixture = await createE2EPluginSource();
+      pluginSourceTempDir = pluginFixture.tempDir;
+    }, SETUP_TIMEOUT_MS * 2);
 
-  afterAll(async () => {
-    if (pluginSourceTempDir) await cleanupTempDir(pluginSourceTempDir);
-  });
+    afterAll(async () => {
+      if (pluginSourceTempDir) await cleanupTempDir(pluginSourceTempDir);
+    });
 
-  it(
-    "Test 4: change a project skill's source from local to plugin",
-    { timeout: EXTENDED_LIFECYCLE_TIMEOUT_MS },
-    async () => {
-      const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
-
-      try {
-        // Phase A + B: Use plugin source for init
-        const phaseA = await initGlobal(pluginFixture.sourceDir, fakeHome);
-        expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-        const phaseB = await initProject(pluginFixture.sourceDir, fakeHome, projectDir);
-        expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-        // Phase C: Edit — switch api-framework-hono from local to plugin source
-        const session = new TerminalSession(
-          ["edit", "--source", pluginFixture.sourceDir],
-          projectDir,
-          {
-            env: {
-              HOME: fakeHome,
-              AGENTSINC_SOURCE: undefined,
-            },
-            rows: 60,
-            cols: 120,
-          },
-        );
+    it(
+      "Test 4: change a project skill's source from local to plugin",
+      { timeout: EXTENDED_LIFECYCLE_TIMEOUT_MS },
+      async () => {
+        const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 
         try {
-          // Build step — pass through all three domains
-          await passThroughAllBuildDomains(session);
+          // Phase A + B: Use plugin source for init
+          const phaseA = await initGlobal(pluginFixture.sourceDir, fakeHome);
+          expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // Sources step — navigate to "Customize skill sources"
-          await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.arrowDown(); // Move to "Customize skill sources"
-          await delay(KEYSTROKE_DELAY_MS);
-          session.enter();
+          const phaseB = await initProject(pluginFixture.sourceDir, fakeHome, projectDir);
+          expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // In the customize view, navigate to api-framework-hono row
-          // and select the marketplace source column
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.arrowRight(); // Move to marketplace source column
-          await delay(KEYSTROKE_DELAY_MS);
-          session.space(); // Select marketplace source
-          await delay(KEYSTROKE_DELAY_MS);
-          session.enter(); // Confirm source selection
-
-          // Agents step
-          await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
-
-          // Confirm step
-          await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
-
-          // Wait for completion
-          const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-          const output = session.getRawOutput();
-
-          // Phase D: Assertions
-
-          expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-          // D-1: Output contains migration-related text
-          expect(output).toMatch(/[Ss]witch|[Ii]nstall/);
-
-          // D-2: Local skill files removed (switched to plugin)
-          const localSkillPath = path.join(
+          // Phase C: Edit — switch api-framework-hono from local to plugin source
+          const session = new TerminalSession(
+            ["edit", "--source", pluginFixture.sourceDir],
             projectDir,
-            CLAUDE_DIR,
-            STANDARD_DIRS.SKILLS,
-            "api-framework-hono",
-            STANDARD_FILES.SKILL_MD,
-          );
-          expect(await fileExists(localSkillPath)).toBe(false);
-
-          // D-3: Config updated with non-local source
-          const projectConfig = await readTestFile(
-            path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
-          );
-          expect(projectConfig).toContain("api-framework-hono");
-        } finally {
-          await session.destroy();
-        }
-      } finally {
-        await cleanupTempDir(tempDir);
-      }
-    },
-  );
-
-  it(
-    "Test 5: edit detects source migration from local to plugin for locally-initialized skills",
-    { timeout: EXTENDED_LIFECYCLE_TIMEOUT_MS },
-    async () => {
-      const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
-
-      try {
-        // Phase A + B: Init with plugin source — initProject forces all sources
-        // to local via the "l" hotkey. So after Phase B, all skills have
-        // source: "local" in config, even though the source has a marketplace.
-        const phaseA = await initGlobal(pluginFixture.sourceDir, fakeHome);
-        expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-        const phaseB = await initProject(pluginFixture.sourceDir, fakeHome, projectDir);
-        expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-        // Phase C: Edit — the wizard resolves skills from the plugin source,
-        // which assigns the marketplace as the default source. Since Phase B
-        // wrote source: "local" but the wizard now uses the marketplace source,
-        // the edit command detects a source change (local -> marketplace)
-        // and migrates skills from local to plugin mode.
-        const session = new TerminalSession(
-          ["edit", "--source", pluginFixture.sourceDir],
-          projectDir,
-          {
-            env: {
-              HOME: fakeHome,
-              AGENTSINC_SOURCE: undefined,
+            {
+              env: {
+                HOME: fakeHome,
+                AGENTSINC_SOURCE: undefined,
+              },
+              rows: 60,
+              cols: 120,
             },
-            rows: 60,
-            cols: 120,
-          },
-        );
+          );
+
+          try {
+            // Build step — pass through all three domains
+            await passThroughAllBuildDomains(session);
+
+            // Sources step — navigate to "Customize skill sources"
+            await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+            await delay(STEP_TRANSITION_DELAY_MS);
+            session.arrowDown(); // Move to "Customize skill sources"
+            await delay(KEYSTROKE_DELAY_MS);
+            session.enter();
+
+            // In the customize view, navigate to api-framework-hono row
+            // and select the marketplace source column
+            await delay(STEP_TRANSITION_DELAY_MS);
+            session.arrowRight(); // Move to marketplace source column
+            await delay(KEYSTROKE_DELAY_MS);
+            session.space(); // Select marketplace source
+            await delay(KEYSTROKE_DELAY_MS);
+            session.enter(); // Confirm source selection
+
+            // Agents step
+            await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+            await delay(STEP_TRANSITION_DELAY_MS);
+            session.enter();
+
+            // Confirm step
+            await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
+            await delay(STEP_TRANSITION_DELAY_MS);
+            session.enter();
+
+            // Wait for completion
+            const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+            const output = session.getRawOutput();
+
+            // Phase D: Assertions
+
+            expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+            // D-1: Output contains migration-related text
+            expect(output).toMatch(/[Ss]witch|[Ii]nstall/);
+
+            // D-2: Local skill files removed (switched to plugin)
+            const localSkillPath = path.join(
+              projectDir,
+              CLAUDE_DIR,
+              STANDARD_DIRS.SKILLS,
+              "api-framework-hono",
+              STANDARD_FILES.SKILL_MD,
+            );
+            expect(await fileExists(localSkillPath)).toBe(false);
+
+            // D-3: Config updated with non-local source
+            const projectConfig = await readTestFile(
+              path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+            );
+            expect(projectConfig).toContain("api-framework-hono");
+          } finally {
+            await session.destroy();
+          }
+        } finally {
+          await cleanupTempDir(tempDir);
+        }
+      },
+    );
+
+    it(
+      "Test 5: edit detects source migration from local to plugin for locally-initialized skills",
+      { timeout: EXTENDED_LIFECYCLE_TIMEOUT_MS },
+      async () => {
+        const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 
         try {
-          // Build step — pass through all three domains
-          await passThroughAllBuildDomains(session);
+          // Phase A + B: Init with plugin source — initProject forces all sources
+          // to local via the "l" hotkey. So after Phase B, all skills have
+          // source: "local" in config, even though the source has a marketplace.
+          const phaseA = await initGlobal(pluginFixture.sourceDir, fakeHome);
+          expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // Sources step — pass through without customizing.
-          // The wizard defaults all skills to the marketplace source.
-          await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter(); // Accept default sources (marketplace)
+          const phaseB = await initProject(pluginFixture.sourceDir, fakeHome, projectDir);
+          expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // Agents step
-          await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
-
-          // Confirm step
-          await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
-
-          // Wait for completion
-          const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-          const output = session.getRawOutput();
-
-          // Phase D: Assertions
-
-          expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-          // D-1: Output contains migration text (local -> plugin migration detected)
-          expect(output).toMatch(/[Ss]witch/);
-
-          // D-2: Local skill files deleted by migration (switched to plugin)
-          const localSkillPath = path.join(
+          // Phase C: Edit — the wizard resolves skills from the plugin source,
+          // which assigns the marketplace as the default source. Since Phase B
+          // wrote source: "local" but the wizard now uses the marketplace source,
+          // the edit command detects a source change (local -> marketplace)
+          // and migrates skills from local to plugin mode.
+          const session = new TerminalSession(
+            ["edit", "--source", pluginFixture.sourceDir],
             projectDir,
-            CLAUDE_DIR,
-            STANDARD_DIRS.SKILLS,
-            "api-framework-hono",
-            STANDARD_FILES.SKILL_MD,
+            {
+              env: {
+                HOME: fakeHome,
+                AGENTSINC_SOURCE: undefined,
+              },
+              rows: 60,
+              cols: 120,
+            },
           );
-          expect(await fileExists(localSkillPath)).toBe(false);
 
-          // D-3: Config updated with marketplace source (not local)
-          const projectConfig = await readTestFile(
-            path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
-          );
-          expect(projectConfig).toContain("api-framework-hono");
+          try {
+            // Build step — pass through all three domains
+            await passThroughAllBuildDomains(session);
+
+            // Sources step — pass through without customizing.
+            // The wizard defaults all skills to the marketplace source.
+            await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+            await delay(STEP_TRANSITION_DELAY_MS);
+            session.enter(); // Accept default sources (marketplace)
+
+            // Agents step
+            await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+            await delay(STEP_TRANSITION_DELAY_MS);
+            session.enter();
+
+            // Confirm step
+            await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
+            await delay(STEP_TRANSITION_DELAY_MS);
+            session.enter();
+
+            // Wait for completion
+            const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+            const output = session.getRawOutput();
+
+            // Phase D: Assertions
+
+            expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+            // D-1: Output contains migration text (local -> plugin migration detected)
+            expect(output).toMatch(/[Ss]witch/);
+
+            // D-2: Local skill files deleted by migration (switched to plugin)
+            const localSkillPath = path.join(
+              projectDir,
+              CLAUDE_DIR,
+              STANDARD_DIRS.SKILLS,
+              "api-framework-hono",
+              STANDARD_FILES.SKILL_MD,
+            );
+            expect(await fileExists(localSkillPath)).toBe(false);
+
+            // D-3: Config updated with marketplace source (not local)
+            const projectConfig = await readTestFile(
+              path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+            );
+            expect(projectConfig).toContain("api-framework-hono");
+          } finally {
+            await session.destroy();
+          }
         } finally {
-          await session.destroy();
+          await cleanupTempDir(tempDir);
         }
-      } finally {
-        await cleanupTempDir(tempDir);
-      }
-    },
-  );
-});
+      },
+    );
+  },
+);
 
 // =====================================================================
 // Test Suite — Mixed Source Coexistence (Requires Claude CLI)
@@ -687,12 +689,7 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle — mixed source co
           expect(webDevContent).not.toContain("api-framework-hono");
 
           // D-2: api-developer.md (project) contains api-framework-hono (now local)
-          const projectApiDevPath = path.join(
-            projectDir,
-            CLAUDE_DIR,
-            "agents",
-            "api-developer.md",
-          );
+          const projectApiDevPath = path.join(projectDir, CLAUDE_DIR, "agents", "api-developer.md");
           expect(await fileExists(projectApiDevPath)).toBe(true);
           const apiDevContent = await readTestFile(projectApiDevPath);
           expect(apiDevContent).toContain("api-framework-hono");

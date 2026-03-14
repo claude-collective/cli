@@ -62,9 +62,8 @@ describe("edit wizard — navigation and hotkeys", () => {
 
       // Read the original config before editing
       const { readTestFile, fileExists } = await import("../helpers/test-utils.js");
-      const { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } = await import(
-        "../../src/cli/consts.js"
-      );
+      const { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } =
+        await import("../../src/cli/consts.js");
       const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const originalConfig = await readTestFile(configPath);
 

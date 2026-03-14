@@ -361,11 +361,7 @@ describe("dual-scope edit lifecycle — display and locking", () => {
 
           // D-4: Config files unchanged — both still exist
           const globalConfigPath = path.join(fakeHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-          const projectConfigPath = path.join(
-            projectDir,
-            CLAUDE_SRC_DIR,
-            STANDARD_FILES.CONFIG_TS,
-          );
+          const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
           expect(await fileExists(globalConfigPath)).toBe(true);
           expect(await fileExists(projectConfigPath)).toBe(true);
 
