@@ -24,7 +24,7 @@ npx @agents-inc/cli init
 ```
 
 <p align="center">
-  <img src="screenshots/stack-selection.png" alt="Stack selection" width="700">
+  <img src="screenshots/stack-selection.png" alt="Stack selection" width="500">
 </p>
 
 Choose a pre-built stack or start from scratch. Stacks pre-select skills and agents for common tech combinations.
@@ -39,13 +39,13 @@ Choose a pre-built stack or start from scratch. Stacks pre-select skills and age
 | `solidjs-stack`    | SolidJS + Hono + Drizzle                                           |
 
 <p align="center">
-  <img src="screenshots/skill-selection.png" alt="Skill selection" width="700">
+  <img src="screenshots/skill-selection.png" alt="Skill selection" width="500">
 </p>
 
 Add or remove skills from the interactive grid. Skills are organized by domain with framework-aware filtering.
 
 <p align="center">
-  <img src="screenshots/agent-selection.png" alt="Agent selection" width="700">
+  <img src="screenshots/agent-selection.png" alt="Agent selection" width="500">
 </p>
 
 Choose which subagents to compile. Each agent is composed from the skills you selected.
