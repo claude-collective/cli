@@ -711,15 +711,15 @@ describe("local-installer", () => {
       // Set up buildSkillRefsFromConfig mock to return both skills
       const mockBuildSkillRefs = vi.mocked((await import("../resolver")).buildSkillRefsFromConfig);
       mockBuildSkillRefs.mockReturnValueOnce([
-        { id: "web-framework-react" as SkillId, usage: "when working with web-framework" },
-        { id: "web-testing-vitest" as SkillId, usage: "when working with web-testing" },
+        { id: "web-framework-react", usage: "when working with web-framework" },
+        { id: "web-testing-vitest", usage: "when working with web-testing" },
       ]);
 
       const config = buildProjectConfig({
         agents: [{ name: "web-developer" as AgentName, scope: "global" }],
         skills: [
-          { id: "web-framework-react" as SkillId, scope: "project", source: "local" },
-          { id: "web-testing-vitest" as SkillId, scope: "global", source: "local" },
+          { id: "web-framework-react", scope: "project", source: "local" },
+          { id: "web-testing-vitest", scope: "global", source: "local" },
         ],
         stack: {
           "web-developer": {
@@ -745,15 +745,15 @@ describe("local-installer", () => {
       // Set up buildSkillRefsFromConfig mock to return both skills
       const mockBuildSkillRefs = vi.mocked((await import("../resolver")).buildSkillRefsFromConfig);
       mockBuildSkillRefs.mockReturnValueOnce([
-        { id: "web-framework-react" as SkillId, usage: "when working with web-framework" },
-        { id: "web-testing-vitest" as SkillId, usage: "when working with web-testing" },
+        { id: "web-framework-react", usage: "when working with web-framework" },
+        { id: "web-testing-vitest", usage: "when working with web-testing" },
       ]);
 
       const config = buildProjectConfig({
         agents: [{ name: "web-developer" as AgentName, scope: "project" }],
         skills: [
-          { id: "web-framework-react" as SkillId, scope: "project", source: "local" },
-          { id: "web-testing-vitest" as SkillId, scope: "global", source: "local" },
+          { id: "web-framework-react", scope: "project", source: "local" },
+          { id: "web-testing-vitest", scope: "global", source: "local" },
         ],
         stack: {
           "web-developer": {
@@ -921,6 +921,99 @@ describe("local-installer", () => {
       expect(result.selectedAgents).toEqual(["web-developer"]);
       expect(result.source).toBe("github:my/repo");
       expect(result.marketplace).toBe("my-marketplace");
+    });
+  });
+
+  describe("writeScopedConfigs with HOME isolation", () => {
+    // Moved from e2e/lifecycle/unified-config-view.e2e.test.ts — these are unit tests
+    // that call writeScopedConfigs directly, not E2E tests.
+    // Boundary cast: empty agents record for tests that don't need agent definitions
+    const emptyAgents = {} as Record<AgentName, AgentDefinition>;
+    let savedHome: string | undefined;
+
+    beforeEach(() => {
+      savedHome = process.env.HOME;
+    });
+
+    afterEach(() => {
+      // Restore HOME after each test
+      if (savedHome !== undefined) {
+        process.env.HOME = savedHome;
+      } else {
+        delete process.env.HOME;
+      }
+    });
+
+    it("should skip project config file when no existing config on disk and no project-scoped items", async () => {
+      const globalHome = path.join(tempDir, "fake-home");
+      const projectDir = path.join(tempDir, "project");
+
+      process.env.HOME = globalHome;
+
+      const config = buildProjectConfig({
+        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        agents: [{ name: "web-developer", scope: "global" }],
+      });
+
+      const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      await mkdir(path.dirname(projectConfigPath), { recursive: true });
+
+      await writeScopedConfigs(
+        config,
+        EMPTY_MATRIX,
+        emptyAgents,
+        projectDir,
+        projectConfigPath,
+        false,
+      );
+
+      const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const { fileExists } = await import("../../utils/fs");
+      expect(await fileExists(globalConfigPath)).toBe(true);
+
+      // Project config should NOT be written (no existing project installation and no project-scoped items)
+      expect(await fileExists(projectConfigPath)).toBe(false);
+    });
+
+    it("should write project config when project split has project-scoped items", async () => {
+      const globalHome = path.join(tempDir, "fake-home");
+      const projectDir = path.join(tempDir, "project");
+
+      process.env.HOME = globalHome;
+
+      const config = buildProjectConfig({
+        skills: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+          { id: "web-testing-vitest", scope: "project", source: "local" },
+        ],
+        agents: [
+          { name: "web-developer", scope: "global" },
+          { name: "web-reviewer", scope: "project" },
+        ],
+      });
+
+      const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      await mkdir(path.dirname(projectConfigPath), { recursive: true });
+
+      await writeScopedConfigs(
+        config,
+        EMPTY_MATRIX,
+        emptyAgents,
+        projectDir,
+        projectConfigPath,
+        false,
+      );
+
+      const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const { fileExists } = await import("../../utils/fs");
+      expect(await fileExists(globalConfigPath)).toBe(true);
+      expect(await fileExists(projectConfigPath)).toBe(true);
+
+      // Project config should have the project-scoped skill
+      const projectContent = await readFile(projectConfigPath, "utf-8");
+      expect(projectContent).toContain("web-testing-vitest");
+      // Project config should import from global
+      expect(projectContent).toContain("import globalConfig");
     });
   });
 });

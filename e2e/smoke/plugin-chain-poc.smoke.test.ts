@@ -23,7 +23,7 @@ import { verifyPluginInRegistry } from "../helpers/plugin-assertions.js";
 /**
  * Blocker 7.1: Full Plugin Chain Proof-of-Concept
  *
- * This test proves the entire plugin build → register → install chain works
+ * This test proves the entire plugin build -> register -> install chain works
  * end-to-end using the E2E source fixture. It must pass before any plugin-mode
  * E2E tests can be written.
  *
@@ -31,12 +31,16 @@ import { verifyPluginInRegistry } from "../helpers/plugin-assertions.js";
  * (HOME isolation) hasn't been resolved yet.
  *
  * Chain under test:
- *   createE2ESource() → build plugins → build marketplace → claude plugin marketplace add → claude plugin install
+ *   createE2ESource() -> build plugins -> build marketplace -> claude plugin marketplace add -> claude plugin install
+ *
+ * NOTE: These are smoke tests for the Claude CLI binary integration, NOT pure E2E
+ * tests for our CLI. Steps 3-5 call the Claude CLI directly.
+ * Moved from e2e/integration/plugin-chain-poc.e2e.test.ts.
  */
 
 const claudeAvailable = await isClaudeCLIAvailable();
 
-describe.skipIf(!claudeAvailable)("full plugin chain: build → register → install → verify", () => {
+describe.skipIf(!claudeAvailable)("full plugin chain: build -> register -> install -> verify", () => {
   let fixture: E2EPluginSource;
   let projectDir: string;
   let projectTempDir: string;

@@ -17,7 +17,7 @@ import {
 } from "../helpers/test-utils.js";
 
 /**
- * E2E smoke tests for Claude CLI plugin commands.
+ * Smoke tests for Claude CLI plugin commands.
  *
  * These tests verify that `claude plugin install`, `claude plugin marketplace add`,
  * and `claude plugin uninstall` work in the test environment. They call the real
@@ -25,6 +25,9 @@ import {
  *
  * The entire suite is skipped when the Claude CLI is not available (e.g. CI
  * without Claude installed).
+ *
+ * NOTE: These are smoke tests for the Claude CLI binary, NOT E2E tests for our CLI.
+ * Moved from e2e/commands/plugin-install.e2e.test.ts.
  */
 
 const claudeAvailable = await isClaudeCLIAvailable();

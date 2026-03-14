@@ -13,6 +13,9 @@ import { ensureBinaryExists, createTempDir, cleanupTempDir } from "../helpers/te
  * all subsequent plugin E2E tests must use the real HOME directory instead.
  *
  * Each test documents the actual CLI behavior to inform the test framework design.
+ *
+ * NOTE: These are smoke tests for the Claude CLI binary, NOT E2E tests for our CLI.
+ * Moved from e2e/lifecycle/home-isolation.e2e.test.ts.
  */
 
 const claudeAvailable = await isClaudeCLIAvailable();

@@ -1,45 +1,28 @@
 import path from "path";
-import { mkdir, writeFile, readFile, rm } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, afterEach, beforeAll } from "vitest";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
 import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
-  fileExists,
   directoryExists,
-  readTestFile,
   runCLI,
   writeProjectConfig,
   createLocalSkill,
-  renderConfigTs,
   EXIT_CODES,
   COMPILE_ENV,
 } from "../helpers/test-utils.js";
-import type {
-  AgentDefinition,
-  AgentName,
-  ProjectConfig,
-  SkillId,
-} from "../../src/cli/types/index.js";
-import { writeScopedConfigs } from "../../src/cli/lib/installation/local-installer.js";
-import { splitConfigByScope } from "../../src/cli/lib/configuration/config-generator.js";
-import { initializeMatrix } from "../../src/cli/lib/matrix/matrix-provider.js";
-import { EMPTY_MATRIX } from "../../src/cli/lib/__tests__/mock-data/mock-matrices.js";
-import { buildProjectConfig } from "../../src/cli/lib/__tests__/helpers.js";
-
-// Boundary cast: empty agents record for tests that don't need agent definitions
-const emptyAgents = {} as Record<AgentName, AgentDefinition>;
 
 /**
- * Unified config view with split writes E2E tests.
+ * Unified config view — dual-scope compile verification E2E test.
  *
- * Verifies the following behaviors:
+ * Verifies that a project with both global and project configs can compile.
  *
- * 1. writeScopedConfigs skips project config when no existing config on disk and project split is empty
- * 2. Dual-scope project structure works with compile
- * 3. Edit from project with only global config creates project config correctly
- * 4. Edit from ~/ writes to global only
+ * NOTE: The writeScopedConfigs and splitConfigByScope unit tests that were
+ * previously in this file have been moved to their proper homes:
+ * - writeScopedConfigs tests → src/cli/lib/installation/local-installer.test.ts
+ * - splitConfigByScope tests → src/cli/lib/configuration/config-generator.test.ts
  */
 describe("unified config view — split writes", () => {
   let tempDir: string;
@@ -51,97 +34,6 @@ describe("unified config view — split writes", () => {
       await cleanupTempDir(tempDir);
       tempDir = undefined!;
     }
-  });
-
-  describe("writeScopedConfigs empty project guard", () => {
-    it("should skip project config file when no existing config on disk and no project-scoped items", async () => {
-      tempDir = await createTempDir();
-      const globalHome = path.join(tempDir, "fake-home");
-      const projectDir = path.join(tempDir, "project");
-
-      // Setup fake HOME
-      process.env.HOME = globalHome;
-
-      try {
-        initializeMatrix(EMPTY_MATRIX);
-
-        const config = buildProjectConfig({
-          skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
-          agents: [{ name: "web-developer", scope: "global" }],
-        });
-
-        const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-        // Create directory but NOT config.ts — no existing config on disk
-        await mkdir(path.dirname(projectConfigPath), { recursive: true });
-
-        await writeScopedConfigs(
-          config,
-          EMPTY_MATRIX,
-          emptyAgents,
-          projectDir,
-          projectConfigPath,
-          false,
-        );
-
-        // Global config should be written
-        const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-        expect(await fileExists(globalConfigPath)).toBe(true);
-
-        // Project config should NOT be written (no existing project installation and no project-scoped items)
-        expect(await fileExists(projectConfigPath)).toBe(false);
-      } finally {
-        // Restore HOME
-        delete process.env.HOME;
-      }
-    });
-
-    it("should write project config when project split has project-scoped items", async () => {
-      tempDir = await createTempDir();
-      const globalHome = path.join(tempDir, "fake-home");
-      const projectDir = path.join(tempDir, "project");
-
-      process.env.HOME = globalHome;
-
-      try {
-        initializeMatrix(EMPTY_MATRIX);
-
-        const config = buildProjectConfig({
-          skills: [
-            { id: "web-framework-react", scope: "global", source: "agents-inc" },
-            { id: "web-testing-vitest", scope: "project", source: "local" },
-          ],
-          agents: [
-            { name: "web-developer", scope: "global" },
-            { name: "web-reviewer", scope: "project" },
-          ],
-        });
-
-        const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-        await mkdir(path.dirname(projectConfigPath), { recursive: true });
-
-        await writeScopedConfigs(
-          config,
-          EMPTY_MATRIX,
-          emptyAgents,
-          projectDir,
-          projectConfigPath,
-          false,
-        );
-
-        // Both configs should be written
-        const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-        expect(await fileExists(globalConfigPath)).toBe(true);
-        expect(await fileExists(projectConfigPath)).toBe(true);
-
-        // Project config should have the project-scoped skill
-        const projectContent = await readTestFile(projectConfigPath);
-        expect(projectContent).toContain("web-testing-vitest");
-        // Project config should import from global
-        expect(projectContent).toContain("import globalConfig");
-      } finally {
-        delete process.env.HOME;
-      }
-    });
   });
 
   describe("dual-scope compile verification", () => {
@@ -255,45 +147,6 @@ export interface ProjectConfig {
       // Verify agents were compiled in the project directory
       const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
       expect(await directoryExists(agentsDir)).toBe(true);
-    });
-  });
-
-  describe("splitConfigByScope correctness", () => {
-    it("should produce empty project split when all items are global", () => {
-      const config: ProjectConfig = {
-        name: "test",
-        skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
-        ],
-        agents: [{ name: "web-developer", scope: "global" }],
-      };
-
-      const { project } = splitConfigByScope(config);
-
-      expect(project.skills).toHaveLength(0);
-      expect(project.agents).toHaveLength(0);
-    });
-
-    it("should correctly split mixed-scope configs", () => {
-      const config: ProjectConfig = {
-        name: "test",
-        skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "local" },
-        ],
-        agents: [
-          { name: "web-developer", scope: "global" },
-          { name: "api-developer", scope: "project" },
-        ],
-      };
-
-      const { global: g, project: p } = splitConfigByScope(config);
-
-      expect(g.skills.map((s) => s.id)).toEqual(["web-framework-react"]);
-      expect(g.agents.map((a) => a.name)).toEqual(["web-developer"]);
-      expect(p.skills.map((s) => s.id)).toEqual(["web-testing-vitest"]);
-      expect(p.agents.map((a) => a.name)).toEqual(["api-developer"]);
     });
   });
 });

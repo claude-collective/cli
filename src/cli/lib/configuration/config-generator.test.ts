@@ -596,4 +596,44 @@ describe("config-generator", () => {
       expect(result.global.name).toBe("global");
     });
   });
+
+  describe("splitConfigByScope correctness (moved from E2E)", () => {
+    // Moved from e2e/lifecycle/unified-config-view.e2e.test.ts — these are pure unit tests
+    // that call splitConfigByScope directly, not E2E tests.
+
+    it("should produce empty project split when all items are global", () => {
+      const config = buildProjectConfig({
+        skills: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+        ],
+        agents: [{ name: "web-developer", scope: "global" }],
+      });
+
+      const { project } = splitConfigByScope(config);
+
+      expect(project.skills).toHaveLength(0);
+      expect(project.agents).toHaveLength(0);
+    });
+
+    it("should correctly split mixed-scope configs", () => {
+      const config = buildProjectConfig({
+        skills: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+          { id: "web-testing-vitest", scope: "project", source: "local" },
+        ],
+        agents: [
+          { name: "web-developer", scope: "global" },
+          { name: "api-developer", scope: "project" },
+        ],
+      });
+
+      const { global: g, project: p } = splitConfigByScope(config);
+
+      expect(g.skills.map((s) => s.id)).toEqual(["web-framework-react"]);
+      expect(g.agents.map((a) => a.name)).toEqual(["web-developer"]);
+      expect(p.skills.map((s) => s.id)).toEqual(["web-testing-vitest"]);
+      expect(p.agents.map((a) => a.name)).toEqual(["api-developer"]);
+    });
+  });
 });
