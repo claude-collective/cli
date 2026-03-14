@@ -31,36 +31,36 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 
 ### Approach State
 
-| Field             | Type                                    | Purpose                           |
-| ----------------- | --------------------------------------- | --------------------------------- |
-| `approach`        | `"stack" \| "scratch" \| null`          | Stack-based or build-from-scratch |
-| `selectedStackId` | `string \| null`                        | Selected stack ID                 |
-| `stackAction`     | `"defaults" \| "customize" \| null`     | Use stack as-is or customize      |
+| Field             | Type                                | Purpose                           |
+| ----------------- | ----------------------------------- | --------------------------------- |
+| `approach`        | `"stack" \| "scratch" \| null`      | Stack-based or build-from-scratch |
+| `selectedStackId` | `string \| null`                    | Selected stack ID                 |
+| `stackAction`     | `"defaults" \| "customize" \| null` | Use stack as-is or customize      |
 
 ### Selection State
 
-| Field                     | Type                        | Purpose                                               |
-| ------------------------- | --------------------------- | ----------------------------------------------------- |
-| `selectedDomains`         | `Domain[]`                  | Active domains                                        |
-| `currentDomainIndex`      | `number`                    | Currently visible domain in build step                |
-| `domainSelections`        | `DomainSelections`          | Full skill selections by domain/category              |
-| `_stackDomainSelections`  | `DomainSelections \| null`  | Snapshot for restoring stack selections on re-toggle   |
-| `selectedAgents`          | `AgentName[]`               | Selected agents for compilation                       |
-| `agentConfigs`            | `AgentScopeConfig[]`        | Per-agent scope configuration (project/global)        |
-| `boundSkills`             | `BoundSkill[]`              | Foreign skills bound via search                       |
-| `skillConfigs`            | `SkillConfig[]`             | Per-skill source and scope configuration              |
-| `lockedSkillIds`          | `SkillId[]`                 | Skills that cannot be toggled (existing global items)  |
-| `lockedAgentNames`        | `AgentName[]`               | Agents that cannot be toggled (existing global agents) |
+| Field                    | Type                       | Purpose                                                |
+| ------------------------ | -------------------------- | ------------------------------------------------------ |
+| `selectedDomains`        | `Domain[]`                 | Active domains                                         |
+| `currentDomainIndex`     | `number`                   | Currently visible domain in build step                 |
+| `domainSelections`       | `DomainSelections`         | Full skill selections by domain/category               |
+| `_stackDomainSelections` | `DomainSelections \| null` | Snapshot for restoring stack selections on re-toggle   |
+| `selectedAgents`         | `AgentName[]`              | Selected agents for compilation                        |
+| `agentConfigs`           | `AgentScopeConfig[]`       | Per-agent scope configuration (project/global)         |
+| `boundSkills`            | `BoundSkill[]`             | Foreign skills bound via search                        |
+| `skillConfigs`           | `SkillConfig[]`            | Per-skill source and scope configuration               |
+| `lockedSkillIds`         | `SkillId[]`                | Skills that cannot be toggled (existing global items)  |
+| `lockedAgentNames`       | `AgentName[]`              | Agents that cannot be toggled (existing global agents) |
 
 ### UI State
 
-| Field            | Type                  | Purpose                                 |
-| ---------------- | --------------------- | --------------------------------------- |
-| `showLabels`     | `boolean`             | Show compatibility labels on skill tags |
-| `showSettings`   | `boolean`             | Settings overlay visible                |
-| `showHelp`       | `boolean`             | Help overlay visible                    |
-| `focusedSkillId` | `SkillId \| null`     | Currently focused skill (for S hotkey)  |
-| `focusedAgentId` | `AgentName \| null`   | Currently focused agent (for S hotkey)  |
+| Field            | Type                | Purpose                                 |
+| ---------------- | ------------------- | --------------------------------------- |
+| `showLabels`     | `boolean`           | Show compatibility labels on skill tags |
+| `showSettings`   | `boolean`           | Settings overlay visible                |
+| `showHelp`       | `boolean`           | Help overlay visible                    |
+| `focusedSkillId` | `SkillId \| null`   | Currently focused skill (for S hotkey)  |
+| `focusedAgentId` | `AgentName \| null` | Currently focused agent (for S hotkey)  |
 
 ### Source State
 
@@ -80,11 +80,11 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 
 ### Approach / Stack
 
-| Action           | Signature                                              | Effect                                               |
-| ---------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| `setApproach`    | `(approach: "stack" \| "scratch" \| null) => void`     | Set wizard approach                                  |
-| `selectStack`    | `(stackId: string \| null) => void`                    | Select/deselect stack; resets all selections          |
-| `setStackAction` | `(action: "defaults" \| "customize") => void`          | Use stack as-is or customize                         |
+| Action           | Signature                                          | Effect                                       |
+| ---------------- | -------------------------------------------------- | -------------------------------------------- |
+| `setApproach`    | `(approach: "stack" \| "scratch" \| null) => void` | Set wizard approach                          |
+| `selectStack`    | `(stackId: string \| null) => void`                | Select/deselect stack; resets all selections |
+| `setStackAction` | `(action: "defaults" \| "customize") => void`      | Use stack as-is or customize                 |
 
 ### Selection
 
@@ -127,17 +127,17 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 
 ### Derived
 
-| Action             | Signature          | Effect                                        |
-| ------------------ | ------------------ | --------------------------------------------- |
-| `deriveInstallMode`| `() => InstallMode` | Derive install mode from skillConfigs sources |
+| Action              | Signature           | Effect                                        |
+| ------------------- | ------------------- | --------------------------------------------- |
+| `deriveInstallMode` | `() => InstallMode` | Derive install mode from skillConfigs sources |
 
 ### Population (Hydrating from Config/Stack)
 
-| Action                       | Signature                                          | When Used                              |
-| ---------------------------- | -------------------------------------------------- | -------------------------------------- |
-| `populateFromStack`          | `(stack) => void`                                  | Stack selection in init wizard         |
-| `populateFromSkillIds`       | `(skillIds, savedConfigs?) => void`                | Edit mode: restore from project config |
-| `preselectAgentsFromDomains` | `() => void`                                       | After domain selection                 |
+| Action                       | Signature                           | When Used                              |
+| ---------------------------- | ----------------------------------- | -------------------------------------- |
+| `populateFromStack`          | `(stack) => void`                   | Stack selection in init wizard         |
+| `populateFromSkillIds`       | `(skillIds, savedConfigs?) => void` | Edit mode: restore from project config |
+| `preselectAgentsFromDomains` | `() => void`                        | After domain selection                 |
 
 ### Reset
 
@@ -147,16 +147,16 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 
 ### Computed Getters
 
-| Getter                             | Returns                              | Purpose                      |
-| ---------------------------------- | ------------------------------------ | ---------------------------- |
-| `getAllSelectedTechnologies`        | `SkillId[]`                          | Flat list of all selected skills |
-| `getSelectedTechnologiesPerDomain` | `Partial<Record<Domain, SkillId[]>>` | Skills grouped by domain     |
-| `getCurrentDomain`                 | `Domain \| null`                     | Domain at currentDomainIndex |
-| `getTechnologyCount`               | `number`                             | Total selected count         |
-| `getStepProgress`                  | `{ completedSteps, skippedSteps }`   | For wizard tab indicators    |
-| `canGoToNextDomain`                | `boolean`                            | Has next domain              |
-| `canGoToPreviousDomain`            | `boolean`                            | Has previous domain          |
-| `buildSourceRows`                  | `{ skillId, options }[]`             | Sources step UI data         |
+| Getter                             | Returns                              | Purpose                          |
+| ---------------------------------- | ------------------------------------ | -------------------------------- |
+| `getAllSelectedTechnologies`       | `SkillId[]`                          | Flat list of all selected skills |
+| `getSelectedTechnologiesPerDomain` | `Partial<Record<Domain, SkillId[]>>` | Skills grouped by domain         |
+| `getCurrentDomain`                 | `Domain \| null`                     | Domain at currentDomainIndex     |
+| `getTechnologyCount`               | `number`                             | Total selected count             |
+| `getStepProgress`                  | `{ completedSteps, skippedSteps }`   | For wizard tab indicators        |
+| `canGoToNextDomain`                | `boolean`                            | Has next domain                  |
+| `canGoToPreviousDomain`            | `boolean`                            | Has previous domain              |
+| `buildSourceRows`                  | `{ skillId, options }[]`             | Sources step UI data             |
 
 ## Usage Pattern
 
@@ -214,7 +214,7 @@ DOMAIN_AGENTS = {
 
 `reset()` action restores all state to `createInitialState()` defaults (`wizard-store.ts:468-492`).
 
-`selectStack()` also resets: domainSelections, _stackDomainSelections, selectedDomains, skillConfigs, selectedAgents, agentConfigs, boundSkills, currentDomainIndex, stackAction.
+`selectStack()` also resets: domainSelections, \_stackDomainSelections, selectedDomains, skillConfigs, selectedAgents, agentConfigs, boundSkills, currentDomainIndex, stackAction.
 
 Initial state:
 

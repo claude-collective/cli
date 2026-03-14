@@ -58,15 +58,15 @@ type PluginManifest = {
 
 All location functions are in `src/cli/lib/plugins/plugin-finder.ts`:
 
-| Function                   | Purpose                                   |
-| -------------------------- | ----------------------------------------- |
-| `getUserPluginsDir()`      | User-level plugins dir                    |
-| `getCollectivePluginDir()` | Collective (shared) plugins dir           |
-| `getProjectPluginsDir()`   | Project-level plugins: `.claude/plugins/` |
-| `getPluginSkillsDir()`     | Skills subdirectory within a plugin       |
-| `getPluginAgentsDir()`     | Agents subdirectory within a plugin       |
-| `getPluginManifestPath()`  | Path to plugin.json within a plugin dir   |
-| `readPluginManifest()`     | Read and parse plugin.json from a dir     |
+| Function                   | Purpose                                     |
+| -------------------------- | ------------------------------------------- |
+| `getUserPluginsDir()`      | User-level plugins dir                      |
+| `getCollectivePluginDir()` | Collective (shared) plugins dir             |
+| `getProjectPluginsDir()`   | Project-level plugins: `.claude/plugins/`   |
+| `getPluginSkillsDir()`     | Skills subdirectory within a plugin         |
+| `getPluginAgentsDir()`     | Agents subdirectory within a plugin         |
+| `getPluginManifestPath()`  | Path to plugin.json within a plugin dir     |
+| `readPluginManifest()`     | Read and parse plugin.json from a dir       |
 | `getPluginSkillIds()`      | Extract SkillIds from plugin SKILL.md files |
 
 Note: `getPluginManifestPath()` also exists in `plugin-manifest.ts` (for output manifest path during compilation).
@@ -98,12 +98,12 @@ Discovers all installed skill plugins in a project directory:
 
 **File:** `src/cli/lib/plugins/plugin-info.ts`
 
-| Function                    | Purpose                                          |
-| --------------------------- | ------------------------------------------------ |
-| `getPluginInfo()`           | Get plugin info (name, version, skill/agent count) |
-| `formatPluginDisplay()`     | Format plugin info for terminal display          |
-| `getInstallationInfo()`     | Get installation info (mode, paths, counts)      |
-| `formatInstallationDisplay()` | Format installation info for terminal display  |
+| Function                      | Purpose                                            |
+| ----------------------------- | -------------------------------------------------- |
+| `getPluginInfo()`             | Get plugin info (name, version, skill/agent count) |
+| `formatPluginDisplay()`       | Format plugin info for terminal display            |
+| `getInstallationInfo()`       | Get installation info (mode, paths, counts)        |
+| `formatInstallationDisplay()` | Format installation info for terminal display      |
 
 Types:
 
@@ -191,9 +191,9 @@ Executed through `src/cli/utils/exec.ts`:
 | --------------------------------- | ------------------------------------------------ |
 | `claudePluginInstall()`           | `claude plugin install {path} --scope {scope}`   |
 | `claudePluginUninstall()`         | `claude plugin uninstall {name} --scope {scope}` |
-| `claudePluginMarketplaceList()`   | `claude plugin marketplace list --json`           |
-| `claudePluginMarketplaceExists()` | Checks if marketplace is registered               |
-| `claudePluginMarketplaceAdd()`    | `claude plugin marketplace add {source}`          |
+| `claudePluginMarketplaceList()`   | `claude plugin marketplace list --json`          |
+| `claudePluginMarketplaceExists()` | Checks if marketplace is registered              |
+| `claudePluginMarketplaceAdd()`    | `claude plugin marketplace add {source}`         |
 
 `claudePluginInstall()` and `claudePluginUninstall()` accept `scope: "project" | "user"` and `projectDir` parameters. All inputs validated for injection prevention before execution.
 
@@ -222,15 +222,15 @@ Both `installLocal()` and `installPluginConfig()` use `writeScopedConfigs()` (li
 
 Key helper functions in `local-installer.ts`:
 
-| Function                 | Line  | Purpose                                         |
-| ------------------------ | ----- | ----------------------------------------------- |
-| `resolveInstallPaths()`  | `:98` | Resolve skill/agent/config paths for a scope    |
-| `buildAndMergeConfig()`  | `:284`| Build config from wizard and merge with existing|
-| `writeConfigFile()`      | `:302`| Write config.ts using `generateConfigSource()`  |
-| `writeScopedConfigs()`   | `:422`| Split and write configs by scope                |
-| `buildCompileAgents()`   | `:311`| Build agent compile config from ProjectConfig   |
-| `buildAgentScopeMap()`   | `:338`| Map agent names to their scope                  |
-| `setConfigMetadata()`    | `:253`| Set source/marketplace/domains on config        |
+| Function                | Line   | Purpose                                          |
+| ----------------------- | ------ | ------------------------------------------------ |
+| `resolveInstallPaths()` | `:98`  | Resolve skill/agent/config paths for a scope     |
+| `buildAndMergeConfig()` | `:284` | Build config from wizard and merge with existing |
+| `writeConfigFile()`     | `:302` | Write config.ts using `generateConfigSource()`   |
+| `writeScopedConfigs()`  | `:422` | Split and write configs by scope                 |
+| `buildCompileAgents()`  | `:311` | Build agent compile config from ProjectConfig    |
+| `buildAgentScopeMap()`  | `:338` | Map agent names to their scope                   |
+| `setConfigMetadata()`   | `:253` | Set source/marketplace/domains on config         |
 
 ### Detection
 
@@ -245,6 +245,7 @@ Detection logic:
 3. Each checks for `.claude-src/config.ts` and loads config to determine mode
 
 Install mode is derived at runtime from the skills array via `deriveInstallMode()` (line `:26`):
+
 - Empty skills array = `"local"` mode (default)
 - All `source: "local"` = `"local"` mode
 - All non-local sources = `"plugin"` mode

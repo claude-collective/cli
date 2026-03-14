@@ -11,11 +11,11 @@
 
 Vitest is configured with 3 test projects:
 
-| Project       | Include Pattern                                           | Purpose           |
-| ------------- | --------------------------------------------------------- | ----------------- |
+| Project       | Include Pattern                                                                   | Purpose           |
+| ------------- | --------------------------------------------------------------------------------- | ----------------- |
 | `unit`        | `src/**/*.test.{ts,tsx}`, `scripts/**/*.test.ts` (excluding integration/commands) | Unit + component  |
-| `integration` | `__tests__/integration/**`, `__tests__/user-journeys/**`  | Integration tests |
-| `commands`    | `__tests__/commands/**/*.test.ts`                         | CLI command tests |
+| `integration` | `__tests__/integration/**`, `__tests__/user-journeys/**`                          | Integration tests |
+| `commands`    | `__tests__/commands/**/*.test.ts`                                                 | CLI command tests |
 
 ## Configuration
 
@@ -286,6 +286,7 @@ e2e/
 ```
 
 **Note on E2E splits:** Several large E2E files were split into smaller files for parallel execution (commit 84e68ef):
+
 - `plugin-uninstall.e2e.test.ts` -> `plugin-uninstall-core.e2e.test.ts` + `plugin-uninstall-edge-cases.e2e.test.ts`
 - `edit-wizard-plugin.e2e.test.ts` -> `edit-wizard-plugin-migration.e2e.test.ts` + `edit-wizard-plugin-operations.e2e.test.ts`
 - `edit-wizard.e2e.test.ts` -> `edit-wizard-completion.e2e.test.ts` + `edit-wizard-launch.e2e.test.ts` + `edit-wizard-navigation.e2e.test.ts`
@@ -299,45 +300,45 @@ e2e/
 
 **MANDATORY: All test data must use these factories. Never construct inline.**
 
-| Factory                          | Purpose                             | Signature                                                   |
-| -------------------------------- | ----------------------------------- | ----------------------------------------------------------- |
-| `createMockSkill()`              | Create a ResolvedSkill mock         | `(id, overrides?) => ResolvedSkill`                         |
-| `createMockMatrix()`             | Create a MergedSkillsMatrix mock    | `(...skills) => MergedSkillsMatrix`                         |
-| `createMockCategory()`           | Create a CategoryDefinition mock    | `(id, displayName, overrides?) => CategoryDefinition`       |
-| `createMockAgent()`              | Create an AgentDefinition mock      | `(name, overrides?) => AgentDefinition`                     |
-| `createMockAgentConfig()`        | Create an AgentConfig mock          | `(name, skills?, overrides?) => AgentConfig`                |
-| `createMockSkillEntry()`         | Create a Skill entry                | `(id, preloaded?, overrides?) => Skill`                     |
-| `createMockSkillSource()`        | Create a SkillSource mock           | `(type, overrides?) => SkillSource`                         |
-| `createMockExtractedSkill()`     | Create ExtractedSkillMetadata       | `(id, overrides?) => ExtractedSkillMetadata`                |
-| `createMockSkillDefinition()`    | Create a SkillDefinition mock       | `(id, overrides?) => SkillDefinition`                       |
-| `createMockResolvedStack()`      | Create a ResolvedStack mock         | `(id, name, overrides?) => ResolvedStack`                   |
-| `createMockStack()`              | Create a Stack mock                 | `(id, config) => Stack`                                     |
-| `createMockMatrixConfig()`       | Create decomposed matrix config     | `(categories, overrides?) => MockMatrixConfig`              |
-| `createMockCompileConfig()`      | Create a CompileConfig mock         | `(agents, overrides?) => CompileConfig`                     |
-| `createMockCompiledStackPlugin()`| Create a CompiledStackPlugin mock   | `(overrides?) => CompiledStackPlugin`                       |
-| `createMockSkillAssignment()`    | Create a SkillAssignment mock       | `(id, preloaded?) => SkillAssignment`                       |
-| `createMockMultiSourceSkill()`   | Create multi-source ResolvedSkill   | `(id, sources, overrides?) => ResolvedSkill`                |
-| `createMockCompiledAgentData()`  | Create CompiledAgentData mock       | `(overrides?) => CompiledAgentData`                         |
-| `createMockMarketplace()`        | Create a Marketplace mock           | `(plugins?) => Marketplace`                                 |
-| `createMockMarketplacePlugin()`  | Create a MarketplacePlugin mock     | `(name, source?) => MarketplacePlugin`                      |
-| `createMockRawStacksConfig()`    | Create raw stacks config (2-stack)  | `() => RawStacksConfig`                                     |
-| `createMockRawStacksConfigWithArrays()` | Raw stacks with array categories | `() => RawStacksConfig`                                |
-| `createMockRawStacksConfigWithObjects()`| Raw stacks with object assignments | `() => RawStacksConfig`                               |
-| `buildWizardResult()`            | Create a WizardResultV2 mock        | `(skills, overrides?) => WizardResultV2`                    |
-| `buildSourceResult()`            | Create a SourceLoadResult mock      | `(matrix, sourcePath, overrides?) => SourceLoadResult`      |
-| `buildProjectConfig()`           | Create a ProjectConfig mock         | `(overrides?) => ProjectConfig`                             |
-| `buildSourceConfig()`            | Create source config object         | `(overrides?) => Record<string, unknown>`                   |
-| `buildSkillConfigs()`            | Create SkillConfig array            | `(skillIds, overrides?) => SkillConfig[]`                   |
-| `buildAgentConfigs()`            | Create AgentScopeConfig array       | `(agentNames, overrides?) => AgentScopeConfig[]`            |
-| `buildTestProjectConfig()`       | Create TestProjectConfig            | `(agents, skills, overrides?) => TestProjectConfig`         |
-| `buildWizardResultFromStore()`   | Build WizardResultV2 from store     | `(matrix, overrides?) => WizardResultV2`                    |
-| `createTestSkill()`              | Create a TestSkill for disk tests   | `(id, description, overrides?) => TestSkill`                |
-| `createComprehensiveMatrix()`    | Full matrix with 8 skills + stacks  | `(overrides?) => MergedSkillsMatrix`                        |
-| `createBasicMatrix()`            | Minimal matrix with 5 skills        | `(overrides?) => MergedSkillsMatrix`                        |
-| `createCompileContext()`         | Create a CompileContext mock        | `(overrides?) => CompileContext`                            |
-| `simulateSkillSelections()`      | Simulate user skill selections      | `(skillIds, matrix, selectedDomains) => void`               |
-| `testSkillToResolvedSkill()`     | Convert TestSkill to ResolvedSkill  | `(skill, overrides?) => ResolvedSkill`                      |
-| `extractSkillIdsFromAssignment()`| Extract IDs from stack assignment   | `(assignment) => string[]`                                  |
+| Factory                                  | Purpose                            | Signature                                              |
+| ---------------------------------------- | ---------------------------------- | ------------------------------------------------------ |
+| `createMockSkill()`                      | Create a ResolvedSkill mock        | `(id, overrides?) => ResolvedSkill`                    |
+| `createMockMatrix()`                     | Create a MergedSkillsMatrix mock   | `(...skills) => MergedSkillsMatrix`                    |
+| `createMockCategory()`                   | Create a CategoryDefinition mock   | `(id, displayName, overrides?) => CategoryDefinition`  |
+| `createMockAgent()`                      | Create an AgentDefinition mock     | `(name, overrides?) => AgentDefinition`                |
+| `createMockAgentConfig()`                | Create an AgentConfig mock         | `(name, skills?, overrides?) => AgentConfig`           |
+| `createMockSkillEntry()`                 | Create a Skill entry               | `(id, preloaded?, overrides?) => Skill`                |
+| `createMockSkillSource()`                | Create a SkillSource mock          | `(type, overrides?) => SkillSource`                    |
+| `createMockExtractedSkill()`             | Create ExtractedSkillMetadata      | `(id, overrides?) => ExtractedSkillMetadata`           |
+| `createMockSkillDefinition()`            | Create a SkillDefinition mock      | `(id, overrides?) => SkillDefinition`                  |
+| `createMockResolvedStack()`              | Create a ResolvedStack mock        | `(id, name, overrides?) => ResolvedStack`              |
+| `createMockStack()`                      | Create a Stack mock                | `(id, config) => Stack`                                |
+| `createMockMatrixConfig()`               | Create decomposed matrix config    | `(categories, overrides?) => MockMatrixConfig`         |
+| `createMockCompileConfig()`              | Create a CompileConfig mock        | `(agents, overrides?) => CompileConfig`                |
+| `createMockCompiledStackPlugin()`        | Create a CompiledStackPlugin mock  | `(overrides?) => CompiledStackPlugin`                  |
+| `createMockSkillAssignment()`            | Create a SkillAssignment mock      | `(id, preloaded?) => SkillAssignment`                  |
+| `createMockMultiSourceSkill()`           | Create multi-source ResolvedSkill  | `(id, sources, overrides?) => ResolvedSkill`           |
+| `createMockCompiledAgentData()`          | Create CompiledAgentData mock      | `(overrides?) => CompiledAgentData`                    |
+| `createMockMarketplace()`                | Create a Marketplace mock          | `(plugins?) => Marketplace`                            |
+| `createMockMarketplacePlugin()`          | Create a MarketplacePlugin mock    | `(name, source?) => MarketplacePlugin`                 |
+| `createMockRawStacksConfig()`            | Create raw stacks config (2-stack) | `() => RawStacksConfig`                                |
+| `createMockRawStacksConfigWithArrays()`  | Raw stacks with array categories   | `() => RawStacksConfig`                                |
+| `createMockRawStacksConfigWithObjects()` | Raw stacks with object assignments | `() => RawStacksConfig`                                |
+| `buildWizardResult()`                    | Create a WizardResultV2 mock       | `(skills, overrides?) => WizardResultV2`               |
+| `buildSourceResult()`                    | Create a SourceLoadResult mock     | `(matrix, sourcePath, overrides?) => SourceLoadResult` |
+| `buildProjectConfig()`                   | Create a ProjectConfig mock        | `(overrides?) => ProjectConfig`                        |
+| `buildSourceConfig()`                    | Create source config object        | `(overrides?) => Record<string, unknown>`              |
+| `buildSkillConfigs()`                    | Create SkillConfig array           | `(skillIds, overrides?) => SkillConfig[]`              |
+| `buildAgentConfigs()`                    | Create AgentScopeConfig array      | `(agentNames, overrides?) => AgentScopeConfig[]`       |
+| `buildTestProjectConfig()`               | Create TestProjectConfig           | `(agents, skills, overrides?) => TestProjectConfig`    |
+| `buildWizardResultFromStore()`           | Build WizardResultV2 from store    | `(matrix, overrides?) => WizardResultV2`               |
+| `createTestSkill()`                      | Create a TestSkill for disk tests  | `(id, description, overrides?) => TestSkill`           |
+| `createComprehensiveMatrix()`            | Full matrix with 8 skills + stacks | `(overrides?) => MergedSkillsMatrix`                   |
+| `createBasicMatrix()`                    | Minimal matrix with 5 skills       | `(overrides?) => MergedSkillsMatrix`                   |
+| `createCompileContext()`                 | Create a CompileContext mock       | `(overrides?) => CompileContext`                       |
+| `simulateSkillSelections()`              | Simulate user skill selections     | `(skillIds, matrix, selectedDomains) => void`          |
+| `testSkillToResolvedSkill()`             | Convert TestSkill to ResolvedSkill | `(skill, overrides?) => ResolvedSkill`                 |
+| `extractSkillIdsFromAssignment()`        | Extract IDs from stack assignment  | `(assignment) => string[]`                             |
 
 ### Skill File Creators
 
@@ -349,15 +350,15 @@ e2e/
 
 ### Test Utilities
 
-| Helper                   | Purpose                                          |
-| ------------------------ | ------------------------------------------------ |
-| `runCliCommand()`        | Run CLI command, capture stdout/stderr/error      |
-| `readTestYaml<T>()`      | Read and parse YAML test file                    |
-| `readTestTsConfig<T>()`  | Load TS config file via jiti                     |
-| `writeTestTsConfig()`    | Write a config.ts file to a project directory    |
-| `parseTestFrontmatter()` | Lightweight frontmatter parser for assertions    |
-| `createTestDirs()`       | Create plugin test directory structure            |
-| `cleanupTestDirs()`      | Clean up plugin test directory structure          |
+| Helper                   | Purpose                                              |
+| ------------------------ | ---------------------------------------------------- |
+| `runCliCommand()`        | Run CLI command, capture stdout/stderr/error         |
+| `readTestYaml<T>()`      | Read and parse YAML test file                        |
+| `readTestTsConfig<T>()`  | Load TS config file via jiti                         |
+| `writeTestTsConfig()`    | Write a config.ts file to a project directory        |
+| `parseTestFrontmatter()` | Lightweight frontmatter parser for assertions        |
+| `createTestDirs()`       | Create plugin test directory structure               |
+| `cleanupTestDirs()`      | Clean up plugin test directory structure             |
 | `createTempDir()`        | Create temp directory (re-export from test-fs-utils) |
 | `cleanupTempDir()`       | Remove temp directory (re-export from test-fs-utils) |
 
@@ -365,13 +366,13 @@ e2e/
 
 Pure content renderers for test file generation:
 
-| Function               | Purpose                          |
-| ---------------------- | -------------------------------- |
+| Function               | Purpose                            |
+| ---------------------- | ---------------------------------- |
 | `renderSkillMd()`      | Generate SKILL.md with frontmatter |
-| `renderAgentYaml()`    | Generate agent metadata.yaml     |
-| `renderConfigTs()`     | Generate config.ts with export   |
-| `renderCategoriesTs()` | Generate categories config       |
-| `renderRulesTs()`      | Generate rules config            |
+| `renderAgentYaml()`    | Generate agent metadata.yaml       |
+| `renderConfigTs()`     | Generate config.ts with export     |
+| `renderCategoriesTs()` | Generate categories config         |
+| `renderRulesTs()`      | Generate rules config              |
 
 ### Temp Directory Management
 
@@ -404,40 +405,40 @@ Intercepts both `process.stdout.write` (Node.js) and `console.log` (Bun) for cro
 
 Single source of truth for all test ResolvedSkills. Use `SKILLS.react`, `SKILLS.hono` etc. directly.
 
-| Key          | Skill ID                                  | Domain  |
-| ------------ | ----------------------------------------- | ------- |
-| `react`      | `web-framework-react`                     | web     |
-| `vue`        | `web-framework-vue-composition-api`       | web     |
-| `zustand`    | `web-state-zustand`                       | web     |
-| `pinia`      | `web-state-pinia`                         | web     |
-| `scss`       | `web-styling-scss-modules`                | web     |
-| `tailwind`   | `web-styling-tailwind`                    | web     |
-| `vitest`     | `web-testing-vitest`                      | web     |
-| `hono`       | `api-framework-hono`                      | api     |
-| `drizzle`    | `api-database-drizzle`                    | api     |
-| `antiOverEng`| `meta-methodology-anti-over-engineering`  | shared  |
+| Key           | Skill ID                                 | Domain |
+| ------------- | ---------------------------------------- | ------ |
+| `react`       | `web-framework-react`                    | web    |
+| `vue`         | `web-framework-vue-composition-api`      | web    |
+| `zustand`     | `web-state-zustand`                      | web    |
+| `pinia`       | `web-state-pinia`                        | web    |
+| `scss`        | `web-styling-scss-modules`               | web    |
+| `tailwind`    | `web-styling-tailwind`                   | web    |
+| `vitest`      | `web-testing-vitest`                     | web    |
+| `hono`        | `api-framework-hono`                     | api    |
+| `drizzle`     | `api-database-drizzle`                   | api    |
+| `antiOverEng` | `meta-methodology-anti-over-engineering` | shared |
 
 ### TEST_CATEGORIES
 
 Base category fixtures for spread-based customization:
 
-| Key               | Category ID          | Display Name     |
-| ----------------- | -------------------- | ---------------- |
-| `framework`       | `web-framework`      | Framework        |
-| `clientState`     | `web-client-state`   | Client State     |
-| `styling`         | `web-styling`        | Styling          |
-| `testing`         | `web-testing`        | Testing          |
-| `serverState`     | `web-server-state`   | Server State     |
-| `animation`       | `web-animation`      | Animation        |
-| `accessibility`   | `web-accessibility`  | Accessibility    |
-| `api`             | `api-api`            | Backend Framework|
-| `database`        | `api-database`       | Database         |
-| `observability`   | `api-observability`  | Observability    |
-| `methodology`     | `shared-methodology` | Methodology      |
-| `tooling`         | `shared-tooling`     | Tooling          |
-| `security`        | `shared-security`    | Security         |
-| `cliFramework`    | `cli-framework`      | CLI Framework    |
-| `mobileFramework` | `mobile-framework`   | Mobile Framework |
+| Key               | Category ID          | Display Name      |
+| ----------------- | -------------------- | ----------------- |
+| `framework`       | `web-framework`      | Framework         |
+| `clientState`     | `web-client-state`   | Client State      |
+| `styling`         | `web-styling`        | Styling           |
+| `testing`         | `web-testing`        | Testing           |
+| `serverState`     | `web-server-state`   | Server State      |
+| `animation`       | `web-animation`      | Animation         |
+| `accessibility`   | `web-accessibility`  | Accessibility     |
+| `api`             | `api-api`            | Backend Framework |
+| `database`        | `api-database`       | Database          |
+| `observability`   | `api-observability`  | Observability     |
+| `methodology`     | `shared-methodology` | Methodology       |
+| `tooling`         | `shared-tooling`     | Tooling           |
+| `security`        | `shared-security`    | Security          |
+| `cliFramework`    | `cli-framework`      | CLI Framework     |
+| `mobileFramework` | `mobile-framework`   | Mobile Framework  |
 
 ## Mock Data Module (`src/cli/lib/__tests__/mock-data/`)
 

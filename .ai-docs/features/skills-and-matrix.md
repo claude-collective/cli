@@ -28,20 +28,20 @@
 | `matrix-resolver.ts`     | `src/cli/lib/matrix/matrix-resolver.ts`     | Alias resolution, relationship queries, validation                   |
 | `matrix-provider.ts`     | `src/cli/lib/matrix/matrix-provider.ts`     | Singleton matrix holder, asserting lookups (getSkillById, findStack) |
 | `skill-resolution.ts`    | `src/cli/lib/matrix/skill-resolution.ts`    | Merge categories + rules + skills into MergedSkillsMatrix            |
-| `matrix-health-check.ts` | `src/cli/lib/matrix/matrix-health-check.ts` | Validate matrix integrity                                           |
+| `matrix-health-check.ts` | `src/cli/lib/matrix/matrix-health-check.ts` | Validate matrix integrity                                            |
 | `index.ts`               | `src/cli/lib/matrix/index.ts`               | Barrel exports                                                       |
 
 ### Skills System (`src/cli/lib/skills/`)
 
-| File                       | Path                                          | Purpose                                |
-| -------------------------- | --------------------------------------------- | -------------------------------------- |
-| `skill-fetcher.ts`         | `src/cli/lib/skills/skill-fetcher.ts`         | Fetch skills from source directories   |
-| `skill-metadata.ts`        | `src/cli/lib/skills/skill-metadata.ts`        | Read/write skill metadata, hashing     |
-| `skill-copier.ts`          | `src/cli/lib/skills/skill-copier.ts`          | Copy skills to local/plugin dirs       |
-| `skill-plugin-compiler.ts` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Compile skill as Claude plugin         |
-| `local-skill-loader.ts`    | `src/cli/lib/skills/local-skill-loader.ts`    | Discover local skills in project       |
+| File                       | Path                                          | Purpose                                          |
+| -------------------------- | --------------------------------------------- | ------------------------------------------------ |
+| `skill-fetcher.ts`         | `src/cli/lib/skills/skill-fetcher.ts`         | Fetch skills from source directories             |
+| `skill-metadata.ts`        | `src/cli/lib/skills/skill-metadata.ts`        | Read/write skill metadata, hashing               |
+| `skill-copier.ts`          | `src/cli/lib/skills/skill-copier.ts`          | Copy skills to local/plugin dirs                 |
+| `skill-plugin-compiler.ts` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Compile skill as Claude plugin                   |
+| `local-skill-loader.ts`    | `src/cli/lib/skills/local-skill-loader.ts`    | Discover local skills in project                 |
 | `source-switcher.ts`       | `src/cli/lib/skills/source-switcher.ts`       | Delete/migrate local skills for source switching |
-| `index.ts`                 | `src/cli/lib/skills/index.ts`                 | Barrel exports                         |
+| `index.ts`                 | `src/cli/lib/skills/index.ts`                 | Barrel exports                                   |
 
 ### Loading System (`src/cli/lib/loading/`)
 
@@ -181,14 +181,14 @@ Validates that a skill ID exists in the matrix:
 
 Defined in `config/skill-rules.ts` under `relationships` using skill slugs:
 
-| Type           | Effect                                  | Enforcement         |
-| -------------- | --------------------------------------- | ------------------- |
-| `conflicts`    | Selecting one disables others           | Hard (grays out)    |
-| `discourages`  | Selecting one warns about others        | Soft (warning icon) |
-| `recommends`   | Selecting one highlights companions     | Soft (highlight)    |
-| `requires`     | Skill A needs skill B first             | Hard (dependency)   |
-| `alternatives` | Interchangeable skills for same purpose | Informational       |
-| `compatibleWith` | Symmetric compatibility groups        | Framework filtering |
+| Type             | Effect                                  | Enforcement         |
+| ---------------- | --------------------------------------- | ------------------- |
+| `conflicts`      | Selecting one disables others           | Hard (grays out)    |
+| `discourages`    | Selecting one warns about others        | Soft (warning icon) |
+| `recommends`     | Selecting one highlights companions     | Soft (highlight)    |
+| `requires`       | Skill A needs skill B first             | Hard (dependency)   |
+| `alternatives`   | Interchangeable skills for same purpose | Informational       |
+| `compatibleWith` | Symmetric compatibility groups          | Framework filtering |
 
 All relationship rules use `SkillSlug` references (e.g., `"react"`, `"zustand"`) which are resolved to canonical `SkillId`s during the merge step via the slug map.
 

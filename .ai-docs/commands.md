@@ -117,11 +117,11 @@ Compiles a stack (bundle of skills + agents) as a single plugin.
 
 Manage `.claude-src/config.ts` project configuration.
 
-| Subcommand    | Purpose                                                         |
-| ------------- | --------------------------------------------------------------- |
-| `config`      | Overview showing source resolution layers (alias for `show`)    |
-| `config show` | Display all resolved config values (source, marketplace, etc.)  |
-| `config path` | Show config file locations                                      |
+| Subcommand    | Purpose                                                        |
+| ------------- | -------------------------------------------------------------- |
+| `config`      | Overview showing source resolution layers (alias for `show`)   |
+| `config show` | Display all resolved config values (source, marketplace, etc.) |
+| `config path` | Show config file locations                                     |
 
 ## Error Handling Pattern
 

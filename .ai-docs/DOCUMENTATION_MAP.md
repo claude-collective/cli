@@ -95,6 +95,7 @@ Adversarial audit of first-pass validation results for test-infrastructure.md. E
 - Added note that smoke tests use `*.smoke.test.ts` pattern, not matched by E2E vitest config
 
 Verified correct (no changes needed):
+
 - E2E file counts: commands=24, interactive=24, lifecycle=11, integration=3, smoke=3, total=65
 - SKILLS registry: 10 entries
 - TEST_CATEGORIES: 15 entries
@@ -198,7 +199,7 @@ Validated against source code after significant test infrastructure and command 
 - Removed phantom `configs/` and `matrix/` from fixtures subdirectories (do not exist)
 - Added `compile.test.ts` to command tests listing
 - Added `install-mode.integration.test.ts` to integration tests
-- Added 22 new co-located test files: configuration/__tests__/ (8 files), mode-migrator, matrix-provider, skill-resolution, config-generator, config-merger, versioning, local-installer, use-section-scroll, etc.
+- Added 22 new co-located test files: configuration/**tests**/ (8 files), mode-migrator, matrix-provider, skill-resolution, config-generator, config-merger, versioning, local-installer, use-section-scroll, etc.
 - Expanded factory functions table: 6 -> 35 factories documented
 - Added Content Generators section
 - Added Canonical Test Fixtures section (SKILLS registry table, TEST_CATEGORIES table)

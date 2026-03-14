@@ -10,31 +10,31 @@
 
 ## Files
 
-| File                     | Path                                               | Purpose                                       |
-| ------------------------ | -------------------------------------------------- | --------------------------------------------- |
-| `config.ts`              | `src/cli/lib/configuration/config.ts`              | Source resolution, project source config I/O   |
-| `config-generator.ts`    | `src/cli/lib/configuration/config-generator.ts`    | Generate ProjectConfig from wizard, scope split|
-| `config-merger.ts`       | `src/cli/lib/configuration/config-merger.ts`       | Merge wizard result with existing              |
-| `config-saver.ts`        | `src/cli/lib/configuration/config-saver.ts`        | Save source to project config                  |
-| `config-writer.ts`       | `src/cli/lib/configuration/config-writer.ts`       | Generate TypeScript config source strings      |
-| `config-types-writer.ts` | `src/cli/lib/configuration/config-types-writer.ts` | Generate config-types.ts type files            |
-| `config-loader.ts`       | `src/cli/lib/configuration/config-loader.ts`       | Load TypeScript config via jiti                |
-| `project-config.ts`      | `src/cli/lib/configuration/project-config.ts`      | Load and validate project config               |
-| `source-manager.ts`      | `src/cli/lib/configuration/source-manager.ts`      | Add/remove extra sources                       |
-| `define-config.ts`       | `src/cli/lib/configuration/define-config.ts`       | Type-safe `defineConfig()` helper              |
-| `default-categories.ts`  | `src/cli/lib/configuration/default-categories.ts`  | Default skill category definitions             |
-| `default-rules.ts`       | `src/cli/lib/configuration/default-rules.ts`       | Default skill rule definitions                 |
-| `default-stacks.ts`      | `src/cli/lib/configuration/default-stacks.ts`      | Default stack definitions                      |
-| `index.ts`               | `src/cli/lib/configuration/index.ts`               | Barrel exports                                 |
+| File                     | Path                                               | Purpose                                         |
+| ------------------------ | -------------------------------------------------- | ----------------------------------------------- |
+| `config.ts`              | `src/cli/lib/configuration/config.ts`              | Source resolution, project source config I/O    |
+| `config-generator.ts`    | `src/cli/lib/configuration/config-generator.ts`    | Generate ProjectConfig from wizard, scope split |
+| `config-merger.ts`       | `src/cli/lib/configuration/config-merger.ts`       | Merge wizard result with existing               |
+| `config-saver.ts`        | `src/cli/lib/configuration/config-saver.ts`        | Save source to project config                   |
+| `config-writer.ts`       | `src/cli/lib/configuration/config-writer.ts`       | Generate TypeScript config source strings       |
+| `config-types-writer.ts` | `src/cli/lib/configuration/config-types-writer.ts` | Generate config-types.ts type files             |
+| `config-loader.ts`       | `src/cli/lib/configuration/config-loader.ts`       | Load TypeScript config via jiti                 |
+| `project-config.ts`      | `src/cli/lib/configuration/project-config.ts`      | Load and validate project config                |
+| `source-manager.ts`      | `src/cli/lib/configuration/source-manager.ts`      | Add/remove extra sources                        |
+| `define-config.ts`       | `src/cli/lib/configuration/define-config.ts`       | Type-safe `defineConfig()` helper               |
+| `default-categories.ts`  | `src/cli/lib/configuration/default-categories.ts`  | Default skill category definitions              |
+| `default-rules.ts`       | `src/cli/lib/configuration/default-rules.ts`       | Default skill rule definitions                  |
+| `default-stacks.ts`      | `src/cli/lib/configuration/default-stacks.ts`      | Default stack definitions                       |
+| `index.ts`               | `src/cli/lib/configuration/index.ts`               | Barrel exports                                  |
 
 ## Config File Locations
 
-| File                       | Path                      | Purpose                                    |
-| -------------------------- | ------------------------- | ------------------------------------------ |
-| Project config             | `.claude-src/config.ts`   | Skills, agents, stack, source, branding     |
-| Project config types       | `.claude-src/config-types.ts` | Auto-generated type unions for config   |
-| Global config              | `~/.claude-src/config.ts` | Global-scope skills, agents, stack          |
-| Global config types        | `~/.claude-src/config-types.ts` | Auto-generated global type unions   |
+| File                 | Path                            | Purpose                                 |
+| -------------------- | ------------------------------- | --------------------------------------- |
+| Project config       | `.claude-src/config.ts`         | Skills, agents, stack, source, branding |
+| Project config types | `.claude-src/config-types.ts`   | Auto-generated type unions for config   |
+| Global config        | `~/.claude-src/config.ts`       | Global-scope skills, agents, stack      |
+| Global config types  | `~/.claude-src/config-types.ts` | Auto-generated global type unions       |
 
 Config uses a unified `ProjectConfig` type for both source-level settings (source, marketplace, branding) and installation settings (skills, agents, stack). Files are TypeScript (loaded via jiti), not YAML.
 
@@ -162,21 +162,21 @@ When `edit` command modifies skills:
 
 ## Config I/O
 
-| Function                      | Purpose                                | File                  |
-| ----------------------------- | -------------------------------------- | --------------------- |
-| `loadProjectSourceConfig()`   | Load .claude-src/config.ts (partial)   | `config.ts:28`        |
-| `loadGlobalSourceConfig()`    | Load ~/.claude-src/config.ts (partial) | `config.ts:52`        |
-| `loadProjectConfig()`         | Load + validate with global fallback   | `project-config.ts:75`|
-| `loadProjectConfigFromDir()`  | Load + validate from specific dir only | `project-config.ts:18`|
-| `validateProjectConfig()`     | Validate project config structure      | `project-config.ts:88`|
-| `generateConfigSource()`      | Generate TypeScript source string      | `config-writer.ts:29` |
-| `saveSourceToProjectConfig()` | Save source field to config file       | `config-saver.ts:8`   |
-| `loadConfig()`                | Generic TypeScript config loader (jiti)| `config-loader.ts:26` |
-| `defineConfig()`              | Type-safe config helper (identity fn)  | `define-config.ts:10` |
-| `getProjectConfigPath()`      | Build absolute path to project config  | `config.ts:24`        |
-| `resolveAllSources()`         | Resolve primary + extra sources        | `config.ts:224`       |
-| `resolveAuthor()`             | Resolve author from effective config   | `config.ts:204`       |
-| `formatOrigin()`              | Human-readable label for source origin | `config.ts:172`       |
+| Function                      | Purpose                                 | File                   |
+| ----------------------------- | --------------------------------------- | ---------------------- |
+| `loadProjectSourceConfig()`   | Load .claude-src/config.ts (partial)    | `config.ts:28`         |
+| `loadGlobalSourceConfig()`    | Load ~/.claude-src/config.ts (partial)  | `config.ts:52`         |
+| `loadProjectConfig()`         | Load + validate with global fallback    | `project-config.ts:75` |
+| `loadProjectConfigFromDir()`  | Load + validate from specific dir only  | `project-config.ts:18` |
+| `validateProjectConfig()`     | Validate project config structure       | `project-config.ts:88` |
+| `generateConfigSource()`      | Generate TypeScript source string       | `config-writer.ts:29`  |
+| `saveSourceToProjectConfig()` | Save source field to config file        | `config-saver.ts:8`    |
+| `loadConfig()`                | Generic TypeScript config loader (jiti) | `config-loader.ts:26`  |
+| `defineConfig()`              | Type-safe config helper (identity fn)   | `define-config.ts:10`  |
+| `getProjectConfigPath()`      | Build absolute path to project config   | `config.ts:24`         |
+| `resolveAllSources()`         | Resolve primary + extra sources         | `config.ts:224`        |
+| `resolveAuthor()`             | Resolve author from effective config    | `config.ts:204`        |
+| `formatOrigin()`              | Human-readable label for source origin  | `config.ts:172`        |
 
 ## Config Writer
 
@@ -184,13 +184,13 @@ When `edit` command modifies skills:
 
 Replaced the former `writeProjectSourceConfig()`. Generates TypeScript source strings from `ProjectConfig`.
 
-| Function                             | Purpose                                              |
-| ------------------------------------ | ---------------------------------------------------- |
-| `generateConfigSource()`             | Main entry: generates config.ts source string        |
-| `generateBlankGlobalConfigSource()`  | Blank global config (empty arrays)                   |
-| `generateBlankGlobalConfigTypesSource()` | Blank config-types.ts (all types = `never`)      |
-| `ensureBlankGlobalConfig()`          | Creates blank global config at `~/.claude-src/` if missing |
-| `getGlobalConfigImportPath()`        | Returns absolute path to `~/.claude-src/`            |
+| Function                                 | Purpose                                                    |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| `generateConfigSource()`                 | Main entry: generates config.ts source string              |
+| `generateBlankGlobalConfigSource()`      | Blank global config (empty arrays)                         |
+| `generateBlankGlobalConfigTypesSource()` | Blank config-types.ts (all types = `never`)                |
+| `ensureBlankGlobalConfig()`              | Creates blank global config at `~/.claude-src/` if missing |
+| `getGlobalConfigImportPath()`            | Returns absolute path to `~/.claude-src/`                  |
 
 The `generateConfigSource()` function accepts an optional `ConfigSourceOptions` parameter. When `isProjectConfig: true`, the generated config imports from the global config and spreads global arrays into skills, agents, and domains.
 
@@ -200,13 +200,13 @@ The `generateConfigSource()` function accepts an optional `ConfigSourceOptions` 
 
 Generates `config-types.ts` files with typed union types narrowed to installed items.
 
-| Function                               | Purpose                                               |
-| -------------------------------------- | ----------------------------------------------------- |
-| `generateConfigTypesSource()`          | Generate standalone config-types.ts from matrix       |
-| `generateProjectConfigTypesSource()`   | Generate project config-types.ts extending global     |
-| `regenerateConfigTypes()`              | Full regeneration with background matrix loading      |
-| `loadConfigTypesDataInBackground()`    | Kick off background matrix/agent loading              |
-| `getGlobalConfigTypesPath()`           | Check if global config-types.ts exists                |
+| Function                             | Purpose                                           |
+| ------------------------------------ | ------------------------------------------------- |
+| `generateConfigTypesSource()`        | Generate standalone config-types.ts from matrix   |
+| `generateProjectConfigTypesSource()` | Generate project config-types.ts extending global |
+| `regenerateConfigTypes()`            | Full regeneration with background matrix loading  |
+| `loadConfigTypesDataInBackground()`  | Kick off background matrix/agent loading          |
+| `getGlobalConfigTypesPath()`         | Check if global config-types.ts exists            |
 
 When a global installation exists, project `config-types.ts` imports from global and extends with project-only types. Types are narrowed to only installed items (not the full matrix).
 
@@ -259,9 +259,9 @@ Falls back to `DEFAULT_BRANDING` from `src/cli/consts.ts:163-166`:
 
 Config files are validated at parse boundaries using Zod schemas from `src/cli/lib/schemas.ts`:
 
-| Schema                          | Purpose                                           |
-| ------------------------------- | ------------------------------------------------- |
-| `projectSourceConfigSchema`     | Lenient loader for source config fields            |
-| `projectConfigLoaderSchema`     | Lenient loader for full ProjectConfig              |
+| Schema                      | Purpose                                 |
+| --------------------------- | --------------------------------------- |
+| `projectSourceConfigSchema` | Lenient loader for source config fields |
+| `projectConfigLoaderSchema` | Lenient loader for full ProjectConfig   |
 
 Schema URLs defined in `SCHEMA_PATHS` at `src/cli/consts.ts:79-86`.

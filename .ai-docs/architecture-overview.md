@@ -8,7 +8,7 @@
 | ----------- | ------------------------------------------------------------------------ |
 | Package     | `@agents-inc/cli`                                                        |
 | Version     | 0.74.10                                                                  |
-| Binary      | `agentsinc` (also `CLI_BIN_NAME` in `src/cli/consts.ts:27`)             |
+| Binary      | `agentsinc` (also `CLI_BIN_NAME` in `src/cli/consts.ts:27`)              |
 | Type        | ESM (`"type": "module"` in package.json)                                 |
 | Entry Point | `src/cli/index.ts` (runs oclif with `run()`)                             |
 | Build       | tsup -> `dist/`                                                          |
@@ -183,8 +183,8 @@ Implemented in: `src/cli/lib/configuration/config.ts:84-132`
 
 ### 4. Install Modes
 
-| Mode   | Skills Location     | Agents Location   | Config Location       |
-| ------ | ------------------- | ----------------- | --------------------- |
+| Mode   | Skills Location     | Agents Location   | Config Location         |
+| ------ | ------------------- | ----------------- | ----------------------- |
 | local  | `.claude/skills/`   | `.claude/agents/` | `.claude-src/config.ts` |
 | plugin | Claude plugin cache | `.claude/agents/` | `.claude-src/config.ts` |
 
@@ -223,6 +223,7 @@ The `src/cli/types/generated/matrix.ts` file contains the full `BUILT_IN_MATRIX`
 ### 8. Matrix Provider and Skill Resolution
 
 `src/cli/lib/matrix/matrix-provider.ts` provides safe skill lookups:
+
 - `getSkillById(id)` — asserting lookup by SkillId
 - `getSkillBySlug(slug)` — asserting lookup by SkillSlug
 

@@ -184,7 +184,7 @@ Centralized hotkey definitions. Each hotkey has a `key` (for matching) and `labe
 
 **Character hotkeys:**
 
-| Export                    | Key | Context                       |
+| Export                   | Key | Context                       |
 | ------------------------ | --- | ----------------------------- |
 | `HOTKEY_HELP`            | ?   | Global (all steps)            |
 | `HOTKEY_ACCEPT_DEFAULTS` | A   | Global (all steps)            |
@@ -262,13 +262,13 @@ Test files use:
 
 For long skill lists that exceed terminal height. Constants in `SCROLL_VIEWPORT` (`src/cli/consts.ts:150-161`):
 
-| Constant                  | Value | Purpose                                     |
-| ------------------------- | ----- | ------------------------------------------- |
-| `SCROLL_INDICATOR_HEIGHT` | 1     | Height of scroll indicator line              |
-| `CATEGORY_NAME_LINES`     | 2     | Lines per category name row (incl. margin)   |
-| `CATEGORY_MARGIN_LINES`   | 1     | Margin between category sections             |
-| `MIN_VIEWPORT_ROWS`       | 5     | Minimum rows before enabling scroll          |
-| `MIN_TERMINAL_HEIGHT`     | 15    | Minimum terminal height for wizard display   |
+| Constant                  | Value | Purpose                                    |
+| ------------------------- | ----- | ------------------------------------------ |
+| `SCROLL_INDICATOR_HEIGHT` | 1     | Height of scroll indicator line            |
+| `CATEGORY_NAME_LINES`     | 2     | Lines per category name row (incl. margin) |
+| `CATEGORY_MARGIN_LINES`   | 1     | Margin between category sections           |
+| `MIN_VIEWPORT_ROWS`       | 5     | Minimum rows before enabling scroll        |
+| `MIN_TERMINAL_HEIGHT`     | 15    | Minimum terminal height for wizard display |
 
 ### Section Scroll (`use-section-scroll.ts`)
 
