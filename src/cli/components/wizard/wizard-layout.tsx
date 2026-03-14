@@ -12,7 +12,6 @@ import {
   HOTKEY_SCOPE,
   HOTKEY_SETTINGS,
   HOTKEY_TOGGLE_LABELS,
-  KEY_LABEL_ARROWS,
   KEY_LABEL_ARROWS_VERT,
   KEY_LABEL_ENTER,
   KEY_LABEL_ESC,
@@ -56,7 +55,7 @@ const DefinitionItem: React.FC<KeyHintProps> = ({
 };
 
 const HOT_KEYS: { label: string; values: string[] }[] = [
-  { label: "navigate", values: [KEY_LABEL_ARROWS, KEY_LABEL_ARROWS_VERT] },
+  { label: "navigate", values: [KEY_LABEL_ARROWS_VERT] },
   { label: "select", values: [KEY_LABEL_SPACE] },
   { label: "continue", values: [KEY_LABEL_ENTER] },
   { label: "back", values: [KEY_LABEL_ESC] },

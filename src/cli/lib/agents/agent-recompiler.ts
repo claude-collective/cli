@@ -133,6 +133,10 @@ async function compileAndWriteAgents(
 
   const globalAgentsDir = path.join(os.homedir(), CLAUDE_DIR, "agents");
 
+  // Ensure both directories exist before writing agents.
+  // ensureDir is idempotent (mkdir -p), so calling it when dirs already exist is safe.
+  await ensureDir(globalAgentsDir);
+
   for (const [agentName, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
     try {
       const output = await compileAgentForPlugin(agentName, agent, sourcePath, engine, installMode);
@@ -140,9 +144,6 @@ async function compileAndWriteAgents(
       // Route agent output by scope: global agents go to ~/.claude/agents/, project agents to agentsDir
       const scope = agentScopeMap?.get(agentName) ?? "project";
       const targetDir = scope === "global" ? globalAgentsDir : agentsDir;
-      if (scope === "global") {
-        await ensureDir(targetDir);
-      }
       await writeFile(path.join(targetDir, `${agentName}.md`), output);
       result.compiled.push(agentName);
       verbose(`  Recompiled: ${agentName} (${scope} -> ${targetDir})`);

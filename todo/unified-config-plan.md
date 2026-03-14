@@ -36,6 +36,12 @@ The split-write infrastructure is fully implemented (D-37 phases 1-5). The bug i
 
 ---
 
+## Precondition
+
+`edit` requires at least one installation (global or project) to exist. If neither exists, `detectInstallation()` returns `null` and the command exits with an error: "No Agents Inc. installation found. Run 'agentsinc init' to create one." This is already handled at `edit.tsx` line 89-93. No change needed.
+
+---
+
 ## The Bug
 
 **Scenario:** User has a global installation at `~/` but no project config. They run `edit` from `/home/user/my-project/`.
@@ -48,28 +54,32 @@ The split-write infrastructure is fully implemented (D-37 phases 1-5). The bug i
    - Writes everything as a standalone global config
    - Project-scoped items silently land in `~/.claude-src/config.ts`
 
+**Secondary bug:** The `isGlobalDir` check at line 152 (`projectDir === GLOBAL_INSTALL_ROOT`) also uses `installation.projectDir`. When installation falls back to global, `isGlobalDir = true`, so nothing is locked — the user can toggle off global skills even though they're in a project directory. Fixing `projectDir` to `cwd` also fixes this: `isGlobalDir` becomes `false` in a project directory, and global items are correctly locked.
+
 **Root cause:** `edit.tsx` uses `installation.projectDir` for writes. When installation falls back to global, this is `~/` instead of the user's actual working directory.
 
 ---
 
 ## The Fix
 
-### 1. Use `process.cwd()` for save operations in `edit.tsx`
+### 1. Use `process.cwd()` for save operations and locked-items check in `edit.tsx`
 
 **File:** `src/cli/commands/edit.tsx`
 
-Use `installation.projectDir` for **reading** existing state (loading config, discovering installed skills). Use `process.cwd()` for **writing** (config saves, plugin installs, scope migrations, recompilation output).
+Use `installation.projectDir` for **reading** existing state (loading config, discovering installed skills). Use `process.cwd()` for **writing** (config saves, plugin installs, scope migrations, recompilation output) and for the **locked-items check** (determining whether global items are read-only).
 
-Every `projectDir` reference in the post-wizard section of `edit.tsx` that feeds into a write operation must use `process.cwd()`:
+Every `projectDir` reference in `edit.tsx` that feeds into a write operation or the `isGlobalDir` check must use `process.cwd()`:
 
 | Line    | Current call                                                                                     | What changes                                                 |
 | ------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| 152     | `const isGlobalDir = projectDir === GLOBAL_INSTALL_ROOT`                                         | `projectDir` → `cwd`                                         |
 | 297     | `executeMigration(migrationPlan, projectDir, ...)`                                               | `projectDir` → `cwd`                                         |
 | 313     | `migrateLocalSkillScope(skillId, change.from, projectDir)`                                       | `projectDir` → `cwd`                                         |
 | 319     | `claudePluginUninstall(skillId, oldPluginScope, projectDir)`                                     | `projectDir` → `cwd`                                         |
 | 321     | `claudePluginInstall(pluginRef, newPluginScope, projectDir)`                                     | `projectDir` → `cwd`                                         |
 | 335     | `deleteLocalSkill(projectDir, skillId)`                                                          | `projectDir` → `cwd`                                         |
-| 348+    | Plugin install loop `projectDir`                                                                 | `projectDir` → `cwd`                                         |
+| 348+    | Plugin install loop `projectDir` (lines 357, 368)                                                | `projectDir` → `cwd`                                         |
+| 368     | `claudePluginUninstall(skillId, pluginScope, projectDir)` (removed-skills loop)                  | `projectDir` → `cwd`                                         |
 | 394     | `buildAndMergeConfig(..., projectDir, ...)`                                                      | `projectDir` → `cwd`                                         |
 | 401-407 | `writeScopedConfigs(..., projectDir, installation.configPath)`                                   | `projectDir` → `cwd`, `configPath` → recomputed from `cwd`   |
 | 414     | `discoverAllPluginSkills(projectDir)`                                                            | `projectDir` → `cwd`                                         |
@@ -77,7 +87,7 @@ Every `projectDir` reference in the post-wizard section of `edit.tsx` that feeds
 
 **Critical:** `installation.configPath` also needs recomputing. When installation falls back to global, `installation.configPath` points to `~/.claude-src/config.ts`. But `writeScopedConfigs` uses this parameter as the **project** config path (line 452 of local-installer.ts). Must recompute: `path.join(cwd, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS)`.
 
-**When `cwd === os.homedir()`:** Everything works unchanged — `isProjectContext = false` in `writeScopedConfigs`, single standalone config written. No edge case.
+**When `cwd === os.homedir()`:** Everything works unchanged — `isProjectContext = false` in `writeScopedConfigs`, single standalone config written. `isGlobalDir = true`, nothing locked. No edge case.
 
 ### 2. Call `ensureBlankGlobalConfig()` before scoped writes
 
@@ -98,7 +108,7 @@ Guard:
 ```typescript
 const { global: globalConfig, project: projectSplitConfig } = splitConfigByScope(finalConfig);
 
-// Always write global config
+// Always write global config (idempotent — content comes from splitConfigByScope)
 await writeConfigFile(globalConfig, globalConfigPath);
 await writeStandaloneConfigTypes(globalConfigPath, matrix, agents, globalConfig);
 
@@ -116,11 +126,24 @@ if (hasProjectItems) {
 
 **File:** `src/cli/commands/edit.tsx`
 
-Remove the message at line 99-103 ("No project installation found. Using global installation from ~/.claude-src/"). The edit command should go straight into the wizard regardless of whether it found a project config or a global config. The user doesn't need to know which config was loaded — the wizard shows the merged view with [G]/[P] badges, which is sufficient context.
+Remove the message at line 99-103 ("No project installation found. Using global installation from ~/.claude-src/"). The edit command should go straight into the wizard. The user doesn't need to know which config was loaded — the wizard shows the merged view with [G]/[P] badges, which is sufficient context.
 
-### 5. No auto-recompile after scoped edit
+### 5. Confirmation step shows scope changes and project config cleanup
 
-The edit command does NOT need to recompile after creating a new project config. The user should run `compile` separately. This keeps the edit command focused on config changes and avoids surprising side effects when a project config is created for the first time.
+**File:** `src/cli/components/wizard/step-confirm.tsx`
+
+The confirmation step (last wizard step) must show:
+
+- Skills that changed scope (P→G or G→P)
+- Skills that were deselected
+
+If, after the edit, there are zero project-scoped skills and zero project-scoped agents remaining, the confirmation step should warn that the project installation will be removed.
+
+**Implementation notes:**
+
+- The confirmation step currently has no concept of "before" state. It would need new props: previous skill configs and previous agent configs (passed from the wizard's initial state).
+- Scope change detection currently happens post-wizard in `edit.tsx` (lines 203-224). Either this logic needs to be duplicated in the wizard store for the confirm step to display, or the confirm step needs to receive the previous configs and compute diffs itself.
+- On confirm, the edit command runs the equivalent of `uninstall --all` scoped to the project directory. The `uninstall` command's cleanup logic is in private methods and uses `process.cwd()` internally, so it cannot be called as a function. The cleanup logic (removing `.claude-src/`, `.claude/agents/`, `.claude/skills/`, plugins) needs to be extracted into shared utility functions that both `uninstall` and `edit` can use, or `edit` should invoke `uninstall` via oclif's command runner: `this.config.runCommand('uninstall', ['--all', '--yes'])`.
 
 ---
 
@@ -132,22 +155,27 @@ A global agent referencing project skills is invalid (D7 cross-scope rule). `bui
 
 ### 2. Removing a global skill from project context
 
-Global skills are locked in project context (D9). The user cannot remove them. To remove global skills, edit from `~/`. Correct behavior.
+Global skills are locked in project context (D9). The user cannot toggle them off. To remove global skills, edit from `~/`. Correct behavior. The user can still toggle any skill that isn't locked — they just can't remove something that belongs to global from a project edit.
 
 ### 3. First edit from project dir (no project config exists)
 
 - Wizard shows the global config state (loaded via fallback)
+- Global items are locked (the `isGlobalDir` fix at line 152 ensures this)
 - If the user makes no changes → early return, no project config created
 - If the user adds project-scoped items → project config created with import from global
-- If the user only modifies global-scoped items → only global config updated, no project config created (empty project guard)
+- If the user only modifies global-scoped items → this cannot happen because global items are locked
 
-### 4. Compile after scoped edit
+### 4. Project config becomes empty after edit
 
-`compile.ts` runs dual passes when both installations exist. After an edit that creates a project config for the first time, `detectProjectInstallation(cwd)` finds the new config and compile runs both passes. Already correct.
+User has a project config with project-scoped skills. They edit and either deselect them all or move them all to global scope. The project split is now empty. The confirmation step warns that the project installation will be removed. On confirm, `uninstall --all` runs scoped to the project directory.
 
-### 5. GlobalConfigPrompt in init
+### 5. Recompile after edit
 
-Still needed. It asks whether to edit the existing global or create a new project installation. Unrelated to this fix.
+The edit command already recompiles agents after saving. This behavior stays as-is.
+
+### 6. GlobalConfigPrompt in init — remove
+
+The `GlobalConfigPrompt` ("Edit global installation or create new project installation?") is no longer needed. The wizard shows the merged view with scope badges, and writes route by scope automatically. The user doesn't need to choose — they just edit, and global items go to `~/`, project items go to `<cwd>/`. Remove the prompt from `init.tsx` and go straight into the wizard when a global config exists but no project config does.
 
 ---
 
@@ -160,11 +188,11 @@ Still needed. It asks whether to edit the existing global or create a new projec
    - Run `edit` from project dir, add a skill, press S to set scope to [P]
    - Verify: `<project>/.claude-src/config.ts` created with import from global, contains only the new skill
    - Verify: `~/.claude-src/config.ts` unchanged
+   - Verify: global skills are locked (cannot toggle off)
 
-2. **Edit from project with only global config — modify global skill only:**
+2. **Edit from project with only global config — cannot modify global skills:**
    - Same setup
-   - Run `edit`, change a global skill's source (don't add project-scoped items)
-   - Verify: global config updated, NO project config created
+   - Verify: global skills show [G] badge and cannot be toggled off
 
 3. **Edit from project with both configs — add project skill:**
    - Setup: both global and project configs exist
@@ -174,13 +202,22 @@ Still needed. It asks whether to edit the existing global or create a new projec
 4. **Edit from `~/` — all items go to global:**
    - Run `edit` from home dir
    - Verify: only global config updated, no project config involved
+   - Verify: nothing is locked (can toggle any skill)
+
+5. **Edit from project — remove all project skills:**
+   - Setup: project config with 2 project-scoped skills
+   - Run `edit`, deselect both project skills
+   - Verify: confirmation step warns about project installation removal
+   - Verify: project `.claude-src/` and `.claude/` cleaned up after confirm
 
 ### Automated Tests
 
 - Add test: edit with global-only installation, `process.cwd()` used for saves (not `installation.projectDir`)
+- Add test: edit with global-only installation, global skills are locked
 - Add test: edit with global-only + project-scoped additions creates project config
-- Add test: edit with global-only + global-only changes does NOT create project config
+- Add test: edit with global-only + no changes does NOT create project config
 - Add test: `writeScopedConfigs` skips project config file when project split is empty
+- Add test: project config deleted (uninstall) when all project-scoped items removed
 
 ---
 

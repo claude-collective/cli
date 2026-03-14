@@ -3,8 +3,6 @@ import React from "react";
 import { Flags } from "@oclif/core";
 import { render, Box, Text, useApp } from "ink";
 import fs from "fs";
-import os from "os";
-import path from "path";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
@@ -17,7 +15,6 @@ import {
 import {
   installLocal,
   installPluginConfig,
-  detectGlobalInstallation,
   detectProjectInstallation,
   deriveInstallMode,
 } from "../lib/installation/index.js";
@@ -82,52 +79,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelect, onCancel }) => {
         items={DASHBOARD_OPTIONS}
         onSelect={(command) => {
           onSelect(command);
-          exit();
-        }}
-        onCancel={() => {
-          onCancel();
-          exit();
-        }}
-      />
-      <Text> </Text>
-      <Text dimColor>
-        {" "}
-        {KEY_LABEL_ARROWS_VERT} Navigate {"  "}
-        {KEY_LABEL_ENTER} Confirm {"  "}
-        {KEY_LABEL_ESC} Exit
-      </Text>
-    </Box>
-  );
-};
-
-type GlobalConfigChoice = "edit-global" | "create-project";
-
-const GLOBAL_CONFIG_OPTIONS: SelectListItem<GlobalConfigChoice>[] = [
-  { label: "Edit global installation", value: "edit-global" },
-  { label: "Create new project installation", value: "create-project" },
-];
-
-type GlobalConfigPromptProps = {
-  globalConfigDir: string;
-  onSelect: (choice: GlobalConfigChoice) => void;
-  onCancel: () => void;
-};
-
-const GlobalConfigPrompt: React.FC<GlobalConfigPromptProps> = ({
-  globalConfigDir,
-  onSelect,
-  onCancel,
-}) => {
-  const { exit } = useApp();
-
-  return (
-    <Box flexDirection="column">
-      <Text>A global installation was found at {globalConfigDir}</Text>
-      <Text> </Text>
-      <SelectList
-        items={GLOBAL_CONFIG_OPTIONS}
-        onSelect={(choice) => {
-          onSelect(choice);
           exit();
         }}
         onCancel={() => {
@@ -263,51 +214,6 @@ export default class Init extends BaseCommand {
         await this.config.runCommand(selectedCommand);
       }
       return;
-    }
-
-    // No project config exists: check if a global installation exists
-    const globalInstallation = await detectGlobalInstallation();
-    if (globalInstallation) {
-      const globalConfigDir = path.join(os.homedir(), CLAUDE_SRC_DIR);
-
-      // Non-interactive: skip prompt and fall through to wizard
-      if (process.stdin.isTTY) {
-        let globalChoice: GlobalConfigChoice | null = null;
-
-        const { waitUntilExit: waitForPrompt } = render(
-          <GlobalConfigPrompt
-            globalConfigDir={globalConfigDir}
-            onSelect={(choice) => {
-              globalChoice = choice;
-            }}
-            onCancel={() => {
-              globalChoice = null;
-            }}
-          />,
-        );
-
-        await waitForPrompt();
-        clearTerminalOutput();
-
-        if (globalChoice === "edit-global") {
-          const editArgs: string[] = [];
-          if (flags.source) {
-            editArgs.push("--source", flags.source);
-          }
-          if (flags.refresh) {
-            editArgs.push("--refresh");
-          }
-          await this.config.runCommand("edit", editArgs);
-          return;
-        }
-
-        // User cancelled (Esc)
-        if (globalChoice === null) {
-          return;
-        }
-
-        // "create-project" falls through to wizard below
-      }
     }
 
     // Auto-create blank global config on first init from a project directory.

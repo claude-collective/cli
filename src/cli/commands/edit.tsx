@@ -1,4 +1,5 @@
 import os from "os";
+import path from "path";
 
 import { Flags } from "@oclif/core";
 import { render } from "ink";
@@ -6,13 +7,17 @@ import { render } from "ink";
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
   CLI_BIN_NAME,
   GLOBAL_INSTALL_ROOT,
   PROJECT_ROOT,
   SOURCE_DISPLAY_NAMES,
+  STANDARD_FILES,
 } from "../consts.js";
 import { getAgentDefinitions, recompileAgents } from "../lib/agents/index.js";
 import { loadProjectConfig } from "../lib/configuration/index.js";
+import { ensureBlankGlobalConfig } from "../lib/configuration/config-writer.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
   detectInstallation,
@@ -83,6 +88,7 @@ export default class Edit extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Edit);
+    const cwd = process.cwd();
 
     const installation = await detectInstallation();
 
@@ -92,16 +98,13 @@ export default class Edit extends BaseCommand {
       });
     }
 
+    // Use installation.projectDir for reads (loading config, discovering installed skills).
+    // Use cwd for writes (config saves, plugin installs, scope migrations, recompilation output)
+    // and for the locked-items check (determining whether global items are read-only).
     const projectDir = installation.projectDir;
 
     enableBuffering();
 
-    if (installation.projectDir === os.homedir()) {
-      pushBufferMessage(
-        "info",
-        "No project installation found. Using global installation from ~/.claude-src/",
-      );
-    }
     let sourceResult;
     let startupMessages: StartupMessage[] = [];
     try {
@@ -149,7 +152,9 @@ export default class Edit extends BaseCommand {
 
     // D9: In project context, existing global items are read-only (locked).
     // When editing from ~/ (global context), nothing is locked.
-    const isGlobalDir = projectDir === GLOBAL_INSTALL_ROOT;
+    // Uses cwd (not projectDir) so that global items are correctly locked
+    // even when detectInstallation() fell back to the global installation.
+    const isGlobalDir = cwd === GLOBAL_INSTALL_ROOT;
     const lockedSkillIds = isGlobalDir
       ? undefined
       : projectConfig?.config?.skills?.filter((s) => s.scope === "global").map((s) => s.id);
@@ -294,7 +299,7 @@ export default class Edit extends BaseCommand {
         }
       }
 
-      const migrationResult = await executeMigration(migrationPlan, projectDir, sourceResult);
+      const migrationResult = await executeMigration(migrationPlan, cwd, sourceResult);
 
       for (const warning of migrationResult.warnings) {
         this.warn(warning);
@@ -310,15 +315,15 @@ export default class Edit extends BaseCommand {
     for (const [skillId, change] of scopeChanges) {
       const skillConfig = result.skills.find((s) => s.id === skillId);
       if (skillConfig?.source === "local") {
-        await migrateLocalSkillScope(skillId, change.from, projectDir);
+        await migrateLocalSkillScope(skillId, change.from, cwd);
       } else if (sourceResult.marketplace && skillConfig) {
         // Plugin-mode scope change: uninstall from old scope, install to new scope
         const oldPluginScope = change.from === "global" ? "user" : "project";
         const newPluginScope = change.to === "global" ? "user" : "project";
         try {
-          await claudePluginUninstall(skillId, oldPluginScope, projectDir);
+          await claudePluginUninstall(skillId, oldPluginScope, cwd);
           const pluginRef = `${skillId}@${sourceResult.marketplace}`;
-          await claudePluginInstall(pluginRef, newPluginScope, projectDir);
+          await claudePluginInstall(pluginRef, newPluginScope, cwd);
         } catch (error) {
           this.warn(`Failed to migrate plugin scope for ${skillId}: ${getErrorMessage(error)}`);
         }
@@ -332,7 +337,7 @@ export default class Edit extends BaseCommand {
         continue;
       }
       if (change.from === "local") {
-        await deleteLocalSkill(projectDir, skillId);
+        await deleteLocalSkill(cwd, skillId);
       }
     }
 
@@ -354,7 +359,7 @@ export default class Edit extends BaseCommand {
         const pluginScope = skillConfig.scope === "global" ? "user" : "project";
         this.log(`Installing plugin: ${pluginRef}...`);
         try {
-          await claudePluginInstall(pluginRef, pluginScope, projectDir);
+          await claudePluginInstall(pluginRef, pluginScope, cwd);
         } catch (error) {
           this.warn(`Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`);
         }
@@ -365,7 +370,7 @@ export default class Edit extends BaseCommand {
         const pluginScope = oldSkill?.scope === "global" ? "user" : "project";
         this.log(`Uninstalling plugin: ${skillId}...`);
         try {
-          await claudePluginUninstall(skillId, pluginScope, projectDir);
+          await claudePluginUninstall(skillId, pluginScope, cwd);
         } catch (error) {
           this.warn(`Failed to uninstall plugin ${skillId}: ${getErrorMessage(error)}`);
         }
@@ -391,19 +396,37 @@ export default class Edit extends BaseCommand {
 
     // Persist wizard result to config.ts and config-types.ts (split by scope when in project context)
     try {
-      const mergeResult = await buildAndMergeConfig(result, sourceResult, projectDir, flags.source);
+      const mergeResult = await buildAndMergeConfig(result, sourceResult, cwd, flags.source);
 
       // Load full agent definitions for config-types.ts generation
       const cliAgents = await loadAllAgents(PROJECT_ROOT);
       const sourceAgents = await loadAllAgents(sourcePath);
       const agents: Record<AgentName, AgentDefinition> = { ...cliAgents, ...sourceAgents };
 
+      // Ensure global config exists before writing project config (so the
+      // `import globalConfig from "~/.claude-src/config"` doesn't throw)
+      if (cwd !== os.homedir()) {
+        await ensureBlankGlobalConfig();
+      }
+
+      // Recompute configPath from cwd — when detectInstallation() fell back to
+      // global, installation.configPath points to ~/.claude-src/config.ts, but
+      // writeScopedConfigs uses it as the project config path.
+      const configPath = path.join(cwd, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+
+      // Determine whether a project installation already exists:
+      // If detectInstallation() found a project config, projectDir differs from homedir.
+      // If it fell back to global, projectDir === homedir (no project installation).
+      const projectInstallationExists =
+        path.resolve(installation.projectDir) !== path.resolve(os.homedir());
+
       await writeScopedConfigs(
         mergeResult.config,
         sourceResult.matrix,
         agents,
-        projectDir,
-        installation.configPath,
+        cwd,
+        configPath,
+        projectInstallationExists,
       );
     } catch (error) {
       this.warn(`Could not update config: ${getErrorMessage(error)}`);
@@ -411,18 +434,19 @@ export default class Edit extends BaseCommand {
 
     this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
-      const recompileSkills = await discoverAllPluginSkills(projectDir);
+      const recompileSkills = await discoverAllPluginSkills(cwd);
 
       // Build scope map so recompileAgents routes agents to the correct directory:
-      // global agents -> ~/.claude/agents/, project agents -> installation.agentsDir
+      // global agents -> ~/.claude/agents/, project agents -> <cwd>/.claude/agents/
       const agentScopeMap = new Map(result.agentConfigs.map((a) => [a.name, a.scope] as const));
+      const outputDir = path.join(cwd, CLAUDE_DIR, "agents");
 
       const recompileResult = await recompileAgents({
-        pluginDir: projectDir,
+        pluginDir: cwd,
         sourcePath,
         skills: recompileSkills,
-        projectDir,
-        outputDir: installation.agentsDir,
+        projectDir: cwd,
+        outputDir,
         installMode: deriveInstallMode(result.skills),
         agentScopeMap,
       });
