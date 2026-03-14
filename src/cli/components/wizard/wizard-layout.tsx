@@ -123,7 +123,7 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
         </Static>
       )}
       <Box flexDirection="column" paddingX={1} height={terminalHeight}>
-        {logo && (
+        {logo && store.step === "stack" && (
           <Box flexDirection="row" marginTop={1} columnGap={1}>
             <Text>{logo}</Text>
           </Box>

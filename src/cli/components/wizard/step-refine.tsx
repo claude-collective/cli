@@ -2,6 +2,7 @@ import { Box, Text, useInput } from "ink";
 import React from "react";
 import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
 import { KEY_LABEL_ENTER, KEY_LABEL_ESC, KEY_LABEL_ARROWS_VERT } from "./hotkeys.js";
+import { ViewTitle } from "./view-title.js";
 
 export type RefineAction = "all-recommended" | "customize" | null;
 
@@ -36,6 +37,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
 
   return (
     <Box flexDirection="column" paddingX={2}>
+      <ViewTitle>Refine your stack</ViewTitle>
       <Text>
         Your stack includes{" "}
         <Text color={CLI_COLORS.PRIMARY} bold>
