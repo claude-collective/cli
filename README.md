@@ -4,38 +4,18 @@
 
 # Agents Inc
 
-An agent composition framework that builds stacks and compiles specialized subagents for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Manage your subagents and skills with code via a unified CLI.
+An agent composition framework for Claude Code.
+
+Compose specialized [Claude Code](https://docs.anthropic.com/en/docs/claude-code) subagents from atomic skills. Choose your stack, customize your skills, and compile from the CLI.
 
 [![npm version](https://img.shields.io/npm/v/@agents-inc/cli)](https://www.npmjs.com/package/@agents-inc/cli)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Node: 18+](https://img.shields.io/badge/Node-18%2B-green.svg)](https://nodejs.org/)
 
-<!-- TODO: Add animated GIF of the full init wizard flow (stack selection -> skill grid -> agent config -> done).
-This is the hero image. It should show the complete happy path in ~15-20 seconds.
 <p align="center">
-  <img src="./assets/init-wizard.gif" alt="Agents Inc init wizard" width="700">
+  <img src="./screenshots/wizard-flow.gif" alt="Agents Inc init wizard" width="700">
 </p>
--->
-
-## Overview
-
-Agents Inc comprises two parts:
-
-- **[Marketplace](https://github.com/agents-inc/skills):** 87+ atomic, best-practice skills spanning web, API, CLI, infra, and meta domains
-- **CLI:** installs, ejects, creates, compiles, and updates skills and subagents
-
-Skills are composed into 18+ domain-specific subagents through templates and modular agent partials, all validated against strict Zod schemas. Everything is ejectable so there's endless customisation with no lock-in.
-
-## How It Works
-
-Each subagent is composed from modular partials (role, workflow, output format) plus a set of atomic skills. The CLI manages the full lifecycle:
-
-- **Install:** pull skills from the public marketplace, your own, or a local directory either as plugins or directly as source files
-- **Compose:** map skills to subagents, configure preloaded vs dynamic loading
-- **Compile:** resolve skill mappings, Liquid templates, and agent partials into `.claude/agents/`
-- **Eject:** take progressive ownership of any layer (partials, templates, skills, subagents)
-- **Update:** pull upstream skill changes without losing local customizations
 
 ## Getting Started
 
@@ -43,11 +23,11 @@ Each subagent is composed from modular partials (role, workflow, output format) 
 npx @agents-inc/cli init
 ```
 
-Requires Node 18+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
+<p align="center">
+  <img src="screenshots/stack-selection.png" alt="Stack selection" width="700">
+</p>
 
-The wizard has three steps:
-
-**1. Pick a stack or start from scratch** (or create your own in your custom marketplace):
+Choose a pre-built stack or start from scratch. Stacks pre-select skills and agents for common tech combinations.
 
 | Stack              | Technologies                                                       |
 | ------------------ | ------------------------------------------------------------------ |
@@ -58,31 +38,42 @@ The wizard has three steps:
 | `remix-stack`      | Remix + React + Hono + Drizzle                                     |
 | `solidjs-stack`    | SolidJS + Hono + Drizzle                                           |
 
-**2. Customize skills.** Add or remove from the interactive grid.
+<p align="center">
+  <img src="screenshots/skill-selection.png" alt="Skill selection" width="700">
+</p>
 
-**3. Select subagents.** Choose which role-based subagents to include.
+Add or remove skills from the interactive grid. Skills are organized by domain with framework-aware filtering.
 
-**4. Compile.** After init, use `agentsinc edit` to change selections and `agentsinc compile` to rebuild.
+<p align="center">
+  <img src="screenshots/agent-selection.png" alt="Agent selection" width="700">
+</p>
+
+Choose which subagents to compile. Each agent is composed from the skills you selected.
+
+After init, use `agentsinc edit` to change selections and `agentsinc compile` to rebuild.
+
+## Guides
+
+| Guide                                                                       | Description                                                          |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [Install modes](docs/guides/install-modes.md)                               | Plugin vs local install, global vs project scope                     |
+| [Editing your config](docs/guides/editing-config.md)                        | Skill mappings, preloaded vs dynamic loading, and config structure   |
+| [Customizing subagents](docs/guides/customizing-subagents.md)               | Eject and modify partials, templates, and skills                     |
+| [Writing custom skills and subagents](docs/guides/writing-custom-skills.md) | Author skills and subagents from scratch or iterate on existing ones |
+| [Importing third-party skills](docs/guides/importing-skills.md)             | Install skills from external repositories                            |
+| [Creating a marketplace](docs/guides/creating-a-marketplace.md)             | Build a personal or org-level marketplace with curated skills        |
 
 ## Skills
 
-87+ skills organized by category:
+**Web:** React, Vue, Angular, Next.js, Remix, Nuxt, SolidJS, Tailwind, Zustand, Vitest, Playwright, and more
+**API:** Hono, Express, Drizzle, Prisma, PostHog, and more
+**Mobile:** React Native, Expo
+**CLI:** Commander, oclif + Ink
+**Shared:** Turborepo, Code Reviewing, Auth Security, and more
 
-**Web:** `React` `Vue` `Angular` `SolidJS` `Next.js` `Remix` `Nuxt` `SCSS Modules` `CVA` `Zustand` `Pinia` `NgRx SignalStore` `Jotai` `React Query` `SWR` `tRPC` `GraphQL` `React Hook Form` `Zod` `shadcn/ui` `Radix UI` `TanStack Table` `Vitest` `Playwright` `Cypress` `MSW` `Framer Motion` `Storybook` `Accessibility`
-
-**API:** `Hono` `Express` `Fastify` `Drizzle` `Prisma` `Better Auth` `PostHog` `Resend` `Axiom + Pino + Sentry` `GitHub Actions`
-
-**Mobile:** `React Native` `Expo`
-
-**CLI:** `Commander` `oclif + Ink`
-
-**Infra:** `Turborepo` `Tooling` `Env config`
-
-**Meta:** `Code reviewing` `Research methodology` `Investigation requirements` `Anti-over-engineering` `Context management`
+Browse the full catalog on the [Plugin Marketplace](https://github.com/agents-inc/skills).
 
 ## Subagents
-
-17 roles across 7 categories:
 
 | Category         | Subagents                                                          |
 | ---------------- | ------------------------------------------------------------------ |
@@ -95,89 +86,62 @@ The wizard has three steps:
 | Documentation    | `documentor`                                                       |
 | Meta             | `skill-summoner` `agent-summoner`                                  |
 
+Each subagent is composed from modular partials (role, workflow, output format) plus its assigned skills. Everything is ejectable.
+
 ## Commands
 
-### Primary
+### Core
 
 | Command   | Description                                                                 |
 | --------- | --------------------------------------------------------------------------- |
 | `init`    | Interactive setup wizard: pick a stack, customize skills, compile subagents |
-| `edit`    | Modify skill selection in the interactive wizard                            |
+| `edit`    | Modify skill selection via the interactive wizard                           |
 | `compile` | Recompile subagents after changes                                           |
 | `update`  | Pull latest skills from source                                              |
+| `search`  | Search skills across all sources                                            |
 
 ### Customization
 
-| Command        | Description                                                                                                       |
-| -------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `eject <type>` | Export for customization (`agent-partials`, `templates`, `skills`, `all`)                                         |
-| `new skill`    | Scaffold a custom skill ![Coming soon](https://img.shields.io/badge/coming%20soon-grey)                           |
-| `new agent`    | Scaffold a custom agent ![Coming soon](https://img.shields.io/badge/coming%20soon-grey)                           |
-| `import skill` | Import a skill from an external GitHub repository ![Coming soon](https://img.shields.io/badge/coming%20soon-grey) |
-| `search`       | Search skills across sources ![Coming soon](https://img.shields.io/badge/coming%20soon-grey)                      |
+| Command           | Description                                                               |
+| ----------------- | ------------------------------------------------------------------------- |
+| `eject <type>`    | Export for customization (`agent-partials`, `templates`, `skills`, `all`) |
+| `new skill`       | Scaffold a custom skill                                                   |
+| `new agent`       | Scaffold a custom agent                                                   |
+| `new marketplace` | Scaffold a new skill marketplace                                          |
+| `import skill`    | Import a skill from an external GitHub repository                         |
+
+### Build
+
+| Command             | Description                                    |
+| ------------------- | ---------------------------------------------- |
+| `build marketplace` | Generate `marketplace.json` from source skills |
+| `build plugins`     | Build skill and agent plugins for distribution |
+| `build stack`       | Build a stack as a single plugin               |
+
+### Configuration
+
+| Command                | Description                        |
+| ---------------------- | ---------------------------------- |
+| `config`               | Show config overview               |
+| `config get`           | Get a config value                 |
+| `config show`          | Display all resolved config values |
+| `config path`          | Show config file paths             |
+| `config set-project`   | Set a project config value         |
+| `config unset-project` | Remove a project config value      |
 
 ### Diagnostics
 
-| Command     | Description                                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------------------------ |
-| `doctor`    | Diagnose setup issues                                                                                        |
-| `diff`      | Show changes between local and source skills ![Coming soon](https://img.shields.io/badge/coming%20soon-grey) |
-| `outdated`  | Check for skill updates                                                                                      |
-| `validate`  | Validate config and skill structure                                                                          |
-| `info`      | Show project configuration details                                                                           |
-| `uninstall` | Remove Agents Inc from your project                                                                          |
+| Command     | Description                                  |
+| ----------- | -------------------------------------------- |
+| `doctor`    | Diagnose setup issues                        |
+| `diff`      | Show changes between local and source skills |
+| `list`      | List installed skills                        |
+| `outdated`  | Check for skill updates                      |
+| `validate`  | Validate config and skill structure          |
+| `info`      | Show project configuration details           |
+| `uninstall` | Remove Agents Inc from your project          |
 
 Run `agentsinc --help` for full usage.
-
-## Customization
-
-Progressive layers from config to full extension:
-
-| Layer           | How                                                                                            |
-| --------------- | ---------------------------------------------------------------------------------------------- |
-| Edit config     | `.claude-src/config.yaml`; skill-to-subagent mappings, preloaded/dynamic                       |
-| Wizard          | `agentsinc edit`; add/remove skills interactively                                              |
-| Eject partials  | `agentsinc eject agent-partials`; customize agent partials such as intro, workflow, and output |
-| Eject templates | `agentsinc eject templates`; modify Liquid templates                                           |
-| Eject skills    | `agentsinc eject skills`; fork skills for local editing                                        |
-| Custom skills   | `agentsinc new skill`; scaffold with proper metadata                                           |
-| Custom agents   | `agentsinc new agent`; scaffold agent files                                                    |
-| Custom sources  | Point to a private repo or local directory as a skill source                                   |
-| Plugins         | Package skills/subagents as Claude Code plugins for distribution                               |
-
-Templates apply globally across all subagents; partials apply to specific roles. Put shared conventions in a template for consistency, and role-specific behaviour in partials.
-
-Import skills from any GitHub repository:
-
-```bash
-agentsinc import skill github:your-org/skills --list
-agentsinc import skill github:your-org/skills --skill react-best-practices
-agentsinc import skill github:your-org/skills --all
-```
-
-## Tech Stack
-
-| Component    | Technology                            |
-| ------------ | ------------------------------------- |
-| Commands     | oclif                                 |
-| Terminal UI  | Ink + React                           |
-| Wizard state | Zustand                               |
-| Validation   | Zod (30+ schemas at parse boundaries) |
-| Compilation  | LiquidJS                              |
-| Testing      | Vitest                                |
-
-```
-src/cli/
-  commands/       # oclif command definitions
-  components/     # Ink/React terminal UI components
-  lib/            # Core logic (compiler, loader, resolver, schemas)
-  stores/         # Zustand state management
-  utils/          # Shared utilities
-src/agents/       # Subagent definitions (18 roles)
-config/           # Skills matrix, stacks, default mappings
-```
-
-See [docs/reference/architecture.md](./docs/reference/architecture.md) for the full reference.
 
 ## Links
 
