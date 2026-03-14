@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.74.10] - 2026-03-14
+
+**E2E test file splits for parallel execution**
+
+- Split 6 large E2E files (1,087 to 451 lines each) into 14 smaller files
+- 76 tests preserved, E2E suite now 62 files / 468 tests
+
+See [changelogs/0.74.10.md](./changelogs/0.74.10.md) for full details.
+
+---
+
 ## [0.74.9] - 2026-03-14
 
 **Wizard polish, R-08 refactor, E2E test methodology fixes**
