@@ -10,8 +10,6 @@ import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import {
   HOTKEY_SET_ALL_LOCAL,
   HOTKEY_SET_ALL_PLUGIN,
-  KEY_LABEL_ENTER,
-  KEY_LABEL_ESC,
   isHotkey,
 } from "./hotkeys.js";
 import { SelectionCard } from "./selection-card.js";
@@ -28,7 +26,7 @@ type SourcesView = "choice" | "customize";
 
 export const StepSources: React.FC<StepSourcesProps> = ({ projectDir, onContinue, onBack }) => {
   const store = useWizardStore();
-  const [view, setView] = useState<SourcesView>("choice");
+  const [view, setView] = useState<SourcesView>(FEATURE_FLAGS.SOURCE_CHOICE ? "choice" : "customize");
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [isGridSearching, setIsGridSearching] = useState(false);
   const { ref: gridRef, measuredHeight: gridHeight } = useMeasuredHeight();
@@ -99,8 +97,12 @@ export const StepSources: React.FC<StepSourcesProps> = ({ projectDir, onContinue
         onContinue();
       }
       if (key.escape) {
-        store.setCustomizeSources(false);
-        setView("choice");
+        if (FEATURE_FLAGS.SOURCE_CHOICE) {
+          store.setCustomizeSources(false);
+          setView("choice");
+        } else {
+          onBack();
+        }
       }
     }
   });
@@ -119,12 +121,6 @@ export const StepSources: React.FC<StepSourcesProps> = ({ projectDir, onContinue
             onBind={FEATURE_FLAGS.SOURCE_SEARCH ? handleBind : undefined}
             onSearchStateChange={FEATURE_FLAGS.SOURCE_SEARCH ? handleSearchStateChange : undefined}
           />
-        </Box>
-        <Box marginTop={1}>
-          <Text dimColor>
-            {HOTKEY_SET_ALL_LOCAL.label} set all local {HOTKEY_SET_ALL_PLUGIN.label} set all plugin{" "}
-            {KEY_LABEL_ENTER} continue {KEY_LABEL_ESC} back
-          </Text>
         </Box>
       </Box>
     );
