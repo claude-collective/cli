@@ -297,22 +297,27 @@ export type BoundSkillCandidate = {
   description?: string;
 };
 
+/** Advisory visual state for a skill option in the wizard UI */
+export type OptionState =
+  | { status: "normal" }
+  | { status: "recommended"; reason: string }
+  | { status: "discouraged"; reason: string }
+  | { status: "incompatible"; reason: string };
+
 /**
  * Skill option as displayed in the wizard, computed based on current selections.
  * Recomputed by matrix-resolver on every selection change.
  */
 export type SkillOption = {
   id: SkillId;
-  /** True if a discourage rule, conflict, or unmet requirement applies (shown with warning indicator) */
-  discouraged: boolean;
-  /** Explains which discourage/conflict/requirement rule applies */
-  discouragedReason?: string;
-  /** True if a recommend rule from another selected skill suggests this one */
-  recommended: boolean;
-  /** Explains why this skill is recommended */
-  recommendedReason?: string;
+  /** Advisory state computed from matrix relationships (incompatible > discouraged > recommended > normal) */
+  advisoryState: OptionState;
   /** True if this skill is currently selected by the user */
   selected: boolean;
+  /** True when this skill is selected but has unmet dependency requirements */
+  hasUnmetRequirements: boolean;
+  /** Explains which requirements are unmet (only set when hasUnmetRequirements is true) */
+  unmetRequirementsReason?: string;
   /** Other skills that serve the same purpose (for "or try X" hints) */
   alternatives: SkillId[];
 };
@@ -324,7 +329,7 @@ export type SelectionValidation = {
   warnings: ValidationWarning[];
 };
 
-/** Blocking validation error requiring user action */
+/** Advisory validation error (non-blocking) */
 export type ValidationError = {
   type: "conflict" | "missingRequirement" | "categoryExclusive";
   message: string;

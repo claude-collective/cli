@@ -4,6 +4,10 @@ import {
   getDependentSkills,
   isDiscouraged,
   getDiscourageReason,
+  isIncompatible,
+  getIncompatibleReason,
+  hasUnmetRequirements,
+  getUnmetRequirementsReason,
   isRecommended,
   validateSelection,
   validateConflicts,
@@ -85,7 +89,7 @@ describe("isDiscouraged", () => {
     expect(result).toBe(true);
   });
 
-  it("should return true if skill conflicts with a selected skill", () => {
+  it("should return false if skill conflicts with a selected skill (conflicts now handled by isIncompatible)", () => {
     const skillA = createMockSkill(REACT_ID, {
       conflictsWith: [{ skillId: VUE_ID, reason: "Incompatible" }],
     });
@@ -94,10 +98,12 @@ describe("isDiscouraged", () => {
     initializeMatrix(matrix);
 
     const result = isDiscouraged(REACT_ID, [VUE_ID]);
-    expect(result).toBe(true);
+    expect(result).toBe(false);
+    // Conflicts are now checked via isIncompatible
+    expect(isIncompatible(REACT_ID, [VUE_ID])).toBe(true);
   });
 
-  it("should return true if selected skill conflicts with this skill (reverse)", () => {
+  it("should return false if selected skill conflicts with this skill (conflicts now handled by isIncompatible)", () => {
     const skillA = createMockSkill(REACT_ID);
     const skillB = createMockSkill(VUE_ID, {
       conflictsWith: [{ skillId: REACT_ID, reason: "Incompatible" }],
@@ -106,10 +112,12 @@ describe("isDiscouraged", () => {
     initializeMatrix(matrix);
 
     const result = isDiscouraged(REACT_ID, [VUE_ID]);
-    expect(result).toBe(true);
+    expect(result).toBe(false);
+    // Conflicts are now checked via isIncompatible
+    expect(isIncompatible(REACT_ID, [VUE_ID])).toBe(true);
   });
 
-  it("should return true if required skills are not selected (AND logic)", () => {
+  it("should return false if required skills are not selected (requirements now handled by hasUnmetRequirements)", () => {
     const skillA = createMockSkill(REACT_ID, {
       requires: [{ skillIds: [VUE_ID, ZUSTAND_ID], needsAny: false, reason: "Needs both" }],
     });
@@ -119,10 +127,12 @@ describe("isDiscouraged", () => {
     initializeMatrix(matrix);
 
     const result = isDiscouraged(REACT_ID, [VUE_ID]);
-    expect(result).toBe(true);
+    expect(result).toBe(false);
+    // Requirements are now checked via hasUnmetRequirements (separate from isIncompatible)
+    expect(hasUnmetRequirements(REACT_ID, [VUE_ID])).toBe(true);
   });
 
-  it("should return false if required skills are all selected (AND logic)", () => {
+  it("should return false via isIncompatible if required skills are all selected (AND logic)", () => {
     const skillA = createMockSkill(REACT_ID, {
       requires: [{ skillIds: [VUE_ID, ZUSTAND_ID], needsAny: false, reason: "Needs both" }],
     });
@@ -131,11 +141,11 @@ describe("isDiscouraged", () => {
     const matrix = createMockMatrix(skillA, skillB, skillC);
     initializeMatrix(matrix);
 
-    const result = isDiscouraged(REACT_ID, [VUE_ID, ZUSTAND_ID]);
+    const result = isIncompatible(REACT_ID, [VUE_ID, ZUSTAND_ID]);
     expect(result).toBe(false);
   });
 
-  it("should return true if none of the required skills are selected (OR logic)", () => {
+  it("should return true via hasUnmetRequirements if none of the required skills are selected (OR logic)", () => {
     const skillA = createMockSkill(REACT_ID, {
       requires: [{ skillIds: [VUE_ID, ZUSTAND_ID], needsAny: true, reason: "Needs one" }],
     });
@@ -144,11 +154,11 @@ describe("isDiscouraged", () => {
     const matrix = createMockMatrix(skillA, skillB, skillC);
     initializeMatrix(matrix);
 
-    const result = isDiscouraged(REACT_ID, []);
+    const result = hasUnmetRequirements(REACT_ID, []);
     expect(result).toBe(true);
   });
 
-  it("should return false if any required skill is selected (OR logic)", () => {
+  it("should return false via isIncompatible if any required skill is selected (OR logic)", () => {
     const skillA = createMockSkill(REACT_ID, {
       requires: [{ skillIds: [VUE_ID, ZUSTAND_ID], needsAny: true, reason: "Needs one" }],
     });
@@ -157,7 +167,7 @@ describe("isDiscouraged", () => {
     const matrix = createMockMatrix(skillA, skillB, skillC);
     initializeMatrix(matrix);
 
-    const result = isDiscouraged(REACT_ID, [ZUSTAND_ID]);
+    const result = isIncompatible(REACT_ID, [ZUSTAND_ID]);
     expect(result).toBe(false);
   });
 });
@@ -218,7 +228,7 @@ describe("getDiscourageReason", () => {
     expect(result).toContain("Not recommended together");
   });
 
-  it("should return conflict reason when skill conflicts with selected skill", () => {
+  it("should return undefined for conflicts (conflicts now handled by getIncompatibleReason)", () => {
     const skillA = createMockSkill(REACT_ID, {
       conflictsWith: [{ skillId: VUE_ID, reason: "Incompatible architectures" }],
     });
@@ -227,11 +237,14 @@ describe("getDiscourageReason", () => {
     initializeMatrix(matrix);
 
     const reason = getDiscourageReason(REACT_ID, [VUE_ID]);
-    expect(reason).toContain("Incompatible architectures");
-    expect(reason).toContain("conflicts with");
+    expect(reason).toBeUndefined();
+    // Conflicts are now checked via getIncompatibleReason
+    const incompatibleReason = getIncompatibleReason(REACT_ID, [VUE_ID]);
+    expect(incompatibleReason).toContain("conflicts with");
+    expect(incompatibleReason).toContain("Vue Composition Api");
   });
 
-  it("should return requirement reason when dependencies are unmet", () => {
+  it("should return undefined for unmet requirements (requirements now handled by getUnmetRequirementsReason)", () => {
     const skillA = createMockSkill(REACT_ID, {
       requires: [{ skillIds: [VUE_ID], needsAny: false, reason: "Framework required" }],
     });
@@ -240,8 +253,11 @@ describe("getDiscourageReason", () => {
     initializeMatrix(matrix);
 
     const reason = getDiscourageReason(REACT_ID, []);
-    expect(reason).toContain("Framework required");
-    expect(reason).toContain("requires");
+    expect(reason).toBeUndefined();
+    // Requirements are now checked via getUnmetRequirementsReason (separate from getIncompatibleReason)
+    const unmetReason = getUnmetRequirementsReason(REACT_ID, []);
+    expect(unmetReason).toContain("requires");
+    expect(unmetReason).toContain("Vue Composition Api");
   });
 });
 
@@ -271,7 +287,7 @@ describe("validateSelection", () => {
     initializeMatrix(matrix);
 
     const result = validateSelection([REACT_ID, VUE_ID]);
-    expect(result.valid).toBe(false);
+    expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].type).toBe("conflict");
   });
@@ -285,7 +301,7 @@ describe("validateSelection", () => {
     initializeMatrix(matrix);
 
     const result = validateSelection([REACT_ID]);
-    expect(result.valid).toBe(false);
+    expect(result.valid).toBe(true);
     expect(result.errors.some((e) => e.type === "missingRequirement")).toBe(true);
   });
 
@@ -318,7 +334,7 @@ describe("validateSelection", () => {
     initializeMatrix(matrix);
 
     const result = validateSelection([REACT_ID, VUE_ID]);
-    expect(result.valid).toBe(false);
+    expect(result.valid).toBe(true);
     expect(result.errors.some((e) => e.type === "categoryExclusive")).toBe(true);
   });
 });
@@ -424,7 +440,7 @@ describe("Empty skill selection", () => {
       expect(result).toBe(false);
     });
 
-    it("should discourage skills with unmet requirements even with no selections", () => {
+    it("should not mark skills with unmet requirements as incompatible (requirements are separate)", () => {
       const skillA = createMockSkill(REACT_ID, {
         requires: [{ skillIds: [VUE_ID], needsAny: false, reason: "Needs B" }],
       });
@@ -432,7 +448,19 @@ describe("Empty skill selection", () => {
       const matrix = createMockMatrix(skillA, skillB);
       initializeMatrix(matrix);
 
-      const result = isDiscouraged(REACT_ID, []);
+      const result = isIncompatible(REACT_ID, []);
+      expect(result).toBe(false);
+    });
+
+    it("should detect unmet requirements via hasUnmetRequirements", () => {
+      const skillA = createMockSkill(REACT_ID, {
+        requires: [{ skillIds: [VUE_ID], needsAny: false, reason: "Needs B" }],
+      });
+      const skillB = createMockSkill(VUE_ID);
+      const matrix = createMockMatrix(skillA, skillB);
+      initializeMatrix(matrix);
+
+      const result = hasUnmetRequirements(REACT_ID, []);
       expect(result).toBe(true);
     });
   });
@@ -488,7 +516,7 @@ describe("Conflicting skills", () => {
 
       const result = validateSelection([REACT_ID, VUE_ID]);
 
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].type).toBe("conflict");
       expect(result.errors[0].message).toContain("React conflicts with Vue Composition Api");
@@ -511,7 +539,7 @@ describe("Conflicting skills", () => {
 
       const result = validateSelection([REACT_ID, VUE_ID, ZUSTAND_ID]);
 
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.errors.filter((e) => e.type === "conflict")).toHaveLength(2);
     });
 
@@ -525,7 +553,7 @@ describe("Conflicting skills", () => {
 
       const result = validateSelection([REACT_ID, VUE_ID]);
 
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.errors[0].type).toBe("conflict");
     });
 
@@ -570,20 +598,22 @@ describe("Conflicting skills", () => {
       initializeMatrix(matrix);
     });
 
-    it("when conflicting skill is selected, should mark skill as discouraged", () => {
+    it("when conflicting skill is selected, should mark skill as incompatible", () => {
       const options = getAvailableSkills("web-framework", [VUE_ID]);
 
       const skillAOption = options.find((o: { id: string }) => o.id === REACT_ID);
       expect(skillAOption).toBeDefined();
-      expect(skillAOption!.discouraged).toBe(true);
+      expect(skillAOption!.advisoryState.status).toBe("incompatible");
     });
 
-    it("when conflicting skill is selected, should set discouragedReason with conflict reason", () => {
+    it("when conflicting skill is selected, should set reason with conflict reason", () => {
       const options = getAvailableSkills("web-framework", [VUE_ID]);
 
       const skillAOption = options.find((o: { id: string }) => o.id === REACT_ID);
       expect(skillAOption).toBeDefined();
-      expect(skillAOption!.discouragedReason).toContain("Different paradigms");
+      expect(skillAOption!.advisoryState).toEqual(
+        expect.objectContaining({ status: "incompatible", reason: expect.stringContaining("conflicts with") }),
+      );
     });
   });
 });
@@ -606,7 +636,7 @@ describe("Missing skill dependencies", () => {
 
       const result = validateSelection([REACT_ID]);
 
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].type).toBe("missingRequirement");
       expect(result.errors[0].skills).toContain(REACT_ID);
@@ -630,7 +660,7 @@ describe("Missing skill dependencies", () => {
 
       const result = validateSelection([REACT_ID]);
 
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].type).toBe("missingRequirement");
       // Should include both missing dependencies
@@ -655,7 +685,7 @@ describe("Missing skill dependencies", () => {
 
       const result = validateSelection([REACT_ID]);
 
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].type).toBe("missingRequirement");
       expect(result.errors[0].message).toContain("one of");
@@ -698,7 +728,7 @@ describe("Missing skill dependencies", () => {
       // Both A and B are selected but their dependencies are not
       const result = validateSelection([REACT_ID, VUE_ID]);
 
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(2);
       expect(result.errors.every((e) => e.type === "missingRequirement")).toBe(true);
     });
@@ -820,8 +850,8 @@ describe("Missing skill dependencies", () => {
     });
   });
 
-  describe("isDiscouraged warns about skills with unmet dependencies", () => {
-    it("should discourage skill when required dependency is not selected", () => {
+  describe("hasUnmetRequirements detects skills with unmet dependencies", () => {
+    it("should detect unmet requirements when required dependency is not selected", () => {
       const skillA = createMockSkill(REACT_ID, {
         requires: [{ skillIds: [VUE_ID], needsAny: false, reason: "Needs framework" }],
       });
@@ -829,12 +859,12 @@ describe("Missing skill dependencies", () => {
       const matrix = createMockMatrix(skillA, skillB);
       initializeMatrix(matrix);
 
-      const result = isDiscouraged(REACT_ID, []);
+      const result = hasUnmetRequirements(REACT_ID, []);
 
       expect(result).toBe(true);
     });
 
-    it("should not discourage skill when required dependency is selected", () => {
+    it("should not detect unmet requirements when required dependency is selected", () => {
       const skillA = createMockSkill(REACT_ID, {
         requires: [{ skillIds: [VUE_ID], needsAny: false, reason: "Needs framework" }],
       });
@@ -842,13 +872,26 @@ describe("Missing skill dependencies", () => {
       const matrix = createMockMatrix(skillA, skillB);
       initializeMatrix(matrix);
 
-      const result = isDiscouraged(REACT_ID, [VUE_ID]);
+      const result = hasUnmetRequirements(REACT_ID, [VUE_ID]);
+
+      expect(result).toBe(false);
+    });
+
+    it("should not affect isIncompatible (requirements are separate from conflicts)", () => {
+      const skillA = createMockSkill(REACT_ID, {
+        requires: [{ skillIds: [VUE_ID], needsAny: false, reason: "Needs framework" }],
+      });
+      const skillB = createMockSkill(VUE_ID);
+      const matrix = createMockMatrix(skillA, skillB);
+      initializeMatrix(matrix);
+
+      const result = isIncompatible(REACT_ID, []);
 
       expect(result).toBe(false);
     });
   });
 
-  describe("getDiscourageReason explains why skill is discouraged due to missing dependencies", () => {
+  describe("getUnmetRequirementsReason explains why skill has unmet dependencies", () => {
     it("should explain missing required skill", () => {
       const skillA = createMockSkill(REACT_ID, {
         requires: [
@@ -863,9 +906,8 @@ describe("Missing skill dependencies", () => {
       const matrix = createMockMatrix(skillA, skillB);
       initializeMatrix(matrix);
 
-      const reason = getDiscourageReason(REACT_ID, []);
+      const reason = getUnmetRequirementsReason(REACT_ID, []);
 
-      expect(reason).toContain("Framework required");
       expect(reason).toContain("requires");
       expect(reason).toContain("Vue Composition Api");
     });
@@ -885,7 +927,7 @@ describe("Missing skill dependencies", () => {
       const matrix = createMockMatrix(skillA, skillB, skillC);
       initializeMatrix(matrix);
 
-      const reason = getDiscourageReason(REACT_ID, []);
+      const reason = getUnmetRequirementsReason(REACT_ID, []);
 
       expect(reason).toContain("Vue Composition Api");
       expect(reason).toContain("Zustand");
@@ -906,10 +948,29 @@ describe("Missing skill dependencies", () => {
       const matrix = createMockMatrix(skillA, skillB, skillC);
       initializeMatrix(matrix);
 
-      const reason = getDiscourageReason(REACT_ID, []);
+      const reason = getUnmetRequirementsReason(REACT_ID, []);
 
-      expect(reason).toContain("Need a framework");
+      expect(reason).toContain("requires");
       expect(reason).toContain("or");
+    });
+
+    it("should return undefined when getIncompatibleReason is called for requirements (requirements are separate)", () => {
+      const skillA = createMockSkill(REACT_ID, {
+        requires: [
+          {
+            skillIds: [VUE_ID],
+            needsAny: false,
+            reason: "Framework required",
+          },
+        ],
+      });
+      const skillB = createMockSkill(VUE_ID);
+      const matrix = createMockMatrix(skillA, skillB);
+      initializeMatrix(matrix);
+
+      const reason = getIncompatibleReason(REACT_ID, []);
+
+      expect(reason).toBeUndefined();
     });
   });
 
@@ -930,7 +991,7 @@ describe("Missing skill dependencies", () => {
 
       const result = validateSelection([SCSS_ID]);
 
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.errors[0].type).toBe("missingRequirement");
     });
 
@@ -1246,11 +1307,13 @@ describe("getAvailableSkills edge cases", () => {
 
     const result = getAvailableSkills("web-framework", [REACT_ID]);
     const optionB = result.find((o) => o.id === VUE_ID);
-    expect(optionB!.discouraged).toBe(true);
-    expect(optionB!.discouragedReason).toContain("Not ideal pairing");
+    expect(optionB!.advisoryState.status).toBe("discouraged");
+    expect(optionB!.advisoryState).toEqual(
+      expect.objectContaining({ reason: expect.stringContaining("Not ideal pairing") }),
+    );
   });
 
-  it("should set recommended and recommendedReason when applicable", () => {
+  it("should set recommended advisoryState when applicable", () => {
     const skillA = createMockSkill(REACT_ID, {
       category: "web-framework",
     });
@@ -1273,8 +1336,10 @@ describe("getAvailableSkills edge cases", () => {
 
     const result = getAvailableSkills("web-framework", [REACT_ID]);
     const optionB = result.find((o) => o.id === VUE_ID);
-    expect(optionB!.recommended).toBe(true);
-    expect(optionB!.recommendedReason).toContain("Great combination");
+    expect(optionB!.advisoryState.status).toBe("recommended");
+    expect(optionB!.advisoryState).toEqual(
+      expect.objectContaining({ reason: expect.stringContaining("Great combination") }),
+    );
   });
 
   it("should mark discouraged when skill conflicts with selected skill", () => {
@@ -1300,11 +1365,11 @@ describe("getAvailableSkills edge cases", () => {
 
     const result = getAvailableSkills("web-framework", [REACT_ID]);
     const optionB = result.find((o) => o.id === VUE_ID);
-    // Conflicts now produce discouraged state (not disabled)
-    expect(optionB!.discouraged).toBe(true);
+    // Conflicts now produce incompatible state
+    expect(optionB!.advisoryState.status).toBe("incompatible");
   });
 
-  it("discouraged takes priority over recommended when skill has conflicts", () => {
+  it("incompatible takes priority over recommended when skill has conflicts", () => {
     const skillA = createMockSkill(REACT_ID, {
       category: "web-framework",
       conflictsWith: [{ skillId: VUE_ID, reason: "Incompatible" }],
@@ -1328,9 +1393,8 @@ describe("getAvailableSkills edge cases", () => {
 
     const result = getAvailableSkills("web-framework", [REACT_ID]);
     const optionB = result.find((o) => o.id === VUE_ID);
-    // Discouraged takes priority over recommended
-    expect(optionB!.discouraged).toBe(true);
-    expect(optionB!.recommended).toBe(false);
+    // Incompatible takes priority over recommended
+    expect(optionB!.advisoryState.status).toBe("incompatible");
   });
 });
 
@@ -1361,7 +1425,7 @@ describe("validateSelection edge cases", () => {
     initializeMatrix(matrix);
 
     const result = validateSelection([REACT_ID, VUE_ID, ZUSTAND_ID]);
-    expect(result.valid).toBe(false);
+    expect(result.valid).toBe(true);
     expect(result.errors.some((e) => e.type === "categoryExclusive")).toBe(true);
   });
 
@@ -1377,7 +1441,7 @@ describe("validateSelection edge cases", () => {
 
     // A conflicts with B AND requires C — selecting A+B should produce conflict error
     const result = validateSelection([REACT_ID, VUE_ID]);
-    expect(result.valid).toBe(false);
+    expect(result.valid).toBe(true);
     expect(result.errors.some((e) => e.type === "conflict")).toBe(true);
     // Also reports missing requirement for C
     expect(result.errors.some((e) => e.type === "missingRequirement")).toBe(true);

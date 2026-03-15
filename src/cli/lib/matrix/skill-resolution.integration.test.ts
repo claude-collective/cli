@@ -12,6 +12,10 @@ import {
   getAvailableSkills,
   isDiscouraged,
   getDiscourageReason,
+  isIncompatible,
+  getIncompatibleReason,
+  hasUnmetRequirements,
+  getUnmetRequirementsReason,
   resolveAlias,
 } from ".";
 import {
@@ -268,12 +272,12 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       // Only drizzle selected, hono missing
       const validation = validateSelection(["api-database-drizzle"]);
-      expect(validation.valid).toBe(false);
+      expect(validation.valid).toBe(true);
       expect(validation.errors[0].type).toBe("missingRequirement");
       expect(validation.errors[0].message).toContain("Hono");
     });
 
-    it("should discourage dependent skill when requirement is not selected", () => {
+    it("should mark dependent skill as having unmet requirements when requirement is not selected", () => {
       const matrix = buildMultiSourceMatrix();
       initializeMatrix(matrix);
 
@@ -287,16 +291,16 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       ];
 
-      // Nothing selected, auth should be discouraged
-      const discouraged = isDiscouraged(AUTH_PATTERNS, []);
-      expect(discouraged).toBe(true);
+      // Nothing selected, auth should have unmet requirements
+      const unmet = hasUnmetRequirements(AUTH_PATTERNS, []);
+      expect(unmet).toBe(true);
 
-      const reason = getDiscourageReason(AUTH_PATTERNS, []);
-      expect(reason).toContain("Auth patterns need a backend framework");
+      const reason = getUnmetRequirementsReason(AUTH_PATTERNS, []);
+      expect(reason).toContain("requires");
       expect(reason).toContain("Hono");
     });
 
-    it("should not discourage dependent skill when requirement is selected", () => {
+    it("should not mark dependent skill as having unmet requirements when requirement is selected", () => {
       const matrix = buildMultiSourceMatrix();
       initializeMatrix(matrix);
 
@@ -310,9 +314,9 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       ];
 
-      // hono selected, auth should not be discouraged
-      const discouraged = isDiscouraged(AUTH_PATTERNS, ["api-framework-hono"]);
-      expect(discouraged).toBe(false);
+      // hono selected, auth should not have unmet requirements
+      const unmet = hasUnmetRequirements(AUTH_PATTERNS, ["api-framework-hono"]);
+      expect(unmet).toBe(false);
     });
 
     it("should handle OR dependency across sources", () => {
@@ -335,7 +339,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       // Without any framework, sentry should fail
       const failValidation = validateSelection([MONITORING_SENTRY]);
-      expect(failValidation.valid).toBe(false);
+      expect(failValidation.valid).toBe(true);
     });
   });
 
@@ -354,12 +358,12 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       const validation = validateSelection(["web-framework-react", VUE_ID]);
-      expect(validation.valid).toBe(false);
+      expect(validation.valid).toBe(true);
       expect(validation.errors[0].type).toBe("conflict");
       expect(validation.errors[0].message).toContain("Choose one frontend framework");
     });
 
-    it("should discourage conflicting skill from another source", () => {
+    it("should mark conflicting skill from another source as incompatible", () => {
       const matrix = buildMultiSourceMatrix();
       initializeMatrix(matrix);
 
@@ -371,9 +375,9 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       ];
 
-      // React selected, vue should be discouraged
-      const discouraged = isDiscouraged(VUE_ID, ["web-framework-react"]);
-      expect(discouraged).toBe(true);
+      // React selected, vue should be incompatible
+      const incompatible = isIncompatible(VUE_ID, ["web-framework-react"]);
+      expect(incompatible).toBe(true);
     });
 
     it("should enforce category exclusivity across multi-source skills", () => {
@@ -382,7 +386,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       // framework category is exclusive -- selecting both react and vue violates it
       const validation = validateSelection(["web-framework-react", VUE_ID]);
-      expect(validation.valid).toBe(false);
+      expect(validation.valid).toBe(true);
       expect(validation.errors.some((e) => e.type === "categoryExclusive")).toBe(true);
     });
   });
@@ -438,7 +442,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       expect(ids).toContain(VUE_ID);
 
       // None should be discouraged or selected initially
-      expect(available.every((o) => !o.discouraged)).toBe(true);
+      expect(available.every((o) => o.advisoryState.status === "normal")).toBe(true);
       expect(available.every((o) => !o.selected)).toBe(true);
     });
   });

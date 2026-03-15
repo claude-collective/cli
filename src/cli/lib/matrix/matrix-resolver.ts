@@ -1,6 +1,7 @@
 import { groupBy } from "remeda";
 import type {
   CategoryPath,
+  OptionState,
   ResolvedSkill,
   SelectionValidation,
   SkillId,
@@ -14,6 +15,18 @@ import { matrix, getSkillById } from "./matrix-provider";
 
 function getLabel(skill: Pick<ResolvedSkill, "displayName">): string {
   return skill.displayName;
+}
+
+function joinWithOr(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} or ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")} or ${items[items.length - 1]}`;
+}
+
+function joinWithAnd(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
 /** Resolves a skill ID to its canonical SkillId. Throws if not found in the matrix. */
@@ -80,12 +93,8 @@ export function getDependentSkills(skillId: SkillId, currentSelections: SkillId[
  * Determines whether a skill should be discouraged (shown with yellow warning)
  * in the wizard given the current selection state.
  *
- * A skill is discouraged when any of these conditions are true:
- * 1. It has a `discourages` relationship with a currently selected skill (bidirectional)
- * 2. It conflicts with a currently selected skill (bidirectional `conflictsWith` check)
- * 3. It has unmet `requires` dependencies (AND mode or OR/needsAny mode)
- *
- * Discouraged skills remain selectable but show a yellow warning to inform the user.
+ * A skill is discouraged when it has a `discourages` relationship with a
+ * currently selected skill (bidirectional check).
  *
  * @param skillId - The skill to check (resolved via alias lookup)
  * @param currentSelections - Currently selected skill IDs
@@ -96,7 +105,7 @@ export function isDiscouraged(skillId: SkillId, currentSelections: SkillId[]): b
   const skill = matrix.skills[fullId];
   if (!skill) return false;
 
-  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections);
+  const { resolvedSelections } = initializeSelectionContext(currentSelections);
 
   // Check discourages relationships (bidirectional)
   for (const selectedId of resolvedSelections) {
@@ -110,30 +119,50 @@ export function isDiscouraged(skillId: SkillId, currentSelections: SkillId[]): b
     }
   }
 
+  return false;
+}
+
+/**
+ * Determines whether a skill is incompatible with the current selection state
+ * (shown with red warning). Only checks conflictsWith relationships.
+ *
+ * @param skillId - The skill to check (resolved via alias lookup)
+ * @param currentSelections - Currently selected skill IDs
+ * @returns true if the skill has conflicts with current selections
+ */
+export function isIncompatible(skillId: SkillId, currentSelections: SkillId[]): boolean {
+  const fullId = resolveAlias(skillId);
+  const skill = matrix.skills[fullId];
+  if (!skill) return false;
+
+  const { resolvedSelections } = initializeSelectionContext(currentSelections);
+
   // Check conflictsWith relationships (bidirectional)
   for (const selectedId of resolvedSelections) {
-    if (skill.conflictsWith.some((c) => c.skillId === selectedId)) {
-      return true;
-    }
-
+    if (skill.conflictsWith.some((c) => c.skillId === selectedId)) return true;
     const selectedSkill = matrix.skills[selectedId];
-    if (selectedSkill?.conflictsWith.some((c) => c.skillId === fullId)) {
-      return true;
-    }
+    if (selectedSkill?.conflictsWith.some((c) => c.skillId === fullId)) return true;
   }
 
-  // Check unmet requires dependencies
+  return false;
+}
+
+/**
+ * Checks if a selected skill has unmet dependency requirements.
+ * Only meaningful for skills that are currently selected.
+ */
+export function hasUnmetRequirements(skillId: SkillId, currentSelections: SkillId[]): boolean {
+  const fullId = resolveAlias(skillId);
+  const skill = matrix.skills[fullId];
+  if (!skill) return false;
+
+  const { selectedSet } = initializeSelectionContext(currentSelections);
+
   for (const requirement of skill.requires) {
     if (requirement.needsAny) {
-      const hasAny = requirement.skillIds.some((reqId) => selectedSet.has(reqId));
-      if (!hasAny) {
-        return true;
-      }
+      if (!requirement.skillIds.some((reqId) => selectedSet.has(reqId))) return true;
     } else {
-      const hasAll = requirement.skillIds.every((reqId) => selectedSet.has(reqId));
-      if (!hasAll) {
-        return true;
-      }
+      if (!requirement.skillIds.every((reqId) => selectedSet.has(reqId))) return true;
     }
   }
 
@@ -143,8 +172,7 @@ export function isDiscouraged(skillId: SkillId, currentSelections: SkillId[]): b
 /**
  * Returns a human-readable reason why a skill is discouraged, or undefined if it is not.
  *
- * Checks discourages relationships, conflicts (bidirectional), and unmet requirements,
- * returning the first matching reason with context.
+ * Checks discourages relationships (bidirectional), returning the first matching reason.
  *
  * @param skillId - The skill to get the discourage reason for
  * @param currentSelections - Currently selected skill IDs
@@ -158,7 +186,7 @@ export function getDiscourageReason(
   const skill = matrix.skills[fullId];
   if (!skill) return undefined;
 
-  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections);
+  const { resolvedSelections } = initializeSelectionContext(currentSelections);
 
   // Check discourages relationships (bidirectional)
   for (const selectedId of resolvedSelections) {
@@ -176,45 +204,78 @@ export function getDiscourageReason(
     }
   }
 
+  return undefined;
+}
+
+/**
+ * Returns a human-readable reason why a skill is incompatible, or undefined if it is not.
+ *
+ * Only checks conflicts (bidirectional), returning the first matching reason.
+ *
+ * @param skillId - The skill to get the incompatible reason for
+ * @param currentSelections - Currently selected skill IDs
+ * @returns Formatted reason string or undefined
+ */
+export function getIncompatibleReason(
+  skillId: SkillId,
+  currentSelections: SkillId[],
+): string | undefined {
+  const fullId = resolveAlias(skillId);
+  const skill = matrix.skills[fullId];
+  if (!skill) return undefined;
+
+  const { resolvedSelections } = initializeSelectionContext(currentSelections);
+
   // Check conflictsWith relationships (bidirectional)
   for (const selectedId of resolvedSelections) {
     const conflict = skill.conflictsWith.find((c) => c.skillId === selectedId);
     if (conflict) {
-      return `${conflict.reason} (conflicts with ${getLabel(getSkillById(selectedId))})`;
+      return `conflicts with ${getLabel(getSkillById(selectedId))}`;
     }
 
     const selectedSkill = matrix.skills[selectedId];
     if (selectedSkill) {
       const reverseConflict = selectedSkill.conflictsWith.find((c) => c.skillId === fullId);
       if (reverseConflict) {
-        return `${reverseConflict.reason} (conflicts with ${getLabel(selectedSkill)})`;
+        return `conflicts with ${getLabel(selectedSkill)}`;
       }
     }
   }
 
-  // Check unmet requires dependencies
+  return undefined;
+}
+
+/**
+ * Returns a human-readable reason for unmet requirements, or undefined if all are met.
+ */
+export function getUnmetRequirementsReason(
+  skillId: SkillId,
+  currentSelections: SkillId[],
+): string | undefined {
+  const fullId = resolveAlias(skillId);
+  const skill = matrix.skills[fullId];
+  if (!skill) return undefined;
+
+  const { selectedSet } = initializeSelectionContext(currentSelections);
+
   for (const requirement of skill.requires) {
     if (requirement.needsAny) {
       const hasAny = requirement.skillIds.some((reqId) => selectedSet.has(reqId));
       if (!hasAny) {
-        const requiredNames = requirement.skillIds
-          .map((id) => {
-            const s = matrix.skills[id];
-            return s ? getLabel(s) : id;
-          })
-          .join(" or ");
-        return `${requirement.reason} (requires ${requiredNames})`;
+        const requiredNames = requirement.skillIds.map((id) => {
+          const s = matrix.skills[id];
+          return s ? getLabel(s) : id;
+        });
+        return `requires ${joinWithOr(requiredNames)}`;
       }
     } else {
       const missingIds = requirement.skillIds.filter((reqId) => !selectedSet.has(reqId));
       if (missingIds.length > 0) {
-        const missingNames = missingIds
-          .map((id) => {
-            const s = matrix.skills[id];
-            return s ? getLabel(s) : id;
-          })
-          .join(", ");
-        return `${requirement.reason} (requires ${missingNames})`;
+        const missingNames = missingIds.map((id) => {
+          const s = matrix.skills[id];
+          return s ? getLabel(s) : id;
+        });
+        return `requires ${joinWithAnd(missingNames)}`;
       }
     }
   }
@@ -432,24 +493,37 @@ export function validateSelection(selections: SkillId[]): SelectionValidation {
   ]);
 
   return {
-    valid: errors.length === 0,
+    valid: true,
     errors,
     warnings,
   };
 }
 
+function computeAdvisoryState(skillId: SkillId, currentSelections: SkillId[]): OptionState {
+  // Priority: incompatible > discouraged > recommended > normal
+  if (isIncompatible(skillId, currentSelections)) {
+    return { status: "incompatible", reason: getIncompatibleReason(skillId, currentSelections) ?? "Incompatible" };
+  }
+  if (isDiscouraged(skillId, currentSelections)) {
+    return { status: "discouraged", reason: getDiscourageReason(skillId, currentSelections) ?? "Not recommended" };
+  }
+  if (isRecommended(skillId, currentSelections)) {
+    return { status: "recommended", reason: getRecommendReason(skillId, currentSelections) ?? "Recommended" };
+  }
+  return { status: "normal" };
+}
+
 /**
  * Builds a list of skill options for a category, annotated with their current
- * state (discouraged, recommended, selected) relative to the wizard's
- * selection state.
+ * advisory state relative to the wizard's selection state.
  *
  * Each skill is checked against the current selections to determine its visual
- * and interactive state in the wizard UI. States are mutually prioritized:
- * discouraged takes precedence over recommended.
+ * state in the wizard UI. States are prioritized:
+ * incompatible > discouraged > recommended > normal.
  *
  * @param categoryId - Category path to filter skills by
  * @param currentSelections - Currently selected skill IDs
- * @returns Array of skill options with state annotations and reasons
+ * @returns Array of skill options with advisory state annotations
  */
 export function getAvailableSkills(
   categoryId: CategoryPath,
@@ -460,20 +534,15 @@ export function getAvailableSkills(
 
   for (const skill of Object.values(matrix.skills)) {
     if (!skill) continue;
-    if (skill.category !== categoryId) {
-      continue;
-    }
+    if (skill.category !== categoryId) continue;
 
-    const discouraged = isDiscouraged(skill.id, currentSelections);
-    const recommended = !discouraged && isRecommended(skill.id, currentSelections);
-
+    const isSelected = selectedSet.has(skill.id);
     skillOptions.push({
       id: skill.id,
-      discouraged,
-      discouragedReason: discouraged ? getDiscourageReason(skill.id, currentSelections) : undefined,
-      recommended,
-      recommendedReason: recommended ? getRecommendReason(skill.id, currentSelections) : undefined,
-      selected: selectedSet.has(skill.id),
+      advisoryState: computeAdvisoryState(skill.id, currentSelections),
+      selected: isSelected,
+      hasUnmetRequirements: isSelected && hasUnmetRequirements(skill.id, currentSelections),
+      unmetRequirementsReason: isSelected ? getUnmetRequirementsReason(skill.id, currentSelections) : undefined,
       alternatives: skill.alternatives.map((a) => a.skillId),
     });
   }
