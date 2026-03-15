@@ -9,6 +9,8 @@
 | D-95  | Create a reusable view title component for wizard steps                                                               | Done          |
 | D-96  | Remove redundant left/right arrow navigation description below views                                                  | Done          |
 | D-97  | Improve startup time — lazy-load matrix, only generate custom skills on startup                                       | Investigate   |
+| D-101 | "Next.js Fullstack" stack uses `web-framework-react` but no Next.js skill — rename stack or add Next.js skills        | Ready for Dev |
+| D-102 | Next.js App Router + Server Actions are complementary but mutually exclusive via `web-framework` category — merge or recategorize | Investigate   |
 | D-62  | Review default stacks: include meta/methodology/reviewing skills                                                      | Ready for Dev |
 | D-38  | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))         | Has Open Qs   |
 | D-39  | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))             | Ready for Dev |
@@ -21,6 +23,7 @@
 | D-98  | Break up large E2E test files + restructure E2E folder organization                                                   | Done          |
 | D-99  | Update README + .ai-docs to reflect current architecture (see [readme-audit.md](./readme-audit.md))                   | Ready for Dev |
 | D-100 | Fix pre-existing E2E test violations — `undefined!`, magic timeouts, raw `readFile`, cleanup patterns                 | Ready for Dev |
+| D-101 | Add `compatibleWith` groups to default-rules.ts — NgRx shows as recommended with React because it has no compatibility constraint. Framework-specific skills (NgRx, Pinia, Vue Test Utils, etc.) need `compatibleWith` entries scoping them to their framework | Ready for Dev |
 
 ---
 
