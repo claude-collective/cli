@@ -1,29 +1,29 @@
-import path from "path";
 import { mkdir } from "fs/promises";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { isClaudeCLIAvailable } from "../../src/cli/utils/exec.js";
+import path from "path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
+import { isClaudeCLIAvailable } from "../../src/cli/utils/exec.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
-  fileExists,
   createPermissionsFile,
-  readTestFile,
-  runCLI,
+  createTempDir,
   delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  SETUP_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
+  ensureBinaryExists,
+  EXIT_CODES,
+  EXIT_WAIT_TIMEOUT_MS,
+  fileExists,
   KEYSTROKE_DELAY_MS,
   PLUGIN_INSTALL_TIMEOUT_MS,
-  EXIT_WAIT_TIMEOUT_MS,
-  EXIT_CODES,
+  readTestFile,
+  runCLI,
+  SETUP_TIMEOUT_MS,
+  STEP_TRANSITION_DELAY_MS,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
 
 /**
@@ -146,7 +146,7 @@ describe.skipIf(!claudeAvailable)(
         session.enter();
 
         // Step 4: Sources — accept recommended (first option)
-        await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
@@ -154,7 +154,7 @@ describe.skipIf(!claudeAvailable)(
         // Focus starts on the first agent. In the E2E stack, agents are:
         // web-developer (first), api-developer (second).
         // Press "s" to toggle web-developer to global scope.
-        await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         // Toggle web-developer to global scope

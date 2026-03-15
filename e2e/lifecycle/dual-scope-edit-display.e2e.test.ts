@@ -1,28 +1,28 @@
-import path from "path";
 import { mkdir } from "fs/promises";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
+import path from "path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { verifyAgentCompiled } from "../helpers/plugin-assertions.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
-  fileExists,
   createPermissionsFile,
+  createTempDir,
   delay,
-  passThroughAllBuildDomains,
-  WIZARD_LOAD_TIMEOUT_MS,
-  INSTALL_TIMEOUT_MS,
-  SETUP_TIMEOUT_MS,
-  LIFECYCLE_TEST_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  KEYSTROKE_DELAY_MS,
-  EXIT_WAIT_TIMEOUT_MS,
+  ensureBinaryExists,
   EXIT_CODES,
+  EXIT_WAIT_TIMEOUT_MS,
+  fileExists,
+  INSTALL_TIMEOUT_MS,
+  KEYSTROKE_DELAY_MS,
+  LIFECYCLE_TEST_TIMEOUT_MS,
+  passThroughAllBuildDomains,
+  SETUP_TIMEOUT_MS,
+  STEP_TRANSITION_DELAY_MS,
   waitForRawText,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
-import { verifyAgentCompiled } from "../helpers/plugin-assertions.js";
 
 /**
  * Dual-scope edit lifecycle E2E test — display and locking.
@@ -192,17 +192,12 @@ async function initProject(
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    // Sources step — "Choice" view shows two options:
-    //   1. "Use all recommended sources" (first, focused)
-    //   2. "Customize skill sources" (second)
-    // We need to enter Customize view to press "l" (set all sources to local).
+    // Sources step — already in customize view (SOURCE_CHOICE is false).
+    // We need to press "l" to set ALL sources to local.
     // Without this, skills have source: "agents-inc" from createDefaultSkillConfig,
     // which triggers plugin install mode (and fails without a real marketplace).
-    await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
-    session.arrowDown(); // Move to "Customize skill sources"
-    await delay(KEYSTROKE_DELAY_MS);
-    session.enter(); // Enter customize view
 
     // In customize view, press "l" to set ALL sources to local
     await delay(STEP_TRANSITION_DELAY_MS);
@@ -215,7 +210,7 @@ async function initProject(
     // Agent focus order: web-developer, web-reviewer, web-researcher,
     // web-tester, web-pm, web-architecture, api-developer, ...
     // Need 6 arrow-downs to reach api-developer.
-    await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     for (let i = 0; i < 6; i++) {
       session.arrowDown();
@@ -327,12 +322,12 @@ describe("dual-scope edit lifecycle — display and locking", () => {
           await passThroughAllBuildDomains(session);
 
           // Sources step
-          await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter();
 
           // Agents step — should show scope badges
-          await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter();
 

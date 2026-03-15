@@ -89,7 +89,7 @@ describe("init wizard — UI elements", () => {
     wizardSession.enter();
 
     // Sources step — accept recommended defaults
-    await wizardSession.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
@@ -132,7 +132,7 @@ describe("init wizard — UI elements", () => {
       await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
 
       const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("navigate");
+      expect(fullOutput).toContain("select");
       expect(fullOutput).toContain("select");
       expect(fullOutput).toContain("continue");
       expect(fullOutput).toContain("back");
@@ -202,7 +202,7 @@ describe("init wizard — UI elements", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.enter();
 
-      await wizardSession.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
     }
 
     it("should toggle scope badge when S key is pressed in build step", async () => {

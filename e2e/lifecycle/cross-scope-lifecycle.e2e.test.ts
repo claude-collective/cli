@@ -1,31 +1,31 @@
-import path from "path";
 import { mkdir } from "fs/promises";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import path from "path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import {
-  verifyConfig,
   verifyAgentCompiled,
+  verifyConfig,
   verifySkillCopiedLocally,
 } from "../helpers/plugin-assertions.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
-  fileExists,
-  directoryExists,
-  readTestFile,
   createPermissionsFile,
+  createTempDir,
+  delay,
+  directoryExists,
+  ensureBinaryExists,
+  EXIT_CODES,
+  EXIT_WAIT_TIMEOUT_MS,
+  fileExists,
+  LIFECYCLE_TEST_TIMEOUT_MS,
   navigateInitWizardToCompletion,
   passThroughAllBuildDomains,
-  delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
+  readTestFile,
   SETUP_TIMEOUT_MS,
-  LIFECYCLE_TEST_TIMEOUT_MS,
-  EXIT_WAIT_TIMEOUT_MS,
-  EXIT_CODES,
+  STEP_TRANSITION_DELAY_MS,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
 
 /**
@@ -170,13 +170,13 @@ describe("cross-scope lifecycle: init global -> edit global from project", () =>
 
       await passThroughAllBuildDomains(session);
 
-      // Sources step — accept defaults (first option: "Use all recommended skills")
-      await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+      // Sources step — accept defaults
+      await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 
       // Agents step — accept defaults
-      await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 

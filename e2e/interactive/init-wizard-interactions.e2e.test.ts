@@ -114,13 +114,13 @@ describe("init wizard — interactions", () => {
 
         // Check if we advanced or need another Enter for an additional domain
         const afterFirstEnter = session.getFullOutput();
-        if (!afterFirstEnter.includes("technologies")) {
+        if (!afterFirstEnter.includes("Customize skill sources")) {
           session.enter();
           await delay(STEP_TRANSITION_DELAY_MS);
         }
 
         // Sources step
-        await session.waitForText("technologies", INSTALL_TIMEOUT_MS);
+        await session.waitForText("Customize skill sources", INSTALL_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
@@ -206,11 +206,11 @@ describe("init wizard — interactions", () => {
         for (let attempt = 0; attempt < 4; attempt++) {
           session.enter();
           await delay(STEP_TRANSITION_DELAY_MS);
-          if (session.getFullOutput().includes("technologies")) break;
+          if (session.getFullOutput().includes("Customize skill sources")) break;
         }
 
         // Sources step
-        await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
@@ -317,11 +317,11 @@ describe("init wizard — interactions", () => {
         for (let attempt = 0; attempt < 4; attempt++) {
           session.enter();
           await delay(STEP_TRANSITION_DELAY_MS);
-          if (session.getFullOutput().includes("technologies")) break;
+          if (session.getFullOutput().includes("Customize skill sources")) break;
         }
 
         // Sources step
-        await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 

@@ -1,23 +1,23 @@
 import path from "path";
-import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { CLAUDE_DIR } from "../../src/cli/consts.js";
+import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
-  directoryExists,
-  listFiles,
   createEditableProject,
   createPermissionsFile,
+  createTempDir,
   delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  INSTALL_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  EXIT_TIMEOUT_MS,
+  directoryExists,
+  ensureBinaryExists,
   EXIT_CODES,
+  EXIT_TIMEOUT_MS,
+  INSTALL_TIMEOUT_MS,
+  listFiles,
+  STEP_TRANSITION_DELAY_MS,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
 
 /**
  * E2E tests for the `edit` command wizard — confirm step and completion flow.
@@ -67,12 +67,12 @@ describe("edit wizard — confirm step and completion", () => {
 
       // Build step -> Sources step
       session.enter();
-      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Sources step -> Agents step (accept recommended sources)
       session.enter();
-      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Agents step -> Confirm step
@@ -113,12 +113,12 @@ describe("edit wizard — confirm step and completion", () => {
 
       // Build step -> Sources step
       session.enter();
-      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Sources step -> Agents step
       session.enter();
-      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Agents step -> Confirm step
@@ -165,12 +165,12 @@ describe("edit wizard — confirm step and completion", () => {
 
       // Build step -> Sources step
       session.enter();
-      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Sources step -> Agents step
       session.enter();
-      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Agents step -> Confirm step
@@ -180,11 +180,11 @@ describe("edit wizard — confirm step and completion", () => {
 
       // Go back from confirm step to build step via ESC
       session.escape();
-      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.escape();
-      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.escape();
@@ -215,12 +215,12 @@ describe("edit wizard — confirm step and completion", () => {
 
       // Build step -> Sources step
       session.enter();
-      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Sources step -> Agents step
       session.enter();
-      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Agents step -> Confirm step
@@ -230,11 +230,11 @@ describe("edit wizard — confirm step and completion", () => {
 
       // Press ESC on confirm step — should go back to agents step
       session.escape();
-      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
 
       const screen = session.getScreen();
       // Should be back on the agents step, not exited
-      expect(screen).toContain("Select agents to compile");
+      expect(screen).toContain("Select agents");
     });
   });
 });

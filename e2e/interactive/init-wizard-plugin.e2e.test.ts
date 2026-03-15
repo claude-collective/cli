@@ -1,30 +1,30 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { isClaudeCLIAvailable } from "../../src/cli/utils/exec.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
+import { createE2ESource } from "../helpers/create-e2e-source.js";
 import {
-  verifyConfig,
   verifyAgentCompiled,
+  verifyConfig,
   verifySkillCopiedLocally,
 } from "../helpers/plugin-assertions.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
   createPermissionsFile,
+  createTempDir,
   delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  KEYSTROKE_DELAY_MS,
+  ensureBinaryExists,
   EXIT_CODES,
-  PLUGIN_INSTALL_TIMEOUT_MS,
   EXIT_WAIT_TIMEOUT_MS,
+  KEYSTROKE_DELAY_MS,
+  PLUGIN_INSTALL_TIMEOUT_MS,
   SETUP_TIMEOUT_MS,
+  STEP_TRANSITION_DELAY_MS,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
 
 /**
  * E2E tests for the init wizard in plugin mode.
@@ -297,18 +297,15 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 
-      // Step 4: Sources choice view — Arrow Down to "Customize skill sources", Enter
-      await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+      // Step 4: Sources customize view — already in customize view
+      await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.enter();
 
       // Step 4b: Sources customize view — set ONE skill to local.
       // SourceGrid focus enters at row 0, col 0 (the "local" option of the
       // first skill). Pressing space selects "local" for that skill, leaving
       // all other skills at their default marketplace source.
-      await session.waitForText("set all local", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.space();
       await delay(KEYSTROKE_DELAY_MS);
@@ -317,7 +314,7 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
       session.enter();
 
       // Step 5: Agents step — Enter to accept defaults
-      await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 

@@ -1,32 +1,32 @@
-import path from "path";
 import { readFile, writeFile } from "fs/promises";
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
-import { isClaudeCLIAvailable } from "../../src/cli/utils/exec.js";
+import path from "path";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
+import { isClaudeCLIAvailable } from "../../src/cli/utils/exec.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
 import {
-  verifyConfig,
   verifyAgentCompiled,
+  verifyConfig,
   verifySkillCopiedLocally,
 } from "../helpers/plugin-assertions.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
   createPermissionsFile,
+  createTempDir,
   delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  SETUP_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
+  ensureBinaryExists,
+  EXIT_CODES,
+  EXIT_WAIT_TIMEOUT_MS,
   KEYSTROKE_DELAY_MS,
   PLUGIN_INSTALL_TIMEOUT_MS,
-  EXIT_WAIT_TIMEOUT_MS,
-  EXIT_CODES,
+  SETUP_TIMEOUT_MS,
+  STEP_TRANSITION_DELAY_MS,
   waitForRawText,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
 
 /**
@@ -107,19 +107,17 @@ async function initLocal(
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "technologies", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
-    session.arrowDown();
-    await delay(KEYSTROKE_DELAY_MS);
-    session.enter();
 
-    await waitForRawText(session, "set all local", WIZARD_LOAD_TIMEOUT_MS);
+    // Already in customize view
+    await waitForRawText(session, "Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.write("l");
     await delay(KEYSTROKE_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Select agents", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
@@ -243,20 +241,18 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle — bulk mode 
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
-        await waitForRawText(session, "technologies", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
-        session.arrowDown();
-        await delay(STEP_TRANSITION_DELAY_MS);
-        session.enter();
-        await waitForRawText(session, "set all local", WIZARD_LOAD_TIMEOUT_MS);
+        // Already in customize view
+        await waitForRawText(session, "Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         session.write("p");
         await delay(STEP_TRANSITION_DELAY_MS);
 
         session.enter();
-        await waitForRawText(session, "Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Select agents", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         session.enter();
@@ -322,20 +318,18 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle — bulk mode 
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
-        await waitForRawText(session, "technologies", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
-        session.arrowDown();
-        await delay(STEP_TRANSITION_DELAY_MS);
-        session.enter();
-        await waitForRawText(session, "set all local", WIZARD_LOAD_TIMEOUT_MS);
+        // Already in customize view
+        await waitForRawText(session, "Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         session.write("l");
         await delay(STEP_TRANSITION_DELAY_MS);
 
         session.enter();
-        await waitForRawText(session, "Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Select agents", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         session.enter();

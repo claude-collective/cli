@@ -1,8 +1,10 @@
-import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import path from "path";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
+import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
+import type { AgentName, Domain, SkillId } from "../../src/cli/types/index.js";
 import { isClaudeCLIAvailable } from "../../src/cli/utils/exec.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
@@ -10,21 +12,19 @@ import {
 import { verifyConfig, verifySkillCopiedLocally } from "../helpers/plugin-assertions.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
   createPermissionsFile,
-  writeProjectConfig,
+  createTempDir,
   delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
+  ensureBinaryExists,
   EXIT_CODES,
-  PLUGIN_INSTALL_TIMEOUT_MS,
   EXIT_WAIT_TIMEOUT_MS,
+  PLUGIN_INSTALL_TIMEOUT_MS,
   SETUP_TIMEOUT_MS,
+  STEP_TRANSITION_DELAY_MS,
+  WIZARD_LOAD_TIMEOUT_MS,
+  writeProjectConfig,
 } from "../helpers/test-utils.js";
-import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
-import type { AgentName, Domain, SkillId } from "../../src/cli/types/index.js";
 
 /**
  * E2E tests for the edit wizard — mode migration between local and plugin.
@@ -205,25 +205,18 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode migration", () =>
         // Build step
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
-        // Build -> Sources (choice view)
+        // Build -> Sources (customize view)
         session.enter();
-        await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
-        // Arrow Down to "Customize skill sources", then Enter to open customize view
-        session.arrowDown();
-        await delay(STEP_TRANSITION_DELAY_MS);
-        session.enter();
-        await session.waitForText("set all local", WIZARD_LOAD_TIMEOUT_MS);
-        await delay(STEP_TRANSITION_DELAY_MS);
-
-        // Press "p" hotkey to set ALL skills to plugin mode
+        // Already in customize view — press "p" hotkey to set ALL skills to plugin mode
         session.write("p");
         await delay(STEP_TRANSITION_DELAY_MS);
 
         // Enter to continue from customize view -> Agents step
         session.enter();
-        await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         // Agents -> Confirm
@@ -274,25 +267,18 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode migration", () =>
         // Build step
         await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
-        // Build -> Sources (choice view)
+        // Build -> Sources (customize view)
         session.enter();
-        await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
-        // Arrow Down to "Customize skill sources", then Enter to open customize view
-        session.arrowDown();
-        await delay(STEP_TRANSITION_DELAY_MS);
-        session.enter();
-        await session.waitForText("set all local", WIZARD_LOAD_TIMEOUT_MS);
-        await delay(STEP_TRANSITION_DELAY_MS);
-
-        // Press "l" hotkey to set ALL skills to local mode
+        // Already in customize view — press "l" hotkey to set ALL skills to local mode
         session.write("l");
         await delay(STEP_TRANSITION_DELAY_MS);
 
         // Enter to continue from customize view -> Agents step
         session.enter();
-        await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         // Agents -> Confirm

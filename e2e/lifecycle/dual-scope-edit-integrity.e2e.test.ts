@@ -1,32 +1,32 @@
-import path from "path";
 import { mkdir } from "fs/promises";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import path from "path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
 import { isClaudeCLIAvailable } from "../../src/cli/utils/exec.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
+import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
-  fileExists,
   createPermissionsFile,
-  readTestFile,
+  createTempDir,
   delay,
-  passThroughAllBuildDomains,
-  WIZARD_LOAD_TIMEOUT_MS,
-  INSTALL_TIMEOUT_MS,
-  SETUP_TIMEOUT_MS,
-  LIFECYCLE_TEST_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  KEYSTROKE_DELAY_MS,
-  EXIT_WAIT_TIMEOUT_MS,
+  ensureBinaryExists,
   EXIT_CODES,
+  EXIT_WAIT_TIMEOUT_MS,
+  fileExists,
+  INSTALL_TIMEOUT_MS,
+  KEYSTROKE_DELAY_MS,
+  LIFECYCLE_TEST_TIMEOUT_MS,
+  passThroughAllBuildDomains,
+  readTestFile,
+  SETUP_TIMEOUT_MS,
+  STEP_TRANSITION_DELAY_MS,
   waitForRawText,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
 
 /**
@@ -132,18 +132,15 @@ async function initProject(
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
-    session.arrowDown();
-    await delay(KEYSTROKE_DELAY_MS);
-    session.enter();
 
-    await delay(STEP_TRANSITION_DELAY_MS);
+    // Already in customize view — press "l" to set ALL sources to local
     session.write("l");
     await delay(KEYSTROKE_DELAY_MS);
     session.enter();
 
-    await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     for (let i = 0; i < 6; i++) {
       session.arrowDown();
@@ -354,12 +351,9 @@ describe.skipIf(!claudeAvailable)(
             // Build step — pass through all three domains
             await passThroughAllBuildDomains(session);
 
-            // Sources step — navigate to "Customize skill sources"
-            await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+            // Sources step — already in customize view
+            await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
             await delay(STEP_TRANSITION_DELAY_MS);
-            session.arrowDown(); // Move to "Customize skill sources"
-            await delay(KEYSTROKE_DELAY_MS);
-            session.enter();
 
             // In the customize view, navigate to api-framework-hono row
             // and select the marketplace source column
@@ -371,7 +365,7 @@ describe.skipIf(!claudeAvailable)(
             session.enter(); // Confirm source selection
 
             // Agents step
-            await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+            await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
             await delay(STEP_TRANSITION_DELAY_MS);
             session.enter();
 
@@ -455,12 +449,12 @@ describe.skipIf(!claudeAvailable)(
 
             // Sources step — pass through without customizing.
             // The wizard defaults all skills to the marketplace source.
-            await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+            await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
             await delay(STEP_TRANSITION_DELAY_MS);
             session.enter(); // Accept default sources (marketplace)
 
             // Agents step
-            await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+            await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
             await delay(STEP_TRANSITION_DELAY_MS);
             session.enter();
 
@@ -561,12 +555,12 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle — mixed source co
           await passThroughAllBuildDomains(session);
 
           // Sources step — pass through without customizing.
-          await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter(); // Accept default sources
 
           // Agents step
-          await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter();
 
@@ -650,14 +644,10 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle — mixed source co
           // Build step — pass through all three domains
           await passThroughAllBuildDomains(session);
 
-          // Sources step — customize: switch api-framework-hono to local
-          await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+          // Sources step — already in customize view: switch api-framework-hono to local
+          await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
-          session.arrowDown();
-          await delay(KEYSTROKE_DELAY_MS);
-          session.enter();
 
-          await delay(STEP_TRANSITION_DELAY_MS);
           session.arrowLeft(); // Move to "local" column
           await delay(KEYSTROKE_DELAY_MS);
           session.space();
@@ -665,7 +655,7 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle — mixed source co
           session.enter();
 
           // Agents step
-          await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter();
 

@@ -97,7 +97,7 @@ describe("init wizard — scratch flow", () => {
     wizardSession.enter();
 
     // Sources step — accept recommended defaults
-    await wizardSession.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 

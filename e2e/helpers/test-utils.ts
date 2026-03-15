@@ -1,19 +1,19 @@
+import { execa } from "execa";
+import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { stripVTControlCharacters } from "node:util";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mkdir, writeFile, readdir, readFile } from "fs/promises";
-import { stripVTControlCharacters } from "node:util";
-import { execa } from "execa";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
+import { renderConfigTs, renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 import {
-  createTempDir as createTempDirBase,
   cleanupTempDir,
-  fileExists,
+  createTempDir as createTempDirBase,
   directoryExists,
+  fileExists,
 } from "../../src/cli/lib/__tests__/test-fs-utils.js";
 import { EXIT_CODES } from "../../src/cli/lib/exit-codes.js";
 import type { AgentName, Domain, ProjectConfig, SkillId } from "../../src/cli/types/index.js";
 import type { TerminalSession } from "./terminal-session.js";
-import { renderConfigTs, renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 
 export { EXIT_CODES };
 
@@ -98,14 +98,14 @@ export async function navigateEditWizardToCompletion(
   session: TerminalSession,
   timeoutMs = 30_000,
 ): Promise<void> {
-  // Build step -> Sources step
+  // Build step -> Sources step (customize view)
   session.enter();
-  await session.waitForText("technologies", timeoutMs);
+  await session.waitForText("Customize skill sources", timeoutMs);
   await delay(STEP_TRANSITION_DELAY_MS);
 
   // Sources step -> Agents step
   session.enter();
-  await session.waitForText("Select agents to compile", timeoutMs);
+  await session.waitForText("Select agents", timeoutMs);
   await delay(STEP_TRANSITION_DELAY_MS);
 
   // Agents step -> Confirm step
@@ -207,8 +207,7 @@ export async function createTempDir(): Promise<string> {
   return createTempDirBase(E2E_TEMP_PREFIX);
 }
 
-export { cleanupTempDir, fileExists, directoryExists };
-export { renderConfigTs, renderSkillMd };
+export { cleanupTempDir, directoryExists, fileExists, renderConfigTs, renderSkillMd };
 
 /**
  * Creates a minimal project directory with a single local skill.

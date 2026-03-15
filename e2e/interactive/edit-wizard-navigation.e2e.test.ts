@@ -1,16 +1,16 @@
 import path from "path";
-import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
   createEditableProject,
+  createTempDir,
   delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  EXIT_TIMEOUT_MS,
+  ensureBinaryExists,
   EXIT_CODES,
+  EXIT_TIMEOUT_MS,
+  STEP_TRANSITION_DELAY_MS,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
 
 /**
@@ -205,12 +205,12 @@ describe("edit wizard — navigation and hotkeys", () => {
       // Navigate to the confirm step to verify the scope change is reflected.
       // Build step -> Sources step
       session.enter();
-      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Sources step -> Agents step
       session.enter();
-      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Agents step -> Confirm step

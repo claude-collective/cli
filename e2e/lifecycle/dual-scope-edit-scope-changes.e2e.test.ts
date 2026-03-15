@@ -1,27 +1,27 @@
-import path from "path";
 import { mkdir } from "fs/promises";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import path from "path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
-  fileExists,
   createPermissionsFile,
-  readTestFile,
+  createTempDir,
   delay,
-  passThroughAllBuildDomains,
-  WIZARD_LOAD_TIMEOUT_MS,
-  INSTALL_TIMEOUT_MS,
-  SETUP_TIMEOUT_MS,
-  LIFECYCLE_TEST_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  KEYSTROKE_DELAY_MS,
-  EXIT_WAIT_TIMEOUT_MS,
+  ensureBinaryExists,
   EXIT_CODES,
+  EXIT_WAIT_TIMEOUT_MS,
+  fileExists,
+  INSTALL_TIMEOUT_MS,
+  KEYSTROKE_DELAY_MS,
+  LIFECYCLE_TEST_TIMEOUT_MS,
+  passThroughAllBuildDomains,
+  readTestFile,
+  SETUP_TIMEOUT_MS,
+  STEP_TRANSITION_DELAY_MS,
   waitForRawText,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
 
 /**
@@ -122,18 +122,15 @@ async function initProject(
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
-    session.arrowDown();
-    await delay(KEYSTROKE_DELAY_MS);
-    session.enter();
 
-    await delay(STEP_TRANSITION_DELAY_MS);
+    // Already in customize view — press "l" to set ALL sources to local
     session.write("l");
     await delay(KEYSTROKE_DELAY_MS);
     session.enter();
 
-    await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     for (let i = 0; i < 6; i++) {
       session.arrowDown();
@@ -251,12 +248,12 @@ describe("dual-scope edit lifecycle — scope changes via S hotkey", () => {
           session.enter();
 
           // Sources step (pass through)
-          await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter();
 
           // Agents step (pass through)
-          await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter();
 
@@ -315,7 +312,7 @@ describe("dual-scope edit lifecycle — scope changes via S hotkey", () => {
           await passThroughAllBuildDomains(session);
 
           // Sources step (pass through)
-          await session.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter();
 
@@ -324,7 +321,7 @@ describe("dual-scope edit lifecycle — scope changes via S hotkey", () => {
           // Need 6 arrow-downs to reach api-developer:
           // web-developer -> web-reviewer -> web-researcher -> web-tester ->
           // web-pm -> web-architecture -> api-developer
-          await session.waitForText("Select agents to compile", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           for (let i = 0; i < 6; i++) {
             session.arrowDown();

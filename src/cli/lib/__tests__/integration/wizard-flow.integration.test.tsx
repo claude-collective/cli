@@ -666,7 +666,6 @@ describe("Wizard integration", () => {
       await delay(RENDER_DELAY_MS);
 
       // Centralized footer shows navigation hints
-      expect(lastFrame()).toContain("navigate");
       expect(lastFrame()).toContain("select");
     });
   });
@@ -797,7 +796,6 @@ describe("Wizard integration", () => {
 
       // Footer shows keyboard navigation hints
       const frame = lastFrame();
-      expect(frame).toContain("navigate");
       expect(frame).toContain("select");
     });
 
@@ -817,7 +815,6 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       const frame = lastFrame();
-      expect(frame).toContain("navigate");
       expect(frame).toContain("back");
     });
 

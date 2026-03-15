@@ -1,27 +1,26 @@
 import path from "path";
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
+import type { SkillId } from "../../src/cli/types/index.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
-import type { SkillId } from "../../src/cli/types/index.js";
 import {
-  createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
-  fileExists,
-  readTestFile,
-  createPermissionsFile,
   createEditableProject,
+  createPermissionsFile,
+  createTempDir,
+  delay,
+  ensureBinaryExists,
+  EXIT_CODES,
+  EXIT_WAIT_TIMEOUT_MS,
+  fileExists,
+  LIFECYCLE_TEST_TIMEOUT_MS,
   navigateEditWizardToCompletion,
   navigateInitWizardToCompletion,
-  delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  INSTALL_TIMEOUT_MS,
+  readTestFile,
   SETUP_TIMEOUT_MS,
-  LIFECYCLE_TEST_TIMEOUT_MS,
   STEP_TRANSITION_DELAY_MS,
-  EXIT_WAIT_TIMEOUT_MS,
-  EXIT_CODES,
+  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
 
 /**
@@ -170,12 +169,12 @@ async function navigateMultiDomainEditToCompletion(
 
   // Build step — Shared domain -> Sources step
   session.enter();
-  await session.waitForText("technologies", timeoutMs);
+  await session.waitForText("Customize skill sources", timeoutMs);
   await delay(STEP_TRANSITION_DELAY_MS);
 
   // Sources step -> Agents step
   session.enter();
-  await session.waitForText("Select agents to compile", timeoutMs);
+  await session.waitForText("Select agents", timeoutMs);
   await delay(STEP_TRANSITION_DELAY_MS);
 
   // Agents step -> Confirm step

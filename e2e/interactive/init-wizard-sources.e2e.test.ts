@@ -86,7 +86,7 @@ describe("init wizard — source management", () => {
     wizardSession.enter();
 
     // Sources step
-    await wizardSession.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
   }
 
   describe("source management in wizard", () => {
@@ -170,8 +170,8 @@ describe("init wizard — source management", () => {
       session.escape();
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be back on the sources step with the "technologies" text
-      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+      // Should be back on the sources step with the "Customize skill sources" text
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
 
       const fullOutput = session.getFullOutput();
       // Should no longer show settings-specific content
