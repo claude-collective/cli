@@ -1,18 +1,18 @@
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { StepAgents } from "./step-agents";
-import { useWizardStore } from "../../stores/wizard-store";
-import { initializeMatrix } from "../../lib/matrix/matrix-provider";
+import { EMPTY_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
 import {
   ARROW_DOWN,
   ENTER,
   ESCAPE,
-  SPACE,
-  RENDER_DELAY_MS,
   INPUT_DELAY_MS,
+  RENDER_DELAY_MS,
+  SPACE,
   delay,
 } from "../../lib/__tests__/test-constants";
-import { EMPTY_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
+import { initializeMatrix } from "../../lib/matrix/matrix-provider";
+import { useWizardStore } from "../../stores/wizard-store";
+import { StepAgents } from "./step-agents";
 
 const EXPECTED_AGENT_COUNT = 18;
 
@@ -34,7 +34,7 @@ describe("StepAgents component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Select agents to compile:");
+      expect(output).toContain("Select agents");
     });
 
     it("should render all agents", () => {

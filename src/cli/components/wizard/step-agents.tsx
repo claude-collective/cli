@@ -1,13 +1,13 @@
 import { Box, Text, useInput } from "ink";
 import React, { useMemo, useState } from "react";
 import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
-import { useRowScroll } from "../hooks/use-row-scroll.js";
-import { useWizardStore } from "../../stores/wizard-store.js";
 import { matrix } from "../../lib/matrix/matrix-provider.js";
+import { useWizardStore } from "../../stores/wizard-store.js";
 import type { AgentName, MergedSkillsMatrix } from "../../types/index.js";
-import { typedKeys } from "../../utils/typed-object.js";
 import { isAgentName } from "../../utils/type-guards.js";
+import { typedKeys } from "../../utils/typed-object.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
+import { useRowScroll } from "../hooks/use-row-scroll.js";
 import { getDomainDisplayName } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -245,10 +245,9 @@ export const StepAgents: React.FC = () => {
         const isFocused = row.agent.id === focusedId;
         const isSelected = selectedAgents.includes(row.agent.id);
         const checkbox = isSelected ? "[\u2713]" : "[ ]";
-        const pointer = isFocused ? UI_SYMBOLS.CURRENT : " ";
+        const pointer = isFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER;
         const agentConfig = agentConfigs.find((ac) => ac.name === row.agent.id);
         const scope = agentConfig?.scope ?? "global";
-        const scopeBadge = scope === "global" ? " [G]" : " [P]";
         return (
           <Box key={row.agent.id} flexShrink={0}>
             <Text>
@@ -258,12 +257,19 @@ export const StepAgents: React.FC = () => {
                 bold={isFocused}
               >
                 {" "}
-                {checkbox} {row.agent.label}
+                {checkbox}{" "}
               </Text>
-              <Text color={scope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.INFO}>
-                {scopeBadge}
+              <Text color={scope === "global" ? CLI_COLORS.WARNING : "#eee"}>
+                {scope === "global" ? "[G]" : "[P]"}
               </Text>
-              <Text dimColor> - {row.agent.description}</Text>
+              <Text
+                color={isSelected || isFocused ? CLI_COLORS.PRIMARY : undefined}
+                bold={isFocused}
+              >
+                {" "}
+                {row.agent.label}
+              </Text>
+              <Text dimColor> {row.agent.description}</Text>
             </Text>
           </Box>
         );
@@ -273,7 +279,7 @@ export const StepAgents: React.FC = () => {
 
   return (
     <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
-      <ViewTitle>Select agents to compile:</ViewTitle>
+      <ViewTitle>Select agents</ViewTitle>
 
       <Box ref={listRef} flexDirection="column" flexGrow={1} flexBasis={0}>
         <Box
@@ -292,7 +298,8 @@ export const StepAgents: React.FC = () => {
       </Box>
 
       <Text color={isContinueFocused ? CLI_COLORS.PRIMARY : undefined} bold={isContinueFocused}>
-        {isContinueFocused ? UI_SYMBOLS.CURRENT : " "} {"\u2192"} {continueLabel}
+        {isContinueFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER} {"\u2192"}{" "}
+        {continueLabel}
       </Text>
     </Box>
   );
