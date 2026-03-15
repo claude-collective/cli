@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.74.12] - 2026-03-15
+
+**Matrix refactor, wizard polish, symlink fix**
+
+- Matrix resolver: split `isDiscouraged` into `isDiscouraged`, `isIncompatible`, `hasUnmetRequirements`
+- Wizard: per-skill labels, remove marketplace display, simplify build step
+- Fix macOS `/var` symlink bug in local-installer with `fs.realpathSync`
+
+See [changelogs/0.74.12.md](./changelogs/0.74.12.md) for full details.
+
+---
+
 ## [0.74.11] - 2026-03-14
 
 **Documentation overhaul — README, standards, .ai-docs**
