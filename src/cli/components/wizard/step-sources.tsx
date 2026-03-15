@@ -7,11 +7,7 @@ import { searchExtraSources } from "../../lib/loading/multi-source-loader.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { BoundSkillCandidate, SkillAlias, SkillId } from "../../types/index.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
-import {
-  HOTKEY_SET_ALL_LOCAL,
-  HOTKEY_SET_ALL_PLUGIN,
-  isHotkey,
-} from "./hotkeys.js";
+import { HOTKEY_SET_ALL_LOCAL, HOTKEY_SET_ALL_PLUGIN, isHotkey } from "./hotkeys.js";
 import { SelectionCard } from "./selection-card.js";
 import { SourceGrid } from "./source-grid.js";
 import { ViewTitle } from "./view-title.js";
@@ -26,7 +22,9 @@ type SourcesView = "choice" | "customize";
 
 export const StepSources: React.FC<StepSourcesProps> = ({ projectDir, onContinue, onBack }) => {
   const store = useWizardStore();
-  const [view, setView] = useState<SourcesView>(FEATURE_FLAGS.SOURCE_CHOICE ? "choice" : "customize");
+  const [view, setView] = useState<SourcesView>(
+    FEATURE_FLAGS.SOURCE_CHOICE ? "choice" : "customize",
+  );
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [isGridSearching, setIsGridSearching] = useState(false);
   const { ref: gridRef, measuredHeight: gridHeight } = useMeasuredHeight();

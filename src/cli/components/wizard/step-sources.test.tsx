@@ -142,5 +142,4 @@ describe("StepSources component", () => {
       expect(onContinue).toHaveBeenCalledTimes(2);
     });
   });
-
 });
