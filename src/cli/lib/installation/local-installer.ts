@@ -1,3 +1,4 @@
+import fs from "fs";
 import os from "os";
 import path from "path";
 import type {
@@ -430,8 +431,7 @@ export async function writeScopedConfigs(
   // Use os.homedir() at runtime (not GLOBAL_INSTALL_ROOT constant) so the path
   // agrees with getGlobalConfigImportPath() which also calls os.homedir() at runtime
   const homeDir = os.homedir();
-  const isProjectContext = path.resolve(projectDir) !== path.resolve(homeDir);
-
+  const isProjectContext = fs.realpathSync(projectDir) !== fs.realpathSync(homeDir);
   if (!isProjectContext) {
     // Installing from ~/ — write directly to global config (no import preamble)
     await writeConfigFile(finalConfig, projectConfigPath);
@@ -548,7 +548,7 @@ export async function installPluginConfig(
 
   // Create directories based on installation context, not data content.
   // ensureDir is idempotent (mkdir -p), so calling it when dirs already exist is safe.
-  const isProjectInstall = path.resolve(projectDir) !== path.resolve(os.homedir());
+  const isProjectInstall = fs.realpathSync(projectDir) !== fs.realpathSync(os.homedir());
   if (isProjectInstall) {
     await ensureDir(projectPaths.agentsDir);
   }
@@ -559,7 +559,7 @@ export async function installPluginConfig(
   const finalConfig = mergeResult.config;
 
   // During init, the project installation is being created — it exists if we're in a project context
-  const projectInstallationExists = path.resolve(projectDir) !== path.resolve(os.homedir());
+  const projectInstallationExists = fs.realpathSync(projectDir) !== fs.realpathSync(os.homedir());
 
   await writeScopedConfigs(
     finalConfig,
@@ -644,7 +644,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   // Create directories based on installation context, not data content.
   // ensureDir is idempotent (mkdir -p), so calling it when dirs already exist is safe.
   const homeDir = os.homedir();
-  const isProjectInstall = path.resolve(projectDir) !== path.resolve(homeDir);
+  const isProjectInstall = fs.realpathSync(projectDir) !== fs.realpathSync(homeDir);
   if (isProjectInstall) {
     await prepareDirectories(projectPaths);
   } else {
@@ -672,7 +672,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const finalConfig = mergeResult.config;
 
   // During init, the project installation is being created — it exists if we're in a project context
-  const isProjectContext = path.resolve(projectDir) !== path.resolve(os.homedir());
+  const isProjectContext = fs.realpathSync(projectDir) !== fs.realpathSync(os.homedir());
 
   await writeScopedConfigs(
     finalConfig,

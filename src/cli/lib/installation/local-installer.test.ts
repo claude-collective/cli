@@ -930,9 +930,12 @@ describe("local-installer", () => {
     // Boundary cast: empty agents record for tests that don't need agent definitions
     const emptyAgents = {} as Record<AgentName, AgentDefinition>;
     let savedHome: string | undefined;
+    let globalHome: string;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       savedHome = process.env.HOME;
+      globalHome = path.join(tempDir, "fake-home");
+      await mkdir(globalHome, { recursive: true });
     });
 
     afterEach(() => {
@@ -945,7 +948,6 @@ describe("local-installer", () => {
     });
 
     it("should skip project config file when no existing config on disk and no project-scoped items", async () => {
-      const globalHome = path.join(tempDir, "fake-home");
       const projectDir = path.join(tempDir, "project");
 
       process.env.HOME = globalHome;
@@ -976,7 +978,6 @@ describe("local-installer", () => {
     });
 
     it("should write project config when project split has project-scoped items", async () => {
-      const globalHome = path.join(tempDir, "fake-home");
       const projectDir = path.join(tempDir, "project");
 
       process.env.HOME = globalHome;
