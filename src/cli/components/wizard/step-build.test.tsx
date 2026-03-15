@@ -515,7 +515,7 @@ describe("StepBuild component", () => {
           displayName: "Framework",
           required: true,
           exclusive: true,
-          options: [{ id: "web-framework-react", state: "normal", selected: true }],
+          options: [{ id: "web-framework-react", state: { status: "normal" }, selected: true }],
         },
       ];
       const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
@@ -525,20 +525,20 @@ describe("StepBuild component", () => {
       expect(result.message).toBeUndefined();
     });
 
-    it("should return invalid when required category has no selection", () => {
+    it("should return advisory message when required category has no selection", () => {
       const categories: GridCategoryRow[] = [
         {
           id: "web-framework",
           displayName: "Framework",
           required: true,
           exclusive: true,
-          options: [{ id: "web-framework-react", state: "normal", selected: false }],
+          options: [{ id: "web-framework-react", state: { status: "normal" }, selected: false }],
         },
       ];
       const selections: CategorySelections = {};
 
       const result = validateBuildStep(categories, selections);
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.message).toContain("Framework");
     });
 
@@ -552,7 +552,7 @@ describe("StepBuild component", () => {
           options: [
             {
               id: "web-state-zustand",
-              state: "normal",
+              state: { status: "normal" },
               selected: false,
             },
           ],
@@ -564,7 +564,7 @@ describe("StepBuild component", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("should return invalid for first missing required category", () => {
+    it("should return advisory message for first missing required category", () => {
       const categories: GridCategoryRow[] = [
         {
           id: "web-framework",
@@ -584,15 +584,15 @@ describe("StepBuild component", () => {
       const selections: CategorySelections = {};
 
       const result = validateBuildStep(categories, selections);
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBe(true);
       expect(result.message).toContain("Framework"); // Should be the first one
     });
   });
 
   describe("validation on continue", () => {
-    it("should show validation error when trying to continue without required selection", async () => {
+    it("should call onContinue even without required selection (advisory only)", async () => {
       const onContinue = vi.fn();
-      const { stdin, lastFrame, unmount } = renderStepBuild({
+      const { stdin, unmount } = renderStepBuild({
         onContinue,
         selections: {},
       });
@@ -604,10 +604,8 @@ describe("StepBuild component", () => {
       stdin.write(ENTER);
       await delay(INPUT_DELAY_MS);
 
-      // Should show validation error and NOT call onContinue
-      const output = lastFrame();
-      expect(output).toContain("Select at least one skill");
-      expect(onContinue).not.toHaveBeenCalled();
+      // Validation is advisory — onContinue is always called
+      expect(onContinue).toHaveBeenCalled();
     });
 
     it("should call onContinue when validation passes", async () => {

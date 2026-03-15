@@ -48,7 +48,7 @@ describe("Wizard integration", () => {
   });
 
   describe("Flow A1: Stack path with defaults", () => {
-    it("should complete full stack -> domain -> build -> accept defaults -> confirm flow", async () => {
+    it("should complete full stack -> domain -> build -> sources -> agents -> confirm flow", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -69,7 +69,14 @@ describe("Wizard integration", () => {
 
       await navigateDomainSelectionToBuild(stdin);
 
-      await stdin.write("A");
+      // Navigate through remaining steps manually (2 domains: web, api)
+      await stdin.write(ENTER); // Build: advance from web domain to api domain
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Build: advance from api domain -> Sources
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Sources -> Agents
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Agents -> Confirm
       await delay(STEP_TRANSITION_DELAY_MS);
 
       expect(lastFrame()).toContain("Confirm");
@@ -84,30 +91,6 @@ describe("Wizard integration", () => {
       const result = onComplete.mock.calls[0][0];
       expect(result.selectedStackId).toBe("react-fullstack");
       expect(result.cancelled).toBe(false);
-    });
-
-    it("should skip sources step and go to confirm after accepting defaults", async () => {
-      const onComplete = vi.fn();
-      const onCancel = vi.fn();
-
-      const { stdin, lastFrame, unmount } = render(
-        <Wizard onComplete={onComplete} onCancel={onCancel} />,
-      );
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      // Navigate: stack selection -> domain selection -> build -> [A] accept defaults -> confirm
-      await stdin.write(ENTER); // Select first stack
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await navigateDomainSelectionToBuild(stdin); // Domain -> Build
-      await stdin.write("A"); // Accept defaults
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      const state = useWizardStore.getState();
-      expect(state.step).toBe("confirm");
-
-      expect(lastFrame()).toContain("Confirm");
     });
   });
 
@@ -521,7 +504,7 @@ describe("Wizard integration", () => {
       expect(state.selectedStackId).toBe("react-fullstack");
     });
 
-    it("should complete wizard with stack defaults flow via A shortcut", async () => {
+    it("should complete wizard by navigating through all steps", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -539,15 +522,17 @@ describe("Wizard integration", () => {
       // Step 1b: Navigate through domain selection
       await navigateDomainSelectionToBuild(stdin);
 
-      // Step 2: Build - press A to accept defaults
-      await stdin.write("A");
+      // Step 2: Build - navigate through both domains (web, api)
+      await stdin.write(ENTER); // Advance from web domain to api domain
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Advance from api domain -> Sources
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 3: Sources - should show sources step (or confirm if sources skipped)
-      const frame = lastFrame();
-      // On defaults path, sources may be skipped; check we're past build
+      // Should be past build step
       const state = useWizardStore.getState();
-      expect(state.step === "sources" || state.step === "confirm").toBe(true);
+      expect(state.step === "sources" || state.step === "agents" || state.step === "confirm").toBe(
+        true,
+      );
     });
   });
 
@@ -739,11 +724,17 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Complete full flow: stack -> domain -> build -> [A] -> confirm
+      // Complete full flow: stack -> domain -> build (2 domains) -> sources -> agents -> confirm
       await stdin.write(ENTER); // Select first stack
       await delay(STEP_TRANSITION_DELAY_MS);
       await navigateDomainSelectionToBuild(stdin); // Domain -> Build
-      await stdin.write("A"); // Accept defaults
+      await stdin.write(ENTER); // Build: advance from web to api domain
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Build: advance from api domain -> Sources
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Sources -> Agents
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Agents -> Confirm
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Confirm -> complete
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -772,11 +763,17 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Complete full flow: stack -> domain -> build -> [A] -> confirm
+      // Complete full flow: stack -> domain -> build (2 domains) -> sources -> agents -> confirm
       await stdin.write(ENTER); // Select first stack
       await delay(STEP_TRANSITION_DELAY_MS);
       await navigateDomainSelectionToBuild(stdin); // Domain -> Build
-      await stdin.write("A"); // Accept defaults
+      await stdin.write(ENTER); // Build: advance from web to api domain
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Build: advance from api domain -> Sources
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Sources -> Agents
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ENTER); // Agents -> Confirm
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Confirm -> complete
       await delay(STEP_TRANSITION_DELAY_MS);

@@ -147,13 +147,12 @@ describe("edit wizard — launch and display", () => {
       });
 
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
-      await session.waitForText("(1 selected)", WIZARD_LOAD_TIMEOUT_MS);
 
       const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // Framework category should show the pre-selected react skill
       expect(output).toMatch(/Framework.*\(1 of 1\)/);
-      // Testing category should show the pre-selected vitest skill
-      expect(output).toMatch(/Testing.*\(1 selected\)/);
+      // Testing category should be visible (non-exclusive categories no longer show a counter)
+      expect(output).toContain("Testing");
       // Both skill tags should be visible
       expect(output).toContain("React");
       expect(output).toContain("Vitest");

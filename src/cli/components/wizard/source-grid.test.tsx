@@ -203,8 +203,8 @@ describe("SourceGrid component", () => {
       stdin.write(ARROW_UP);
       await delay(INPUT_DELAY_MS);
 
-      // React only has 2 options, so col should be clamped to 1
-      expect(onFocusChange).toHaveBeenCalledWith(0, 1);
+      // Vertical navigation resets column to 0
+      expect(onFocusChange).toHaveBeenCalledWith(0, 0);
     });
   });
 

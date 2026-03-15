@@ -4,21 +4,22 @@ import { Box, Text } from "ink";
 
 import { CLI_COLORS } from "../../consts.js";
 import { getSkillById } from "../../lib/matrix/matrix-provider.js";
-import type { SkillId, Category } from "../../types/index.js";
+import type { Category, OptionState, SkillId } from "../../types/index.js";
 import { isSectionLocked, useCategoryGridInput } from "../hooks/use-category-grid-input.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
 import { useSectionScroll } from "../hooks/use-section-scroll.js";
 
-export type OptionState = "normal" | "recommended" | "discouraged";
-
 export type CategoryOption = {
   id: SkillId;
   state: OptionState;
-  stateReason?: string;
   selected: boolean;
   local?: boolean;
   installed?: boolean;
   scope?: "project" | "global";
+  /** True when selected but has unmet dependency requirements (shown dimmed) */
+  hasUnmetRequirements?: boolean;
+  /** Explains unmet requirements (shown in label when D pressed) */
+  unmetRequirementsReason?: string;
 };
 
 export type CategoryRow = {
@@ -77,34 +78,42 @@ type SkillTagProps = {
   showLabels: boolean;
 };
 
-const getCompatibilityLabel = (option: CategoryOption, isLocked: boolean): string | null => {
-  if (option.selected) return "(selected)";
-  if (isLocked) return "(disabled)";
-  if (option.state === "recommended") return "(recommended)";
-  if (option.state === "discouraged") return "(discouraged)";
+const getCompatibilityLabel = (option: CategoryOption): string | null => {
+  if (option.selected && option.hasUnmetRequirements && option.unmetRequirementsReason) {
+    return `(${option.unmetRequirementsReason})`;
+  }
+  if (option.selected) return null;
+  if (option.state.status === "incompatible") return "(incompatible)";
+  if (option.state.status === "recommended") return "(recommended)";
+  if (option.state.status === "discouraged") return "(discouraged)";
   return null;
 };
 
 const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLabels }) => {
   const getTextColor = (): string => {
-    if (isLocked) return CLI_COLORS.NEUTRAL;
     if (option.selected) return CLI_COLORS.PRIMARY;
-    if (option.state === "recommended") return CLI_COLORS.UNFOCUSED;
-    if (option.state === "discouraged") return CLI_COLORS.WARNING;
+    if (option.state.status === "incompatible") return CLI_COLORS.ERROR;
+    if (option.state.status === "recommended") return CLI_COLORS.UNFOCUSED;
+    if (option.state.status === "discouraged") return CLI_COLORS.WARNING;
 
     return CLI_COLORS.NEUTRAL;
   };
 
   const getStateBorderColor = (): string => {
-    if (isLocked) return CLI_COLORS.NEUTRAL;
     if (option.selected) return CLI_COLORS.PRIMARY;
-    if (option.state === "recommended") return CLI_COLORS.UNFOCUSED;
-    if (option.state === "discouraged") return CLI_COLORS.WARNING;
+    if (option.state.status === "incompatible") return CLI_COLORS.ERROR;
+    if (option.state.status === "recommended") return CLI_COLORS.UNFOCUSED;
+    if (option.state.status === "discouraged") return CLI_COLORS.WARNING;
     return CLI_COLORS.UNFOCUSED;
   };
 
   const textColor = getTextColor();
-  const compatibilityLabel = showLabels ? getCompatibilityLabel(option, isLocked) : null;
+  const hasUnmetDeps = option.selected && !!option.hasUnmetRequirements;
+  const compatibilityLabel = hasUnmetDeps
+    ? getCompatibilityLabel(option)
+    : showLabels && isFocused
+      ? getCompatibilityLabel(option)
+      : null;
 
   return (
     <Box
@@ -114,7 +123,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
       flexShrink={0}
     >
       <>
-        <Text color={textColor} bold>
+        <Text color={textColor} bold dimColor={option.selected && !!option.hasUnmetRequirements}>
           {" "}
           {getSkillById(option.id).displayName}{" "}
         </Text>
@@ -146,23 +155,22 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 }) => {
   const selectedCount = options.filter((o) => o.selected).length;
 
-  const selectionCounter = category.exclusive
-    ? `(${selectedCount} of 1)`
-    : `(${selectedCount} selected)`;
+  const selectionCounter = category.exclusive ? `(${selectedCount} of 1)` : null;
 
   return (
     <Box flexDirection="column" marginTop={isFirst ? 0 : 1}>
       <Box flexDirection="row">
-        <Text dimColor={isLocked} color={isFocused ? "#fff" : "gray"}>
-          {category.displayName}
-        </Text>
-        {category.required && (
-          <Text color={isLocked ? CLI_COLORS.NEUTRAL : CLI_COLORS.ERROR} dimColor={isLocked}>
-            {" "}
-            {SYMBOL_REQUIRED}
+        {isFocused ? (
+          <Text color="#000" backgroundColor={CLI_COLORS.WHITE}>
+            {` ${category.displayName}${category.required ? ` ${SYMBOL_REQUIRED}` : ""}${selectionCounter ? ` ${selectionCounter}` : ""} `}
           </Text>
+        ) : (
+          <>
+            <Text color="gray">{category.displayName}</Text>
+            {category.required && <Text color={CLI_COLORS.ERROR}> {SYMBOL_REQUIRED}</Text>}
+            {selectionCounter && <Text dimColor> {selectionCounter}</Text>}
+          </>
         )}
-        {selectionCounter && <Text dimColor> {selectionCounter}</Text>}
       </Box>
 
       <Box flexDirection="row" flexWrap="wrap" marginTop={0}>
@@ -223,11 +231,12 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
   const handleFocusChange = useCallback(
     (row: number, col: number) => {
+      if (showLabels) onToggleLabels();
       onFocusChange?.(row, col);
       const skill = processedCategories[row]?.sortedOptions[col];
       onFocusedSkillChange?.(skill?.id ?? null);
     },
-    [onFocusChange, processedCategories, onFocusedSkillChange],
+    [showLabels, onToggleLabels, onFocusChange, processedCategories, onFocusedSkillChange],
   );
 
   const { focusedRow, focusedCol, setFocused, moveFocus } = useFocusedListItem(

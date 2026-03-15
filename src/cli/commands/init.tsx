@@ -8,7 +8,6 @@ import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import {
   loadSkillsMatrixFromSource,
-  getMarketplaceLabel,
   fetchMarketplace,
   type SourceLoadResult,
 } from "../lib/loading/index.js";
@@ -251,11 +250,9 @@ export default class Init extends BaseCommand {
 
     let wizardResult: WizardResultV2 | null = null;
 
-    const marketplaceLabel = getMarketplaceLabel(sourceResult);
     const { waitUntilExit } = render(
       <Wizard
         version={this.config.version}
-        marketplaceLabel={marketplaceLabel}
         logo={ASCII_LOGO}
         projectDir={projectDir}
         startupMessages={startupMessages}

@@ -186,7 +186,7 @@ async function loadFromRemote(
       marketplace = marketplaceResult.marketplace.name;
       verbose(`Using marketplace name from marketplace.json: ${marketplace}`);
     } catch {
-      // No marketplace.json — getMarketplaceLabel() handles the fallback display
+      // No marketplace.json — source name is used as fallback
       verbose(`Source does not have a marketplace.json — using source name as label`);
     }
   }
@@ -349,36 +349,6 @@ export function extractSourceName(source: string): string {
   // Take the first path segment (org/owner name)
   const firstSegment = withoutUrl.split("/")[0];
   return firstSegment || source;
-}
-
-/**
- * Compute a display label for the marketplace indicator in the wizard.
- *
- * Returns undefined when the source is local (no marketplace to display).
- *
- * Format examples:
- *   "Acme Corp + 1 public"   — private marketplace with public also available
- *   "Acme Corp"              — private marketplace only
- *   "agents-inc (public)" — default public marketplace
- */
-export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | undefined {
-  if (sourceResult.isLocal) return undefined;
-
-  const { marketplace } = sourceResult;
-
-  if (!marketplace) {
-    const name = extractSourceName(sourceResult.sourceConfig.source);
-    return `${name} (public)`;
-  }
-
-  // When using a non-default source, the public marketplace is also available
-  const PUBLIC_MARKETPLACE_COUNT = 1;
-  const isDefaultSource = sourceResult.sourceConfig.source === DEFAULT_SOURCE;
-  if (!isDefaultSource) {
-    return `${marketplace} + ${PUBLIC_MARKETPLACE_COUNT} public`;
-  }
-
-  return marketplace;
 }
 
 export function mergeLocalSkillsIntoMatrix(

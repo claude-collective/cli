@@ -10,7 +10,6 @@ export {
   type SourceLoadOptions,
   type SourceLoadResult,
   loadSkillsMatrixFromSource,
-  getMarketplaceLabel,
 } from "./source-loader";
 
 export {

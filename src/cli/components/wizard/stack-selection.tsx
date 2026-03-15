@@ -69,11 +69,11 @@ export const StackSelection: React.FC<StackSelectionProps> = ({
     }
 
     if (key.upArrow || input === "k") {
-      setFocusedIndex((prev) => Math.max(0, prev - 1));
+      setFocusedIndex((prev) => (prev <= 0 ? totalItems - 1 : prev - 1));
       return;
     }
     if (key.downArrow || input === "j") {
-      setFocusedIndex((prev) => Math.min(totalItems - 1, prev + 1));
+      setFocusedIndex((prev) => (prev >= totalItems - 1 ? 0 : prev + 1));
     }
   });
 

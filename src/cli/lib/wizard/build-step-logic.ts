@@ -3,7 +3,6 @@ import type {
   CategoryDefinition,
   Domain,
   SkillId,
-  SkillOption,
   CategorySelections,
 } from "../../types/index.js";
 import type { SkillConfig } from "../../types/config.js";
@@ -12,7 +11,6 @@ import { matrix, getSkillById } from "../matrix/matrix-provider.js";
 import type {
   CategoryRow,
   CategoryOption,
-  OptionState,
 } from "../../components/wizard/category-grid.js";
 
 const FRAMEWORK_CATEGORY_ID = "web-framework";
@@ -32,40 +30,13 @@ export function validateBuildStep(
       const categorySelections = selections[category.id] || [];
       if (categorySelections.length === 0) {
         return {
-          valid: false,
-          message: `Select at least one skill from the ${category.displayName} category. Use arrow keys to navigate, then SPACE to select.`,
+          valid: true,
+          message: `No skills selected in ${category.displayName} (required category)`,
         };
       }
     }
   }
   return { valid: true };
-}
-
-export function computeOptionState(
-  skill: Pick<SkillOption, "discouraged" | "recommended">,
-): OptionState {
-  if (skill.discouraged) {
-    return "discouraged";
-  }
-  if (skill.recommended) {
-    return "recommended";
-  }
-  return "normal";
-}
-
-function getStateReason(
-  skill: Pick<
-    SkillOption,
-    "discouraged" | "discouragedReason" | "recommended" | "recommendedReason"
-  >,
-): string | undefined {
-  if (skill.discouraged && skill.discouragedReason) {
-    return skill.discouragedReason;
-  }
-  if (skill.recommended && skill.recommendedReason) {
-    return skill.recommendedReason;
-  }
-  return undefined;
 }
 
 function isFrameworkSelected(selections: CategorySelections): boolean {
@@ -125,12 +96,13 @@ export function buildCategoriesForDomain(
 
     const options: CategoryOption[] = filteredSkillOptions.map((skill) => ({
       id: skill.id,
-      state: computeOptionState(skill),
-      stateReason: getStateReason(skill),
+      state: skill.advisoryState,
       selected: skill.selected,
       local: getSkillById(skill.id).local,
       installed: installedSkillIds?.includes(skill.id) || false,
       scope: skillConfigs?.find((sc) => sc.id === skill.id)?.scope,
+      hasUnmetRequirements: skill.hasUnmetRequirements,
+      unmetRequirementsReason: skill.unmetRequirementsReason,
     }));
 
     return {

@@ -46,7 +46,6 @@ type WizardProps = {
   onComplete: (result: WizardResultV2) => void;
   onCancel: () => void;
   version?: string;
-  marketplaceLabel?: string;
   logo?: string;
   initialStep?: WizardStep;
   initialDomains?: Domain[];
@@ -67,7 +66,6 @@ export const Wizard: React.FC<WizardProps> = ({
   onComplete,
   onCancel,
   version,
-  marketplaceLabel,
   logo,
   initialStep,
   initialDomains,
@@ -288,7 +286,6 @@ export const Wizard: React.FC<WizardProps> = ({
     <ThemeProvider theme={cliTheme}>
       <WizardLayout
         version={version}
-        marketplaceLabel={marketplaceLabel}
         logo={logo}
         startupMessages={startupMessages}
       >

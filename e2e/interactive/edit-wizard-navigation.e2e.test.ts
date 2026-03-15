@@ -224,8 +224,8 @@ describe("edit wizard — navigation and hotkeys", () => {
     });
   });
 
-  describe("build step validation", () => {
-    it("should prevent advancing when all skills in a required category are deselected", async () => {
+  describe("build step advancement", () => {
+    it("should advance past build step even when all skills in a category are deselected", async () => {
       tempDir = await createTempDir();
       const projectDir = await createEditableProject(tempDir, {
         skills: ["web-framework-react"],
@@ -246,13 +246,11 @@ describe("edit wizard — navigation and hotkeys", () => {
       session.space();
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Try to proceed with ENTER — validation should prevent advancing
+      // Press ENTER — wizard should advance to the next step (sources)
       session.enter();
-      await delay(STEP_TRANSITION_DELAY_MS);
 
-      const screen = session.getScreen();
-      // The wizard should show a validation error about requiring at least one skill
-      expect(screen).toContain("Select at least one skill");
+      // The wizard no longer blocks advancement — it advances to sources step
+      await session.waitForText("Sources", EXIT_TIMEOUT_MS);
     });
   });
 });

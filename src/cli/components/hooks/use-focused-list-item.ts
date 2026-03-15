@@ -133,8 +133,7 @@ export function useFocusedListItem(
       } else {
         const step = direction === "down" ? 1 : -1;
         const newRow = findNextUnlockedRow(currentRow, step);
-        const newRowColCount = getColCount(newRow);
-        let finalCol = Math.min(currentCol, Math.max(0, newRowColCount - 1));
+        let finalCol = 0;
 
         if (adjustCol) {
           finalCol = adjustCol(newRow, finalCol);

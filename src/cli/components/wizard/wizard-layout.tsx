@@ -1,13 +1,12 @@
 import { Box, Static, Text } from "ink";
 import React, { Fragment } from "react";
-import { CLI_COLORS, DEFAULT_PLUGIN_NAME } from "../../consts.js";
+import { CLI_COLORS } from "../../consts.js";
 import type { StartupMessage } from "../../utils/logger.js";
 import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
 import { HelpModal } from "./help-modal.js";
 import {
-  HOTKEY_ACCEPT_DEFAULTS,
   HOTKEY_HELP,
   HOTKEY_SCOPE,
   HOTKEY_SETTINGS,
@@ -62,8 +61,6 @@ const HOT_KEYS: { label: string; values: string[] }[] = [
 ];
 
 const WizardFooter = () => {
-  const store = useWizardStore();
-
   return (
     <Box
       columnGap={2}
@@ -76,11 +73,6 @@ const WizardFooter = () => {
       paddingLeft={1}
       paddingRight={1}
     >
-      <DefinitionItem
-        label="Accept defaults"
-        values={[HOTKEY_ACCEPT_DEFAULTS.label]}
-        isVisible={store.step === "build" && !!store.selectedStackId}
-      />
       {HOT_KEYS.map((hotkey) => (
         <DefinitionItem {...hotkey} key={hotkey.label} />
       ))}
@@ -90,7 +82,6 @@ const WizardFooter = () => {
 
 type WizardLayoutProps = {
   version?: string;
-  marketplaceLabel?: string;
   logo?: string;
   startupMessages?: StartupMessage[];
   children: React.ReactNode;
@@ -98,7 +89,6 @@ type WizardLayoutProps = {
 
 export const WizardLayout: React.FC<WizardLayoutProps> = ({
   version,
-  marketplaceLabel,
   logo,
   startupMessages,
   children,
@@ -128,10 +118,6 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
             <Text>{logo}</Text>
           </Box>
         )}
-        <Box>
-          <Text dimColor>Marketplace: </Text>
-          <Text bold>{marketplaceLabel || `${DEFAULT_PLUGIN_NAME} (public)`}</Text>
-        </Box>
         <WizardTabs
           steps={WIZARD_STEPS}
           currentStep={store.step}

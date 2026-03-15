@@ -28,7 +28,6 @@ import {
   deriveInstallMode,
 } from "../lib/installation/index.js";
 import {
-  getMarketplaceLabel,
   loadAllAgents,
   loadSkillsMatrixFromSource,
 } from "../lib/loading/index.js";
@@ -148,7 +147,6 @@ export default class Edit extends BaseCommand {
     disableBuffering();
 
     let wizardResult: WizardResultV2 | null = null;
-    const marketplaceLabel = getMarketplaceLabel(sourceResult);
 
     // D9: In project context, existing global items are read-only (locked).
     // When editing from ~/ (global context), nothing is locked.
@@ -165,7 +163,6 @@ export default class Edit extends BaseCommand {
     const { waitUntilExit } = render(
       <Wizard
         version={this.config.version}
-        marketplaceLabel={marketplaceLabel}
         initialStep="build"
         initialDomains={projectConfig?.config?.domains}
         initialAgents={projectConfig?.config?.selectedAgents}
@@ -194,11 +191,10 @@ export default class Edit extends BaseCommand {
       this.error("Cancelled", { exit: EXIT_CODES.CANCELLED });
     }
 
-    if (!result.validation.valid) {
-      const errorMessages = result.validation.errors.map((e) => e.message).join("\n  ");
-      this.error(`Selection has validation errors:\n  ${errorMessages}`, {
-        exit: EXIT_CODES.ERROR,
-      });
+    if (result.validation.errors.length > 0) {
+      for (const err of result.validation.errors) {
+        this.warn(err.message);
+      }
     }
 
     const newSkillIds = result.skills.map((s) => s.id);

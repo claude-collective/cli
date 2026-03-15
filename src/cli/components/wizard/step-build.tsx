@@ -1,13 +1,11 @@
 import { Box, Text, useInput } from "ink";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import { CLI_COLORS } from "../../consts.js";
-import { validateBuildStep } from "../../lib/wizard/index.js";
 import type { Domain, SkillId, Category, CategorySelections } from "../../types/index.js";
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { CategoryGrid } from "./category-grid.js";
-import { KEY_LABEL_ENTER, KEY_LABEL_ESC } from "./hotkeys.js";
 import { getDomainDisplayName, orderDomains } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -25,26 +23,6 @@ export type StepBuildProps = {
   onBack: () => void;
 };
 
-type FooterProps = {
-  validationError?: string;
-};
-
-const Footer: React.FC<FooterProps> = ({ validationError }) => {
-  return (
-    <Box flexDirection="column" marginTop={1}>
-      {validationError && (
-        <Box flexDirection="column" marginBottom={1}>
-          <Text color={CLI_COLORS.WARNING}>{validationError}</Text>
-          <Text dimColor>
-            Press {KEY_LABEL_ESC} to go back, or select a skill and press {KEY_LABEL_ENTER} to
-            continue.
-          </Text>
-        </Box>
-      )}
-    </Box>
-  );
-};
-
 export const StepBuild: React.FC<StepBuildProps> = ({
   domain: activeDomain,
   selectedDomains,
@@ -57,7 +35,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   onContinue,
   onBack,
 }) => {
-  const [validationError, setValidationError] = useState<string | undefined>(undefined);
   const { ref: gridRef, measuredHeight: gridHeight } = useMeasuredHeight();
   const skillConfigs = useWizardStore((s) => s.skillConfigs);
 
@@ -78,15 +55,8 @@ export const StepBuild: React.FC<StepBuildProps> = ({
 
   useInput((_input, key) => {
     if (key.return) {
-      const validation = validateBuildStep(categories, selections);
-      if (validation.valid) {
-        setValidationError(undefined);
-        onContinue();
-      } else {
-        setValidationError(validation.message);
-      }
+      onContinue();
     } else if (key.escape) {
-      setValidationError(undefined);
       onBack();
     }
   });
@@ -131,7 +101,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
         />
       </Box>
 
-      <Footer validationError={validationError} />
     </Box>
   );
 };

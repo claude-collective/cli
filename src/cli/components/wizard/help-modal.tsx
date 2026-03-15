@@ -3,7 +3,6 @@ import React from "react";
 import { CLI_COLORS } from "../../consts.js";
 import type { WizardStep } from "../../stores/wizard-store.js";
 import {
-  HOTKEY_ACCEPT_DEFAULTS,
   HOTKEY_HELP,
   HOTKEY_SCOPE,
   HOTKEY_SETTINGS,
@@ -41,7 +40,6 @@ const BUILD_KEYS: HelpSection = {
   keys: [
     { key: HOTKEY_TOGGLE_LABELS.label, description: "Toggle compatibility labels" },
     { key: HOTKEY_SCOPE.label, description: "Toggle skill scope (project/global)" },
-    { key: HOTKEY_ACCEPT_DEFAULTS.label, description: "Accept stack defaults (stack path only)" },
     { key: KEY_LABEL_VIM, description: "Vim-style navigation" },
   ],
 };

@@ -225,12 +225,13 @@ describe("StepStack component", () => {
         expect(selectedStackId).toBe("react-fullstack");
       });
 
-      it("should clamp at top boundary", async () => {
+      it("should wrap to last item when pressing up from first item", async () => {
         const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
 
+        // From index 0, UP wraps to scratch (index 2), UP again goes to react-minimal (index 1)
         stdin.write(ARROW_UP);
         await delay(SELECT_NAV_DELAY_MS);
         stdin.write(ARROW_UP);
@@ -239,15 +240,16 @@ describe("StepStack component", () => {
         await delay(SELECT_NAV_DELAY_MS);
 
         const { selectedStackId } = useWizardStore.getState();
-        expect(selectedStackId).toBe("react-fullstack");
+        expect(selectedStackId).toBe("react-minimal");
       });
 
-      it("should clamp at bottom boundary (scratch is last)", async () => {
+      it("should wrap to first item when pressing down past last item", async () => {
         const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
 
+        // From index 0, DOWN x4: 0->1->2->0->1 (react-minimal)
         stdin.write(ARROW_DOWN);
         await delay(SELECT_NAV_DELAY_MS);
         stdin.write(ARROW_DOWN);
@@ -259,8 +261,8 @@ describe("StepStack component", () => {
         stdin.write(ENTER);
         await delay(SELECT_NAV_DELAY_MS);
 
-        const { approach } = useWizardStore.getState();
-        expect(approach).toBe("scratch");
+        const { selectedStackId } = useWizardStore.getState();
+        expect(selectedStackId).toBe("react-minimal");
       });
     });
 

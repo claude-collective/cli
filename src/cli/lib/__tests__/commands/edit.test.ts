@@ -26,14 +26,12 @@ const {
   mockRender,
   mockDetectInstallation,
   mockLoadSkillsMatrixFromSource,
-  mockGetMarketplaceLabel,
   mockLoadProjectConfig,
   mockDiscoverAllPluginSkills,
 } = vi.hoisted(() => ({
   mockRender: vi.fn().mockReturnValue({ waitUntilExit: () => Promise.resolve() }),
   mockDetectInstallation: vi.fn().mockResolvedValue(null),
   mockLoadSkillsMatrixFromSource: vi.fn(),
-  mockGetMarketplaceLabel: vi.fn().mockReturnValue(undefined),
   mockLoadProjectConfig: vi.fn().mockResolvedValue(null),
   mockDiscoverAllPluginSkills: vi.fn().mockResolvedValue({}),
 }));
@@ -57,7 +55,6 @@ vi.mock("../../loading/index.js", async (importOriginal) => {
     ...original,
     loadSkillsMatrixFromSource: (...args: unknown[]) =>
       mockLoadSkillsMatrixFromSource(...(args as [])),
-    getMarketplaceLabel: (...args: unknown[]) => mockGetMarketplaceLabel(...(args as [])),
   };
 });
 
@@ -523,7 +520,6 @@ describe("edit command local-mode skill fallback", () => {
 
     mockLoadSkillsMatrixFromSource.mockResolvedValue(testSourceResult);
     initializeMatrix(testSourceResult.matrix);
-    mockGetMarketplaceLabel.mockReturnValue(undefined);
   });
 
   afterEach(async () => {

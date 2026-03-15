@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   validateBuildStep,
-  computeOptionState,
   buildCategoriesForDomain,
 } from "./build-step-logic";
 import { createMockMatrix, SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
@@ -31,9 +30,9 @@ describe("validateBuildStep", () => {
     expect(result).toEqual({ valid: true });
   });
 
-  it("should return invalid when required category has no selections", () => {
+  it("should return advisory message when required category has no selections", () => {
     const result = validateBuildStep([requiredCategory], {});
-    expect(result.valid).toBe(false);
+    expect(result.valid).toBe(true);
     expect(result.message).toContain("Framework");
   });
 
@@ -44,7 +43,7 @@ describe("validateBuildStep", () => {
     expect(result).toEqual({ valid: true });
   });
 
-  it("should return invalid for first missing required category", () => {
+  it("should return advisory message for first missing required category", () => {
     const anotherRequired: CategoryRow = {
       id: "web-client-state",
       displayName: "State Management",
@@ -53,31 +52,13 @@ describe("validateBuildStep", () => {
       options: [],
     };
     const result = validateBuildStep([requiredCategory, anotherRequired], {});
-    expect(result.valid).toBe(false);
+    expect(result.valid).toBe(true);
     expect(result.message).toContain("Framework");
   });
 
   it("should handle empty categories array", () => {
     const result = validateBuildStep([], {});
     expect(result).toEqual({ valid: true });
-  });
-});
-
-describe("computeOptionState", () => {
-  it("should return discouraged when skill is discouraged", () => {
-    expect(computeOptionState({ discouraged: true, recommended: false })).toBe("discouraged");
-  });
-
-  it("should return recommended when skill is recommended", () => {
-    expect(computeOptionState({ discouraged: false, recommended: true })).toBe("recommended");
-  });
-
-  it("should return normal when no special state", () => {
-    expect(computeOptionState({ discouraged: false, recommended: false })).toBe("normal");
-  });
-
-  it("should prioritize discouraged over recommended", () => {
-    expect(computeOptionState({ discouraged: true, recommended: true })).toBe("discouraged");
   });
 });
 
