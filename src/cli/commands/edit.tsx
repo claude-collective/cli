@@ -27,10 +27,7 @@ import {
   executeMigration,
   deriveInstallMode,
 } from "../lib/installation/index.js";
-import {
-  loadAllAgents,
-  loadSkillsMatrixFromSource,
-} from "../lib/loading/index.js";
+import { loadAllAgents, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { matrix, getSkillById } from "../lib/matrix/matrix-provider";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";

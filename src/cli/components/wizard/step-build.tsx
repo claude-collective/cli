@@ -100,7 +100,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
           onFocusedSkillChange={handleFocusedSkillChange}
         />
       </Box>
-
     </Box>
   );
 };

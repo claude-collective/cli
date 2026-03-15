@@ -121,14 +121,26 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
       borderColor={isFocused ? getStateBorderColor() : CLI_COLORS.NEUTRAL}
       borderStyle="single"
       flexShrink={0}
+      paddingLeft={1}
     >
       <>
+        <Text />
+        {option.scope && (
+          <>
+            <Text color={"#eee"} backgroundColor={"#383838"}>
+              {option.scope === "global" ? " G " : " P "}
+            </Text>
+            <Text> </Text>
+          </>
+        )}
         <Text color={textColor} bold dimColor={option.selected && !!option.hasUnmetRequirements}>
-          {" "}
           {getSkillById(option.id).displayName}{" "}
         </Text>
-        {option.scope && <Text dimColor>{option.scope === "global" ? "G " : "P "}</Text>}
-        {compatibilityLabel && <Text dimColor>{compatibilityLabel} </Text>}
+        {compatibilityLabel && (
+          <Text color={textColor} dimColor>
+            {compatibilityLabel}{" "}
+          </Text>
+        )}
       </>
     </Box>
   );
@@ -161,13 +173,13 @@ const CategorySection: React.FC<CategorySectionProps> = ({
     <Box flexDirection="column" marginTop={isFirst ? 0 : 1}>
       <Box flexDirection="row">
         {isFocused ? (
-          <Text color="#000" backgroundColor={CLI_COLORS.WHITE}>
+          <Text color={CLI_COLORS.WHITE} backgroundColor="#383838">
             {` ${category.displayName}${category.required ? ` ${SYMBOL_REQUIRED}` : ""}${selectionCounter ? ` ${selectionCounter}` : ""} `}
           </Text>
         ) : (
           <>
             <Text color="gray">{category.displayName}</Text>
-            {category.required && <Text color={CLI_COLORS.ERROR}> {SYMBOL_REQUIRED}</Text>}
+            {category.required && <Text color="gray"> {SYMBOL_REQUIRED}</Text>}
             {selectionCounter && <Text dimColor> {selectionCounter}</Text>}
           </>
         )}

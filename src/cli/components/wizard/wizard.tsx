@@ -284,11 +284,7 @@ export const Wizard: React.FC<WizardProps> = ({
 
   return (
     <ThemeProvider theme={cliTheme}>
-      <WizardLayout
-        version={version}
-        logo={logo}
-        startupMessages={startupMessages}
-      >
+      <WizardLayout version={version} logo={logo} startupMessages={startupMessages}>
         {renderStep()}
       </WizardLayout>
     </ThemeProvider>

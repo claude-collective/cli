@@ -75,7 +75,7 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
     if (isFocused) {
       return option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.UNFOCUSED;
     }
-    return option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.NEUTRAL;
+    return CLI_COLORS.NEUTRAL;
   };
 
   const textColor = option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.NEUTRAL;

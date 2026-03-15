@@ -61,14 +61,18 @@ const defaultCategories: CategoryRow[] = [
     "Styling",
     [
       createOption("web-styling-scss-modules", { selected: true }),
-      createOption("web-styling-tailwind", { state: { status: "recommended", reason: "Modern utility-first CSS" } }),
+      createOption("web-styling-tailwind", {
+        state: { status: "recommended", reason: "Modern utility-first CSS" },
+      }),
       createOption("web-styling-cva"),
       createOption("web-framework-nuxt"),
     ],
     { required: true },
   ),
   createCategory("web-client-state", "Client State", [
-    createOption("web-state-zustand", { state: { status: "recommended", reason: "Simple and performant" } }),
+    createOption("web-state-zustand", {
+      state: { status: "recommended", reason: "Simple and performant" },
+    }),
     createOption("web-state-jotai"),
     createOption("web-state-redux-toolkit", {
       state: { status: "discouraged", reason: "Complex for most apps" },
@@ -103,16 +107,22 @@ const categoriesWithFramework: CategoryRow[] = [
     "Styling",
     [
       createOption("web-styling-scss-modules"),
-      createOption("web-styling-tailwind", { state: { status: "recommended", reason: "Modern utility-first CSS" } }),
+      createOption("web-styling-tailwind", {
+        state: { status: "recommended", reason: "Modern utility-first CSS" },
+      }),
       createOption("web-styling-cva"),
       createOption("web-framework-nuxt"),
     ],
     { required: true },
   ),
   createCategory("web-client-state", "Client State", [
-    createOption("web-state-zustand", { state: { status: "recommended", reason: "Simple and performant" } }),
+    createOption("web-state-zustand", {
+      state: { status: "recommended", reason: "Simple and performant" },
+    }),
     createOption("web-state-jotai"),
-    createOption("web-state-redux-toolkit", { state: { status: "discouraged", reason: "Complex for most apps" } }),
+    createOption("web-state-redux-toolkit", {
+      state: { status: "discouraged", reason: "Complex for most apps" },
+    }),
     createOption("web-state-mobx"),
   ]),
 ];
@@ -304,7 +314,9 @@ describe("CategoryGrid component", () => {
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
           createOption("web-forms-react-hook-form"),
-          createOption("web-forms-vee-validate", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-forms-vee-validate", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
         ]),
       ];
 
@@ -350,7 +362,9 @@ describe("CategoryGrid component", () => {
     it("should render discouraged skills with display name", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-forms-react-hook-form", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
         ]),
       ];
 
@@ -386,7 +400,9 @@ describe("CategoryGrid component", () => {
     it("should render discouraged skills with display name from store", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-forms-react-hook-form", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
         ]),
       ];
 
@@ -774,8 +790,12 @@ describe("CategoryGrid component", () => {
       const onToggle = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", { state: { status: "discouraged", reason: "Not recommended" } }),
-          createOption("web-forms-vee-validate", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-forms-react-hook-form", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
+          createOption("web-forms-vee-validate", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
         ]),
       ];
 
@@ -817,7 +837,9 @@ describe("CategoryGrid component", () => {
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
           createOption("web-forms-react-hook-form"),
-          createOption("web-forms-vee-validate", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-forms-vee-validate", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
           createOption("web-forms-zod-validation"),
         ]),
       ];
@@ -844,7 +866,9 @@ describe("CategoryGrid component", () => {
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
           createOption("web-forms-react-hook-form"),
-          createOption("web-forms-vee-validate", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-forms-vee-validate", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
           createOption("web-forms-zod-validation"),
         ]),
       ];
@@ -870,8 +894,12 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", { state: { status: "discouraged", reason: "Not recommended" } }),
-          createOption("web-forms-vee-validate", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-forms-react-hook-form", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
+          createOption("web-forms-vee-validate", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
         ]),
       ];
 
@@ -1007,7 +1035,9 @@ describe("CategoryGrid component", () => {
     it("should show discouraged label for focused discouraged option when showLabels is true", () => {
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-vee-validate", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-forms-vee-validate", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
           createOption("web-forms-react-hook-form"),
         ]),
       ];
@@ -1026,8 +1056,12 @@ describe("CategoryGrid component", () => {
       const categories: CategoryRow[] = [
         createCategory("web-client-state", "State", [
           createOption("web-state-jotai"),
-          createOption("web-state-zustand", { state: { status: "recommended", reason: "Recommended choice" } }),
-          createOption("web-state-redux-toolkit", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-state-zustand", {
+            state: { status: "recommended", reason: "Recommended choice" },
+          }),
+          createOption("web-state-redux-toolkit", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
           createOption("web-state-mobx"),
         ]),
       ];
@@ -1095,7 +1129,9 @@ describe("CategoryGrid component", () => {
       const categoriesAfter: CategoryRow[] = [
         createCategory("web-client-state", "State", [
           createOption("web-state-jotai"),
-          createOption("web-state-zustand", { state: { status: "discouraged", reason: "Not recommended" } }),
+          createOption("web-state-zustand", {
+            state: { status: "discouraged", reason: "Not recommended" },
+          }),
           createOption("web-state-redux-toolkit"),
         ]),
       ];

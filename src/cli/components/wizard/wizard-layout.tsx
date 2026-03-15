@@ -9,9 +9,10 @@ import { HelpModal } from "./help-modal.js";
 import {
   HOTKEY_HELP,
   HOTKEY_SCOPE,
+  HOTKEY_SET_ALL_LOCAL,
+  HOTKEY_SET_ALL_PLUGIN,
   HOTKEY_SETTINGS,
   HOTKEY_TOGGLE_LABELS,
-  KEY_LABEL_ARROWS_VERT,
   KEY_LABEL_ENTER,
   KEY_LABEL_ESC,
   KEY_LABEL_SPACE,
@@ -54,7 +55,6 @@ const DefinitionItem: React.FC<KeyHintProps> = ({
 };
 
 const HOT_KEYS: { label: string; values: string[] }[] = [
-  { label: "navigate", values: [KEY_LABEL_ARROWS_VERT] },
   { label: "select", values: [KEY_LABEL_SPACE] },
   { label: "continue", values: [KEY_LABEL_ENTER] },
   { label: "back", values: [KEY_LABEL_ESC] },
@@ -137,12 +137,21 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
                 label="Labels"
                 values={[HOTKEY_TOGGLE_LABELS.label]}
                 isVisible={store.step === "build"}
-                isActive={store.showLabels}
               />
               <DefinitionItem
                 label="Scope"
                 values={[HOTKEY_SCOPE.label]}
-                isVisible={store.step === "build"}
+                isVisible={store.step === "build" || store.step === "agents"}
+              />
+              <DefinitionItem
+                label="Set all local"
+                values={[HOTKEY_SET_ALL_LOCAL.label]}
+                isVisible={store.step === "sources"}
+              />
+              <DefinitionItem
+                label="Set all plugin"
+                values={[HOTKEY_SET_ALL_PLUGIN.label]}
+                isVisible={store.step === "sources"}
               />
               <DefinitionItem
                 label="Settings"
