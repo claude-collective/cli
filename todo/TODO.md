@@ -1,28 +1,28 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                                                                  | Status        |
-| ----- | --------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` when init writes global-scoped skills                 | Investigate   |
-| D-93  | Global-scoped plugins double-installed to both project and global `settings.json`                                     | Investigate   |
-| D-91  | `uninstall --all` only removes CLI-installed plugins, not all skills in config                                        | Investigate   |
-| D-94  | Stack change or "start from scratch" doesn't reset previously selected skills                                         | Done          |
-| D-95  | Create a reusable view title component for wizard steps                                                               | Done          |
-| D-96  | Remove redundant left/right arrow navigation description below views                                                  | Done          |
-| D-97  | Improve startup time — lazy-load matrix, only generate custom skills on startup                                       | Investigate   |
-| D-101 | "Next.js Fullstack" stack uses `web-framework-react` but no Next.js skill — rename stack or add Next.js skills        | Ready for Dev |
-| D-102 | Next.js App Router + Server Actions are complementary but mutually exclusive via `web-framework` category — merge or recategorize | Investigate   |
-| D-62  | Review default stacks: include meta/methodology/reviewing skills                                                      | Ready for Dev |
-| D-38  | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))         | Has Open Qs   |
-| D-39  | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))             | Ready for Dev |
-| D-90  | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths   | Ready for Dev |
-| D-41  | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                       | Ready for Dev |
-| D-52  | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md)) | Ready for Dev |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                 | Ready for Dev |
-| D-66  | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                       | Investigate   |
-| D-69  | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                      | Investigate   |
-| D-98  | Break up large E2E test files + restructure E2E folder organization                                                   | Done          |
-| D-99  | Update README + .ai-docs to reflect current architecture (see [readme-audit.md](./readme-audit.md))                   | Ready for Dev |
-| D-100 | Fix pre-existing E2E test violations — `undefined!`, magic timeouts, raw `readFile`, cleanup patterns                 | Ready for Dev |
+| ID    | Task                                                                                                                                                                                                                                                           | Status        |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` when init writes global-scoped skills                                                                                                                                                          | Investigate   |
+| D-93  | Global-scoped plugins double-installed to both project and global `settings.json`                                                                                                                                                                              | Investigate   |
+| D-91  | `uninstall --all` only removes CLI-installed plugins, not all skills in config                                                                                                                                                                                 | Investigate   |
+| D-94  | Stack change or "start from scratch" doesn't reset previously selected skills                                                                                                                                                                                  | Done          |
+| D-95  | Create a reusable view title component for wizard steps                                                                                                                                                                                                        | Done          |
+| D-96  | Remove redundant left/right arrow navigation description below views                                                                                                                                                                                           | Done          |
+| D-97  | Improve startup time — lazy-load matrix, only generate custom skills on startup                                                                                                                                                                                | Investigate   |
+| D-101 | "Next.js Fullstack" stack uses `web-framework-react` but no Next.js skill — rename stack or add Next.js skills                                                                                                                                                 | Ready for Dev |
+| D-102 | Next.js App Router + Server Actions are complementary but mutually exclusive via `web-framework` category — merge or recategorize                                                                                                                              | Investigate   |
+| D-62  | Review default stacks: include meta/methodology/reviewing skills                                                                                                                                                                                               | Ready for Dev |
+| D-38  | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                                                                                                                                                  | Has Open Qs   |
+| D-39  | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                                                                                                                                                      | Ready for Dev |
+| D-90  | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths                                                                                                                                            | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                                                                                                                                                | Ready for Dev |
+| D-52  | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                                                                                                                                          | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                                                                                                                                          | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                                                                                                                                                                | Investigate   |
+| D-69  | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                                                                                                                                               | Investigate   |
+| D-98  | Break up large E2E test files + restructure E2E folder organization                                                                                                                                                                                            | Done          |
+| D-99  | Update README + .ai-docs to reflect current architecture (see [readme-audit.md](./readme-audit.md))                                                                                                                                                            | Ready for Dev |
+| D-100 | Fix pre-existing E2E test violations — `undefined!`, magic timeouts, raw `readFile`, cleanup patterns                                                                                                                                                          | Ready for Dev |
 | D-101 | Add `compatibleWith` groups to default-rules.ts — NgRx shows as recommended with React because it has no compatibility constraint. Framework-specific skills (NgRx, Pinia, Vue Test Utils, etc.) need `compatibleWith` entries scoping them to their framework | Ready for Dev |
 
 ---
