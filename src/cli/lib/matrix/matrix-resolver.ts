@@ -502,13 +502,22 @@ export function validateSelection(selections: SkillId[]): SelectionValidation {
 function computeAdvisoryState(skillId: SkillId, currentSelections: SkillId[]): OptionState {
   // Priority: incompatible > discouraged > recommended > normal
   if (isIncompatible(skillId, currentSelections)) {
-    return { status: "incompatible", reason: getIncompatibleReason(skillId, currentSelections) ?? "Incompatible" };
+    return {
+      status: "incompatible",
+      reason: getIncompatibleReason(skillId, currentSelections) ?? "Incompatible",
+    };
   }
   if (isDiscouraged(skillId, currentSelections)) {
-    return { status: "discouraged", reason: getDiscourageReason(skillId, currentSelections) ?? "Not recommended" };
+    return {
+      status: "discouraged",
+      reason: getDiscourageReason(skillId, currentSelections) ?? "Not recommended",
+    };
   }
   if (isRecommended(skillId, currentSelections)) {
-    return { status: "recommended", reason: getRecommendReason(skillId, currentSelections) ?? "Recommended" };
+    return {
+      status: "recommended",
+      reason: getRecommendReason(skillId, currentSelections) ?? "Recommended",
+    };
   }
   return { status: "normal" };
 }
@@ -542,7 +551,9 @@ export function getAvailableSkills(
       advisoryState: computeAdvisoryState(skill.id, currentSelections),
       selected: isSelected,
       hasUnmetRequirements: isSelected && hasUnmetRequirements(skill.id, currentSelections),
-      unmetRequirementsReason: isSelected ? getUnmetRequirementsReason(skill.id, currentSelections) : undefined,
+      unmetRequirementsReason: isSelected
+        ? getUnmetRequirementsReason(skill.id, currentSelections)
+        : undefined,
       alternatives: skill.alternatives.map((a) => a.skillId),
     });
   }

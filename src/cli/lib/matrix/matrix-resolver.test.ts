@@ -612,7 +612,10 @@ describe("Conflicting skills", () => {
       const skillAOption = options.find((o: { id: string }) => o.id === REACT_ID);
       expect(skillAOption).toBeDefined();
       expect(skillAOption!.advisoryState).toEqual(
-        expect.objectContaining({ status: "incompatible", reason: expect.stringContaining("conflicts with") }),
+        expect.objectContaining({
+          status: "incompatible",
+          reason: expect.stringContaining("conflicts with"),
+        }),
       );
     });
   });

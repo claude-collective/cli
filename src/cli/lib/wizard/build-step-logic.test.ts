@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  validateBuildStep,
-  buildCategoriesForDomain,
-} from "./build-step-logic";
+import { validateBuildStep, buildCategoriesForDomain } from "./build-step-logic";
 import { createMockMatrix, SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
 import type { CategoryRow } from "../../components/wizard/category-grid";
 import type { SkillId, Category, CategorySelections } from "../../types";

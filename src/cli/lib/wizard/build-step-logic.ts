@@ -1,17 +1,9 @@
 import { sortBy } from "remeda";
-import type {
-  CategoryDefinition,
-  Domain,
-  SkillId,
-  CategorySelections,
-} from "../../types/index.js";
+import type { CategoryDefinition, Domain, SkillId, CategorySelections } from "../../types/index.js";
 import type { SkillConfig } from "../../types/config.js";
 import { getAvailableSkills, resolveAlias } from "../matrix/index.js";
 import { matrix, getSkillById } from "../matrix/matrix-provider.js";
-import type {
-  CategoryRow,
-  CategoryOption,
-} from "../../components/wizard/category-grid.js";
+import type { CategoryRow, CategoryOption } from "../../components/wizard/category-grid.js";
 
 const FRAMEWORK_CATEGORY_ID = "web-framework";
 const WEB_DOMAIN_ID = "web";
