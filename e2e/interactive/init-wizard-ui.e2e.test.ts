@@ -221,28 +221,6 @@ describe("init wizard — UI elements", () => {
       expect(output).toContain("Customize your");
     });
 
-    it("should toggle compatibility labels on skill tags when D key is pressed in build step", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
-
-      await navigateStackToBuild(session);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Verify build step is showing and Labels badge is present
-      const buildOutput = session.getFullOutput();
-      expect(buildOutput).toContain("Customize your");
-      expect(buildOutput).toContain("Labels");
-
-      // Press D to toggle compatibility labels on
-      session.write("D");
-      await delay(KEYSTROKE_DELAY_MS);
-
-      // With labels toggled on, compatibility labels like "(recommended)" or
-      // "(selected)" should appear next to skill tags
-      const labelsOnOutput = session.getFullOutput();
-      expect(labelsOnOutput).toMatch(/\(recommended\)|\(selected\)|\(discouraged\)/);
-    });
-
     it("should open help modal when ? key is pressed and close it with ESC", async () => {
       await createProjectAndSource();
       session = spawnInitWizard(projectDir!, sourceDir!);

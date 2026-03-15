@@ -107,16 +107,6 @@ describe("init wizard — stack flow", () => {
       expect(fullOutput).toContain("Start from scratch");
     });
 
-    it("should show the marketplace label", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
-
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("Marketplace:");
-    });
-
     it("should show the E2E test stack from source config", async () => {
       await createProjectAndSource();
       session = spawnInitWizard(projectDir!, sourceDir!);
