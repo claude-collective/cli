@@ -41,7 +41,6 @@ const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
     category: "shared-methodology",
     author: "@test",
     domain: "shared",
-    tags: ["methodology", "foundational"],
   },
 ];
 
@@ -50,39 +49,26 @@ const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
 const reactSkill = createTestSkill(
   "web-framework-react",
   "React framework for building user interfaces",
-  {
-    tags: ["react", "web", "ui"],
-  },
+  {},
 );
 
-const zustandSkill = createTestSkill("web-state-zustand", "Bear necessities state management", {
-  tags: ["state", "react", "zustand"],
-});
+const zustandSkill = createTestSkill("web-state-zustand", "Bear necessities state management");
 
-const vitestSkill = createTestSkill("web-testing-vitest", "Next generation testing framework", {
-  tags: ["testing", "vitest", "unit"],
-});
+const vitestSkill = createTestSkill("web-testing-vitest", "Next generation testing framework");
 
-const honoSkill = createTestSkill("api-framework-hono", "Lightweight web framework for the edge", {
-  tags: ["api", "hono", "edge"],
-});
+const honoSkill = createTestSkill("api-framework-hono", "Lightweight web framework for the edge");
 
 const vueSkill = createTestSkill(
   "web-framework-vue-composition-api",
   "Progressive JavaScript framework",
-  {
-    tags: ["vue", "web"],
-  },
+  {},
 );
 
 const scssSkill = createTestSkill("web-styling-scss-modules", "CSS Modules with SCSS", {
   displayName: "SCSS Modules",
-  tags: ["css", "scss"],
 });
 
-const drizzleSkill = createTestSkill("api-database-drizzle", "TypeScript ORM for SQL databases", {
-  tags: ["database", "orm"],
-});
+const drizzleSkill = createTestSkill("api-database-drizzle", "TypeScript ORM for SQL databases");
 
 // Composed TestSkill arrays
 
@@ -92,7 +78,7 @@ export const COMPILE_LOCAL_SKILL: TestSkill = createTestSkill(
   // Boundary cast: fictional skill ID for testing local skill compilation
   "web-tooling-local-skill" as SkillId,
   "A local project skill",
-  { slug: "tooling" as SkillSlug, displayName: "Local Skill", tags: ["local", "custom"] },
+  { slug: "tooling" as SkillSlug, displayName: "Local Skill" },
 );
 
 export const DEFAULT_TEST_SKILLS: TestSkill[] = [reactSkill, zustandSkill, vitestSkill, honoSkill];
@@ -112,7 +98,6 @@ export const DOCKER_TOOLING_SKILL: TestSkill = createTestSkill(
     slug: "tooling" as SkillSlug,
     displayName: "Docker",
     domain: "shared",
-    tags: ["docker", "devops", "containers"],
   },
 );
 
@@ -123,7 +108,6 @@ export const CI_CD_SKILLS: TestSkill[] = [
     displayName: "GitHub Actions",
     category: "infra-ci-cd",
     domain: "shared",
-    tags: ["ci-cd", "github-actions"],
   }),
   // Boundary cast: fictional skill ID for testing CI/CD skills
   createTestSkill("infra-ci-cd-gitlab-ci" as SkillId, "gitlab-ci CI/CD pipeline", {
@@ -132,7 +116,6 @@ export const CI_CD_SKILLS: TestSkill[] = [
     displayName: "GitLab CI",
     category: "infra-ci-cd",
     domain: "shared",
-    tags: ["ci-cd", "gitlab-ci"],
   }),
 ];
 
@@ -142,7 +125,7 @@ export const DATADOG_OBSERVABILITY_SKILL: TestSkill = createTestSkill(
   // Boundary cast: fictional skill ID for testing observability skills
   "api-observability-datadog" as SkillId,
   "Datadog APM integration",
-  { tags: ["monitoring", "observability", "apm", "custom-tag"] },
+  {},
 );
 
 export const REQUIRES_RELATIONSHIP_SKILLS: TestSkill[] = [reactSkill, vitestSkill];
@@ -150,16 +133,9 @@ export const REQUIRES_RELATIONSHIP_SKILLS: TestSkill[] = [reactSkill, vitestSkil
 // Source-switching TestSkill arrays (with rendered SKILL.md content)
 
 /** Creates a TestSkill with rendered SKILL.md content for source-switching tests */
-function contentSkill(
-  id: SkillId,
-  description: string,
-  tags: string[],
-  body: string,
-  author?: string,
-): TestSkill {
+function contentSkill(id: SkillId, description: string, body: string, author?: string): TestSkill {
   return createTestSkill(id, description, {
     ...(author ? { author } : {}),
-    tags,
     content: renderSkillMd(id, description, body),
   });
 }
@@ -168,25 +144,21 @@ export const SWITCHABLE_SKILLS: TestSkill[] = [
   contentSkill(
     "web-framework-react",
     "React framework for building user interfaces",
-    ["react", "web"],
     "# React (Marketplace Version)\n\nReact is a JavaScript library for building user interfaces.\nUse component-based architecture with JSX.",
   ),
   contentSkill(
     "web-state-zustand",
     "Bear necessities state management",
-    ["state", "zustand"],
     "# Zustand (Marketplace Version)\n\nZustand is a minimal state management library for React.",
   ),
   contentSkill(
     "api-framework-hono",
     "Lightweight web framework for the edge",
-    ["api", "hono"],
     "# Hono (Marketplace Version)\n\nHono is a fast web framework for the edge.",
   ),
   contentSkill(
     "web-testing-vitest",
     "Next generation testing framework",
-    ["testing", "vitest"],
     "# Vitest (Marketplace Version)\n\nVitest is a fast unit test framework powered by Vite.",
   ),
 ];
@@ -195,41 +167,32 @@ export const LOCAL_SKILL_VARIANTS: TestSkill[] = [
   contentSkill(
     "web-framework-react",
     "React framework (local customized version)",
-    ["react", "web"],
     "# React (Local Version)\n\nThis is my customized React skill with project-specific patterns.",
     "@local-user",
   ),
   contentSkill(
     "web-state-zustand",
     "Zustand state management (local customized version)",
-    ["state", "zustand"],
     "# Zustand (Local Version)\n\nMy customized Zustand patterns with project-specific stores.",
     "@local-user",
   ),
 ];
 
 export const RESOLUTION_PIPELINE_SKILLS: TestSkill[] = [
-  createTestSkill("web-framework-react", "React framework (public source)", {
-    tags: ["react", "web"],
-  }),
+  createTestSkill("web-framework-react", "React framework (public source)"),
   createTestSkill("api-framework-hono", "Hono framework (acme source)", {
     author: "@acme",
-    tags: ["api", "hono"],
   }),
   // Boundary cast: fictional skill ID for testing multi-source resolution
   createTestSkill("web-animation-framer" as SkillId, "Framer Motion (internal source)", {
     slug: "framer-motion",
     displayName: "Framer Motion",
     author: "@internal",
-    tags: ["animation"],
   }),
   createTestSkill("api-database-drizzle", "Drizzle ORM (acme source)", {
     author: "@acme",
-    tags: ["database"],
   }),
-  createTestSkill("web-testing-vitest", "Vitest testing (public source)", {
-    tags: ["testing"],
-  }),
+  createTestSkill("web-testing-vitest", "Vitest testing (public source)"),
 ];
 
 // Composed skill ID collections
@@ -255,7 +218,6 @@ export const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) =>
 export const REACT_EXTRACTED = createMockExtractedSkill("web-framework-react", {
   description: "React framework",
   author: "@vince",
-  tags: ["react"],
 });
 
 export const REACT_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-react", {
@@ -355,9 +317,9 @@ export const CATEGORY_GRID_SKILLS: {
   { id: "web-framework-vue-composition-api", displayName: "Vue", category: "web-framework" },
   { id: "web-framework-angular-standalone", displayName: "Angular", category: "web-framework" },
   { id: "web-framework-solidjs", displayName: "SolidJS", category: "web-framework" },
-  { id: "web-framework-nuxt", displayName: "Nuxt", category: "web-framework" },
-  { id: "web-framework-remix", displayName: "Remix", category: "web-framework" },
-  { id: "web-framework-nextjs", displayName: "Next.js", category: "web-framework" },
+  { id: "web-meta-framework-nuxt", displayName: "Nuxt", category: "web-meta-framework" },
+  { id: "web-meta-framework-remix", displayName: "Remix", category: "web-meta-framework" },
+  { id: "web-meta-framework-nextjs", displayName: "Next.js", category: "web-meta-framework" },
   { id: "web-styling-scss-modules", displayName: "SCSS Modules", category: "web-styling" },
   { id: "web-styling-tailwind", displayName: "Tailwind", category: "web-styling" },
   { id: "web-styling-cva", displayName: "CVA", category: "web-styling" },
@@ -567,7 +529,6 @@ Use composition over inheritance for flexible component design.
 `,
   metadata: {
     author: "@external-author",
-    tags: ["react", "patterns", "web"],
     category: "web-framework",
   },
 };
@@ -592,7 +553,6 @@ Test component interactions and data flow.
 `,
   metadata: {
     author: "@external-author",
-    tags: ["testing", "vitest"],
     category: "web-testing",
   },
 };

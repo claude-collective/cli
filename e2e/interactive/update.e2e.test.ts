@@ -224,10 +224,10 @@ describe("update command", () => {
       });
 
       // Add two skills with stale forkedFrom hashes
-      await createLocalSkill(projectDir, "web-framework-nextjs-app-router", {
+      await createLocalSkill(projectDir, "web-meta-framework-nextjs", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-framework-nextjs-app-router",
+          "displayName: web-meta-framework-nextjs",
           "forkedFrom:",
           "  skillId: web-framework-react",
           '  contentHash: "0000000"',
@@ -270,10 +270,10 @@ describe("update command", () => {
       });
 
       // Create a local skill forked from web-framework-react with a stale hash
-      await createLocalSkill(projectDir, "web-framework-nextjs-app-router", {
+      await createLocalSkill(projectDir, "web-meta-framework-nextjs", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-framework-nextjs-app-router",
+          "displayName: web-meta-framework-nextjs",
           "forkedFrom:",
           "  skillId: web-framework-react",
           '  contentHash: "0000000"',
@@ -303,10 +303,10 @@ describe("update command", () => {
       });
 
       // Create a skill with stale forkedFrom hash so it's detected as outdated
-      await createLocalSkill(projectDir, "web-framework-nextjs-app-router", {
+      await createLocalSkill(projectDir, "web-meta-framework-nextjs", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-framework-nextjs-app-router",
+          "displayName: web-meta-framework-nextjs",
           "forkedFrom:",
           "  skillId: web-framework-react",
           '  contentHash: "0000000"',
@@ -342,10 +342,10 @@ describe("update command", () => {
       });
 
       // Create two skills with stale forkedFrom hashes
-      await createLocalSkill(projectDir, "web-framework-nextjs-app-router", {
+      await createLocalSkill(projectDir, "web-meta-framework-nextjs", {
         metadata: [
           'author: "@agents-inc"',
-          "displayName: web-framework-nextjs-app-router",
+          "displayName: web-meta-framework-nextjs",
           "forkedFrom:",
           "  skillId: web-framework-react",
           '  contentHash: "0000000"',

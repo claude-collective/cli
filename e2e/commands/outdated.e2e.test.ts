@@ -114,7 +114,7 @@ describe("outdated command", () => {
     const sourceDir = e2e.sourceDir;
 
     const sourceSkillId = "web-framework-react";
-    const localDirName = "web-framework-nextjs-server-actions";
+    const localDirName = "web-meta-framework-nextjs";
 
     // Use a different local directory name to avoid overwriting the source skill in the matrix.
     await createLocalSkill(tempDir, localDirName, {
@@ -144,7 +144,7 @@ describe("outdated command", () => {
     const sourceDir = e2e.sourceDir;
 
     const sourceSkillId = "web-framework-react";
-    const localDirName = "web-framework-nextjs-server-actions";
+    const localDirName = "web-meta-framework-nextjs";
 
     // Use a different local directory name to avoid overwriting the source skill in the matrix.
     await createLocalSkill(tempDir, localDirName, {
@@ -269,10 +269,10 @@ describe("outdated command", () => {
     const sourceDir = e2e.sourceDir;
 
     // Create one outdated skill (distinct dir name to preserve source entry in matrix)
-    await createLocalSkill(tempDir, "web-framework-nextjs-server-actions", {
+    await createLocalSkill(tempDir, "web-meta-framework-nextjs", {
       metadata: [
         'author: "@agents-inc"',
-        "displayName: web-framework-nextjs-server-actions",
+        "displayName: web-meta-framework-nextjs",
         "forkedFrom:",
         "  skillId: web-framework-react",
         '  contentHash: "0000000"',
@@ -348,7 +348,7 @@ describe("outdated command", () => {
 
     // 2. Create an OUTDATED skill (stale contentHash)
     const outdatedSourceId = "web-framework-react";
-    const outdatedLocalDir = "web-framework-nextjs-server-actions";
+    const outdatedLocalDir = "web-meta-framework-nextjs";
 
     await createLocalSkill(tempDir, outdatedLocalDir, {
       metadata: [

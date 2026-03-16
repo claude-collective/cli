@@ -20,12 +20,12 @@ export const defaultStacks: Stack[] = [
   {
     id: "nextjs-fullstack",
     name: "Next.js Fullstack",
-    description: "React + Hono full-stack",
+    description: "Next.js + Hono full-stack",
     philosophy: "Ship fast, iterate faster",
     agents: {
       "web-developer": {
         "web-framework": [{ id: "web-framework-react", preloaded: true }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: true }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: true }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
         "web-server-state": [{ id: "web-server-state-react-query", preloaded: false }],
@@ -51,7 +51,7 @@ export const defaultStacks: Stack[] = [
       "web-reviewer": {
         "shared-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
         "web-server-state": [{ id: "web-server-state-react-query", preloaded: false }],
@@ -82,7 +82,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pm": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
         "web-server-state": [{ id: "web-server-state-react-query", preloaded: false }],
@@ -112,7 +112,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
         "web-server-state": [{ id: "web-server-state-react-query", preloaded: false }],
@@ -134,7 +134,7 @@ export const defaultStacks: Stack[] = [
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
         "web-server-state": [{ id: "web-server-state-react-query", preloaded: false }],
@@ -152,7 +152,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
         "web-server-state": [{ id: "web-server-state-react-query", preloaded: false }],
@@ -171,7 +171,7 @@ export const defaultStacks: Stack[] = [
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
         "web-server-state": [{ id: "web-server-state-react-query", preloaded: false }],
@@ -191,7 +191,7 @@ export const defaultStacks: Stack[] = [
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
         "web-server-state": [{ id: "web-server-state-react-query", preloaded: false }],
@@ -211,7 +211,7 @@ export const defaultStacks: Stack[] = [
       },
       documentor: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
         "web-server-state": [{ id: "web-server-state-react-query", preloaded: false }],
@@ -367,7 +367,7 @@ export const defaultStacks: Stack[] = [
     agents: {
       "web-developer": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: true }],
-        "web-meta-framework": [{ id: "web-framework-nuxt", preloaded: true }],
+        "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: true }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
@@ -382,7 +382,7 @@ export const defaultStacks: Stack[] = [
       "web-reviewer": {
         "shared-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nuxt", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
@@ -397,7 +397,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pm": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nuxt", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -415,7 +415,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nuxt", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
@@ -429,7 +429,7 @@ export const defaultStacks: Stack[] = [
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nuxt", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -440,7 +440,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nuxt", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -452,7 +452,7 @@ export const defaultStacks: Stack[] = [
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nuxt", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -464,7 +464,7 @@ export const defaultStacks: Stack[] = [
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nuxt", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -476,7 +476,7 @@ export const defaultStacks: Stack[] = [
       },
       documentor: {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nuxt", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -503,7 +503,7 @@ export const defaultStacks: Stack[] = [
     agents: {
       "web-developer": {
         "web-framework": [{ id: "web-framework-react", preloaded: true }],
-        "web-meta-framework": [{ id: "web-framework-remix", preloaded: true }],
+        "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: true }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -517,7 +517,7 @@ export const defaultStacks: Stack[] = [
       "web-reviewer": {
         "shared-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-remix", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -531,7 +531,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pm": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-remix", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -548,7 +548,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-remix", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -561,7 +561,7 @@ export const defaultStacks: Stack[] = [
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-remix", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -571,7 +571,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-remix", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -582,7 +582,7 @@ export const defaultStacks: Stack[] = [
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-remix", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -593,7 +593,7 @@ export const defaultStacks: Stack[] = [
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-remix", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -604,7 +604,7 @@ export const defaultStacks: Stack[] = [
       },
       documentor: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-remix", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -875,7 +875,7 @@ export const defaultStacks: Stack[] = [
     agents: {
       "web-developer": {
         "web-framework": [{ id: "web-framework-react", preloaded: true }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: true }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: true }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
         "web-server-state": [{ id: "web-data-fetching-trpc", preloaded: true }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -889,7 +889,7 @@ export const defaultStacks: Stack[] = [
       "web-reviewer": {
         "shared-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
         "web-server-state": [{ id: "web-data-fetching-trpc", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -903,7 +903,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pm": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
         "web-server-state": [{ id: "web-data-fetching-trpc", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -918,7 +918,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
         "web-server-state": [{ id: "web-data-fetching-trpc", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -931,7 +931,7 @@ export const defaultStacks: Stack[] = [
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
         "web-server-state": [{ id: "web-data-fetching-trpc", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -941,7 +941,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
         "web-server-state": [{ id: "web-data-fetching-trpc", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -952,7 +952,7 @@ export const defaultStacks: Stack[] = [
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
         "web-server-state": [{ id: "web-data-fetching-trpc", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -963,7 +963,7 @@ export const defaultStacks: Stack[] = [
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
         "web-server-state": [{ id: "web-data-fetching-trpc", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -974,7 +974,7 @@ export const defaultStacks: Stack[] = [
       },
       documentor: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-nextjs", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
         "web-server-state": [{ id: "web-data-fetching-trpc", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -1000,7 +1000,7 @@ export const defaultStacks: Stack[] = [
     agents: {
       "web-developer": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: true }],
-        "web-meta-framework": [{ id: "web-framework-sveltekit", preloaded: true }],
+        "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: true }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -1014,7 +1014,7 @@ export const defaultStacks: Stack[] = [
       "web-reviewer": {
         "shared-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-sveltekit", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -1028,7 +1028,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pm": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-sveltekit", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1045,7 +1045,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-sveltekit", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -1058,7 +1058,7 @@ export const defaultStacks: Stack[] = [
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-sveltekit", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1068,7 +1068,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-sveltekit", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1079,7 +1079,7 @@ export const defaultStacks: Stack[] = [
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-sveltekit", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1090,7 +1090,7 @@ export const defaultStacks: Stack[] = [
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-sveltekit", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1101,7 +1101,7 @@ export const defaultStacks: Stack[] = [
       },
       documentor: {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
-        "web-meta-framework": [{ id: "web-framework-sveltekit", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1126,7 +1126,7 @@ export const defaultStacks: Stack[] = [
     philosophy: "Ship less JavaScript, faster by default",
     agents: {
       "web-developer": {
-        "web-meta-framework": [{ id: "web-framework-astro", preloaded: true }],
+        "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: true }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -1138,7 +1138,7 @@ export const defaultStacks: Stack[] = [
       },
       "web-reviewer": {
         "shared-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
-        "web-meta-framework": [{ id: "web-framework-astro", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -1150,7 +1150,7 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pm": {
-        "web-meta-framework": [{ id: "web-framework-astro", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1164,7 +1164,7 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-researcher": {
-        "web-meta-framework": [{ id: "web-framework-astro", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "shared-methodology": SHARED_METHODOLOGY,
       },
@@ -1175,7 +1175,7 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "pattern-scout": {
-        "web-meta-framework": [{ id: "web-framework-astro", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1183,7 +1183,7 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "web-pattern-critique": {
-        "web-meta-framework": [{ id: "web-framework-astro", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1192,7 +1192,7 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "agent-summoner": {
-        "web-meta-framework": [{ id: "web-framework-astro", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1201,7 +1201,7 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       "skill-summoner": {
-        "web-meta-framework": [{ id: "web-framework-astro", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
@@ -1210,7 +1210,7 @@ export const defaultStacks: Stack[] = [
         "shared-methodology": SHARED_METHODOLOGY,
       },
       documentor: {
-        "web-meta-framework": [{ id: "web-framework-astro", preloaded: false }],
+        "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],

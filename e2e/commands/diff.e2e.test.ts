@@ -128,7 +128,7 @@ describe("diff command", () => {
     sourceTempDir = e2e.tempDir;
     tempDir = await createTempDir();
 
-    const targetLocalDir = "web-framework-nextjs-app-router";
+    const targetLocalDir = "web-meta-framework-nextjs";
     const otherLocalDir = "web-testing-cypress-e2e";
 
     await createLocalSkill(tempDir, targetLocalDir, {
@@ -326,7 +326,7 @@ describe("diff command", () => {
     sourceTempDir = e2e.tempDir;
     tempDir = await createTempDir();
 
-    const reactFork = "web-framework-nextjs-app-router";
+    const reactFork = "web-meta-framework-nextjs";
     const vitestFork = "web-testing-cypress-e2e";
 
     const reactDir = await createLocalSkill(tempDir, reactFork, {
