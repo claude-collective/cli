@@ -373,15 +373,18 @@ function getCanonicalSkillCategories(): Record<string, string> {
       "infra-ci-cd-gitlab-ci": "shared-ci-cd",
       "web-accessibility-a11y": "web-accessibility",
       "web-animation-framer": "web-animation",
-      "meta-methodology-investigation": "shared-methodology",
-      "meta-methodology-success-criteria": "shared-methodology",
-      "meta-methodology-investigation-requirements": "shared-methodology",
-      "meta-methodology-anti-over-engineering": "shared-methodology",
-      "meta-methodology-write-verification": "shared-methodology",
-      "meta-methodology-improvement-protocol": "shared-methodology",
-      "meta-methodology-context-management": "shared-methodology",
+      "meta-methodology-investigation": "shared-meta",
+      "meta-methodology-success-criteria": "shared-meta",
+      "meta-methodology-investigation-requirements": "shared-meta",
+      "meta-methodology-anti-over-engineering": "shared-meta",
+      "meta-methodology-write-verification": "shared-meta",
+      "meta-methodology-improvement-protocol": "shared-meta",
+      "meta-methodology-context-management": "shared-meta",
+      "shared-meta-research-methodology": "shared-meta",
+      "shared-meta-reviewing": "shared-meta",
+      "shared-meta-cli-reviewing": "shared-meta",
       "meta-company-patterns": "local",
-      "meta-test-skill": "shared-methodology",
+      "meta-test-skill": "shared-meta",
       "web-framework-nonexistent": "web-framework",
       "web-framework-react-pro": "web-framework",
       "web-framework-react-strict": "web-framework",
@@ -445,7 +448,7 @@ export function createMockSkill(id: SkillId, overrides?: Partial<ResolvedSkill>)
   }
 
   // Derive slug from skill ID: strip domain-category prefix to get the last segment(s)
-  // e.g., "web-framework-react" -> "react", "meta-methodology-anti-over-engineering" -> "anti-over-engineering"
+  // e.g., "web-framework-react" -> "react", "shared-meta-reviewing" -> "reviewing"
   const segments = id.split("-");
   const defaultSlug = (segments.length >= 3 ? segments.slice(2).join("-") : id) as SkillSlug;
 
@@ -792,7 +795,7 @@ export function createComprehensiveMatrix(
     "api-database-drizzle": SKILLS.drizzle,
     "web-testing-vitest": SKILLS.vitest,
     // Methodology skill
-    "meta-methodology-anti-over-engineering": SKILLS.antiOverEng,
+    "shared-meta-reviewing": SKILLS.antiOverEng,
   };
 
   const categories = {
@@ -812,7 +815,7 @@ export function createComprehensiveMatrix(
       exclusive: false,
       order: 10,
     },
-    "shared-methodology": {
+    "shared-meta": {
       ...TEST_CATEGORIES.methodology,
       domain: "shared",
       exclusive: false,
@@ -865,7 +868,7 @@ export function createComprehensiveMatrix(
     hono: "api-framework-hono",
     drizzle: "api-database-drizzle",
     vitest: "web-testing-vitest",
-    "anti-over-engineering": "meta-methodology-anti-over-engineering",
+    reviewing: "shared-meta-reviewing",
   } as unknown as Record<SkillSlug, SkillId>;
 
   // Boundary cast: Object.fromEntries returns { [k: string]: string }
@@ -894,7 +897,7 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
     "api-framework-hono": SKILLS.hono,
     "web-testing-vitest": SKILLS.vitest,
     // Methodology skill
-    "meta-methodology-anti-over-engineering": SKILLS.antiOverEng,
+    "shared-meta-reviewing": SKILLS.antiOverEng,
   };
 
   const suggestedStacks: ResolvedStack[] = [
@@ -928,7 +931,7 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
         domain: "shared",
         exclusive: false,
       },
-      "shared-methodology": {
+      "shared-meta": {
         ...TEST_CATEGORIES.methodology,
         domain: "shared",
         exclusive: false,
@@ -1178,18 +1181,14 @@ export function createMockRawStacksConfigWithArrays(): RawStacksConfig {
         agents: {
           "web-developer": {
             "web-framework": "web-framework-react",
-            "shared-methodology": [
-              "meta-methodology-investigation-requirements",
-              "meta-methodology-anti-over-engineering",
-              "meta-methodology-success-criteria",
+            "shared-meta": [
+              "shared-meta-research-methodology",
+              "shared-meta-reviewing",
+              "shared-meta-cli-reviewing",
             ],
           },
           "pattern-scout": {
-            "shared-methodology": [
-              "meta-methodology-investigation-requirements",
-              "meta-methodology-anti-over-engineering",
-            ],
-            "shared-research": "meta-research-research-methodology",
+            "shared-meta": ["shared-meta-research-methodology"],
           },
         },
       },
@@ -1208,9 +1207,9 @@ export function createMockRawStacksConfigWithObjects(): RawStacksConfig {
           "web-developer": {
             "web-framework": [{ id: "web-framework-react", preloaded: true }],
             "web-styling": "web-styling-scss-modules",
-            "shared-methodology": [
-              { id: "meta-methodology-investigation-requirements", preloaded: true },
-              "meta-methodology-anti-over-engineering",
+            "shared-meta": [
+              { id: "shared-meta-research-methodology", preloaded: true },
+              "shared-meta-reviewing",
             ],
           },
         },

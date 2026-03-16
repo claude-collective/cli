@@ -29,15 +29,12 @@ const E2E_SKILL_NAMES = [
   "web-testing-vitest",
   "web-state-zustand",
   "api-framework-hono",
-  "meta-methodology-anti-over-engineering",
-  "meta-methodology-context-management",
-  "meta-methodology-improvement-protocol",
-  "meta-methodology-investigation-requirements",
-  "meta-methodology-success-criteria",
-  "meta-methodology-write-verification",
+  "shared-meta-research-methodology",
+  "shared-meta-reviewing",
+  "shared-meta-cli-reviewing",
 ];
 
-const EXPECTED_SKILL_COUNT = 10;
+const EXPECTED_SKILL_COUNT = 7;
 const MARKETPLACE_NAME = "test-mp";
 
 describe("build pipeline (plugin chain)", () => {

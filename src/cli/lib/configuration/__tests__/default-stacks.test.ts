@@ -73,13 +73,4 @@ describe("defaultStacks", () => {
     expect(framework).toBeDefined();
     expect(framework).toContainEqual({ id: "web-framework-react", preloaded: true });
   });
-
-  it("nextjs-fullstack has methodology skills preloaded", () => {
-    const stack = defaultStacks.find((s) => s.id === "nextjs-fullstack");
-    const webDev = stack!.agents["web-developer"];
-    const methodology = webDev!["shared-methodology"];
-    expect(methodology).toBeDefined();
-    expect(methodology!.length).toBeGreaterThan(0);
-    expect(methodology!.every((a) => a.preloaded === true)).toBe(true);
-  });
 });

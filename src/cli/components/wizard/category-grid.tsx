@@ -141,7 +141,14 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
             <Text> </Text>
           </>
         )}
-        <Text color={textColor} bold dimColor={(option.selected && !!option.hasUnmetRequirements) || (option.selected && !!option.requiredBy)}>
+        <Text
+          color={textColor}
+          bold
+          dimColor={
+            (option.selected && !!option.hasUnmetRequirements) ||
+            (option.selected && !!option.requiredBy)
+          }
+        >
           {getSkillById(option.id).displayName}{" "}
         </Text>
         {compatibilityLabel && (

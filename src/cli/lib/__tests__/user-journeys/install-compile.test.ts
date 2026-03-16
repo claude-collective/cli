@@ -565,16 +565,16 @@ You are a specialized web developer with deep expertise in:
     }
   });
 
-  it("should embed template core_principles section in output", async () => {
+  it("should embed template core principles and methodologies in output", async () => {
     await createAgent(dirs.agentsDir, "web-developer", {
       title: "Web Developer",
-      description: "Web developer with core principles",
+      description: "Web developer with methodologies",
       tools: ["Read"],
     });
 
     const stackId = uniqueStackId();
     const stack = createMockStack(stackId, {
-      name: "Principles Stack",
+      name: "Methodologies Stack",
       agents: { "web-developer": {} },
     });
 
@@ -590,9 +590,11 @@ You are a specialized web developer with deep expertise in:
       "utf-8",
     );
 
-    // The agent template includes a core_principles block
+    // The agent template includes core principles summary and full methodology partials
     expect(agentContent).toContain("<core_principles>");
     expect(agentContent).toContain("</core_principles>");
+    expect(agentContent).toContain("<methodologies>");
+    expect(agentContent).toContain("</methodologies>");
   });
 });
 

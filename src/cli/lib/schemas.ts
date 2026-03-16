@@ -76,7 +76,7 @@ export const permissionModeSchema = z.enum([
 export const skillSlugSchema = z.enum(SKILL_SLUGS) as z.ZodType<SkillSlug>;
 
 /** Matches SkillId format: prefix-category-name (at least 3 dash-separated segments) */
-export const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+-.+$/;
+export const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security|shared)-.+-.+$/;
 
 // Regex-based since Zod cannot express template literal types natively
 export const skillIdSchema = z

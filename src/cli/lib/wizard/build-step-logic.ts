@@ -89,7 +89,8 @@ export function buildCategoriesForDomain(
     const options: CategoryOption[] = filteredSkillOptions.map((skill) => {
       // Check if any currently selected skill depends on this one
       const dependents = skill.selected ? getDependentSkills(skill.id, allSelections) : [];
-      const firstDependent = dependents.length > 0 ? getSkillById(dependents[0]).displayName : undefined;
+      const firstDependent =
+        dependents.length > 0 ? getSkillById(dependents[0]).displayName : undefined;
 
       return {
         id: skill.id,

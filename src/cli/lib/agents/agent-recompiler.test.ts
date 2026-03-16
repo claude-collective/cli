@@ -153,6 +153,7 @@ describe("agent-recompiler", () => {
       expect(content).toContain("name: web-developer");
       expect(content).toContain("description:");
       expect(content).toContain("<core_principles>");
+      expect(content).toContain("<methodologies>");
     });
 
     it("respects projectDir for local template resolution", async () => {

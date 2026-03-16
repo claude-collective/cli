@@ -10,7 +10,7 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import { BUILT_IN_MATRIX } from "../../../types/generated/matrix";
 import { loadProjectConfig } from "../../configuration";
-import { DEFAULT_PRESELECTED_SKILLS, STANDARD_FILES } from "../../../consts";
+import { STANDARD_FILES } from "../../../consts";
 import type { AgentScopeConfig, MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
@@ -581,12 +581,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
       "api-framework-hono",
       "api-database-drizzle",
     ];
-    // Only include methodology skills that exist in the test matrix
-    const matrixSkillIds = Object.keys(matrix.skills) as SkillId[];
-    const methodologySkills = DEFAULT_PRESELECTED_SKILLS.filter((s) => matrixSkillIds.includes(s));
-    const allSkills: SkillId[] = [...selectedSkills, ...methodologySkills];
-
-    simulateSkillSelections(allSkills, matrix, ["web", "api", "shared"]);
+    simulateSkillSelections(selectedSkills, matrix, ["web", "api"]);
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
@@ -598,12 +593,9 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-    // Config should contain all selected skills + methodology
+    // Config should contain all selected skills
     for (const skillId of selectedSkills) {
       expect(config.skills.map((s) => s.id)).toContain(skillId);
-    }
-    for (const methodSkill of methodologySkills) {
-      expect(config.skills.map((s) => s.id)).toContain(methodSkill);
     }
 
     // Agents should include both web and api domain agents
@@ -652,40 +644,6 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     for (const agentName of result.compiledAgents) {
       const agentPath = path.join(result.agentsDir, `${agentName}.md`);
       expect(await fileExists(agentPath)).toBe(true);
-    }
-  });
-
-  it("should include methodology skills in all domain agents via the config", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-    // Only include methodology skills that exist in the test matrix
-    const matrixSkillIds = Object.keys(matrix.skills) as SkillId[];
-    const methodologySkills = DEFAULT_PRESELECTED_SKILLS.filter((s) => matrixSkillIds.includes(s));
-    const allSkills: SkillId[] = [...selectedSkills, ...methodologySkills];
-
-    simulateSkillSelections(allSkills, matrix, ["web", "api", "shared"]);
-    useWizardStore.getState().preselectAgentsFromDomains();
-
-    const wizardResult = buildWizardResultFromStore(matrix);
-    const result = await installLocal({
-      wizardResult,
-      sourceResult,
-      projectDir: dirs.projectDir,
-    });
-
-    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-
-    // Methodology skills should be in config.skills
-    for (const methodSkill of methodologySkills) {
-      expect(config.skills.map((s) => s.id)).toContain(methodSkill);
-    }
-
-    // All compiled agents should have valid .md files
-    expect(result.compiledAgents.length).toBeGreaterThan(0);
-    for (const agentName of result.compiledAgents) {
-      const agentPath = path.join(result.agentsDir, `${agentName}.md`);
-      expect(await fileExists(agentPath)).toBe(true);
-      const content = await readFile(agentPath, "utf-8");
-      expect(content).toContain("---");
     }
   });
 

@@ -275,8 +275,8 @@ describe.skipIf(!claudeAvailable)(
         // api-framework-hono should be present (preloaded or dynamic)
         expect(apiDevContent).toContain("api-framework-hono");
 
-        // Methodology skills should be present
-        expect(apiDevContent).toContain("meta-methodology");
+        // Shared meta skills should be present
+        expect(apiDevContent).toContain("shared-meta");
 
         // api-developer should NOT contain web-framework-react (web skills don't belong in API agent)
         expect(apiDevContent).not.toContain("web-framework-react");

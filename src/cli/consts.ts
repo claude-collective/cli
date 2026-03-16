@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
-import type { Domain, SkillId } from "./types/index.js";
+import type { Domain } from "./types/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -199,12 +199,3 @@ export const ASCII_LOGO = ` █████╗  ██████╗ ███�
 ██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ╚════██║      ██║██║╚██╗██║██║
 ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   ███████║      ██║██║ ╚████║╚██████╗
 ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝      ╚═╝╚═╝  ╚═══╝ ╚═════╝`;
-
-export const DEFAULT_PRESELECTED_SKILLS: readonly SkillId[] = [
-  "meta-methodology-anti-over-engineering",
-  "meta-methodology-context-management",
-  "meta-methodology-improvement-protocol",
-  "meta-methodology-investigation-requirements",
-  "meta-methodology-success-criteria",
-  "meta-methodology-write-verification",
-];

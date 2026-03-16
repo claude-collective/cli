@@ -155,10 +155,10 @@ describe("slug-based relationship rules", () => {
       tempDir = sourceTempDir;
 
       // React IS in the default recommends list, so we need to check a skill
-      // that's truly not recommended. "anti-over-engineering" is a methodology skill
+      // that's truly not recommended. "reviewing" is a shared-meta skill
       // that has no recommend entry in either default or source rules.
       const { exitCode, stdout } = await runCLI(
-        ["info", "meta-methodology-anti-over-engineering", "--source", sourceDir, "--no-preview"],
+        ["info", "shared-meta-reviewing", "--source", sourceDir, "--no-preview"],
         tempDir,
       );
 
@@ -196,7 +196,7 @@ describe("slug-based relationship rules", () => {
 
       const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
 
-      expect(combined).toContain("Checked 10 skill(s)");
+      expect(combined).toContain("Checked 7 skill(s)");
 
       // Default rules may produce unresolved references for slugs not in E2E source
       // (e.g., "angular", "vue"), but E2E source slugs should all resolve cleanly.

@@ -3,7 +3,7 @@ import { defaultCategories } from "../default-categories";
 import type { Category } from "../../../types";
 import { typedKeys } from "../../../utils/typed-object";
 
-const EXPECTED_CATEGORY_COUNT = 37;
+const EXPECTED_CATEGORY_COUNT = 36;
 
 describe("defaultCategories", () => {
   it("has the expected number of categories", () => {
@@ -40,8 +40,8 @@ describe("defaultCategories", () => {
     expect(cat!.domain).toBe("cli");
   });
 
-  it("includes shared-methodology", () => {
-    const cat = defaultCategories["shared-methodology"];
+  it("includes shared-meta", () => {
+    const cat = defaultCategories["shared-meta"];
     expect(cat).toBeDefined();
     expect(cat!.domain).toBe("shared");
     expect(cat!.exclusive).toBe(false);

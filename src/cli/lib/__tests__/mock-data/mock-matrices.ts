@@ -106,20 +106,20 @@ export const ALL_SKILLS_WEB_AND_API_MATRIX = createMockMatrix(...Object.values(S
 
 export const ALL_SKILLS_METHODOLOGY_MATRIX = createMockMatrix(...Object.values(SKILLS), {
   categories: {
-    "shared-methodology": { domain: "shared" },
+    "shared-meta": { domain: "shared" },
   } as Record<Category, CategoryDefinition>,
 });
 
 export const ALL_SKILLS_METHODOLOGY_BARE_MATRIX = createMockMatrix(...Object.values(SKILLS), {
   categories: {
-    "shared-methodology": {},
+    "shared-meta": {},
   } as Record<Category, CategoryDefinition>,
 });
 
 export const ALL_SKILLS_MULTI_DOMAIN_MATRIX = createMockMatrix(...Object.values(SKILLS), {
   categories: {
     "web-framework": { domain: "web" },
-    "shared-methodology": { domain: "shared" },
+    "shared-meta": { domain: "shared" },
     "api-api": { domain: "api" },
   } as Record<Category, CategoryDefinition>,
 });

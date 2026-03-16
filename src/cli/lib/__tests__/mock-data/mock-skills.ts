@@ -34,11 +34,11 @@ export const VITEST_SINGLE_FILE_SKILL: Skill = {
 
 const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
   {
-    id: "meta-methodology-anti-over-engineering",
-    slug: "anti-over-engineering",
+    id: "shared-meta-reviewing",
+    slug: "reviewing",
     displayName: "Anti Over-Engineering",
     description: "Surgical implementation, not architectural innovation",
-    category: "shared-methodology",
+    category: "shared-meta",
     author: "@test",
     domain: "shared",
   },
@@ -384,7 +384,7 @@ export const MULTI_SOURCE_INTERNAL_SKILLS: MultiSourceSkillEntry[] = [
   { id: "web-animation-framer", category: "web-animation", description: "Framer Motion" },
   {
     id: "meta-methodology-investigation",
-    category: "shared-methodology",
+    category: "shared-meta",
     description: "Investigation first",
   },
   { id: "web-accessibility-a11y", category: "web-accessibility", description: "Web accessibility" },

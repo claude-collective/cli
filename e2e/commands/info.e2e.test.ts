@@ -267,7 +267,6 @@ describe("info command", () => {
     });
   });
 
-
   describe("invalid source", () => {
     it("should error when --source points to nonexistent path", async () => {
       tempDir = await createTempDir();
@@ -352,19 +351,19 @@ contentHash: "e2e-long-desc-hash"
       expect(combined).toContain("web-framework-react");
     });
 
-    it("should suggest methodology skills when querying meta", async () => {
+    it("should suggest shared-meta skills when querying shared-meta", async () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
       const { exitCode, combined } = await runCLI(
-        ["info", "meta-methodology", "--source", sourceDir],
+        ["info", "shared-meta", "--source", sourceDir],
         tempDir,
       );
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
       expect(combined).toContain("not found");
       expect(combined).toContain("Did you mean");
-      expect(combined).toContain("meta-methodology-");
+      expect(combined).toContain("shared-meta-");
     });
   });
 });

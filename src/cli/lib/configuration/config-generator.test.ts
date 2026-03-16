@@ -373,19 +373,17 @@ describe("config-generator", () => {
       initializeMatrix(METHODOLOGY_MATRIX);
       const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
 
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["meta-methodology-anti-over-engineering"],
-        { selectedAgents },
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["shared-meta-reviewing"], {
+        selectedAgents,
+      });
 
       expect(config.agents).toEqual(buildAgentConfigs(["api-developer", "web-developer"]));
       expect(config.stack).toBeDefined();
-      expect(config.stack!["web-developer"]?.["shared-methodology"]?.[0]?.id).toBe(
-        "meta-methodology-anti-over-engineering",
+      expect(config.stack!["web-developer"]?.["shared-meta"]?.[0]?.id).toBe(
+        "shared-meta-reviewing",
       );
-      expect(config.stack!["api-developer"]?.["shared-methodology"]?.[0]?.id).toBe(
-        "meta-methodology-anti-over-engineering",
+      expect(config.stack!["api-developer"]?.["shared-meta"]?.[0]?.id).toBe(
+        "shared-meta-reviewing",
       );
     });
   });
@@ -440,12 +438,11 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "pattern-scout": {
-          "shared-methodology": [
-            sa("meta-methodology-investigation-requirements", true),
-            sa("meta-methodology-anti-over-engineering", true),
-            sa("meta-methodology-success-criteria", true),
+          "shared-meta": [
+            sa("shared-meta-research-methodology", true),
+            sa("shared-meta-reviewing", true),
+            sa("shared-meta-cli-reviewing", true),
           ],
-          "shared-research": [sa("meta-research-research-methodology", true)],
         },
       });
     });

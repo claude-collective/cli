@@ -912,7 +912,7 @@ describe("WizardStore", () => {
 
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
-          misc: { "shared-methodology": [sa("meta-methodology-vitest" as SkillId)] },
+          misc: { "shared-meta": [sa("meta-methodology-vitest" as SkillId)] },
         },
       };
       initializeMatrix(ALL_SKILLS_METHODOLOGY_BARE_MATRIX);
@@ -930,10 +930,10 @@ describe("WizardStore", () => {
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
           "pattern-scout": {
-            "shared-methodology": [
-              sa("meta-methodology-investigation-requirements", true),
-              sa("meta-methodology-anti-over-engineering", true),
-              sa("meta-methodology-success-criteria", true),
+            "shared-meta": [
+              sa("shared-meta-research-methodology", true),
+              sa("shared-meta-reviewing", true),
+              sa("shared-meta-cli-reviewing", true),
             ],
           },
         },
@@ -944,10 +944,10 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.shared!["shared-methodology"]).toEqual([
-        "meta-methodology-investigation-requirements",
-        "meta-methodology-anti-over-engineering",
-        "meta-methodology-success-criteria",
+      expect(domainSelections.shared!["shared-meta"]).toEqual([
+        "shared-meta-research-methodology",
+        "shared-meta-reviewing",
+        "shared-meta-cli-reviewing",
       ]);
     });
 
@@ -958,9 +958,9 @@ describe("WizardStore", () => {
         agents: {
           web: {
             "web-framework": [sa("web-framework-react", true)],
-            "shared-methodology": [
-              sa("meta-methodology-investigation-requirements", true),
-              sa("meta-methodology-anti-over-engineering", true),
+            "shared-meta": [
+              sa("shared-meta-research-methodology", true),
+              sa("shared-meta-reviewing", true),
             ],
           },
           api: { "api-api": [sa("api-framework-hono", true)] },
@@ -973,9 +973,9 @@ describe("WizardStore", () => {
       const { domainSelections } = useWizardStore.getState();
 
       expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
-      expect(domainSelections.shared!["shared-methodology"]).toEqual([
-        "meta-methodology-investigation-requirements",
-        "meta-methodology-anti-over-engineering",
+      expect(domainSelections.shared!["shared-meta"]).toEqual([
+        "shared-meta-research-methodology",
+        "shared-meta-reviewing",
       ]);
       expect(domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
     });
@@ -986,15 +986,15 @@ describe("WizardStore", () => {
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
           agent1: {
-            "shared-methodology": [
-              sa("meta-methodology-investigation-requirements", true),
-              sa("meta-methodology-anti-over-engineering", true),
+            "shared-meta": [
+              sa("shared-meta-research-methodology", true),
+              sa("shared-meta-reviewing", true),
             ],
           },
           agent2: {
-            "shared-methodology": [
-              sa("meta-methodology-anti-over-engineering", true),
-              sa("meta-methodology-success-criteria", true),
+            "shared-meta": [
+              sa("shared-meta-reviewing", true),
+              sa("shared-meta-cli-reviewing", true),
             ],
           },
         },
@@ -1006,10 +1006,10 @@ describe("WizardStore", () => {
       const { domainSelections } = useWizardStore.getState();
 
       // Should deduplicate: anti-over-engineering appears in both agents
-      expect(domainSelections.shared!["shared-methodology"]).toEqual([
-        "meta-methodology-investigation-requirements",
-        "meta-methodology-anti-over-engineering",
-        "meta-methodology-success-criteria",
+      expect(domainSelections.shared!["shared-meta"]).toEqual([
+        "shared-meta-research-methodology",
+        "shared-meta-reviewing",
+        "shared-meta-cli-reviewing",
       ]);
     });
   });

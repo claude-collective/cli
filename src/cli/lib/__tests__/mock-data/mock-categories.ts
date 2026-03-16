@@ -74,7 +74,7 @@ export const MULTI_SOURCE_CATEGORIES = {
   "api-database": { ...TEST_CATEGORIES.database, order: 5 },
   "shared-security": { ...TEST_CATEGORIES.security, order: 6 },
   "web-animation": { ...TEST_CATEGORIES.animation, order: 7 },
-  "shared-methodology": { ...TEST_CATEGORIES.methodology, order: 8 },
+  "shared-meta": { ...TEST_CATEGORIES.methodology, order: 8 },
   "web-accessibility": { ...TEST_CATEGORIES.accessibility, order: 9 },
   "api-observability": { ...TEST_CATEGORIES.observability, order: 10 },
 } as Partial<Record<Category, CategoryDefinition>> as Record<Category, CategoryDefinition>;

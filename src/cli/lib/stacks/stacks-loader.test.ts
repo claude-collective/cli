@@ -130,18 +130,18 @@ describe("stacks-loader", () => {
       expect(stack.id).toBe("multi-select-stack");
 
       // Array values should be normalized to SkillAssignment[]
-      expect(stack.agents["web-developer"]!["shared-methodology"]).toEqual([
-        createMockSkillAssignment("meta-methodology-investigation-requirements"),
-        createMockSkillAssignment("meta-methodology-anti-over-engineering"),
-        createMockSkillAssignment("meta-methodology-success-criteria"),
+      expect(stack.agents["web-developer"]!["shared-meta"]).toEqual([
+        createMockSkillAssignment("shared-meta-research-methodology"),
+        createMockSkillAssignment("shared-meta-reviewing"),
+        createMockSkillAssignment("shared-meta-cli-reviewing"),
       ]);
 
       // Single values normalized to SkillAssignment[]
       expect(stack.agents["web-developer"]!["web-framework"]).toEqual([
         createMockSkillAssignment("web-framework-react"),
       ]);
-      expect(stack.agents["pattern-scout"]!["shared-research"]).toEqual([
-        createMockSkillAssignment("meta-research-research-methodology"),
+      expect(stack.agents["pattern-scout"]!["shared-meta"]).toEqual([
+        createMockSkillAssignment("shared-meta-research-methodology"),
       ]);
     });
 
@@ -165,9 +165,9 @@ describe("stacks-loader", () => {
       ]);
 
       // Mixed array: object + bare string
-      expect(stack.agents["web-developer"]!["shared-methodology"]).toEqual([
-        createMockSkillAssignment("meta-methodology-investigation-requirements", true),
-        createMockSkillAssignment("meta-methodology-anti-over-engineering"),
+      expect(stack.agents["web-developer"]!["shared-meta"]).toEqual([
+        createMockSkillAssignment("shared-meta-research-methodology", true),
+        createMockSkillAssignment("shared-meta-reviewing"),
       ]);
     });
   });
@@ -290,29 +290,27 @@ describe("stacks-loader", () => {
 
     it("resolves array of skill assignments for multi-select categories", () => {
       const agentConfig: StackAgentConfig = {
-        "shared-methodology": [
-          createMockSkillAssignment("meta-methodology-investigation-requirements", true),
-          createMockSkillAssignment("meta-methodology-anti-over-engineering", true),
-          createMockSkillAssignment("meta-methodology-success-criteria", true),
+        "shared-meta": [
+          createMockSkillAssignment("shared-meta-research-methodology", true),
+          createMockSkillAssignment("shared-meta-reviewing", true),
+          createMockSkillAssignment("shared-meta-cli-reviewing", true),
         ],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
       expect(skills).toHaveLength(3);
-      expect(
-        skills.find((s) => s.id === "meta-methodology-investigation-requirements"),
-      ).toBeDefined();
-      expect(skills.find((s) => s.id === "meta-methodology-anti-over-engineering")).toBeDefined();
-      expect(skills.find((s) => s.id === "meta-methodology-success-criteria")).toBeDefined();
+      expect(skills.find((s) => s.id === "shared-meta-research-methodology")).toBeDefined();
+      expect(skills.find((s) => s.id === "shared-meta-reviewing")).toBeDefined();
+      expect(skills.find((s) => s.id === "shared-meta-cli-reviewing")).toBeDefined();
     });
 
     it("handles single-element arrays", () => {
       const agentConfig: StackAgentConfig = {
         "web-framework": [createMockSkillAssignment("web-framework-react", true)],
-        "shared-methodology": [
-          createMockSkillAssignment("meta-methodology-investigation-requirements", true),
-          createMockSkillAssignment("meta-methodology-anti-over-engineering", true),
+        "shared-meta": [
+          createMockSkillAssignment("shared-meta-research-methodology", true),
+          createMockSkillAssignment("shared-meta-reviewing", true),
         ],
         "web-styling": [createMockSkillAssignment("web-styling-scss-modules")],
       };
@@ -321,16 +319,14 @@ describe("stacks-loader", () => {
 
       expect(skills).toHaveLength(4);
       expect(skills.find((s) => s.id === "web-framework-react")).toBeDefined();
-      expect(
-        skills.find((s) => s.id === "meta-methodology-investigation-requirements"),
-      ).toBeDefined();
-      expect(skills.find((s) => s.id === "meta-methodology-anti-over-engineering")).toBeDefined();
+      expect(skills.find((s) => s.id === "shared-meta-research-methodology")).toBeDefined();
+      expect(skills.find((s) => s.id === "shared-meta-reviewing")).toBeDefined();
       expect(skills.find((s) => s.id === "web-styling-scss-modules")).toBeDefined();
     });
 
     it("handles empty array", () => {
       const agentConfig: StackAgentConfig = {
-        "shared-methodology": [],
+        "shared-meta": [],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -341,10 +337,10 @@ describe("stacks-loader", () => {
     it("warns and skips invalid skill IDs within arrays", () => {
       // Boundary cast: intentionally invalid skill ID (uppercase) within array to test validation
       const agentConfig = {
-        "shared-methodology": [
-          { id: "meta-methodology-investigation-requirements", preloaded: true },
+        "shared-meta": [
+          { id: "shared-meta-research-methodology", preloaded: true },
           { id: "Not-A-Valid-Id", preloaded: false },
-          { id: "meta-methodology-anti-over-engineering", preloaded: true },
+          { id: "shared-meta-reviewing", preloaded: true },
         ],
       } as unknown as StackAgentConfig;
 
@@ -352,29 +348,25 @@ describe("stacks-loader", () => {
 
       // Should include valid IDs and skip invalid one
       expect(skills).toHaveLength(2);
-      expect(
-        skills.find((s) => s.id === "meta-methodology-investigation-requirements"),
-      ).toBeDefined();
-      expect(skills.find((s) => s.id === "meta-methodology-anti-over-engineering")).toBeDefined();
+      expect(skills.find((s) => s.id === "shared-meta-research-methodology")).toBeDefined();
+      expect(skills.find((s) => s.id === "shared-meta-reviewing")).toBeDefined();
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"));
     });
 
     it("reads preloaded from each assignment individually", () => {
       const agentConfig: StackAgentConfig = {
-        "shared-methodology": [
-          createMockSkillAssignment("meta-methodology-investigation-requirements", true),
-          createMockSkillAssignment("meta-methodology-anti-over-engineering", false),
+        "shared-meta": [
+          createMockSkillAssignment("shared-meta-research-methodology", true),
+          createMockSkillAssignment("shared-meta-reviewing", false),
         ],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      const preloadedSkill = skills.find(
-        (s) => s.id === "meta-methodology-investigation-requirements",
-      );
+      const preloadedSkill = skills.find((s) => s.id === "shared-meta-research-methodology");
       expect(preloadedSkill!.preloaded).toBe(true);
 
-      const dynamicSkill = skills.find((s) => s.id === "meta-methodology-anti-over-engineering");
+      const dynamicSkill = skills.find((s) => s.id === "shared-meta-reviewing");
       expect(dynamicSkill!.preloaded).toBe(false);
     });
 
@@ -433,12 +425,10 @@ describe("stacks-loader", () => {
         description: "Test",
         agents: {
           "pattern-scout": {
-            "shared-methodology": [
-              createMockSkillAssignment("meta-methodology-investigation-requirements", true),
-              createMockSkillAssignment("meta-methodology-anti-over-engineering", true),
-            ],
-            "shared-research": [
-              createMockSkillAssignment("meta-research-research-methodology", true),
+            "shared-meta": [
+              createMockSkillAssignment("shared-meta-research-methodology", true),
+              createMockSkillAssignment("shared-meta-reviewing", true),
+              createMockSkillAssignment("shared-meta-cli-reviewing", true),
             ],
           },
         },
@@ -447,16 +437,14 @@ describe("stacks-loader", () => {
       const result = resolveStackSkills(stack);
 
       expect(Object.keys(result)).toHaveLength(1);
-      // 2 methodology skills + 1 research skill = 3 total
+      // 3 shared-meta skills
       expect(result["pattern-scout"]).toHaveLength(3);
       expect(
-        result["pattern-scout"].find((s) => s.id === "meta-methodology-investigation-requirements"),
+        result["pattern-scout"].find((s) => s.id === "shared-meta-research-methodology"),
       ).toBeDefined();
+      expect(result["pattern-scout"].find((s) => s.id === "shared-meta-reviewing")).toBeDefined();
       expect(
-        result["pattern-scout"].find((s) => s.id === "meta-methodology-anti-over-engineering"),
-      ).toBeDefined();
-      expect(
-        result["pattern-scout"].find((s) => s.id === "meta-research-research-methodology"),
+        result["pattern-scout"].find((s) => s.id === "shared-meta-cli-reviewing"),
       ).toBeDefined();
     });
   });

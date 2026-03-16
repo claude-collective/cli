@@ -67,76 +67,47 @@ const E2E_SKILLS: E2ESkill[] = [
     displayName: "api-framework-hono",
   },
   {
-    category: "shared-methodology",
-    id: "meta-methodology-anti-over-engineering",
-    slug: "anti-over-engineering",
-    description: "Surgical implementation, not architectural innovation",
+    category: "shared-meta",
+    id: "shared-meta-research-methodology",
+    slug: "research-methodology",
+    description: "Codebase investigation and research methodology",
     domain: "shared",
-    displayName: "Anti Over-Engineering",
+    displayName: "Research Methodology",
   },
   {
-    category: "shared-methodology",
-    id: "meta-methodology-context-management",
-    slug: "context-management",
-    description: "Maintain project continuity across sessions",
+    category: "shared-meta",
+    id: "shared-meta-reviewing",
+    slug: "reviewing",
+    description: "Code review guidance and patterns",
     domain: "shared",
-    displayName: "Context Management",
+    displayName: "Reviewing",
   },
   {
-    category: "shared-methodology",
-    id: "meta-methodology-improvement-protocol",
-    slug: "improvement-protocol",
-    description: "Evidence-based self-improvement",
+    category: "shared-meta",
+    id: "shared-meta-cli-reviewing",
+    slug: "cli-reviewing",
+    description: "CLI code review patterns",
     domain: "shared",
-    displayName: "Improvement Protocol",
-  },
-  {
-    category: "shared-methodology",
-    id: "meta-methodology-investigation-requirements",
-    slug: "investigation-requirements",
-    description: "Never speculate - read actual code first",
-    domain: "shared",
-    displayName: "Investigation Requirements",
-  },
-  {
-    category: "shared-methodology",
-    id: "meta-methodology-success-criteria",
-    slug: "success-criteria",
-    description: "Explicit, measurable criteria defining done",
-    domain: "shared",
-    displayName: "Success Criteria",
-  },
-  {
-    category: "shared-methodology",
-    id: "meta-methodology-write-verification",
-    slug: "write-verification",
-    description: "Verify work was actually saved",
-    domain: "shared",
-    displayName: "Write Verification",
+    displayName: "CLI Reviewing",
   },
 ];
 
-const METHODOLOGY_SKILLS: SkillId[] = [
-  "meta-methodology-investigation-requirements",
-  "meta-methodology-anti-over-engineering",
-  "meta-methodology-success-criteria",
-  "meta-methodology-write-verification",
-  "meta-methodology-improvement-protocol",
-  "meta-methodology-context-management",
+const SHARED_META_SKILLS: SkillId[] = [
+  "shared-meta-research-methodology",
+  "shared-meta-reviewing",
+  "shared-meta-cli-reviewing",
 ];
 
 const webDeveloperAgentConfig: StackAgentConfig = {
   "web-framework": [createMockSkillAssignment("web-framework-react", true)],
   "web-testing": [createMockSkillAssignment("web-testing-vitest")],
   "web-client-state": [createMockSkillAssignment("web-state-zustand")],
-  "shared-methodology": METHODOLOGY_SKILLS.map((id) => createMockSkillAssignment(id, true)),
+  "shared-meta": SHARED_META_SKILLS.map((id) => createMockSkillAssignment(id, true)),
 };
 
 const apiDeveloperAgentConfig: StackAgentConfig = {
   "api-api": [createMockSkillAssignment("api-framework-hono", true)],
-  "shared-methodology": METHODOLOGY_SKILLS.slice(0, 2).map((id) =>
-    createMockSkillAssignment(id, true),
-  ),
+  "shared-meta": SHARED_META_SKILLS.slice(0, 2).map((id) => createMockSkillAssignment(id, true)),
 };
 
 const E2E_STACK: Stack = {
@@ -215,7 +186,7 @@ async function writeSkills(sourceDir: string, skills: E2ESkill[]): Promise<void>
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@agents-inc"\ncategory: ${skill.category}\ndomain: ${skill.domain}\nslug: ${skill.slug}\ntags: []\ndisplayName: ${skill.displayName}\ncliDescription: "${skill.description}"\nusageGuidance: "Use when testing E2E scenarios"\ncontentHash: "a1b2c3d"\n`,
+      `author: "@agents-inc"\ncategory: ${skill.category}\ndomain: ${skill.domain}\nslug: ${skill.slug}\ndisplayName: ${skill.displayName}\ncliDescription: "${skill.description}"\nusageGuidance: "Use when testing E2E scenarios"\ncontentHash: "a1b2c3d"\n`,
     );
   }
 }

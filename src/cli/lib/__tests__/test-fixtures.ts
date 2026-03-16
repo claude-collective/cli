@@ -23,7 +23,7 @@ export const SKILLS = {
   hono: createMockSkill("api-framework-hono"),
   drizzle: createMockSkill("api-database-drizzle"),
   // Methodology
-  antiOverEng: createMockSkill("meta-methodology-anti-over-engineering", {
+  antiOverEng: createMockSkill("shared-meta-reviewing", {
     description: "Surgical implementation, not architectural innovation",
   }),
 } satisfies Record<string, ResolvedSkill>;
@@ -47,7 +47,7 @@ export const TEST_CATEGORIES = {
   database: createMockCategory("api-database", "Database"),
   observability: createMockCategory("api-observability", "Observability"),
   // Shared domain
-  methodology: createMockCategory("shared-methodology", "Methodology"),
+  methodology: createMockCategory("shared-meta", "Meta"),
   tooling: createMockCategory("shared-tooling", "Tooling"),
   security: createMockCategory("shared-security", "Security"),
   // CLI domain
