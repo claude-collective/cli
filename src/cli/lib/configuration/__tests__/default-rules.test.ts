@@ -13,7 +13,7 @@ describe("defaultRules", () => {
       c.skills.includes("react"),
     );
     expect(frameworkConflict).toBeDefined();
-    expect(frameworkConflict!.reason).toBe("Frameworks are mutually exclusive");
+    expect(frameworkConflict!.reason).toBe("Base frameworks are mutually exclusive");
   });
 
   it("has recommend rules as flat picks with skill and reason", () => {
@@ -35,7 +35,7 @@ describe("defaultRules", () => {
   it("has alternative groups", () => {
     expect(defaultRules.relationships.alternatives.length).toBeGreaterThan(0);
     const frameworkAlts = defaultRules.relationships.alternatives.find(
-      (a) => a.purpose === "Frontend Framework",
+      (a) => a.purpose === "Base Framework",
     );
     expect(frameworkAlts).toBeDefined();
     expect(frameworkAlts!.skills).toContain("react");

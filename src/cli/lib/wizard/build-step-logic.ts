@@ -1,7 +1,7 @@
 import { sortBy } from "remeda";
 import type { CategoryDefinition, Domain, SkillId, CategorySelections } from "../../types/index.js";
 import type { SkillConfig } from "../../types/config.js";
-import { getAvailableSkills, resolveAlias } from "../matrix/index.js";
+import { getAvailableSkills, resolveAlias, getDependentSkills } from "../matrix/index.js";
 import { matrix, getSkillById } from "../matrix/matrix-provider.js";
 import type { CategoryRow, CategoryOption } from "../../components/wizard/category-grid.js";
 
@@ -86,16 +86,23 @@ export function buildCategoriesForDomain(
         )
       : skillOptions;
 
-    const options: CategoryOption[] = filteredSkillOptions.map((skill) => ({
-      id: skill.id,
-      state: skill.advisoryState,
-      selected: skill.selected,
-      local: getSkillById(skill.id).local,
-      installed: installedSkillIds?.includes(skill.id) || false,
-      scope: skillConfigs?.find((sc) => sc.id === skill.id)?.scope,
-      hasUnmetRequirements: skill.hasUnmetRequirements,
-      unmetRequirementsReason: skill.unmetRequirementsReason,
-    }));
+    const options: CategoryOption[] = filteredSkillOptions.map((skill) => {
+      // Check if any currently selected skill depends on this one
+      const dependents = skill.selected ? getDependentSkills(skill.id, allSelections) : [];
+      const firstDependent = dependents.length > 0 ? getSkillById(dependents[0]).displayName : undefined;
+
+      return {
+        id: skill.id,
+        state: skill.advisoryState,
+        selected: skill.selected,
+        local: getSkillById(skill.id).local,
+        installed: installedSkillIds?.includes(skill.id) || false,
+        scope: skillConfigs?.find((sc) => sc.id === skill.id)?.scope,
+        hasUnmetRequirements: skill.hasUnmetRequirements,
+        unmetRequirementsReason: skill.unmetRequirementsReason,
+        requiredBy: skill.selected ? firstDependent : undefined,
+      };
+    });
 
     return {
       id: cat.id,

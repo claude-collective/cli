@@ -357,16 +357,7 @@ export const CATEGORY_GRID_SKILLS: {
   { id: "web-framework-solidjs", displayName: "SolidJS", category: "web-framework" },
   { id: "web-framework-nuxt", displayName: "Nuxt", category: "web-framework" },
   { id: "web-framework-remix", displayName: "Remix", category: "web-framework" },
-  {
-    id: "web-framework-nextjs-app-router",
-    displayName: "Next.js App Router",
-    category: "web-framework",
-  },
-  {
-    id: "web-framework-nextjs-server-actions",
-    displayName: "Next.js Server Actions",
-    category: "web-framework",
-  },
+  { id: "web-framework-nextjs", displayName: "Next.js", category: "web-framework" },
   { id: "web-styling-scss-modules", displayName: "SCSS Modules", category: "web-styling" },
   { id: "web-styling-tailwind", displayName: "Tailwind", category: "web-styling" },
   { id: "web-styling-cva", displayName: "CVA", category: "web-styling" },

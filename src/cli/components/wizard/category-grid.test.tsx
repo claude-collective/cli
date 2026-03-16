@@ -1190,8 +1190,7 @@ describe("CategoryGrid component", () => {
         "web-framework-solidjs",
         "web-framework-nuxt",
         "web-framework-remix",
-        "web-framework-nextjs-app-router",
-        "web-framework-nextjs-server-actions",
+        "web-framework-nextjs",
         "web-styling-tailwind",
         "web-styling-scss-modules",
       ];

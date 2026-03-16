@@ -20,6 +20,8 @@ export type CategoryOption = {
   hasUnmetRequirements?: boolean;
   /** Explains unmet requirements (shown in label when D pressed) */
   unmetRequirementsReason?: string;
+  /** Display name of the skill that requires this one (e.g. "Next.js") */
+  requiredBy?: string;
 };
 
 export type CategoryRow = {
@@ -79,6 +81,9 @@ type SkillTagProps = {
 };
 
 const getCompatibilityLabel = (option: CategoryOption): string | null => {
+  if (option.selected && option.requiredBy) {
+    return `(required by ${option.requiredBy})`;
+  }
   if (option.selected && option.hasUnmetRequirements && option.unmetRequirementsReason) {
     return `(${option.unmetRequirementsReason})`;
   }
@@ -108,12 +113,15 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
   };
 
   const textColor = getTextColor();
+  const hasRequiredBy = option.selected && !!option.requiredBy;
   const hasUnmetDeps = option.selected && !!option.hasUnmetRequirements;
-  const compatibilityLabel = hasUnmetDeps
+  const compatibilityLabel = hasRequiredBy
     ? getCompatibilityLabel(option)
-    : showLabels && isFocused
+    : hasUnmetDeps
       ? getCompatibilityLabel(option)
-      : null;
+      : showLabels && isFocused
+        ? getCompatibilityLabel(option)
+        : null;
 
   return (
     <Box
@@ -133,7 +141,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
             <Text> </Text>
           </>
         )}
-        <Text color={textColor} bold dimColor={option.selected && !!option.hasUnmetRequirements}>
+        <Text color={textColor} bold dimColor={(option.selected && !!option.hasUnmetRequirements) || (option.selected && !!option.requiredBy)}>
           {getSkillById(option.id).displayName}{" "}
         </Text>
         {compatibilityLabel && (

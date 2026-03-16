@@ -9,16 +9,12 @@ export const defaultRules: SkillRulesConfig = {
   relationships: {
     conflicts: [
       {
-        skills: [
-          "react",
-          "vue-composition-api",
-          "angular-standalone",
-          "solidjs",
-          "nextjs-app-router",
-          "remix",
-          "nuxt",
-        ],
-        reason: "Frameworks are mutually exclusive",
+        skills: ["react", "vue-composition-api", "angular-standalone", "solidjs", "svelte"],
+        reason: "Base frameworks are mutually exclusive",
+      },
+      {
+        skills: ["nextjs", "remix", "sveltekit", "astro"],
+        reason: "Meta-frameworks are mutually exclusive",
       },
       {
         skills: ["pinia", "zustand", "redux-toolkit", "mobx"],
@@ -53,8 +49,8 @@ export const defaultRules: SkillRulesConfig = {
         reason: "API frameworks are mutually exclusive within a single service",
       },
       {
-        skills: ["drizzle", "prisma"],
-        reason: "Both are ORMs serving similar purposes",
+        skills: ["drizzle", "prisma", "mongodb"],
+        reason: "Database ORMs/ODMs are mutually exclusive",
       },
       {
         skills: ["cli-commander", "oclif-ink"],
@@ -88,6 +84,129 @@ export const defaultRules: SkillRulesConfig = {
           "Cypress excels at interactive debugging; Playwright has better cross-browser support and CI performance",
       },
     ],
+    compatibleWith: [
+      // React ecosystem (includes Next.js, Remix as meta-frameworks)
+      {
+        skills: ["framer-motion", "react", "nextjs", "remix"],
+        reason: "Motion (Framer Motion) is a React animation library",
+      },
+      {
+        skills: ["error-boundaries", "react", "nextjs", "remix"],
+        reason: "Error boundaries are a React concept",
+      },
+      {
+        skills: ["file-upload-patterns", "react", "nextjs", "remix"],
+        reason: "Skill teaches React-based file upload patterns",
+      },
+      {
+        skills: ["image-handling", "react", "nextjs", "remix"],
+        reason: "Skill teaches React-based image handling hooks",
+      },
+      {
+        skills: ["react-hook-form", "react", "nextjs", "remix"],
+        reason: "React Hook Form is React only",
+      },
+      {
+        skills: ["react-intl", "react", "nextjs", "remix"],
+        reason: "React Intl (FormatJS) is React only",
+      },
+      {
+        skills: ["react-query", "react", "nextjs", "remix"],
+        reason: "TanStack Query React adapter",
+      },
+      {
+        skills: ["swr", "react", "nextjs", "remix"],
+        reason: "SWR is a React Hooks library",
+      },
+      {
+        skills: ["trpc", "react", "nextjs", "remix"],
+        reason: "tRPC skill teaches React Query integration",
+      },
+      {
+        skills: ["jotai", "react", "nextjs", "remix"],
+        reason: "Jotai is a React atomic state library",
+      },
+      {
+        skills: ["mobx", "react", "nextjs", "remix"],
+        reason: "Skill teaches MobX with mobx-react-lite",
+      },
+      {
+        skills: ["redux-toolkit", "react", "nextjs", "remix"],
+        reason: "Redux Toolkit skill teaches React Redux patterns",
+      },
+      {
+        skills: ["zustand", "react", "nextjs", "remix"],
+        reason: "Zustand is a React state library",
+      },
+      {
+        skills: ["react-testing-library", "react", "nextjs", "remix"],
+        reason: "React Testing Library is React only",
+      },
+      {
+        skills: ["radix-ui", "react", "nextjs", "remix"],
+        reason: "Radix UI primitives are React-specific",
+      },
+      {
+        skills: ["shadcn-ui", "react", "nextjs", "remix"],
+        reason: "shadcn/ui is built on React + Radix UI",
+      },
+      {
+        skills: ["tanstack-table", "react", "nextjs", "remix"],
+        reason: "Skill teaches @tanstack/react-table patterns only",
+      },
+      // Next.js specific
+      {
+        skills: ["next-intl", "nextjs"],
+        reason: "next-intl is Next.js only",
+      },
+      // Vue ecosystem (includes Nuxt as meta-framework)
+      {
+        skills: ["vee-validate", "vue-composition-api", "nuxt"],
+        reason: "VeeValidate is Vue only",
+      },
+      {
+        skills: ["vue-i18n", "vue-composition-api", "nuxt"],
+        reason: "vue-i18n is Vue 3 only",
+      },
+      {
+        skills: ["pinia", "vue-composition-api", "nuxt"],
+        reason: "Pinia is Vue only",
+      },
+      {
+        skills: ["vue-test-utils", "vue-composition-api", "nuxt"],
+        reason: "Vue Test Utils is Vue only",
+      },
+      // Angular ecosystem
+      {
+        skills: ["ngrx-signalstore", "angular-standalone"],
+        reason: "NgRx SignalStore is Angular only",
+      },
+      // Multi-framework
+      {
+        skills: [
+          "graphql-apollo",
+          "react",
+          "vue-composition-api",
+          "angular-standalone",
+          "nextjs",
+          "remix",
+          "nuxt",
+        ],
+        reason: "Apollo Client has bindings for React, Vue, and Angular",
+      },
+      {
+        skills: [
+          "graphql-urql",
+          "react",
+          "vue-composition-api",
+          "solidjs",
+          "nextjs",
+          "remix",
+          "nuxt",
+        ],
+        reason: "URQL has bindings for React, Vue, and Solid",
+      },
+    ],
     recommends: [
       { skill: "zustand", reason: "Best-in-class React state management" },
       { skill: "react-query", reason: "Modern server state caching for React" },
@@ -112,44 +231,64 @@ export const defaultRules: SkillRulesConfig = {
     ],
     requires: [
       {
+        skill: "nextjs",
+        needs: ["react"],
+        reason: "Next.js is built on React",
+      },
+      {
+        skill: "remix",
+        needs: ["react"],
+        reason: "Remix is built on React",
+      },
+      {
+        skill: "nuxt",
+        needs: ["vue-composition-api"],
+        reason: "Nuxt is built on Vue",
+      },
+      {
+        skill: "sveltekit",
+        needs: ["svelte"],
+        reason: "SvelteKit is built on Svelte",
+      },
+      {
         skill: "zustand",
-        needs: ["react", "nextjs-app-router", "remix", "react-native"],
+        needs: ["react", "nextjs", "remix", "react-native"],
         needsAny: true,
         reason: "Our Zustand skill covers React/React Native patterns",
       },
       {
         skill: "redux-toolkit",
-        needs: ["react", "nextjs-app-router", "remix", "react-native"],
+        needs: ["react", "nextjs", "remix", "react-native"],
         needsAny: true,
         reason: "Our Redux Toolkit skill covers React/React Native patterns",
       },
       {
         skill: "mobx",
-        needs: ["react", "nextjs-app-router", "remix"],
+        needs: ["react", "nextjs", "remix"],
         needsAny: true,
         reason: "Our MobX skill teaches React patterns",
       },
       {
         skill: "react-query",
-        needs: ["react", "nextjs-app-router", "remix", "react-native"],
+        needs: ["react", "nextjs", "remix", "react-native"],
         needsAny: true,
         reason: "TanStack Query's React adapter",
       },
       {
         skill: "swr",
-        needs: ["react", "nextjs-app-router", "remix", "react-native"],
+        needs: ["react", "nextjs", "remix", "react-native"],
         needsAny: true,
         reason: "SWR is a React Hooks library",
       },
       {
         skill: "react-hook-form",
-        needs: ["react", "nextjs-app-router", "remix", "react-native"],
+        needs: ["react", "nextjs", "remix", "react-native"],
         needsAny: true,
         reason: "React Hook Form is React only",
       },
       {
         skill: "react-testing-library",
-        needs: ["react", "nextjs-app-router", "remix"],
+        needs: ["react", "nextjs", "remix"],
         needsAny: true,
         reason: "React Testing Library is React only",
       },
@@ -184,7 +323,7 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         skill: "shadcn-ui",
-        needs: ["react", "nextjs-app-router", "remix"],
+        needs: ["react", "nextjs", "remix"],
         needsAny: true,
         reason: "shadcn/ui requires a React-based framework",
       },
@@ -195,36 +334,25 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         skill: "graphql-apollo",
-        needs: [
-          "react",
-          "vue-composition-api",
-          "angular-standalone",
-          "nextjs-app-router",
-          "remix",
-          "nuxt",
-        ],
+        needs: ["react", "vue-composition-api", "angular-standalone", "nextjs", "remix", "nuxt"],
         needsAny: true,
         reason: "Apollo Client requires a UI framework",
       },
       {
         skill: "graphql-urql",
-        needs: ["react", "vue-composition-api", "solidjs", "nextjs-app-router", "remix", "nuxt"],
+        needs: ["react", "vue-composition-api", "solidjs", "nextjs", "remix", "nuxt"],
         needsAny: true,
         reason: "URQL supports React, Vue, and Solid",
       },
     ],
     alternatives: [
       {
-        purpose: "Frontend Framework",
-        skills: [
-          "react",
-          "vue-composition-api",
-          "angular-standalone",
-          "solidjs",
-          "nextjs-app-router",
-          "remix",
-          "nuxt",
-        ],
+        purpose: "Base Framework",
+        skills: ["react", "vue-composition-api", "angular-standalone", "solidjs", "svelte"],
+      },
+      {
+        purpose: "Meta-Framework",
+        skills: ["nextjs", "remix", "nuxt", "sveltekit", "astro"],
       },
       {
         purpose: "Styling",
@@ -248,7 +376,7 @@ export const defaultRules: SkillRulesConfig = {
         purpose: "API Framework",
         skills: ["hono", "express", "fastify"],
       },
-      { purpose: "Database ORM", skills: ["drizzle", "prisma"] },
+      { purpose: "Database ORM / ODM", skills: ["drizzle", "prisma", "mongodb"] },
       { purpose: "Forms (React)", skills: ["react-hook-form"] },
       { purpose: "Forms (Vue)", skills: ["vee-validate"] },
       { purpose: "Validation", skills: ["zod-validation"] },
@@ -266,6 +394,9 @@ export const defaultRules: SkillRulesConfig = {
         purpose: "CLI Framework",
         skills: ["cli-commander", "oclif-ink"],
       },
+      { purpose: "AI SDK", skills: ["vercel-ai-sdk"] },
+      { purpose: "Backend as a Service", skills: ["supabase"] },
+      { purpose: "Auth", skills: ["better-auth-drizzle-hono", "nextauth", "clerk"] },
     ],
   },
 };
