@@ -2,26 +2,26 @@
 
 | ID    | Task                                                                                                                                                                                                                                                           | Status        |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D-107 | Audit base framework skills (React, Vue) for content that conflicts with meta-frameworks — add skip directives to examples and TOC entries (e.g. "skip if using Next.js")                                                                                       | Investigate   |
+| D-106 | Remove methodology skills — inline their content directly into the Liquid agent template instead of loading as separate skills                                                                                                                                  | Ready for Dev |
+| D-105 | Split `infra-tooling-setup-tooling` into 4 atomic skills + new `web-tooling` category (see [D-105-split-tooling-skill.md](./D-105-split-tooling-skill.md))                                                                                                     | Ready for Dev |
+| D-104 | Audit all skills against the Skill Atomicity Bible (`docs/standards/content/skill-atomicity-bible.md`) — ensure each skill follows structure, scope, and content rules                                                                                          | Ready for Dev |
+| D-103 | Remove `tags` from skill metadata                                                                                                                                                                                                                              | Ready for Dev |
 | D-92  | Global config missing `source`, `marketplace`, `selectedAgents` when init writes global-scoped skills                                                                                                                                                          | Investigate   |
 | D-93  | Global-scoped plugins double-installed to both project and global `settings.json`                                                                                                                                                                              | Investigate   |
 | D-91  | `uninstall --all` only removes CLI-installed plugins, not all skills in config                                                                                                                                                                                 | Investigate   |
-| D-94  | Stack change or "start from scratch" doesn't reset previously selected skills                                                                                                                                                                                  | Done          |
-| D-95  | Create a reusable view title component for wizard steps                                                                                                                                                                                                        | Done          |
-| D-96  | Remove redundant left/right arrow navigation description below views                                                                                                                                                                                           | Done          |
 | D-97  | Improve startup time — lazy-load matrix, only generate custom skills on startup                                                                                                                                                                                | Investigate   |
-| D-101 | "Next.js Fullstack" stack uses `web-framework-react` but no Next.js skill — rename stack or add Next.js skills                                                                                                                                                 | Ready for Dev |
-| D-102 | Next.js App Router + Server Actions are complementary but mutually exclusive via `web-framework` category — merge or recategorize                                                                                                                              | Investigate   |
 | D-62  | Review default stacks: include meta/methodology/reviewing skills                                                                                                                                                                                               | Ready for Dev |
-| D-38  | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                                                                                                                                                  | Has Open Qs   |
-| D-39  | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                                                                                                                                                      | Ready for Dev |
+| D-101 | "Next.js Fullstack" stack uses `web-framework-react` but no Next.js skill — rename stack or add Next.js skills                                                                                                                                                 | Ready for Dev |
+| D-102 | Next.js App Router + Server Actions are complementary but mutually exclusive via `web-framework` category — merge or recategorize                                                                                                                              | Ready for Dev |
+| D-38  | Split framework categories + remove base-framework pseudo-categories (see [implementation plan](./D-38-remove-base-framework.md)) — subsumes D-102, addresses D-101                                                                                            | Ready for Dev |
+| D-39  | Couple meta-frameworks with base frameworks — "required by" label + block deselect (see [implementation plan](./D-39-couple-meta-frameworks.md))                                                                                                               | Ready for Dev |
 | D-90  | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths                                                                                                                                            | Ready for Dev |
 | D-41  | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                                                                                                                                                | Ready for Dev |
 | D-52  | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                                                                                                                                          | Ready for Dev |
 | D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                                                                                                                                          | Ready for Dev |
 | D-66  | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                                                                                                                                                                | Investigate   |
 | D-69  | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                                                                                                                                               | Investigate   |
-| D-98  | Break up large E2E test files + restructure E2E folder organization                                                                                                                                                                                            | Done          |
-| D-99  | Update README + .ai-docs to reflect current architecture (see [readme-audit.md](./readme-audit.md))                                                                                                                                                            | Ready for Dev |
 | D-100 | Fix pre-existing E2E test violations — `undefined!`, magic timeouts, raw `readFile`, cleanup patterns                                                                                                                                                          | Ready for Dev |
 | D-101 | Add `compatibleWith` groups to default-rules.ts — NgRx shows as recommended with React because it has no compatibility constraint. Framework-specific skills (NgRx, Pinia, Vue Test Utils, etc.) need `compatibleWith` entries scoping them to their framework | Ready for Dev |
 
@@ -246,44 +246,6 @@ The CLI is unresponsive for up to ~5 seconds on startup (varies by machine speed
 - Determine which parts of matrix generation are expensive (YAML parsing, skill resolution, category building)
 - Design a merge strategy: pre-built marketplace matrix + incremental custom skill overlay
 - Consider caching the marketplace matrix to disk after first generation
-
----
-
-### E2E Test Structure
-
-#### D-98: Break up large E2E test files + restructure E2E folder organization
-
-**Priority:** Medium
-
-**See audit:** [e2e-methodology-audit.md](./e2e-methodology-audit.md)
-
-Several E2E test files are too large and cover too many concerns. Vitest runs test files in parallel but tests within a file are sequential — splitting large files directly improves E2E suite runtime.
-
-**Tier 1 — Must split (>600 lines):**
-
-| File                                         | Lines | Split into                                                                                                                  |
-| -------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------- |
-| `lifecycle/dual-scope-edit.e2e.test.ts`      | 1,087 | `dual-scope-edit-display.e2e.test.ts`, `dual-scope-edit-scope-changes.e2e.test.ts`, `dual-scope-edit-integrity.e2e.test.ts` |
-| `interactive/edit-wizard.e2e.test.ts`        | 734   | `edit-wizard-launch.e2e.test.ts`, `edit-wizard-navigation.e2e.test.ts`, `edit-wizard-completion.e2e.test.ts`                |
-| `interactive/edit-wizard-plugin.e2e.test.ts` | 605   | `edit-wizard-plugin-install-uninstall.e2e.test.ts`, `edit-wizard-plugin-mode-migration.e2e.test.ts`                         |
-
-**Tier 2 — Should split (500–600 lines):**
-
-| File                                     | Lines | Split into                                                                        |
-| ---------------------------------------- | ----- | --------------------------------------------------------------------------------- |
-| `commands/plugin-uninstall.e2e.test.ts`  | 591   | `plugin-uninstall-cleanup.e2e.test.ts`, `plugin-uninstall-edge-cases.e2e.test.ts` |
-| `lifecycle/source-switching.e2e.test.ts` | 565   | `source-switching-modes.e2e.test.ts`, `source-switching-per-skill.e2e.test.ts`    |
-
-**Tier 3 — Consider (400–500 lines):**
-`search.e2e.test.ts` (451) → static vs interactive. Others in this range are already focused.
-
-**Folder structure review:**
-
-Current structure (`commands/`, `interactive/`, `lifecycle/`, `integration/`, `smoke/`) is reasonable. The main issue is `commands/` has 24 files while `lifecycle/` has 9. Consider:
-
-- Keep current structure — it maps well to test types (non-interactive commands vs wizard flows vs multi-step journeys)
-- The `integration/` folder (4 files) could merge into `lifecycle/` since they test similar multi-step flows
-- `smoke/` (Claude CLI tests) is correctly separated after the methodology audit
 
 ---
 
