@@ -94,6 +94,24 @@ description: Component architecture, hooks, patterns
 - [reference.md](reference.md) - Decision frameworks, anti-patterns
 ```
 
+### SKILL.md Content Standard
+
+SKILL.md is the **decision layer** — it answers _what_, _why_, _when_, and _what not to do_. It never answers _how_ with full code implementations.
+
+| Section                       | Purpose                                                               |
+| ----------------------------- | --------------------------------------------------------------------- |
+| Frontmatter                   | `name` and `description` fields                                       |
+| Quick Guide                   | One paragraph summary of key patterns and gotchas                     |
+| `<critical_requirements>`     | Must-follow rules, placed at the **top**                              |
+| Auto-detection                | Keywords that trigger this skill                                      |
+| When to use / When NOT to use | Decision guidance                                                     |
+| Key patterns                  | Name + brief illustrative snippet (3–10 lines) + link to example file |
+| Table of Contents             | Links to all example files by concept                                 |
+| Red flags                     | Common mistakes, gotchas, and anti-patterns                           |
+| `<critical_reminders>`        | Repeats critical rules at the **bottom**                              |
+
+**Target: ~500 lines.** If SKILL.md exceeds this, move full code examples to the examples folder — not by deleting content, but by extracting it. All concepts, decisions, and red flags stay in SKILL.md. Only full code blocks move out. Never remove patterns, red flags, or decision guidance just to hit a line count.
+
 ### Examples Folder Structure
 
 Examples are split into focused files based on the technology's natural topics:
@@ -510,11 +528,32 @@ Next.js, Vite, Remix, Gatsby
 (replace with SPA/SSR/Static categories)
 ```
 
+### Environment Variables
+
+```
+NEXT_PUBLIC_ (Next.js-specific prefix — use generic names: API_URL, not NEXT_PUBLIC_API_URL)
+VITE_ (Vite-specific prefix)
+NUXT_ (Nuxt-specific prefix)
+EXPO_PUBLIC_ (Expo-specific prefix)
+```
+
 ### Codebase-Specific
 
 ```
 @repo/ (workspace package imports)
+@/lib/ (codebase-specific path aliases)
 ../../../packages/ (deep relative imports)
+```
+
+### Template Contamination
+
+Patterns that appear to have been copied from an unrelated skill's template. If these appear in a skill that doesn't use the associated technology, they are copy-paste errors:
+
+```
+runInAction (MobX — found in vue-i18n, tRPC, Remix skills during Iteration 1)
+forwardRef (React — check if skill is actually React)
+defineStore (Pinia — check if skill is actually Pinia)
+useSelector, useDispatch (Redux — check if skill is actually Redux)
 ```
 
 ### General Patterns
@@ -600,6 +639,21 @@ When removing valuable content that belongs in another skill:
 - [ ] All decision trees end within this skill's domain
 - [ ] All anti-patterns are domain-specific
 - [ ] Pattern titles don't include external tool names
+
+### File Structure
+
+- [ ] `examples/core.md` exists (ALWAYS required — rename the most fundamental example file if needed)
+- [ ] `<red_flags>` section exists in SKILL.md (not just in reference.md)
+- [ ] No content duplicated between SKILL.md and example files (SKILL.md has brief snippets + links)
+- [ ] No content duplicated between SKILL.md and reference.md (each concept lives in ONE canonical location)
+- [ ] Old technology-named example files replaced with redirect stubs pointing to `core.md`
+- [ ] No `NEXT_PUBLIC_*`, `VITE_*`, or other framework-specific env var prefixes
+
+### Template Contamination
+
+- [ ] Critical requirements actually relate to THIS technology (not copy-pasted from another skill)
+- [ ] Critical reminders match critical requirements (no stale entries from a different domain)
+- [ ] No `runInAction()`, `forwardRef()`, `defineStore()` in skills that don't use those technologies
 
 ### Coherence
 
@@ -1247,6 +1301,36 @@ Valid uses to KEEP:
 
 ---
 
+### Issue: "Critical requirements don't match the technology"
+
+**Symptom:** Rules like `runInAction()` appear in a Vue i18n skill, or `forwardRef` in an Angular skill
+
+**Solution:** This is template contamination — the original AI-generated skill copied boilerplate from an unrelated skill. Read every critical requirement and ask: "Does this rule actually apply to THIS technology?" If not, remove it and replace with a domain-specific rule.
+
+Common contamination sources found in Iteration 1:
+
+- `runInAction()` (MobX) appeared in vue-i18n, tRPC, and Remix skills
+- Generic CLAUDE.md rules (named exports, named constants) duplicated into critical requirements instead of being referenced
+
+---
+
+### Issue: "Content appears in multiple files"
+
+**Symptom:** The same code example or decision tree exists in SKILL.md, reference.md, AND an example file
+
+**Solution:** Each concept should live in ONE canonical location:
+
+| Content Type                                   | Canonical Owner                           | Other files get...                         |
+| ---------------------------------------------- | ----------------------------------------- | ------------------------------------------ |
+| Decision guidance, philosophy, red flags       | SKILL.md                                  | Nothing (don't duplicate)                  |
+| Full code implementations                      | Example files (`examples/*.md`)           | Brief 3-10 line snippet + link in SKILL.md |
+| Quick-lookup tables, checklists, API reference | `reference.md`                            | Cross-reference link                       |
+| Anti-patterns with code                        | Either SKILL.md red flags OR reference.md | Not both                                   |
+
+During Iteration 1, ~30 skills had the same content in 2-3 places. The fix: keep it in the canonical owner, replace duplicates with cross-reference links.
+
+---
+
 ### Issue: "Content relocation is complex"
 
 **Symptom:** Unsure where content belongs
@@ -1277,7 +1361,9 @@ grep -rn \
   "MSW\|msw\|Mock Service Worker\|" \
   "Vitest\|vitest\|Jest\|jest\|" \
   "Hono\|hono\|Drizzle\|drizzle\|" \
-  "lucide-react\|lucide\|@repo/\|" \
+  "lucide-react\|lucide\|@repo/\|@/lib/\|" \
+  "NEXT_PUBLIC_\|VITE_\|NUXT_\|EXPO_PUBLIC_\|" \
+  "runInAction\|" \
   "Next\.js\|Vite\|Remix" \
   "src/skills/path/to/skill/"
 ```
