@@ -762,8 +762,8 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - [ ] Has `<patterns>` section with Core Patterns with embedded good/bad examples
 - [ ] Has `<performance>` section for optimization patterns (OPTIONAL - include if relevant)
 - [ ] Has `<decision_framework>` section
-- [ ] Has `<integration>` section for stack integration guidance (OPTIONAL - include if meaningful)
-- [ ] Has `<red_flags>` section with "Gotchas & Edge Cases" subsection
+- [ ] Has `<integration>` section ONLY if skill has its own ecosystem packages to list (OPTIONAL — must NOT name external tools from other domains per atomicity bible)
+- [ ] Has `<red_flags>` section with "Gotchas & Edge Cases" subsection (REQUIRED in SKILL.md, not just reference.md)
 
 **Example Quality:**
 - [ ] Good/Bad pairs embedded in each Core Pattern
@@ -773,6 +773,26 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - [ ] Named constants used (no magic numbers)
 - [ ] Named exports used (no default exports)
 - [ ] Patterns use `#### SubsectionName` headers as needed
+
+**Atomicity (REQUIRED — most common source of skill defects):**
+- [ ] Grep for `NEXT_PUBLIC_`, `@repo/`, `@/lib/` — replace with generic names
+- [ ] Grep for external tool names from other domains (React Query, Zustand, SCSS, MSW, Vitest, lucide-react, Hono, Drizzle)
+- [ ] `<integration>` section (if present) names ONLY the skill's own ecosystem packages, not external tools
+- [ ] "When NOT to use" does NOT name specific competing tools by name
+- [ ] Decision trees end within this skill's domain (no "→ Use React Query" exits)
+- [ ] Critical requirements actually relate to THIS technology (no template contamination — e.g. `runInAction()` in a non-MobX skill)
+
+**File Structure:**
+- [ ] `examples/core.md` exists (ALWAYS required — rename the most fundamental file if needed)
+- [ ] `<red_flags>` section exists in SKILL.md (not just in reference.md)
+- [ ] SKILL.md is the decision layer (~500 lines max): brief 3-10 line snippets + links to example files, NOT full implementations
+- [ ] No content duplicated between SKILL.md and example files
+- [ ] No content duplicated between SKILL.md and reference.md
+
+**API Accuracy:**
+- [ ] For each code example's main API call, verified the function signature against official docs
+- [ ] Verified which package an import comes from (not just the function name)
+- [ ] Checked npm for the latest stable version — updated version claims if stale
 
 **Write Verification:**
 - [ ] Re-read the files after completing edits
@@ -818,6 +838,25 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - [ ] Any removed content was ONLY removed because it was redundant or violated conventions
 - [ ] Added prompt-bible structure AROUND existing content, not replacing it
 
+**Atomicity (REQUIRED — most common source of skill defects):**
+- [ ] Grep for `NEXT_PUBLIC_`, `@repo/`, `@/lib/` — replace with generic names
+- [ ] Grep for external tool names from other domains (React Query, Zustand, SCSS, MSW, Vitest, lucide-react, Hono, Drizzle)
+- [ ] `<integration>` section (if present) names ONLY the skill's own ecosystem packages, not external tools
+- [ ] "When NOT to use" does NOT name specific competing tools by name
+- [ ] Decision trees end within this skill's domain
+- [ ] Critical requirements actually relate to THIS technology (no template contamination)
+
+**File Structure:**
+- [ ] `examples/core.md` exists (ALWAYS required)
+- [ ] `<red_flags>` section exists in SKILL.md
+- [ ] SKILL.md serves as decision layer (~500 lines max): brief snippets + links, NOT full implementations
+- [ ] No content duplicated between SKILL.md, reference.md, and example files
+
+**API Accuracy:**
+- [ ] For each code example's main API call, verified the function signature against official docs
+- [ ] Verified which package an import comes from (not just the function name)
+- [ ] Checked npm for the latest stable version — updated version claims if stale
+
 **Write Verification:**
 - [ ] Re-read the files after completing edits
 - [ ] Verified changes were actually written
@@ -847,9 +886,15 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 
 **Completeness:**
 - [ ] All major patterns covered
-- [ ] Integration guidance provided (if meaningful)
+- [ ] Integration guidance (if present) is generic — names only skill's own packages, not external tools
 - [ ] Testing approaches included (if applicable)
 - [ ] Performance section addresses optimization (if relevant)
+
+**Content Ownership (no duplication):**
+- [ ] SKILL.md owns: decisions, philosophy, red flags, brief pattern snippets
+- [ ] Example files own: full code implementations (SKILL.md links to them, doesn't duplicate)
+- [ ] reference.md owns: quick-lookup tables, checklists, API reference
+- [ ] Anti-patterns appear in ONE location (SKILL.md red flags OR reference.md, not both)
 
 **Currency:**
 - [ ] No deprecated patterns recommended

@@ -356,8 +356,8 @@ Skills use a three-file structure in domain-based directories:
 
 - **Location:** `.claude/skills/{domain}-{category}-{technology}/`
 - **Files:** `SKILL.md`, `metadata.yaml`, `reference.md` (optional)
-- **Domains:** `web-`, `api-`, `cli-`, `meta-`
-- **Examples:** `web-framework-react/`, `api-database-drizzle/`, `meta-methodology-investigation-requirements/`
+- **Domains:** `web-`, `api-`, `cli-`, `shared-`, `mobile-`
+- **Examples:** `web-framework-react/`, `api-database-drizzle/`, `shared-meta-reviewing/`
 
 ---
 
