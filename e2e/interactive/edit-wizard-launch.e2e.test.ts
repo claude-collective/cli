@@ -147,6 +147,9 @@ describe("edit wizard — launch and display", () => {
       });
 
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      // Wait for category headers and skill tags to render before assertions
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
 
       const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // Framework category should show the pre-selected react skill

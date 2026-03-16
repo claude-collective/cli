@@ -109,12 +109,12 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
       expect(fullOutput).toContain("Next.js Fullstack");
     });
 
-    it("should have shown the marketplace label", () => {
+    it("should have used the real marketplace for plugin installation", () => {
       const fullOutput = initSession!.getFullOutput();
 
-      // The marketplace label comes from .claude-plugin/marketplace.json
-      // or falls back to source name display
-      expect(fullOutput).toContain("Marketplace:");
+      // The real marketplace name (from .claude-plugin/marketplace.json)
+      // appears in plugin installation output (e.g. "Registered marketplace: agents-inc")
+      expect(fullOutput).toContain("agents-inc");
     });
 
     it("should have created config.ts", async () => {
