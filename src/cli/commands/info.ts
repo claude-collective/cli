@@ -63,13 +63,6 @@ function formatRequirements(requirements: SkillRequirement[]): string {
     .join("; ");
 }
 
-function formatTags(tags: string[]): string {
-  if (tags.length === 0) {
-    return "(none)";
-  }
-  return tags.join(", ");
-}
-
 function findSuggestions(
   skills: Partial<Record<SkillId, ResolvedSkill>>,
   query: string,
@@ -106,8 +99,6 @@ function formatSkillInfo(skill: ResolvedSkill, isInstalled: boolean): string {
   lines.push("");
   lines.push("Description:");
   lines.push(`  ${skill.description}`);
-  lines.push("");
-  lines.push(`Tags: ${formatTags(skill.tags)}`);
   lines.push("");
   lines.push(`Requires: ${formatRequirements(skill.requires)}`);
   lines.push(

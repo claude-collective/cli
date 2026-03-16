@@ -42,11 +42,9 @@ describe("test helpers", () => {
     it("allows overrides", () => {
       const skill = createMockSkill("web-framework-react", {
         author: "@custom",
-        tags: ["popular"],
       });
 
       expect(skill.author).toBe("@custom");
-      expect(skill.tags).toEqual(["popular"]);
     });
 
     it("throws for unknown skill without category override", () => {

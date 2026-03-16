@@ -104,7 +104,6 @@ async function extractLocalSkill(
     usageGuidance: metadata.usageGuidance,
     category: metadata.category,
     author: LOCAL_DEFAULTS.AUTHOR,
-    tags: metadata.tags ?? [],
     path: relativePath,
     local: true,
     localPath: relativePath,

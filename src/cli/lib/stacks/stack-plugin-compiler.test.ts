@@ -467,7 +467,6 @@ describe("stack-plugin-compiler", () => {
 
     it.each([
       ["skills", "## Required Skill Plugins"],
-      ["tags", "## Tags"],
       ["philosophy", "## Philosophy"],
       ["principles", "## Principles"],
     ])("should omit %s section from README when stack has none", async (_field, readmeSection) => {

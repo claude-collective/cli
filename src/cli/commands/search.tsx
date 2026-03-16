@@ -35,7 +35,7 @@ function matchesQuery(skill: ResolvedSkill, query: string): boolean {
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
 
-  return skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery));
+  return false;
 }
 
 function matchesCategory(skill: ResolvedSkill, category: string): boolean {
@@ -86,7 +86,6 @@ async function fetchSkillsFromSource(
         displayName: skillDir,
         // Boundary cast: external source skills have no real category; "imported" is a display-only placeholder
         category: "imported" as CategoryPath,
-        tags: [],
         author: `@${source.name}`,
         conflictsWith: [],
         isRecommended: false,
@@ -110,7 +109,7 @@ async function fetchSkillsFromSource(
 export default class Search extends BaseCommand {
   static summary = "Search available skills";
   static description =
-    "Search skills by ID, alias, description, category, or tags. " +
+    "Search skills by ID, alias, description, or category. " +
     "Run without arguments or with -i for interactive mode with multi-select.";
 
   static examples = [
@@ -134,7 +133,7 @@ export default class Search extends BaseCommand {
 
   static args = {
     query: Args.string({
-      description: "Search query (matches name, description, category, tags)",
+      description: "Search query (matches name, description, category)",
       required: false,
     }),
   };

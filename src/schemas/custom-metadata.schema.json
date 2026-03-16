@@ -32,13 +32,6 @@
       "maxLength": 50,
       "pattern": "^[a-z][a-z0-9-]*$"
     },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z][a-z0-9-]*$"
-      }
-    },
     "contentHash": {
       "type": "string",
       "pattern": "^[a-f0-9]{7}$"

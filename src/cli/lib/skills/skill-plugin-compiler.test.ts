@@ -160,25 +160,6 @@ describe("skill-plugin-compiler", () => {
       expect(content).toContain('"api-database-drizzle"');
     });
 
-    it("should include tags in README when metadata has tags", async () => {
-      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue-composition-api", {
-        extraMetadata: { tags: ["web", "data", "async"] },
-      });
-
-      const result = await compileSkillPlugin({
-        skillPath,
-        outputDir,
-      });
-
-      const readmePath = path.join(result.pluginPath, "README.md");
-      const content = await readFile(readmePath, "utf-8");
-
-      expect(content).toContain("## Tags");
-      expect(content).toContain("`web`");
-      expect(content).toContain("`data`");
-      expect(content).toContain("`async`");
-    });
-
     it("should use custom skill name when provided", async () => {
       const skillPath = await writeTestSkill(skillsDir, "web-state-pinia");
 

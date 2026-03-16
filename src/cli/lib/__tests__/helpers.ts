@@ -428,7 +428,6 @@ export function createTestSkill(
     category,
     author: "@test",
     domain,
-    tags: [],
     ...overrides,
   };
 }
@@ -462,7 +461,6 @@ export function createMockSkill(id: SkillId, overrides?: Partial<ResolvedSkill>)
     displayName: defaultDisplayName,
     description: `${id} skill`,
     category,
-    tags: [],
     author: "@test",
     conflictsWith: [],
     isRecommended: false,
@@ -513,7 +511,6 @@ export function createMockExtractedSkill(
     description: `${id} skill`,
     category: `${domain}-${category}` as CategoryPath,
     author: "@test",
-    tags: [],
     path: `skills/${directoryPath}/`,
     domain: domain as Domain,
     displayName: name,
@@ -715,7 +712,6 @@ export async function writeSourceSkill(
     category: config.category,
     domain,
     author: config.author ?? "@test",
-    ...(config.tags && { tags: config.tags }),
   };
 
   await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
@@ -1250,7 +1246,6 @@ export function testSkillToResolvedSkill(
   // Boundary cast: TestSkill.id is string, but in practice always a valid SkillId
   return createMockSkill(skill.id as SkillId, {
     description: skill.description,
-    ...(skill.tags?.length ? { tags: skill.tags } : {}),
     ...overrides,
   });
 }

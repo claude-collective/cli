@@ -51,8 +51,6 @@ function matchesQuery(skill: SourcedSkill, query: string): boolean {
   if (skill.slug.toLowerCase().includes(lowerQuery)) return true;
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
-  if (skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))) return true;
-
   return skill.sourceName.toLowerCase().includes(lowerQuery);
 }
 

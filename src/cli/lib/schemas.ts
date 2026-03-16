@@ -172,7 +172,6 @@ export const skillMetadataLoaderSchema = z
     // Field accepts any string; cross-field validation in superRefine enforces strict/custom rules
     category: (z.string() as z.ZodType<CategoryPath>).optional(),
     author: z.string().optional(),
-    tags: z.array(z.string()).optional(),
     domain: z.string() as z.ZodType<Domain>,
     custom: z.boolean().optional(),
   })
@@ -380,7 +379,6 @@ export const localRawMetadataSchema = z
     category: z.string() as z.ZodType<CategoryPath>,
     /** When an AI agent should invoke this skill */
     usageGuidance: z.string().optional(),
-    tags: z.array(z.string()).optional(),
     /** Domain this skill belongs to (e.g., "web", "api", "cli") */
     domain: z.string() as z.ZodType<Domain>,
     /** True if this skill was created outside the CLI's built-in vocabulary */
@@ -623,8 +621,6 @@ export const metadataValidationSchema = z
     usageGuidance: z.string().min(10),
     /** Kebab-case short key — must be a known built-in slug */
     slug: z.enum(SKILL_SLUGS) as z.ZodType<SkillSlug>,
-    /** Searchable tags — kebab-case only */
-    tags: z.array(z.string().regex(/^[a-z][a-z0-9-]*$/)).optional(),
     /** 7-char hex SHA of skill content (for change detection) */
     contentHash: z
       .string()
@@ -672,8 +668,6 @@ export const customMetadataValidationSchema = z.object({
     .regex(/^[a-z][a-z0-9-]*$/)
     .min(1)
     .max(50),
-  /** Searchable tags — kebab-case only */
-  tags: z.array(z.string().regex(/^[a-z][a-z0-9-]*$/)).optional(),
   /** 7-char hex SHA of skill content (for change detection) */
   contentHash: z
     .string()

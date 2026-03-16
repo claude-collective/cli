@@ -256,7 +256,6 @@ function buildResolvedSkill(
     description: skill.description,
     usageGuidance: skill.usageGuidance,
     category: skill.category,
-    tags: skill.tags,
     author: skill.author,
     ...resolved,
     isRecommended: recommendation != null,

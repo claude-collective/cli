@@ -177,7 +177,6 @@ export type ResolvedSkill = {
   usageGuidance?: string;
   /** Matches key in matrix.categories; determines which wizard category grid this skill appears in */
   category: CategoryPath;
-  tags: string[];
   /** Author handle (e.g., "@vince") from metadata.yaml */
   author: string;
   /** Selecting this skill disables these others (hard exclusion) */
@@ -359,7 +358,6 @@ export type ExtractedSkillMetadata = {
   usageGuidance?: string;
   category: CategoryPath;
   author: string;
-  tags: string[];
   /** Relative path from src/ to the skill directory */
   path: string;
   /** True if from .claude/skills/ (user-defined local skill) */

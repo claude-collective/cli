@@ -39,9 +39,6 @@ async function createSkillSource(
     `---
 name: ${SKILL_ID}
 description: A test skill for info E2E
-tags:
-  - test
-  - e2e
 author: "@test"
 ---
 
@@ -270,22 +267,6 @@ describe("info command", () => {
     });
   });
 
-  describe("metadata display", () => {
-    it("should show tags in skill info", async () => {
-      tempDir = await createTempDir();
-      const { sourceDir, skillId } = await createSkillSource(tempDir);
-
-      const { exitCode, stdout } = await runCLI(
-        ["info", skillId, "--source", sourceDir, "--no-preview"],
-        tempDir,
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Tags:");
-      expect(stdout).toContain("test");
-      expect(stdout).toContain("e2e");
-    });
-  });
 
   describe("invalid source", () => {
     it("should error when --source points to nonexistent path", async () => {
@@ -322,8 +303,6 @@ describe("info command", () => {
         `---
 name: ${longSkillId}
 description: ${longDescription}
-tags:
-  - test
 author: "@test"
 ---
 

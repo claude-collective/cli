@@ -72,13 +72,6 @@ function generateReadme(
   lines.push(frontmatter.description);
   lines.push("");
 
-  if (metadata?.tags && metadata.tags.length > 0) {
-    lines.push("## Tags");
-    lines.push("");
-    lines.push(metadata.tags.map((t) => `\`${t}\``).join(" "));
-    lines.push("");
-  }
-
   lines.push("## Installation");
   lines.push("");
   lines.push("Add this plugin to your Claude Code configuration:");
@@ -152,7 +145,6 @@ export async function compileSkillPlugin(
     description: frontmatter.description,
     author: metadata?.author,
     version,
-    keywords: metadata?.tags,
   });
 
   await writePluginManifest(pluginDir, manifest);

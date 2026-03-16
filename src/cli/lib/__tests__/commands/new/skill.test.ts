@@ -164,6 +164,13 @@ describe("generateMetadataYaml", () => {
     expect(content).toContain("category: web-framework");
   });
 
+  it("should include yaml-language-server schema comment at the top", () => {
+    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH, "web");
+    expect(content).toMatch(
+      /^# yaml-language-server: \$schema=https:\/\/raw\.githubusercontent\.com\/agents-inc\/cli\/main\/src\/schemas\/custom-metadata\.schema\.json\n/,
+    );
+  });
+
   it("should always include custom: true", () => {
     const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH, "web");
     expect(content).toContain("custom: true");

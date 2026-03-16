@@ -111,7 +111,8 @@ export function generateMetadataYaml(
 ): string {
   const titleName = toTitleCase(name);
 
-  return `custom: true
+  return `# yaml-language-server: $schema=https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/custom-metadata.schema.json
+custom: true
 domain: ${domain}
 category: ${category}
 author: "${author}"
@@ -120,9 +121,6 @@ slug: ${name}
 cliDescription: Brief description
 usageGuidance: Use when <guidance>.
 contentHash: ${contentHash}
-tags:
-  - local
-  - custom
 `;
 }
 

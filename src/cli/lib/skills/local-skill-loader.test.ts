@@ -174,7 +174,6 @@ describe("local-skill-loader", () => {
       // Catalog data
       expect(skill?.category).toBe("web-framework");
       expect(skill?.author).toBe("@dummy-author");
-      expect(skill?.tags).toEqual([]);
       expect(skill?.domain).toBe("web");
 
       // Location
@@ -194,7 +193,7 @@ describe("local-skill-loader", () => {
       expect(result?.skills[0].category).toBe("web-framework");
     });
 
-    it("preserves metadata tags and optional fields from metadata.yaml", async () => {
+    it("preserves optional fields from metadata.yaml", async () => {
       await writeLocalSkill("rich-skill", {
         metadata: [
           "displayName: Rich Skill",
@@ -202,9 +201,6 @@ describe("local-skill-loader", () => {
           "category: web-framework",
           "domain: web",
           "usageGuidance: When building components",
-          "tags:",
-          "  - frontend",
-          "  - react",
         ].join("\n"),
         skillMd: renderSkillMd("rich-skill (@local)", "A rich skill", "Content"),
       });
@@ -213,20 +209,18 @@ describe("local-skill-loader", () => {
       const skill = result?.skills[0];
 
       expect(skill?.usageGuidance).toBe("When building components");
-      expect(skill?.tags).toEqual(["frontend", "react"]);
     });
 
     it("skips skill when metadata.yaml has wrong field types", async () => {
       await writeLocalSkill("wrong-types", {
         // displayName must be a string, but providing a number via YAML
-        metadata: "displayName: 123\ndomain: web\ntags: not-an-array",
+        metadata: "displayName: 123\ndomain: web",
         skillMd: renderSkillMd("wrong-types (@local)", "Wrong types in metadata", "Content"),
       });
 
       const result = await discoverLocalSkills(tempDir);
 
-      // Schema validation should fail because tags must be an array
-      // The skill may still pass if the schema is lenient, but the function should not throw
+      // Schema validation may fail for wrong types, but the function should not throw
       expect(result).not.toBeNull();
     });
 

@@ -333,7 +333,6 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const dockerId = "infra-tooling-docker" as SkillId;
       expect(merged.skills[dockerId]).toBeDefined();
       expect(merged.skills[dockerId]!.description).toBe("Docker containerization patterns");
-      expect(merged.skills[dockerId]!.tags).toContain("docker");
       expect(merged.skills[dockerId]!.category).toBe("shared-tooling");
     } finally {
       await cleanupTempDir(tempDir);
@@ -596,7 +595,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       // Boundary cast: test-only skill ID not in generated SkillId union
       const datadogSkill = merged.skills["api-observability-datadog" as SkillId];
       expect(datadogSkill).toBeDefined();
-      expect(datadogSkill!.tags).toEqual(DATADOG_OBSERVABILITY_SKILL.tags);
+      expect(datadogSkill).toBeDefined();
     } finally {
       await cleanupTempDir(tempDir);
     }

@@ -372,7 +372,6 @@ export function mergeLocalSkillsIntoMatrix(
       usageGuidance: metadata.usageGuidance,
 
       category,
-      tags: metadata.tags ?? [],
 
       author: LOCAL_DEFAULTS.AUTHOR,
 

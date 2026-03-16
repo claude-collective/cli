@@ -30,7 +30,6 @@ const rawMetadataSchema = z.object({
   slug: z.string() as z.ZodType<SkillSlug>,
   cliDescription: z.string().optional(),
   usageGuidance: z.string().optional(),
-  tags: z.array(z.string()).optional(),
   // Boundary cast: domain is a string at the YAML parse boundary; narrowed to Domain type
   domain: z.string() as z.ZodType<Domain>,
   custom: z.boolean().optional(),
@@ -154,7 +153,6 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
       usageGuidance: metadata.usageGuidance,
       category: metadata.category,
       author: metadata.author,
-      tags: metadata.tags ?? [],
       path: `skills/${skillDir}/`,
       domain: metadata.domain,
       displayName: metadata.displayName,

@@ -35,7 +35,6 @@ export type TestSkill = Pick<
   category: string;
   domain: string;
 } & {
-  tags?: string[];
   content?: string;
   cliDescription?: string;
   /** Skip metadata.yaml creation for this local skill (for testing missing-metadata warnings) */
@@ -245,7 +244,6 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
       author: skill.author,
       category: skill.category,
       domain,
-      tags: skill.tags ?? [],
       // displayName is required by extractAllSkills for source-based matrix loading
       displayName: skill.id,
       slug,

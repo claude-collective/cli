@@ -243,7 +243,6 @@ async function writeValidSourceSkill(
     usageGuidance: config.usageGuidance,
     slug,
   };
-  if (config.tags) metadata.tags = config.tags;
 
   await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
 }
@@ -327,7 +326,6 @@ describe("source validation (validateSource)", () => {
       usageGuidance: "Use React for building component-based UIs",
       slug: "react",
       author: "@test",
-      tags: ["react", "web"],
     });
 
     await writeTestMatrix(configDir, {
