@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.75.1] - 2026-03-16
+
+**Meta-framework ID rename, tags removal, schema reference**
+
+- Rename meta-framework skill IDs for category consistency (web-framework-_ → web-meta-framework-_)
+- Remove `tags` field from skill metadata entirely (D-103)
+- Add `$schema` reference to generated metadata.yaml (D-108)
+
+See [changelogs/0.75.1.md](./changelogs/0.75.1.md) for full details.
+
+---
+
 ## [0.75.0] - 2026-03-16
 
 **Framework restructuring, new stacks and categories**
