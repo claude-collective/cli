@@ -2,20 +2,20 @@
 
 | ID    | Task                                                                                                                                                                                                                                                           | Status        |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D-112 | Create a guide for setting up AI documentation — use documenter sub-agent, create `.ai-docs/` directory, iterate over docs, symlink into repo root. Link from README alongside other guides.                                                                    | Ready for Dev |
+| D-111 | Create a GIF demo showing how the CLI works for the README                                                                                                                                                                                                     | Ready for Dev |
+| D-110 | Fix the logo in the README                                                                                                                                                                                                                                     | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                                                                                                                                                                                                              | Ready for Dev |
 | D-107 | Audit base framework skills (React, Vue) for content that conflicts with meta-frameworks — add skip directives to examples and TOC entries (e.g. "skip if using Next.js")                                                                                       | Investigate   |
 | D-106 | Remove methodology skills — inline their content directly into the Liquid agent template instead of loading as separate skills                                                                                                                                  | Ready for Dev |
 | D-105 | Split `infra-tooling-setup-tooling` into 4 atomic skills + new `web-tooling` category (see [D-105-split-tooling-skill.md](./D-105-split-tooling-skill.md))                                                                                                     | Ready for Dev |
 | D-104 | Audit all skills against the Skill Atomicity Bible (`docs/standards/content/skill-atomicity-bible.md`) — ensure each skill follows structure, scope, and content rules                                                                                          | Ready for Dev |
-| D-103 | Remove `tags` from skill metadata                                                                                                                                                                                                                              | Ready for Dev |
 | D-92  | Global config missing `source`, `marketplace`, `selectedAgents` when init writes global-scoped skills                                                                                                                                                          | Investigate   |
 | D-93  | Global-scoped plugins double-installed to both project and global `settings.json`                                                                                                                                                                              | Investigate   |
 | D-91  | `uninstall --all` only removes CLI-installed plugins, not all skills in config                                                                                                                                                                                 | Investigate   |
 | D-97  | Improve startup time — lazy-load matrix, only generate custom skills on startup                                                                                                                                                                                | Investigate   |
 | D-62  | Review default stacks: include meta/methodology/reviewing skills                                                                                                                                                                                               | Ready for Dev |
-| D-101 | "Next.js Fullstack" stack uses `web-framework-react` but no Next.js skill — rename stack or add Next.js skills                                                                                                                                                 | Ready for Dev |
-| D-102 | Next.js App Router + Server Actions are complementary but mutually exclusive via `web-framework` category — merge or recategorize                                                                                                                              | Ready for Dev |
-| D-38  | Split framework categories + remove base-framework pseudo-categories (see [implementation plan](./D-38-remove-base-framework.md)) — subsumes D-102, addresses D-101                                                                                            | Ready for Dev |
-| D-39  | Couple meta-frameworks with base frameworks — "required by" label + block deselect (see [implementation plan](./D-39-couple-meta-frameworks.md))                                                                                                               | Ready for Dev |
+| D-101 | Add `compatibleWith` groups to default-rules.ts — NgRx shows as recommended with React because it has no compatibility constraint. Framework-specific skills (NgRx, Pinia, Vue Test Utils, etc.) need `compatibleWith` entries scoping them to their framework | Ready for Dev |
 | D-90  | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths                                                                                                                                            | Ready for Dev |
 | D-41  | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                                                                                                                                                | Ready for Dev |
 | D-52  | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                                                                                                                                          | Ready for Dev |
@@ -77,51 +77,6 @@ When running `cc init` from a project directory and selecting global-scoped skil
 ---
 
 ### Framework Features
-
-#### D-38: Remove web-base-framework, allow multi-framework
-
-**Priority:** Medium
-**See plan:** [D-38-remove-base-framework.md](./D-38-remove-base-framework.md)
-
-Remove the `web-base-framework` and `mobile-platform` stacks-only category keys. Merge their skills into the `web-framework` / `mobile-framework` arrays. Change `web-framework` from fully exclusive to supporting compatible multi-selection (React + Remix, Vue + Nuxt, etc.).
-
-When a user selects a meta-framework (Next.js, Remix, Nuxt), the corresponding base framework (React, Vue) should be recommended or auto-included. However, some base framework patterns conflict with meta-framework patterns (e.g., React Router vs Next.js App Router). A "slimmed down" version of the base framework skill may be needed for meta-framework contexts.
-
-**Problem:** The React skill teaches generic React patterns including routing, but when using Next.js, you want Next.js routing, not React Router. Similarly for data fetching patterns. The full React skill includes patterns that conflict with Next.js conventions.
-
-**Possible approaches:**
-
-- **Skill variants:** Create slimmed-down variants of base framework skills for meta-framework contexts (e.g., `web-framework-react-for-nextjs` that excludes routing/data-fetching sections)
-- **Conditional sections:** Add conditional sections in SKILL.md that are included/excluded based on what other skills are selected (e.g., `<!-- if not: web-framework-nextjs -->` around the routing section)
-- **Skill composition:** Split framework skills into atomic sub-skills (react-components, react-routing, react-data-fetching) and let meta-frameworks exclude the ones they replace
-- **Conflict rules in metadata.yaml:** Use existing `conflictsWith` to mark specific patterns as conflicting, letting the system warn users
-
-**Investigation needed:**
-
-- Audit each meta-framework skill to identify which base framework patterns it replaces
-- Determine the right granularity (full skill variants vs conditional sections vs sub-skills)
-- Consider whether this is even a problem in practice — does having both the React routing skill and Next.js routing skill actually cause issues for the AI agent consuming them?
-
----
-
-#### D-39: Couple meta-frameworks with base frameworks
-
-**Priority:** Medium
-**Depends on:** D-38
-**See plan:** [D-39-couple-meta-frameworks.md](./D-39-couple-meta-frameworks.md)
-
-When a user selects a meta-framework (e.g., Next.js), automatically select the corresponding base framework skill (e.g., React) and block deselection while the meta-framework depends on it. This ensures users get both the meta-framework-specific patterns and the underlying framework knowledge.
-
-**Key decisions (from refinement):**
-
-- Auto-select base framework when meta-framework is toggled on (not just validation)
-- Block deselection of base framework while dependents exist
-- Add `requiredBy` visual indicator ("required by Next.js") to locked skills
-- Auto-select logic lives in `use-build-step-props.ts` hook (not the store)
-- Only same-category auto-selection (no cross-category)
-- Expert mode bypasses auto-select and deselect blocking
-
----
 
 #### D-41: Create `agents-inc` configuration skill
 
