@@ -1,7 +1,7 @@
 import { sortBy } from "remeda";
 import type { CategoryDefinition, Domain, SkillId, CategorySelections } from "../../types/index.js";
 import type { SkillConfig } from "../../types/config.js";
-import { getAvailableSkills, resolveAlias, getDependentSkills } from "../matrix/index.js";
+import { getAvailableSkills, getUnmetRequiredBy, resolveAlias } from "../matrix/index.js";
 import { matrix, getSkillById } from "../matrix/matrix-provider.js";
 import type { CategoryRow, CategoryOption } from "../../components/wizard/category-grid.js";
 
@@ -31,14 +31,8 @@ export function validateBuildStep(
   return { valid: true };
 }
 
-function isFrameworkSelected(selections: CategorySelections): boolean {
-  const frameworkSelections = selections[FRAMEWORK_CATEGORY_ID] ?? [];
-  return frameworkSelections.length > 0;
-}
-
 function getSelectedFrameworks(selections: CategorySelections): SkillId[] {
-  const frameworkSelections = selections[FRAMEWORK_CATEGORY_ID] ?? [];
-  return frameworkSelections.map((alias) => resolveAlias(alias));
+  return (selections[FRAMEWORK_CATEGORY_ID] ?? []).map((alias) => resolveAlias(alias));
 }
 
 function isCompatibleWithSelectedFrameworks(
@@ -46,26 +40,22 @@ function isCompatibleWithSelectedFrameworks(
   selectedFrameworkIds: SkillId[],
 ): boolean {
   const skill = getSkillById(skillId);
-
-  // No compatibleWith = compatible with all (allows legacy skills to appear)
-  if (skill.compatibleWith.length === 0) {
-    return true;
-  }
-
+  if (skill.compatibleWith.length === 0) return true;
   return selectedFrameworkIds.some((frameworkId) => skill.compatibleWith.includes(frameworkId));
 }
 
-// Build CategoryRow[] from matrix for a domain, with framework-first filtering for web
+// Build CategoryRow[] from matrix for a domain
 export function buildCategoriesForDomain(
   domain: Domain,
   allSelections: SkillId[],
   selections: CategorySelections,
   installedSkillIds?: SkillId[],
   skillConfigs?: SkillConfig[],
+  filterIncompatible?: boolean,
 ): CategoryRow[] {
-  const frameworkSource = selections;
-  const frameworkSelected = isFrameworkSelected(frameworkSource);
-  const selectedFrameworkIds = frameworkSelected ? getSelectedFrameworks(frameworkSource) : [];
+  const selectedFrameworkIds = getSelectedFrameworks(selections);
+  const shouldFilter =
+    filterIncompatible && domain === WEB_DOMAIN_ID && selectedFrameworkIds.length > 0;
 
   // Object.values() on a Partial record only yields values that exist — all are CategoryDefinition
   const categories = sortBy(
@@ -78,32 +68,24 @@ export function buildCategoriesForDomain(
   const categoryRows: CategoryRow[] = categories.map((cat) => {
     const skillOptions = getAvailableSkills(cat.id, allSelections);
 
-    const useFrameworkFilter =
-      domain === WEB_DOMAIN_ID && cat.id !== FRAMEWORK_CATEGORY_ID && frameworkSelected;
-    const filteredSkillOptions = useFrameworkFilter
-      ? skillOptions.filter((skill) =>
-          isCompatibleWithSelectedFrameworks(skill.id, selectedFrameworkIds),
-        )
-      : skillOptions;
+    const filteredOptions =
+      shouldFilter && cat.id !== FRAMEWORK_CATEGORY_ID
+        ? skillOptions.filter((skill) =>
+            isCompatibleWithSelectedFrameworks(skill.id, selectedFrameworkIds),
+          )
+        : skillOptions;
 
-    const options: CategoryOption[] = filteredSkillOptions.map((skill) => {
-      // Check if any currently selected skill depends on this one
-      const dependents = skill.selected ? getDependentSkills(skill.id, allSelections) : [];
-      const firstDependent =
-        dependents.length > 0 ? getSkillById(dependents[0]).displayName : undefined;
-
-      return {
-        id: skill.id,
-        state: skill.advisoryState,
-        selected: skill.selected,
-        local: getSkillById(skill.id).local,
-        installed: installedSkillIds?.includes(skill.id) || false,
-        scope: skillConfigs?.find((sc) => sc.id === skill.id)?.scope,
-        hasUnmetRequirements: skill.hasUnmetRequirements,
-        unmetRequirementsReason: skill.unmetRequirementsReason,
-        requiredBy: skill.selected ? firstDependent : undefined,
-      };
-    });
+    const options: CategoryOption[] = filteredOptions.map((skill) => ({
+      id: skill.id,
+      state: skill.advisoryState,
+      selected: skill.selected,
+      local: getSkillById(skill.id).local,
+      installed: installedSkillIds?.includes(skill.id) || false,
+      scope: skillConfigs?.find((sc) => sc.id === skill.id)?.scope,
+      hasUnmetRequirements: skill.hasUnmetRequirements,
+      unmetRequirementsReason: skill.unmetRequirementsReason,
+      requiredBy: skill.selected ? undefined : getUnmetRequiredBy(skill.id, allSelections),
+    }));
 
     return {
       id: cat.id,

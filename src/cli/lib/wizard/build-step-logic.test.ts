@@ -110,25 +110,13 @@ describe("buildCategoriesForDomain", () => {
     expect(result[1].id).toBe(stateCategory);
   });
 
-  it("should apply framework filtering for non-framework categories in web domain", () => {
+  it("should show all skills regardless of framework selection", () => {
     const matrix = createMatrix();
     initializeMatrix(matrix);
 
-    // With React selected as framework, only Zustand (compatible with React) should show
+    // With React selected, all state skills still show (no filtering)
     const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
     const result = buildCategoriesForDomain("web", [], selections);
-
-    const stateRow = result.find((r) => r.id === stateCategory);
-    expect(stateRow).toBeDefined();
-    expect(stateRow!.options).toHaveLength(1);
-    expect(stateRow!.options[0].id).toBe("web-state-zustand");
-  });
-
-  it("should not apply framework filtering when no framework is selected", () => {
-    const matrix = createMatrix();
-    initializeMatrix(matrix);
-
-    const result = buildCategoriesForDomain("web", [], {});
 
     const stateRow = result.find((r) => r.id === stateCategory);
     expect(stateRow).toBeDefined();
