@@ -10,6 +10,7 @@ export { mergeMatrixWithSkills, synthesizeCategory } from "./skill-resolution";
 export {
   resolveAlias,
   getDependentSkills,
+  getUnmetRequiredBy,
   isDiscouraged,
   getDiscourageReason,
   isIncompatible,

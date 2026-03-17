@@ -90,6 +90,39 @@ export function getDependentSkills(skillId: SkillId, currentSelections: SkillId[
 }
 
 /**
+ * For an unselected skill, finds the first selected skill that needs it
+ * and whose requirement is currently unmet. Returns the dependent's display name,
+ * or undefined if no selected skill has an unmet need for this skill.
+ */
+export function getUnmetRequiredBy(skillId: SkillId, currentSelections: SkillId[]): string | undefined {
+  const fullId = resolveAlias(skillId);
+  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections);
+
+  if (selectedSet.has(fullId)) return undefined;
+
+  for (const selectedId of resolvedSelections) {
+    const selectedSkill = matrix.skills[selectedId];
+    if (!selectedSkill) continue;
+
+    for (const req of selectedSkill.requires) {
+      if (!req.skillIds.includes(fullId)) continue;
+
+      if (req.needsAny) {
+        // OR: unmet only if NONE of the options are selected
+        if (!req.skillIds.some((id) => selectedSet.has(id))) {
+          return selectedSkill.displayName;
+        }
+      } else {
+        // AND: unmet if this specific skill isn't selected
+        return selectedSkill.displayName;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+/**
  * Determines whether a skill should be discouraged (shown with yellow warning)
  * in the wizard given the current selection state.
  *
@@ -124,7 +157,8 @@ export function isDiscouraged(skillId: SkillId, currentSelections: SkillId[]): b
 
 /**
  * Determines whether a skill is incompatible with the current selection state
- * (shown with red warning). Only checks conflictsWith relationships.
+ * (shown with red warning). Checks conflictsWith relationships and also
+ * detects unsatisfiable requires (all required dependencies conflict with selections).
  *
  * @param skillId - The skill to check (resolved via alias lookup)
  * @param currentSelections - Currently selected skill IDs
@@ -137,14 +171,47 @@ export function isIncompatible(skillId: SkillId, currentSelections: SkillId[]): 
 
   const { resolvedSelections } = initializeSelectionContext(currentSelections);
 
-  // Check conflictsWith relationships (bidirectional)
-  for (const selectedId of resolvedSelections) {
-    if (skill.conflictsWith.some((c) => c.skillId === selectedId)) return true;
-    const selectedSkill = matrix.skills[selectedId];
-    if (selectedSkill?.conflictsWith.some((c) => c.skillId === fullId)) return true;
-  }
+  return hasDirectConflict(skill, resolvedSelections)
+    || hasUnsatisfiableRequires(skill, resolvedSelections)
+    || isIncompatibleByFramework(skill, resolvedSelections);
+}
 
-  return false;
+/** True if the skill directly conflicts with any selected skill (bidirectional). */
+function hasDirectConflict(skill: ResolvedSkill, selections: SkillId[]): boolean {
+  return selections.some((selectedId) =>
+    skill.conflictsWith.some((c) => c.skillId === selectedId)
+    || matrix.skills[selectedId]?.conflictsWith.some((c) => c.skillId === skill.id),
+  );
+}
+
+/** True if a dependency skill directly conflicts with any selected skill. */
+function isDepBlockedByConflict(depId: SkillId, selections: SkillId[]): boolean {
+  const depSkill = matrix.skills[depId];
+  return depSkill ? hasDirectConflict(depSkill, selections) : false;
+}
+
+/**
+ * True if any requires rule is unsatisfiable because all possible
+ * dependencies are blocked by conflicts with current selections.
+ * e.g. SvelteKit requires Svelte, but Svelte conflicts with selected React.
+ */
+function hasUnsatisfiableRequires(skill: ResolvedSkill, selections: SkillId[]): boolean {
+  return skill.requires.some((req) =>
+    req.needsAny
+      ? req.skillIds.every((depId) => isDepBlockedByConflict(depId, selections))
+      : req.skillIds.some((depId) => isDepBlockedByConflict(depId, selections)),
+  );
+}
+
+/**
+ * True if the skill declares compatibleWith frameworks and none of
+ * them are in the current selections. Empty compatibleWith = universal.
+ * e.g. Zustand is compatible with [react, nextjs, remix] — incompatible when Svelte is selected.
+ */
+function isIncompatibleByFramework(skill: ResolvedSkill, selections: SkillId[]): boolean {
+  if (skill.compatibleWith.length === 0) return false;
+  return selections.length > 0
+    && !selections.some((id) => skill.compatibleWith.includes(id));
 }
 
 /**
@@ -226,22 +293,58 @@ export function getIncompatibleReason(
 
   const { resolvedSelections } = initializeSelectionContext(currentSelections);
 
-  // Check conflictsWith relationships (bidirectional)
-  for (const selectedId of resolvedSelections) {
-    const conflict = skill.conflictsWith.find((c) => c.skillId === selectedId);
-    if (conflict) {
+  // Direct conflict (bidirectional)
+  const directReason = findDirectConflictReason(skill, fullId, resolvedSelections);
+  if (directReason) return directReason;
+
+  // Unsatisfiable requires — dependency blocked by conflict
+  const reqReason = findUnsatisfiableRequiresReason(skill, resolvedSelections);
+  if (reqReason) return reqReason;
+
+  // Framework compatibility mismatch
+  if (isIncompatibleByFramework(skill, resolvedSelections)) {
+    const compatLabels = skill.compatibleWith.map((id) => getLabel(getSkillById(id))).join(", ");
+    return `only compatible with ${compatLabels}`;
+  }
+
+  return undefined;
+}
+
+function findDirectConflictReason(
+  skill: ResolvedSkill,
+  fullId: SkillId,
+  selections: SkillId[],
+): string | undefined {
+  for (const selectedId of selections) {
+    if (skill.conflictsWith.some((c) => c.skillId === selectedId)) {
       return `conflicts with ${getLabel(getSkillById(selectedId))}`;
     }
-
     const selectedSkill = matrix.skills[selectedId];
-    if (selectedSkill) {
-      const reverseConflict = selectedSkill.conflictsWith.find((c) => c.skillId === fullId);
-      if (reverseConflict) {
-        return `conflicts with ${getLabel(selectedSkill)}`;
+    if (selectedSkill?.conflictsWith.some((c) => c.skillId === fullId)) {
+      return `conflicts with ${getLabel(selectedSkill)}`;
+    }
+  }
+  return undefined;
+}
+
+function findUnsatisfiableRequiresReason(
+  skill: ResolvedSkill,
+  selections: SkillId[],
+): string | undefined {
+  for (const req of skill.requires) {
+    if (req.needsAny) {
+      const allBlocked = req.skillIds.every((depId) => isDepBlockedByConflict(depId, selections));
+      if (allBlocked) {
+        const labels = req.skillIds.map((id) => getLabel(getSkillById(id))).join(" or ");
+        return `requires ${labels} (all conflict with current selection)`;
+      }
+    } else {
+      const blockedDep = req.skillIds.find((depId) => isDepBlockedByConflict(depId, selections));
+      if (blockedDep) {
+        return `requires ${getLabel(getSkillById(blockedDep))} which conflicts with current selection`;
       }
     }
   }
-
   return undefined;
 }
 
