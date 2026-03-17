@@ -12,6 +12,7 @@ import {
   HOTKEY_SET_ALL_LOCAL,
   HOTKEY_SET_ALL_PLUGIN,
   HOTKEY_SETTINGS,
+  HOTKEY_FILTER_INCOMPATIBLE,
   HOTKEY_TOGGLE_LABELS,
   KEY_LABEL_ENTER,
   KEY_LABEL_ESC,
@@ -137,6 +138,12 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
                 label="Labels"
                 values={[HOTKEY_TOGGLE_LABELS.label]}
                 isVisible={store.step === "build"}
+              />
+              <DefinitionItem
+                label="Filter incompatible"
+                values={[HOTKEY_FILTER_INCOMPATIBLE.label]}
+                isVisible={store.step === "build"}
+                isActive={store.filterIncompatible}
               />
               <DefinitionItem
                 label="Scope"

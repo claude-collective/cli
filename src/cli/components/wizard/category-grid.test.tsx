@@ -584,9 +584,8 @@ describe("CategoryGrid component", () => {
       expect(onFocusChange).toHaveBeenCalledWith(0, 1);
     });
 
-    it("should call onFocusChange when pressing up arrow (wraps to framework when locked)", async () => {
+    it("should call onFocusChange when pressing up arrow (wraps to last row)", async () => {
       const onFocusChange = vi.fn();
-      // No framework selected, so navigation stays on framework row
       const { stdin, unmount } = renderGrid({
         defaultFocusedRow: 0,
         defaultFocusedCol: 0,
@@ -598,8 +597,8 @@ describe("CategoryGrid component", () => {
       await stdin.write(ARROW_UP);
       await delay(INPUT_DELAY_MS);
 
-      // Should stay on row 0 (framework) since other rows are locked
-      expect(onFocusChange).toHaveBeenCalledWith(0, 0);
+      // Should wrap to last row (4) since no sections are locked
+      expect(onFocusChange).toHaveBeenCalledWith(4, 0);
     });
 
     it("should navigate between sections when unlocked", async () => {
@@ -814,11 +813,10 @@ describe("CategoryGrid component", () => {
       expect(onToggle).toHaveBeenCalled();
     });
 
-    it("should bounce focus away from locked sections on mount", async () => {
+    it("should keep focus on initial row when no sections are locked", async () => {
       const onFocusChange = vi.fn();
-      // No framework selected, styling section is locked
       const { unmount } = renderGrid({
-        defaultFocusedRow: 1, // Styling (locked)
+        defaultFocusedRow: 1,
         defaultFocusedCol: 0,
         onFocusChange,
       });
@@ -826,8 +824,8 @@ describe("CategoryGrid component", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Focus should have bounced from locked row 1 to unlocked row 0 (framework)
-      expect(onFocusChange).toHaveBeenCalledWith(0, 0);
+      // Focus stays on row 1 since no sections are locked
+      expect(onFocusChange).not.toHaveBeenCalled();
     });
   });
 
@@ -954,9 +952,8 @@ describe("CategoryGrid component", () => {
       expect(onFocusChange).toHaveBeenCalledWith(1, 0);
     });
 
-    it("should only jump to unlocked sections", async () => {
+    it("should jump to next section on Tab", async () => {
       const onFocusChange = vi.fn();
-      // No framework selected, so Tab should stay on framework
       const { stdin, unmount } = renderGrid({
         defaultFocusedRow: 0,
         defaultFocusedCol: 0,
@@ -968,8 +965,8 @@ describe("CategoryGrid component", () => {
       await stdin.write(TAB);
       await delay(INPUT_DELAY_MS);
 
-      // Should NOT call onFocusChange since there's nowhere to go (all others locked)
-      expect(onFocusChange).not.toHaveBeenCalled();
+      // Should jump to next section since no sections are locked
+      expect(onFocusChange).toHaveBeenCalledWith(1, 0);
     });
   });
 

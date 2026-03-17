@@ -161,6 +161,7 @@ export type WizardState = {
   _stackDomainSelections: DomainSelections | null;
 
   showLabels: boolean;
+  filterIncompatible: boolean;
 
   skillConfigs: SkillConfig[];
   focusedSkillId: SkillId | null;
@@ -283,6 +284,8 @@ export type WizardState = {
   prevDomain: () => boolean;
   /** Toggle compatibility label visibility on skill tags in the build step grid. */
   toggleShowLabels: () => void;
+  /** Toggle filtering of incompatible skills in the build step grid. */
+  toggleFilterIncompatible: () => void;
   /**
    * Derive the install mode from skillConfigs source values.
    * If all skills use "local" source, returns "local". If all use non-local, returns "plugin".
@@ -450,6 +453,7 @@ type WizardStateData = Pick<
   | "domainSelections"
   | "_stackDomainSelections"
   | "showLabels"
+  | "filterIncompatible"
   | "skillConfigs"
   | "focusedSkillId"
   | "customizeSources"
@@ -476,6 +480,7 @@ const createInitialState = (): WizardStateData => ({
   /** Snapshot of domainSelections from populateFromStack/populateFromSkillIds, used to restore on domain re-toggle */
   _stackDomainSelections: null,
   showLabels: false,
+  filterIncompatible: false,
   skillConfigs: [],
   focusedSkillId: null,
   customizeSources: false,
@@ -729,6 +734,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   toggleShowLabels: () => set((state) => ({ showLabels: !state.showLabels })),
+  toggleFilterIncompatible: () => set((state) => ({ filterIncompatible: !state.filterIncompatible })),
 
   deriveInstallMode: (): InstallMode => {
     const { skillConfigs } = get();

@@ -15,10 +15,12 @@ export type StepBuildProps = {
   selections: CategorySelections;
   allSelections: SkillId[];
   showLabels: boolean;
+  filterIncompatible: boolean;
   /** Skill IDs already installed on disk, shown with a dimmed checkmark */
   installedSkillIds?: SkillId[];
   onToggle: (categoryId: Category, technologyId: SkillId) => void;
   onToggleLabels: () => void;
+  onToggleFilterIncompatible: () => void;
   onContinue: () => void;
   onBack: () => void;
 };
@@ -29,9 +31,11 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   selections,
   allSelections,
   showLabels,
+  filterIncompatible,
   installedSkillIds,
   onToggle,
   onToggleLabels,
+  onToggleFilterIncompatible,
   onContinue,
   onBack,
 }) => {
@@ -51,6 +55,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     selections,
     installedSkillIds,
     skillConfigs,
+    filterIncompatible,
   });
 
   useInput((_input, key) => {
@@ -97,6 +102,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
           showLabels={showLabels}
           onToggle={onToggle}
           onToggleLabels={onToggleLabels}
+          onToggleFilterIncompatible={onToggleFilterIncompatible}
           onFocusedSkillChange={handleFocusedSkillChange}
         />
       </Box>

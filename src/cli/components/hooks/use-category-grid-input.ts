@@ -3,20 +3,13 @@ import { useInput } from "ink";
 
 import type { Category, SkillId } from "../../types/index.js";
 import type { CategoryOption, CategoryRow } from "../wizard/category-grid.js";
-import { HOTKEY_TOGGLE_LABELS, isHotkey } from "../wizard/hotkeys.js";
+import { HOTKEY_FILTER_INCOMPATIBLE, HOTKEY_TOGGLE_LABELS, isHotkey } from "../wizard/hotkeys.js";
 
 const FRAMEWORK_CATEGORY_ID = "web-framework";
 
-// Locked = non-framework section when no framework is selected
-export const isSectionLocked = (categoryId: Category, categories: CategoryRow[]): boolean => {
-  if (categoryId === FRAMEWORK_CATEGORY_ID) {
-    return false;
-  }
-
-  const frameworkCategory = categories.find((cat) => cat.id === FRAMEWORK_CATEGORY_ID);
-  if (!frameworkCategory) return false;
-
-  return !frameworkCategory.options.some((opt) => opt.selected);
+// No sections are locked — users can freely navigate and select any skill
+export const isSectionLocked = (_categoryId: Category, _categories: CategoryRow[]): boolean => {
+  return false;
 };
 
 export const findValidStartColumn = (_options: CategoryOption[]): number => {
@@ -61,6 +54,7 @@ type UseCategoryGridInputOptions = {
   moveFocus: (direction: "up" | "down" | "left" | "right") => void;
   onToggle: (categoryId: Category, technologyId: SkillId) => void;
   onToggleLabels: () => void;
+  onToggleFilterIncompatible?: () => void;
 };
 
 export function useCategoryGridInput({
@@ -72,6 +66,7 @@ export function useCategoryGridInput({
   moveFocus,
   onToggle,
   onToggleLabels,
+  onToggleFilterIncompatible,
 }: UseCategoryGridInputOptions): void {
   const currentRow = processedCategories[focusedRow];
   const currentOptions = currentRow?.sortedOptions || [];
@@ -133,6 +128,11 @@ export function useCategoryGridInput({
 
     if (isHotkey(input, HOTKEY_TOGGLE_LABELS)) {
       onToggleLabels();
+      return;
+    }
+
+    if (isHotkey(input, HOTKEY_FILTER_INCOMPATIBLE) && onToggleFilterIncompatible) {
+      onToggleFilterIncompatible();
       return;
     }
 

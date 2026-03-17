@@ -62,8 +62,10 @@ const defaultProps: StepBuildProps = {
   selections: {},
   allSelections: [],
   showLabels: false,
+  filterIncompatible: false,
   onToggle: vi.fn(),
   onToggleLabels: vi.fn(),
+  onToggleFilterIncompatible: vi.fn(),
   onContinue: vi.fn(),
   onBack: vi.fn(),
 };

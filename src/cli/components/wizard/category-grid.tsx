@@ -39,6 +39,7 @@ export type CategoryGridProps = {
   showLabels: boolean;
   onToggle: (categoryId: Category, technologyId: SkillId) => void;
   onToggleLabels: () => void;
+  onToggleFilterIncompatible?: () => void;
   /** Optional initial focus row (default: 0). Use with React `key` to reset. */
   defaultFocusedRow?: number;
   /** Optional initial focus col (default: 0). Use with React `key` to reset. */
@@ -81,13 +82,11 @@ type SkillTagProps = {
 };
 
 const getCompatibilityLabel = (option: CategoryOption): string | null => {
-  if (option.selected && option.requiredBy) {
-    return `(required by ${option.requiredBy})`;
-  }
   if (option.selected && option.hasUnmetRequirements && option.unmetRequirementsReason) {
     return `(${option.unmetRequirementsReason})`;
   }
   if (option.selected) return null;
+  if (option.requiredBy) return `(required by ${option.requiredBy})`;
   if (option.state.status === "incompatible") return "(incompatible)";
   if (option.state.status === "recommended") return "(recommended)";
   if (option.state.status === "discouraged") return "(discouraged)";
@@ -223,6 +222,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   showLabels,
   onToggle,
   onToggleLabels,
+  onToggleFilterIncompatible,
   defaultFocusedRow = 0,
   defaultFocusedCol = 0,
   onFocusChange,
@@ -295,6 +295,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     moveFocus,
     onToggle,
     onToggleLabels,
+    onToggleFilterIncompatible,
   });
 
   const { setSectionRef, scrollEnabled, scrollTopPx } = useSectionScroll({

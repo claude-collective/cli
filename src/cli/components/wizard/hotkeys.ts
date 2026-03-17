@@ -20,6 +20,7 @@ export const HOTKEY_SETTINGS = { key: "s", label: "S" } as const;
 // ---------------------------------------------------------------------------
 
 export const HOTKEY_TOGGLE_LABELS = { key: "d", label: "D" } as const;
+export const HOTKEY_FILTER_INCOMPATIBLE = { key: "f", label: "F" } as const;
 
 // ---------------------------------------------------------------------------
 // Sources step hotkeys (customize view)
