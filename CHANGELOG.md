@@ -7,6 +7,19 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.77.0] - 2026-03-17
+
+**Stacks overhaul, incompatibility detection, wizard UX improvements**
+
+- Overhaul 13 default stacks: rename, new descriptions, 4 new stacks, reorder (D-115)
+- Detect unsatisfiable requires and framework incompatibility in skill matrix
+- Add `web-routing` category, recategorize TanStack Router
+- Replace framework filtering with visible incompatibility markers
+- Add Filter Incompatible toggle (F hotkey) in build step
+- Remove auto-select, deselection blocking, and section locking
+
+See [changelogs/0.77.0.md](./changelogs/0.77.0.md) for full details.
+
 ## [0.76.0] - 2026-03-16
 
 **Shared meta category consolidation, web-tooling category**
