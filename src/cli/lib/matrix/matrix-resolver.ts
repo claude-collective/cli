@@ -94,7 +94,10 @@ export function getDependentSkills(skillId: SkillId, currentSelections: SkillId[
  * and whose requirement is currently unmet. Returns the dependent's display name,
  * or undefined if no selected skill has an unmet need for this skill.
  */
-export function getUnmetRequiredBy(skillId: SkillId, currentSelections: SkillId[]): string | undefined {
+export function getUnmetRequiredBy(
+  skillId: SkillId,
+  currentSelections: SkillId[],
+): string | undefined {
   const fullId = resolveAlias(skillId);
   const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections);
 
@@ -171,16 +174,19 @@ export function isIncompatible(skillId: SkillId, currentSelections: SkillId[]): 
 
   const { resolvedSelections } = initializeSelectionContext(currentSelections);
 
-  return hasDirectConflict(skill, resolvedSelections)
-    || hasUnsatisfiableRequires(skill, resolvedSelections)
-    || isIncompatibleByFramework(skill, resolvedSelections);
+  return (
+    hasDirectConflict(skill, resolvedSelections) ||
+    hasUnsatisfiableRequires(skill, resolvedSelections) ||
+    isIncompatibleByFramework(skill, resolvedSelections)
+  );
 }
 
 /** True if the skill directly conflicts with any selected skill (bidirectional). */
 function hasDirectConflict(skill: ResolvedSkill, selections: SkillId[]): boolean {
-  return selections.some((selectedId) =>
-    skill.conflictsWith.some((c) => c.skillId === selectedId)
-    || matrix.skills[selectedId]?.conflictsWith.some((c) => c.skillId === skill.id),
+  return selections.some(
+    (selectedId) =>
+      skill.conflictsWith.some((c) => c.skillId === selectedId) ||
+      matrix.skills[selectedId]?.conflictsWith.some((c) => c.skillId === skill.id),
   );
 }
 
@@ -210,8 +216,7 @@ function hasUnsatisfiableRequires(skill: ResolvedSkill, selections: SkillId[]): 
  */
 function isIncompatibleByFramework(skill: ResolvedSkill, selections: SkillId[]): boolean {
   if (skill.compatibleWith.length === 0) return false;
-  return selections.length > 0
-    && !selections.some((id) => skill.compatibleWith.includes(id));
+  return selections.length > 0 && !selections.some((id) => skill.compatibleWith.includes(id));
 }
 
 /**

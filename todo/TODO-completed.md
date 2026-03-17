@@ -8,10 +8,10 @@
 
 | ID    | Task                                                                                                                                        |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| D-107 | Audit base framework skills for meta-framework conflicts — added skip directives to React (useActionState) and Vue (watch+fetch) SKILL.md    |
+| D-107 | Audit base framework skills for meta-framework conflicts — added skip directives to React (useActionState) and Vue (watch+fetch) SKILL.md   |
 | D-114 | Create `infra` domain — cancelled, sticking with `shared-` prefix for infra/monorepo/ci-cd/security skills                                  |
-| D-104 | Audit all skills against the Skill Atomicity Bible — all skills audited and compliant                                                        |
-| D-91  | `uninstall --all` filters to CLI-installed plugins only — uses `${id}@${source}` heuristic against config skills (106f79a)                   |
+| D-104 | Audit all skills against the Skill Atomicity Bible — all skills audited and compliant                                                       |
+| D-91  | `uninstall --all` filters to CLI-installed plugins only — uses `${id}@${source}` heuristic against config skills (106f79a)                  |
 | D-103 | Remove `tags` from skill metadata — removed from schemas, types, loaders, resolvers, search, info command, all tests (0.75.1)               |
 | D-108 | Add `$schema` reference to generated metadata.yaml in `cc new skill` — uses custom-metadata.schema.json (0.75.1)                            |
 | D-101 | Fix "Next.js Fullstack" stack description — updated to "Next.js + Hono full-stack" (0.75.1)                                                 |

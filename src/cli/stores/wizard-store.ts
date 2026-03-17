@@ -734,7 +734,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   toggleShowLabels: () => set((state) => ({ showLabels: !state.showLabels })),
-  toggleFilterIncompatible: () => set((state) => ({ filterIncompatible: !state.filterIncompatible })),
+  toggleFilterIncompatible: () =>
+    set((state) => ({ filterIncompatible: !state.filterIncompatible })),
 
   deriveInstallMode: (): InstallMode => {
     const { skillConfigs } = get();

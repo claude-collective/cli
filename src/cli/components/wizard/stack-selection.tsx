@@ -16,7 +16,9 @@ const REACT_FRAMEWORK_ID = "web-framework-react";
 const SCRATCH_LABEL = "Start from scratch";
 const SCRATCH_DESCRIPTION = "Select domains and skills manually";
 
-function groupStacks(stacks: { id: string; name: string; description: string; allSkillIds: SkillId[] }[]): StackGroup[] {
+function groupStacks(
+  stacks: { id: string; name: string; description: string; allSkillIds: SkillId[] }[],
+): StackGroup[] {
   const reactItems: StackItem[] = [];
   const otherItems: StackItem[] = [];
 
@@ -68,7 +70,10 @@ const StackSection: React.FC<{
               {" "}
               {item.name}
             </Text>
-            <Text dimColor>{"  "}{item.description}</Text>
+            <Text dimColor>
+              {"  "}
+              {item.description}
+            </Text>
           </Text>
         </Box>
       );
@@ -82,9 +87,7 @@ export type StackSelectionProps = {
   onCancel?: () => void;
 };
 
-export const StackSelection: React.FC<StackSelectionProps> = ({
-  onCancel,
-}) => {
+export const StackSelection: React.FC<StackSelectionProps> = ({ onCancel }) => {
   const { selectStack, setApproach, setStackAction, populateFromSkillIds, toggleDomain } =
     useWizardStore();
 
@@ -98,7 +101,8 @@ export const StackSelection: React.FC<StackSelectionProps> = ({
   // Compute visual row counts for scroll: header + items per group, spacers between groups, spacer + scratch row
   const totalRowCount = useMemo(() => {
     const groupRows = groups.reduce(
-      (sum, g, i) => sum + 1 /* header */ + g.items.length + (i > 0 ? 1 : 0) /* spacer between groups */,
+      (sum, g, i) =>
+        sum + 1 /* header */ + g.items.length + (i > 0 ? 1 : 0) /* spacer between groups */,
       0,
     );
     return groupRows + 1 /* spacer before scratch */ + 1 /* scratch row */;
@@ -170,7 +174,11 @@ export const StackSelection: React.FC<StackSelectionProps> = ({
 
   return (
     <Box ref={listRef} flexDirection="column" flexGrow={1} flexBasis={0}>
-      <Box flexDirection="column" flexGrow={1} {...(scrollEnabled && { overflow: "hidden" as const })}>
+      <Box
+        flexDirection="column"
+        flexGrow={1}
+        {...(scrollEnabled && { overflow: "hidden" as const })}
+      >
         <Box
           flexDirection="column"
           marginTop={scrollTop > 0 ? -scrollTop : 0}
@@ -192,12 +200,20 @@ export const StackSelection: React.FC<StackSelectionProps> = ({
           </Box>
           <Box key="scratch" flexShrink={0}>
             <Text>
-              <Text color={isScratchFocused ? CLI_COLORS.PRIMARY : undefined}>{scratchPointer}</Text>
-              <Text color={isScratchFocused ? CLI_COLORS.PRIMARY : undefined} bold={isScratchFocused}>
+              <Text color={isScratchFocused ? CLI_COLORS.PRIMARY : undefined}>
+                {scratchPointer}
+              </Text>
+              <Text
+                color={isScratchFocused ? CLI_COLORS.PRIMARY : undefined}
+                bold={isScratchFocused}
+              >
                 {" "}
                 {SCRATCH_LABEL}
               </Text>
-              <Text dimColor>{"  "}{SCRATCH_DESCRIPTION}</Text>
+              <Text dimColor>
+                {"  "}
+                {SCRATCH_DESCRIPTION}
+              </Text>
             </Text>
           </Box>
         </Box>

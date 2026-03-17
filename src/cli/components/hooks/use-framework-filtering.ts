@@ -23,7 +23,14 @@ export function useFrameworkFiltering({
 }: UseFrameworkFilteringOptions): CategoryRow[] {
   return useMemo(
     () =>
-      buildCategoriesForDomain(domain, allSelections, selections, installedSkillIds, skillConfigs, filterIncompatible),
+      buildCategoriesForDomain(
+        domain,
+        allSelections,
+        selections,
+        installedSkillIds,
+        skillConfigs,
+        filterIncompatible,
+      ),
     [domain, allSelections, selections, installedSkillIds, skillConfigs, filterIncompatible],
   );
 }
