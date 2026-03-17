@@ -154,6 +154,10 @@ export const defaultRules: SkillRulesConfig = {
         skills: ["tanstack-table", "react", "nextjs", "remix"],
         reason: "Skill teaches @tanstack/react-table patterns only",
       },
+      {
+        skills: ["tanstack-router", "react"],
+        reason: "TanStack Router is a React routing library",
+      },
       // Next.js specific
       {
         skills: ["next-intl", "nextjs"],
@@ -230,6 +234,11 @@ export const defaultRules: SkillRulesConfig = {
       { skill: "prisma", reason: "Mature database ORM with great DX" },
     ],
     requires: [
+      {
+        skill: "tanstack-router",
+        needs: ["react"],
+        reason: "TanStack Router is a React routing library",
+      },
       {
         skill: "nextjs",
         needs: ["react"],
@@ -354,6 +363,7 @@ export const defaultRules: SkillRulesConfig = {
         purpose: "Meta-Framework",
         skills: ["nextjs", "remix", "nuxt", "sveltekit", "astro"],
       },
+      { purpose: "Routing (React)", skills: ["tanstack-router"] },
       {
         purpose: "Styling",
         skills: ["scss-modules", "tailwind", "cva"],

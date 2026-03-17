@@ -23,6 +23,15 @@ export const defaultCategories: CategoryMap = {
     required: false,
     order: 2,
   },
+  "web-routing": {
+    id: "web-routing",
+    displayName: "Routing",
+    description: "Client-side routing (TanStack Router)",
+    domain: "web",
+    exclusive: true,
+    required: false,
+    order: 3,
+  },
   "web-styling": {
     id: "web-styling",
     displayName: "Styling",
@@ -30,7 +39,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: true,
-    order: 3,
+    order: 4,
   },
   "web-client-state": {
     id: "web-client-state",
@@ -39,7 +48,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: true,
     required: false,
-    order: 4,
+    order: 5,
   },
   "web-server-state": {
     id: "web-server-state",
@@ -48,7 +57,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: true,
     required: false,
-    order: 5,
+    order: 6,
   },
   "web-forms": {
     id: "web-forms",
@@ -57,7 +66,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 6,
+    order: 7,
   },
   "web-testing": {
     id: "web-testing",
@@ -66,7 +75,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 7,
+    order: 8,
   },
   "web-ui-components": {
     id: "web-ui-components",
@@ -75,7 +84,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 8,
+    order: 9,
   },
   "web-tooling": {
     id: "web-tooling",
@@ -84,7 +93,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 9,
+    order: 10,
   },
   "web-mocking": {
     id: "web-mocking",
@@ -93,7 +102,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 10,
+    order: 11,
   },
   "web-error-handling": {
     id: "web-error-handling",
@@ -102,7 +111,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 11,
+    order: 12,
   },
   "web-i18n": {
     id: "web-i18n",
@@ -111,7 +120,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: true,
     required: false,
-    order: 12,
+    order: 13,
   },
   "web-file-upload": {
     id: "web-file-upload",
@@ -120,7 +129,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 13,
+    order: 14,
   },
   "web-files": {
     id: "web-files",
@@ -129,7 +138,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 14,
+    order: 15,
   },
   "web-utilities": {
     id: "web-utilities",
@@ -138,7 +147,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 15,
+    order: 16,
   },
   "web-realtime": {
     id: "web-realtime",
@@ -147,7 +156,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: true,
     required: false,
-    order: 16,
+    order: 17,
   },
   "web-animation": {
     id: "web-animation",
@@ -156,7 +165,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 17,
+    order: 18,
   },
   "web-pwa": {
     id: "web-pwa",
@@ -165,7 +174,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 18,
+    order: 19,
   },
   "web-accessibility": {
     id: "web-accessibility",
@@ -174,7 +183,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 19,
+    order: 20,
   },
   "web-performance": {
     id: "web-performance",
@@ -183,7 +192,7 @@ export const defaultCategories: CategoryMap = {
     domain: "web",
     exclusive: false,
     required: false,
-    order: 20,
+    order: 21,
   },
   "api-api": {
     id: "api-api",
