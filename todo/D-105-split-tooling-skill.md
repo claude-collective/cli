@@ -12,12 +12,12 @@ Split into 4 atomic skills and introduce a new `web-tooling` category.
 
 ### New Skills
 
-| Skill ID | Category | Content |
-|----------|----------|---------|
-| `shared-tooling-eslint-prettier` | `shared-tooling` | ESLint 9 flat config, defineConfig(), globalIgnores(), typescript-eslint v8, eslint-plugin-only-warn, ESLint 10 migration, Prettier v3.0+ config, shared config pattern, eslint-config-prettier integration |
-| `shared-tooling-typescript-config` | `shared-tooling` | Shared TypeScript strict mode configs, TS 5.x options (verbatimModuleSyntax, module: "preserve", moduleDetection: "force", ${configDir}), path alias sync, specialized configs (react.json, node.json) |
-| `shared-tooling-git-hooks` | `shared-tooling` | Husky v9 setup + migration from v8, lint-staged patterns, commitlint + conventional commits, VS Code integration (format-on-save, eslint-on-save, recommended extensions), CI/production handling |
-| `web-tooling-vite` | `web-tooling` (new) | Vite config, path aliases, vendor chunk splitting (manualChunks), environment-specific builds, Rolldown/advancedChunks, Environment API, Sass modern API, build targets, module preload config |
+| Skill ID                           | Category            | Content                                                                                                                                                                                                     |
+| ---------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared-tooling-eslint-prettier`   | `shared-tooling`    | ESLint 9 flat config, defineConfig(), globalIgnores(), typescript-eslint v8, eslint-plugin-only-warn, ESLint 10 migration, Prettier v3.0+ config, shared config pattern, eslint-config-prettier integration |
+| `shared-tooling-typescript-config` | `shared-tooling`    | Shared TypeScript strict mode configs, TS 5.x options (verbatimModuleSyntax, module: "preserve", moduleDetection: "force", ${configDir}), path alias sync, specialized configs (react.json, node.json)      |
+| `shared-tooling-git-hooks`         | `shared-tooling`    | Husky v9 setup + migration from v8, lint-staged patterns, commitlint + conventional commits, VS Code integration (format-on-save, eslint-on-save, recommended extensions), CI/production handling           |
+| `web-tooling-vite`                 | `web-tooling` (new) | Vite config, path aliases, vendor chunk splitting (manualChunks), environment-specific builds, Rolldown/advancedChunks, Environment API, Sass modern API, build targets, module preload config              |
 
 ### New Category: `web-tooling`
 

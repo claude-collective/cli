@@ -1,29 +1,27 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                                                                                                                                                                                                           | Status        |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-112 | Create a guide for setting up AI documentation — use documenter sub-agent, create `.ai-docs/` directory, iterate over docs, symlink into repo root. Link from README alongside other guides.                                                                    | Ready for Dev |
-| D-111 | Create a GIF demo showing how the CLI works for the README                                                                                                                                                                                                     | Ready for Dev |
-| D-110 | Fix the logo in the README                                                                                                                                                                                                                                     | Ready for Dev |
-| D-109 | Fix the screenshots in the README                                                                                                                                                                                                                              | Ready for Dev |
-| D-107 | Audit base framework skills (React, Vue) for content that conflicts with meta-frameworks — add skip directives to examples and TOC entries (e.g. "skip if using Next.js")                                                                                       | Investigate   |
-| D-106 | Remove methodology skills — inline their content directly into the Liquid agent template instead of loading as separate skills                                                                                                                                  | Ready for Dev |
-| D-105 | Split `infra-tooling-setup-tooling` into 4 atomic skills + new `web-tooling` category (see [D-105-split-tooling-skill.md](./D-105-split-tooling-skill.md))                                                                                                     | Ready for Dev |
-| D-104 | Audit all skills against the Skill Atomicity Bible (`docs/standards/content/skill-atomicity-bible.md`) — ensure each skill follows structure, scope, and content rules                                                                                          | Ready for Dev |
-| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` when init writes global-scoped skills                                                                                                                                                          | Investigate   |
-| D-93  | Global-scoped plugins double-installed to both project and global `settings.json`                                                                                                                                                                              | Investigate   |
-| D-91  | `uninstall --all` only removes CLI-installed plugins, not all skills in config                                                                                                                                                                                 | Investigate   |
-| D-97  | Improve startup time — lazy-load matrix, only generate custom skills on startup                                                                                                                                                                                | Investigate   |
-| D-62  | Review default stacks: include meta/methodology/reviewing skills                                                                                                                                                                                               | Ready for Dev |
-| D-101 | Add `compatibleWith` groups to default-rules.ts — NgRx shows as recommended with React because it has no compatibility constraint. Framework-specific skills (NgRx, Pinia, Vue Test Utils, etc.) need `compatibleWith` entries scoping them to their framework | Ready for Dev |
-| D-90  | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths                                                                                                                                            | Ready for Dev |
-| D-41  | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                                                                                                                                                | Ready for Dev |
-| D-52  | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                                                                                                                                          | Ready for Dev |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                                                                                                                                          | Ready for Dev |
-| D-66  | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                                                                                                                                                                | Investigate   |
-| D-69  | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                                                                                                                                               | Investigate   |
-| D-100 | Fix pre-existing E2E test violations — `undefined!`, magic timeouts, raw `readFile`, cleanup patterns                                                                                                                                                          | Ready for Dev |
-| D-101 | Add `compatibleWith` groups to default-rules.ts — NgRx shows as recommended with React because it has no compatibility constraint. Framework-specific skills (NgRx, Pinia, Vue Test Utils, etc.) need `compatibleWith` entries scoping them to their framework | Ready for Dev |
+| ID    | Task                                                                                                                                                                                                                                      | Status        |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D-118 | Investigate renaming scope terminology from "project/global" to "project/user" to align with Claude's terminology and distinguish from install mode (local/plugin)                                                                        | Investigate   |
+| D-117 | Show count of selected global skills and project skills somewhere in the wizard UI                                                                                                                                                        | Ready for Dev |
+| D-116 | Filter Incompatible toggle should also deselect all skills currently marked as incompatible when activated                                                                                                                                 | Ready for Dev |
+| D-115 | Overhaul default stacks — rename (framework-first + "Full-Stack" suffix), expand descriptions to 4-5 core skills (comma-separated), add 4 new stacks, reorder, remove plus signs from descriptions.                                       | Ready for Dev |
+| D-62  | Review default stacks: add reviewing/research skills (methodology part done via D-106 template inlining)                                                                                                                                  | Ready for Dev |
+| D-97  | Improve startup time — lazy-load matrix, only generate custom skills on startup                                                                                                                                                           | Investigate   |
+| D-113 | Change stack selection to match agent selection style — replace `SelectionCard` (bordered cards) with compact flat list: chevron pointer, inline label + dimmed description, group headers, scrolling. Matches `step-agents.tsx` pattern. | Ready for Dev |
+| D-112 | Create a guide for setting up AI documentation — use documenter sub-agent, create `.ai-docs/` directory, iterate over docs, symlink into repo root. Link from README alongside other guides.                                              | Ready for Dev |
+| D-111 | Create a GIF demo showing how the CLI works for the README                                                                                                                                                                                | Ready for Dev |
+| D-110 | Fix the logo in the README                                                                                                                                                                                                                | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                                                                                                                                                                                         | Ready for Dev |
+| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` when init writes global-scoped skills                                                                                                                                     | Investigate   |
+| D-93  | Global-scoped plugins double-installed to both project and global `settings.json`                                                                                                                                                         | Investigate   |
+| D-90  | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths                                                                                                                       | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                                                                                                                           | Ready for Dev |
+| D-52  | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                                                                                                                     | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                                                                                                                     | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                                                                                                                                           | Investigate   |
+| D-69  | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                                                                                                                          | Investigate   |
+| D-100 | Fix pre-existing E2E test violations — `undefined!`, magic timeouts, raw `readFile`, cleanup patterns                                                                                                                                     | Ready for Dev |
 
 ---
 
@@ -61,18 +59,6 @@ When running `cc init` from a project directory and selecting global-scoped skil
 When running `cc init` from a project directory and selecting global-scoped skills, the plugins appear in BOTH `~/.claude/settings.json` AND `<project>/.claude/settings.json`. Global-scoped plugins should only be in the global settings.
 
 **Reproduction:** Run `cc init` from a project dir, select global-scoped skills. Check both `~/.claude/settings.json` and `<project>/.claude/settings.json` — both contain the plugin entries.
-
----
-
-#### D-91: `uninstall --all` only removes CLI-installed plugins, not all skills in config
-
-**Priority:** High
-
-`cc uninstall --all` uninstalls ALL discovered plugins (every entry in `settings.json` `enabledPlugins`). It should only uninstall plugins that were installed via this CLI — i.e., plugins whose settings key (`web-styling-cva@agents-inc`) has a matching skill entry in the project config (`{ id: 'web-styling-cva', source: 'agents-inc' }`).
-
-**Detection heuristic:** A plugin in `settings.json` is CLI-installed if the config's `skills` array contains a matching `{ id, source }` where `${id}@${source}` equals the settings key.
-
-**See plan:** [D-91-uninstall-all-filter.md](./D-91-uninstall-all-filter.md)
 
 ---
 
@@ -119,6 +105,91 @@ Create a configuration **skill** (not a sub-agent) that gives Claude deep expert
 ---
 
 ### Wizard UX
+
+#### D-113: Change stack selection to match agent selection style
+
+Replace the current `SelectionCard`-based layout in `stack-selection.tsx` with a compact flat list matching `step-agents.tsx`.
+
+**Current:** Each stack renders as a rounded-border card with padded label + description lines and `marginBottom={1}` between cards — takes 4-5 terminal lines per stack.
+
+**Target:** Compact single-line rows with sections, matching `step-agents.tsx`:
+
+- Section headers (`React`, `Other Frameworks`) — bold/dim, same style as agent group headers
+- Chevron pointer (`›` / space) on focused item
+- Label (bold/colored when focused)
+- Dimmed description inline after label
+- Same `useRowScroll` scrolling used in `step-agents.tsx`
+
+**Sections:**
+
+- **React** — all React-based stacks (Next.js Full-Stack, Next.js T3 Stack, Next.js Supabase Full-Stack, Next.js Turborepo Full-Stack, React Old School, React Hono Full-Stack, Remix Full-Stack)
+- **Other Frameworks** — SvelteKit Full-Stack, SolidJS Full-Stack, Astro Content Full-Stack, Vue Modern Full-Stack, Nuxt Full-Stack, Angular Modern Full-Stack
+
+**Key files:**
+
+- `src/cli/components/wizard/stack-selection.tsx` — replace `SelectionCard` with inline `Text` rows
+- `src/cli/components/wizard/step-stack.tsx` — no changes needed
+- `src/cli/components/wizard/selection-card.tsx` — may become unused (check before removing)
+
+**Acceptance criteria:**
+
+- [ ] Each stack renders as one line: `› Next.js Fullstack  Next.js + Hono full-stack`
+- [ ] Focused item uses `CLI_COLORS.PRIMARY` + bold label
+- [ ] "Start from scratch" appears as last row in the same style
+- [ ] Scrolling works when stacks exceed available height
+- [ ] Existing tests in `step-stack.test.tsx` still pass
+
+---
+
+#### D-115: Overhaul default stacks
+
+**1. Rename existing stacks** (framework-first naming, consistent "Full-Stack" suffix):
+
+| Old name             | New name                  |
+| -------------------- | ------------------------- |
+| Next.js Fullstack    | Next.js Full-Stack        |
+| T3 Stack             | Next.js T3 Stack          |
+| Modern Angular Stack | Angular Modern Full-Stack |
+| Nuxt Full-Stack      | _(unchanged)_             |
+| Remix Full-Stack     | _(unchanged)_             |
+| Modern Vue Stack     | Vue Modern Full-Stack     |
+| SolidJS Stack        | SolidJS Full-Stack        |
+| SvelteKit Full-Stack | _(unchanged)_             |
+| Astro Content Stack  | Astro Content Full-Stack  |
+
+**2. Update all descriptions** — comma-separated, 4-5 core skills each:
+
+| Stack                     | New description                                         |
+| ------------------------- | ------------------------------------------------------- |
+| Next.js Full-Stack        | `React, Next.js, Hono, Drizzle, Better Auth, Zustand`   |
+| Next.js T3 Stack          | `React, Next.js, tRPC, Prisma, NextAuth, Tailwind`      |
+| Remix Full-Stack          | `React, Remix, Hono, Drizzle, Better Auth`              |
+| SvelteKit Full-Stack      | `Svelte, SvelteKit, Hono, Drizzle, Better Auth`         |
+| SolidJS Full-Stack        | `SolidJS, Hono, Drizzle, Better Auth, Vitest`           |
+| Astro Content Full-Stack  | `Astro, Hono, Drizzle`                                  |
+| Vue Modern Full-Stack     | `Vue, Pinia, Hono, Drizzle, Better Auth`                |
+| Nuxt Full-Stack           | `Vue, Nuxt, Hono, Drizzle, Better Auth`                 |
+| Angular Modern Full-Stack | `Angular, NgRx SignalStore, Hono, Drizzle, Better Auth` |
+
+**3. Add 4 new stacks:**
+
+| ID                       | Name                         | Description                                          | New skills needed                           |
+| ------------------------ | ---------------------------- | ---------------------------------------------------- | ------------------------------------------- |
+| `nextjs-supabase-stack`  | Next.js Supabase Full-Stack  | `React, Next.js, Supabase, Drizzle, Better Auth`     | `api-baas-supabase` (exists in skills repo) |
+| `nextjs-turborepo-stack` | Next.js Turborepo Full-Stack | `Turborepo, pnpm Workspaces, Next.js, Hono, Drizzle` | None — all skills exist                     |
+| `react-old-school`       | React Old School             | `React, Redux Toolkit, SCSS Modules, Vite, Vitest`   | None — all skills exist                     |
+| `react-hono-spa`         | React Hono Full-Stack        | `React, Vite, Hono, Drizzle, Better Auth`            | None — all skills exist                     |
+
+**4. Reorder** (React stacks first, then other frameworks):
+
+1. Next.js Full-Stack, 2. Next.js T3 Stack, 3. Next.js Supabase Full-Stack, 4. Next.js Turborepo Full-Stack, 5. React Old School, 6. React Hono Full-Stack, 7. Remix Full-Stack, 8. SvelteKit Full-Stack, 9. SolidJS Full-Stack, 10. Astro Content Full-Stack, 11. Vue Modern Full-Stack, 12. Nuxt Full-Stack, 13. Angular Modern Full-Stack
+
+**Key files:**
+
+- `src/cli/lib/configuration/default-stacks.ts` — all stack definitions live here
+- New stacks should follow the same agent skill-assignment pattern as existing stacks
+
+---
 
 #### D-62: Review default stacks: include meta/methodology/reviewing skills
 

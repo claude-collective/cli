@@ -10,12 +10,12 @@ The original plan changed `web-framework` from exclusive to non-exclusive and ad
 
 ### Why This Is Simpler
 
-| Old Approach | New Approach |
-|---|---|
-| `web-framework` becomes non-exclusive (checkbox) | `web-framework` stays exclusive (radio) |
-| 6+ granular conflict rules within one category | Zero new conflict rules needed |
+| Old Approach                                      | New Approach                                                        |
+| ------------------------------------------------- | ------------------------------------------------------------------- |
+| `web-framework` becomes non-exclusive (checkbox)  | `web-framework` stays exclusive (radio)                             |
+| 6+ granular conflict rules within one category    | Zero new conflict rules needed                                      |
 | New auto-select logic for intra-category coupling | Existing cross-category `requires` mechanism (like shadcn→Tailwind) |
-| Complex conflict/requires interactions | Clean separation: base in one category, meta in another |
+| Complex conflict/requires interactions            | Clean separation: base in one category, meta in another             |
 
 ---
 
@@ -25,34 +25,34 @@ The original plan changed `web-framework` from exclusive to non-exclusive and ad
 
 Base UI frameworks. User picks exactly one.
 
-| Skill | ID |
-|---|---|
-| React | `web-framework-react` |
-| Vue | `web-framework-vue-composition-api` |
-| Angular | `web-framework-angular-standalone` |
-| SolidJS | `web-framework-solidjs` |
-| Svelte | `web-framework-svelte` (future) |
+| Skill   | ID                                  |
+| ------- | ----------------------------------- |
+| React   | `web-framework-react`               |
+| Vue     | `web-framework-vue-composition-api` |
+| Angular | `web-framework-angular-standalone`  |
+| SolidJS | `web-framework-solidjs`             |
+| Svelte  | `web-framework-svelte` (future)     |
 
 ### `web-meta-framework` (new, optional, exclusive)
 
 Meta-frameworks built on a base framework. User picks zero or one.
 
-| Skill | ID | Requires |
-|---|---|---|
-| Next.js | `web-framework-nextjs` (merged) | `web-framework-react` |
-| Remix | `web-framework-remix` | `web-framework-react` |
-| Nuxt | `web-framework-nuxt` | `web-framework-vue-composition-api` |
-| SvelteKit | `web-framework-sveltekit` (future) | `web-framework-svelte` |
-| Astro | `web-framework-astro` (future) | none (framework-agnostic islands) |
+| Skill     | ID                                 | Requires                            |
+| --------- | ---------------------------------- | ----------------------------------- |
+| Next.js   | `web-framework-nextjs` (merged)    | `web-framework-react`               |
+| Remix     | `web-framework-remix`              | `web-framework-react`               |
+| Nuxt      | `web-framework-nuxt`               | `web-framework-vue-composition-api` |
+| SvelteKit | `web-framework-sveltekit` (future) | `web-framework-svelte`              |
+| Astro     | `web-framework-astro` (future)     | none (framework-agnostic islands)   |
 
 ### `mobile-framework` (existing, change to non-exclusive)
 
 Only two skills — no need for a separate category split. Just allow both to be selected.
 
-| Skill | ID | Requires |
-|---|---|---|
+| Skill        | ID                              | Requires                             |
+| ------------ | ------------------------------- | ------------------------------------ |
 | React Native | `mobile-framework-react-native` | `web-framework-react` (cross-domain) |
-| Expo | `mobile-framework-expo` | `mobile-framework-react-native` |
+| Expo         | `mobile-framework-expo`         | `mobile-framework-react-native`      |
 
 ---
 
@@ -73,9 +73,9 @@ No auto-select needed for the normal flow because the category ordering means th
 
 As part of this change, merge the two Next.js skills into a single `web-framework-nextjs`:
 
-| Before | After |
-|---|---|
-| `web-framework-nextjs-app-router` | `web-framework-nextjs` |
+| Before                                | After                                                        |
+| ------------------------------------- | ------------------------------------------------------------ |
+| `web-framework-nextjs-app-router`     | `web-framework-nextjs`                                       |
 | `web-framework-nextjs-server-actions` | Becomes `examples/server-actions.md` inside the merged skill |
 
 **This resolves D-102** (App Router + Server Actions complementary but mutually exclusive).
@@ -102,12 +102,14 @@ web-framework-nextjs/
 Add skip directives to base framework example files that conflict with meta-framework patterns:
 
 In React `SKILL.md` table of contents:
+
 ```markdown
 - [examples/routing.md](examples/routing.md) - React Router (**skip if using Next.js, Remix, or TanStack Router**)
 - [examples/data-fetching.md](examples/data-fetching.md) - Client-side fetching (**skip if using Next.js or Remix**)
 ```
 
 At the top of `examples/routing.md`:
+
 ```markdown
 > **Skip this file if your project uses Next.js, Remix, or any meta-framework with its own router.**
 > These frameworks replace React Router with their own file-based routing.
@@ -168,6 +170,7 @@ And in `skill-rules.ts`, add the corresponding `requires` entries.
 ### Phase 4: Add skip directives to base framework skills
 
 Add "skip if using [meta-framework]" notes to:
+
 - React: `examples/routing.md`, `examples/data-fetching.md`
 - Vue: equivalent routing/data-fetching examples (if they exist)
 - (Future) Svelte: SPA routing examples
@@ -218,11 +221,11 @@ Same for remix-stack, nuxt-stack, and any future stacks (T3, SvelteKit, Astro).
 
 ## Tasks Resolved By This Change
 
-| Task | How Resolved |
-|---|---|
-| **D-38** | `web-base-framework` and `mobile-platform` removed; framework categories restructured |
-| **D-101** (Next.js stack missing skill) | Merged `web-framework-nextjs` added to nextjs-fullstack stack |
-| **D-102** (App Router + Server Actions exclusive) | Merged into one skill; Server Actions is an examples/ file |
+| Task                                              | How Resolved                                                                          |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **D-38**                                          | `web-base-framework` and `mobile-platform` removed; framework categories restructured |
+| **D-101** (Next.js stack missing skill)           | Merged `web-framework-nextjs` added to nextjs-fullstack stack                         |
+| **D-102** (App Router + Server Actions exclusive) | Merged into one skill; Server Actions is an examples/ file                            |
 
 ---
 
@@ -230,30 +233,30 @@ Same for remix-stack, nuxt-stack, and any future stacks (T3, SvelteKit, Astro).
 
 ### CLI repo (`/home/vince/dev/cli`)
 
-| File | Changes |
-|---|---|
-| `src/cli/lib/configuration/skill-categories.ts` | Add `web-meta-framework` category |
-| `src/cli/lib/configuration/skill-rules.ts` | Add `requires` rules for meta→base coupling |
-| `src/cli/lib/configuration/default-stacks.ts` | Update stacks to use `web-meta-framework` key |
-| `src/cli/types/generated/source-types.ts` | Regenerated (new category in union) |
-| `src/cli/types-matrix.ts` | Remove `web-base-framework`, `mobile-platform` from Category if still present |
-| `src/cli/lib/schemas.ts` | Remove from `SUBCATEGORY_VALUES`, simplify `stackSubcategorySchema` |
-| `src/schemas/stacks.schema.json` | Remove pseudo-categories, add `web-meta-framework` |
-| `src/schemas/project-config.schema.json` | Same |
-| Tests (multiple) | Update for new category structure |
+| File                                            | Changes                                                                       |
+| ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| `src/cli/lib/configuration/skill-categories.ts` | Add `web-meta-framework` category                                             |
+| `src/cli/lib/configuration/skill-rules.ts`      | Add `requires` rules for meta→base coupling                                   |
+| `src/cli/lib/configuration/default-stacks.ts`   | Update stacks to use `web-meta-framework` key                                 |
+| `src/cli/types/generated/source-types.ts`       | Regenerated (new category in union)                                           |
+| `src/cli/types-matrix.ts`                       | Remove `web-base-framework`, `mobile-platform` from Category if still present |
+| `src/cli/lib/schemas.ts`                        | Remove from `SUBCATEGORY_VALUES`, simplify `stackSubcategorySchema`           |
+| `src/schemas/stacks.schema.json`                | Remove pseudo-categories, add `web-meta-framework`                            |
+| `src/schemas/project-config.schema.json`        | Same                                                                          |
+| Tests (multiple)                                | Update for new category structure                                             |
 
 ### Skills repo (`/home/vince/dev/skills`)
 
-| File | Changes |
-|---|---|
-| `web-framework-nextjs/` | New merged skill (from app-router + server-actions) |
-| `web-framework-nextjs-app-router/` | Removed |
-| `web-framework-nextjs-server-actions/` | Removed |
-| `web-framework-remix/metadata.yaml` | `category: web-meta-framework`, add `requires` |
-| `web-framework-nuxt/metadata.yaml` | `category: web-meta-framework`, add `requires` |
-| `web-framework-react/examples/routing.md` | Add skip directive for meta-frameworks |
-| `web-framework-react/examples/data-fetching.md` | Add skip directive for meta-frameworks |
-| `stacks.yaml` | Merge `web-base-framework` into `web-framework`, add `web-meta-framework` entries |
+| File                                            | Changes                                                                           |
+| ----------------------------------------------- | --------------------------------------------------------------------------------- |
+| `web-framework-nextjs/`                         | New merged skill (from app-router + server-actions)                               |
+| `web-framework-nextjs-app-router/`              | Removed                                                                           |
+| `web-framework-nextjs-server-actions/`          | Removed                                                                           |
+| `web-framework-remix/metadata.yaml`             | `category: web-meta-framework`, add `requires`                                    |
+| `web-framework-nuxt/metadata.yaml`              | `category: web-meta-framework`, add `requires`                                    |
+| `web-framework-react/examples/routing.md`       | Add skip directive for meta-frameworks                                            |
+| `web-framework-react/examples/data-fetching.md` | Add skip directive for meta-frameworks                                            |
+| `stacks.yaml`                                   | Merge `web-base-framework` into `web-framework`, add `web-meta-framework` entries |
 
 ---
 
