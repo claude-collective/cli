@@ -89,13 +89,13 @@ describe("getStackName", () => {
   beforeEach(() => {
     initializeMatrix(
       createMockMatrix(SKILLS.react, {
-        suggestedStacks: [createMockResolvedStack("nextjs-fullstack", "Next.js Fullstack")],
+        suggestedStacks: [createMockResolvedStack("nextjs-fullstack", "Next.js Full-Stack")],
       }),
     );
   });
 
   it("should return stack name for a valid stack ID", () => {
-    expect(getStackName("nextjs-fullstack")).toBe("Next.js Fullstack");
+    expect(getStackName("nextjs-fullstack")).toBe("Next.js Full-Stack");
   });
 
   it("should return undefined for unknown stack ID", () => {

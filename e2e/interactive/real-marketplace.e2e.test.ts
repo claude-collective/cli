@@ -105,8 +105,8 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
     it("should have rendered real stacks during stack selection", () => {
       const fullOutput = initSession!.getFullOutput();
 
-      // The CLI's built-in stacks include "Next.js Fullstack" as the first stack
-      expect(fullOutput).toContain("Next.js Fullstack");
+      // The CLI's built-in stacks include "Next.js Full-Stack" as the first stack
+      expect(fullOutput).toContain("Next.js Full-Stack");
     });
 
     it("should have used the real marketplace for plugin installation", () => {
@@ -181,7 +181,7 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
       const mdFiles = outputFiles.filter((f) => f.endsWith(".md"));
 
       // Read a compiled agent and verify it has real skill text
-      // The first stack is "Next.js Fullstack" which includes web-framework-react
+      // The first stack is "Next.js Full-Stack" which includes web-framework-react
       const MIN_REAL_CONTENT_LENGTH = 1000;
       let foundRealContent = false;
       for (const mdFile of mdFiles) {

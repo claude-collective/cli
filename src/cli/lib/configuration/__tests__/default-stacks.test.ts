@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { typedEntries } from "../../../utils/typed-object";
 import { defaultStacks } from "../default-stacks";
 
-const EXPECTED_STACK_COUNT = 9;
+const EXPECTED_STACK_COUNT = 13;
 
 /** Flat list of every (stack, agent, category) combination for parameterized tests */
 const agentCategoryCases = defaultStacks.flatMap((stack) =>
@@ -25,22 +25,22 @@ describe("defaultStacks", () => {
   it("includes nextjs-fullstack with correct fields", () => {
     const stack = defaultStacks.find((s) => s.id === "nextjs-fullstack");
     expect(stack).toBeDefined();
-    expect(stack!.name).toBe("Next.js Fullstack");
-    expect(stack!.description).toBe("Next.js + Hono full-stack");
+    expect(stack!.name).toBe("Next.js Full-Stack");
+    expect(stack!.description).toBe("Next.js, Hono, Drizzle, Better Auth, Zustand");
     expect(stack!.philosophy).toBe("Ship fast, iterate faster");
   });
 
-  it("includes angular-stack with correct fields", () => {
-    const stack = defaultStacks.find((s) => s.id === "angular-stack");
+  it("includes angular-modern-fullstack with correct fields", () => {
+    const stack = defaultStacks.find((s) => s.id === "angular-modern-fullstack");
     expect(stack).toBeDefined();
-    expect(stack!.name).toBe("Modern Angular Stack");
+    expect(stack!.name).toBe("Angular Modern Full-Stack");
     expect(stack!.philosophy).toBe("Enterprise-grade and type-safe");
   });
 
-  it("includes solidjs-stack", () => {
-    const stack = defaultStacks.find((s) => s.id === "solidjs-stack");
+  it("includes solidjs-fullstack", () => {
+    const stack = defaultStacks.find((s) => s.id === "solidjs-fullstack");
     expect(stack).toBeDefined();
-    expect(stack!.name).toBe("SolidJS Stack");
+    expect(stack!.name).toBe("SolidJS Full-Stack");
   });
 
   it.each(defaultStacks)("stack $id has required fields", (stack) => {

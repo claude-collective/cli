@@ -36,7 +36,7 @@ describe("stacks-loader", () => {
 
       expect(stacks).toHaveLength(2);
       expect(stacks[0].id).toBe("nextjs-fullstack");
-      expect(stacks[0].name).toBe("Next.js Fullstack");
+      expect(stacks[0].name).toBe("Next.js Full-Stack");
       expect(stacks[1].id).toBe("vue-spa");
     });
 
@@ -212,7 +212,7 @@ describe("stacks-loader", () => {
       // Should fall back to the built-in default stack
       expect(stack).not.toBeNull();
       expect(stack!.id).toBe("nextjs-fullstack");
-      expect(stack!.name).toBe("Next.js Fullstack");
+      expect(stack!.name).toBe("Next.js Full-Stack");
     });
   });
 

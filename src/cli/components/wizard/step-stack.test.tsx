@@ -91,12 +91,13 @@ describe("StepStack component", () => {
         expect(output).toContain("Choose a stack");
       });
 
-      it("should render divider between stacks and scratch option", () => {
+      it("should render section structure with scratch option", () => {
         const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("\u2500");
+        expect(output).toContain("Start from scratch");
+        expect(output).toContain("Select domains and skills manually");
       });
     });
 

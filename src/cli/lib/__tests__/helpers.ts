@@ -825,7 +825,7 @@ export function createComprehensiveMatrix(
   } as Record<Category, CategoryDefinition>;
 
   const suggestedStacks: ResolvedStack[] = [
-    createMockResolvedStack("nextjs-fullstack", "Next.js Fullstack", {
+    createMockResolvedStack("nextjs-fullstack", "Next.js Full-Stack", {
       description: "Complete Next.js stack with React and Hono",
       skills: {
         "web-developer": {
@@ -847,7 +847,7 @@ export function createComprehensiveMatrix(
       ],
       philosophy: "Modern, type-safe fullstack development",
     }),
-    createMockResolvedStack("vue-stack", "Vue Stack", {
+    createMockResolvedStack("vue-modern-fullstack", "Vue Modern Full-Stack", {
       description: "Vue.js frontend stack",
       skills: {
         "web-developer": {
@@ -1143,7 +1143,7 @@ export function createMockRawStacksConfig(): RawStacksConfig {
     stacks: [
       {
         id: "nextjs-fullstack",
-        name: "Next.js Fullstack",
+        name: "Next.js Full-Stack",
         description: "Full-stack Next.js with Hono API",
         agents: {
           "web-developer": {
