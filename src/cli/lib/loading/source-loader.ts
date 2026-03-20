@@ -79,7 +79,11 @@ export async function loadSkillsMatrixFromSource(
   let result: SourceLoadResult;
 
   if (source === DEFAULT_SOURCE && !devMode) {
-    // Default source: use pre-computed BUILT_IN_MATRIX instead of loading from disk
+    // Default source: use pre-computed BUILT_IN_MATRIX instead of loading from disk.
+    // Still resolve sourcePath via fetchFromSource so skill files can be read
+    // (e.g. for local-mode copy). The fetch is cached, so no network call if
+    // the clone already exists.
+    const fetchResult = await fetchFromSource(source, { forceRefresh });
     result = {
       matrix: {
         ...BUILT_IN_MATRIX,
@@ -88,7 +92,7 @@ export async function loadSkillsMatrixFromSource(
         suggestedStacks: [...BUILT_IN_MATRIX.suggestedStacks],
       },
       sourceConfig,
-      sourcePath: "",
+      sourcePath: fetchResult.path,
       isLocal: false,
       marketplace: sourceConfig.marketplace,
     };
@@ -104,22 +108,24 @@ export async function loadSkillsMatrixFromSource(
 
   const resolvedProjectDir = projectDir || process.cwd();
 
-  let localSkillsResult = await discoverLocalSkills(resolvedProjectDir);
-
-  // If no local skills in project, try global (home directory)
+  // Load global local skills first, then project local skills — project wins on conflict
   const homeDir = os.homedir();
-  if (
-    (!localSkillsResult || localSkillsResult.skills.length === 0) &&
-    resolvedProjectDir !== homeDir
-  ) {
-    localSkillsResult = await discoverLocalSkills(homeDir);
+  if (resolvedProjectDir !== homeDir) {
+    const globalLocalSkillsResult = await discoverLocalSkills(homeDir);
+    if (globalLocalSkillsResult && globalLocalSkillsResult.skills.length > 0) {
+      verbose(
+        `Found ${globalLocalSkillsResult.skills.length} global local skill(s) in ${globalLocalSkillsResult.localSkillsPath}`,
+      );
+      result.matrix = mergeLocalSkillsIntoMatrix(result.matrix, globalLocalSkillsResult);
+    }
   }
 
-  if (localSkillsResult && localSkillsResult.skills.length > 0) {
+  const projectLocalSkillsResult = await discoverLocalSkills(resolvedProjectDir);
+  if (projectLocalSkillsResult && projectLocalSkillsResult.skills.length > 0) {
     verbose(
-      `Found ${localSkillsResult.skills.length} local skill(s) in ${localSkillsResult.localSkillsPath}`,
+      `Found ${projectLocalSkillsResult.skills.length} project local skill(s) in ${projectLocalSkillsResult.localSkillsPath}`,
     );
-    result.matrix = mergeLocalSkillsIntoMatrix(result.matrix, localSkillsResult);
+    result.matrix = mergeLocalSkillsIntoMatrix(result.matrix, projectLocalSkillsResult);
   }
 
   if (!options.skipExtraSources) {

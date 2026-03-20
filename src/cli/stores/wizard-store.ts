@@ -613,7 +613,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         return {
           id,
           scope: saved?.scope ?? "global",
-          source: primarySource ?? saved?.source ?? DEFAULT_PUBLIC_SOURCE_NAME,
+          source: saved?.source ?? primarySource ?? DEFAULT_PUBLIC_SOURCE_NAME,
         };
       });
 
