@@ -119,13 +119,13 @@ async function prepareDirectories(paths: InstallPaths): Promise<void> {
 async function deleteAndCopySkills(
   skills: SkillConfig[],
   sourceResult: SourceLoadResult,
-  projectDir: string,
+  baseDir: string,
   skillsDir: string,
 ): Promise<CopiedSkill[]> {
   for (const skill of skills) {
     if (skill.source && skill.source !== "local") {
       verbose(`Using alternate source '${skill.source}' for ${skill.id}`);
-      await deleteLocalSkill(projectDir, skill.id);
+      await deleteLocalSkill(baseDir, skill.id);
     }
   }
 
@@ -661,7 +661,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
       : [];
   const globalCopied =
     globalSkills.length > 0
-      ? await deleteAndCopySkills(globalSkills, sourceResult, projectDir, globalPaths.skillsDir)
+      ? await deleteAndCopySkills(globalSkills, sourceResult, os.homedir(), globalPaths.skillsDir)
       : [];
   const copiedSkills = [...projectCopied, ...globalCopied];
 

@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 import type { SkillId } from "../../types";
 import type { SkillConfig } from "../../types/config";
@@ -86,19 +87,36 @@ export async function executeMigration(
   const localizedSkills: SkillId[] = [];
   const pluginizedSkills: SkillId[] = [];
 
-  // Migrate skills from plugin to local
+  // Migrate skills from plugin to local, split by scope
   if (plan.toLocal.length > 0) {
     try {
-      const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
-      const skillIds = plan.toLocal.map((m) => m.id);
-      const copied = await copySkillsToLocalFlattened(
-        skillIds,
-        localSkillsDir,
-        sourceResult.matrix,
-        sourceResult,
-      );
-      for (const skill of copied) {
-        localizedSkills.push(skill.skillId);
+      const projectMigrations = plan.toLocal.filter((m) => m.newScope !== "global");
+      const globalMigrations = plan.toLocal.filter((m) => m.newScope === "global");
+
+      if (projectMigrations.length > 0) {
+        const projectSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
+        const copied = await copySkillsToLocalFlattened(
+          projectMigrations.map((m) => m.id),
+          projectSkillsDir,
+          sourceResult.matrix,
+          sourceResult,
+        );
+        for (const skill of copied) {
+          localizedSkills.push(skill.skillId);
+        }
+      }
+
+      if (globalMigrations.length > 0) {
+        const globalSkillsDir = path.join(os.homedir(), LOCAL_SKILLS_PATH);
+        const copied = await copySkillsToLocalFlattened(
+          globalMigrations.map((m) => m.id),
+          globalSkillsDir,
+          sourceResult.matrix,
+          sourceResult,
+        );
+        for (const skill of copied) {
+          localizedSkills.push(skill.skillId);
+        }
       }
 
       // Uninstall plugin references using per-skill scope
@@ -120,9 +138,10 @@ export async function executeMigration(
 
   // Migrate skills from local to plugin
   if (plan.toPlugin.length > 0) {
-    // Delete local copies
+    // Delete local copies from the scope-appropriate directory
     for (const migration of plan.toPlugin) {
-      await deleteLocalSkill(projectDir, migration.id);
+      const baseDir = migration.oldScope === "global" ? os.homedir() : projectDir;
+      await deleteLocalSkill(baseDir, migration.id);
     }
 
     // Install as plugins using per-skill scope

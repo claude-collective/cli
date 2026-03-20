@@ -44,22 +44,13 @@ export async function detectProjectInstallation(projectDir: string): Promise<Ins
 
   const mode: InstallMode = deriveInstallMode(loaded?.config?.skills ?? []);
 
-  if (mode === "local") {
-    return {
-      mode: "local",
-      configPath,
-      agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
-      skillsDir: path.join(projectDir, CLAUDE_DIR, "skills"),
-      projectDir,
-    };
-  }
-
-  // Skills live in global plugin cache; agents compiled locally
   return {
-    mode: "plugin",
+    mode,
     configPath,
     agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
-    skillsDir: path.join(projectDir, CLAUDE_DIR, PLUGINS_SUBDIR),
+    // Mixed mode has local skills in .claude/skills/ and plugins in cache;
+    // use .claude/skills/ as the primary skillsDir (same as local mode)
+    skillsDir: path.join(projectDir, CLAUDE_DIR, mode === "plugin" ? PLUGINS_SUBDIR : "skills"),
     projectDir,
   };
 }
@@ -77,21 +68,11 @@ export async function detectGlobalInstallation(): Promise<Installation | null> {
   const loaded = await loadProjectConfigFromDir(homeDir);
   const mode: InstallMode = deriveInstallMode(loaded?.config?.skills ?? []);
 
-  if (mode === "local") {
-    return {
-      mode: "local",
-      configPath,
-      agentsDir: path.join(homeDir, CLAUDE_DIR, "agents"),
-      skillsDir: path.join(homeDir, CLAUDE_DIR, "skills"),
-      projectDir: homeDir,
-    };
-  }
-
   return {
-    mode: "plugin",
+    mode,
     configPath,
     agentsDir: path.join(homeDir, CLAUDE_DIR, "agents"),
-    skillsDir: path.join(homeDir, CLAUDE_DIR, PLUGINS_SUBDIR),
+    skillsDir: path.join(homeDir, CLAUDE_DIR, mode === "plugin" ? PLUGINS_SUBDIR : "skills"),
     projectDir: homeDir,
   };
 }
