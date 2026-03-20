@@ -134,7 +134,10 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
         <Text />
         {option.scope && (
           <>
-            <Text color={option.scope === "global" ? CLI_COLORS.WARNING : "#eee"} backgroundColor={"#383838"}>
+            <Text
+              color={option.scope === "global" ? CLI_COLORS.WARNING : "#eee"}
+              backgroundColor={"#383838"}
+            >
               {option.scope === "global" ? " G " : " P "}
             </Text>
             <Text> </Text>

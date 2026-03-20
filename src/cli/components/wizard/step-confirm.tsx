@@ -52,10 +52,8 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
     }
   });
 
-  
   return (
     <Box flexDirection="column" paddingX={2}>
-
       {domainSelections && selectedDomains && !stackName && (
         <Box flexDirection="column" marginBottom={1}>
           {selectedDomains.map((domain) => {

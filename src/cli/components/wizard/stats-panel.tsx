@@ -16,7 +16,10 @@ export type StatsData = {
   agentsProject: number;
 };
 
-export function computeStats(skillConfigs: SkillConfig[], agentConfigs: AgentScopeConfig[]): StatsData {
+export function computeStats(
+  skillConfigs: SkillConfig[],
+  agentConfigs: AgentScopeConfig[],
+): StatsData {
   let globalPlugin = 0;
   let globalLocal = 0;
   let projectPlugin = 0;
@@ -57,7 +60,15 @@ export const StatsPanel: React.FC<{ stats: StatsData }> = ({ stats }) => {
   const dimProjectAgents = stats.agentsProject === 0;
 
   return (
-    <Box flexDirection="row" columnGap={0} marginTop={-4} borderStyle="single" borderColor={CLI_COLORS.NEUTRAL} borderDimColor paddingX={1}>
+    <Box
+      flexDirection="row"
+      columnGap={0}
+      marginTop={-4}
+      borderStyle="single"
+      borderColor={CLI_COLORS.NEUTRAL}
+      borderDimColor
+      paddingX={1}
+    >
       <Box flexDirection="column" flexGrow={1}>
         <Text dimColor>Skills</Text>
         <Text>
@@ -66,15 +77,11 @@ export const StatsPanel: React.FC<{ stats: StatsData }> = ({ stats }) => {
           </Text>
           <Text>{"  "}</Text>
           <Text dimColor={stats.globalPlugin === 0}>
-            <Text color={CLI_COLORS.PRIMARY}>
-              {stats.globalPlugin}
-            </Text>
+            <Text color={CLI_COLORS.PRIMARY}>{stats.globalPlugin}</Text>
             <Text> plugin </Text>
           </Text>
           <Text dimColor={stats.globalLocal === 0}>
-            <Text color={CLI_COLORS.PRIMARY}>
-              {stats.globalLocal}
-            </Text>
+            <Text color={CLI_COLORS.PRIMARY}>{stats.globalLocal}</Text>
             <Text> local</Text>
           </Text>
         </Text>
@@ -84,23 +91,25 @@ export const StatsPanel: React.FC<{ stats: StatsData }> = ({ stats }) => {
           </Text>
           <Text>{"  "}</Text>
           <Text dimColor={stats.projectPlugin === 0}>
-            <Text color={CLI_COLORS.PRIMARY}>
-              {stats.projectPlugin}
-            </Text>
+            <Text color={CLI_COLORS.PRIMARY}>{stats.projectPlugin}</Text>
             <Text> plugin </Text>
           </Text>
           <Text dimColor={stats.projectLocal === 0}>
-            <Text color={CLI_COLORS.PRIMARY}>
-              {stats.projectLocal}
-            </Text>
+            <Text color={CLI_COLORS.PRIMARY}>{stats.projectLocal}</Text>
             <Text> local</Text>
           </Text>
         </Text>
       </Box>
       <Box flexDirection="column" marginX={1} marginTop={0} height={3} justifyContent="center">
-        <Text dimColor color={CLI_COLORS.NEUTRAL}>│</Text>
-        <Text dimColor color={CLI_COLORS.NEUTRAL}>│</Text>
-        <Text dimColor color={CLI_COLORS.NEUTRAL}>│</Text>
+        <Text dimColor color={CLI_COLORS.NEUTRAL}>
+          │
+        </Text>
+        <Text dimColor color={CLI_COLORS.NEUTRAL}>
+          │
+        </Text>
+        <Text dimColor color={CLI_COLORS.NEUTRAL}>
+          │
+        </Text>
       </Box>
       <Box flexDirection="column" flexGrow={1} paddingLeft={0}>
         <Text dimColor>Agents</Text>

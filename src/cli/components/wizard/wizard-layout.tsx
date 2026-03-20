@@ -18,7 +18,12 @@ import {
   KEY_LABEL_ESC,
   KEY_LABEL_SPACE,
 } from "./hotkeys.js";
-import { WIZARD_STEPS, WizardTabs, type DomainNavProps, type TabDropdownProps } from "./wizard-tabs.js";
+import {
+  WIZARD_STEPS,
+  WizardTabs,
+  type DomainNavProps,
+  type TabDropdownProps,
+} from "./wizard-tabs.js";
 import { getDomainDisplayName, getStackName, orderDomains } from "./utils.js";
 import type { Domain } from "../../types/index.js";
 
