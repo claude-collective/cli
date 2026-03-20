@@ -1,4 +1,5 @@
 import { Flags } from "@oclif/core";
+import os from "os";
 import path from "path";
 import { BaseCommand } from "../base-command";
 import { getErrorMessage } from "../utils/errors";
@@ -75,7 +76,11 @@ async function checkSkillsResolved(
   }
 
   const localResult = await discoverLocalSkills(projectDir);
-  const localSkillIds = new Set(localResult?.skills.map((s) => s.id) ?? []);
+  const globalResult = projectDir !== os.homedir() ? await discoverLocalSkills(os.homedir()) : null;
+  const localSkillIds = new Set([
+    ...(localResult?.skills.map((s) => s.id) ?? []),
+    ...(globalResult?.skills.map((s) => s.id) ?? []),
+  ]);
 
   const missingSkills: string[] = [];
   for (const skillId of uniqueSkills) {
@@ -113,10 +118,13 @@ async function checkAgentsCompiled(
     };
   }
 
-  const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+  const projectAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+  const globalAgentsDir = path.join(os.homedir(), CLAUDE_DIR, "agents");
   const missingAgents: string[] = [];
 
   for (const agent of agents) {
+    // Check scope-appropriate directory for the agent
+    const agentsDir = agent.scope === "global" ? globalAgentsDir : projectAgentsDir;
     const agentPath = path.join(agentsDir, `${agent.name}.md`);
     if (!(await fileExists(agentPath))) {
       missingAgents.push(agent.name);
@@ -138,16 +146,22 @@ async function checkAgentsCompiled(
 }
 
 async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promise<CheckResult> {
-  const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+  const projectAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+  const globalAgentsDir = path.join(os.homedir(), CLAUDE_DIR, "agents");
 
-  if (!(await directoryExists(agentsDir))) {
+  const projectExists = await directoryExists(projectAgentsDir);
+  const globalExists = projectDir !== os.homedir() && (await directoryExists(globalAgentsDir));
+
+  if (!projectExists && !globalExists) {
     return {
       status: "pass",
       message: "No agents directory",
     };
   }
 
-  const mdFiles = await glob("*.md", agentsDir);
+  const projectMdFiles = projectExists ? await glob("*.md", projectAgentsDir) : [];
+  const globalMdFiles = globalExists ? await glob("*.md", globalAgentsDir) : [];
+  const mdFiles = [...new Set([...projectMdFiles, ...globalMdFiles])];
   const configAgentNames: Set<string> = new Set((config.agents ?? []).map((a) => a.name));
 
   const orphanedFiles: string[] = [];

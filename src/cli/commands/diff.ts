@@ -1,5 +1,6 @@
 import { Args, Flags } from "@oclif/core";
 import chalk from "chalk";
+import os from "os";
 import path from "path";
 import { createTwoFilesPatch } from "diff";
 import { BaseCommand } from "../base-command.js";
@@ -160,9 +161,13 @@ export default class Diff extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Diff);
     const projectDir = process.cwd();
-    const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
+    const homeDir = os.homedir();
+    const projectLocalPath = path.join(projectDir, LOCAL_SKILLS_PATH);
+    const globalLocalPath = path.join(homeDir, LOCAL_SKILLS_PATH);
+    const hasProject = await fileExists(projectLocalPath);
+    const hasGlobal = projectDir !== homeDir && (await fileExists(globalLocalPath));
 
-    if (!(await fileExists(localSkillsPath))) {
+    if (!hasProject && !hasGlobal) {
       if (!flags.quiet) {
         this.warn(
           `No local skills found. Run '${CLI_BIN_NAME} init' or '${CLI_BIN_NAME} edit' first.`,
@@ -193,28 +198,46 @@ export default class Diff extends BaseCommand {
         }
       }
 
-      let skillDirs = await listDirectories(localSkillsPath);
+      // Collect skill dirs from both project and global scopes
+      type ScopedSkillDir = { dirName: string; localSkillsPath: string };
+      const scopedDirs: ScopedSkillDir[] = [];
+      if (hasProject) {
+        for (const dirName of await listDirectories(projectLocalPath)) {
+          scopedDirs.push({ dirName, localSkillsPath: projectLocalPath });
+        }
+      }
+      if (hasGlobal) {
+        const projectDirNames = new Set(scopedDirs.map((d) => d.dirName));
+        for (const dirName of await listDirectories(globalLocalPath)) {
+          // Project-scoped takes precedence
+          if (!projectDirNames.has(dirName)) {
+            scopedDirs.push({ dirName, localSkillsPath: globalLocalPath });
+          }
+        }
+      }
 
       if (args.skill) {
-        skillDirs = skillDirs.filter((dir) => dir === args.skill);
-        if (skillDirs.length === 0) {
+        const filtered = scopedDirs.filter((d) => d.dirName === args.skill);
+        if (filtered.length === 0) {
           if (!flags.quiet) {
             this.error(`Skill '${args.skill}' not found in local skills`, {
               exit: EXIT_CODES.ERROR,
             });
           }
         }
+        scopedDirs.length = 0;
+        scopedDirs.push(...filtered);
       }
 
       const results: SkillDiffResult[] = [];
       const skillsWithoutForkedFrom: string[] = [];
 
-      for (const skillDirName of skillDirs) {
-        const result = await diffSkill(localSkillsPath, skillDirName, sourcePath, sourceSkills);
+      for (const { dirName, localSkillsPath } of scopedDirs) {
+        const result = await diffSkill(localSkillsPath, dirName, sourcePath, sourceSkills);
         results.push(result);
 
         if (!result.forkedFrom) {
-          skillsWithoutForkedFrom.push(skillDirName);
+          skillsWithoutForkedFrom.push(dirName);
         }
       }
 

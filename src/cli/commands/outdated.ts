@@ -1,5 +1,6 @@
 import { Flags } from "@oclif/core";
 import { printTable } from "@oclif/table";
+import os from "os";
 import path from "path";
 import { countBy } from "remeda";
 
@@ -69,8 +70,13 @@ export default class Outdated extends BaseCommand {
     const projectDir = installation?.projectDir ?? process.cwd();
 
     try {
-      const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
-      if (!(await fileExists(localSkillsPath))) {
+      const projectLocalPath = path.join(projectDir, LOCAL_SKILLS_PATH);
+      const homeDir = os.homedir();
+      const globalLocalPath = path.join(homeDir, LOCAL_SKILLS_PATH);
+      const hasProject = await fileExists(projectLocalPath);
+      const hasGlobal = projectDir !== homeDir && (await fileExists(globalLocalPath));
+
+      if (!hasProject && !hasGlobal) {
         if (flags.json) {
           this.log(
             JSON.stringify({
@@ -107,7 +113,17 @@ export default class Outdated extends BaseCommand {
         }
       }
 
-      const results = await compareLocalSkillsWithSource(projectDir, sourcePath, sourceSkills);
+      // Check both project-scoped and global-scoped local skills
+      const projectResults = hasProject
+        ? await compareLocalSkillsWithSource(projectDir, sourcePath, sourceSkills)
+        : [];
+      const globalResults = hasGlobal
+        ? await compareLocalSkillsWithSource(homeDir, sourcePath, sourceSkills)
+        : [];
+
+      // Merge results, project-scoped takes precedence
+      const seenIds = new Set(projectResults.map((r) => r.id));
+      const results = [...projectResults, ...globalResults.filter((r) => !seenIds.has(r.id))];
       const summary = calculateSummary(results);
 
       if (flags.json) {

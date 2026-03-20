@@ -3,7 +3,6 @@ import React from "react";
 import { Flags } from "@oclif/core";
 import { render, Box, Text, useApp } from "ink";
 import path from "path";
-import os from "os";
 
 import { BaseCommand } from "../base-command";
 import { Confirm } from "../components/common/confirm";
@@ -12,7 +11,7 @@ import { directoryExists, listDirectories, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { listPluginNames, getProjectPluginsDir } from "../lib/plugins";
 import { readForkedFromMetadata } from "../lib/skills";
-import { loadProjectSourceConfig } from "../lib/configuration/config";
+import { loadProjectConfigFromDir } from "../lib/configuration/project-config";
 import type { ProjectConfig } from "../types";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, CLI_COLORS, DEFAULT_BRANDING } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
@@ -34,19 +33,9 @@ type UninstallTarget = {
   claudeSrcDir: string;
   /** Resolved project source config from .claude-src/config.ts */
   config: Partial<ProjectConfig> | null;
-  /** All configured source URLs (primary + extras) */
-  configuredSources: string[];
   /** Agent names from the generated config (e.g., ["web-developer"]) */
   configuredAgents: string[];
 };
-
-function collectConfiguredSources(config: Partial<ProjectConfig> | null): string[] {
-  if (!config) return [];
-  return [
-    ...(config.source ? [config.source] : []),
-    ...(config.sources?.map((entry) => entry.url) ?? []),
-  ];
-}
 
 function collectConfiguredAgents(config: Partial<ProjectConfig> | null): string[] {
   if (!config?.agents) return [];
@@ -71,7 +60,7 @@ async function detectUninstallTarget(projectDir: string): Promise<UninstallTarge
       directoryExists(agentsDir),
       directoryExists(claudeDir),
       directoryExists(claudeSrcDir),
-      loadProjectSourceConfig(projectDir),
+      loadProjectConfigFromDir(projectDir).then((result) => result?.config ?? null),
     ],
   );
 
@@ -82,7 +71,6 @@ async function detectUninstallTarget(projectDir: string): Promise<UninstallTarge
     // Best-effort: plugin detection may fail
   }
 
-  const configuredSources = collectConfiguredSources(config);
   const configuredAgents = collectConfiguredAgents(config);
   const cliInstalledKeys = getCliInstalledPluginKeys(config);
   const cliPluginNames = pluginNames.filter((name) => cliInstalledKeys.has(name));
@@ -101,7 +89,6 @@ async function detectUninstallTarget(projectDir: string): Promise<UninstallTarge
     claudeDir,
     claudeSrcDir,
     config,
-    configuredSources,
     configuredAgents,
   };
 }
@@ -180,24 +167,8 @@ async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
   }
 }
 
-function skillMatchesConfiguredSource(
-  forkedFromSource: string | undefined,
-  configuredSources: string[],
-): boolean {
-  if (!forkedFromSource || configuredSources.length === 0) return false;
-  return configuredSources.includes(forkedFromSource);
-}
-
-function shouldRemoveSkill(
-  forkedFrom: { source?: string } | null,
-  configuredSources: string[],
-  hasConfig: boolean,
-): boolean {
-  return (
-    forkedFrom !== null &&
-    (skillMatchesConfiguredSource(forkedFrom.source, configuredSources) ||
-      (!forkedFrom.source && hasConfig))
-  );
+function shouldRemoveSkill(forkedFrom: { source?: string } | null): boolean {
+  return forkedFrom !== null;
 }
 
 export default class Uninstall extends BaseCommand {
@@ -306,7 +277,10 @@ export default class Uninstall extends BaseCommand {
         for (const pluginName of target.cliPluginNames) {
           if (cliAvailable) {
             try {
-              const pluginScope = projectDir === os.homedir() ? "user" : "project";
+              // Derive scope from per-skill config; fall back to project-level heuristic
+              const skillId = pluginName.split("@")[0];
+              const skillConfig = target.config?.skills?.find((s) => s.id === skillId);
+              const pluginScope = skillConfig?.scope === "global" ? "user" : "project";
               await claudePluginUninstall(pluginName, pluginScope, projectDir);
             } catch {
               // Best-effort: plugin may not be registered with Claude CLI
@@ -368,7 +342,7 @@ export default class Uninstall extends BaseCommand {
       const skillDir = path.join(target.skillsDir, skillDirName);
       const forkedFrom = await readForkedFromMetadata(skillDir);
 
-      if (shouldRemoveSkill(forkedFrom, target.configuredSources, target.config !== null)) {
+      if (shouldRemoveSkill(forkedFrom)) {
         await remove(skillDir);
         removedCount++;
         this.log(`  Uninstalled skill '${skillDirName}'`);

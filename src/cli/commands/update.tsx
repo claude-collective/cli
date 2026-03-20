@@ -3,6 +3,7 @@ import React from "react";
 import { Flags, Args } from "@oclif/core";
 import { printTable } from "@oclif/table";
 import { render } from "ink";
+import os from "os";
 import path from "path";
 
 import { BaseCommand } from "../base-command.js";
@@ -142,8 +143,13 @@ export default class Update extends BaseCommand {
     const shouldRecompile = !flags["no-recompile"];
 
     try {
-      const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
-      if (!(await fileExists(localSkillsPath))) {
+      const projectLocalPath = path.join(projectDir, LOCAL_SKILLS_PATH);
+      const homeDir = os.homedir();
+      const globalLocalPath = path.join(homeDir, LOCAL_SKILLS_PATH);
+      const hasProject = await fileExists(projectLocalPath);
+      const hasGlobal = projectDir !== homeDir && (await fileExists(globalLocalPath));
+
+      if (!hasProject && !hasGlobal) {
         this.warn(ERROR_MESSAGES.NO_LOCAL_SKILLS);
         return;
       }
@@ -167,11 +173,24 @@ export default class Update extends BaseCommand {
         }
       }
 
-      const allResults = await compareLocalSkillsWithSource(
-        projectDir,
-        sourceResult.sourcePath,
-        sourceSkills,
-      );
+      // Check both project-scoped and global-scoped local skills
+      const projectResults = hasProject
+        ? await compareLocalSkillsWithSource(projectDir, sourceResult.sourcePath, sourceSkills)
+        : [];
+      const globalResults = hasGlobal
+        ? await compareLocalSkillsWithSource(homeDir, sourceResult.sourcePath, sourceSkills)
+        : [];
+
+      // Track which base dir each skill lives in (for updateSkill dest path)
+      const skillBaseDir = new Map<string, string>();
+      for (const r of projectResults) skillBaseDir.set(r.id, projectDir);
+      for (const r of globalResults) {
+        if (!skillBaseDir.has(r.id)) skillBaseDir.set(r.id, homeDir);
+      }
+
+      // Merge results, project-scoped takes precedence
+      const seenIds = new Set(projectResults.map((r) => r.id));
+      const allResults = [...projectResults, ...globalResults.filter((r) => !seenIds.has(r.id))];
 
       let outdatedSkills = allResults.filter((r) => r.status === "outdated");
 
@@ -283,7 +302,8 @@ export default class Update extends BaseCommand {
       for (const skill of outdatedSkills) {
         this.log(`Updating ${skill.id}...`);
 
-        const result = await updateSkill(skill, projectDir, sourceResult);
+        const baseDir = skillBaseDir.get(skill.id) ?? projectDir;
+        const result = await updateSkill(skill, baseDir, sourceResult);
 
         if (result.success) {
           this.log(`  Updated ${skill.id}`);

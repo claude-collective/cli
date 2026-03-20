@@ -16,13 +16,17 @@ import {
   installPluginConfig,
   detectProjectInstallation,
   deriveInstallMode,
+  resolveInstallPaths,
 } from "../lib/installation/index.js";
+import { copySkillsToLocalFlattened } from "../lib/skills/index.js";
+import { ensureDir } from "../utils/fs.js";
 import { checkPermissions } from "../lib/permission-checker.js";
 import { getInstallationInfo } from "../lib/plugins/plugin-info.js";
 import {
   claudePluginInstall,
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
+  claudePluginMarketplaceUpdate,
 } from "../utils/exec.js";
 import {
   ASCII_LOGO,
@@ -120,7 +124,7 @@ export async function getDashboardData(projectDir: string): Promise<DashboardDat
 
 /** Formats the dashboard summary as plain text lines (for non-interactive/test output). */
 export function formatDashboardText(data: DashboardData): string {
-  const modeLabel = data.mode === "plugin" ? "Plugin" : "Local";
+  const modeLabel = data.mode === "plugin" ? "Plugin" : data.mode === "mixed" ? "Mixed" : "Local";
   const lines = [
     DEFAULT_BRANDING.NAME,
     "",
@@ -289,13 +293,69 @@ export default class Init extends BaseCommand {
     const projectDir = process.cwd();
     const installMode = deriveInstallMode(result.skills);
 
+    const localSkills = result.skills.filter((s) => s.source === "local");
+    const pluginSkills = result.skills.filter((s) => s.source !== "local");
+
     this.log("\n");
     this.log(`Selected ${result.skills.length} skills`);
     this.log(
-      `Install mode: ${installMode === "plugin" ? "Plugin (native install)" : "Local (copy to .claude/skills/)"}`,
+      `Install mode: ${
+        installMode === "plugin"
+          ? "Plugin (native install)"
+          : installMode === "mixed"
+            ? `Mixed (${localSkills.length} local, ${pluginSkills.length} plugin)`
+            : "Local (copy to .claude/skills/)"
+      }`,
     );
 
     if (installMode === "plugin") {
+      await this.installIndividualPlugins(result, sourceResult, flags, projectDir);
+      return;
+    }
+
+    if (installMode === "mixed") {
+      // Split local skills by scope — project skills go to .claude/skills/,
+      // global skills go to ~/.claude/skills/ (mirrors installLocal pattern)
+      const projectLocalSkills = localSkills.filter((s) => s.scope !== "global");
+      const globalLocalSkills = localSkills.filter((s) => s.scope === "global");
+
+      const projectPaths = resolveInstallPaths(projectDir, "project");
+      const globalPaths = resolveInstallPaths(projectDir, "global");
+
+      const projectCopied =
+        projectLocalSkills.length > 0
+          ? (await ensureDir(projectPaths.skillsDir),
+            await copySkillsToLocalFlattened(
+              projectLocalSkills.map((s) => s.id),
+              projectPaths.skillsDir,
+              sourceResult.matrix,
+              sourceResult,
+            ))
+          : [];
+
+      const globalCopied =
+        globalLocalSkills.length > 0
+          ? (await ensureDir(globalPaths.skillsDir),
+            await copySkillsToLocalFlattened(
+              globalLocalSkills.map((s) => s.id),
+              globalPaths.skillsDir,
+              sourceResult.matrix,
+              sourceResult,
+            ))
+          : [];
+
+      const totalCopied = projectCopied.length + globalCopied.length;
+      if (projectCopied.length > 0 && globalCopied.length > 0) {
+        this.log(
+          `Copied ${totalCopied} local skills (${projectCopied.length} project, ${globalCopied.length} global)`,
+        );
+      } else if (globalCopied.length > 0) {
+        this.log(`Copied ${globalCopied.length} local skills to ~/.claude/skills/`);
+      } else {
+        this.log(`Copied ${projectCopied.length} local skills to .claude/skills/`);
+      }
+
+      // Install plugin skills + generate config + compile agents (uses full result)
       await this.installIndividualPlugins(result, sourceResult, flags, projectDir);
       return;
     }
@@ -336,6 +396,12 @@ export default class Init extends BaseCommand {
         this.error(getErrorMessage(error), {
           exit: EXIT_CODES.ERROR,
         });
+      }
+    } else {
+      try {
+        await claudePluginMarketplaceUpdate(marketplace);
+      } catch (error) {
+        this.warn(`Could not update marketplace — continuing with cached version`);
       }
     }
 

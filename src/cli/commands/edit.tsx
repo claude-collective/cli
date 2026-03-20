@@ -33,6 +33,7 @@ import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
 import type { AgentDefinition, AgentName, SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
+import { remove } from "../utils/fs.js";
 import {
   claudePluginInstall,
   claudePluginUninstall,
@@ -126,15 +127,15 @@ export default class Edit extends BaseCommand {
     try {
       const discoveredSkills = await discoverAllPluginSkills(projectDir);
       // Boundary cast: discoverAllPluginSkills keys are skill IDs from frontmatter
-      currentSkillIds = Object.keys(discoveredSkills) as SkillId[];
+      const pluginSkillIds = Object.keys(discoveredSkills) as SkillId[];
 
-      // In local mode, plugin discovery returns empty — fall back to project config skills
-      if (currentSkillIds.length === 0 && projectConfig?.config?.skills?.length) {
-        currentSkillIds = projectConfig.config.skills.map((s) => s.id);
-        pushBufferMessage("info", `Found ${currentSkillIds.length} skills from project config`);
-      } else {
-        pushBufferMessage("info", `Current plugin has ${currentSkillIds.length} skills`);
-      }
+      // Merge plugin-discovered skills with config skills (catches local skills and
+      // global-scoped plugins that discoverAllPluginSkills doesn't find).
+      const configSkillIds = projectConfig?.config?.skills?.map((s) => s.id) ?? [];
+      const mergedIds = new Set<SkillId>([...pluginSkillIds, ...configSkillIds]);
+      currentSkillIds = [...mergedIds];
+
+      pushBufferMessage("info", `Found ${currentSkillIds.length} installed skills`);
     } catch (error) {
       disableBuffering();
       this.handleError(error);
@@ -330,7 +331,9 @@ export default class Edit extends BaseCommand {
         continue;
       }
       if (change.from === "local") {
-        await deleteLocalSkill(cwd, skillId);
+        const oldSkill = projectConfig?.config?.skills?.find((s) => s.id === skillId);
+        const deleteDir = oldSkill?.scope === "global" ? os.homedir() : cwd;
+        await deleteLocalSkill(deleteDir, skillId);
       }
     }
 
@@ -459,6 +462,19 @@ export default class Edit extends BaseCommand {
     } catch (error) {
       this.warn(`Agent recompilation failed: ${getErrorMessage(error)}`);
       this.log(`You can manually recompile with '${CLI_BIN_NAME} compile'.\n`);
+    }
+
+    // Clean up old agent .md files after scope changes.
+    // Recompilation wrote the new file to the correct scope directory;
+    // now delete the stale copy from the old scope directory.
+    for (const [agentName, change] of agentScopeChanges) {
+      const oldBaseDir = change.from === "global" ? os.homedir() : cwd;
+      const oldAgentPath = path.join(oldBaseDir, CLAUDE_DIR, "agents", `${agentName}.md`);
+      try {
+        await remove(oldAgentPath);
+      } catch (error) {
+        this.warn(`Could not remove old agent file ${oldAgentPath}: ${getErrorMessage(error)}`);
+      }
     }
 
     const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];

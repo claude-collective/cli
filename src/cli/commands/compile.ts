@@ -5,7 +5,7 @@ import { BaseCommand } from "../base-command";
 import { setVerbose, verbose, warn } from "../utils/logger";
 import { discoverAllPluginSkills } from "../lib/plugins";
 import { getAgentDefinitions } from "../lib/agents";
-import { resolveSource } from "../lib/configuration";
+import { resolveSource, loadProjectConfigFromDir } from "../lib/configuration";
 import { directoryExists, glob, readFile, fileExists } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
 import { parseFrontmatter } from "../lib/loading";
@@ -13,6 +13,7 @@ import { CLI_BIN_NAME, GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH, STANDARD_FILES } 
 import { EXIT_CODES } from "../lib/exit-codes";
 import { ERROR_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages";
 import {
+  buildAgentScopeMap,
   detectGlobalInstallation,
   detectProjectInstallation,
   type Installation,
@@ -148,6 +149,11 @@ export default class Compile extends BaseCommand {
 
     let totalPassesWithSkills = 0;
 
+    // When both installations exist, filter each pass to its own scope to prevent
+    // the project pass from overwriting global agents with zero-skill versions
+    // (the project config's stack only has project agent entries).
+    const hasBothScopes = !!globalInstallation && !!projectInstallation;
+
     if (globalInstallation) {
       const hadSkills = await this.runCompilePass({
         label: "Global",
@@ -155,6 +161,7 @@ export default class Compile extends BaseCommand {
         installation: globalInstallation,
         agentDefs,
         flags,
+        scopeFilter: hasBothScopes ? "global" : undefined,
       });
       if (hadSkills) totalPassesWithSkills++;
     }
@@ -166,6 +173,7 @@ export default class Compile extends BaseCommand {
         installation: projectInstallation,
         agentDefs,
         flags,
+        scopeFilter: hasBothScopes ? "project" : undefined,
       });
       if (hadSkills) totalPassesWithSkills++;
     }
@@ -181,12 +189,15 @@ export default class Compile extends BaseCommand {
   private async discoverAllSkills(projectDir: string = process.cwd()): Promise<DiscoveredSkills> {
     this.log(STATUS_MESSAGES.DISCOVERING_SKILLS);
 
-    const pluginSkills = await discoverAllPluginSkills(projectDir);
-    const pluginSkillCount = typedKeys<SkillId>(pluginSkills).length;
-    verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
+    // Load global plugins (skip if projectDir is already the home directory to avoid double-loading)
+    const isGlobalProject = projectDir === os.homedir();
+    const globalPluginSkills = isGlobalProject ? {} : await discoverAllPluginSkills(os.homedir());
+    const globalPluginSkillCount = typedKeys<SkillId>(globalPluginSkills).length;
+    if (globalPluginSkillCount > 0) {
+      verbose(`  Found ${globalPluginSkillCount} skills from global plugins`);
+    }
 
     // Load global local skills (skip if projectDir is already the home directory to avoid double-loading)
-    const isGlobalProject = projectDir === GLOBAL_INSTALL_ROOT;
     const globalLocalSkillsDir = path.join(GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH);
     const globalLocalSkills = isGlobalProject
       ? {}
@@ -196,25 +207,30 @@ export default class Compile extends BaseCommand {
       verbose(`  Found ${globalLocalSkillCount} global local skills from ~/.claude/skills/`);
     }
 
+    const pluginSkills = await discoverAllPluginSkills(projectDir);
+    const pluginSkillCount = typedKeys<SkillId>(pluginSkills).length;
+    verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
+
     const localSkills = await discoverLocalProjectSkills(projectDir);
     const localSkillCount = typedKeys<SkillId>(localSkills).length;
     verbose(`  Found ${localSkillCount} local skills from .claude/skills/`);
 
     // Global skills loaded first, project skills second — project wins on conflict (later sources override)
-    const allSkills = mergeSkills(pluginSkills, globalLocalSkills, localSkills);
+    const allSkills = mergeSkills(globalPluginSkills, globalLocalSkills, pluginSkills, localSkills);
     const totalSkillCount = typedKeys<SkillId>(allSkills).length;
 
     if (totalSkillCount === 0) {
       return { allSkills, totalSkillCount };
     }
 
-    if (pluginSkillCount > 0 && totalSkillCount > pluginSkillCount) {
-      const localCount = totalSkillCount - pluginSkillCount;
+    const totalPluginSkillCount = globalPluginSkillCount + pluginSkillCount;
+    if (totalPluginSkillCount > 0 && totalSkillCount > totalPluginSkillCount) {
+      const localCount = totalSkillCount - totalPluginSkillCount;
       this.log(
-        `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localCount} local)`,
+        `Discovered ${totalSkillCount} skills (${totalPluginSkillCount} from plugins, ${localCount} local)`,
       );
-    } else if (pluginSkillCount > 0) {
-      this.log(`Discovered ${pluginSkillCount} skills from plugins`);
+    } else if (totalPluginSkillCount > 0) {
+      this.log(`Discovered ${totalPluginSkillCount} skills from plugins`);
     } else {
       this.log(`Discovered ${totalSkillCount} local skills`);
     }
@@ -228,8 +244,10 @@ export default class Compile extends BaseCommand {
     installation: Installation;
     agentDefs: AgentSourcePaths;
     flags: CompileFlags;
+    /** When true, only compile agents matching this scope (filters out agents handled by another pass) */
+    scopeFilter?: "project" | "global";
   }): Promise<boolean> {
-    const { label, projectDir, installation, agentDefs, flags } = params;
+    const { label, projectDir, installation, agentDefs, flags, scopeFilter } = params;
 
     this.log("");
     this.log(`Compiling ${label.toLowerCase()} agents...`);
@@ -245,6 +263,20 @@ export default class Compile extends BaseCommand {
       return false;
     }
 
+    // Load config to build scope map so agents are routed to the correct directory
+    const loadedConfig = await loadProjectConfigFromDir(projectDir);
+    const agentScopeMap = loadedConfig?.config
+      ? buildAgentScopeMap(loadedConfig.config)
+      : undefined;
+
+    // When a scope filter is active, only compile agents matching that scope.
+    // This prevents the project pass from overwriting global agents (which were already compiled
+    // in the global pass) with zero-skill versions (the project stack only has project entries).
+    const filteredAgents =
+      scopeFilter && loadedConfig?.config?.agents
+        ? loadedConfig.config.agents.filter((a) => a.scope === scopeFilter).map((a) => a.name)
+        : undefined;
+
     this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
       const recompileResult = await recompileAgents({
@@ -253,6 +285,8 @@ export default class Compile extends BaseCommand {
         skills: allSkills,
         projectDir,
         outputDir: installation.agentsDir,
+        agentScopeMap,
+        agents: filteredAgents,
       });
 
       if (recompileResult.failed.length > 0) {
