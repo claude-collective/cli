@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.79.0] - 2026-03-21
+
+**Scope-aware path resolution across all commands**
+
+- Fix all commands to route global-scoped skills/agents to `~/` and project-scoped to project dir
+- Always merge global and project local skills instead of fallback pattern
+- Scope-aware config generation, installation, compilation, and mode migration
+- 6 new E2E test suites for scope-aware behavior
+
+See [changelogs/0.79.0.md](./changelogs/0.79.0.md) for full details.
+
 ## [0.78.0] - 2026-03-20
 
 **Wizard tab navigation, stats panel, e2e cleanup**
