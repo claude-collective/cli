@@ -18,8 +18,9 @@ export type MergeResult = {
 
 /**
  * Pure merge logic: existing values take precedence for identity fields;
- * agents are unioned by name; skills are merged by ID (new overrides existing,
- * keeps the rest); stack is deep-merged by agent.
+ * agents are merged by name (new overrides existing, keeps the rest);
+ * skills are merged by ID (new overrides existing, keeps the rest);
+ * stack is deep-merged by agent.
  */
 export function mergeConfigs(
   newConfig: ProjectConfig,
@@ -35,14 +36,19 @@ export function mergeConfigs(
     merged.description = existingConfig.description;
   }
 
-  if (existingConfig.source) {
+  if (existingConfig.source && !newConfig.source) {
     merged.source = existingConfig.source;
   }
 
+  // Merge agents by name: new agents override existing (preserves scope changes), existing agents preserved otherwise
   if (existingConfig.agents && existingConfig.agents.length > 0) {
+    const newAgentsByName = indexBy(merged.agents, (a) => a.name);
     const existingNames = new Set(existingConfig.agents.map((a) => a.name));
-    const newAgents = merged.agents.filter((a) => !existingNames.has(a.name));
-    merged.agents = [...existingConfig.agents, ...newAgents];
+    const updatedExisting = existingConfig.agents.map(
+      (existing) => newAgentsByName[existing.name] ?? existing,
+    );
+    const addedAgents = merged.agents.filter((a) => !existingNames.has(a.name));
+    merged.agents = [...updatedExisting, ...addedAgents];
   }
 
   // Merge skills by ID: new skills override existing, existing skills preserved otherwise

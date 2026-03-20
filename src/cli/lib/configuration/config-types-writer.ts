@@ -299,8 +299,9 @@ export function generateConfigTypesSource(
     categories = unique([...configCategories, ...extraCategoriesArr]).sort();
 
     // Derive domains from included categories via matrix lookup
+    // Also include config.domains (user-selected domains) that may not have skills in this scope
     const configDomains = deriveDomains(categories, matrix);
-    domains = unique([...configDomains, ...extraDomainsArr]).sort();
+    domains = unique([...configDomains, ...(config.domains ?? []), ...extraDomainsArr]).sort();
   } else {
     // Fall back to full matrix (e.g., blank global config)
     skillIds = unique([...typedKeys(matrix.skills), ...extraSkillIds]).sort();

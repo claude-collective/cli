@@ -204,14 +204,30 @@ export function splitConfigByScope(config: ProjectConfig): SplitConfigResult {
   const globalAgents = config.agents.filter((a) => a.scope === "global");
   const projectAgents = config.agents.filter((a) => a.scope === "project");
 
-  // Split stack by agent partition
+  // Split stack by agent partition, filtering global agents' stacks to only reference global skills.
+  // Project agents keep ALL skill references (both project and global) since global skills are available everywhere.
+  const globalSkillIds = new Set(globalSkills.map((s) => s.id));
   const globalStack: typeof config.stack = {};
   const projectStack: typeof config.stack = {};
 
   if (config.stack) {
     for (const agent of globalAgents) {
-      if (config.stack[agent.name]) {
-        globalStack[agent.name] = config.stack[agent.name];
+      const agentStack = config.stack[agent.name];
+      if (agentStack) {
+        // Filter each category's assignments to only include global-scoped skills
+        const filtered: StackAgentConfig = {};
+        for (const [category, assignments] of typedEntries<Category, SkillAssignment[]>(
+          agentStack,
+        )) {
+          if (!assignments) continue;
+          const globalOnly = assignments.filter((a) => globalSkillIds.has(a.id));
+          if (globalOnly.length > 0) {
+            filtered[category] = globalOnly;
+          }
+        }
+        if (typedKeys<Category>(filtered).length > 0) {
+          globalStack[agent.name] = filtered;
+        }
       }
     }
     for (const agent of projectAgents) {
@@ -227,32 +243,26 @@ export function splitConfigByScope(config: ProjectConfig): SplitConfigResult {
   const projectSelectedAgents =
     config.selectedAgents?.filter((a) => !globalAgentNames.has(a)) ?? [];
 
-  // Split domains: global gets all, project gets only domains not already in global
-  const globalDomains = config.domains ?? [];
-  const globalDomainSet = new Set(globalDomains);
-  const projectOnlyDomains = (config.domains ?? []).filter((d) => !globalDomainSet.has(d));
-
+  // Domains are a UI/preference concept — all selected domains go in global config.
+  // Project config inherits domains from global at runtime, so it gets none.
   const globalConfig: ProjectConfig = {
+    ...config,
     name: "global",
     agents: globalAgents,
     skills: globalSkills,
-    ...(Object.keys(globalStack).length > 0 && { stack: globalStack }),
-    ...(globalDomains.length > 0 && { domains: globalDomains }),
-    ...(globalSelectedAgents.length > 0 && { selectedAgents: globalSelectedAgents }),
+    ...(Object.keys(globalStack).length > 0 ? { stack: globalStack } : { stack: undefined }),
+    domains: config.domains,
+    selectedAgents: globalSelectedAgents.length > 0 ? globalSelectedAgents : undefined,
   };
 
   const projectConfig: ProjectConfig = {
+    ...config,
     name: config.name,
     agents: projectAgents,
     skills: projectSkills,
-    ...(Object.keys(projectStack).length > 0 && { stack: projectStack }),
-    ...(config.description && { description: config.description }),
-    ...(config.author && { author: config.author }),
-    ...(config.source && { source: config.source }),
-    ...(config.marketplace && { marketplace: config.marketplace }),
-    ...(config.agentsSource && { agentsSource: config.agentsSource }),
-    ...(projectOnlyDomains.length > 0 && { domains: projectOnlyDomains }),
-    ...(projectSelectedAgents.length > 0 && { selectedAgents: projectSelectedAgents }),
+    ...(Object.keys(projectStack).length > 0 ? { stack: projectStack } : { stack: undefined }),
+    domains: undefined,
+    selectedAgents: projectSelectedAgents.length > 0 ? projectSelectedAgents : undefined,
   };
 
   return { global: globalConfig, project: projectConfig };
