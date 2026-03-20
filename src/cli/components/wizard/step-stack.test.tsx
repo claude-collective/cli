@@ -83,12 +83,13 @@ describe("StepStack component", () => {
         expect(output).toContain("Full React stack");
       });
 
-      it("should render ViewTitle for stack selection", () => {
+      it("should render stack selection content (title rendered by wizard-layout)", () => {
         const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("Choose a stack");
+        expect(output).toContain("React Fullstack");
+        expect(output).toContain("Start from scratch");
       });
 
       it("should render section structure with scratch option", () => {
@@ -116,7 +117,8 @@ describe("StepStack component", () => {
         expect(selectedStackId).toBe("react-fullstack");
 
         const output = lastFrame();
-        expect(output).toContain("Select domains to configure");
+        // Domain selection content is now rendered (title handled by wizard-layout)
+        expect(output).toContain("Web");
       });
 
       it("should select second stack when navigated to", async () => {
@@ -154,7 +156,8 @@ describe("StepStack component", () => {
         expect(selectedStackId).toBeNull();
 
         const output = lastFrame();
-        expect(output).toContain("Select domains to configure");
+        // Domain selection content is now rendered (title handled by wizard-layout)
+        expect(output).toContain("Web");
       });
 
       it("should pre-select domains except CLI when scratch is chosen", async () => {
@@ -276,7 +279,6 @@ describe("StepStack component", () => {
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("Choose a stack");
         expect(output).toContain("Start from scratch");
       });
     });
@@ -298,12 +300,14 @@ describe("StepStack component", () => {
         expect(output).toContain("CLI");
       });
 
-      it("should render header text for domain selection", () => {
+      it("should render domain options in selection view", () => {
         const { lastFrame, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("Select domains to configure");
+        // Domain items are shown directly (title rendered by wizard-layout)
+        expect(output).toContain("Web");
+        expect(output).toContain("API");
       });
 
       it("should show domain descriptions", () => {
@@ -396,7 +400,9 @@ describe("StepStack component", () => {
         expect(approach).toBeNull();
 
         const output = lastFrame();
-        expect(output).toContain("Choose a stack");
+        // Back to stack selection view (title rendered by wizard-layout)
+        expect(output).toContain("React Fullstack");
+        expect(output).toContain("Start from scratch");
       });
     });
   });

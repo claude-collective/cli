@@ -42,7 +42,7 @@ export function useWizardInitialization({
     // Restore saved domains from config, overriding the domains
     // derived by populateFromSkillIds
     if (initialDomains?.length) {
-      useWizardStore.setState({ selectedDomains: initialDomains });
+      useWizardStore.setState({ selectedDomains: initialDomains, currentDomainIndex: 0 });
     }
     // Restore saved agents from config, overriding the default empty array
     if (initialAgents?.length) {

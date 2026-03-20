@@ -140,7 +140,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({
   if (isLoading) {
     return (
       <Box flexDirection="column" paddingX={2}>
-        <ViewTitle>Skill Sources</ViewTitle>
+        {/* <ViewTitle>Skill Sources</ViewTitle> */}
         <Text dimColor>Loading sources...</Text>
       </Box>
     );
@@ -169,7 +169,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({
 
   return (
     <Box flexDirection="column" paddingX={2}>
-      <ViewTitle>Skill Sources</ViewTitle>
+      {/* <ViewTitle>Skill Sources</ViewTitle> */}
       <Box marginTop={1} />
 
       <Text bold>Configured marketplaces:</Text>

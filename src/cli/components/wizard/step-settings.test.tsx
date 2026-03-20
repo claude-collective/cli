@@ -57,13 +57,14 @@ describe("StepSettings component", () => {
   });
 
   describe("rendering", () => {
-    it("should render the title", async () => {
+    it("should render configured marketplaces header", async () => {
       const { lastFrame, unmount } = renderStepSettings();
       cleanup = unmount;
 
       await delay(LOADING_SETTLE_MS);
       const output = lastFrame();
-      expect(output).toContain("Skill Sources");
+      // ViewTitle removed; verify content renders (title shown by wizard-layout)
+      expect(output).toContain("Configured marketplaces:");
     });
 
     it("should render configured sources", async () => {
@@ -227,8 +228,8 @@ describe("StepSettings component", () => {
       expect(onClose).not.toHaveBeenCalled();
 
       const output = lastFrame();
-      // Should still show the settings view
-      expect(output).toContain("Skill Sources");
+      // Should still show the settings view (ViewTitle removed, check content)
+      expect(output).toContain("Configured marketplaces:");
     });
 
     it("should show hint text for add mode", async () => {

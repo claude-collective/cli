@@ -85,14 +85,15 @@ describe("StepSources component", () => {
       expect(onBack).toHaveBeenCalledTimes(1);
     });
 
-    it("should show ViewTitle in customize view", async () => {
+    it("should show source grid content in customize view", async () => {
       const { lastFrame, unmount } = renderStepSources();
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
 
       const output = lastFrame();
-      expect(output).toContain("Customize skill sources");
+      // ViewTitle removed; verify source grid renders (title shown by wizard-layout)
+      expect(output).toContain("React");
     });
   });
 
@@ -106,8 +107,8 @@ describe("StepSources component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should still render the customize view title
-      expect(output).toContain("Customize skill sources");
+      // ViewTitle removed; source grid renders empty state
+      expect(output).toBeDefined();
     });
 
     it("should handle single technology", () => {
@@ -123,8 +124,7 @@ describe("StepSources component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should show the single technology in the source grid
-      expect(output).toContain("Customize skill sources");
+      // ViewTitle removed; verify source grid shows the technology
       expect(output).toContain("React");
     });
 

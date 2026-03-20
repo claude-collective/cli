@@ -279,7 +279,7 @@ export const StepAgents: React.FC = () => {
 
   return (
     <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
-      <ViewTitle>Select agents</ViewTitle>
+      {/* <ViewTitle>Select agents</ViewTitle> */}
 
       <Box ref={listRef} flexDirection="column" flexGrow={1} flexBasis={0}>
         <Box

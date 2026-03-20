@@ -37,7 +37,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
 
   return (
     <Box flexDirection="column" paddingX={2}>
-      <ViewTitle>Refine your stack</ViewTitle>
+      {/* <ViewTitle>Refine your stack</ViewTitle> */}
       <Text>
         Your stack includes{" "}
         <Text color={CLI_COLORS.PRIMARY} bold>

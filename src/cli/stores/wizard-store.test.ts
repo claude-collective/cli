@@ -863,7 +863,7 @@ describe("WizardStore", () => {
   });
 
   describe("populateFromStack", () => {
-    it("should set selectedDomains to all domains regardless of stack contents", () => {
+    it("should set selectedDomains to only domains present in stack contents", () => {
       const store = useWizardStore.getState();
 
       const stack: Parameters<typeof store.populateFromStack>[0] = {
@@ -877,7 +877,7 @@ describe("WizardStore", () => {
 
       const { selectedDomains, domainSelections } = useWizardStore.getState();
 
-      expect(selectedDomains).toEqual(["web", "api", "mobile", "cli", "shared"]);
+      expect(selectedDomains).toEqual(["web"]);
 
       expect(domainSelections.web).toBeDefined();
       expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);

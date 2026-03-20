@@ -105,12 +105,12 @@ const SourceSection: React.FC<SourceSectionProps> = ({
   const searchPillIndex = row.options.length;
 
   return (
-    <Box flexDirection="column" marginTop={1}>
+    <Box flexDirection="column">
       <Box flexDirection="row">
         <Text>{getSkillById(row.skillId).displayName}</Text>
       </Box>
 
-      <Box flexDirection="row" flexWrap="wrap" marginTop={0}>
+      <Box flexDirection="row" flexWrap="wrap">
         {row.options.map((option, index) => (
           <SourceTag
             key={option.id}

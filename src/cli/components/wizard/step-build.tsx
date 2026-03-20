@@ -1,13 +1,64 @@
 import { Box, Text, useInput } from "ink";
 import React, { useCallback, useMemo } from "react";
 import { CLI_COLORS } from "../../consts.js";
+import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import type { Domain, SkillId, Category, CategorySelections } from "../../types/index.js";
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { CategoryGrid } from "./category-grid.js";
-import { getDomainDisplayName, orderDomains } from "./utils.js";
+import { getDomainDisplayName } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
+import { StatsPanel } from "./stats-panel.js";
+
+const SCOPE_COLOR_PROJECT = "#eee";
+
+type StatsData = {
+  skillsTotal: number;
+  globalPlugin: number;
+  globalLocal: number;
+  projectPlugin: number;
+  projectLocal: number;
+  agentsTotal: number;
+  agentsGlobal: number;
+  agentsProject: number;
+};
+
+function computeStats(skillConfigs: SkillConfig[], agentConfigs: AgentScopeConfig[]): StatsData {
+  let globalPlugin = 0;
+  let globalLocal = 0;
+  let projectPlugin = 0;
+  let projectLocal = 0;
+
+  for (const sc of skillConfigs) {
+    const isLocal = sc.source === "local";
+    if (sc.scope === "global") {
+      if (isLocal) globalLocal++;
+      else globalPlugin++;
+    } else {
+      if (isLocal) projectLocal++;
+      else projectPlugin++;
+    }
+  }
+
+  let agentsGlobal = 0;
+  let agentsProject = 0;
+  for (const ac of agentConfigs) {
+    if (ac.scope === "global") agentsGlobal++;
+    else agentsProject++;
+  }
+
+  return {
+    skillsTotal: skillConfigs.length,
+    globalPlugin,
+    globalLocal,
+    projectPlugin,
+    projectLocal,
+    agentsTotal: agentConfigs.length,
+    agentsGlobal,
+    agentsProject,
+  };
+}
 
 export type StepBuildProps = {
   domain: Domain;
@@ -41,13 +92,17 @@ export const StepBuild: React.FC<StepBuildProps> = ({
 }) => {
   const { ref: gridRef, measuredHeight: gridHeight } = useMeasuredHeight();
   const skillConfigs = useWizardStore((s) => s.skillConfigs);
+  const agentConfigs = useWizardStore((s) => s.agentConfigs);
+
+  const stats = useMemo(
+    () => computeStats(skillConfigs, agentConfigs),
+    [skillConfigs, agentConfigs],
+  );
 
   const handleFocusedSkillChange = useCallback(
     (id: SkillId | null) => useWizardStore.getState().setFocusedSkillId(id),
     [],
   );
-
-  const orderedDomains = useMemo(() => orderDomains(selectedDomains), [selectedDomains]);
 
   const categories = useFrameworkFiltering({
     domain: activeDomain,
@@ -68,31 +123,10 @@ export const StepBuild: React.FC<StepBuildProps> = ({
 
   return (
     <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
-      <Box
-        columnGap={2}
-        flexDirection="row"
-        justifyContent="space-between"
-        marginBottom={1}
-        paddingRight={1}
-        marginTop={-1}
-        borderTop={false}
-        borderRight={false}
-        borderLeft={false}
-        borderColor={CLI_COLORS.NEUTRAL}
-        borderStyle="single"
-      >
-        <Box columnGap={2} flexDirection="row">
-          {orderedDomains.map((domain) => {
-            const isActive = domain === activeDomain;
-            return (
-              <Text key={domain} color={isActive ? CLI_COLORS.WARNING : undefined} bold={isActive}>
-                {getDomainDisplayName(domain)}
-              </Text>
-            );
-          })}
-        </Box>
+      <Box flexDirection="row" columnGap={2} justifyContent="flex-end">
+        {/* <ViewTitle>{`Customize your ${getDomainDisplayName(activeDomain)} stack`}</ViewTitle> */}
+        <StatsPanel stats={stats} />
       </Box>
-      <ViewTitle>{`Customize your ${getDomainDisplayName(activeDomain)} stack`}</ViewTitle>
 
       <Box ref={gridRef} flexGrow={1} flexBasis={0}>
         <CategoryGrid

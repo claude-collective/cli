@@ -3,7 +3,7 @@ import React, { Fragment } from "react";
 import { CLI_COLORS } from "../../consts.js";
 import type { StartupMessage } from "../../utils/logger.js";
 import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
-import { useWizardStore } from "../../stores/wizard-store.js";
+import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
 import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
 import { HelpModal } from "./help-modal.js";
 import {
@@ -18,7 +18,9 @@ import {
   KEY_LABEL_ESC,
   KEY_LABEL_SPACE,
 } from "./hotkeys.js";
-import { WIZARD_STEPS, WizardTabs } from "./wizard-tabs.js";
+import { WIZARD_STEPS, WizardTabs, type DomainNavProps, type TabDropdownProps } from "./wizard-tabs.js";
+import { getDomainDisplayName, getStackName, orderDomains } from "./utils.js";
+import type { Domain } from "../../types/index.js";
 
 type KeyHintProps = {
   isVisible?: boolean;
@@ -98,6 +100,50 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
   const { completedSteps, skippedSteps } = store.getStepProgress();
   const { rows: terminalHeight } = useTerminalDimensions();
 
+  const handleSelectDomain = (domain: Domain) => {
+    const index = store.selectedDomains.indexOf(domain);
+    if (index !== -1) {
+      useWizardStore.getState().setCurrentDomainIndex(index);
+    }
+  };
+
+  const domainNav: DomainNavProps | undefined =
+    store.step === "build" && store.selectedDomains.length > 0
+      ? {
+          domains: orderDomains(store.selectedDomains),
+          activeDomain: (store.getCurrentDomain() || store.selectedDomains[0] || "web") as Domain,
+          getDomainLabel: getDomainDisplayName,
+          onSelectDomain: handleSelectDomain,
+        }
+      : undefined;
+
+  // TODO: dropdowns should be in a map
+  const dropdowns: Partial<Record<WizardStep, TabDropdownProps>> = {};
+
+  if (store.step === "stack") {
+    const label = "Choose a stack";
+    dropdowns.stack = { items: [{ id: label, label }] };
+  }
+
+  if (store.step === "sources") {
+    const label = "Customize skill sources";
+    dropdowns.sources = { items: [{ id: label, label }] };
+  }
+
+  if (store.step === "agents") {
+    const label = "Select agents";
+    dropdowns.agents = { items: [{ id: label, label }] };
+  }
+
+  if (store.step === "confirm") {
+    const stackName = getStackName(store.selectedStackId);
+    const domainsText = store.selectedDomains.map(getDomainDisplayName).join(" + ");
+    const label = stackName
+      ? `Ready to install ${stackName}`
+      : `Ready to install your custom stack${domainsText ? ` (${domainsText})` : ""}`;
+    dropdowns.confirm = { items: [{ id: label, label }] };
+  }
+
   return (
     <>
       {startupMessages && startupMessages.length > 0 && (
@@ -125,6 +171,8 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
           completedSteps={completedSteps}
           skippedSteps={skippedSteps}
           version={version}
+          domainNav={domainNav}
+          dropdowns={dropdowns}
         />
         {store.showHelp ? (
           <HelpModal currentStep={store.step} />

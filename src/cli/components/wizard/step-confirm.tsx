@@ -52,15 +52,9 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
     }
   });
 
-  const domainsText = selectedDomains?.map(getDomainDisplayName).join(" + ") || "";
-  const title = stackName
-    ? `Ready to install ${stackName}`
-    : `Ready to install your custom stack${domainsText ? ` (${domainsText})` : ""}`;
-
+  
   return (
     <Box flexDirection="column" paddingX={2}>
-      <ViewTitle>{title}</ViewTitle>
-      <Text> </Text>
 
       {domainSelections && selectedDomains && !stackName && (
         <Box flexDirection="column" marginBottom={1}>
@@ -77,7 +71,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
         </Box>
       )}
 
-      <Box flexDirection="column" marginY={1}>
+      <Box flexDirection="column">
         {technologyCount !== undefined && (
           <Text>
             <Text dimColor>Technologies:</Text> <Text bold>{technologyCount}</Text>
@@ -121,12 +115,6 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
             </Text>
           </>
         )}
-      </Box>
-
-      <Box marginTop={1}>
-        <Text dimColor>
-          {KEY_LABEL_ENTER} install {KEY_LABEL_ESC} go back
-        </Text>
       </Box>
     </Box>
   );

@@ -28,7 +28,7 @@ export const StepStack: React.FC<StepStackProps> = ({ onCancel }) => {
 
   return (
     <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
-      <ViewTitle>Choose a stack</ViewTitle>
+      {/* <ViewTitle>Choose a stack</ViewTitle> */}
       <Box ref={containerRef} flexGrow={1} flexBasis={0}>
         <StackSelection availableHeight={measuredHeight} onCancel={onCancel} />
       </Box>

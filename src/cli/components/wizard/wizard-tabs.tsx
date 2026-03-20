@@ -1,12 +1,31 @@
-import { Box, Text } from "ink";
+import { Box, Text, useInput } from "ink";
 import React from "react";
 import { CLI_COLORS } from "../../consts.js";
 import type { WizardStep } from "../../stores/wizard-store.js";
+import type { Domain } from "../../types/index.js";
 
 type WizardTabStep = {
   id: WizardStep;
   label: string;
   number: number;
+};
+
+export type TabDropdownItem = {
+  id: string;
+  label: string;
+};
+
+export type TabDropdownProps = {
+  items: TabDropdownItem[];
+  activeId?: string;
+  isSubNav?: boolean;
+};
+
+export type DomainNavProps = {
+  domains: Domain[];
+  activeDomain: Domain;
+  getDomainLabel: (domain: Domain) => string;
+  onSelectDomain?: (domain: Domain) => void;
 };
 
 export type WizardTabsProps = {
@@ -15,6 +34,8 @@ export type WizardTabsProps = {
   completedSteps: WizardStep[];
   skippedSteps?: WizardStep[];
   version?: string;
+  domainNav?: DomainNavProps;
+  dropdowns?: Partial<Record<WizardStep, TabDropdownProps>>;
 };
 
 export const WIZARD_STEPS: WizardTabStep[] = [
@@ -82,26 +103,99 @@ const Tab: React.FC<TabProps> = ({ step, state }) => {
   }
 };
 
+const TabDropdown: React.FC<TabDropdownProps> = ({ items, activeId, isSubNav }) => (
+  <Box
+    position="absolute"
+    marginTop={2}
+    flexDirection="row"
+    columnGap={0}
+    paddingLeft={1}
+    paddingRight={1}
+    borderStyle="single"
+    borderColor="blackBright"
+  >
+    {items.map((item) => {
+      const isActive = item.id === activeId;
+      return (
+        <Text
+          key={item.id}
+          dimColor={!isSubNav}
+          bold={isSubNav && isActive}
+          color={isActive ? CLI_COLORS.WARNING : CLI_COLORS.UNFOCUSED}
+        >
+          {" "}
+          {item.label}{" "}
+        </Text>
+      );
+    })}
+  </Box>
+);
+
+const DomainNav: React.FC<DomainNavProps> = ({ domains, activeDomain, getDomainLabel }) => (
+  <TabDropdown
+    items={domains.map((d) => ({ id: d, label: getDomainLabel(d) }))}
+    activeId={activeDomain}
+    isSubNav
+  />
+);
+
+const getStepJustifyContent = (stepId: WizardStep): "flex-start" | "flex-end" | "center" => {
+  if (stepId === "stack") return "flex-start";
+  if (stepId === "confirm") return "flex-end";
+  return "center";
+};
+
 export const WizardTabs: React.FC<WizardTabsProps> = ({
   steps,
   currentStep,
   completedSteps,
   skippedSteps = [],
   version,
+  domainNav,
+  dropdowns,
 }) => {
   return (
     <Box
       flexDirection="row"
       columnGap={2}
-      borderRight={false}
-      borderLeft={false}
       borderColor="blackBright"
       borderStyle="single"
-      paddingRight={1}
+      paddingX={1}
       alignItems="center"
+      marginBottom={3}
     >
       {steps.map((step) => {
         const state = getStepState(step.id, currentStep, completedSteps, skippedSteps);
+
+        if (step.id === "build" && domainNav) {
+          return (
+            <Box
+              key={step.id}
+              position="relative"
+              display="flex"
+              justifyContent={getStepJustifyContent(step.id)}
+            >
+              <Tab step={step} state={state} />
+              <DomainNav {...domainNav} />
+            </Box>
+          );
+        }
+
+        // Generic dropdown for any step
+        const dropdown = dropdowns?.[step.id];
+        if (dropdown) {
+          return (
+            <Box
+              key={step.id}
+              position="relative"
+              display="flex"
+              justifyContent={getStepJustifyContent(step.id)}
+            >
+              <Tab step={step} state={state} />
+              <TabDropdown {...dropdown} />
+            </Box>
+          );
+        }
 
         return <Tab key={step.id} step={step} state={state} />;
       })}

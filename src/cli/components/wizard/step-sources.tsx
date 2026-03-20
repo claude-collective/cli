@@ -108,18 +108,15 @@ export const StepSources: React.FC<StepSourcesProps> = ({ projectDir, onContinue
   if (view === "customize") {
     const rows = store.buildSourceRows();
     return (
-      <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
-        <ViewTitle>Customize skill sources</ViewTitle>
-        <Box ref={gridRef} flexGrow={1} flexBasis={0}>
-          <SourceGrid
-            rows={rows}
-            availableHeight={gridHeight}
-            onSelect={handleGridSelect}
-            onSearch={FEATURE_FLAGS.SOURCE_SEARCH ? handleSearch : undefined}
-            onBind={FEATURE_FLAGS.SOURCE_SEARCH ? handleBind : undefined}
-            onSearchStateChange={FEATURE_FLAGS.SOURCE_SEARCH ? handleSearchStateChange : undefined}
-          />
-        </Box>
+      <Box ref={gridRef} flexGrow={1} flexBasis={0}>
+        <SourceGrid
+          rows={rows}
+          availableHeight={gridHeight}
+          onSelect={handleGridSelect}
+          onSearch={FEATURE_FLAGS.SOURCE_SEARCH ? handleSearch : undefined}
+          onBind={FEATURE_FLAGS.SOURCE_SEARCH ? handleBind : undefined}
+          onSearchStateChange={FEATURE_FLAGS.SOURCE_SEARCH ? handleSearchStateChange : undefined}
+        />
       </Box>
     );
   }

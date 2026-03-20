@@ -44,12 +44,11 @@ describe("CheckboxGrid component", () => {
   });
 
   describe("rendering", () => {
-    it("should render title and subtitle", () => {
+    it("should render subtitle (title is rendered by wizard-layout, not checkbox-grid)", () => {
       const { lastFrame, unmount } = renderCheckboxGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Test title");
       expect(output).toContain("Test subtitle");
     });
 

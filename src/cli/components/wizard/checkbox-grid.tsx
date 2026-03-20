@@ -115,7 +115,7 @@ export const CheckboxGrid = <T extends string = string>({
 
   return (
     <Box flexDirection="column">
-      <ViewTitle>{title}</ViewTitle>
+      {/* <ViewTitle>{title}</ViewTitle> */}
       {subtitle && <Text dimColor>{subtitle}</Text>}
       <Box
         flexDirection="column"

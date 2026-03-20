@@ -12,7 +12,7 @@ export const ViewTitle: React.FC<ViewTitleProps> = ({ children }) => {
   const paddingHalf = " ".repeat(TITLE_HORIZONTAL_PADDING / 2);
 
   return (
-    <Box marginBottom={1} flexDirection="column">
+    <Box marginBottom={2} flexDirection="column">
       <Text backgroundColor={"#eee"}>{padding}</Text>
       <Text bold backgroundColor={"#eee"} color={"#000"}>
         {paddingHalf}

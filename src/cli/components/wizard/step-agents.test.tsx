@@ -29,12 +29,15 @@ describe("StepAgents component", () => {
   });
 
   describe("rendering", () => {
-    it("should render title", () => {
+    it("should render agent group headers", () => {
       const { lastFrame, unmount } = render(<StepAgents />);
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Select agents");
+      // ViewTitle removed; verify agent groups render (title shown by wizard-layout)
+      expect(output).toContain("Web");
+      expect(output).toContain("API");
+      expect(output).toContain("Meta");
     });
 
     it("should render all agents", () => {

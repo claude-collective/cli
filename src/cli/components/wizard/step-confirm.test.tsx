@@ -13,7 +13,7 @@ describe("StepConfirm component", () => {
   });
 
   describe("stack path", () => {
-    it("should render stack name in title", () => {
+    it("should render technology and skill counts for stack", () => {
       const onComplete = vi.fn();
       const onBack = vi.fn();
 
@@ -29,7 +29,9 @@ describe("StepConfirm component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Ready to install nextjs-fullstack");
+      // ViewTitle removed; verify stats render (title shown by wizard-layout)
+      expect(output).toContain("Technologies:");
+      expect(output).toContain("12");
     });
 
     it("should show technology count", () => {
@@ -116,7 +118,7 @@ describe("StepConfirm component", () => {
       expect(output).toContain("Local");
     });
 
-    it("should render confirm step content", () => {
+    it("should render confirm step stats content", () => {
       const onComplete = vi.fn();
       const onBack = vi.fn();
 
@@ -132,12 +134,14 @@ describe("StepConfirm component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Ready to install");
+      // ViewTitle removed; verify stats are shown (title shown by wizard-layout)
+      expect(output).toContain("Technologies:");
+      expect(output).toContain("Skills:");
     });
   });
 
   describe("scratch path", () => {
-    it("should render custom stack title with domain names", () => {
+    it("should render domain breakdown with technologies for custom stack", () => {
       const onComplete = vi.fn();
       const onBack = vi.fn();
 
@@ -160,8 +164,9 @@ describe("StepConfirm component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Ready to install your custom stack");
-      expect(output).toContain("Web + API");
+      // ViewTitle removed; verify domain breakdown renders (title shown by wizard-layout)
+      expect(output).toContain("Web:");
+      expect(output).toContain("API:");
     });
 
     it("should show domain breakdown with technologies", () => {
@@ -194,7 +199,7 @@ describe("StepConfirm component", () => {
       expect(output).toContain("hono");
     });
 
-    it("should handle single domain without plus sign", () => {
+    it("should render single domain breakdown without plus sign", () => {
       const onComplete = vi.fn();
       const onBack = vi.fn();
 
@@ -213,7 +218,9 @@ describe("StepConfirm component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("(Web)");
+      // ViewTitle removed; verify domain breakdown renders
+      expect(output).toContain("Web:");
+      expect(output).toContain("react");
       expect(output).not.toContain("+");
     });
 
@@ -384,14 +391,15 @@ describe("StepConfirm component", () => {
   });
 
   describe("default props", () => {
-    it("should render custom stack title when no stack name provided", () => {
+    it("should render without crashing when no stack name provided", () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(<StepConfirm onComplete={onComplete} />);
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Ready to install your custom stack");
+      // ViewTitle removed; component renders empty when no stats provided
+      expect(output).toBeDefined();
     });
 
     it("should not show stats when not provided", () => {

@@ -282,6 +282,13 @@ export type WizardState = {
    * Side effects: decrements `currentDomainIndex`
    */
   prevDomain: () => boolean;
+  /**
+   * Set the current domain index directly.
+   * @param index - Index to set (0-based, must be within selectedDomains range)
+   *
+   * Side effects: sets `currentDomainIndex` if index is valid, otherwise no-op
+   */
+  setCurrentDomainIndex: (index: number) => void;
   /** Toggle compatibility label visibility on skill tags in the build step grid. */
   toggleShowLabels: () => void;
   /** Toggle filtering of incompatible skills in the build step grid. */
@@ -565,7 +572,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       return {
         domainSelections,
         _stackDomainSelections: structuredClone(domainSelections),
-        selectedDomains: sortDomainsCanonically(getAllDomainsFromCategories(categories)),
+        selectedDomains: sortDomainsCanonically([...domains]),
         skillConfigs,
       };
     }),
@@ -731,6 +738,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       return true;
     }
     return false;
+  },
+
+  setCurrentDomainIndex: (index) => {
+    const state = get();
+    if (index >= 0 && index < state.selectedDomains.length) {
+      set({ currentDomainIndex: index });
+    }
   },
 
   toggleShowLabels: () => set((state) => ({ showLabels: !state.showLabels })),

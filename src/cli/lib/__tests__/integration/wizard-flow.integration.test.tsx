@@ -65,7 +65,8 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      expect(lastFrame()).toContain("Select domains");
+      // Domain selection sub-view (ViewTitle removed from CheckboxGrid; verify domain options)
+      expect(lastFrame()).toContain("Web");
 
       await navigateDomainSelectionToBuild(stdin);
 
@@ -110,7 +111,8 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      expect(lastFrame()).toContain("Select domains");
+      // Domain selection sub-view (ViewTitle removed from CheckboxGrid; verify domain options)
+      expect(lastFrame()).toContain("Web");
       await navigateDomainSelectionToBuild(stdin);
 
       expect(lastFrame()).toContain("Skills");
@@ -146,7 +148,8 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      expect(lastFrame()).toContain("Select domains");
+      // Domain selection sub-view (ViewTitle removed from CheckboxGrid; verify domain options)
+      expect(lastFrame()).toContain("Web");
 
       const state = useWizardStore.getState();
       expect(state.approach).toBe("scratch");
@@ -172,7 +175,7 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      expect(lastFrame()).toContain("Select domains");
+      // Domain selection sub-view (ViewTitle removed from CheckboxGrid; verify domain content)
       expect(lastFrame()).toContain("Selected");
       expect(lastFrame()).toContain("web");
 
@@ -239,7 +242,8 @@ describe("Wizard integration", () => {
       const state = useWizardStore.getState();
       expect(state.approach).toBe("scratch");
       expect(state.step).toBe("stack");
-      expect(lastFrame()).toContain("Select domains");
+      // Domain selection sub-view (ViewTitle removed from CheckboxGrid; verify domain options)
+      expect(lastFrame()).toContain("Web");
     });
 
     it("should navigate through multi-domain build with pre-selected domains", async () => {
@@ -291,9 +295,10 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Should show ViewTitle for current domain
+      // ViewTitle removed from StepBuild; verify domain tab navigation renders instead
       const frame = lastFrame();
-      expect(frame).toContain("Customize your Web stack");
+      expect(frame).toContain("Web");
+      expect(frame).toContain("Skills");
     });
 
     it("should advance to next domain when validation passes", async () => {
@@ -458,8 +463,8 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be at domain selection
-      expect(lastFrame()).toContain("Select domains");
+      // Should be at domain selection (ViewTitle removed; verify domain options render)
+      expect(lastFrame()).toContain("Web");
 
       // Press ESC to go back from domain selection
       await stdin.write(ESCAPE);
@@ -494,8 +499,8 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 1b: Domain selection
-      expect(lastFrame()).toContain("Select domains");
+      // Step 1b: Domain selection (ViewTitle removed from CheckboxGrid; verify domain options)
+      expect(lastFrame()).toContain("Web");
       await navigateDomainSelectionToBuild(stdin);
 
       // Step 2: Build - pre-populated from stack
@@ -568,7 +573,8 @@ describe("Wizard integration", () => {
       // Select a stack to get to domain selection
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
-      expect(lastFrame()).toContain("Select domains");
+      // Domain selection sub-view (ViewTitle removed from CheckboxGrid; verify domain options)
+      expect(lastFrame()).toContain("Web");
 
       // Press ESC to go back from domain selection
       await stdin.write(ESCAPE);
