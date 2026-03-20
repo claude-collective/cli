@@ -354,11 +354,10 @@ describe("edit wizard — local mode", () => {
         await session.waitForText("Plugin updated", EDIT_COMPLETION_TIMEOUT_MS);
         await session.waitForExit(EXIT_TIMEOUT_MS);
 
-        // The edit command detects that web-framework-react's source changed from
-        // "local" (config) to the E2E source's default. This triggers a local-to-plugin
-        // migration which deletes the local skill files (even though the E2E source has
-        // no marketplace, so plugin install is skipped with a warning).
-        expect(await verifySkillCopiedLocally(projectDir, "web-framework-react")).toBe(false);
+        // The wizard preserves the saved source ("local") from the existing config
+        // when the user doesn't explicitly change it. No source migration is triggered,
+        // so local skill files remain intact.
+        expect(await verifySkillCopiedLocally(projectDir, "web-framework-react")).toBe(true);
       },
     );
   });

@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "fs/promises";
+import os from "os";
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
@@ -355,7 +356,10 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle — bulk mode 
           source: "local",
         });
 
-        expect(await verifyAgentCompiled(projectDir, "web-developer")).toBe(true);
+        // Agents default to global scope, so check both project dir and home dir
+        const agentInProject = await verifyAgentCompiled(projectDir, "web-developer");
+        const agentInHome = await verifyAgentCompiled(os.homedir(), "web-developer");
+        expect(agentInProject || agentInHome).toBe(true);
       },
     );
   });

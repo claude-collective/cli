@@ -73,6 +73,7 @@ async function createPluginProject(
     })),
     agents: agents.map((name) => ({ name, scope: "project" as const })),
     domains,
+    selectedAgents: agents,
   });
 
   for (const skillId of skills) {

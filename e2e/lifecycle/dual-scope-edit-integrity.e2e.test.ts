@@ -351,18 +351,15 @@ describe.skipIf(!claudeAvailable)(
             // Build step — pass through all three domains
             await passThroughAllBuildDomains(session);
 
-            // Sources step — already in customize view
+            // Sources step — already in customize view.
+            // Press "p" to switch all skills from local to plugin (marketplace) source.
+            // The wizard now preserves saved sources, so passing through without "p"
+            // would keep "local" and no migration would be detected.
             await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
             await delay(STEP_TRANSITION_DELAY_MS);
-
-            // In the customize view, navigate to api-framework-hono row
-            // and select the marketplace source column
-            await delay(STEP_TRANSITION_DELAY_MS);
-            session.arrowRight(); // Move to marketplace source column
+            session.write("p");
             await delay(KEYSTROKE_DELAY_MS);
-            session.space(); // Select marketplace source
-            await delay(KEYSTROKE_DELAY_MS);
-            session.enter(); // Confirm source selection
+            session.enter();
 
             // Agents step
             await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
@@ -447,11 +444,14 @@ describe.skipIf(!claudeAvailable)(
             // Build step — pass through all three domains
             await passThroughAllBuildDomains(session);
 
-            // Sources step — pass through without customizing.
-            // The wizard defaults all skills to the marketplace source.
+            // Sources step — press "p" to switch all skills from local to plugin.
+            // The wizard now preserves saved sources, so passing through without "p"
+            // would keep "local" and no migration would be detected.
             await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
             await delay(STEP_TRANSITION_DELAY_MS);
-            session.enter(); // Accept default sources (marketplace)
+            session.write("p");
+            await delay(KEYSTROKE_DELAY_MS);
+            session.enter();
 
             // Agents step
             await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
@@ -554,10 +554,14 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle — mixed source co
           // Build step — pass through all three domains
           await passThroughAllBuildDomains(session);
 
-          // Sources step — pass through without customizing.
+          // Sources step — press "p" to switch all skills from local to plugin.
+          // The wizard now preserves saved sources, so passing through without "p"
+          // would keep "local" and no migration would be detected.
           await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter(); // Accept default sources
+          session.write("p");
+          await delay(KEYSTROKE_DELAY_MS);
+          session.enter();
 
           // Agents step
           await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);

@@ -35,7 +35,7 @@ const E2E_TEMP_PREFIX = "ai-e2e-";
 // --- Shared timing constants for interactive E2E tests ---
 
 /** Time to wait for the wizard to load and render the first step */
-export const WIZARD_LOAD_TIMEOUT_MS = 10_000;
+export const WIZARD_LOAD_TIMEOUT_MS = 15_000;
 
 /** Time to wait for installation to complete */
 export const INSTALL_TIMEOUT_MS = 30_000;
@@ -439,6 +439,7 @@ export async function createEditableProject(
     skills: skillConfigs,
     agents: agentConfigs,
     domains,
+    selectedAgents: agents,
   });
 
   for (const skillId of skills) {

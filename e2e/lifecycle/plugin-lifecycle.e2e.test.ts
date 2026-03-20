@@ -93,6 +93,12 @@ describe.skipIf(!claudeAvailable)("plugin mode lifecycle: init -> uninstall", ()
       expect(initOutput).toContain("Installing skill plugins...");
       expect(initOutput).toContain("Plugin (native install)");
 
+      // PP-1A2: Per-skill install messages verify actual plugin installation
+      expect(initOutput).toContain(`Installed web-framework-react@${fixture.marketplaceName}`);
+
+      // PP-1A3: Plugin mode should NOT copy skills locally
+      expect(initOutput).not.toContain("Skills copied to:");
+
       // PP-1B: Config exists with marketplace source
       await verifyConfig(projectDir, {
         skillIds: ["web-framework-react"],
