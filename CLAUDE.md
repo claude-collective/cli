@@ -44,6 +44,14 @@ This file provides behavioral rules and conventions. For codebase reference docu
 - NEVER derive `slug` from skill ID or directory path — `slug` is a required field in metadata, always pass it explicitly
 - NEVER add backward-compatibility shims or legacy fallbacks — the project is pre-1.0. Remove old code cleanly.
 
+### Scope Awareness (project vs global)
+- NEVER hardcode `projectDir` for skill/agent paths when a skill has a `scope` field — use `os.homedir()` for `"global"` scope, `projectDir` for `"project"` scope
+- NEVER use `path.join(projectDir, LOCAL_SKILLS_PATH)` without checking scope — global-scoped local skills live at `~/.claude/skills/`, not `<project>/.claude/skills/`
+- NEVER load global local skills as a fallback only when project has none — always merge both project and global local skills (project takes precedence on conflict)
+- NEVER pass a uniform scope to `claudePluginInstall`/`claudePluginUninstall` for multiple skills — each skill has its own scope in its `SkillConfig`
+- NEVER let a marketplace `primarySource` override a user's saved `source` in config — saved source (`"local"` or marketplace name) always takes priority over computed defaults
+- NEVER use conditional fallbacks like `if (x.length === 0) { use fallback }` when both primary and fallback data should always be merged
+
 ### Test Data
 - NEVER construct test data inline — use factories from `__tests__/helpers.ts` and fixtures from `create-test-source.ts`. If a factory doesn't exist, create one.
 - NEVER create custom mock skills when a canonical `SKILLS.*` entry from `test-fixtures.ts` would work
@@ -69,6 +77,12 @@ This file provides behavioral rules and conventions. For codebase reference docu
 - ALWAYS grep for the old value when changing test data or renaming anything
 - ALWAYS search for all call sites when removing a workaround
 - When a task is deferred, ALWAYS move it to `TODO-deferred.md` — never delete
+
+### Scope Awareness
+- ALWAYS use `resolveInstallPaths(projectDir, scope)` with the explicit scope parameter when resolving skill/agent directories
+- ALWAYS split skill lists by scope (`filter(s => s.scope === "global")` / `filter(s => s.scope !== "global")`) before any path-dependent operation (copy, delete, install, uninstall)
+- ALWAYS load both project AND global local skills and merge them — see `source-loader.ts` and `compile.ts` for the correct pattern
+- ALWAYS preserve saved `source` from config over computed `primarySource` when restoring wizard state — `saved?.source ?? primarySource ?? DEFAULT_PUBLIC_SOURCE_NAME`
 
 ### Type Safety
 - ALWAYS use type guards (`isCategory()`, `isDomain()`, `isAgentName()` from `utils/type-guards.ts`) instead of `as` casts for runtime narrowing
