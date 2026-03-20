@@ -549,8 +549,7 @@ describe("edit command local-mode skill fallback", () => {
     expect(installedSkillIds).toEqual(CONFIG_SKILL_IDS);
   });
 
-  it("should use discovered plugin skills as installedSkillIds when plugin discovery returns results", async () => {
-    const pluginSkillIds: SkillId[] = ["web-framework-react"];
+  it("should merge discovered plugin skills with config skills as installedSkillIds", async () => {
     mockDiscoverAllPluginSkills.mockResolvedValue({
       "web-framework-react": { id: "web-framework-react", path: "skills/web-framework-react/" },
     });
@@ -571,6 +570,7 @@ describe("edit command local-mode skill fallback", () => {
 
     expect(mockRender).toHaveBeenCalledOnce();
     const installedSkillIds = getRenderedInstalledSkillIds();
-    expect(installedSkillIds).toEqual(pluginSkillIds);
+    // Plugin discovery found react; config also has hono — both should be included
+    expect(installedSkillIds).toEqual(CONFIG_SKILL_IDS);
   });
 });

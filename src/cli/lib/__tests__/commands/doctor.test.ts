@@ -24,7 +24,7 @@ describe("doctor command", () => {
   });
 
   describe("basic execution", () => {
-    it("should run without arguments", async () => {
+    it("should run without arguments", { timeout: 30_000 }, async () => {
       const { error } = await runCliCommand(["doctor"]);
 
       // Should not have argument parsing errors

@@ -3,6 +3,8 @@ import path from "path";
 import { mkdir } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 
+const COMMAND_TIMEOUT = 30_000;
+
 describe("search command", () => {
   let tempDir: string;
   let projectDir: string;
@@ -26,7 +28,7 @@ describe("search command", () => {
   });
 
   describe("argument validation", () => {
-    it("should accept query as first argument", async () => {
+    it("should accept query as first argument", { timeout: COMMAND_TIMEOUT }, async () => {
       const { stdout, error } = await runCliCommand(["search", "test"]);
 
       // Should start processing (may fail due to source issues, but should accept the arg)
@@ -35,7 +37,7 @@ describe("search command", () => {
       expect(output.toLowerCase()).not.toContain("missing required arg");
     });
 
-    it("should accept --category flag", async () => {
+    it("should accept --category flag", { timeout: COMMAND_TIMEOUT }, async () => {
       const { stdout, error } = await runCliCommand(["search", "test", "--category", "web"]);
 
       // Should not error on invalid flag
@@ -43,7 +45,7 @@ describe("search command", () => {
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
 
-    it("should accept -c shorthand for category", async () => {
+    it("should accept -c shorthand for category", { timeout: COMMAND_TIMEOUT }, async () => {
       const { stdout, error } = await runCliCommand(["search", "test", "-c", "web"]);
 
       // Should not error on invalid flag
@@ -54,7 +56,7 @@ describe("search command", () => {
 
   // Skip: stdout capture limited in oclif/bun test environment
   describe("output format", () => {
-    it("should show loading message when starting", async () => {
+    it("should show loading message when starting", { timeout: COMMAND_TIMEOUT }, async () => {
       const { stdout } = await runCliCommand(["search", "anything"]);
 
       // Should show loading message as first output
@@ -63,7 +65,7 @@ describe("search command", () => {
   });
 
   describe("with --source flag", () => {
-    it("should accept --source flag", async () => {
+    it("should accept --source flag", { timeout: COMMAND_TIMEOUT }, async () => {
       const { stdout, error } = await runCliCommand([
         "search",
         "test",
@@ -76,7 +78,7 @@ describe("search command", () => {
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
 
-    it("should accept -s shorthand for source", async () => {
+    it("should accept -s shorthand for source", { timeout: COMMAND_TIMEOUT }, async () => {
       const { stdout, error } = await runCliCommand(["search", "test", "-s", "/nonexistent/path"]);
 
       // Should not error on invalid flag

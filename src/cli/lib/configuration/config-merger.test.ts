@@ -95,11 +95,6 @@ describe("config-merger", () => {
           existingValue: "Existing description",
           newValue: "New description",
         },
-        {
-          field: "source" as const,
-          existingValue: "github:existing/source",
-          newValue: "github:new/source",
-        },
         { field: "author" as const, existingValue: "@existing-author", newValue: "@new-author" },
         {
           field: "marketplace" as const,
@@ -127,6 +122,51 @@ describe("config-merger", () => {
           expect(result.config[field]).toBe(existingValue);
         },
       );
+
+      it("should keep new source when sourceFlag is provided (new source takes precedence)", async () => {
+        await writeFullConfig(
+          buildProjectConfig({
+            name: "project",
+            skills: [],
+            source: "github:existing/source",
+          }),
+        );
+
+        const newConfig = buildProjectConfig({
+          name: "project",
+          skills: [],
+          source: "github:new/source",
+        });
+
+        const result = await mergeWithExistingConfig(newConfig, {
+          projectDir: tempDir,
+        });
+
+        expect(result.merged).toBe(true);
+        expect(result.config.source).toBe("github:new/source");
+      });
+
+      it("should keep existing source when new config has no source", async () => {
+        await writeFullConfig(
+          buildProjectConfig({
+            name: "project",
+            skills: [],
+            source: "github:existing/source",
+          }),
+        );
+
+        const newConfig = buildProjectConfig({
+          name: "project",
+          skills: [],
+        });
+
+        const result = await mergeWithExistingConfig(newConfig, {
+          projectDir: tempDir,
+        });
+
+        expect(result.merged).toBe(true);
+        expect(result.config.source).toBe("github:existing/source");
+      });
     });
 
     describe("union of agents arrays", () => {
@@ -375,11 +415,27 @@ describe("config-merger", () => {
         expect(result.description).toBe("Existing description");
       });
 
-      it("should use existing source when present", () => {
+      it("should use new source when both configs have source (sourceFlag takes precedence)", () => {
         const newConfig = buildProjectConfig({
           name: "project",
           skills: [],
           source: "github:new/source",
+        });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          skills: [],
+          source: "github:existing/source",
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        expect(result.source).toBe("github:new/source");
+      });
+
+      it("should use existing source when new config has no source", () => {
+        const newConfig = buildProjectConfig({
+          name: "project",
+          skills: [],
         });
         const existingConfig = buildProjectConfig({
           name: "project",
