@@ -78,7 +78,7 @@ describe("build stack command", () => {
 
       session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
     });
 
     it("should display the E2E test stack name in the selector", async () => {
@@ -88,7 +88,7 @@ describe("build stack command", () => {
 
       session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
 
       const screen = session.getScreen();
       expect(screen).toContain("e2e-test-stack");
@@ -101,7 +101,7 @@ describe("build stack command", () => {
 
       session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.enter();
@@ -139,7 +139,7 @@ describe("build stack command", () => {
 
       session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Both stacks should be listed in the selector
@@ -365,7 +365,7 @@ describe("build stack command", () => {
 
       session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.ctrlC();
@@ -381,7 +381,7 @@ describe("build stack command", () => {
 
       session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
 
       session.ctrlC();
 

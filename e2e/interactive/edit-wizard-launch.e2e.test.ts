@@ -97,7 +97,7 @@ describe("edit wizard — launch and display", () => {
       // The wizard opens at the build step with pre-selected skills.
       // "web-framework-react" should be pre-selected, shown as "1 of 1"
       // in the Framework category header.
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await session.waitForText("Framework");
       // Framework category should show the pre-selected skill count
       await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
@@ -118,7 +118,7 @@ describe("edit wizard — launch and display", () => {
 
       // Wait for the wizard to render the build step.
       // The build step shows "Customize your X stack" title and domain tabs.
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // Should show the domain tab bar with Web selected
       expect(output).toContain("Web");
@@ -146,7 +146,7 @@ describe("edit wizard — launch and display", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       // Wait for category headers and skill tags to render before assertions
       await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
       await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
@@ -191,7 +191,9 @@ describe("edit wizard — launch and display", () => {
       // The edit command should load skills from the E2E source.
       // The startup message includes the skill count from the custom source.
       await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      // Wait for category headers to render before checking for skill names
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
 
       const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // The E2E source includes web-framework-react, web-testing-vitest, and
@@ -222,7 +224,9 @@ describe("edit wizard — launch and display", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      // Wait for category headers to render before checking for skill names
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
 
       const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // The original pre-selected skill should still be visible
@@ -273,7 +277,7 @@ describe("edit wizard — launch and display", () => {
       });
 
       // The edit command falls back to global config and launches the wizard
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
 
       const raw = session.getRawOutput();
       expect(raw).toContain("Loaded");

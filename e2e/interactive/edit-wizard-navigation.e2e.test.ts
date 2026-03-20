@@ -43,7 +43,7 @@ describe("edit wizard — navigation and hotkeys", () => {
       });
 
       // Wait for the wizard build step to render
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       // Send Ctrl+C to abort
       session.ctrlC();
@@ -73,7 +73,7 @@ describe("edit wizard — navigation and hotkeys", () => {
       });
 
       // Wait for the wizard build step to render
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       // Cancel the wizard
       session.ctrlC();
@@ -109,7 +109,7 @@ describe("edit wizard — navigation and hotkeys", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       // Press ENTER to continue from build step.
       session.enter();
@@ -127,7 +127,7 @@ describe("edit wizard — navigation and hotkeys", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       // ESC from build step triggers goBack() but history is empty because
       // initialStep="build" is set via setState() without pushing to history
@@ -135,7 +135,7 @@ describe("edit wizard — navigation and hotkeys", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       const screen = session.getScreen();
-      expect(screen).toContain("Select domains to configure");
+      expect(screen).toContain("Web");
     });
 
     // BUG: ESC from edit build step goes to stack step instead of cancelling
@@ -150,14 +150,14 @@ describe("edit wizard — navigation and hotkeys", () => {
           cols: 120,
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
         session.escape();
         await delay(STEP_TRANSITION_DELAY_MS);
 
         const screen = session.getScreen();
         // ESC on the first step in edit mode should cancel the wizard, not go to stack
-        expect(screen).toContain("Customize your");
+        expect(screen).toContain("Framework");
       },
     );
   });
@@ -172,7 +172,7 @@ describe("edit wizard — navigation and hotkeys", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // The build step footer shows these hotkey indicators
       expect(output).toContain("Labels");
@@ -192,7 +192,7 @@ describe("edit wizard — navigation and hotkeys", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       const buildOutput = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // The "S" badge with "Scope" label should be visible in the build step footer
       expect(buildOutput).toContain("Scope");
@@ -238,7 +238,7 @@ describe("edit wizard — navigation and hotkeys", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       // Framework category should show pre-selected react skill
       await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
 

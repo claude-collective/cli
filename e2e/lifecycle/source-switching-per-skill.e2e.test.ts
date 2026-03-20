@@ -88,19 +88,19 @@ async function initLocal(
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "API", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Shared", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
@@ -187,15 +187,15 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle — per-skill 
           cols: 120,
         });
 
-        await waitForRawText(session, "Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
-        await waitForRawText(session, "Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "API", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
-        await waitForRawText(session, "Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Shared", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 

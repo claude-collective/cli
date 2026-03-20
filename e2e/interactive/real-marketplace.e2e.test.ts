@@ -73,12 +73,12 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
     initSession.enter();
 
     // Step 2: Domain selection (pre-populated from stack)
-    await initSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await initSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     initSession.enter();
 
     // Step 3: Build step -- accept stack defaults
-    await initSession.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+    await initSession.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     initSession.write("a");
 
@@ -205,7 +205,7 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
       });
 
       try {
-        await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForText("Framework");
 
         const screen = session.getScreen();

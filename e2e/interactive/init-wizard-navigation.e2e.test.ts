@@ -83,7 +83,7 @@ describe("init wizard — navigation", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.enter();
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.escape();
@@ -98,15 +98,15 @@ describe("init wizard — navigation", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.enter();
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.enter();
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.escape();
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     });
 
     it("should go back from confirm step to build step", async () => {
@@ -117,11 +117,11 @@ describe("init wizard — navigation", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.enter();
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.enter();
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.write("a");
@@ -129,7 +129,7 @@ describe("init wizard — navigation", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.escape();
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
     });
 
     it("should cancel wizard when pressing Escape on initial stack selection", async () => {

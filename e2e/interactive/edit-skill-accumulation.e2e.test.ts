@@ -133,7 +133,7 @@ describe("project config does not accumulate global skills after edit", () => {
       });
 
       // Wait for the build step to render
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
 
       // Navigate through without changes
       await navigateEditWizardToCompletion(session, SETUP_TIMEOUT_MS);

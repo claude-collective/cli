@@ -91,19 +91,19 @@ async function initLocal(
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "API", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Shared", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
@@ -153,11 +153,11 @@ async function initPlugin(
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await waitForRawText(session, "Customize your", WIZARD_LOAD_TIMEOUT_MS);
+    await waitForRawText(session, "Framework", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.write("a");
 
@@ -229,15 +229,15 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle — bulk mode 
           env: { AGENTSINC_SOURCE: undefined },
         });
 
-        await waitForRawText(session, "Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
-        await waitForRawText(session, "Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "API", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
-        await waitForRawText(session, "Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Shared", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
@@ -306,15 +306,15 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle — bulk mode 
           env: { AGENTSINC_SOURCE: undefined },
         });
 
-        await waitForRawText(session, "Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
-        await waitForRawText(session, "Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "API", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
-        await waitForRawText(session, "Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+        await waitForRawText(session, "Shared", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 

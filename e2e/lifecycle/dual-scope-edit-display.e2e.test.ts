@@ -96,7 +96,7 @@ async function initGlobal(
     session.enter();
 
     // Domain selection — accept all pre-selected domains (Web, API, Shared)
-    await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
@@ -104,7 +104,7 @@ async function initGlobal(
     // This skips individual domain pages and jumps to confirmation.
     // Critically, the "a" path creates skillConfigs with source: "local"
     // (wizard.tsx:190 fallback), avoiding the plugin install path.
-    await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.write("a");
 
@@ -169,26 +169,26 @@ async function initProject(
     session.enter();
 
     // Domain selection — accept all pre-selected domains (Web, API, Shared)
-    await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
     // Build step — Web domain (pass through, all skills stay global)
-    await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
     // Build step — API domain
     // Focus starts on api-framework-hono (only skill in API domain).
     // Press "s" to toggle scope from global to project.
-    await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.write("s"); // Toggle api-framework-hono scope to "project"
     await delay(KEYSTROKE_DELAY_MS);
     session.enter();
 
     // Build step — Shared domain (pass through, all methodology skills stay global)
-    await session.waitForText("Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Shared", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 

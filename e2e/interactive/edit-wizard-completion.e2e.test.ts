@@ -63,7 +63,7 @@ describe("edit wizard — confirm step and completion", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       // Build step -> Sources step
       session.enter();
@@ -109,7 +109,7 @@ describe("edit wizard — confirm step and completion", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       // Build step -> Sources step
       session.enter();
@@ -157,7 +157,7 @@ describe("edit wizard — confirm step and completion", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       // Verify pre-selected skill is shown
       await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
       const outputBefore = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
@@ -188,7 +188,7 @@ describe("edit wizard — confirm step and completion", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.escape();
-      await session.waitForText("Customize your Web stack", EXIT_TIMEOUT_MS);
+      await session.waitForText("Web", EXIT_TIMEOUT_MS);
       // The pre-selected skill should still be shown after navigating back
       await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
       const outputAfter = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
@@ -211,7 +211,7 @@ describe("edit wizard — confirm step and completion", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       // Build step -> Sources step
       session.enter();

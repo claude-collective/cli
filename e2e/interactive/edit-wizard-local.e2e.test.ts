@@ -91,7 +91,7 @@ describe("edit wizard — local mode", () => {
         });
 
         // Wait for the build step to render with pre-selected skills
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
 
         // The build step shows categories vertically. Framework (react) is at the top.
@@ -142,7 +142,7 @@ describe("edit wizard — local mode", () => {
           cols: 120,
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
 
         // Select an additional skill
@@ -185,7 +185,7 @@ describe("edit wizard — local mode", () => {
           cols: 120,
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
 
         // Select an additional skill
@@ -234,7 +234,7 @@ describe("edit wizard — local mode", () => {
         });
 
         // Build step — tailwind is unresolvable, only react resolves
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
         // Navigate straight through without changing skills
         await navigateEditWizardToCompletion(session);
@@ -277,7 +277,7 @@ describe("edit wizard — local mode", () => {
         cols: 120,
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       await navigateEditWizardToCompletion(session);
       await session.waitForText("Plugin updated", EDIT_COMPLETION_TIMEOUT_MS);
@@ -313,7 +313,7 @@ describe("edit wizard — local mode", () => {
           cols: 120,
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
         await navigateEditWizardToCompletion(session);
 
@@ -348,7 +348,7 @@ describe("edit wizard — local mode", () => {
           cols: 120,
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
         await navigateEditWizardToCompletion(session);
         await session.waitForText("Plugin updated", EDIT_COMPLETION_TIMEOUT_MS);

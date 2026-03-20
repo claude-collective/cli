@@ -145,7 +145,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
         env: { AGENTSINC_SOURCE: undefined },
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       await navigateEditWizardToCompletion(session);
 
@@ -178,7 +178,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
           env: { AGENTSINC_SOURCE: undefined },
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
         await navigateEditWizardToCompletion(session);
         await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
@@ -208,7 +208,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
           env: { AGENTSINC_SOURCE: undefined },
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
         await navigateEditWizardToCompletion(session);
         await session.waitForText("Recompiling agents", PLUGIN_INSTALL_TIMEOUT_MS);
@@ -239,7 +239,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
           cols: 120,
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
 
         session.arrowDown();
@@ -281,7 +281,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
           env: { AGENTSINC_SOURCE: undefined },
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
         await navigateEditWizardToCompletion(session);
 
@@ -310,7 +310,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
         env: { AGENTSINC_SOURCE: undefined },
       });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
       session.ctrlC();
 

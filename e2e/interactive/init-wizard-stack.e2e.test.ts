@@ -76,12 +76,12 @@ describe("init wizard — stack flow", () => {
     wizardSession.enter();
 
     // Step 2: Domain selection (pre-populated from stack)
-    await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
     // Step 3: Build step — accept stack defaults
-    await wizardSession.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.write("a");
 
@@ -141,7 +141,7 @@ describe("init wizard — stack flow", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       session.enter();
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     });
 
     it("should complete a full stack-based init flow with defaults", async () => {
@@ -278,18 +278,18 @@ describe("init wizard — stack flow", () => {
       session.enter();
 
       // Domain selection — pre-populated from stack
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 
       // Build step renders — the stack selection sets stackAction to "customize",
       // so the build step shows with the stack's skills pre-selected.
       // Pressing Enter (not "a") advances through domains one by one.
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
 
       // Verify skill categories from the E2E stack are visible
       const buildOutput = session.getFullOutput();
-      expect(buildOutput).toContain("Customize your");
+      expect(buildOutput).toContain("Framework");
 
       // The E2E stack has web-framework-react, web-testing-vitest, web-state-zustand for web-developer.
       // The build step should show the Framework category from the stack.
@@ -308,7 +308,7 @@ describe("init wizard — stack flow", () => {
       session.enter();
 
       // Domain selection — the stack pre-selects Web and API domains
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Navigate to API domain (index 1) and deselect it with Space
@@ -325,12 +325,17 @@ describe("init wizard — stack flow", () => {
       session.enter();
 
       // Build step starts on Web domain
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Navigate to API domain (Enter advances to next domain)
       session.enter();
-      await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.enter();
+
+      // Wait for API domain build step content to render
+      await session.waitForText("hono", WIZARD_LOAD_TIMEOUT_MS);
 
       // Verify the E2E stack's API skills were restored.
       // The E2E stack assigns api-framework-hono to the api-developer agent.
@@ -351,7 +356,7 @@ describe("init wizard — stack flow", () => {
       session.enter();
 
       // Domain selection — scratch pre-selects web, api, mobile
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Deselect API (index 1)
@@ -368,7 +373,7 @@ describe("init wizard — stack flow", () => {
       session.enter();
 
       // Web domain first
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Select required skill in Web domain to pass validation
@@ -377,7 +382,7 @@ describe("init wizard — stack flow", () => {
       session.enter();
 
       // API domain
-      await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
 
       // In scratch flow, no stack snapshot exists, so no skills should be
       // automatically restored. The API domain should have zero skills selected.

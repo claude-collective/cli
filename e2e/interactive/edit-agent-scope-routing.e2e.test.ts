@@ -162,7 +162,7 @@ describe("edit recompile routes agents to correct scope directory", () => {
       );
 
       // Wait for the build step to render
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
 
       // Navigate through without changes (single domain — only 1 Enter on build step)
       await navigateEditWizardToCompletion(session, SETUP_TIMEOUT_MS);

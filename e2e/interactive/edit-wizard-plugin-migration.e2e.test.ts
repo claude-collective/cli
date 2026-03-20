@@ -203,7 +203,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode migration", () =>
         });
 
         // Build step
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
         // Build -> Sources (customize view)
         session.enter();
@@ -265,7 +265,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode migration", () =>
         });
 
         // Build step
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
 
         // Build -> Sources (customize view)
         session.enter();

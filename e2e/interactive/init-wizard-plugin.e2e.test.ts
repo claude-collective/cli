@@ -90,12 +90,12 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
     wizardSession.enter();
 
     // Step 2: Domain selection — Enter accepts pre-selected domains
-    await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
     // Step 3: Build step — "a" accepts all defaults
-    await wizardSession.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.write("a");
 
@@ -221,11 +221,11 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.write("a");
 
@@ -279,21 +279,21 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
       session.enter();
 
       // Step 2: Domain selection — Enter accepts pre-selected domains
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 
       // Step 3: Build step — advance through each domain with Enter.
       // The E2E stack pre-selects skills for Web, API, and Shared domains.
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 
-      await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 
-      await session.waitForText("Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Shared", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 

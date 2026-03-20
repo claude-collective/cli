@@ -66,25 +66,25 @@ describe("init wizard — UI elements", () => {
     wizardSession.enter();
 
     // Domain selection — accept pre-selected defaults
-    await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
     // Build step — select required skill in each domain, then advance
-    await wizardSession.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.space();
     await delay(KEYSTROKE_DELAY_MS);
     wizardSession.enter();
 
-    await wizardSession.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.space();
     await delay(KEYSTROKE_DELAY_MS);
     wizardSession.enter();
 
     // Scratch pre-selects mobile via DEFAULT_SCRATCH_DOMAINS; advance past it (no required categories)
-    await wizardSession.waitForText("Customize your Mobile stack", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Mobile", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
@@ -163,11 +163,11 @@ describe("init wizard — UI elements", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.enter();
 
-      await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.enter();
 
-      await wizardSession.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
     }
 
     /**
@@ -182,23 +182,23 @@ describe("init wizard — UI elements", () => {
       await delay(KEYSTROKE_DELAY_MS);
       wizardSession.enter();
 
-      await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.enter();
 
-      await wizardSession.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.space();
-      await delay(KEYSTROKE_DELAY_MS);
-      wizardSession.enter();
-
-      await wizardSession.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.space();
       await delay(KEYSTROKE_DELAY_MS);
       wizardSession.enter();
 
-      await wizardSession.waitForText("Customize your Mobile stack", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.space();
+      await delay(KEYSTROKE_DELAY_MS);
+      wizardSession.enter();
+
+      await wizardSession.waitForText("Mobile", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.enter();
 
@@ -218,7 +218,7 @@ describe("init wizard — UI elements", () => {
 
       // The focused skill should now show the "G" badge for global scope
       const output = session.getFullOutput();
-      expect(output).toContain("Customize your");
+      expect(output).toContain("Framework");
     });
 
     it("should open help modal when ? key is pressed and close it with ESC", async () => {
@@ -262,7 +262,7 @@ describe("init wizard — UI elements", () => {
 
       // Verify settings overlay appears with source management UI
       const settingsOutput = session.getFullOutput();
-      expect(settingsOutput).toContain("Skill Sources");
+      expect(settingsOutput).toContain("Customize skill sources");
     });
   });
 
@@ -279,12 +279,12 @@ describe("init wizard — UI elements", () => {
       wizardSession.enter();
 
       // Domain selection — accept pre-populated defaults from stack
-      await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.enter();
 
       // Build step — accept all stack defaults
-      await wizardSession.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.write("a");
 

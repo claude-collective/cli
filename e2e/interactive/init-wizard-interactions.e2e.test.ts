@@ -87,7 +87,7 @@ describe("init wizard — interactions", () => {
         session.enter();
 
         // Step 2: Domain selection — the E2E stack pre-selects Web and API
-        await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         // Navigate to API domain (index 1) and deselect it with Space
@@ -104,7 +104,7 @@ describe("init wizard — interactions", () => {
         // the single remaining domain (Web) to the sources step.
         // However, if the Shared domain is also shown (web-extras parent),
         // multiple Enter presses may be needed to advance through all domains.
-        await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -192,13 +192,13 @@ describe("init wizard — interactions", () => {
         session.enter();
 
         // Step 2: Domains — accept defaults (Web + API)
-        await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
         // Step 3: Build — advance through each domain (Web, API, and possibly Shared).
         // Press Enter for each domain until we reach the sources step.
-        await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -283,12 +283,12 @@ describe("init wizard — interactions", () => {
         session.enter();
 
         // Step 2: Domains — accept defaults
-        await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
         // Step 3: Build step — Web domain
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         // The build step shows categories with skills. The first focusable skill

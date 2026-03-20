@@ -159,13 +159,13 @@ export async function navigateInitWizardToCompletion(
   await delay(STEP_TRANSITION_DELAY_MS);
   session.enter();
 
-  // Step 2: Domain selection — accept pre-selected domains
-  await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+  // Step 2: Domain selection — accept pre-selected domains (wait for domain text)
+  await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
   await delay(STEP_TRANSITION_DELAY_MS);
   session.enter();
 
-  // Step 3: Build step — "a" accepts all stack defaults
-  await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+  // Step 3: Build step — "a" accepts all stack defaults (wait for skill text)
+  await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
   await delay(STEP_TRANSITION_DELAY_MS);
   session.write("a");
 
@@ -187,18 +187,18 @@ export async function passThroughAllBuildDomains(
   session: TerminalSession,
   timeoutMs = WIZARD_LOAD_TIMEOUT_MS,
 ): Promise<void> {
-  // Build step — Web domain
-  await session.waitForText("Customize your Web stack", timeoutMs);
+  // Build step — Web domain (wait for skill categories)
+  await session.waitForText("Framework", timeoutMs);
   await delay(STEP_TRANSITION_DELAY_MS);
   session.enter();
 
   // Build step — API domain
-  await session.waitForText("Customize your API stack", timeoutMs);
+  await session.waitForText("API", timeoutMs);
   await delay(STEP_TRANSITION_DELAY_MS);
   session.enter();
 
   // Build step — Shared domain
-  await session.waitForText("Customize your Shared stack", timeoutMs);
+  await session.waitForText("Shared", timeoutMs);
   await delay(STEP_TRANSITION_DELAY_MS);
   session.enter();
 }

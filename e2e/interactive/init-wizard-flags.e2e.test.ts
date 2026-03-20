@@ -90,7 +90,9 @@ describe("init wizard — flags and permissions", () => {
 
       // The edit command should load skills from the E2E source
       await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      // Wait for category headers to render before checking for skill names
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
 
       const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // The E2E source includes web-framework-react
@@ -121,12 +123,12 @@ describe("init wizard — flags and permissions", () => {
       wizardSession.enter();
 
       // Step 2: Domain selection (pre-populated from stack)
-      await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.enter();
 
       // Step 3: Build step -- accept stack defaults
-      await wizardSession.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await wizardSession.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       wizardSession.write("a");
 

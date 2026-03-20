@@ -118,14 +118,14 @@ describe.skipIf(!claudeAvailable)(
         session.enter();
 
         // Step 2: Domain selection — accept pre-selected domains
-        await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
         // Step 3a: Build step — Web domain
         // web-framework-react is the first skill (first category in Web domain).
         // Focus starts on the first skill. Press "s" to toggle it to global scope.
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         // Toggle web-framework-react to global scope
@@ -136,12 +136,12 @@ describe.skipIf(!claudeAvailable)(
         session.enter();
 
         // Step 3b: Build step — API domain
-        await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 
         // Step 3c: Build step — Shared domain
-        await session.waitForText("Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Shared", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
         session.enter();
 

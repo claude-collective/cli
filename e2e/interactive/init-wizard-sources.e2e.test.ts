@@ -65,23 +65,23 @@ describe("init wizard — source management", () => {
     wizardSession.enter();
 
     // Domain selection — accept pre-populated defaults from stack
-    await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
     // Build step — advance through each domain with Enter.
     // The E2E stack pre-selects skills for Web, API, and Shared domains.
-    await wizardSession.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
     // Second domain (API)
-    await wizardSession.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
     // Third domain (Shared) — Enter advances past build step to sources
-    await wizardSession.waitForText("Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Shared", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
@@ -101,8 +101,8 @@ describe("init wizard — source management", () => {
       session.write("s");
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // The settings overlay shows "Skill Sources" title and "Configured marketplaces"
-      await session.waitForText("Skill Sources", EXIT_TIMEOUT_MS);
+      // The settings overlay shows "Customize skill sources" title and "Configured marketplaces"
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
 
       const fullOutput = session.getFullOutput();
       expect(fullOutput).toContain("Configured marketplaces");
@@ -118,7 +118,7 @@ describe("init wizard — source management", () => {
 
       // Open settings overlay
       session.write("s");
-      await session.waitForText("Skill Sources", EXIT_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Press A to open the add source input
@@ -140,7 +140,7 @@ describe("init wizard — source management", () => {
 
       // Open settings overlay
       session.write("s");
-      await session.waitForText("Skill Sources", EXIT_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // The default source ("Public") is focused. Press DEL (backspace).
@@ -163,7 +163,7 @@ describe("init wizard — source management", () => {
 
       // Open settings overlay
       session.write("s");
-      await session.waitForText("Skill Sources", EXIT_TIMEOUT_MS);
+      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Press ESC to close the settings overlay

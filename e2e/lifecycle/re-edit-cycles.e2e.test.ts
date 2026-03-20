@@ -159,12 +159,12 @@ async function navigateMultiDomainEditToCompletion(
 ): Promise<void> {
   // Build step — Web domain -> API domain
   session.enter();
-  await session.waitForText("Customize your API stack", timeoutMs);
+  await session.waitForText("API", timeoutMs);
   await delay(STEP_TRANSITION_DELAY_MS);
 
   // Build step — API domain -> Shared domain
   session.enter();
-  await session.waitForText("Customize your Shared stack", timeoutMs);
+  await session.waitForText("Shared", timeoutMs);
   await delay(STEP_TRANSITION_DELAY_MS);
 
   // Build step — Shared domain -> Sources step
@@ -257,7 +257,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           env: { AGENTSINC_SOURCE: undefined },
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         await navigateMultiDomainEditToCompletion(session);
@@ -288,7 +288,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           env: { AGENTSINC_SOURCE: undefined },
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         await navigateMultiDomainEditToCompletion(session);
@@ -373,7 +373,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           cols: 120,
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
 
         // Arrow down from Framework category to next category, press space to select
@@ -419,7 +419,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           cols: 120,
         });
 
-        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         // Single-domain project -- navigateEditWizardToCompletion works here

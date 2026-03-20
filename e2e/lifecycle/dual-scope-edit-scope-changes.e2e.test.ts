@@ -61,11 +61,11 @@ async function initGlobal(
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.write("a");
 
@@ -104,21 +104,21 @@ async function initProject(
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
-    await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.write("s");
     await delay(KEYSTROKE_DELAY_MS);
     session.enter();
 
-    await session.waitForText("Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+    await session.waitForText("Shared", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     session.enter();
 
@@ -230,20 +230,20 @@ describe("dual-scope edit lifecycle — scope changes via S hotkey", () => {
 
         try {
           // Build step — Web domain (pass through)
-          await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter();
 
           // Build step — API domain — toggle api-framework-hono scope to global
           // api-framework-hono is the first (only) skill in API domain, focus starts on it
-          await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.write("s"); // Toggle scope from project to global
           await delay(KEYSTROKE_DELAY_MS);
           session.enter();
 
           // Build step — Shared domain (pass through)
-          await session.waitForText("Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+          await session.waitForText("Shared", WIZARD_LOAD_TIMEOUT_MS);
           await delay(STEP_TRANSITION_DELAY_MS);
           session.enter();
 

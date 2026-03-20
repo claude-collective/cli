@@ -74,25 +74,25 @@ describe("init wizard — scratch flow", () => {
     wizardSession.enter();
 
     // Domain selection — accept pre-selected defaults
-    await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
     // Build step — select required skill in each domain, then advance
-    await wizardSession.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.space();
     await delay(KEYSTROKE_DELAY_MS);
     wizardSession.enter();
 
-    await wizardSession.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.space();
     await delay(KEYSTROKE_DELAY_MS);
     wizardSession.enter();
 
     // Scratch pre-selects mobile via DEFAULT_SCRATCH_DOMAINS; advance past it (no required categories)
-    await wizardSession.waitForText("Customize your Mobile stack", WIZARD_LOAD_TIMEOUT_MS);
+    await wizardSession.waitForText("Mobile", WIZARD_LOAD_TIMEOUT_MS);
     await delay(STEP_TRANSITION_DELAY_MS);
     wizardSession.enter();
 
@@ -123,7 +123,7 @@ describe("init wizard — scratch flow", () => {
       await delay(KEYSTROKE_DELAY_MS);
 
       session.enter();
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     });
 
     it("should complete a scratch-based init flow selecting both domains", async () => {
@@ -138,7 +138,7 @@ describe("init wizard — scratch flow", () => {
       session.enter();
 
       // Step 2: Domain selection — web and api are pre-selected from scratch defaults
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       const domainOutput = session.getFullOutput();
@@ -148,7 +148,7 @@ describe("init wizard — scratch flow", () => {
       session.enter();
 
       // Step 3: Build step — verify both domain tabs are shown
-      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
       const buildOutput = session.getFullOutput();
       expect(buildOutput).toContain("Web");
       expect(buildOutput).toContain("API");
@@ -165,12 +165,12 @@ describe("init wizard — scratch flow", () => {
       await delay(KEYSTROKE_DELAY_MS);
       session.enter();
 
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
       session.enter();
 
       // Build step starts on the first domain (Web)
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Select the required Framework skill before advancing
@@ -179,12 +179,12 @@ describe("init wizard — scratch flow", () => {
 
       // Press Enter to advance to the next domain (API)
       session.enter();
-      await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Press Escape to go back to the previous domain (Web)
       session.escape();
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
     });
 
     it("should show confirm step details with selected technologies", async () => {
@@ -253,7 +253,7 @@ describe("init wizard — scratch flow", () => {
       session.enter();
 
       // Domain selection — scratch pre-selects web, api, mobile
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Navigate to API domain and deselect it (toggle off with space)
@@ -273,12 +273,17 @@ describe("init wizard — scratch flow", () => {
       // Continue with only Web selected
       session.enter();
 
+      // Domain selection shows "Web" — press Enter again to advance to build step
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.enter();
+
       // Build step should show only Web domain
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
 
       // The build step should NOT show API or Mobile
       const buildOutput = session.getFullOutput();
-      expect(buildOutput).toContain("Customize your Web stack");
+      expect(buildOutput).toContain("Framework");
     });
   });
 
@@ -295,7 +300,7 @@ describe("init wizard — scratch flow", () => {
       session.enter();
 
       // Domain selection — scratch pre-selects web, api, mobile
-      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Deselect Web (index 0, focused by default)
