@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { Box, Text } from "ink";
 
@@ -134,7 +134,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
         <Text />
         {option.scope && (
           <>
-            <Text color={"#eee"} backgroundColor={"#383838"}>
+            <Text color={option.scope === "global" ? CLI_COLORS.WARNING : "#eee"} backgroundColor={"#383838"}>
               {option.scope === "global" ? " G " : " P "}
             </Text>
             <Text> </Text>
@@ -280,11 +280,13 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   );
 
   const mountedRef = useRef(false);
-  if (!mountedRef.current) {
-    mountedRef.current = true;
-    const skill = processedCategories[defaultFocusedRow]?.sortedOptions[defaultFocusedCol];
-    onFocusedSkillChange?.(skill?.id ?? null);
-  }
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      const skill = processedCategories[defaultFocusedRow]?.sortedOptions[defaultFocusedCol];
+      onFocusedSkillChange?.(skill?.id ?? null);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- fire once on mount to notify parent of initial focus
 
   useCategoryGridInput({
     processedCategories,
