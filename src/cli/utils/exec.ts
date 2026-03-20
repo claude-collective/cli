@@ -239,6 +239,23 @@ export async function claudePluginMarketplaceRemove(name: string): Promise<void>
   }
 }
 
+export async function claudePluginMarketplaceUpdate(name: string): Promise<void> {
+  validatePluginName(name);
+
+  const args = ["plugin", "marketplace", "update", name];
+  let result;
+  try {
+    result = await execCommand("claude", args, {});
+  } catch (err) {
+    throw new Error(`Failed to update marketplace: ${getErrorMessage(err)}`);
+  }
+
+  if (result.exitCode !== 0) {
+    const errorMessage = result.stderr || result.stdout || "Unknown error";
+    throw new Error(`Failed to update marketplace: ${errorMessage.trim()}`);
+  }
+}
+
 export async function claudePluginUninstall(
   pluginName: string,
   scope: "project" | "user",
