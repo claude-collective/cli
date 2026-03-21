@@ -256,7 +256,7 @@ Source: `src/cli/lib/schemas.ts` lines 114-133
 
 ```
 web-developer, api-developer, cli-developer, web-architecture,
-agent-summoner, documentor, skill-summoner, cli-migrator,
+agent-summoner, scribe, convention-keeper, skill-summoner, cli-migrator,
 pattern-scout, web-pattern-critique, web-pm, api-researcher,
 web-researcher, api-reviewer, cli-reviewer, web-reviewer,
 cli-tester, web-tester

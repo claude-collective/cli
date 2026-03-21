@@ -60,6 +60,7 @@ The three phases should be visually distinct. Mixing setup, interaction, and ass
 ### `beforeAll`
 
 Use for:
+
 - `ensureBinaryExists()` -- required in every test file, verifies `bin/run.js` exists
 - Expensive shared fixtures: source creation (`createE2ESource()`), which is read-only across tests
 
@@ -73,12 +74,14 @@ beforeAll(async () => {
 ### `beforeEach`
 
 Use for:
+
 - Per-test project creation via `ProjectBuilder`
 - Any state that must be fresh for each test
 
 ### `afterEach`
 
 Use for:
+
 - `wizard.destroy()` -- cleans up PTY session and temp dirs
 - Temp dir cleanup: `cleanupTempDir(tempDir)`
 - Resetting variables: `tempDir = undefined!`
@@ -93,6 +96,7 @@ afterEach(async () => {
 ### `afterAll`
 
 Use for:
+
 - Shared source cleanup: `cleanupTempDir(source.tempDir)`
 - Lifecycle tests where phases share state across a single `it()` block
 
@@ -130,6 +134,7 @@ afterEach(async () => {
 **Tests do not manage timing.** No `delay()`, no `setTimeout`, no `INTERNAL_DELAYS` in test files.
 
 All delays are encapsulated inside the framework:
+
 - `BaseStep.pressEnter()` includes an internal `STEP_TRANSITION` delay
 - `BaseStep.pressSpace()` includes an internal `KEYSTROKE` delay
 - `TerminalScreen.waitForText()` polls with auto-retry

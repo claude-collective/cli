@@ -162,6 +162,7 @@ await prompt.arrowDown();
 **Why:** Duplication drifts. When one copy is updated, the others silently become incorrect.
 
 **Instead:**
+
 - Navigation flows -> step methods on page objects
 - Setup patterns -> new `ProjectBuilder` method or fixture helper
 - Assertion patterns -> new custom matcher in `project-matchers.ts`
@@ -177,11 +178,13 @@ await prompt.arrowDown();
 **Why:** The shared utilities grow over time. A helper you need likely already exists. Duplicating it means two copies that drift apart.
 
 **Before writing any helper function in a test file:**
+
 1. Grep `e2e/helpers/test-utils.ts` for the function name or a similar name
 2. Grep `e2e/fixtures/` for related helpers
 3. Grep `e2e/pages/constants.ts` for the constant value
 
 **Where new helpers belong:**
+
 - Path helpers (like `skillsPath`, `agentsPath`) -> `test-utils.ts`
 - Dual-scope lifecycle helpers -> `dual-scope-helpers.ts`
 - Constants (paths, timeouts, text) -> `constants.ts`

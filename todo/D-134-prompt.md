@@ -7,6 +7,7 @@ Use this prompt with clean context + Ralph Loop to iterate over the declarative 
 ## Prompt
 
 Read these files before doing anything else:
+
 1. CLAUDE.md — project rules, delegation rules, conventions
 2. .ai-docs/DOCUMENTATION_MAP.md — then read .ai-docs/test-infrastructure.md
 3. todo/D-134-declarative-e2e-framework.md — the full spec for this task
@@ -49,6 +50,7 @@ This task implements D-134: replacing the imperative E2E test suite with a decla
 ## Delegation instructions for sub-agents
 
 When delegating to cli-developer for framework code:
+
 - "Read CLAUDE.md before starting. Do NOT run any git commands."
 - "Read todo/D-134-declarative-e2e-framework.md for the full spec."
 - "Read e2e/helpers/terminal-session.ts to understand the session layer you are wrapping."
@@ -56,6 +58,7 @@ When delegating to cli-developer for framework code:
 - Point them to the specific step's file list and type definitions in the spec.
 
 When delegating to cli-tester for test migration:
+
 - "Read CLAUDE.md before starting. Do NOT run any git commands."
 - "Read todo/D-134-declarative-e2e-framework.md for the full spec, especially the API examples."
 - "Read the existing test file you are migrating. Understand what it tests."
@@ -66,6 +69,7 @@ When delegating to cli-tester for test migration:
 ## What "done" looks like
 
 All 11 success criteria from the spec pass:
+
 1. No writeFile/readFile/mkdir/path.join in test bodies
 2. No session.waitForText() in test files
 3. No delay() in test files

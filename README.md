@@ -83,8 +83,8 @@ Browse the full catalog on the [Plugin Marketplace](https://github.com/agents-in
 | Researchers      | `web-researcher` `api-researcher`                                  |
 | Planning         | `web-pm`                                                           |
 | Pattern Analysis | `pattern-scout` `web-pattern-critique`                             |
-| Documentation    | `documentor`                                                       |
-| Meta             | `skill-summoner` `agent-summoner`                                  |
+| Documentation    | `scribe`                                                           |
+| Meta             | `skill-summoner` `agent-summoner` `convention-keeper`              |
 
 Each subagent is composed from modular partials (role, workflow, output format) plus its assigned skills. Everything is ejectable.
 

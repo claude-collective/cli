@@ -79,6 +79,8 @@ This file provides behavioral rules and conventions. For codebase reference docu
 - ALWAYS grep for the old value when changing test data or renaming anything
 - ALWAYS search for all call sites when removing a workaround
 - When a task is deferred, ALWAYS move it to `TODO-deferred.md` — never delete
+- ALWAYS write a finding to `.agents-docs/findings/` when a sub-agent fixes an anti-pattern, discovers a missing standard, or notices convention drift — use the template from `.agents-docs/FINDING_TEMPLATE.md`
+- ALWAYS tell sub-agents: "If you fix an anti-pattern or discover a missing standard, write a finding to `.agents-docs/findings/` using the template in `.agents-docs/FINDING_TEMPLATE.md`"
 
 ### Scope Awareness
 - ALWAYS use `resolveInstallPaths(projectDir, scope)` with the explicit scope parameter when resolving skill/agent directories

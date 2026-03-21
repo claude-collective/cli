@@ -42,6 +42,7 @@ describe("compile command", () => {
 ```
 
 Key points:
+
 - `beforeAll(ensureBinaryExists)` verifies the CLI binary exists
 - `ProjectBuilder.minimal()` creates the project; `tempDir` captures the parent for cleanup
 - `CLI.run()` takes a `ProjectHandle` and returns ANSI-stripped output
@@ -107,6 +108,7 @@ it("should select specific stack and toggle skills", async () => {
 ```
 
 Key points:
+
 - Each step method returns the next step object -- TypeScript enforces valid navigation
 - Navigate by name (`selectStack("E2E Test Stack")`, `toggleAgent("API Developer")`) not by index
 - Steps compose: `build.advanceDomain()` advances one domain, `build.passThroughAllDomains()` advances all three
@@ -143,6 +145,7 @@ it("full lifecycle: init -> compile -> uninstall", { timeout: TIMEOUTS.LIFECYCLE
 ```
 
 Key points:
+
 - Source is created once in `beforeAll` and shared
 - Project directory is created in `beforeAll` (not per-test)
 - Each interactive session is destroyed before the next phase starts
@@ -182,6 +185,7 @@ await expect({ dir: projectDir }).toHaveConfig();
 ```
 
 Key points:
+
 - Pass `HOME` via env to control where global config lives
 - `ProjectBuilder.dualScope()` for pre-built file structures
 - `dual-scope-helpers.ts` for state built through wizard interactions
@@ -201,7 +205,9 @@ await agents.navigateCursorToAgent("API Developer");
 await domain.toggleDomain(STEP_TEXT.DOMAIN_API);
 
 // Bad: fragile index-based navigation
-for (let i = 0; i < 3; i++) { await step.navigateDown(); }
+for (let i = 0; i < 3; i++) {
+  await step.navigateDown();
+}
 ```
 
 **Exception:** `InteractivePrompt` (non-wizard prompts) still uses index-based navigation in some cases because the prompts lack unique text labels. Document the assumption with a comment when this is unavoidable:

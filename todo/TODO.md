@@ -2,10 +2,11 @@
 
 | ID    | Task                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Status                                                                                       |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------- |
-| D-135 | Investigate: edit-to-local flow writes agents to real HOME despite TerminalSession HOME override — `agent-recompiler.ts:134` uses `os.homedir()` which should respect `HOME=cwd`, but after `cc edit` switching skills to local mode, the compiled agent ends up at the real `~/.claude/agents/` instead of `projectDir/.claude/agents/`. The `agentInProject \|\| agentInHome` assertions in `source-switching-modes.e2e.test.ts` and `init-then-edit-merge.e2e.test.ts` may be masking a genuine scope-routing bug. Possible causes: Claude CLI plugin operations writing agents as a side effect, subprocess not inheriting env, or WSL2 `os.homedir()` quirk. | Investigate |
-| D-137 | Standards feedback loop — sub-agents capture anti-pattern findings during work, a `standards-reviewer` agent synthesizes them into doc updates. Three-stage pipeline: Capture (sub-agents write structured findings to `.ai-docs/findings/`), Accumulate (findings pile up across sessions), Synthesize (reviewer agent reads findings, cross-refs existing standards, proposes updates). See detailed spec below. | Investigate |
-| D-134 | Declarative E2E test utilities — replace imperative `session.waitForText()`/`session.enter()`/try-catch patterns with high-level helpers that read like user stories (e.g., `wizard.selectStack("full-stack")`, `wizard.selectSkill("web", "framework", "react")`, `wizard.completeWizard()`, `assertAgentCompiled(dir, "web-developer")`). Tests should describe user interactions and expected output, not terminal scraping mechanics. Follows D-120/D-121/D-125. | Ready for Dev |
-| D-133 | E2E tests for 13 untested bug fixes — (1) source priority override in wizard-store.ts, (2) splitConfigByScope missing fields, (3) shouldRemoveSkill forkedFrom-only check, (4) uninstall using loadProjectConfigFromDir, (5) config merger preserving agent scope changes, (6) old agent file deletion on scope change, (7) stack scope leak filtering, (8) duplicate domains fix, (9) global config including all domains, (10) config-types.ts Domain type including config.domains, (11) compile scope-aware dual pass (global vs project agent filtering), (12) compile global plugin discovery for project pass, (13) compile project agents missing skills when global stack entries override project stack | Ready for Dev |
+| D-135 | Investigate: edit-to-local flow writes agents to real HOME despite TerminalSession HOME override — `agent-recompiler.ts:134` uses `os.homedir()` which should respect `HOME=cwd`, but after `cc edit` switching skills to local mode, the compiled agent ends up at the real `~/.claude/agents/` instead of `projectDir/.claude/agents/`. The `agentInProject \|\| agentInHome` assertions in `source-switching-modes.e2e.test.ts` and `init-then-edit-merge.e2e.test.ts` may be masking a genuine scope-routing bug. Possible causes: Claude CLI plugin operations writing agents as a side effect, subprocess not inheriting env, or WSL2 `os.homedir()` quirk.                                                 | Investigate                                                                                  |
+| D-137 | Standards feedback loop — sub-agents capture anti-pattern findings during work, a `convention-keeper` agent synthesizes them into doc updates. Three-stage pipeline: Capture (sub-agents write structured findings to `.agents-docs/findings/`), Accumulate (findings pile up across sessions), Synthesize (reviewer agent reads findings, cross-refs existing standards, proposes updates). See detailed spec below.                                                                                                                                                                                                                                                                                             | Done                                                                                         |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions in `src/agents/` using the agent-summoner. Audit each agent's instructions against actual usage patterns, findings from the convention-keeper, and CLAUDE.md rules. Update prompts, add missing guardrails, improve output formats, and ensure agents write findings to `.agents-docs/findings/` when they discover anti-patterns.                                                                                                                                                                                                                                                                                                               | Ready for Dev                                                                                |
+| D-134 | Declarative E2E test utilities — replace imperative `session.waitForText()`/`session.enter()`/try-catch patterns with high-level helpers that read like user stories (e.g., `wizard.selectStack("full-stack")`, `wizard.selectSkill("web", "framework", "react")`, `wizard.completeWizard()`, `assertAgentCompiled(dir, "web-developer")`). Tests should describe user interactions and expected output, not terminal scraping mechanics. Follows D-120/D-121/D-125.                                                                                                                                                                                                                                              | Ready for Dev                                                                                |
+| D-133 | E2E tests for 13 untested bug fixes — (1) source priority override in wizard-store.ts, (2) splitConfigByScope missing fields, (3) shouldRemoveSkill forkedFrom-only check, (4) uninstall using loadProjectConfigFromDir, (5) config merger preserving agent scope changes, (6) old agent file deletion on scope change, (7) stack scope leak filtering, (8) duplicate domains fix, (9) global config including all domains, (10) config-types.ts Domain type including config.domains, (11) compile scope-aware dual pass (global vs project agent filtering), (12) compile global plugin discovery for project pass, (13) compile project agents missing skills when global stack entries override project stack | Ready for Dev                                                                                |
 | D-132 | Skip incompatibility markers in exclusive categories — in radio (max 1) categories like Framework and Meta-Framework, the single-selection constraint already prevents conflicts. Incompatibility styling is redundant noise there. Only show incompatibility markers in non-exclusive (checkbox) categories where users could select conflicting skills. Check `exclusive: true` on the category definition.                                                                                                                                                                                                                                                                                                     | Ready for Dev                                                                                |
 | D-131 | Track project installations in global config — add `projects?: string[]` to global config, updated by init/edit/uninstall. Warn on global uninstall if project installations still depend on it. Prevents broken TypeScript imports when global is uninstalled before projects. Stale entries handled by `fileExists` check.                                                                                                                                                                                                                                                                                                                                                                                      | Investigate                                                                                  |
 | D-130 | Narrow stack type safety — `StackAgentConfig` allows any `SkillId` in any `Category`. Generate a discriminated type where each category key only accepts skill IDs that belong to that category (e.g., `"web-framework"` only accepts `"web-framework-react"                                                                                                                                                                                                                                                                                                                                                                                                                                                      | "web-framework-vue"`). Depends on D-97 (pre-generated matrix) to avoid regeneration overhead | Investigate |
@@ -130,7 +131,7 @@ Sub-agents discover implicit standards during refactoring and review work (e.g.,
 **Three-stage pipeline:**
 
 **Stage 1 — Capture (automatic, during sub-agent work):**
-When a sub-agent fixes an anti-pattern or discovers a standard gap, it writes a structured finding to `.ai-docs/findings/`. Each finding is a small markdown file (~10 lines) with frontmatter:
+When a sub-agent fixes an anti-pattern or discovers a standard gap, it writes a structured finding to `.agents-docs/findings/`. Each finding is a small markdown file (~10 lines) with frontmatter:
 
 ```yaml
 type: anti-pattern | standard-gap | convention-drift
@@ -145,29 +146,72 @@ Body sections: "What Was Wrong", "Fix Applied", "Proposed Standard". Written in-
 **Stage 2 — Accumulate (passive):**
 Findings pile up across sessions. No processing needed — each review/refactor session produces 3-8 findings.
 
-**Stage 3 — Synthesize (on-demand, `standards-reviewer` agent):**
+**Stage 3 — Synthesize (on-demand, `convention-keeper` agent):**
 A new agent type that:
-1. Reads unprocessed findings in `.ai-docs/findings/`
+
+1. Reads unprocessed findings in `.agents-docs/findings/`
 2. Groups by theme (DRY, assertions, constants, type safety)
 3. Cross-references against `docs/standards/` and `CLAUDE.md`
 4. Determines: existing rule violated (enforcement gap) or missing rule (documentation gap)?
 5. Proposes targeted additions to specific docs
 6. Marks findings as incorporated
 
-**How this differs from the `documenter` agent:**
-The documenter documents _code_ — it reads source and produces reference docs. The standards-reviewer documents _conventions_ — it reads evidence of what went wrong and proposes rules to prevent recurrence.
+**How this differs from the `scribe` agent:**
+The scribe documents _code_ — it reads source and produces reference docs. The convention-keeper documents _conventions_ — it reads evidence of what went wrong and proposes rules to prevent recurrence.
 
 **Implementation pieces:**
-1. `.ai-docs/findings/` directory and finding schema
+
+1. `.agents-docs/findings/` directory and finding schema
 2. CLAUDE.md delegation update — instruct sub-agents to write findings when fixing anti-patterns
-3. `standards-reviewer` agent definition (new agent type or skill)
+3. `convention-keeper` agent definition (new agent type or skill)
 4. Optional: `/standards-review` invocable skill
 
 **Capture sources (both):**
+
 - Sub-agents write raw findings during work (full context, most detail)
 - Orchestrator writes findings when synthesizing across multiple agent results (cross-cutting patterns)
 
 **Motivation:** In the D-134 E2E framework audit, 4 review agents found 28 issues across 103 files. The fixes were straightforward, but the _standards documentation updates_ that prevent recurrence required manual synthesis — reading all 4 agent reports, categorizing patterns, identifying doc gaps, and writing 5 targeted doc changes. This task automates that synthesis.
+
+---
+
+#### D-138: Iterate on sub-agents — systematic improvement pass
+
+**Priority:** Medium
+
+All agent definitions in `src/agents/` should be reviewed and improved using the agent-summoner's Improve Mode. Each agent was written at a point in time and may not reflect current project conventions, CLAUDE.md rules, or lessons learned from the convention-keeper's findings.
+
+**Scope:**
+
+| Category  | Agents                                                    |
+| --------- | --------------------------------------------------------- |
+| Meta      | agent-summoner, skill-summoner, scribe, convention-keeper |
+| Reviewer  | cli-reviewer, web-reviewer, api-reviewer                  |
+| Developer | cli-developer, web-developer                              |
+| Tester    | cli-tester, web-tester                                    |
+| Pattern   | web-pattern-critique, pattern-scout                       |
+| Planning  | web-pm                                                    |
+| Research  | web-researcher                                            |
+
+**For each agent:**
+
+1. Read the current source files (`metadata.yaml`, `intro.md`, `workflow.md`, `critical-requirements.md`, `output-format.md`, `critical-reminders.md`, `examples.md`)
+2. Cross-reference against CLAUDE.md NEVER/ALWAYS rules — does the agent enforce them?
+3. Check `.agents-docs/findings/` for findings where `reporting_agent` matches — does the agent's instructions prevent recurrence?
+4. Ensure the agent includes the findings capture instruction (write to `.agents-docs/findings/` when anti-patterns are discovered)
+5. Use agent-summoner Improve Mode to propose and apply improvements
+6. Recompile and verify
+
+**Key improvements to look for:**
+
+- Missing CLAUDE.md rules (e.g., git safety, type cast restrictions)
+- Missing findings capture instruction
+- Outdated file paths or function references
+- Weak or missing self-correction triggers
+- Output format gaps
+- Missing domain knowledge that would prevent common mistakes
+
+**Approach:** Do 2-3 agents per session. Start with the most-used agents (cli-developer, cli-tester, cli-reviewer).
 
 ---
 

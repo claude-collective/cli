@@ -153,8 +153,8 @@ await expect(project).toHaveSettings({
 Always use named constants from `EXIT_CODES`. Never use bare numbers.
 
 ```typescript
-expect(exitCode).toBe(EXIT_CODES.SUCCESS);   // 0
-expect(exitCode).toBe(EXIT_CODES.ERROR);      // 1
+expect(exitCode).toBe(EXIT_CODES.SUCCESS); // 0
+expect(exitCode).toBe(EXIT_CODES.ERROR); // 1
 expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS); // 2
 ```
 
@@ -229,6 +229,7 @@ expect(output).not.toContain("ENOENT");
 If you find yourself calling `readFile` in a test to check a file's content, that is a sign a new matcher is needed. Add it to `e2e/matchers/project-matchers.ts`, register it in `e2e/matchers/setup.ts` (both the `expect.extend` call and the TypeScript type augmentation), and use it in your test.
 
 A good matcher:
+
 - Takes a `{ dir: string }` as the receiver
 - Reads files internally (the test never sees `readFile`)
 - Returns clear error messages that include what was expected and what was found

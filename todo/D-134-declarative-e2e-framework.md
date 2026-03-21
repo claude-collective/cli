@@ -12,22 +12,22 @@ The E2E test suite (70 files, 21,371 lines) is **imperative and fragile**. Tests
 
 ### By the Numbers
 
-| Anti-Pattern | Count | Scope |
-|---|---|---|
-| `waitForText` calls | 462 | 32 files |
-| `session.enter()` calls | 272 | all interactive |
-| `delay()` calls | 553 | all files |
-| `WIZARD_LOAD_TIMEOUT_MS` references | 1,018 | all files |
-| `STEP_TRANSITION_DELAY_MS` references | 451 | all files |
-| `path.join` for paths | 577 | all files |
-| `fileExists` / `directoryExists` | 252 | all files |
-| Production code imports (`src/cli/`) | ~70 | 30+ files |
-| Try-catch blocks | 56 | 10+ files |
-| Nested try-catch (3+ levels) | 8+ | 4 files |
-| Index-based arrow navigation | 4+ known | fragile |
-| Duplicated "full init flow" | 6+ | independent copies |
-| Duplicated "edit wizard to completion" | 5+ | independent copies |
-| Total `expect()` assertions | 1,667 | all files |
+| Anti-Pattern                           | Count    | Scope              |
+| -------------------------------------- | -------- | ------------------ |
+| `waitForText` calls                    | 462      | 32 files           |
+| `session.enter()` calls                | 272      | all interactive    |
+| `delay()` calls                        | 553      | all files          |
+| `WIZARD_LOAD_TIMEOUT_MS` references    | 1,018    | all files          |
+| `STEP_TRANSITION_DELAY_MS` references  | 451      | all files          |
+| `path.join` for paths                  | 577      | all files          |
+| `fileExists` / `directoryExists`       | 252      | all files          |
+| Production code imports (`src/cli/`)   | ~70      | 30+ files          |
+| Try-catch blocks                       | 56       | 10+ files          |
+| Nested try-catch (3+ levels)           | 8+       | 4 files            |
+| Index-based arrow navigation           | 4+ known | fragile            |
+| Duplicated "full init flow"            | 6+       | independent copies |
+| Duplicated "edit wizard to completion" | 5+       | independent copies |
+| Total `expect()` assertions            | 1,667    | all files          |
 
 ### Top Duplicated `waitForText` Strings (36 unique across all files)
 
@@ -69,6 +69,7 @@ The migration is structured as a sequence of **break-then-fix** steps. Each step
 If a step breaks tests, the fix is in the same step. We never have a commit where old helpers and new page objects serve the same purpose. The sequencing (Section: Sequenced Refactoring Steps) is designed so that each step's blast radius is obvious — when tests fail, you know exactly which change caused it because you just made one atomic change.
 
 **Why this matters for AI agents:** E2E test debugging is slow and error-prone for AI agents because:
+
 - Running the full suite takes minutes
 - Terminal output is hard to parse from error messages
 - Flaky timing makes it unclear if a failure is real
@@ -88,6 +89,7 @@ There are exactly two categories of file operations in E2E:
 2. **Custom matchers** (`toHaveConfig`, `toHaveCompiledAgents`) — these run AFTER the CLI has done its work. They read files to verify outcomes. The file-reading logic lives inside the matcher, never in the test.
 
 The test itself only does three things:
+
 - **Launch** a wizard or CLI command (through page objects or `CLI.run()`)
 - **Interact** with the wizard (through step methods)
 - **Assert** on the result (through custom matchers)
@@ -196,6 +198,7 @@ Adapted from Playwright's Page Object Model and Martin Fowler's POM guidance:
 ### Example 1: Full Init Flow with Defaults
 
 **Before (current):**
+
 ```typescript
 it("should complete a full stack-based init flow", async () => {
   projectDir = await createTempDir();
@@ -245,11 +248,12 @@ it("should complete a full stack-based init flow", async () => {
   expect(await fileExists(configPath)).toBe(true);
   const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
   const agentFiles = await listFiles(agentsDir);
-  expect(agentFiles.filter(f => f.endsWith(".md")).length).toBeGreaterThan(0);
+  expect(agentFiles.filter((f) => f.endsWith(".md")).length).toBeGreaterThan(0);
 });
 ```
 
 **After (declarative):**
+
 ```typescript
 it("should complete a full stack-based init flow", async () => {
   const wizard = await InitWizard.launch({ source });
@@ -264,6 +268,7 @@ it("should complete a full stack-based init flow", async () => {
 ### Example 2: Scope Toggle in Build Step
 
 **Before:**
+
 ```typescript
 session = new TerminalSession(["edit"], projectDir, { rows: 40, cols: 120 });
 await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
@@ -278,6 +283,7 @@ expect(confirmOutput).toContain("global");
 ```
 
 **After:**
+
 ```typescript
 const wizard = await EditWizard.launch({ projectDir });
 await wizard.build.toggleScopeOnFocusedSkill();
@@ -296,14 +302,16 @@ await expect(confirm).toShowScope({ global: 1 });
 **Before:** 30+ lines spanning 4 phases with manual session create/destroy.
 
 **After:**
+
 ```typescript
-const initResult = await InitWizard.launch({ source }).then(w => w.completeWithDefaults());
+const initResult = await InitWizard.launch({ source }).then((w) => w.completeWithDefaults());
 expect(await initResult.exitCode).toBe(0);
 await expect(initResult.project).toHaveConfig({ skillIds: ["web-framework-react"] });
 
 const editResult = await EditWizard.launch({
-  projectDir: initResult.project.dir, source,
-}).then(w => w.passThrough());
+  projectDir: initResult.project.dir,
+  source,
+}).then((w) => w.passThrough());
 expect(await editResult.exitCode).toBe(0);
 await expect(editResult.project).toHaveConfig({ skillIds: ["web-framework-react"] });
 ```
@@ -311,6 +319,7 @@ await expect(editResult.project).toHaveConfig({ skillIds: ["web-framework-react"
 ### Example 5: Non-Interactive Command
 
 **Before:**
+
 ```typescript
 tempDir = await createTempDir();
 const { projectDir, agentsDir } = await createMinimalProject(tempDir);
@@ -319,11 +328,12 @@ const result = await runCLI(["compile", "--verbose"], projectDir, {
 });
 expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
 expect(result.combined).toContain("Compiled");
-const mdFiles = (await listFiles(agentsDir)).filter(f => f.endsWith(".md"));
+const mdFiles = (await listFiles(agentsDir)).filter((f) => f.endsWith(".md"));
 expect(mdFiles.length).toBeGreaterThan(0);
 ```
 
 **After:**
+
 ```typescript
 const project = await ProjectBuilder.minimal();
 const result = await CLI.run(["compile", "--verbose"], project);
@@ -337,6 +347,7 @@ await expect(project).toHaveCompiledAgents();
 The search modal has known bugs. Tests should be written using the POM pattern but marked with `it.fails` or `it.skip` until the modal is fixed.
 
 **After:**
+
 ```typescript
 it.fails("should search and select a skill", async () => {
   const wizard = await InitWizard.launch({ source });
@@ -355,18 +366,20 @@ it.fails("should search and select a skill", async () => {
 Lifecycle tests that need different state between phases should achieve that state through user interactions (wizard sessions), not by mutating config files directly. If a state can't be reached through the CLI, it shouldn't be tested in E2E — it belongs in a unit/integration test.
 
 **After:**
+
 ```typescript
 // Phase 1: Init with defaults
-const initResult = await InitWizard.launch({ source }).then(w => w.completeWithDefaults());
+const initResult = await InitWizard.launch({ source }).then((w) => w.completeWithDefaults());
 expect(await initResult.exitCode).toBe(0);
 
 // Phase 2: Edit — change source through the wizard's source step
 const wizard = await EditWizard.launch({ projectDir: initResult.project.dir, source });
 await wizard.build.passThroughAllDomains();
 await wizard.sources.setAllPlugin();
-const editResult = await wizard.sources.advance()
-  .then(agents => agents.acceptDefaults())
-  .then(confirm => confirm.confirm());
+const editResult = await wizard.sources
+  .advance()
+  .then((agents) => agents.acceptDefaults())
+  .then((confirm) => confirm.confirm());
 expect(await editResult.exitCode).toBe(0);
 ```
 
@@ -408,6 +421,7 @@ e2e/
 ```
 
 **Files deleted during migration** (not kept for compatibility):
+
 - `e2e/helpers/test-utils.ts` — replaced by `constants.ts`, `project-builder.ts`, `cli.ts`, step objects
 - `e2e/helpers/plugin-assertions.ts` — replaced by `project-matchers.ts`
 
@@ -447,14 +461,14 @@ export const STEP_TEXT = {
   DOMAIN_API: "API",
   DOMAIN_SHARED: "Shared",
   DOMAIN_MOBILE: "Mobile",
-  BUILD: "Framework",        // First category visible in build step
+  BUILD: "Framework", // First category visible in build step
   SOURCES: "Customize skill sources",
   AGENTS: "Select agents",
   CONFIRM: "Ready to install",
 
   // Completion
   INIT_SUCCESS: "initialized successfully",
-  EDIT_SUCCESS: "Plugin updated",    // NOT "recompiled"
+  EDIT_SUCCESS: "Plugin updated", // NOT "recompiled"
   COMPILE_SUCCESS: "Compiled",
   EJECT_SUCCESS: "Eject complete!",
   IMPORT_SUCCESS: "Import complete:",
@@ -473,7 +487,7 @@ export const STEP_TEXT = {
   SEARCH: "Search Skills",
 
   // UI elements
-  FOOTER_SELECT: "select",  // Footer text used for stable render detection
+  FOOTER_SELECT: "select", // Footer text used for stable render detection
   START_FROM_SCRATCH: "Start from scratch",
   TOGGLE_SELECTION: "Toggle selection",
   NO_INSTALLATION: "No installation found",
@@ -665,6 +679,7 @@ The steps are ordered so that each step's changes are independent of subsequent 
 **What:** Create all new framework files. No test files are modified.
 
 **Files created:**
+
 - `e2e/pages/constants.ts`
 - `e2e/pages/terminal-screen.ts`
 - `e2e/pages/base-step.ts`
@@ -684,6 +699,7 @@ The steps are ordered so that each step's changes are independent of subsequent 
 - `e2e/matchers/setup.ts`
 
 **Validation:** Write 3 new standalone smoke tests using the POM API to prove it works end-to-end before touching any existing test. These smoke tests exercise:
+
 1. `InitWizard.completeWithDefaults()` + `toHaveConfig()` matcher
 2. `EditWizard.passThrough()` + `toHaveCompiledAgents()` matcher
 3. `ProjectBuilder.minimal()` + `CLI.run(["compile"])` + `toHaveCompiledAgents()`
@@ -702,6 +718,7 @@ If these smoke tests fail, fix the framework before proceeding.
 **Why first:** These functions are used across 20+ files but are pure assertion helpers with no flow control. Safest starting point — if a matcher fails, the error message tells you exactly what's wrong.
 
 **Migration pattern:**
+
 ```typescript
 // Before
 await verifyConfig(projectDir, { skillIds: ["web-framework-react"] });
@@ -723,6 +740,7 @@ await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
 **What:** Replace `createMinimalProject()`, `createEditableProject()`, `createDualScopeProject()`, `createProjectWithCustomSkill()`, `createMinimalInstallation()` in `test-utils.ts` with `ProjectBuilder` methods.
 
 **Migration pattern:**
+
 ```typescript
 // Before
 const { projectDir, agentsDir } = await createMinimalProject(tempDir);
@@ -743,11 +761,12 @@ const project = await ProjectBuilder.minimal();
 **What:** Replace raw `runCLI()` + manual path construction + manual assertions with `CLI.run()` + custom matchers.
 
 **Migration pattern:**
+
 ```typescript
 // Before
 const result = await runCLI(["compile", "--verbose"], projectDir, { env: COMPILE_ENV });
 expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-const mdFiles = (await listFiles(agentsDir)).filter(f => f.endsWith(".md"));
+const mdFiles = (await listFiles(agentsDir)).filter((f) => f.endsWith(".md"));
 expect(mdFiles.length).toBeGreaterThan(0);
 
 // After
@@ -768,13 +787,14 @@ await expect(project).toHaveCompiledAgents();
 **What:** Remove all timing constant imports from test files. Tests that still use `TerminalSession` directly (not yet migrated to page objects) get their delays from `e2e/pages/constants.ts` instead of `test-utils.ts`.
 
 **Migration pattern:**
+
 ```typescript
 // Before
 import { WIZARD_LOAD_TIMEOUT_MS, STEP_TRANSITION_DELAY_MS, delay } from "../helpers/test-utils.js";
 
 // After
 import { TIMEOUTS, INTERNAL_DELAYS } from "../pages/constants.js";
-const delay = (ms: number) => new Promise(r => setTimeout(r, ms)); // inline until step objects replace it
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms)); // inline until step objects replace it
 ```
 
 **Files modified:** All interactive + lifecycle test files (~35 files)
@@ -788,6 +808,7 @@ const delay = (ms: number) => new Promise(r => setTimeout(r, ms)); // inline unt
 **What:** Migrate all `init-wizard-*.e2e.test.ts` files (8 files) to use `InitWizard` page object. This is the highest-value migration — these files have the most duplicated navigation.
 
 **Migration per file:**
+
 1. Replace `new TerminalSession(["init", ...])` with `InitWizard.launch()`
 2. Replace `waitForText` + `delay` + `enter` sequences with step methods
 3. Replace `navigateInitWizardToCompletion()` with `wizard.completeWithDefaults()`
@@ -795,6 +816,7 @@ const delay = (ms: number) => new Promise(r => setTimeout(r, ms)); // inline unt
 5. Remove `session` variable tracking (wizard handles lifecycle)
 
 **Files migrated (in order):**
+
 1. `init-wizard-stack.e2e.test.ts` — canonical init flow, simplest
 2. `init-wizard-scratch.e2e.test.ts` — uses `selectScratch()`
 3. `init-wizard-interactions.e2e.test.ts` — scope toggle, domain deselection
@@ -816,6 +838,7 @@ const delay = (ms: number) => new Promise(r => setTimeout(r, ms)); // inline unt
 **What:** Migrate all `edit-wizard-*.e2e.test.ts` files (7 files) to use `EditWizard` page object.
 
 **Files migrated:**
+
 1. `edit-wizard-completion.e2e.test.ts`
 2. `edit-wizard-navigation.e2e.test.ts`
 3. `edit-wizard-launch.e2e.test.ts`
@@ -835,6 +858,7 @@ const delay = (ms: number) => new Promise(r => setTimeout(r, ms)); // inline unt
 **What:** Migrate remaining interactive tests that aren't init or edit wizard.
 
 **Files migrated:**
+
 1. `build-stack.e2e.test.ts`
 2. `search-interactive.e2e.test.ts` — uses `SearchModal` page object (tests marked `it.fails`)
 3. `search-static.e2e.test.ts`
@@ -852,6 +876,7 @@ const delay = (ms: number) => new Promise(r => setTimeout(r, ms)); // inline unt
 **What:** Migrate all lifecycle test files. These are the most complex — multi-phase, shared state. Any tests that previously mutated config files directly must be rewritten to achieve state through wizard interactions or moved to unit/integration tests.
 
 **Files migrated (ordered by complexity):**
+
 1. `local-lifecycle.e2e.test.ts` — simplest lifecycle
 2. `plugin-lifecycle.e2e.test.ts`
 3. `cross-scope-lifecycle.e2e.test.ts`
@@ -873,6 +898,7 @@ const delay = (ms: number) => new Promise(r => setTimeout(r, ms)); // inline unt
 **What:** Any command or integration tests not yet migrated in steps 2-3.
 
 **Files:**
+
 - `e2e/integration/custom-agents.e2e.test.ts`
 - `e2e/integration/eject-compile.e2e.test.ts`
 - `e2e/integration/eject-integration.e2e.test.ts`
@@ -887,10 +913,12 @@ const delay = (ms: number) => new Promise(r => setTimeout(r, ms)); // inline unt
 **What:** The final cleanup. By this point, `test-utils.ts` should have no consumers. Delete it. Grep all `.e2e.test.ts` files for any remaining `import.*from.*src/cli` — fix any stragglers.
 
 **Files deleted:**
+
 - `e2e/helpers/test-utils.ts`
 - `e2e/helpers/plugin-assertions.ts` (already deleted in step 1, confirm gone)
 
 **Verification:**
+
 ```bash
 # Must return 0 results:
 grep -r 'from.*src/cli' e2e/**/*.e2e.test.ts
@@ -951,11 +979,11 @@ Steps 1-3 can run in parallel with each other (independent concerns). Steps 5-8 
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|---|---|
-| Framework has bugs discovered during migration | Step 0 includes 3 smoke tests that prove the API end-to-end. Fix framework bugs before migrating any existing test. |
-| A step breaks too many tests at once | Steps 5-8 are ordered by complexity (simplest first). If `init-wizard-stack` migration works, the pattern is proven for the other 7 init files. |
-| Timing changes cause flaky tests | All timing is now in `constants.ts` and `INTERNAL_DELAYS`. If flaky, adjust one constant — not 451 scattered references. |
-| Page objects don't cover an edge case | `BaseStep` exposes `protected` methods. Step subclasses can access the underlying screen/session for escape-hatch scenarios. Tests never touch session directly. |
-| Migration takes too long | Steps are independent units of work. Each step is a single commit. Progress is always forward — no step depends on future steps. |
-| `navigateToItem(label)` is unreliable | The method has a max-attempts limit and throws with a clear error including the current screen content. Falls back to index-based navigation only if explicitly requested via a separate method. |
+| Risk                                           | Mitigation                                                                                                                                                                                       |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Framework has bugs discovered during migration | Step 0 includes 3 smoke tests that prove the API end-to-end. Fix framework bugs before migrating any existing test.                                                                              |
+| A step breaks too many tests at once           | Steps 5-8 are ordered by complexity (simplest first). If `init-wizard-stack` migration works, the pattern is proven for the other 7 init files.                                                  |
+| Timing changes cause flaky tests               | All timing is now in `constants.ts` and `INTERNAL_DELAYS`. If flaky, adjust one constant — not 451 scattered references.                                                                         |
+| Page objects don't cover an edge case          | `BaseStep` exposes `protected` methods. Step subclasses can access the underlying screen/session for escape-hatch scenarios. Tests never touch session directly.                                 |
+| Migration takes too long                       | Steps are independent units of work. Each step is a single commit. Progress is always forward — no step depends on future steps.                                                                 |
+| `navigateToItem(label)` is unreliable          | The method has a max-attempts limit and throws with a clear error including the current screen content. Falls back to index-based navigation only if explicitly requested via a separate method. |

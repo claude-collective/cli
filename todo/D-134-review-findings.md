@@ -12,19 +12,19 @@
 
 ## Success criteria status
 
-| # | Criterion | Status |
-|---|-----------|--------|
-| 1 | No writeFile/readFile/mkdir in test bodies | PASS — 183 remaining are all in setup blocks (beforeAll/beforeEach), not test bodies |
-| 2 | No session.waitForText/enter/arrowDown in test files | PASS — 0 matches |
-| 3 | No delay() in test files | PASS — 0 matches |
-| 4 | No src/cli/ imports in E2E test files (non-type) | PASS — 0 matches |
-| 5 | No index-based navigation | Mostly done — 13 arrowDown() in InteractivePrompt-based tests (architectural boundary) |
-| 6 | No duplicated navigation flows | PASS |
-| 7 | Each test reads like a user story | PASS (qualitative) |
-| 8 | UI text changes require editing 1 file | PASS — STEP_TEXT + EXIT_CODES centralized in constants.ts |
-| 9 | test-utils.ts and plugin-assertions.ts deleted | plugin-assertions.ts deleted. test-utils.ts retained as clean utility module (178 lines, 74 importers — cannot delete without massive refactor) |
-| 10 | Zero compatibility code | PASS — no deprecated functions or backward-compat shims |
-| 11 | No direct config mutation between test phases | PASS — writeProjectConfig calls are in setup, not between phases |
+| #   | Criterion                                            | Status                                                                                                                                          |
+| --- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | No writeFile/readFile/mkdir in test bodies           | PASS — 183 remaining are all in setup blocks (beforeAll/beforeEach), not test bodies                                                            |
+| 2   | No session.waitForText/enter/arrowDown in test files | PASS — 0 matches                                                                                                                                |
+| 3   | No delay() in test files                             | PASS — 0 matches                                                                                                                                |
+| 4   | No src/cli/ imports in E2E test files (non-type)     | PASS — 0 matches                                                                                                                                |
+| 5   | No index-based navigation                            | Mostly done — 13 arrowDown() in InteractivePrompt-based tests (architectural boundary)                                                          |
+| 6   | No duplicated navigation flows                       | PASS                                                                                                                                            |
+| 7   | Each test reads like a user story                    | PASS (qualitative)                                                                                                                              |
+| 8   | UI text changes require editing 1 file               | PASS — STEP_TEXT + EXIT_CODES centralized in constants.ts                                                                                       |
+| 9   | test-utils.ts and plugin-assertions.ts deleted       | plugin-assertions.ts deleted. test-utils.ts retained as clean utility module (178 lines, 74 importers — cannot delete without massive refactor) |
+| 10  | Zero compatibility code                              | PASS — no deprecated functions or backward-compat shims                                                                                         |
+| 11  | No direct config mutation between test phases        | PASS — writeProjectConfig calls are in setup, not between phases                                                                                |
 
 ## Verification checklist
 
@@ -41,6 +41,7 @@
 ## All Fixed Items
 
 ### Framework fixes
+
 - **F1:** `navigateCursorToItem` promoted to `BaseStep` — 4 copies eliminated from domain-step, stack-step, agents-step
 - **F2:** Shared `setupSession()` extracted in `init-wizard.ts` — ~40 duplicate lines removed
 - **F3:** `InteractivePrompt` inline delay patterns replaced with `private delay(ms)` method — 10 occurrences cleaned
@@ -57,6 +58,7 @@
 - **F14:** `PluginScope` type exported from `project-matchers.ts` and used in `setup.ts` — eliminates inline union duplication
 
 ### Test fixes
+
 - **T1:** Duplicated dual-scope helpers extracted to `e2e/fixtures/dual-scope-helpers.ts` (~350 lines deduplicated from 3 lifecycle files)
 - **T2:** `project-builder.ts` imports replaced: `CLAUDE_DIR`/`STANDARD_FILES` from `src/cli/consts.ts` → `DIRS`/`FILES` from `e2e/pages/constants.ts`. `renderConfigTs`/`renderSkillMd` now imported via `test-utils.ts` re-exports
 - **T3:** Index-based agent navigation replaced with `navigateCursorToAgent("API Developer")` in 4 files
@@ -75,6 +77,7 @@
 - **T16:** 265 raw exit code assertions replaced with `EXIT_CODES.SUCCESS` / `EXIT_CODES.ERROR` across 38 test files
 
 ### Cleanup
+
 - Removed unused `navigateInitWizardToCompletion`, `passThroughAllBuildDomains`, `waitForRawText` from `test-utils.ts`
 - Removed unused internal timing constants and `delay` function from `test-utils.ts`
 - Removed unused `TerminalSession` import from `test-utils.ts`

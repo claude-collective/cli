@@ -45,11 +45,11 @@ The framework uses a 5-layer Page Object Model adapted for terminal-based CLI te
 
 **Horizontal layers** support all vertical layers:
 
-| Layer | Files | Purpose |
-|-------|-------|---------|
-| Matchers | `e2e/matchers/project-matchers.ts`, `setup.ts` | Custom Vitest matchers for file-based assertions |
-| Fixtures | `e2e/fixtures/project-builder.ts`, `cli.ts`, `dual-scope-helpers.ts`, `interactive-prompt.ts` | Project creation, CLI execution, scope helpers |
-| Constants | `e2e/pages/constants.ts` | All UI text, paths, timeouts, exit codes |
+| Layer     | Files                                                                                         | Purpose                                          |
+| --------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Matchers  | `e2e/matchers/project-matchers.ts`, `setup.ts`                                                | Custom Vitest matchers for file-based assertions |
+| Fixtures  | `e2e/fixtures/project-builder.ts`, `cli.ts`, `dual-scope-helpers.ts`, `interactive-prompt.ts` | Project creation, CLI execution, scope helpers   |
+| Constants | `e2e/pages/constants.ts`                                                                      | All UI text, paths, timeouts, exit codes         |
 
 ---
 
@@ -97,13 +97,13 @@ e2e/
 
 ## Test Categories
 
-| Category | Directory | Tool | Description |
-|----------|-----------|------|-------------|
-| Command | `commands/` | `CLI.run()` | Non-interactive commands: flags, output, exit codes, file side effects. One `describe` per command; split into files when a command has 15+ tests. |
-| Interactive | `interactive/` | `InitWizard` / `EditWizard` | Wizard flows: navigation, step transitions, completion. Split by concern: `init-wizard-stack`, `edit-wizard-local`. |
-| Lifecycle | `lifecycle/` | Both | Multi-phase: init, edit, compile, uninstall across shared project state. Single `it()` block per lifecycle. |
-| Integration | `integration/` | `CLI.run()` | Cross-command pipelines (e.g., eject then compile) |
-| Smoke | `smoke/` | Various | Third-party probes (Claude CLI). May import `exec.ts` functions (`execCommand`, `claudePluginInstall`, etc.) because they test the Claude CLI binary directly, not our CLI. Use `describe.skipIf(!claudeAvailable)`. |
+| Category    | Directory      | Tool                        | Description                                                                                                                                                                                                          |
+| ----------- | -------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Command     | `commands/`    | `CLI.run()`                 | Non-interactive commands: flags, output, exit codes, file side effects. One `describe` per command; split into files when a command has 15+ tests.                                                                   |
+| Interactive | `interactive/` | `InitWizard` / `EditWizard` | Wizard flows: navigation, step transitions, completion. Split by concern: `init-wizard-stack`, `edit-wizard-local`.                                                                                                  |
+| Lifecycle   | `lifecycle/`   | Both                        | Multi-phase: init, edit, compile, uninstall across shared project state. Single `it()` block per lifecycle.                                                                                                          |
+| Integration | `integration/` | `CLI.run()`                 | Cross-command pipelines (e.g., eject then compile)                                                                                                                                                                   |
+| Smoke       | `smoke/`       | Various                     | Third-party probes (Claude CLI). May import `exec.ts` functions (`execCommand`, `claudePluginInstall`, etc.) because they test the Claude CLI binary directly, not our CLI. Use `describe.skipIf(!claudeAvailable)`. |
 
 ---
 
@@ -121,14 +121,14 @@ e2e/
 
 **File:** `e2e/vitest.config.ts`
 
-| Setting | Value | Notes |
-|---------|-------|-------|
-| `pool` | `"forks"` | Process isolation between test files |
-| `testTimeout` | `30_000` | Default per-test timeout |
-| `hookTimeout` | `60_000` | Default for beforeAll/afterAll |
-| `retry` | `1` | Automatic retry on first failure |
-| `include` | `e2e/**/*.e2e.test.ts` | Smoke tests (`*.smoke.test.ts`) excluded, run explicitly |
-| `globalSetup` | `./e2e/global-setup.ts` | Pre-suite setup |
+| Setting       | Value                   | Notes                                                    |
+| ------------- | ----------------------- | -------------------------------------------------------- |
+| `pool`        | `"forks"`               | Process isolation between test files                     |
+| `testTimeout` | `30_000`                | Default per-test timeout                                 |
+| `hookTimeout` | `60_000`                | Default for beforeAll/afterAll                           |
+| `retry`       | `1`                     | Automatic retry on first failure                         |
+| `include`     | `e2e/**/*.e2e.test.ts`  | Smoke tests (`*.smoke.test.ts`) excluded, run explicitly |
+| `globalSetup` | `./e2e/global-setup.ts` | Pre-suite setup                                          |
 
 Long tests override per-test: `it("...", { timeout: TIMEOUTS.LIFECYCLE }, async () => {})`.
 
@@ -158,11 +158,11 @@ These are paths within a skills source directory (not a project directory). Use 
 
 ## Further Reading
 
-| Topic | File |
-|-------|------|
+| Topic                                      | File                                     |
+| ------------------------------------------ | ---------------------------------------- |
 | Test structure and the three-phase pattern | [test-structure.md](./test-structure.md) |
-| Setting up test data and fixtures | [test-data.md](./test-data.md) |
-| Assertions and custom matchers | [assertions.md](./assertions.md) |
-| Reusable patterns for each test type | [patterns.md](./patterns.md) |
-| Page Object Model framework | [page-objects.md](./page-objects.md) |
-| Rules and anti-patterns | [anti-patterns.md](./anti-patterns.md) |
+| Setting up test data and fixtures          | [test-data.md](./test-data.md)           |
+| Assertions and custom matchers             | [assertions.md](./assertions.md)         |
+| Reusable patterns for each test type       | [patterns.md](./patterns.md)             |
+| Page Object Model framework                | [page-objects.md](./page-objects.md)     |
+| Rules and anti-patterns                    | [anti-patterns.md](./anti-patterns.md)   |
