@@ -61,7 +61,7 @@ describe("StepAgents component", () => {
       expect(output).toContain("Pattern Critique");
       expect(output).toContain("Agent Summoner");
       expect(output).toContain("Skill Summoner");
-      expect(output).toContain("Documentor");
+      expect(output).toContain("Scribe");
     });
 
     it("should render agent descriptions", () => {

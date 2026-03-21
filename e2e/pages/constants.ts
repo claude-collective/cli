@@ -31,9 +31,10 @@ export const STEP_TEXT = {
   DOMAIN_SHARED: "Shared",
   DOMAIN_MOBILE: "Mobile",
   BUILD: "Framework", // First category visible in build step
+  BUILD_CATEGORY_COUNT: " of ", // Category counter (e.g., "(1 of 1)") — unique to build step
   SOURCES: "Customize skill sources",
   AGENTS: "Select agents",
-  CONFIRM: "Ready to install",
+  CONFIRM: "to install",
 
   // Completion
   INIT_SUCCESS: "initialized successfully",

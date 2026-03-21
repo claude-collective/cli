@@ -11,6 +11,7 @@ import {
   ensureBinaryExists,
   isClaudeCLIAvailable,
 } from "../helpers/test-utils.js";
+import "../matchers/setup.js";
 
 /**
  * E2E tests for the init wizard DEFAULT SOURCE code path.
@@ -106,7 +107,36 @@ describe("init wizard — default source local mode ENOENT (D-123)", () => {
     wizard = undefined;
   });
 
-  it.todo("should handle local install mode without ENOENT when using default source");
+  /**
+   * D-123: Using the default source (BUILT_IN_MATRIX) with no --source flag should
+   * complete a full init flow — stack selection, domain/build navigation, and install.
+   *
+   * Currently fails: the build step shows "No categories to display" because
+   * BUILT_IN_MATRIX categories do not populate into the wizard's domain view.
+   * This prevents completeWithDefaults() from navigating past the build step.
+   *
+   * When fixed, this test should pass — remove `.fails` and verify:
+   *   - exit code 0
+   *   - "initialized successfully" in output
+   *   - no ENOENT errors
+   *   - config.ts and compiled agents exist
+   */
+  it.fails("should complete init with default source without ENOENT", async () => {
+    wizard = await InitWizard.launch({
+      noSource: true,
+      env: { CC_SOURCE: undefined },
+    });
+
+    const result = await wizard.completeWithDefaults();
+
+    expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+    const output = result.output;
+    expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
+    expect(output).not.toContain("ENOENT");
+    await expect(result.project).toHaveConfig();
+    await expect(result.project).toHaveCompiledAgents();
+  });
 
   it("should load wizard with BUILT_IN_MATRIX when no source is provided", async () => {
     wizard = await InitWizard.launch({

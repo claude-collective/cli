@@ -54,9 +54,12 @@ export class EditWizard {
       env,
     });
 
-    // Edit wizard opens directly to the build step
+    // Edit wizard opens directly to the build step.
+    // Wait for the category counter ("X of 1") which only appears on the build step.
+    // Cannot use STEP_TEXT.BUILD ("Framework") because the stack step's "Other Frameworks"
+    // group label also matches, causing premature detection.
     const screen = new TerminalScreen(session);
-    await screen.waitForText(STEP_TEXT.BUILD, TIMEOUTS.WIZARD_LOAD);
+    await screen.waitForText(STEP_TEXT.BUILD_CATEGORY_COUNT, TIMEOUTS.WIZARD_LOAD);
     await screen.waitForStableRender(TIMEOUTS.WIZARD_LOAD);
 
     const build = new BuildStep(session, options.projectDir);
