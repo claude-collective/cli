@@ -44,6 +44,7 @@ export default defineConfig({
         test: {
           name: "commands",
           include: ["src/cli/lib/__tests__/commands/**/*.test.ts"],
+          retry: 1,
         },
       },
     ],

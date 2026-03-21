@@ -137,29 +137,24 @@ describe("edit wizard — skill detection across sources and scopes", () => {
 
         const webOutput = session.getFullOutput();
 
-        // All web skills should be visible as pre-selected in the Web domain
-        // Category names are derived from the category definitions in the matrix
+        // Verify we're on the build step by checking stats panel content (unique to build step)
+        expect(webOutput).toContain("0 plugin");
+        expect(webOutput).toContain("2 local");
+
+        // Web domain categories should be visible with pre-selected skills
         expect(webOutput).toContain("Framework");
         expect(webOutput).toContain("Testing");
 
-        // The stats panel should show correct counts.
-        // Skills: 2 project local, 2 global local = 4 total
-        // We check the stats panel text which renders as "Global  X plugin Y local"
-        // and "Project  X plugin Y local"
-        // Since all are source: "local", plugin counts should be 0.
-
-        // StatsPanel renders: "Global  0 plugin  2 local" and "Project  0 plugin  2 local"
-        // We check the numbers appear
-        expect(webOutput).toContain("Skills");
-
         // Navigate to API domain to verify api skills are also detected
         session.enter();
-        await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("API Framework", WIZARD_LOAD_TIMEOUT_MS);
         await delay(STEP_TRANSITION_DELAY_MS);
 
         const apiOutput = session.getFullOutput();
-        // The API skill (api-framework-hono) should be visible
-        expect(apiOutput).toContain("API");
+        // The API domain's category header confirms we navigated to the API build step
+        expect(apiOutput).toContain("API Framework");
+        // Stats panel still visible confirms we're on the build step
+        expect(apiOutput).toContain("0 plugin");
       },
     );
 
