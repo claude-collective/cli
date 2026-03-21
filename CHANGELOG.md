@@ -7,17 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.80.0] - 2026-03-21
+
+**E2E test framework overhaul — POM framework, DRY migration, 142 new tests**
+
+- Page Object Model framework with declarative test patterns (D-134)
+- 142 new tests covering command flags, error paths, and pure functions (D-136)
+- DRY migration: 265 raw exit codes → constants, centralized helpers, split slow files
+
+See [changelogs/0.80.0.md](./changelogs/0.80.0.md) for full details.
+
 ## [Unreleased]
-
-### Fixed
-
-- Tighten fragile E2E assertions in edit-wizard-detection: use stats panel content and `"API Framework"` category anchor instead of bare `"Framework"` / `"Skills"` text (D-125)
-- Add `retry: 1` to E2E and commands vitest configs for transient process startup failures
-
-### Added
-
-- D-134: Declarative E2E test utilities task
-- D-135: Investigate agent scope routing with HOME override task
 
 ## [0.79.0] - 2026-03-21
 
