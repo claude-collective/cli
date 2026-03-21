@@ -436,7 +436,7 @@ Boundaries:
 - `researcher/` - Read-only research agents (web-researcher, api-researcher)
 - `planning/` - Planning agents (web-pm)
 - `pattern/` - Pattern discovery agents (pattern-scout, web-pattern-critique)
-- `meta/` - Meta-level agents (agent-summoner, skill-summoner, documentor)
+- `meta/` - Meta-level agents (agent-summoner, skill-summoner, scribe, convention-keeper)
 - `tester/` - Testing agents (web-tester, cli-tester)
 
 **Directory structure:**
@@ -1493,15 +1493,15 @@ Output formats are determined by the file system with cascading resolution:
 1. **Agent-level**: `src/agents/{category}/{agent-name}/output-format.md`
 2. **Category fallback**: `src/agents/{category}/output-format.md`
 
-| Category   | Example Agents                              |
-| ---------- | ------------------------------------------- |
-| developer  | web-developer, api-developer, cli-developer |
-| reviewer   | web-reviewer, api-reviewer, cli-reviewer    |
-| researcher | web-researcher, api-researcher              |
-| planning   | web-pm, web-architecture                    |
-| tester     | web-tester, cli-tester                      |
-| pattern    | pattern-scout, web-pattern-critique         |
-| meta       | documentor, agent-summoner, skill-summoner  |
+| Category   | Example Agents                                            |
+| ---------- | --------------------------------------------------------- |
+| developer  | web-developer, api-developer, cli-developer               |
+| reviewer   | web-reviewer, api-reviewer, cli-reviewer                  |
+| researcher | web-researcher, api-researcher                            |
+| planning   | web-pm, web-architecture                                  |
+| tester     | web-tester, cli-tester                                    |
+| pattern    | pattern-scout, web-pattern-critique                       |
+| meta       | scribe, agent-summoner, skill-summoner, convention-keeper |
 
 ---
 

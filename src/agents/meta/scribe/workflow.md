@@ -201,7 +201,7 @@ After generating documentation, add a reference to the project's CLAUDE.md so ot
 ```markdown
 ## Generated Documentation
 
-> AI-optimized documentation created by the documentor agent.
+> AI-optimized documentation created by the scribe agent.
 
 - **Documentation Index:** `.claude/docs/DOCUMENTATION_MAP.md`
 - **Last Updated:** [current date]

@@ -386,7 +386,7 @@ Success criteria should be:
 - Implementation work (writing code) -> web-developer, api-developer
 - Writing tests -> web-tester
 - Code review -> web-reviewer, api-reviewer
-- Living documentation maintenance -> documentor
+- Living documentation maintenance -> scribe
 - Infrastructure scaffolding -> architect
 - Agent/skill creation or improvement -> agent-summoner, skill-summoner
 

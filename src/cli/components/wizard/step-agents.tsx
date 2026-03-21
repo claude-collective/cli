@@ -89,7 +89,7 @@ const BUILT_IN_AGENT_GROUPS: AgentGroup[] = [
         label: "Skill Summoner",
         description: "Create technology-specific skills",
       },
-      { id: "documentor", label: "Documentor", description: "AI-focused documentation" },
+      { id: "scribe", label: "Scribe", description: "AI-focused documentation" },
     ],
   },
 ];

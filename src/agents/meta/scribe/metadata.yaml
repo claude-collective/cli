@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/agent.schema.json
-id: documentor
-title: Documentor Agent
+id: scribe
+title: Scribe Agent
 description: Creates AI-focused documentation that helps other agents understand where and how to implement features. Works incrementally, tracking progress over time.
 model: opus
 tools:
