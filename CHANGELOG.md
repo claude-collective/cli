@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.81.0] - 2026-03-21
+
+**Wizard UX: dedicated domain step, no tab numbers, agent updates**
+
+- Dedicated domain selection step between Stack and Build (D-120)
+- Tab numbers removed — cleaner `Stack  Domains  Skills  Sources  Agents  Confirm` (D-121)
+- Documentor agent renamed to Scribe, new convention-keeper agent
+
+See [changelogs/0.81.0.md](./changelogs/0.81.0.md) for full details.
+
 ## [0.80.0] - 2026-03-21
 
 **E2E test framework overhaul — POM framework, DRY migration, 142 new tests**
