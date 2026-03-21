@@ -7,6 +7,18 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Tighten fragile E2E assertions in edit-wizard-detection: use stats panel content and `"API Framework"` category anchor instead of bare `"Framework"` / `"Skills"` text (D-125)
+- Add `retry: 1` to E2E and commands vitest configs for transient process startup failures
+
+### Added
+
+- D-134: Declarative E2E test utilities task
+- D-135: Investigate agent scope routing with HOME override task
+
 ## [0.79.0] - 2026-03-21
 
 **Scope-aware path resolution across all commands**
