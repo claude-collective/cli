@@ -41,7 +41,7 @@ describe("defaultRules", () => {
     expect(frameworkAlts!.skills).toContain("react");
   });
 
-  it("has discourage rules", () => {
-    expect(defaultRules.relationships.discourages.length).toBeGreaterThan(0);
+  it("has discourage rules (currently empty — conflicts prevent co-selection)", () => {
+    expect(defaultRules.relationships.discourages).toStrictEqual([]);
   });
 });

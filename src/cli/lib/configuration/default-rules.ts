@@ -13,16 +13,12 @@ export const defaultRules: SkillRulesConfig = {
         reason: "Base frameworks are mutually exclusive",
       },
       {
-        skills: ["nextjs", "remix", "sveltekit", "astro"],
+        skills: ["nextjs", "remix", "nuxt", "sveltekit", "astro", "qwik"],
         reason: "Meta-frameworks are mutually exclusive",
       },
       {
-        skills: ["pinia", "zustand", "redux-toolkit", "mobx"],
-        reason: "Pinia is Vue-only; zustand/redux-toolkit/mobx skills teach React patterns",
-      },
-      {
-        skills: ["ngrx-signalstore", "zustand", "pinia", "redux-toolkit", "mobx"],
-        reason: "NgRx SignalStore is Angular-only",
+        skills: ["zustand", "redux-toolkit", "mobx", "jotai"],
+        reason: "React state management libraries are mutually exclusive",
       },
       {
         skills: ["react-query", "swr"],
@@ -37,53 +33,51 @@ export const defaultRules: SkillRulesConfig = {
         reason: "Both are E2E frameworks",
       },
       {
-        skills: ["react-hook-form", "vee-validate"],
-        reason: "react-hook-form is React-only, vee-validate is Vue-only",
-      },
-      {
-        skills: ["react-testing-library", "vue-test-utils"],
-        reason: "Framework-specific testing libraries",
-      },
-      {
-        skills: ["hono", "express", "fastify"],
+        skills: ["hono", "express", "fastify", "elysia", "nestjs"],
         reason: "API frameworks are mutually exclusive within a single service",
       },
       {
-        skills: ["drizzle", "prisma", "mongodb"],
-        reason: "Database ORMs/ODMs are mutually exclusive",
+        skills: ["drizzle", "prisma", "sequelize", "typeorm"],
+        reason: "SQL ORMs are mutually exclusive",
       },
       {
         skills: ["cli-commander", "oclif-ink"],
         reason: "CLI frameworks are mutually exclusive",
       },
+      {
+        skills: ["mongodb", "mongoose"],
+        reason: "Raw MongoDB driver and Mongoose ODM are alternative approaches",
+      },
+      {
+        skills: ["pinecone", "qdrant", "chroma", "weaviate"],
+        reason: "Vector databases are mutually exclusive",
+      },
+      {
+        skills: ["elasticsearch", "meilisearch"],
+        reason: "Search engines are mutually exclusive",
+      },
+      {
+        skills: ["payload", "sanity", "strapi"],
+        reason: "CMS platforms are mutually exclusive",
+      },
+      {
+        skills: ["shadcn-ui", "mui", "chakra-ui", "mantine", "ant-design"],
+        reason: "React UI component libraries define competing design systems",
+      },
+      {
+        skills: ["turborepo", "nx"],
+        reason: "Monorepo build orchestrators are mutually exclusive",
+      },
+      {
+        skills: ["biome", "eslint-prettier"],
+        reason: "Linting and formatting tools are mutually exclusive",
+      },
+      {
+        skills: ["react-router", "tanstack-router"],
+        reason: "React client-side routers are mutually exclusive",
+      },
     ],
-    discourages: [
-      {
-        skills: ["zustand", "redux-toolkit", "mobx"],
-        reason: "Using multiple React state libraries adds complexity",
-      },
-      {
-        skills: ["redux-toolkit", "zustand"],
-        reason: "Redux Toolkit adds more boilerplate than Zustand",
-      },
-      {
-        skills: ["swr", "react-query"],
-        reason: "SWR is simpler but React Query has more features",
-      },
-      {
-        skills: ["express", "hono"],
-        reason: "Express is mature but Hono offers better performance and edge support",
-      },
-      {
-        skills: ["express", "fastify"],
-        reason: "Express is mature but Fastify offers better performance",
-      },
-      {
-        skills: ["cypress-e2e", "playwright-e2e"],
-        reason:
-          "Cypress excels at interactive debugging; Playwright has better cross-browser support and CI performance",
-      },
-    ],
+    discourages: [],
     compatibleWith: [
       // React ecosystem (includes Next.js, Remix as meta-frameworks)
       {
@@ -210,6 +204,57 @@ export const defaultRules: SkillRulesConfig = {
         ],
         reason: "URQL has bindings for React, Vue, and Solid",
       },
+      // React Router
+      {
+        skills: ["react-router", "react", "remix"],
+        reason: "React Router is a React routing library",
+      },
+      // React UI component libraries
+      {
+        skills: ["chakra-ui", "react", "nextjs", "remix"],
+        reason: "Chakra UI is a React component library",
+      },
+      {
+        skills: ["mantine", "react", "nextjs", "remix"],
+        reason: "Mantine is a React component library",
+      },
+      {
+        skills: ["mui", "react", "nextjs", "remix"],
+        reason: "MUI is a React component library",
+      },
+      {
+        skills: ["ant-design", "react", "nextjs", "remix"],
+        reason: "Ant Design is a React component library",
+      },
+      {
+        skills: ["headless-ui", "react", "vue-composition-api", "nextjs", "remix", "nuxt"],
+        reason: "Headless UI supports React and Vue",
+      },
+      // Vue ecosystem
+      {
+        skills: ["vueuse", "vue-composition-api", "nuxt"],
+        reason: "VueUse composables require Vue 3",
+      },
+      // Mobile
+      {
+        skills: ["expo", "react", "react-native"],
+        reason: "Expo is a React Native framework",
+      },
+      // Cross-framework tools
+      {
+        skills: [
+          "storybook",
+          "react",
+          "vue-composition-api",
+          "angular-standalone",
+          "svelte",
+          "nextjs",
+          "remix",
+          "nuxt",
+          "sveltekit",
+        ],
+        reason: "Storybook supports all major frameworks",
+      },
     ],
     recommends: [
       { skill: "zustand", reason: "Best-in-class React state management" },
@@ -232,6 +277,12 @@ export const defaultRules: SkillRulesConfig = {
       { skill: "playwright-e2e", reason: "Cross-browser E2E testing" },
       { skill: "posthog-analytics", reason: "Product analytics and feature flags" },
       { skill: "prisma", reason: "Mature database ORM with great DX" },
+      { skill: "vercel-ai-sdk", reason: "Provider-agnostic AI integration with streaming" },
+      { skill: "anthropic-sdk", reason: "Direct Claude API access with tool use and vision" },
+      { skill: "hono", reason: "Fast, lightweight API framework with edge support" },
+      { skill: "pinecone", reason: "Managed vector database for AI applications" },
+      { skill: "stripe", reason: "Industry-standard payment processing" },
+      { skill: "expo", reason: "Best-in-class React Native development experience" },
     ],
     requires: [
       {
@@ -353,6 +404,79 @@ export const defaultRules: SkillRulesConfig = {
         needsAny: true,
         reason: "URQL supports React, Vue, and Solid",
       },
+      {
+        skill: "react-router",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "React Router is a React routing library",
+      },
+      {
+        skill: "chakra-ui",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Chakra UI is a React component library",
+      },
+      {
+        skill: "mantine",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Mantine is a React component library",
+      },
+      {
+        skill: "mui",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "MUI is a React component library",
+      },
+      {
+        skill: "ant-design",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Ant Design is a React component library",
+      },
+      {
+        skill: "headless-ui",
+        needs: ["react", "vue-composition-api", "nextjs", "remix", "nuxt"],
+        needsAny: true,
+        reason: "Headless UI supports React and Vue",
+      },
+      {
+        skill: "vueuse",
+        needs: ["vue-composition-api", "nuxt"],
+        needsAny: true,
+        reason: "VueUse composables require Vue 3",
+      },
+      {
+        skill: "expo",
+        needs: ["react-native"],
+        reason: "Expo is a React Native framework",
+      },
+      {
+        skill: "react-native",
+        needs: ["react"],
+        reason: "React Native is built on React",
+      },
+      {
+        skill: "claude-vision",
+        needs: ["anthropic-sdk"],
+        reason: "Claude Vision uses the Anthropic SDK",
+      },
+      {
+        skill: "openai-whisper",
+        needs: ["openai-sdk"],
+        reason: "Whisper API uses the OpenAI SDK",
+      },
+      {
+        skill: "next-intl",
+        needs: ["nextjs"],
+        reason: "next-intl is built specifically for Next.js",
+      },
+      {
+        skill: "trpc",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Our tRPC skill teaches React Query integration patterns",
+      },
     ],
     alternatives: [
       {
@@ -361,12 +485,12 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         purpose: "Meta-Framework",
-        skills: ["nextjs", "remix", "nuxt", "sveltekit", "astro"],
+        skills: ["nextjs", "remix", "nuxt", "sveltekit", "astro", "qwik"],
       },
-      { purpose: "Routing (React)", skills: ["tanstack-router"] },
+      { purpose: "Routing (React)", skills: ["tanstack-router", "react-router"] },
       {
         purpose: "Styling",
-        skills: ["scss-modules", "tailwind", "cva"],
+        skills: ["scss-modules", "tailwind"],
       },
       {
         purpose: "Client State (React)",
@@ -376,7 +500,7 @@ export const defaultRules: SkillRulesConfig = {
       { purpose: "Client State (Angular)", skills: ["ngrx-signalstore"] },
       {
         purpose: "Server State / Data Fetching",
-        skills: ["react-query", "swr"],
+        skills: ["react-query", "swr", "trpc"],
       },
       {
         purpose: "GraphQL Client",
@@ -384,9 +508,12 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         purpose: "API Framework",
-        skills: ["hono", "express", "fastify"],
+        skills: ["hono", "express", "fastify", "elysia", "nestjs"],
       },
-      { purpose: "Database ORM / ODM", skills: ["drizzle", "prisma", "mongodb"] },
+      {
+        purpose: "Database ORM / ODM",
+        skills: ["drizzle", "prisma", "sequelize", "typeorm", "mongoose"],
+      },
       { purpose: "Forms (React)", skills: ["react-hook-form"] },
       { purpose: "Forms (Vue)", skills: ["vee-validate"] },
       { purpose: "Validation", skills: ["zod-validation"] },
@@ -398,15 +525,43 @@ export const defaultRules: SkillRulesConfig = {
         skills: ["playwright-e2e", "cypress-e2e"],
       },
       { purpose: "API Mocking", skills: ["msw"] },
-      { purpose: "UI Components (React + Tailwind)", skills: ["shadcn-ui"] },
-      { purpose: "Mobile", skills: ["react-native"] },
+      {
+        purpose: "UI Components (React)",
+        skills: ["shadcn-ui", "mui", "chakra-ui", "mantine", "ant-design"],
+      },
+      { purpose: "Mobile", skills: ["react-native", "expo"] },
       {
         purpose: "CLI Framework",
         skills: ["cli-commander", "oclif-ink"],
       },
-      { purpose: "AI SDK", skills: ["vercel-ai-sdk"] },
-      { purpose: "Backend as a Service", skills: ["supabase"] },
+      { purpose: "AI SDK", skills: ["vercel-ai-sdk", "langchain", "llamaindex"] },
+      { purpose: "Backend as a Service", skills: ["supabase", "firebase", "appwrite"] },
       { purpose: "Auth", skills: ["better-auth-drizzle-hono", "nextauth", "clerk"] },
+      {
+        purpose: "AI Provider SDK",
+        skills: [
+          "anthropic-sdk",
+          "openai-sdk",
+          "google-gemini-sdk",
+          "mistral-sdk",
+          "cohere-sdk",
+          "together-ai",
+          "replicate",
+          "huggingface-inference",
+          "ollama",
+          "litellm",
+        ],
+      },
+      { purpose: "Vector Database", skills: ["pinecone", "qdrant", "chroma", "weaviate"] },
+      { purpose: "Search Engine", skills: ["elasticsearch", "meilisearch"] },
+      { purpose: "CMS", skills: ["payload", "sanity", "strapi"] },
+      { purpose: "Managed Database", skills: ["neon", "planetscale", "turso", "vercel-postgres"] },
+      { purpose: "Cache / KV Store", skills: ["redis", "upstash", "vercel-kv"] },
+      { purpose: "Payment", skills: ["stripe"] },
+      { purpose: "Realtime", skills: ["websockets", "socket-io", "sse"] },
+      { purpose: "Animation", skills: ["framer-motion", "css-animations", "view-transitions"] },
+      { purpose: "Monorepo Orchestrator", skills: ["turborepo", "nx"] },
+      { purpose: "Linting / Formatting", skills: ["biome", "eslint-prettier"] },
     ],
   },
 };

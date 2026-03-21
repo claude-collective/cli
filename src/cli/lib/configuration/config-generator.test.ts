@@ -357,7 +357,7 @@ describe("config-generator", () => {
 
       expect(config.stack?.["agent-summoner"]).toBeUndefined();
       expect(config.stack?.["skill-summoner"]).toBeUndefined();
-      expect(config.stack?.["documentor"]).toBeUndefined();
+      expect(config.stack?.["scribe"]).toBeUndefined();
     });
 
     it("returns empty agents when selectedAgents is not provided", () => {
