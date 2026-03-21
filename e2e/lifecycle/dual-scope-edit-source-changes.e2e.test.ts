@@ -1,0 +1,200 @@
+import path from "path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import {
+  createE2EPluginSource,
+  type E2EPluginSource,
+} from "../helpers/create-e2e-plugin-source.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import {
+  isClaudeCLIAvailable,
+  cleanupTempDir,
+  ensureBinaryExists,
+  fileExists,
+  readTestFile,
+} from "../helpers/test-utils.js";
+import { createTestEnvironment, initGlobal, initProject } from "../fixtures/dual-scope-helpers.js";
+
+/**
+ * Dual-scope edit lifecycle E2E test -- source changes via Sources step.
+ * Requires Claude CLI to be available.
+ *
+ * Split from dual-scope-edit-integrity.e2e.test.ts for parallel execution.
+ */
+
+const claudeAvailable = await isClaudeCLIAvailable();
+
+// =====================================================================
+// Test Suite -- Source Changes via Sources Step (Requires Claude CLI)
+// =====================================================================
+
+describe.skipIf(!claudeAvailable)(
+  "dual-scope edit lifecycle -- source changes via Sources step",
+  () => {
+    let pluginFixture: E2EPluginSource;
+    let pluginSourceTempDir: string;
+
+    beforeAll(async () => {
+      await ensureBinaryExists();
+      pluginFixture = await createE2EPluginSource();
+      pluginSourceTempDir = pluginFixture.tempDir;
+    }, TIMEOUTS.SETUP * 2);
+
+    afterAll(async () => {
+      if (pluginSourceTempDir) await cleanupTempDir(pluginSourceTempDir);
+    });
+
+    it(
+      "Test 4: change a project skill's source from local to plugin",
+      { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
+      async () => {
+        const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
+
+        try {
+          // Phase A + B: Use plugin source for init
+          const phaseA = await initGlobal(pluginFixture.sourceDir, pluginFixture.tempDir, fakeHome);
+          expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+          const phaseB = await initProject(
+            pluginFixture.sourceDir,
+            pluginFixture.tempDir,
+            fakeHome,
+            projectDir,
+          );
+          expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+          // Phase C: Edit -- switch api-framework-hono from local to plugin source
+          const wizard = await EditWizard.launch({
+            projectDir,
+            source: { sourceDir: pluginFixture.sourceDir, tempDir: pluginFixture.tempDir },
+            env: { HOME: fakeHome },
+            rows: 60,
+            cols: 120,
+          });
+
+          try {
+            // Build step -- pass through all three domains
+            const sources = await wizard.build.passThroughAllDomains();
+
+            // Sources step -- press "p" to switch all skills from local to plugin
+            await sources.waitForReady();
+            await sources.setAllPlugin();
+            const agents = await sources.advance();
+
+            // Agents step
+            const confirm = await agents.acceptDefaults("edit");
+
+            // Confirm step
+            const result = await confirm.confirm();
+
+            // Phase D: Assertions
+            const exitCode = await result.exitCode;
+            expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+            // D-1: Output contains migration-related text
+            const output = result.rawOutput;
+            expect(output).toMatch(/[Ss]witch|[Ii]nstall/);
+
+            // D-2: Local skill files removed (switched to plugin)
+            const localSkillPath = path.join(
+              projectDir,
+              DIRS.CLAUDE,
+              DIRS.SKILLS,
+              "api-framework-hono",
+              FILES.SKILL_MD,
+            );
+            expect(await fileExists(localSkillPath)).toBe(false);
+
+            // D-3: Config updated with non-local source
+            const projectConfig = await readTestFile(
+              path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+            );
+            expect(projectConfig).toContain("api-framework-hono");
+
+            await result.destroy();
+          } catch (e) {
+            await wizard.destroy();
+            throw e;
+          }
+        } finally {
+          await cleanupTempDir(tempDir);
+        }
+      },
+    );
+
+    it(
+      "Test 5: edit detects source migration from local to plugin for locally-initialized skills",
+      { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
+      async () => {
+        const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
+
+        try {
+          // Phase A + B: Init with plugin source -- initProject forces all sources
+          // to local via the "l" hotkey. So after Phase B, all skills have
+          // source: "local" in config, even though the source has a marketplace.
+          const phaseA = await initGlobal(pluginFixture.sourceDir, pluginFixture.tempDir, fakeHome);
+          expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+          const phaseB = await initProject(
+            pluginFixture.sourceDir,
+            pluginFixture.tempDir,
+            fakeHome,
+            projectDir,
+          );
+          expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+          // Phase C: Edit -- switch all to plugin
+          const wizard = await EditWizard.launch({
+            projectDir,
+            source: { sourceDir: pluginFixture.sourceDir, tempDir: pluginFixture.tempDir },
+            env: { HOME: fakeHome },
+            rows: 60,
+            cols: 120,
+          });
+
+          try {
+            const sources = await wizard.build.passThroughAllDomains();
+
+            await sources.waitForReady();
+            await sources.setAllPlugin();
+            const agents = await sources.advance();
+
+            const confirm = await agents.acceptDefaults("edit");
+            const result = await confirm.confirm();
+
+            // Phase D: Assertions
+            const exitCode = await result.exitCode;
+            expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+            // D-1: Output contains migration text (local -> plugin migration detected)
+            const output = result.rawOutput;
+            expect(output).toMatch(/[Ss]witch/);
+
+            // D-2: Local skill files deleted by migration (switched to plugin)
+            const localSkillPath = path.join(
+              projectDir,
+              DIRS.CLAUDE,
+              DIRS.SKILLS,
+              "api-framework-hono",
+              FILES.SKILL_MD,
+            );
+            expect(await fileExists(localSkillPath)).toBe(false);
+
+            // D-3: Config updated with marketplace source (not local)
+            const projectConfig = await readTestFile(
+              path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+            );
+            expect(projectConfig).toContain("api-framework-hono");
+
+            await result.destroy();
+          } catch (e) {
+            await wizard.destroy();
+            throw e;
+          }
+        } finally {
+          await cleanupTempDir(tempDir);
+        }
+      },
+    );
+  },
+);

@@ -1,327 +1,130 @@
-import path from "path";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
-import {
-  createTempDir,
-  cleanupTempDir,
-  ensureBinaryExists,
-  fileExists,
-  directoryExists,
-  listFiles,
-  createPermissionsFile,
-  delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  INSTALL_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  KEYSTROKE_DELAY_MS,
-  EXIT_CODES,
-} from "../helpers/test-utils.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { InitWizard } from "../pages/wizards/init-wizard.js";
+import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { ensureBinaryExists } from "../helpers/test-utils.js";
+import "../matchers/setup.js";
 
 describe("init wizard — scratch flow", () => {
-  let session: TerminalSession | undefined;
-  let projectDir: string | undefined;
-  let sourceDir: string | undefined;
-  let sourceTempDir: string | undefined;
+  let wizard: InitWizard | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
-
-    if (projectDir) {
-      await cleanupTempDir(projectDir);
-      projectDir = undefined;
-    }
-    if (sourceTempDir) {
-      await cleanupTempDir(sourceTempDir);
-      sourceTempDir = undefined;
-    }
+    await wizard?.destroy();
+    wizard = undefined;
   });
-
-  async function createProjectAndSource(): Promise<void> {
-    projectDir = await createTempDir();
-    const source = await createE2ESource();
-    sourceDir = source.sourceDir;
-    sourceTempDir = source.tempDir;
-  }
-
-  function spawnInitWizard(
-    cwd: string,
-    sourcePath: string,
-    options?: { cols?: number; rows?: number },
-  ): TerminalSession {
-    return new TerminalSession(["init", "--source", sourcePath], cwd, {
-      cols: options?.cols,
-      rows: options?.rows,
-      env: { AGENTSINC_SOURCE: undefined },
-    });
-  }
-
-  /**
-   * Navigates the scratch flow from stack selection through to the confirm step.
-   * Selects "Start from scratch", accepts default domains, advances through all
-   * domain build steps, accepts default sources, accepts default agents.
-   */
-  async function navigateScratchToConfirm(wizardSession: TerminalSession): Promise<void> {
-    // Stack selection — navigate to "Start from scratch" and select it
-    await wizardSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.arrowDown();
-    await delay(KEYSTROKE_DELAY_MS);
-    wizardSession.enter();
-
-    // Domain selection — accept pre-selected defaults
-    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.enter();
-
-    // Build step — select required skill in each domain, then advance
-    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.space();
-    await delay(KEYSTROKE_DELAY_MS);
-    wizardSession.enter();
-
-    await wizardSession.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.space();
-    await delay(KEYSTROKE_DELAY_MS);
-    wizardSession.enter();
-
-    // Scratch pre-selects mobile via DEFAULT_SCRATCH_DOMAINS; advance past it (no required categories)
-    await wizardSession.waitForText("Mobile", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.enter();
-
-    // Sources step — accept recommended defaults
-    await wizardSession.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.enter();
-
-    // Agents step — continue with pre-selected agents
-    await wizardSession.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.enter();
-
-    // Confirm step
-    await wizardSession.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-  }
 
   describe("scratch flow", () => {
     it("should navigate to 'Start from scratch' and enter domain selection", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      const domain = await wizard.stack.selectScratch();
 
-      // Navigate past the E2E test stack to reach "Start from scratch"
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-
-      session.enter();
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      const output = domain.getOutput();
+      expect(output).toContain(STEP_TEXT.DOMAIN_WEB);
     });
 
     it("should complete a scratch-based init flow selecting both domains", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      // Step 1: Navigate to "Start from scratch"
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.enter();
+      const domain = await wizard.stack.selectScratch();
 
-      // Step 2: Domain selection — web and api are pre-selected from scratch defaults
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      const domainOutput = domain.getOutput();
+      expect(domainOutput).toContain(STEP_TEXT.DOMAIN_WEB);
+      expect(domainOutput).toContain(STEP_TEXT.DOMAIN_API);
 
-      const domainOutput = session.getFullOutput();
-      expect(domainOutput).toContain("Web");
-      expect(domainOutput).toContain("API");
+      const build = await domain.acceptDefaults();
 
-      session.enter();
-
-      // Step 3: Build step — verify both domain tabs are shown
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-      const buildOutput = session.getFullOutput();
-      expect(buildOutput).toContain("Web");
-      expect(buildOutput).toContain("API");
+      const buildOutput = build.getOutput();
+      expect(buildOutput).toContain(STEP_TEXT.DOMAIN_WEB);
+      expect(buildOutput).toContain(STEP_TEXT.DOMAIN_API);
     });
 
     it("should navigate domain views with Enter and Escape in build step", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      // Navigate to scratch -> domain selection -> build step
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.enter();
+      const domain = await wizard.stack.selectScratch();
+      const build = await domain.acceptDefaults();
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.enter();
+      // Select required Framework skill before advancing
+      await build.toggleSkill("react");
 
-      // Build step starts on the first domain (Web)
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Advance to next domain (API)
+      await build.advanceDomain();
 
-      // Select the required Framework skill before advancing
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
+      const afterAdvance = build.getOutput();
+      expect(afterAdvance).toContain(STEP_TEXT.DOMAIN_API);
 
-      // Press Enter to advance to the next domain (API)
-      session.enter();
-      await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Go back to previous domain (Web)
+      await build.goBack();
 
-      // Press Escape to go back to the previous domain (Web)
-      session.escape();
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      const afterBack = build.getOutput();
+      expect(afterBack).toContain(STEP_TEXT.DOMAIN_WEB);
     });
 
     it("should show confirm step details with selected technologies", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await navigateScratchToConfirm(session);
+      const domain = await wizard.stack.selectScratch();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughScratchDomains();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("init");
 
-      // Verify confirm step shows expected details
-      const confirmOutput = session.getFullOutput();
-      expect(confirmOutput).toContain("Web");
-      expect(confirmOutput).toContain("API");
+      const confirmOutput = confirm.getOutput();
+      expect(confirmOutput).toContain(STEP_TEXT.DOMAIN_WEB);
+      expect(confirmOutput).toContain(STEP_TEXT.DOMAIN_API);
       expect(confirmOutput).toContain("Skills:");
       expect(confirmOutput).toContain("Agents:");
       expect(confirmOutput).toContain("project");
     });
 
     it("should complete a full scratch-based init flow through to install", async () => {
-      await createProjectAndSource();
-      await createPermissionsFile(projectDir!);
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await navigateScratchToConfirm(session);
+      const domain = await wizard.stack.selectScratch();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughScratchDomains();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("init");
+      const result = await confirm.confirm();
 
-      // Press Enter to install
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.enter();
-
-      // Wait for installation to complete
-      await session.waitForText("initialized successfully", INSTALL_TIMEOUT_MS);
-
-      const exitCode = await session.waitForExit(INSTALL_TIMEOUT_MS);
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      // Verify config was created
-      const configPath = path.join(projectDir!, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      expect(await fileExists(configPath)).toBe(true);
-
-      // Verify agents directory was created with agent files
-      const agentsDir = path.join(projectDir!, CLAUDE_DIR, "agents");
-      expect(await directoryExists(agentsDir)).toBe(true);
-
-      const agentFiles = await listFiles(agentsDir);
-      const mdFiles = agentFiles.filter((f) => f.endsWith(".md"));
-      expect(mdFiles.length).toBeGreaterThan(0);
-
-      // Verify skills directory was created
-      const skillsDir = path.join(projectDir!, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      expect(await directoryExists(skillsDir)).toBe(true);
-
-      const skillFolders = await listFiles(skillsDir);
-      expect(skillFolders.length).toBeGreaterThan(0);
+      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      await expect(result.project).toHaveConfig();
+      await expect(result.project).toHaveCompiledAgents();
+      await expect(result.project).toHaveSkillCopied("web-framework-react");
     });
   });
 
   describe("single-domain scratch flow", () => {
     it("should show only Web domain in build step when API is deselected", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      // Navigate to "Start from scratch"
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.enter();
+      const domain = await wizard.stack.selectScratch();
 
-      // Domain selection — scratch pre-selects web, api, mobile
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Deselect API and Mobile, keep only Web
+      await domain.toggleDomain(STEP_TEXT.DOMAIN_API);
+      await domain.toggleDomain(STEP_TEXT.DOMAIN_MOBILE);
 
-      // Navigate to API domain and deselect it (toggle off with space)
-      // Domains are listed in order: Web, API, Mobile (or similar)
-      // Web is at index 0 (focused by default), API is at index 1
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
+      const build = await domain.advance();
 
-      // Also deselect Mobile (index 2)
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
-
-      // Continue with only Web selected
-      session.enter();
-
-      // Domain selection shows "Web" — press Enter again to advance to build step
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.enter();
-
-      // Build step should show only Web domain
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-
-      // The build step should NOT show API or Mobile
-      const buildOutput = session.getFullOutput();
+      const buildOutput = build.getOutput();
       expect(buildOutput).toContain("Framework");
     });
   });
 
   describe("all domains deselected", () => {
     it("should show empty message when all domains are deselected", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      // Navigate to "Start from scratch"
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.enter();
+      const domain = await wizard.stack.selectScratch();
 
-      // Domain selection — scratch pre-selects web, api, mobile
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Deselect all pre-selected scratch domains by navigating and toggling each.
+      // Scratch pre-selects Web, API, Mobile. The cursor starts on Web.
+      await domain.deselectAll();
 
-      // Deselect Web (index 0, focused by default)
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
-
-      // Deselect API (index 1)
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
-
-      // Deselect Mobile (index 2)
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
-
-      // The checkbox grid should show the empty message
-      const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("Please select at least one domain");
+      const output = domain.getOutput();
+      expect(output).toContain("Please select at least one domain");
     });
   });
 });

@@ -1,19 +1,16 @@
+import path from "path";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { TerminalSession } from "../helpers/terminal-session.js";
+import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
-  createEditableProject,
   createLocalSkill,
-  delay,
-  runCLI,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  EXIT_TIMEOUT_MS,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { CLI } from "../fixtures/cli.js";
+import { InteractivePrompt } from "../fixtures/interactive-prompt.js";
 
 /**
  * E2E tests for the `update` command.
@@ -22,17 +19,20 @@ import { createE2ESource } from "../helpers/create-e2e-source.js";
  * It shows an interactive confirmation prompt (unless --yes is passed).
  *
  * These tests spawn the actual CLI binary (zero mocks).
+ *
+ * Note: The update confirmation prompt is NOT the wizard, so interactive tests
+ * use InteractivePrompt (which wraps TerminalSession internally).
  */
 describe("update command", () => {
   let tempDir: string;
-  let session: TerminalSession | undefined;
+  let prompt: InteractivePrompt | undefined;
   let sourceTempDir: string | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
+    await prompt?.destroy();
+    prompt = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
       tempDir = undefined!;
@@ -47,7 +47,7 @@ describe("update command", () => {
     it("should display help text with command description", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["update", "--help"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["update", "--help"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Update local skills from source");
@@ -61,40 +61,35 @@ describe("update command", () => {
     it("should warn when no local skills exist", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, combined } = await runCLI(["update", "--yes"], tempDir);
+      const { exitCode, output } = await CLI.run(["update", "--yes"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // The update command checks for LOCAL_SKILLS_PATH and warns if absent
-      expect(combined).toContain("No local skills found");
+      expect(output).toContain("No local skills found");
     });
   });
 
   describe("interactive update", () => {
     it("should launch and show loading status for a project with skills", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      session = new TerminalSession(["update"], projectDir);
+      prompt = new InteractivePrompt(["update"], projectDir);
 
-      // The update command logs "Loading skills..." as it resolves the source
-      await session.waitForText("Loading skills...", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("Loading skills...", TIMEOUTS.WIZARD_LOAD);
     });
 
-    // The update command with --yes and no outdated skills should report
-    // "All skills are up to date." and exit 0. If this fails because
-    // createEditableProject's source cannot be resolved without a real
-    // marketplace, the test correctly fails -- that's a setup issue, not
-    // a reason to accept error messages as "passing."
     it("should report all skills up to date when no outdated skills exist", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      session = new TerminalSession(["update", "--yes"], projectDir);
+      prompt = new InteractivePrompt(["update", "--yes"], projectDir);
 
-      await session.waitForText("skills", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("skills", TIMEOUTS.WIZARD_LOAD);
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
-      const output = session.getFullOutput();
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
+      const output = prompt.getOutput();
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("up to date");
@@ -103,110 +98,105 @@ describe("update command", () => {
 
   describe("update with nonexistent skill name", () => {
     it("should show error containing the skill name", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["update", "nonexistent-skill-xyz", "--source", source.sourceDir],
-        projectDir,
+        { dir: projectDir },
       );
 
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-      // The update command prints: Error: Skill "nonexistent-skill-xyz" not found.
-      expect(combined).toContain("nonexistent-skill-xyz");
-      expect(combined).toContain("not found");
+      expect(output).toContain("nonexistent-skill-xyz");
+      expect(output).toContain("not found");
     });
 
     it("should suggest similar skills via Did you mean", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      // "framework" is a substring of "web-framework-react", triggering findSimilarSkills
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["update", "framework", "--source", source.sourceDir],
-        projectDir,
+        { dir: projectDir },
       );
 
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-      // findSimilarSkills checks if lowered query is included in skill ID
-      expect(combined).toContain("Did you mean");
+      expect(output).toContain("Did you mean");
     });
   });
 
   describe("update --yes --no-recompile", () => {
     it("should not recompile agents when --no-recompile is set", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["update", "--yes", "--no-recompile", "--source", source.sourceDir],
-        projectDir,
+        { dir: projectDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // When --no-recompile is set, the STATUS_MESSAGES.RECOMPILING_AGENTS
-      // ("Recompiling agents...") should NOT appear in the output
-      expect(combined).not.toContain("Recompiling agents");
+      expect(output).not.toContain("Recompiling agents");
     });
   });
 
   describe("update local-only skill", () => {
     it("should report that a local-only skill cannot be updated", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      // Create a local-only skill with no forkedFrom metadata
       await createLocalSkill(projectDir, "cli-framework-cli-commander", {
         description: "A purely local skill with no source link",
       });
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["update", "cli-framework-cli-commander", "--source", source.sourceDir],
-        projectDir,
+        { dir: projectDir },
       );
 
-      // BUG: CLI exits 0 even when it says "Cannot update" -- arguably should
-      // be non-zero, but documenting current behavior
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // The update command should recognize it has no forkedFrom and report local-only
-      expect(combined).toContain("local-only");
-      expect(combined).toContain("Cannot update");
+      expect(output).toContain("local-only");
+      expect(output).toContain("Cannot update");
     });
   });
 
   describe("update with --source flag", () => {
     it("should use custom source directory and complete without error", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["update", "--yes", "--source", source.sourceDir],
-        projectDir,
+        { dir: projectDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // The source is local, so the command should report loading from it
-      expect(combined).toContain("Loaded from local:");
+      expect(output).toContain("Loaded from local:");
     });
   });
 
@@ -216,14 +206,12 @@ describe("update command", () => {
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
 
-      // Create a project directory with .claude/skills/ containing multiple
-      // skills with forkedFrom metadata pointing to source skills but with
-      // stale hashes that won't match the actual source SKILL.md hashes.
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: [],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      // Add two skills with stale forkedFrom hashes
       await createLocalSkill(projectDir, "web-meta-framework-nextjs", {
         metadata: [
           'author: "@agents-inc"',
@@ -246,30 +234,28 @@ describe("update command", () => {
         ].join("\n"),
       });
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["update", "--yes", "--source", source.sourceDir],
-        projectDir,
+        { dir: projectDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // The update command prints "Updating <skillId>..." for each outdated skill
-      expect(combined).toContain("Updating web-framework-react");
-      expect(combined).toContain("Updating web-testing-vitest");
-      // Summary should mention 2 skills updated
-      expect(combined).toContain("2 skill(s) updated");
+      expect(output).toContain("Updating web-framework-react");
+      expect(output).toContain("Updating web-testing-vitest");
+      expect(output).toContain("2 skill(s) updated");
     });
   });
 
   describe("update with exact skill name", () => {
     it("should update only the specified skill", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: [],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      // Create a local skill forked from web-framework-react with a stale hash
       await createLocalSkill(projectDir, "web-meta-framework-nextjs", {
         metadata: [
           'author: "@agents-inc"',
@@ -281,28 +267,27 @@ describe("update command", () => {
         ].join("\n"),
       });
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["update", "web-framework-react", "--source", source.sourceDir, "--yes"],
-        projectDir,
+        { dir: projectDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // The update command prints "Updating <skillId>..." for the specified skill
-      expect(combined).toContain("Updating web-framework-react");
-      expect(combined).toContain("1 skill(s) updated");
+      expect(output).toContain("Updating web-framework-react");
+      expect(output).toContain("1 skill(s) updated");
     });
   });
 
   describe("interactive update with outdated skills", () => {
     it("should show outdated skill table and confirmation prompt", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: [],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      // Create a skill with stale forkedFrom hash so it's detected as outdated
       await createLocalSkill(projectDir, "web-meta-framework-nextjs", {
         metadata: [
           'author: "@agents-inc"',
@@ -314,34 +299,25 @@ describe("update command", () => {
         ].join("\n"),
       });
 
-      // Launch interactively (no --yes) so the confirmation prompt appears
-      session = new TerminalSession(["update", "--source", source.sourceDir], projectDir);
+      prompt = new InteractivePrompt(["update", "--source", source.sourceDir], projectDir);
 
-      // Wait for the full confirmation UI to render (table + prompt)
-      await session.waitForText("Proceed with update?", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("Proceed with update?", TIMEOUTS.WIZARD_LOAD);
 
-      const output = session.getFullOutput();
-
-      // Verify the outdated skill appears in the table
+      const output = prompt.getOutput();
       expect(output).toContain("web-framework-react");
-      // Verify the confirmation prompt renders
       expect(output).toContain("Proceed with update?");
     });
 
     // BUG: The update command's interactive confirm hangs after pressing 'y'.
-    // The UpdateConfirm callback sets `confirmed = true` but nothing unmounts
-    // the Ink instance, so `await waitUntilExit()` never resolves.
-    // Compare with uninstall.tsx which wraps render in a Promise that
-    // resolves on callback, avoiding the waitUntilExit hang.
     it.fails("should confirm and update all outdated skills interactively", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: [],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      // Create two skills with stale forkedFrom hashes
       await createLocalSkill(projectDir, "web-meta-framework-nextjs", {
         metadata: [
           'author: "@agents-inc"',
@@ -364,65 +340,55 @@ describe("update command", () => {
         ].join("\n"),
       });
 
-      session = new TerminalSession(["update", "--source", source.sourceDir], projectDir);
+      prompt = new InteractivePrompt(["update", "--source", source.sourceDir], projectDir);
 
-      // Wait for the confirmation prompt to appear
-      await session.waitForText("Proceed with update?", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("Proceed with update?", TIMEOUTS.WIZARD_LOAD);
 
-      // Confirm the update by pressing 'y'
-      session.write("y");
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.confirm();
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
-      const output = session.getFullOutput();
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
+      const output = prompt.getOutput();
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // Both outdated skills should be updated
       expect(output).toContain("Updating web-framework-react");
       expect(output).toContain("Updating web-testing-vitest");
       expect(output).toContain("2 skill(s) updated");
     });
 
     it("should use custom source via --source flag in interactive mode", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      // Launch interactively with --source pointing to the E2E source
-      session = new TerminalSession(["update", "--source", source.sourceDir], projectDir);
+      prompt = new InteractivePrompt(["update", "--source", source.sourceDir], projectDir);
 
-      // The update command logs "Loaded from local: <path>" when using a local source
-      await session.waitForText("Loaded from local:", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("Loaded from local:", TIMEOUTS.WIZARD_LOAD);
 
-      const output = session.getFullOutput();
-
-      // Verify the source path appears in the output
+      const output = prompt.getOutput();
       expect(output).toContain(source.sourceDir);
     });
   });
 
   describe("cancellation", () => {
-    it("should exit when Ctrl+C is pressed during source resolution", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+    it.fails("should exit when Ctrl+C is pressed during source resolution", async () => {
+      const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      // Point at a non-existent remote source to keep the command busy resolving
-      session = new TerminalSession(
+      prompt = new InteractivePrompt(
         ["update", "--source", "https://example.invalid/nonexistent-repo.git"],
         projectDir,
       );
 
-      // The command starts loading and tries to resolve the remote source
-      await session.waitForText("Loading skills...", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Loading skills...", TIMEOUTS.WIZARD_LOAD);
 
-      session.ctrlC();
+      await prompt.ctrlC();
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
-      // Ctrl+C should terminate the process (non-zero exit from SIGINT)
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     });
   });

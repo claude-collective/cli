@@ -4,14 +4,14 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
   cleanupTempDir,
-  createEditableProject,
   createLocalSkill,
   ensureBinaryExists,
+  agentsPath,
   writeProjectConfig,
-  runCLI,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
 
 describe("list command", () => {
   let tempDir: string;
@@ -28,7 +28,7 @@ describe("list command", () => {
   it("should show no installation found in empty directory", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["list"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["list"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("No installation found");
@@ -37,7 +37,7 @@ describe("list command", () => {
   it("should work with ls alias", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["ls"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["ls"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("No installation found");
@@ -46,7 +46,7 @@ describe("list command", () => {
   it("should suggest running init when no installation found", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["list"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["list"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("init");
@@ -55,7 +55,7 @@ describe("list command", () => {
   it("should display help text with --help flag", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["list", "--help"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["list", "--help"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("USAGE");
@@ -65,7 +65,7 @@ describe("list command", () => {
   it("should display help text with ls --help alias", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["ls", "--help"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["ls", "--help"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("USAGE");
@@ -73,10 +73,11 @@ describe("list command", () => {
 
   describe("with local installation", () => {
     it("should show installation details for a local project", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      const { exitCode, stdout } = await runCLI(["list"], projectDir);
+      const { exitCode, stdout } = await CLI.run(["list"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Installation:");
@@ -86,12 +87,13 @@ describe("list command", () => {
     });
 
     it("should show correct skill count", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-testing-vitest"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      const { exitCode, stdout } = await runCLI(["list"], projectDir);
+      const { exitCode, stdout } = await CLI.run(["list"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Skills:");
@@ -99,10 +101,11 @@ describe("list command", () => {
     });
 
     it("should show mode as Local for local installations", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      const { exitCode, stdout } = await runCLI(["list"], projectDir);
+      const { exitCode, stdout } = await CLI.run(["list"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Mode:");
@@ -110,28 +113,30 @@ describe("list command", () => {
     });
 
     it("should show config path in output", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      const { exitCode, stdout } = await runCLI(["list"], projectDir);
+      const { exitCode, stdout } = await CLI.run(["list"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Config:");
-      expect(stdout).toContain(STANDARD_FILES.CONFIG_TS);
+      expect(stdout).toContain(FILES.CONFIG_TS);
     });
 
     it("should show agent count when agents exist", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         agents: ["web-developer", "api-developer"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
       // Create agent markdown files in the agents directory
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+      const agentsDir = agentsPath(projectDir);
       await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer\n");
       await writeFile(path.join(agentsDir, "api-developer.md"), "# API Developer\n");
 
-      const { exitCode, stdout } = await runCLI(["list"], projectDir);
+      const { exitCode, stdout } = await CLI.run(["list"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Agents:");
@@ -143,12 +148,13 @@ describe("list command", () => {
     // The list command currently only shows skill counts, not individual skill IDs.
     // This test asserts the user should see which skills are installed.
     it.fails("should show all skill IDs in output", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      const { exitCode, stdout } = await runCLI(["list"], projectDir);
+      const { exitCode, stdout } = await CLI.run(["list"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("web-framework-react");
@@ -163,10 +169,11 @@ describe("list command", () => {
     // from a source with forkedFrom metadata) and user-created skills (custom: true,
     // no forkedFrom). Users should be able to see which skills are custom vs managed.
     it.fails("should distinguish CLI-managed and user-created skills in output", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-testing-vitest"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
       // Add a user-created skill (custom: true, no forkedFrom)
       await createLocalSkill(projectDir, "web-utilities-date-fns", {
@@ -174,7 +181,7 @@ describe("list command", () => {
         metadata: `custom: true\nauthor: "@local"\ndisplayName: My Custom Helper\ncategory: web-utilities\ncontentHash: "custom-hash"\n`,
       });
 
-      const { exitCode, stdout } = await runCLI(["list"], projectDir);
+      const { exitCode, stdout } = await CLI.run(["list"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // The output should show individual skills with some kind of type indicator
@@ -191,11 +198,11 @@ describe("list command", () => {
       tempDir = await createTempDir();
 
       // Create .claude/skills/ with a skill but no config.ts
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+      const skillsDir = path.join(tempDir, DIRS.CLAUDE, DIRS.SKILLS);
       await mkdir(skillsDir, { recursive: true });
       await createLocalSkill(tempDir, "web-animation-css-animations");
 
-      const { exitCode, stdout } = await runCLI(["list"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["list"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // Without config.ts, detectInstallation returns null
@@ -203,10 +210,11 @@ describe("list command", () => {
     });
 
     it("should work with ls alias on a local installation", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      const { exitCode, stdout } = await runCLI(["ls"], projectDir);
+      const { exitCode, stdout } = await CLI.run(["ls"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Installation:");
@@ -229,8 +237,8 @@ describe("list command", () => {
       // Create skills directory with a skill folder so skill count > 0
       const globalSkillsDir = path.join(
         globalHome,
-        CLAUDE_DIR,
-        STANDARD_DIRS.SKILLS,
+        DIRS.CLAUDE,
+        DIRS.SKILLS,
         "web-framework-react",
       );
       await mkdir(globalSkillsDir, { recursive: true });
@@ -240,9 +248,13 @@ describe("list command", () => {
       await mkdir(projectDir, { recursive: true });
 
       // Run list with HOME pointing to globalHome so detectGlobalInstallation finds the config
-      const { exitCode, stdout } = await runCLI(["list"], projectDir, {
-        env: { HOME: globalHome },
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["list"],
+        { dir: projectDir },
+        {
+          env: { HOME: globalHome },
+        },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // detectInstallation should fall back to the global config and show installation info

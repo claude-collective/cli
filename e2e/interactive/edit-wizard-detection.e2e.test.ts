@@ -1,20 +1,16 @@
 import path from "path";
 import { mkdir } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { CLAUDE_DIR, STANDARD_DIRS } from "../../src/cli/consts.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
 import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
   writeProjectConfig,
   createLocalSkill,
-  delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  INTERACTIVE_TEST_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import { DIRS, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 
 /**
  * E2E tests for edit wizard skill detection (Gap 6).
@@ -22,26 +18,18 @@ import { createE2ESource } from "../helpers/create-e2e-source.js";
  * Verifies that the edit wizard correctly detects and displays skills
  * from different sources and scopes: local skills, project-scoped
  * plugin-like skills, and global-scoped skills.
- *
- * The edit command merges skills from:
- *   1. discoverAllPluginSkills() — Claude CLI plugin registry
- *   2. projectConfig.skills — config.ts skill entries
- *
- * For local-mode installs (no Claude CLI), the config.ts is the primary
- * source. The wizard should show all configured skills as pre-selected
- * in the build step.
  */
 
 describe("edit wizard — skill detection across sources and scopes", () => {
-  let session: TerminalSession | undefined;
+  let wizard: EditWizard | undefined;
   let tempDir: string | undefined;
   let sourceTempDir: string | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
+    await wizard?.destroy();
+    wizard = undefined;
 
     if (tempDir) {
       await cleanupTempDir(tempDir);
@@ -56,7 +44,7 @@ describe("edit wizard — skill detection across sources and scopes", () => {
   describe("mixed local and plugin-sourced skills", () => {
     it(
       "should detect and display all skill types in the build step",
-      { timeout: INTERACTIVE_TEST_TIMEOUT_MS },
+      { timeout: TIMEOUTS.INTERACTIVE },
       async () => {
         tempDir = await createTempDir();
         const projectDir = path.join(tempDir, "project");
@@ -69,9 +57,7 @@ describe("edit wizard — skill detection across sources and scopes", () => {
         //   - web-testing-vitest: local source, global scope
         //   - web-state-zustand: local source, project scope
         //   - api-framework-hono: local source, global scope
-        const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-        const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-        await mkdir(skillsDir, { recursive: true });
+        const agentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
         await mkdir(agentsDir, { recursive: true });
 
         await writeProjectConfig(projectDir, {
@@ -92,30 +78,10 @@ describe("edit wizard — skill detection across sources and scopes", () => {
 
         // Create local skill directories with SKILL.md and metadata
         const skills = [
-          {
-            id: "web-framework-react",
-            category: "web-framework",
-            slug: "react",
-            domain: "web",
-          },
-          {
-            id: "web-testing-vitest",
-            category: "web-testing",
-            slug: "vitest",
-            domain: "web",
-          },
-          {
-            id: "web-state-zustand",
-            category: "web-client-state",
-            slug: "zustand",
-            domain: "web",
-          },
-          {
-            id: "api-framework-hono",
-            category: "api-api",
-            slug: "hono",
-            domain: "api",
-          },
+          { id: "web-framework-react", category: "web-framework", slug: "react", domain: "web" },
+          { id: "web-testing-vitest", category: "web-testing", slug: "vitest", domain: "web" },
+          { id: "web-state-zustand", category: "web-client-state", slug: "zustand", domain: "web" },
+          { id: "api-framework-hono", category: "api-api", slug: "hono", domain: "api" },
         ] as const;
 
         for (const skill of skills) {
@@ -126,18 +92,16 @@ describe("edit wizard — skill detection across sources and scopes", () => {
         }
 
         // Launch edit wizard
-        session = new TerminalSession(["edit", "--source", source.sourceDir], projectDir, {
+        wizard = await EditWizard.launch({
+          projectDir,
+          source,
           rows: 60,
           cols: 120,
         });
 
-        // Wait for the build step to render with pre-selected skills
-        await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-        await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+        const webOutput = wizard.build.getOutput();
 
-        const webOutput = session.getFullOutput();
-
-        // Verify we're on the build step by checking stats panel content (unique to build step)
+        // Verify we're on the build step by checking stats panel content
         expect(webOutput).toContain("0 plugin");
         expect(webOutput).toContain("2 local");
 
@@ -146,11 +110,9 @@ describe("edit wizard — skill detection across sources and scopes", () => {
         expect(webOutput).toContain("Testing");
 
         // Navigate to API domain to verify api skills are also detected
-        session.enter();
-        await session.waitForText("API Framework", WIZARD_LOAD_TIMEOUT_MS);
-        await delay(STEP_TRANSITION_DELAY_MS);
+        await wizard.build.advanceDomain();
 
-        const apiOutput = session.getFullOutput();
+        const apiOutput = wizard.build.getOutput();
         // The API domain's category header confirms we navigated to the API build step
         expect(apiOutput).toContain("API Framework");
         // Stats panel still visible confirms we're on the build step
@@ -160,7 +122,7 @@ describe("edit wizard — skill detection across sources and scopes", () => {
 
     it(
       "should show startup message with correct installed skill count",
-      { timeout: INTERACTIVE_TEST_TIMEOUT_MS },
+      { timeout: TIMEOUTS.INTERACTIVE },
       async () => {
         tempDir = await createTempDir();
         const projectDir = path.join(tempDir, "project");
@@ -168,9 +130,7 @@ describe("edit wizard — skill detection across sources and scopes", () => {
         const source = await createE2ESource();
         sourceTempDir = source.tempDir;
 
-        const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-        const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-        await mkdir(skillsDir, { recursive: true });
+        const agentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
         await mkdir(agentsDir, { recursive: true });
 
         // Create project with 3 skills
@@ -200,15 +160,14 @@ describe("edit wizard — skill detection across sources and scopes", () => {
           });
         }
 
-        session = new TerminalSession(["edit", "--source", source.sourceDir], projectDir, {
+        wizard = await EditWizard.launch({
+          projectDir,
+          source,
           rows: 60,
           cols: 120,
         });
 
-        // The startup message should report the correct count
-        await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
-
-        const rawOutput = session.getRawOutput();
+        const rawOutput = wizard.getRawOutput();
         // "Found 3 installed skills" — edit.tsx:137
         expect(rawOutput).toContain("Found 3 installed skills");
       },

@@ -4,37 +4,18 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
   cleanupTempDir,
-  createEditableProject,
   ensureBinaryExists,
   directoryExists,
   fileExists,
+  renderSkillMd,
+  agentsPath,
+  skillsPath,
   writeProjectConfig,
-  runCLI,
-  EXIT_CODES,
+  addForkedFromMetadata,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
-import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
-
-const FORKED_FROM_METADATA =
-  [
-    'author: "@test"',
-    'contentHash: "e2e-hash-web-framework-react"',
-    "forkedFrom:",
-    "  skillId: web-framework-react",
-    '  contentHash: "e2e-hash"',
-    "  date: 2026-01-01",
-  ].join("\n") + "\n";
-
-async function addForkedFromMetadata(projectDir: string): Promise<void> {
-  const metadataPath = path.join(
-    projectDir,
-    CLAUDE_DIR,
-    STANDARD_DIRS.SKILLS,
-    "web-framework-react",
-    STANDARD_FILES.METADATA_YAML,
-  );
-  await writeFile(metadataPath, FORKED_FROM_METADATA);
-}
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
 
 describe("uninstall command", () => {
   let tempDir: string;
@@ -51,7 +32,7 @@ describe("uninstall command", () => {
   it("should display help text with --help flag", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["uninstall", "--help"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--help"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Remove");
@@ -62,17 +43,18 @@ describe("uninstall command", () => {
   it("should warn when no installation is found", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, combined } = await runCLI(["uninstall", "--yes"], tempDir);
+    const { exitCode, output } = await CLI.run(["uninstall", "--yes"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("Nothing to uninstall");
-    expect(combined).toContain("is not installed");
-    expect(combined).toContain("No changes made");
+    expect(output).toContain("Nothing to uninstall");
+    expect(output).toContain("is not installed");
+    expect(output).toContain("No changes made");
   });
 
   it("should remove skills and agents with --yes", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
 
     await addForkedFromMetadata(projectDir);
 
@@ -85,12 +67,12 @@ describe("uninstall command", () => {
     });
 
     // Verify files exist before uninstall
-    const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    const skillsDir = skillsPath(projectDir);
+    const agentsDir = agentsPath(projectDir);
     expect(await directoryExists(skillsDir)).toBe(true);
     expect(await directoryExists(agentsDir)).toBe(true);
 
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
@@ -100,19 +82,22 @@ describe("uninstall command", () => {
     expect(await directoryExists(agentsDir)).toBe(false);
 
     // Config directory should still exist (not using --all)
-    expect(await directoryExists(path.join(projectDir, CLAUDE_SRC_DIR))).toBe(true);
+    expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
   });
 
   it("should also remove config directory with --all --yes", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
 
     await addForkedFromMetadata(projectDir);
 
-    const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
+    const configDir = path.join(projectDir, DIRS.CLAUDE_SRC);
     expect(await directoryExists(configDir)).toBe(true);
 
-    const { exitCode, stdout } = await runCLI(["uninstall", "--all", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--all", "--yes"], {
+      dir: projectDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
@@ -122,15 +107,16 @@ describe("uninstall command", () => {
   });
 
   it("should remove skills directory when all skills are CLI-managed", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
 
     await addForkedFromMetadata(projectDir);
 
-    const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+    const skillsDir = skillsPath(projectDir);
     expect(await directoryExists(skillsDir)).toBe(true);
 
-    const { exitCode } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -139,15 +125,16 @@ describe("uninstall command", () => {
   });
 
   it("should remove agents directory when config exists", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
 
     await addForkedFromMetadata(projectDir);
 
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    const agentsDir = agentsPath(projectDir);
     expect(await directoryExists(agentsDir)).toBe(true);
 
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("CLI-compiled");
@@ -155,15 +142,16 @@ describe("uninstall command", () => {
   });
 
   it("should preserve agents not listed in config", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
 
-    // createEditableProject generates config with agents: ["web-developer"]
+    // ProjectBuilder.editable() generates config with agents: ["web-developer"]
     // Add an extra agent file NOT in the config
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    const agentsDir = agentsPath(projectDir);
     await writeFile(path.join(agentsDir, "my-custom-agent.md"), "# Custom Agent");
 
-    const { exitCode } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     // Custom agent should be preserved (not in config.agents)
@@ -171,64 +159,123 @@ describe("uninstall command", () => {
   });
 
   it("should skip user-created skills without forkedFrom metadata", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
 
     // Create a user-created skill with no forkedFrom metadata
-    const userSkillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "my-custom-skill");
+    const userSkillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "my-custom-skill");
     await mkdir(userSkillDir, { recursive: true });
     await writeFile(
-      path.join(userSkillDir, STANDARD_FILES.SKILL_MD),
+      path.join(userSkillDir, FILES.SKILL_MD),
       renderSkillMd("my-custom-skill", "User created", "# My Custom Skill"),
     );
     await writeFile(
-      path.join(userSkillDir, STANDARD_FILES.METADATA_YAML),
+      path.join(userSkillDir, FILES.METADATA_YAML),
       'author: "@user"\ncontentHash: "user-hash"\n',
     );
 
     await addForkedFromMetadata(projectDir);
 
-    const { exitCode, combined } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, output } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // User-created skill should be skipped
-    expect(combined).toContain("Skipping");
-    expect(combined).toContain("my-custom-skill");
+    expect(output).toContain("Skipping");
+    expect(output).toContain("my-custom-skill");
 
     // User skill should still exist
     expect(await directoryExists(userSkillDir)).toBe(true);
 
     // CLI-managed skill should be removed
-    const cliSkillDir = path.join(
-      projectDir,
-      CLAUDE_DIR,
-      STANDARD_DIRS.SKILLS,
-      "web-framework-react",
-    );
+    const cliSkillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-framework-react");
     expect(await directoryExists(cliSkillDir)).toBe(false);
   });
 
   it("should skip all skills when only user-created skills exist", async () => {
     tempDir = await createTempDir();
     const projectDir = path.join(tempDir, "project");
-    const userSkillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "my-custom-skill");
+    const userSkillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "my-custom-skill");
     await mkdir(userSkillDir, { recursive: true });
 
     await writeFile(
-      path.join(userSkillDir, STANDARD_FILES.SKILL_MD),
+      path.join(userSkillDir, FILES.SKILL_MD),
       renderSkillMd("my-custom-skill", "User created", "# My Custom Skill"),
     );
     await writeFile(
-      path.join(userSkillDir, STANDARD_FILES.METADATA_YAML),
+      path.join(userSkillDir, FILES.METADATA_YAML),
       'author: "@user"\ncontentHash: "user-hash"\n',
     );
 
-    const { exitCode, combined } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, output } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("Skipping");
-    expect(combined).toContain("my-custom-skill");
+    expect(output).toContain("Skipping");
+    expect(output).toContain("my-custom-skill");
     expect(await directoryExists(userSkillDir)).toBe(true);
+  });
+
+  it("should print removal list before proceeding with --yes", async () => {
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
+
+    await addForkedFromMetadata(projectDir);
+
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    // --yes should print what will be removed (without interactive prompt)
+    expect(stdout).toContain("The following will be removed:");
+    expect(stdout).toContain("CLI-managed files:");
+  });
+
+  it("should report nothing to uninstall for empty directory with HOME override", async () => {
+    tempDir = await createTempDir();
+    const globalHome = path.join(tempDir, "global-home");
+    const emptyDir = path.join(tempDir, "empty-project");
+    await mkdir(globalHome, { recursive: true });
+    await mkdir(emptyDir, { recursive: true });
+
+    // Global home has config but no skills/agents
+    await writeProjectConfig(globalHome, {
+      name: "global-test",
+      skills: [],
+      agents: [],
+    });
+
+    const { exitCode, output } = await CLI.run(
+      ["uninstall", "--yes"],
+      { dir: emptyDir },
+      { env: { HOME: globalHome } },
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    // No local skills or agents in the empty project dir
+    expect(output).toContain("Nothing to uninstall");
+  });
+
+  it("should succeed with --yes --all when config dir exists but no skills", async () => {
+    tempDir = await createTempDir();
+    const projectDir = path.join(tempDir, "project");
+
+    // Write only config — no skills or agents directories
+    await writeProjectConfig(projectDir, {
+      name: "config-only-test",
+      skills: [],
+      agents: [],
+    });
+
+    const configDir = path.join(projectDir, DIRS.CLAUDE_SRC);
+    expect(await directoryExists(configDir)).toBe(true);
+
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--all", "--yes"], {
+      dir: projectDir,
+    });
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    // Config dir should be removed with --all
+    expect(await directoryExists(configDir)).toBe(false);
   });
 });

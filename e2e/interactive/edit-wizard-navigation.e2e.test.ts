@@ -1,161 +1,98 @@
-import path from "path";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { TerminalSession } from "../helpers/terminal-session.js";
-import {
-  cleanupTempDir,
-  createEditableProject,
-  createTempDir,
-  delay,
-  ensureBinaryExists,
-  EXIT_CODES,
-  EXIT_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  WIZARD_LOAD_TIMEOUT_MS,
-} from "../helpers/test-utils.js";
+import { ensureBinaryExists } from "../helpers/test-utils.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import "../matchers/setup.js";
 
 /**
  * E2E tests for the `edit` command wizard — navigation, hotkeys, cancellation,
  * and build step validation.
  */
 describe("edit wizard — navigation and hotkeys", () => {
-  let tempDir: string;
-  let session: TerminalSession | undefined;
+  let wizard: EditWizard | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
-    if (tempDir) {
-      await cleanupTempDir(tempDir);
-      tempDir = undefined!;
-    }
+    await wizard?.destroy();
+    wizard = undefined;
   });
 
   describe("cancellation", () => {
     it("should cancel when Ctrl+C is pressed during wizard", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
-
-      // Wait for the wizard build step to render
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
       // Send Ctrl+C to abort
-      session.ctrlC();
+      wizard.abort();
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await wizard.waitForExit(TIMEOUTS.EXIT);
 
       // Ctrl+C in a PTY sends SIGINT, which usually results in non-zero exit
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     });
 
     it("should preserve original installation after cancellation", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
       });
 
-      // Read the original config before editing
-      const { readTestFile, fileExists } = await import("../helpers/test-utils.js");
-      const { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } =
-        await import("../../src/cli/consts.js");
-      const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const originalConfig = await readTestFile(configPath);
-
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
-
-      // Wait for the wizard build step to render
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
       // Cancel the wizard
-      session.ctrlC();
-      await session.waitForExit(EXIT_TIMEOUT_MS);
+      wizard.abort();
+      await wizard.waitForExit(TIMEOUTS.EXIT);
 
       // Config should be unchanged after cancellation
-      const configAfterCancel = await readTestFile(configPath);
-      expect(configAfterCancel).toBe(originalConfig);
-
+      await expect(project).toHaveConfig({ skillIds: ["web-framework-react"] });
       // Original skill files should still exist
-      const skillMdPath = path.join(
-        projectDir,
-        CLAUDE_DIR,
-        STANDARD_DIRS.SKILLS,
-        "web-framework-react",
-        STANDARD_FILES.SKILL_MD,
-      );
-      expect(await fileExists(skillMdPath)).toBe(true);
+      await expect(project).toHaveSkillCopied("web-framework-react");
     });
   });
 
   describe("keyboard navigation", () => {
-    it("should navigate to confirm step with ENTER", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+    it("should navigate to sources step with ENTER", async () => {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-styling-tailwind"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
-
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
       // Press ENTER to continue from build step.
-      session.enter();
+      const sources = await wizard.build.advanceToSources();
 
-      // The next step after build is "sources", then "agents", then "confirm"
-      await session.waitForText("Sources", EXIT_TIMEOUT_MS);
+      const output = sources.getOutput();
+      expect(output).toContain(STEP_TEXT.SOURCES);
     });
 
     it("should navigate to domain step when pressing ESC (known bug: should cancel in edit mode)", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
-
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
       // ESC from build step triggers goBack() but history is empty because
       // initialStep="build" is set via setState() without pushing to history
-      session.escape();
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await wizard.build.goBack();
 
-      const screen = session.getScreen();
-      expect(screen).toContain("Web");
+      const screen = wizard.build.getScreen();
+      expect(screen).toContain(STEP_TEXT.DOMAIN_WEB);
     });
 
     // BUG: ESC from edit build step goes to stack step instead of cancelling
     it.fails(
       "should cancel wizard when pressing ESC on the initial build step in edit mode",
       async () => {
-        tempDir = await createTempDir();
-        const projectDir = await createEditableProject(tempDir);
+        const project = await ProjectBuilder.editable();
 
-        session = new TerminalSession(["edit"], projectDir, {
-          rows: 40,
-          cols: 120,
-        });
+        wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
-        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+        await wizard.build.goBack();
 
-        session.escape();
-        await delay(STEP_TRANSITION_DELAY_MS);
-
-        const screen = session.getScreen();
+        const screen = wizard.build.getScreen();
         // ESC on the first step in edit mode should cancel the wizard, not go to stack
         expect(screen).toContain("Framework");
       },
@@ -164,60 +101,39 @@ describe("edit wizard — navigation and hotkeys", () => {
 
   describe("wizard hotkeys", () => {
     it("should show hotkey indicators in the footer", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      const output = wizard.build.getOutput();
       // The build step footer shows these hotkey indicators
       expect(output).toContain("Labels");
       expect(output).toContain("Help");
     });
 
     it("should toggle focused skill scope with S key", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-styling-tailwind"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      const buildOutput = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      const buildOutput = wizard.build.getOutput();
       // The "S" badge with "Scope" label should be visible in the build step footer
       expect(buildOutput).toContain("Scope");
 
       // The first skill (web-framework-react) is focused and pre-selected.
       // Press "s" to toggle its scope from "project" (default) to "global".
-      session.write("s");
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await wizard.build.toggleScopeOnFocusedSkill();
 
       // Navigate to the confirm step to verify the scope change is reflected.
-      // Build step -> Sources step
-      session.enter();
-      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      const sources = await wizard.build.advanceToSources();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("edit");
 
-      // Sources step -> Agents step
-      session.enter();
-      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Agents step -> Confirm step
-      session.enter();
-      await session.waitForText("Ready to install", EXIT_TIMEOUT_MS);
-
-      const confirmOutput = session.getFullOutput();
+      const confirmOutput = confirm.getOutput();
       // The confirm step shows "Scope:" with counts of project/global skills.
       expect(confirmOutput).toContain("Scope:");
       expect(confirmOutput).toContain("global");
@@ -226,31 +142,27 @@ describe("edit wizard — navigation and hotkeys", () => {
 
   describe("build step advancement", () => {
     it("should advance past build step even when all skills in a category are deselected", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       // Framework category should show pre-selected react skill
-      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
+      const output = wizard.build.getOutput();
+      expect(output).toContain("(1 of 1)");
 
       // Deselect the react skill with SPACE (it is already focused as the first item)
-      session.space();
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await wizard.build.toggleFocusedSkill();
 
       // Press ENTER — wizard should advance to the next step (sources)
-      session.enter();
+      const sources = await wizard.build.advanceToSources();
 
+      const sourcesOutput = sources.getOutput();
       // The wizard no longer blocks advancement — it advances to sources step
-      await session.waitForText("Sources", EXIT_TIMEOUT_MS);
+      expect(sourcesOutput).toContain("Sources");
     });
   });
 });

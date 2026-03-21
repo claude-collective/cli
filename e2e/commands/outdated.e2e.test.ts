@@ -2,16 +2,17 @@ import path from "path";
 import { createHash } from "crypto";
 import { mkdir, readFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { EXIT_CODES, FILES, SOURCE_PATHS } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
   createLocalSkill,
   ensureBinaryExists,
-  runCLI,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { HASH_PREFIX_LENGTH, SKILLS_DIR_PATH, STANDARD_FILES } from "../../src/cli/consts.js";
+import { CLI } from "../fixtures/cli.js";
+
+const HASH_PREFIX_LENGTH = 7;
 
 describe("outdated command", () => {
   let tempDir: string;
@@ -33,33 +34,33 @@ describe("outdated command", () => {
   it("should warn when no local skills exist", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, combined } = await runCLI(["outdated"], tempDir);
+    const { exitCode, output } = await CLI.run(["outdated"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("No local skills found");
+    expect(output).toContain("No local skills found");
   });
 
   it("should output JSON when --json flag is used with no local skills", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["outdated", "--json"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["outdated", "--json"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     const parsed = JSON.parse(stdout);
     expect(parsed).toHaveProperty("skills");
     expect(parsed).toHaveProperty("summary");
-    expect(parsed.skills).toEqual([]);
+    expect(parsed.skills).toStrictEqual([]);
     expect(parsed.summary.outdated).toBe(0);
   });
 
   it("should suggest init or edit when no local skills", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, combined } = await runCLI(["outdated"], tempDir);
+    const { exitCode, output } = await CLI.run(["outdated"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("init");
+    expect(output).toContain("init");
   });
 
   it("should show skill as current when content hash matches source", async () => {
@@ -72,10 +73,10 @@ describe("outdated command", () => {
     const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       sourceDir,
-      SKILLS_DIR_PATH,
+      SOURCE_PATHS.SKILLS_DIR,
       "web-testing",
       sourceSkillId,
-      STANDARD_FILES.SKILL_MD,
+      FILES.SKILL_MD,
     );
 
     // Compute the hash the same way the CLI does: SHA-256 prefix of the source SKILL.md
@@ -98,11 +99,13 @@ describe("outdated command", () => {
       ].join("\n"),
     });
 
-    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
+    const { exitCode, output } = await CLI.run(["outdated", "--source", sourceDir], {
+      dir: tempDir,
+    });
 
     // Should show "current" status for the skill
-    expect(combined).toContain("current");
-    expect(combined).toContain(sourceSkillId);
+    expect(output).toContain("current");
+    expect(output).toContain(sourceSkillId);
     // Should exit with 0 when all skills are up to date
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
   });
@@ -128,11 +131,13 @@ describe("outdated command", () => {
       ].join("\n"),
     });
 
-    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
+    const { exitCode, output } = await CLI.run(["outdated", "--source", sourceDir], {
+      dir: tempDir,
+    });
 
     // Should show "outdated" status for the skill
-    expect(combined).toContain("outdated");
-    expect(combined).toContain(sourceSkillId);
+    expect(output).toContain("outdated");
+    expect(output).toContain(sourceSkillId);
     // Should exit with non-zero when outdated skills are found
     expect(exitCode).toBe(EXIT_CODES.ERROR);
   });
@@ -158,10 +163,9 @@ describe("outdated command", () => {
       ].join("\n"),
     });
 
-    const { exitCode, stdout } = await runCLI(
-      ["outdated", "--json", "--source", sourceDir],
-      tempDir,
-    );
+    const { exitCode, stdout } = await CLI.run(["outdated", "--json", "--source", sourceDir], {
+      dir: tempDir,
+    });
 
     const parsed = JSON.parse(stdout);
     expect(parsed).toHaveProperty("skills");
@@ -187,10 +191,12 @@ describe("outdated command", () => {
       metadata: 'author: "@test"\ndisplayName: web-utilities-native-js\n',
     });
 
-    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
+    const { exitCode, output } = await CLI.run(["outdated", "--source", sourceDir], {
+      dir: tempDir,
+    });
 
     // Should show "local-only" status
-    expect(combined).toContain("local-only");
+    expect(output).toContain("local-only");
     // Should exit with 0 since local-only is not "outdated"
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
   });
@@ -199,7 +205,7 @@ describe("outdated command", () => {
     it("should display outdated help", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["outdated", "--help"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["outdated", "--help"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Check which local skills are out of date");
@@ -218,10 +224,10 @@ describe("outdated command", () => {
     const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       sourceDir,
-      SKILLS_DIR_PATH,
+      SOURCE_PATHS.SKILLS_DIR,
       "web-testing",
       sourceSkillId,
-      STANDARD_FILES.SKILL_MD,
+      FILES.SKILL_MD,
     );
 
     const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
@@ -241,10 +247,9 @@ describe("outdated command", () => {
       ].join("\n"),
     });
 
-    const { exitCode, stdout } = await runCLI(
-      ["outdated", "--json", "--source", sourceDir],
-      tempDir,
-    );
+    const { exitCode, stdout } = await CLI.run(["outdated", "--json", "--source", sourceDir], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -285,14 +290,16 @@ describe("outdated command", () => {
       metadata: 'author: "@test"\ndisplayName: web-utilities-native-js\n',
     });
 
-    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
+    const { exitCode, output } = await CLI.run(["outdated", "--source", sourceDir], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
 
     // Should show summary line with counts
-    expect(combined).toContain("Summary:");
-    expect(combined).toContain("outdated");
-    expect(combined).toContain("local-only");
+    expect(output).toContain("Summary:");
+    expect(output).toContain("outdated");
+    expect(output).toContain("local-only");
   });
 
   it("should handle --source with an empty source directory gracefully", async () => {
@@ -305,12 +312,14 @@ describe("outdated command", () => {
       metadata: 'author: "@test"\ndisplayName: web-utilities-native-js\n',
     });
 
-    const { exitCode, combined } = await runCLI(["outdated", "--source", emptySourceDir], tempDir);
+    const { exitCode, output } = await CLI.run(["outdated", "--source", emptySourceDir], {
+      dir: tempDir,
+    });
 
     // With an empty source (no skills at all), local skills should show as local-only
     // and the command should exit successfully (no outdated skills)
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("local-only");
+    expect(output).toContain("local-only");
   });
 
   it("should show mixed statuses for current, outdated, and local-only skills", async () => {
@@ -324,10 +333,10 @@ describe("outdated command", () => {
     const currentLocalDir = "web-testing-cypress-e2e";
     const currentSourceMdPath = path.join(
       sourceDir,
-      SKILLS_DIR_PATH,
+      SOURCE_PATHS.SKILLS_DIR,
       "web-testing",
       currentSourceId,
-      STANDARD_FILES.SKILL_MD,
+      FILES.SKILL_MD,
     );
     const sourceContent = await readFile(currentSourceMdPath, "utf-8");
     const matchingHash = createHash("sha256")
@@ -367,19 +376,20 @@ describe("outdated command", () => {
     });
 
     // Verify human-readable output contains all three statuses
-    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
+    const { exitCode, output } = await CLI.run(["outdated", "--source", sourceDir], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
-    expect(combined).toContain("current");
-    expect(combined).toContain("outdated");
-    expect(combined).toContain("local-only");
-    expect(combined).toContain("Summary:");
+    expect(output).toContain("current");
+    expect(output).toContain("outdated");
+    expect(output).toContain("local-only");
+    expect(output).toContain("Summary:");
 
     // Verify JSON output has correct per-skill status
-    const { stdout: jsonStdout } = await runCLI(
-      ["outdated", "--json", "--source", sourceDir],
-      tempDir,
-    );
+    const { stdout: jsonStdout } = await CLI.run(["outdated", "--json", "--source", sourceDir], {
+      dir: tempDir,
+    });
 
     const parsed = JSON.parse(jsonStdout);
     expect(parsed.summary.current).toBeGreaterThanOrEqual(1);

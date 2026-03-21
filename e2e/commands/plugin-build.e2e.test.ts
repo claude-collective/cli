@@ -1,16 +1,15 @@
 import path from "path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { EXIT_CODES, TIMEOUTS } from "../pages/constants.js";
 import {
   ensureBinaryExists,
   cleanupTempDir,
   fileExists,
   listFiles,
   readTestFile,
-  runCLI,
-  EXIT_CODES,
-  SETUP_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { CLI } from "../fixtures/cli.js";
 
 /**
  * P-BUILD-1 and P-BUILD-2: Build pipeline E2E tests.
@@ -46,7 +45,7 @@ describe("build pipeline (plugin chain)", () => {
     const source = await createE2ESource();
     sourceDir = source.sourceDir;
     tempDir = source.tempDir;
-  }, SETUP_TIMEOUT_MS);
+  }, TIMEOUTS.SETUP);
 
   afterAll(async () => {
     if (tempDir) {
@@ -55,11 +54,11 @@ describe("build pipeline (plugin chain)", () => {
   });
 
   describe("build plugins produces valid plugin directories", () => {
-    let buildResult: Awaited<ReturnType<typeof runCLI>>;
+    let buildResult: Awaited<ReturnType<typeof CLI.run>>;
 
     beforeAll(async () => {
-      buildResult = await runCLI(["build", "plugins"], sourceDir);
-    }, SETUP_TIMEOUT_MS);
+      buildResult = await CLI.run(["build", "plugins"], { dir: sourceDir });
+    }, TIMEOUTS.SETUP);
 
     it("should exit with code 0", () => {
       expect(buildResult.exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -102,16 +101,15 @@ describe("build pipeline (plugin chain)", () => {
   });
 
   describe("build marketplace produces valid marketplace.json", () => {
-    let marketplaceResult: Awaited<ReturnType<typeof runCLI>>;
+    let marketplaceResult: Awaited<ReturnType<typeof CLI.run>>;
 
     beforeAll(async () => {
       // P-BUILD-2 depends on P-BUILD-1 having already run (plugins built).
       // Vitest runs describes in order within the same file.
-      marketplaceResult = await runCLI(
-        ["build", "marketplace", "--name", MARKETPLACE_NAME],
-        sourceDir,
-      );
-    }, SETUP_TIMEOUT_MS);
+      marketplaceResult = await CLI.run(["build", "marketplace", "--name", MARKETPLACE_NAME], {
+        dir: sourceDir,
+      });
+    }, TIMEOUTS.SETUP);
 
     it("should exit with code 0", () => {
       expect(marketplaceResult.exitCode).toBe(EXIT_CODES.SUCCESS);

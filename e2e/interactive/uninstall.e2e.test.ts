@@ -1,20 +1,10 @@
 import path from "path";
 import { writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
-import {
-  createTempDir,
-  cleanupTempDir,
-  ensureBinaryExists,
-  directoryExists,
-  createEditableProject,
-  delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  EXIT_TIMEOUT_MS,
-  EXIT_CODES,
-} from "../helpers/test-utils.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, STEP_TEXT } from "../pages/constants.js";
+import { cleanupTempDir, ensureBinaryExists, directoryExists } from "../helpers/test-utils.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { InteractivePrompt } from "../fixtures/interactive-prompt.js";
 
 /**
  * E2E tests for the `uninstall` command interactive confirmation prompt.
@@ -24,16 +14,19 @@ import {
  * to uninstall?" using @inkjs/ui ConfirmInput (y/n keys).
  *
  * These tests spawn the actual CLI binary via PTY (zero mocks).
+ *
+ * Note: The uninstall confirmation is NOT the wizard, so it uses
+ * InteractivePrompt (which wraps TerminalSession internally).
  */
 describe("uninstall interactive", () => {
   let tempDir: string;
-  let session: TerminalSession | undefined;
+  let prompt: InteractivePrompt | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
+    await prompt?.destroy();
+    prompt = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
       tempDir = undefined!;
@@ -44,20 +37,22 @@ describe("uninstall interactive", () => {
    * Creates a project with CLI-managed skills (forkedFrom metadata present)
    * so that uninstall detects content to remove.
    */
-  async function createUninstallableProject(temp: string): Promise<string> {
-    const projectDir = await createEditableProject(temp, {
+  async function createUninstallableProject(): Promise<string> {
+    const project = await ProjectBuilder.editable({
       skills: ["web-framework-react"],
       agents: ["web-developer"],
       domains: ["web"],
     });
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
 
     // Add forkedFrom metadata so uninstall recognizes the skill as CLI-managed
     const skillMetadataPath = path.join(
       projectDir,
-      CLAUDE_DIR,
-      STANDARD_DIRS.SKILLS,
+      DIRS.CLAUDE,
+      "skills",
       "web-framework-react",
-      STANDARD_FILES.METADATA_YAML,
+      "metadata.yaml",
     );
     await writeFile(
       skillMetadataPath,
@@ -76,193 +71,170 @@ describe("uninstall interactive", () => {
 
   describe("confirmation prompt", () => {
     it("should show confirmation prompt with files to remove", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      session = new TerminalSession(["uninstall"], projectDir);
+      prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await session.waitForText("The following will be removed", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("The following will be removed", TIMEOUTS.WIZARD_LOAD);
 
-      const output = session.getFullOutput();
+      const output = prompt.getOutput();
       expect(output).toContain("CLI-managed files");
       expect(output).toContain("Are you sure you want to uninstall");
     });
 
     it("should show the y/N prompt defaulting to cancel", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      session = new TerminalSession(["uninstall"], projectDir);
+      prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await session.waitForText("Are you sure you want to uninstall", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
 
-      const output = session.getFullOutput();
-      // ConfirmInput with defaultChoice="cancel" renders "y/N"
+      const output = prompt.getOutput();
       expect(output).toContain("y/N");
     });
   });
 
   describe("cancel with n", () => {
     it("should cancel when user types n", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      session = new TerminalSession(["uninstall"], projectDir);
+      prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await session.waitForText("Are you sure you want to uninstall", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      session.write("n");
+      await prompt.deny();
 
-      await session.waitForText("Uninstall cancelled", EXIT_TIMEOUT_MS);
+      await prompt.waitForText("Uninstall cancelled", TIMEOUTS.EXIT);
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     });
 
     it("should preserve files after cancellation", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+      const skillsDir = path.join(projectDir, DIRS.CLAUDE, "skills");
+      const agentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
 
-      // Verify files exist before uninstall
       expect(await directoryExists(skillsDir)).toBe(true);
       expect(await directoryExists(agentsDir)).toBe(true);
 
-      session = new TerminalSession(["uninstall"], projectDir);
+      prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await session.waitForText("Are you sure you want to uninstall", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      session.write("n");
+      await prompt.deny();
 
-      await session.waitForExit(EXIT_TIMEOUT_MS);
+      await prompt.waitForExit(TIMEOUTS.EXIT);
 
-      // All files should be preserved after cancellation
       expect(await directoryExists(skillsDir)).toBe(true);
       expect(await directoryExists(agentsDir)).toBe(true);
-      expect(await directoryExists(path.join(projectDir, CLAUDE_SRC_DIR))).toBe(true);
+      expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
     });
 
     it("should cancel when user presses Enter (default is cancel)", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      session = new TerminalSession(["uninstall"], projectDir);
+      prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await session.waitForText("Are you sure you want to uninstall", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      // Enter should use defaultChoice which is "cancel" (defaultValue={false})
-      session.enter();
+      await prompt.pressEnter();
 
-      await session.waitForText("Uninstall cancelled", EXIT_TIMEOUT_MS);
+      await prompt.waitForText("Uninstall cancelled", TIMEOUTS.EXIT);
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     });
   });
 
   describe("confirm with y", () => {
     it("should proceed when user types y", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      session = new TerminalSession(["uninstall"], projectDir);
+      prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await session.waitForText("Are you sure you want to uninstall", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.confirm();
 
-      session.write("y");
+      await prompt.waitForText(STEP_TEXT.UNINSTALL_SUCCESS, TIMEOUTS.EXIT);
 
-      await session.waitForText("Uninstall complete", EXIT_TIMEOUT_MS);
-
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     });
 
     it("should remove CLI-managed files after confirming", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+      const skillsDir = path.join(projectDir, DIRS.CLAUDE, "skills");
+      const agentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
 
-      // Verify files exist before uninstall
       expect(await directoryExists(skillsDir)).toBe(true);
       expect(await directoryExists(agentsDir)).toBe(true);
 
-      session = new TerminalSession(["uninstall"], projectDir);
+      prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await session.waitForText("Are you sure you want to uninstall", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.confirm();
 
-      session.write("y");
+      await prompt.waitForExit(TIMEOUTS.EXIT);
 
-      await session.waitForExit(EXIT_TIMEOUT_MS);
-
-      // Skills and agents should be removed
       expect(await directoryExists(skillsDir)).toBe(false);
       expect(await directoryExists(agentsDir)).toBe(false);
-
-      // Config directory should still exist (no --all flag)
-      expect(await directoryExists(path.join(projectDir, CLAUDE_SRC_DIR))).toBe(true);
+      expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
     });
   });
 
   describe("--all flag", () => {
     it("should show config removal in confirmation prompt with --all", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      session = new TerminalSession(["uninstall", "--all"], projectDir);
+      prompt = new InteractivePrompt(["uninstall", "--all"], projectDir);
 
-      await session.waitForText("The following will be removed", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("The following will be removed", TIMEOUTS.WIZARD_LOAD);
 
-      const output = session.getFullOutput();
+      const output = prompt.getOutput();
       expect(output).toContain("Config:");
-      expect(output).toContain(CLAUDE_SRC_DIR);
+      expect(output).toContain(DIRS.CLAUDE_SRC);
     });
   });
 
   describe("Ctrl+C during confirmation", () => {
     it("should exit cleanly when Ctrl+C is pressed", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      session = new TerminalSession(["uninstall"], projectDir);
+      prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await session.waitForText("Are you sure you want to uninstall", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      session.ctrlC();
+      await prompt.ctrlC();
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     });
 
     it("should preserve files after Ctrl+C", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createUninstallableProject(tempDir);
+      const projectDir = await createUninstallableProject();
 
-      const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+      const skillsDir = path.join(projectDir, DIRS.CLAUDE, "skills");
+      const agentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
 
-      session = new TerminalSession(["uninstall"], projectDir);
+      prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await session.waitForText("Are you sure you want to uninstall", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      session.ctrlC();
+      await prompt.ctrlC();
 
-      await session.waitForExit(EXIT_TIMEOUT_MS);
+      await prompt.waitForExit(TIMEOUTS.EXIT);
 
-      // All files should be preserved after Ctrl+C
       expect(await directoryExists(skillsDir)).toBe(true);
       expect(await directoryExists(agentsDir)).toBe(true);
-      expect(await directoryExists(path.join(projectDir, CLAUDE_SRC_DIR))).toBe(true);
+      expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
     });
   });
 });

@@ -4,21 +4,19 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
   cleanupTempDir,
-  createMinimalProject,
-  createEditableProject,
   createLocalSkill,
   ensureBinaryExists,
-  fileExists,
   listFiles,
   readTestFile,
   renderSkillMd,
-  runCLI,
+  agentsPath,
   writeProjectConfig,
-  EXIT_CODES,
-  COMPILE_ENV,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import type { SkillId } from "../../src/cli/types/index.js";
+import { CLI } from "../fixtures/cli.js";
+import "../matchers/setup.js";
 
 describe("compile command edge cases", () => {
   let tempDir: string;
@@ -34,12 +32,13 @@ describe("compile command edge cases", () => {
 
   describe("custom stack assignments in manually-edited config", () => {
     it("should compile agents with a custom category added to the stack", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
         agents: ["web-developer"],
         domains: ["web"],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
       // Create a second local skill for a custom category
       await createLocalSkill(projectDir, "web-custom-e2e-tool" as SkillId, {
@@ -64,20 +63,15 @@ describe("compile command edge cases", () => {
         },
       });
 
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Discovered 2 local skills");
+      expect(output).toContain("Discovered 2 local skills");
 
-      const webDevPath = path.join(agentsDir, "web-developer.md");
-      expect(await fileExists(webDevPath)).toBe(true);
-
-      const content = await readTestFile(webDevPath);
       // The custom skill should appear in the compiled agent output
-      expect(content).toContain("web-custom-e2e-tool");
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["web-custom-e2e-tool"],
+      });
     });
   });
 
@@ -96,15 +90,15 @@ describe("compile command edge cases", () => {
       // Create a skill with broken YAML frontmatter in SKILL.md
       const brokenSkillDir = path.join(
         projectDir,
-        CLAUDE_DIR,
-        STANDARD_DIRS.SKILLS,
+        DIRS.CLAUDE,
+        DIRS.SKILLS,
         "web-testing-e2e-broken",
       );
       await mkdir(brokenSkillDir, { recursive: true });
 
       // Write SKILL.md with invalid YAML frontmatter (unbalanced quotes)
       await writeFile(
-        path.join(brokenSkillDir, STANDARD_FILES.SKILL_MD),
+        path.join(brokenSkillDir, FILES.SKILL_MD),
         `---
 name: "web-testing-e2e-broken
 description: "This YAML is broken because the name quote is not closed
@@ -118,18 +112,16 @@ This skill has invalid YAML frontmatter.
       // Still provide a valid metadata.yaml so the skill directory is not skipped
       // for the missing-metadata reason
       await writeFile(
-        path.join(brokenSkillDir, STANDARD_FILES.METADATA_YAML),
+        path.join(brokenSkillDir, FILES.METADATA_YAML),
         `author: "@test"\ncontentHash: "hash-broken"\n`,
       );
 
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const agentsDir = agentsPath(projectDir);
+      const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       // Compile should succeed — the broken skill is skipped, the valid one compiles
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Discovered 1 local skills");
+      expect(output).toContain("Discovered 1 local skills");
 
       const outputFiles = await listFiles(agentsDir);
       expect(outputFiles.length).toBeGreaterThan(0);
@@ -149,14 +141,14 @@ This skill has invalid YAML frontmatter.
       // Create a skill with valid SKILL.md but broken metadata.yaml
       const badMetadataSkillDir = path.join(
         projectDir,
-        CLAUDE_DIR,
-        STANDARD_DIRS.SKILLS,
+        DIRS.CLAUDE,
+        DIRS.SKILLS,
         "web-testing-e2e-bad-meta",
       );
       await mkdir(badMetadataSkillDir, { recursive: true });
 
       await writeFile(
-        path.join(badMetadataSkillDir, STANDARD_FILES.SKILL_MD),
+        path.join(badMetadataSkillDir, FILES.SKILL_MD),
         renderSkillMd(
           "web-testing-e2e-bad-meta",
           "Skill with broken metadata",
@@ -166,19 +158,17 @@ This skill has invalid YAML frontmatter.
 
       // Write completely invalid YAML to metadata.yaml
       await writeFile(
-        path.join(badMetadataSkillDir, STANDARD_FILES.METADATA_YAML),
+        path.join(badMetadataSkillDir, FILES.METADATA_YAML),
         `{{{ this is not: valid: yaml: "at all`,
       );
 
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       // The broken-metadata skill should still be loaded via SKILL.md frontmatter
       // (metadata.yaml is separate from skill loading in loadSkillsFromDir).
       // The valid skill should compile regardless.
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toMatch(/Discovered \d+ local skills/);
+      expect(output).toMatch(/Discovered \d+ local skills/);
     });
   });
 
@@ -211,25 +201,21 @@ This skill has invalid YAML frontmatter.
         metadata: `author: "@test"\ncontentHash: "hash-exists"\n`,
       });
 
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       // Compile discovers skills from disk, not config. The phantom skill is never
       // discovered, so it's silently skipped during resolution. The existing skill
       // still routes to the agent.
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Discovered 1 local skills");
+      expect(output).toContain("Discovered 1 local skills");
 
-      const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
-      expect(outputFiles).toContain("web-developer.md");
+      await expect({ dir: projectDir }).toHaveCompiledAgents();
 
       // The compiled agent should reference the existing skill but not the phantom
-      const webDevContent = await readTestFile(path.join(agentsDir, "web-developer.md"));
-      expect(webDevContent).toContain("web-testing-e2e-exists");
-      expect(webDevContent).not.toContain("web-testing-e2e-phantom");
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["web-testing-e2e-exists"],
+        notContains: ["web-testing-e2e-phantom"],
+      });
     });
   });
 
@@ -251,35 +237,27 @@ This skill has invalid YAML frontmatter.
         metadata: `author: "@test"\ncontentHash: "hash-orphan"\n`,
       });
 
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       // With an empty stack, the skill is discovered but not routed to any agent.
       // Agents should still compile (with no skill references).
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Discovered 1 local skills");
-
-      const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles).toContain("web-developer.md");
+      expect(output).toContain("Discovered 1 local skills");
 
       // The agent should compile but not reference the orphan skill
-      const webDevContent = await readTestFile(path.join(agentsDir, "web-developer.md"));
-      expect(webDevContent).toMatch(/^---\n/);
-      expect(webDevContent).toContain("name: web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
     });
   });
 
   describe("compile idempotency", () => {
     it("should produce identical output when run twice", async () => {
-      tempDir = await createTempDir();
-      const { projectDir, agentsDir } = await createMinimalProject(tempDir);
+      const project = await ProjectBuilder.minimal();
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
+      const agentsDir = agentsPath(project.dir);
 
       // First compile
-      const firstResult = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const firstResult = await CLI.run(["compile"], { dir: projectDir });
       expect(firstResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Read all compiled agent files after first compile
@@ -290,9 +268,7 @@ This skill has invalid YAML frontmatter.
       }
 
       // Second compile
-      const secondResult = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const secondResult = await CLI.run(["compile"], { dir: projectDir });
       expect(secondResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Read all compiled agent files after second compile
@@ -303,7 +279,7 @@ This skill has invalid YAML frontmatter.
       }
 
       // Same set of files
-      expect(secondFiles.sort()).toEqual(firstFiles.sort());
+      expect(secondFiles.sort()).toStrictEqual(firstFiles.sort());
 
       // Identical content for each file
       for (const file of firstFiles) {

@@ -6,12 +6,11 @@ import {
   cleanupTempDir,
   createLocalSkill,
   ensureBinaryExists,
-  runCLI,
-  EXIT_CODES,
+  renderSkillMd,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { SKILLS_DIR_PATH, STANDARD_FILES } from "../../src/cli/consts.js";
-import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
+import { EXIT_CODES, FILES, SOURCE_PATHS } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
 
 describe("diff command", () => {
   let tempDir: string;
@@ -33,16 +32,16 @@ describe("diff command", () => {
   it("should warn when no local skills exist", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, combined } = await runCLI(["diff"], tempDir);
+    const { exitCode, output } = await CLI.run(["diff"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("No local skills found");
+    expect(output).toContain("No local skills found");
   });
 
   it("should handle --quiet flag with no local skills", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["diff", "--quiet"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["diff", "--quiet"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout.trim()).toBe("");
@@ -54,9 +53,9 @@ describe("diff command", () => {
       metadata: 'author: "@test"\ncontentHash: "abc123"\ndisplayName: my-test-skill\n',
     });
 
-    const { combined } = await runCLI(["diff"], tempDir);
+    const { output } = await CLI.run(["diff"], { dir: tempDir });
 
-    expect(combined).toContain("no forkedFrom metadata");
+    expect(output).toContain("no forkedFrom metadata");
   });
 
   // BUG: diff exits code 1 even on success because this.exit(0) throws ExitError
@@ -68,7 +67,7 @@ describe("diff command", () => {
       metadata: 'author: "@test"\ncontentHash: "abc123"\ndisplayName: my-test-skill\n',
     });
 
-    const { exitCode } = await runCLI(["diff"], tempDir);
+    const { exitCode } = await CLI.run(["diff"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
   });
@@ -79,10 +78,10 @@ describe("diff command", () => {
       metadata: 'author: "@test"\ndisplayName: my-test-skill\n',
     });
 
-    const { exitCode, combined } = await runCLI(["diff", "nonexistent-skill"], tempDir);
+    const { exitCode, output } = await CLI.run(["diff", "nonexistent-skill"], { dir: tempDir });
 
     expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("not found");
+    expect(output).toContain("not found");
   });
 
   it("should show differences when forked skill diverges from source", async () => {
@@ -106,7 +105,7 @@ describe("diff command", () => {
     });
 
     await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
+      path.join(skillDir, FILES.SKILL_MD),
       renderSkillMd(
         localDirName,
         "Locally modified content",
@@ -114,12 +113,14 @@ describe("diff command", () => {
       ),
     );
 
-    const { exitCode, combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
+    const { exitCode, output } = await CLI.run(["diff", "--source", e2e.sourceDir], {
+      dir: tempDir,
+    });
 
-    expect(combined).toContain(sourceSkillId);
-    expect(combined).toContain("---");
-    expect(combined).toContain("+++");
-    expect(combined).toMatch(/Found differences in \d+ skill/);
+    expect(output).toContain(sourceSkillId);
+    expect(output).toContain("---");
+    expect(output).toContain("+++");
+    expect(output).toMatch(/Found differences in \d+ skill/);
     expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
   });
 
@@ -155,11 +156,13 @@ describe("diff command", () => {
       ].join("\n"),
     });
 
-    const { combined } = await runCLI(["diff", targetLocalDir, "--source", e2e.sourceDir], tempDir);
+    const { output } = await CLI.run(["diff", targetLocalDir, "--source", e2e.sourceDir], {
+      dir: tempDir,
+    });
 
-    expect(combined).toContain("web-framework-react");
-    expect(combined).toContain(targetLocalDir);
-    expect(combined).toMatch(/Found differences in 1 skill/);
+    expect(output).toContain("web-framework-react");
+    expect(output).toContain(targetLocalDir);
+    expect(output).toMatch(/Found differences in 1 skill/);
   });
 
   it("should exit silently with --quiet when differences exist", async () => {
@@ -182,14 +185,13 @@ describe("diff command", () => {
     });
 
     await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
+      path.join(skillDir, FILES.SKILL_MD),
       renderSkillMd(localDirName, "Different content", "# Changed"),
     );
 
-    const { exitCode, stdout } = await runCLI(
-      ["diff", "--quiet", "--source", e2e.sourceDir],
-      tempDir,
-    );
+    const { exitCode, stdout } = await CLI.run(["diff", "--quiet", "--source", e2e.sourceDir], {
+      dir: tempDir,
+    });
 
     expect(stdout.trim()).toBe("");
     expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
@@ -204,10 +206,10 @@ describe("diff command", () => {
     const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       e2e.sourceDir,
-      SKILLS_DIR_PATH,
+      SOURCE_PATHS.SKILLS_DIR,
       "web-testing",
       sourceSkillId,
-      STANDARD_FILES.SKILL_MD,
+      FILES.SKILL_MD,
     );
 
     const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
@@ -224,12 +226,12 @@ describe("diff command", () => {
       ].join("\n"),
     });
 
-    await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), sourceContent);
+    await writeFile(path.join(skillDir, FILES.SKILL_MD), sourceContent);
 
-    const { combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
+    const { output } = await CLI.run(["diff", "--source", e2e.sourceDir], { dir: tempDir });
 
     // Exit code assertion is in the it.fails test below (known bug: this.exit(0) throws ExitError)
-    expect(combined).toContain("up to date");
+    expect(output).toContain("up to date");
   });
 
   // BUG: diff exits code 1 even on success because this.exit(0) throws ExitError
@@ -244,10 +246,10 @@ describe("diff command", () => {
     const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       e2e.sourceDir,
-      SKILLS_DIR_PATH,
+      SOURCE_PATHS.SKILLS_DIR,
       "web-testing",
       sourceSkillId,
-      STANDARD_FILES.SKILL_MD,
+      FILES.SKILL_MD,
     );
 
     const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
@@ -264,11 +266,13 @@ describe("diff command", () => {
       ].join("\n"),
     });
 
-    await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), sourceContent);
+    await writeFile(path.join(skillDir, FILES.SKILL_MD), sourceContent);
 
-    const { exitCode, combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
+    const { exitCode, output } = await CLI.run(["diff", "--source", e2e.sourceDir], {
+      dir: tempDir,
+    });
 
-    expect(combined).toContain("up to date");
+    expect(output).toContain("up to date");
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
   });
 
@@ -283,10 +287,10 @@ describe("diff command", () => {
     const localDirName = "web-testing-cypress-e2e";
     const sourceSkillMdPath = path.join(
       e2e.sourceDir,
-      SKILLS_DIR_PATH,
+      SOURCE_PATHS.SKILLS_DIR,
       "web-testing",
       sourceSkillId,
-      STANDARD_FILES.SKILL_MD,
+      FILES.SKILL_MD,
     );
 
     const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
@@ -303,9 +307,11 @@ describe("diff command", () => {
       ].join("\n"),
     });
 
-    await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), sourceContent);
+    await writeFile(path.join(skillDir, FILES.SKILL_MD), sourceContent);
 
-    const { exitCode } = await runCLI(["diff", "--quiet", "--source", e2e.sourceDir], tempDir);
+    const { exitCode } = await CLI.run(["diff", "--quiet", "--source", e2e.sourceDir], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
   });
@@ -313,7 +319,7 @@ describe("diff command", () => {
   it("should display help text with --help flag", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["diff", "--help"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["diff", "--help"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("USAGE");
@@ -342,7 +348,7 @@ describe("diff command", () => {
     });
 
     await writeFile(
-      path.join(reactDir, STANDARD_FILES.SKILL_MD),
+      path.join(reactDir, FILES.SKILL_MD),
       renderSkillMd(reactFork, "Locally modified react", "# Modified React"),
     );
 
@@ -359,15 +365,15 @@ describe("diff command", () => {
     });
 
     await writeFile(
-      path.join(vitestDir, STANDARD_FILES.SKILL_MD),
+      path.join(vitestDir, FILES.SKILL_MD),
       renderSkillMd(vitestFork, "Locally modified vitest", "# Modified Vitest"),
     );
 
-    const { combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
+    const { output } = await CLI.run(["diff", "--source", e2e.sourceDir], { dir: tempDir });
 
-    expect(combined).toContain("web-framework-react");
-    expect(combined).toContain("web-testing-vitest");
-    expect(combined).toMatch(/Found differences in 2 skill/);
+    expect(output).toContain("web-framework-react");
+    expect(output).toContain("web-testing-vitest");
+    expect(output).toMatch(/Found differences in 2 skill/);
   });
 
   it("should use --source flag to override default source", async () => {
@@ -390,15 +396,15 @@ describe("diff command", () => {
     });
 
     await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
+      path.join(skillDir, FILES.SKILL_MD),
       renderSkillMd(localDirName, "Locally modified", "# Changed"),
     );
 
-    const { combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
+    const { output } = await CLI.run(["diff", "--source", e2e.sourceDir], { dir: tempDir });
 
-    expect(combined).toContain(`Loaded from local: ${e2e.sourceDir}`);
-    expect(combined).toContain("web-testing-vitest");
-    expect(combined).toMatch(/Found differences in \d+ skill/);
+    expect(output).toContain(`Loaded from local: ${e2e.sourceDir}`);
+    expect(output).toContain("web-testing-vitest");
+    expect(output).toMatch(/Found differences in \d+ skill/);
   });
 
   // BUG: When a forked skill references a source skill that no longer exists,
@@ -425,8 +431,8 @@ describe("diff command", () => {
       ].join("\n"),
     });
 
-    const { combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
+    const { output } = await CLI.run(["diff", "--source", e2e.sourceDir], { dir: tempDir });
 
-    expect(combined).toContain("no longer exists");
+    expect(output).toContain("no longer exists");
   });
 });

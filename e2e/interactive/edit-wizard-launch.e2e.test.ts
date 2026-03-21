@@ -1,19 +1,18 @@
-import path from "path";
 import { mkdir } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { CLAUDE_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
 import {
+  ensureBinaryExists,
   createTempDir,
   cleanupTempDir,
-  ensureBinaryExists,
-  createEditableProject,
   createLocalSkill,
-  runCLI,
-  WIZARD_LOAD_TIMEOUT_MS,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import { CLI } from "../fixtures/cli.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { EXIT_CODES, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
+import "../matchers/setup.js";
+import path from "path";
 
 /**
  * E2E tests for the `edit` command wizard — launch, display, and error handling.
@@ -22,17 +21,17 @@ import { createE2ESource } from "../helpers/create-e2e-source.js";
  * help output, and global config fallback.
  */
 describe("edit wizard — launch and display", () => {
-  let tempDir: string;
-  let session: TerminalSession | undefined;
+  let wizard: EditWizard | undefined;
+  let tempDir: string | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
+    await wizard?.destroy();
+    wizard = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
+      tempDir = undefined;
     }
   });
 
@@ -42,86 +41,58 @@ describe("edit wizard — launch and display", () => {
       const emptyDir = path.join(tempDir, "empty");
       await mkdir(emptyDir, { recursive: true });
 
-      session = new TerminalSession(["edit"], emptyDir);
+      const result = await CLI.run(["edit"], { dir: emptyDir });
 
-      // The edit command calls detectInstallation() which returns null
-      // when no config.ts is found, then exits with an error
-      await session.waitForText("No installation found");
-
-      const exitCode = await session.waitForExit();
-      expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-
-      const output = session.getFullOutput();
-      expect(output).toContain("agentsinc init");
+      expect(result.exitCode).not.toBe(EXIT_CODES.SUCCESS);
+      expect(result.output).toContain(STEP_TEXT.NO_INSTALLATION);
+      expect(result.output).toContain("agentsinc init");
     });
   });
 
   describe("wizard launch", () => {
     it("should display startup messages for an existing installation", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
 
-      session = new TerminalSession(["edit"], projectDir);
+      wizard = await EditWizard.launch({ projectDir: project.dir });
 
-      // Startup messages are buffered and rendered via Ink's <Static> component
-      await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
-
-      const raw = session.getRawOutput();
-      expect(raw).toContain("Loaded");
-      expect(raw).toContain("skills");
+      const output = wizard.getRawOutput();
+      expect(output).toContain(STEP_TEXT.LOADED);
+      expect(output).toContain("skills");
     });
 
     it("should show skills loaded status", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
 
-      session = new TerminalSession(["edit"], projectDir);
+      wizard = await EditWizard.launch({ projectDir: project.dir });
 
-      // The edit command buffers status messages and shows them via Ink's <Static>
-      await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
+      const output = wizard.getRawOutput();
+      expect(output).toContain(STEP_TEXT.LOADED);
     });
 
     it("should show pre-selected skills in the build step", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, rows: 40, cols: 120 });
 
-      // The wizard opens at the build step with pre-selected skills.
-      // "web-framework-react" should be pre-selected, shown as "1 of 1"
-      // in the Framework category header.
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await session.waitForText("Framework");
+      const output = wizard.build.getOutput();
       // Framework category should show the pre-selected skill count
-      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
-      const fullOutput = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
-      expect(fullOutput).toMatch(/Framework.*\(1 of 1\)/);
+      expect(output).toMatch(/Framework.*\(1 of 1\)/);
       // The React skill tag should be visible
-      expect(fullOutput).toContain("React");
+      expect(output).toContain("React");
     });
 
     it("should reach the build step wizard view", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+      const project = await ProjectBuilder.editable();
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, rows: 40, cols: 120 });
 
-      // Wait for the wizard to render the build step.
-      // The build step shows "Customize your X stack" title and domain tabs.
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      const output = wizard.build.getOutput();
       // Should show the domain tab bar with Web selected
-      expect(output).toContain("Web");
+      expect(output).toContain(STEP_TEXT.DOMAIN_WEB);
       // Should show the build step navigation instructions
       expect(output).toContain("SPACE");
       expect(output).toContain("ENTER");
@@ -134,27 +105,18 @@ describe("edit wizard — launch and display", () => {
 
   describe("multiple installed skills", () => {
     it("should handle edit with multiple installed skills", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-testing-vitest"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 60,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, rows: 60, cols: 120 });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      // Wait for category headers and skill tags to render before assertions
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
-
-      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      const output = wizard.build.getOutput();
       // Framework category should show the pre-selected react skill
       expect(output).toMatch(/Framework.*\(1 of 1\)/);
-      // Testing category should be visible (non-exclusive categories no longer show a counter)
+      // Testing category should be visible
       expect(output).toContain("Testing");
       // Both skill tags should be visible
       expect(output).toContain("React");
@@ -163,41 +125,25 @@ describe("edit wizard — launch and display", () => {
   });
 
   describe("--source flag", () => {
-    let sourceTempDir: string | undefined;
-
-    afterEach(async () => {
-      if (sourceTempDir) {
-        await cleanupTempDir(sourceTempDir);
-        sourceTempDir = undefined;
-      }
-    });
-
     it("should load skills from custom source directory", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
       const source = await createE2ESource();
-      sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(["edit", "--source", source.sourceDir], projectDir, {
+      wizard = await EditWizard.launch({
+        projectDir: project.dir,
+        source,
         rows: 60,
         cols: 120,
       });
 
-      // The edit command should load skills from the E2E source.
-      // The startup message includes the skill count from the custom source.
-      await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      // Wait for category headers to render before checking for skill names
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-
-      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
-      // The E2E source includes web-framework-react, web-testing-vitest, and
-      // web-state-zustand — the build step should show skills from the custom source
+      const output = wizard.build.getOutput();
+      // The E2E source includes web-framework-react — the build step should show
+      // skills from the custom source
       expect(output).toContain("Framework");
       // E2E source uses skill IDs as displayNames (e.g. "web-framework-react")
       expect(output).toContain("react");
@@ -206,29 +152,21 @@ describe("edit wizard — launch and display", () => {
 
   describe("newly added skill", () => {
     it("should show a new local skill alongside original skills in build step", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
       // Create an additional local skill that was NOT in the original config.
-      await createLocalSkill(projectDir, "web-testing-vitest", {
+      await createLocalSkill(project.dir, "web-testing-vitest", {
         description: "Next generation testing framework",
         metadata: `author: "@test"\ndisplayName: web-testing-vitest\nslug: vitest\ncategory: web-testing\ndomain: web\ncontentHash: "e2e-hash-vitest"\n`,
       });
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 60,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, rows: 60, cols: 120 });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      // Wait for category headers to render before checking for skill names
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-
-      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      const output = wizard.build.getOutput();
       // The original pre-selected skill should still be visible
       expect(output).toContain("React");
       // The newly added skill tag should be visible in the build step.
@@ -240,47 +178,38 @@ describe("edit wizard — launch and display", () => {
     it("should display help text with command description", async () => {
       tempDir = await createTempDir();
 
-      session = new TerminalSession(["edit", "--help"], tempDir);
+      const result = await CLI.run(["edit", "--help"], { dir: tempDir });
 
-      await session.waitForText("USAGE");
-
-      const output = session.getFullOutput();
-      expect(output).toContain("edit");
-      expect(output).toContain("Edit skills");
-      expect(output).toContain("--source");
-      expect(output).toContain("--refresh");
-
-      const exitCode = await session.waitForExit();
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(result.output).toContain("edit");
+      expect(result.output).toContain("Edit skills");
+      expect(result.output).toContain("--source");
+      expect(result.output).toContain("--refresh");
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
     });
   });
 
   describe("global installation fallback", () => {
     it("should load wizard using global config when no project config exists", async () => {
-      tempDir = await createTempDir();
-
-      // Create a "global home" directory with a valid installation
-      const globalHome = path.join(tempDir, "global-home");
-      const projectDir = await createEditableProject(globalHome, {
+      // Create a global installation (acts as HOME)
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react"],
         agents: ["web-developer"],
         domains: ["web"],
       });
+      tempDir = path.dirname(project.dir);
 
       // Create a working directory WITHOUT config (forces global fallback)
       const workDir = path.join(tempDir, "work");
       await mkdir(workDir, { recursive: true });
 
       // Launch edit with HOME pointing to the global project directory
-      session = new TerminalSession(["edit"], workDir, {
-        env: { HOME: projectDir },
+      wizard = await EditWizard.launch({
+        projectDir: workDir,
+        env: { HOME: project.dir },
       });
 
-      // The edit command falls back to global config and launches the wizard
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-
-      const raw = session.getRawOutput();
-      expect(raw).toContain("Loaded");
+      const raw = wizard.getRawOutput();
+      expect(raw).toContain(STEP_TEXT.LOADED);
       expect(raw).toContain("skills");
     });
   });

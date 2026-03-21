@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { cleanupTempDir, ensureBinaryExists, runCLI, EXIT_CODES } from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import type { SkillSlug } from "../../src/cli/types/index.js";
+import { EXIT_CODES } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
 
 describe("slug-based relationship rules", () => {
   let tempDir: string;
@@ -30,11 +32,13 @@ describe("slug-based relationship rules", () => {
       });
       tempDir = sourceTempDir;
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
+      const { output } = await CLI.run(["validate", "--source", sourceDir, "--verbose"], {
+        dir: tempDir,
+      });
 
       // Slug resolution should detect that "angular-standalone" has no matching skill in the source
-      expect(combined).toContain("Unresolved slug");
-      expect(combined).toContain("angular-standalone");
+      expect(output).toContain("Unresolved slug");
+      expect(output).toContain("angular-standalone");
     });
 
     it("should resolve conflict slugs to canonical IDs shown in info output", async () => {
@@ -52,9 +56,9 @@ describe("slug-based relationship rules", () => {
       tempDir = sourceTempDir;
 
       // Query react's info — should show zustand as a canonical ID conflict
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", "web-framework-react", "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -82,10 +86,12 @@ describe("slug-based relationship rules", () => {
       });
       tempDir = sourceTempDir;
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
+      const { output } = await CLI.run(["validate", "--source", sourceDir, "--verbose"], {
+        dir: tempDir,
+      });
 
-      expect(combined).toContain("Unresolved slug");
-      expect(combined).toContain("angular-standalone");
+      expect(output).toContain("Unresolved slug");
+      expect(output).toContain("angular-standalone");
     });
 
     it("should resolve require slugs to canonical IDs shown in info output", async () => {
@@ -104,9 +110,9 @@ describe("slug-based relationship rules", () => {
       tempDir = sourceTempDir;
 
       // Query zustand's info — should show react requirement as canonical ID
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", "web-state-zustand", "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -131,9 +137,9 @@ describe("slug-based relationship rules", () => {
       });
       tempDir = sourceTempDir;
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", "api-framework-hono", "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -157,9 +163,9 @@ describe("slug-based relationship rules", () => {
       // React IS in the default recommends list, so we need to check a skill
       // that's truly not recommended. "reviewing" is a shared-meta skill
       // that has no recommend entry in either default or source rules.
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", "shared-meta-reviewing", "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -194,9 +200,11 @@ describe("slug-based relationship rules", () => {
       });
       tempDir = sourceTempDir;
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
+      const { output } = await CLI.run(["validate", "--source", sourceDir, "--verbose"], {
+        dir: tempDir,
+      });
 
-      expect(combined).toContain("Checked 7 skill(s)");
+      expect(output).toContain("Checked 7 skill(s)");
 
       // Default rules may produce unresolved references for slugs not in E2E source
       // (e.g., "angular", "vue"), but E2E source slugs should all resolve cleanly.
@@ -210,7 +218,7 @@ describe("slug-based relationship rules", () => {
       // Y = the unresolved reference (the slug that couldn't be resolved)
       // We check that Y (the unresolved part) is never an E2E skill's resolved ID.
       const unresolvedRefPattern = /has unresolved reference '([^']+)'/;
-      const unresolvedLines = combined
+      const unresolvedLines = output
         .split("\n")
         .filter((line) => line.includes("unresolved reference"));
 
@@ -242,15 +250,17 @@ describe("slug-based relationship rules", () => {
       });
       tempDir = sourceTempDir;
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
+      const { output } = await CLI.run(["validate", "--source", sourceDir, "--verbose"], {
+        dir: tempDir,
+      });
 
       // "vue-composition-api" slug does not exist in the E2E source
-      expect(combined).toContain("Unresolved slug");
-      expect(combined).toContain("vue-composition-api");
+      expect(output).toContain("Unresolved slug");
+      expect(output).toContain("vue-composition-api");
     });
   });
 
-  describe("multiple rule types combined", () => {
+  describe("multiple rule types output", () => {
     it("should resolve all relationship types from slugs to canonical IDs", async () => {
       // Use "hono" for recommends since it's NOT in default recommends.
       // "react" and "vitest" are in default recommends, so we can't verify
@@ -281,27 +291,27 @@ describe("slug-based relationship rules", () => {
       tempDir = sourceTempDir;
 
       // Verify react shows hono as conflict (canonical ID)
-      const reactInfo = await runCLI(
+      const reactInfo = await CLI.run(
         ["info", "web-framework-react", "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
       expect(reactInfo.exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(reactInfo.stdout).toContain("Conflicts with:");
       expect(reactInfo.stdout).toContain("api-framework-hono");
 
       // Verify vitest shows react as requirement (canonical ID)
-      const vitestInfo = await runCLI(
+      const vitestInfo = await CLI.run(
         ["info", "web-testing-vitest", "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
       expect(vitestInfo.exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(vitestInfo.stdout).toContain("Requires:");
       expect(vitestInfo.stdout).toContain("web-framework-react");
 
       // Verify hono shows as recommended
-      const honoInfo = await runCLI(
+      const honoInfo = await CLI.run(
         ["info", "api-framework-hono", "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
       expect(honoInfo.exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(honoInfo.stdout).toContain("Recommended: Yes");

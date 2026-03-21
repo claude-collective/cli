@@ -4,27 +4,20 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
   cleanupTempDir,
-  createMinimalProject,
-  createProjectWithCustomSkill,
   createLocalSkill,
   ensureBinaryExists,
   fileExists,
   listFiles,
   readTestFile,
-  runCLI,
+  renderSkillMd,
+  agentsPath,
   writeProjectConfig,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
-import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-
-const COMPILE_ENV = {
-  // Prevent source resolution from reading user's global config.
-  // Do NOT spread process.env here — execa inherits it automatically,
-  // and spreading would clobber the HOME override set by runCLI().
-  AGENTSINC_SOURCE: undefined,
-};
+import { CLI } from "../fixtures/cli.js";
+import "../matchers/setup.js";
 
 describe("compile command", () => {
   let tempDir: string;
@@ -39,18 +32,17 @@ describe("compile command", () => {
   });
 
   it("should compile agents to default output directory", async () => {
-    tempDir = await createTempDir();
-    const { projectDir, agentsDir } = await createMinimalProject(tempDir);
+    const project = await ProjectBuilder.minimal();
+    tempDir = path.dirname(project.dir);
+    const agentsDir = agentsPath(project.dir);
 
-    const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-      env: COMPILE_ENV,
-    });
+    const { exitCode, output } = await CLI.run(["compile"], { dir: project.dir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("Compiling global agents");
-    expect(combined).toContain("Discovered 1 local skills");
-    expect(combined).toMatch(/Recompiled \d+ global agents/);
-    expect(combined).toContain("Global compile complete");
+    expect(output).toContain("Compiling global agents");
+    expect(output).toContain("Discovered 1 local skills");
+    expect(output).toMatch(/Recompiled \d+ global agents/);
+    expect(output).toContain("Global compile complete");
 
     const outputFiles = await listFiles(agentsDir);
     expect(outputFiles.length).toBeGreaterThan(0);
@@ -63,41 +55,32 @@ describe("compile command", () => {
   });
 
   it("should produce valid compiled agent files with frontmatter", async () => {
-    tempDir = await createTempDir();
-    const { projectDir, agentsDir } = await createMinimalProject(tempDir);
+    const project = await ProjectBuilder.minimal();
+    tempDir = path.dirname(project.dir);
 
-    const { exitCode } = await runCLI(["compile"], projectDir, {
-      env: COMPILE_ENV,
-    });
+    const { exitCode } = await CLI.run(["compile"], { dir: project.dir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const webDevPath = path.join(agentsDir, "web-developer.md");
-    expect(await fileExists(webDevPath)).toBe(true);
+    await expect({ dir: project.dir }).toHaveCompiledAgent("web-developer");
+    await expect({ dir: project.dir }).toHaveCompiledAgentContent("web-developer", {
+      contains: ["name: web-developer", "description:", "tools:", "model:", "#"],
+    });
 
-    const content = await readTestFile(webDevPath);
-
-    expect(content).toMatch(/^---\n/);
-    expect(content).toContain("name: web-developer");
-    expect(content).toContain("description:");
-    expect(content).toContain("tools:");
-    expect(content).toContain("model:");
-
+    // Verify substantial content
+    const content = await readTestFile(path.join(agentsPath(project.dir), "web-developer.md"));
     const MIN_COMPILED_AGENT_LENGTH = 500;
     expect(content.length).toBeGreaterThan(MIN_COMPILED_AGENT_LENGTH);
-    expect(content).toContain("#");
   });
 
   it("should support --verbose flag", async () => {
-    tempDir = await createTempDir();
-    const { projectDir, agentsDir } = await createMinimalProject(tempDir);
+    const project = await ProjectBuilder.minimal();
+    tempDir = path.dirname(project.dir);
 
-    const { exitCode, combined } = await runCLI(["compile", "--verbose"], projectDir, {
-      env: COMPILE_ENV,
-    });
+    const { exitCode, output } = await CLI.run(["compile", "--verbose"], { dir: project.dir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("Recompiled");
+    expect(output).toContain("Recompiled");
   });
 
   it("should fail when no skills are available", async () => {
@@ -106,12 +89,10 @@ describe("compile command", () => {
     await mkdir(projectDir, { recursive: true });
     await writeProjectConfig(projectDir, { name: "empty", skills: [], agents: [] });
 
-    const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-      env: COMPILE_ENV,
-    });
+    const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
     expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("No skills found");
+    expect(output).toContain("No skills found");
   });
 
   describe("multiple skills", () => {
@@ -133,14 +114,12 @@ describe("compile command", () => {
         metadata: `author: "@test"\ncontentHash: "hash-third"\n`,
       });
 
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const agentsDir = agentsPath(projectDir);
+      const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Discovered 3 local skills");
-      expect(combined).toMatch(/Recompiled \d+ global agents/);
+      expect(output).toContain("Discovered 3 local skills");
+      expect(output).toMatch(/Recompiled \d+ global agents/);
 
       const outputFiles = await listFiles(agentsDir);
       expect(outputFiles.length).toBeGreaterThan(0);
@@ -156,14 +135,12 @@ describe("compile command", () => {
         metadata: `author: "@test"\ncontentHash: "hash-content"\n`,
       });
 
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      const { exitCode, combined } = await runCLI(["compile", "--verbose"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const agentsDir = agentsPath(projectDir);
+      const { exitCode, output } = await CLI.run(["compile", "--verbose"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Discovered 1 local skills");
-      expect(combined).toContain("Compiled:");
+      expect(output).toContain("Discovered 1 local skills");
+      expect(output).toContain("Compiled:");
 
       const outputFiles = await listFiles(agentsDir);
       expect(outputFiles.length).toBeGreaterThan(0);
@@ -172,16 +149,14 @@ describe("compile command", () => {
 
   describe("verbose output", () => {
     it("should show loaded skill names in verbose mode", async () => {
-      tempDir = await createTempDir();
-      const { projectDir } = await createMinimalProject(tempDir);
+      const project = await ProjectBuilder.minimal();
+      tempDir = path.dirname(project.dir);
 
-      const { exitCode, combined } = await runCLI(["compile", "--verbose"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode, output } = await CLI.run(["compile", "--verbose"], { dir: project.dir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Loaded skill:");
-      expect(combined).toContain("web-testing-vitest");
+      expect(output).toContain("Loaded skill:");
+      expect(output).toContain("web-testing-vitest");
     });
   });
 
@@ -197,25 +172,18 @@ describe("compile command", () => {
         metadata: `author: "@test"\ncontentHash: "hash-valid"\n`,
       });
 
-      const invalidSkillDir = path.join(
-        projectDir,
-        CLAUDE_DIR,
-        STANDARD_DIRS.SKILLS,
-        "web-state-mobx",
-      );
+      const invalidSkillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-state-mobx");
       await mkdir(invalidSkillDir, { recursive: true });
       await writeFile(
-        path.join(invalidSkillDir, STANDARD_FILES.SKILL_MD),
+        path.join(invalidSkillDir, FILES.SKILL_MD),
         renderSkillMd("web-state-mobx", "Missing metadata", "# No Metadata"),
       );
 
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("missing metadata.yaml");
-      expect(combined).toContain("Discovered 1 local skills");
+      expect(output).toContain("missing metadata.yaml");
+      expect(output).toContain("Discovered 1 local skills");
     });
   });
 
@@ -225,7 +193,7 @@ describe("compile command", () => {
       const projectDir = path.join(tempDir, "project");
       await mkdir(projectDir, { recursive: true });
 
-      const { exitCode, stdout } = await runCLI(["compile", "--help"], projectDir);
+      const { exitCode, stdout } = await CLI.run(["compile", "--help"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("USAGE");
@@ -240,31 +208,29 @@ describe("compile command", () => {
       tempDir = await createTempDir();
       const projectDir = path.join(tempDir, "project");
       // Create project with .claude/ but no skills/ subdirectory
-      await mkdir(path.join(projectDir, CLAUDE_DIR), { recursive: true });
+      await mkdir(path.join(projectDir, DIRS.CLAUDE), { recursive: true });
       await writeProjectConfig(projectDir, { name: "empty", skills: [], agents: [] });
 
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("No skills found");
+      expect(output).toContain("No skills found");
     });
   });
 
   describe("output directory with existing files", () => {
     it("should write compiled agents alongside pre-existing files", async () => {
-      tempDir = await createTempDir();
-      const { projectDir, agentsDir } = await createMinimalProject(tempDir);
+      const project = await ProjectBuilder.minimal();
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
+      const agentsDir = agentsPath(project.dir);
 
       // Place a pre-existing file in the agents directory
       const preExistingFile = "existing-notes.txt";
       await mkdir(agentsDir, { recursive: true });
       await writeFile(path.join(agentsDir, preExistingFile), "pre-existing content");
 
-      const { exitCode } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode } = await CLI.run(["compile"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -281,12 +247,11 @@ describe("compile command", () => {
 
   describe("agent YAML content verification", () => {
     it("should produce agents with valid YAML frontmatter fields", async () => {
-      tempDir = await createTempDir();
-      const { projectDir, agentsDir } = await createMinimalProject(tempDir);
+      const project = await ProjectBuilder.minimal();
+      tempDir = path.dirname(project.dir);
+      const agentsDir = agentsPath(project.dir);
 
-      const { exitCode } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode } = await CLI.run(["compile"], { dir: project.dir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -305,12 +270,11 @@ describe("compile command", () => {
     });
 
     it("should produce agents with content after frontmatter", async () => {
-      tempDir = await createTempDir();
-      const { projectDir, agentsDir } = await createMinimalProject(tempDir);
+      const project = await ProjectBuilder.minimal();
+      tempDir = path.dirname(project.dir);
+      const agentsDir = agentsPath(project.dir);
 
-      const { exitCode } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode } = await CLI.run(["compile"], { dir: project.dir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -329,12 +293,11 @@ describe("compile command", () => {
     });
 
     it("should produce distinct content for each compiled agent", async () => {
-      tempDir = await createTempDir();
-      const { projectDir, agentsDir } = await createMinimalProject(tempDir);
+      const project = await ProjectBuilder.minimal();
+      tempDir = path.dirname(project.dir);
+      const agentsDir = agentsPath(project.dir);
 
-      const { exitCode } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode } = await CLI.run(["compile"], { dir: project.dir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -352,15 +315,14 @@ describe("compile command", () => {
 
   describe("custom skills in project config", () => {
     it("should compile agents with custom skills in config", async () => {
-      tempDir = await createTempDir();
-      const { projectDir, agentsDir } = await createProjectWithCustomSkill(tempDir);
+      const project = await ProjectBuilder.withCustomSkill();
+      tempDir = path.dirname(project.dir);
+      const agentsDir = agentsPath(project.dir);
 
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode, output } = await CLI.run(["compile"], { dir: project.dir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toMatch(/Recompiled \d+ global agents/);
+      expect(output).toMatch(/Recompiled \d+ global agents/);
 
       const outputFiles = await listFiles(agentsDir);
       expect(outputFiles.length).toBeGreaterThan(0);
@@ -368,24 +330,19 @@ describe("compile command", () => {
     });
 
     it("should include custom skill in compiled agent frontmatter", async () => {
-      tempDir = await createTempDir();
-      const { projectDir, agentsDir } = await createProjectWithCustomSkill(tempDir);
+      const project = await ProjectBuilder.withCustomSkill();
+      tempDir = path.dirname(project.dir);
 
-      const { exitCode } = await runCLI(["compile"], projectDir, {
-        env: COMPILE_ENV,
-      });
+      const { exitCode } = await CLI.run(["compile"], { dir: project.dir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const webDevPath = path.join(agentsDir, "web-developer.md");
-      expect(await fileExists(webDevPath)).toBe(true);
-
-      const content = await readTestFile(webDevPath);
-
       // The custom skill is assigned as preloaded in the stack config,
       // so it should appear in the YAML frontmatter skills list
-      expect(content).toMatch(/^---\n/);
-      expect(content).toContain("web-custom-e2e-widget");
+      await expect({ dir: project.dir }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: project.dir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["web-custom-e2e-widget"],
+      });
     });
   });
 
@@ -414,15 +371,15 @@ describe("compile command", () => {
       const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
       sourceTempDir = srcTempDir;
 
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      const { exitCode, combined } = await runCLI(["compile", "--source", sourceDir], projectDir, {
-        env: COMPILE_ENV,
+      const agentsDir = agentsPath(projectDir);
+      const { exitCode, output } = await CLI.run(["compile", "--source", sourceDir], {
+        dir: projectDir,
       });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Discovered 1 local skills");
-      expect(combined).toContain("Source: flag");
-      expect(combined).toMatch(/Recompiled \d+ global agents/);
+      expect(output).toContain("Discovered 1 local skills");
+      expect(output).toContain("Source: flag");
+      expect(output).toMatch(/Recompiled \d+ global agents/);
 
       const outputFiles = await listFiles(agentsDir);
       expect(outputFiles.length).toBeGreaterThan(0);
@@ -454,18 +411,16 @@ describe("compile command", () => {
       const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
       sourceTempDir = srcTempDir;
 
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      const { exitCode, combined } = await runCLI(
-        ["compile", "--agent-source", sourceDir],
-        projectDir,
-        { env: COMPILE_ENV },
-      );
+      const agentsDir = agentsPath(projectDir);
+      const { exitCode, output } = await CLI.run(["compile", "--agent-source", sourceDir], {
+        dir: projectDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Discovered 1 local skills");
-      expect(combined).toContain("Fetching agent partials...");
-      expect(combined).toContain("Agent partials fetched");
-      expect(combined).toMatch(/Recompiled \d+ global agents/);
+      expect(output).toContain("Discovered 1 local skills");
+      expect(output).toContain("Fetching agent partials...");
+      expect(output).toContain("Agent partials fetched");
+      expect(output).toMatch(/Recompiled \d+ global agents/);
 
       const outputFiles = await listFiles(agentsDir);
       expect(outputFiles.length).toBeGreaterThan(0);
@@ -499,13 +454,15 @@ describe("compile command", () => {
 
       // Run compile with HOME pointing to globalHome so detectInstallation falls back to global
       // compile without --output uses detectInstallation() which falls back to global
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: { HOME: globalHome, AGENTSINC_SOURCE: undefined },
-      });
+      const { exitCode, output } = await CLI.run(
+        ["compile"],
+        { dir: projectDir },
+        { env: { HOME: globalHome } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // When using global installation, dual-pass compile runs the global pass
-      expect(combined).toContain("Compiling global agents");
+      expect(output).toContain("Compiling global agents");
     });
   });
 });

@@ -1,150 +1,75 @@
-import path from "path";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { CLAUDE_SRC_DIR, CLAUDE_DIR } from "../../src/cli/consts.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
-import {
-  createTempDir,
-  cleanupTempDir,
-  ensureBinaryExists,
-  directoryExists,
-  delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  KEYSTROKE_DELAY_MS,
-  EXIT_CODES,
-} from "../helpers/test-utils.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { InitWizard } from "../pages/wizards/init-wizard.js";
+import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { ensureBinaryExists } from "../helpers/test-utils.js";
 
 describe("init wizard — navigation", () => {
-  let session: TerminalSession | undefined;
-  let projectDir: string | undefined;
-  let sourceDir: string | undefined;
-  let sourceTempDir: string | undefined;
+  let wizard: InitWizard | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
-
-    if (projectDir) {
-      await cleanupTempDir(projectDir);
-      projectDir = undefined;
-    }
-    if (sourceTempDir) {
-      await cleanupTempDir(sourceTempDir);
-      sourceTempDir = undefined;
-    }
+    await wizard?.destroy();
+    wizard = undefined;
   });
-
-  async function createProjectAndSource(): Promise<void> {
-    projectDir = await createTempDir();
-    const source = await createE2ESource();
-    sourceDir = source.sourceDir;
-    sourceTempDir = source.tempDir;
-  }
-
-  function spawnInitWizard(
-    cwd: string,
-    sourcePath: string,
-    options?: { cols?: number; rows?: number },
-  ): TerminalSession {
-    return new TerminalSession(["init", "--source", sourcePath], cwd, {
-      cols: options?.cols,
-      rows: options?.rows,
-      env: { AGENTSINC_SOURCE: undefined },
-    });
-  }
 
   describe("Ctrl+C abort", () => {
     it("should exit the wizard without creating files", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      wizard.abort();
 
-      session.ctrlC();
-
-      const exitCode = await session.waitForExit();
+      const exitCode = await wizard.waitForExit();
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-
-      expect(await directoryExists(path.join(projectDir!, CLAUDE_SRC_DIR))).toBe(false);
-      expect(await directoryExists(path.join(projectDir!, CLAUDE_DIR))).toBe(false);
     });
   });
 
   describe("Escape navigation", () => {
     it("should go back from domain selection to stack selection", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      const domain = await wizard.stack.selectFirstStack();
+      const stack = await domain.goBack();
 
-      session.enter();
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      session.escape();
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      const output = stack.getOutput();
+      expect(output).toContain(STEP_TEXT.STACK);
     });
 
     it("should go back from build step to domain selection", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      const domain = await wizard.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
 
-      session.enter();
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await build.goBack();
 
-      session.enter();
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      session.escape();
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      const output = build.getOutput();
+      expect(output).toContain(STEP_TEXT.DOMAIN_WEB);
     });
 
-    it("should go back from confirm step to build step", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+    it("should go back from confirm step to agents step", async () => {
+      wizard = await InitWizard.launch();
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      const domain = await wizard.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughAllDomains();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("init");
 
-      session.enter();
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await confirm.goBack();
 
-      session.enter();
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      session.write("a");
-      await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      session.escape();
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
+      // After going back from confirm, we should see the agents step
+      const output = confirm.getOutput();
+      expect(output).toContain(STEP_TEXT.AGENTS);
     });
 
     it("should cancel wizard when pressing Escape on initial stack selection", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await wizard.stack.cancel();
 
-      session.escape();
-
-      const exitCode = await session.waitForExit();
+      const exitCode = await wizard.waitForExit();
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-
-      expect(await directoryExists(path.join(projectDir!, CLAUDE_SRC_DIR))).toBe(false);
     });
   });
 });

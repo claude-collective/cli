@@ -3,17 +3,14 @@ import os from "os";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
-  isClaudeCLIAvailable,
-  claudePluginMarketplaceAdd,
-  claudePluginInstall,
-} from "../../src/cli/utils/exec.js";
-import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
-import { verifyPluginInSettings, verifyNoPlugins } from "../helpers/plugin-assertions.js";
+import "../matchers/setup.js";
 import {
-  runCLI,
+  isClaudeCLIAvailable,
+  claudePluginMarketplaceAdd,
+  claudePluginInstall,
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
@@ -21,10 +18,12 @@ import {
   listFiles,
   renderSkillMd,
   writeProjectConfig,
-  EXIT_CODES,
+  agentsPath,
+  skillsPath,
   FORKED_FROM_METADATA,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
 
 /**
  * Plugin-mode uninstall E2E tests — core cleanup with Claude CLI.
@@ -79,16 +78,16 @@ describe.skipIf(!claudeAvailable)("uninstall with plugins calls Claude CLI", () 
     });
 
     // Step 6: Create local skill with forkedFrom metadata (so skill uninstall works)
-    const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
+    const skillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-framework-react");
     await mkdir(skillDir, { recursive: true });
     await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
+      path.join(skillDir, FILES.SKILL_MD),
       renderSkillMd("web-framework-react", "React framework", "# React\n\nTest content."),
     );
-    await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), FORKED_FROM_METADATA);
+    await writeFile(path.join(skillDir, FILES.METADATA_YAML), FORKED_FROM_METADATA);
 
     // Step 7: Create agents directory
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    const agentsDir = agentsPath(projectDir);
     await mkdir(agentsDir, { recursive: true });
     await writeFile(path.join(agentsDir, "web-developer.md"), "---\nname: web-developer\n---\n");
 
@@ -105,20 +104,23 @@ describe.skipIf(!claudeAvailable)("uninstall with plugins calls Claude CLI", () 
   describe("pre-conditions", () => {
     it("should have the plugin registered in settings before uninstall", async () => {
       const pluginKey = `web-framework-react@${fixture.marketplaceName}`;
-      const isRegistered = await verifyPluginInSettings(projectDir, pluginKey);
-      expect(isRegistered).toBe(true);
+      await expect({ dir: projectDir }).toHavePlugin(pluginKey);
     });
   });
 
   describe("after uninstall --yes", () => {
-    let uninstallResult: Awaited<ReturnType<typeof runCLI>>;
+    let uninstallResult: Awaited<ReturnType<typeof CLI.run>>;
 
     beforeAll(async () => {
       // Use real HOME so the CLI finds the plugin registry and can call
       // `claude plugin uninstall` to deregister the plugin.
-      uninstallResult = await runCLI(["uninstall", "--yes"], projectDir, {
-        env: { HOME: realHome },
-      });
+      uninstallResult = await CLI.run(
+        ["uninstall", "--yes"],
+        { dir: projectDir },
+        {
+          env: { HOME: realHome },
+        },
+      );
     }, 60_000);
 
     it("should exit with code 0", () => {
@@ -135,11 +137,11 @@ describe.skipIf(!claudeAvailable)("uninstall with plugins calls Claude CLI", () 
     });
 
     it("should clean up plugin from settings", async () => {
-      await verifyNoPlugins(projectDir);
+      await expect({ dir: projectDir }).toHaveNoPlugins();
     });
 
     it("should remove CLI-managed skill directories", async () => {
-      const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+      const skillsDir = skillsPath(projectDir);
       // Skills directory should be removed or empty (all skills were CLI-managed)
       if (await directoryExists(skillsDir)) {
         const entries = await listFiles(skillsDir);
@@ -148,13 +150,13 @@ describe.skipIf(!claudeAvailable)("uninstall with plugins calls Claude CLI", () 
     });
 
     it("should remove CLI-compiled agent files", async () => {
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+      const agentsDir = agentsPath(projectDir);
       // Agents directory should be removed (all agents were CLI-compiled)
       expect(await directoryExists(agentsDir)).toBe(false);
     });
 
     it("should preserve config directory (without --all)", async () => {
-      expect(await directoryExists(path.join(projectDir, CLAUDE_SRC_DIR))).toBe(true);
+      expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
     });
   });
 });

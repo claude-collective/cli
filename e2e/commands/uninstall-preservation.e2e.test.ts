@@ -2,19 +2,19 @@ import path from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
-  createTempDir,
   cleanupTempDir,
-  createEditableProject,
   ensureBinaryExists,
   directoryExists,
   fileExists,
   readTestFile,
   writeProjectConfig,
-  runCLI,
-  EXIT_CODES,
-  FORKED_FROM_METADATA,
+  agentsPath,
+  skillsPath,
+  addForkedFromMetadata,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
 
 /**
  * Uninstall preservation E2E tests.
@@ -31,18 +31,6 @@ import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../..
  * - 10e: .claude/ directory preserved when it contains non-CLI content
  */
 
-/** Add forkedFrom metadata to the default skill created by createEditableProject */
-async function addForkedFromMetadata(projectDir: string): Promise<void> {
-  const metadataPath = path.join(
-    projectDir,
-    CLAUDE_DIR,
-    STANDARD_DIRS.SKILLS,
-    "web-framework-react",
-    STANDARD_FILES.METADATA_YAML,
-  );
-  await writeFile(metadataPath, FORKED_FROM_METADATA);
-}
-
 describe("uninstall preservation behavior", () => {
   let tempDir: string;
 
@@ -56,18 +44,19 @@ describe("uninstall preservation behavior", () => {
   });
 
   it("should preserve ejected templates in .claude-src after uninstall --yes", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
     await addForkedFromMetadata(projectDir);
 
     // Eject templates to .claude-src/agents/_templates/
-    const ejectResult = await runCLI(["eject", "templates"], projectDir);
+    const ejectResult = await CLI.run(["eject", "templates"], { dir: projectDir });
     expect(ejectResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Verify ejected template exists before uninstall
     const templatePath = path.join(
       projectDir,
-      CLAUDE_SRC_DIR,
+      DIRS.CLAUDE_SRC,
       "agents",
       "_templates",
       "agent.liquid",
@@ -75,7 +64,7 @@ describe("uninstall preservation behavior", () => {
     expect(await fileExists(templatePath)).toBe(true);
 
     // Run uninstall --yes (without --all)
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
@@ -84,27 +73,30 @@ describe("uninstall preservation behavior", () => {
     expect(await fileExists(templatePath)).toBe(true);
 
     // Compiled artifacts should be removed
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    const agentsDir = agentsPath(projectDir);
     expect(await directoryExists(agentsDir)).toBe(false);
 
-    const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+    const skillsDir = skillsPath(projectDir);
     expect(await directoryExists(skillsDir)).toBe(false);
   });
 
   it("should remove .claude-src entirely with --all including ejected content", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
     await addForkedFromMetadata(projectDir);
 
     // Eject templates
-    const ejectResult = await runCLI(["eject", "templates"], projectDir);
+    const ejectResult = await CLI.run(["eject", "templates"], { dir: projectDir });
     expect(ejectResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+    const claudeSrcDir = path.join(projectDir, DIRS.CLAUDE_SRC);
     expect(await directoryExists(claudeSrcDir)).toBe(true);
 
     // Run uninstall --all --yes
-    const { exitCode, stdout } = await runCLI(["uninstall", "--all", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--all", "--yes"], {
+      dir: projectDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
@@ -114,28 +106,29 @@ describe("uninstall preservation behavior", () => {
   });
 
   it("should preserve custom agent source in .claude-src/agents after uninstall --yes", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir, {
+    const project = await ProjectBuilder.editable({
       skills: ["web-framework-react"],
       agents: ["web-developer"],
       domains: ["web"],
     });
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
     await addForkedFromMetadata(projectDir);
 
     // Create a custom agent source directory in .claude-src/agents/
-    const customAgentSrcDir = path.join(projectDir, CLAUDE_SRC_DIR, "agents", "my-custom-agent");
+    const customAgentSrcDir = path.join(projectDir, DIRS.CLAUDE_SRC, "agents", "my-custom-agent");
     await mkdir(customAgentSrcDir, { recursive: true });
     await writeFile(
-      path.join(customAgentSrcDir, STANDARD_FILES.AGENT_METADATA_YAML),
+      path.join(customAgentSrcDir, FILES.METADATA_YAML),
       "id: my-custom-agent\ntitle: My Custom Agent\ndescription: A user-defined agent\ntools:\n  - Read\n",
     );
     await writeFile(
-      path.join(customAgentSrcDir, STANDARD_FILES.INTRO_MD),
+      path.join(customAgentSrcDir, FILES.INTRO_MD),
       "# My Custom Agent\n\nThis is a custom agent created by the user.",
     );
 
     // Create compiled output for the custom agent in .claude/agents/
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    const agentsDir = agentsPath(projectDir);
     await writeFile(
       path.join(agentsDir, "my-custom-agent.md"),
       "---\nname: my-custom-agent\n---\n# Custom Agent compiled",
@@ -153,34 +146,33 @@ describe("uninstall preservation behavior", () => {
     });
 
     // Run uninstall --yes
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
 
     // Custom agent SOURCE in .claude-src/ should be preserved (--yes does not touch .claude-src/)
     expect(await directoryExists(customAgentSrcDir)).toBe(true);
-    expect(await fileExists(path.join(customAgentSrcDir, STANDARD_FILES.AGENT_METADATA_YAML))).toBe(
-      true,
-    );
-    expect(await fileExists(path.join(customAgentSrcDir, STANDARD_FILES.INTRO_MD))).toBe(true);
+    expect(await fileExists(path.join(customAgentSrcDir, FILES.METADATA_YAML))).toBe(true);
+    expect(await fileExists(path.join(customAgentSrcDir, FILES.INTRO_MD))).toBe(true);
 
     // Compiled agent artifact in .claude/agents/ should be removed (it was in config)
     expect(await fileExists(path.join(agentsDir, "my-custom-agent.md"))).toBe(false);
   });
 
   it("should remove only config-tracked agents and preserve others", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir, {
+    const project = await ProjectBuilder.editable({
       skills: ["web-framework-react"],
       agents: ["web-developer"],
       domains: ["web"],
     });
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
     await addForkedFromMetadata(projectDir);
 
     // Config tracks only web-developer. Create compiled agent files for both
     // a tracked agent AND an extra non-tracked agent.
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    const agentsDir = agentsPath(projectDir);
     await writeFile(
       path.join(agentsDir, "web-developer.md"),
       "---\nname: web-developer\n---\n# Web Developer Agent",
@@ -194,7 +186,7 @@ describe("uninstall preservation behavior", () => {
     expect(await fileExists(path.join(agentsDir, "web-developer.md"))).toBe(true);
     expect(await fileExists(path.join(agentsDir, "extra-agent.md"))).toBe(true);
 
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
@@ -207,25 +199,26 @@ describe("uninstall preservation behavior", () => {
   });
 
   it("should preserve .claude directory when it contains non-CLI content", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
+    const project = await ProjectBuilder.editable();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
     await addForkedFromMetadata(projectDir);
 
     // Add a user-created file to .claude/ that the CLI does not manage
-    const claudeDir = path.join(projectDir, CLAUDE_DIR);
+    const claudeDir = path.join(projectDir, DIRS.CLAUDE);
     await writeFile(
       path.join(claudeDir, "settings.json"),
       JSON.stringify({ permissions: { allow: ["Read(*)"] }, userPreference: "keep-me" }),
     );
 
     // Verify structure before uninstall
-    const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    const skillsDir = skillsPath(projectDir);
+    const agentsDir = agentsPath(projectDir);
     expect(await directoryExists(skillsDir)).toBe(true);
     expect(await directoryExists(agentsDir)).toBe(true);
     expect(await fileExists(path.join(claudeDir, "settings.json"))).toBe(true);
 
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");

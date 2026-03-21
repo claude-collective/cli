@@ -4,17 +4,18 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
   cleanupTempDir,
-  createDualScopeProject,
   createLocalSkill,
   directoryExists,
   ensureBinaryExists,
   listFiles,
   readTestFile,
-  runCLI,
+  agentsPath,
   writeProjectConfig,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR } from "../../src/cli/consts.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EXIT_CODES, DIRS } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
+import "../matchers/setup.js";
 
 describe("dual-scope compile", () => {
   let tempDir: string;
@@ -29,17 +30,19 @@ describe("dual-scope compile", () => {
   });
 
   it("should compile agents to both global and project locations", async () => {
-    tempDir = await createTempDir();
-    const { globalHome, projectDir } = await createDualScopeProject(tempDir);
+    const { project, globalHome } = await ProjectBuilder.dualScope();
+    tempDir = path.dirname(project.dir);
 
-    const { exitCode } = await runCLI(["compile"], projectDir, {
-      env: { HOME: globalHome, AGENTSINC_SOURCE: undefined },
-    });
+    const { exitCode } = await CLI.run(
+      ["compile"],
+      { dir: project.dir },
+      { env: { HOME: globalHome.dir } },
+    );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const globalAgents = await listFiles(path.join(globalHome, CLAUDE_DIR, "agents"));
-    const projectAgents = await listFiles(path.join(projectDir, CLAUDE_DIR, "agents"));
+    const globalAgents = await listFiles(agentsPath(globalHome.dir));
+    const projectAgents = await listFiles(agentsPath(project.dir));
 
     const globalMdFiles = globalAgents.filter((f) => f.endsWith(".md"));
     const projectMdFiles = projectAgents.filter((f) => f.endsWith(".md"));
@@ -49,37 +52,38 @@ describe("dual-scope compile", () => {
   });
 
   it("should compile global agents referencing only global skills", async () => {
-    tempDir = await createTempDir();
-    const { globalHome, projectDir } = await createDualScopeProject(tempDir);
+    const { project, globalHome } = await ProjectBuilder.dualScope();
+    tempDir = path.dirname(project.dir);
 
-    const { exitCode } = await runCLI(["compile"], projectDir, {
-      env: { HOME: globalHome, AGENTSINC_SOURCE: undefined },
-    });
+    const { exitCode } = await CLI.run(
+      ["compile"],
+      { dir: project.dir },
+      { env: { HOME: globalHome.dir } },
+    );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const globalAgentPath = path.join(globalHome, CLAUDE_DIR, "agents", "web-developer.md");
-    const content = await readTestFile(globalAgentPath);
-
-    expect(content).toContain("web-testing-cypress-e2e");
-    expect(content).not.toContain("web-testing-playwright-e2e");
+    await expect({ dir: globalHome.dir }).toHaveCompiledAgentContent("web-developer", {
+      contains: ["web-testing-cypress-e2e"],
+      notContains: ["web-testing-playwright-e2e"],
+    });
   });
 
   it("should compile project agents referencing both global and project skills", async () => {
-    tempDir = await createTempDir();
-    const { globalHome, projectDir } = await createDualScopeProject(tempDir);
+    const { project, globalHome } = await ProjectBuilder.dualScope();
+    tempDir = path.dirname(project.dir);
 
-    const { exitCode } = await runCLI(["compile"], projectDir, {
-      env: { HOME: globalHome, AGENTSINC_SOURCE: undefined },
-    });
+    const { exitCode } = await CLI.run(
+      ["compile"],
+      { dir: project.dir },
+      { env: { HOME: globalHome.dir } },
+    );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const projectAgentPath = path.join(projectDir, CLAUDE_DIR, "agents", "api-developer.md");
-    const content = await readTestFile(projectAgentPath);
-
-    expect(content).toContain("web-testing-playwright-e2e");
-    expect(content).toContain("web-testing-cypress-e2e");
+    await expect({ dir: project.dir }).toHaveCompiledAgentContent("api-developer", {
+      contains: ["web-testing-playwright-e2e", "web-testing-cypress-e2e"],
+    });
   });
 
   it("should work with global-only installation", async () => {
@@ -107,17 +111,19 @@ describe("dual-scope compile", () => {
       metadata: `author: "@test"\ncontentHash: "hash-global"\n`,
     });
 
-    const { exitCode } = await runCLI(["compile"], projectDir, {
-      env: { HOME: globalHome, AGENTSINC_SOURCE: undefined },
-    });
+    const { exitCode } = await CLI.run(
+      ["compile"],
+      { dir: projectDir },
+      { env: { HOME: globalHome } },
+    );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const globalAgents = await listFiles(path.join(globalHome, CLAUDE_DIR, "agents"));
+    const globalAgents = await listFiles(agentsPath(globalHome));
     const globalMdFiles = globalAgents.filter((f) => f.endsWith(".md"));
     expect(globalMdFiles.length).toBeGreaterThan(0);
 
-    const projectAgentsExist = await directoryExists(path.join(projectDir, CLAUDE_DIR, "agents"));
+    const projectAgentsExist = await directoryExists(agentsPath(projectDir));
     expect(projectAgentsExist).toBe(false);
   });
 
@@ -146,36 +152,40 @@ describe("dual-scope compile", () => {
       metadata: `author: "@test"\ncontentHash: "hash-local"\n`,
     });
 
-    const { exitCode } = await runCLI(["compile"], projectDir, {
-      env: { HOME: globalHome, AGENTSINC_SOURCE: undefined },
-    });
+    const { exitCode } = await CLI.run(
+      ["compile"],
+      { dir: projectDir },
+      { env: { HOME: globalHome } },
+    );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const projectAgents = await listFiles(path.join(projectDir, CLAUDE_DIR, "agents"));
+    const projectAgents = await listFiles(agentsPath(projectDir));
     const projectMdFiles = projectAgents.filter((f) => f.endsWith(".md"));
     expect(projectMdFiles.length).toBeGreaterThan(0);
 
     // The global agents directory is now always created (ensureDir is unconditional),
     // but for a project-only install no agent .md files should be written there.
-    const globalAgentFiles = await listFiles(path.join(globalHome, CLAUDE_DIR, "agents"));
+    const globalAgentFiles = await listFiles(agentsPath(globalHome));
     const globalMdFiles = globalAgentFiles.filter((f) => f.endsWith(".md"));
     expect(globalMdFiles.length).toBe(0);
   });
 
   it("should show both passes in verbose output", async () => {
-    tempDir = await createTempDir();
-    const { globalHome, projectDir } = await createDualScopeProject(tempDir);
+    const { project, globalHome } = await ProjectBuilder.dualScope();
+    tempDir = path.dirname(project.dir);
 
-    const { exitCode, combined } = await runCLI(["compile", "--verbose"], projectDir, {
-      env: { HOME: globalHome, AGENTSINC_SOURCE: undefined },
-    });
+    const { exitCode, output } = await CLI.run(
+      ["compile", "--verbose"],
+      { dir: project.dir },
+      { env: { HOME: globalHome.dir } },
+    );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(combined).toContain("Compiling global agents");
-    expect(combined).toContain("Compiling project agents");
-    expect(combined).toContain("Loaded skill:");
-    expect(combined).toContain("web-testing-cypress-e2e");
-    expect(combined).toContain("web-testing-playwright-e2e");
+    expect(output).toContain("Compiling global agents");
+    expect(output).toContain("Compiling project agents");
+    expect(output).toContain("Loaded skill:");
+    expect(output).toContain("web-testing-cypress-e2e");
+    expect(output).toContain("web-testing-playwright-e2e");
   });
 });

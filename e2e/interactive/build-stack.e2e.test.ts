@@ -1,30 +1,31 @@
 import path from "path";
 import { writeFile } from "fs/promises";
-import { execa } from "execa";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { STACKS_FILE_PATH } from "../../src/cli/consts.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
+import { EXIT_CODES, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import {
-  BIN_RUN,
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
-  stripAnsi,
   directoryExists,
-  delay,
-  runCLI,
   readTestFile,
   listFiles,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  KEYSTROKE_DELAY_MS,
-  EXIT_TIMEOUT_MS,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { renderConfigTs } from "../../src/cli/lib/__tests__/content-generators.js";
+import { CLI } from "../fixtures/cli.js";
+import { InteractivePrompt } from "../fixtures/interactive-prompt.js";
 
-const COMPILE_TIMEOUT_MS = 30_000;
+const COMPILE_TIMEOUT_MS = TIMEOUTS.INSTALL;
+
+/** Stacks config file path (self-contained -- no src/cli import). */
+const STACKS_FILE_PATH = "config/stacks.ts";
+
+/**
+ * Renders a minimal config.ts export from a plain object.
+ * Self-contained helper -- no src/cli import needed.
+ */
+function renderStacksConfig(data: Record<string, unknown>): string {
+  return `export default ${JSON.stringify(data, null, 2)};\n`;
+}
 
 /**
  * E2E tests for the `build stack` command.
@@ -37,15 +38,15 @@ const COMPILE_TIMEOUT_MS = 30_000;
  */
 describe("build stack command", () => {
   let tempDir: string;
-  let session: TerminalSession | undefined;
+  let prompt: InteractivePrompt | undefined;
   let sourceDir: string | undefined;
   let sourceTempDir: string | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
+    await prompt?.destroy();
+    prompt = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
       tempDir = undefined!;
@@ -60,7 +61,7 @@ describe("build stack command", () => {
     it("should display help text with command description", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["build", "stack", "--help"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["build", "stack", "--help"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Build a stack into a standalone plugin");
@@ -76,9 +77,9 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
+      prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
     });
 
     it("should display the E2E test stack name in the selector", async () => {
@@ -86,12 +87,12 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
+      prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
 
-      const screen = session.getScreen();
-      expect(screen).toContain("e2e-test-stack");
+      const output = prompt.getScreen();
+      expect(output).toContain("e2e-test-stack");
     });
 
     it("should select stack and begin compilation on Enter", async () => {
@@ -99,15 +100,13 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
+      prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      session.enter();
+      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter();
 
       // After selecting, the command should begin compilation
-      await session.waitForText("Compiling stack", COMPILE_TIMEOUT_MS);
+      await prompt.waitForText(STEP_TEXT.COMPILING_STACK, COMPILE_TIMEOUT_MS);
     });
 
     it("should navigate between stacks with arrow keys", async () => {
@@ -116,10 +115,9 @@ describe("build stack command", () => {
       sourceTempDir = source.tempDir;
 
       // Overwrite stacks file with two stacks so arrow keys can move between them.
-      // The second stack re-uses the same agents as the first (skills exist in source).
       await writeFile(
         path.join(sourceDir, STACKS_FILE_PATH),
-        renderConfigTs({
+        renderStacksConfig({
           stacks: [
             {
               id: "alpha-stack",
@@ -137,30 +135,26 @@ describe("build stack command", () => {
         }),
       );
 
-      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
+      prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
 
       // Both stacks should be listed in the selector
-      const screenBefore = session.getScreen();
+      const screenBefore = prompt.getScreen();
       expect(screenBefore).toContain("alpha-stack");
       expect(screenBefore).toContain("beta-stack");
 
       // Press arrow down to move focus to the second stack
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
+      await prompt.arrowDown();
 
       // The screen should still show both stacks (navigation does not remove items)
-      const screenAfter = session.getScreen();
+      const screenAfter = prompt.getScreen();
       expect(screenAfter).toContain("alpha-stack");
       expect(screenAfter).toContain("beta-stack");
     });
   });
 
   describe("non-interactive with --stack flag", () => {
-    // These tests use execa directly because they need the timeout option
-    // which runCLI does not support
     it("should compile the specified stack directly", async () => {
       const source = await createE2ESource();
       sourceDir = source.sourceDir;
@@ -168,10 +162,8 @@ describe("build stack command", () => {
       tempDir = await createTempDir();
       const outputDir = path.join(tempDir, "output");
 
-      const result = await execa(
-        "node",
+      const { exitCode, output } = await CLI.run(
         [
-          BIN_RUN,
           "build",
           "stack",
           "--stack",
@@ -181,13 +173,12 @@ describe("build stack command", () => {
           "--source",
           sourceDir,
         ],
-        { cwd: sourceDir, reject: false, timeout: COMPILE_TIMEOUT_MS },
+        { dir: sourceDir },
       );
-      const stdout = stripAnsi(result.stdout);
 
-      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Compiling stack");
-      expect(stdout).toContain("e2e-test-stack");
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(output).toContain(STEP_TEXT.COMPILING_STACK);
+      expect(output).toContain("e2e-test-stack");
     });
 
     it("should create output in the specified directory", async () => {
@@ -197,10 +188,8 @@ describe("build stack command", () => {
       tempDir = await createTempDir();
       const outputDir = path.join(tempDir, "custom-output");
 
-      const result = await execa(
-        "node",
+      const { exitCode } = await CLI.run(
         [
-          BIN_RUN,
           "build",
           "stack",
           "--stack",
@@ -210,10 +199,10 @@ describe("build stack command", () => {
           "--source",
           sourceDir,
         ],
-        { cwd: sourceDir, reject: false, timeout: COMPILE_TIMEOUT_MS },
+        { dir: sourceDir },
       );
 
-      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       const stackOutputDir = path.join(outputDir, "e2e-test-stack");
       expect(await directoryExists(stackOutputDir)).toBe(true);
@@ -226,11 +215,8 @@ describe("build stack command", () => {
       tempDir = await createTempDir();
       const outputDir = path.join(tempDir, "source-override-output");
 
-      // Run from a separate temp dir (not the source) to verify --source overrides cwd
-      const result = await execa(
-        "node",
+      const { exitCode, output } = await CLI.run(
         [
-          BIN_RUN,
           "build",
           "stack",
           "--stack",
@@ -240,15 +226,13 @@ describe("build stack command", () => {
           "--source",
           sourceDir,
         ],
-        { cwd: sourceDir, reject: false, timeout: COMPILE_TIMEOUT_MS },
+        { dir: sourceDir },
       );
-      const stdout = stripAnsi(result.stdout);
 
-      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Compiling stack");
-      expect(stdout).toContain("e2e-test-stack");
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(output).toContain(STEP_TEXT.COMPILING_STACK);
+      expect(output).toContain("e2e-test-stack");
 
-      // Verify the stack was actually compiled from the custom source
       const stackOutputDir = path.join(outputDir, "e2e-test-stack");
       expect(await directoryExists(stackOutputDir)).toBe(true);
     });
@@ -260,10 +244,8 @@ describe("build stack command", () => {
       tempDir = await createTempDir();
       const outputDir = path.join(tempDir, "verbose-output");
 
-      const result = await execa(
-        "node",
+      const { exitCode, output } = await CLI.run(
         [
-          BIN_RUN,
           "build",
           "stack",
           "--stack",
@@ -274,16 +256,13 @@ describe("build stack command", () => {
           sourceDir,
           "--verbose",
         ],
-        { cwd: sourceDir, reject: false, timeout: COMPILE_TIMEOUT_MS },
+        { dir: sourceDir },
       );
-      const stdout = stripAnsi(result.stdout);
 
-      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      // Verbose mode should include stack compilation details not shown without --verbose
-      expect(stdout).toContain("Compiling stack plugin: e2e-test-stack");
-      expect(stdout).toContain("Found stack: E2E Test Stack");
-      expect(stdout).toContain("Compiled agent:");
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(output).toContain("Compiling stack plugin: e2e-test-stack");
+      expect(output).toContain("Found stack: E2E Test Stack");
+      expect(output).toContain("Compiled agent:");
     });
 
     it("should produce compiled agent markdown with frontmatter and skill content", async () => {
@@ -293,10 +272,8 @@ describe("build stack command", () => {
       tempDir = await createTempDir();
       const outputDir = path.join(tempDir, "content-output");
 
-      const result = await execa(
-        "node",
+      const { exitCode } = await CLI.run(
         [
-          BIN_RUN,
           "build",
           "stack",
           "--stack",
@@ -306,10 +283,10 @@ describe("build stack command", () => {
           "--source",
           sourceDir,
         ],
-        { cwd: sourceDir, reject: false, timeout: COMPILE_TIMEOUT_MS },
+        { dir: sourceDir },
       );
 
-      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Verify agent markdown files were created
       const agentsDir = path.join(outputDir, "e2e-test-stack", "agents");
@@ -322,7 +299,6 @@ describe("build stack command", () => {
       // Verify web-developer.md content
       const webDeveloperContent = await readTestFile(path.join(agentsDir, "web-developer.md"));
 
-      // Frontmatter should contain agent metadata (name is the AgentName identifier)
       expect(webDeveloperContent).toMatch(/^---\n/);
       expect(webDeveloperContent).toContain("name: web-developer");
       expect(webDeveloperContent).toContain("description:");
@@ -332,13 +308,8 @@ describe("build stack command", () => {
       expect(webDeveloperContent).toContain("Edit");
       expect(webDeveloperContent).toContain("model:");
       expect(webDeveloperContent).toContain("permissionMode:");
-
-      // Frontmatter should list preloaded skills
       expect(webDeveloperContent).toContain("skills:");
       expect(webDeveloperContent).toContain("web-framework-react");
-
-      // Dynamic skills should appear in the skill activation protocol with descriptions
-      // from the E2E source SKILL.md frontmatter
       expect(webDeveloperContent).toContain("web-testing-vitest");
       expect(webDeveloperContent).toContain("Next generation testing framework");
       expect(webDeveloperContent).toContain("web-state-zustand");
@@ -351,8 +322,6 @@ describe("build stack command", () => {
       expect(apiDeveloperContent).toContain("name: api-developer");
       expect(apiDeveloperContent).toContain("description:");
       expect(apiDeveloperContent).toContain("tools:");
-
-      // api-framework-hono is preloaded, so its ID should appear in frontmatter skills list
       expect(apiDeveloperContent).toContain("api-framework-hono");
     });
   });
@@ -363,14 +332,13 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
+      prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
 
-      session.ctrlC();
+      await prompt.ctrlC();
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     });
 
@@ -379,13 +347,13 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
+      prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await session.waitForText("Select a stack to compile", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
 
-      session.ctrlC();
+      await prompt.ctrlC();
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     });
   });

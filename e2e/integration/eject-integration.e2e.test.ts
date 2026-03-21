@@ -5,16 +5,19 @@ import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
-  createMinimalProject,
   directoryExists,
   fileExists,
   getEjectedTemplatePath,
   listFiles,
   readTestFile,
-  runCLI,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { DIRS, EXIT_CODES, FILES } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
+
+function agentsPath(projectDir: string): string {
+  return path.join(projectDir, DIRS.CLAUDE, "agents");
+}
 
 /**
  * Eject command integration tests.
@@ -42,7 +45,7 @@ describe("eject command integration", () => {
     tempDir = await createTempDir();
 
     // Eject templates to the default location
-    const { exitCode, stdout } = await runCLI(["eject", "templates"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["eject", "templates"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Eject complete!");
@@ -60,12 +63,12 @@ describe("eject command integration", () => {
   it("ejected agent-partials structure matches readAgentFiles expectations", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode } = await runCLI(["eject", "agent-partials"], tempDir);
+    const { exitCode } = await CLI.run(["eject", "agent-partials"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // The path loadProjectAgents() scans: .claude-src/agents/
-    const agentsDir = path.join(tempDir, CLAUDE_SRC_DIR, "agents");
+    const agentsDir = path.join(tempDir, DIRS.CLAUDE_SRC, "agents");
     expect(await directoryExists(agentsDir)).toBe(true);
 
     // Find an agent directory (agent-partials ejects from src/agents/ which
@@ -85,20 +88,18 @@ describe("eject command integration", () => {
       for (const subdir of subdirs) {
         const agentPath = path.join(groupPath, subdir);
 
-        const hasIntro = await fileExists(path.join(agentPath, STANDARD_FILES.INTRO_MD));
-        const hasWorkflow = await fileExists(path.join(agentPath, STANDARD_FILES.WORKFLOW_MD));
-        const hasMetadata = await fileExists(
-          path.join(agentPath, STANDARD_FILES.AGENT_METADATA_YAML),
-        );
+        const hasIntro = await fileExists(path.join(agentPath, FILES.INTRO_MD));
+        const hasWorkflow = await fileExists(path.join(agentPath, FILES.WORKFLOW_MD));
+        const hasMetadata = await fileExists(path.join(agentPath, FILES.METADATA_YAML));
 
         if (hasIntro && hasWorkflow && hasMetadata) {
           foundAgent = true;
 
           // Verify the files are non-empty (readAgentFiles expects content)
-          const intro = await readTestFile(path.join(agentPath, STANDARD_FILES.INTRO_MD));
+          const intro = await readTestFile(path.join(agentPath, FILES.INTRO_MD));
           expect(intro.length).toBeGreaterThan(0);
 
-          const workflow = await readTestFile(path.join(agentPath, STANDARD_FILES.WORKFLOW_MD));
+          const workflow = await readTestFile(path.join(agentPath, FILES.WORKFLOW_MD));
           expect(workflow.length).toBeGreaterThan(0);
           break;
         }
@@ -111,11 +112,13 @@ describe("eject command integration", () => {
   });
 
   it("eject templates -> modify -> compile picks up modified template", async () => {
-    tempDir = await createTempDir();
-    const { projectDir, agentsDir } = await createMinimalProject(tempDir);
+    const project = await ProjectBuilder.minimal();
+    tempDir = path.dirname(project.dir);
+    const projectDir = project.dir;
+    const agentsDir = agentsPath(project.dir);
 
     // Step 1: Eject templates
-    const ejectResult = await runCLI(["eject", "templates"], projectDir);
+    const ejectResult = await CLI.run(["eject", "templates"], { dir: projectDir });
     expect(ejectResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Step 2: Modify agent.liquid with a unique marker
@@ -128,7 +131,7 @@ describe("eject command integration", () => {
     await writeFile(templatePath, modifiedTemplate);
 
     // Step 3: Compile
-    const compileResult = await runCLI(["compile"], projectDir);
+    const compileResult = await CLI.run(["compile"], { dir: projectDir });
     expect(compileResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Step 4: Verify compiled agents contain the marker
@@ -147,7 +150,7 @@ describe("eject command integration", () => {
     tempDir = await createTempDir();
 
     // First eject
-    const firstResult = await runCLI(["eject", "templates"], tempDir);
+    const firstResult = await CLI.run(["eject", "templates"], { dir: tempDir });
     expect(firstResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Modify the template with custom content
@@ -156,10 +159,10 @@ describe("eject command integration", () => {
     await writeFile(templatePath, customContent);
 
     // Second eject WITHOUT --force
-    const secondResult = await runCLI(["eject", "templates"], tempDir);
+    const secondResult = await CLI.run(["eject", "templates"], { dir: tempDir });
     expect(secondResult.exitCode).toBe(EXIT_CODES.SUCCESS);
     // Should warn about existing templates
-    expect(secondResult.combined).toContain("already exist");
+    expect(secondResult.output).toContain("already exist");
 
     // Custom content should be preserved (not overwritten)
     const afterContent = await readTestFile(templatePath);
@@ -170,7 +173,7 @@ describe("eject command integration", () => {
     tempDir = await createTempDir();
 
     // First eject — get the original built-in content
-    const firstResult = await runCLI(["eject", "templates"], tempDir);
+    const firstResult = await CLI.run(["eject", "templates"], { dir: tempDir });
     expect(firstResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
     const templatePath = getEjectedTemplatePath(tempDir);
@@ -184,7 +187,7 @@ describe("eject command integration", () => {
     expect(await readTestFile(templatePath)).toBe(customContent);
 
     // Second eject WITH --force
-    const forceResult = await runCLI(["eject", "templates", "--force"], tempDir);
+    const forceResult = await CLI.run(["eject", "templates", "--force"], { dir: tempDir });
     expect(forceResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Custom content should be overwritten with built-in content

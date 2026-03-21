@@ -1,31 +1,18 @@
-import { mkdir } from "fs/promises";
 import path from "path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
   cleanupTempDir,
-  createPermissionsFile,
-  createTempDir,
-  delay,
   ensureBinaryExists,
-  EXIT_CODES,
-  EXIT_WAIT_TIMEOUT_MS,
   fileExists,
-  INSTALL_TIMEOUT_MS,
-  KEYSTROKE_DELAY_MS,
-  LIFECYCLE_TEST_TIMEOUT_MS,
-  passThroughAllBuildDomains,
   readTestFile,
-  SETUP_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  waitForRawText,
-  WIZARD_LOAD_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
+import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-helpers.js";
 
 /**
- * Dual-scope edit lifecycle E2E test — scope changes via S hotkey.
+ * Dual-scope edit lifecycle E2E test -- scope changes via S hotkey.
  *
  * Tests toggling project skills/agents to global scope via the "s" hotkey
  * in the edit wizard.
@@ -40,161 +27,11 @@ import {
  * projectDir, not homeDir. This causes ENOENT.
  */
 
-/**
- * Runs Phase A: Init from HOME directory.
- * Selects the E2E Test Stack, accepts all domains, advances through build steps.
- * All skills remain global-scoped (default).
- */
-async function initGlobal(
-  sourceDir: string,
-  homeDir: string,
-): Promise<{ exitCode: number; output: string }> {
-  const session = new TerminalSession(["init", "--source", sourceDir], homeDir, {
-    env: {
-      HOME: homeDir,
-      AGENTSINC_SOURCE: undefined,
-    },
-  });
-
-  try {
-    await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.enter();
-
-    await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.enter();
-
-    await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.write("a");
-
-    await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.enter();
-
-    await waitForRawText(session, "initialized successfully", INSTALL_TIMEOUT_MS);
-    const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-    const output = session.getRawOutput();
-
-    return { exitCode, output };
-  } finally {
-    await session.destroy();
-  }
-}
-
-/**
- * Runs Phase B: Init from project directory.
- * Toggles api-framework-hono and api-developer to project scope.
- */
-async function initProject(
-  sourceDir: string,
-  homeDir: string,
-  projectDir: string,
-): Promise<{ exitCode: number; output: string }> {
-  const session = new TerminalSession(["init", "--source", sourceDir], projectDir, {
-    env: {
-      HOME: homeDir,
-      AGENTSINC_SOURCE: undefined,
-    },
-  });
-
-  try {
-    await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.enter();
-
-    await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.enter();
-
-    await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.enter();
-
-    await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.write("s");
-    await delay(KEYSTROKE_DELAY_MS);
-    session.enter();
-
-    await session.waitForText("Shared", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.enter();
-
-    await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-
-    // Already in customize view — press "l" to set ALL sources to local
-    session.write("l");
-    await delay(KEYSTROKE_DELAY_MS);
-    session.enter();
-
-    await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    for (let i = 0; i < 6; i++) {
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-    }
-    session.write("s");
-    await delay(KEYSTROKE_DELAY_MS);
-    session.enter();
-
-    await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    session.enter();
-
-    await waitForRawText(session, "initialized successfully", INSTALL_TIMEOUT_MS);
-    const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-    const output = session.getRawOutput();
-
-    return { exitCode, output };
-  } finally {
-    await session.destroy();
-  }
-}
-
-/**
- * Creates the temp directory structure for a dual-scope test.
- */
-async function createTestEnvironment(): Promise<{
-  tempDir: string;
-  fakeHome: string;
-  projectDir: string;
-}> {
-  const tempDir = await createTempDir();
-  const fakeHome = path.join(tempDir, "fake-home");
-  const projectDir = path.join(fakeHome, "project");
-
-  await mkdir(fakeHome, { recursive: true });
-  await mkdir(projectDir, { recursive: true });
-
-  await createPermissionsFile(fakeHome);
-  await createPermissionsFile(projectDir);
-
-  return { tempDir, fakeHome, projectDir };
-}
-
-/**
- * Runs Phase A + Phase B to establish dual-scope state.
- */
-async function setupDualScope(
-  sourceDir: string,
-  fakeHome: string,
-  projectDir: string,
-): Promise<void> {
-  const phaseA = await initGlobal(sourceDir, fakeHome);
-  expect(phaseA.exitCode, `Phase A init failed: ${phaseA.output}`).toBe(EXIT_CODES.SUCCESS);
-
-  const phaseB = await initProject(sourceDir, fakeHome, projectDir);
-  expect(phaseB.exitCode, `Phase B init failed: ${phaseB.output}`).toBe(EXIT_CODES.SUCCESS);
-}
-
 // =====================================================================
-// Test Suite — Scope Changes via S Hotkey
+// Test Suite -- Scope Changes via S Hotkey
 // =====================================================================
 
-describe("dual-scope edit lifecycle — scope changes via S hotkey", () => {
+describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
   let sourceDir: string;
   let sourceTempDir: string;
 
@@ -203,84 +40,71 @@ describe("dual-scope edit lifecycle — scope changes via S hotkey", () => {
     const source = await createE2ESource();
     sourceDir = source.sourceDir;
     sourceTempDir = source.tempDir;
-  }, SETUP_TIMEOUT_MS * 2);
+  }, TIMEOUTS.SETUP * 2);
 
   afterAll(async () => {
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
   });
 
   it.fails(
-    "Test 2: toggle a project skill's scope to global (expected fail — ENOENT in project-scoped skill copy)",
-    { timeout: LIFECYCLE_TEST_TIMEOUT_MS },
+    "Test 2: toggle a project skill's scope to global (expected fail -- ENOENT in project-scoped skill copy)",
+    { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
       const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 
       try {
-        await setupDualScope(sourceDir, fakeHome, projectDir);
+        await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
 
-        // Phase C: Edit — toggle api-framework-hono from project to global scope
-        const session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
-          env: {
-            HOME: fakeHome,
-            AGENTSINC_SOURCE: undefined,
-          },
+        // Phase C: Edit -- toggle api-framework-hono from project to global scope
+        const wizard = await EditWizard.launch({
+          projectDir,
+          source: { sourceDir, tempDir: sourceTempDir },
+          env: { HOME: fakeHome },
           rows: 60,
           cols: 120,
         });
 
         try {
-          // Build step — Web domain (pass through)
-          await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
+          // Build step -- Web domain (pass through)
+          await wizard.build.advanceDomain();
 
-          // Build step — API domain — toggle api-framework-hono scope to global
-          // api-framework-hono is the first (only) skill in API domain, focus starts on it
-          await session.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.write("s"); // Toggle scope from project to global
-          await delay(KEYSTROKE_DELAY_MS);
-          session.enter();
+          // Build step -- API domain -- toggle api-framework-hono scope to global
+          await wizard.build.toggleScopeOnFocusedSkill();
+          await wizard.build.advanceDomain();
 
-          // Build step — Shared domain (pass through)
-          await session.waitForText("Shared", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
+          // Build step -- Shared domain (pass through)
+          const sources = await wizard.build.advanceToSources();
 
           // Sources step (pass through)
-          await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
+          await sources.waitForReady();
+          const agents = await sources.advance();
 
           // Agents step (pass through)
-          await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
+          const confirm = await agents.acceptDefaults("edit");
 
           // Confirm step
-          await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
-
-          // Wait for completion
-          const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+          const result = await confirm.confirm();
+          const exitCode = await result.exitCode;
           expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
           // Phase D: Assertions
 
           // D-1: Global config now contains api-framework-hono (it was toggled to global)
           const globalConfig = await readTestFile(
-            path.join(fakeHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+            path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
           );
           expect(globalConfig).toContain("api-framework-hono");
 
           // D-2: Project config does NOT contain api-framework-hono (it moved to global)
           const projectConfig = await readTestFile(
-            path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+            path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
           );
           expect(projectConfig).not.toContain("api-framework-hono");
-        } finally {
-          await session.destroy();
+
+          await result.destroy();
+        } catch (e) {
+          await wizard.destroy();
+          throw e;
         }
       } finally {
         await cleanupTempDir(tempDir);
@@ -289,81 +113,76 @@ describe("dual-scope edit lifecycle — scope changes via S hotkey", () => {
   );
 
   it.fails(
-    "Test 3: toggle a project agent's scope to global (expected fail — ENOENT in project-scoped skill copy)",
-    { timeout: LIFECYCLE_TEST_TIMEOUT_MS },
+    "Test 3: toggle a project agent's scope to global (expected fail -- ENOENT in project-scoped skill copy)",
+    { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
       const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 
       try {
-        await setupDualScope(sourceDir, fakeHome, projectDir);
+        await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
 
-        // Phase C: Edit — toggle api-developer from project to global scope
-        const session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
-          env: {
-            HOME: fakeHome,
-            AGENTSINC_SOURCE: undefined,
-          },
+        // Phase C: Edit -- toggle api-developer from project to global scope
+        const wizard = await EditWizard.launch({
+          projectDir,
+          source: { sourceDir, tempDir: sourceTempDir },
+          env: { HOME: fakeHome },
           rows: 60,
           cols: 120,
         });
 
         try {
-          // Build step — pass through all three domains
-          await passThroughAllBuildDomains(session);
+          // Build step -- pass through all three domains
+          const sources = await wizard.build.passThroughAllDomains();
 
           // Sources step (pass through)
-          await session.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
+          await sources.waitForReady();
+          const agents = await sources.advance();
 
-          // Agents step — toggle api-developer to global scope
-          // Focus starts on web-developer (first in Web group).
-          // Need 6 arrow-downs to reach api-developer:
-          // web-developer -> web-reviewer -> web-researcher -> web-tester ->
-          // web-pm -> web-architecture -> api-developer
-          await session.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
+          // Agents step -- toggle api-developer to global scope
+          // Need 6 arrow-downs to reach api-developer
           for (let i = 0; i < 6; i++) {
-            session.arrowDown();
-            await delay(KEYSTROKE_DELAY_MS);
+            await agents.navigateDown();
           }
-          session.write("s"); // Toggle api-developer scope from project to global
-          await delay(KEYSTROKE_DELAY_MS);
-          session.enter();
+          await agents.toggleScopeOnFocusedAgent();
+          const confirm = await agents.advance("edit");
 
           // Confirm step
-          await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-          await delay(STEP_TRANSITION_DELAY_MS);
-          session.enter();
-
-          // Wait for completion
-          const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+          const result = await confirm.confirm();
+          const exitCode = await result.exitCode;
           expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
           // Phase D: Assertions
 
           // D-1: api-developer.md exists at global scope (HOME)
-          const globalApiDevPath = path.join(fakeHome, CLAUDE_DIR, "agents", "api-developer.md");
+          const globalApiDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "api-developer.md");
           expect(
             await fileExists(globalApiDevPath),
             "api-developer.md must exist in global agents dir after scope toggle",
           ).toBe(true);
 
           // D-2: api-developer.md does NOT exist at project scope
-          const projectApiDevPath = path.join(projectDir, CLAUDE_DIR, "agents", "api-developer.md");
+          const projectApiDevPath = path.join(
+            projectDir,
+            DIRS.CLAUDE,
+            "agents",
+            "api-developer.md",
+          );
           expect(
             await fileExists(projectApiDevPath),
             "api-developer.md must NOT exist in project agents dir after scope toggle to global",
           ).toBe(false);
 
           // D-3: web-developer.md still at global scope (unchanged)
-          const globalWebDevPath = path.join(fakeHome, CLAUDE_DIR, "agents", "web-developer.md");
+          const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
           expect(
             await fileExists(globalWebDevPath),
             "web-developer.md must still exist in global agents dir",
           ).toBe(true);
-        } finally {
-          await session.destroy();
+
+          await result.destroy();
+        } catch (e) {
+          await wizard.destroy();
+          throw e;
         }
       } finally {
         await cleanupTempDir(tempDir);

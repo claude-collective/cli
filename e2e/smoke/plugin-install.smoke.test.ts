@@ -1,15 +1,13 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { CLAUDE_DIR } from "../../src/cli/consts.js";
+import { DIRS } from "../pages/constants.js";
 import {
   isClaudeCLIAvailable,
   claudePluginMarketplaceList,
   claudePluginInstall,
   claudePluginUninstall,
   execCommand,
-} from "../../src/cli/utils/exec.js";
-import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
@@ -105,7 +103,7 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       await mkdir(projectDir, { recursive: true });
 
       // Create .claude directory so the CLI has a valid project context
-      const claudeDir = path.join(projectDir, CLAUDE_DIR);
+      const claudeDir = path.join(projectDir, DIRS.CLAUDE);
       await mkdir(claudeDir, { recursive: true });
 
       // Attempt to install a nonexistent plugin to verify the command doesn't hang.
@@ -139,7 +137,7 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       const projectDir = path.join(tempDir, "project");
       await mkdir(projectDir, { recursive: true });
 
-      const claudeDir = path.join(projectDir, CLAUDE_DIR);
+      const claudeDir = path.join(projectDir, DIRS.CLAUDE);
       await mkdir(claudeDir, { recursive: true });
 
       // Uninstalling a nonexistent plugin should succeed silently (the exec
@@ -193,7 +191,7 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       const projectDir = path.join(tempDir, "project");
       await mkdir(projectDir, { recursive: true });
 
-      const claudeDir = path.join(projectDir, CLAUDE_DIR);
+      const claudeDir = path.join(projectDir, DIRS.CLAUDE);
       await mkdir(claudeDir, { recursive: true });
 
       const settingsPath = path.join(claudeDir, "settings.json");

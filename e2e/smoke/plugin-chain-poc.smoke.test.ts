@@ -1,24 +1,23 @@
 import { mkdir, readdir, readFile } from "fs/promises";
 import path from "path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { CLAUDE_DIR, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../src/cli/consts.js";
-import {
-  isClaudeCLIAvailable,
-  claudePluginMarketplaceAdd,
-  claudePluginInstall,
-} from "../../src/cli/utils/exec.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
+import { TIMEOUTS, DIRS, FILES } from "../pages/constants.js";
 import {
+  isClaudeCLIAvailable,
+  claudePluginMarketplaceAdd,
+  claudePluginInstall,
   ensureBinaryExists,
   cleanupTempDir,
   fileExists,
   createTempDir,
-  SETUP_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
-import { verifyPluginInRegistry } from "../helpers/plugin-assertions.js";
+
+const PLUGIN_MANIFEST_DIR = ".claude-plugin";
+import "../matchers/setup.js";
 
 /**
  * Blocker 7.1: Full Plugin Chain Proof-of-Concept
@@ -56,8 +55,8 @@ describe.skipIf(!claudeAvailable)(
       projectDir = path.join(projectTempDir, "project");
       await mkdir(projectDir, { recursive: true });
       // Create .claude dir for plugin context
-      await mkdir(path.join(projectDir, CLAUDE_DIR), { recursive: true });
-    }, SETUP_TIMEOUT_MS);
+      await mkdir(path.join(projectDir, DIRS.CLAUDE), { recursive: true });
+    }, TIMEOUTS.SETUP);
 
     afterAll(async () => {
       if (fixture) await cleanupTempDir(fixture.tempDir);
@@ -73,9 +72,9 @@ describe.skipIf(!claudeAvailable)(
       const firstDir = pluginDirs[0];
       if (!firstDir) throw new Error("Expected at least one plugin directory");
       const firstPlugin = path.join(fixture.pluginsDir, firstDir);
-      expect(
-        await fileExists(path.join(firstPlugin, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE)),
-      ).toBe(true);
+      expect(await fileExists(path.join(firstPlugin, PLUGIN_MANIFEST_DIR, FILES.PLUGIN_JSON))).toBe(
+        true,
+      );
     });
 
     // Step 2: Verify marketplace.json was built
@@ -107,12 +106,10 @@ describe.skipIf(!claudeAvailable)(
       // Check the REAL home dir since we are NOT isolating HOME for this test
       const homeDir = process.env.HOME;
       if (!homeDir) throw new Error("HOME environment variable is not set");
-      const hasEntry = await verifyPluginInRegistry(
-        homeDir,
+      await expect({ dir: homeDir }).toHavePluginInRegistry(
         `web-framework-react@${fixture.marketplaceName}`,
         "project",
       );
-      expect(hasEntry).toBe(true);
     });
   },
 );

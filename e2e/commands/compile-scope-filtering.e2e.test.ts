@@ -8,13 +8,16 @@ import {
   fileExists,
   listFiles,
   readTestFile,
-  runCLI,
+  agentsPath,
   writeProjectConfig,
-  COMPILE_ENV,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { verifyAgentCompiled } from "../helpers/plugin-assertions.js";
-import { CLAUDE_DIR } from "../../src/cli/consts.js";
+import "../matchers/setup.js";
+import { EXIT_CODES, DIRS } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
+
+function agentFilePath(dir: string, agentName: string): string {
+  return path.join(agentsPath(dir), `${agentName}.md`);
+}
 
 /**
  * Regression tests for compile scope-filtering fixes.
@@ -83,27 +86,29 @@ describe("compile scope filtering", () => {
         metadata: `author: "@test"\ncontentHash: "hash-project-sf"\n`,
       });
 
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: { HOME: globalHome, ...COMPILE_ENV },
-      });
+      const { exitCode, output } = await CLI.run(
+        ["compile"],
+        { dir: projectDir },
+        { env: { HOME: globalHome } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Compiling global agents");
-      expect(combined).toContain("Compiling project agents");
+      expect(output).toContain("Compiling global agents");
+      expect(output).toContain("Compiling project agents");
 
       // Global agent should exist and contain its skill (not be clobbered)
-      const globalAgentPath = path.join(globalHome, CLAUDE_DIR, "agents", "web-developer.md");
+      const globalAgentPath = agentFilePath(globalHome, "web-developer");
       expect(await fileExists(globalAgentPath)).toBe(true);
       const globalAgentContent = await readTestFile(globalAgentPath);
       expect(globalAgentContent).toContain("web-testing-cypress-e2e");
 
       // web-developer should NOT appear in the project agents directory
       // (it's a global agent, not a project agent)
-      const projectWebDevPath = path.join(projectDir, CLAUDE_DIR, "agents", "web-developer.md");
+      const projectWebDevPath = agentFilePath(projectDir, "web-developer");
       expect(await fileExists(projectWebDevPath)).toBe(false);
 
       // Project agent should exist and contain its skill
-      expect(await verifyAgentCompiled(projectDir, "api-developer")).toBe(true);
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
     });
 
     it("should compile global agent with skills even when project config has no stack entry for it", async () => {
@@ -160,25 +165,23 @@ describe("compile scope filtering", () => {
         metadata: `author: "@test"\ncontentHash: "hash-pC"\n`,
       });
 
-      const { exitCode } = await runCLI(["compile"], projectDir, {
-        env: { HOME: globalHome, ...COMPILE_ENV },
-      });
+      const { exitCode } = await CLI.run(
+        ["compile"],
+        { dir: projectDir },
+        { env: { HOME: globalHome } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Both global agents should be compiled with their respective skills
-      const globalWebDev = await readTestFile(
-        path.join(globalHome, CLAUDE_DIR, "agents", "web-developer.md"),
-      );
+      const globalWebDev = await readTestFile(agentFilePath(globalHome, "web-developer"));
       expect(globalWebDev).toContain("web-testing-cypress-e2e");
 
-      const globalApiDev = await readTestFile(
-        path.join(globalHome, CLAUDE_DIR, "agents", "api-developer.md"),
-      );
+      const globalApiDev = await readTestFile(agentFilePath(globalHome, "api-developer"));
       expect(globalApiDev).toContain("web-framework-react");
 
       // Project agent compiled separately
-      expect(await verifyAgentCompiled(projectDir, "cli-developer")).toBe(true);
+      await expect({ dir: projectDir }).toHaveCompiledAgent("cli-developer");
     });
   });
 
@@ -232,14 +235,16 @@ describe("compile scope filtering", () => {
         metadata: `author: "@test"\ncontentHash: "hash-pd"\n`,
       });
 
-      const { exitCode, combined } = await runCLI(["compile", "--verbose"], projectDir, {
-        env: { HOME: globalHome, ...COMPILE_ENV },
-      });
+      const { exitCode, output } = await CLI.run(
+        ["compile", "--verbose"],
+        { dir: projectDir },
+        { env: { HOME: globalHome } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Project agent should include both the project-local AND global-local skill
-      const projectAgentPath = path.join(projectDir, CLAUDE_DIR, "agents", "api-developer.md");
+      const projectAgentPath = agentFilePath(projectDir, "api-developer");
       expect(await fileExists(projectAgentPath)).toBe(true);
       const content = await readTestFile(projectAgentPath);
       expect(content).toContain("web-testing-playwright-e2e");
@@ -288,15 +293,17 @@ describe("compile scope filtering", () => {
         metadata: `author: "@test"\ncontentHash: "hash-ppd"\n`,
       });
 
-      const { exitCode } = await runCLI(["compile"], projectDir, {
-        env: { HOME: globalHome, ...COMPILE_ENV },
-      });
+      const { exitCode } = await CLI.run(
+        ["compile"],
+        { dir: projectDir },
+        { env: { HOME: globalHome } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // The project agent should include the global skill even though
       // the project config only has project-scoped skills
-      const projectAgentPath = path.join(projectDir, CLAUDE_DIR, "agents", "api-developer.md");
+      const projectAgentPath = agentFilePath(projectDir, "api-developer");
       expect(await fileExists(projectAgentPath)).toBe(true);
       const content = await readTestFile(projectAgentPath);
       expect(content).toContain("web-testing-cypress-e2e");
@@ -348,14 +355,16 @@ describe("compile scope filtering", () => {
         metadata: `author: "@test"\ncontentHash: "hash-p13"\n`,
       });
 
-      const { exitCode } = await runCLI(["compile"], projectDir, {
-        env: { HOME: globalHome, ...COMPILE_ENV },
-      });
+      const { exitCode } = await CLI.run(
+        ["compile"],
+        { dir: projectDir },
+        { env: { HOME: globalHome } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Project agent should have its skill, not be empty/zero-skill
-      const projectAgentPath = path.join(projectDir, CLAUDE_DIR, "agents", "api-developer.md");
+      const projectAgentPath = agentFilePath(projectDir, "api-developer");
       expect(await fileExists(projectAgentPath)).toBe(true);
       const content = await readTestFile(projectAgentPath);
 
@@ -410,15 +419,17 @@ describe("compile scope filtering", () => {
         metadata: `author: "@test"\ncontentHash: "hash-pdd"\n`,
       });
 
-      const { exitCode } = await runCLI(["compile"], projectDir, {
-        env: { HOME: globalHome, ...COMPILE_ENV },
-      });
+      const { exitCode } = await CLI.run(
+        ["compile"],
+        { dir: projectDir },
+        { env: { HOME: globalHome } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // web-developer should ONLY be in global dir, NOT in project dir
-      const globalAgents = await listFiles(path.join(globalHome, CLAUDE_DIR, "agents"));
-      const projectAgents = await listFiles(path.join(projectDir, CLAUDE_DIR, "agents"));
+      const globalAgents = await listFiles(agentsPath(globalHome));
+      const projectAgents = await listFiles(agentsPath(projectDir));
 
       const globalMdFiles = globalAgents.filter((f) => f.endsWith(".md"));
       const projectMdFiles = projectAgents.filter((f) => f.endsWith(".md"));
@@ -471,21 +482,23 @@ describe("compile scope filtering", () => {
         metadata: `author: "@test"\ncontentHash: "hash-pv"\n`,
       });
 
-      const { exitCode, combined } = await runCLI(["compile", "--verbose"], projectDir, {
-        env: { HOME: globalHome, ...COMPILE_ENV },
-      });
+      const { exitCode, output } = await CLI.run(
+        ["compile", "--verbose"],
+        { dir: projectDir },
+        { env: { HOME: globalHome } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Both passes should be labeled
-      expect(combined).toContain("Compiling global agents");
-      expect(combined).toContain("Compiling project agents");
-      expect(combined).toContain("Global compile complete");
-      expect(combined).toContain("Project compile complete");
+      expect(output).toContain("Compiling global agents");
+      expect(output).toContain("Compiling project agents");
+      expect(output).toContain("Global compile complete");
+      expect(output).toContain("Project compile complete");
 
       // Each pass should report recompiled agents
-      expect(combined).toMatch(/Recompiled \d+ global agents/);
-      expect(combined).toMatch(/Recompiled \d+ project agents/);
+      expect(output).toMatch(/Recompiled \d+ global agents/);
+      expect(output).toMatch(/Recompiled \d+ project agents/);
     });
   });
 });

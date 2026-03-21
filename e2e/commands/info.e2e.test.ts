@@ -1,22 +1,12 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import {
-  createTempDir,
-  cleanupTempDir,
-  createEditableProject,
-  ensureBinaryExists,
-  runCLI,
-  EXIT_CODES,
-} from "../helpers/test-utils.js";
-import {
-  CLAUDE_DIR,
-  STANDARD_DIRS,
-  STANDARD_FILES,
-  SKILLS_DIR_PATH,
-} from "../../src/cli/consts.js";
+import { EXIT_CODES, DIRS, FILES, SOURCE_PATHS } from "../pages/constants.js";
+import { createTempDir, cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
 import type { SkillId } from "../../src/cli/types/index.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { CLI } from "../fixtures/cli.js";
 
 const SKILL_ID: SkillId = "web-testing-info-e2e";
 
@@ -29,16 +19,25 @@ const SKILL_ID: SkillId = "web-testing-info-e2e";
  */
 async function createSkillSource(
   tempDir: string,
+  options?: {
+    skillId?: SkillId;
+    skillMd?: string;
+    metadataYaml?: string;
+    description?: string;
+  },
 ): Promise<{ sourceDir: string; skillId: SkillId }> {
+  const skillId = options?.skillId ?? SKILL_ID;
+  const description = options?.description ?? "A test skill for info E2E";
   const sourceDir = path.join(tempDir, "source");
-  const skillDir = path.join(sourceDir, SKILLS_DIR_PATH, SKILL_ID);
+  const skillDir = path.join(sourceDir, SOURCE_PATHS.SKILLS_DIR, skillId);
   await mkdir(skillDir, { recursive: true });
 
   await writeFile(
-    path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    `---
-name: ${SKILL_ID}
-description: A test skill for info E2E
+    path.join(skillDir, FILES.SKILL_MD),
+    options?.skillMd ??
+      `---
+name: ${skillId}
+description: ${description}
 author: "@test"
 ---
 
@@ -49,18 +48,19 @@ This is test content for the info command E2E tests.
   );
 
   await writeFile(
-    path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-    `category: web-testing
+    path.join(skillDir, FILES.METADATA_YAML),
+    options?.metadataYaml ??
+      `category: web-testing
 domain: web
 slug: info-e2e
 author: "@test"
 displayName: info-e2e
-cliDescription: A test skill for info E2E
+cliDescription: ${description}
 contentHash: "e2e-info-test-hash"
 `,
   );
 
-  return { sourceDir, skillId: SKILL_ID };
+  return { sourceDir, skillId };
 }
 
 describe("info command", () => {
@@ -79,7 +79,7 @@ describe("info command", () => {
     it("should display info help text", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["info", "--help"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["info", "--help"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("USAGE");
@@ -94,11 +94,11 @@ describe("info command", () => {
     it("should error when no skill argument is provided", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, combined } = await runCLI(["info"], tempDir);
+      const { exitCode, output } = await CLI.run(["info"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS);
-      expect(combined).toContain("Missing 1 required arg");
-      expect(combined).toContain("skill");
+      expect(output).toContain("Missing 1 required arg");
+      expect(output).toContain("skill");
     });
   });
 
@@ -107,9 +107,9 @@ describe("info command", () => {
       tempDir = await createTempDir();
       const { sourceDir, skillId } = await createSkillSource(tempDir);
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", skillId, "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -124,9 +124,9 @@ describe("info command", () => {
       tempDir = await createTempDir();
       const { sourceDir, skillId } = await createSkillSource(tempDir);
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", skillId, "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -137,27 +137,29 @@ describe("info command", () => {
       tempDir = await createTempDir();
       const { sourceDir, skillId } = await createSkillSource(tempDir);
 
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: [skillId],
       });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
 
-      // createEditableProject metadata lacks displayName required by discoverLocalSkills.
+      // ProjectBuilder.editable metadata lacks displayName required by discoverLocalSkills.
       // Overwrite with complete metadata so the local skill is discovered.
       const localSkillMetadataPath = path.join(
         projectDir,
-        CLAUDE_DIR,
-        STANDARD_DIRS.SKILLS,
+        DIRS.CLAUDE,
+        DIRS.SKILLS,
         skillId,
-        STANDARD_FILES.METADATA_YAML,
+        FILES.METADATA_YAML,
       );
       await writeFile(
         localSkillMetadataPath,
         `category: web-testing\nauthor: "@test"\ndomain: web\ndisplayName: info-e2e\nslug: info-e2e\ncontentHash: "e2e-hash"\n`,
       );
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", skillId, "--source", sourceDir, "--no-preview"],
-        projectDir,
+        { dir: projectDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -170,26 +172,26 @@ describe("info command", () => {
       tempDir = await createTempDir();
       const { sourceDir } = await createSkillSource(tempDir);
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["info", "nonexistent-skill-xyz", "--source", sourceDir],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("not found");
+      expect(output).toContain("not found");
     });
 
     it("should suggest search command when skill is not found", async () => {
       tempDir = await createTempDir();
       const { sourceDir } = await createSkillSource(tempDir);
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["info", "nonexistent-skill-xyz", "--source", sourceDir],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("search");
+      expect(output).toContain("search");
     });
   });
 
@@ -198,9 +200,9 @@ describe("info command", () => {
       tempDir = await createTempDir();
       const { sourceDir, skillId } = await createSkillSource(tempDir);
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", skillId, "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -215,9 +217,9 @@ describe("info command", () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", "web-framework-react", "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -231,9 +233,9 @@ describe("info command", () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", "web-testing-vitest", "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -246,7 +248,9 @@ describe("info command", () => {
       tempDir = await createTempDir();
       const { sourceDir, skillId } = await createSkillSource(tempDir);
 
-      const { exitCode, stdout } = await runCLI(["info", skillId, "--source", sourceDir], tempDir);
+      const { exitCode, stdout } = await CLI.run(["info", skillId, "--source", sourceDir], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain(`Skill: ${skillId}`);
@@ -257,9 +261,9 @@ describe("info command", () => {
       tempDir = await createTempDir();
       const { sourceDir, skillId } = await createSkillSource(tempDir);
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["info", skillId, "--source", sourceDir, "--no-preview"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -271,13 +275,13 @@ describe("info command", () => {
     it("should error when --source points to nonexistent path", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["info", SKILL_ID, "--source", "/nonexistent/path/to/source"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-      expect(combined.length).toBeGreaterThan(0);
+      expect(output.length).toBeGreaterThan(0);
     });
   });
 
@@ -292,44 +296,21 @@ describe("info command", () => {
         "Additional content is included to push the total length well beyond the five hundred character threshold that was specified in the test plan. " +
         "This final sentence ensures we are comfortably over the limit.";
 
-      const sourceDir = path.join(tempDir, "source");
       const longSkillId: SkillId = "web-testing-long-desc";
-      const skillDir = path.join(sourceDir, SKILLS_DIR_PATH, longSkillId);
-      await mkdir(skillDir, { recursive: true });
+      const { sourceDir, skillId } = await createSkillSource(tempDir, {
+        skillId: longSkillId,
+        description: longDescription,
+        skillMd: `---\nname: ${longSkillId}\ndescription: ${longDescription}\nauthor: "@test"\n---\n\n# Long Description Skill\n\n${longDescription}\n`,
+        metadataYaml: `category: web-testing\ndomain: web\nslug: long-desc\nauthor: "@test"\ndisplayName: long-desc-test\ncliDescription: ${longDescription}\ncontentHash: "e2e-long-desc-hash"\n`,
+      });
 
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---
-name: ${longSkillId}
-description: ${longDescription}
-author: "@test"
----
-
-# Long Description Skill
-
-${longDescription}
-`,
-      );
-
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        `category: web-testing
-domain: web
-slug: long-desc
-author: "@test"
-displayName: long-desc-test
-cliDescription: ${longDescription}
-contentHash: "e2e-long-desc-hash"
-`,
-      );
-
-      const { exitCode, stdout } = await runCLI(
-        ["info", longSkillId, "--source", sourceDir, "--no-preview"],
-        tempDir,
+      const { exitCode, stdout } = await CLI.run(
+        ["info", skillId, "--source", sourceDir, "--no-preview"],
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain(`Skill: ${longSkillId}`);
+      expect(stdout).toContain(`Skill: ${skillId}`);
       expect(stdout).toContain("Description:");
       expect(stdout).toContain(longDescription.slice(0, 50));
     });
@@ -340,30 +321,28 @@ contentHash: "e2e-long-desc-hash"
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode, combined } = await runCLI(
-        ["info", "web-framework", "--source", sourceDir],
-        tempDir,
-      );
+      const { exitCode, output } = await CLI.run(["info", "web-framework", "--source", sourceDir], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("not found");
-      expect(combined).toContain("Did you mean");
-      expect(combined).toContain("web-framework-react");
+      expect(output).toContain("not found");
+      expect(output).toContain("Did you mean");
+      expect(output).toContain("web-framework-react");
     });
 
     it("should suggest shared-meta skills when querying shared-meta", async () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode, combined } = await runCLI(
-        ["info", "shared-meta", "--source", sourceDir],
-        tempDir,
-      );
+      const { exitCode, output } = await CLI.run(["info", "shared-meta", "--source", sourceDir], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("not found");
-      expect(combined).toContain("Did you mean");
-      expect(combined).toContain("shared-meta-");
+      expect(output).toContain("not found");
+      expect(output).toContain("Did you mean");
+      expect(output).toContain("shared-meta-");
     });
   });
 });

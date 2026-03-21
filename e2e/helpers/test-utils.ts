@@ -4,22 +4,18 @@ import { stripVTControlCharacters } from "node:util";
 import path from "path";
 import { fileURLToPath } from "url";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
-import { renderConfigTs, renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
+import {
+  renderAgentYaml,
+  renderConfigTs,
+  renderSkillMd,
+} from "../../src/cli/lib/__tests__/content-generators.js";
 import {
   cleanupTempDir,
   createTempDir as createTempDirBase,
   directoryExists,
   fileExists,
 } from "../../src/cli/lib/__tests__/test-fs-utils.js";
-import { EXIT_CODES } from "../../src/cli/lib/exit-codes.js";
-import type { AgentName, Domain, ProjectConfig, SkillId } from "../../src/cli/types/index.js";
-import type { TerminalSession } from "./terminal-session.js";
-
-export { EXIT_CODES };
-
-export const OCLIF_EXIT_CODES = {
-  UNKNOWN_COMMAND: 127,
-} as const;
+import type { ProjectConfig, SkillId } from "../../src/cli/types/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,47 +27,6 @@ export const CLI_ROOT = path.resolve(__dirname, "../..");
 export const BIN_RUN = path.join(CLI_ROOT, "bin", "run.js");
 
 const E2E_TEMP_PREFIX = "ai-e2e-";
-
-// --- Shared timing constants for interactive E2E tests ---
-
-/** Time to wait for the wizard to load and render the first step */
-export const WIZARD_LOAD_TIMEOUT_MS = 15_000;
-
-/** Time to wait for installation to complete */
-export const INSTALL_TIMEOUT_MS = 30_000;
-
-/** Delay after a step transition (e.g., pressing Enter to advance) */
-export const STEP_TRANSITION_DELAY_MS = 500;
-
-/** Delay after a single keystroke (e.g., arrow key, letter key) */
-export const KEYSTROKE_DELAY_MS = 150;
-
-/** Time to wait for a PTY process to exit after sending a signal */
-export const EXIT_TIMEOUT_MS = 10_000;
-
-/** Timeout for plugin installation (longer than standard INSTALL_TIMEOUT_MS) */
-export const PLUGIN_INSTALL_TIMEOUT_MS = 60_000;
-
-/** Timeout for waiting for a process to exit in lifecycle tests */
-export const EXIT_WAIT_TIMEOUT_MS = 30_000;
-
-/** Standard timeout for beforeAll hooks in E2E tests */
-export const SETUP_TIMEOUT_MS = 60_000;
-
-/** Standard timeout for long-running lifecycle E2E tests */
-export const LIFECYCLE_TEST_TIMEOUT_MS = 180_000;
-
-/** Standard timeout for interactive wizard E2E tests */
-export const INTERACTIVE_TEST_TIMEOUT_MS = 120_000;
-
-/** General-purpose delay for waiting on async terminal updates */
-export const delay = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
-/** Environment override to disable remote source lookups during E2E compilation tests */
-export const COMPILE_ENV = {
-  AGENTSINC_SOURCE: undefined,
-};
 
 /**
  * Standard forkedFrom metadata block for E2E plugin/uninstall tests.
@@ -87,193 +42,23 @@ export const FORKED_FROM_METADATA =
     "  date: 2026-01-01",
   ].join("\n") + "\n";
 
-/**
- * Navigates the edit wizard from build step through completion without changing skills.
- * Build -> Sources -> Agents -> Confirm -> Complete
- *
- * Intended for edit-command E2E tests that need to advance through the wizard
- * without modifying skill selections.
- */
-export async function navigateEditWizardToCompletion(
-  session: TerminalSession,
-  timeoutMs = 30_000,
-): Promise<void> {
-  // Build step -> Sources step (customize view)
-  session.enter();
-  await session.waitForText("Customize skill sources", timeoutMs);
-  await delay(STEP_TRANSITION_DELAY_MS);
-
-  // Sources step -> Agents step
-  session.enter();
-  await session.waitForText("Select agents", timeoutMs);
-  await delay(STEP_TRANSITION_DELAY_MS);
-
-  // Agents step -> Confirm step
-  session.enter();
-  await session.waitForText("Ready to install", timeoutMs);
-  await delay(STEP_TRANSITION_DELAY_MS);
-
-  // Confirm step -> Complete
-  session.enter();
-}
-
-/**
- * Waits for text in the raw PTY output (not the xterm buffer).
- * The xterm buffer has limited scrollback (1000 lines) which gets exceeded
- * by relationship resolution warnings during matrix loading. Raw output
- * captures everything the process wrote, regardless of scrollback limits.
- */
-export async function waitForRawText(
-  session: TerminalSession,
-  text: string,
-  timeoutMs: number,
-): Promise<void> {
-  const POLL_INTERVAL_MS = 50;
-  const start = Date.now();
-  while (!session.getRawOutput().includes(text)) {
-    if (Date.now() - start > timeoutMs) {
-      const rawTail = session.getRawOutput().slice(-2000);
-      throw new Error(
-        `Timeout waiting for "${text}" in raw output after ${timeoutMs}ms.\n` +
-          `Raw output tail:\n${rawTail}`,
-      );
-    }
-    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-  }
-}
-
-/**
- * Navigates the init wizard from Stack selection through completion with defaults.
- * Stack -> Domain -> Build("a" accepts all) -> Confirm -> Wait for success.
- *
- * Intended for lifecycle E2E tests that use the standard E2E source with
- * a single stack. Assumes the wizard is already loaded (session was spawned
- * with `init --source <dir>`).
- */
-export async function navigateInitWizardToCompletion(
-  session: TerminalSession,
-  timeoutMs = INSTALL_TIMEOUT_MS,
-): Promise<void> {
-  // Step 1: Stack selection — accept first stack (E2E Test Stack)
-  await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-  await delay(STEP_TRANSITION_DELAY_MS);
-  session.enter();
-
-  // Step 2: Domain selection — accept pre-selected domains (wait for domain text)
-  await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-  await delay(STEP_TRANSITION_DELAY_MS);
-  session.enter();
-
-  // Step 3: Build step — "a" accepts all stack defaults (wait for skill text)
-  await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-  await delay(STEP_TRANSITION_DELAY_MS);
-  session.write("a");
-
-  // Step 4: Confirmation — Enter to confirm installation
-  await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-  await delay(STEP_TRANSITION_DELAY_MS);
-  session.enter();
-
-  // Wait for installation to complete
-  await session.waitForText("initialized successfully", timeoutMs);
-}
-
-/**
- * Passes through all 3 domain build steps (Web, API, Shared) without changes.
- * Used in edit wizard and multi-domain lifecycle tests where the E2E source
- * defines 3 domains.
- */
-export async function passThroughAllBuildDomains(
-  session: TerminalSession,
-  timeoutMs = WIZARD_LOAD_TIMEOUT_MS,
-): Promise<void> {
-  // Build step — Web domain (wait for skill categories)
-  await session.waitForText("Framework", timeoutMs);
-  await delay(STEP_TRANSITION_DELAY_MS);
-  session.enter();
-
-  // Build step — API domain
-  await session.waitForText("API", timeoutMs);
-  await delay(STEP_TRANSITION_DELAY_MS);
-  session.enter();
-
-  // Build step — Shared domain
-  await session.waitForText("Shared", timeoutMs);
-  await delay(STEP_TRANSITION_DELAY_MS);
-  session.enter();
-}
-
 export async function createTempDir(): Promise<string> {
   return createTempDirBase(E2E_TEMP_PREFIX);
 }
 
-export { cleanupTempDir, directoryExists, fileExists, renderConfigTs, renderSkillMd };
-
-/**
- * Creates a minimal project directory with a single local skill.
- * This is the minimum viable setup for `compile`.
- *
- * Structure:
- *   <projectDir>/
- *     .claude-src/
- *       config.ts
- *     .claude/
- *       skills/
- *         web-testing-vitest/
- *           SKILL.md
- *           metadata.yaml
- */
-export async function createMinimalProject(tempDir: string): Promise<{
-  projectDir: string;
-  agentsDir: string;
-}> {
-  const projectDir = path.join(tempDir, "project");
-  const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-  const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-testing-vitest");
-
-  await mkdir(skillDir, { recursive: true });
-
-  await writeFile(
-    path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    renderSkillMd(
-      "web-testing-vitest",
-      "E2E test skill for compile verification",
-      "# Test E2E Skill\n\nThis skill exists solely for E2E testing of the compile command.",
-    ),
-  );
-
-  await writeFile(
-    path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-    `author: "@test"
-displayName: web-testing-vitest
-slug: vitest
-cliDescription: "E2E test skill"
-usageGuidance: "Use when testing E2E scenarios"
-contentHash: "a1b2c3d"
-`,
-  );
-
-  await writeProjectConfig(projectDir, {
-    name: "e2e-compile-test",
-    skills: [{ id: "web-testing-vitest", scope: "project", source: "local" }],
-    agents: [
-      { name: "web-developer", scope: "project" },
-      { name: "api-developer", scope: "project" },
-    ],
-  });
-
-  return { projectDir, agentsDir };
+/** Wait for the given number of milliseconds. Shared delay utility for PTY-based tests. */
+export function delay(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
-/**
- * Creates a minimal `.claude-src/config.ts` installation in the given directory.
- *
- * This satisfies `detectInstallation()` for commands that require an existing
- * installation (e.g., `new skill` when no `--output` flag is provided).
- */
-export async function createMinimalInstallation(dir: string): Promise<void> {
-  await writeProjectConfig(dir, { name: "test", domains: [] });
-}
+export {
+  cleanupTempDir,
+  directoryExists,
+  fileExists,
+  renderAgentYaml,
+  renderConfigTs,
+  renderSkillMd,
+};
 
 /** Write a config.ts file to the .claude-src/ directory of the given base dir. */
 export async function writeProjectConfig(
@@ -389,277 +174,73 @@ export async function createPermissionsFile(projectDir: string): Promise<void> {
   );
 }
 
+/** Returns the path to compiled agents dir in a project. */
+export function agentsPath(dir: string): string {
+  return path.join(dir, CLAUDE_DIR, "agents");
+}
+
+/** Returns the path to installed skills dir in a project. */
+export function skillsPath(dir: string): string {
+  return path.join(dir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+}
+
 /**
- * Minimum viable project structure for the `edit` command.
+ * Add forkedFrom metadata to the default `web-framework-react` skill
+ * created by `ProjectBuilder.editable()`.
  *
- * The edit command calls detectInstallation() which looks for
- * .claude-src/config.ts (or .claude/config.ts). It then
- * loads the project config for domains, agents, skills, etc.
- * and discovers installed plugin skills via discoverAllPluginSkills().
- *
- * For local mode, discoverAllPluginSkills() returns empty, so the
- * edit command falls back to projectConfig.config.skills.
- *
- * This helper creates the minimal file structure:
- *   <projectDir>/
- *     .claude-src/
- *       config.ts   (with name, skills, agents, domains)
- *     .claude/
- *       skills/
- *         <skillId>/
- *           SKILL.md
- *           metadata.yaml
- *       agents/       (empty, for recompilation target)
+ * This marks the skill as CLI-managed so `uninstall` will remove it
+ * instead of skipping it as user-created.
  */
-export async function createEditableProject(
-  tempDir: string,
-  options?: {
-    skills?: SkillId[];
-    agents?: AgentName[];
-    domains?: Domain[];
-  },
-): Promise<string> {
-  const projectDir = path.join(tempDir, "project");
-  const skills = options?.skills ?? ["web-framework-react"];
-  const agents = options?.agents ?? ["web-developer"];
-  const domains = options?.domains ?? ["web"];
+export async function addForkedFromMetadata(projectDir: string): Promise<void> {
+  const metadataPath = path.join(
+    projectDir,
+    CLAUDE_DIR,
+    STANDARD_DIRS.SKILLS,
+    "web-framework-react",
+    STANDARD_FILES.METADATA_YAML,
+  );
+  await writeFile(metadataPath, FORKED_FROM_METADATA);
+}
 
-  const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-  const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+/**
+ * Injects a marketplace field into an existing config.ts.
+ * Used by lifecycle tests that need to switch from local to plugin source.
+ */
+export async function injectMarketplaceIntoConfig(
+  baseDir: string,
+  marketplaceName: string,
+): Promise<void> {
+  const configPath = path.join(baseDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+  const content = await readFile(configPath, "utf-8");
 
-  await mkdir(skillsDir, { recursive: true });
-  await mkdir(agentsDir, { recursive: true });
-
-  // Skills must be SkillConfig[] objects (not bare strings) to pass Zod validation
-  const skillConfigs = skills.map((id) => ({ id, scope: "project" as const, source: "local" }));
-  const agentConfigs = agents.map((name) => ({ name, scope: "project" as const }));
-
-  await writeProjectConfig(projectDir, {
-    name: "test-edit-project",
-    skills: skillConfigs,
-    agents: agentConfigs,
-    domains,
-    selectedAgents: agents,
-  });
-
-  for (const skillId of skills) {
-    const skillDir = path.join(skillsDir, skillId);
-    await mkdir(skillDir, { recursive: true });
-
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd(skillId, "Test skill for E2E", `# ${skillId}\n\nTest content.`),
-    );
-
-    // Derive category from skill ID (e.g., "web-framework-react" -> "web-framework")
-    const parts = skillId.split("-");
-    const category = parts.slice(0, 2).join("-");
-    const slug = parts.slice(2).join("-") || skillId;
-
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@test"\ndisplayName: ${skillId}\ncategory: ${category}\nslug: ${slug}\ncliDescription: "E2E test skill"\nusageGuidance: "Use when testing E2E scenarios"\ncontentHash: "b2c3d4e"\n`,
+  const marker = "export default {";
+  const idx = content.indexOf(marker);
+  if (idx === -1) {
+    throw new Error(
+      `Could not find "${marker}" in config.ts. Content starts with: ${content.slice(0, 200)}`,
     );
   }
+  const insertAt = idx + marker.length;
+  const patched =
+    content.slice(0, insertAt) +
+    `\n  "marketplace": "${marketplaceName}",` +
+    content.slice(insertAt);
 
-  return projectDir;
-}
-
-/**
- * Creates two independent installations (global + project) for dual-scope compile tests.
- *
- * Structure:
- *   <tempDir>/
- *     global-home/                        <- fake HOME
- *       .claude-src/config.ts             <- global config
- *       .claude/skills/web-testing-cypress-e2e/
- *     project/                            <- project dir (cwd)
- *       .claude-src/config.ts             <- project config
- *       .claude/skills/web-testing-playwright-e2e/
- */
-export async function createDualScopeProject(tempDir: string): Promise<{
-  globalHome: string;
-  projectDir: string;
-}> {
-  const globalHome = path.join(tempDir, "global-home");
-  const projectDir = path.join(tempDir, "project");
-
-  // --- Global installation ---
-  await writeProjectConfig(globalHome, {
-    name: "global-test",
-    skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
-    agents: [{ name: "web-developer", scope: "global" }],
-    domains: ["web"],
-    stack: {
-      "web-developer": {
-        "web-testing": [{ id: "web-testing-cypress-e2e", preloaded: true }],
-      },
-    },
-  });
-
-  await createLocalSkill(globalHome, "web-testing-cypress-e2e", {
-    description: "Global E2E skill for dual-scope testing",
-    metadata: `author: "@test"\ndisplayName: web-testing-cypress-e2e\ncliDescription: "E2E test skill"\nusageGuidance: "Use when testing E2E scenarios"\ncontentHash: "c3d4e5f"\n`,
-  });
-
-  // --- Project installation ---
-  await writeProjectConfig(projectDir, {
-    name: "project-test",
-    skills: [
-      { id: "web-testing-playwright-e2e", scope: "project", source: "local" },
-      { id: "web-testing-cypress-e2e", scope: "global", source: "local" },
-    ],
-    agents: [{ name: "api-developer", scope: "project" }],
-    domains: ["web"],
-    stack: {
-      "api-developer": {
-        "web-testing": [{ id: "web-testing-cypress-e2e", preloaded: true }],
-        "web-mocking": [{ id: "web-testing-playwright-e2e", preloaded: true }],
-      },
-    },
-  });
-
-  await createLocalSkill(projectDir, "web-testing-playwright-e2e", {
-    description: "Project-local E2E skill for dual-scope testing",
-    metadata: `author: "@test"\ndisplayName: web-testing-playwright-e2e\ncliDescription: "E2E test skill"\nusageGuidance: "Use when testing E2E scenarios"\ncontentHash: "d4e5f6a"\n`,
-  });
-
-  return { globalHome, projectDir };
-}
-
-/**
- * Creates a project directory with a custom (non-marketplace) skill and
- * a config that references it via a custom category in the stack.
- *
- * This exercises the regression where Zod schema validation in
- * loadProjectConfigFromDir rejected custom skill IDs and category keys.
- *
- * The skill ID uses a valid prefix ("web-") so it passes downstream
- * validation in resolveAgentConfigToSkills, while remaining a custom
- * (non-marketplace) skill unknown to the built-in type unions.
- *
- * Structure:
- *   <projectDir>/
- *     .claude-src/
- *       config-types.ts   (auto-generated types including custom IDs)
- *       config.ts         (imports config-types, uses satisfies ProjectConfig)
- *     .claude/
- *       skills/
- *         web-custom-e2e-widget/
- *           SKILL.md
- *           metadata.yaml  (custom: true, domain: custom-e2e, category: web-custom-e2e)
- */
-export async function createProjectWithCustomSkill(tempDir: string): Promise<{
-  projectDir: string;
-  agentsDir: string;
-}> {
-  const projectDir = path.join(tempDir, "project");
-  const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-
-  const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
-  const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-custom-e2e-widget");
-
-  await mkdir(configDir, { recursive: true });
-  await mkdir(skillDir, { recursive: true });
-
-  // Auto-generated config-types.ts with custom skill ID and custom category
-  const configTypesContent = `// AUTO-GENERATED by agentsinc — DO NOT EDIT
-
-export type SkillId =
-  // Custom
-  | "web-custom-e2e-widget"
-  // Marketplace
-  | "web-framework-react";
-
-export type AgentName =
-  | "web-developer";
-
-export type Domain =
-  // Custom
-  | "custom-e2e"
-  // Marketplace
-  | "web";
-
-export type Category =
-  | "web-custom-e2e"
-  | "web-framework";
-
-export type SkillConfig = { id: SkillId; scope: "project" | "global"; source: string };
-
-export type SkillAssignment = SkillId | { id: SkillId; preloaded: boolean };
-
-export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;
-
-export type AgentScopeConfig = { name: AgentName; scope: "project" | "global" };
-
-export interface ProjectConfig {
-  version?: "1";
-  name: string;
-  description?: string;
-  agents: AgentScopeConfig[];
-  skills: SkillConfig[];
-  author?: string;
-  stack?: Partial<Record<AgentName, StackAgentConfig>>;
-  source?: string;
-  marketplace?: string;
-  agentsSource?: string;
-  domains?: Domain[];
-  selectedAgents?: AgentName[];
-}
-`;
-
-  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TYPES_TS), configTypesContent);
-
-  // Config file that references custom skill and custom category
-  const configContent = `import type { ProjectConfig } from "./config-types";
-
-export default {
-  name: "test-custom-skill-project",
-  agents: [{ name: "web-developer", scope: "project" }],
-  skills: [{ id: "web-custom-e2e-widget", scope: "project", source: "local" }],
-  domains: ["web"],
-  stack: {
-    "web-developer": {
-      "web-custom-e2e": {
-        id: "web-custom-e2e-widget",
-        preloaded: true,
-      },
-    },
-  },
-} satisfies ProjectConfig;
-`;
-
-  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), configContent);
-
-  // Custom skill SKILL.md
-  await writeFile(
-    path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    renderSkillMd(
-      "web-custom-e2e-widget",
-      "A custom test widget skill",
-      "# Custom E2E Widget\n\nCustom skill for E2E testing of custom skill ID handling.",
-    ),
-  );
-
-  // Custom skill metadata.yaml with custom: true
-  await writeFile(
-    path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-    `custom: true
-domain: custom-e2e
-category: web-custom-e2e
-slug: e2e-widget
-author: "@test"
-displayName: Custom E2E Widget
-cliDescription: "E2E custom test skill"
-usageGuidance: "Use when testing custom skill scenarios"
-contentHash: "e5f6a7b"
-`,
-  );
-
-  return { projectDir, agentsDir };
+  await writeFile(configPath, patched, "utf-8");
 }
 
 /** Returns the path to the ejected agent.liquid template in a project. */
 export function getEjectedTemplatePath(projectDir: string): string {
   return path.join(projectDir, CLAUDE_SRC_DIR, "agents", "_templates", "agent.liquid");
 }
+
+export { createE2ESource } from "./create-e2e-source.js";
+
+export {
+  isClaudeCLIAvailable,
+  claudePluginMarketplaceAdd,
+  claudePluginMarketplaceList,
+  claudePluginInstall,
+  claudePluginUninstall,
+  execCommand,
+} from "../../src/cli/utils/exec.js";

@@ -2,7 +2,6 @@ import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
-  runCLI,
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
@@ -11,10 +10,10 @@ import {
   readTestFile,
   renderSkillMd,
   writeProjectConfig,
-  EXIT_CODES,
   FORKED_FROM_METADATA,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { CLI } from "../fixtures/cli.js";
 
 /**
  * Plugin-mode uninstall E2E tests — edge cases.
@@ -31,6 +30,53 @@ import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../..
  * Reference: e2e-framework-design.md, Section 4.3
  */
 
+/**
+ * Creates a standard uninstall test project with config, a skill, and agents.
+ * Returns the project directory and paths to key directories for assertions.
+ */
+async function createUninstallableProject(
+  tempDir: string,
+  options: {
+    configName: string;
+    skillSource: string;
+    settingsJson?: string;
+  },
+): Promise<{ projectDir: string; skillDir: string; agentsDir: string }> {
+  const projectDir = path.join(tempDir, "project");
+
+  await writeProjectConfig(projectDir, {
+    name: options.configName,
+    skills: [
+      {
+        id: "web-framework-react",
+        scope: "project",
+        source: options.skillSource,
+      },
+    ],
+    agents: [{ name: "web-developer", scope: "project" }],
+    domains: ["web"],
+  });
+
+  const skillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-framework-react");
+  await mkdir(skillDir, { recursive: true });
+  await writeFile(
+    path.join(skillDir, FILES.SKILL_MD),
+    renderSkillMd("web-framework-react", "React framework", "# React\n\nTest content."),
+  );
+  await writeFile(path.join(skillDir, FILES.METADATA_YAML), FORKED_FROM_METADATA);
+
+  const agentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
+  await mkdir(agentsDir, { recursive: true });
+  await writeFile(path.join(agentsDir, "web-developer.md"), "---\nname: web-developer\n---\n");
+
+  if (options.settingsJson) {
+    const claudeDir = path.join(projectDir, DIRS.CLAUDE);
+    await writeFile(path.join(claudeDir, "settings.json"), options.settingsJson);
+  }
+
+  return { projectDir, skillDir, agentsDir };
+}
+
 describe("uninstall with plugin config but no installed plugins", () => {
   let tempDir: string;
 
@@ -45,34 +91,12 @@ describe("uninstall with plugin config but no installed plugins", () => {
 
   it("should complete gracefully when config references plugins that are not installed", async () => {
     tempDir = await createTempDir();
-    const projectDir = path.join(tempDir, "project");
-
-    await writeProjectConfig(projectDir, {
-      name: "phantom-plugin-project",
-      skills: [
-        {
-          id: "web-framework-react",
-          scope: "project",
-          source: "nonexistent-marketplace",
-        },
-      ],
-      agents: [{ name: "web-developer", scope: "project" }],
-      domains: ["web"],
+    const { projectDir } = await createUninstallableProject(tempDir, {
+      configName: "phantom-plugin-project",
+      skillSource: "nonexistent-marketplace",
     });
 
-    const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-framework-react", "React framework", "# React\n\nTest content."),
-    );
-    await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), FORKED_FROM_METADATA);
-
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-    await mkdir(agentsDir, { recursive: true });
-    await writeFile(path.join(agentsDir, "web-developer.md"), "---\nname: web-developer\n---\n");
-
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
@@ -80,37 +104,15 @@ describe("uninstall with plugin config but no installed plugins", () => {
 
   it("should remove local skills and agents even without plugin uninstall", async () => {
     tempDir = await createTempDir();
-    const projectDir = path.join(tempDir, "project");
-
-    await writeProjectConfig(projectDir, {
-      name: "no-plugins-project",
-      skills: [
-        {
-          id: "web-framework-react",
-          scope: "project",
-          source: "some-marketplace",
-        },
-      ],
-      agents: [{ name: "web-developer", scope: "project" }],
-      domains: ["web"],
+    const { projectDir, skillDir, agentsDir } = await createUninstallableProject(tempDir, {
+      configName: "no-plugins-project",
+      skillSource: "some-marketplace",
     });
-
-    const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-framework-react", "React framework", "# React"),
-    );
-    await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), FORKED_FROM_METADATA);
-
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-    await mkdir(agentsDir, { recursive: true });
-    await writeFile(path.join(agentsDir, "web-developer.md"), "---\nname: web-developer\n---\n");
 
     expect(await directoryExists(skillDir)).toBe(true);
     expect(await directoryExists(agentsDir)).toBe(true);
 
-    const { exitCode } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     expect(await directoryExists(skillDir)).toBe(false);
@@ -119,46 +121,18 @@ describe("uninstall with plugin config but no installed plugins", () => {
 
   it("should handle settings.json with plugins that are not in config", async () => {
     tempDir = await createTempDir();
-    const projectDir = path.join(tempDir, "project");
-
-    await writeProjectConfig(projectDir, {
-      name: "local-only-project",
-      skills: [
-        {
-          id: "web-framework-react",
-          scope: "project",
-          source: "local",
-        },
-      ],
-      agents: [{ name: "web-developer", scope: "project" }],
-      domains: ["web"],
-    });
-
-    const claudeDir = path.join(projectDir, CLAUDE_DIR);
-    await mkdir(claudeDir, { recursive: true });
-    await writeFile(
-      path.join(claudeDir, "settings.json"),
-      JSON.stringify({
+    const { projectDir, skillDir } = await createUninstallableProject(tempDir, {
+      configName: "local-only-project",
+      skillSource: "local",
+      settingsJson: JSON.stringify({
         permissions: { allow: ["Read(*)"] },
         enabledPlugins: {
           "manual-plugin@some-marketplace": true,
         },
       }),
-    );
+    });
 
-    const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-framework-react", "React framework", "# React"),
-    );
-    await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), FORKED_FROM_METADATA);
-
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-    await mkdir(agentsDir, { recursive: true });
-    await writeFile(path.join(agentsDir, "web-developer.md"), "---\nname: web-developer\n---\n");
-
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
@@ -168,33 +142,17 @@ describe("uninstall with plugin config but no installed plugins", () => {
 
   it("should also remove config with --all flag when no plugins exist", async () => {
     tempDir = await createTempDir();
-    const projectDir = path.join(tempDir, "project");
-
-    await writeProjectConfig(projectDir, {
-      name: "all-flag-test",
-      skills: [
-        {
-          id: "web-framework-react",
-          scope: "project",
-          source: "fake-marketplace",
-        },
-      ],
-      agents: [{ name: "web-developer", scope: "project" }],
-      domains: ["web"],
+    const { projectDir } = await createUninstallableProject(tempDir, {
+      configName: "all-flag-test",
+      skillSource: "fake-marketplace",
     });
 
-    const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-framework-react", "React framework", "# React"),
-    );
-    await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), FORKED_FROM_METADATA);
-
-    const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
+    const configDir = path.join(projectDir, DIRS.CLAUDE_SRC);
     expect(await directoryExists(configDir)).toBe(true);
 
-    const { exitCode, stdout } = await runCLI(["uninstall", "--all", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--all", "--yes"], {
+      dir: projectDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
@@ -217,52 +175,24 @@ describe("uninstall preserves non-CLI plugins", () => {
 
   it("should preserve manually-placed plugins in settings.json after uninstall", async () => {
     tempDir = await createTempDir();
-    const projectDir = path.join(tempDir, "project");
-
-    await writeProjectConfig(projectDir, {
-      name: "preserve-manual-plugins-test",
-      skills: [
-        {
-          id: "web-framework-react",
-          scope: "project",
-          source: "some-marketplace",
-        },
-      ],
-      agents: [{ name: "web-developer", scope: "project" }],
-      domains: ["web"],
-    });
-
-    const claudeDir = path.join(projectDir, CLAUDE_DIR);
-    await mkdir(claudeDir, { recursive: true });
-    await writeFile(
-      path.join(claudeDir, "settings.json"),
-      JSON.stringify({
+    const { projectDir, skillDir } = await createUninstallableProject(tempDir, {
+      configName: "preserve-manual-plugins-test",
+      skillSource: "some-marketplace",
+      settingsJson: JSON.stringify({
         permissions: { allow: ["Read(*)"] },
         enabledPlugins: {
           "web-framework-react@some-marketplace": true,
           "manual-plugin@other-marketplace": true,
         },
       }),
-    );
+    });
 
-    const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-framework-react", "React framework", "# React\n\nTest content."),
-    );
-    await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), FORKED_FROM_METADATA);
-
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-    await mkdir(agentsDir, { recursive: true });
-    await writeFile(path.join(agentsDir, "web-developer.md"), "---\nname: web-developer\n---\n");
-
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
 
-    const settingsPath = path.join(projectDir, CLAUDE_DIR, "settings.json");
+    const settingsPath = path.join(projectDir, DIRS.CLAUDE, "settings.json");
     const settingsExists = await fileExists(settingsPath);
 
     if (settingsExists) {
@@ -277,26 +207,10 @@ describe("uninstall preserves non-CLI plugins", () => {
 
   it("should not remove enabledPlugins entries that are not in config", async () => {
     tempDir = await createTempDir();
-    const projectDir = path.join(tempDir, "project");
-
-    await writeProjectConfig(projectDir, {
-      name: "multi-plugin-test",
-      skills: [
-        {
-          id: "web-framework-react",
-          scope: "project",
-          source: "marketplace-a",
-        },
-      ],
-      agents: [{ name: "web-developer", scope: "project" }],
-      domains: ["web"],
-    });
-
-    const claudeDir = path.join(projectDir, CLAUDE_DIR);
-    await mkdir(claudeDir, { recursive: true });
-    await writeFile(
-      path.join(claudeDir, "settings.json"),
-      JSON.stringify({
+    const { projectDir } = await createUninstallableProject(tempDir, {
+      configName: "multi-plugin-test",
+      skillSource: "marketplace-a",
+      settingsJson: JSON.stringify({
         permissions: { allow: ["Read(*)"] },
         enabledPlugins: {
           "web-framework-react@marketplace-a": true,
@@ -304,26 +218,14 @@ describe("uninstall preserves non-CLI plugins", () => {
           "third-party-tool@external-source": true,
         },
       }),
-    );
+    });
 
-    const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-framework-react", "React framework", "# React"),
-    );
-    await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), FORKED_FROM_METADATA);
-
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-    await mkdir(agentsDir, { recursive: true });
-    await writeFile(path.join(agentsDir, "web-developer.md"), "---\nname: web-developer\n---\n");
-
-    const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
+    const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
 
-    const settingsPath = path.join(projectDir, CLAUDE_DIR, "settings.json");
+    const settingsPath = path.join(projectDir, DIRS.CLAUDE, "settings.json");
     const settingsExists = await fileExists(settingsPath);
 
     if (settingsExists) {
@@ -350,43 +252,16 @@ describe("uninstall without Claude CLI on PATH", () => {
 
   it("should complete uninstall when claude binary is not available", async () => {
     tempDir = await createTempDir();
-    const projectDir = path.join(tempDir, "project");
-
-    await writeProjectConfig(projectDir, {
-      name: "no-claude-cli-test",
-      skills: [
-        {
-          id: "web-framework-react",
-          scope: "project",
-          source: "some-marketplace",
-        },
-      ],
-      agents: [{ name: "web-developer", scope: "project" }],
-      domains: ["web"],
-    });
-
-    const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "web-framework-react");
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-framework-react", "React framework", "# React\n\nTest content."),
-    );
-    await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), FORKED_FROM_METADATA);
-
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-    await mkdir(agentsDir, { recursive: true });
-    await writeFile(path.join(agentsDir, "web-developer.md"), "---\nname: web-developer\n---\n");
-
-    const claudeDir = path.join(projectDir, CLAUDE_DIR);
-    await writeFile(
-      path.join(claudeDir, "settings.json"),
-      JSON.stringify({
+    const { projectDir, skillDir, agentsDir } = await createUninstallableProject(tempDir, {
+      configName: "no-claude-cli-test",
+      skillSource: "some-marketplace",
+      settingsJson: JSON.stringify({
         permissions: { allow: ["Read(*)"] },
         enabledPlugins: {
           "web-framework-react@some-marketplace": true,
         },
       }),
-    );
+    });
 
     expect(await directoryExists(skillDir)).toBe(true);
     expect(await directoryExists(agentsDir)).toBe(true);
@@ -394,12 +269,16 @@ describe("uninstall without Claude CLI on PATH", () => {
     // Use a minimal PATH that includes node and basic Unix utilities but NOT claude.
     const minimalPath = [path.dirname(process.execPath), "/usr/bin", "/bin"].join(":");
 
-    const { exitCode, stdout, stderr } = await runCLI(["uninstall", "--yes"], projectDir, {
-      env: {
-        PATH: minimalPath,
-        HOME: projectDir,
+    const { exitCode, stdout, stderr } = await CLI.run(
+      ["uninstall", "--yes"],
+      { dir: projectDir },
+      {
+        env: {
+          PATH: minimalPath,
+          HOME: projectDir,
+        },
       },
-    });
+    );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");

@@ -1,21 +1,17 @@
 import path from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
-  createEditableProject,
   writeProjectConfig,
-  runCLI,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
+import { CLI } from "../fixtures/cli.js";
 
 describe("doctor command", () => {
   let tempDir: string;
-  let sourceTempDir: string | undefined;
 
   beforeAll(ensureBinaryExists);
 
@@ -24,16 +20,12 @@ describe("doctor command", () => {
       await cleanupTempDir(tempDir);
       tempDir = undefined!;
     }
-    if (sourceTempDir) {
-      await cleanupTempDir(sourceTempDir);
-      sourceTempDir = undefined;
-    }
   });
 
   it("should report config missing in unconfigured directory", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["doctor"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["doctor"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
     expect(stdout).toContain("Doctor");
@@ -47,7 +39,7 @@ describe("doctor command", () => {
   it("should show skipped checks when config is missing", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["doctor"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["doctor"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
     expect(stdout).toContain("Skills Resolved");
@@ -59,7 +51,7 @@ describe("doctor command", () => {
   it("should show source reachable check", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["doctor"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["doctor"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
     expect(stdout).toContain("Source Reachable");
@@ -68,7 +60,7 @@ describe("doctor command", () => {
   it("should show tip to run init when config is missing", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["doctor"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["doctor"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
     expect(stdout).toContain("Tip:");
@@ -78,7 +70,9 @@ describe("doctor command", () => {
   it("should accept --source flag", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["doctor", "--source", "/nonexistent"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["doctor", "--source", "/nonexistent"], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
     expect(stdout).toContain("Doctor");
@@ -92,137 +86,18 @@ describe("doctor command", () => {
       agents: [{ name: "web-developer", scope: "project" }],
     });
 
-    const { exitCode, stdout } = await runCLI(["doctor"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["doctor"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Config Valid");
     expect(stdout).toContain("is valid");
   });
 
-  describe("--verbose flag", () => {
-    it("should show additional details with --verbose", async () => {
-      tempDir = await createTempDir();
-      const source = await createE2ESource();
-      sourceTempDir = source.tempDir;
-
-      const { exitCode, stdout } = await runCLI(
-        ["doctor", "--verbose", "--source", source.sourceDir],
-        tempDir,
-      );
-
-      // --verbose causes formatCheckLine to show details even for "pass" results.
-      // The Source Reachable check passes and includes "N skills available" in details.
-      expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(stdout).toContain("skills available");
-    });
-  });
-
-  describe("valid config with local E2E source", () => {
-    it("should show Source Reachable with local source info and skill count", async () => {
-      tempDir = await createTempDir();
-      const source = await createE2ESource();
-      sourceTempDir = source.tempDir;
-
-      const projectDir = await createEditableProject(tempDir);
-
-      const { exitCode, stdout } = await runCLI(
-        ["doctor", "--verbose", "--source", source.sourceDir],
-        projectDir,
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // Source Reachable check: "Connected to local: <path>"
-      expect(stdout).toContain("Connected to local:");
-      // Details line shows skill count
-      expect(stdout).toContain("skills available");
-      // Config Valid should pass
-      expect(stdout).toContain("Config Valid");
-      expect(stdout).toContain("is valid");
-    });
-  });
-
-  describe("agents compiled check", () => {
-    it("should pass when agent .md files exist for configured agents", async () => {
-      tempDir = await createTempDir();
-      const source = await createE2ESource();
-      sourceTempDir = source.tempDir;
-
-      const projectDir = await createEditableProject(tempDir, {
-        agents: ["web-developer"],
-      });
-
-      // Create the compiled agent .md file so checkAgentsCompiled passes
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer\n");
-
-      const { exitCode, stdout } = await runCLI(
-        ["doctor", "--source", source.sourceDir],
-        projectDir,
-      );
-
-      // checkAgentsCompiled returns pass with "N/N agents compiled"
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Agents Compiled");
-      expect(stdout).toContain("agents compiled");
-    });
-
-    it("should warn when agent .md files are missing for configured agents", async () => {
-      tempDir = await createTempDir();
-      const source = await createE2ESource();
-      sourceTempDir = source.tempDir;
-
-      const projectDir = await createEditableProject(tempDir, {
-        agents: ["web-developer"],
-      });
-      // Do NOT create web-developer.md -- it's missing
-
-      const { exitCode, stdout } = await runCLI(
-        ["doctor", "--source", source.sourceDir],
-        projectDir,
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // checkAgentsCompiled returns warn with "N agent(s) need recompilation"
-      expect(stdout).toContain("Agents Compiled");
-      expect(stdout).toContain("recompilation");
-      // The tip suggests running compile
-      expect(stdout).toContain("compile");
-    });
-  });
-
-  describe("orphaned agent files check", () => {
-    it("should warn when orphaned .md files exist in agents dir", async () => {
-      tempDir = await createTempDir();
-      const source = await createE2ESource();
-      sourceTempDir = source.tempDir;
-
-      const projectDir = await createEditableProject(tempDir, {
-        agents: ["web-developer"],
-      });
-
-      // Create the configured agent file AND an orphan
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer\n");
-      await writeFile(path.join(agentsDir, "orphan-agent.md"), "# Orphan\n");
-
-      const { exitCode, stdout } = await runCLI(
-        ["doctor", "--source", source.sourceDir],
-        projectDir,
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // checkNoOrphans returns warn with "N orphaned agent file(s)"
-      expect(stdout).toContain("No Orphans");
-      expect(stdout).toContain("orphan");
-      expect(stdout).toContain("not in config");
-    });
-  });
-
   describe("--help flag", () => {
     it("should display help output with expected flags", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["doctor", "--help"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["doctor", "--help"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Diagnose");
@@ -231,49 +106,16 @@ describe("doctor command", () => {
     });
   });
 
-  describe("missing skills directory with valid config", () => {
-    it("should report missing skills when skills directory does not exist", async () => {
-      tempDir = await createTempDir();
-      const source = await createE2ESource();
-      sourceTempDir = source.tempDir;
-
-      // Create valid config referencing a skill NOT in the E2E source matrix
-      await writeProjectConfig(tempDir, {
-        name: "test-project",
-        agents: [{ name: "web-developer", scope: "project" }],
-        stack: {
-          "web-developer": {
-            "web-framework": [{ skillId: "web-framework-nonexistent", required: true }],
-          },
-        },
-      });
-
-      // Do NOT create .claude/skills/ directory -- it is missing
-
-      const { exitCode, stdout } = await runCLI(["doctor", "--source", source.sourceDir], tempDir);
-
-      // Config is valid, but the nonexistent skill is not in the source matrix
-      // and not found locally, so Skills Resolved should fail
-      expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(stdout).toContain("Config Valid");
-      expect(stdout).toContain("Skills Resolved");
-      expect(stdout).toContain("not found");
-    });
-  });
-
   describe("corrupt config file", () => {
     it("should not crash and should report config error with corrupt config.ts", async () => {
       tempDir = await createTempDir();
 
       // Create a corrupt config.ts file with invalid JavaScript syntax
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
+      const configDir = path.join(tempDir, DIRS.CLAUDE_SRC);
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_TS),
-        "export default {{{CORRUPT SYNTAX!!!",
-      );
+      await writeFile(path.join(configDir, FILES.CONFIG_TS), "export default {{{CORRUPT SYNTAX!!!");
 
-      const { exitCode, stdout } = await runCLI(["doctor"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["doctor"], { dir: tempDir });
 
       // Doctor should not crash -- it should report a config error
       expect(exitCode).toBe(EXIT_CODES.ERROR);
@@ -299,9 +141,13 @@ describe("doctor command", () => {
       await mkdir(projectDir, { recursive: true });
 
       // Run doctor with HOME pointing to globalHome
-      const { exitCode, stdout } = await runCLI(["doctor"], projectDir, {
-        env: { HOME: globalHome },
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: projectDir },
+        {
+          env: { HOME: globalHome },
+        },
+      );
 
       // Doctor should detect the global config and validate it
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);

@@ -1,17 +1,15 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { EXIT_CODES, TIMEOUTS } from "../pages/constants.js";
 import {
   ensureBinaryExists,
   cleanupTempDir,
   createTempDir,
   fileExists,
   readTestFile,
-  runCLI,
-  EXIT_CODES,
-  INSTALL_TIMEOUT_MS,
-  SETUP_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
+import { CLI } from "../fixtures/cli.js";
 
 /**
  * E2E tests for `build plugins --agents-dir`: agent plugin compilation.
@@ -69,7 +67,7 @@ describe("build agent plugins", () => {
         createAgentMd(agentName, `E2E test agent for ${agentName}`),
       );
     }
-  }, INSTALL_TIMEOUT_MS);
+  }, TIMEOUTS.INSTALL);
 
   afterAll(async () => {
     if (tempDir) {
@@ -78,7 +76,7 @@ describe("build agent plugins", () => {
   });
 
   describe("build plugins with --agents-dir flag", () => {
-    let buildResult: Awaited<ReturnType<typeof runCLI>>;
+    let buildResult: Awaited<ReturnType<typeof CLI.run>>;
     const outputDir = "dist/plugins";
 
     beforeAll(async () => {
@@ -87,11 +85,11 @@ describe("build agent plugins", () => {
       const skillsDir = path.join(sourceDir, "src", "skills");
       await mkdir(skillsDir, { recursive: true });
 
-      buildResult = await runCLI(
+      buildResult = await CLI.run(
         ["build", "plugins", "--agents-dir", agentsDir, "--skills-dir", skillsDir],
-        sourceDir,
+        { dir: sourceDir },
       );
-    }, SETUP_TIMEOUT_MS);
+    }, TIMEOUTS.SETUP);
 
     it("should exit with code 0", () => {
       expect(buildResult.exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -165,10 +163,9 @@ describe("build agent plugins", () => {
       await mkdir(skillsDir, { recursive: true });
 
       try {
-        const result = await runCLI(
-          ["build", "plugins", "--skills-dir", skillsDir],
-          noAgentSourceDir,
-        );
+        const result = await CLI.run(["build", "plugins", "--skills-dir", skillsDir], {
+          dir: noAgentSourceDir,
+        });
         expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
         // Output should NOT mention agent compilation
         expect(result.stdout).not.toContain("Compiling agent plugins");
@@ -201,9 +198,9 @@ describe("build agent plugins", () => {
       );
 
       try {
-        const result = await runCLI(
+        const result = await CLI.run(
           ["build", "plugins", "--agents-dir", edgeAgentsDir, "--skills-dir", edgeSkillsDir],
-          edgeSourceDir,
+          { dir: edgeSourceDir },
         );
 
         // Build should still succeed (bad agents are warned, not fatal)
@@ -232,9 +229,9 @@ describe("build agent plugins", () => {
       await mkdir(emptySkillsDir, { recursive: true });
 
       try {
-        const result = await runCLI(
+        const result = await CLI.run(
           ["build", "plugins", "--agents-dir", emptyAgentsDir, "--skills-dir", emptySkillsDir],
-          emptySourceDir,
+          { dir: emptySourceDir },
         );
 
         expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -259,7 +256,7 @@ describe("build agent plugins", () => {
       );
 
       try {
-        const result = await runCLI(
+        const result = await CLI.run(
           [
             "build",
             "plugins",
@@ -270,7 +267,7 @@ describe("build agent plugins", () => {
             "--output-dir",
             customOutputDir,
           ],
-          customOutSourceDir,
+          { dir: customOutSourceDir },
         );
 
         expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);

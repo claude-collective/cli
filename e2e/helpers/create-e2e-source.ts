@@ -24,6 +24,24 @@ import {
   renderSkillMd,
 } from "../../src/cli/lib/__tests__/content-generators.js";
 
+/**
+ * E2E Source Creation Conventions
+ *
+ * Preferred pattern: Create source ONCE per describe block in `beforeAll`,
+ * store in a suite-level variable, and pass to wizard launchers via the
+ * `source` option. This avoids redundant source creation per test.
+ *
+ * Example:
+ *   let source: { sourceDir: string; tempDir: string };
+ *   beforeAll(async () => { source = await createE2ESource(); });
+ *   afterAll(async () => { await cleanupTempDir(source.tempDir); });
+ *
+ * Wizard launchers (InitWizard.launch, EditWizard.launch) accept a `source`
+ * option to use a pre-created source instead of creating a new one internally.
+ *
+ * Only create sources inline when the test requires a unique/modified source.
+ */
+
 type E2ESkill = {
   category: CategoryPath;
   id: SkillId;

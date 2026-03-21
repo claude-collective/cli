@@ -1,9 +1,8 @@
 import path from "path";
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { readFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
 import {
   createTempDir,
   cleanupTempDir,
@@ -11,11 +10,10 @@ import {
   writeProjectConfig,
   createPermissionsFile,
   createLocalSkill,
-  navigateEditWizardToCompletion,
-  WIZARD_LOAD_TIMEOUT_MS,
-  EXIT_CODES,
-  SETUP_TIMEOUT_MS,
 } from "../helpers/test-utils.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import { DIRS, FILES, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import "../matchers/setup.js";
 
 /**
  * Bug B regression test: project config must not accumulate global-scoped skills
@@ -29,32 +27,28 @@ import {
  *
  * Code path under test:
  *   edit.tsx -> buildAndMergeConfig() -> writeScopedConfigs() -> splitConfigByScope()
- *
- * splitConfigByScope filters skills by scope: global skills go to ~/.claude-src/config.ts,
- * project skills go to <project>/.claude-src/config.ts. If this filtering fails, global
- * skills would accumulate in the project config on each edit.
  */
 
 describe("project config does not accumulate global skills after edit", () => {
   let sourceDir: string;
   let sourceTempDir: string;
   let tempHOME: string | undefined;
-  let session: TerminalSession | undefined;
+  let wizard: EditWizard | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
     const source = await createE2ESource();
     sourceDir = source.sourceDir;
     sourceTempDir = source.tempDir;
-  }, SETUP_TIMEOUT_MS);
+  }, TIMEOUTS.SETUP);
 
   afterAll(async () => {
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
   });
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
+    await wizard?.destroy();
+    wizard = undefined;
     if (tempHOME) {
       await cleanupTempDir(tempHOME);
       tempHOME = undefined;
@@ -63,7 +57,7 @@ describe("project config does not accumulate global skills after edit", () => {
 
   it(
     "should not add global skills to project config after no-op edit",
-    { timeout: SETUP_TIMEOUT_MS },
+    { timeout: TIMEOUTS.SETUP },
     async () => {
       tempHOME = await createTempDir();
       const projectDir = path.join(tempHOME, "project");
@@ -83,7 +77,7 @@ describe("project config does not accumulate global skills after edit", () => {
       });
 
       // Create global agent file
-      const globalAgentsDir = path.join(tempHOME, CLAUDE_DIR, "agents");
+      const globalAgentsDir = path.join(tempHOME, DIRS.CLAUDE, "agents");
       await mkdir(globalAgentsDir, { recursive: true });
       await writeFile(
         path.join(globalAgentsDir, "web-developer.md"),
@@ -91,10 +85,6 @@ describe("project config does not accumulate global skills after edit", () => {
       );
 
       // --- Setup project config at <tempHOME>/project/.claude-src/config.ts ---
-      // The project config includes BOTH the global-scoped skill (inherited from global)
-      // and the project-scoped skill. This mirrors the state after an initial init or edit
-      // that touched both scopes. The bug scenario is that after a no-op edit,
-      // splitConfigByScope should remove the global skill from the project config file.
       await writeProjectConfig(projectDir, {
         name: "bug-b-test",
         skills: [
@@ -112,7 +102,7 @@ describe("project config does not accumulate global skills after edit", () => {
       });
 
       // Create project agent file
-      const projectAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+      const projectAgentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
       await mkdir(projectAgentsDir, { recursive: true });
       await writeFile(
         path.join(projectAgentsDir, "web-developer.md"),
@@ -122,26 +112,22 @@ describe("project config does not accumulate global skills after edit", () => {
       // Create permissions file to prevent blocking prompt
       await createPermissionsFile(projectDir);
 
-      const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
 
       // --- Action: run edit wizard, navigate through without changes ---
-      session = new TerminalSession(["edit", "--source", sourceDir], projectDir, {
-        env: {
-          HOME: tempHOME,
-          AGENTSINC_SOURCE: undefined,
-        },
+      wizard = await EditWizard.launch({
+        projectDir,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: tempHOME },
       });
 
-      // Wait for the build step to render
-      await session.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
+      // Single domain — advance through build -> sources -> agents -> confirm
+      const sources = await wizard.build.advanceToSources();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("edit");
+      const result = await confirm.confirm();
 
-      // Navigate through without changes
-      await navigateEditWizardToCompletion(session, SETUP_TIMEOUT_MS);
-
-      // Wait for the edit flow to complete
-      await session.waitForText("Recompiling agents", SETUP_TIMEOUT_MS);
-      const exitCode = await session.waitForExit(SETUP_TIMEOUT_MS);
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // --- Assert: project config should not contain global skills in the skills array ---
       const updatedProjectConfig = await readFile(projectConfigPath, "utf-8");
@@ -152,11 +138,7 @@ describe("project config does not accumulate global skills after edit", () => {
       // The skills array in the project config should NOT contain the global skill as an
       // inline entry. It may reference global skills via `...globalConfig.skills` spread
       // (which is correct), but it must not have `"id":"web-framework-react"` as a literal
-      // skill object in the project config. The stack section may reference skill IDs for
-      // agent routing — that's expected and not a scope leak.
-      //
-      // Match the pattern of an inline skill config object with the global skill ID.
-      // This would look like: {"id":"web-framework-react","scope":"...","source":"..."}
+      // skill object in the project config.
       const hasInlineGlobalSkill =
         updatedProjectConfig.includes('"id":"web-framework-react"') ||
         updatedProjectConfig.includes('"id": "web-framework-react"');
@@ -166,11 +148,10 @@ describe("project config does not accumulate global skills after edit", () => {
       ).toBe(false);
 
       // The project config should use `...globalConfig.skills` spread to inherit global skills
-      // rather than inlining them
       expect(updatedProjectConfig).toContain("globalConfig.skills");
 
       // Also verify the global config still has its skill (it wasn't removed)
-      const globalConfigPath = path.join(tempHOME, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const globalConfigPath = path.join(tempHOME, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const updatedGlobalConfig = await readFile(globalConfigPath, "utf-8");
       expect(updatedGlobalConfig).toContain("web-framework-react");
     },

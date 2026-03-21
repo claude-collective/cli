@@ -1,23 +1,10 @@
-import path from "path";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { CLAUDE_DIR } from "../../src/cli/consts.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
-import {
-  cleanupTempDir,
-  createEditableProject,
-  createPermissionsFile,
-  createTempDir,
-  delay,
-  directoryExists,
-  ensureBinaryExists,
-  EXIT_CODES,
-  EXIT_TIMEOUT_MS,
-  INSTALL_TIMEOUT_MS,
-  listFiles,
-  STEP_TRANSITION_DELAY_MS,
-  WIZARD_LOAD_TIMEOUT_MS,
-} from "../helpers/test-utils.js";
+import { ensureBinaryExists } from "../helpers/test-utils.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import "../matchers/setup.js";
 
 /**
  * E2E tests for the `edit` command wizard — confirm step and completion flow.
@@ -26,60 +13,31 @@ import {
  * back navigation, and skill selection preservation.
  */
 describe("edit wizard — confirm step and completion", () => {
-  let tempDir: string;
-  let session: TerminalSession | undefined;
+  let wizard: EditWizard | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
-    if (tempDir) {
-      await cleanupTempDir(tempDir);
-      tempDir = undefined!;
-    }
+    await wizard?.destroy();
+    wizard = undefined;
   });
 
   describe("confirm step and completion", () => {
-    let sourceTempDir: string | undefined;
-
-    afterEach(async () => {
-      if (sourceTempDir) {
-        await cleanupTempDir(sourceTempDir);
-        sourceTempDir = undefined;
-      }
-    });
-
     it("should navigate to confirm step and show summary", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-styling-tailwind"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      const sources = await wizard.build.advanceToSources();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("edit");
 
-      // Build step -> Sources step
-      session.enter();
-      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Sources step -> Agents step (accept recommended sources)
-      session.enter();
-      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Agents step -> Confirm step
-      session.enter();
-      await session.waitForText("Ready to install", EXIT_TIMEOUT_MS);
-
-      const screen = session.getScreen();
+      await confirm.waitForReady();
+      const screen = confirm.getScreen();
       // Confirm step shows summary with skill/agent counts and install mode
       expect(screen).toContain("Skills:");
       expect(screen).toContain("Agents:");
@@ -88,110 +46,61 @@ describe("edit wizard — confirm step and completion", () => {
       expect(screen).toContain("ESC");
     });
 
-    it("should complete full edit flow and recompile agents", { timeout: 60_000 }, async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
-        skills: ["web-framework-react", "web-styling-tailwind"],
-        agents: ["web-developer"],
-        domains: ["web"],
-      });
+    it(
+      "should complete full edit flow and recompile agents",
+      { timeout: TIMEOUTS.PLUGIN_INSTALL },
+      async () => {
+        const project = await ProjectBuilder.editable({
+          skills: ["web-framework-react", "web-styling-tailwind"],
+          agents: ["web-developer"],
+          domains: ["web"],
+        });
 
-      // Permissions file prevents the blocking permission prompt after recompile
-      await createPermissionsFile(projectDir);
+        const source = await createE2ESource();
 
-      // Use a local E2E source to avoid triggering `claude plugin install/uninstall`
-      // commands that hang when a real `claude` binary is present on the system.
-      const source = await createE2ESource();
-      sourceTempDir = source.tempDir;
+        wizard = await EditWizard.launch({
+          projectDir: project.dir,
+          source,
+          cols: 120,
+          rows: 40,
+        });
 
-      session = new TerminalSession(["edit", "--source", source.sourceDir], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+        // Single domain — advance Build -> Sources -> Agents -> Confirm
+        const sources = await wizard.build.advanceToSources();
+        const agents = await sources.acceptDefaults();
+        const confirm = await agents.acceptDefaults("edit");
+        const result = await confirm.confirm();
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-
-      // Build step -> Sources step
-      session.enter();
-      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Sources step -> Agents step
-      session.enter();
-      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Agents step -> Confirm step
-      session.enter();
-      await session.waitForText("Ready to install", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Confirm step -> Complete (press Enter to confirm)
-      session.enter();
-
-      // Wait for recompilation to finish
-      await session.waitForText("Recompiling agents", INSTALL_TIMEOUT_MS);
-
-      const exitCode = await session.waitForExit(INSTALL_TIMEOUT_MS);
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      // Verify agents were written to disk
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-      expect(await directoryExists(agentsDir)).toBe(true);
-
-      const agentFiles = await listFiles(agentsDir);
-      const mdFiles = agentFiles.filter((f) => f.endsWith(".md"));
-      expect(mdFiles.length).toBeGreaterThan(0);
-    });
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+        await expect(result.project).toHaveCompiledAgents();
+      },
+    );
 
     it("should preserve skill selections when navigating back and forth", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-styling-tailwind"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
       // Verify pre-selected skill is shown
-      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
-      const outputBefore = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      const outputBefore = wizard.build.getOutput();
       expect(outputBefore).toMatch(/Framework.*\(1 of 1\)/);
 
-      // Build step -> Sources step
-      session.enter();
-      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Navigate forward: Build -> Sources -> Agents -> Confirm
+      const sources = await wizard.build.advanceToSources();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("edit");
 
-      // Sources step -> Agents step
-      session.enter();
-      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Go back from confirm -> agents -> sources -> build via ESC chain
+      const agentsBack = await confirm.goBackToAgents();
+      const sourcesBack = await agentsBack.goBack();
+      const buildAgain = await sourcesBack.goBack();
 
-      // Agents step -> Confirm step
-      session.enter();
-      await session.waitForText("Ready to install", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Go back from confirm step to build step via ESC
-      session.escape();
-      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      session.escape();
-      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      session.escape();
-      await session.waitForText("Web", EXIT_TIMEOUT_MS);
       // The pre-selected skill should still be shown after navigating back
-      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
-      const outputAfter = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      const outputAfter = buildAgain.getOutput();
       expect(outputAfter).toMatch(/Framework.*\(1 of 1\)/);
       expect(outputAfter).toContain("React");
     });
@@ -199,42 +108,24 @@ describe("edit wizard — confirm step and completion", () => {
 
   describe("confirm step navigation", () => {
     it("should return to agents step when pressing ESC on confirm step", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
+      const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-styling-tailwind"],
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-
-      // Build step -> Sources step
-      session.enter();
-      await session.waitForText("Customize skill sources", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Sources step -> Agents step
-      session.enter();
-      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Agents step -> Confirm step
-      session.enter();
-      await session.waitForText("Ready to install", EXIT_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      const sources = await wizard.build.advanceToSources();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("edit");
 
       // Press ESC on confirm step — should go back to agents step
-      session.escape();
-      await session.waitForText("Select agents", EXIT_TIMEOUT_MS);
+      await confirm.goBack();
 
-      const screen = session.getScreen();
+      const screen = agents.getOutput();
       // Should be back on the agents step, not exited
-      expect(screen).toContain("Select agents");
+      expect(screen).toContain(STEP_TEXT.AGENTS);
     });
   });
 });

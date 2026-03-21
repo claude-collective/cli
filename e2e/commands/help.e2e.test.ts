@@ -1,102 +1,163 @@
-import { execa } from "execa";
-import { describe, it, expect, beforeAll } from "vitest";
-import {
-  BIN_RUN,
-  ensureBinaryExists,
-  stripAnsi,
-  EXIT_CODES,
-  OCLIF_EXIT_CODES,
-} from "../helpers/test-utils.js";
+import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { createTempDir, cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
+import { CLI } from "../fixtures/cli.js";
+import { EXIT_CODES } from "../pages/constants.js";
 
 describe("help and version", () => {
+  let tempDir: string;
+
   beforeAll(ensureBinaryExists);
 
+  afterEach(async () => {
+    if (tempDir) {
+      await cleanupTempDir(tempDir);
+      tempDir = undefined!;
+    }
+  });
+
   it("should display top-level help with --help flag", async () => {
-    const result = await execa("node", [BIN_RUN, "--help"], { reject: false });
-    const stdout = stripAnsi(result.stdout);
+    tempDir = await createTempDir();
+    const result = await CLI.run(["--help"], { dir: tempDir });
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("USAGE");
-    expect(stdout).toContain("COMMANDS");
-    expect(stdout).toContain("compile");
-    expect(stdout).toContain("init");
-    expect(stdout).toContain("doctor");
-    expect(stdout).toContain("validate");
-    expect(stdout).toContain("config");
-    expect(stdout).toContain("edit");
-    expect(stdout).toContain("eject");
-    expect(stdout).toContain("list");
+    expect(result.stdout).toContain("USAGE");
+    expect(result.stdout).toContain("COMMANDS");
+    expect(result.stdout).toContain("compile");
+    expect(result.stdout).toContain("init");
+    expect(result.stdout).toContain("doctor");
+    expect(result.stdout).toContain("validate");
+    expect(result.stdout).toContain("config");
+    expect(result.stdout).toContain("edit");
+    expect(result.stdout).toContain("eject");
+    expect(result.stdout).toContain("list");
   });
 
   it("should display compile-specific help", async () => {
-    const result = await execa("node", [BIN_RUN, "compile", "--help"], { reject: false });
-    const stdout = stripAnsi(result.stdout);
+    tempDir = await createTempDir();
+    const result = await CLI.run(["compile", "--help"], { dir: tempDir });
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Compile agents");
-    expect(stdout).toContain("--verbose");
-    expect(stdout).toContain("--source");
+    expect(result.stdout).toContain("Compile agents");
+    expect(result.stdout).toContain("--verbose");
+    expect(result.stdout).toContain("--source");
   });
 
   it("should display init-specific help", async () => {
-    const result = await execa("node", [BIN_RUN, "init", "--help"], { reject: false });
-    const stdout = stripAnsi(result.stdout);
+    tempDir = await createTempDir();
+    const result = await CLI.run(["init", "--help"], { dir: tempDir });
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("init");
-    expect(stdout).toContain("USAGE");
+    expect(result.stdout).toContain("init");
+    expect(result.stdout).toContain("USAGE");
   });
 
   it("should display doctor-specific help", async () => {
-    const result = await execa("node", [BIN_RUN, "doctor", "--help"], { reject: false });
-    const stdout = stripAnsi(result.stdout);
+    tempDir = await createTempDir();
+    const result = await CLI.run(["doctor", "--help"], { dir: tempDir });
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Diagnose");
-    expect(stdout).toContain("--verbose");
-    expect(stdout).toContain("--source");
+    expect(result.stdout).toContain("Diagnose");
+    expect(result.stdout).toContain("--verbose");
+    expect(result.stdout).toContain("--source");
   });
 
   it("should display validate-specific help", async () => {
-    const result = await execa("node", [BIN_RUN, "validate", "--help"], { reject: false });
-    const stdout = stripAnsi(result.stdout);
+    tempDir = await createTempDir();
+    const result = await CLI.run(["validate", "--help"], { dir: tempDir });
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Validate");
-    expect(stdout).toContain("--plugins");
-    expect(stdout).toContain("--all");
-    expect(stdout).toContain("--source");
+    expect(result.stdout).toContain("Validate");
+    expect(result.stdout).toContain("--plugins");
+    expect(result.stdout).toContain("--all");
+    expect(result.stdout).toContain("--source");
   });
 
   it("should display help using 'help <command>' syntax", async () => {
-    const result = await execa("node", [BIN_RUN, "help", "compile"], { reject: false });
-    const stdout = stripAnsi(result.stdout);
+    tempDir = await createTempDir();
+    const result = await CLI.run(["help", "compile"], { dir: tempDir });
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Compile agents");
+    expect(result.stdout).toContain("Compile agents");
+  });
+
+  it("should display init help via 'help init' syntax", async () => {
+    tempDir = await createTempDir();
+    const result = await CLI.run(["help", "init"], { dir: tempDir });
+
+    expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(result.stdout).toContain("init");
+    expect(result.stdout).toContain("USAGE");
+    expect(result.stdout).toContain("--source");
+  });
+
+  it("should display edit help via 'help edit' syntax", async () => {
+    tempDir = await createTempDir();
+    const result = await CLI.run(["help", "edit"], { dir: tempDir });
+
+    expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(result.stdout).toContain("Edit skills");
+    expect(result.stdout).toContain("USAGE");
+    expect(result.stdout).toContain("--source");
+  });
+
+  it("should display edit-specific help with --help flag", async () => {
+    tempDir = await createTempDir();
+    const result = await CLI.run(["edit", "--help"], { dir: tempDir });
+
+    expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(result.stdout).toContain("Edit skills");
+    expect(result.stdout).toContain("--refresh");
+    expect(result.stdout).toContain("--agent-source");
+  });
+
+  it("should display build stack help via 'help build stack' syntax", async () => {
+    tempDir = await createTempDir();
+    const result = await CLI.run(["help", "build", "stack"], { dir: tempDir });
+
+    expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(result.stdout).toContain("Build a stack");
+    expect(result.stdout).toContain("USAGE");
+  });
+
+  it("should display search help via 'help search' syntax", async () => {
+    tempDir = await createTempDir();
+    const result = await CLI.run(["help", "search"], { dir: tempDir });
+
+    expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(result.stdout).toContain("Search available skills");
+    expect(result.stdout).toContain("USAGE");
+  });
+
+  it("should show error for help with unknown command", async () => {
+    tempDir = await createTempDir();
+    const result = await CLI.run(["help", "nonexistent-command"], { dir: tempDir });
+
+    // oclif shows an error when the command is not found
+    expect(result.exitCode).not.toBe(EXIT_CODES.SUCCESS);
+    expect(result.output).toContain("not found");
   });
 
   it("should display version with --version flag", async () => {
-    const result = await execa("node", [BIN_RUN, "--version"], { reject: false });
-    const stdout = stripAnsi(result.stdout);
+    tempDir = await createTempDir();
+    const result = await CLI.run(["--version"], { dir: tempDir });
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toMatch(/@agents-inc\/cli\/\d+\.\d+\.\d+/);
+    expect(result.stdout).toMatch(/@agents-inc\/cli\/\d+\.\d+\.\d+/);
   });
 
   it("should show error for unknown command", async () => {
-    const result = await execa("node", [BIN_RUN, "nonexistent-command"], { reject: false });
-    const combined = stripAnsi(result.stdout + result.stderr);
+    tempDir = await createTempDir();
+    const result = await CLI.run(["nonexistent-command"], { dir: tempDir });
 
-    expect(result.exitCode).toBe(OCLIF_EXIT_CODES.UNKNOWN_COMMAND);
-    expect(combined).toContain("is not a");
+    expect(result.exitCode).toBe(EXIT_CODES.UNKNOWN_COMMAND);
+    expect(result.output).toContain("is not a");
   });
 
   it("should show error for invalid flag on compile", async () => {
-    const result = await execa("node", [BIN_RUN, "compile", "--invalid-flag"], { reject: false });
-    const combined = stripAnsi(result.stdout + result.stderr);
+    tempDir = await createTempDir();
+    const result = await CLI.run(["compile", "--invalid-flag"], { dir: tempDir });
 
     expect(result.exitCode).toBe(EXIT_CODES.INVALID_ARGS);
-    expect(combined).toContain("Nonexistent flag");
+    expect(result.output).toContain("Nonexistent flag");
   });
 });

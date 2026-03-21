@@ -1,37 +1,36 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { TerminalSession } from "../helpers/terminal-session.js";
+import { TIMEOUTS, EXIT_CODES, STEP_TEXT } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
+  createE2ESource,
   ensureBinaryExists,
-  delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  KEYSTROKE_DELAY_MS,
-  EXIT_TIMEOUT_MS,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { InteractivePrompt } from "../fixtures/interactive-prompt.js";
 
 /**
- * E2E tests for the `search` command — interactive mode.
+ * E2E tests for the `search` command -- interactive mode.
  *
  * Interactive mode is triggered by running `search` without a query argument
  * or with the -i flag. It renders an Ink search UI.
  *
  * Tests use CC_SOURCE env var to point to a local source, avoiding network calls.
+ *
+ * Note: The search interactive UI is NOT the wizard, so it does not use
+ * wizard page objects. It uses InteractivePrompt (which wraps TerminalSession
+ * internally).
  */
-describe("search command — interactive mode", () => {
+describe("search command -- interactive mode", () => {
   let tempDir: string;
-  let session: TerminalSession | undefined;
+  let prompt: InteractivePrompt | undefined;
   let sourceDir: string | undefined;
   let sourceTempDir: string | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
+    await prompt?.destroy();
+    prompt = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
       tempDir = undefined!;
@@ -53,31 +52,28 @@ describe("search command — interactive mode", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         env: { CC_SOURCE: sourceDir },
       });
 
-      // The search command logs "Loading skills from all sources..." before rendering the UI
-      await session.waitForText("Loading skills", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText(STEP_TEXT.LOADING_SKILLS, TIMEOUTS.WIZARD_LOAD);
     });
 
     it("should show the search UI header after loading", async () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      // The SkillSearch component renders "Search Skills" in the header
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
 
-      const screen = session.getScreen();
-      // The footer shows navigation hints
-      expect(screen).toContain("navigate");
-      expect(screen).toContain("ESC");
+      const output = prompt.getScreen();
+      expect(output).toContain("navigate");
+      expect(output).toContain("ESC");
     });
   });
 
@@ -86,17 +82,16 @@ describe("search command — interactive mode", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search", "-i", "react"], tempDir, {
+      prompt = new InteractivePrompt(["search", "-i", "react"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      // The interactive search should render with the query pre-filled
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
 
-      const screen = session.getScreen();
-      expect(screen).toContain("react");
+      const output = prompt.getScreen();
+      expect(output).toContain("react");
     });
   });
 
@@ -105,79 +100,74 @@ describe("search command — interactive mode", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
 
-      const screen = session.getScreen();
-      // The E2E source includes skills like web-framework-react
-      expect(screen).toContain("react");
+      const output = prompt.getScreen();
+      expect(output).toContain("react");
     });
 
     it("should filter results when typing a query", async () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      // Type a query to filter results
-      session.write("hono");
-      await delay(STEP_TRANSITION_DELAY_MS);
+      for (const char of "hono") {
+        await prompt.pressKey(char);
+      }
 
-      const screen = session.getScreen();
-      expect(screen).toContain("hono");
+      const output = prompt.getScreen();
+      expect(output).toContain("hono");
     });
 
     it("should show no results message for unmatched interactive query", async () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      // Type characters one at a time to avoid PTY buffering issues
       for (const char of "zzzzq") {
-        session.write(char);
-        await delay(KEYSTROKE_DELAY_MS);
+        await prompt.pressKey(char);
       }
-      await delay(STEP_TRANSITION_DELAY_MS);
 
-      const screen = session.getScreen();
-      expect(screen).toContain("No skills found");
+      const output = prompt.getScreen();
+      expect(output).toContain("No skills found");
     });
 
     it("should show result count in status bar", async () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
 
-      const screen = session.getScreen();
-      // StatusBar shows "N result(s)"
-      expect(screen).toMatch(/\d+ results?/);
+      const output = prompt.getScreen();
+      expect(output).toMatch(/\d+ results?/);
     });
   });
 
@@ -186,32 +176,25 @@ describe("search command — interactive mode", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      // Select the first (focused) skill
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
+      await prompt.space();
 
-      const screenAfterFirstSelect = session.getScreen();
+      const screenAfterFirstSelect = prompt.getScreen();
       expect(screenAfterFirstSelect).toContain("1 selected");
 
-      // Navigate down to a different skill and select it too
-      session.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
+      await prompt.arrowDown();
 
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
+      await prompt.space();
 
-      const screenAfterSecondSelect = session.getScreen();
-
-      // Having "2 selected" proves arrow down moved focus to a different skill
+      const screenAfterSecondSelect = prompt.getScreen();
       expect(screenAfterSecondSelect).toContain("2 selected");
     });
   });
@@ -221,25 +204,19 @@ describe("search command — interactive mode", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      // SPACE toggles selection on the focused skill
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
+      await prompt.space();
 
-      const screenAfterSelect = session.getScreen();
-
-      // StatusBar should show "1 selected" after selecting one skill
+      const screenAfterSelect = prompt.getScreen();
       expect(screenAfterSelect).toContain("1 selected");
-
-      // Footer should now show the ENTER/import hint (only visible when hasSelection)
       expect(screenAfterSelect).toContain("import");
     });
 
@@ -249,24 +226,22 @@ describe("search command — interactive mode", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      // Select and import
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
-      session.enter();
+      await prompt.space();
+      await prompt.pressEnter();
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const rawOutput = session.getRawOutput();
+      const rawOutput = prompt.getRawOutput();
       expect(rawOutput).toContain("Importing 1 skill");
     });
   });
@@ -276,29 +251,23 @@ describe("search command — interactive mode", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
+      await prompt.pressEnter(); // Wait for stable render via transition delay
 
-      // Navigate down through multiple results (the E2E source has 10 skills)
       for (let i = 0; i < 5; i++) {
-        session.arrowDown();
-        await delay(KEYSTROKE_DELAY_MS);
+        await prompt.arrowDown();
       }
 
-      // Select the skill at the 6th position to prove we navigated there
-      session.space();
-      await delay(KEYSTROKE_DELAY_MS);
+      await prompt.space();
 
-      const afterScrollScreen = session.getScreen();
-
+      const afterScrollScreen = prompt.getScreen();
       expect(afterScrollScreen).toMatch(/\d+ results?/);
-
       expect(afterScrollScreen).toContain("1 selected");
     });
   });
@@ -308,18 +277,17 @@ describe("search command — interactive mode", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
 
-      session.ctrlC();
+      await prompt.ctrlC();
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     });
 
@@ -327,19 +295,17 @@ describe("search command — interactive mode", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(["search"], tempDir, {
+      prompt = new InteractivePrompt(["search"], tempDir, {
         rows: 40,
         cols: 120,
         env: { CC_SOURCE: sourceDir },
       });
 
-      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await prompt.waitForText(STEP_TEXT.SEARCH, TIMEOUTS.WIZARD_LOAD);
 
-      session.escape();
+      await prompt.escape();
 
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
-      // ESC triggers onCancel which calls exit(EXIT_CODES.CANCELLED)
+      const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     });
   });

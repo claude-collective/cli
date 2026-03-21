@@ -1,12 +1,12 @@
 import path from "path";
+import { CLI } from "../fixtures/cli.js";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { EXIT_CODES } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
   fileExists,
-  runCLI,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
 
 describe("build commands", () => {
@@ -25,7 +25,7 @@ describe("build commands", () => {
     it("should display help text", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["build", "plugins", "--help"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["build", "plugins", "--help"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Build skills and agents into standalone plugins");
@@ -34,7 +34,7 @@ describe("build commands", () => {
     it("should complete with zero plugins when no source directory exists", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["build", "plugins"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["build", "plugins"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Compiling skill plugins");
@@ -45,22 +45,22 @@ describe("build commands", () => {
     it("should error when --skill references a nonexistent path", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, combined } = await runCLI(
+      const { exitCode, output } = await CLI.run(
         ["build", "plugins", "--skill", "nonexistent-skill"],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("Compilation failed");
+      expect(output).toContain("Compilation failed");
     });
 
     it("should use a custom output directory with --output-dir", async () => {
       tempDir = await createTempDir();
       const customOutputDir = path.join(tempDir, "custom-plugins");
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["build", "plugins", "--output-dir", customOutputDir],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -71,7 +71,9 @@ describe("build commands", () => {
     it("should accept --verbose flag", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["build", "plugins", "--verbose"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["build", "plugins", "--verbose"], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Compiling skill plugins");
@@ -82,7 +84,9 @@ describe("build commands", () => {
     it("should display help text", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["build", "marketplace", "--help"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["build", "marketplace", "--help"], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Generate marketplace.json from built plugins");
@@ -91,7 +95,7 @@ describe("build commands", () => {
     it("should complete with zero plugins when no plugins directory exists", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["build", "marketplace"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["build", "marketplace"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Generating marketplace.json");
@@ -103,9 +107,9 @@ describe("build commands", () => {
       tempDir = await createTempDir();
       const customOutput = path.join(tempDir, "custom-marketplace.json");
 
-      const { exitCode, stdout } = await runCLI(
+      const { exitCode, stdout } = await CLI.run(
         ["build", "marketplace", "--output", customOutput],
-        tempDir,
+        { dir: tempDir },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -118,10 +122,9 @@ describe("build commands", () => {
       tempDir = await createTempDir();
       const customName = "my-custom-marketplace";
 
-      const { exitCode, stdout } = await runCLI(
-        ["build", "marketplace", "--name", customName],
-        tempDir,
-      );
+      const { exitCode, stdout } = await CLI.run(["build", "marketplace", "--name", customName], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Marketplace generated with 0 plugins!");

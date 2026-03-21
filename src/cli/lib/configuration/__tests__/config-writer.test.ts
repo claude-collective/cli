@@ -1,6 +1,14 @@
+import os from "os";
+import path from "path";
 import { describe, it, expect } from "vitest";
-import { generateConfigSource } from "../config-writer";
-import { buildProjectConfig, buildSkillConfigs } from "../../__tests__/helpers";
+import {
+  generateConfigSource,
+  generateBlankGlobalConfigSource,
+  generateBlankGlobalConfigTypesSource,
+  getGlobalConfigImportPath,
+} from "../config-writer";
+import { buildProjectConfig, buildSkillConfigs, buildAgentConfigs } from "../../__tests__/helpers";
+import { CLAUDE_SRC_DIR } from "../../../consts";
 
 describe("generateConfigSource", () => {
   it("produces valid TypeScript with import type, export default, and named variables", () => {
@@ -142,5 +150,549 @@ describe("generateConfigSource", () => {
       source.indexOf("satisfies ProjectConfig;"),
     );
     expect(exportBlock).toContain("domains,");
+  });
+
+  describe("empty config", () => {
+    it("handles config with no skills, no agents, no domains, no stack", () => {
+      const config = buildProjectConfig({
+        name: "empty-project",
+        skills: [],
+        agents: [],
+        domains: undefined,
+        stack: undefined,
+      });
+      const source = generateConfigSource(config);
+      expect(source).toContain('"name": "empty-project"');
+      expect(source).toContain("skills: [],");
+      expect(source).toContain("agents: [],");
+      expect(source).not.toContain("const stack:");
+      expect(source).not.toContain("const domains:");
+      expect(source).toContain("satisfies ProjectConfig;");
+      // Only ProjectConfig type should be imported
+      const importLine = source.split("\n")[0];
+      expect(importLine).toBe('import type { ProjectConfig } from "./config-types";');
+    });
+
+    it("does not emit domains field when domains is undefined", () => {
+      const config = buildProjectConfig({
+        name: "test-empty",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config);
+      expect(source).not.toContain("domains");
+    });
+
+    it("handles empty domains array", () => {
+      const config = buildProjectConfig({
+        name: "empty-domains",
+        skills: [],
+        agents: [],
+        domains: [],
+      });
+      const source = generateConfigSource(config);
+      // Empty domains array: inline empty in export default, no extracted variable
+      expect(source).toContain("domains: [],");
+      expect(source).not.toContain("const domains:");
+    });
+  });
+
+  describe("global-scope items", () => {
+    it("serializes skills with global scope", () => {
+      const config = buildProjectConfig({
+        name: "global-project",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+      });
+      const source = generateConfigSource(config);
+      expect(source).toContain('"scope":"global"');
+      expect(source).toContain('"id":"web-framework-react"');
+    });
+
+    it("serializes agents with global scope", () => {
+      const config = buildProjectConfig({
+        name: "global-agents",
+        skills: [],
+        agents: buildAgentConfigs(["web-developer", "api-developer"], { scope: "global" }),
+      });
+      const source = generateConfigSource(config);
+      // Each agent object should contain scope: "global"
+      const agentSection = source.slice(
+        source.indexOf("const agents:"),
+        source.indexOf("];", source.indexOf("const agents:")) + 2,
+      );
+      expect(agentSection).toContain('"scope":"global"');
+      expect(agentSection).toContain('"name":"web-developer"');
+      expect(agentSection).toContain('"name":"api-developer"');
+    });
+
+    it("mixes project and global scope items", () => {
+      const config = buildProjectConfig({
+        name: "mixed-scope",
+        skills: [
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+          ...buildSkillConfigs(["api-framework-hono"], { scope: "project" }),
+        ],
+        agents: [
+          ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+          ...buildAgentConfigs(["api-developer"], { scope: "project" }),
+        ],
+      });
+      const source = generateConfigSource(config);
+      // Both scopes should appear in the output
+      const globalCount = (source.match(/"scope":"global"/g) || []).length;
+      const projectCount = (source.match(/"scope":"project"/g) || []).length;
+      expect(globalCount).toBe(2); // 1 skill + 1 agent
+      expect(projectCount).toBe(2); // 1 skill + 1 agent
+    });
+  });
+
+  describe("special characters in name", () => {
+    it("escapes double quotes in project name", () => {
+      const config = buildProjectConfig({
+        name: 'my "quoted" project',
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config);
+      // JSON.stringify escapes quotes
+      expect(source).toContain('"name": "my \\"quoted\\" project"');
+    });
+
+    it("escapes backslashes in project name", () => {
+      const config = buildProjectConfig({
+        name: "my\\backslash\\project",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config);
+      // JSON.stringify escapes backslashes
+      expect(source).toContain("my\\\\backslash\\\\project");
+    });
+
+    it("handles names with unicode characters", () => {
+      const config = buildProjectConfig({
+        name: "projet-francais",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config);
+      expect(source).toContain('"name": "projet-francais"');
+      expect(source).toContain("satisfies ProjectConfig;");
+    });
+  });
+
+  describe("standalone generation (no global import)", () => {
+    it("does not import from global config when isProjectConfig is not set", () => {
+      const config = buildProjectConfig();
+      const source = generateConfigSource(config);
+      expect(source).not.toContain("globalConfig");
+      expect(source).not.toContain("...globalConfig");
+      expect(source).toContain('from "./config-types"');
+    });
+
+    it("does not import from global config when options is undefined", () => {
+      const config = buildProjectConfig();
+      const source = generateConfigSource(config, undefined);
+      expect(source).not.toContain("globalConfig");
+    });
+
+    it("does not import from global config when isProjectConfig is false", () => {
+      const config = buildProjectConfig();
+      const source = generateConfigSource(config, { isProjectConfig: false });
+      expect(source).not.toContain("globalConfig");
+    });
+  });
+
+  describe("project config with global import", () => {
+    it("imports from global config when isProjectConfig is true", () => {
+      const config = buildProjectConfig();
+      const source = generateConfigSource(config, { isProjectConfig: true });
+      expect(source).toContain("import globalConfig from");
+      expect(source).toContain("...globalConfig,");
+    });
+
+    it("spreads global skills and agents into project arrays", () => {
+      const config = buildProjectConfig({
+        name: "project-with-global",
+        skills: buildSkillConfigs(["web-framework-react"]),
+        agents: buildAgentConfigs(["web-developer"]),
+      });
+      const source = generateConfigSource(config, { isProjectConfig: true });
+      expect(source).toContain("...globalConfig.skills,");
+      expect(source).toContain("...globalConfig.agents,");
+    });
+
+    it("always declares skills and agents variables even when empty", () => {
+      const config = buildProjectConfig({
+        name: "project-empty",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config, { isProjectConfig: true });
+      // In project mode, skills/agents always declared to spread global
+      expect(source).toContain("const skills: SkillConfig[]");
+      expect(source).toContain("const agents: AgentScopeConfig[]");
+      expect(source).toContain("...globalConfig.skills,");
+      expect(source).toContain("...globalConfig.agents,");
+    });
+
+    it("spreads global domains when project has domains", () => {
+      const config = buildProjectConfig({
+        name: "project-domains",
+        skills: [],
+        agents: [],
+        domains: ["web"],
+      });
+      const source = generateConfigSource(config, { isProjectConfig: true });
+      expect(source).toContain("...(globalConfig.domains ?? []),");
+      expect(source).toContain('"web"');
+    });
+
+    it("does not declare domains variable when project has no domains", () => {
+      const config = buildProjectConfig({
+        name: "project-no-domains",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config, { isProjectConfig: true });
+      expect(source).not.toContain("const domains:");
+    });
+
+    it("spreads global selectedAgents when project has selectedAgents", () => {
+      const config = buildProjectConfig({
+        name: "project-agents",
+        skills: [],
+        agents: [],
+        selectedAgents: ["web-developer" as any],
+      });
+      const source = generateConfigSource(config, { isProjectConfig: true });
+      expect(source).toContain("...(globalConfig.selectedAgents ?? [])");
+      expect(source).toContain('"web-developer"');
+    });
+
+    it("uses default plugin name when config name is 'global'", () => {
+      const config = buildProjectConfig({
+        name: "global",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config, { isProjectConfig: true });
+      // Should not inherit "global" as name, should use DEFAULT_PLUGIN_NAME
+      // In project config mode, the name key is unquoted
+      expect(source).toContain('name: "agents-inc"');
+    });
+  });
+
+  describe("complex stack", () => {
+    it("handles multiple agents with multiple categories each", () => {
+      const config = buildProjectConfig({
+        name: "complex-stack",
+        skills: [
+          ...buildSkillConfigs(["web-framework-react"]),
+          ...buildSkillConfigs(["web-styling-tailwind"]),
+          ...buildSkillConfigs(["api-framework-hono"]),
+          ...buildSkillConfigs(["api-database-drizzle"]),
+        ],
+        agents: [...buildAgentConfigs(["web-developer"]), ...buildAgentConfigs(["api-developer"])],
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+            "web-styling": [{ id: "web-styling-tailwind", preloaded: true }],
+          },
+          "api-developer": {
+            "api-api": [{ id: "api-framework-hono", preloaded: false }],
+            "api-database": [{ id: "api-database-drizzle", preloaded: false }],
+          },
+        },
+      });
+      const source = generateConfigSource(config);
+      // Stack should be extracted as named variable
+      expect(source).toContain("const stack: Partial<Record<AgentName, StackAgentConfig>>");
+      // Both agents should appear in stack
+      expect(source).toContain('"web-developer"');
+      expect(source).toContain('"api-developer"');
+      // Categories should appear
+      expect(source).toContain('"web-framework"');
+      expect(source).toContain('"web-styling"');
+      expect(source).toContain('"api-api"');
+      expect(source).toContain('"api-database"');
+      // Preloaded skill should retain object format
+      expect(source).toContain('"preloaded": true');
+      // Non-preloaded single skills should be compacted to bare strings
+      expect(source).toContain('"web-framework": "web-framework-react"');
+      expect(source).toContain('"api-api": "api-framework-hono"');
+      expect(source).toContain('"api-database": "api-database-drizzle"');
+    });
+
+    it("handles stack with multiple skills per category", () => {
+      const config = buildProjectConfig({
+        name: "multi-skill-category",
+        skills: [
+          ...buildSkillConfigs(["web-framework-react"]),
+          ...buildSkillConfigs(["web-meta-framework-nextjs"]),
+        ],
+        agents: buildAgentConfigs(["web-developer"]),
+        stack: {
+          "web-developer": {
+            "web-framework": [
+              { id: "web-framework-react", preloaded: false },
+              { id: "web-meta-framework-nextjs", preloaded: false },
+            ],
+          },
+        },
+      });
+      const source = generateConfigSource(config);
+      // Multiple skills should be an array of bare strings
+      expect(source).toContain('"web-framework-react"');
+      expect(source).toContain('"web-meta-framework-nextjs"');
+    });
+  });
+
+  describe("empty arrays for skills and agents", () => {
+    it("uses inline empty arrays in export default", () => {
+      const config = buildProjectConfig({
+        name: "empty-arrays",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config);
+      expect(source).toContain("skills: [],");
+      expect(source).toContain("agents: [],");
+    });
+
+    it("does not extract named variables for empty arrays", () => {
+      const config = buildProjectConfig({
+        name: "no-extraction",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config);
+      expect(source).not.toContain("const skills: SkillConfig[]");
+      expect(source).not.toContain("const agents: AgentScopeConfig[]");
+    });
+  });
+
+  describe("syntactic validity", () => {
+    /**
+     * Strips TypeScript-specific syntax so the generated config can be
+     * evaluated as plain JavaScript inside `new Function()`.
+     * - Removes import type statements
+     * - Removes `satisfies ProjectConfig`
+     * - Strips type annotations from const declarations
+     * - Replaces `export default` with a variable assignment
+     */
+    function stripTsForEval(source: string): string {
+      return source
+        .replace(/import type \{[^}]+\} from "\.\/config-types";\n/, "")
+        .replace(/ satisfies ProjectConfig/, "")
+        .replace(/const (\w+): [^=]+=/g, "const $1 =")
+        .replace("export default", "const __config =");
+    }
+
+    it("generates parseable JavaScript when type annotations are stripped", () => {
+      const config = buildProjectConfig({
+        name: "valid-js",
+        skills: buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+        agents: buildAgentConfigs(["web-developer", "api-developer"]),
+        domains: ["web", "api"],
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+      const source = stripTsForEval(generateConfigSource(config));
+
+      // Should not throw when evaluated as JavaScript
+      expect(() => {
+        new Function(source);
+      }).not.toThrow();
+    });
+
+    it("generates valid output for minimal config", () => {
+      const config = buildProjectConfig({ name: "minimal", skills: [], agents: [] });
+      const source = stripTsForEval(generateConfigSource(config));
+
+      expect(() => {
+        new Function(source);
+      }).not.toThrow();
+    });
+
+    it("generates valid output for complex config", () => {
+      const config = buildProjectConfig({
+        name: "complex-valid",
+        description: "A complex project",
+        author: "@tester",
+        skills: [
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+          ...buildSkillConfigs(["api-framework-hono"], { scope: "project" }),
+        ],
+        agents: [
+          ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+          ...buildAgentConfigs(["api-developer"], { scope: "project" }),
+        ],
+        domains: ["web", "api"],
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: true }],
+          },
+          "api-developer": {
+            "api-api": [{ id: "api-framework-hono", preloaded: false }],
+          },
+        },
+      });
+      const source = stripTsForEval(generateConfigSource(config));
+
+      expect(() => {
+        new Function(source);
+      }).not.toThrow();
+    });
+  });
+
+  describe("satisfies type assertion", () => {
+    it("always ends export default with satisfies ProjectConfig", () => {
+      const config = buildProjectConfig();
+      const source = generateConfigSource(config);
+      expect(source).toContain("} satisfies ProjectConfig;");
+    });
+
+    it("contains satisfies for empty config", () => {
+      const config = buildProjectConfig({ name: "empty", skills: [], agents: [] });
+      const source = generateConfigSource(config);
+      expect(source).toContain("} satisfies ProjectConfig;");
+    });
+
+    it("contains satisfies for project config mode", () => {
+      const config = buildProjectConfig();
+      const source = generateConfigSource(config, { isProjectConfig: true });
+      expect(source).toContain("} satisfies ProjectConfig;");
+    });
+  });
+
+  describe("scalar fields", () => {
+    it("serializes description and author", () => {
+      const config = buildProjectConfig({
+        name: "with-meta",
+        description: "A test project",
+        author: "@tester",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config);
+      expect(source).toContain('"description": "A test project"');
+      expect(source).toContain('"author": "@tester"');
+    });
+
+    it("serializes source and marketplace fields", () => {
+      const config = buildProjectConfig({
+        name: "with-source",
+        source: "/path/to/skills",
+        marketplace: "custom-marketplace",
+        skills: [],
+        agents: [],
+      });
+      const source = generateConfigSource(config);
+      expect(source).toContain('"source": "/path/to/skills"');
+      expect(source).toContain('"marketplace": "custom-marketplace"');
+    });
+  });
+});
+
+describe("generateBlankGlobalConfigSource", () => {
+  it("generates a config with name 'global'", () => {
+    const source = generateBlankGlobalConfigSource();
+    expect(source).toContain('"name": "global"');
+  });
+
+  it("has empty skills, agents, and domains arrays", () => {
+    const source = generateBlankGlobalConfigSource();
+    expect(source).toContain('"skills": []');
+    expect(source).toContain('"agents": []');
+    expect(source).toContain('"domains": []');
+  });
+
+  it("contains import type from config-types", () => {
+    const source = generateBlankGlobalConfigSource();
+    expect(source).toContain('import type { ProjectConfig } from "./config-types"');
+  });
+
+  it("contains satisfies ProjectConfig", () => {
+    const source = generateBlankGlobalConfigSource();
+    expect(source).toContain("satisfies ProjectConfig;");
+  });
+
+  it("ends with a trailing newline", () => {
+    const source = generateBlankGlobalConfigSource();
+    expect(source.endsWith("\n")).toBe(true);
+  });
+
+  it("generates parseable JavaScript when type annotations are stripped", () => {
+    let source = generateBlankGlobalConfigSource();
+    source = source.replace(/import type \{[^}]+\} from "\.\/config-types";\n/, "");
+    source = source.replace(/ satisfies ProjectConfig/, "");
+    source = source.replace("export default", "const __config =");
+
+    expect(() => {
+      new Function(source);
+    }).not.toThrow();
+  });
+});
+
+describe("generateBlankGlobalConfigTypesSource", () => {
+  it("marks all union types as never", () => {
+    const source = generateBlankGlobalConfigTypesSource();
+    expect(source).toContain("export type SkillId = never;");
+    expect(source).toContain("export type AgentName = never;");
+    expect(source).toContain("export type Domain = never;");
+    expect(source).toContain("export type Category = never;");
+  });
+
+  it("contains auto-generated header", () => {
+    const source = generateBlankGlobalConfigTypesSource();
+    expect(source).toContain("AUTO-GENERATED by agentsinc");
+    expect(source).toContain("DO NOT EDIT");
+  });
+
+  it("contains StackAgentConfig type", () => {
+    const source = generateBlankGlobalConfigTypesSource();
+    expect(source).toContain("export type StackAgentConfig");
+  });
+
+  it("contains ProjectConfig interface", () => {
+    const source = generateBlankGlobalConfigTypesSource();
+    expect(source).toContain("export interface ProjectConfig");
+  });
+
+  it("contains SkillConfig type", () => {
+    const source = generateBlankGlobalConfigTypesSource();
+    expect(source).toContain("export type SkillConfig");
+  });
+
+  it("contains AgentScopeConfig type", () => {
+    const source = generateBlankGlobalConfigTypesSource();
+    expect(source).toContain("export type AgentScopeConfig");
+  });
+
+  it("contains SkillAssignment type", () => {
+    const source = generateBlankGlobalConfigTypesSource();
+    expect(source).toContain("export type SkillAssignment");
+  });
+});
+
+describe("getGlobalConfigImportPath", () => {
+  it("returns a path under the home directory", () => {
+    const importPath = getGlobalConfigImportPath();
+    expect(importPath.startsWith(os.homedir())).toBe(true);
+  });
+
+  it("includes the claude-src directory", () => {
+    const importPath = getGlobalConfigImportPath();
+    expect(importPath).toContain(CLAUDE_SRC_DIR);
+  });
+
+  it("returns an absolute path", () => {
+    const importPath = getGlobalConfigImportPath();
+    expect(path.isAbsolute(importPath)).toBe(true);
   });
 });

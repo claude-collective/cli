@@ -1,340 +1,158 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { TerminalSession } from "../helpers/terminal-session.js";
-import {
-  createTempDir,
-  cleanupTempDir,
-  ensureBinaryExists,
-  delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  KEYSTROKE_DELAY_MS,
-} from "../helpers/test-utils.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { InitWizard } from "../pages/wizards/init-wizard.js";
+import { STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
+import { ensureBinaryExists } from "../helpers/test-utils.js";
+import "../matchers/setup.js";
 
 describe("init wizard — UI elements", () => {
-  let session: TerminalSession | undefined;
-  let projectDir: string | undefined;
-  let sourceDir: string | undefined;
-  let sourceTempDir: string | undefined;
+  let wizard: InitWizard | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
-
-    if (projectDir) {
-      await cleanupTempDir(projectDir);
-      projectDir = undefined;
-    }
-    if (sourceTempDir) {
-      await cleanupTempDir(sourceTempDir);
-      sourceTempDir = undefined;
-    }
+    await wizard?.destroy();
+    wizard = undefined;
   });
-
-  async function createProjectAndSource(): Promise<void> {
-    projectDir = await createTempDir();
-    const source = await createE2ESource();
-    sourceDir = source.sourceDir;
-    sourceTempDir = source.tempDir;
-  }
-
-  function spawnInitWizard(
-    cwd: string,
-    sourcePath: string,
-    options?: { cols?: number; rows?: number },
-  ): TerminalSession {
-    return new TerminalSession(["init", "--source", sourcePath], cwd, {
-      cols: options?.cols,
-      rows: options?.rows,
-      env: { AGENTSINC_SOURCE: undefined },
-    });
-  }
-
-  /**
-   * Navigates the scratch flow from stack selection through to the confirm step.
-   * Selects "Start from scratch", accepts default domains, advances through all
-   * domain build steps, accepts default sources, accepts default agents.
-   */
-  async function navigateScratchToConfirm(wizardSession: TerminalSession): Promise<void> {
-    // Stack selection — navigate to "Start from scratch" and select it
-    await wizardSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.arrowDown();
-    await delay(KEYSTROKE_DELAY_MS);
-    wizardSession.enter();
-
-    // Domain selection — accept pre-selected defaults
-    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.enter();
-
-    // Build step — select required skill in each domain, then advance
-    await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.space();
-    await delay(KEYSTROKE_DELAY_MS);
-    wizardSession.enter();
-
-    await wizardSession.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.space();
-    await delay(KEYSTROKE_DELAY_MS);
-    wizardSession.enter();
-
-    // Scratch pre-selects mobile via DEFAULT_SCRATCH_DOMAINS; advance past it (no required categories)
-    await wizardSession.waitForText("Mobile", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.enter();
-
-    // Sources step — accept recommended defaults
-    await wizardSession.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.enter();
-
-    // Agents step — continue with pre-selected agents
-    await wizardSession.waitForText("Select agents", WIZARD_LOAD_TIMEOUT_MS);
-    await delay(STEP_TRANSITION_DELAY_MS);
-    wizardSession.enter();
-
-    // Confirm step
-    await wizardSession.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-  }
 
   describe("terminal size handling", () => {
     it("should show resize warning in a narrow terminal", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!, { cols: 40, rows: 40 });
+      wizard = await InitWizard.launchRaw({ cols: 40, rows: 40 });
 
-      await session.waitForText("too narrow", WIZARD_LOAD_TIMEOUT_MS);
-
-      const screen = session.getScreen();
+      const screen = wizard.getScreen();
       expect(screen).toContain("resize your terminal");
     });
 
     it("should show resize warning in a short terminal", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!, { cols: 120, rows: 10 });
+      wizard = await InitWizard.launchRaw({ cols: 120, rows: 10 });
 
-      await session.waitForText("too short", WIZARD_LOAD_TIMEOUT_MS);
-
-      const screen = session.getScreen();
+      const screen = wizard.getScreen();
       expect(screen).toContain("resize your terminal");
     });
   });
 
   describe("wizard UI elements", () => {
     it("should display hotkey hints in the footer", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("select");
-      expect(fullOutput).toContain("select");
-      expect(fullOutput).toContain("continue");
-      expect(fullOutput).toContain("back");
+      const output = wizard.stack.getOutput();
+      expect(output).toContain("select");
+      expect(output).toContain("continue");
+      expect(output).toContain("back");
     });
 
     it("should display wizard step tabs", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("Stack");
-      expect(fullOutput).toContain("Skills");
-      expect(fullOutput).toContain("Sources");
-      expect(fullOutput).toContain("Agents");
-      expect(fullOutput).toContain("Confirm");
+      const output = wizard.stack.getOutput();
+      expect(output).toContain("Stack");
+      expect(output).toContain("Skills");
+      expect(output).toContain("Sources");
+      expect(output).toContain("Agents");
+      expect(output).toContain("Confirm");
     });
   });
 
   describe("wizard toggle badges and keyboard shortcuts", () => {
-    /**
-     * Navigates the stack flow from stack selection to the build step.
-     * Selects the first stack, accepts default domains, arrives at build step.
-     */
-    async function navigateStackToBuild(wizardSession: TerminalSession): Promise<void> {
-      await wizardSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.enter();
-
-      await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.enter();
-
-      await wizardSession.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-    }
-
-    /**
-     * Navigates the scratch flow from stack selection to the sources step.
-     * Selects "Start from scratch", accepts default domains, advances through
-     * all domain build steps, arrives at sources step.
-     */
-    async function navigateScratchToSources(wizardSession: TerminalSession): Promise<void> {
-      await wizardSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.arrowDown();
-      await delay(KEYSTROKE_DELAY_MS);
-      wizardSession.enter();
-
-      await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.enter();
-
-      await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.space();
-      await delay(KEYSTROKE_DELAY_MS);
-      wizardSession.enter();
-
-      await wizardSession.waitForText("API", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.space();
-      await delay(KEYSTROKE_DELAY_MS);
-      wizardSession.enter();
-
-      await wizardSession.waitForText("Mobile", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.enter();
-
-      await wizardSession.waitForText("Customize skill sources", WIZARD_LOAD_TIMEOUT_MS);
-    }
-
     it("should toggle scope badge when S key is pressed in build step", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await navigateStackToBuild(session);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      const domain = await wizard.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
 
-      // Press S to toggle focused skill's scope to global
-      session.write("S");
-      await delay(KEYSTROKE_DELAY_MS);
+      // Press S to toggle focused skill's scope
+      await build.toggleScopeOnFocusedSkill();
 
-      // The focused skill should now show the "G" badge for global scope
-      const output = session.getFullOutput();
+      const output = build.getOutput();
       expect(output).toContain("Framework");
     });
 
     it("should open help modal when ? key is pressed and close it with ESC", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
-
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      wizard = await InitWizard.launch();
 
       // Press ? to open help modal
-      session.write("?");
+      await wizard.stack.openHelp();
 
-      // Wait for help modal to render (contains navigation instructions)
-      await session.waitForText("Toggle selection", WIZARD_LOAD_TIMEOUT_MS);
-
-      // Verify help modal content appears via screen (xterm-processed view)
-      const helpScreen = session.getScreen();
+      const helpScreen = wizard.stack.getScreen();
       expect(helpScreen).toContain("Navigation");
       expect(helpScreen).toContain("Toggles");
 
       // Press ESC to close help modal
-      session.escape();
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await wizard.stack.closeHelp();
 
-      // Verify help modal is closed and wizard step content is visible again
-      const afterCloseScreen = session.getScreen();
-      expect(afterCloseScreen).toContain("Choose a stack");
+      const afterCloseScreen = wizard.stack.getScreen();
+      expect(afterCloseScreen).toContain(STEP_TEXT.STACK);
       expect(afterCloseScreen).not.toContain("Keyboard Shortcuts");
     });
 
     it("should open settings overlay when S key is pressed during sources step", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await navigateScratchToSources(session);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Navigate scratch flow to sources
+      const domain = await wizard.stack.selectScratch();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughScratchDomains();
 
-      // Press S to open settings overlay
-      session.write("S");
-      await delay(STEP_TRANSITION_DELAY_MS);
+      await sources.openSettings();
 
-      // Verify settings overlay appears with source management UI
-      const settingsOutput = session.getFullOutput();
-      expect(settingsOutput).toContain("Customize skill sources");
+      const output = sources.getOutput();
+      expect(output).toContain(STEP_TEXT.SOURCES);
     });
   });
 
   describe("confirm step detail verification", () => {
-    /**
-     * Navigates the stack-based flow to the confirm step without installing.
-     * Selects the first stack (E2E Test Stack), accepts domain defaults,
-     * accepts all stack defaults with "a", and waits for the confirm step.
-     */
-    async function navigateStackToConfirm(wizardSession: TerminalSession): Promise<void> {
-      // Stack selection — select the first stack (E2E Test Stack)
-      await wizardSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.enter();
-
-      // Domain selection — accept pre-populated defaults from stack
-      await wizardSession.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.enter();
-
-      // Build step — accept all stack defaults
-      await wizardSession.waitForText("Framework", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      wizardSession.write("a");
-
-      // Confirm step
-      await wizardSession.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
-    }
-
     it("should display install mode on the confirm step", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await navigateStackToConfirm(session);
+      const domain = await wizard.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughAllDomains();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("init");
 
-      const confirmOutput = session.getFullOutput();
+      const confirmOutput = confirm.getOutput();
       expect(confirmOutput).toContain("Install mode:");
       expect(confirmOutput).toContain("Plugin");
     });
 
     it("should display install scope on the confirm step", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await navigateStackToConfirm(session);
+      const domain = await wizard.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughAllDomains();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("init");
 
-      const confirmOutput = session.getFullOutput();
+      const confirmOutput = confirm.getOutput();
       expect(confirmOutput).toContain("Scope:");
       expect(confirmOutput).toContain("project");
     });
 
     it("should display selected skills grouped by domain on the confirm step", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await navigateScratchToConfirm(session);
+      // Use scratch flow for domain-grouped display
+      const domain = await wizard.stack.selectScratch();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughScratchDomains();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("init");
 
-      // Scratch flow shows domain-grouped selections (stack flow does not)
-      const confirmOutput = session.getFullOutput();
-
-      // Verify domains appear as group headers with colon separator
+      const confirmOutput = confirm.getOutput();
       expect(confirmOutput).toContain("Web:");
       expect(confirmOutput).toContain("API:");
     });
 
     it("should display selected agent count on the confirm step", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
+      wizard = await InitWizard.launch();
 
-      await navigateStackToConfirm(session);
+      const domain = await wizard.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughAllDomains();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("init");
 
-      const confirmOutput = session.getFullOutput();
+      const confirmOutput = confirm.getOutput();
       expect(confirmOutput).toContain("Agents:");
     });
   });

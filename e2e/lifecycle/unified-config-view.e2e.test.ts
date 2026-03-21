@@ -1,30 +1,23 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, afterEach, beforeAll } from "vitest";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
+import { DIRS, EXIT_CODES, FILES } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
   directoryExists,
-  runCLI,
   writeProjectConfig,
   createLocalSkill,
-  EXIT_CODES,
-  COMPILE_ENV,
 } from "../helpers/test-utils.js";
+import { CLI } from "../fixtures/cli.js";
 
 /**
- * Unified config view — dual-scope compile verification E2E test.
+ * Unified config view -- dual-scope compile verification E2E test.
  *
  * Verifies that a project with both global and project configs can compile.
- *
- * NOTE: The writeScopedConfigs and splitConfigByScope unit tests that were
- * previously in this file have been moved to their proper homes:
- * - writeScopedConfigs tests → src/cli/lib/installation/local-installer.test.ts
- * - splitConfigByScope tests → src/cli/lib/configuration/config-generator.test.ts
  */
-describe("unified config view — split writes", () => {
+describe("unified config view -- split writes", () => {
   let tempDir: string;
 
   beforeAll(ensureBinaryExists);
@@ -62,12 +55,12 @@ describe("unified config view — split writes", () => {
       });
 
       // Create a project config that imports from global and adds a project skill
-      const projectConfigDir = path.join(projectDir, CLAUDE_SRC_DIR);
+      const projectConfigDir = path.join(projectDir, DIRS.CLAUDE_SRC);
       await mkdir(projectConfigDir, { recursive: true });
 
       // Write project config that imports from global
       const globalImportPath = path
-        .relative(projectConfigDir, path.join(globalHome, CLAUDE_SRC_DIR))
+        .relative(projectConfigDir, path.join(globalHome, DIRS.CLAUDE_SRC))
         .split(path.sep)
         .join("/");
 
@@ -88,10 +81,9 @@ export default {
   ...globalConfig,
   name: "test-project",
   skills,
-  agents,
-} satisfies ProjectConfig;
+  agents } satisfies ProjectConfig;
 `;
-      await writeFile(path.join(projectConfigDir, STANDARD_FILES.CONFIG_TS), projectConfigContent);
+      await writeFile(path.join(projectConfigDir, FILES.CONFIG_TS), projectConfigContent);
 
       // Write a simple config-types.ts for the project
       const configTypesContent = `// AUTO-GENERATED
@@ -118,17 +110,11 @@ export interface ProjectConfig {
   selectedAgents?: AgentName[];
 }
 `;
-      await writeFile(
-        path.join(projectConfigDir, STANDARD_FILES.CONFIG_TYPES_TS),
-        configTypesContent,
-      );
+      await writeFile(path.join(projectConfigDir, FILES.CONFIG_TYPES_TS), configTypesContent);
 
       // Also write global config-types.ts so the import resolves
-      const globalConfigTypesDir = path.join(globalHome, CLAUDE_SRC_DIR);
-      await writeFile(
-        path.join(globalConfigTypesDir, STANDARD_FILES.CONFIG_TYPES_TS),
-        configTypesContent,
-      );
+      const globalConfigTypesDir = path.join(globalHome, DIRS.CLAUDE_SRC);
+      await writeFile(path.join(globalConfigTypesDir, FILES.CONFIG_TYPES_TS), configTypesContent);
 
       // Create the project skill on disk
       await createLocalSkill(projectDir, "web-testing-vitest", {
@@ -137,15 +123,17 @@ export interface ProjectConfig {
       });
 
       // Run compile from the project directory with HOME pointing to fake-home
-      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
-        env: { HOME: globalHome, ...COMPILE_ENV },
-      });
+      const { exitCode, output } = await CLI.run(
+        ["compile"],
+        { dir: projectDir },
+        { env: { HOME: globalHome } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Discovered");
+      expect(output).toContain("Discovered");
 
       // Verify agents were compiled in the project directory
-      const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+      const agentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
       expect(await directoryExists(agentsDir)).toBe(true);
     });
   });

@@ -1,32 +1,13 @@
-import path from "path";
-import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
-import { isClaudeCLIAvailable } from "../../src/cli/utils/exec.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
-import { verifyConfig, verifyAgentCompiled } from "../helpers/plugin-assertions.js";
-import { TerminalSession } from "../helpers/terminal-session.js";
-import {
-  createTempDir,
-  cleanupTempDir,
-  ensureBinaryExists,
-  createPermissionsFile,
-  writeProjectConfig,
-  navigateEditWizardToCompletion,
-  delay,
-  WIZARD_LOAD_TIMEOUT_MS,
-  STEP_TRANSITION_DELAY_MS,
-  EXIT_TIMEOUT_MS,
-  EXIT_CODES,
-  PLUGIN_INSTALL_TIMEOUT_MS,
-  EXIT_WAIT_TIMEOUT_MS,
-  SETUP_TIMEOUT_MS,
-} from "../helpers/test-utils.js";
-import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
-import type { AgentName, Domain, SkillId } from "../../src/cli/types/index.js";
+import { cleanupTempDir, ensureBinaryExists, isClaudeCLIAvailable } from "../helpers/test-utils.js";
+import { ProjectBuilder } from "../fixtures/project-builder.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import "../matchers/setup.js";
 
 /**
  * E2E tests for the edit wizard in plugin mode — skill install/uninstall
@@ -42,123 +23,58 @@ import type { AgentName, Domain, SkillId } from "../../src/cli/types/index.js";
  */
 
 /** Combined timeout for tests that include plugin operations + exit wait */
-const PLUGIN_TEST_TIMEOUT_MS = PLUGIN_INSTALL_TIMEOUT_MS + EXIT_WAIT_TIMEOUT_MS;
+const PLUGIN_TEST_TIMEOUT_MS = TIMEOUTS.PLUGIN_TEST;
 
 const claudeAvailable = await isClaudeCLIAvailable();
 
-/**
- * Creates a project directory that looks like it was initialized in plugin mode.
- */
-async function createPluginProject(
-  tempDir: string,
-  options: {
-    skills: SkillId[];
-    marketplace: string;
-    agents?: AgentName[];
-    domains?: Domain[];
-  },
-): Promise<string> {
-  const projectDir = path.join(tempDir, "project");
-  const skills = options.skills;
-  const agents = options.agents ?? ["web-developer"];
-  const domains = options.domains ?? ["web"];
-
-  await writeProjectConfig(projectDir, {
-    name: "plugin-edit-test",
-    marketplace: options.marketplace,
-    skills: skills.map((id) => ({
-      id,
-      scope: "project" as const,
-      source: options.marketplace,
-    })),
-    agents: agents.map((name) => ({ name, scope: "project" as const })),
-    domains,
-    selectedAgents: agents,
-  });
-
-  for (const skillId of skills) {
-    const skillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, skillId);
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd(skillId, "Test skill", `# ${skillId}`),
-    );
-    const parts = skillId.split("-");
-    const category = parts.slice(0, 2).join("-");
-    const slug = parts.slice(2).join("-") || skillId;
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@test"\ndisplayName: ${skillId}\ncategory: ${category}\nslug: ${slug}\ncontentHash: "e2e-hash-${skillId}"\n`,
-    );
-  }
-
-  const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-  await mkdir(agentsDir, { recursive: true });
-  for (const agent of agents) {
-    await writeFile(
-      path.join(agentsDir, `${agent}.md`),
-      `---\nname: ${agent}\n---\nTest agent content.\n`,
-    );
-  }
-
-  await createPermissionsFile(projectDir);
-
-  return projectDir;
-}
-
 describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () => {
   let fixture: E2EPluginSource;
-
-  let tempDir: string | undefined;
-  let session: TerminalSession | undefined;
+  let wizard: EditWizard | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
     fixture = await createE2EPluginSource();
-  }, SETUP_TIMEOUT_MS);
+  }, TIMEOUTS.SETUP);
 
   afterAll(async () => {
     if (fixture) await cleanupTempDir(fixture.tempDir);
   });
 
   afterEach(async () => {
-    await session?.destroy();
-    session = undefined;
-
-    if (tempDir) {
-      await cleanupTempDir(tempDir);
-      tempDir = undefined;
-    }
+    await wizard?.destroy();
+    wizard = undefined;
   });
+
+  /**
+   * Navigate from a single-domain build step through to completion.
+   */
+  async function completeEditFromBuild(w: EditWizard) {
+    const sources = await w.build.advanceToSources();
+    const agents = await sources.acceptDefaults();
+    const confirm = await agents.acceptDefaults("edit");
+    return confirm.confirm();
+  }
 
   describe("remove skill triggers plugin uninstall", () => {
     it("should uninstall removed plugin skills", { timeout: PLUGIN_TEST_TIMEOUT_MS }, async () => {
-      tempDir = await createTempDir();
-
-      const projectDir = await createPluginProject(tempDir, {
+      const project = await ProjectBuilder.pluginProject({
         skills: ["web-framework-react", "web-styling-tailwind"],
         marketplace: fixture.marketplaceName,
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
-        env: { AGENTSINC_SOURCE: undefined },
+      wizard = await EditWizard.launch({
+        projectDir: project.dir,
+        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
       });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      const result = await completeEditFromBuild(wizard);
 
-      await navigateEditWizardToCompletion(session);
+      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
-
-      const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      const rawOutput = session.getRawOutput();
-
+      const rawOutput = result.rawOutput;
       expect(rawOutput).toContain("Uninstalling plugin: web-styling-tailwind");
-
       expect(rawOutput).toContain("removed");
     });
 
@@ -166,26 +82,23 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
       "should update config after removing a plugin skill",
       { timeout: PLUGIN_TEST_TIMEOUT_MS },
       async () => {
-        tempDir = await createTempDir();
-
-        const projectDir = await createPluginProject(tempDir, {
+        const project = await ProjectBuilder.pluginProject({
           skills: ["web-framework-react", "web-styling-tailwind"],
           marketplace: fixture.marketplaceName,
           agents: ["web-developer"],
           domains: ["web"],
         });
 
-        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
-          env: { AGENTSINC_SOURCE: undefined },
+        wizard = await EditWizard.launch({
+          projectDir: project.dir,
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
         });
 
-        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+        const result = await completeEditFromBuild(wizard);
 
-        await navigateEditWizardToCompletion(session);
-        await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
-        await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+        await result.exitCode;
 
-        await verifyConfig(projectDir, {
+        await expect(result.project).toHaveConfig({
           skillIds: ["web-framework-react"],
           source: fixture.marketplaceName,
         });
@@ -196,26 +109,23 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
       "should recompile agents after removing a plugin skill",
       { timeout: PLUGIN_TEST_TIMEOUT_MS },
       async () => {
-        tempDir = await createTempDir();
-
-        const projectDir = await createPluginProject(tempDir, {
+        const project = await ProjectBuilder.pluginProject({
           skills: ["web-framework-react", "web-styling-tailwind"],
           marketplace: fixture.marketplaceName,
           agents: ["web-developer"],
           domains: ["web"],
         });
 
-        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
-          env: { AGENTSINC_SOURCE: undefined },
+        wizard = await EditWizard.launch({
+          projectDir: project.dir,
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
         });
 
-        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+        const result = await completeEditFromBuild(wizard);
 
-        await navigateEditWizardToCompletion(session);
-        await session.waitForText("Recompiling agents", PLUGIN_INSTALL_TIMEOUT_MS);
-        await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
+        await result.exitCode;
 
-        expect(await verifyAgentCompiled(projectDir, "web-developer")).toBe(true);
+        await expect(result.project).toHaveCompiledAgent("web-developer");
       },
     );
   });
@@ -225,40 +135,30 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
       "should install added plugin skills when navigating to a new skill",
       { timeout: PLUGIN_TEST_TIMEOUT_MS },
       async () => {
-        tempDir = await createTempDir();
-
-        const projectDir = await createPluginProject(tempDir, {
+        const project = await ProjectBuilder.pluginProject({
           skills: ["web-framework-react"],
           marketplace: fixture.marketplaceName,
           agents: ["web-developer"],
           domains: ["web"],
         });
 
-        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
-          env: { AGENTSINC_SOURCE: undefined },
+        wizard = await EditWizard.launch({
+          projectDir: project.dir,
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           rows: 60,
           cols: 120,
         });
 
-        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
-        await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+        // Arrow down to next skill and select it
+        await wizard.build.navigateDown();
+        await wizard.build.toggleFocusedSkill();
 
-        session.arrowDown();
-        await delay(STEP_TRANSITION_DELAY_MS);
+        const result = await completeEditFromBuild(wizard);
 
-        session.space();
-        await delay(STEP_TRANSITION_DELAY_MS);
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-        await navigateEditWizardToCompletion(session);
-        await session.waitForText("Plugin updated", PLUGIN_INSTALL_TIMEOUT_MS);
-
-        const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-        const rawOutput = session.getRawOutput();
-
+        const rawOutput = result.rawOutput;
         expect(rawOutput).toContain("Installing plugin:");
-
         expect(rawOutput).toMatch(/\d+ added/);
       },
     );
@@ -269,27 +169,23 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
       "should complete edit without triggering plugin install/uninstall when skills are unchanged",
       { timeout: PLUGIN_TEST_TIMEOUT_MS },
       async () => {
-        tempDir = await createTempDir();
-
-        const projectDir = await createPluginProject(tempDir, {
+        const project = await ProjectBuilder.pluginProject({
           skills: ["web-framework-react"],
           marketplace: fixture.marketplaceName,
           agents: ["web-developer"],
           domains: ["web"],
         });
 
-        session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
-          env: { AGENTSINC_SOURCE: undefined },
+        wizard = await EditWizard.launch({
+          projectDir: project.dir,
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
         });
 
-        await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+        const result = await completeEditFromBuild(wizard);
 
-        await navigateEditWizardToCompletion(session);
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-        const exitCode = await session.waitForExit(EXIT_WAIT_TIMEOUT_MS);
-        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-        const rawOutput = session.getRawOutput();
+        const rawOutput = result.rawOutput;
         expect(rawOutput).not.toContain("Installing plugin:");
         expect(rawOutput).not.toContain("Uninstalling plugin:");
       },
@@ -298,27 +194,24 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
 
   describe("cancellation in plugin mode", () => {
     it("should not trigger plugin install/uninstall when cancelled", async () => {
-      tempDir = await createTempDir();
-
-      const projectDir = await createPluginProject(tempDir, {
+      const project = await ProjectBuilder.pluginProject({
         skills: ["web-framework-react", "web-testing-vitest"],
         marketplace: fixture.marketplaceName,
         agents: ["web-developer"],
         domains: ["web"],
       });
 
-      session = new TerminalSession(["edit", "--source", fixture.sourceDir], projectDir, {
-        env: { AGENTSINC_SOURCE: undefined },
+      wizard = await EditWizard.launch({
+        projectDir: project.dir,
+        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
       });
 
-      await session.waitForText("Web", WIZARD_LOAD_TIMEOUT_MS);
+      wizard.abort();
 
-      session.ctrlC();
-
-      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const exitCode = await wizard.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
 
-      const rawOutput = session.getRawOutput();
+      const rawOutput = wizard.getRawOutput();
       expect(rawOutput).not.toContain("Installing plugin:");
       expect(rawOutput).not.toContain("Uninstalling plugin:");
     });

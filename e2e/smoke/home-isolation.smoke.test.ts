@@ -1,9 +1,16 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { CLAUDE_DIR, PLUGIN_MANIFEST_DIR } from "../../src/cli/consts.js";
-import { isClaudeCLIAvailable, execCommand } from "../../src/cli/utils/exec.js";
-import { ensureBinaryExists, createTempDir, cleanupTempDir } from "../helpers/test-utils.js";
+import { DIRS } from "../pages/constants.js";
+import {
+  isClaudeCLIAvailable,
+  execCommand,
+  ensureBinaryExists,
+  createTempDir,
+  cleanupTempDir,
+} from "../helpers/test-utils.js";
+
+const PLUGIN_MANIFEST_DIR = ".claude-plugin";
 
 /**
  * Blocker 7.6: HOME Isolation + Claude CLI Auth
@@ -75,7 +82,7 @@ describe.skipIf(!claudeAvailable)(
     it("should attempt plugin install with HOME=<tempDir>", async () => {
       tempDir = await createTempDir();
       const projectDir = path.join(tempDir, "project");
-      await mkdir(path.join(projectDir, CLAUDE_DIR), { recursive: true });
+      await mkdir(path.join(projectDir, DIRS.CLAUDE), { recursive: true });
 
       const result = await execCommand(
         "claude",

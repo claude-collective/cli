@@ -1,21 +1,40 @@
 import path from "path";
+import { CLI } from "../fixtures/cli.js";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { EXIT_CODES, FILES, SOURCE_PATHS } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
-  runCLI,
-  EXIT_CODES,
+  renderSkillMd,
 } from "../helpers/test-utils.js";
-import { renderSkillMd } from "../../src/cli/lib/__tests__/content-generators.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import {
-  SKILL_CATEGORIES_PATH,
-  SKILL_RULES_PATH,
-  SKILLS_DIR_PATH,
-  STANDARD_FILES,
-} from "../../src/cli/consts.js";
+
+/** Create a minimal valid skill in a source directory for validation tests. */
+async function createValidationSkill(
+  sourceDir: string,
+  skillId: string,
+  options: {
+    metadataYaml: string;
+    skillMdContent?: string;
+    /** Subdirectory under src/skills/ (defaults to skillId) */
+    subPath?: string;
+  },
+): Promise<string> {
+  const subPath = options.subPath ?? skillId;
+  const skillDir = path.join(sourceDir, SOURCE_PATHS.SKILLS_DIR, subPath);
+  await mkdir(skillDir, { recursive: true });
+
+  await writeFile(
+    path.join(skillDir, FILES.SKILL_MD),
+    options.skillMdContent ?? renderSkillMd(skillId, `Test skill ${skillId}`, `# ${skillId}`),
+  );
+
+  await writeFile(path.join(skillDir, FILES.METADATA_YAML), options.metadataYaml);
+
+  return skillDir;
+}
 
 describe("validate command", () => {
   let tempDir: string;
@@ -34,23 +53,24 @@ describe("validate command", () => {
       tempDir = await createTempDir();
       const nonexistentDir = path.join(tempDir, "nonexistent");
 
-      const { exitCode, combined } = await runCLI(
-        ["validate", "--source", nonexistentDir],
-        tempDir,
-      );
+      const { exitCode, output } = await CLI.run(["validate", "--source", nonexistentDir], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("does not exist");
+      expect(output).toContain("does not exist");
     });
 
     it("should report error for empty source directory without skills structure", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, combined } = await runCLI(["validate", "--source", tempDir], tempDir);
+      const { exitCode, output } = await CLI.run(["validate", "--source", tempDir], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("Checked 0 skill(s)");
-      expect(combined).toContain("1 error(s)");
+      expect(output).toContain("Checked 0 skill(s)");
+      expect(output).toContain("1 error(s)");
     });
   });
 
@@ -59,10 +79,10 @@ describe("validate command", () => {
       tempDir = await createTempDir();
       const nonexistentPlugin = path.join(tempDir, "no-such-plugin");
 
-      const { exitCode, combined } = await runCLI(["validate", nonexistentPlugin], tempDir);
+      const { exitCode, output } = await CLI.run(["validate", nonexistentPlugin], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("Validating plugin:");
+      expect(output).toContain("Validating plugin:");
     });
 
     it("should fail when validating an empty directory as plugin", async () => {
@@ -70,10 +90,10 @@ describe("validate command", () => {
       const emptyPluginDir = path.join(tempDir, "empty-plugin");
       await mkdir(emptyPluginDir, { recursive: true });
 
-      const { exitCode, combined } = await runCLI(["validate", emptyPluginDir], tempDir);
+      const { exitCode, output } = await CLI.run(["validate", emptyPluginDir], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("Validating plugin:");
+      expect(output).toContain("Validating plugin:");
     });
   });
 
@@ -81,7 +101,7 @@ describe("validate command", () => {
     it("should display validate help", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(["validate", "--help"], tempDir);
+      const { exitCode, stdout } = await CLI.run(["validate", "--help"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Validate");
@@ -95,53 +115,55 @@ describe("validate command", () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { exitCode, output } = await CLI.run(["validate", "--source", sourceDir], {
+        dir: tempDir,
+      });
 
       // E2E source metadata is complete — only displayName mismatch warnings for methodology skills
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toContain("Validating source:");
-      expect(combined).toMatch(/Checked \d+ skill\(s\)/);
+      expect(output).toContain("Validating source:");
+      expect(output).toMatch(/Checked \d+ skill\(s\)/);
     });
 
     it("should report error and warning counts for a source", async () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { exitCode, output } = await CLI.run(["validate", "--source", sourceDir], {
+        dir: tempDir,
+      });
 
       // E2E source metadata is complete — methodology skills have displayName mismatches (warnings only)
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(combined).toMatch(/Result: 0 error\(s\), \d+ warning\(s\)/);
+      expect(output).toMatch(/Result: 0 error\(s\), \d+ warning\(s\)/);
     });
 
     it("should report zero errors for a fully valid source", async () => {
       tempDir = await createTempDir();
       const sourceDir = path.join(tempDir, "valid-source");
-      const skillDir = path.join(sourceDir, SKILLS_DIR_PATH, "web-valid-skill");
-      await mkdir(skillDir, { recursive: true });
 
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        renderSkillMd("web-valid-skill", "A fully valid test skill", "# Valid Skill"),
-      );
+      await createValidationSkill(sourceDir, "web-valid-skill", {
+        skillMdContent: renderSkillMd(
+          "web-valid-skill",
+          "A fully valid test skill",
+          "# Valid Skill",
+        ),
+        metadataYaml:
+          [
+            `author: "@test"`,
+            `category: web-testing`,
+            `slug: vitest`,
+            `displayName: web-valid-skill`,
+            `cliDescription: A fully valid test skill`,
+            `usageGuidance: Use for testing`,
+            `contentHash: "abc1234"`,
+          ].join("\n") + "\n",
+      });
 
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        [
-          `author: "@test"`,
-          `category: web-testing`,
-          `slug: vitest`,
-          `displayName: web-valid-skill`,
-          `cliDescription: A fully valid test skill`,
-          `usageGuidance: Use for testing`,
-          `contentHash: "abc1234"`,
-        ].join("\n") + "\n",
-      );
+      const { output } = await CLI.run(["validate", "--source", sourceDir], { dir: tempDir });
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
-
-      expect(combined).toContain("Checked 1 skill(s)");
-      expect(combined).toContain("0 error(s)");
+      expect(output).toContain("Checked 1 skill(s)");
+      expect(output).toContain("0 error(s)");
     });
   });
 
@@ -149,43 +171,35 @@ describe("validate command", () => {
     it("should detect malformed metadata.yaml", async () => {
       tempDir = await createTempDir();
       const sourceDir = path.join(tempDir, "bad-source");
-      const skillDir = path.join(sourceDir, SKILLS_DIR_PATH, "web-bad-skill");
-      await mkdir(skillDir, { recursive: true });
 
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        renderSkillMd("web-bad-skill", "A broken skill", "# Bad Skill"),
-      );
+      await createValidationSkill(sourceDir, "web-bad-skill", {
+        skillMdContent: renderSkillMd("web-bad-skill", "A broken skill", "# Bad Skill"),
+        metadataYaml: `{{{invalid yaml content\n  broken: [unmatched`,
+      });
 
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        `{{{invalid yaml content\n  broken: [unmatched`,
-      );
-
-      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { exitCode, output } = await CLI.run(["validate", "--source", sourceDir], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("1 error(s)");
+      expect(output).toContain("1 error(s)");
     });
 
     it("should detect missing required metadata fields", async () => {
       tempDir = await createTempDir();
       const sourceDir = path.join(tempDir, "incomplete-source");
-      const skillDir = path.join(sourceDir, SKILLS_DIR_PATH, "web-incomplete-skill");
-      await mkdir(skillDir, { recursive: true });
 
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        renderSkillMd("web-incomplete-skill", "Missing fields", "# Incomplete"),
-      );
+      await createValidationSkill(sourceDir, "web-incomplete-skill", {
+        skillMdContent: renderSkillMd("web-incomplete-skill", "Missing fields", "# Incomplete"),
+        metadataYaml: `someRandomKey: value\n`,
+      });
 
-      // metadata.yaml with no required fields
-      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), `someRandomKey: value\n`);
-
-      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { exitCode, output } = await CLI.run(["validate", "--source", sourceDir], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("error");
+      expect(output).toContain("error");
     });
   });
 
@@ -194,18 +208,17 @@ describe("validate command", () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode: buildExitCode, stdout: buildStdout } = await runCLI(
-        ["build", "plugins"],
-        sourceDir,
-      );
+      const { exitCode: buildExitCode, stdout: buildStdout } = await CLI.run(["build", "plugins"], {
+        dir: sourceDir,
+      });
       expect(buildExitCode).toBe(EXIT_CODES.SUCCESS);
       expect(buildStdout).toContain("Plugin compilation complete!");
 
-      const { exitCode, combined } = await runCLI(["validate", "--plugins"], sourceDir);
+      const { exitCode, output } = await CLI.run(["validate", "--plugins"], { dir: sourceDir });
 
       // E2E source metadata is incomplete, so built plugins have validation errors
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("Validating plugin");
+      expect(output).toContain("Validating plugin");
     });
   });
 
@@ -215,13 +228,12 @@ describe("validate command", () => {
       const emptyPluginDir = path.join(tempDir, "empty-plugin");
       await mkdir(emptyPluginDir, { recursive: true });
 
-      const { exitCode, combined } = await runCLI(
-        ["validate", emptyPluginDir, "--verbose"],
-        tempDir,
-      );
+      const { exitCode, output } = await CLI.run(["validate", emptyPluginDir, "--verbose"], {
+        dir: tempDir,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
-      expect(combined).toContain("Validating plugin:");
+      expect(output).toContain("Validating plugin:");
     });
   });
 
@@ -230,11 +242,11 @@ describe("validate command", () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { output } = await CLI.run(["validate", "--source", sourceDir], { dir: tempDir });
 
       // E2E source has exactly 7 skills across web, api, and shared domains
-      expect(combined).toContain("Checked 7 skill(s)");
-      expect(combined).toContain("Validating source:");
+      expect(output).toContain("Checked 7 skill(s)");
+      expect(output).toContain("Validating source:");
     });
   });
 
@@ -244,57 +256,41 @@ describe("validate command", () => {
       const sourceDir = path.join(tempDir, "rel-source");
 
       // Create two valid skills with domain field (required by rawMetadataSchema)
-      const skillADir = path.join(
-        sourceDir,
-        SKILLS_DIR_PATH,
-        "web-framework",
-        "web-framework-alpha",
-      );
-      const skillBDir = path.join(sourceDir, SKILLS_DIR_PATH, "web-testing", "web-testing-beta");
-      await mkdir(skillADir, { recursive: true });
-      await mkdir(skillBDir, { recursive: true });
+      await createValidationSkill(sourceDir, "web-framework-alpha", {
+        subPath: "web-framework/web-framework-alpha",
+        metadataYaml:
+          [
+            `author: "@test"`,
+            `category: web-framework`,
+            `domain: web`,
+            `slug: react`,
+            `displayName: web-framework-alpha`,
+            `cliDescription: Alpha framework for testing`,
+            `usageGuidance: Use for testing relationship validation`,
+            `contentHash: "ab12cd3"`,
+          ].join("\n") + "\n",
+      });
 
-      await writeFile(
-        path.join(skillADir, STANDARD_FILES.SKILL_MD),
-        renderSkillMd("web-framework-alpha", "Alpha framework skill", "# Alpha"),
-      );
-      await writeFile(
-        path.join(skillADir, STANDARD_FILES.METADATA_YAML),
-        [
-          `author: "@test"`,
-          `category: web-framework`,
-          `domain: web`,
-          `slug: react`,
-          `displayName: web-framework-alpha`,
-          `cliDescription: Alpha framework for testing`,
-          `usageGuidance: Use for testing relationship validation`,
-          `contentHash: "ab12cd3"`,
-        ].join("\n") + "\n",
-      );
-
-      await writeFile(
-        path.join(skillBDir, STANDARD_FILES.SKILL_MD),
-        renderSkillMd("web-testing-beta", "Beta testing skill", "# Beta"),
-      );
-      await writeFile(
-        path.join(skillBDir, STANDARD_FILES.METADATA_YAML),
-        [
-          `author: "@test"`,
-          `category: web-testing`,
-          `domain: web`,
-          `slug: vitest`,
-          `displayName: web-testing-beta`,
-          `cliDescription: Beta testing framework`,
-          `usageGuidance: Use for testing relationship validation`,
-          `contentHash: "de45fa6"`,
-        ].join("\n") + "\n",
-      );
+      await createValidationSkill(sourceDir, "web-testing-beta", {
+        subPath: "web-testing/web-testing-beta",
+        metadataYaml:
+          [
+            `author: "@test"`,
+            `category: web-testing`,
+            `domain: web`,
+            `slug: vitest`,
+            `displayName: web-testing-beta`,
+            `cliDescription: Beta testing framework`,
+            `usageGuidance: Use for testing relationship validation`,
+            `contentHash: "de45fa6"`,
+          ].join("\n") + "\n",
+      });
 
       // Create skill-categories.ts with full CategoryDefinition objects
-      const categoriesDir = path.join(sourceDir, path.dirname(SKILL_CATEGORIES_PATH));
+      const categoriesDir = path.join(sourceDir, path.dirname(SOURCE_PATHS.SKILL_CATEGORIES));
       await mkdir(categoriesDir, { recursive: true });
       await writeFile(
-        path.join(sourceDir, SKILL_CATEGORIES_PATH),
+        path.join(sourceDir, SOURCE_PATHS.SKILL_CATEGORIES),
         `export default {
   version: "1.0.0",
   categories: {
@@ -305,8 +301,7 @@ describe("validate command", () => {
       domain: "web",
       exclusive: true,
       required: false,
-      order: 1,
-    },
+      order: 1 },
     "web-testing": {
       id: "web-testing",
       displayName: "Testing",
@@ -314,16 +309,13 @@ describe("validate command", () => {
       domain: "web",
       exclusive: false,
       required: false,
-      order: 2,
-    },
-  },
-};\n`,
+      order: 2 } } };\n`,
       );
 
       // Create skill-rules.ts with a conflict referencing a slug not present in this source.
       // The matrix health check should detect the unresolved reference.
       await writeFile(
-        path.join(sourceDir, SKILL_RULES_PATH),
+        path.join(sourceDir, SOURCE_PATHS.SKILL_RULES),
         `export default {
   version: "1.0.0",
   aliases: {},
@@ -331,23 +323,22 @@ describe("validate command", () => {
     conflicts: [
       {
         skills: ["react", "angular-standalone"],
-        reason: "Testing unresolved reference detection",
-      },
+        reason: "Testing unresolved reference detection" },
     ],
     discourages: [],
     recommends: [],
     requires: [],
-    alternatives: [],
-  },
-};\n`,
+    alternatives: [] } };\n`,
       );
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir, "--verbose"], tempDir);
+      const { output } = await CLI.run(["validate", "--source", sourceDir, "--verbose"], {
+        dir: tempDir,
+      });
 
       // Slug resolution should detect the unresolved slug (angular-standalone not in source)
-      expect(combined).toContain("Checked 2 skill(s)");
-      expect(combined).toContain("Unresolved slug");
-      expect(combined).toContain("angular-standalone");
+      expect(output).toContain("Checked 2 skill(s)");
+      expect(output).toContain("Unresolved slug");
+      expect(output).toContain("angular-standalone");
     });
   });
 
@@ -360,58 +351,221 @@ describe("validate command", () => {
       tempDir = await createTempDir();
       const sourceDir = path.join(tempDir, "dup-source");
 
-      // Create the same skill ID under two different category directories
-      const skillDirA = path.join(
-        sourceDir,
-        SKILLS_DIR_PATH,
-        "web-framework",
-        "web-framework-react",
-      );
-      const skillDirB = path.join(sourceDir, SKILLS_DIR_PATH, "web-testing", "web-framework-react");
-      await mkdir(skillDirA, { recursive: true });
-      await mkdir(skillDirB, { recursive: true });
-
       // First occurrence under web-framework category
-      await writeFile(
-        path.join(skillDirA, STANDARD_FILES.SKILL_MD),
-        renderSkillMd("web-framework-react", "React in framework category", "# React (framework)"),
-      );
-      await writeFile(
-        path.join(skillDirA, STANDARD_FILES.METADATA_YAML),
-        [
-          `author: "@test"`,
-          `category: web-framework`,
-          `slug: react`,
-          `displayName: web-framework-react`,
-          `cliDescription: React framework skill`,
-          `usageGuidance: Use for building React applications`,
-          `contentHash: "react-fw"`,
-        ].join("\n") + "\n",
-      );
+      await createValidationSkill(sourceDir, "web-framework-react", {
+        subPath: "web-framework/web-framework-react",
+        skillMdContent: renderSkillMd(
+          "web-framework-react",
+          "React in framework category",
+          "# React (framework)",
+        ),
+        metadataYaml:
+          [
+            `author: "@test"`,
+            `category: web-framework`,
+            `slug: react`,
+            `displayName: web-framework-react`,
+            `cliDescription: React framework skill`,
+            `usageGuidance: Use for building React applications`,
+            `contentHash: "react-fw"`,
+          ].join("\n") + "\n",
+      });
 
       // Second occurrence under web-testing category (same skill ID)
+      await createValidationSkill(sourceDir, "web-framework-react", {
+        subPath: "web-testing/web-framework-react",
+        skillMdContent: renderSkillMd(
+          "web-framework-react",
+          "React in testing category",
+          "# React (testing)",
+        ),
+        metadataYaml:
+          [
+            `author: "@test"`,
+            `category: web-testing`,
+            `slug: react`,
+            `displayName: web-framework-react`,
+            `cliDescription: React testing skill`,
+            `usageGuidance: Use for testing React applications`,
+            `contentHash: "react-test"`,
+          ].join("\n") + "\n",
+      });
+
+      const { output } = await CLI.run(["validate", "--source", sourceDir], { dir: tempDir });
+
+      // Validator should detect the duplicate skill ID and report it
+      expect(output).toContain("duplicate");
+      expect(output).toContain("web-framework-react");
+    });
+  });
+
+  describe("--all flag with plugin directory", () => {
+    it("should validate all plugins in directory after build", async () => {
+      const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
+      tempDir = sourceTempDir;
+
+      // Build plugins first
+      const { exitCode: buildExitCode } = await CLI.run(["build", "plugins"], { dir: sourceDir });
+      expect(buildExitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Use --all to validate all built plugins in the plugin-manifest directory
+      const pluginDir = path.join(sourceDir, "plugin-manifest");
+      const { output } = await CLI.run(["validate", pluginDir, "--all"], { dir: sourceDir });
+
+      // Should report plugin validation summary with total/valid/invalid counts
+      expect(output).toContain("Validating all plugins in:");
+      expect(output).toContain("Total plugins:");
+      expect(output).toContain("Valid:");
+      expect(output).toContain("Invalid:");
+    });
+  });
+
+  describe("--plugins flag validates plugins in cwd", () => {
+    it("should validate plugins in current directory when --plugins is used", async () => {
+      const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
+      tempDir = sourceTempDir;
+
+      // Build plugins first so there are plugin files to validate
+      const { exitCode: buildExitCode } = await CLI.run(["build", "plugins"], { dir: sourceDir });
+      expect(buildExitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Validate plugins using --plugins flag (validates in cwd)
+      const { output } = await CLI.run(["validate", "--plugins"], { dir: sourceDir });
+
+      // Should attempt plugin validation in current directory
+      expect(output).toContain("Validating plugin");
+    });
+
+    it("should fail when --plugins used in directory with no plugins", async () => {
+      tempDir = await createTempDir();
+
+      const { exitCode, output } = await CLI.run(["validate", "--plugins"], { dir: tempDir });
+
+      expect(exitCode).toBe(EXIT_CODES.ERROR);
+      expect(output).toContain("Validating plugin:");
+    });
+  });
+
+  describe("malformed metadata.yaml in source", () => {
+    it("should report YAML parse errors for corrupted metadata files", async () => {
+      tempDir = await createTempDir();
+      const sourceDir = path.join(tempDir, "corrupt-source");
+
+      await createValidationSkill(sourceDir, "web-corrupt-skill", {
+        subPath: "web-corrupt/web-corrupt-skill",
+        skillMdContent: renderSkillMd("web-corrupt-skill", "Corrupt metadata", "# Corrupt"),
+        metadataYaml: `: : : [broken\nyaml: {{{`,
+      });
+
+      const { exitCode, output } = await CLI.run(["validate", "--source", sourceDir], {
+        dir: tempDir,
+      });
+
+      expect(exitCode).toBe(EXIT_CODES.ERROR);
+      expect(output).toContain("Checked");
+      // Should report parse failure or schema validation errors
+      expect(output).toMatch(/error/i);
+    });
+  });
+
+  describe("missing SKILL.md in source", () => {
+    it("should report error when metadata.yaml exists without SKILL.md", async () => {
+      tempDir = await createTempDir();
+      const sourceDir = path.join(tempDir, "missing-skillmd-source");
+
+      // Create skills directory with only metadata.yaml, no SKILL.md
+      const skillDir = path.join(sourceDir, SOURCE_PATHS.SKILLS_DIR, "web-orphan-skill");
+      await mkdir(skillDir, { recursive: true });
       await writeFile(
-        path.join(skillDirB, STANDARD_FILES.SKILL_MD),
-        renderSkillMd("web-framework-react", "React in testing category", "# React (testing)"),
-      );
-      await writeFile(
-        path.join(skillDirB, STANDARD_FILES.METADATA_YAML),
+        path.join(skillDir, FILES.METADATA_YAML),
         [
           `author: "@test"`,
           `category: web-testing`,
-          `slug: react`,
-          `displayName: web-framework-react`,
-          `cliDescription: React testing skill`,
-          `usageGuidance: Use for testing React applications`,
-          `contentHash: "react-test"`,
+          `slug: orphan`,
+          `displayName: web-orphan-skill`,
+          `cliDescription: Missing SKILL.md`,
+          `usageGuidance: Should fail validation`,
+          `contentHash: "orphan1"`,
         ].join("\n") + "\n",
       );
 
-      const { combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
+      const { exitCode, output } = await CLI.run(["validate", "--source", sourceDir], {
+        dir: tempDir,
+      });
 
-      // Validator should detect the duplicate skill ID and report it
-      expect(combined).toContain("duplicate");
-      expect(combined).toContain("web-framework-react");
+      expect(exitCode).toBe(EXIT_CODES.ERROR);
+      expect(output).toContain("Missing SKILL.md");
+      expect(output).toContain("1 error(s)");
+    });
+  });
+
+  describe("fully valid source", () => {
+    it("should pass cleanly with zero errors and zero warnings", async () => {
+      tempDir = await createTempDir();
+      const sourceDir = path.join(tempDir, "clean-source");
+
+      // Create a skill where displayName matches directory name (no warning)
+      // Use a valid slug from the enum and a valid 7-char hex contentHash
+      await createValidationSkill(sourceDir, "web-testing-vitest", {
+        subPath: "web-testing/web-testing-vitest",
+        skillMdContent: renderSkillMd("web-testing-vitest", "Vitest testing framework", "# Vitest"),
+        metadataYaml:
+          [
+            `author: "@test"`,
+            `category: web-testing`,
+            `domain: web`,
+            `slug: vitest`,
+            `displayName: web-testing-vitest`,
+            `cliDescription: Vitest testing framework`,
+            `usageGuidance: Use for testing JavaScript applications`,
+            `contentHash: "a1b2c3d"`,
+          ].join("\n") + "\n",
+      });
+
+      const { exitCode, output } = await CLI.run(["validate", "--source", sourceDir], {
+        dir: tempDir,
+      });
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(output).toContain("Checked 1 skill(s)");
+      expect(output).toContain("0 error(s), 0 warning(s)");
+      expect(output).toContain("Source validated successfully");
+    });
+  });
+
+  describe("--verbose on source validation", () => {
+    it("should show verbose output with issue details on source validation", async () => {
+      tempDir = await createTempDir();
+      const sourceDir = path.join(tempDir, "verbose-source");
+
+      // Create a skill with displayName mismatch to trigger a warning
+      // Use a valid slug enum value and valid 7-char hex contentHash
+      await createValidationSkill(sourceDir, "web-testing-vitest", {
+        subPath: "web-testing/web-testing-vitest",
+        skillMdContent: renderSkillMd("web-testing-vitest", "Vitest test framework", "# Vitest"),
+        metadataYaml:
+          [
+            `author: "@test"`,
+            `category: web-testing`,
+            `domain: web`,
+            `slug: vitest`,
+            `displayName: Vitest Test Framework`,
+            `cliDescription: Vitest test framework`,
+            `usageGuidance: Use for testing with Vitest`,
+            `contentHash: "b2c3d4e"`,
+          ].join("\n") + "\n",
+      });
+
+      const { exitCode, output } = await CLI.run(["validate", "--source", sourceDir, "--verbose"], {
+        dir: tempDir,
+      });
+
+      // Should succeed (warnings only) and show the displayName mismatch warning
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(output).toContain("Validating source:");
+      expect(output).toContain("Checked 1 skill(s)");
+      expect(output).toContain("displayName");
+      expect(output).toContain("does not match directory name");
     });
   });
 });

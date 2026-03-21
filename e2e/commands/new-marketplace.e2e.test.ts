@@ -1,5 +1,7 @@
 import path from "path";
+import { CLI } from "../fixtures/cli.js";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { EXIT_CODES, FILES, DIRS, SOURCE_PATHS } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
@@ -7,18 +9,7 @@ import {
   fileExists,
   readTestFile,
   directoryExists,
-  runCLI,
-  EXIT_CODES,
 } from "../helpers/test-utils.js";
-import {
-  SKILL_CATEGORIES_PATH,
-  SKILL_RULES_PATH,
-  SKILLS_DIR_PATH,
-  STACKS_FILE_PATH,
-  STANDARD_FILES,
-  PLUGIN_MANIFEST_DIR,
-  CLAUDE_SRC_DIR,
-} from "../../src/cli/consts.js";
 
 describe("new marketplace command", () => {
   let tempDir: string;
@@ -35,7 +26,7 @@ describe("new marketplace command", () => {
   it("should display help text", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["new", "marketplace", "--help"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["new", "marketplace", "--help"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Scaffold a new private marketplace project");
@@ -46,26 +37,30 @@ describe("new marketplace command", () => {
   it("should error when no name is provided", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, combined } = await runCLI(["new", "marketplace"], tempDir);
+    const { exitCode, output } = await CLI.run(["new", "marketplace"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS);
-    expect(combined).toContain("Missing 1 required arg");
+    expect(output).toContain("Missing 1 required arg");
   });
 
   it("should error with an invalid marketplace name", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, combined } = await runCLI(["new", "marketplace", "InvalidName"], tempDir);
+    const { exitCode, output } = await CLI.run(["new", "marketplace", "InvalidName"], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS);
-    expect(combined).toContain("kebab-case");
+    expect(output).toContain("kebab-case");
   });
 
   it("should create a marketplace with proper directory structure", async () => {
     tempDir = await createTempDir();
     const marketplaceName = "my-test-marketplace";
 
-    const { exitCode, stdout } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    const { exitCode, stdout } = await CLI.run(["new", "marketplace", marketplaceName], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Create New Marketplace");
@@ -75,22 +70,22 @@ describe("new marketplace command", () => {
     expect(await directoryExists(marketplaceDir)).toBe(true);
 
     // Verify stacks.ts exists
-    const stacksPath = path.join(marketplaceDir, STACKS_FILE_PATH);
+    const stacksPath = path.join(marketplaceDir, SOURCE_PATHS.STACKS_FILE);
     expect(await fileExists(stacksPath)).toBe(true);
 
     // Verify skills directory exists with dummy skill
-    const dummySkillDir = path.join(marketplaceDir, SKILLS_DIR_PATH, "dummy-skill");
+    const dummySkillDir = path.join(marketplaceDir, SOURCE_PATHS.SKILLS_DIR, "dummy-skill");
     expect(await directoryExists(dummySkillDir)).toBe(true);
 
     // Verify SKILL.md and metadata.yaml for dummy skill
-    expect(await fileExists(path.join(dummySkillDir, STANDARD_FILES.SKILL_MD))).toBe(true);
-    expect(await fileExists(path.join(dummySkillDir, STANDARD_FILES.METADATA_YAML))).toBe(true);
+    expect(await fileExists(path.join(dummySkillDir, FILES.SKILL_MD))).toBe(true);
+    expect(await fileExists(path.join(dummySkillDir, FILES.METADATA_YAML))).toBe(true);
 
     // Verify README.md exists
     expect(await fileExists(path.join(marketplaceDir, "README.md"))).toBe(true);
 
     // Verify .claude-src/config.ts exists (installation marker)
-    const configPath = path.join(marketplaceDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+    const configPath = path.join(marketplaceDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
     expect(await fileExists(configPath)).toBe(true);
   });
 
@@ -98,10 +93,10 @@ describe("new marketplace command", () => {
     tempDir = await createTempDir();
     const marketplaceName = "my-stacks-test";
 
-    const { exitCode } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    const { exitCode } = await CLI.run(["new", "marketplace", marketplaceName], { dir: tempDir });
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const stacksPath = path.join(tempDir, marketplaceName, STACKS_FILE_PATH);
+    const stacksPath = path.join(tempDir, marketplaceName, SOURCE_PATHS.STACKS_FILE);
     const content = await readTestFile(stacksPath);
 
     expect(content).toContain('"stacks"');
@@ -113,7 +108,7 @@ describe("new marketplace command", () => {
     tempDir = await createTempDir();
     const marketplaceName = "my-readme-test";
 
-    const { exitCode } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    const { exitCode } = await CLI.run(["new", "marketplace", marketplaceName], { dir: tempDir });
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     const readmePath = path.join(tempDir, marketplaceName, "README.md");
@@ -121,15 +116,17 @@ describe("new marketplace command", () => {
 
     expect(content).toContain(`# ${marketplaceName}`);
     expect(content).toContain("Private marketplace");
-    expect(content).toContain(STACKS_FILE_PATH);
-    expect(content).toContain(SKILLS_DIR_PATH);
+    expect(content).toContain(SOURCE_PATHS.STACKS_FILE);
+    expect(content).toContain(SOURCE_PATHS.SKILLS_DIR);
   });
 
   it("should build marketplace.json during scaffold", async () => {
     tempDir = await createTempDir();
     const marketplaceName = "my-build-test";
 
-    const { exitCode, stdout } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    const { exitCode, stdout } = await CLI.run(["new", "marketplace", marketplaceName], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Building plugins");
@@ -138,7 +135,7 @@ describe("new marketplace command", () => {
     const marketplaceJsonPath = path.join(
       tempDir,
       marketplaceName,
-      PLUGIN_MANIFEST_DIR,
+      SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
       "marketplace.json",
     );
     expect(await fileExists(marketplaceJsonPath)).toBe(true);
@@ -148,32 +145,31 @@ describe("new marketplace command", () => {
     tempDir = await createTempDir();
     const marketplaceName = "duplicate-marketplace";
 
-    const { exitCode: setupExitCode } = await runCLI(
-      ["new", "marketplace", marketplaceName],
-      tempDir,
-    );
+    const { exitCode: setupExitCode } = await CLI.run(["new", "marketplace", marketplaceName], {
+      dir: tempDir,
+    });
     expect(setupExitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const { exitCode, combined } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    const { exitCode, output } = await CLI.run(["new", "marketplace", marketplaceName], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
-    expect(combined).toContain("already exists");
+    expect(output).toContain("already exists");
   });
 
   it("should overwrite existing marketplace with --force", async () => {
     tempDir = await createTempDir();
     const marketplaceName = "force-marketplace";
 
-    const { exitCode: setupExitCode } = await runCLI(
-      ["new", "marketplace", marketplaceName],
-      tempDir,
-    );
+    const { exitCode: setupExitCode } = await CLI.run(["new", "marketplace", marketplaceName], {
+      dir: tempDir,
+    });
     expect(setupExitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const { exitCode, stdout } = await runCLI(
-      ["new", "marketplace", marketplaceName, "--force"],
-      tempDir,
-    );
+    const { exitCode, stdout } = await CLI.run(["new", "marketplace", marketplaceName, "--force"], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Marketplace created successfully");
@@ -184,9 +180,9 @@ describe("new marketplace command", () => {
     const marketplaceName = "output-test";
     const outputDir = path.join(tempDir, "custom-parent");
 
-    const { exitCode, stdout } = await runCLI(
+    const { exitCode, stdout } = await CLI.run(
       ["new", "marketplace", marketplaceName, "--output", outputDir],
-      tempDir,
+      { dir: tempDir },
     );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -194,17 +190,17 @@ describe("new marketplace command", () => {
 
     const marketplaceDir = path.join(outputDir, marketplaceName);
     expect(await directoryExists(marketplaceDir)).toBe(true);
-    expect(await fileExists(path.join(marketplaceDir, STACKS_FILE_PATH))).toBe(true);
+    expect(await fileExists(path.join(marketplaceDir, SOURCE_PATHS.STACKS_FILE))).toBe(true);
   });
 
   it("should produce a valid skill-categories.ts with dummy category", async () => {
     tempDir = await createTempDir();
     const marketplaceName = "my-categories-test";
 
-    const { exitCode } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    const { exitCode } = await CLI.run(["new", "marketplace", marketplaceName], { dir: tempDir });
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const categoriesPath = path.join(tempDir, marketplaceName, SKILL_CATEGORIES_PATH);
+    const categoriesPath = path.join(tempDir, marketplaceName, SOURCE_PATHS.SKILL_CATEGORIES);
     expect(await fileExists(categoriesPath)).toBe(true);
 
     const content = await readTestFile(categoriesPath);
@@ -218,16 +214,16 @@ describe("new marketplace command", () => {
   it("should error with a numbers-only marketplace name", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, combined } = await runCLI(["new", "marketplace", "12345"], tempDir);
+    const { exitCode, output } = await CLI.run(["new", "marketplace", "12345"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS);
-    expect(combined).toContain("kebab-case");
+    expect(output).toContain("kebab-case");
   });
 
   it("should accept a single character marketplace name", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(["new", "marketplace", "a"], tempDir);
+    const { exitCode, stdout } = await CLI.run(["new", "marketplace", "a"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Marketplace created successfully");
@@ -237,10 +233,10 @@ describe("new marketplace command", () => {
     tempDir = await createTempDir();
     const marketplaceName = "my-rules-test";
 
-    const { exitCode } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    const { exitCode } = await CLI.run(["new", "marketplace", marketplaceName], { dir: tempDir });
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const rulesPath = path.join(tempDir, marketplaceName, SKILL_RULES_PATH);
+    const rulesPath = path.join(tempDir, marketplaceName, SOURCE_PATHS.SKILL_RULES);
     expect(await fileExists(rulesPath)).toBe(true);
 
     const content = await readTestFile(rulesPath);
