@@ -61,6 +61,8 @@ This file provides behavioral rules and conventions. For codebase reference docu
 - NEVER write inline SKILL.md frontmatter or agent YAML template strings — use `renderSkillMd()`, `renderAgentYaml()` from `content-generators.ts`
 - NEVER repeat agent metadata strings inline — use `AGENT_DEFS` from `mock-agents.ts`
 - NEVER put TODO/task IDs in test `describe()` blocks
+- NEVER define path/timeout/text constants locally in E2E test files — use `DIRS`, `FILES`, `TIMEOUTS`, `SOURCE_PATHS`, `STEP_TEXT`, `EXIT_CODES` from `e2e/pages/constants.ts`
+- NEVER write a helper function in an E2E test file without first grepping `e2e/helpers/test-utils.ts` and `e2e/fixtures/` for an existing one
 
 ### Code Style
 - NEVER create redundant type aliases — use `Pick<>`, `Partial<>`, or `&`. Check `types/` first.
@@ -99,6 +101,8 @@ This file provides behavioral rules and conventions. For codebase reference docu
 - ALWAYS use config factories: `buildProjectConfig()`, `buildSourceConfig()`, `buildAgentConfigs()`, `buildSkillConfigs()`
 - ALWAYS use `AGENT_DEFS` from `mock-agents.ts` for agent metadata
 - When fixing test data, ALWAYS evaluate the construction pattern too, not just the values
+- ALWAYS read `docs/standards/e2e/README.md` before writing or modifying E2E tests
+- ALWAYS use `toStrictEqual` (not `toEqual`) for object and array comparisons in assertions
 
 ---
 
