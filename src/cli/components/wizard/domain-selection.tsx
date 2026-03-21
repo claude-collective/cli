@@ -16,7 +16,8 @@ const BUILT_IN_DOMAIN_DESCRIPTIONS: Record<Domain, string> = {
 };
 
 export const DomainSelection: React.FC = () => {
-  const { selectedDomains, toggleDomain, setStep, setApproach, selectStack } = useWizardStore();
+  const { selectedDomains, toggleDomain, setStep, setApproach, selectStack, goBack } =
+    useWizardStore();
 
   const availableDomains = useMemo((): CheckboxItem<Domain>[] => {
     const matrixDomains = unique(
@@ -37,12 +38,12 @@ export const DomainSelection: React.FC = () => {
   const handleBack = () => {
     setApproach(null);
     selectStack(null);
+    goBack();
   };
 
   return (
     <CheckboxGrid
       title="Select domains to configure"
-      // subtitle="Select one or more domains, then continue"
       items={availableDomains}
       selectedIds={selectedDomains}
       onToggle={toggleDomain}

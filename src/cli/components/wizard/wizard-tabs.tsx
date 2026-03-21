@@ -7,7 +7,6 @@ import type { Domain } from "../../types/index.js";
 type WizardTabStep = {
   id: WizardStep;
   label: string;
-  number: number;
 };
 
 export type TabDropdownItem = {
@@ -39,28 +38,26 @@ export type WizardTabsProps = {
 };
 
 export const WIZARD_STEPS: WizardTabStep[] = [
-  { id: "stack", label: "Stack", number: 1 },
-  { id: "build", label: "Skills", number: 2 },
-  { id: "sources", label: "Sources", number: 3 },
-  { id: "agents", label: "Agents", number: 4 },
-  { id: "confirm", label: "Confirm", number: 5 },
+  { id: "stack", label: "Stack" },
+  { id: "domains", label: "Domains" },
+  { id: "build", label: "Skills" },
+  { id: "sources", label: "Sources" },
+  { id: "agents", label: "Agents" },
+  { id: "confirm", label: "Confirm" },
 ];
 
 type FormattedStepLabel = {
-  /** The step number indicator, e.g. "[1]" */
-  prefix: string;
   /** The step label text, e.g. "Stack" */
   label: string;
-  /** The complete formatted string, e.g. "[1] Stack" */
+  /** The complete formatted string, e.g. "Stack" */
   full: string;
 };
 
-/** Format a wizard step as its tab label parts and full string, e.g. "[1] Stack" */
+/** Format a wizard step as its tab label */
 export function formatStepLabel(stepId: WizardStep): FormattedStepLabel {
   const step = WIZARD_STEPS.find((s) => s.id === stepId);
-  if (!step) return { prefix: "", label: stepId, full: stepId };
-  const prefix = `[${step.number}]`;
-  return { prefix, label: step.label, full: `${prefix} ${step.label}` };
+  if (!step) return { label: stepId, full: stepId };
+  return { label: step.label, full: step.label };
 }
 
 type StepState = "completed" | "current" | "pending" | "skipped";
@@ -83,7 +80,7 @@ type TabProps = {
 };
 
 const Tab: React.FC<TabProps> = ({ step, state }) => {
-  const label = `[${step.number}] ${step.label}`;
+  const label = step.label;
 
   switch (state) {
     case "current":

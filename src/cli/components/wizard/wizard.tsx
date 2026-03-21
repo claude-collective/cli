@@ -11,6 +11,7 @@ import { StepConfirm } from "./step-confirm.js";
 import { StepSources } from "./step-sources.js";
 import { StepSettings } from "./step-settings.js";
 import { StepAgents } from "./step-agents.js";
+import { DomainSelection } from "./domain-selection.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
 import { matrix, findStack } from "../../lib/matrix/matrix-provider.js";
 import {
@@ -122,18 +123,14 @@ export const Wizard: React.FC<WizardProps> = ({
     }
 
     if (key.escape) {
-      // At the initial stack/scratch selection (approach not yet set), ESC cancels the wizard.
-      // StackSelection handles its own ESC via the onCancel prop.
-      // Other steps that don't have their own escape handler use goBack.
-      if (
-        store.step !== "build" &&
-        store.step !== "confirm" &&
-        store.step !== "sources" &&
-        store.step !== "agents" &&
-        store.step !== "stack"
-      ) {
-        store.goBack();
-      }
+      // Steps with their own ESC handling (via useInput in child components):
+      // - "stack": StackSelection handles ESC via onCancel prop
+      // - "domains": DomainSelection handles ESC via CheckboxGrid onBack
+      // - "build": StepBuild handles ESC via its own useInput
+      // - "sources": StepSources handles ESC via onBack prop
+      // - "confirm": StepConfirm handles ESC via onBack prop
+      // - "agents": StepAgents handles ESC via its own useInput
+      // All steps handle their own ESC, so this is a no-op.
       return;
     }
 
@@ -214,6 +211,9 @@ export const Wizard: React.FC<WizardProps> = ({
     switch (store.step) {
       case "stack":
         return <StepStack onCancel={handleCancel} />;
+
+      case "domains":
+        return <DomainSelection />;
 
       case "build":
         return <StepBuild {...buildStepProps} />;

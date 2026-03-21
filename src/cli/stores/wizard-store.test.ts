@@ -1329,7 +1329,7 @@ describe("WizardStore", () => {
       const { selectedAgents } = useWizardStore.getState();
       expect(selectedAgents).not.toContain("agent-summoner");
       expect(selectedAgents).not.toContain("skill-summoner");
-      expect(selectedAgents).not.toContain("documentor");
+      expect(selectedAgents).not.toContain("scribe");
       expect(selectedAgents).not.toContain("pattern-scout");
       expect(selectedAgents).not.toContain("web-pattern-critique");
     });
@@ -1379,13 +1379,13 @@ describe("WizardStore", () => {
 
     it("should replace previous agent selection", () => {
       const store = useWizardStore.getState();
-      store.toggleAgent("documentor");
+      store.toggleAgent("scribe");
       store.toggleDomain("web");
       store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
       // preselectAgentsFromDomains replaces the array entirely
-      expect(selectedAgents).not.toContain("documentor");
+      expect(selectedAgents).not.toContain("scribe");
     });
   });
 
@@ -1393,12 +1393,15 @@ describe("WizardStore", () => {
     it("should include agents in completed steps when on confirm", () => {
       const store = useWizardStore.getState();
       store.setApproach("scratch");
+      store.setStep("domains");
       store.setStep("build");
       store.setStep("sources");
       store.setStep("agents");
       store.setStep("confirm");
 
       const { completedSteps } = store.getStepProgress();
+      expect(completedSteps).toContain("stack");
+      expect(completedSteps).toContain("domains");
       expect(completedSteps).toContain("agents");
       expect(completedSteps).toContain("sources");
       expect(completedSteps).toContain("build");
@@ -1407,11 +1410,14 @@ describe("WizardStore", () => {
     it("should include sources in completed steps when on agents step", () => {
       const store = useWizardStore.getState();
       store.setApproach("scratch");
+      store.setStep("domains");
       store.setStep("build");
       store.setStep("sources");
       store.setStep("agents");
 
       const { completedSteps } = store.getStepProgress();
+      expect(completedSteps).toContain("stack");
+      expect(completedSteps).toContain("domains");
       expect(completedSteps).toContain("build");
       expect(completedSteps).toContain("sources");
       expect(completedSteps).not.toContain("agents");

@@ -3,12 +3,6 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { WizardStep } from "../../stores/wizard-store";
 import { WizardTabs, WIZARD_STEPS, formatStepLabel, type WizardTabsProps } from "./wizard-tabs";
 
-/** Format a custom (non-WIZARD_STEPS) step label for test assertions */
-const formatCustomStepLabel = (step: { label: string; number: number }) => {
-  const prefix = `[${step.number}]`;
-  return { prefix, label: step.label, full: `${prefix} ${step.label}` };
-};
-
 const renderWizardTabs = (props: Partial<WizardTabsProps> = {}) => {
   const defaultProps: WizardTabsProps = {
     steps: WIZARD_STEPS,
@@ -29,34 +23,23 @@ describe("WizardTabs component", () => {
   });
 
   describe("rendering", () => {
-    it("should render all 5 tabs", () => {
+    it("should render all 6 tabs", () => {
       const { lastFrame, unmount } = renderWizardTabs();
       cleanup = unmount;
 
       const output = lastFrame();
       expect(output).toContain(formatStepLabel("stack").full);
+      expect(output).toContain(formatStepLabel("domains").full);
       expect(output).toContain(formatStepLabel("build").full);
       expect(output).toContain(formatStepLabel("sources").full);
       expect(output).toContain(formatStepLabel("agents").full);
       expect(output).toContain(formatStepLabel("confirm").full);
     });
 
-    it("should render all step numbers", () => {
-      const { lastFrame, unmount } = renderWizardTabs();
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain(formatStepLabel("stack").prefix);
-      expect(output).toContain(formatStepLabel("build").prefix);
-      expect(output).toContain(formatStepLabel("sources").prefix);
-      expect(output).toContain(formatStepLabel("agents").prefix);
-      expect(output).toContain(formatStepLabel("confirm").prefix);
-    });
-
     it("should render with custom steps", () => {
       const customSteps = [
-        { id: "stack" as WizardStep, label: "First", number: 1 },
-        { id: "build" as WizardStep, label: "Second", number: 2 },
+        { id: "stack" as WizardStep, label: "First" },
+        { id: "build" as WizardStep, label: "Second" },
       ];
       const { lastFrame, unmount } = renderWizardTabs({
         steps: customSteps,
@@ -65,8 +48,8 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain(formatCustomStepLabel(customSteps[0]).full);
-      expect(output).toContain(formatCustomStepLabel(customSteps[1]).full);
+      expect(output).toContain("First");
+      expect(output).toContain("Second");
     });
 
     it("should render horizontal dividers above and below tabs", () => {
@@ -157,6 +140,7 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
+      expect(output).toContain(formatStepLabel("domains").full);
       expect(output).toContain(formatStepLabel("build").full);
       expect(output).toContain(formatStepLabel("sources").full);
     });
@@ -301,19 +285,20 @@ describe("WizardTabs component", () => {
     it("should handle all steps completed", () => {
       const { lastFrame, unmount } = renderWizardTabs({
         currentStep: "confirm",
-        completedSteps: ["stack", "build", "sources", "agents", "confirm"],
+        completedSteps: ["stack", "domains", "build", "sources", "agents", "confirm"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
       expect(output).toContain(formatStepLabel("stack").full);
+      expect(output).toContain(formatStepLabel("domains").full);
       expect(output).toContain(formatStepLabel("build").full);
       expect(output).toContain(formatStepLabel("sources").full);
       expect(output).toContain(formatStepLabel("confirm").full);
     });
 
     it("should handle single step", () => {
-      const singleStep = [{ id: "confirm" as WizardStep, label: "Only Step", number: 1 }];
+      const singleStep = [{ id: "confirm" as WizardStep, label: "Only Step" }];
       const { lastFrame, unmount } = renderWizardTabs({
         steps: singleStep,
         currentStep: "confirm",
@@ -322,7 +307,7 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain(formatCustomStepLabel(singleStep[0]).full);
+      expect(output).toContain("Only Step");
     });
   });
 });

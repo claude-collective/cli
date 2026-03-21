@@ -88,7 +88,7 @@ export type StackSelectionProps = {
 };
 
 export const StackSelection: React.FC<StackSelectionProps> = ({ onCancel }) => {
-  const { selectStack, setApproach, setStackAction, populateFromSkillIds, toggleDomain } =
+  const { selectStack, setApproach, setStackAction, populateFromSkillIds, toggleDomain, setStep } =
     useWizardStore();
 
   const stacks = matrix.suggestedStacks;
@@ -157,6 +157,7 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ onCancel }) => {
         for (const domain of DEFAULT_SCRATCH_DOMAINS) {
           toggleDomain(domain);
         }
+        setStep("domains");
         return;
       }
       const focusedStack = stacks.find((s) => s.id === focusedId);
@@ -165,6 +166,7 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ onCancel }) => {
         setStackAction("customize");
         populateFromSkillIds(focusedStack.allSkillIds);
         setApproach("stack");
+        setStep("domains");
       }
     }
   });

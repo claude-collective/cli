@@ -125,12 +125,14 @@ function buildBoundSkillOptions(
 /**
  * Wizard step identifiers for the multi-step init/edit flow.
  *
- * Progression: stack -> build -> sources -> agents -> confirm
+ * Progression: stack -> domains -> build -> sources -> agents -> confirm
  * The "stack" step shows all stacks + "Start from scratch" in a unified list.
+ * The "domains" step shows domain selection (web, api, cli, mobile, shared).
  * Navigation is tracked via the `history` stack for goBack() support.
  */
 export type WizardStep =
-  | "stack" // Unified first step: select stack or "Start from scratch", then domain selection
+  | "stack" // Select stack or "Start from scratch"
+  | "domains" // Select domains to configure
   | "build" // CategoryGrid for technology selection
   | "sources" // Choose skill sources (recommended vs custom)
   | "agents" // Select which agents to compile
@@ -143,8 +145,8 @@ export type WizardStep =
  * one or two state fields. Wizard step components compose these actions to build
  * up the full selection state incrementally (domains -> categories -> skills -> sources).
  *
- * State flow: unified stack/scratch selection -> domain selection -> per-domain skill
- * selection (build step) -> source customization -> confirmation.
+ * State flow: stack/scratch selection -> domain selection -> per-domain skill
+ * selection (build step) -> source customization -> agent selection -> confirmation.
  */
 export type WizardState = {
   step: WizardStep;
@@ -925,7 +927,10 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     const completed: WizardStep[] = [];
     const skipped: WizardStep[] = [];
 
-    if (state.step !== "stack") {
+    if (state.step !== "stack" && state.step !== "domains") {
+      completed.push("stack");
+      completed.push("domains");
+    } else if (state.step === "domains") {
       completed.push("stack");
     }
 

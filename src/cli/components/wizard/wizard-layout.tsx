@@ -130,6 +130,11 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
     dropdowns.stack = { items: [{ id: label, label }] };
   }
 
+  if (store.step === "domains") {
+    const label = "Select domains";
+    dropdowns.domains = { items: [{ id: label, label }] };
+  }
+
   if (store.step === "sources") {
     const label = "Customize skill sources";
     dropdowns.sources = { items: [{ id: label, label }] };

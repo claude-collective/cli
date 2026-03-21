@@ -63,7 +63,7 @@ describe("StepStack component", () => {
     cleanup = undefined;
   });
 
-  describe("unified stack/scratch selection (initial view)", () => {
+  describe("stack/scratch selection", () => {
     describe("rendering", () => {
       it("should render stack options and scratch option", () => {
         const { lastFrame, unmount } = render(<StepStack />);
@@ -103,8 +103,8 @@ describe("StepStack component", () => {
     });
 
     describe("stack selection", () => {
-      it("should select first stack on Enter and show domain selection", async () => {
-        const { stdin, lastFrame, unmount } = render(<StepStack />);
+      it("should set approach and transition to domains step on Enter", async () => {
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -112,13 +112,10 @@ describe("StepStack component", () => {
         stdin.write(ENTER);
         await delay(SELECT_NAV_DELAY_MS);
 
-        const { approach, selectedStackId } = useWizardStore.getState();
+        const { approach, selectedStackId, step } = useWizardStore.getState();
         expect(approach).toBe("stack");
         expect(selectedStackId).toBe("react-fullstack");
-
-        const output = lastFrame();
-        // Domain selection content is now rendered (title handled by wizard-layout)
-        expect(output).toContain("Web");
+        expect(step).toBe("domains");
       });
 
       it("should select second stack when navigated to", async () => {
@@ -138,8 +135,8 @@ describe("StepStack component", () => {
     });
 
     describe("scratch selection", () => {
-      it("should show domain selection when scratch is selected", async () => {
-        const { stdin, lastFrame, unmount } = render(<StepStack />);
+      it("should set approach and transition to domains step when scratch is selected", async () => {
+        const { stdin, unmount } = render(<StepStack />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
@@ -151,13 +148,10 @@ describe("StepStack component", () => {
         stdin.write(ENTER);
         await delay(SELECT_NAV_DELAY_MS);
 
-        const { approach, selectedStackId } = useWizardStore.getState();
+        const { approach, selectedStackId, step } = useWizardStore.getState();
         expect(approach).toBe("scratch");
         expect(selectedStackId).toBeNull();
-
-        const output = lastFrame();
-        // Domain selection content is now rendered (title handled by wizard-layout)
-        expect(output).toContain("Web");
+        expect(step).toBe("domains");
       });
 
       it("should pre-select domains except CLI when scratch is chosen", async () => {
@@ -279,129 +273,6 @@ describe("StepStack component", () => {
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("Start from scratch");
-      });
-    });
-  });
-
-  describe("domain selection mode (after stack/scratch choice)", () => {
-    beforeEach(() => {
-      useWizardStore.getState().setApproach("scratch");
-    });
-
-    describe("rendering", () => {
-      it("should render domain options", () => {
-        const { lastFrame, unmount } = render(<StepStack />);
-        cleanup = unmount;
-
-        const output = lastFrame();
-        expect(output).toContain("Web");
-        expect(output).toContain("API");
-        expect(output).toContain("CLI");
-      });
-
-      it("should render domain options in selection view", () => {
-        const { lastFrame, unmount } = render(<StepStack />);
-        cleanup = unmount;
-
-        const output = lastFrame();
-        // Domain items are shown directly (title rendered by wizard-layout)
-        expect(output).toContain("Web");
-        expect(output).toContain("API");
-      });
-
-      it("should show domain descriptions", () => {
-        const { lastFrame, unmount } = render(<StepStack />);
-        cleanup = unmount;
-
-        const output = lastFrame();
-        // Only the focused item (Web, first in list) shows its description
-        expect(output).toContain("Frontend web applications");
-      });
-    });
-
-    describe("domain selection", () => {
-      it("should toggle domain when selected", async () => {
-        const { stdin, unmount } = render(<StepStack />);
-        cleanup = unmount;
-
-        await delay(RENDER_DELAY_MS);
-
-        // First domain (Web) is focused by default, toggle with space
-        stdin.write(" ");
-        await delay(SELECT_NAV_DELAY_MS);
-
-        const { selectedDomains } = useWizardStore.getState();
-        expect(selectedDomains).toContain("web");
-      });
-
-      it("should allow multiple domain selection", async () => {
-        const { stdin, unmount } = render(<StepStack />);
-        cleanup = unmount;
-
-        await delay(RENDER_DELAY_MS);
-
-        // First domain (Web) is focused by default
-        stdin.write(" ");
-        await delay(SELECT_NAV_DELAY_MS);
-
-        expect(useWizardStore.getState().selectedDomains).toContain("web");
-
-        useWizardStore.getState().toggleDomain("api");
-
-        const { selectedDomains } = useWizardStore.getState();
-        expect(selectedDomains).toContain("web");
-        expect(selectedDomains).toContain("api");
-      });
-
-      it("should show selected domains summary when domains selected", async () => {
-        useWizardStore.getState().toggleDomain("web");
-
-        const { lastFrame, unmount } = render(<StepStack />);
-        cleanup = unmount;
-
-        const output = lastFrame();
-        expect(output).toContain("Selected:");
-        expect(output).toContain("web");
-      });
-
-      it("should navigate to build step when continuing", async () => {
-        useWizardStore.getState().toggleDomain("web");
-
-        const { stdin, unmount } = render(<StepStack />);
-        cleanup = unmount;
-
-        await delay(RENDER_DELAY_MS);
-
-        // Navigate to continue option (after 4 domains)
-        for (let i = 0; i < 4; i++) {
-          stdin.write(ARROW_DOWN);
-          await delay(SELECT_NAV_DELAY_MS);
-        }
-        stdin.write(ENTER);
-        await delay(SELECT_NAV_DELAY_MS);
-
-        const { step } = useWizardStore.getState();
-        expect(step).toBe("build");
-      });
-    });
-
-    describe("back navigation", () => {
-      it("should return to stack/scratch selection when pressing ESC", async () => {
-        const { stdin, lastFrame, unmount } = render(<StepStack />);
-        cleanup = unmount;
-
-        await delay(RENDER_DELAY_MS);
-
-        stdin.write(ESCAPE);
-        await delay(SELECT_NAV_DELAY_MS);
-
-        const { approach } = useWizardStore.getState();
-        expect(approach).toBeNull();
-
-        const output = lastFrame();
-        // Back to stack selection view (title rendered by wizard-layout)
-        expect(output).toContain("React Fullstack");
         expect(output).toContain("Start from scratch");
       });
     });

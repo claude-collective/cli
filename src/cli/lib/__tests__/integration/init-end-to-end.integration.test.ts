@@ -114,11 +114,11 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         expect(stackCheckAgentNames).toContain(agentId);
       }
 
-      // DEFAULT_AGENTS (agent-summoner, skill-summoner, documentor) must NOT
+      // DEFAULT_AGENTS (agent-summoner, skill-summoner, scribe) must NOT
       // appear in stack when selectedAgents is populated and doesn't include them
       expect(config.stack?.["agent-summoner"]).toBeUndefined();
       expect(config.stack?.["skill-summoner"]).toBeUndefined();
-      expect(config.stack?.["documentor"]).toBeUndefined();
+      expect(config.stack?.["scribe"]).toBeUndefined();
     });
 
     it("should compile agent .md files that exist and have content", async () => {
@@ -341,7 +341,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       const store = useWizardStore.getState();
       expect(store.selectedAgents).not.toContain("agent-summoner");
       expect(store.selectedAgents).not.toContain("skill-summoner");
-      expect(store.selectedAgents).not.toContain("documentor");
+      expect(store.selectedAgents).not.toContain("scribe");
 
       const wizardResult = buildWizardResultFromStore(matrix);
       const result = await installLocal({
@@ -356,12 +356,12 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       expect(config.stack).toBeDefined();
       expect(config.stack!["agent-summoner"]).toBeUndefined();
       expect(config.stack!["skill-summoner"]).toBeUndefined();
-      expect(config.stack!["documentor"]).toBeUndefined();
+      expect(config.stack!["scribe"]).toBeUndefined();
 
       // config.agents should not contain default agents
       expect(config.agents).not.toContain("agent-summoner");
       expect(config.agents).not.toContain("skill-summoner");
-      expect(config.agents).not.toContain("documentor");
+      expect(config.agents).not.toContain("scribe");
     });
   });
 

@@ -618,7 +618,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
     // Specifically verify DEFAULT_AGENTS are absent from stack
     expect(config.stack?.["agent-summoner"]).toBeUndefined();
     expect(config.stack?.["skill-summoner"]).toBeUndefined();
-    expect(config.stack?.["documentor"]).toBeUndefined();
+    expect(config.stack?.["scribe"]).toBeUndefined();
   });
 
   it("should assign all skills to all selected agents", async () => {

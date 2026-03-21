@@ -15,9 +15,9 @@ import {
 } from "../test-constants";
 
 /**
- * Navigate from the domain selection sub-view to the build step.
+ * Navigate from the domain selection step to the build step.
  *
- * Domain selection uses a custom useInput list with items:
+ * Domain selection uses a CheckboxGrid with items:
  *   [Web, API, CLI, Mobile, Continue]
  *
  * Focus starts on "Web" (index 0). We press down 4 times to reach
@@ -148,12 +148,12 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Domain selection sub-view (ViewTitle removed from CheckboxGrid; verify domain options)
+      // Domain selection step (now its own step, not a sub-view of stack)
       expect(lastFrame()).toContain("Web");
 
       const state = useWizardStore.getState();
       expect(state.approach).toBe("scratch");
-      expect(state.step).toBe("stack");
+      expect(state.step).toBe("domains");
     });
 
     it("should complete scratch flow from domain selection to build", async () => {
@@ -162,10 +162,10 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       useWizardStore.setState({
-        step: "stack",
+        step: "domains",
         approach: "scratch",
         selectedDomains: ["web"],
-        history: [],
+        history: ["stack"],
       });
 
       const { stdin, lastFrame, unmount } = render(
@@ -175,7 +175,7 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Domain selection sub-view (ViewTitle removed from CheckboxGrid; verify domain content)
+      // Domain selection step (ViewTitle removed from CheckboxGrid; verify domain content)
       expect(lastFrame()).toContain("Selected");
       expect(lastFrame()).toContain("web");
 
@@ -241,8 +241,8 @@ describe("Wizard integration", () => {
 
       const state = useWizardStore.getState();
       expect(state.approach).toBe("scratch");
-      expect(state.step).toBe("stack");
-      // Domain selection sub-view (ViewTitle removed from CheckboxGrid; verify domain options)
+      expect(state.step).toBe("domains");
+      // Domain selection step (verify domain options)
       expect(lastFrame()).toContain("Web");
     });
 
@@ -252,10 +252,10 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       useWizardStore.setState({
-        step: "stack",
+        step: "domains",
         approach: "scratch",
         selectedDomains: ["web", "api"],
-        history: [],
+        history: ["stack"],
       });
 
       const { stdin, lastFrame, unmount } = render(
@@ -345,7 +345,7 @@ describe("Wizard integration", () => {
         domainSelections: {
           web: { ["web-framework"]: ["web-framework-react"] },
         },
-        history: ["stack"],
+        history: ["stack", "domains"],
       });
 
       const { stdin, unmount } = render(<Wizard onComplete={onComplete} onCancel={onCancel} />);
@@ -367,7 +367,7 @@ describe("Wizard integration", () => {
   });
 
   describe("Flow D: Back navigation", () => {
-    it("should navigate back from build to stack step and to initial selection", async () => {
+    it("should navigate back from build to domains step", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -381,7 +381,7 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Now at domain selection, navigate to build
+      // Now at domain selection step, navigate to build
       await navigateDomainSelectionToBuild(stdin);
 
       // Verify we're at build
@@ -389,13 +389,13 @@ describe("Wizard integration", () => {
       expect(state.step).toBe("build");
       expect(state.selectedStackId).toBe("react-fullstack");
 
-      // Go back from build to stack (domain selection sub-view)
+      // Go back from build to domains step
       await stdin.write(ESCAPE);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be back at stack step (domain selection since approach is still set)
+      // Should be back at domains step
       state = useWizardStore.getState();
-      expect(state.step).toBe("stack");
+      expect(state.step).toBe("domains");
       // Stack selection should be preserved
       expect(state.selectedStackId).toBe("react-fullstack");
     });
@@ -613,8 +613,8 @@ describe("Wizard integration", () => {
       await stdin.write(ESCAPE);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be back at stack step (domain selection view since approach is still set)
-      expect(useWizardStore.getState().step).toBe("stack");
+      // Should be back at domains step
+      expect(useWizardStore.getState().step).toBe("domains");
     });
 
     it("should preserve selections when going back", async () => {
@@ -709,8 +709,9 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Should show wizard tabs (4 tabs: Stack, Skills, Sources, Confirm)
+      // Should show wizard tabs (6 tabs: Stack, Domains, Skills, Sources, Agents, Confirm)
       expect(lastFrame()).toContain("Stack");
+      expect(lastFrame()).toContain("Domains");
       expect(lastFrame()).toContain("Skills");
       expect(lastFrame()).toContain("Sources");
       expect(lastFrame()).toContain("Confirm");
@@ -829,12 +830,12 @@ describe("Wizard integration", () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
-      // Pre-set to scratch but with no domains (simulating cleared state)
+      // Pre-set to domains step with no domains selected (simulating cleared state)
       useWizardStore.setState({
-        step: "stack",
+        step: "domains",
         approach: "scratch",
         selectedDomains: [],
-        history: [],
+        history: ["stack"],
       });
 
       const { lastFrame, unmount } = render(<Wizard onComplete={onComplete} onCancel={onCancel} />);
@@ -861,17 +862,19 @@ describe("Wizard integration", () => {
       // Check tabs are visible on initial stack selection
       let frame = lastFrame();
       expect(frame).toContain("Stack");
+      expect(frame).toContain("Domains");
       expect(frame).toContain("Skills");
       expect(frame).toContain("Confirm");
       expect(frame).not.toContain("Intro");
 
-      // Navigate to domain selection (select a stack)
+      // Navigate to domain selection step (select a stack)
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Check tabs are still visible on domain selection
+      // Check tabs are still visible on domain selection step
       frame = lastFrame();
       expect(frame).toContain("Stack");
+      expect(frame).toContain("Domains");
       expect(frame).toContain("Skills");
     });
   });
