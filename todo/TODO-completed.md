@@ -28,6 +28,7 @@
 | D-106 | Inline methodology skills into Liquid agent template — 6 partials in `_templates/methodologies/`, removed `SHARED_METHODOLOGY` from stacks      |
 | D-113 | Stack selection → compact flat list — chevron pointer, inline label + dimmed description, React/Other Frameworks groups, `useRowScroll`         |
 | D-115 | Overhaul default stacks — 13 stacks total (4 new), framework-first naming, "Full-Stack" suffix, comma-separated descriptions, React-first order |
+| D-133 | E2E tests for 13 untested bug fixes — compile-scope-filtering.e2e.test.ts (7 tests: dual-pass, global plugin discovery, clobber prevention) + config-scope-integrity.e2e.test.ts (5 tests: source priority, agent scope merge, old agent deletion, stack filtering, domain placement, domain types) |
 
 ---
 
