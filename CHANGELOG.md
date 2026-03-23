@@ -7,6 +7,15 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.82.0] - 2026-03-23
+
+**Domain reorganization — create ai, meta, infra domains**
+
+- 30 skills reorganized across 3 new domains (ai, meta, infra) and 10 new categories
+- 3 managed database skills recategorized from api-baas to api-database
+
+See [changelogs/0.82.0.md](./changelogs/0.82.0.md) for full details.
+
 ## [0.81.1] - 2026-03-23
 
 **Fix: source rules override defaults for slug-based lookups**
