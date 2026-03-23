@@ -24,7 +24,6 @@ describe("search command — static mode", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
     if (sourceTempDir) {
       await cleanupTempDir(sourceTempDir);

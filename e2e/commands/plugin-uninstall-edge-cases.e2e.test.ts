@@ -85,7 +85,6 @@ describe("uninstall with plugin config but no installed plugins", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 
@@ -169,7 +168,6 @@ describe("uninstall preserves non-CLI plugins", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 
@@ -246,7 +244,6 @@ describe("uninstall without Claude CLI on PATH", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

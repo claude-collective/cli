@@ -29,7 +29,6 @@ describe("uninstall interactive", () => {
     prompt = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

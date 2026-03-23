@@ -1,11 +1,12 @@
 import path from "path";
-import { readFile, writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
   cleanupTempDir,
   createLocalSkill,
   ensureBinaryExists,
+  readTestFile,
   renderSkillMd,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
@@ -25,7 +26,6 @@ describe("diff command", () => {
     }
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 
@@ -207,12 +207,11 @@ describe("diff command", () => {
     const sourceSkillMdPath = path.join(
       e2e.sourceDir,
       SOURCE_PATHS.SKILLS_DIR,
-      "web-testing",
       sourceSkillId,
       FILES.SKILL_MD,
     );
 
-    const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
+    const sourceContent = await readTestFile(sourceSkillMdPath);
 
     const skillDir = await createLocalSkill(tempDir, localDirName, {
       description: "Next generation testing framework",
@@ -247,12 +246,11 @@ describe("diff command", () => {
     const sourceSkillMdPath = path.join(
       e2e.sourceDir,
       SOURCE_PATHS.SKILLS_DIR,
-      "web-testing",
       sourceSkillId,
       FILES.SKILL_MD,
     );
 
-    const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
+    const sourceContent = await readTestFile(sourceSkillMdPath);
 
     const skillDir = await createLocalSkill(tempDir, localDirName, {
       description: "Next generation testing framework",
@@ -288,12 +286,11 @@ describe("diff command", () => {
     const sourceSkillMdPath = path.join(
       e2e.sourceDir,
       SOURCE_PATHS.SKILLS_DIR,
-      "web-testing",
       sourceSkillId,
       FILES.SKILL_MD,
     );
 
-    const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
+    const sourceContent = await readTestFile(sourceSkillMdPath);
 
     const skillDir = await createLocalSkill(tempDir, localDirName, {
       description: "Next generation testing framework",

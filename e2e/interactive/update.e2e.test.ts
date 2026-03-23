@@ -35,7 +35,6 @@ describe("update command", () => {
     prompt = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
     if (sourceTempDir) {
       await cleanupTempDir(sourceTempDir);

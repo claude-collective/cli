@@ -71,7 +71,6 @@ describe("info command", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

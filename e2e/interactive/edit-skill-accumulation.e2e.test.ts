@@ -1,5 +1,4 @@
 import path from "path";
-import { readFile } from "fs/promises";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
@@ -10,6 +9,7 @@ import {
   writeProjectConfig,
   createPermissionsFile,
   createLocalSkill,
+  readTestFile,
 } from "../helpers/test-utils.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { DIRS, FILES, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
@@ -130,7 +130,7 @@ describe("project config does not accumulate global skills after edit", () => {
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // --- Assert: project config should not contain global skills in the skills array ---
-      const updatedProjectConfig = await readFile(projectConfigPath, "utf-8");
+      const updatedProjectConfig = await readTestFile(projectConfigPath);
 
       // The project config MUST contain the project-scoped skill
       expect(updatedProjectConfig).toContain("web-testing-vitest");
@@ -152,7 +152,7 @@ describe("project config does not accumulate global skills after edit", () => {
 
       // Also verify the global config still has its skill (it wasn't removed)
       const globalConfigPath = path.join(tempHOME, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const updatedGlobalConfig = await readFile(globalConfigPath, "utf-8");
+      const updatedGlobalConfig = await readTestFile(globalConfigPath);
       expect(updatedGlobalConfig).toContain("web-framework-react");
     },
   );

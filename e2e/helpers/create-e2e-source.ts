@@ -193,7 +193,7 @@ export async function createE2ESource(options?: E2ESourceOptions): Promise<{
 
 async function writeSkills(sourceDir: string, skills: E2ESkill[]): Promise<void> {
   for (const skill of skills) {
-    const skillDir = path.join(sourceDir, SKILLS_DIR_PATH, skill.category, skill.id);
+    const skillDir = path.join(sourceDir, SKILLS_DIR_PATH, skill.id);
     await mkdir(skillDir, { recursive: true });
 
     await writeFile(

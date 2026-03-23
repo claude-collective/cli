@@ -23,7 +23,6 @@ describe("doctor diagnostics", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
     if (sourceTempDir) {
       await cleanupTempDir(sourceTempDir);

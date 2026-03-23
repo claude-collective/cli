@@ -1,6 +1,6 @@
 import path from "path";
 import { createHash } from "crypto";
-import { mkdir, readFile } from "fs/promises";
+import { mkdir } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { EXIT_CODES, FILES, SOURCE_PATHS } from "../pages/constants.js";
 import {
@@ -8,6 +8,7 @@ import {
   cleanupTempDir,
   createLocalSkill,
   ensureBinaryExists,
+  readTestFile,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { CLI } from "../fixtures/cli.js";
@@ -27,7 +28,6 @@ describe("outdated command", () => {
     }
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 
@@ -74,13 +74,12 @@ describe("outdated command", () => {
     const sourceSkillMdPath = path.join(
       sourceDir,
       SOURCE_PATHS.SKILLS_DIR,
-      "web-testing",
       sourceSkillId,
       FILES.SKILL_MD,
     );
 
     // Compute the hash the same way the CLI does: SHA-256 prefix of the source SKILL.md
-    const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
+    const sourceContent = await readTestFile(sourceSkillMdPath);
     const matchingHash = createHash("sha256")
       .update(sourceContent)
       .digest("hex")
@@ -225,12 +224,11 @@ describe("outdated command", () => {
     const sourceSkillMdPath = path.join(
       sourceDir,
       SOURCE_PATHS.SKILLS_DIR,
-      "web-testing",
       sourceSkillId,
       FILES.SKILL_MD,
     );
 
-    const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
+    const sourceContent = await readTestFile(sourceSkillMdPath);
     const matchingHash = createHash("sha256")
       .update(sourceContent)
       .digest("hex")
@@ -334,11 +332,10 @@ describe("outdated command", () => {
     const currentSourceMdPath = path.join(
       sourceDir,
       SOURCE_PATHS.SKILLS_DIR,
-      "web-testing",
       currentSourceId,
       FILES.SKILL_MD,
     );
-    const sourceContent = await readFile(currentSourceMdPath, "utf-8");
+    const sourceContent = await readTestFile(currentSourceMdPath);
     const matchingHash = createHash("sha256")
       .update(sourceContent)
       .digest("hex")

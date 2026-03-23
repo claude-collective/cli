@@ -14,7 +14,6 @@ describe("import skill command", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
     if (e2eSourceTempDir) {
       await cleanupTempDir(e2eSourceTempDir);

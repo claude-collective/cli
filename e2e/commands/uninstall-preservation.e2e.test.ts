@@ -40,7 +40,6 @@ describe("uninstall preservation behavior", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

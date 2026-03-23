@@ -77,6 +77,7 @@ export async function initProject(
   sourceTempDir: string,
   homeDir: string,
   projectDir: string,
+  options?: { setLocal?: boolean },
 ): Promise<{ exitCode: number; output: string }> {
   const wizard = await InitWizard.launch({
     source: { sourceDir, tempDir: sourceTempDir },
@@ -99,9 +100,11 @@ export async function initProject(
     // Shared domain (pass through)
     const sources = await build.advanceToSources();
 
-    // Sources step -- press "l" to set ALL sources to local
+    // Sources step -- optionally set ALL sources to local (default: yes)
     await sources.waitForReady();
-    await sources.setAllLocal();
+    if (options?.setLocal !== false) {
+      await sources.setAllLocal();
+    }
     const agents = await sources.advance();
 
     // Agents step -- navigate to api-developer and toggle to project scope

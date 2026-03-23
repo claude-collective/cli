@@ -13,7 +13,6 @@ describe("slug-based relationship rules", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

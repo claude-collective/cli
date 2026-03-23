@@ -27,7 +27,6 @@ describe("compile command", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 
@@ -352,7 +351,6 @@ describe("compile command", () => {
     afterEach(async () => {
       if (sourceTempDir) {
         await cleanupTempDir(sourceTempDir);
-        sourceTempDir = undefined!;
       }
     });
 
@@ -392,7 +390,6 @@ describe("compile command", () => {
     afterEach(async () => {
       if (sourceTempDir) {
         await cleanupTempDir(sourceTempDir);
-        sourceTempDir = undefined!;
       }
     });
 

@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile } from "fs/promises";
+import { mkdir, readdir } from "fs/promises";
 import path from "path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
@@ -14,6 +14,7 @@ import {
   cleanupTempDir,
   fileExists,
   createTempDir,
+  readTestFile,
 } from "../helpers/test-utils.js";
 
 const PLUGIN_MANIFEST_DIR = ".claude-plugin";
@@ -82,7 +83,7 @@ describe.skipIf(!claudeAvailable)(
       const marketplacePath = path.join(fixture.sourceDir, PLUGIN_MANIFEST_DIR, "marketplace.json");
       expect(await fileExists(marketplacePath)).toBe(true);
 
-      const content = await readFile(marketplacePath, "utf-8");
+      const content = await readTestFile(marketplacePath);
       const marketplace = JSON.parse(content);
       expect(marketplace.name).toBe(fixture.marketplaceName);
       expect(marketplace.plugins.length).toBeGreaterThanOrEqual(1);

@@ -38,7 +38,6 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

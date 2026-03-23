@@ -25,7 +25,6 @@ describe("unified config view -- split writes", () => {
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

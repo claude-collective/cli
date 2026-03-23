@@ -1,5 +1,5 @@
 import path from "path";
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import {
@@ -10,6 +10,7 @@ import {
   createPermissionsFile,
   createLocalSkill,
   fileExists,
+  readTestFile,
 } from "../helpers/test-utils.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { DIRS, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
@@ -152,7 +153,7 @@ describe("edit recompile routes agents to correct scope directory", () => {
         "Global agent web-developer.md should exist in ~/.claude/agents/",
       ).toBe(true);
 
-      const globalWebDevContent = await readFile(globalWebDevPath, "utf-8");
+      const globalWebDevContent = await readTestFile(globalWebDevPath);
       expect(
         globalWebDevContent,
         "Global agent web-developer.md should have been recompiled (not the stub)",
@@ -166,7 +167,7 @@ describe("edit recompile routes agents to correct scope directory", () => {
         "Project agent api-developer.md should exist in project/.claude/agents/",
       ).toBe(true);
 
-      const projectApiDevContent = await readFile(projectApiDevPath, "utf-8");
+      const projectApiDevContent = await readTestFile(projectApiDevPath);
       expect(
         projectApiDevContent,
         "Project agent api-developer.md should have been recompiled (not the stub)",
