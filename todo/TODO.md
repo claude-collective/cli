@@ -30,7 +30,7 @@
 | D-111 | Create a GIF demo for the README                                                           | Ready for Dev |
 | D-110 | Fix the logo in the README                                                                 | Ready for Dev |
 | D-109 | Fix the screenshots in the README                                                          | Ready for Dev |
-| D-111 | Replace E2E text anchors with stable test identifiers (terminal `data-testid` equivalent)  | Ready for Dev |
+| D-111 | Replace E2E text anchors with stable test identifiers for active state detection           | Investigate   |
 | D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                    | Investigate   |
 | D-93  | Global-scoped plugins double-installed to project and global `settings.json`               | Investigate   |
 | D-90  | Add Sentry tracking for unresolved matrix references                                       | Ready for Dev |
@@ -531,6 +531,24 @@ The current skill covers oclif command structure and Ink component patterns but 
 ---
 
 ### Testing
+
+#### D-111: Stable test identifiers for active state detection
+
+**Priority:** Medium
+
+E2E tests currently use `STEP_TEXT` display strings (e.g., `"Choose a stack"`, `"Framework"`) to identify wizard steps. These break when labels change. More critically, there's no way to assert which tab or domain is *active* vs merely present — tests can only check that text exists on screen.
+
+**Goal:** Tests should be able to assert that a specific tab/domain is in the active state (e.g., "Shared domain is active" not just "Shared text is visible").
+
+**Ruled out approaches:**
+- Zero-width Unicode characters (`\u200B`) — Yoga counts them as layout characters, breaking box border alignment
+- Transparent/hidden text color — terminals have no concept of transparent; `getScreen()` strips color info
+
+**Direction to investigate:**
+- Parse raw ANSI escape sequences from the PTY buffer instead of using `getScreen()`. Active items already emit distinct ANSI codes (bold + warning color). A `TerminalSession` method like `hasStyledText("Shared", { bold: true })` could check the raw stream without any UI changes.
+- Alternative: xterm's buffer API may expose cell-level style attributes that survive processing.
+
+---
 
 #### D-134: Declarative E2E test utilities
 
