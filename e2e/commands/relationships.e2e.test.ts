@@ -123,8 +123,8 @@ describe("slug-based relationship rules", () => {
 
   describe("recommend rules", () => {
     it("should mark a skill as recommended via slug-based recommend rule", async () => {
-      // Use "hono" which is NOT in the default recommends list, so we can
-      // verify the source-specific recommend rule takes effect.
+      // "hono" is in the default recommends list — the source-specific rule
+      // should override the default reason when displayed via `info`.
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource({
         relationships: {
           recommends: [
@@ -262,9 +262,8 @@ describe("slug-based relationship rules", () => {
 
   describe("multiple rule types output", () => {
     it("should resolve all relationship types from slugs to canonical IDs", async () => {
-      // Use "hono" for recommends since it's NOT in default recommends.
-      // "react" and "vitest" are in default recommends, so we can't verify
-      // source-specific reason text for them.
+      // Source recommends for "hono" should override the default recommends
+      // reason. Verifies that source-provided rules take precedence.
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource({
         relationships: {
           conflicts: [

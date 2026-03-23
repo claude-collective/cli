@@ -233,28 +233,28 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
     if (hasSourceRules) {
       const sourceRules = await loadSkillRules(sourceRulesPath);
 
-      // Merge relationships: concatenate arrays
+      // Merge relationships: source rules first (override defaults for first-match lookups)
       relationships = {
         conflicts: [
-          ...defaultRules.relationships.conflicts,
           ...sourceRules.relationships.conflicts,
+          ...defaultRules.relationships.conflicts,
         ],
         discourages: [
-          ...defaultRules.relationships.discourages,
           ...sourceRules.relationships.discourages,
+          ...defaultRules.relationships.discourages,
         ],
         recommends: [
-          ...defaultRules.relationships.recommends,
           ...sourceRules.relationships.recommends,
+          ...defaultRules.relationships.recommends,
         ],
-        requires: [...defaultRules.relationships.requires, ...sourceRules.relationships.requires],
+        requires: [...sourceRules.relationships.requires, ...defaultRules.relationships.requires],
         alternatives: [
-          ...defaultRules.relationships.alternatives,
           ...sourceRules.relationships.alternatives,
+          ...defaultRules.relationships.alternatives,
         ],
         compatibleWith: [
-          ...(defaultRules.relationships.compatibleWith ?? []),
           ...(sourceRules.relationships.compatibleWith ?? []),
+          ...(defaultRules.relationships.compatibleWith ?? []),
         ],
       };
 
