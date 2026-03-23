@@ -15,19 +15,14 @@ Provide your skill definition in this structure:
 
 ```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/metadata.schema.json
-category: [category]
-author: [@author]
-version: 1
-cli_name: [Display Name]
-cli_description: [5-6 words max]
-usage_guidance: >-
+category: [domain]-[category]
+slug: [technology]
+domain: [domain]
+author: "@[author]"
+displayName: [Display Name]
+cliDescription: [5-6 words max]
+usageGuidance: >-
   [When AI agent should invoke this skill - be specific about triggers]
-requires: []
-compatible_with: []
-conflicts_with: []
-tags:
-  - [tag1]
-  - [tag2]
 ```
 
 ### SKILL.md
@@ -274,6 +269,7 @@ description: [One-line description]
 - [ ] Usage guidance is specific (not vague "use when needed")
 - [ ] SKILL.md has TOC if > 100 lines
 - [ ] No overlap with existing skills (checked against: [list])
-- [ ] Tags are lowercase kebab-case
+- [ ] slug field matches the technology portion of the directory name
+- [ ] domain field matches the domain portion of the directory name
       </validation>
       </output_format>

@@ -67,7 +67,7 @@
 1. After completing ANY skill edits, re-read the files using the Read tool
 2. Verify SKILL.md exists with `<critical_requirements>` near the top
 3. Verify SKILL.md has `<critical_reminders>` near the bottom
-4. Verify metadata.yaml exists with required fields
+4. Verify metadata.yaml exists with required fields (category, slug, author, displayName, cliDescription, usageGuidance)
 5. Verify directory follows 3-part naming pattern
 6. If verification fails, report failure and re-attempt the edit
 7. Only report success AFTER verification passes

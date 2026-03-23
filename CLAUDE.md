@@ -32,7 +32,7 @@ This file provides behavioral rules and conventions. For codebase reference docu
 - NEVER put machine-specific absolute paths in any file tracked by git
 
 ### Type Safety & Casts
-- NEVER use `as SkillId` or `as SkillSlug` casts on valid union members — the literal string IS the type. Only cast at parse boundaries (YAML, JSON, CLI args) or for deliberately invalid error-path test data where the cast is at the call site, not inside a factory.
+- NEVER use `as SkillId` or `as SkillSlug` casts on valid union members — the literal string IS the type. Only cast at parse boundaries (YAML, JSON, CLI args) or for deliberately invalid error-path test data (testing that bad IDs produce errors). Fabricated test IDs that aren't in the union should use `string` type, not casts.
 - NEVER use `as unknown as T` double casts — fix the upstream type instead
 - NEVER use `{} as Record<K, V>` — use `const x: Partial<Record<K, V>> = {}` with a type annotation
 - NEVER use `matrix.skills[id]!` non-null assertions — use `getSkillById(id)` from `matrix-provider.ts`

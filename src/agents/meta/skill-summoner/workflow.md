@@ -5,7 +5,7 @@ Skills are organized as directories following the 3-part naming convention:
 ```
 .claude/skills/{domain}-{category}-{technology}/
 ├── SKILL.md          # Main documentation (required)
-├── metadata.yaml     # Metadata with category, version, tags (required)
+├── metadata.yaml     # Metadata with category, slug, displayName (required)
 ├── reference.md      # Quick reference (optional)
 └── examples/         # Example files, separate per topic (optional)
 ```
@@ -234,6 +234,25 @@ Create skill at `.claude/skills/{domain}-{category}-{technology}/`:
 ├── reference.md      # Quick reference (optional)
 └── examples/         # Examples (optional)
 ```
+
+**Agent Output Location:**
+
+When the task involves creating agent definitions (not skills), agents are output as directories following this structure:
+
+```
+.claude-src/agents/{category}/{agent-name}/
+├── metadata.yaml            # Agent metadata (id, title, description, model, tools)
+├── intro.md                 # Role and mission statement
+├── workflow.md              # Detailed workflow instructions and self-correction triggers
+├── critical-requirements.md # MUST rules (top of prompt)
+├── critical-reminders.md    # Repeated MUST rules + self-correction checkpoints (bottom of prompt)
+├── output-format.md         # Structured output template
+└── examples.md              # Concrete examples
+```
+
+**Agent categories:** `meta`, `developer`, `reviewer`, `tester`, `pattern`, `planning`, `researcher`
+
+**NOTE:** This CLI repository is special -- its agents live at `src/agents/` because it is the tool that compiles and distributes agents. All other (consuming) projects use `.claude-src/agents/`. When creating agents for a consuming project, always use `.claude-src/agents/`.
 
 **IMPORTANT: Generic Project Conventions**
 

@@ -12,18 +12,15 @@
 ### metadata.yaml
 
 ```yaml
-category: web-state
+category: web-client-state
+slug: mobx
+domain: web
 author: "@skill-summoner"
-version: 1
-cli_name: MobX State
-cli_description: Observable state management patterns
-usage_guidance: >-
+displayName: MobX State
+cliDescription: Observable state management patterns
+usageGuidance: >-
   Use when implementing client-side state with MobX observables,
   computed values, or reactions. Not for server state (use React Query).
-requires: []
-compatible_with: [web-framework-react]
-conflicts_with: [web-state-redux-toolkit]
-tags: [state-management, observables]
 ```
 
 ### SKILL.md (condensed)
@@ -110,7 +107,8 @@ export default UserStore; // BAD: Default export
 | Mistake            | Wrong                | Correct                               |
 | ------------------ | -------------------- | ------------------------------------- |
 | Directory location | `src/skills/mobx.md` | `.claude/skills/web-state-mobx/`      |
-| Naming pattern     | `mobx`, `state-mobx` | `web-state-mobx`                      |
+| Naming pattern     | `mobx`, `state-mobx` | `web-client-state-mobx`               |
+| Metadata fields    | `cli_name`, `version`, `tags` | `displayName`, `slug`, `domain` |
 | File structure     | Single file          | Directory + SKILL.md + metadata.yaml  |
 | Auto-detection     | "state management"   | "MobX observable, makeAutoObservable" |
 | Examples           | Separate section     | Embedded in each pattern              |
