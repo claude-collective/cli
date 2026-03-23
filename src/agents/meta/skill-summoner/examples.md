@@ -104,11 +104,11 @@ export default UserStore; // BAD: Default export
 
 ## Common Mistakes
 
-| Mistake            | Wrong                | Correct                               |
-| ------------------ | -------------------- | ------------------------------------- |
-| Directory location | `src/skills/mobx.md` | `.claude/skills/web-state-mobx/`      |
-| Naming pattern     | `mobx`, `state-mobx` | `web-client-state-mobx`               |
-| Metadata fields    | `cli_name`, `version`, `tags` | `displayName`, `slug`, `domain` |
-| File structure     | Single file          | Directory + SKILL.md + metadata.yaml  |
-| Auto-detection     | "state management"   | "MobX observable, makeAutoObservable" |
-| Examples           | Separate section     | Embedded in each pattern              |
+| Mistake            | Wrong                         | Correct                               |
+| ------------------ | ----------------------------- | ------------------------------------- |
+| Directory location | `src/skills/mobx.md`          | `.claude/skills/web-state-mobx/`      |
+| Naming pattern     | `mobx`, `state-mobx`          | `web-client-state-mobx`               |
+| Metadata fields    | `cli_name`, `version`, `tags` | `displayName`, `slug`, `domain`       |
+| File structure     | Single file                   | Directory + SKILL.md + metadata.yaml  |
+| Auto-detection     | "state management"            | "MobX observable, makeAutoObservable" |
+| Examples           | Separate section              | Embedded in each pattern              |

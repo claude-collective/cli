@@ -1,45 +1,50 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Status                                                                                       |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------- |
-| D-135 | Investigate: edit-to-local flow writes agents to real HOME despite TerminalSession HOME override — `agent-recompiler.ts:134` uses `os.homedir()` which should respect `HOME=cwd`, but after `cc edit` switching skills to local mode, the compiled agent ends up at the real `~/.claude/agents/` instead of `projectDir/.claude/agents/`. The `agentInProject \|\| agentInHome` assertions in `source-switching-modes.e2e.test.ts` and `init-then-edit-merge.e2e.test.ts` may be masking a genuine scope-routing bug. Possible causes: Claude CLI plugin operations writing agents as a side effect, subprocess not inheriting env, or WSL2 `os.homedir()` quirk.                                                 | Investigate                                                                                  |
-| D-137 | Standards feedback loop — sub-agents capture anti-pattern findings during work, a `convention-keeper` agent synthesizes them into doc updates. Three-stage pipeline: Capture (sub-agents write structured findings to `.agents-docs/findings/`), Accumulate (findings pile up across sessions), Synthesize (reviewer agent reads findings, cross-refs existing standards, proposes updates). See detailed spec below.                                                                                                                                                                                                                                                                                             | Done                                                                                         |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions in `src/agents/` using the agent-summoner. Audit each agent's instructions against actual usage patterns, findings from the convention-keeper, and CLAUDE.md rules. Update prompts, add missing guardrails, improve output formats, and ensure agents write findings to `.agents-docs/findings/` when they discover anti-patterns.                                                                                                                                                                                                                                                                                                               | Ready for Dev                                                                                |
-| D-134 | Declarative E2E test utilities — replace imperative `session.waitForText()`/`session.enter()`/try-catch patterns with high-level helpers that read like user stories (e.g., `wizard.selectStack("full-stack")`, `wizard.selectSkill("web", "framework", "react")`, `wizard.completeWizard()`, `assertAgentCompiled(dir, "web-developer")`). Tests should describe user interactions and expected output, not terminal scraping mechanics. Follows D-120/D-121/D-125.                                                                                                                                                                                                                                              | Ready for Dev                                                                                |
-| D-133 | E2E tests for 13 untested bug fixes — (1) source priority override in wizard-store.ts, (2) splitConfigByScope missing fields, (3) shouldRemoveSkill forkedFrom-only check, (4) uninstall using loadProjectConfigFromDir, (5) config merger preserving agent scope changes, (6) old agent file deletion on scope change, (7) stack scope leak filtering, (8) duplicate domains fix, (9) global config including all domains, (10) config-types.ts Domain type including config.domains, (11) compile scope-aware dual pass (global vs project agent filtering), (12) compile global plugin discovery for project pass, (13) compile project agents missing skills when global stack entries override project stack | Ready for Dev                                                                                |
-| D-132 | Skip incompatibility markers in exclusive categories — in radio (max 1) categories like Framework and Meta-Framework, the single-selection constraint already prevents conflicts. Incompatibility styling is redundant noise there. Only show incompatibility markers in non-exclusive (checkbox) categories where users could select conflicting skills. Check `exclusive: true` on the category definition.                                                                                                                                                                                                                                                                                                     | Ready for Dev                                                                                |
-| D-131 | Track project installations in global config — add `projects?: string[]` to global config, updated by init/edit/uninstall. Warn on global uninstall if project installations still depend on it. Prevents broken TypeScript imports when global is uninstalled before projects. Stale entries handled by `fileExists` check.                                                                                                                                                                                                                                                                                                                                                                                      | Investigate                                                                                  |
-| D-130 | Narrow stack type safety — `StackAgentConfig` allows any `SkillId` in any `Category`. Generate a discriminated type where each category key only accepts skill IDs that belong to that category (e.g., `"web-framework"` only accepts `"web-framework-react"                                                                                                                                                                                                                                                                                                                                                                                                                                                      | "web-framework-vue"`). Depends on D-97 (pre-generated matrix) to avoid regeneration overhead | Investigate |
-| D-129 | Add visibility into global config contents from project config — the `...globalConfig.skills` spread hides what's available. Consider generating comments listing the spread contents, or another approach to make the project config self-documenting without duplicating data                                                                                                                                                                                                                                                                                                                                                                                                                                   | Investigate                                                                                  |
-| D-128 | Disable scope toggle (S hotkey) when editing from global scope (`~`) — changing a global skill/agent to project scope is undefined when there's no project. Grey out or ignore S with a message like "Run `cc edit` from a project to change scope"                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Ready for Dev                                                                                |
-| D-127 | UX for changing global-scoped skills/agents to project scope from within a project — when running `cc edit` from a project dir, allow users to "claim" global skills/agents into the project. Needs design: how to present this, confirmation UX, what happens to the global config entry                                                                                                                                                                                                                                                                                                                                                                                                                         | Investigate                                                                                  |
-| D-126 | Global uninstall skips local skills — `uninstall --all` from home dir shows "Skipping: not created by Agents Inc. CLI" for global-scoped local skills. The `forkedFrom` metadata check in uninstall likely fails because skills were copied to `~/.claude/skills/` but the uninstall code can't find or validate their metadata. May be related to scope-blind path fixes in this session                                                                                                                                                                                                                                                                                                                         | Ready for Dev                                                                                |
-| D-125 | Fix weak E2E test assertions — (1) `source-switching-modes.e2e.test.ts` and `init-then-edit-merge.e2e.test.ts` use `agentInProject \|\| agentInHome` cop-out assertions instead of verifying the agent is in the CORRECT scope-specific location. (2) `edit-wizard-detection.e2e.test.ts` asserts fragile category display names ("Framework", "Testing") on a screen that may show domain selection instead of skill grid. All assertions should verify exact expected location/content based on the agent/skill scope.                                                                                                                                                                                          | Ready for Dev                                                                                |
-| D-124 | E2E tests for default source path — no E2E test exercises the `DEFAULT_SOURCE` / `BUILT_IN_MATRIX` code path (all tests use `--source`). Add tests for: (1) stale marketplace clone scenario (register, modify source, re-init), (2) local install mode without `--source` flag from a consuming project                                                                                                                                                                                                                                                                                                                                                                                                          | Ready for Dev                                                                                |
-| D-123 | Local mode ENOENT on consuming projects — `source-loader.ts` sets `sourcePath: ""` for `BUILT_IN_MATRIX`, so `skill-copier.ts` builds relative paths that only work inside the marketplace repo. Local mode needs to fetch source first (like pre-`9189b22` `loadFromRemote` did) when default source is used                                                                                                                                                                                                                                                                                                                                                                                                     | Ready for Dev                                                                                |
-| D-122 | Auto-update marketplace before plugin install — stale Claude CLI marketplace clone causes "not found" errors for renamed/new skills. Add `claudePluginMarketplaceUpdate()` to `exec.ts`, call in `init.tsx` when marketplace already exists (retry-on-failure or always-update)                                                                                                                                                                                                                                                                                                                                                                                                                                   | Ready for Dev                                                                                |
-| D-121 | Remove step numbers from wizard tabs (remove [1], [2], [3], [4], [5] prefixes from Stack, Skills, Sources, Agents, Confirm tabs)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Ready for Dev                                                                                |
-| D-120 | Add dedicated domain selection step to wizard flow — move domain selection out of stack step into its own step between stack and build                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Ready for Dev                                                                                |
-| D-119 | Update READMEs to mention 100+ skills (currently 103), 13 stacks (explain what stacks are and how they work), and other up-to-date stats                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Ready for Dev                                                                                |
-| D-118 | Investigate renaming scope terminology from "project/global" to "project/user" to align with Claude's terminology and distinguish from install mode (local/plugin)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Investigate                                                                                  |
-| D-117 | Show count of selected global skills and project skills somewhere in the wizard UI                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Ready for Dev                                                                                |
-| D-116 | Filter Incompatible toggle should also deselect all skills currently marked as incompatible when activated                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Ready for Dev                                                                                |
-| D-62  | Review default stacks: add reviewing/research skills (methodology part done via D-106 template inlining)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Ready for Dev                                                                                |
-| D-97  | Improve startup time — lazy-load matrix, only generate custom skills on startup                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Investigate                                                                                  |
-| D-112 | Create a guide for setting up AI documentation — use documenter sub-agent, create `.ai-docs/` directory, iterate over docs, symlink into repo root. Link from README alongside other guides.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Ready for Dev                                                                                |
-| D-111 | Create a GIF demo showing how the CLI works for the README                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Ready for Dev                                                                                |
-| D-110 | Fix the logo in the README                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Ready for Dev                                                                                |
-| D-109 | Fix the screenshots in the README                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Ready for Dev                                                                                |
-| D-111 | Update tests to point to stable strings                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Ready for Dev                                                                                |
-| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` when init writes global-scoped skills                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Investigate                                                                                  |
-| D-93  | Global-scoped plugins double-installed to both project and global `settings.json`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Investigate                                                                                  |
-| D-90  | Add Sentry tracking for unresolved matrix references — `getDiscourageReason` and `validateSelection` fallback paths                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Ready for Dev                                                                                |
-| D-41  | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Ready for Dev                                                                                |
-| D-52  | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Ready for Dev                                                                                |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Ready for Dev                                                                                |
-| D-66  | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Investigate                                                                                  |
-| D-69  | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Investigate                                                                                  |
-| D-100 | Fix pre-existing E2E test violations — `undefined!`, magic timeouts, raw `readFile`, cleanup patterns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Ready for Dev                                                                                |
+| ID    | Task                                                                                       | Status        |
+| ----- | ------------------------------------------------------------------------------------------ | ------------- |
+| D-135 | Edit-to-local flow writes agents to real HOME despite HOME override                        | Investigate   |
+| D-137 | Standards feedback loop — capture and synthesize anti-pattern findings                     | Done          |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions                           | Ready for Dev |
+| D-134 | Declarative E2E test utilities — high-level helpers replacing imperative patterns          | Done          |
+| D-133 | E2E tests for 13 untested bug fixes                                                        | Done          |
+| D-132 | Skip incompatibility markers in exclusive (radio) categories                               | Ready for Dev |
+| D-131 | Track project installations in global config                                               | Investigate   |
+| D-130 | Narrow stack type safety — category-scoped SkillId unions. Depends on D-97                 | Investigate   |
+| D-129 | Add visibility into global config contents from project config                             | Investigate   |
+| D-128 | Disable scope toggle (S hotkey) when editing from global scope                             | Ready for Dev |
+| D-127 | UX for claiming global skills/agents into project scope                                    | Investigate   |
+| D-126 | Global uninstall skips local skills — `forkedFrom` metadata check fails                    | Ready for Dev |
+| D-125 | Fix weak E2E test assertions — scope-blind `\|\|` checks and fragile display names         | Ready for Dev |
+| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                            | Ready for Dev |
+| D-123 | Local mode ENOENT on consuming projects — empty `sourcePath` for built-in matrix           | Ready for Dev |
+| D-122 | Auto-update marketplace before plugin install                                              | Ready for Dev |
+| D-121 | Remove step numbers from wizard tabs                                                       | Ready for Dev |
+| D-120 | Add dedicated domain selection step to wizard flow                                         | Ready for Dev |
+| D-119 | Update READMEs with current stats (100+ skills, 13 stacks)                                 | Ready for Dev |
+| D-118 | Investigate renaming "project/global" scope to "project/user"                              | Investigate   |
+| D-117 | Show selected global/project skill counts in wizard UI                                     | Ready for Dev |
+| D-116 | Filter Incompatible toggle should also deselect incompatible skills                        | Ready for Dev |
+| D-62  | Review default stacks: add reviewing/research skills                                       | Ready for Dev |
+| D-97  | Improve startup time — lazy-load matrix generation                                         | Investigate   |
+| D-112 | Create a guide for setting up AI documentation                                             | Ready for Dev |
+| D-111 | Create a GIF demo for the README                                                           | Ready for Dev |
+| D-110 | Fix the logo in the README                                                                 | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                                          | Ready for Dev |
+| D-111 | Replace E2E text anchors with stable test identifiers (terminal `data-testid` equivalent)  | Ready for Dev |
+| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                    | Investigate   |
+| D-93  | Global-scoped plugins double-installed to project and global `settings.json`               | Investigate   |
+| D-90  | Add Sentry tracking for unresolved matrix references                                       | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill. See [plan](./D-41-config-sub-agent.md)            | Ready for Dev |
+| D-52  | Expand `new agent` command. See [plan](./D-52-expand-new-agent.md)                         | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                            | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type                                            | Investigate   |
+| D-69  | Config migration strategy for outdated config shapes                                       | Investigate   |
+| D-100 | Fix pre-existing E2E test violations                                                       | Ready for Dev |
+| D-139 | Skill domain & category reorganization. See [plan](./D-139-skill-domain-reorganization.md) | Ready for Dev |
+| D-140 | Agent gap analysis — add 5 new agents. See [proposal](./D-140-agent-gap-analysis.md)       | Ready for Dev |
+| D-141 | Merge AI docs — consolidate `.ai-docs/` with `reference/` and `standards/` split           | Ready for Dev |
+| D-142 | Rename `scribe` → `codex-keeper`, keep `convention-keeper`                                 | Ready for Dev |
+| D-143 | Shorten default stack descriptions — drop redundant framework names                        | Ready for Dev |
 
 ---
 
@@ -77,6 +82,60 @@ When running `cc init` from a project directory and selecting global-scoped skil
 When running `cc init` from a project directory and selecting global-scoped skills, the plugins appear in BOTH `~/.claude/settings.json` AND `<project>/.claude/settings.json`. Global-scoped plugins should only be in the global settings.
 
 **Reproduction:** Run `cc init` from a project dir, select global-scoped skills. Check both `~/.claude/settings.json` and `<project>/.claude/settings.json` — both contain the plugin entries.
+
+#### D-135: Edit-to-local flow writes agents to real HOME despite HOME override
+
+**Priority:** Medium
+
+`agent-recompiler.ts:134` uses `os.homedir()` which should respect `HOME=cwd`, but after `cc edit` switching skills to local mode, the compiled agent ends up at the real `~/.claude/agents/` instead of `projectDir/.claude/agents/`. The `agentInProject || agentInHome` assertions in `source-switching-modes.e2e.test.ts` and `init-then-edit-merge.e2e.test.ts` may be masking a genuine scope-routing bug. Possible causes: Claude CLI plugin operations writing agents as a side effect, subprocess not inheriting env, or WSL2 `os.homedir()` quirk.
+
+---
+
+#### D-126: Global uninstall skips local skills
+
+**Priority:** Medium
+
+`uninstall --all` from home dir shows "Skipping: not created by Agents Inc. CLI" for global-scoped local skills. The `forkedFrom` metadata check in uninstall likely fails because skills were copied to `~/.claude/skills/` but the uninstall code can't find or validate their metadata. May be related to scope-blind path fixes.
+
+---
+
+#### D-123: Local mode ENOENT on consuming projects
+
+**Priority:** Medium
+
+`source-loader.ts` sets `sourcePath: ""` for `BUILT_IN_MATRIX`, so `skill-copier.ts` builds relative paths that only work inside the marketplace repo. Local mode needs to fetch source first (like pre-`9189b22` `loadFromRemote` did) when default source is used.
+
+---
+
+#### D-122: Auto-update marketplace before plugin install
+
+**Priority:** Medium
+
+Stale Claude CLI marketplace clone causes "not found" errors for renamed/new skills. Add `claudePluginMarketplaceUpdate()` to `exec.ts`, call in `init.tsx` when marketplace already exists (retry-on-failure or always-update).
+
+---
+
+#### D-131: Track project installations in global config
+
+**Priority:** Medium
+
+Add `projects?: string[]` to global config, updated by init/edit/uninstall. Warn on global uninstall if project installations still depend on it. Prevents broken TypeScript imports when global is uninstalled before projects. Stale entries handled by `fileExists` check.
+
+---
+
+#### D-130: Narrow stack type safety
+
+**Priority:** Low
+
+`StackAgentConfig` allows any `SkillId` in any `Category`. Generate a discriminated type where each category key only accepts skill IDs that belong to that category (e.g., `"web-framework"` only accepts `"web-framework-react" | "web-framework-vue"`). Depends on D-97 (pre-generated matrix) to avoid regeneration overhead.
+
+---
+
+#### D-129: Add visibility into global config contents from project config
+
+**Priority:** Low
+
+The `...globalConfig.skills` spread hides what's available. Consider generating comments listing the spread contents, or another approach to make the project config self-documenting without duplicating data.
 
 ---
 
@@ -156,8 +215,8 @@ A new agent type that:
 5. Proposes targeted additions to specific docs
 6. Marks findings as incorporated
 
-**How this differs from the `scribe` agent:**
-The scribe documents _code_ — it reads source and produces reference docs. The convention-keeper documents _conventions_ — it reads evidence of what went wrong and proposes rules to prevent recurrence.
+**How this differs from the `codex-keeper` agent:**
+The codex-keeper documents _code_ — it reads source and produces reference docs. The convention-keeper documents _conventions_ — it reads evidence of what went wrong and proposes rules to prevent recurrence.
 
 **Implementation pieces:**
 
@@ -183,15 +242,15 @@ All agent definitions in `src/agents/` should be reviewed and improved using the
 
 **Scope:**
 
-| Category  | Agents                                                    |
-| --------- | --------------------------------------------------------- |
-| Meta      | agent-summoner, skill-summoner, scribe, convention-keeper |
-| Reviewer  | cli-reviewer, web-reviewer, api-reviewer                  |
-| Developer | cli-developer, web-developer                              |
-| Tester    | cli-tester, web-tester                                    |
-| Pattern   | web-pattern-critique, pattern-scout                       |
-| Planning  | web-pm                                                    |
-| Research  | web-researcher                                            |
+| Category  | Agents                                                          |
+| --------- | --------------------------------------------------------------- |
+| Meta      | agent-summoner, skill-summoner, codex-keeper, convention-keeper |
+| Reviewer  | cli-reviewer, web-reviewer, api-reviewer                        |
+| Developer | cli-developer, web-developer                                    |
+| Tester    | cli-tester, web-tester                                          |
+| Pattern   | web-pattern-critique, pattern-scout                             |
+| Planning  | web-pm                                                          |
+| Research  | web-researcher                                                  |
 
 **For each agent:**
 
@@ -215,7 +274,210 @@ All agent definitions in `src/agents/` should be reviewed and improved using the
 
 ---
 
+#### D-141: Merge AI documentation — consolidate `.ai-docs/` and `docs/standards/`
+
+**Priority:** Medium
+
+All AI-consumed documentation currently lives in two places: `.ai-docs/` (codebase reference — architecture, types, store map) and `docs/standards/` (prescriptive coding standards — clean code, E2E testing, prompt engineering). Both are exclusively for AI agents, but they serve different purposes and have different validation lifecycles.
+
+**Goal:** Single home for all AI documentation (`.ai-docs/`), with a clear internal split between descriptive reference and prescriptive standards.
+
+**New structure:**
+
+```
+.ai-docs/
+  DOCUMENTATION_MAP.md              # master index for both sections
+  reference/                        # descriptive — "how things work" (existing docs, moved)
+    architecture-overview.md
+    commands.md
+    type-system.md
+    store-map.md
+    component-patterns.md
+    utilities.md
+    test-infrastructure.md
+    features/
+      compilation-pipeline.md
+      configuration.md
+      wizard-flow.md
+      skills-and-matrix.md
+      plugin-system.md
+  standards/                        # prescriptive — "how to write code" (moved from docs/standards/)
+    clean-code-standards.md
+    e2e-testing-bible.md
+    e2e/
+      README.md
+      assertions.md
+      anti-patterns.md
+      page-objects.md
+      patterns.md
+      test-data.md
+      test-structure.md
+    prompt-bible.md
+    loop-prompts-bible.md
+    skill-atomicity-bible.md
+    skill-atomicity-primer.md
+    typescript-types-bible.md
+    documentation-bible.md
+    commit-protocol.md              # moved from docs/guides/ (AI-consumed)
+```
+
+**After cleanup, `docs/` becomes human-only:**
+
+```
+docs/
+  index.md                          # updated to reflect removals
+  guides/                           # human how-to guides only
+    creating-a-marketplace.md
+    writing-custom-skills.md
+    importing-skills.md
+    customizing-subagents.md
+    editing-config.md
+    agent-reminders.md
+    install-modes.md
+  reference/
+    architecture.md                 # keep or remove (overlaps with .ai-docs/reference/)
+  features/                         # specs and research
+  research/
+```
+
+**Implementation steps:**
+
+1. Create `.ai-docs/reference/` and `.ai-docs/standards/` directories
+2. Move existing `.ai-docs/*.md` files (except DOCUMENTATION_MAP.md) into `.ai-docs/reference/`
+3. Move `.ai-docs/features/` into `.ai-docs/reference/features/`
+4. Move `docs/standards/*` into `.ai-docs/standards/`
+5. Move `docs/guides/commit-protocol.md` into `.ai-docs/standards/`
+6. Update DOCUMENTATION_MAP.md: add a Standards section with lighter validation cadence
+7. Update `docs/index.md`: remove standards section, update references
+8. Update CLAUDE.md: single instruction to read `.ai-docs/DOCUMENTATION_MAP.md` covers everything
+9. Update all cross-references within moved docs (grep for `docs/standards/` paths)
+10. Update codex-keeper agent to know the `reference/` vs `standards/` split
+11. Evaluate `docs/reference/architecture.md` — remove if fully superseded by `.ai-docs/reference/architecture-overview.md`
+
+**Scribe agent updates:**
+
+The codex-keeper agent (`src/agents/meta/codex-keeper/` after D-142 rename) needs these changes:
+
+- `workflow.md`: Replace `.claude/docs/` references with `.ai-docs/` throughout
+- `workflow.md`: Add awareness of the `reference/` vs `standards/` split — codex-keeper creates/validates reference docs, NOT standards (standards are managed by convention-keeper)
+- `workflow.md`: Update Output Location Standards section to show new directory structure
+- `workflow.md`: Update Documentation Map Structure section
+- `output-format.md`: Update file location examples from `.claude/docs/` to `.ai-docs/reference/`
+- `intro.md`: Clarify scope — codex-keeper handles `.ai-docs/reference/`, convention-keeper handles `.ai-docs/standards/`
+
+**Validation lifecycle difference:**
+
+- `reference/` — audited aggressively (7-30 day cadence, line numbers drift with code)
+- `standards/` — lighter cadence (validate when convention-keeper proposes updates, or quarterly)
+
+**CLAUDE.md already says:** "ALWAYS read `.ai-docs/DOCUMENTATION_MAP.md` before working on any area" — once the map indexes standards too, this single instruction covers everything.
+
+---
+
+#### D-142: Rename meta documentation agents — scribe → codex-keeper
+
+**Priority:** Low (naming only, no behavior change)
+
+**Depends on:** D-141 (doc merge should land first so references are stable)
+
+The meta agent category currently has four agents with two naming patterns:
+
+| Current Name      | Role                                | Pattern      |
+| ----------------- | ----------------------------------- | ------------ |
+| agent-summoner    | Creates/improves agents             | `*-summoner` |
+| skill-summoner    | Creates/improves skills             | `*-summoner` |
+| scribe            | Creates AI reference docs           | standalone   |
+| convention-keeper | Synthesizes findings into standards | `*-keeper`   |
+
+The "summoner" pair shares a role word differentiated by domain. The documentation pair should share "keeper" — both keep knowledge, differentiated by what they maintain:
+
+| New Name          | Role                                                            | Pattern    |
+| ----------------- | --------------------------------------------------------------- | ---------- |
+| codex-keeper      | Descriptive docs (architecture, types, store maps, commands)    | `*-keeper` |
+| convention-keeper | Prescriptive docs (standards, rules from anti-pattern findings) | `*-keeper` |
+
+**Naming rationale:** "Keeper" fits the lore/fantasy theme (summoners summon, keepers keep knowledge). A "codex" is a structured body of reference knowledge — maps directly to `.ai-docs/reference/`. Convention-keeper already has the right name and keeps `.ai-docs/standards/`.
+
+**Implementation steps:**
+
+1. Rename directory:
+   - `src/agents/meta/scribe/` → `src/agents/meta/codex-keeper/`
+
+2. Update `metadata.yaml`:
+   - `id: scribe` → `id: codex-keeper`, `title: Codex Keeper Agent`
+
+3. Update cross-references (grep for `scribe` excluding skill-summoner's unrelated uses):
+   - `CLAUDE.md` — delegation rules, agent mentions
+   - `todo/TODO.md` — D-137 spec mentions scribe by name
+   - `src/agents/meta/agent-summoner/workflow.md` — agent category tables
+   - `src/agents/meta/scribe/workflow.md` — self-references, `documentation-bible.md` reference
+   - `src/agents/meta/convention-keeper/workflow.md` — mentions scribe as distinct from itself
+   - D-138 agent audit table
+   - D-141 scribe agent update references
+   - Any stacks or config referencing the `scribe` agent ID
+
+4. Update generated types if `AgentName` union includes `scribe`
+
+5. Verify: `tsc --noEmit`, `npm test`, grep for orphaned references
+
+---
+
+#### D-143: Shorten default stack descriptions
+
+**Priority:** Low (cosmetic)
+
+**File:** `src/cli/lib/configuration/default-stacks.ts`
+
+**Rule:** Drop the primary framework from the description when it's already in the stack name. Keep sub-technologies (Supabase, Turborepo) that are meaningful stack choices even if they also appear in the name.
+
+| Stack Name                   | Current Description                                      | New Description                               |
+| ---------------------------- | -------------------------------------------------------- | --------------------------------------------- |
+| Next.js Full-Stack           | Hono, Drizzle, Better Auth, Zustand             | Hono, Drizzle, Better Auth, Zustand           |
+| Next.js T3 Stack             | tRPC, Prisma, NextAuth, Tailwind                | tRPC, Prisma, NextAuth, Tailwind              |
+| Next.js Supabase Full-Stack  | Supabase, Drizzle, Better Auth                  | Supabase, Drizzle, Better Auth                |
+| Next.js Turborepo Full-Stack | Turborepo, pnpm Workspaces, Hono, Drizzle       | Turborepo, pnpm Workspaces, Hono, Drizzle     |
+| React Old School             | Redux Toolkit, SCSS Modules, Vite, Vitest         | Redux Toolkit, SCSS Modules, Vite, Vitest     |
+| React Hono Full-Stack        | Vite, Hono, Drizzle, Better Auth                  | Vite, Hono, Drizzle, Better Auth              |
+| Remix Full-Stack             | Hono, Drizzle, Better Auth                        | Hono, Drizzle, Better Auth                    |
+| SvelteKit Full-Stack         | Hono, Drizzle, Better Auth                    | Hono, Drizzle, Better Auth                    |
+| SolidJS Full-Stack           | Hono, Drizzle, Better Auth, Vitest              | Hono, Drizzle, Better Auth, Vitest            |
+| Astro Content Full-Stack     | Hono, Drizzle                                     | Hono, Drizzle                                 |
+| Vue Modern Full-Stack        | Pinia, Hono, Drizzle, Better Auth                   | Pinia, Hono, Drizzle, Better Auth             |
+| Nuxt Full-Stack              | Hono, Drizzle, Better Auth                    | Hono, Drizzle, Better Auth                    |
+| Angular Modern Full-Stack    | NgRx, Hono, Drizzle, Better Auth                | NgRx, Hono, Drizzle, Better Auth              |
+| Next.js AI SaaS              | Vercel AI, Anthropic, Drizzle, Pinecone | Vercel AI, Anthropic, Drizzle, Pinecone       |
+| Next.js SaaS Starter         | Better Auth, Stripe, Drizzle, Resend, PostHog   | Better Auth, Stripe, Drizzle, Resend, PostHog |
+| Expo Mobile Full-Stack       | Zustand, React Query, Hono, Drizzle  | Zustand, React Query, Hono, Drizzle           |
+
+**Implementation:** 16 single-line string replacements in `default-stacks.ts`. Regenerate types afterward (`bun run generate:types`) if stack descriptions appear in the generated matrix.
+
+---
+
 ### Wizard UX
+
+#### D-132: Skip incompatibility markers in exclusive categories
+
+**Priority:** Low
+
+In radio (max 1) categories like Framework and Meta-Framework, the single-selection constraint already prevents conflicts. Incompatibility styling is redundant noise there. Only show incompatibility markers in non-exclusive (checkbox) categories where users could select conflicting skills. Check `exclusive: true` on the category definition.
+
+---
+
+#### D-128: Disable scope toggle (S hotkey) when editing from global scope
+
+**Priority:** Low
+
+Changing a global skill/agent to project scope is undefined when there's no project. Grey out or ignore S with a message like "Run `cc edit` from a project to change scope".
+
+---
+
+#### D-127: UX for claiming global skills/agents into project scope
+
+**Priority:** Low
+
+When running `cc edit` from a project dir, allow users to "claim" global skills/agents into the project. Needs design: how to present this, confirmation UX, what happens to the global config entry.
+
+---
 
 #### D-62: Review default stacks: include meta/methodology/reviewing skills
 
@@ -265,6 +527,40 @@ The current skill covers oclif command structure and Ink component patterns but 
 - `e2e/helpers/test-utils.ts` — runCLI, createTempDir, etc.
 - `e2e/vitest.config.ts` — E2E test runner config
 - `src/cli/base-command.ts` — BaseCommand pattern
+
+---
+
+### Testing
+
+#### D-134: Declarative E2E test utilities
+
+**Priority:** Medium
+
+Replace imperative `session.waitForText()`/`session.enter()`/try-catch patterns with high-level helpers that read like user stories (e.g., `wizard.selectStack("full-stack")`, `wizard.selectSkill("web", "framework", "react")`, `wizard.completeWizard()`, `assertAgentCompiled(dir, "web-developer")`). Tests should describe user interactions and expected output, not terminal scraping mechanics. Follows D-120/D-121/D-125.
+
+---
+
+#### D-133: E2E tests for 13 untested bug fixes
+
+**Priority:** Medium
+
+(1) source priority override in wizard-store.ts, (2) splitConfigByScope missing fields, (3) shouldRemoveSkill forkedFrom-only check, (4) uninstall using loadProjectConfigFromDir, (5) config merger preserving agent scope changes, (6) old agent file deletion on scope change, (7) stack scope leak filtering, (8) duplicate domains fix, (9) global config including all domains, (10) config-types.ts Domain type including config.domains, (11) compile scope-aware dual pass, (12) compile global plugin discovery for project pass, (13) compile project agents missing skills when global stack entries override project stack.
+
+---
+
+#### D-125: Fix weak E2E test assertions
+
+**Priority:** Medium
+
+(1) `source-switching-modes.e2e.test.ts` and `init-then-edit-merge.e2e.test.ts` use `agentInProject || agentInHome` cop-out assertions instead of verifying the agent is in the CORRECT scope-specific location. (2) `edit-wizard-detection.e2e.test.ts` asserts fragile category display names ("Framework", "Testing") on a screen that may show domain selection instead of skill grid. All assertions should verify exact expected location/content based on the agent/skill scope.
+
+---
+
+#### D-124: E2E tests for default source path
+
+**Priority:** Medium
+
+No E2E test exercises the `DEFAULT_SOURCE` / `BUILT_IN_MATRIX` code path (all tests use `--source`). Add tests for: (1) stale marketplace clone scenario (register, modify source, re-init), (2) local install mode without `--source` flag from a consuming project.
 
 ---
 

@@ -26,7 +26,7 @@ describe("defaultStacks", () => {
     const stack = defaultStacks.find((s) => s.id === "nextjs-fullstack");
     expect(stack).toBeDefined();
     expect(stack!.name).toBe("Next.js Full-Stack");
-    expect(stack!.description).toBe("Next.js, Hono, Drizzle, Better Auth, Zustand");
+    expect(stack!.description).toBe("Hono, Drizzle, Better Auth, Zustand");
     expect(stack!.philosophy).toBe("Ship fast, iterate faster");
   });
 

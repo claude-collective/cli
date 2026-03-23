@@ -5605,7 +5605,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "nextjs-fullstack",
       name: "Next.js Full-Stack",
-      description: "Next.js, Hono, Drizzle, Better Auth, Zustand",
+      description: "Hono, Drizzle, Better Auth, Zustand",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -5842,7 +5842,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "nextjs-t3-stack",
       name: "Next.js T3 Stack",
-      description: "Next.js, tRPC, Prisma, NextAuth, Tailwind",
+      description: "tRPC, Prisma, NextAuth, Tailwind",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -5976,7 +5976,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "nextjs-supabase-fullstack",
       name: "Next.js Supabase Full-Stack",
-      description: "Next.js, Supabase, Drizzle, Better Auth",
+      description: "Supabase, Drizzle, Better Auth",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -6224,7 +6224,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "nextjs-turborepo-fullstack",
       name: "Next.js Turborepo Full-Stack",
-      description: "Next.js, Turborepo, pnpm Workspaces, Hono, Drizzle",
+      description: "Turborepo, pnpm Workspaces, Hono, Drizzle",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -6479,7 +6479,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "react-old-school",
       name: "React Old School",
-      description: "React, Redux Toolkit, SCSS Modules, Vite, Vitest",
+      description: "Redux Toolkit, SCSS Modules, Vite, Vitest",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -6577,7 +6577,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "react-hono-fullstack",
       name: "React Hono Full-Stack",
-      description: "React, Vite, Hono, Drizzle, Better Auth",
+      description: "Vite, Hono, Drizzle, Better Auth",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -6804,7 +6804,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "remix-fullstack",
       name: "Remix Full-Stack",
-      description: "Remix, Hono, Drizzle, Better Auth",
+      description: "Hono, Drizzle, Better Auth",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -6940,7 +6940,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "sveltekit-fullstack",
       name: "SvelteKit Full-Stack",
-      description: "SvelteKit, Hono, Drizzle, Better Auth",
+      description: "Hono, Drizzle, Better Auth",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-svelte"],
@@ -7076,7 +7076,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "solidjs-fullstack",
       name: "SolidJS Full-Stack",
-      description: "SolidJS, Hono, Drizzle, Better Auth, Vitest",
+      description: "Hono, Drizzle, Better Auth, Vitest",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-solidjs"],
@@ -7202,7 +7202,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "astro-content-fullstack",
       name: "Astro Content Full-Stack",
-      description: "Astro, Hono, Drizzle",
+      description: "Hono, Drizzle",
       skills: {
         "web-developer": {
           "web-meta-framework": ["web-meta-framework-astro"],
@@ -7328,7 +7328,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "vue-modern-fullstack",
       name: "Vue Modern Full-Stack",
-      description: "Vue, Pinia, Hono, Drizzle, Better Auth",
+      description: "Pinia, Hono, Drizzle, Better Auth",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-vue-composition-api"],
@@ -7464,7 +7464,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "nuxt-fullstack",
       name: "Nuxt Full-Stack",
-      description: "Vue, Nuxt, Hono, Drizzle, Better Auth",
+      description: "Hono, Drizzle, Better Auth",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-vue-composition-api"],
@@ -7610,7 +7610,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "angular-modern-fullstack",
       name: "Angular Modern Full-Stack",
-      description: "Angular, NgRx, Hono, Drizzle, Better Auth",
+      description: "NgRx, Hono, Drizzle, Better Auth",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-angular-standalone"],
@@ -7746,7 +7746,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "nextjs-ai-saas",
       name: "Next.js AI SaaS",
-      description: "Next.js, Vercel AI SDK, Anthropic SDK, Drizzle, Pinecone",
+      description: "Vercel AI, Anthropic, Drizzle, Pinecone",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -8015,7 +8015,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "nextjs-saas-starter",
       name: "Next.js SaaS Starter",
-      description: "Next.js, Better Auth, Stripe, Drizzle, Resend, PostHog",
+      description: "Better Auth, Stripe, Drizzle, Resend, PostHog",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -8264,7 +8264,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
     {
       id: "expo-mobile-fullstack",
       name: "Expo Mobile Full-Stack",
-      description: "Expo, React Native, Zustand, React Query, Hono, Drizzle",
+      description: "Zustand, React Query, Hono, Drizzle",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],

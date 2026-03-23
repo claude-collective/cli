@@ -17,7 +17,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "nextjs-fullstack",
     name: "Next.js Full-Stack",
-    description: "Next.js, Hono, Drizzle, Better Auth, Zustand",
+    description: "Hono, Drizzle, Better Auth, Zustand",
     philosophy: "Ship fast, iterate faster",
     agents: {
       "web-developer": {
@@ -220,7 +220,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "nextjs-t3-stack",
     name: "Next.js T3 Stack",
-    description: "Next.js, tRPC, Prisma, NextAuth, Tailwind",
+    description: "tRPC, Prisma, NextAuth, Tailwind",
     philosophy: "End-to-end type safety with great DX",
     agents: {
       "web-developer": {
@@ -334,7 +334,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "nextjs-supabase-fullstack",
     name: "Next.js Supabase Full-Stack",
-    description: "Next.js, Supabase, Drizzle, Better Auth",
+    description: "Supabase, Drizzle, Better Auth",
     philosophy: "Full-stack with Supabase backend-as-a-service",
     agents: {
       "web-developer": {
@@ -547,7 +547,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "nextjs-turborepo-fullstack",
     name: "Next.js Turborepo Full-Stack",
-    description: "Next.js, Turborepo, pnpm Workspaces, Hono, Drizzle",
+    description: "Turborepo, pnpm Workspaces, Hono, Drizzle",
     philosophy: "Monorepo architecture with Turborepo and pnpm",
     agents: {
       "web-developer": {
@@ -814,7 +814,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "react-old-school",
     name: "React Old School",
-    description: "React, Redux Toolkit, SCSS Modules, Vite, Vitest",
+    description: "Redux Toolkit, SCSS Modules, Vite, Vitest",
     philosophy: "Classic React with proven patterns",
     agents: {
       "web-developer": {
@@ -898,7 +898,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "react-hono-fullstack",
     name: "React Hono Full-Stack",
-    description: "React, Vite, Hono, Drizzle, Better Auth",
+    description: "Vite, Hono, Drizzle, Better Auth",
     philosophy: "React SPA with Hono backend",
     agents: {
       "web-developer": {
@@ -1092,7 +1092,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "remix-fullstack",
     name: "Remix Full-Stack",
-    description: "Remix, Hono, Drizzle, Better Auth",
+    description: "Hono, Drizzle, Better Auth",
     philosophy: "Web standards and excellent forms handling",
     agents: {
       "web-developer": {
@@ -1208,7 +1208,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "sveltekit-fullstack",
     name: "SvelteKit Full-Stack",
-    description: "SvelteKit, Hono, Drizzle, Better Auth",
+    description: "Hono, Drizzle, Better Auth",
     philosophy: "Write less, do more with compiler magic",
     agents: {
       "web-developer": {
@@ -1324,7 +1324,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "solidjs-fullstack",
     name: "SolidJS Full-Stack",
-    description: "SolidJS, Hono, Drizzle, Better Auth, Vitest",
+    description: "Hono, Drizzle, Better Auth, Vitest",
     philosophy: "Maximum performance with minimal overhead",
     agents: {
       "web-developer": {
@@ -1431,7 +1431,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "astro-content-fullstack",
     name: "Astro Content Full-Stack",
-    description: "Astro, Hono, Drizzle",
+    description: "Hono, Drizzle",
     philosophy: "Ship less JavaScript, faster by default",
     agents: {
       "web-developer": {
@@ -1538,7 +1538,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "vue-modern-fullstack",
     name: "Vue Modern Full-Stack",
-    description: "Vue, Pinia, Hono, Drizzle, Better Auth",
+    description: "Pinia, Hono, Drizzle, Better Auth",
     philosophy: "Progressive and approachable",
     agents: {
       "web-developer": {
@@ -1654,7 +1654,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "nuxt-fullstack",
     name: "Nuxt Full-Stack",
-    description: "Vue, Nuxt, Hono, Drizzle, Better Auth",
+    description: "Hono, Drizzle, Better Auth",
     philosophy: "Progressive Vue with Nuxt power",
     agents: {
       "web-developer": {
@@ -1779,7 +1779,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "angular-modern-fullstack",
     name: "Angular Modern Full-Stack",
-    description: "Angular, NgRx, Hono, Drizzle, Better Auth",
+    description: "NgRx, Hono, Drizzle, Better Auth",
     philosophy: "Enterprise-grade and type-safe",
     agents: {
       "web-developer": {
@@ -1895,7 +1895,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "nextjs-ai-saas",
     name: "Next.js AI SaaS",
-    description: "Next.js, Vercel AI SDK, Anthropic SDK, Drizzle, Pinecone",
+    description: "Vercel AI, Anthropic, Drizzle, Pinecone",
     philosophy: "AI-first full-stack with streaming and tool use",
     agents: {
       "web-developer": {
@@ -2127,7 +2127,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "nextjs-saas-starter",
     name: "Next.js SaaS Starter",
-    description: "Next.js, Better Auth, Stripe, Drizzle, Resend, PostHog",
+    description: "Better Auth, Stripe, Drizzle, Resend, PostHog",
     philosophy: "Ship your SaaS fast with auth, payments, and analytics",
     agents: {
       "web-developer": {
@@ -2343,7 +2343,7 @@ export const defaultStacks: Stack[] = [
   {
     id: "expo-mobile-fullstack",
     name: "Expo Mobile Full-Stack",
-    description: "Expo, React Native, Zustand, React Query, Hono, Drizzle",
+    description: "Zustand, React Query, Hono, Drizzle",
     philosophy: "Cross-platform mobile with shared React patterns",
     agents: {
       "web-developer": {
