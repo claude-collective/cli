@@ -7,6 +7,14 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.81.1] - 2026-03-23
+
+**Fix: source rules override defaults for slug-based lookups**
+
+- Source-provided skill rules now take precedence over defaults when both reference the same slug
+
+See [changelogs/0.81.1.md](./changelogs/0.81.1.md) for full details.
+
 ## [0.81.0] - 2026-03-21
 
 **Wizard UX: dedicated domain step, no tab numbers, agent updates**
