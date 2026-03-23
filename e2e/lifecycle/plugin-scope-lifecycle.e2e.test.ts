@@ -171,7 +171,7 @@ describe.skipIf(!claudeAvailable)(
         expect(apiDevContent).toMatch(/^---/);
         expect(apiDevContent).toMatch(/name:\s*api-developer/);
         expect(apiDevContent).toContain("api-framework-hono");
-        expect(apiDevContent).toContain("shared-meta");
+        expect(apiDevContent).toContain("meta-reviewing");
         expect(apiDevContent).not.toContain("web-framework-react");
 
         // ================================================================

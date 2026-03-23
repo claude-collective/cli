@@ -69,30 +69,34 @@ describe.skipIf(!claudeAvailable)("init wizard — stale marketplace update (D-1
     expect(output).toContain("Registering marketplace");
   });
 
-  it("should update marketplace on second init (v2) without errors", async () => {
-    // First run: register marketplace with v1
-    const wizardV1 = await InitWizard.launch({
-      source: { sourceDir: fixtureV1.sourceDir, tempDir: fixtureV1.tempDir },
-      env: { HOME: sharedHome },
-    });
-    const resultV1 = await wizardV1.completeWithDefaults();
-    expect(await resultV1.exitCode).toBe(EXIT_CODES.SUCCESS);
-    await wizardV1.destroy();
+  it(
+    "should update marketplace on second init (v2) without errors",
+    { timeout: TIMEOUTS.LIFECYCLE },
+    async () => {
+      // First run: register marketplace with v1
+      const wizardV1 = await InitWizard.launch({
+        source: { sourceDir: fixtureV1.sourceDir, tempDir: fixtureV1.tempDir },
+        env: { HOME: sharedHome },
+      });
+      const resultV1 = await wizardV1.completeWithDefaults();
+      expect(await resultV1.exitCode).toBe(EXIT_CODES.SUCCESS);
+      await wizardV1.destroy();
 
-    // Second run: init with v2 source, same marketplace
-    wizard = await InitWizard.launch({
-      source: { sourceDir: fixtureV2.sourceDir, tempDir: fixtureV2.tempDir },
-      env: { HOME: sharedHome },
-    });
-    const result = await wizard.completeWithDefaults();
+      // Second run: init with v2 source, same marketplace
+      wizard = await InitWizard.launch({
+        source: { sourceDir: fixtureV2.sourceDir, tempDir: fixtureV2.tempDir },
+        env: { HOME: sharedHome },
+      });
+      const result = await wizard.completeWithDefaults();
 
-    expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const output = result.output;
-    expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
-    expect(output).not.toContain("Registering marketplace");
-    expect(output).not.toContain("Failed to");
-  });
+      const output = result.output;
+      expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
+      expect(output).not.toContain("Registering marketplace");
+      expect(output).not.toContain("Failed to");
+    },
+  );
 });
 
 // --- Bug D-123: Local mode ENOENT on consuming projects ---

@@ -366,25 +366,25 @@ function getCanonicalSkillCategories(): Record<string, string> {
       "api-security-auth-patterns": "api-security",
       "api-observability-datadog": "api-observability",
       "cli-framework-commander": "cli-framework",
-      "infra-setup-env": "shared-tooling",
+      "infra-setup-env": "infra-config",
       "infra-tooling-linter": "unmapped-category",
       "infra-tooling-docker": "shared-tooling",
-      "infra-ci-cd-github-actions": "shared-ci-cd",
-      "infra-ci-cd-gitlab-ci": "shared-ci-cd",
+      "infra-ci-cd-github-actions": "infra-ci-cd",
+      "infra-ci-cd-gitlab-ci": "infra-ci-cd",
       "web-accessibility-a11y": "web-accessibility",
       "web-animation-framer": "web-animation",
-      "meta-methodology-investigation": "shared-meta",
-      "meta-methodology-success-criteria": "shared-meta",
-      "meta-methodology-investigation-requirements": "shared-meta",
-      "meta-methodology-anti-over-engineering": "shared-meta",
-      "meta-methodology-write-verification": "shared-meta",
-      "meta-methodology-improvement-protocol": "shared-meta",
-      "meta-methodology-context-management": "shared-meta",
-      "shared-meta-research-methodology": "shared-meta",
-      "shared-meta-reviewing": "shared-meta",
-      "shared-meta-cli-reviewing": "shared-meta",
+      "meta-methodology-investigation": "meta-methodology",
+      "meta-methodology-success-criteria": "meta-methodology",
+      "meta-methodology-investigation-requirements": "meta-methodology",
+      "meta-methodology-anti-over-engineering": "meta-methodology",
+      "meta-methodology-write-verification": "meta-methodology",
+      "meta-methodology-improvement-protocol": "meta-methodology",
+      "meta-methodology-context-management": "meta-methodology",
+      "meta-methodology-research-methodology": "meta-methodology",
+      "meta-reviewing-reviewing": "meta-reviewing",
+      "meta-reviewing-cli-reviewing": "meta-reviewing",
       "meta-company-patterns": "local",
-      "meta-test-skill": "shared-meta",
+      "meta-test-skill": "meta-reviewing",
       "web-framework-nonexistent": "web-framework",
       "web-framework-react-pro": "web-framework",
       "web-framework-react-strict": "web-framework",
@@ -396,8 +396,8 @@ function getCanonicalSkillCategories(): Record<string, string> {
 
 /** Maps non-domain SkillIdPrefix values to their corresponding Domain */
 const DOMAIN_PREFIX_MAP: Record<string, Domain> = {
-  meta: "shared",
-  infra: "shared",
+  meta: "meta",
+  infra: "infra",
   security: "shared",
 };
 
@@ -448,7 +448,7 @@ export function createMockSkill(id: SkillId, overrides?: Partial<ResolvedSkill>)
   }
 
   // Derive slug from skill ID: strip domain-category prefix to get the last segment(s)
-  // e.g., "web-framework-react" -> "react", "shared-meta-reviewing" -> "reviewing"
+  // e.g., "web-framework-react" -> "react", "meta-reviewing-reviewing" -> "reviewing"
   const segments = id.split("-");
   const defaultSlug = (segments.length >= 3 ? segments.slice(2).join("-") : id) as SkillSlug;
 
@@ -795,7 +795,7 @@ export function createComprehensiveMatrix(
     "api-database-drizzle": SKILLS.drizzle,
     "web-testing-vitest": SKILLS.vitest,
     // Methodology skill
-    "shared-meta-reviewing": SKILLS.antiOverEng,
+    "meta-reviewing-reviewing": SKILLS.antiOverEng,
   };
 
   const categories = {
@@ -815,9 +815,9 @@ export function createComprehensiveMatrix(
       exclusive: false,
       order: 10,
     },
-    "shared-meta": {
+    "meta-reviewing": {
       ...TEST_CATEGORIES.methodology,
-      domain: "shared",
+      domain: "meta",
       exclusive: false,
       required: false,
       order: 11,
@@ -868,7 +868,7 @@ export function createComprehensiveMatrix(
     hono: "api-framework-hono",
     drizzle: "api-database-drizzle",
     vitest: "web-testing-vitest",
-    reviewing: "shared-meta-reviewing",
+    reviewing: "meta-reviewing-reviewing",
   } as unknown as Record<SkillSlug, SkillId>;
 
   // Boundary cast: Object.fromEntries returns { [k: string]: string }
@@ -897,7 +897,7 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
     "api-framework-hono": SKILLS.hono,
     "web-testing-vitest": SKILLS.vitest,
     // Methodology skill
-    "shared-meta-reviewing": SKILLS.antiOverEng,
+    "meta-reviewing-reviewing": SKILLS.antiOverEng,
   };
 
   const suggestedStacks: ResolvedStack[] = [
@@ -931,9 +931,9 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
         domain: "shared",
         exclusive: false,
       },
-      "shared-meta": {
+      "meta-reviewing": {
         ...TEST_CATEGORIES.methodology,
-        domain: "shared",
+        domain: "meta",
         exclusive: false,
         required: false,
       },
@@ -1181,14 +1181,14 @@ export function createMockRawStacksConfigWithArrays(): RawStacksConfig {
         agents: {
           "web-developer": {
             "web-framework": "web-framework-react",
-            "shared-meta": [
-              "shared-meta-research-methodology",
-              "shared-meta-reviewing",
-              "shared-meta-cli-reviewing",
+            "meta-reviewing": [
+              "meta-methodology-research-methodology",
+              "meta-reviewing-reviewing",
+              "meta-reviewing-cli-reviewing",
             ],
           },
           "pattern-scout": {
-            "shared-meta": ["shared-meta-research-methodology"],
+            "meta-reviewing": ["meta-methodology-research-methodology"],
           },
         },
       },
@@ -1207,9 +1207,9 @@ export function createMockRawStacksConfigWithObjects(): RawStacksConfig {
           "web-developer": {
             "web-framework": [{ id: "web-framework-react", preloaded: true }],
             "web-styling": "web-styling-scss-modules",
-            "shared-meta": [
-              { id: "shared-meta-research-methodology", preloaded: true },
-              "shared-meta-reviewing",
+            "meta-reviewing": [
+              { id: "meta-methodology-research-methodology", preloaded: true },
+              "meta-reviewing-reviewing",
             ],
           },
         },

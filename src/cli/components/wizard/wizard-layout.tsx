@@ -147,10 +147,9 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
 
   if (store.step === "confirm") {
     const stackName = getStackName(store.selectedStackId);
-    const domainsText = store.selectedDomains.map(getDomainDisplayName).join(" + ");
     const label = stackName
       ? `Ready to install ${stackName}`
-      : `Ready to install your custom stack${domainsText ? ` (${domainsText})` : ""}`;
+      : "Ready to install your custom stack";
     dropdowns.confirm = { items: [{ id: label, label }] };
   }
 

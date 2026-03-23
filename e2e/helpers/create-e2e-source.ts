@@ -85,47 +85,46 @@ const E2E_SKILLS: E2ESkill[] = [
     displayName: "api-framework-hono",
   },
   {
-    category: "shared-meta",
-    id: "shared-meta-research-methodology",
+    category: "meta-methodology",
+    id: "meta-methodology-research-methodology",
     slug: "research-methodology",
     description: "Codebase investigation and research methodology",
-    domain: "shared",
+    domain: "meta",
     displayName: "Research Methodology",
   },
   {
-    category: "shared-meta",
-    id: "shared-meta-reviewing",
+    category: "meta-reviewing",
+    id: "meta-reviewing-reviewing",
     slug: "reviewing",
     description: "Code review guidance and patterns",
-    domain: "shared",
+    domain: "meta",
     displayName: "Reviewing",
   },
   {
-    category: "shared-meta",
-    id: "shared-meta-cli-reviewing",
+    category: "meta-reviewing",
+    id: "meta-reviewing-cli-reviewing",
     slug: "cli-reviewing",
     description: "CLI code review patterns",
-    domain: "shared",
+    domain: "meta",
     displayName: "CLI Reviewing",
   },
-];
-
-const SHARED_META_SKILLS: SkillId[] = [
-  "shared-meta-research-methodology",
-  "shared-meta-reviewing",
-  "shared-meta-cli-reviewing",
 ];
 
 const webDeveloperAgentConfig: StackAgentConfig = {
   "web-framework": [createMockSkillAssignment("web-framework-react", true)],
   "web-testing": [createMockSkillAssignment("web-testing-vitest")],
   "web-client-state": [createMockSkillAssignment("web-state-zustand")],
-  "shared-meta": SHARED_META_SKILLS.map((id) => createMockSkillAssignment(id, true)),
+  "meta-reviewing": [
+    createMockSkillAssignment("meta-reviewing-reviewing", true),
+    createMockSkillAssignment("meta-reviewing-cli-reviewing", true),
+  ],
+  "meta-methodology": [createMockSkillAssignment("meta-methodology-research-methodology", true)],
 };
 
 const apiDeveloperAgentConfig: StackAgentConfig = {
   "api-api": [createMockSkillAssignment("api-framework-hono", true)],
-  "shared-meta": SHARED_META_SKILLS.slice(0, 2).map((id) => createMockSkillAssignment(id, true)),
+  "meta-methodology": [createMockSkillAssignment("meta-methodology-research-methodology", true)],
+  "meta-reviewing": [createMockSkillAssignment("meta-reviewing-reviewing", true)],
 };
 
 const E2E_STACK: Stack = {

@@ -912,7 +912,7 @@ describe("WizardStore", () => {
 
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
-          misc: { "shared-meta": [sa("meta-methodology-vitest" as SkillId)] },
+          misc: { "meta-reviewing": [sa("meta-methodology-vitest" as SkillId)] },
         },
       };
       initializeMatrix(ALL_SKILLS_METHODOLOGY_BARE_MATRIX);
@@ -930,10 +930,10 @@ describe("WizardStore", () => {
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
           "pattern-scout": {
-            "shared-meta": [
-              sa("shared-meta-research-methodology", true),
-              sa("shared-meta-reviewing", true),
-              sa("shared-meta-cli-reviewing", true),
+            "meta-reviewing": [
+              sa("meta-methodology-research-methodology", true),
+              sa("meta-reviewing-reviewing", true),
+              sa("meta-reviewing-cli-reviewing", true),
             ],
           },
         },
@@ -944,10 +944,10 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.shared!["shared-meta"]).toEqual([
-        "shared-meta-research-methodology",
-        "shared-meta-reviewing",
-        "shared-meta-cli-reviewing",
+      expect(domainSelections.meta!["meta-reviewing"]).toEqual([
+        "meta-methodology-research-methodology",
+        "meta-reviewing-reviewing",
+        "meta-reviewing-cli-reviewing",
       ]);
     });
 
@@ -958,9 +958,9 @@ describe("WizardStore", () => {
         agents: {
           web: {
             "web-framework": [sa("web-framework-react", true)],
-            "shared-meta": [
-              sa("shared-meta-research-methodology", true),
-              sa("shared-meta-reviewing", true),
+            "meta-reviewing": [
+              sa("meta-methodology-research-methodology", true),
+              sa("meta-reviewing-reviewing", true),
             ],
           },
           api: { "api-api": [sa("api-framework-hono", true)] },
@@ -973,9 +973,9 @@ describe("WizardStore", () => {
       const { domainSelections } = useWizardStore.getState();
 
       expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
-      expect(domainSelections.shared!["shared-meta"]).toEqual([
-        "shared-meta-research-methodology",
-        "shared-meta-reviewing",
+      expect(domainSelections.meta!["meta-reviewing"]).toEqual([
+        "meta-methodology-research-methodology",
+        "meta-reviewing-reviewing",
       ]);
       expect(domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
     });
@@ -986,15 +986,15 @@ describe("WizardStore", () => {
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
           agent1: {
-            "shared-meta": [
-              sa("shared-meta-research-methodology", true),
-              sa("shared-meta-reviewing", true),
+            "meta-reviewing": [
+              sa("meta-methodology-research-methodology", true),
+              sa("meta-reviewing-reviewing", true),
             ],
           },
           agent2: {
-            "shared-meta": [
-              sa("shared-meta-reviewing", true),
-              sa("shared-meta-cli-reviewing", true),
+            "meta-reviewing": [
+              sa("meta-reviewing-reviewing", true),
+              sa("meta-reviewing-cli-reviewing", true),
             ],
           },
         },
@@ -1006,10 +1006,10 @@ describe("WizardStore", () => {
       const { domainSelections } = useWizardStore.getState();
 
       // Should deduplicate: anti-over-engineering appears in both agents
-      expect(domainSelections.shared!["shared-meta"]).toEqual([
-        "shared-meta-research-methodology",
-        "shared-meta-reviewing",
-        "shared-meta-cli-reviewing",
+      expect(domainSelections.meta!["meta-reviewing"]).toEqual([
+        "meta-methodology-research-methodology",
+        "meta-reviewing-reviewing",
+        "meta-reviewing-cli-reviewing",
       ]);
     });
   });

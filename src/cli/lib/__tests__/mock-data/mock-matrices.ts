@@ -106,20 +106,20 @@ export const ALL_SKILLS_WEB_AND_API_MATRIX = createMockMatrix(...Object.values(S
 
 export const ALL_SKILLS_METHODOLOGY_MATRIX = createMockMatrix(...Object.values(SKILLS), {
   categories: {
-    "shared-meta": { domain: "shared" },
+    "meta-reviewing": { domain: "meta" },
   } as Record<Category, CategoryDefinition>,
 });
 
 export const ALL_SKILLS_METHODOLOGY_BARE_MATRIX = createMockMatrix(...Object.values(SKILLS), {
   categories: {
-    "shared-meta": {},
+    "meta-reviewing": {},
   } as Record<Category, CategoryDefinition>,
 });
 
 export const ALL_SKILLS_MULTI_DOMAIN_MATRIX = createMockMatrix(...Object.values(SKILLS), {
   categories: {
     "web-framework": { domain: "web" },
-    "shared-meta": { domain: "shared" },
+    "meta-reviewing": { domain: "meta" },
     "api-api": { domain: "api" },
   } as Record<Category, CategoryDefinition>,
 });
@@ -234,9 +234,9 @@ export const TOOLING_AND_FRAMEWORK_CONFIG = createMockMatrixConfig({
 });
 
 export const CI_CD_CONFIG = createMockMatrixConfig({
-  "shared-ci-cd": createMockCategory("shared-ci-cd", "CI/CD", {
+  "infra-ci-cd": createMockCategory("infra-ci-cd", "CI/CD", {
     description: "Continuous integration and deployment",
-    domain: "shared",
+    domain: "infra",
     exclusive: true,
     required: false,
     order: 30,

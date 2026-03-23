@@ -28,9 +28,9 @@ const E2E_SKILL_NAMES = [
   "web-testing-vitest",
   "web-state-zustand",
   "api-framework-hono",
-  "shared-meta-research-methodology",
-  "shared-meta-reviewing",
-  "shared-meta-cli-reviewing",
+  "meta-methodology-research-methodology",
+  "meta-reviewing-reviewing",
+  "meta-reviewing-cli-reviewing",
 ];
 
 const EXPECTED_SKILL_COUNT = 7;

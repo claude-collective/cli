@@ -35,8 +35,8 @@ describe("init wizard — interactions", () => {
         // Continue with only Web selected
         const build = await domain.advance();
 
-        // Advance through remaining domains (Web + Shared, no API) to sources
-        const sources = await build.passThroughWebAndSharedDomains();
+        // Advance through remaining domains (Web + Methodology, no API) to sources
+        const sources = await build.passThroughWebAndMethodologyDomains();
         const agents = await sources.acceptDefaults();
         const confirm = await agents.acceptDefaults("init");
         const result = await confirm.confirm();

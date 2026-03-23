@@ -70,9 +70,13 @@ describe("POM Framework Smoke Tests", () => {
       async () => {
         source = await createE2ESource();
         project = await ProjectBuilder.editable({
-          skills: ["web-framework-react", "api-framework-hono", "shared-meta-research-methodology"],
+          skills: [
+            "web-framework-react",
+            "api-framework-hono",
+            "meta-methodology-research-methodology",
+          ],
           agents: ["web-developer", "api-developer"],
-          domains: ["web", "api", "shared"],
+          domains: ["web", "api", "meta"],
         });
 
         const wizard = await EditWizard.launch({

@@ -275,7 +275,7 @@ describe("config-scope integrity -- config-types Domain type includes config.dom
         // All 3 domains must appear in the Domain type -- including "api"
         expect(domainTypeBlock).toContain('"web"');
         expect(domainTypeBlock).toContain('"api"');
-        expect(domainTypeBlock).toContain('"shared"');
+        expect(domainTypeBlock).toContain('"meta"');
       } finally {
         await cleanupTempDir(tempDir);
       }

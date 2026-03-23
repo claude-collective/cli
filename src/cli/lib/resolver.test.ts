@@ -212,18 +212,18 @@ describe("buildSkillRefsFromConfig", () => {
 
   it("should handle multiple skills per category", () => {
     const agentStack: StackAgentConfig = {
-      "shared-meta": [
-        sa("shared-meta-research-methodology", true),
-        sa("shared-meta-reviewing", true),
+      "meta-reviewing": [
+        sa("meta-methodology-research-methodology", true),
+        sa("meta-reviewing-reviewing", true),
       ],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
 
     expect(result).toHaveLength(2);
-    expect(result[0].id).toBe("shared-meta-research-methodology");
+    expect(result[0].id).toBe("meta-methodology-research-methodology");
     expect(result[0].preloaded).toBe(true);
-    expect(result[1].id).toBe("shared-meta-reviewing");
+    expect(result[1].id).toBe("meta-reviewing-reviewing");
     expect(result[1].preloaded).toBe(true);
   });
 });

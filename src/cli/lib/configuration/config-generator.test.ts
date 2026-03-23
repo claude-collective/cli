@@ -373,17 +373,17 @@ describe("config-generator", () => {
       initializeMatrix(METHODOLOGY_MATRIX);
       const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
 
-      const config = generateProjectConfigFromSkills("my-project", ["shared-meta-reviewing"], {
+      const config = generateProjectConfigFromSkills("my-project", ["meta-reviewing-reviewing"], {
         selectedAgents,
       });
 
       expect(config.agents).toEqual(buildAgentConfigs(["api-developer", "web-developer"]));
       expect(config.stack).toBeDefined();
-      expect(config.stack!["web-developer"]?.["shared-meta"]?.[0]?.id).toBe(
-        "shared-meta-reviewing",
+      expect(config.stack!["web-developer"]?.["meta-reviewing"]?.[0]?.id).toBe(
+        "meta-reviewing-reviewing",
       );
-      expect(config.stack!["api-developer"]?.["shared-meta"]?.[0]?.id).toBe(
-        "shared-meta-reviewing",
+      expect(config.stack!["api-developer"]?.["meta-reviewing"]?.[0]?.id).toBe(
+        "meta-reviewing-reviewing",
       );
     });
   });
@@ -438,10 +438,10 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "pattern-scout": {
-          "shared-meta": [
-            sa("shared-meta-research-methodology", true),
-            sa("shared-meta-reviewing", true),
-            sa("shared-meta-cli-reviewing", true),
+          "meta-reviewing": [
+            sa("meta-methodology-research-methodology", true),
+            sa("meta-reviewing-reviewing", true),
+            sa("meta-reviewing-cli-reviewing", true),
           ],
         },
       });

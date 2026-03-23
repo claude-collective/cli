@@ -82,10 +82,8 @@ describe("project-config", () => {
         stack: {
           "web-developer": {
             "web-framework": "web-framework-react",
-            "shared-meta": [
-              { id: "shared-meta-research-methodology", preloaded: true },
-              { id: "shared-meta-reviewing", preloaded: true },
-            ],
+            "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
+            "meta-methodology": [{ id: "meta-methodology-research-methodology", preloaded: true }],
             "web-styling": {
               id: "web-styling-scss-modules",
               preloaded: true,
@@ -102,10 +100,8 @@ describe("project-config", () => {
           // bare string -> SkillAssignment[]
           "web-framework": [{ id: "web-framework-react", preloaded: false }],
           // array of objects -> SkillAssignment[]
-          "shared-meta": [
-            { id: "shared-meta-research-methodology", preloaded: true },
-            { id: "shared-meta-reviewing", preloaded: true },
-          ],
+          "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
+          "meta-methodology": [{ id: "meta-methodology-research-methodology", preloaded: true }],
           // single object -> SkillAssignment[]
           "web-styling": [{ id: "web-styling-scss-modules", preloaded: true }],
         },

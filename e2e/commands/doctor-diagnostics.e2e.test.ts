@@ -12,6 +12,7 @@ import {
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { CLI } from "../fixtures/cli.js";
+import type { SkillId } from "../../src/cli/types/index.js";
 
 describe("doctor diagnostics", () => {
   let tempDir: string;
@@ -161,7 +162,7 @@ describe("doctor diagnostics", () => {
         agents: [{ name: "web-developer", scope: "project" }],
         stack: {
           "web-developer": {
-            "web-framework": [{ skillId: "web-framework-nonexistent", required: true }],
+            "web-framework": [{ id: "web-framework-nonexistent" as SkillId, preloaded: true }], // fabricated E2E test ID
           },
         },
       });
@@ -232,7 +233,9 @@ describe("doctor diagnostics", () => {
         agents: [{ name: "web-developer", scope: "project" }],
         stack: {
           "web-developer": {
-            "web-framework": [{ id: "web-framework-nonexistent-skill", preloaded: true }],
+            "web-framework": [
+              { id: "web-framework-nonexistent-skill" as SkillId, preloaded: true },
+            ], // fabricated E2E test ID
           },
         },
       });
@@ -312,7 +315,7 @@ describe("doctor diagnostics", () => {
         agents: [{ name: "web-developer", scope: "project" }],
         stack: {
           "web-developer": {
-            "web-framework": [{ id: "web-framework-doesnt-exist", preloaded: true }],
+            "web-framework": [{ id: "web-framework-doesnt-exist" as SkillId, preloaded: true }], // fabricated E2E test ID
           },
         },
       });

@@ -9,8 +9,11 @@ export function getDomainDisplayName(domain: string): string {
   const displayNames: Record<Domain, string> = {
     web: "Web",
     api: "API",
+    ai: "AI",
     cli: "CLI",
     mobile: "Mobile",
+    infra: "Infrastructure",
+    meta: "Methodology",
     shared: "Shared",
   };
   return (

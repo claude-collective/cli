@@ -107,7 +107,7 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- per-skill s
           await prompt.waitForRawText(STEP_TEXT.DOMAIN_API, TIMEOUTS.WIZARD_LOAD);
           await prompt.pressEnter();
 
-          await prompt.waitForRawText(STEP_TEXT.DOMAIN_SHARED, TIMEOUTS.WIZARD_LOAD);
+          await prompt.waitForRawText(STEP_TEXT.DOMAIN_META, TIMEOUTS.WIZARD_LOAD);
           await prompt.pressEnter();
 
           await prompt.waitForRawText(STEP_TEXT.SOURCES, TIMEOUTS.WIZARD_LOAD);

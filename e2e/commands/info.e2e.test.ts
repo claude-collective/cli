@@ -4,11 +4,11 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { EXIT_CODES, DIRS, FILES, SOURCE_PATHS } from "../pages/constants.js";
 import { createTempDir, cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
-import type { SkillId } from "../../src/cli/types/index.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { CLI } from "../fixtures/cli.js";
+import type { SkillId } from "../../src/cli/types/index.js";
 
-const SKILL_ID: SkillId = "web-testing-info-e2e";
+const SKILL_ID = "web-testing-info-e2e";
 
 /**
  * Creates a minimal skills source directory that the `info` command can load.
@@ -20,13 +20,13 @@ const SKILL_ID: SkillId = "web-testing-info-e2e";
 async function createSkillSource(
   tempDir: string,
   options?: {
-    skillId?: SkillId;
+    skillId?: string;
     skillMd?: string;
     metadataYaml?: string;
     description?: string;
   },
 ): Promise<{ sourceDir: string; skillId: SkillId }> {
-  const skillId = options?.skillId ?? SKILL_ID;
+  const skillId = (options?.skillId ?? SKILL_ID) as SkillId; // fabricated E2E test ID
   const description = options?.description ?? "A test skill for info E2E";
   const sourceDir = path.join(tempDir, "source");
   const skillDir = path.join(sourceDir, SOURCE_PATHS.SKILLS_DIR, skillId);
@@ -296,7 +296,7 @@ describe("info command", () => {
         "Additional content is included to push the total length well beyond the five hundred character threshold that was specified in the test plan. " +
         "This final sentence ensures we are comfortably over the limit.";
 
-      const longSkillId: SkillId = "web-testing-long-desc";
+      const longSkillId = "web-testing-long-desc";
       const { sourceDir, skillId } = await createSkillSource(tempDir, {
         skillId: longSkillId,
         description: longDescription,
@@ -331,18 +331,21 @@ describe("info command", () => {
       expect(output).toContain("web-framework-react");
     });
 
-    it("should suggest shared-meta skills when querying shared-meta", async () => {
+    it("should suggest meta-reviewing skills when querying meta-reviewing", async () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode, output } = await CLI.run(["info", "shared-meta", "--source", sourceDir], {
-        dir: tempDir,
-      });
+      const { exitCode, output } = await CLI.run(
+        ["info", "meta-reviewing", "--source", sourceDir],
+        {
+          dir: tempDir,
+        },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
       expect(output).toContain("not found");
       expect(output).toContain("Did you mean");
-      expect(output).toContain("shared-meta-");
+      expect(output).toContain("meta-reviewing-");
     });
   });
 });

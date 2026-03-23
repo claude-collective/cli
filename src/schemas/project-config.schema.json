@@ -25,7 +25,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+        "pattern": "^(ai|web|api|cli|mobile|infra|meta|shared|security)-.+-.+$"
       }
     },
     "author": {
@@ -39,7 +39,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["web", "api", "cli", "mobile", "shared"]
+        "enum": ["ai", "api", "cli", "infra", "meta", "mobile", "shared", "web"]
       }
     },
     "selectedAgents": {
@@ -58,44 +58,57 @@
         "propertyNames": {
           "type": "string",
           "enum": [
-            "web-framework",
-            "web-styling",
+            "ai-infrastructure",
+            "ai-observability",
+            "ai-orchestration",
+            "ai-patterns",
+            "ai-provider",
+            "api-analytics",
+            "api-api",
+            "api-auth",
+            "api-baas",
+            "api-cms",
+            "api-commerce",
+            "api-database",
+            "api-email",
+            "api-flags",
+            "api-framework",
+            "api-observability",
+            "api-performance",
+            "api-search",
+            "api-vector-db",
+            "cli-framework",
+            "infra-ci-cd",
+            "infra-config",
+            "infra-platform",
+            "meta-methodology",
+            "meta-reviewing",
+            "mobile-framework",
+            "shared-monorepo",
+            "shared-security",
+            "shared-tooling",
+            "web-accessibility",
+            "web-animation",
             "web-client-state",
-            "web-server-state",
-            "web-forms",
-            "web-testing",
-            "web-ui-components",
-            "web-mocking",
+            "web-data-fetching",
             "web-error-handling",
-            "web-i18n",
             "web-file-upload",
             "web-files",
-            "web-utilities",
-            "web-realtime",
-            "web-animation",
-            "web-pwa",
-            "web-accessibility",
+            "web-forms",
+            "web-framework",
+            "web-i18n",
+            "web-meta-framework",
+            "web-mocking",
             "web-performance",
-            "web-base-framework",
-            "api-api",
-            "api-database",
-            "api-auth",
-            "api-observability",
-            "api-analytics",
-            "api-email",
-            "api-performance",
-            "mobile-framework",
-            "mobile-platform",
-            "shared-monorepo",
-            "shared-tooling",
-            "shared-security",
-            "shared-methodology",
-            "shared-research",
-            "shared-reviewing",
-            "shared-ci-cd",
-            "cli-framework",
-            "cli-prompts",
-            "cli-testing"
+            "web-pwa",
+            "web-realtime",
+            "web-routing",
+            "web-server-state",
+            "web-styling",
+            "web-testing",
+            "web-tooling",
+            "web-ui-components",
+            "web-utilities"
           ]
         },
         "additionalProperties": {
@@ -104,7 +117,7 @@
               "anyOf": [
                 {
                   "type": "string",
-                  "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                  "pattern": "^(ai|web|api|cli|mobile|infra|meta|shared|security)-.+-.+$"
                 },
                 {
                   "type": "object",
@@ -133,7 +146,7 @@
                 "anyOf": [
                   {
                     "type": "string",
-                    "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                    "pattern": "^(ai|web|api|cli|mobile|infra|meta|shared|security)-.+-.+$"
                   },
                   {
                     "type": "object",

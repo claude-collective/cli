@@ -15,6 +15,7 @@ import {
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
+import type { AgentName } from "../../src/cli/types/index.js";
 
 /**
  * Uninstall preservation E2E tests.
@@ -140,7 +141,7 @@ describe("uninstall preservation behavior", () => {
       skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
       agents: [
         { name: "web-developer", scope: "project" },
-        { name: "my-custom-agent", scope: "project" },
+        { name: "my-custom-agent" as AgentName, scope: "project" }, // fabricated E2E test ID
       ],
       domains: ["web"],
     });

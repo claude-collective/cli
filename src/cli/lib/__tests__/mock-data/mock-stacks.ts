@@ -127,10 +127,10 @@ export const MULTI_METHODOLOGY_STACK = createMockStack("test-stack", {
   description: "Test stack",
   agents: {
     "pattern-scout": {
-      "shared-meta": [
-        sa("shared-meta-research-methodology", true),
-        sa("shared-meta-reviewing", true),
-        sa("shared-meta-cli-reviewing", true),
+      "meta-reviewing": [
+        sa("meta-methodology-research-methodology", true),
+        sa("meta-reviewing-reviewing", true),
+        sa("meta-reviewing-cli-reviewing", true),
       ],
     },
   },
@@ -142,7 +142,7 @@ export const STACK_WITH_EMPTY_CATEGORY = createMockStack("test-stack", {
   agents: {
     "web-developer": {
       "web-framework": [sa("web-framework-react", true)],
-      "shared-meta": [],
+      "meta-reviewing": [],
     },
   },
 });

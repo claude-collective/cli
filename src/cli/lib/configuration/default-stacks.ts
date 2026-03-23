@@ -39,7 +39,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
@@ -47,7 +47,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
@@ -57,14 +57,14 @@ export const defaultStacks: Stack[] = [
         "web-mocking": [{ id: "web-mocks-msw", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
       },
       "cli-reviewer": {
-        "shared-meta": [{ id: "shared-meta-cli-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-tester": {
@@ -89,7 +89,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-architecture": {
@@ -99,7 +99,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-researcher": {
@@ -119,7 +119,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "pattern-scout": {
@@ -137,7 +137,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -154,8 +154,8 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -172,9 +172,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -191,9 +191,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -210,9 +210,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
     },
@@ -238,7 +238,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
@@ -246,7 +246,7 @@ export const defaultStacks: Stack[] = [
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-database": [{ id: "api-database-prisma", preloaded: false }],
         "api-auth": [{ id: "api-auth-nextauth", preloaded: false }],
       },
@@ -291,7 +291,7 @@ export const defaultStacks: Stack[] = [
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-database": [{ id: "api-database-prisma", preloaded: false }],
         "api-auth": [{ id: "api-auth-nextauth", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -301,7 +301,7 @@ export const defaultStacks: Stack[] = [
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-database": [{ id: "api-database-prisma", preloaded: false }],
         "api-auth": [{ id: "api-auth-nextauth", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -311,7 +311,7 @@ export const defaultStacks: Stack[] = [
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-database": [{ id: "api-database-prisma", preloaded: false }],
         "api-auth": [{ id: "api-auth-nextauth", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -321,7 +321,7 @@ export const defaultStacks: Stack[] = [
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-database": [{ id: "api-database-prisma", preloaded: false }],
         "api-auth": [{ id: "api-auth-nextauth", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -357,7 +357,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
@@ -365,7 +365,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
@@ -375,7 +375,7 @@ export const defaultStacks: Stack[] = [
         "web-mocking": [{ id: "web-mocks-msw", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
@@ -383,7 +383,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
       },
       "cli-reviewer": {
-        "shared-meta": [{ id: "shared-meta-cli-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-tester": {
@@ -409,7 +409,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-architecture": {
@@ -420,7 +420,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-researcher": {
@@ -441,7 +441,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "pattern-scout": {
@@ -460,7 +460,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -478,8 +478,8 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -497,9 +497,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -517,9 +517,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -537,9 +537,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
     },
@@ -573,7 +573,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "shared-tooling": SHARED_TOOLING,
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
@@ -589,7 +589,7 @@ export const defaultStacks: Stack[] = [
         ],
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
@@ -603,7 +603,7 @@ export const defaultStacks: Stack[] = [
         ],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
@@ -614,7 +614,7 @@ export const defaultStacks: Stack[] = [
         ],
       },
       "cli-reviewer": {
-        "shared-meta": [{ id: "shared-meta-cli-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
@@ -647,7 +647,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
@@ -661,7 +661,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
@@ -689,7 +689,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
@@ -711,7 +711,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
@@ -732,8 +732,8 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
@@ -754,9 +754,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
@@ -777,9 +777,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
@@ -800,9 +800,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
@@ -827,7 +827,7 @@ export const defaultStacks: Stack[] = [
         "web-tooling": [{ id: "web-tooling-vite", preloaded: false }],
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-client-state": [{ id: "web-state-redux-toolkit", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
@@ -861,7 +861,7 @@ export const defaultStacks: Stack[] = [
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-routing": [{ id: "web-routing-react-router", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -869,7 +869,7 @@ export const defaultStacks: Stack[] = [
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-routing": [{ id: "web-routing-react-router", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -877,7 +877,7 @@ export const defaultStacks: Stack[] = [
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-routing": [{ id: "web-routing-react-router", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -885,7 +885,7 @@ export const defaultStacks: Stack[] = [
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-routing": [{ id: "web-routing-react-router", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -919,7 +919,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
@@ -927,7 +927,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
@@ -936,14 +936,14 @@ export const defaultStacks: Stack[] = [
         "web-mocking": [{ id: "web-mocks-msw", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
       },
       "cli-reviewer": {
-        "shared-meta": [{ id: "shared-meta-cli-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-tester": {
@@ -967,7 +967,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-architecture": {
@@ -977,7 +977,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-researcher": {
@@ -996,7 +996,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "pattern-scout": {
@@ -1013,7 +1013,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -1029,8 +1029,8 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -1046,9 +1046,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -1064,9 +1064,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -1082,9 +1082,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
     },
@@ -1110,13 +1110,13 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
@@ -1165,7 +1165,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -1175,7 +1175,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -1185,7 +1185,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -1195,7 +1195,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -1226,13 +1226,13 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
@@ -1281,7 +1281,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
@@ -1291,7 +1291,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
@@ -1301,7 +1301,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
@@ -1311,7 +1311,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -1341,12 +1341,12 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-solidjs", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
@@ -1391,7 +1391,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-solidjs", preloaded: false }],
@@ -1400,7 +1400,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-solidjs", preloaded: false }],
@@ -1409,7 +1409,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-solidjs", preloaded: false }],
@@ -1418,7 +1418,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -1448,12 +1448,12 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
@@ -1498,7 +1498,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-cms": [{ id: "api-cms-sanity", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
@@ -1507,7 +1507,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-cms": [{ id: "api-cms-sanity", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
@@ -1516,7 +1516,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-cms": [{ id: "api-cms-sanity", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
@@ -1525,7 +1525,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-cms": [{ id: "api-cms-sanity", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -1556,13 +1556,13 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
@@ -1611,7 +1611,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
@@ -1621,7 +1621,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
@@ -1631,7 +1631,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
@@ -1641,7 +1641,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -1673,14 +1673,14 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
@@ -1733,7 +1733,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
@@ -1744,7 +1744,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
@@ -1755,7 +1755,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
@@ -1766,7 +1766,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -1797,13 +1797,13 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-angular-standalone", preloaded: false }],
         "web-client-state": [{ id: "web-state-ngrx-signalstore", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
@@ -1852,7 +1852,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-angular-standalone", preloaded: false }],
@@ -1862,7 +1862,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-angular-standalone", preloaded: false }],
@@ -1872,7 +1872,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-angular-standalone", preloaded: false }],
@@ -1882,7 +1882,7 @@ export const defaultStacks: Stack[] = [
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -1914,15 +1914,13 @@ export const defaultStacks: Stack[] = [
         "api-api": [{ id: "api-framework-hono", preloaded: true }],
         "api-database": [{ id: "api-database-drizzle", preloaded: true }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: true },
-          { id: "api-ai-anthropic-sdk", preloaded: true },
-          { id: "api-ai-tool-use-patterns", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: true }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: true }],
+        "ai-patterns": [{ id: "ai-patterns-tool-use-patterns", preloaded: false }],
         "api-vector-db": [{ id: "api-vector-db-pinecone", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
@@ -1930,7 +1928,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
@@ -1940,18 +1938,16 @@ export const defaultStacks: Stack[] = [
         "web-mocking": [{ id: "web-mocks-msw", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: false },
-          { id: "api-ai-anthropic-sdk", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: false }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
       },
       "cli-reviewer": {
-        "shared-meta": [{ id: "shared-meta-cli-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-tester": {
@@ -1973,30 +1969,26 @@ export const defaultStacks: Stack[] = [
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: false },
-          { id: "api-ai-anthropic-sdk", preloaded: false },
-          { id: "api-ai-tool-use-patterns", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: false }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: false }],
+        "ai-patterns": [{ id: "ai-patterns-tool-use-patterns", preloaded: false }],
         "api-vector-db": [{ id: "api-vector-db-pinecone", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-architecture": {
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: false },
-          { id: "api-ai-anthropic-sdk", preloaded: false },
-          { id: "api-ai-tool-use-patterns", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: false }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: false }],
+        "ai-patterns": [{ id: "ai-patterns-tool-use-patterns", preloaded: false }],
         "api-vector-db": [{ id: "api-vector-db-pinecone", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-researcher": {
@@ -2013,15 +2005,13 @@ export const defaultStacks: Stack[] = [
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: false },
-          { id: "api-ai-anthropic-sdk", preloaded: false },
-          { id: "api-ai-tool-use-patterns", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: false }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: false }],
+        "ai-patterns": [{ id: "ai-patterns-tool-use-patterns", preloaded: false }],
         "api-vector-db": [{ id: "api-vector-db-pinecone", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "pattern-scout": {
@@ -2036,15 +2026,13 @@ export const defaultStacks: Stack[] = [
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: false },
-          { id: "api-ai-anthropic-sdk", preloaded: false },
-          { id: "api-ai-tool-use-patterns", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: false }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: false }],
+        "ai-patterns": [{ id: "ai-patterns-tool-use-patterns", preloaded: false }],
         "api-vector-db": [{ id: "api-vector-db-pinecone", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2058,16 +2046,14 @@ export const defaultStacks: Stack[] = [
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: false },
-          { id: "api-ai-anthropic-sdk", preloaded: false },
-          { id: "api-ai-tool-use-patterns", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: false }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: false }],
+        "ai-patterns": [{ id: "ai-patterns-tool-use-patterns", preloaded: false }],
         "api-vector-db": [{ id: "api-vector-db-pinecone", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2081,17 +2067,15 @@ export const defaultStacks: Stack[] = [
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: false },
-          { id: "api-ai-anthropic-sdk", preloaded: false },
-          { id: "api-ai-tool-use-patterns", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: false }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: false }],
+        "ai-patterns": [{ id: "ai-patterns-tool-use-patterns", preloaded: false }],
         "api-vector-db": [{ id: "api-vector-db-pinecone", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2105,17 +2089,15 @@ export const defaultStacks: Stack[] = [
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: false },
-          { id: "api-ai-anthropic-sdk", preloaded: false },
-          { id: "api-ai-tool-use-patterns", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: false }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: false }],
+        "ai-patterns": [{ id: "ai-patterns-tool-use-patterns", preloaded: false }],
         "api-vector-db": [{ id: "api-vector-db-pinecone", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2129,17 +2111,15 @@ export const defaultStacks: Stack[] = [
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
-        "api-ai": [
-          { id: "api-ai-vercel-ai-sdk", preloaded: false },
-          { id: "api-ai-anthropic-sdk", preloaded: false },
-          { id: "api-ai-tool-use-patterns", preloaded: false },
-        ],
+        "ai-orchestration": [{ id: "ai-orchestration-vercel-ai-sdk", preloaded: false }],
+        "ai-provider": [{ id: "ai-provider-anthropic-sdk", preloaded: false }],
+        "ai-patterns": [{ id: "ai-patterns-tool-use-patterns", preloaded: false }],
         "api-vector-db": [{ id: "api-vector-db-pinecone", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
     },
@@ -2173,7 +2153,7 @@ export const defaultStacks: Stack[] = [
           { id: "api-flags-posthog-flags", preloaded: false },
         ],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
@@ -2181,7 +2161,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
@@ -2191,7 +2171,7 @@ export const defaultStacks: Stack[] = [
         "web-mocking": [{ id: "web-mocks-msw", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
@@ -2199,7 +2179,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
       },
       "cli-reviewer": {
-        "shared-meta": [{ id: "shared-meta-cli-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-tester": {
@@ -2225,7 +2205,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-architecture": {
@@ -2236,7 +2216,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-researcher": {
@@ -2257,7 +2237,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "pattern-scout": {
@@ -2276,7 +2256,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2294,8 +2274,8 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2313,9 +2293,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2333,9 +2313,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2353,9 +2333,9 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
     },
@@ -2384,7 +2364,7 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
@@ -2392,7 +2372,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "mobile-framework": [
           { id: "mobile-framework-expo", preloaded: false },
@@ -2404,14 +2384,14 @@ export const defaultStacks: Stack[] = [
         "web-mocking": [{ id: "web-mocks-msw", preloaded: false }],
       },
       "api-reviewer": {
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
         "api-database": [{ id: "api-database-drizzle", preloaded: false }],
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
       },
       "cli-reviewer": {
-        "shared-meta": [{ id: "shared-meta-cli-reviewing", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-tester": {
@@ -2433,7 +2413,7 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-architecture": {
@@ -2442,7 +2422,7 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "web-researcher": {
@@ -2462,7 +2442,7 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
       },
       "pattern-scout": {
@@ -2480,7 +2460,7 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
       },
       "web-pattern-critique": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2497,8 +2477,8 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: true }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
       },
       "agent-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2515,9 +2495,9 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2534,9 +2514,9 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       scribe: {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2553,9 +2533,9 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-better-auth-drizzle-hono", preloaded: false }],
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
-        "shared-ci-cd": [{ id: "shared-ci-cd-github-actions", preloaded: false }],
+        "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
-        "shared-meta": [{ id: "shared-meta-reviewing", preloaded: false }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
     },

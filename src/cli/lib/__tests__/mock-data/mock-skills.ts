@@ -34,13 +34,13 @@ export const VITEST_SINGLE_FILE_SKILL: Skill = {
 
 const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
   {
-    id: "shared-meta-reviewing",
+    id: "meta-reviewing-reviewing",
     slug: "reviewing",
     displayName: "Anti Over-Engineering",
     description: "Surgical implementation, not architectural innovation",
-    category: "shared-meta",
+    category: "meta-reviewing",
     author: "@test",
-    domain: "shared",
+    domain: "meta",
   },
 ];
 
@@ -107,7 +107,7 @@ export const CI_CD_SKILLS: TestSkill[] = [
     slug: "github-actions",
     displayName: "GitHub Actions",
     category: "infra-ci-cd",
-    domain: "shared",
+    domain: "infra",
   }),
   // Boundary cast: fictional skill ID for testing CI/CD skills
   createTestSkill("infra-ci-cd-gitlab-ci" as SkillId, "gitlab-ci CI/CD pipeline", {
@@ -115,7 +115,7 @@ export const CI_CD_SKILLS: TestSkill[] = [
     slug: "gitlab-ci" as SkillSlug,
     displayName: "GitLab CI",
     category: "infra-ci-cd",
-    domain: "shared",
+    domain: "infra",
   }),
 ];
 
@@ -384,7 +384,7 @@ export const MULTI_SOURCE_INTERNAL_SKILLS: MultiSourceSkillEntry[] = [
   { id: "web-animation-framer", category: "web-animation", description: "Framer Motion" },
   {
     id: "meta-methodology-investigation",
-    category: "shared-meta",
+    category: "meta-methodology",
     description: "Investigation first",
   },
   { id: "web-accessibility-a11y", category: "web-accessibility", description: "Web accessibility" },

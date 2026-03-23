@@ -359,8 +359,8 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       );
 
       // Verify category exclusive flag
-      expect(merged.categories["shared-ci-cd"]).toBeDefined();
-      expect(merged.categories["shared-ci-cd"]!.exclusive).toBe(true);
+      expect(merged.categories["infra-ci-cd"]).toBeDefined();
+      expect(merged.categories["infra-ci-cd"]!.exclusive).toBe(true);
 
       // Verify both skills are loaded
       // Boundary cast: test-only skill IDs not in generated SkillId union
@@ -433,9 +433,9 @@ describe("Integration: Custom Skills Matrix Loading", () => {
               "web-developer": {
                 "web-framework": [{ id: "web-framework-react", preloaded: true }],
                 "web-testing": "web-testing-vitest",
-                "shared-meta": [
-                  { id: "shared-meta-research-methodology", preloaded: true },
-                  "shared-meta-reviewing",
+                "meta-reviewing": [
+                  { id: "meta-methodology-research-methodology", preloaded: true },
+                  "meta-reviewing-reviewing",
                 ],
               },
             },
@@ -463,11 +463,11 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       expect(testingAssignments![0].preloaded).toBe(false);
 
       // Methodology: mixed array — first preloaded: true, second defaults to false
-      const methodologyAssignments = stack.agents["web-developer"]!["shared-meta"];
+      const methodologyAssignments = stack.agents["web-developer"]!["meta-reviewing"];
       expect(methodologyAssignments).toHaveLength(2);
-      expect(methodologyAssignments![0].id).toBe("shared-meta-research-methodology");
+      expect(methodologyAssignments![0].id).toBe("meta-methodology-research-methodology");
       expect(methodologyAssignments![0].preloaded).toBe(true);
-      expect(methodologyAssignments![1].id).toBe("shared-meta-reviewing");
+      expect(methodologyAssignments![1].id).toBe("meta-reviewing-reviewing");
       expect(methodologyAssignments![1].preloaded).toBe(false);
     } finally {
       await cleanupTempDir(tempDir);

@@ -14,7 +14,7 @@ import {
 } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
-import type { SkillId } from "../../src/cli/types/index.js";
+import type { SkillId, SkillAssignment } from "../../src/cli/types/index.js";
 import { CLI } from "../fixtures/cli.js";
 import "../matchers/setup.js";
 
@@ -51,15 +51,15 @@ describe("compile command edge cases", () => {
         name: "test-custom-stack",
         skills: [
           { id: "web-framework-react", scope: "project", source: "local" },
-          { id: "web-custom-e2e-tool", scope: "project", source: "local" },
+          { id: "web-custom-e2e-tool" as SkillId, scope: "project", source: "local" }, // fabricated E2E test ID
         ],
         agents: [{ name: "web-developer", scope: "project" }],
         domains: ["web"],
         stack: {
           "web-developer": {
             "web-framework": [{ id: "web-framework-react", preloaded: true }],
-            "web-custom-tool": [{ id: "web-custom-e2e-tool", preloaded: true }],
-          },
+            "web-custom-tool": [{ id: "web-custom-e2e-tool" as SkillId, preloaded: true }],
+          } as Record<string, SkillAssignment[]>, // fabricated category key
         },
       });
 
@@ -188,8 +188,8 @@ This skill has invalid YAML frontmatter.
         stack: {
           "web-developer": {
             "web-testing": [
-              { id: "web-testing-e2e-exists", preloaded: true },
-              { id: "web-testing-e2e-phantom", preloaded: true },
+              { id: "web-testing-e2e-exists" as SkillId, preloaded: true }, // fabricated E2E test ID
+              { id: "web-testing-e2e-phantom" as SkillId, preloaded: true }, // fabricated E2E test ID
             ],
           },
         },

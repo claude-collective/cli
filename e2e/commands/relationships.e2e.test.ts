@@ -161,10 +161,10 @@ describe("slug-based relationship rules", () => {
       tempDir = sourceTempDir;
 
       // React IS in the default recommends list, so we need to check a skill
-      // that's truly not recommended. "reviewing" is a shared-meta skill
+      // that's truly not recommended. "reviewing" is a meta-reviewing skill
       // that has no recommend entry in either default or source rules.
       const { exitCode, stdout } = await CLI.run(
-        ["info", "shared-meta-reviewing", "--source", sourceDir, "--no-preview"],
+        ["info", "meta-reviewing-reviewing", "--source", sourceDir, "--no-preview"],
         { dir: tempDir },
       );
 

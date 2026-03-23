@@ -130,18 +130,18 @@ describe("stacks-loader", () => {
       expect(stack.id).toBe("multi-select-stack");
 
       // Array values should be normalized to SkillAssignment[]
-      expect(stack.agents["web-developer"]!["shared-meta"]).toEqual([
-        createMockSkillAssignment("shared-meta-research-methodology"),
-        createMockSkillAssignment("shared-meta-reviewing"),
-        createMockSkillAssignment("shared-meta-cli-reviewing"),
+      expect(stack.agents["web-developer"]!["meta-reviewing"]).toEqual([
+        createMockSkillAssignment("meta-methodology-research-methodology"),
+        createMockSkillAssignment("meta-reviewing-reviewing"),
+        createMockSkillAssignment("meta-reviewing-cli-reviewing"),
       ]);
 
       // Single values normalized to SkillAssignment[]
       expect(stack.agents["web-developer"]!["web-framework"]).toEqual([
         createMockSkillAssignment("web-framework-react"),
       ]);
-      expect(stack.agents["pattern-scout"]!["shared-meta"]).toEqual([
-        createMockSkillAssignment("shared-meta-research-methodology"),
+      expect(stack.agents["pattern-scout"]!["meta-reviewing"]).toEqual([
+        createMockSkillAssignment("meta-methodology-research-methodology"),
       ]);
     });
 
@@ -165,9 +165,9 @@ describe("stacks-loader", () => {
       ]);
 
       // Mixed array: object + bare string
-      expect(stack.agents["web-developer"]!["shared-meta"]).toEqual([
-        createMockSkillAssignment("shared-meta-research-methodology", true),
-        createMockSkillAssignment("shared-meta-reviewing"),
+      expect(stack.agents["web-developer"]!["meta-reviewing"]).toEqual([
+        createMockSkillAssignment("meta-methodology-research-methodology", true),
+        createMockSkillAssignment("meta-reviewing-reviewing"),
       ]);
     });
   });
@@ -290,27 +290,27 @@ describe("stacks-loader", () => {
 
     it("resolves array of skill assignments for multi-select categories", () => {
       const agentConfig: StackAgentConfig = {
-        "shared-meta": [
-          createMockSkillAssignment("shared-meta-research-methodology", true),
-          createMockSkillAssignment("shared-meta-reviewing", true),
-          createMockSkillAssignment("shared-meta-cli-reviewing", true),
+        "meta-reviewing": [
+          createMockSkillAssignment("meta-methodology-research-methodology", true),
+          createMockSkillAssignment("meta-reviewing-reviewing", true),
+          createMockSkillAssignment("meta-reviewing-cli-reviewing", true),
         ],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
       expect(skills).toHaveLength(3);
-      expect(skills.find((s) => s.id === "shared-meta-research-methodology")).toBeDefined();
-      expect(skills.find((s) => s.id === "shared-meta-reviewing")).toBeDefined();
-      expect(skills.find((s) => s.id === "shared-meta-cli-reviewing")).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-methodology-research-methodology")).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-reviewing-reviewing")).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-reviewing-cli-reviewing")).toBeDefined();
     });
 
     it("handles single-element arrays", () => {
       const agentConfig: StackAgentConfig = {
         "web-framework": [createMockSkillAssignment("web-framework-react", true)],
-        "shared-meta": [
-          createMockSkillAssignment("shared-meta-research-methodology", true),
-          createMockSkillAssignment("shared-meta-reviewing", true),
+        "meta-reviewing": [
+          createMockSkillAssignment("meta-methodology-research-methodology", true),
+          createMockSkillAssignment("meta-reviewing-reviewing", true),
         ],
         "web-styling": [createMockSkillAssignment("web-styling-scss-modules")],
       };
@@ -319,14 +319,14 @@ describe("stacks-loader", () => {
 
       expect(skills).toHaveLength(4);
       expect(skills.find((s) => s.id === "web-framework-react")).toBeDefined();
-      expect(skills.find((s) => s.id === "shared-meta-research-methodology")).toBeDefined();
-      expect(skills.find((s) => s.id === "shared-meta-reviewing")).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-methodology-research-methodology")).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-reviewing-reviewing")).toBeDefined();
       expect(skills.find((s) => s.id === "web-styling-scss-modules")).toBeDefined();
     });
 
     it("handles empty array", () => {
       const agentConfig: StackAgentConfig = {
-        "shared-meta": [],
+        "meta-reviewing": [],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -337,10 +337,10 @@ describe("stacks-loader", () => {
     it("warns and skips invalid skill IDs within arrays", () => {
       // Boundary cast: intentionally invalid skill ID (uppercase) within array to test validation
       const agentConfig = {
-        "shared-meta": [
-          { id: "shared-meta-research-methodology", preloaded: true },
+        "meta-reviewing": [
+          { id: "meta-methodology-research-methodology", preloaded: true },
           { id: "Not-A-Valid-Id", preloaded: false },
-          { id: "shared-meta-reviewing", preloaded: true },
+          { id: "meta-reviewing-reviewing", preloaded: true },
         ],
       } as unknown as StackAgentConfig;
 
@@ -348,25 +348,25 @@ describe("stacks-loader", () => {
 
       // Should include valid IDs and skip invalid one
       expect(skills).toHaveLength(2);
-      expect(skills.find((s) => s.id === "shared-meta-research-methodology")).toBeDefined();
-      expect(skills.find((s) => s.id === "shared-meta-reviewing")).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-methodology-research-methodology")).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-reviewing-reviewing")).toBeDefined();
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"));
     });
 
     it("reads preloaded from each assignment individually", () => {
       const agentConfig: StackAgentConfig = {
-        "shared-meta": [
-          createMockSkillAssignment("shared-meta-research-methodology", true),
-          createMockSkillAssignment("shared-meta-reviewing", false),
+        "meta-reviewing": [
+          createMockSkillAssignment("meta-methodology-research-methodology", true),
+          createMockSkillAssignment("meta-reviewing-reviewing", false),
         ],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      const preloadedSkill = skills.find((s) => s.id === "shared-meta-research-methodology");
+      const preloadedSkill = skills.find((s) => s.id === "meta-methodology-research-methodology");
       expect(preloadedSkill!.preloaded).toBe(true);
 
-      const dynamicSkill = skills.find((s) => s.id === "shared-meta-reviewing");
+      const dynamicSkill = skills.find((s) => s.id === "meta-reviewing-reviewing");
       expect(dynamicSkill!.preloaded).toBe(false);
     });
 
@@ -425,10 +425,10 @@ describe("stacks-loader", () => {
         description: "Test",
         agents: {
           "pattern-scout": {
-            "shared-meta": [
-              createMockSkillAssignment("shared-meta-research-methodology", true),
-              createMockSkillAssignment("shared-meta-reviewing", true),
-              createMockSkillAssignment("shared-meta-cli-reviewing", true),
+            "meta-reviewing": [
+              createMockSkillAssignment("meta-methodology-research-methodology", true),
+              createMockSkillAssignment("meta-reviewing-reviewing", true),
+              createMockSkillAssignment("meta-reviewing-cli-reviewing", true),
             ],
           },
         },
@@ -437,14 +437,16 @@ describe("stacks-loader", () => {
       const result = resolveStackSkills(stack);
 
       expect(Object.keys(result)).toHaveLength(1);
-      // 3 shared-meta skills
+      // 3 meta-reviewing skills
       expect(result["pattern-scout"]).toHaveLength(3);
       expect(
-        result["pattern-scout"].find((s) => s.id === "shared-meta-research-methodology"),
+        result["pattern-scout"].find((s) => s.id === "meta-methodology-research-methodology"),
       ).toBeDefined();
-      expect(result["pattern-scout"].find((s) => s.id === "shared-meta-reviewing")).toBeDefined();
       expect(
-        result["pattern-scout"].find((s) => s.id === "shared-meta-cli-reviewing"),
+        result["pattern-scout"].find((s) => s.id === "meta-reviewing-reviewing"),
+      ).toBeDefined();
+      expect(
+        result["pattern-scout"].find((s) => s.id === "meta-reviewing-cli-reviewing"),
       ).toBeDefined();
     });
   });

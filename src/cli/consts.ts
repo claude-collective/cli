@@ -188,7 +188,16 @@ export const CLI_COLORS = {
 } as const;
 
 /** Canonical display order for built-in domains. Custom domains appear before these, alphabetically. */
-export const BUILT_IN_DOMAIN_ORDER: readonly Domain[] = ["web", "api", "mobile", "cli", "shared"];
+export const BUILT_IN_DOMAIN_ORDER: readonly Domain[] = [
+  "web",
+  "api",
+  "ai",
+  "mobile",
+  "cli",
+  "infra",
+  "meta",
+  "shared",
+];
 
 /** Default domains pre-selected when "Start from scratch" is chosen (all except CLI) */
 export const DEFAULT_SCRATCH_DOMAINS: readonly Domain[] = ["web", "api", "mobile"];

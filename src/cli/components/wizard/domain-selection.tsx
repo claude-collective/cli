@@ -10,8 +10,11 @@ import { getDomainDisplayName, orderDomains } from "./utils.js";
 const BUILT_IN_DOMAIN_DESCRIPTIONS: Record<Domain, string> = {
   web: "Frontend web applications",
   api: "Backend APIs and services",
+  ai: "AI and LLM integrations",
   cli: "Command-line tools",
   mobile: "Mobile applications",
+  infra: "CI/CD, deployment, and infrastructure",
+  meta: "Code review and research methodology",
   shared: "Shared utilities and methodology",
 };
 

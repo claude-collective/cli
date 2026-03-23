@@ -28,7 +28,7 @@ export class BuildStep extends BaseStep {
 
   /**
    * Pass through all domains one by one, then advance to SourcesStep.
-   * Expects Web, API, and Shared domains (matches the standard E2E source).
+   * Expects Web, API, and Methodology domains (matches the standard E2E source).
    */
   async passThroughAllDomains(): Promise<SourcesStep> {
     // Web domain
@@ -41,8 +41,8 @@ export class BuildStep extends BaseStep {
     await this.waitForStableRender();
     await this.pressEnter();
 
-    // Shared domain
-    await this.screen.waitForText(STEP_TEXT.DOMAIN_SHARED, TIMEOUTS.WIZARD_LOAD);
+    // Methodology domain
+    await this.screen.waitForText(STEP_TEXT.DOMAIN_META, TIMEOUTS.WIZARD_LOAD);
     await this.waitForStableRender();
     await this.pressEnter();
 
@@ -96,16 +96,16 @@ export class BuildStep extends BaseStep {
   }
 
   /**
-   * Pass through Web and Shared domains (when API is deselected).
+   * Pass through Web and Methodology domains (when API is deselected).
    */
-  async passThroughWebAndSharedDomains(): Promise<SourcesStep> {
+  async passThroughWebAndMethodologyDomains(): Promise<SourcesStep> {
     // Web domain
     await this.screen.waitForText(STEP_TEXT.BUILD, TIMEOUTS.WIZARD_LOAD);
     await this.waitForStableRender();
     await this.pressEnter();
 
-    // Shared domain
-    await this.screen.waitForText(STEP_TEXT.DOMAIN_SHARED, TIMEOUTS.WIZARD_LOAD);
+    // Methodology domain
+    await this.screen.waitForText(STEP_TEXT.DOMAIN_META, TIMEOUTS.WIZARD_LOAD);
     await this.waitForStableRender();
     await this.pressEnter();
 

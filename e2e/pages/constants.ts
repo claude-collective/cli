@@ -28,7 +28,7 @@ export const STEP_TEXT = {
   STACK: "Choose a stack",
   DOMAIN_WEB: "Web",
   DOMAIN_API: "API",
-  DOMAIN_SHARED: "Shared",
+  DOMAIN_META: "Methodology",
   DOMAIN_MOBILE: "Mobile",
   BUILD: "Framework", // First category visible in build step
   BUILD_CATEGORY_COUNT: " of ", // Category counter (e.g., "(1 of 1)") — unique to build step

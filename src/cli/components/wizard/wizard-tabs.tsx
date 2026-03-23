@@ -18,6 +18,7 @@ export type TabDropdownProps = {
   items: TabDropdownItem[];
   activeId?: string;
   isSubNav?: boolean;
+  inline?: boolean;
 };
 
 export type DomainNavProps = {
@@ -100,16 +101,16 @@ const Tab: React.FC<TabProps> = ({ step, state }) => {
   }
 };
 
-const TabDropdown: React.FC<TabDropdownProps> = ({ items, activeId, isSubNav }) => (
+const TabDropdown: React.FC<TabDropdownProps> = ({ items, activeId, isSubNav, inline }) => (
   <Box
-    position="absolute"
-    marginTop={2}
+    {...(inline ? {} : { position: "absolute" as const, marginTop: 2 })}
     flexDirection="row"
     columnGap={0}
     paddingLeft={1}
     paddingRight={1}
     borderStyle="single"
     borderColor="blackBright"
+    flexWrap="wrap"
   >
     {items.map((item) => {
       const isActive = item.id === activeId;
@@ -128,19 +129,31 @@ const TabDropdown: React.FC<TabDropdownProps> = ({ items, activeId, isSubNav }) 
   </Box>
 );
 
-const DomainNav: React.FC<DomainNavProps> = ({ domains, activeDomain, getDomainLabel }) => (
+const DomainNav: React.FC<DomainNavProps & { inline?: boolean }> = ({
+  domains,
+  activeDomain,
+  getDomainLabel,
+  inline,
+}) => (
   <TabDropdown
     items={domains.map((d) => ({ id: d, label: getDomainLabel(d) }))}
     activeId={activeDomain}
     isSubNav
+    inline={inline}
   />
 );
+
+const DOMAIN_NAV_CHAR_THRESHOLD = 25;
 
 const getStepJustifyContent = (stepId: WizardStep): "flex-start" | "flex-end" | "center" => {
   if (stepId === "stack") return "flex-start";
   if (stepId === "confirm") return "flex-end";
   return "center";
 };
+
+const isDomainNavOverThreshold = (domainNav: DomainNavProps): boolean =>
+  domainNav.domains.reduce((sum, d) => sum + domainNav.getDomainLabel(d).length, 0) >
+  DOMAIN_NAV_CHAR_THRESHOLD;
 
 export const WizardTabs: React.FC<WizardTabsProps> = ({
   steps,
@@ -151,54 +164,63 @@ export const WizardTabs: React.FC<WizardTabsProps> = ({
   domainNav,
   dropdowns,
 }) => {
+  const shouldHoistDomainNav = domainNav ? isDomainNavOverThreshold(domainNav) : false;
+
   return (
-    <Box
-      flexDirection="row"
-      columnGap={2}
-      borderColor="blackBright"
-      borderStyle="single"
-      paddingX={1}
-      alignItems="center"
-      marginBottom={3}
-    >
-      {steps.map((step) => {
-        const state = getStepState(step.id, currentStep, completedSteps, skippedSteps);
+    <>
+      <Box
+        flexDirection="row"
+        columnGap={2}
+        borderColor="blackBright"
+        borderStyle="single"
+        paddingX={1}
+        alignItems="center"
+        marginBottom={shouldHoistDomainNav ? 0 : 3}
+      >
+        {steps.map((step) => {
+          const state = getStepState(step.id, currentStep, completedSteps, skippedSteps);
 
-        if (step.id === "build" && domainNav) {
-          return (
-            <Box
-              key={step.id}
-              position="relative"
-              display="flex"
-              justifyContent={getStepJustifyContent(step.id)}
-            >
-              <Tab step={step} state={state} />
-              <DomainNav {...domainNav} />
-            </Box>
-          );
-        }
+          if (step.id === "build" && domainNav && !shouldHoistDomainNav) {
+            return (
+              <Box
+                key={step.id}
+                position="relative"
+                display="flex"
+                justifyContent={getStepJustifyContent(step.id)}
+              >
+                <Tab step={step} state={state} />
+                <DomainNav {...domainNav} />
+              </Box>
+            );
+          }
 
-        // Generic dropdown for any step
-        const dropdown = dropdowns?.[step.id];
-        if (dropdown) {
-          return (
-            <Box
-              key={step.id}
-              position="relative"
-              display="flex"
-              justifyContent={getStepJustifyContent(step.id)}
-            >
-              <Tab step={step} state={state} />
-              <TabDropdown {...dropdown} />
-            </Box>
-          );
-        }
+          // Generic dropdown for any step
+          const dropdown = dropdowns?.[step.id];
+          if (dropdown) {
+            return (
+              <Box
+                key={step.id}
+                position="relative"
+                display="flex"
+                justifyContent={getStepJustifyContent(step.id)}
+              >
+                <Tab step={step} state={state} />
+                <TabDropdown {...dropdown} />
+              </Box>
+            );
+          }
 
-        return <Tab key={step.id} step={step} state={state} />;
-      })}
-      <Box flexGrow={1} justifyContent="flex-end">
-        <Text dimColor>{`v${version}`}</Text>
+          return <Tab key={step.id} step={step} state={state} />;
+        })}
+        <Box flexGrow={1} justifyContent="flex-end">
+          <Text dimColor>{`v${version}`}</Text>
+        </Box>
       </Box>
-    </Box>
+      {domainNav && shouldHoistDomainNav && (
+        <Box marginBottom={3}>
+          <DomainNav {...domainNav} inline />
+        </Box>
+      )}
+    </>
   );
 };
