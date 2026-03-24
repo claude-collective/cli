@@ -592,6 +592,42 @@ describe("config-generator", () => {
 
       expect(result.global.name).toBe("global");
     });
+
+    it("splits global agents' stack between global and project when skills have mixed scope", () => {
+      // Bug regression: when all agents are global but skills are mixed scope,
+      // project skills' stack mappings must appear in the project config under the
+      // same global agent name. Before the fix, only globalFiltered was built and
+      // project skills were silently dropped from the stack.
+      const config = buildProjectConfig({
+        skills: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+          { id: "web-testing-vitest", scope: "project", source: "local" },
+        ],
+        agents: [
+          { name: "web-developer", scope: "global" },
+        ],
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+            "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+          },
+        },
+      });
+
+      const result = splitConfigByScope(config);
+
+      // Global partition should contain only the global skill's stack mapping
+      expect(result.global.stack?.["web-developer"]).toStrictEqual({
+        "web-framework": [{ id: "web-framework-react", preloaded: false }],
+      });
+
+      // Project partition should contain the project skill's stack mapping
+      // under the same global agent name
+      expect(result.project.stack).toBeDefined();
+      expect(result.project.stack?.["web-developer"]).toStrictEqual({
+        "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+      });
+    });
   });
 
   describe("splitConfigByScope correctness (moved from E2E)", () => {

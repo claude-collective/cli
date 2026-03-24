@@ -214,19 +214,27 @@ export function splitConfigByScope(config: ProjectConfig): SplitConfigResult {
     for (const agent of globalAgents) {
       const agentStack = config.stack[agent.name];
       if (agentStack) {
-        // Filter each category's assignments to only include global-scoped skills
-        const filtered: StackAgentConfig = {};
+        // Split each category's assignments: global skills -> global config, project skills -> project config
+        const globalFiltered: StackAgentConfig = {};
+        const projectFiltered: StackAgentConfig = {};
         for (const [category, assignments] of typedEntries<Category, SkillAssignment[]>(
           agentStack,
         )) {
           if (!assignments) continue;
           const globalOnly = assignments.filter((a) => globalSkillIds.has(a.id));
+          const projectOnly = assignments.filter((a) => !globalSkillIds.has(a.id));
           if (globalOnly.length > 0) {
-            filtered[category] = globalOnly;
+            globalFiltered[category] = globalOnly;
+          }
+          if (projectOnly.length > 0) {
+            projectFiltered[category] = projectOnly;
           }
         }
-        if (typedKeys<Category>(filtered).length > 0) {
-          globalStack[agent.name] = filtered;
+        if (typedKeys<Category>(globalFiltered).length > 0) {
+          globalStack[agent.name] = globalFiltered;
+        }
+        if (typedKeys<Category>(projectFiltered).length > 0) {
+          projectStack[agent.name] = projectFiltered;
         }
       }
     }
