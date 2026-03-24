@@ -9,6 +9,9 @@ import {
   createMockMatrix,
   createMockSkill,
   buildSourceResult,
+  buildWizardResult,
+  buildSkillConfigs,
+  buildAgentConfigs,
   CLI_ROOT,
   SKILLS,
   TEST_CATEGORIES,
@@ -28,12 +31,16 @@ const {
   mockLoadSkillsMatrixFromSource,
   mockLoadProjectConfig,
   mockDiscoverAllPluginSkills,
+  mockCopySkillsToLocalFlattened,
+  mockEnsureDir,
 } = vi.hoisted(() => ({
   mockRender: vi.fn().mockReturnValue({ waitUntilExit: () => Promise.resolve() }),
   mockDetectInstallation: vi.fn().mockResolvedValue(null),
   mockLoadSkillsMatrixFromSource: vi.fn(),
   mockLoadProjectConfig: vi.fn().mockResolvedValue(null),
   mockDiscoverAllPluginSkills: vi.fn().mockResolvedValue({}),
+  mockCopySkillsToLocalFlattened: vi.fn().mockResolvedValue(undefined),
+  mockEnsureDir: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("ink", async (importOriginal) => {
@@ -71,6 +78,23 @@ vi.mock("../../plugins/index.js", async (importOriginal) => {
   return {
     ...original,
     discoverAllPluginSkills: (...args: unknown[]) => mockDiscoverAllPluginSkills(...(args as [])),
+  };
+});
+
+vi.mock("../../skills/index.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../skills/index.js")>();
+  return {
+    ...original,
+    copySkillsToLocalFlattened: (...args: unknown[]) =>
+      mockCopySkillsToLocalFlattened(...(args as [])),
+  };
+});
+
+vi.mock("../../../utils/fs.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../../utils/fs.js")>();
+  return {
+    ...original,
+    ensureDir: (...args: unknown[]) => mockEnsureDir(...(args as [])),
   };
 });
 
@@ -572,5 +596,170 @@ describe("edit command local-mode skill fallback", () => {
     const installedSkillIds = getRenderedInstalledSkillIds();
     // Plugin discovery found react; config also has hono — both should be included
     expect(installedSkillIds).toEqual(CONFIG_SKILL_IDS);
+  });
+});
+
+// Bug regression: edit command must detect when agents are added/removed,
+// not just skill changes. Without the fix, adding a new agent (with no skill
+// changes) would cause the command to print "No changes made" and exit early.
+
+describe("edit command detects added agents", () => {
+  let tempDir: string;
+  let projectDir: string;
+  let originalCwd: string;
+
+  const EXISTING_SKILL_IDS: SkillId[] = ["web-framework-react"];
+  const EXISTING_SKILLS = buildSkillConfigs(EXISTING_SKILL_IDS, {
+    scope: "project",
+    source: "local",
+  });
+
+  const testMatrix = FULLSTACK_PAIR_MATRIX;
+  const testSourceResult = buildSourceResult(testMatrix, "/test/source");
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    tempDir = await createTempDir("cc-edit-agent-detect-");
+    projectDir = path.join(tempDir, "project");
+    await mkdir(projectDir, { recursive: true });
+    process.chdir(projectDir);
+
+    mockRender.mockClear();
+    mockDetectInstallation.mockResolvedValue({
+      mode: "local",
+      scope: "project",
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+      agentsDir: path.join(projectDir, ".claude/agents"),
+      skillsDir: path.join(projectDir, ".claude/skills"),
+      projectDir,
+    });
+
+    mockLoadSkillsMatrixFromSource.mockResolvedValue(testSourceResult);
+    initializeMatrix(testSourceResult.matrix);
+    mockDiscoverAllPluginSkills.mockResolvedValue({});
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await cleanupTempDir(tempDir);
+  });
+
+  it("should NOT report 'No changes made' when only agents are added", async () => {
+    // Old config has one agent: web-developer
+    mockLoadProjectConfig.mockResolvedValue({
+      config: {
+        name: "test-project",
+        agents: buildAgentConfigs(["web-developer"]),
+        skills: EXISTING_SKILLS,
+      },
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+    });
+
+    // Mock render to invoke onComplete with a wizard result that adds web-tester
+    // (same skills, but a new agent)
+    mockRender.mockImplementation((element: ReactElement) => {
+      const onComplete = element.props.onComplete as (result: unknown) => void;
+      const wizardResult = buildWizardResult(EXISTING_SKILLS, {
+        agentConfigs: buildAgentConfigs(["web-developer", "web-tester"]),
+      });
+      onComplete(wizardResult);
+      return { waitUntilExit: () => Promise.resolve() };
+    });
+
+    try {
+      await Edit.run([], { root: CLI_ROOT });
+    } catch {
+      // Command may error on later steps — that's OK for this test
+    }
+
+    // With the fix, the command detects agent changes and proceeds past the
+    // early return. discoverAllPluginSkills is called twice: once during startup
+    // (line 129) and once during recompilation (line 482). Without the fix,
+    // the command exits early and only calls it once.
+    expect(mockDiscoverAllPluginSkills).toHaveBeenCalledTimes(2);
+  });
+});
+
+// Bug regression: edit command must copy newly added local-source skills to
+// .claude/skills/. Without the fix, the addedLocalSkills copy block was missing,
+// so skills switched to local source during edit were never copied.
+
+describe("edit command copies newly added local skills", () => {
+  let tempDir: string;
+  let projectDir: string;
+  let originalCwd: string;
+
+  const testMatrix = FULLSTACK_PAIR_MATRIX;
+  const testSourceResult = buildSourceResult(testMatrix, "/test/source");
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    tempDir = await createTempDir("cc-edit-local-copy-");
+    projectDir = path.join(tempDir, "project");
+    await mkdir(projectDir, { recursive: true });
+    process.chdir(projectDir);
+
+    mockRender.mockClear();
+    mockCopySkillsToLocalFlattened.mockClear();
+    mockEnsureDir.mockClear();
+    mockDetectInstallation.mockResolvedValue({
+      mode: "local",
+      scope: "project",
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+      agentsDir: path.join(projectDir, ".claude/agents"),
+      skillsDir: path.join(projectDir, ".claude/skills"),
+      projectDir,
+    });
+
+    mockLoadSkillsMatrixFromSource.mockResolvedValue(testSourceResult);
+    initializeMatrix(testSourceResult.matrix);
+    mockDiscoverAllPluginSkills.mockResolvedValue({});
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await cleanupTempDir(tempDir);
+  });
+
+  it("should call copySkillsToLocalFlattened when a local skill is added", async () => {
+    // Old config has no skills
+    mockLoadProjectConfig.mockResolvedValue({
+      config: {
+        name: "test-project",
+        agents: buildAgentConfigs(["web-developer"]),
+        skills: [],
+      },
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+    });
+
+    const newLocalSkills = buildSkillConfigs(["web-framework-react"], {
+      scope: "project",
+      source: "local",
+    });
+
+    // Mock render to invoke onComplete with a wizard result that adds a local skill
+    mockRender.mockImplementation((element: ReactElement) => {
+      const onComplete = element.props.onComplete as (result: unknown) => void;
+      const wizardResult = buildWizardResult(newLocalSkills, {
+        agentConfigs: buildAgentConfigs(["web-developer"]),
+      });
+      onComplete(wizardResult);
+      return { waitUntilExit: () => Promise.resolve() };
+    });
+
+    try {
+      await Edit.run([], { root: CLI_ROOT });
+    } catch {
+      // Expected: command errors after copy (getAgentDefinitions is not mocked)
+    }
+
+    // The copy function should have been called for the newly added local skill
+    expect(mockCopySkillsToLocalFlattened).toHaveBeenCalledOnce();
+    expect(mockCopySkillsToLocalFlattened).toHaveBeenCalledWith(
+      ["web-framework-react"],
+      expect.stringContaining(".claude/skills"),
+      testSourceResult.matrix,
+      testSourceResult,
+    );
   });
 });

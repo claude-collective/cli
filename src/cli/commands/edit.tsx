@@ -26,14 +26,15 @@ import {
   detectMigrations,
   executeMigration,
   deriveInstallMode,
+  resolveInstallPaths,
 } from "../lib/installation/index.js";
 import { loadAllAgents, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { matrix, getSkillById } from "../lib/matrix/matrix-provider";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
-import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
+import { deleteLocalSkill, migrateLocalSkillScope, copySkillsToLocalFlattened } from "../lib/skills/index.js";
 import type { AgentDefinition, AgentName, SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
-import { remove } from "../utils/fs.js";
+import { ensureDir, remove } from "../utils/fs.js";
 import {
   claudePluginInstall,
   claudePluginUninstall,
@@ -200,6 +201,11 @@ export default class Edit extends BaseCommand {
     const addedSkills = newSkillIds.filter((id) => !currentSkillIds.includes(id));
     const removedSkills = currentSkillIds.filter((id) => !newSkillIds.includes(id));
 
+    const oldAgentNames = projectConfig?.config?.agents?.map((a) => a.name) ?? [];
+    const newAgentNames = result.agentConfigs.map((a) => a.name);
+    const addedAgents = newAgentNames.filter((name) => !oldAgentNames.includes(name));
+    const removedAgents = oldAgentNames.filter((name) => !newAgentNames.includes(name));
+
     const sourceChanges = new Map<SkillId, { from: string; to: string }>();
     const scopeChanges = new Map<
       SkillId,
@@ -243,8 +249,9 @@ export default class Edit extends BaseCommand {
     const hasScopeChanges = scopeChanges.size > 0;
     const hasAgentScopeChanges = agentScopeChanges.size > 0;
     const hasSkillChanges = addedSkills.length > 0 || removedSkills.length > 0;
+    const hasAgentChanges = addedAgents.length > 0 || removedAgents.length > 0;
 
-    if (!hasSkillChanges && !hasSourceChanges && !hasScopeChanges && !hasAgentScopeChanges) {
+    if (!hasSkillChanges && !hasAgentChanges && !hasSourceChanges && !hasScopeChanges && !hasAgentScopeChanges) {
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       this.log("Plugin unchanged\n");
       return;
@@ -257,6 +264,12 @@ export default class Edit extends BaseCommand {
     for (const skillId of removedSkills) {
       const skill = matrix.skills[skillId];
       this.log(`  - ${skill?.displayName ?? skillId}`);
+    }
+    for (const agentName of addedAgents) {
+      this.log(`  + ${agentName} (agent)`);
+    }
+    for (const agentName of removedAgents) {
+      this.log(`  - ${agentName} (agent)`);
     }
     for (const [skillId, change] of sourceChanges) {
       const fromLabel = formatSourceDisplayName(change.from);
@@ -374,6 +387,41 @@ export default class Edit extends BaseCommand {
       }
     }
 
+    // Copy newly added local-source skills to .claude/skills/ (split by scope)
+    const addedLocalSkills = result.skills.filter(
+      (s) => addedSkills.includes(s.id) && s.source === "local",
+    );
+
+    if (addedLocalSkills.length > 0) {
+      const projectLocalSkills = addedLocalSkills.filter((s) => s.scope !== "global");
+      const globalLocalSkills = addedLocalSkills.filter((s) => s.scope === "global");
+
+      const projectPaths = resolveInstallPaths(cwd, "project");
+      const globalPaths = resolveInstallPaths(cwd, "global");
+
+      if (projectLocalSkills.length > 0) {
+        await ensureDir(projectPaths.skillsDir);
+        await copySkillsToLocalFlattened(
+          projectLocalSkills.map((s) => s.id),
+          projectPaths.skillsDir,
+          sourceResult.matrix,
+          sourceResult,
+        );
+      }
+
+      if (globalLocalSkills.length > 0) {
+        await ensureDir(globalPaths.skillsDir);
+        await copySkillsToLocalFlattened(
+          globalLocalSkills.map((s) => s.id),
+          globalPaths.skillsDir,
+          sourceResult.matrix,
+          sourceResult,
+        );
+      }
+
+      this.log(`Copied ${addedLocalSkills.length} local skill(s) to .claude/skills/`);
+    }
+
     // Load agent definitions first — needed for both config-types.ts and recompilation
     let sourcePath: string;
     this.log(
@@ -479,6 +527,9 @@ export default class Edit extends BaseCommand {
     }
 
     const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];
+    if (hasAgentChanges) {
+      summaryParts.push(`${addedAgents.length} agent${addedAgents.length !== 1 ? "s" : ""} added, ${removedAgents.length} agent${removedAgents.length !== 1 ? "s" : ""} removed`);
+    }
     if (hasSourceChanges) {
       summaryParts.push(`${sourceChanges.size} source${sourceChanges.size > 1 ? "s" : ""} changed`);
     }
