@@ -601,6 +601,26 @@ describe("WizardStore", () => {
       expect(skillConfigs[0].scope).toBe("global");
     });
 
+    it("should not toggle scope of locked skills", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({ lockedSkillIds: ["web-framework-react"] as SkillId[] });
+
+      store.toggleSkillScope("web-framework-react");
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs[0].scope).toBe("global");
+    });
+
+    it("should not toggle skill scope when isEditingFromGlobalScope is true", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({ isEditingFromGlobalScope: true });
+
+      store.toggleSkillScope("web-framework-react");
+      const { skillConfigs } = useWizardStore.getState();
+      expect(skillConfigs[0].scope).toBe("global");
+    });
+
     it("should update source via setSkillSource", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
@@ -1278,6 +1298,16 @@ describe("WizardStore", () => {
       store.toggleAgentScope("web-developer");
       const { agentConfigs } = useWizardStore.getState();
       expect(agentConfigs).toEqual([{ name: "web-developer", scope: "global" }]);
+    });
+
+    it("should not toggle agent scope when isEditingFromGlobalScope is true", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      useWizardStore.setState({ isEditingFromGlobalScope: true });
+
+      store.toggleAgentScope("web-developer");
+      const { agentConfigs } = useWizardStore.getState();
+      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "global" }]);
     });
   });
 
