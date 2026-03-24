@@ -169,6 +169,7 @@ export default class Edit extends BaseCommand {
         lockedSkillIds={lockedSkillIds}
         installedAgentConfigs={projectConfig?.config?.agents}
         lockedAgentNames={lockedAgentNames}
+        isEditingFromGlobalScope={isGlobalDir}
         projectDir={projectDir}
         startupMessages={startupMessages}
         onComplete={(result) => {

@@ -185,6 +185,9 @@ export type WizardState = {
   /** Agent names that cannot be toggled or removed (D9: existing global agents in project context) */
   lockedAgentNames: AgentName[];
 
+  /** When true, scope toggling is disabled (editing from ~/.claude/ with no project to move items to) */
+  isEditingFromGlobalScope: boolean;
+
   history: WizardStep[];
 
   /**
@@ -475,6 +478,7 @@ type WizardStateData = Pick<
   | "boundSkills"
   | "lockedSkillIds"
   | "lockedAgentNames"
+  | "isEditingFromGlobalScope"
   | "history"
 >;
 
@@ -502,6 +506,7 @@ const createInitialState = (): WizardStateData => ({
   boundSkills: [],
   lockedSkillIds: [],
   lockedAgentNames: [],
+  isEditingFromGlobalScope: false,
   history: [],
 });
 
@@ -760,6 +765,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleSkillScope: (skillId) =>
     set((state) => {
+      if (state.isEditingFromGlobalScope) return state;
       // D9: locked skills cannot have their scope toggled
       if (state.lockedSkillIds.includes(skillId)) return state;
       return {
@@ -850,6 +856,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleAgentScope: (agentName) =>
     set((state) => {
+      if (state.isEditingFromGlobalScope) return state;
       // D9: locked agents cannot have their scope toggled
       if (state.lockedAgentNames.includes(agentName)) return state;
       return {

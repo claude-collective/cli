@@ -56,6 +56,7 @@ type WizardProps = {
   installedAgentConfigs?: AgentScopeConfig[];
   lockedSkillIds?: SkillId[];
   lockedAgentNames?: AgentName[];
+  isEditingFromGlobalScope?: boolean;
   projectDir?: string;
   startupMessages?: StartupMessage[];
 };
@@ -76,6 +77,7 @@ export const Wizard: React.FC<WizardProps> = ({
   installedAgentConfigs,
   lockedSkillIds,
   lockedAgentNames,
+  isEditingFromGlobalScope,
   projectDir,
   startupMessages,
 }) => {
@@ -97,6 +99,7 @@ export const Wizard: React.FC<WizardProps> = ({
     installedAgentConfigs,
     lockedSkillIds,
     lockedAgentNames,
+    isEditingFromGlobalScope,
   });
 
   const buildStepProps = useBuildStepProps({ store, installedSkillIds });
@@ -145,6 +148,7 @@ export const Wizard: React.FC<WizardProps> = ({
     }
 
     if (isHotkey(input, HOTKEY_SCOPE) && store.step === "build") {
+      if (store.isEditingFromGlobalScope) return;
       const focused = store.focusedSkillId;
       if (focused) {
         store.toggleSkillScope(focused);
@@ -153,6 +157,7 @@ export const Wizard: React.FC<WizardProps> = ({
     }
 
     if (isHotkey(input, HOTKEY_SCOPE) && store.step === "agents") {
+      if (store.isEditingFromGlobalScope) return;
       const focused = store.focusedAgentId;
       if (focused) {
         store.toggleAgentScope(focused);

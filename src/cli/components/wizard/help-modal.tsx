@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
 import React from "react";
 import { CLI_COLORS } from "../../consts.js";
-import type { WizardStep } from "../../stores/wizard-store.js";
+import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
 import {
   HOTKEY_HELP,
   HOTKEY_SCOPE,
@@ -88,7 +88,15 @@ export type HelpModalProps = {
 };
 
 export const HelpModal: React.FC<HelpModalProps> = ({ currentStep }) => {
-  const stepSection = STEP_SECTIONS[currentStep];
+  const { isEditingFromGlobalScope } = useWizardStore();
+  const rawSection = STEP_SECTIONS[currentStep];
+  const stepSection =
+    rawSection && isEditingFromGlobalScope
+      ? {
+          ...rawSection,
+          keys: rawSection.keys.filter((k) => k.key !== HOTKEY_SCOPE.label),
+        }
+      : rawSection;
 
   return (
     <Box

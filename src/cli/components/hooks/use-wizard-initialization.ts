@@ -12,6 +12,7 @@ type UseWizardInitializationOptions = {
   installedAgentConfigs?: AgentScopeConfig[];
   lockedSkillIds?: SkillId[];
   lockedAgentNames?: AgentName[];
+  isEditingFromGlobalScope?: boolean;
 };
 
 /**
@@ -27,6 +28,7 @@ export function useWizardInitialization({
   installedAgentConfigs,
   lockedSkillIds,
   lockedAgentNames,
+  isEditingFromGlobalScope,
 }: UseWizardInitializationOptions): void {
   const initialized = useRef(false);
 
@@ -58,6 +60,9 @@ export function useWizardInitialization({
         ...(lockedSkillIds?.length && { lockedSkillIds }),
         ...(lockedAgentNames?.length && { lockedAgentNames }),
       });
+    }
+    if (isEditingFromGlobalScope) {
+      useWizardStore.setState({ isEditingFromGlobalScope });
     }
   }
 }

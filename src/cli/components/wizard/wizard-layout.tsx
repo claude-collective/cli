@@ -205,7 +205,10 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
               <DefinitionItem
                 label="Scope"
                 values={[HOTKEY_SCOPE.label]}
-                isVisible={store.step === "build" || store.step === "agents"}
+                isVisible={
+                  (store.step === "build" || store.step === "agents") &&
+                  !store.isEditingFromGlobalScope
+                }
               />
               <DefinitionItem
                 label="Set all local"
