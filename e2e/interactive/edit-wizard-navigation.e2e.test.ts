@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { ensureBinaryExists } from "../helpers/test-utils.js";
+import { ensureBinaryExists, createTempDir, cleanupTempDir } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
@@ -104,6 +104,15 @@ describe("edit wizard — navigation and hotkeys", () => {
   });
 
   describe("wizard hotkeys", () => {
+    let tempHOME: string | undefined;
+
+    afterEach(async () => {
+      if (tempHOME) {
+        await cleanupTempDir(tempHOME);
+        tempHOME = undefined;
+      }
+    });
+
     it("should show hotkey indicators in the footer", async () => {
       const project = await ProjectBuilder.editable();
 
@@ -122,7 +131,17 @@ describe("edit wizard — navigation and hotkeys", () => {
         domains: ["web"],
       });
 
-      wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
+      // Create a separate HOME so the wizard does not treat projectDir as global scope.
+      // TerminalSession sets HOME=cwd by default, which makes isGlobalDir=true and
+      // hides the Scope hotkey. A distinct HOME ensures project-scope editing.
+      tempHOME = await createTempDir();
+
+      wizard = await EditWizard.launch({
+        projectDir: project.dir,
+        cols: 120,
+        rows: 40,
+        env: { HOME: tempHOME },
+      });
 
       const buildOutput = wizard.build.getOutput();
       // The "S" badge with "Scope" label should be visible in the build step footer
