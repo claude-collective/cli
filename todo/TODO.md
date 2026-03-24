@@ -2,23 +2,19 @@
 
 | ID    | Task                                                                                              | Status        |
 | ----- | ------------------------------------------------------------------------------------------------- | ------------- |
+| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                           | In Progress   |
 | D-138 | Iterate on sub-agents — review and improve all agent definitions                                  | Ready for Dev |
 | D-132 | Skip incompatibility markers in exclusive (radio) categories                                      | Ready for Dev |
 | D-131 | Track project installations in global config                                                      | Investigate   |
 | D-130 | Narrow stack type safety — category-scoped SkillId unions. Depends on D-97                        | Investigate   |
 | D-129 | Add visibility into global config contents from project config                                    | Investigate   |
-| D-128 | Disable scope toggle (S hotkey) when editing from global scope                                    | Ready for Dev |
 | D-127 | UX for claiming global skills/agents into project scope                                           | Investigate   |
-| D-126 | Global uninstall skips local skills — `forkedFrom` metadata check fails                           | Done          |
 | D-125 | Fix weak E2E test assertions — scope-blind `\|\|` checks and fragile display names                | Ready for Dev |
 | D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                                   | Ready for Dev |
 | D-123 | Local mode ENOENT on consuming projects — empty `sourcePath` for built-in matrix                  | Ready for Dev |
 | D-122 | Auto-update marketplace before plugin install                                                     | Ready for Dev |
-| D-121 | Remove step numbers from wizard tabs                                                              | Ready for Dev |
-| D-120 | Add dedicated domain selection step to wizard flow                                                | Ready for Dev |
 | D-119 | Update READMEs with current stats (100+ skills, 13 stacks)                                        | Ready for Dev |
 | D-118 | Investigate renaming "project/global" scope to "project/user"                                     | Investigate   |
-| D-117 | Show selected global/project skill counts in wizard UI                                            | Ready for Dev |
 | D-116 | Filter Incompatible toggle should also deselect incompatible skills                               | Ready for Dev |
 | D-62  | Review default stacks: add reviewing/research skills                                              | Ready for Dev |
 | D-97  | Improve startup time — lazy-load matrix generation                                                | Investigate   |
@@ -27,18 +23,15 @@
 | D-110 | Fix the logo in the README                                                                        | Ready for Dev |
 | D-109 | Fix the screenshots in the README                                                                 | Ready for Dev |
 | D-111 | Replace E2E text anchors with stable test identifiers for active state detection                  | Investigate   |
-| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                           | In Progress   |
 | D-90  | Add Sentry tracking for unresolved matrix references                                              | Ready for Dev |
 | D-41  | Create `agents-inc` configuration skill. See [plan](./D-41-config-sub-agent.md)                   | Ready for Dev |
 | D-52  | Expand `new agent` command. See [plan](./D-52-expand-new-agent.md)                                | Ready for Dev |
 | D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                   | Ready for Dev |
 | D-66  | AI-assisted PR review: categorize diffs by type                                                   | Investigate   |
 | D-69  | Config migration strategy for outdated config shapes                                              | Investigate   |
-| D-100 | Fix pre-existing E2E test violations                                                              | Ready for Dev |
 | D-140 | Agent gap analysis — add 5 new agents. See [proposal](./D-140-agent-gap-analysis.md)              | Ready for Dev |
 | D-141 | Merge AI docs — consolidate `.ai-docs/` with `reference/` and `standards/` split                  | Ready for Dev |
 | D-142 | Rename `scribe` → `codex-keeper`, keep `convention-keeper`                                        | Ready for Dev |
-| D-143 | Shorten default stack descriptions — drop redundant framework names                               | Done          |
 | D-144 | Info panel — replace `?` help overlay with `I` info panel showing stats, context, toggles         | Investigate   |
 | D-145 | Show stats panel on every wizard step — handle layout for both absolute and flow-positioned views | Investigate   |
 
@@ -68,14 +61,6 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 When running `cc init` from a project directory and selecting global-scoped skills, the global config at `~/.claude-src/config.ts` is written without `source`, `marketplace`, or `selectedAgents`. These fields only appear in the project config. The global config should include them so that `cc edit` from global context can resolve the marketplace and install plugins.
 
 **Reproduction:** Run `cc init` from a project dir, select global-scoped skills. Compare `~/.claude-src/config.ts` (missing fields) with `<project>/.claude-src/config.ts` (has all fields).
-
----
-
-#### D-126: Global uninstall skips local skills
-
-**Priority:** Medium
-
-`uninstall --all` from home dir shows "Skipping: not created by Agents Inc. CLI" for global-scoped local skills. The `forkedFrom` metadata check in uninstall likely fails because skills were copied to `~/.claude/skills/` but the uninstall code can't find or validate their metadata. May be related to scope-blind path fixes.
 
 ---
 
@@ -349,37 +334,6 @@ The "summoner" pair shares a role word differentiated by domain. The documentati
 
 ---
 
-#### D-143: Shorten default stack descriptions
-
-**Priority:** Low (cosmetic)
-
-**File:** `src/cli/lib/configuration/default-stacks.ts`
-
-**Rule:** Drop the primary framework from the description when it's already in the stack name. Keep sub-technologies (Supabase, Turborepo) that are meaningful stack choices even if they also appear in the name.
-
-| Stack Name                   | Current Description                           | New Description                               |
-| ---------------------------- | --------------------------------------------- | --------------------------------------------- |
-| Next.js Full-Stack           | Hono, Drizzle, Better Auth, Zustand           | Hono, Drizzle, Better Auth, Zustand           |
-| Next.js T3 Stack             | tRPC, Prisma, NextAuth, Tailwind              | tRPC, Prisma, NextAuth, Tailwind              |
-| Next.js Supabase Full-Stack  | Supabase, Drizzle, Better Auth                | Supabase, Drizzle, Better Auth                |
-| Next.js Turborepo Full-Stack | Turborepo, pnpm Workspaces, Hono, Drizzle     | Turborepo, pnpm Workspaces, Hono, Drizzle     |
-| React Old School             | Redux Toolkit, SCSS Modules, Vite, Vitest     | Redux Toolkit, SCSS Modules, Vite, Vitest     |
-| React Hono Full-Stack        | Vite, Hono, Drizzle, Better Auth              | Vite, Hono, Drizzle, Better Auth              |
-| Remix Full-Stack             | Hono, Drizzle, Better Auth                    | Hono, Drizzle, Better Auth                    |
-| SvelteKit Full-Stack         | Hono, Drizzle, Better Auth                    | Hono, Drizzle, Better Auth                    |
-| SolidJS Full-Stack           | Hono, Drizzle, Better Auth, Vitest            | Hono, Drizzle, Better Auth, Vitest            |
-| Astro Content Full-Stack     | Hono, Drizzle                                 | Hono, Drizzle                                 |
-| Vue Modern Full-Stack        | Pinia, Hono, Drizzle, Better Auth             | Pinia, Hono, Drizzle, Better Auth             |
-| Nuxt Full-Stack              | Hono, Drizzle, Better Auth                    | Hono, Drizzle, Better Auth                    |
-| Angular Modern Full-Stack    | NgRx, Hono, Drizzle, Better Auth              | NgRx, Hono, Drizzle, Better Auth              |
-| Next.js AI SaaS              | Vercel AI, Anthropic, Drizzle, Pinecone       | Vercel AI, Anthropic, Drizzle, Pinecone       |
-| Next.js SaaS Starter         | Better Auth, Stripe, Drizzle, Resend, PostHog | Better Auth, Stripe, Drizzle, Resend, PostHog |
-| Expo Mobile Full-Stack       | Zustand, React Query, Hono, Drizzle           | Zustand, React Query, Hono, Drizzle           |
-
-**Implementation:** 16 single-line string replacements in `default-stacks.ts`. Regenerate types afterward (`bun run generate:types`) if stack descriptions appear in the generated matrix.
-
----
-
 ### Wizard UX
 
 #### D-132: Skip incompatibility markers in exclusive categories
@@ -387,14 +341,6 @@ The "summoner" pair shares a role word differentiated by domain. The documentati
 **Priority:** Low
 
 In radio (max 1) categories like Framework and Meta-Framework, the single-selection constraint already prevents conflicts. Incompatibility styling is redundant noise there. Only show incompatibility markers in non-exclusive (checkbox) categories where users could select conflicting skills. Check `exclusive: true` on the category definition.
-
----
-
-#### D-128: Disable scope toggle (S hotkey) when editing from global scope
-
-**Priority:** Low
-
-Changing a global skill/agent to project scope is undefined when there's no project. Grey out or ignore S with a message like "Run `cc edit` from a project to change scope".
 
 ---
 
