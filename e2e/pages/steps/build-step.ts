@@ -10,9 +10,15 @@ export class BuildStep extends BaseStep {
     await this.pressEnter();
   }
 
-  /** Toggle a skill by navigating to it and pressing Space. */
+  /** Toggle a skill by scrolling until it is visible and pressing Space. */
   async toggleSkill(skillLabel: string): Promise<void> {
     await this.waitForItemVisible(skillLabel);
+    await this.pressSpace();
+  }
+
+  /** Navigate cursor to a skill by label, then toggle it with Space. */
+  async selectSkill(skillLabel: string): Promise<void> {
+    await this.navigateCursorToItem(skillLabel);
     await this.pressSpace();
   }
 

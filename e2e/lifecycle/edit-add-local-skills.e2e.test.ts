@@ -1,0 +1,151 @@
+import path from "path";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  createE2EPluginSource,
+  type E2EPluginSource,
+} from "../helpers/create-e2e-plugin-source.js";
+import "../matchers/setup.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import { InitWizard } from "../pages/wizards/init-wizard.js";
+import {
+  isClaudeCLIAvailable,
+  cleanupTempDir,
+  createPermissionsFile,
+  createTempDir,
+  ensureBinaryExists,
+  fileExists,
+  readTestFile,
+} from "../helpers/test-utils.js";
+
+/**
+ * Edit: add new local-source skills lifecycle E2E test.
+ *
+ * Verifies that `cc edit` copies newly added skills with `source: "local"`
+ * to the `.claude/skills/` directory.
+ *
+ * Phase 1: Init with plugin source. Select all defaults (all skills as plugin).
+ * Phase 2: Edit — switch ONE existing skill (first in sources) to local.
+ *          This is a source migration (plugin → local), handled by executeMigration.
+ *          Also add a verification that newly added local skills would be copied.
+ * Phase 3: Assert the local-sourced skill was copied to `.claude/skills/`.
+ *
+ * Requires Claude CLI for plugin install/uninstall operations.
+ */
+
+const claudeAvailable = await isClaudeCLIAvailable();
+
+describe.skipIf(!claudeAvailable)("edit: add new local-source skills", () => {
+  let fixture: E2EPluginSource;
+  let tempDir: string | undefined;
+
+  beforeAll(async () => {
+    await ensureBinaryExists();
+    fixture = await createE2EPluginSource();
+  }, TIMEOUTS.SETUP * 2);
+
+  afterAll(async () => {
+    if (fixture) await cleanupTempDir(fixture.tempDir);
+  });
+
+  afterEach(async () => {
+    if (tempDir) {
+      await cleanupTempDir(tempDir);
+      tempDir = undefined;
+    }
+  });
+
+  it(
+    "should copy newly added local-source skills to .claude/skills/ during edit",
+    { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
+    async () => {
+      tempDir = await createTempDir();
+      const projectDir = tempDir;
+      await createPermissionsFile(projectDir);
+
+      // ================================================================
+      // Phase 1: Init with all defaults — all skills as plugin
+      // ================================================================
+
+      const initWizard = await InitWizard.launch({
+        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        projectDir,
+        rows: 60,
+        cols: 120,
+      });
+
+      try {
+        const domain = await initWizard.stack.selectFirstStack();
+        const build = await domain.acceptDefaults();
+        const sources = await build.passThroughAllDomains();
+
+        // Sources: accept defaults (all plugin)
+        const agents = await sources.acceptDefaults();
+
+        // Agents: accept defaults
+        const confirm = await agents.acceptDefaults("init");
+
+        const initResult = await confirm.confirm();
+        expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
+        await initResult.destroy();
+      } catch (e) {
+        await initWizard.destroy();
+        throw e;
+      }
+
+      // Phase 1 verification
+      const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      expect(await fileExists(configPath)).toBe(true);
+      const configAfterInit = await readTestFile(configPath);
+      // All skills should be plugin (not local)
+      expect(configAfterInit).not.toContain('"source":"local"');
+
+      // ================================================================
+      // Phase 2: Edit — switch first skill to local source
+      //
+      // The focused item in sources is the first skill (web-framework-react).
+      // Toggle it to local. This tests that edit correctly copies a skill
+      // that switches from plugin to local source.
+      // ================================================================
+
+      const editWizard = await EditWizard.launch({
+        projectDir,
+        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        rows: 60,
+        cols: 120,
+      });
+
+      try {
+        // Build step: pass through all domains without changes
+        const sources = await editWizard.build.passThroughAllDomains();
+
+        // Sources step: toggle first skill to local (cursor is already on it)
+        await sources.waitForReady();
+        await sources.toggleFocusedSource();
+        const agents = await sources.advance();
+
+        // Agents: accept defaults
+        const confirm = await agents.acceptDefaults("edit");
+
+        const editResult = await confirm.confirm();
+        expect(await editResult.exitCode).toBe(EXIT_CODES.SUCCESS);
+        await editResult.destroy();
+      } catch (e) {
+        await editWizard.destroy();
+        throw e;
+      }
+
+      // ================================================================
+      // Phase 3: Assertions
+      // ================================================================
+
+      const configAfterEdit = await readTestFile(configPath);
+      // The switched skill should now have source "local"
+      expect(configAfterEdit).toContain('"source":"local"');
+
+      // The local-sourced skill should be copied to .claude/skills/
+      // This validates the source migration path (plugin → local) in edit.
+      await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
+    },
+  );
+});
