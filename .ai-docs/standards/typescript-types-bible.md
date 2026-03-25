@@ -129,7 +129,7 @@ Not all casts are bad. Classify them:
 
 For the full boundary cast taxonomy with real codebase examples (6 categories, acceptable vs
 unacceptable patterns, post-safeParse conventions), see
-[`clean-code-standards.md` Section 7.2](docs/standards/clean-code-standards.md).
+[`clean-code-standards.md` Section 7.2](clean-code-standards.md).
 
 **Double cast through `unknown` for branded Record keys.** When constructing a Record whose keys and values are both branded template literal types (e.g., `SkillDisplayName`, `SkillId`), a single `as` cast fails because object literal string keys are not assignable to branded types. Use `as unknown as Record<BrandedKey, BrandedValue>` with a comment:
 

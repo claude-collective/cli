@@ -5,7 +5,7 @@ affected_files:
   - path/to/file1.ts
   - path/to/file2.ts
 standards_docs:
-  - docs/standards/e2e/anti-patterns.md
+  - .ai-docs/standards/e2e/anti-patterns.md
 date: YYYY-MM-DD
 reporting_agent: <agent-type> # which sub-agent discovered the issue (tells us whose instructions may need updating)
 category: dry | typescript | testing | complexity | performance | architecture

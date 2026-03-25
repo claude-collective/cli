@@ -1,27 +1,8 @@
 # Agents Inc. CLI Documentation
 
+> **AI Documentation:** For AI-consumed reference and standards docs, see [`.ai-docs/DOCUMENTATION_MAP.md`](../.ai-docs/DOCUMENTATION_MAP.md).
+
 ## Documentation Index
-
-### Standards
-
-Rules and conventions for developers and content authors.
-
-#### Code Standards (For CLI Developers)
-
-| Document                                                            | Content                                                   |
-| ------------------------------------------------------------------- | --------------------------------------------------------- |
-| [clean-code-standards.md](./standards/code/clean-code-standards.md) | Enforceable code quality rules and boundary cast taxonomy |
-
-#### Content Standards (For Agent & Skill Authors)
-
-| Document                                                                         | Content                                             |
-| -------------------------------------------------------------------------------- | --------------------------------------------------- |
-| [claude-architecture-bible.md](./standards/content/claude-architecture-bible.md) | Agent/skill compilation system and directory layout |
-| [prompt-bible.md](./standards/content/prompt-bible.md)                           | Universal prompt engineering techniques for agents  |
-| [skill-atomicity-bible.md](./standards/content/skill-atomicity-bible.md)         | Skill isolation and composability principles        |
-| [agent-compliance-bible.md](./standards/content/agent-compliance-bible.md)       | Agent quality verification checklist                |
-| [frontend-bible.md](./standards/content/frontend-bible.md)                       | Frontend standards extraction categories            |
-| [loop-prompts-bible.md](./standards/content/loop-prompts-bible.md)               | Loop/orchestrator agent coordination patterns       |
 
 ### Reference
 
@@ -41,7 +22,6 @@ How-to documentation for common tasks.
 | --------------------------------------------------------------- | ------------------------------------------------- |
 | [creating-a-marketplace.md](./guides/creating-a-marketplace.md) | Manual and automated marketplace creation         |
 | [migrate-to-marketplace.md](./guides/migrate-to-marketplace.md) | Converting an existing CC repo into a marketplace |
-| [commit-protocol.md](./guides/commit-protocol.md)               | AI commit and changelog conventions               |
 
 ### Features
 

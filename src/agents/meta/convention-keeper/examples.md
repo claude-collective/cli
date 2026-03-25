@@ -25,7 +25,7 @@
 
 **Proposal:**
 
-**File:** `docs/standards/e2e/anti-patterns.md`
+**File:** `.ai-docs/standards/e2e/anti-patterns.md`
 **Section:** Add after existing "Duplicated Constants" section
 
 **Text to add:**
@@ -41,13 +41,13 @@
 
 **Findings:** `2026-03-21-toequal-vs-tostrictequal.md`
 
-**Cross-reference result:** `docs/standards/e2e/assertions.md` exists but has no rule about `toEqual` vs `toStrictEqual`.
+**Cross-reference result:** `.ai-docs/standards/e2e/assertions.md` exists but has no rule about `toEqual` vs `toStrictEqual`.
 
 **Classification:** Documentation gap
 
 **Proposal:**
 
-**File:** `docs/standards/e2e/assertions.md`
+**File:** `.ai-docs/standards/e2e/assertions.md`
 **Section:** Add to "Matcher Selection" section
 
 **Text to add:**

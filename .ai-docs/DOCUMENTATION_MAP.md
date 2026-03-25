@@ -1,6 +1,6 @@
 # Documentation Map
 
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-25
 **Total Areas:** 12
 **Documented:** 12 (100%)
 **Needs Validation:** 1
@@ -14,22 +14,45 @@
 - [PLANNED] Planned
 - [NOT-STARTED] Not started
 
-## Documentation Status
+## Reference Documentation
 
-| Area                  | Status             | File                               | Last Updated | Last Validated | Next Action              |
-| --------------------- | ------------------ | ---------------------------------- | ------------ | -------------- | ------------------------ |
-| Architecture Overview | [DONE]             | `architecture-overview.md`         | 2026-03-14   | 2026-03-14     | Validate in 30 days      |
-| Commands Reference    | [DONE]             | `commands.md`                      | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
-| Type System           | [DONE]             | `type-system.md`                   | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
-| State Management      | [DONE]             | `store-map.md`                     | 2026-03-14   | 2026-03-14     | Validate in 7 days       |
-| Compilation Pipeline  | [NEEDS-VALIDATION] | `features/compilation-pipeline.md` | 2026-02-25   | 2026-02-25     | Validate (17 days stale) |
-| Configuration System  | [DONE]             | `features/configuration.md`        | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
-| Wizard Flow           | [DONE]             | `features/wizard-flow.md`          | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
-| Skills & Matrix       | [DONE]             | `features/skills-and-matrix.md`    | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
-| Plugin System         | [DONE]             | `features/plugin-system.md`        | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
-| Component Patterns    | [DONE]             | `component-patterns.md`            | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
-| Utilities Reference   | [DONE]             | `utilities.md`                     | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
-| Test Infrastructure   | [DONE]             | `test-infrastructure.md`           | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+Descriptive docs -- "how things work". Validated aggressively (7-30 day cadence).
+
+| Area                  | Status             | File                                        | Last Updated | Last Validated | Next Action              |
+| --------------------- | ------------------ | ------------------------------------------- | ------------ | -------------- | ------------------------ |
+| Architecture Overview | [DONE]             | `reference/architecture-overview.md`         | 2026-03-14   | 2026-03-14     | Validate in 30 days      |
+| Commands Reference    | [DONE]             | `reference/commands.md`                      | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+| Type System           | [DONE]             | `reference/type-system.md`                   | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+| State Management      | [DONE]             | `reference/store-map.md`                     | 2026-03-14   | 2026-03-14     | Validate in 7 days       |
+| Compilation Pipeline  | [NEEDS-VALIDATION] | `reference/features/compilation-pipeline.md` | 2026-02-25   | 2026-02-25     | Validate (17 days stale) |
+| Configuration System  | [DONE]             | `reference/features/configuration.md`        | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+| Wizard Flow           | [DONE]             | `reference/features/wizard-flow.md`          | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+| Skills & Matrix       | [DONE]             | `reference/features/skills-and-matrix.md`    | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+| Plugin System         | [DONE]             | `reference/features/plugin-system.md`        | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+| Component Patterns    | [DONE]             | `reference/component-patterns.md`            | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+| Utilities Reference   | [DONE]             | `reference/utilities.md`                     | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+| Test Infrastructure   | [DONE]             | `reference/test-infrastructure.md`           | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
+
+## Standards Documentation
+
+Prescriptive rules for code quality, testing, and content authoring. Lighter validation cadence -- validate when convention-keeper proposes updates, or quarterly.
+
+| Area                    | File                                        | Last Moved  |
+| ----------------------- | ------------------------------------------- | ----------- |
+| Clean Code Standards    | `standards/clean-code-standards.md`         | 2026-03-25  |
+| E2E Testing Bible       | `standards/e2e-testing-bible.md`            | 2026-03-25  |
+| E2E Sub-Standards       | `standards/e2e/` (7 files)                  | 2026-03-25  |
+| Prompt Engineering      | `standards/prompt-bible.md`                 | 2026-03-25  |
+| Loop Prompts            | `standards/loop-prompts-bible.md`           | 2026-03-25  |
+| Skill Atomicity         | `standards/skill-atomicity-bible.md`        | 2026-03-25  |
+| Skill Atomicity Primer  | `standards/skill-atomicity-primer.md`       | 2026-03-25  |
+| TypeScript Types        | `standards/typescript-types-bible.md`       | 2026-03-25  |
+| Documentation Standards | `standards/documentation-bible.md`          | 2026-03-25  |
+| Commit Protocol         | `standards/commit-protocol.md`              | 2026-03-25  |
+
+## Agent Findings Pipeline
+
+Sub-agent feedback loop for standards improvement. See [`agent-findings/README.md`](agent-findings/README.md) for pipeline details.
 
 ## Coverage Metrics
 

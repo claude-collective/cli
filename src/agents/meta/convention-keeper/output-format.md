@@ -67,7 +67,7 @@
 | ----------- | -------------- | ----------- | ----------------- |
 | [Rule text] | [What's wrong] | [file:line] | [high/medium/low] |
 
-**Findings written:** [count] files created in `.agents-docs/findings/`
+**Findings written:** [count] files created in `.ai-docs/agent-findings/`
 
 </audit_results>
 
@@ -116,14 +116,14 @@ Every proposal must include:
 For each finding group, check these locations:
 
 1. `CLAUDE.md` - NEVER/ALWAYS sections
-2. `docs/standards/clean-code-standards.md` - general code standards
-3. `docs/standards/e2e/` - all E2E-specific docs (if test-related)
-4. `docs/standards/e2e/anti-patterns.md` - known anti-patterns
-5. `docs/standards/e2e/assertions.md` - assertion rules
-6. `docs/standards/e2e/page-objects.md` - page object model patterns
-7. `docs/standards/e2e/patterns.md` - reusable patterns
-8. `docs/standards/e2e/test-data.md` - test data conventions
-9. `docs/standards/e2e/test-structure.md` - test organization
+2. `.ai-docs/standards/clean-code-standards.md` - general code standards
+3. `.ai-docs/standards/e2e/` - all E2E-specific docs (if test-related)
+4. `.ai-docs/standards/e2e/anti-patterns.md` - known anti-patterns
+5. `.ai-docs/standards/e2e/assertions.md` - assertion rules
+6. `.ai-docs/standards/e2e/page-objects.md` - page object model patterns
+7. `.ai-docs/standards/e2e/patterns.md` - reusable patterns
+8. `.ai-docs/standards/e2e/test-data.md` - test data conventions
+9. `.ai-docs/standards/e2e/test-structure.md` - test organization
 
 ### Severity Guide for Audit Mode
 

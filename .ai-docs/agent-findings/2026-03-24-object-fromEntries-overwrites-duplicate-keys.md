@@ -4,7 +4,7 @@ severity: high
 affected_files:
   - src/cli/lib/configuration/config-generator.ts
 standards_docs:
-  - docs/standards/clean-code-standards.md
+  - .ai-docs/standards/clean-code-standards.md
 date: 2026-03-24
 reporting_agent: cli-developer
 category: typescript
@@ -26,6 +26,6 @@ Added a regression test with `web-styling-scss-modules` and `web-styling-tailwin
 
 ## Proposed Standard
 
-Add to `docs/standards/clean-code-standards.md`:
+Add to `.ai-docs/standards/clean-code-standards.md`:
 
 **Never use `Object.fromEntries()` with potentially duplicate keys.** When mapping items to key-value pairs where multiple items can share the same key, group items first (using `Map`, `groupBy` from remeda, or a reduce) before converting to an object. `Object.fromEntries` silently drops duplicates.

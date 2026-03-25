@@ -6,7 +6,7 @@ affected_files:
   - e2e/commands/compile-edge-cases.e2e.test.ts
   - e2e/commands/outdated.e2e.test.ts
 standards_docs:
-  - docs/standards/e2e/assertions.md
+  - .ai-docs/standards/e2e/assertions.md
   - CLAUDE.md
 date: 2026-03-21
 reporting_agent: cli-tester
@@ -25,4 +25,4 @@ Replaced all 7 `toEqual` calls with `toStrictEqual` for object comparisons. Left
 
 ## Proposed Standard
 
-Added "Object Equality" section to `docs/standards/e2e/assertions.md`. Added CLAUDE.md ALWAYS rule: "ALWAYS use `toStrictEqual` (not `toEqual`) for object and array comparisons."
+Added "Object Equality" section to `.ai-docs/standards/e2e/assertions.md`. Added CLAUDE.md ALWAYS rule: "ALWAYS use `toStrictEqual` (not `toEqual`) for object and array comparisons."

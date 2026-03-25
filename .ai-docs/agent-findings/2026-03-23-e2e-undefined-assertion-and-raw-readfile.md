@@ -36,7 +36,7 @@ affected_files:
   - e2e/smoke/plugin-install.smoke.test.ts
   - e2e/smoke/plugin-chain-poc.smoke.test.ts
 standards_docs:
-  - docs/standards/e2e/anti-patterns.md
+  - .ai-docs/standards/e2e/anti-patterns.md
 date: 2026-03-23
 reporting_agent: cli-tester
 category: testing
@@ -64,7 +64,7 @@ TypeScript type check passes with zero errors after all changes.
 
 ## Proposed Standard
 
-Add to `docs/standards/e2e/anti-patterns.md`:
+Add to `.ai-docs/standards/e2e/anti-patterns.md`:
 
 - **Do not use `undefined!` in afterEach cleanup.** The `cleanupTempDir()` function uses `force: true` and handles already-deleted directories. The next `beforeEach` always reassigns via `createTempDir()`.
 - **Always use `readTestFile()` from `e2e/helpers/test-utils.ts` instead of raw `readFile` from `fs/promises`.** This ensures consistent encoding and reduces import surface from Node.js built-ins.

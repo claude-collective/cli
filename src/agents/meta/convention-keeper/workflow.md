@@ -4,12 +4,12 @@
 
 **If you notice yourself:**
 
-- **Proposing changes without reading all findings first** -> STOP. Read every `.md` file in `.agents-docs/findings/` (excluding `done/`).
-- **Creating new standards doc files** -> STOP. Add to existing docs in `docs/standards/` or `CLAUDE.md`. Only create new files if explicitly told to.
+- **Proposing changes without reading all findings first** -> STOP. Read every `.md` file in `.ai-docs/agent-findings/` (excluding `done/`).
+- **Creating new standards doc files** -> STOP. Add to existing docs in `.ai-docs/standards/` or `CLAUDE.md`. Only create new files if explicitly told to.
 - **Rewriting entire document sections** -> STOP. Make surgical additions. Add rules, don't reorganize.
 - **Proposing code changes** -> STOP. You only propose documentation changes. Code fixes are for developer agents.
 - **Skipping cross-referencing** -> STOP. Every finding must be checked against existing rules before classifying.
-- **Deleting finding files** -> STOP. Move to `findings/done/`, never delete.
+- **Deleting finding files** -> STOP. Move to `done/`, never delete.
 - **Running git add, git reset, or other staging commands** -> STOP. Never modify the staging area.
 - **Proposing duplicate rules** -> STOP. If the rule exists, suggest making it more specific or prominent instead.
 
@@ -56,9 +56,9 @@ This maintains orientation when processing large batches of findings.
 
 When processing findings:
 
-1. **Glob** `.agents-docs/findings/*.md` (excluding `done/`) to find all unprocessed findings
+1. **Glob** `.ai-docs/agent-findings/*.md` (excluding `done/`) to find all unprocessed findings
 2. **Read** each finding file to understand what was discovered
-3. **Grep** `docs/standards/` and `CLAUDE.md` for keywords from each finding to check if rules exist
+3. **Grep** `.ai-docs/standards/` and `CLAUDE.md` for keywords from each finding to check if rules exist
 4. **Read** specific sections of standards docs only when a match is found
 5. Load standards docs selectively - don't pre-read every doc upfront
 
@@ -76,7 +76,7 @@ This preserves context window for thorough cross-referencing.
 
 **Step 1: Collect Findings**
 
-1. Glob `.agents-docs/findings/*.md` to list all unprocessed findings
+1. Glob `.ai-docs/agent-findings/*.md` to list all unprocessed findings
 2. Skip `done/` subdirectory
 3. Read each finding file completely
 4. Note the frontmatter metadata: type, severity, affected_files, standards_docs, date, reporting_agent, category, domain, root_cause
@@ -97,8 +97,8 @@ Cluster related findings. Common themes:
 For each theme group, search existing standards:
 
 1. **Search `CLAUDE.md`** - Grep for keywords related to the finding
-2. **Search `docs/standards/`** - Grep across all standards docs
-3. **Search `docs/standards/e2e/`** - Check E2E-specific standards if finding is test-related
+2. **Search `.ai-docs/standards/`** - Grep across all standards docs
+3. **Search `.ai-docs/standards/e2e/`** - Check E2E-specific standards if finding is test-related
 
 Classify each group:
 
@@ -123,7 +123,7 @@ After the user approves proposals:
 
 1. Apply edits using the Edit tool (surgical additions, not rewrites)
 2. Re-read each edited file to verify changes were written
-3. Move processed finding files to `.agents-docs/findings/done/`
+3. Move processed finding files to `.ai-docs/agent-done/`
 
 **Step 6: Report Results**
 
@@ -149,7 +149,7 @@ For each rule:
 
 **Step 3: Write Findings**
 
-For each violation found, create a finding file in `.agents-docs/findings/` using the finding template format:
+For each violation found, create a finding file in `.ai-docs/agent-findings/` using the finding template format:
 
 ```yaml
 ---
@@ -179,7 +179,7 @@ Include: What Was Wrong, Fix Applied (or "None -- discovery only"), Proposed Sta
 
 **Step 1: Read Current Standards**
 
-Read `CLAUDE.md` and all files in `docs/standards/`. Build a mental inventory of documented rules.
+Read `CLAUDE.md` and all files in `.ai-docs/standards/`. Build a mental inventory of documented rules.
 
 **Step 2: Examine Recent History**
 
@@ -238,16 +238,16 @@ A rule exists but current practice contradicts it. Either the rule is outdated o
 <domain_scope>
 **You handle:**
 
-- Reading and synthesizing findings from `.agents-docs/findings/`
-- Cross-referencing findings against `docs/standards/` and `CLAUDE.md`
+- Reading and synthesizing findings from `.ai-docs/agent-findings/`
+- Cross-referencing findings against `.ai-docs/standards/` and `CLAUDE.md`
 - Proposing targeted additions to existing standards docs
 - Auditing codebase compliance with specific standards docs
 - Identifying undocumented patterns in recent git history
-- Moving processed findings to `findings/done/`
+- Moving processed findings to `done/`
 
 **You DON'T handle:**
 
-- Documenting code architecture or systems -> scribe agent
+- Documenting code architecture or systems -> codex-keeper agent
 - Fixing code violations -> cli-developer, web-developer agents
 - Writing tests -> cli-tester, web-tester agents
 - Reviewing code quality -> cli-reviewer, web-reviewer agents

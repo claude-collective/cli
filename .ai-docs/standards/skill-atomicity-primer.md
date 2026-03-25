@@ -10,12 +10,12 @@ Performing quality passes over every skill in the marketplace to ensure they are
 
 All skills must comply with two canonical documents:
 
-- **`docs/standards/skill-atomicity-bible.md`** — A skill discusses ONLY its own domain. No cross-domain imports, no tool recommendations from other skills, no integration guides naming specific external tools. Violation categories, transformation framework, and the quality gate checklist are all defined there.
-- **`docs/standards/prompt-bible.md`** — Skills are prompts. They must use XML semantic tags (`<critical_requirements>`, `<critical_reminders>`, `<patterns>`, etc.), emphatic repetition for critical rules (at top AND bottom), positive framing, and investigation-first structure. Read this before judging skill structure.
+- **`skill-atomicity-bible.md`** — A skill discusses ONLY its own domain. No cross-domain imports, no tool recommendations from other skills, no integration guides naming specific external tools. Violation categories, transformation framework, and the quality gate checklist are all defined there.
+- **`prompt-bible.md`** — Skills are prompts. They must use XML semantic tags (`<critical_requirements>`, `<critical_reminders>`, `<patterns>`, etc.), emphatic repetition for critical rules (at top AND bottom), positive framing, and investigation-first structure. Read this before judging skill structure.
 
 ## Requirements per skill
 
-The canonical structure for SKILL.md and the examples folder is defined in **`docs/standards/skill-atomicity-bible.md`** → "Skill Directory Structure". Follow it exactly.
+The canonical structure for SKILL.md and the examples folder is defined in **`skill-atomicity-bible.md`** → "Skill Directory Structure". Follow it exactly.
 
 Key reminders for iteration:
 

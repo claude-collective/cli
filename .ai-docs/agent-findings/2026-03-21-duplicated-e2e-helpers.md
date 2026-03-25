@@ -11,8 +11,8 @@ affected_files:
   - e2e/lifecycle/source-switching-modes.e2e.test.ts
   - e2e/lifecycle/scope-aware-local-copy.e2e.test.ts
 standards_docs:
-  - docs/standards/e2e/anti-patterns.md
-  - docs/standards/e2e/test-data.md
+  - .ai-docs/standards/e2e/anti-patterns.md
+  - .ai-docs/standards/e2e/test-data.md
 date: 2026-03-21
 reporting_agent: cli-tester
 category: dry
@@ -35,4 +35,4 @@ Extracted all helpers to shared locations (`test-utils.ts`, `dual-scope-helpers.
 
 ## Proposed Standard
 
-Added to `docs/standards/e2e/anti-patterns.md`: "Always check existing shared helpers before writing local ones" -- grep `test-utils.ts`, `fixtures/`, and `constants.ts` before defining any helper in a test file. Added decision tree for where new helpers belong.
+Added to `.ai-docs/standards/e2e/anti-patterns.md`: "Always check existing shared helpers before writing local ones" -- grep `test-utils.ts`, `fixtures/`, and `constants.ts` before defining any helper in a test file. Added decision tree for where new helpers belong.

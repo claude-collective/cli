@@ -13,8 +13,8 @@ affected_files:
   - e2e/interactive/real-marketplace.e2e.test.ts
   - e2e/lifecycle/source-switching-per-skill.e2e.test.ts
 standards_docs:
-  - docs/standards/e2e/anti-patterns.md
-  - docs/standards/e2e/README.md
+  - .ai-docs/standards/e2e/anti-patterns.md
+  - .ai-docs/standards/e2e/README.md
   - CLAUDE.md
 date: 2026-03-21
 reporting_agent: cli-tester

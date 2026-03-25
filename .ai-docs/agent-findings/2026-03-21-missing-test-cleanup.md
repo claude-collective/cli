@@ -6,7 +6,7 @@ affected_files:
   - e2e/smoke/pom-framework.e2e.test.ts
   - e2e/lifecycle/global-scope-lifecycle.e2e.test.ts
 standards_docs:
-  - docs/standards/e2e/test-structure.md
+  - .ai-docs/standards/e2e/test-structure.md
 date: 2026-03-21
 reporting_agent: cli-tester
 category: testing

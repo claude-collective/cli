@@ -11,7 +11,7 @@ Sub-Agent Work → Structured Findings → Convention Keeper → Doc Updates
 
 ### Stage 1: Capture
 
-When a sub-agent (cli-developer, cli-tester, cli-reviewer, etc.) fixes an anti-pattern or discovers a gap in documented standards, it writes a finding to `findings/`.
+When a sub-agent (cli-developer, cli-tester, cli-reviewer, etc.) fixes an anti-pattern or discovers a gap in documented standards, it writes a finding here.
 
 **Who writes findings:**
 
@@ -28,22 +28,22 @@ When a sub-agent (cli-developer, cli-tester, cli-reviewer, etc.) fixes an anti-p
 
 ### Stage 2: Accumulate
 
-Findings pile up in `findings/` across sessions. Each review/refactor session typically produces 3-8 findings. No processing needed — they're just markdown files.
+Findings pile up in this directory across sessions. Each review/refactor session typically produces 3-8 findings. No processing needed — they're just markdown files.
 
 ### Stage 3: Synthesize
 
 Invoke the `convention-keeper` agent to:
 
-1. Read unprocessed findings in `findings/`
+1. Read unprocessed findings (`.md` files, excluding `done/`)
 2. Group by theme (DRY, typescript, testing, complexity)
-3. Cross-reference against `docs/standards/` and `CLAUDE.md`
+3. Cross-reference against `.ai-docs/standards/` and `CLAUDE.md`
 4. Determine: existing rule violated (enforcement gap) or missing rule (documentation gap)?
 5. Propose targeted additions to specific docs
-6. Move processed findings to `findings/done/`
+6. Move processed findings to `done/`
 
 ## Finding Format
 
-See `FINDING_TEMPLATE.md` for the structure. Each finding is a small markdown file (~15-25 lines) with YAML frontmatter containing: `type` (anti-pattern, standard-gap, convention-drift), `severity`, `affected_files`, `standards_docs`, `date`, `reporting_agent` (which sub-agent discovered the issue -- tells us whose instructions may need updating to prevent recurrence), `category` (dry, typescript, testing, complexity, performance, architecture), `domain` (e2e, cli, web, api, shared, infra), and `root_cause` (missing-rule, rule-not-visible, rule-not-specific-enough, convention-undocumented, enforcement-gap). Findings start in `findings/`, get processed by the convention-keeper, then move to `findings/done/`. The directory location IS the status.
+See `TEMPLATE.md` for the structure. Each finding is a small markdown file (~15-25 lines) with YAML frontmatter containing: `type` (anti-pattern, standard-gap, convention-drift), `severity`, `affected_files`, `standards_docs`, `date`, `reporting_agent` (which sub-agent discovered the issue -- tells us whose instructions may need updating to prevent recurrence), `category` (dry, typescript, testing, complexity, performance, architecture), `domain` (e2e, cli, web, api, shared, infra), and `root_cause` (missing-rule, rule-not-visible, rule-not-specific-enough, convention-undocumented, enforcement-gap). Findings start here, get processed by the convention-keeper, then move to `done/`. The directory location IS the status.
 
 ## File Naming
 

@@ -23,7 +23,7 @@ A loop agent orchestrates: select the right sub-agent, provide clear context, ve
 | `cli-reviewer`   | Post-implementation CLI code review                            |
 | `api-developer`  | API routes, database, server logic                             |
 | `api-reviewer`   | Post-implementation API code review                            |
-| `scribe`         | AI-focused documentation generation                            |
+| `codex-keeper`   | AI-focused documentation generation                            |
 | `agent-summoner` | Creating new agent definitions                                 |
 | `skill-summoner` | Creating new skill definitions                                 |
 
@@ -39,7 +39,7 @@ What needs to happen?
 |- Write/modify tests? -> cli-tester
 |- Review code? -> cli-reviewer / api-reviewer
 |- Plan a feature? -> web-pm
-|- Generate docs? -> scribe
+|- Generate docs? -> codex-keeper
 |- Research/investigate? -> Spawn a Task agent
 ```
 
