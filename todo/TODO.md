@@ -1,40 +1,39 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                                      | Status        |
-| ----- | ----------------------------------------------------------------------------------------- | ------------- |
-| D-146 | Replace `SKILL_ID_PATTERN` regex with generated data. See [plan](./D-146-replace-skill-id-pattern.md) | Ready for Dev |
-| D-145 | Operations layer — centralize repeated command sequences. See [proposal](./D-145-operations-layer.md) | Investigate |
-| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                           | Ready for Dev |
-| D-123 | Local mode ENOENT on consuming projects — empty `sourcePath` for built-in matrix          | Ready for Dev |
-| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                   | In Progress   |
-| D-144 | Info panel — replace `?` help overlay with `I` info panel showing stats, context, toggles | Investigate   |
-| D-118 | Investigate renaming "project/global" scope to "project/user"                             | Investigate   |
-| D-142 | Rename `scribe` → `codex-keeper`, keep `convention-keeper`                                | Complete      |
-| D-97  | Improve startup time — lazy-load matrix generation                                        | Investigate   |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions                          | Ready for Dev |
-| D-116 | Filter Incompatible toggle should also deselect incompatible skills                       | Ready for Dev |
-| D-132 | Skip incompatibility markers in exclusive (radio) categories                              | Ready for Dev |
-| D-131 | Track project installations in global config                                              | Investigate   |
-| D-141 | Merge AI docs — consolidate `.ai-docs/` with `reference/` and `standards/` split          | Complete      |
-| D-140 | Agent gap analysis — add 5 new agents. See [proposal](./D-140-agent-gap-analysis.md)      | Ready for Dev |
-| D-111 | Create a GIF demo for the README                                                          | Ready for Dev |
-| D-110 | Fix the logo in the README                                                                | Ready for Dev |
-| D-109 | Fix the screenshots in the README                                                         | Ready for Dev |
-| D-119 | Update READMEs with current stats (154 skills, 16 stacks)                                 | Complete      |
-| D-130 | Narrow stack type safety — category-scoped SkillId unions. Depends on D-97                | Investigate   |
-| D-129 | Add visibility into global config contents from project config                            | Investigate   |
-| D-127 | UX for claiming global skills/agents into project scope                                   | Investigate   |
-| D-125 | Fix weak E2E test assertions — scope-blind `\|\|` checks and fragile display names        | Ready for Dev |
-| D-122 | Auto-update marketplace before plugin install                                             | Ready for Dev |
-| D-62  | Review default stacks: add reviewing/research skills                                      | Ready for Dev |
-| D-112 | Create a guide for setting up AI documentation                                            | Ready for Dev |
-| D-111 | Replace E2E text anchors with stable test identifiers for active state detection          | Investigate   |
-| D-90  | Add Sentry tracking for unresolved matrix references                                      | Ready for Dev |
-| D-41  | Create `agents-inc` configuration skill. See [plan](./D-41-config-sub-agent.md)           | Ready for Dev |
-| D-52  | Expand `new agent` command. See [plan](./D-52-expand-new-agent.md)                        | Ready for Dev |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                           | Ready for Dev |
-| D-66  | AI-assisted PR review: categorize diffs by type                                           | Investigate   |
-| D-69  | Config migration strategy for outdated config shapes                                      | Investigate   |
+| ID    | Task                                                                                                                                                               | Status        |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| D-149 | Stop inferring metadata from skill names/paths — use metadata source. See [findings](../.ai-docs/agent-findings/2026-03-25-skill-metadata-inference-from-names.md) | Ready for Dev |
+| D-148 | Remove unnecessary test mocks (`getErrorMessage`, `consts`, `DEFAULT_SOURCE`) in 3 plugin test files                                                               | Ready for Dev |
+| D-145 | Operations layer — centralize repeated command sequences. See [proposal](./D-145-operations-layer.md)                                                              | Investigate   |
+| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                                                                                                    | Ready for Dev |
+| D-123 | Local mode ENOENT on consuming projects — empty `sourcePath` for built-in matrix                                                                                   | Ready for Dev |
+| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                                                                                            | In Progress   |
+| D-144 | Info panel — replace `?` help overlay with `I` info panel showing stats, context, toggles                                                                          | Investigate   |
+| D-118 | Investigate renaming "project/global" scope to "project/user"                                                                                                      | Investigate   |
+| D-97  | Improve startup time — lazy-load matrix generation                                                                                                                 | Investigate   |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions                                                                                                   | Ready for Dev |
+| D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting                                                                                   | Ready for Dev |
+| D-116 | Filter Incompatible toggle should also deselect incompatible skills                                                                                                | Complete      |
+| D-132 | Skip incompatibility markers in exclusive (radio) categories                                                                                                       | Complete      |
+| D-131 | Track project installations in global config                                                                                                                       | Investigate   |
+| D-140 | Agent gap analysis — add 5 new agents. See [proposal](./D-140-agent-gap-analysis.md)                                                                               | Ready for Dev |
+| D-111 | Create a GIF demo for the README                                                                                                                                   | Ready for Dev |
+| D-110 | Fix the logo in the README                                                                                                                                         | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                                                                                                                  | Ready for Dev |
+| D-130 | Narrow stack type safety — category-scoped SkillId unions. Depends on D-97                                                                                         | Investigate   |
+| D-129 | Add visibility into global config contents from project config                                                                                                     | Investigate   |
+| D-127 | UX for claiming global skills/agents into project scope                                                                                                            | Investigate   |
+| D-125 | Fix weak E2E test assertions — scope-blind `\|\|` checks and fragile display names                                                                                 | Ready for Dev |
+| D-122 | Auto-update marketplace before plugin install                                                                                                                      | Ready for Dev |
+| D-62  | Review default stacks: add reviewing/research skills                                                                                                               | Ready for Dev |
+| D-112 | Create a guide for setting up AI documentation                                                                                                                     | Ready for Dev |
+| D-111 | Replace E2E text anchors with stable test identifiers for active state detection                                                                                   | Investigate   |
+| D-90  | Add Sentry tracking for unresolved matrix references                                                                                                               | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill. See [plan](./D-41-config-sub-agent.md)                                                                                    | Ready for Dev |
+| D-52  | Expand `new agent` command. See [plan](./D-52-expand-new-agent.md)                                                                                                 | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                                                                                    | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type                                                                                                                    | Investigate   |
+| D-69  | Config migration strategy for outdated config shapes                                                                                                               | Investigate   |
 
 ---
 
@@ -323,6 +322,25 @@ The current skill covers oclif command structure and Ink component patterns but 
 ---
 
 ### Testing
+
+#### D-150: Migrate E2E tests from `toggleSkill` to `selectSkill`
+
+**Priority:** Low
+
+`toggleSkill(label)` in `BuildStep` only verifies the label is visible on screen, then presses Space on **whatever is currently focused** — it doesn't navigate to the target. All existing usages work by coincidence because the target skill happens to be at the focused position (col 0 of the focused category). If a future test targets a skill at a different position, `toggleSkill` would silently toggle the wrong item.
+
+**Affected tests (7 call sites across 4 files):**
+
+- `init-wizard-scratch.e2e.test.ts:50` — `toggleSkill("react")` (works: react is at (0,0))
+- `init-wizard-stack.e2e.test.ts:166` — `toggleSkill("react")` (works: same reason)
+- `edit-wizard-local.e2e.test.ts:73` — `toggleFocusedSkill()` after `navigateDown()` (fine: intentionally position-based)
+- `edit-wizard-local.e2e.test.ts:110,144` — `toggleSkill("vitest")` after `navigateDown()` (works: vitest is only item in Testing)
+
+**Action:** Replace `toggleSkill(label)` calls with `selectSkill(label)` which properly navigates to the target's (row, col) position in the grid before pressing Space. Leave `toggleFocusedSkill()` calls as-is — they're intentionally position-based.
+
+**Also consider:** deprecating or removing `toggleSkill` from `BuildStep` to prevent future misuse.
+
+---
 
 #### D-111: Stable test identifiers for active state detection
 
