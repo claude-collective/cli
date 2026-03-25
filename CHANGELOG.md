@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.84.1] - 2026-03-25
+
+**Replace SKILL_ID_PATTERN with generated data**
+
+- Skill ID and category validation now uses generated `SKILL_IDS`/`CATEGORIES` arrays instead of hardcoded regex
+- Unknown skill IDs in stack configs pass through with warning instead of being silently dropped
+- Fixed AI-domain skills producing spurious "Invalid skill ID" warnings
+
+See [changelogs/0.84.1.md](./changelogs/0.84.1.md) for full details.
+
 ## [0.84.0] - 2026-03-25
 
 **Documentation restructure, scribe → codex-keeper rename**
