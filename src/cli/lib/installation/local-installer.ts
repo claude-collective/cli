@@ -15,7 +15,7 @@ import type {
 } from "../../types";
 import type { InstallMode } from "./installation";
 import { deriveInstallMode } from "./installation";
-import { matrix, getCategoryDomain } from "../matrix/matrix-provider";
+import { matrix } from "../matrix/matrix-provider";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
@@ -29,7 +29,6 @@ import { splitConfigByScope } from "../configuration/config-generator";
 import { generateConfigSource, type ConfigSourceOptions } from "../configuration/config-writer";
 import {
   generateConfigTypesSource,
-  generateProjectConfigTypesSource,
 } from "../configuration/config-types-writer";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
@@ -362,57 +361,6 @@ async function writeStandaloneConfigTypes(
   await writeFile(typesPath, source);
 }
 
-async function writeProjectConfigTypes(
-  projectConfigPath: string,
-  projectDir: string,
-  projectConfig?: ProjectConfig,
-  matrix?: MergedSkillsMatrix,
-): Promise<void> {
-  const typesPath = path.join(path.dirname(projectConfigPath), STANDARD_FILES.CONFIG_TYPES_TS);
-  const projectClaudeSrc = path.join(projectDir, CLAUDE_SRC_DIR);
-  const globalClaudeSrc = path.join(os.homedir(), CLAUDE_SRC_DIR);
-  const relativePath = path.relative(projectClaudeSrc, globalClaudeSrc);
-  // Convert to POSIX separators for TypeScript imports
-  const globalTypesImportPath = relativePath.split(path.sep).join("/");
-
-  // Derive project-specific items from the project config when available
-  const projectSkillIds = projectConfig?.skills.map((s) => s.id) ?? [];
-  const projectAgentNames = projectConfig?.agents.map((a) => a.name) ?? [];
-
-  // Derive categories and domains from project skills via matrix lookup
-  let projectCategories: string[] = [];
-  let projectDomains: string[] = [];
-  if (matrix && projectSkillIds.length > 0) {
-    const categorySet = new Set<string>();
-    for (const id of projectSkillIds) {
-      const skill = matrix.skills[id];
-      if (skill?.category && skill.category !== "local") {
-        categorySet.add(skill.category);
-      }
-    }
-    projectCategories = [...categorySet].sort();
-
-    const domainSet = new Set<string>();
-    for (const cat of projectCategories) {
-      const domain = getCategoryDomain(cat);
-      if (domain) {
-        domainSet.add(domain);
-      }
-    }
-    projectDomains = [...domainSet].sort();
-  }
-
-  const source = generateProjectConfigTypesSource({
-    globalTypesImportPath,
-    projectSkillIds,
-    projectAgentNames,
-    projectDomains,
-    projectCategories,
-  });
-  await writeFile(typesPath, source);
-  verbose("Using project config-types.ts that imports from global");
-}
-
 /**
  * Writes config.ts and config-types.ts split by scope.
  * When installing into a project directory:
@@ -461,12 +409,16 @@ export async function writeScopedConfigs(
   if (projectInstallationExists || hasProjectItems) {
     // Write project config with import from global
     await ensureDir(path.dirname(projectConfigPath));
-    await writeConfigFile(projectSplitConfig, projectConfigPath, { isProjectConfig: true });
+    await writeConfigFile(projectSplitConfig, projectConfigPath, {
+      isProjectConfig: true,
+      globalConfig,
+    });
     verbose(`Updated project config at ${projectConfigPath}`);
 
-    // Write project config-types.ts that extends global with only project-scoped items.
-    // Global items are already available via GlobalSkillId/GlobalAgentName imports.
-    await writeProjectConfigTypes(projectConfigPath, projectDir, projectSplitConfig, matrix);
+    // Write project config-types.ts as standalone (self-contained) since the config.ts
+    // is also self-contained when globalConfig is inlined. All skill IDs, agent names,
+    // categories, and domains — both global and project — must be present locally.
+    await writeStandaloneConfigTypes(projectConfigPath, matrix, agents, finalConfig);
   } else {
     verbose(
       "Skipped project config — no existing project installation and no project-scoped items",

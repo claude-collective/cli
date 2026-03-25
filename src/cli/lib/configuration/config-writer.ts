@@ -4,7 +4,6 @@ import type { ProjectConfig } from "../../types";
 import { CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../consts";
 import { fileExists, ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
-import { compactStackForYaml } from "./config-generator";
 import { PROJECT_CONFIG_TYPES_BEFORE, PROJECT_CONFIG_INTERFACE_AFTER } from "./config-types-writer";
 
 export type ConfigSourceOptions = {
@@ -13,6 +12,13 @@ export type ConfigSourceOptions = {
    * The global config import path is resolved internally via `getGlobalConfigImportPath()`.
    */
   isProjectConfig?: boolean;
+
+  /**
+   * When provided alongside `isProjectConfig`, inlines global skills/agents directly
+   * instead of generating `import globalConfig` and spread syntax.
+   * Produces a self-contained, readable config snapshot.
+   */
+  globalConfig?: ProjectConfig;
 };
 
 /** Fields that are extracted into typed named variables below the export default */
@@ -27,12 +33,35 @@ const EXTRACTED_FIELDS = new Set(["skills", "agents", "stack", "domains"]);
  * config and spreads global arrays into skills, agents, and domains.
  */
 export function generateConfigSource(config: ProjectConfig, options?: ConfigSourceOptions): string {
-  const serializable = config.stack
-    ? { ...config, stack: compactStackForYaml(config.stack) }
-    : { ...config };
+  if (options?.isProjectConfig) {
+    if (options.globalConfig) {
+      // Inlined path: compact individual assignments (strip { id, preloaded: false } to bare strings)
+      // while preserving SkillAssignment[] arrays.
+      const cleanedProject: Record<string, unknown> = JSON.parse(JSON.stringify(config));
+      const cleanedGlobal: Record<string, unknown> = JSON.parse(
+        JSON.stringify(options.globalConfig),
+      );
+      if (cleanedProject.stack) {
+        cleanedProject.stack = compactStackAssignments(
+          cleanedProject.stack as Record<string, Record<string, unknown[]>>,
+        );
+      }
+      if (cleanedGlobal.stack) {
+        cleanedGlobal.stack = compactStackAssignments(
+          cleanedGlobal.stack as Record<string, Record<string, unknown[]>>,
+        );
+      }
+      return generateProjectConfigWithInlinedGlobal(cleanedProject, cleanedGlobal);
+    }
+  }
 
   // JSON.parse(JSON.stringify(x)) removes undefined values
-  const cleaned: Record<string, unknown> = JSON.parse(JSON.stringify(serializable));
+  const cleaned: Record<string, unknown> = JSON.parse(JSON.stringify(config));
+  if (cleaned.stack) {
+    cleaned.stack = compactStackAssignments(
+      cleaned.stack as Record<string, Record<string, unknown[]>>,
+    );
+  }
 
   if (options?.isProjectConfig) {
     return generateProjectConfigWithGlobalImport(cleaned, getGlobalConfigImportPath());
@@ -248,6 +277,208 @@ function generateProjectConfigWithGlobalImport(
 }
 
 /**
+ * Generates a project config with global skills/agents inlined directly.
+ * No `import globalConfig` — the output is a self-contained readable snapshot.
+ * Global items appear first with a `// global` comment, followed by project items
+ * with a `// project` comment (only when project items exist).
+ */
+function generateProjectConfigWithInlinedGlobal(
+  cleaned: Record<string, unknown>,
+  cleanedGlobal: Record<string, unknown>,
+): string {
+  // Boundary cast: cleaned comes from JSON.parse(JSON.stringify(...)) so arrays are plain JSON values
+  const projectSkillsArr = (cleaned.skills as unknown[]) ?? [];
+  const projectAgentsArr = (cleaned.agents as unknown[]) ?? [];
+  const projectStackObj = cleaned.stack as Record<string, unknown> | undefined;
+  const projectDomainsArr = (cleaned.domains as unknown[]) ?? [];
+  const projectSelectedAgentsArr = (cleaned.selectedAgents as string[]) ?? [];
+
+  const globalSkillsArr = (cleanedGlobal.skills as unknown[]) ?? [];
+  const globalAgentsArr = (cleanedGlobal.agents as unknown[]) ?? [];
+  const globalDomainsArr = (cleanedGlobal.domains as unknown[]) ?? [];
+  const globalSelectedAgentsArr = (cleanedGlobal.selectedAgents as string[]) ?? [];
+
+  const hasGlobalSkills = globalSkillsArr.length > 0;
+  const hasProjectSkills = projectSkillsArr.length > 0;
+  const hasSkills = hasGlobalSkills || hasProjectSkills;
+
+  const hasGlobalAgents = globalAgentsArr.length > 0;
+  const hasProjectAgents = projectAgentsArr.length > 0;
+  const hasAgents = hasGlobalAgents || hasProjectAgents;
+
+  // Project config stack only includes project-scoped agents.
+  // Global agents' stack entries live in the global config only.
+  // splitConfigByScope may include global agents with project-skill assignments — filter them out.
+  const projectAgentNames = new Set(
+    projectAgentsArr.map((a) => (a as { name: string }).name),
+  );
+  const filteredStack: Record<string, unknown> | undefined = projectStackObj
+    ? Object.fromEntries(
+        Object.entries(projectStackObj).filter(([agent]) => projectAgentNames.has(agent)),
+      )
+    : undefined;
+  const hasStack = filteredStack != null && Object.keys(filteredStack).length > 0;
+
+  const hasGlobalDomains = globalDomainsArr.length > 0;
+  const hasProjectDomains = projectDomainsArr.length > 0;
+  const hasDomains = hasGlobalDomains || hasProjectDomains;
+
+  const typeImports = buildTypeImports({ hasSkills, hasAgents, hasStack, hasDomains });
+
+  const lines: string[] = [`import type { ${typeImports} } from "./config-types";`];
+
+  // Skills variable
+  if (hasSkills) {
+    lines.push(``);
+    lines.push(`const skills: SkillConfig[] = [`);
+    if (hasGlobalSkills) {
+      lines.push(`  // global`);
+      for (const s of globalSkillsArr) {
+        lines.push(`  ${JSON.stringify(s)},`);
+      }
+    }
+    if (hasProjectSkills) {
+      lines.push(`  // project`);
+      for (const s of projectSkillsArr) {
+        lines.push(`  ${JSON.stringify(s)},`);
+      }
+    }
+    lines.push(`];`);
+  }
+
+  // Agents variable
+  if (hasAgents) {
+    lines.push(``);
+    lines.push(`const agents: AgentScopeConfig[] = [`);
+    if (hasGlobalAgents) {
+      lines.push(`  // global`);
+      for (const a of globalAgentsArr) {
+        lines.push(`  ${JSON.stringify(a)},`);
+      }
+    }
+    if (hasProjectAgents) {
+      lines.push(`  // project`);
+      for (const a of projectAgentsArr) {
+        lines.push(`  ${JSON.stringify(a)},`);
+      }
+    }
+    lines.push(`];`);
+  }
+
+  // Stack variable (merged global + project)
+  if (hasStack) {
+    lines.push(``);
+    const stackBody = JSON.stringify(filteredStack, null, 2);
+    lines.push(`const stack: Partial<Record<AgentName, StackAgentConfig>> = ${stackBody};`);
+  }
+
+  // Domains variable
+  if (hasDomains) {
+    lines.push(``);
+    const allDomains = [...new Set([...globalDomainsArr, ...projectDomainsArr])];
+    const items = allDomains.map((d) => JSON.stringify(d)).join(", ");
+    lines.push(`const domains: Domain[] = [${items}];`);
+  }
+
+  // Build export default with inlined global scalar fields
+  const projectName =
+    cleaned.name && cleaned.name !== "global" ? cleaned.name : DEFAULT_PLUGIN_NAME;
+
+  const exportFields: string[] = [];
+  exportFields.push(`  name: ${JSON.stringify(projectName)},`);
+
+  // Project scalar fields (these take precedence over global)
+  const projectScalarFields = Object.entries(cleaned).filter(
+    ([key]) =>
+      !EXTRACTED_FIELDS.has(key) && key !== "name" && key !== "selectedAgents",
+  );
+  const projectScalarKeys = new Set(projectScalarFields.map(([key]) => key));
+
+  // Global scalar fields (only emit if not overridden by project)
+  const globalScalarFields = Object.entries(cleanedGlobal).filter(
+    ([key]) =>
+      !EXTRACTED_FIELDS.has(key) &&
+      key !== "name" &&
+      key !== "selectedAgents" &&
+      !projectScalarKeys.has(key),
+  );
+
+  for (const [key, value] of globalScalarFields) {
+    exportFields.push(`  ${JSON.stringify(key)}: ${JSON.stringify(value)},`);
+  }
+  for (const [key, value] of projectScalarFields) {
+    exportFields.push(`  ${JSON.stringify(key)}: ${JSON.stringify(value)},`);
+  }
+
+  if (hasSkills) {
+    exportFields.push(`  skills,`);
+  } else {
+    exportFields.push(`  skills: [],`);
+  }
+
+  if (hasAgents) {
+    exportFields.push(`  agents,`);
+  } else {
+    exportFields.push(`  agents: [],`);
+  }
+
+  if (hasStack) {
+    exportFields.push(`  stack,`);
+  }
+
+  if (hasDomains) {
+    exportFields.push(`  domains,`);
+  }
+
+  // Merge selectedAgents from global + project (deduplicated)
+  const allSelectedAgents = [...new Set([...globalSelectedAgentsArr, ...projectSelectedAgentsArr])];
+  if (allSelectedAgents.length > 0) {
+    const items = allSelectedAgents.map((a) => JSON.stringify(a)).join(", ");
+    exportFields.push(`  "selectedAgents": [${items}],`);
+  }
+
+  lines.push(``);
+  lines.push(`export default {`);
+  lines.push(...exportFields);
+  lines.push(`} satisfies ProjectConfig;`);
+
+  lines.push(``);
+  return lines.join("\n");
+}
+
+/**
+ * Compacts individual SkillAssignment objects within stack arrays
+ * WITHOUT collapsing single-element arrays to bare values.
+ * - { id: "...", preloaded: false } → "..." (bare string in array)
+ * - { id: "...", preloaded: true } → { id: "...", preloaded: true } (preserved)
+ *
+ * This is used for the inlined TypeScript config path where arrays must remain
+ * as arrays to satisfy the StackAgentConfig type (SkillAssignment[]).
+ */
+function compactStackAssignments(
+  stack: Record<string, Record<string, unknown[]>>,
+): Record<string, Record<string, unknown[]>> {
+  const result: Record<string, Record<string, unknown[]>> = {};
+  for (const [agent, categories] of Object.entries(stack)) {
+    const compactedCategories: Record<string, unknown[]> = {};
+    for (const [category, assignments] of Object.entries(categories)) {
+      if (!Array.isArray(assignments) || assignments.length === 0) continue;
+      compactedCategories[category] = assignments.map((a) => {
+        if (typeof a === "object" && a !== null && "id" in a && "preloaded" in a) {
+          const assignment = a as { id: string; preloaded: boolean };
+          return assignment.preloaded ? { id: assignment.id, preloaded: true } : assignment.id;
+        }
+        return a;
+      });
+    }
+    if (Object.keys(compactedCategories).length > 0) {
+      result[agent] = compactedCategories;
+    }
+  }
+  return result;
+}
+
+/**
  * Returns the absolute path to the global .claude-src directory.
  * Used as the import path for project configs that extend global.
  */
@@ -284,7 +515,7 @@ export type Domain = never;
 export type Category = never;
 
 ${PROJECT_CONFIG_TYPES_BEFORE}
-export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;
+export type StackAgentConfig = Partial<Record<Category, SkillAssignment[]>>;
 
 ${PROJECT_CONFIG_INTERFACE_AFTER}`;
 }

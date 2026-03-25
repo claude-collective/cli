@@ -31,7 +31,11 @@ import {
 import { loadAllAgents, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { matrix, getSkillById } from "../lib/matrix/matrix-provider";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
-import { deleteLocalSkill, migrateLocalSkillScope, copySkillsToLocalFlattened } from "../lib/skills/index.js";
+import {
+  deleteLocalSkill,
+  migrateLocalSkillScope,
+  copySkillsToLocalFlattened,
+} from "../lib/skills/index.js";
 import type { AgentDefinition, AgentName, SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { ensureDir, remove } from "../utils/fs.js";
@@ -251,7 +255,13 @@ export default class Edit extends BaseCommand {
     const hasSkillChanges = addedSkills.length > 0 || removedSkills.length > 0;
     const hasAgentChanges = addedAgents.length > 0 || removedAgents.length > 0;
 
-    if (!hasSkillChanges && !hasAgentChanges && !hasSourceChanges && !hasScopeChanges && !hasAgentScopeChanges) {
+    if (
+      !hasSkillChanges &&
+      !hasAgentChanges &&
+      !hasSourceChanges &&
+      !hasScopeChanges &&
+      !hasAgentScopeChanges
+    ) {
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       this.log("Plugin unchanged\n");
       return;
@@ -528,7 +538,9 @@ export default class Edit extends BaseCommand {
 
     const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];
     if (hasAgentChanges) {
-      summaryParts.push(`${addedAgents.length} agent${addedAgents.length !== 1 ? "s" : ""} added, ${removedAgents.length} agent${removedAgents.length !== 1 ? "s" : ""} removed`);
+      summaryParts.push(
+        `${addedAgents.length} agent${addedAgents.length !== 1 ? "s" : ""} added, ${removedAgents.length} agent${removedAgents.length !== 1 ? "s" : ""} removed`,
+      );
     }
     if (hasSourceChanges) {
       summaryParts.push(`${sourceChanges.size} source${sourceChanges.size > 1 ? "s" : ""} changed`);
