@@ -200,6 +200,12 @@ export const METHODOLOGY_MATRIX = createMockMatrix(SKILLS.antiOverEng);
 
 export const VITEST_MATRIX = createMockMatrix(SKILLS.vitest);
 
+export const MULTI_STYLING_MATRIX = createMockMatrix(
+  SKILLS.react,
+  SKILLS.scss,
+  SKILLS.tailwind,
+);
+
 // ---------------------------------------------------------------------------
 // Compile configs from resolver.test.ts
 // ---------------------------------------------------------------------------

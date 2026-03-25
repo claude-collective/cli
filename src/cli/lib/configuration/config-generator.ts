@@ -93,18 +93,21 @@ export function generateProjectConfigFromSkills(
     );
   }
 
+  // Group skills by category so multiple skills in the same category all survive
+  const grouped = new Map<Category, SkillAssignment[]>();
+  for (const { skillId, category } of validSkills) {
+    const arr = grouped.get(category) ?? [];
+    arr.push({ id: skillId, preloaded: false });
+    grouped.set(category, arr);
+  }
+
   const stackProperty =
-    agentList.length > 0 && validSkills.length > 0
+    agentList.length > 0 && grouped.size > 0
       ? Object.fromEntries(
           agentList.map((agentId) => [
             agentId,
             // Structural cast: Object.fromEntries returns Record<string, V>, narrowing to typed keys
-            Object.fromEntries(
-              validSkills.map(({ skillId, category }) => [
-                category,
-                [{ id: skillId, preloaded: false }],
-              ]),
-            ) as StackAgentConfig,
+            Object.fromEntries(grouped) as StackAgentConfig,
           ]),
         )
       : undefined;
@@ -154,40 +157,6 @@ export function buildStackProperty(stack: Stack): Partial<Record<AgentName, Stac
       })
       .filter(([, mappings]) => typedKeys<Category>(mappings).length > 0),
   ) as Partial<Record<AgentName, StackAgentConfig>>;
-}
-
-/**
- * Compacts a ProjectConfig.stack for YAML serialization.
- * Converts SkillAssignment[] to the most compact form:
- *   - Single skill with preloaded=false -> bare string (e.g., "web-framework-react")
- *   - Single skill with preloaded=true -> object (e.g., { id: "...", preloaded: true })
- *   - Multiple skills -> array of objects/strings
- * This ensures round-trip fidelity: bare strings stay bare, rich format stays rich.
- */
-function compactAssignment(assignment: SkillAssignment): unknown {
-  return assignment.preloaded ? { id: assignment.id, preloaded: true } : assignment.id;
-}
-
-export function compactStackForYaml(
-  stack: Partial<Record<AgentName, StackAgentConfig>>,
-): Record<string, Record<string, unknown>> {
-  return Object.fromEntries(
-    typedEntries<AgentName, StackAgentConfig>(stack)
-      .map(([agentId, agentConfig]) => {
-        const compacted = Object.fromEntries(
-          typedEntries<Category, SkillAssignment[]>(agentConfig)
-            .filter(([, assignments]) => assignments && assignments.length > 0)
-            .map(([category, assignments]) => [
-              category,
-              assignments.length === 1
-                ? compactAssignment(assignments[0])
-                : assignments.map(compactAssignment),
-            ]),
-        );
-        return [agentId, compacted] as const;
-      })
-      .filter(([, compacted]) => Object.keys(compacted).length > 0),
-  );
 }
 
 /**
