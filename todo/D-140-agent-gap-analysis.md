@@ -10,14 +10,14 @@ With the domain reorganization (D-139) creating `ai`, `meta`, and `infra` domain
 
 ### By Role → Domain
 
-| Role           | CLI           | Web                             | API            | Cross-cutting                                             |
-| -------------- | ------------- | ------------------------------- | -------------- | --------------------------------------------------------- |
-| **Developer**  | cli-developer | web-developer, web-architecture | api-developer  | -                                                         |
-| **Reviewer**   | cli-reviewer  | web-reviewer                    | api-reviewer   | -                                                         |
-| **Tester**     | cli-tester    | web-tester                      | -              | -                                                         |
-| **Researcher** | -             | web-researcher                  | api-researcher | -                                                         |
-| **Planning**   | -             | web-pm                          | -              | -                                                         |
-| **Pattern**    | -             | web-pattern-critique            | -              | pattern-scout                                             |
+| Role           | CLI           | Web                             | API            | Cross-cutting                                                   |
+| -------------- | ------------- | ------------------------------- | -------------- | --------------------------------------------------------------- |
+| **Developer**  | cli-developer | web-developer, web-architecture | api-developer  | -                                                               |
+| **Reviewer**   | cli-reviewer  | web-reviewer                    | api-reviewer   | -                                                               |
+| **Tester**     | cli-tester    | web-tester                      | -              | -                                                               |
+| **Researcher** | -             | web-researcher                  | api-researcher | -                                                               |
+| **Planning**   | -             | web-pm                          | -              | -                                                               |
+| **Pattern**    | -             | web-pattern-critique            | -              | pattern-scout                                                   |
 | **Meta**       | -             | -                               | -              | agent-summoner, skill-summoner, codex-keeper, convention-keeper |
 
 ### Coverage Gaps
@@ -85,29 +85,29 @@ Planning        -      ✓      ✗     -      -       -      -
 
 ## Not Proposed (Rationale)
 
-| Agent              | Why Not Yet                                                                                                                       |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| `cli-researcher`   | Only 2 CLI skills. cli-developer can self-research in this small domain.                                                          |
-| `cli-pm`           | CLI features are typically more contained than web/API features. cli-developer handles planning inline.                           |
-| `mobile-developer` | Only 2 mobile skills (Expo, React Native). Not enough domain mass to justify a dedicated agent.                                   |
-| `mobile-reviewer`  | Same — insufficient domain size.                                                                                                  |
-| `ai-researcher`    | ai-developer can research during implementation. Add when AI skill count exceeds 30+.                                             |
-| `ai-tester`        | AI testing is still an emerging practice. Add when patterns stabilize.                                                            |
-| `infra-developer`  | Infrastructure code (Dockerfiles, CI pipelines) is typically templated, not implemented from spec.                                |
+| Agent              | Why Not Yet                                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `cli-researcher`   | Only 2 CLI skills. cli-developer can self-research in this small domain.                                                                |
+| `cli-pm`           | CLI features are typically more contained than web/API features. cli-developer handles planning inline.                                 |
+| `mobile-developer` | Only 2 mobile skills (Expo, React Native). Not enough domain mass to justify a dedicated agent.                                         |
+| `mobile-reviewer`  | Same — insufficient domain size.                                                                                                        |
+| `ai-researcher`    | ai-developer can research during implementation. Add when AI skill count exceeds 30+.                                                   |
+| `ai-tester`        | AI testing is still an emerging practice. Add when patterns stabilize.                                                                  |
+| `infra-developer`  | Infrastructure code (Dockerfiles, CI pipelines) is typically templated, not implemented from spec.                                      |
 | `meta-*` agents    | Meta domain contains methodology/review skills — the existing meta agents (codex-keeper, convention-keeper) already serve this purpose. |
 
 ---
 
 ## Agent Roster After D-140 (23 agents)
 
-| Role           | CLI           | Web                             | API            | AI               | Infra              | Cross-cutting                                             |
-| -------------- | ------------- | ------------------------------- | -------------- | ---------------- | ------------------ | --------------------------------------------------------- |
-| **Developer**  | cli-developer | web-developer, web-architecture | api-developer  | **ai-developer** | -                  | -                                                         |
-| **Reviewer**   | cli-reviewer  | web-reviewer                    | api-reviewer   | **ai-reviewer**  | **infra-reviewer** | -                                                         |
-| **Tester**     | cli-tester    | web-tester                      | **api-tester** | -                | -                  | -                                                         |
-| **Researcher** | -             | web-researcher                  | api-researcher | -                | -                  | -                                                         |
-| **Planning**   | -             | web-pm                          | **api-pm**     | -                | -                  | -                                                         |
-| **Pattern**    | -             | web-pattern-critique            | -              | -                | -                  | pattern-scout                                             |
+| Role           | CLI           | Web                             | API            | AI               | Infra              | Cross-cutting                                                   |
+| -------------- | ------------- | ------------------------------- | -------------- | ---------------- | ------------------ | --------------------------------------------------------------- |
+| **Developer**  | cli-developer | web-developer, web-architecture | api-developer  | **ai-developer** | -                  | -                                                               |
+| **Reviewer**   | cli-reviewer  | web-reviewer                    | api-reviewer   | **ai-reviewer**  | **infra-reviewer** | -                                                               |
+| **Tester**     | cli-tester    | web-tester                      | **api-tester** | -                | -                  | -                                                               |
+| **Researcher** | -             | web-researcher                  | api-researcher | -                | -                  | -                                                               |
+| **Planning**   | -             | web-pm                          | **api-pm**     | -                | -                  | -                                                               |
+| **Pattern**    | -             | web-pattern-critique            | -              | -                | -                  | pattern-scout                                                   |
 | **Meta**       | -             | -                               | -              | -                | -                  | agent-summoner, skill-summoner, codex-keeper, convention-keeper |
 
 ---

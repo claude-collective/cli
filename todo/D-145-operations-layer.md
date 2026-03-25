@@ -14,15 +14,15 @@ The E2E tests solved the equivalent problem with POMs — `InitWizard.launch()` 
 
 Evaluated 7 architectural patterns against this codebase:
 
-| Pattern | Verdict | Why |
-|---------|---------|-----|
+| Pattern                           | Verdict     | Why                                                                        |
+| --------------------------------- | ----------- | -------------------------------------------------------------------------- |
 | **Operations Module (functions)** | **Adopted** | Idiomatic TS, matches existing conventions, proven by Angular/Nx/Turborepo |
-| Clean Architecture (full) | Selective | Good idea (use-case layer), skip ports/adapters formalism |
-| Use-Case Interactor (classes) | Skip | Too Java-flavored for zero-class codebase |
-| CQRS / Mediator | Skip | Massive overkill for 23 fixed commands |
-| Effect-TS / Railway | Skip | Paradigm rewrite, not a refactor |
-| Facade (god object) | Skip | 23-method class = maintenance liability |
-| Service Layer (classes) | Skip | Redundant with existing `lib/` domain modules |
+| Clean Architecture (full)         | Selective   | Good idea (use-case layer), skip ports/adapters formalism                  |
+| Use-Case Interactor (classes)     | Skip        | Too Java-flavored for zero-class codebase                                  |
+| CQRS / Mediator                   | Skip        | Massive overkill for 23 fixed commands                                     |
+| Effect-TS / Railway               | Skip        | Paradigm rewrite, not a refactor                                           |
+| Facade (god object)               | Skip        | 23-method class = maintenance liability                                    |
+| Service Layer (classes)           | Skip        | Redundant with existing `lib/` domain modules                              |
 
 **Best precedent:** Angular CLI's Architect/Builder pattern — pure functions with shape `(options, context) => Promise<Result>`. Nx executors and Turborepo command handlers follow the same model.
 
@@ -72,12 +72,12 @@ export type LoadSourceOptions = {
   sourceFlag?: string;
   projectDir: string;
   forceRefresh?: boolean;
-  captureStartupMessages?: boolean;  // default false; init/edit set true
+  captureStartupMessages?: boolean; // default false; init/edit set true
 };
 
 export type LoadedSource = {
   sourceResult: SourceLoadResult;
-  startupMessages: StartupMessage[];  // empty if captureStartupMessages=false
+  startupMessages: StartupMessage[]; // empty if captureStartupMessages=false
 };
 ```
 
@@ -86,6 +86,7 @@ export type LoadedSource = {
 **Commands:** init, edit, update, diff, outdated, doctor, info, search, eject. NOT compile (loads from filesystem).
 
 **Variations found:**
+
 - init + edit: use buffering + startup messages
 - 7 others: no buffering, simple call-through
 - All pass sourceFlag + projectDir; some pass forceRefresh
@@ -150,7 +151,7 @@ export type PluginUninstallResult = {
 export type SkillComparisonResults = {
   projectResults: SkillComparisonResult[];
   globalResults: SkillComparisonResult[];
-  merged: SkillComparisonResult[];  // project takes precedence
+  merged: SkillComparisonResult[]; // project takes precedence
 };
 ```
 
@@ -208,14 +209,14 @@ export type AgentDefs = {
 export type CompileAgentsOptions = {
   projectDir: string;
   sourcePath: string;
-  pluginDir?: string;                   // defaults to projectDir
-  skills?: SkillDefinitionMap;          // if omitted, discovers automatically
+  pluginDir?: string; // defaults to projectDir
+  skills?: SkillDefinitionMap; // if omitted, discovers automatically
   projectConfig?: ProjectConfig | null; // if omitted, loads from disk
-  agentScopeMap?: Map<AgentName, "project" | "global">;  // if omitted, derived from config
-  agents?: AgentName[];                 // optional filter
-  scopeFilter?: "project" | "global";  // for dual-pass compilation
-  outputDir?: string;                   // defaults to {projectDir}/.claude/agents/
-  installMode?: InstallMode;            // if omitted, derived from config.skills
+  agentScopeMap?: Map<AgentName, "project" | "global">; // if omitted, derived from config
+  agents?: AgentName[]; // optional filter
+  scopeFilter?: "project" | "global"; // for dual-pass compilation
+  outputDir?: string; // defaults to {projectDir}/.claude/agents/
+  installMode?: InstallMode; // if omitted, derived from config.skills
 };
 
 export type CompilationResult = {
@@ -226,6 +227,7 @@ export type CompilationResult = {
 ```
 
 **Key decisions from investigation:**
+
 - **Dual-scope stays outside** — caller invokes once or twice with `scopeFilter`. Compile calls twice; edit/update call once.
 - **Skill discovery is optional** — if `skills` omitted, discovers all plugins + local across both scopes internally. If provided, uses as-is.
 - **Config loading is optional** — if `projectConfig` omitted, loads from disk.
@@ -256,6 +258,7 @@ export type ExecuteInstallationResult = {
 ```
 
 **Composes:** `deriveInstallMode()` → branch on mode:
+
 - **local:** `installLocal()` (existing proto-operation)
 - **plugin:** `ensureMarketplace()` → `installPluginSkills()` → `installPluginConfig()` (existing)
 - **mixed:** `copyLocalSkills()` → `ensureMarketplace()` → `installPluginSkills()` → `installPluginConfig()`
@@ -310,21 +313,21 @@ outdated: detectProject → loadSource → compareSkillsWithSource → [format t
 doctor:   detectProject → [run health checks using config + installation data]
 ```
 
-**Edit is not special.** The key insight from investigation: init's primitives are *hidden* inside `installLocal()` and `installPluginConfig()`, making them non-composable for edit. Once those are exposed as operations, both commands compose the same building blocks in different sequences.
+**Edit is not special.** The key insight from investigation: init's primitives are _hidden_ inside `installLocal()` and `installPluginConfig()`, making them non-composable for edit. Once those are exposed as operations, both commands compose the same building blocks in different sequences.
 
 Migration detection/execution stays in `lib/skills/` and `lib/installation/` — it's domain logic, not orchestration. Operations re-export but don't wrap `detectMigrations()` and `executeMigration()`.
 
 ## Impact
 
-| Command | Before | After | Reduction |
-|---------|--------|-------|-----------|
-| init.tsx | ~525 lines | ~200 lines | ~60% |
-| edit.tsx | ~555 lines | ~300 lines | ~45% |
-| compile.ts | ~353 lines | ~80 lines | ~77% |
-| update.tsx | ~373 lines | ~200 lines | ~45% |
-| diff.ts | ~297 lines | ~150 lines | ~50% |
-| outdated.ts | ~203 lines | ~100 lines | ~50% |
-| doctor.ts | ~444 lines | ~300 lines | ~30% |
+| Command     | Before     | After      | Reduction |
+| ----------- | ---------- | ---------- | --------- |
+| init.tsx    | ~525 lines | ~200 lines | ~60%      |
+| edit.tsx    | ~555 lines | ~300 lines | ~45%      |
+| compile.ts  | ~353 lines | ~80 lines  | ~77%      |
+| update.tsx  | ~373 lines | ~200 lines | ~45%      |
+| diff.ts     | ~297 lines | ~150 lines | ~50%      |
+| outdated.ts | ~203 lines | ~100 lines | ~50%      |
+| doctor.ts   | ~444 lines | ~300 lines | ~30%      |
 
 **Total estimated reduction:** ~1,775 lines across command files.
 
@@ -333,11 +336,13 @@ Migration detection/execution stays in `lib/skills/` and `lib/installation/` —
 **vi.mock is sufficient** — no dependency injection needed. The codebase already uses module-level `vi.mock()` at test boundaries for all side-effecting operations.
 
 **Testing tiers:**
+
 1. **Unit:** vi.mock all dependencies, test pure logic and decision-making (fast, focused)
 2. **Integration:** Real temp dirs via `createTestDirs()`, mock only external boundaries (Claude CLI, network)
 3. **E2E:** Full CLI invocation via `runCliCommand()` — the hard gate for every phase
 
 **Key patterns from investigation:**
+
 - Mock at module boundaries using `vi.mock("../skills/skill-copier", async (importOriginal) => ({...}))`
 - Keep real implementations of non-side-effect helpers via spread
 - Initialize `matrix` singleton per test with `initializeMatrix()`
@@ -350,6 +355,7 @@ Migration detection/execution stays in `lib/skills/` and `lib/installation/` —
 **One session.** No backwards compatibility — internal APIs can break freely. E2E tests are the only hard gate (must pass after every phase). Unit/integration tests may be temporarily disabled.
 
 ### Phase 1: Foundation operations
+
 - Create `src/cli/lib/operations/` with `index.ts` and `types.ts`
 - Extract `loadSource()` — wrap buffered loading pattern
 - Extract `detectProject()` — unified installation detection + config load
@@ -358,6 +364,7 @@ Migration detection/execution stays in `lib/skills/` and `lib/installation/` —
 - **Gate:** E2E tests pass
 
 ### Phase 2: Skill operations
+
 - Extract `copyLocalSkills()` — scope-split skill copying
 - Extract `installPluginSkills()` — plugin installation with scope routing
 - Extract `uninstallPluginSkills()` — plugin uninstallation
@@ -367,18 +374,21 @@ Migration detection/execution stays in `lib/skills/` and `lib/installation/` —
 - **Gate:** E2E tests pass
 
 ### Phase 3: Config + compilation operations
+
 - Extract `writeProjectConfig()` — consolidate 6 functions from local-installer.ts
 - Extract `compileAgents()` — discovery + compilation with optional skill/config params
 - Wire into init.tsx, edit.tsx, compile.ts
 - **Gate:** E2E tests pass
 
 ### Phase 4: Composed pipelines + full command refactor
+
 - Compose `executeInstallation()` from Phase 1-3 operations (keeps installLocal/installPluginConfig as lower-level)
 - Compose `recompileProject()` for compile command
 - Refactor ALL commands to use operations layer
 - **Gate:** E2E tests pass
 
 ### Phase 5: Cleanup + operation unit tests
+
 - Remove dead code from local-installer.ts
 - Update barrel exports in lib/
 - Write unit tests for each operation (one .test.ts per operation)
@@ -387,27 +397,27 @@ Migration detection/execution stays in `lib/skills/` and `lib/installation/` —
 
 ## Existing Proto-Operations (Ready for Direct Promotion)
 
-| Function | Location | Promote? | Notes |
-|----------|----------|----------|-------|
-| `installLocal()` | `local-installer.ts:584` | Keep as-is | Used internally by `executeInstallation()` |
-| `buildAndMergeConfig()` | `local-installer.ts:282` | Keep as-is | Used internally by `writeProjectConfig()` |
-| `recompileAgents()` | `agent-recompiler.ts:157` | Keep as-is | Used internally by `compileAgents()` |
-| `loadSkillsMatrixFromSource()` | `source-loader.ts:69` | Keep as-is | Used internally by `loadSource()` |
-| `installPluginConfig()` | `local-installer.ts:492` | Keep as-is | Used internally by `executeInstallation()` |
-| `compareLocalSkillsWithSource()` | `skill-metadata.ts:215` | Keep as-is | Used internally by `compareSkillsWithSource()` |
-| `writeScopedConfigs()` | `local-installer.ts:369` | Keep as-is | Used internally by `writeProjectConfig()` |
-| `copySkillsToLocalFlattened()` | `skill-copier.ts:200` | Keep as-is | Used internally by `copyLocalSkills()` |
+| Function                         | Location                  | Promote?   | Notes                                          |
+| -------------------------------- | ------------------------- | ---------- | ---------------------------------------------- |
+| `installLocal()`                 | `local-installer.ts:584`  | Keep as-is | Used internally by `executeInstallation()`     |
+| `buildAndMergeConfig()`          | `local-installer.ts:282`  | Keep as-is | Used internally by `writeProjectConfig()`      |
+| `recompileAgents()`              | `agent-recompiler.ts:157` | Keep as-is | Used internally by `compileAgents()`           |
+| `loadSkillsMatrixFromSource()`   | `source-loader.ts:69`     | Keep as-is | Used internally by `loadSource()`              |
+| `installPluginConfig()`          | `local-installer.ts:492`  | Keep as-is | Used internally by `executeInstallation()`     |
+| `compareLocalSkillsWithSource()` | `skill-metadata.ts:215`   | Keep as-is | Used internally by `compareSkillsWithSource()` |
+| `writeScopedConfigs()`           | `local-installer.ts:369`  | Keep as-is | Used internally by `writeProjectConfig()`      |
+| `copySkillsToLocalFlattened()`   | `skill-copier.ts:200`     | Keep as-is | Used internally by `copyLocalSkills()`         |
 
 Operations wrap and compose these — they don't replace them.
 
 ## Resolved Questions
 
-| Question | Answer | Evidence |
-|----------|--------|----------|
-| Raw vs formatted comparison data? | **Raw** — each command formats differently (diff: unified text, outdated: table, update: action list) | Agent 6 investigation |
-| One file per operation or grouped? | **One file per operation** — matches existing `loading/loader.ts`, `loading/source-loader.ts` pattern | Agent 10 investigation |
-| executeInstallation derive mode internally? | **Yes** — calls `deriveInstallMode(skills)` internally, branches on result | Agent 7 investigation |
-| Where do types live? | **`operations/types.ts`** — operation-specific I/O pairs; shared types stay in `src/cli/types/` | Agent 10 investigation |
-| vi.mock or dependency injection? | **vi.mock** — already the pattern across 200+ test files, sufficient for all operations | Agent 9 investigation |
-| Edit-specific operations needed? | **No** — edit uses the same primitives as init; migration logic stays in `lib/skills/` and `lib/installation/` | Agent 8 investigation |
-| Compile dual-scope inside or outside? | **Outside** — caller invokes `compileAgents()` twice with `scopeFilter`; only compile needs this | Agent 5 investigation |
+| Question                                    | Answer                                                                                                         | Evidence               |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| Raw vs formatted comparison data?           | **Raw** — each command formats differently (diff: unified text, outdated: table, update: action list)          | Agent 6 investigation  |
+| One file per operation or grouped?          | **One file per operation** — matches existing `loading/loader.ts`, `loading/source-loader.ts` pattern          | Agent 10 investigation |
+| executeInstallation derive mode internally? | **Yes** — calls `deriveInstallMode(skills)` internally, branches on result                                     | Agent 7 investigation  |
+| Where do types live?                        | **`operations/types.ts`** — operation-specific I/O pairs; shared types stay in `src/cli/types/`                | Agent 10 investigation |
+| vi.mock or dependency injection?            | **vi.mock** — already the pattern across 200+ test files, sufficient for all operations                        | Agent 9 investigation  |
+| Edit-specific operations needed?            | **No** — edit uses the same primitives as init; migration logic stays in `lib/skills/` and `lib/installation/` | Agent 8 investigation  |
+| Compile dual-scope inside or outside?       | **Outside** — caller invokes `compileAgents()` twice with `scopeFilter`; only compile needs this               | Agent 5 investigation  |

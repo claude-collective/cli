@@ -30,49 +30,51 @@ src/cli/lib/operations/
 
 ### Command-to-Operations Mapping
 
-| Command | Operations Used |
-|---------|----------------|
-| `init.tsx` | `loadSource`, `copyLocalSkills`, `ensureMarketplace`, `installPluginSkills`, `writeProjectConfig` (composed individually per G9 — NOT `executeInstallation`) |
-| `edit.tsx` | `detectProject`, `loadSource`, `loadAgentDefs`, `uninstallPluginSkills`, `ensureMarketplace`, `installPluginSkills`, `copyLocalSkills`, `writeProjectConfig`, `compileAgents` |
-| `compile.ts` | `loadAgentDefs`, `compileAgents` (keeps `run()`, `runCompilePass`, `discoverAllSkills` per G8) |
-| `outdated.ts` | `detectProject`, `loadSource`, `compareSkillsWithSource` |
-| `update.tsx` | `loadSource`, `compareSkillsWithSource`, `compileAgents` |
-| `diff.ts` | `loadSource` (does NOT use `compareSkillsWithSource` — uses its own `diffSkill`) |
-| `doctor.ts` | `loadSource` (minimal — replaces 1 call inside `checkSourceReachable`) |
-| `info.ts` | `loadSource` |
-| `search.tsx` | `loadSource` (2 call sites: `runInteractive` + `runStatic`) |
-| `eject.ts` | `loadSource` |
-| `uninstall.tsx` | None (has its own `claudePluginUninstall` logic on plugin names, not SkillIds) |
+| Command         | Operations Used                                                                                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `init.tsx`      | `loadSource`, `copyLocalSkills`, `ensureMarketplace`, `installPluginSkills`, `writeProjectConfig` (composed individually per G9 — NOT `executeInstallation`)                  |
+| `edit.tsx`      | `detectProject`, `loadSource`, `loadAgentDefs`, `uninstallPluginSkills`, `ensureMarketplace`, `installPluginSkills`, `copyLocalSkills`, `writeProjectConfig`, `compileAgents` |
+| `compile.ts`    | `loadAgentDefs`, `compileAgents` (keeps `run()`, `runCompilePass`, `discoverAllSkills` per G8)                                                                                |
+| `outdated.ts`   | `detectProject`, `loadSource`, `compareSkillsWithSource`                                                                                                                      |
+| `update.tsx`    | `loadSource`, `compareSkillsWithSource`, `compileAgents`                                                                                                                      |
+| `diff.ts`       | `loadSource` (does NOT use `compareSkillsWithSource` — uses its own `diffSkill`)                                                                                              |
+| `doctor.ts`     | `loadSource` (minimal — replaces 1 call inside `checkSourceReachable`)                                                                                                        |
+| `info.ts`       | `loadSource`                                                                                                                                                                  |
+| `search.tsx`    | `loadSource` (2 call sites: `runInteractive` + `runStatic`)                                                                                                                   |
+| `eject.ts`      | `loadSource`                                                                                                                                                                  |
+| `uninstall.tsx` | None (has its own `claudePluginUninstall` logic on plugin names, not SkillIds)                                                                                                |
 
 ### Phase-to-Files Mapping
 
-| Phase | New Files Created | Existing Files Modified | Gate |
-|-------|-------------------|------------------------|------|
-| **1: Foundation** | `types.ts`, `index.ts`, `load-source.ts`, `detect-project.ts`, `load-agent-defs.ts` | `init.tsx` (loadSource), `edit.tsx` (detectProject + ~12 access patterns), `compile.ts` (loadAgentDefs) | `npm test -- --run` + compile E2E |
-| **2: Skill Ops** | `copy-local-skills.ts`, `install-plugin-skills.ts`, `uninstall-plugin-skills.ts`, `ensure-marketplace.ts`, `compare-skills.ts` | `init.tsx` (copyLocalSkills), `edit.tsx` (copyLocalSkills, ensureMarketplace), `outdated.ts` (compareSkillsWithSource), `update.tsx` (compareSkillsWithSource) | `npm test -- --run` |
-| **3: Config+Compile** | `write-project-config.ts`, `compile-agents.ts` | `edit.tsx` (writeProjectConfig, compileAgents), `compile.ts` (compileAgents inside runCompilePass) | `npm test -- --run` + compile E2E |
-| **4: Pipelines+Refactor** | `execute-installation.ts`, `recompile-project.ts` | ALL 10 command files (see Phase 4 detail section) | Full unit + E2E + `tsc --noEmit` |
-| **5: Cleanup+Tests** | 12 `*.test.ts` files (one per operation) | Remove dead methods from init.tsx, compile.ts; remove unused imports | Full unit + E2E + `tsc --noEmit` |
+| Phase                     | New Files Created                                                                                                              | Existing Files Modified                                                                                                                                        | Gate                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| **1: Foundation**         | `types.ts`, `index.ts`, `load-source.ts`, `detect-project.ts`, `load-agent-defs.ts`                                            | `init.tsx` (loadSource), `edit.tsx` (detectProject + ~12 access patterns), `compile.ts` (loadAgentDefs)                                                        | `npm test -- --run` + compile E2E |
+| **2: Skill Ops**          | `copy-local-skills.ts`, `install-plugin-skills.ts`, `uninstall-plugin-skills.ts`, `ensure-marketplace.ts`, `compare-skills.ts` | `init.tsx` (copyLocalSkills), `edit.tsx` (copyLocalSkills, ensureMarketplace), `outdated.ts` (compareSkillsWithSource), `update.tsx` (compareSkillsWithSource) | `npm test -- --run`               |
+| **3: Config+Compile**     | `write-project-config.ts`, `compile-agents.ts`                                                                                 | `edit.tsx` (writeProjectConfig, compileAgents), `compile.ts` (compileAgents inside runCompilePass)                                                             | `npm test -- --run` + compile E2E |
+| **4: Pipelines+Refactor** | `execute-installation.ts`, `recompile-project.ts`                                                                              | ALL 10 command files (see Phase 4 detail section)                                                                                                              | Full unit + E2E + `tsc --noEmit`  |
+| **5: Cleanup+Tests**      | 12 `*.test.ts` files (one per operation)                                                                                       | Remove dead methods from init.tsx, compile.ts; remove unused imports                                                                                           | Full unit + E2E + `tsc --noEmit`  |
 
 ### E2E Risk Matrix
 
-| Phase | Operations Created | Commands Modified | E2E Risk | Mitigation |
-|-------|-------------------|-------------------|----------|------------|
-| **1** | loadSource, detectProject, loadAgentDefs | init.tsx, edit.tsx, compile.ts | **MEDIUM** — edit.tsx access patterns change (`projectConfig?.config?.X` to `projectConfig?.X`); if any are missed, silent `undefined` | Grep `projectConfig?.config` and `projectConfig\.config` in edit.tsx; update ALL ~15 matches (G7) |
-| **2** | copyLocalSkills, installPluginSkills, uninstallPluginSkills, ensureMarketplace, compareSkillsWithSource | init.tsx, edit.tsx, outdated.ts, update.tsx | **LOW** — operations are additive wrappers; commands still emit the same log messages | Run unit tests after each operation |
-| **3** | writeProjectConfig, compileAgents | edit.tsx, compile.ts | **MEDIUM** — compile.ts E2E tests assert on per-scope messages; must NOT replace `runCompilePass` (G8) | Only replace `recompileAgents()` call inside runCompilePass; keep all user-facing log messages |
-| **4** | executeInstallation, recompileProject | ALL 10 commands | **HIGH** — init.tsx E2E tests assert on per-skill install messages; edit.test.ts mocks may break | Use individual operations with logging (G9); `executeInstallation` created but NOT used by init.tsx; skip edit.test.ts if broken |
-| **5** | 12 unit test files | Dead code removal only | **LOW** — no behavioral changes, only removing methods replaced in Phase 4 | Run full suite before and after |
+| Phase | Operations Created                                                                                      | Commands Modified                           | E2E Risk                                                                                                                               | Mitigation                                                                                                                       |
+| ----- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | loadSource, detectProject, loadAgentDefs                                                                | init.tsx, edit.tsx, compile.ts              | **MEDIUM** — edit.tsx access patterns change (`projectConfig?.config?.X` to `projectConfig?.X`); if any are missed, silent `undefined` | Grep `projectConfig?.config` and `projectConfig\.config` in edit.tsx; update ALL ~15 matches (G7)                                |
+| **2** | copyLocalSkills, installPluginSkills, uninstallPluginSkills, ensureMarketplace, compareSkillsWithSource | init.tsx, edit.tsx, outdated.ts, update.tsx | **LOW** — operations are additive wrappers; commands still emit the same log messages                                                  | Run unit tests after each operation                                                                                              |
+| **3** | writeProjectConfig, compileAgents                                                                       | edit.tsx, compile.ts                        | **MEDIUM** — compile.ts E2E tests assert on per-scope messages; must NOT replace `runCompilePass` (G8)                                 | Only replace `recompileAgents()` call inside runCompilePass; keep all user-facing log messages                                   |
+| **4** | executeInstallation, recompileProject                                                                   | ALL 10 commands                             | **HIGH** — init.tsx E2E tests assert on per-skill install messages; edit.test.ts mocks may break                                       | Use individual operations with logging (G9); `executeInstallation` created but NOT used by init.tsx; skip edit.test.ts if broken |
+| **5** | 12 unit test files                                                                                      | Dead code removal only                      | **LOW** — no behavioral changes, only removing methods replaced in Phase 4                                                             | Run full suite before and after                                                                                                  |
 
 ---
 
 ## Prerequisites
 
 Before starting, read these files:
+
 - `CLAUDE.md` — project conventions and rules
 - `todo/D-145-operations-layer.md` — the design proposal
 
 **Critical rules for implementors:**
+
 - Do NOT run any git commands
 - Do NOT modify test files unless explicitly told to skip them
 - Use named exports only, kebab-case filenames
@@ -87,9 +89,13 @@ Before starting, read these files:
 ## Phase-by-Phase Execution Order
 
 ### Phase 1: Foundation (types.ts, index.ts, loadSource, detectProject, loadAgentDefs)
+
 ### Phase 2: Skill Operations (copyLocalSkills, installPluginSkills, uninstallPluginSkills, ensureMarketplace, compareSkillsWithSource)
+
 ### Phase 3: Config + Compilation (writeProjectConfig, compileAgents)
+
 ### Phase 4: Composed Pipelines (executeInstallation, recompileProject) + Full Command Refactor
+
 ### Phase 5: Cleanup + Operation Unit Tests
 
 ---
@@ -97,9 +103,11 @@ Before starting, read these files:
 ## Operation: loadSource (Phase 1)
 
 ### File
+
 `src/cli/lib/operations/load-source.ts`
 
 ### Extracts from
+
 - `init.tsx:235-253` — buffered source loading with startup messages
 - `edit.tsx:108-150` — buffered source loading with extra push to buffer
 - `diff.ts:184-188` — simple unbuffered source loading
@@ -107,6 +115,7 @@ Before starting, read these files:
 - `update.tsx:159-162` — simple unbuffered source loading
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 // Do NOT duplicate import statements between the signature and imports sections.
@@ -138,6 +147,7 @@ export async function loadSource(options: LoadSourceOptions): Promise<LoadedSour
 ```
 
 ### Implementation outline
+
 ```
 1. If captureStartupMessages:
    a. Call enableBuffering() from utils/logger.js
@@ -155,6 +165,7 @@ export async function loadSource(options: LoadSourceOptions): Promise<LoadedSour
 ### Call sites (before -> after)
 
 **init.tsx:235-253** — buffered loading
+
 ```typescript
 // BEFORE (lines 235-253):
 enableBuffering();
@@ -193,6 +204,7 @@ const { sourceResult, startupMessages } = loaded;
 ```
 
 **edit.tsx:108-150** — buffered loading with extra push
+
 ```typescript
 // BEFORE (lines 108-150):
 // NOTE: edit.tsx's buffer scope wraps MORE than just the source load — it also
@@ -244,6 +256,7 @@ const projectConfig = await loadProjectConfig(projectDir);
 **IMPORTANT:** Since `loadSource` drains and disables buffering, edit.tsx can no longer push to the buffer after the call. Instead, edit.tsx pushes messages directly into the `startupMessages` array returned by `loadSource`. This is cleaner than keeping buffer mode active.
 
 **diff.ts:184-188** — unbuffered
+
 ```typescript
 // BEFORE:
 const { matrix, sourcePath, isLocal } = await loadSkillsMatrixFromSource({
@@ -264,6 +277,7 @@ const { matrix, sourcePath, isLocal } = sourceResult;
 **update.tsx:159-162** — unbuffered (same pattern as diff)
 
 **doctor.ts:194** — unbuffered (inside `checkSourceReachable` helper function)
+
 ```typescript
 // NOTE: doctor.ts calls loadSkillsMatrixFromSource inside a standalone helper function
 // (checkSourceReachable at line 189). The loadSource operation can replace this call,
@@ -277,6 +291,7 @@ const { matrix, sourcePath, isLocal } = sourceResult;
 **eject.ts:140** — unbuffered (inside `run()` method, conditional on eject type being "skills" or "all")
 
 ### Imports needed
+
 ```typescript
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../loading/index.js";
 import {
@@ -292,14 +307,17 @@ import {
 ## Operation: detectProject (Phase 1)
 
 ### File
+
 `src/cli/lib/operations/detect-project.ts`
 
 ### Extracts from
+
 - `edit.tsx:95-106` — detectInstallation + projectDir extraction
 - `outdated.ts:69-70` — detectInstallation + projectDir fallback
 - `compile.ts:137-145` — detectGlobalInstallation + detectProjectInstallation (separate, NOT this operation)
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 // Do NOT duplicate import statements between the signature and imports sections.
@@ -322,12 +340,11 @@ export type DetectedProject = {
  * @throws — Does NOT throw. Returns null if no installation found.
  *           Commands decide how to handle null (error out, warn, etc.).
  */
-export async function detectProject(
-  projectDir?: string,
-): Promise<DetectedProject | null>;
+export async function detectProject(projectDir?: string): Promise<DetectedProject | null>;
 ```
 
 ### Implementation outline
+
 ```
 1. Call detectInstallation(projectDir) from lib/installation/index.js
 2. If null, return null
@@ -342,6 +359,7 @@ export async function detectProject(
 ### Call sites (before -> after)
 
 **edit.tsx:95-106,129**
+
 ```typescript
 // BEFORE:
 const installation = await detectInstallation();
@@ -369,6 +387,7 @@ in edit.tsx must change from `projectConfig?.config?.skills` to `projectConfig?.
 The implementor must grep for `projectConfig?.config` and update all occurrences.
 
 **outdated.ts:69-70**
+
 ```typescript
 // BEFORE:
 const installation = await detectInstallation();
@@ -380,6 +399,7 @@ const projectDir = detected?.installation.projectDir ?? process.cwd();
 ```
 
 ### Imports needed
+
 ```typescript
 import { detectInstallation, type Installation } from "../installation/index.js";
 import { loadProjectConfig } from "../configuration/index.js";
@@ -391,9 +411,11 @@ import type { ProjectConfig } from "../../types/index.js";
 ## Operation: loadAgentDefs (Phase 1)
 
 ### File
+
 `src/cli/lib/operations/load-agent-defs.ts`
 
 ### Extracts from
+
 - `edit.tsx:435-450` — getAgentDefinitions (435-450) + loadAllAgents merge (457-459, inside next try block)
 - `compile.ts:331-351` — getAgentDefinitions with verbose logging
 - `local-installer.ts:152-156` — loadMergedAgents (CLI + source agents)
@@ -402,6 +424,7 @@ import type { ProjectConfig } from "../../types/index.js";
 (457-459) are in different try blocks. The operation combines both into a single call.
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 
@@ -427,6 +450,7 @@ export async function loadAgentDefs(
 ```
 
 ### Implementation outline
+
 ```
 1. Call getAgentDefinitions(agentSource, options) from lib/agents/index.js
    -> returns AgentSourcePaths { agentsDir, templatesDir, sourcePath }
@@ -439,6 +463,7 @@ export async function loadAgentDefs(
 ### Call sites (before -> after)
 
 **edit.tsx:435-459** (spans two separate try blocks)
+
 ```typescript
 // BEFORE (lines 435-450 — first try block):
 let sourcePath: string;
@@ -460,6 +485,7 @@ const { agents, sourcePath } = agentDefs;
 ```
 
 **compile.ts:331-351** — `loadAgentDefsForCompile` method
+
 ```typescript
 // BEFORE:
 const agentDefs = await getAgentDefinitions(flags["agent-source"], { projectDir });
@@ -475,6 +501,7 @@ return defs; // compile.ts accesses defs.agentSourcePaths.sourcePath for recompi
 ```
 
 ### Imports needed
+
 ```typescript
 import { getAgentDefinitions } from "../agents/index.js";
 import { loadAllAgents } from "../loading/index.js";
@@ -487,14 +514,17 @@ import type { AgentDefinition, AgentName, AgentSourcePaths } from "../../types/i
 ## Operation: copyLocalSkills (Phase 2)
 
 ### File
+
 `src/cli/lib/operations/copy-local-skills.ts`
 
 ### Extracts from
+
 - `init.tsx:316-356` — mixed mode scope-split skill copying
 - `edit.tsx:400-433` — added local skills scope-split copying
 - `local-installer.ts:590-616` — installLocal's scope-split copying
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 
@@ -522,6 +552,7 @@ export async function copyLocalSkills(
 ```
 
 ### Implementation outline
+
 ```
 1. Filter skills by scope:
    projectLocalSkills = skills.filter(s => s.scope !== "global")
@@ -555,6 +586,7 @@ export async function copyLocalSkills(
 ### Call sites (before -> after)
 
 **init.tsx:316-356** — mixed mode
+
 ```typescript
 // BEFORE (lines 316-356):
 const projectLocalSkills = localSkills.filter((s) => s.scope !== "global");
@@ -566,7 +598,9 @@ const globalPaths = resolveInstallPaths(projectDir, "global");
 // AFTER:
 const copyResult = await copyLocalSkills(localSkills, projectDir, sourceResult);
 if (copyResult.projectCopied.length > 0 && copyResult.globalCopied.length > 0) {
-  this.log(`Copied ${copyResult.totalCopied} local skills (${copyResult.projectCopied.length} project, ${copyResult.globalCopied.length} global)`);
+  this.log(
+    `Copied ${copyResult.totalCopied} local skills (${copyResult.projectCopied.length} project, ${copyResult.globalCopied.length} global)`,
+  );
 } else if (copyResult.globalCopied.length > 0) {
   this.log(`Copied ${copyResult.globalCopied.length} local skills to ~/.claude/skills/`);
 } else {
@@ -575,6 +609,7 @@ if (copyResult.projectCopied.length > 0 && copyResult.globalCopied.length > 0) {
 ```
 
 **edit.tsx:400-433** — added local skills
+
 ```typescript
 // BEFORE (lines 400-433):
 const addedLocalSkills = result.skills.filter(
@@ -585,7 +620,9 @@ if (addedLocalSkills.length > 0) {
 }
 
 // AFTER:
-const addedLocalSkills = result.skills.filter(s => addedSkills.includes(s.id) && s.source === "local");
+const addedLocalSkills = result.skills.filter(
+  (s) => addedSkills.includes(s.id) && s.source === "local",
+);
 if (addedLocalSkills.length > 0) {
   const copyResult = await copyLocalSkills(addedLocalSkills, cwd, sourceResult);
   this.log(`Copied ${copyResult.totalCopied} local skill(s) to .claude/skills/`);
@@ -593,6 +630,7 @@ if (addedLocalSkills.length > 0) {
 ```
 
 ### Imports needed
+
 ```typescript
 import { resolveInstallPaths } from "../installation/index.js";
 import { copySkillsToLocalFlattened, type CopiedSkill } from "../skills/index.js";
@@ -606,13 +644,16 @@ import type { SourceLoadResult } from "../loading/source-loader.js";
 ## Operation: installPluginSkills (Phase 2)
 
 ### File
+
 `src/cli/lib/operations/install-plugin-skills.ts`
 
 ### Extracts from
+
 - `init.tsx:409-420` — per-skill claudePluginInstall loop (inside `installIndividualPlugins`)
 - `edit.tsx:373-386` — per-skill claudePluginInstall for added skills
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 
@@ -639,6 +680,7 @@ export async function installPluginSkills(
 ```
 
 ### Implementation outline
+
 ```
 1. Filter to plugin-source skills: skills.filter(s => s.source !== "local")
 2. For each skill:
@@ -653,6 +695,7 @@ export async function installPluginSkills(
 ### Call sites (before -> after)
 
 **init.tsx:409-420**
+
 ```typescript
 // BEFORE (inside installIndividualPlugins method):
 for (const skill of result.skills.filter((s) => s.source !== "local")) {
@@ -679,10 +722,11 @@ for (const item of pluginResult.failed) {
 ```
 
 **edit.tsx:373-386**
+
 ```typescript
 // BEFORE:
 for (const skillId of addedSkills) {
-  const skillConfig = result.skills.find(s => s.id === skillId);
+  const skillConfig = result.skills.find((s) => s.id === skillId);
   if (!skillConfig || skillConfig.source === "local") continue;
   const pluginRef = `${skillId}@${sourceResult.marketplace}`;
   // ...
@@ -690,7 +734,7 @@ for (const skillId of addedSkills) {
 
 // AFTER:
 const addedPluginSkills = result.skills.filter(
-  s => addedSkills.includes(s.id) && s.source !== "local",
+  (s) => addedSkills.includes(s.id) && s.source !== "local",
 );
 if (addedPluginSkills.length > 0 && sourceResult.marketplace) {
   const pluginResult = await installPluginSkills(addedPluginSkills, sourceResult.marketplace, cwd);
@@ -701,6 +745,7 @@ if (addedPluginSkills.length > 0 && sourceResult.marketplace) {
 ```
 
 ### Imports needed
+
 ```typescript
 import { claudePluginInstall } from "../../utils/exec.js";
 import { getErrorMessage } from "../../utils/errors.js";
@@ -713,12 +758,15 @@ import type { SkillConfig } from "../../types/config.js";
 ## Operation: uninstallPluginSkills (Phase 2)
 
 ### File
+
 `src/cli/lib/operations/uninstall-plugin-skills.ts`
 
 ### Extracts from
+
 - `edit.tsx:387-397` — per-skill claudePluginUninstall for removed skills
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 
@@ -742,6 +790,7 @@ export async function uninstallPluginSkills(
 ```
 
 ### Implementation outline
+
 ```
 1. For each skillId:
    a. Find old config: oldSkills.find(s => s.id === skillId)
@@ -755,6 +804,7 @@ export async function uninstallPluginSkills(
 ### Call sites (before -> after)
 
 **edit.tsx:387-397** (inside `if (sourceResult.marketplace)` guard at line 364)
+
 ```typescript
 // BEFORE:
 // Note: this block is inside `if (sourceResult.marketplace) {` (line 364)
@@ -781,6 +831,7 @@ if (removedSkills.length > 0 && sourceResult.marketplace) {
 ```
 
 ### Imports needed
+
 ```typescript
 import { claudePluginUninstall } from "../../utils/exec.js";
 import { getErrorMessage } from "../../utils/errors.js";
@@ -793,14 +844,17 @@ import type { SkillConfig } from "../../types/config.js";
 ## Operation: compareSkillsWithSource (Phase 2)
 
 ### File
+
 `src/cli/lib/operations/compare-skills.ts`
 
 ### Extracts from
+
 - `outdated.ts:73-126` — hasProject/hasGlobal checks + buildSourceSkillsMap + compareLocalSkillsWithSource for both scopes + merge
 - `update.tsx:146-193` — identical pattern with hasProject/hasGlobal checks + skillBaseDir tracking
 - `diff.ts:193-199` — builds sourceSkills map inline (NOTE: diff does NOT use this operation — it uses its own diffSkill comparison. Listed here only for the shared sourceSkills map pattern)
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 
@@ -826,6 +880,7 @@ export async function compareSkillsWithSource(
 ```
 
 ### Implementation outline
+
 ```
 1. Build sourceSkills map from matrix:
    const sourceSkills: Record<string, { path: string }> = {};
@@ -857,6 +912,7 @@ export async function compareSkillsWithSource(
 ### Call sites (before -> after)
 
 **outdated.ts:73-126** (hasProject/hasGlobal checks at 73-77, sourceSkills map at 108-114, compare+merge at 117-126)
+
 ```typescript
 // BEFORE (lines 73-77 + 108-126):
 const projectLocalPath = path.join(projectDir, LOCAL_SKILLS_PATH);
@@ -883,22 +939,32 @@ const { merged: results } = await compareSkillsWithSource(
 Note: outdated.ts still needs the "no local skills" early exit check (hasProject/hasGlobal). The operation returns empty merged array in that case, so the command can check `results.length === 0`.
 
 **update.tsx:168-193** — same pattern plus skillBaseDir tracking
+
 ```typescript
 // BEFORE: same sourceSkills + compare + merge pattern, plus:
 const skillBaseDir = new Map<string, string>();
 for (const r of projectResults) skillBaseDir.set(r.id, projectDir);
-for (const r of globalResults) { if (!skillBaseDir.has(r.id)) skillBaseDir.set(r.id, homeDir); }
+for (const r of globalResults) {
+  if (!skillBaseDir.has(r.id)) skillBaseDir.set(r.id, homeDir);
+}
 
 // AFTER:
-const comparison = await compareSkillsWithSource(projectDir, sourceResult.sourcePath, sourceResult.matrix);
+const comparison = await compareSkillsWithSource(
+  projectDir,
+  sourceResult.sourcePath,
+  sourceResult.matrix,
+);
 const allResults = comparison.merged;
 // Build skillBaseDir from separate results:
 const skillBaseDir = new Map<string, string>();
 for (const r of comparison.projectResults) skillBaseDir.set(r.id, projectDir);
-for (const r of comparison.globalResults) { if (!skillBaseDir.has(r.id)) skillBaseDir.set(r.id, os.homedir()); }
+for (const r of comparison.globalResults) {
+  if (!skillBaseDir.has(r.id)) skillBaseDir.set(r.id, os.homedir());
+}
 ```
 
 **diff.ts:193-199** — builds sourceSkills map inline
+
 ```typescript
 // BEFORE: builds sourceSkills from Object.entries(matrix.skills), then passes to diffSkill
 // NOTE: diff.ts does NOT call compareLocalSkillsWithSource — it does its own per-skill diff.
@@ -908,6 +974,7 @@ for (const r of comparison.globalResults) { if (!skillBaseDir.has(r.id)) skillBa
 ```
 
 ### Imports needed
+
 ```typescript
 import os from "os";
 import path from "path";
@@ -923,13 +990,16 @@ import type { MergedSkillsMatrix } from "../../types/index.js";
 ## Operation: ensureMarketplace (Phase 2)
 
 ### File
+
 `src/cli/lib/operations/ensure-marketplace.ts`
 
 ### Extracts from
+
 - `init.tsx:372-406` — lazy marketplace resolution + exists check + add/update
 - `edit.tsx:364-371` — marketplace exists check + add
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 // Do NOT duplicate import statements between the signature and imports sections.
@@ -953,12 +1023,11 @@ export type MarketplaceResult = {
  * @returns marketplace name + whether it was newly registered. Null marketplace
  *          means no marketplace is configured (e.g., local source without marketplace.json).
  */
-export async function ensureMarketplace(
-  sourceResult: SourceLoadResult,
-): Promise<MarketplaceResult>;
+export async function ensureMarketplace(sourceResult: SourceLoadResult): Promise<MarketplaceResult>;
 ```
 
 ### Implementation outline
+
 ```
 1. If !sourceResult.marketplace:
    a. Try: fetch marketplace name from source
@@ -986,6 +1055,7 @@ export async function ensureMarketplace(
 ### Call sites (before -> after)
 
 **init.tsx:372-406**
+
 ```typescript
 // BEFORE:
 if (!sourceResult.marketplace) {
@@ -1011,6 +1081,7 @@ if (mpResult.registered) {
 ```
 
 **edit.tsx:364-371**
+
 ```typescript
 // BEFORE:
 if (sourceResult.marketplace) {
@@ -1030,6 +1101,7 @@ if (sourceResult.marketplace) {
 ```
 
 ### Imports needed
+
 ```typescript
 import {
   claudePluginMarketplaceExists,
@@ -1046,14 +1118,17 @@ import type { SourceLoadResult } from "../loading/source-loader.js";
 ## Operation: writeProjectConfig (Phase 3)
 
 ### File
+
 `src/cli/lib/operations/write-project-config.ts`
 
 ### Extracts from
+
 - `local-installer.ts:492-558` — installPluginConfig (config generation + writing)
 - `local-installer.ts:584-663` — installLocal (config generation + writing portion)
 - `edit.tsx:452-488` — inline config build + write + writeScopedConfigs
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 // Do NOT duplicate import statements between the signature and imports sections.
@@ -1085,12 +1160,11 @@ export type ConfigWriteResult = {
  * 3. ensureBlankGlobalConfig() — ensures global config exists (when in project context)
  * 4. writeScopedConfigs() — writes config.ts and config-types.ts split by scope
  */
-export async function writeProjectConfig(
-  options: ConfigWriteOptions,
-): Promise<ConfigWriteResult>;
+export async function writeProjectConfig(options: ConfigWriteOptions): Promise<ConfigWriteResult>;
 ```
 
 ### Implementation outline
+
 ```
 1. const { wizardResult, sourceResult, projectDir, sourceFlag } = options
 2. const projectPaths = resolveInstallPaths(projectDir, "project")
@@ -1128,6 +1202,7 @@ export async function writeProjectConfig(
 ### Call sites (before -> after)
 
 **edit.tsx:452-488**
+
 ```typescript
 // BEFORE:
 const mergeResult = await buildAndMergeConfig(result, sourceResult, cwd, flags.source);
@@ -1152,16 +1227,26 @@ const configResult = await writeProjectConfig({
 **init.tsx (via installPluginConfig/installLocal)** — these proto-operations already contain writeProjectConfig logic internally. In Phase 4, `executeInstallation` will compose `writeProjectConfig` directly.
 
 ### Imports needed
+
 ```typescript
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { buildAndMergeConfig, writeScopedConfigs, resolveInstallPaths } from "../installation/index.js";
+import {
+  buildAndMergeConfig,
+  writeScopedConfigs,
+  resolveInstallPaths,
+} from "../installation/index.js";
 import { loadAllAgents, type SourceLoadResult } from "../loading/index.js";
 import { ensureBlankGlobalConfig } from "../configuration/config-writer.js";
 import { ensureDir } from "../../utils/fs.js";
 import { PROJECT_ROOT } from "../../consts.js";
-import type { ProjectConfig, AgentDefinition, AgentName, MergedSkillsMatrix } from "../../types/index.js";
+import type {
+  ProjectConfig,
+  AgentDefinition,
+  AgentName,
+  MergedSkillsMatrix,
+} from "../../types/index.js";
 import type { WizardResultV2 } from "../../components/wizard/wizard.js";
 ```
 
@@ -1170,14 +1255,17 @@ import type { WizardResultV2 } from "../../components/wizard/wizard.js";
 ## Operation: compileAgents (Phase 3)
 
 ### File
+
 `src/cli/lib/operations/compile-agents.ts`
 
 ### Extracts from
+
 - `agent-recompiler.ts:157-231` — recompileAgents (the main function this wraps)
 - `compile.ts:241-318` — runCompilePass (skill discovery + recompile per scope)
 - `edit.tsx:490-524` — recompileAgents call with scope map and outputDir
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 
@@ -1206,12 +1294,11 @@ export type CompilationResult = {
  * Thin wrapper around recompileAgents() that standardizes options.
  * The caller invokes this once (edit, update) or twice with scopeFilter (compile).
  */
-export async function compileAgents(
-  options: CompileAgentsOptions,
-): Promise<CompilationResult>;
+export async function compileAgents(options: CompileAgentsOptions): Promise<CompilationResult>;
 ```
 
 ### Implementation outline
+
 ```
 1. If scopeFilter is set, resolve it to an agents list:
    a. const loadedConfig = await loadProjectConfigFromDir(projectDir)
@@ -1253,14 +1340,18 @@ add it then — not now.
 ### Call sites (before -> after)
 
 **edit.tsx:490-524**
+
 ```typescript
 // BEFORE:
 const recompileSkills = await discoverAllPluginSkills(cwd);
-const agentScopeMap = new Map(result.agentConfigs.map(a => [a.name, a.scope] as const));
+const agentScopeMap = new Map(result.agentConfigs.map((a) => [a.name, a.scope] as const));
 const outputDir = path.join(cwd, CLAUDE_DIR, "agents");
 const recompileResult = await recompileAgents({
-  pluginDir: cwd, sourcePath, skills: recompileSkills,
-  projectDir: cwd, outputDir,
+  pluginDir: cwd,
+  sourcePath,
+  skills: recompileSkills,
+  projectDir: cwd,
+  outputDir,
   installMode: deriveInstallMode(result.skills),
   agentScopeMap,
 });
@@ -1269,7 +1360,7 @@ const recompileResult = await recompileAgents({
 // NOTE: skills param is omitted — recompileAgents will auto-discover via
 // discoverAllPluginSkills(projectDir), which is the same behavior as the "before" code.
 // The explicit discoverAllPluginSkills(cwd) call is no longer needed.
-const agentScopeMap = new Map(result.agentConfigs.map(a => [a.name, a.scope] as const));
+const agentScopeMap = new Map(result.agentConfigs.map((a) => [a.name, a.scope] as const));
 const compilationResult = await compileAgents({
   projectDir: cwd,
   sourcePath,
@@ -1281,13 +1372,17 @@ const compilationResult = await compileAgents({
 ```
 
 **compile.ts runCompilePass** — calls recompileAgents with scopeFilter
+
 ```typescript
 // BEFORE:
 const recompileResult = await recompileAgents({
-  pluginDir: projectDir, sourcePath: agentDefs.sourcePath,
-  skills: allSkills, projectDir,
+  pluginDir: projectDir,
+  sourcePath: agentDefs.sourcePath,
+  skills: allSkills,
+  projectDir,
   outputDir: installation.agentsDir,
-  agentScopeMap, agents: filteredAgents,
+  agentScopeMap,
+  agents: filteredAgents,
 });
 
 // AFTER:
@@ -1302,6 +1397,7 @@ const compilationResult = await compileAgents({
 ```
 
 ### Imports needed
+
 ```typescript
 import { recompileAgents, type RecompileAgentsResult } from "../agents/index.js";
 import { loadProjectConfigFromDir } from "../configuration/index.js";
@@ -1314,9 +1410,11 @@ import type { InstallMode } from "../installation/index.js";
 ## Operation: executeInstallation (Phase 4)
 
 ### File
+
 `src/cli/lib/operations/execute-installation.ts`
 
 ### Extracts from
+
 - `init.tsx:288-364` — `handleInstallation` (mode detection + branching)
 - `init.tsx:366-465` — `installIndividualPlugins` (marketplace + plugin install + installPluginConfig)
 - `init.tsx:467-523` — `installLocalMode` (installLocal wrapper with logging)
@@ -1324,6 +1422,7 @@ import type { InstallMode } from "../installation/index.js";
 - `local-installer.ts:584-663` — installLocal
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 
@@ -1362,6 +1461,7 @@ export async function executeInstallation(
 ```
 
 ### Implementation outline
+
 ```
 1. const installMode = deriveInstallMode(options.wizardResult.skills)
 2. Branch on mode:
@@ -1392,6 +1492,7 @@ export async function executeInstallation(
 ### Call sites (before -> after)
 
 **init.tsx:288-523** — three private methods: handleInstallation (288-364), installIndividualPlugins (366-465), installLocalMode (467-523)
+
 ```typescript
 // BEFORE: ~236 lines across 3 private methods
 
@@ -1400,13 +1501,15 @@ export async function executeInstallation(
 // messages like "Installing skill plugins...", "Installed X@Y", "Registering marketplace".
 // Instead, compose individual operations with logging between each:
 const installMode = deriveInstallMode(result.skills);
-this.log(`Install mode: ${installMode === "plugin" ? "Plugin (native install)" : installMode === "mixed" ? `Mixed (${localSkills.length} local, ${pluginSkills.length} plugin)` : "Local (copy to .claude/skills/)"}`);
+this.log(
+  `Install mode: ${installMode === "plugin" ? "Plugin (native install)" : installMode === "mixed" ? `Mixed (${localSkills.length} local, ${pluginSkills.length} plugin)` : "Local (copy to .claude/skills/)"}`,
+);
 // where localSkills = result.skills.filter(s => s.source === "local")
 // and pluginSkills = result.skills.filter(s => s.source !== "local")
 
 // Step 1: Copy local skills (for local or mixed modes)
 if (installMode !== "plugin") {
-  const localSkills = result.skills.filter(s => s.source === "local");
+  const localSkills = result.skills.filter((s) => s.source === "local");
   const copyResult = await copyLocalSkills(localSkills, projectDir, sourceResult);
   this.log(`Copied ${copyResult.totalCopied} local skills...`);
 }
@@ -1419,20 +1522,28 @@ if (installMode !== "local") {
     // ... fall back to local mode ...
   } else {
     if (mpResult.registered) {
-      this.log(`Registering marketplace "${mpResult.marketplace}"...`);  // E2E tests assert on this
+      this.log(`Registering marketplace "${mpResult.marketplace}"...`); // E2E tests assert on this
     }
     this.log("Installing skill plugins...");
     const pluginResult = await installPluginSkills(
-      result.skills.filter(s => s.source !== "local"), mpResult.marketplace, projectDir);
+      result.skills.filter((s) => s.source !== "local"),
+      mpResult.marketplace,
+      projectDir,
+    );
     for (const item of pluginResult.installed) {
-      this.log(`  Installed ${item.ref}`);  // E2E tests assert on this
+      this.log(`  Installed ${item.ref}`); // E2E tests assert on this
     }
   }
 }
 
 // Step 3: Write config (all modes)
 this.log("Generating configuration...");
-const configResult = await writeProjectConfig({ wizardResult: result, sourceResult, projectDir, sourceFlag: flags.source });
+const configResult = await writeProjectConfig({
+  wizardResult: result,
+  sourceResult,
+  projectDir,
+  sourceFlag: flags.source,
+});
 
 // Step 4: Report success
 this.log(SUCCESS_MESSAGES.INIT_SUCCESS);
@@ -1443,8 +1554,14 @@ this.log(SUCCESS_MESSAGES.INIT_SUCCESS);
 but is NOT used by init.tsx in Phase 4 due to E2E logging requirements.
 
 ### Imports needed
+
 ```typescript
-import { installLocal, installPluginConfig, deriveInstallMode, type InstallMode } from "../installation/index.js";
+import {
+  installLocal,
+  installPluginConfig,
+  deriveInstallMode,
+  type InstallMode,
+} from "../installation/index.js";
 import { copyLocalSkills } from "./copy-local-skills.js";
 import { ensureMarketplace } from "./ensure-marketplace.js";
 import { installPluginSkills } from "./install-plugin-skills.js";
@@ -1459,12 +1576,15 @@ import type { CopiedSkill } from "../skills/skill-copier.js";
 ## Operation: recompileProject (Phase 4)
 
 ### File
+
 `src/cli/lib/operations/recompile-project.ts`
 
 ### Extracts from
+
 - `compile.ts:129-187` — the run() method's dual-scope detection + compile passes
 
 ### Function signature
+
 ```typescript
 // NOTE: All imports for this operation are consolidated in the "Imports needed" section below.
 
@@ -1495,6 +1615,7 @@ export async function recompileProject(
 ```
 
 ### Implementation outline
+
 ```
 1. const cwd = options.projectDir
 2. If options.verbose: setVerbose(true) from utils/logger.js
@@ -1543,9 +1664,11 @@ export async function recompileProject(
 ```
 
 ### Note
+
 This operation absorbs compile.ts's `runCompilePass`, `discoverAllSkills`, `resolveSourceForCompile`, and `loadAgentDefsForCompile` methods. Since compile.ts has 352 lines of which most is orchestration, this is the highest-reduction operation.
 
 **CRITICAL: 4-way skill discovery.** The `discoverAllSkills` method in compile.ts (lines 189-239) does a 4-way merge:
+
 1. Global plugins — `discoverAllPluginSkills(os.homedir())` (skipped when projectDir is homedir)
 2. Global local — `loadSkillsFromDir(~/.claude/skills/)` (skipped when projectDir is homedir)
 3. Project plugins — `discoverAllPluginSkills(projectDir)`
@@ -1564,12 +1687,14 @@ receives the discovered skills via the `skills` parameter.
 
 Note that `loadSkillsFromDir` and `discoverLocalProjectSkills` are currently private functions
 defined at the top of compile.ts (lines 24-78). These must either be:
+
 - Moved to `recompile-project.ts` (co-located with the operation), or
 - Extracted to `lib/plugins/` or `lib/skills/` and exported (preferred if other operations need them)
 
 ### Call sites (before -> after)
 
 **compile.ts:129-352** — the entire `run()` method body + 4 private methods (discoverAllSkills:189-239, runCompilePass:241-318, resolveSourceForCompile:320-329, loadAgentDefsForCompile:331-351)
+
 ```typescript
 // BEFORE: ~224 lines across run() + 4 private methods
 
@@ -1600,6 +1725,7 @@ const compilationResult = await compileAgents({
 ```
 
 ### Imports needed
+
 ```typescript
 import os from "os";
 import path from "path";
@@ -1641,7 +1767,10 @@ export type { SkillComparisonResults } from "./compare-skills.js";
 export type { MarketplaceResult } from "./ensure-marketplace.js";
 export type { ConfigWriteOptions, ConfigWriteResult } from "./write-project-config.js";
 export type { CompileAgentsOptions, CompilationResult } from "./compile-agents.js";
-export type { ExecuteInstallationOptions, ExecuteInstallationResult } from "./execute-installation.js";
+export type {
+  ExecuteInstallationOptions,
+  ExecuteInstallationResult,
+} from "./execute-installation.js";
 export type { RecompileProjectOptions, RecompileProjectResult } from "./recompile-project.js";
 export type { AgentDefs } from "./load-agent-defs.js";
 ```
@@ -1664,10 +1793,26 @@ export { installPluginSkills, type PluginInstallResult } from "./install-plugin-
 export { uninstallPluginSkills, type PluginUninstallResult } from "./uninstall-plugin-skills.js";
 export { compareSkillsWithSource, type SkillComparisonResults } from "./compare-skills.js";
 export { ensureMarketplace, type MarketplaceResult } from "./ensure-marketplace.js";
-export { writeProjectConfig, type ConfigWriteOptions, type ConfigWriteResult } from "./write-project-config.js";
-export { compileAgents, type CompileAgentsOptions, type CompilationResult } from "./compile-agents.js";
-export { executeInstallation, type ExecuteInstallationOptions, type ExecuteInstallationResult } from "./execute-installation.js";
-export { recompileProject, type RecompileProjectOptions, type RecompileProjectResult } from "./recompile-project.js";
+export {
+  writeProjectConfig,
+  type ConfigWriteOptions,
+  type ConfigWriteResult,
+} from "./write-project-config.js";
+export {
+  compileAgents,
+  type CompileAgentsOptions,
+  type CompilationResult,
+} from "./compile-agents.js";
+export {
+  executeInstallation,
+  type ExecuteInstallationOptions,
+  type ExecuteInstallationResult,
+} from "./execute-installation.js";
+export {
+  recompileProject,
+  type RecompileProjectOptions,
+  type RecompileProjectResult,
+} from "./recompile-project.js";
 ```
 
 ---
@@ -1675,32 +1820,33 @@ export { recompileProject, type RecompileProjectOptions, type RecompileProjectRe
 ## Test Disable List
 
 Operations are additive (new files). Existing tests should NOT break during Phases 1-3 because:
+
 - Operations wrap existing lib functions — they don't modify them
 - Commands are only refactored in Phase 4
 
 **Phase 4 may break these unit tests** (if they mock command internals or test command methods directly):
 
-| Test File | Risk | Why |
-|-----------|------|-----|
-| `lib/__tests__/commands/init.test.ts` | LOW | Tests `runCliCommand()` + dashboard helpers, not internals |
-| `lib/__tests__/commands/edit.test.ts` | HIGH | Mocks `detectInstallation`, `loadSkillsMatrixFromSource`, `discoverAllPluginSkills`, `copySkillsToLocalFlattened` directly — import paths won't change (operations are additive) but command code restructuring may break mock expectations |
-| `lib/__tests__/commands/compile.test.ts` | LOW | Tests via `runCliCommand()` |
-| `lib/__tests__/commands/diff.test.ts` | LOW | Tests via `runCliCommand()` |
-| `lib/__tests__/commands/outdated.test.ts` | LOW | Tests via `runCliCommand()` |
-| `lib/__tests__/commands/update.test.ts` | LOW | Tests via `runCliCommand()` |
-| `lib/__tests__/commands/doctor.test.ts` | LOW | Tests via `runCliCommand()` |
-| `lib/__tests__/commands/eject.test.ts` | LOW | Tests via `runCliCommand()` (but uses 26k lines, may have indirect sensitivity) |
-| `lib/__tests__/commands/search.test.ts` | LOW | Tests via `runCliCommand()` |
-| `lib/__tests__/user-journeys/edit-recompile.test.ts` | LOW | Imports `recompileAgents` directly from `lib/agents` — unchanged by operations |
-| `lib/__tests__/user-journeys/compile-flow.test.ts` | LOW | Tests via `runCliCommand()` |
-| `lib/__tests__/integration/installation.test.ts` | NONE | Tests `detectInstallation` directly, unchanged |
-| `lib/__tests__/integration/wizard-init-compile-pipeline.test.ts` | LOW | Imports `installLocal`, `recompileAgents` directly — unchanged (operations wrap, don't replace) |
-| `lib/__tests__/integration/init-flow.integration.test.ts` | LOW | Imports `installLocal`, `deriveInstallMode` directly — unchanged |
-| `lib/__tests__/integration/init-end-to-end.integration.test.ts` | LOW | Imports `installLocal`, `installPluginConfig` directly — unchanged |
-| `lib/__tests__/commands/info.test.ts` | LOW | Tests via `runCliCommand()` — info.ts only gets `loadSource` substitution |
-| `lib/__tests__/integration/source-switching.integration.test.ts` | NONE | Imports `installLocal` directly from `../../installation/local-installer` — unchanged |
-| `lib/__tests__/user-journeys/user-journeys.integration.test.ts` | NONE | Imports `installLocal` and `recompileAgents` directly — unchanged (operations wrap, don't replace) |
-| `lib/__tests__/user-journeys/install-compile.test.ts` | NONE | Does not import any functions being replaced |
+| Test File                                                        | Risk | Why                                                                                                                                                                                                                                         |
+| ---------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/__tests__/commands/init.test.ts`                            | LOW  | Tests `runCliCommand()` + dashboard helpers, not internals                                                                                                                                                                                  |
+| `lib/__tests__/commands/edit.test.ts`                            | HIGH | Mocks `detectInstallation`, `loadSkillsMatrixFromSource`, `discoverAllPluginSkills`, `copySkillsToLocalFlattened` directly — import paths won't change (operations are additive) but command code restructuring may break mock expectations |
+| `lib/__tests__/commands/compile.test.ts`                         | LOW  | Tests via `runCliCommand()`                                                                                                                                                                                                                 |
+| `lib/__tests__/commands/diff.test.ts`                            | LOW  | Tests via `runCliCommand()`                                                                                                                                                                                                                 |
+| `lib/__tests__/commands/outdated.test.ts`                        | LOW  | Tests via `runCliCommand()`                                                                                                                                                                                                                 |
+| `lib/__tests__/commands/update.test.ts`                          | LOW  | Tests via `runCliCommand()`                                                                                                                                                                                                                 |
+| `lib/__tests__/commands/doctor.test.ts`                          | LOW  | Tests via `runCliCommand()`                                                                                                                                                                                                                 |
+| `lib/__tests__/commands/eject.test.ts`                           | LOW  | Tests via `runCliCommand()` (but uses 26k lines, may have indirect sensitivity)                                                                                                                                                             |
+| `lib/__tests__/commands/search.test.ts`                          | LOW  | Tests via `runCliCommand()`                                                                                                                                                                                                                 |
+| `lib/__tests__/user-journeys/edit-recompile.test.ts`             | LOW  | Imports `recompileAgents` directly from `lib/agents` — unchanged by operations                                                                                                                                                              |
+| `lib/__tests__/user-journeys/compile-flow.test.ts`               | LOW  | Tests via `runCliCommand()`                                                                                                                                                                                                                 |
+| `lib/__tests__/integration/installation.test.ts`                 | NONE | Tests `detectInstallation` directly, unchanged                                                                                                                                                                                              |
+| `lib/__tests__/integration/wizard-init-compile-pipeline.test.ts` | LOW  | Imports `installLocal`, `recompileAgents` directly — unchanged (operations wrap, don't replace)                                                                                                                                             |
+| `lib/__tests__/integration/init-flow.integration.test.ts`        | LOW  | Imports `installLocal`, `deriveInstallMode` directly — unchanged                                                                                                                                                                            |
+| `lib/__tests__/integration/init-end-to-end.integration.test.ts`  | LOW  | Imports `installLocal`, `installPluginConfig` directly — unchanged                                                                                                                                                                          |
+| `lib/__tests__/commands/info.test.ts`                            | LOW  | Tests via `runCliCommand()` — info.ts only gets `loadSource` substitution                                                                                                                                                                   |
+| `lib/__tests__/integration/source-switching.integration.test.ts` | NONE | Imports `installLocal` directly from `../../installation/local-installer` — unchanged                                                                                                                                                       |
+| `lib/__tests__/user-journeys/user-journeys.integration.test.ts`  | NONE | Imports `installLocal` and `recompileAgents` directly — unchanged (operations wrap, don't replace)                                                                                                                                          |
+| `lib/__tests__/user-journeys/install-compile.test.ts`            | NONE | Does not import any functions being replaced                                                                                                                                                                                                |
 
 **Why edit.test.ts is HIGH risk:** It mocks 6 modules via `vi.mock()` (installation, loading, configuration, plugins, skills, fs). While the mock target import paths won't change (operations import from lib, not the reverse), the command's internal logic changes. For example, `detectInstallation` may no longer be called directly if the command uses `detectProject()` — but the mock is on `../../installation/index.js` which `detectProject` also imports from. The mock should still work via transitive mocking, BUT the command may call functions in a different order or with different arguments, causing assertion failures.
 
@@ -1713,6 +1859,7 @@ Operations are additive (new files). Existing tests should NOT break during Phas
 Run after each phase to ensure nothing broke:
 
 ### After Phase 1 (Foundation)
+
 ```bash
 # Unit tests (should all pass — operations are additive)
 npm test -- --run
@@ -1723,6 +1870,7 @@ npx vitest run e2e/interactive/init-wizard-default-source.e2e.test.ts
 ```
 
 ### After Phase 2 (Skill Operations)
+
 ```bash
 npm test -- --run
 
@@ -1732,6 +1880,7 @@ npx vitest run e2e/interactive/init-wizard-default-source.e2e.test.ts
 ```
 
 ### After Phase 3 (Config + Compilation)
+
 ```bash
 npm test -- --run
 
@@ -1742,6 +1891,7 @@ npx vitest run e2e/commands/compile-scope-filtering.e2e.test.ts
 ```
 
 ### After Phase 4 (Full Command Refactor) -- CRITICAL GATE
+
 ```bash
 # Full unit test suite
 npm test -- --run
@@ -1754,6 +1904,7 @@ npx tsc --noEmit
 ```
 
 ### After Phase 5 (Cleanup + Operation Unit Tests)
+
 ```bash
 # Everything green
 npm test -- --run
@@ -1882,6 +2033,7 @@ npx tsc --noEmit
 After refactoring commands, these imports should be removable from command files:
 
 ### init.tsx — remove:
+
 - `enableBuffering`, `drainBuffer`, `disableBuffering` (handled by `loadSource`)
 - `loadSkillsMatrixFromSource` (handled by `loadSource`)
 - `resolveInstallPaths` (handled by `copyLocalSkills`)
@@ -1893,6 +2045,7 @@ After refactoring commands, these imports should be removable from command files
 - NOTE: `deriveInstallMode` is KEPT — init.tsx calls it directly per G9 (individual operations, not executeInstallation)
 
 ### edit.tsx — remove:
+
 - `enableBuffering`, `drainBuffer`, `disableBuffering`, `pushBufferMessage` (handled by `loadSource`)
 - `loadSkillsMatrixFromSource` (handled by `loadSource`)
 - `detectInstallation` (handled by `detectProject`)
@@ -1909,11 +2062,12 @@ After refactoring commands, these imports should be removable from command files
 - `ensureDir` (handled by operations)
 
 ### compile.ts — remove:
+
 - `recompileAgents` (replaced by `compileAgents`)
 - `getAgentDefinitions` (replaced by `loadAgentDefs`)
-NOTE: Per G8, compile.ts keeps `run()`, `runCompilePass`, `discoverAllSkills`, `resolveSourceForCompile`
-intact. Only the inner `recompileAgents` and `getAgentDefinitions` calls are replaced.
-The following imports are KEPT (NOT removed):
+  NOTE: Per G8, compile.ts keeps `run()`, `runCompilePass`, `discoverAllSkills`, `resolveSourceForCompile`
+  intact. Only the inner `recompileAgents` and `getAgentDefinitions` calls are replaced.
+  The following imports are KEPT (NOT removed):
 - `discoverAllPluginSkills` (still used by `discoverAllSkills`)
 - `resolveSource`, `loadProjectConfigFromDir` (still used by `resolveSourceForCompile` and `runCompilePass`)
 - `parseFrontmatter` (still used by `loadSkillsFromDir`)
@@ -1921,30 +2075,37 @@ The following imports are KEPT (NOT removed):
 - `detectGlobalInstallation`, `detectProjectInstallation`, `buildAgentScopeMap` (still used by `run()`)
 
 ### outdated.ts — remove:
+
 - `loadSkillsMatrixFromSource` (handled by `loadSource`)
 - `detectInstallation` (handled by `detectProject`)
 - `compareLocalSkillsWithSource` (handled by `compareSkillsWithSource`)
 - `typedEntries` (no longer needed for sourceSkills map building)
 
 ### update.tsx — remove:
+
 - `loadSkillsMatrixFromSource` (handled by `loadSource`)
 - `compareLocalSkillsWithSource` (handled by `compareSkillsWithSource`)
 - `recompileAgents` (handled by `compileAgents`)
 - `matrix` import from matrix-provider (comparison handled by operation)
 
 ### diff.ts — remove:
+
 - `loadSkillsMatrixFromSource` (handled by `loadSource`)
 
 ### doctor.ts — remove:
+
 - `loadSkillsMatrixFromSource` (handled by `loadSource`, inside `checkSourceReachable`)
 
 ### info.ts — remove:
+
 - `loadSkillsMatrixFromSource` (handled by `loadSource`)
 
 ### search.tsx — remove:
+
 - `loadSkillsMatrixFromSource` (handled by `loadSource`)
 
 ### eject.ts — remove:
+
 - `loadSkillsMatrixFromSource` (handled by `loadSource`)
 
 ---
@@ -1993,6 +2154,7 @@ BEFORE `loadProjectConfig()` and `discoverAllPluginSkills()` run. Their `warn()`
 go directly to stderr instead of being captured as startup messages in the wizard.
 
 **Functions that CAN emit warn() during this window:**
+
 - `loadProjectConfig()` via `project-config.ts:54,60` — warns on config load errors, missing skills array
 - `discoverAllPluginSkills()` via `plugin-finder.ts:86,93,102` — warns on missing frontmatter, invalid names, unknown skills
 
@@ -2002,6 +2164,7 @@ these specific warnings, but the visual change could cause test flakiness if a t
 full terminal output.
 
 **Mitigation options:**
+
 1. **Accept the change** — these warnings are rare in practice (only when config is malformed or plugins have bad frontmatter)
 2. **Keep buffer active longer** — have `loadSource` return without draining, let edit.tsx drain manually:
    ```typescript
@@ -2010,7 +2173,7 @@ full terminal output.
      projectDir,
      forceRefresh: flags.refresh,
      captureStartupMessages: true,
-     drainOnReturn: false,  // NEW: keep buffer active, caller drains
+     drainOnReturn: false, // NEW: keep buffer active, caller drains
    });
    ```
 3. **Move loadProjectConfig/discoverAllPluginSkills into the operation** — but this
@@ -2032,6 +2195,7 @@ Operations return data; commands decide what to log." But several operations' ou
 use `verbose()` for messages that are currently `this.log()` and tested by E2E:
 
 **ensureMarketplace:**
+
 - Current (init.tsx:390): `this.log('Registering marketplace "${marketplace}"...')`
 - Proposed (outline step 4c): `verbose('Registered marketplace: ${marketplace}')`
 - E2E assertion: `expect(output).toContain("Registering marketplace")` (init-wizard-default-source.e2e.test.ts:69)
@@ -2047,6 +2211,7 @@ use `verbose()` for messages that are currently `this.log()` and tested by E2E:
   All call sites (init.tsx, edit.tsx, executeInstallation AFTER) have been updated.
 
 **recompileProject:**
+
 - Current (compile.ts:253): `this.log('Compiling ${label.toLowerCase()} agents...')`
 - Proposed: absorbed into `recompileProject()` which returns data
 - E2E assertions (6 tests):
@@ -2063,6 +2228,7 @@ use `verbose()` for messages that are currently `this.log()` and tested by E2E:
   Only use `recompileProject` in a future simplified CLI command or programmatic API.
 
 **executeInstallation:**
+
 - Current (init.tsx:408): `this.log("Installing skill plugins...")`
 - Current (init.tsx:414): `this.log('  Installed ${pluginRef}')`
 - E2E assertions:
@@ -2121,6 +2287,7 @@ This is intentional and matches init.tsx:376 current behavior. Callers rely on
 `sourceResult.marketplace` being set after the call for subsequent plugin operations.
 
 **Consequences:**
+
 - `sourceResult` cannot be frozen or shared between concurrent operations
 - The mutation is a side effect that is not reflected in the return type
 - If a caller passes the same `sourceResult` to multiple operations, the mutation
@@ -2187,19 +2354,20 @@ This means ALL downstream access patterns in edit.tsx must change:
 
 ```typescript
 // BEFORE: projectConfig is LoadedProjectConfig | null
-projectConfig?.config?.skills                    // ~12 occurrences
-projectConfig?.config?.agents                    // ~4 occurrences
-projectConfig?.config?.domains                   // 1 occurrence
-projectConfig?.config?.selectedAgents            // 1 occurrence
+projectConfig?.config?.skills; // ~12 occurrences
+projectConfig?.config?.agents; // ~4 occurrences
+projectConfig?.config?.domains; // 1 occurrence
+projectConfig?.config?.selectedAgents; // 1 occurrence
 
 // AFTER: projectConfig is ProjectConfig | null
-projectConfig?.skills                            // direct access
-projectConfig?.agents
-projectConfig?.domains
-projectConfig?.selectedAgents
+projectConfig?.skills; // direct access
+projectConfig?.agents;
+projectConfig?.domains;
+projectConfig?.selectedAgents;
 ```
 
 **Known locations in edit.tsx that must change** (grep for `projectConfig?.config`):
+
 - Line 139: `projectConfig?.config?.skills?.map(...)`
 - Line 161: `projectConfig?.config?.skills?.filter(...)`
 - Line 164: `projectConfig?.config?.agents?.filter(...)`
@@ -2229,6 +2397,7 @@ with no data, potentially causing empty configs, missing migrations, or incorrec
 **Risk: HIGH — 6 E2E tests assert on scope labels in compile output**
 
 The compile command currently logs per-scope status messages from `runCompilePass`:
+
 - `"Compiling global agents..."` (compile.ts:253)
 - `"Compiling project agents..."` (compile.ts:253)
 - Skill discovery counts (compile.ts:229-236)
@@ -2240,15 +2409,15 @@ E2E tests that assert on "Compiling global agents" and "Compiling project agents
 
 **Concrete E2E test failures if messages are lost:**
 
-| Test File | Assertion | Line |
-|-----------|-----------|------|
-| compile.e2e.test.ts | `"Compiling global agents"` | 41 |
-| compile-scope-filtering.e2e.test.ts | `"Compiling global agents"` | 95 |
-| compile-scope-filtering.e2e.test.ts | `"Compiling project agents"` | 96 |
-| compile-scope-filtering.e2e.test.ts | `"Compiling global agents"` | 493 |
-| compile-scope-filtering.e2e.test.ts | `"Compiling project agents"` | 494 |
-| dual-scope.e2e.test.ts | `"Compiling global agents"` | 184 |
-| dual-scope.e2e.test.ts | `"Compiling project agents"` | 185 |
+| Test File                           | Assertion                    | Line |
+| ----------------------------------- | ---------------------------- | ---- |
+| compile.e2e.test.ts                 | `"Compiling global agents"`  | 41   |
+| compile-scope-filtering.e2e.test.ts | `"Compiling global agents"`  | 95   |
+| compile-scope-filtering.e2e.test.ts | `"Compiling project agents"` | 96   |
+| compile-scope-filtering.e2e.test.ts | `"Compiling global agents"`  | 493  |
+| compile-scope-filtering.e2e.test.ts | `"Compiling project agents"` | 494  |
+| dual-scope.e2e.test.ts              | `"Compiling global agents"`  | 184  |
+| dual-scope.e2e.test.ts              | `"Compiling project agents"` | 185  |
 
 **Recommended approach:** Do NOT use `recompileProject` in Phase 4 for compile.ts.
 Instead, keep compile.ts's `runCompilePass` method structure intact but replace the
@@ -2258,9 +2427,11 @@ using the operations layer without losing intermediate user-facing output. The
 need per-scope progress output.
 
 Update compile.ts Phase 4 refactor plan from:
+
 > Replace `run()` body with `recompileProject()`. Keep flag parsing, verbose setup, and user-facing log messages.
 
 To:
+
 > Replace `recompileAgents()` calls inside `runCompilePass` with `compileAgents()`.
 > Replace `loadAgentDefsForCompile` with `loadAgentDefs()`.
 > Keep `run()`, `runCompilePass`, `discoverAllSkills` intact — they contain user-facing log messages.
@@ -2273,6 +2444,7 @@ To:
 **Risk: HIGH — executeInstallation swallows per-skill log messages that E2E tests assert on**
 
 The `executeInstallation` AFTER block at lines 1314-1326 shows:
+
 ```typescript
 const installResult = await executeInstallation({...});
 this.log(`Install mode: ${installResult.mode}`);
@@ -2282,6 +2454,7 @@ if (installResult.copiedSkills.length > 0) {
 ```
 
 But E2E tests assert on INTERMEDIATE messages from inside the current init.tsx methods:
+
 - `"Installing skill plugins..."` (init.tsx:408)
 - `"Installed web-framework-react@..."` per-skill (init.tsx:414)
 - `"Registering marketplace \"...\"..."` (init.tsx:390)
@@ -2328,12 +2501,14 @@ as currently designed. It's a valid abstraction for programmatic use but
 the init command needs fine-grained control over logging.
 
 **Alternative:** Keep `executeInstallation` but add a `logger` callback parameter:
+
 ```typescript
 export async function executeInstallation(
   options: ExecuteInstallationOptions,
   logger?: { log: (msg: string) => void; warn: (msg: string) => void },
 ): Promise<ExecuteInstallationResult>;
 ```
+
 But this introduces callback-based logging which is the opposite of the "operations return data" principle. Not recommended.
 
 ---
@@ -2356,6 +2531,7 @@ empty merged array in that case, so the command can check `results.length === 0`
 
 However, the current early exit AVOIDS the source load entirely (saving time and network).
 Consider keeping the early exit in the command:
+
 ```typescript
 // Keep fast path: check directories exist before loading source
 const hasProject = await fileExists(path.join(projectDir, LOCAL_SKILLS_PATH));
@@ -2376,21 +2552,25 @@ const { merged: results } = await compareSkillsWithSource(...);
 Final review for sub-agent readiness. All names, types, and cross-references verified consistent.
 
 **Added Quick Reference section at document top:**
+
 - Complete file tree with Phase annotations for each operation file
 - Command-to-operations mapping table (11 commands, showing which operations each uses)
 - Phase-to-files mapping table (5 phases, showing new files created, existing files modified, and gate criteria)
 - E2E risk matrix table (per-phase risk level with concrete mitigation strategies)
 
 **Phase labels added to all operation headers:**
+
 - Every `## Operation:` header now includes `(Phase N)` suffix
 - `Types File` and `Barrel Export` headers marked `(Phase 1, updated each phase)`
 - Implementors can immediately see which phase creates each operation
 
 **Consistency fixes:**
+
 - Fixed incomplete template literal in `executeInstallation` AFTER block (line 1343): expanded `...` to full ternary matching init.tsx:302-308 (`installMode === "mixed"` and `"Local"` branches)
 - Fixed stale "placeholder" reference in `recompileProject` CRITICAL note: the outline steps 8a/9a now contain the full 4-way discovery algorithm (expanded in Pass 2), but the note still said "is a placeholder that must be fully implemented". Updated to reference the completed outline steps.
 
 **Completeness verification:**
+
 - All 12 operations have: File path, Extracts from, Function signature, Implementation outline, Call sites (before/after), Imports needed
 - All function names match between signature sections, types.ts re-exports, index.ts barrel exports, and AFTER blocks
 - All type names match between definition sites and usage sites
@@ -2400,6 +2580,7 @@ Final review for sub-agent readiness. All names, types, and cross-references ver
 - `compareSkillsWithSource` file is `compare-skills.ts` (shortened, but consistent across all references)
 
 **Cross-reference verification:**
+
 - Every import path verified against actual barrel exports (`types/index.ts`, `installation/index.ts`, `configuration/index.ts`, `skills/index.ts`, `agents/index.ts`, `loading/index.ts`)
 - `AgentSourcePaths` confirmed exported via `export type * from "./agents"` in `types/index.ts`
 - `ensureBlankGlobalConfig` confirmed at `configuration/config-writer.ts` (not in barrel — direct import is correct)
@@ -2416,6 +2597,7 @@ Verified import completeness, type compatibility, phase gates, AFTER block accur
 Every operation had type imports duplicated between the "Function signature" header and the "Imports needed" section (often with different import paths for the same type, e.g., `SourceLoadResult` from `source-loader.js` in the signature vs `loading/index.js` in imports). Replaced all signature-level imports with a standardized note: "All imports for this operation are consolidated in the Imports needed section below." This prevents implementors from including both import statements, which would cause TypeScript duplicate identifier errors.
 
 **Import path corrections:**
+
 - `compileAgents`: `InstallMode` import changed from `"../installation/installation.js"` to `"../installation/index.js"` (use barrel, not direct file)
 - `executeInstallation`: Consolidated `InstallMode` and `deriveInstallMode` into single import from `"../installation/index.js"`, removed duplicate `InstallMode` from `"../installation/installation.js"`
 
@@ -2435,6 +2617,7 @@ The outline step 1b said "Filter config.agents" but `loadProjectConfigFromDir` r
 Per G9, init.tsx does NOT use `executeInstallation` — it calls individual operations with logging between each. The AFTER block at line 1337 shows `const installMode = deriveInstallMode(result.skills)`. Removed `deriveInstallMode` from the "init.tsx remove" list and added a NOTE that it's kept.
 
 **Test disable list — 4 missing test files added:**
+
 - `info.test.ts` (LOW risk — tests via `runCliCommand()`)
 - `source-switching.integration.test.ts` (NONE — imports `installLocal` directly, unchanged)
 - `user-journeys.integration.test.ts` (NONE — imports `installLocal` + `recompileAgents` directly, unchanged)
@@ -2486,6 +2669,7 @@ Edge cases, race conditions, and subtle behavior changes that could break E2E te
 Cross-referenced every line number, function signature, and before/after block against actual source code. Changes made:
 
 **Line number corrections:**
+
 - `copyLocalSkills` extracts: edit.tsx range corrected from `401-432` to `400-433`
 - `loadAgentDefs` extracts: edit.tsx range corrected from `436-450` to `435-450`, noted spans two try blocks
 - `installPluginSkills` extracts: init.tsx range corrected from `408-423` to `409-420`
@@ -2494,6 +2678,7 @@ Cross-referenced every line number, function signature, and before/after block a
 - `recompileProject` compile.ts range expanded from `129-187` to `129-352` to include 4 private methods
 
 **Before/after block fixes:**
+
 - `loadSource` edit.tsx: Rewrote "before" to show full buffer scope (108-150) covering loadProjectConfig and discoverAllPluginSkills; added note that these callers lose buffering after refactor since loadSource drains buffer
 - `detectProject` edit.tsx: Added WARNING about access pattern change — `projectConfig` changes from `LoadedProjectConfig | null` to `ProjectConfig | null`, requiring ~12 downstream access pattern changes (`projectConfig?.config?.skills` -> `projectConfig?.skills`)
 - `uninstallPluginSkills` edit.tsx: Added note that "before" code is inside `if (sourceResult.marketplace)` guard at line 364
@@ -2501,22 +2686,26 @@ Cross-referenced every line number, function signature, and before/after block a
 - `compileAgents` compile.ts: Added `pluginDir` omission note (defaults to projectDir in the operation)
 
 **Missing operations coverage:**
+
 - Added `loadSource` call sites for doctor.ts, info.ts, search.tsx, eject.ts (4 commands previously omitted from the 9 listed in the proposal)
 - Added Phase 4 refactor entries for doctor.ts, info.ts, search.tsx, eject.ts, uninstall.tsx (with note that uninstall has no applicable operations)
 - Added import removal checklist entries for doctor.ts, info.ts, search.tsx, eject.ts
 
 **Critical gap: recompileProject skill discovery:**
+
 - Expanded `recompileProject` implementation outline from placeholder ("discover skills for homedir") to full 4-way skill discovery algorithm matching compile.ts:189-239
 - Added CRITICAL note about `loadSkillsFromDir` and `discoverLocalProjectSkills` being private functions in compile.ts (lines 24-78) that must be extracted or moved
 - Added required imports for recompileProject (resolveSource, loadProjectConfigFromDir, buildAgentScopeMap, setVerbose, verbose, etc.)
 
 **Type signature fixes:**
+
 - Removed dead `projectConfig?: ProjectConfig | null` field from `CompileAgentsOptions` (not forwarded to `recompileAgents`)
 - Added JSDoc to `scopeFilter` in `CompileAgentsOptions` explaining it resolves to `agents` list internally
 - Added `scopeFilter` resolution step to `compileAgents` implementation outline
 - Added `loadProjectConfigFromDir` import to `compileAgents` (needed for scopeFilter resolution)
 
 **Test disable list updates:**
+
 - Added 5 missing test files: doctor.test.ts, eject.test.ts, search.test.ts, init-flow.integration.test.ts, init-end-to-end.integration.test.ts
 - Updated edit.test.ts risk description: clarified that import paths won't change (operations are additive) but mock expectations may break due to command code restructuring
 - Added detailed explanation of WHY edit.test.ts is HIGH risk (transitive mocking, call order changes)
