@@ -195,7 +195,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
 
   it("should include stack skill content in compiled agents", async () => {
     // Create skill in src/skills/
-    const reactDirPath = "web/framework/react (@vince)";
+    const reactDirPath = "web/framework/react";
     const reactCanonicalId = "web-framework-react";
     await createSkill(dirs.skillsDir, reactDirPath, {
       name: reactCanonicalId,

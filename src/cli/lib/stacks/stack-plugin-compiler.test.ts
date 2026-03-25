@@ -124,7 +124,7 @@ describe("stack-plugin-compiler", () => {
 
       // Create skill in src/skills/ (new architecture)
       // Directory path is where the files live, frontmatter name is the canonical ID
-      const directoryPath = "web/framework/react (@vince)";
+      const directoryPath = "web/framework/react";
       const frontmatterName = REACT_SKILL_ID;
       await createSkillInSource(directoryPath, {
         name: frontmatterName,
@@ -313,11 +313,10 @@ describe("stack-plugin-compiler", () => {
 
     it("should return skill plugin references", async () => {
       // Create skills in src/skills/ (new architecture)
-      const reactDirPath = "web/framework/react (@vince)";
+      const reactDirPath = "web/framework/react";
       const reactCanonicalId = REACT_SKILL_ID;
-      const tsDirPath = "web/language/typescript (@vince)";
-      // Boundary cast: fake skill ID for test isolation
-      const tsCanonicalId = "web-language-typescript" as SkillId;
+      const tsDirPath = "shared/tooling/typescript-config";
+      const tsCanonicalId = "shared-tooling-typescript-config";
 
       await createSkillInSource(reactDirPath, {
         name: reactCanonicalId,
@@ -342,7 +341,7 @@ describe("stack-plugin-compiler", () => {
         agentSkills: {
           "web-developer": {
             "web-framework": [{ id: reactCanonicalId, preloaded: true }],
-            language: [{ id: tsCanonicalId }],
+            "shared-tooling": [{ id: tsCanonicalId }],
             // Boundary cast: string keys to branded Category
           } as Partial<Record<Category, SkillAssignment[]>>,
         },
@@ -357,7 +356,7 @@ describe("stack-plugin-compiler", () => {
 
       // Skill plugins use canonical frontmatter names
       expect(result.skillPlugins).toContain("web-framework-react");
-      expect(result.skillPlugins).toContain("web-language-typescript");
+      expect(result.skillPlugins).toContain("shared-tooling-typescript-config");
     });
 
     it("should return correct manifest structure", async () => {
@@ -597,9 +596,9 @@ describe("stack-plugin-compiler", () => {
 
     it("should include skill plugins in README when skills are present", async () => {
       // Create skills in src/skills/ (new architecture)
-      const reactDirPath = "web/framework/react (@vince)";
+      const reactDirPath = "web/framework/react";
       const reactCanonicalId = REACT_SKILL_ID;
-      const zustandDirPath = "web/client-state-management/zustand (@vince)";
+      const zustandDirPath = "web/client-state-management/zustand";
       const zustandCanonicalId = "web-state-zustand";
 
       await createSkillInSource(reactDirPath, {
