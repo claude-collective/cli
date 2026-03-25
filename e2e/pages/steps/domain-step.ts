@@ -34,9 +34,9 @@ export class DomainStep extends BaseStep {
    */
   async deselectAll(): Promise<void> {
     // Navigate through the full list, toggling selected items.
-    // The domain list is short (max 5 items), so iterating from
+    // The domain list has up to 8 built-in items, so iterating from
     // top to bottom and toggling any checked items covers all cases.
-    const maxItems = 6;
+    const maxItems = 10;
     for (let i = 0; i < maxItems; i++) {
       const output = this.getOutput();
       // Check if the currently focused item has a checkmark

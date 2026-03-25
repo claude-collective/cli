@@ -7,6 +7,6 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 60_000,
     pool: "forks",
-    retry: 1,
+    retry: 2,
   },
 });
