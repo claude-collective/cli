@@ -27,9 +27,7 @@ import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills, buildStackProperty } from "../configuration";
 import { splitConfigByScope } from "../configuration/config-generator";
 import { generateConfigSource, type ConfigSourceOptions } from "../configuration/config-writer";
-import {
-  generateConfigTypesSource,
-} from "../configuration/config-types-writer";
+import { generateConfigTypesSource } from "../configuration/config-types-writer";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";

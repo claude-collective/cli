@@ -145,9 +145,7 @@ describe("project config does not accumulate global skills after edit", () => {
 
       // Key invariant: the global skill must appear exactly once (no accumulation).
       // Count occurrences of the skill ID in the config to detect duplication.
-      const reactSkillOccurrences = updatedProjectConfig
-        .split("web-framework-react")
-        .length - 1;
+      const reactSkillOccurrences = updatedProjectConfig.split("web-framework-react").length - 1;
       expect(
         reactSkillOccurrences,
         "Global skill 'web-framework-react' should appear exactly once in project config (no accumulation)",

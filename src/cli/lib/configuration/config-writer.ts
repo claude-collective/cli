@@ -309,9 +309,7 @@ function generateProjectConfigWithInlinedGlobal(
   // Project config stack only includes project-scoped agents.
   // Global agents' stack entries live in the global config only.
   // splitConfigByScope may include global agents with project-skill assignments — filter them out.
-  const projectAgentNames = new Set(
-    projectAgentsArr.map((a) => (a as { name: string }).name),
-  );
+  const projectAgentNames = new Set(projectAgentsArr.map((a) => (a as { name: string }).name));
   const filteredStack: Record<string, unknown> | undefined = projectStackObj
     ? Object.fromEntries(
         Object.entries(projectStackObj).filter(([agent]) => projectAgentNames.has(agent)),
@@ -389,8 +387,7 @@ function generateProjectConfigWithInlinedGlobal(
 
   // Project scalar fields (these take precedence over global)
   const projectScalarFields = Object.entries(cleaned).filter(
-    ([key]) =>
-      !EXTRACTED_FIELDS.has(key) && key !== "name" && key !== "selectedAgents",
+    ([key]) => !EXTRACTED_FIELDS.has(key) && key !== "name" && key !== "selectedAgents",
   );
   const projectScalarKeys = new Set(projectScalarFields.map(([key]) => key));
 
