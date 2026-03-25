@@ -29,24 +29,24 @@ npx @agents-inc/cli init
 
 Choose from 16 pre-built stacks or start from scratch. Stacks pre-select skills and agents for common tech combinations.
 
-| Stack                      | Technologies                                     |
-| -------------------------- | ------------------------------------------------ |
-| `nextjs-fullstack`         | Next.js + React + Hono + Drizzle + Better Auth + Zustand |
-| `nextjs-t3-stack`          | Next.js + tRPC + Prisma + NextAuth + Tailwind    |
-| `nextjs-supabase-fullstack`| Next.js + Supabase + Drizzle + Better Auth       |
-| `nextjs-turborepo-fullstack`| Next.js + Turborepo + pnpm Workspaces + Hono + Drizzle |
-| `nextjs-ai-saas`           | Next.js + Vercel AI + Anthropic + Drizzle + Pinecone |
-| `nextjs-saas-starter`      | Next.js + Better Auth + Stripe + Drizzle + Resend + PostHog |
-| `react-old-school`         | React + Redux Toolkit + SCSS Modules + Vite + Vitest |
-| `react-hono-fullstack`     | React + Vite + Hono + Drizzle + Better Auth      |
-| `remix-fullstack`          | Remix + Hono + Drizzle + Better Auth             |
-| `sveltekit-fullstack`      | SvelteKit + Hono + Drizzle + Better Auth         |
-| `solidjs-fullstack`        | SolidJS + Hono + Drizzle + Better Auth + Vitest  |
-| `astro-content-fullstack`  | Astro + Hono + Drizzle                           |
-| `vue-modern-fullstack`     | Vue 3 + Pinia + Hono + Drizzle + Better Auth     |
-| `nuxt-fullstack`           | Nuxt + Hono + Drizzle + Better Auth              |
-| `angular-modern-fullstack` | Angular + NgRx + Hono + Drizzle + Better Auth    |
-| `expo-mobile-fullstack`    | Expo + React Native + Zustand + React Query + Hono + Drizzle |
+| Stack                        | Technologies                                                 |
+| ---------------------------- | ------------------------------------------------------------ |
+| `nextjs-fullstack`           | Next.js + React + Hono + Drizzle + Better Auth + Zustand     |
+| `nextjs-t3-stack`            | Next.js + tRPC + Prisma + NextAuth + Tailwind                |
+| `nextjs-supabase-fullstack`  | Next.js + Supabase + Drizzle + Better Auth                   |
+| `nextjs-turborepo-fullstack` | Next.js + Turborepo + pnpm Workspaces + Hono + Drizzle       |
+| `nextjs-ai-saas`             | Next.js + Vercel AI + Anthropic + Drizzle + Pinecone         |
+| `nextjs-saas-starter`        | Next.js + Better Auth + Stripe + Drizzle + Resend + PostHog  |
+| `react-old-school`           | React + Redux Toolkit + SCSS Modules + Vite + Vitest         |
+| `react-hono-fullstack`       | React + Vite + Hono + Drizzle + Better Auth                  |
+| `remix-fullstack`            | Remix + Hono + Drizzle + Better Auth                         |
+| `sveltekit-fullstack`        | SvelteKit + Hono + Drizzle + Better Auth                     |
+| `solidjs-fullstack`          | SolidJS + Hono + Drizzle + Better Auth + Vitest              |
+| `astro-content-fullstack`    | Astro + Hono + Drizzle                                       |
+| `vue-modern-fullstack`       | Vue 3 + Pinia + Hono + Drizzle + Better Auth                 |
+| `nuxt-fullstack`             | Nuxt + Hono + Drizzle + Better Auth                          |
+| `angular-modern-fullstack`   | Angular + NgRx + Hono + Drizzle + Better Auth                |
+| `expo-mobile-fullstack`      | Expo + React Native + Zustand + React Query + Hono + Drizzle |
 
 <p align="center">
   <img src="screenshots/skill-selection.png" alt="Skill selection" width="500">
