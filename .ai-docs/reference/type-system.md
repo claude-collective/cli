@@ -35,7 +35,7 @@ export type SkillId = (typeof SKILL_MAP)[SkillSlug];
 ```
 
 - Derived from `SKILL_MAP` constant (slug-to-ID mapping), not a template literal
-- Runtime validation still uses `SKILL_ID_PATTERN` in `schemas.ts:79`: `/^(web|api|cli|mobile|infra|meta|security)-.+-.+$/`
+- Runtime validation uses `skillIdSchema` in `schemas.ts` with `.refine()` against `SKILL_IDS` array
 - 86 skill IDs, 86 skill slugs
 - Re-exported from `src/cli/types/skills.ts:4`
 - Examples: `"web-framework-react"`, `"meta-methodology-anti-over-engineering"`, `"api-database-drizzle"`
@@ -248,7 +248,7 @@ Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix
 **From CLAUDE.md and memory:**
 
 1. Union types are generated from source (`bun run generate:types`) for finite sets
-2. Template literal pattern still enforced at runtime via `SKILL_ID_PATTERN` in schemas.ts
+2. Skill ID validation uses `skillIdSchema` with `.refine()` against the generated `SKILL_IDS` array
 3. Boundary casts only at data entry points (YAML parse, JSON parse, CLI args) with comments
 4. Use `typedEntries()` / `typedKeys()` from `src/cli/utils/typed-object.ts` instead of raw `Object.entries()`/`Object.keys()`
 5. Zod schemas at parse boundaries; post-safeParse `as T` casts are intentional (`.passthrough()` widens type)
@@ -282,7 +282,7 @@ All schemas in `src/cli/lib/schemas.ts`. Key schemas:
 | `categorySchema`                   | Category union             | `z.enum(CATEGORIES)` bridge          |
 | `agentNameSchema`                  | AgentName union            | `z.enum(AGENT_NAMES)` bridge         |
 | `skillSlugSchema`                  | SkillSlug union            | `z.enum(SKILL_SLUGS)` bridge         |
-| `skillIdSchema`                    | SkillId format             | `z.string().regex(SKILL_ID_PATTERN)` |
+| `skillIdSchema`                    | SkillId membership         | `.refine()` against `SKILL_IDS`      |
 | `categoryPathSchema`               | CategoryPath               | Custom refine + enum                 |
 | `skillFrontmatterLoaderSchema`     | SKILL.md frontmatter       | Lenient object                       |
 | `skillMetadataLoaderSchema`        | metadata.yaml              | `.passthrough()` + superRefine       |
