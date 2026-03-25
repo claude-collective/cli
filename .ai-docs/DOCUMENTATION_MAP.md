@@ -18,8 +18,8 @@
 
 Descriptive docs -- "how things work". Validated aggressively (7-30 day cadence).
 
-| Area                  | Status             | File                                        | Last Updated | Last Validated | Next Action              |
-| --------------------- | ------------------ | ------------------------------------------- | ------------ | -------------- | ------------------------ |
+| Area                  | Status             | File                                         | Last Updated | Last Validated | Next Action              |
+| --------------------- | ------------------ | -------------------------------------------- | ------------ | -------------- | ------------------------ |
 | Architecture Overview | [DONE]             | `reference/architecture-overview.md`         | 2026-03-14   | 2026-03-14     | Validate in 30 days      |
 | Commands Reference    | [DONE]             | `reference/commands.md`                      | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
 | Type System           | [DONE]             | `reference/type-system.md`                   | 2026-03-14   | 2026-03-14     | Validate in 14 days      |
@@ -37,18 +37,18 @@ Descriptive docs -- "how things work". Validated aggressively (7-30 day cadence)
 
 Prescriptive rules for code quality, testing, and content authoring. Lighter validation cadence -- validate when convention-keeper proposes updates, or quarterly.
 
-| Area                    | File                                        | Last Moved  |
-| ----------------------- | ------------------------------------------- | ----------- |
-| Clean Code Standards    | `standards/clean-code-standards.md`         | 2026-03-25  |
-| E2E Testing Bible       | `standards/e2e-testing-bible.md`            | 2026-03-25  |
-| E2E Sub-Standards       | `standards/e2e/` (7 files)                  | 2026-03-25  |
-| Prompt Engineering      | `standards/prompt-bible.md`                 | 2026-03-25  |
-| Loop Prompts            | `standards/loop-prompts-bible.md`           | 2026-03-25  |
-| Skill Atomicity         | `standards/skill-atomicity-bible.md`        | 2026-03-25  |
-| Skill Atomicity Primer  | `standards/skill-atomicity-primer.md`       | 2026-03-25  |
-| TypeScript Types        | `standards/typescript-types-bible.md`       | 2026-03-25  |
-| Documentation Standards | `standards/documentation-bible.md`          | 2026-03-25  |
-| Commit Protocol         | `standards/commit-protocol.md`              | 2026-03-25  |
+| Area                    | File                                  | Last Moved |
+| ----------------------- | ------------------------------------- | ---------- |
+| Clean Code Standards    | `standards/clean-code-standards.md`   | 2026-03-25 |
+| E2E Testing Bible       | `standards/e2e-testing-bible.md`      | 2026-03-25 |
+| E2E Sub-Standards       | `standards/e2e/` (7 files)            | 2026-03-25 |
+| Prompt Engineering      | `standards/prompt-bible.md`           | 2026-03-25 |
+| Loop Prompts            | `standards/loop-prompts-bible.md`     | 2026-03-25 |
+| Skill Atomicity         | `standards/skill-atomicity-bible.md`  | 2026-03-25 |
+| Skill Atomicity Primer  | `standards/skill-atomicity-primer.md` | 2026-03-25 |
+| TypeScript Types        | `standards/typescript-types-bible.md` | 2026-03-25 |
+| Documentation Standards | `standards/documentation-bible.md`    | 2026-03-25 |
+| Commit Protocol         | `standards/commit-protocol.md`        | 2026-03-25 |
 
 ## Agent Findings Pipeline
 

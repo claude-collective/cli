@@ -276,36 +276,36 @@ All guards import from `src/cli/types/generated/source-types.ts` and check again
 
 All schemas in `src/cli/lib/schemas.ts`. Key schemas:
 
-| Schema                             | Validates                  | Pattern                              |
-| ---------------------------------- | -------------------------- | ------------------------------------ |
-| `domainSchema`                     | Domain union               | `z.enum(DOMAINS)` bridge             |
-| `categorySchema`                   | Category union             | `z.enum(CATEGORIES)` bridge          |
-| `agentNameSchema`                  | AgentName union            | `z.enum(AGENT_NAMES)` bridge         |
-| `skillSlugSchema`                  | SkillSlug union            | `z.enum(SKILL_SLUGS)` bridge         |
-| `skillIdSchema`                    | SkillId membership         | `.refine()` against `SKILL_IDS`      |
-| `categoryPathSchema`               | CategoryPath               | Custom refine + enum                 |
-| `skillFrontmatterLoaderSchema`     | SKILL.md frontmatter       | Lenient object                       |
-| `skillMetadataLoaderSchema`        | metadata.yaml              | `.passthrough()` + superRefine       |
-| `projectConfigLoaderSchema`        | .claude-src/config.ts      | `.passthrough()`                     |
-| `projectSourceConfigSchema`        | Source config              | `.passthrough()`                     |
-| `skillCategoriesFileSchema`        | skill-categories.ts        | `z.object()`                         |
-| `skillRulesFileSchema`             | skill-rules.ts             | `z.object()`                         |
-| `stacksConfigSchema`               | stacks.ts                  | `z.object()`                         |
-| `marketplaceSchema`                | marketplace.json           | Bridge pattern                       |
-| `pluginManifestSchema`             | plugin.json                | Bridge pattern                       |
-| `agentYamlConfigSchema`            | agent metadata.yaml        | Bridge pattern                       |
-| `boundSkillSchema`                 | BoundSkill                 | Bridge pattern                       |
-| `settingsFileSchema`               | settings.yaml              | `.passthrough()`                     |
-| `importedSkillMetadataSchema`      | Imported skill metadata    | `.passthrough()`                     |
-| `localRawMetadataSchema`           | Local skill metadata.yaml  | `.passthrough()` + superRefine       |
-| `localSkillMetadataSchema`         | Local skill forkedFrom     | `.passthrough()`                     |
-| `metadataValidationSchema`         | Strict metadata validation | `.strict()`                          |
-| `customMetadataValidationSchema`   | Custom skill metadata      | `z.object()`                         |
-| `agentYamlGenerationSchema`        | Compiled agent output      | `.strict()`                          |
-| `agentFrontmatterValidationSchema` | AGENT.md frontmatter       | `.strict()`                          |
-| `skillFrontmatterValidationSchema` | SKILL.md frontmatter       | `.strict()`                          |
-| `pluginManifestValidationSchema`   | plugin.json strict         | `.strict()`                          |
-| `stackConfigValidationSchema`      | Published stack config     | `.strict()`                          |
+| Schema                             | Validates                  | Pattern                         |
+| ---------------------------------- | -------------------------- | ------------------------------- |
+| `domainSchema`                     | Domain union               | `z.enum(DOMAINS)` bridge        |
+| `categorySchema`                   | Category union             | `z.enum(CATEGORIES)` bridge     |
+| `agentNameSchema`                  | AgentName union            | `z.enum(AGENT_NAMES)` bridge    |
+| `skillSlugSchema`                  | SkillSlug union            | `z.enum(SKILL_SLUGS)` bridge    |
+| `skillIdSchema`                    | SkillId membership         | `.refine()` against `SKILL_IDS` |
+| `categoryPathSchema`               | CategoryPath               | Custom refine + enum            |
+| `skillFrontmatterLoaderSchema`     | SKILL.md frontmatter       | Lenient object                  |
+| `skillMetadataLoaderSchema`        | metadata.yaml              | `.passthrough()` + superRefine  |
+| `projectConfigLoaderSchema`        | .claude-src/config.ts      | `.passthrough()`                |
+| `projectSourceConfigSchema`        | Source config              | `.passthrough()`                |
+| `skillCategoriesFileSchema`        | skill-categories.ts        | `z.object()`                    |
+| `skillRulesFileSchema`             | skill-rules.ts             | `z.object()`                    |
+| `stacksConfigSchema`               | stacks.ts                  | `z.object()`                    |
+| `marketplaceSchema`                | marketplace.json           | Bridge pattern                  |
+| `pluginManifestSchema`             | plugin.json                | Bridge pattern                  |
+| `agentYamlConfigSchema`            | agent metadata.yaml        | Bridge pattern                  |
+| `boundSkillSchema`                 | BoundSkill                 | Bridge pattern                  |
+| `settingsFileSchema`               | settings.yaml              | `.passthrough()`                |
+| `importedSkillMetadataSchema`      | Imported skill metadata    | `.passthrough()`                |
+| `localRawMetadataSchema`           | Local skill metadata.yaml  | `.passthrough()` + superRefine  |
+| `localSkillMetadataSchema`         | Local skill forkedFrom     | `.passthrough()`                |
+| `metadataValidationSchema`         | Strict metadata validation | `.strict()`                     |
+| `customMetadataValidationSchema`   | Custom skill metadata      | `z.object()`                    |
+| `agentYamlGenerationSchema`        | Compiled agent output      | `.strict()`                     |
+| `agentFrontmatterValidationSchema` | AGENT.md frontmatter       | `.strict()`                     |
+| `skillFrontmatterValidationSchema` | SKILL.md frontmatter       | `.strict()`                     |
+| `pluginManifestValidationSchema`   | plugin.json strict         | `.strict()`                     |
+| `stackConfigValidationSchema`      | Published stack config     | `.strict()`                     |
 
 Schema bridge pattern: `z.enum(GENERATED_ARRAY) as z.ZodType<UnionType>` ensures Zod output matches TypeScript union types from generated source.
 

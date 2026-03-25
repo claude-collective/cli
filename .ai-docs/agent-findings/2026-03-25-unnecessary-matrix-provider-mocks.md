@@ -30,7 +30,7 @@ However, two related anti-patterns were found involving unnecessary mocking of p
 Both `plugin-settings.test.ts` (line 16) and `plugin-discovery.test.ts` (line 13) mock `getErrorMessage` from `../../utils/errors` by re-implementing its exact logic:
 
 ```typescript
-mockGetErrorMessage: vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e)))
+mockGetErrorMessage: vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e)));
 ```
 
 The real function is a one-liner that does the same thing. Neither test file asserts on `mockGetErrorMessage` calls. The mock serves no purpose -- the real function would work identically with zero side effects.
@@ -42,11 +42,11 @@ The real function is a one-liner that does the same thing. Neither test file ass
 ```typescript
 vi.mock("../../consts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../consts")>()),
-  CLAUDE_DIR: ".claude",           // real value: ".claude"
-  PLUGINS_SUBDIR: "plugins",       // real value: "plugins"
-  MAX_CONFIG_FILE_SIZE: 1048576,   // real value: ONE_MB = 1048576
-  PLUGIN_MANIFEST_DIR: ".claude-plugin",  // real value: ".claude-plugin"
-  PLUGIN_MANIFEST_FILE: "plugin.json",    // real value: "plugin.json"
+  CLAUDE_DIR: ".claude", // real value: ".claude"
+  PLUGINS_SUBDIR: "plugins", // real value: "plugins"
+  MAX_CONFIG_FILE_SIZE: 1048576, // real value: ONE_MB = 1048576
+  PLUGIN_MANIFEST_DIR: ".claude-plugin", // real value: ".claude-plugin"
+  PLUGIN_MANIFEST_FILE: "plugin.json", // real value: "plugin.json"
 }));
 ```
 
@@ -54,11 +54,11 @@ Every value is identical to the real module. This mock adds complexity without c
 
 ### Findings Summary
 
-| Category | Count | Description |
-|----------|-------|-------------|
-| **Should fix** | 3 | Two `getErrorMessage` mocks, one `consts` mock with identical values |
-| **Borderline** | 0 | None found |
-| **Justified** | ~60 | Logger mocks (output suppression + assertion), I/O mocks (fs, network, exec), env-dependent path overrides |
+| Category       | Count | Description                                                                                                |
+| -------------- | ----- | ---------------------------------------------------------------------------------------------------------- |
+| **Should fix** | 3     | Two `getErrorMessage` mocks, one `consts` mock with identical values                                       |
+| **Borderline** | 0     | None found                                                                                                 |
+| **Justified**  | ~60   | Logger mocks (output suppression + assertion), I/O mocks (fs, network, exec), env-dependent path overrides |
 
 ### Should Fix
 

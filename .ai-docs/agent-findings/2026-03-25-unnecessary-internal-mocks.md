@@ -121,6 +121,7 @@ The following patterns were reviewed and found to be properly justified:
 ### Not found (good)
 
 No test files mock:
+
 - `typed-object.ts` (typedEntries, typedKeys)
 - `type-guards.ts` (isDomain, isCategory, etc.)
 - `generated/source-types.ts` or `generated/matrix.ts`
@@ -149,9 +150,9 @@ None -- discovery only (read-only audit).
 ### 3. Specific files to clean up (ordered by impact)
 
 **High priority (WRONG -- remove entirely):**
+
 1. `plugin-settings.test.ts`: Remove `vi.mock("../../utils/errors")` and `vi.mock("../../consts")` entirely
 2. `plugin-discovery.test.ts`: Remove `vi.mock("../../utils/errors")`
 3. `step-settings.test.tsx`: Remove `vi.mock("../../lib/configuration/config.js")`
 
-**Low priority (BORDERLINE -- simplify):**
-4. Consider whether suppression-only logger mocks could use `vi.mock("../../utils/logger")` (bare auto-mock) consistently, instead of the more verbose `vi.mock("...", async (importOriginal) => ({ ...(await importOriginal()), verbose: mockVerbose }))` pattern that creates named mock handles never used in assertions.
+**Low priority (BORDERLINE -- simplify):** 4. Consider whether suppression-only logger mocks could use `vi.mock("../../utils/logger")` (bare auto-mock) consistently, instead of the more verbose `vi.mock("...", async (importOriginal) => ({ ...(await importOriginal()), verbose: mockVerbose }))` pattern that creates named mock handles never used in assertions.
