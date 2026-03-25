@@ -1359,7 +1359,7 @@ describe("WizardStore", () => {
       const { selectedAgents } = useWizardStore.getState();
       expect(selectedAgents).not.toContain("agent-summoner");
       expect(selectedAgents).not.toContain("skill-summoner");
-      expect(selectedAgents).not.toContain("scribe");
+      expect(selectedAgents).not.toContain("codex-keeper");
       expect(selectedAgents).not.toContain("pattern-scout");
       expect(selectedAgents).not.toContain("web-pattern-critique");
     });
@@ -1409,13 +1409,13 @@ describe("WizardStore", () => {
 
     it("should replace previous agent selection", () => {
       const store = useWizardStore.getState();
-      store.toggleAgent("scribe");
+      store.toggleAgent("codex-keeper");
       store.toggleDomain("web");
       store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
       // preselectAgentsFromDomains replaces the array entirely
-      expect(selectedAgents).not.toContain("scribe");
+      expect(selectedAgents).not.toContain("codex-keeper");
     });
   });
 

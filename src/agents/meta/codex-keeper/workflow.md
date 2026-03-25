@@ -53,7 +53,7 @@
 **BEFORE creating or validating ANY documentation:**
 
 1. **Understand the documentation map**
-   - Read `.claude/docs/DOCUMENTATION_MAP.md` if it exists
+   - Read `.ai-docs/DOCUMENTATION_MAP.md` if it exists
    - Identify what's documented vs undocumented
    - Check status of existing documentation
    - Determine your target area for this session
@@ -139,7 +139,7 @@ Only proceed when you have verified requirements are met.
 
 ```bash
 # Check if map exists
-if [ -f .claude/docs/DOCUMENTATION_MAP.md ]; then
+if [ -f .ai-docs/DOCUMENTATION_MAP.md ]; then
   # Read and assess
 else
   # Create new map
@@ -201,9 +201,9 @@ After generating documentation, add a reference to the project's CLAUDE.md so ot
 ```markdown
 ## Generated Documentation
 
-> AI-optimized documentation created by the scribe agent.
+> AI-optimized documentation created by the codex-keeper agent.
 
-- **Documentation Index:** `.claude/docs/DOCUMENTATION_MAP.md`
+- **Documentation Index:** `.ai-docs/DOCUMENTATION_MAP.md`
 - **Last Updated:** [current date]
 ```
 
@@ -831,7 +831,7 @@ EditorPage imports:
 
 ## Documentation Map Structure
 
-**File:** `.claude/docs/DOCUMENTATION_MAP.md`
+**File:** `.ai-docs/DOCUMENTATION_MAP.md`
 
 ```markdown
 # Documentation Map
@@ -849,17 +849,17 @@ EditorPage imports:
 - ⏳ Planned
 - ❌ Not started
 
-## Documentation Status
+## Reference Documentation
 
-| Area               | Status | File                    | Last Updated | Next Action         |
-| ------------------ | ------ | ----------------------- | ------------ | ------------------- |
-| Store/State Map    | ✅     | `store-map.md`          | 2025-01-24   | Validate in 7 days  |
-| Anti-Patterns      | 📝     | `anti-patterns.md`      | 2025-01-20   | Needs validation    |
-| Editor Feature     | ✅     | `features/editor.md`    | 2025-01-24   | None                |
-| Component Patterns | 📝     | `component-patterns.md` | 2025-01-18   | Validate patterns   |
-| User Flows         | 🔄     | `user-flows.md`         | 2025-01-24   | Add checkout flow   |
-| Auth Feature       | ⏳     | -                       | -            | Start documentation |
-| API Routes Map     | ❌     | -                       | -            | Not started         |
+| Area               | Status | File                              | Last Updated | Next Action         |
+| ------------------ | ------ | --------------------------------- | ------------ | ------------------- |
+| Store/State Map    | ✅     | `reference/store-map.md`          | 2025-01-24   | Validate in 7 days  |
+| Anti-Patterns      | 📝     | `reference/anti-patterns.md`      | 2025-01-20   | Needs validation    |
+| Editor Feature     | ✅     | `reference/features/editor.md`    | 2025-01-24   | None                |
+| Component Patterns | 📝     | `reference/component-patterns.md` | 2025-01-18   | Validate patterns   |
+| User Flows         | 🔄     | `reference/user-flows.md`         | 2025-01-24   | Add checkout flow   |
+| Auth Feature       | ⏳     | -                                 | -            | Start documentation |
+| API Routes Map     | ❌     | -                                 | -            | Not started         |
 
 ## Priority Queue
 
@@ -1063,12 +1063,12 @@ This preserves context window while ensuring thorough documentation.
 
 ```bash
 # Check if docs directory exists
-if [ ! -d .claude/docs ]; then
-  mkdir -p .claude/docs
+if [ ! -d .ai-docs ]; then
+  mkdir -p .ai-docs
 fi
 
 # Check if map exists
-if [ ! -f .claude/docs/DOCUMENTATION_MAP.md ]; then
+if [ ! -f .ai-docs/DOCUMENTATION_MAP.md ]; then
   # Create initial map by surveying codebase
   # Use Glob to find major areas
   # Initialize status as "not started"
@@ -1104,23 +1104,48 @@ fi
 
 ## Output Location Standards
 
-**All documentation goes in:** `.claude/docs/`
+**All documentation goes in:** `.ai-docs/`
 
 **Structure:**
 
 ```
-.claude/docs/
+.ai-docs/
 ├── DOCUMENTATION_MAP.md           # Master index
-├── store-map.md                   # State management
-├── anti-patterns.md               # Things to avoid
-├── component-patterns.md          # Component conventions
-├── user-flows.md                  # User workflows
-├── component-relationships.md     # How components relate
-└── features/
-    ├── editor.md                  # Feature-specific docs
-    ├── auth.md
-    └── checkout.md
+├── reference/                     # Descriptive — "how things work" (codex-keeper's domain)
+│   ├── architecture-overview.md
+│   ├── commands.md
+│   ├── type-system.md
+│   ├── store-map.md
+│   ├── component-patterns.md
+│   ├── utilities.md
+│   ├── test-infrastructure.md
+│   └── features/
+│       ├── compilation-pipeline.md
+│       ├── configuration.md
+│       ├── wizard-flow.md
+│       ├── skills-and-matrix.md
+│       └── plugin-system.md
+└── standards/                     # Prescriptive — "how to write code" (convention-keeper's domain)
+    ├── clean-code-standards.md
+    ├── e2e-testing-bible.md
+    ├── e2e/
+    │   ├── README.md
+    │   ├── assertions.md
+    │   ├── anti-patterns.md
+    │   ├── page-objects.md
+    │   ├── patterns.md
+    │   ├── test-data.md
+    │   └── test-structure.md
+    ├── prompt-bible.md
+    ├── loop-prompts-bible.md
+    ├── skill-atomicity-bible.md
+    ├── skill-atomicity-primer.md
+    ├── typescript-types-bible.md
+    ├── documentation-bible.md
+    └── commit-protocol.md
 ```
+
+**Scope split:** You (codex-keeper) create and validate files in `reference/`. The convention-keeper agent manages `standards/`. Do not create or modify files in `standards/`.
 
 **File naming:**
 

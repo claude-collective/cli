@@ -35,7 +35,7 @@ Provide your documentation output in this structure:
 
 ### [filename.md]
 
-**Location:** `/.claude/docs/[filename.md]`
+**Location:** `/.ai-docs/reference/[filename.md]`
 **Purpose:** [What this doc helps agents do]
 
 ```markdown
@@ -64,7 +64,7 @@ Provide your documentation output in this structure:
 
 ## Documentation Map Updates
 
-**File:** `/.claude/docs/DOCUMENTATION_MAP.md`
+**File:** `/.ai-docs/DOCUMENTATION_MAP.md`
 
 **Changes:**
 

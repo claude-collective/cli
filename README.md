@@ -27,16 +27,26 @@ npx @agents-inc/cli init
   <img src="screenshots/stack-selection.png" alt="Stack selection" width="500">
 </p>
 
-Choose a pre-built stack or start from scratch. Stacks pre-select skills and agents for common tech combinations.
+Choose from 16 pre-built stacks or start from scratch. Stacks pre-select skills and agents for common tech combinations.
 
-| Stack              | Technologies                                                       |
-| ------------------ | ------------------------------------------------------------------ |
-| `nextjs-fullstack` | Next.js + React + Hono + Drizzle + PostHog + Zustand + React Query |
-| `angular-stack`    | Angular 19 + Signals + NgRx SignalStore + Hono + Drizzle           |
-| `vue-stack`        | Vue 3 Composition API + Pinia + Hono + Drizzle                     |
-| `nuxt-stack`       | Nuxt + Vue 3 full-stack + Pinia + Hono + Drizzle                   |
-| `remix-stack`      | Remix + React + Hono + Drizzle                                     |
-| `solidjs-stack`    | SolidJS + Hono + Drizzle                                           |
+| Stack                      | Technologies                                     |
+| -------------------------- | ------------------------------------------------ |
+| `nextjs-fullstack`         | Next.js + React + Hono + Drizzle + Better Auth + Zustand |
+| `nextjs-t3-stack`          | Next.js + tRPC + Prisma + NextAuth + Tailwind    |
+| `nextjs-supabase-fullstack`| Next.js + Supabase + Drizzle + Better Auth       |
+| `nextjs-turborepo-fullstack`| Next.js + Turborepo + pnpm Workspaces + Hono + Drizzle |
+| `nextjs-ai-saas`           | Next.js + Vercel AI + Anthropic + Drizzle + Pinecone |
+| `nextjs-saas-starter`      | Next.js + Better Auth + Stripe + Drizzle + Resend + PostHog |
+| `react-old-school`         | React + Redux Toolkit + SCSS Modules + Vite + Vitest |
+| `react-hono-fullstack`     | React + Vite + Hono + Drizzle + Better Auth      |
+| `remix-fullstack`          | Remix + Hono + Drizzle + Better Auth             |
+| `sveltekit-fullstack`      | SvelteKit + Hono + Drizzle + Better Auth         |
+| `solidjs-fullstack`        | SolidJS + Hono + Drizzle + Better Auth + Vitest  |
+| `astro-content-fullstack`  | Astro + Hono + Drizzle                           |
+| `vue-modern-fullstack`     | Vue 3 + Pinia + Hono + Drizzle + Better Auth     |
+| `nuxt-fullstack`           | Nuxt + Hono + Drizzle + Better Auth              |
+| `angular-modern-fullstack` | Angular + NgRx + Hono + Drizzle + Better Auth    |
+| `expo-mobile-fullstack`    | Expo + React Native + Zustand + React Query + Hono + Drizzle |
 
 <p align="center">
   <img src="screenshots/skill-selection.png" alt="Skill selection" width="500">
@@ -65,11 +75,16 @@ After init, use `agentsinc edit` to change selections and `agentsinc compile` to
 
 ## Skills
 
-**Web:** React, Vue, Angular, Next.js, Remix, Nuxt, SolidJS, Tailwind, Zustand, Vitest, Playwright, and more
-**API:** Hono, Express, Drizzle, Prisma, PostHog, and more
+154 skills across 8 domains:
+
+**Web:** React, Vue, Angular, Svelte, SolidJS, Next.js, Remix, Nuxt, SvelteKit, Astro, Qwik, Tailwind, SCSS Modules, Zustand, Redux, Pinia, Vitest, Playwright, Storybook, and more
+**API:** Hono, Express, Fastify, NestJS, Elysia, Drizzle, Prisma, PostgreSQL, MongoDB, Redis, Stripe, and more
+**AI:** Anthropic SDK, OpenAI SDK, Vercel AI SDK, LangChain, LlamaIndex, Pinecone, ChromaDB, and more
 **Mobile:** React Native, Expo
 **CLI:** Commander, oclif + Ink
-**Shared:** Turborepo, Code Reviewing, Auth Security, and more
+**Infra:** Docker, GitHub Actions, Cloudflare Workers
+**Shared:** Turborepo, ESLint + Prettier, Code Reviewing, Auth Security, and more
+**Meta:** Research Methodology, CLI Reviewing
 
 Browse the full catalog on the [Plugin Marketplace](https://github.com/agents-inc/skills).
 
@@ -83,7 +98,7 @@ Browse the full catalog on the [Plugin Marketplace](https://github.com/agents-in
 | Researchers      | `web-researcher` `api-researcher`                                  |
 | Planning         | `web-pm`                                                           |
 | Pattern Analysis | `pattern-scout` `web-pattern-critique`                             |
-| Documentation    | `scribe`                                                           |
+| Documentation    | `codex-keeper`                                                     |
 | Meta             | `skill-summoner` `agent-summoner` `convention-keeper`              |
 
 Each subagent is composed from modular partials (role, workflow, output format) plus its assigned skills. Everything is ejectable.
@@ -120,14 +135,11 @@ Each subagent is composed from modular partials (role, workflow, output format) 
 
 ### Configuration
 
-| Command                | Description                        |
-| ---------------------- | ---------------------------------- |
-| `config`               | Show config overview               |
-| `config get`           | Get a config value                 |
-| `config show`          | Display all resolved config values |
-| `config path`          | Show config file paths             |
-| `config set-project`   | Set a project config value         |
-| `config unset-project` | Remove a project config value      |
+| Command       | Description                        |
+| ------------- | ---------------------------------- |
+| `config`      | Show config overview               |
+| `config show` | Display all resolved config values |
+| `config path` | Show config file paths             |
 
 ### Diagnostics
 

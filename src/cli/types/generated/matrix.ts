@@ -5791,7 +5791,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "cli-framework": ["cli-framework-cli-commander"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "web-meta-framework": ["web-meta-framework-nextjs"],
           "web-styling": ["web-styling-scss-modules"],
@@ -5942,7 +5942,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "api-auth": ["api-auth-nextauth"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "web-meta-framework": ["web-meta-framework-nextjs"],
           "web-styling": ["web-styling-tailwind"],
@@ -6171,7 +6171,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "cli-framework": ["cli-framework-cli-commander"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "web-meta-framework": ["web-meta-framework-nextjs"],
           "web-styling": ["web-styling-scss-modules"],
@@ -6425,7 +6425,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "meta-reviewing": ["meta-reviewing-reviewing"],
           "shared-monorepo": ["shared-monorepo-turborepo", "shared-monorepo-pnpm-workspaces"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "web-meta-framework": ["web-meta-framework-nextjs"],
           "web-styling": ["web-styling-scss-modules"],
@@ -6547,7 +6547,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "web-testing": ["web-testing-vitest"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "web-client-state": ["web-state-redux-toolkit"],
           "web-styling": ["web-styling-scss-modules"],
@@ -6755,7 +6755,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "cli-framework": ["cli-framework-cli-commander"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "web-styling": ["web-styling-scss-modules"],
           "web-client-state": ["web-state-zustand"],
@@ -6906,7 +6906,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "api-observability": ["api-observability-axiom-pino-sentry"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "web-meta-framework": ["web-meta-framework-remix"],
           "web-testing": ["web-testing-vitest"],
@@ -7042,7 +7042,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "api-observability": ["api-observability-axiom-pino-sentry"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-svelte"],
           "web-meta-framework": ["web-meta-framework-sveltekit"],
           "web-testing": ["web-testing-vitest"],
@@ -7170,7 +7170,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "api-observability": ["api-observability-axiom-pino-sentry"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-solidjs"],
           "web-testing": ["web-testing-vitest"],
           "api-api": ["api-framework-hono"],
@@ -7296,7 +7296,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "api-cms": ["api-cms-sanity"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-meta-framework": ["web-meta-framework-astro"],
           "web-testing": ["web-testing-vitest"],
           "api-api": ["api-framework-hono"],
@@ -7430,7 +7430,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "api-observability": ["api-observability-axiom-pino-sentry"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-vue-composition-api"],
           "web-client-state": ["web-state-pinia"],
           "web-testing": ["web-testing-vitest"],
@@ -7574,7 +7574,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "api-observability": ["api-observability-axiom-pino-sentry"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-vue-composition-api"],
           "web-meta-framework": ["web-meta-framework-nuxt"],
           "web-client-state": ["web-state-pinia"],
@@ -7712,7 +7712,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "api-observability": ["api-observability-axiom-pino-sentry"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-angular-standalone"],
           "web-client-state": ["web-state-ngrx-signalstore"],
           "web-testing": ["web-testing-vitest"],
@@ -7958,7 +7958,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "cli-framework": ["cli-framework-cli-commander"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "web-meta-framework": ["web-meta-framework-nextjs"],
           "web-styling": ["web-styling-tailwind"],
@@ -8210,7 +8210,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "cli-framework": ["cli-framework-cli-commander"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "web-meta-framework": ["web-meta-framework-nextjs"],
           "web-styling": ["web-styling-tailwind"],
@@ -8426,7 +8426,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           "cli-framework": ["cli-framework-cli-commander"],
           "meta-reviewing": ["meta-reviewing-reviewing"],
         },
-        scribe: {
+        "codex-keeper": {
           "web-framework": ["web-framework-react"],
           "mobile-framework": ["mobile-framework-expo", "mobile-framework-react-native"],
           "web-client-state": ["web-state-zustand"],

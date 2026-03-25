@@ -195,7 +195,7 @@ export const defaultStacks: Stack[] = [
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
@@ -313,7 +313,7 @@ export const defaultStacks: Stack[] = [
         "api-auth": [{ id: "api-auth-nextauth", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
@@ -521,7 +521,7 @@ export const defaultStacks: Stack[] = [
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
@@ -785,7 +785,7 @@ export const defaultStacks: Stack[] = [
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
         ],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
@@ -879,7 +879,7 @@ export const defaultStacks: Stack[] = [
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-client-state": [{ id: "web-state-redux-toolkit", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
@@ -1068,7 +1068,7 @@ export const defaultStacks: Stack[] = [
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         "web-client-state": [{ id: "web-state-zustand", preloaded: false }],
@@ -1187,7 +1187,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-remix", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -1303,7 +1303,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-svelte", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-sveltekit", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -1411,7 +1411,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-solidjs", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -1518,7 +1518,7 @@ export const defaultStacks: Stack[] = [
         "api-cms": [{ id: "api-cms-sanity", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-meta-framework": [{ id: "web-meta-framework-astro", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -1633,7 +1633,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -1757,7 +1757,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nuxt", preloaded: false }],
         "web-client-state": [{ id: "web-state-pinia", preloaded: false }],
@@ -1874,7 +1874,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-angular-standalone", preloaded: false }],
         "web-client-state": [{ id: "web-state-ngrx-signalstore", preloaded: false }],
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -2099,7 +2099,7 @@ export const defaultStacks: Stack[] = [
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
@@ -2317,7 +2317,7 @@ export const defaultStacks: Stack[] = [
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "web-meta-framework": [{ id: "web-meta-framework-nextjs", preloaded: false }],
         "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
@@ -2518,7 +2518,7 @@ export const defaultStacks: Stack[] = [
         "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
-      scribe: {
+      "codex-keeper": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
         "mobile-framework": [
           { id: "mobile-framework-expo", preloaded: false },

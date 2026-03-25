@@ -383,7 +383,7 @@ describe("config-generator", () => {
 
       expect(config.stack?.["agent-summoner"]).toBeUndefined();
       expect(config.stack?.["skill-summoner"]).toBeUndefined();
-      expect(config.stack?.["scribe"]).toBeUndefined();
+      expect(config.stack?.["codex-keeper"]).toBeUndefined();
     });
 
     it("returns empty agents when selectedAgents is not provided", () => {

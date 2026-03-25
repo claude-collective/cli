@@ -436,7 +436,7 @@ Boundaries:
 - `researcher/` - Read-only research agents (web-researcher, api-researcher)
 - `planning/` - Planning agents (web-pm)
 - `pattern/` - Pattern discovery agents (pattern-scout, web-pattern-critique)
-- `meta/` - Meta-level agents (agent-summoner, skill-summoner, scribe, convention-keeper)
+- `meta/` - Meta-level agents (agent-summoner, skill-summoner, codex-keeper, convention-keeper)
 - `tester/` - Testing agents (web-tester, cli-tester)
 
 **Directory structure:**
@@ -1501,7 +1501,7 @@ Output formats are determined by the file system with cascading resolution:
 | planning   | web-pm, web-architecture                                  |
 | tester     | web-tester, cli-tester                                    |
 | pattern    | pattern-scout, web-pattern-critique                       |
-| meta       | scribe, agent-summoner, skill-summoner, convention-keeper |
+| meta       | codex-keeper, agent-summoner, skill-summoner, convention-keeper |
 
 ---
 
