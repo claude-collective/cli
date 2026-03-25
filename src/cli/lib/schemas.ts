@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { KEBAB_CASE_PATTERN } from "../consts";
 import { warn } from "../utils/logger";
-import { SKILL_SLUGS, CATEGORIES, DOMAINS, AGENT_NAMES } from "../types/generated/source-types";
+import {
+  SKILL_IDS,
+  SKILL_SLUGS,
+  CATEGORIES,
+  DOMAINS,
+  AGENT_NAMES,
+} from "../types/generated/source-types";
 import type {
   AgentHookAction,
   AgentHookDefinition,
@@ -75,15 +81,12 @@ export const permissionModeSchema = z.enum([
 
 export const skillSlugSchema = z.enum(SKILL_SLUGS) as z.ZodType<SkillSlug>;
 
-/** Matches SkillId format: prefix-category-name (at least 3 dash-separated segments) */
-export const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security|shared)-.+-.+$/;
-
-// Regex-based since Zod cannot express template literal types natively
+// Validated against the generated SKILL_IDS array — no regex needed
 export const skillIdSchema = z
   .string()
-  .regex(
-    SKILL_ID_PATTERN,
-    "Must be a valid skill ID (e.g., 'web-framework-react')",
+  .refine(
+    (val): val is SkillId => (SKILL_IDS as readonly string[]).includes(val),
+    "Must be a known skill ID (e.g., 'web-framework-react')",
   ) as z.ZodType<SkillId>;
 
 /** Validates category: strict categoryPathSchema by default, any kebab-case string when custom: true */
@@ -112,12 +115,11 @@ function validateCategoryField(
   }
 }
 
-// Accepts: "prefix-category", bare category, "local", or any kebab-case string
+// Accepts: known category, "local", or any kebab-case string (custom categories)
 export const categoryPathSchema = z.string().refine(
   (val): val is CategoryPath => {
     if (val === "local") return true;
-    if (/^(web|api|cli|mobile|infra|meta|security|shared)-.+$/.test(val)) return true;
-    if (categorySchema.safeParse(val).success) return true;
+    if ((CATEGORIES as readonly string[]).includes(val)) return true;
     // Accept any kebab-case string for custom categories
     return KEBAB_CASE_PATTERN.test(val);
   },
@@ -392,8 +394,8 @@ export const localSkillMetadataSchema = z
   .object({
     forkedFrom: z
       .object({
-        /** Original skill ID before forking (e.g., "web-framework-react") */
-        skillId: skillIdSchema,
+        /** Original skill ID before forking — lenient (any string) since custom/extra-source skills have non-builtin IDs */
+        skillId: z.string() as z.ZodType<SkillId>,
         /** SHA hash of the original content at fork time (for diff detection) */
         contentHash: z.string(),
         /** ISO date when the fork was created */

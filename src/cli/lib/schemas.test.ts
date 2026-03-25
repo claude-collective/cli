@@ -9,9 +9,9 @@ import {
   metadataValidationSchema,
   projectConfigLoaderSchema,
   projectSourceConfigSchema,
+  skillIdSchema,
   skillMetadataLoaderSchema,
   skillCategoriesFileSchema,
-  SKILL_ID_PATTERN,
   validateNestingDepth,
   warnUnknownFields,
 } from "./schemas";
@@ -364,20 +364,18 @@ describe("projectSourceConfigSchema with branding", () => {
   });
 });
 
-describe("SKILL_ID_PATTERN", () => {
-  it("should match valid built-in skill IDs with 3+ segments", () => {
-    expect(SKILL_ID_PATTERN.test("web-framework-react")).toBe(true);
-    expect(SKILL_ID_PATTERN.test("api-database-drizzle")).toBe(true);
-    expect(SKILL_ID_PATTERN.test("meta-methodology-anti-over-engineering")).toBe(true);
+describe("skillIdSchema", () => {
+  it("should accept valid built-in skill IDs", () => {
+    expect(skillIdSchema.safeParse("web-framework-react").success).toBe(true);
+    expect(skillIdSchema.safeParse("api-database-drizzle").success).toBe(true);
+    expect(skillIdSchema.safeParse("meta-methodology-research-methodology").success).toBe(true);
+    expect(skillIdSchema.safeParse("ai-provider-anthropic-sdk").success).toBe(true);
   });
 
-  it("should reject IDs without a valid prefix", () => {
-    expect(SKILL_ID_PATTERN.test("acme-pipeline-deploy")).toBe(false);
-    expect(SKILL_ID_PATTERN.test("custom-skill-name")).toBe(false);
-  });
-
-  it("should reject IDs with only 2 segments", () => {
-    expect(SKILL_ID_PATTERN.test("web-framework")).toBe(false);
+  it("should reject IDs not in the generated SKILL_IDS list", () => {
+    expect(skillIdSchema.safeParse("acme-pipeline-deploy").success).toBe(false);
+    expect(skillIdSchema.safeParse("custom-skill-name").success).toBe(false);
+    expect(skillIdSchema.safeParse("web-framework").success).toBe(false);
   });
 });
 
