@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.84.0] - 2026-03-25
+
+**Documentation restructure, scribe → codex-keeper rename**
+
+- Consolidated all AI docs under `.ai-docs/{reference,standards,agent-findings}`
+- Renamed `scribe` agent to `codex-keeper` across entire codebase
+- Updated README with current 16-stack catalog and 154-skill listing
+
+See [changelogs/0.84.0.md](./changelogs/0.84.0.md) for full details.
+
 ## [0.83.0] - 2026-03-25
 
 **Inline global config in project config, multi-skill category fix, SkillAssignment[] arrays**
