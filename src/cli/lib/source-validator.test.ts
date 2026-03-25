@@ -129,57 +129,6 @@ describe("source-validator", () => {
       });
     });
 
-    describe("category domain-prefixed pattern", () => {
-      it("should not warn for valid domain-prefixed categories", () => {
-        const validCategories = [
-          "web-framework",
-          "api-database",
-          "cli-framework",
-          "mobile-ui",
-          "infra-ci-cd",
-          "meta-methodology",
-          "security-auth",
-          "shared-tooling",
-        ];
-
-        for (const category of validCategories) {
-          const metadata = { displayName: DIR_NAME, category };
-          const issues = validateMetadataConventions({}, metadata, REL_PATH, DIR_NAME);
-          const catIssues = issues.filter((i) => i.message.includes("domain-prefixed pattern"));
-          expect(catIssues).toHaveLength(0);
-        }
-      });
-
-      it("should warn for categories without domain prefix", () => {
-        const metadata = { displayName: DIR_NAME, category: "framework" };
-
-        const issues = validateMetadataConventions({}, metadata, REL_PATH, DIR_NAME);
-
-        const catIssues = issues.filter((i) => i.message.includes("domain-prefixed pattern"));
-        expect(catIssues).toHaveLength(1);
-        expect(catIssues[0]?.severity).toBe("warning");
-        expect(catIssues[0]?.message).toContain("framework");
-      });
-
-      it("should warn for categories with unknown domain prefix", () => {
-        const metadata = { displayName: DIR_NAME, category: "unknown-domain" };
-
-        const issues = validateMetadataConventions({}, metadata, REL_PATH, DIR_NAME);
-
-        const catIssues = issues.filter((i) => i.message.includes("domain-prefixed pattern"));
-        expect(catIssues).toHaveLength(1);
-      });
-
-      it("should not warn for empty category", () => {
-        const metadata = { displayName: DIR_NAME, category: "" };
-
-        const issues = validateMetadataConventions({}, metadata, REL_PATH, DIR_NAME);
-
-        const catIssues = issues.filter((i) => i.message.includes("domain-prefixed pattern"));
-        expect(catIssues).toHaveLength(0);
-      });
-    });
-
     it("should set file path on all reported issues", () => {
       const rawMetadata = { display_name: "Mismatched" };
       const metadata = { displayName: "Mismatched", category: "bad-category" };

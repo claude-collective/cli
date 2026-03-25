@@ -66,26 +66,12 @@ describe("source-switcher", () => {
       expect(remove).not.toHaveBeenCalled();
     });
 
-    it("blocks skill ID with uppercase characters", async () => {
-      await deleteLocalSkill("/project", "Not-Valid-Id" as SkillId);
-
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
-      expect(remove).not.toHaveBeenCalled();
-    });
-
-    it("blocks skill ID starting with a number", async () => {
-      await deleteLocalSkill("/project", "123-invalid" as SkillId);
-
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
-      expect(remove).not.toHaveBeenCalled();
-    });
-
-    it("rejects skill IDs without a valid domain prefix", async () => {
-      // "acme-pipeline-deploy" doesn't match SKILL_ID_PATTERN (acme is not a valid domain prefix)
+    it("allows skill IDs that pass security checks regardless of format", async () => {
+      // validateSkillId only checks for filesystem security (null bytes, traversal, slashes)
+      // Format validation (domain prefix, casing) is handled by Zod schemas at parse boundaries
       await deleteLocalSkill("/project", "acme-pipeline-deploy" as SkillId);
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
-      expect(remove).not.toHaveBeenCalled();
+      expect(remove).toHaveBeenCalled();
     });
   });
 });
