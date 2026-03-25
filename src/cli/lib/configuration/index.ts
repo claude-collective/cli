@@ -25,7 +25,6 @@ export {
   type ProjectConfigOptions,
   generateProjectConfigFromSkills,
   buildStackProperty,
-  compactStackForYaml,
 } from "./config-generator";
 
 export {

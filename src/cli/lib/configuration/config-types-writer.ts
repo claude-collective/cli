@@ -119,16 +119,16 @@ function formatSkillUnion(skills: SkillId[]): string {
 
 /**
  * Generates a per-category constrained StackAgentConfig type from skill-by-category groupings.
- * Falls back to the loose `Partial<Record<Category, SkillAssignment>>` when no categories have skills.
+ * Falls back to the loose `Partial<Record<Category, SkillAssignment[]>>` when no categories have skills.
  */
 function generateStackAgentConfig(skillsByCategory: Map<Category, SkillId[]>): string {
   if (skillsByCategory.size === 0) {
-    return "export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;";
+    return "export type StackAgentConfig = Partial<Record<Category, SkillAssignment[]>>;";
   }
 
   const properties = [...skillsByCategory.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([category, skills]) => `  "${category}"?: SkillAssignment<${formatSkillUnion(skills)}>;`);
+    .map(([category, skills]) => `  "${category}"?: SkillAssignment<${formatSkillUnion(skills)}>[];`);
 
   return ["export type StackAgentConfig = {", ...properties, "};"].join("\n");
 }
@@ -539,7 +539,7 @@ export type Domain = ${domainUnion};
 export type Category = ${categoryUnion};
 
 ${PROJECT_CONFIG_TYPES_BEFORE}
-export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;
+export type StackAgentConfig = Partial<Record<Category, SkillAssignment[]>>;
 
 ${PROJECT_CONFIG_INTERFACE_AFTER}`;
 }
