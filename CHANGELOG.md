@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.85.0] - 2026-03-25
+
+**Exclusive incompatibility markers, filter deselection, declarative test data**
+
+- Incompatibility markers suppressed in exclusive (radio) categories (D-132)
+- Filter Incompatible toggle now deselects incompatible skills (D-116)
+- Grid-aware `selectSkill` in E2E infrastructure, test data extracted to named constants
+
+See [changelogs/0.85.0.md](./changelogs/0.85.0.md) for full details.
+
 ## [0.84.1] - 2026-03-25
 
 **Replace SKILL_ID_PATTERN with generated data**
