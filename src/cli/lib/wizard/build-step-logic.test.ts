@@ -1,8 +1,26 @@
 import { describe, it, expect } from "vitest";
 import { validateBuildStep, buildCategoriesForDomain } from "./build-step-logic";
-import { createMockMatrix, createMockSkill, SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
+import {
+  BUILD_STEP_ADVISORY_STATES_MATRIX,
+  BUILD_STEP_API_DB_MATRIX,
+  BUILD_STEP_CONFLICTS_EXCLUSIVE_MATRIX,
+  BUILD_STEP_CONFLICTS_NON_EXCLUSIVE_MATRIX,
+  BUILD_STEP_DISPLAY_NAME_MATRIX,
+  BUILD_STEP_EMPTY_FRAMEWORK_MATRIX,
+  BUILD_STEP_FRAMEWORK_API_MATRIX,
+  BUILD_STEP_FRAMEWORK_NO_FLAGS_MATRIX,
+  BUILD_STEP_FRAMEWORK_NON_EXCLUSIVE_MATRIX,
+  BUILD_STEP_FRAMEWORK_ONLY_MATRIX,
+  BUILD_STEP_LOCAL_SKILL_MATRIX,
+  BUILD_STEP_NON_LOCAL_MATRIX,
+  BUILD_STEP_REQUIRES_MATRIX,
+  BUILD_STEP_SORTING_MATRIX,
+  BUILD_STEP_UNDEFINED_ORDER_MATRIX,
+  BUILD_STEP_UNIVERSAL_COMPAT_MATRIX,
+  BUILD_STEP_WEB_MATRIX,
+} from "../__tests__/mock-data/mock-matrices";
 import type { CategoryRow } from "../../components/wizard/category-grid";
-import type { SkillId, Category, CategorySelections, CategoryDefinition } from "../../types";
+import type { SkillId, Category, CategorySelections } from "../../types";
 import type { SkillConfig } from "../../types/config";
 import { initializeMatrix } from "../matrix/matrix-provider";
 
@@ -111,22 +129,8 @@ describe("buildCategoriesForDomain", () => {
   const frameworkCategory: Category = "web-framework";
   const stateCategory: Category = "web-client-state";
 
-  function createMatrix() {
-    return createMockMatrix(SKILLS.react, SKILLS.vue, SKILLS.zustand, SKILLS.pinia, {
-      categories: {
-        [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
-        [stateCategory]: {
-          ...TEST_CATEGORIES.clientState,
-          displayName: "State Management",
-          order: 1,
-        },
-      } as Record<Category, CategoryDefinition>,
-    });
-  }
-
   it("should return categories with options for the given domain", () => {
-    const matrix = createMatrix();
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_WEB_MATRIX);
     const result = buildCategoriesForDomain("web", [], {});
 
     expect(result).toHaveLength(2);
@@ -135,23 +139,14 @@ describe("buildCategoriesForDomain", () => {
   });
 
   it("should filter categories with no options", () => {
-    const emptyMatrix = createMockMatrix(
-      {},
-      {
-        categories: {
-          [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
-        } as Record<Category, CategoryDefinition>,
-      },
-    );
-    initializeMatrix(emptyMatrix);
+    initializeMatrix(BUILD_STEP_EMPTY_FRAMEWORK_MATRIX);
 
     const result = buildCategoriesForDomain("web", [], {});
     expect(result).toHaveLength(0);
   });
 
   it("should sort categories by order", () => {
-    const matrix = createMatrix();
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_WEB_MATRIX);
     const result = buildCategoriesForDomain("web", [], {});
 
     expect(result[0].id).toBe(frameworkCategory);
@@ -159,8 +154,7 @@ describe("buildCategoriesForDomain", () => {
   });
 
   it("should show all skills regardless of framework selection when filtering is off", () => {
-    const matrix = createMatrix();
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
     // With React selected, all state skills still show (no filtering)
     const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
@@ -172,8 +166,7 @@ describe("buildCategoriesForDomain", () => {
   });
 
   it("should mark installed skills", () => {
-    const matrix = createMatrix();
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_WEB_MATRIX);
     const installedSkillIds: SkillId[] = ["web-framework-react"];
 
     const result = buildCategoriesForDomain("web", [], {}, installedSkillIds);
@@ -189,8 +182,7 @@ describe("buildCategoriesForDomain", () => {
   });
 
   it("should mark all skills as not installed when no installed IDs provided", () => {
-    const matrix = createMatrix();
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
     const result = buildCategoriesForDomain("web", [], {});
 
@@ -201,8 +193,7 @@ describe("buildCategoriesForDomain", () => {
   });
 
   it("should set scope from skillConfigs", () => {
-    const matrix = createMatrix();
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
     const skillConfigs: SkillConfig[] = [
       { id: "web-framework-react", scope: "global", source: "local" },
@@ -221,8 +212,7 @@ describe("buildCategoriesForDomain", () => {
   });
 
   it("should leave scope undefined when skill not in skillConfigs", () => {
-    const matrix = createMatrix();
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
     const skillConfigs: SkillConfig[] = [
       { id: "web-framework-react", scope: "project", source: "local" },
@@ -238,16 +228,7 @@ describe("buildCategoriesForDomain", () => {
   });
 
   it("should propagate category required and exclusive flags", () => {
-    const matrix = createMockMatrix(SKILLS.react, {
-      categories: {
-        [frameworkCategory]: {
-          ...TEST_CATEGORIES.framework,
-          required: true,
-          exclusive: false,
-        },
-      } as Record<Category, CategoryDefinition>,
-    });
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_FRAMEWORK_NON_EXCLUSIVE_MATRIX);
 
     const result = buildCategoriesForDomain("web", [], {});
 
@@ -256,14 +237,7 @@ describe("buildCategoriesForDomain", () => {
   });
 
   it("should default required to false and exclusive to true when not set", () => {
-    // Omit required and exclusive to test ?? defaulting in buildCategoriesForDomain
-    const { required, exclusive, ...frameworkWithoutFlags } = TEST_CATEGORIES.framework;
-    const matrix = createMockMatrix(SKILLS.react, {
-      categories: {
-        [frameworkCategory]: frameworkWithoutFlags,
-      } as Record<Category, CategoryDefinition>,
-    });
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_FRAMEWORK_NO_FLAGS_MATRIX);
 
     const result = buildCategoriesForDomain("web", [], {});
 
@@ -273,17 +247,7 @@ describe("buildCategoriesForDomain", () => {
 
   it("should only return categories matching the requested domain", () => {
     const apiCategory: Category = "api-api";
-    const matrix = createMockMatrix(SKILLS.react, SKILLS.hono, {
-      categories: {
-        [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
-        [apiCategory]: {
-          ...TEST_CATEGORIES.api,
-          domain: "api" as const,
-          displayName: "API Framework",
-        },
-      } as Record<Category, CategoryDefinition>,
-    });
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_FRAMEWORK_API_MATRIX);
 
     const webResult = buildCategoriesForDomain("web", [], {});
     expect(webResult).toHaveLength(1);
@@ -295,34 +259,15 @@ describe("buildCategoriesForDomain", () => {
   });
 
   it("should return empty array when no categories match the domain", () => {
-    const matrix = createMockMatrix(SKILLS.react, {
-      categories: {
-        [frameworkCategory]: { ...TEST_CATEGORIES.framework },
-      } as Record<Category, CategoryDefinition>,
-    });
-    initializeMatrix(matrix);
+    initializeMatrix(BUILD_STEP_FRAMEWORK_ONLY_MATRIX);
 
     const result = buildCategoriesForDomain("api", [], {});
     expect(result).toHaveLength(0);
   });
 
   describe("framework-first filtering", () => {
-    function createFilterableMatrix() {
-      return createMockMatrix(SKILLS.react, SKILLS.vue, SKILLS.zustand, SKILLS.pinia, {
-        categories: {
-          [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
-          [stateCategory]: {
-            ...TEST_CATEGORIES.clientState,
-            displayName: "State Management",
-            order: 1,
-          },
-        } as Record<Category, CategoryDefinition>,
-      });
-    }
-
     it("should filter incompatible skills when filterIncompatible is true and framework selected", () => {
-      const matrix = createFilterableMatrix();
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
       const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
       const result = buildCategoriesForDomain("web", [], selections, [], [], true);
@@ -337,8 +282,7 @@ describe("buildCategoriesForDomain", () => {
     });
 
     it("should NOT filter the framework category itself", () => {
-      const matrix = createFilterableMatrix();
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
       const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
       const result = buildCategoriesForDomain("web", [], selections, [], [], true);
@@ -352,21 +296,7 @@ describe("buildCategoriesForDomain", () => {
     it("should NOT filter on non-web domains even when filterIncompatible is true", () => {
       const apiCategory: Category = "api-api";
       const apiDbCategory: Category = "api-database";
-      const matrix = createMockMatrix(SKILLS.hono, SKILLS.drizzle, {
-        categories: {
-          [apiCategory]: {
-            ...TEST_CATEGORIES.api,
-            domain: "api" as const,
-            required: true,
-          },
-          [apiDbCategory]: {
-            ...TEST_CATEGORIES.database,
-            domain: "api" as const,
-            order: 1,
-          },
-        } as Record<Category, CategoryDefinition>,
-      });
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_API_DB_MATRIX);
 
       const selections: CategorySelections = { "api-api": ["api-framework-hono"] };
       const result = buildCategoriesForDomain("api", [], selections, [], [], true);
@@ -377,8 +307,7 @@ describe("buildCategoriesForDomain", () => {
     });
 
     it("should NOT filter when no frameworks are selected even with filterIncompatible true", () => {
-      const matrix = createFilterableMatrix();
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
       const result = buildCategoriesForDomain("web", [], {}, [], [], true);
 
@@ -389,20 +318,7 @@ describe("buildCategoriesForDomain", () => {
     });
 
     it("should show skills with empty compatibleWith regardless of framework selection", () => {
-      const universalSkill = createMockSkill("web-state-zustand", {
-        compatibleWith: [],
-      });
-      const matrix = createMockMatrix(SKILLS.react, universalSkill, SKILLS.pinia, {
-        categories: {
-          [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
-          [stateCategory]: {
-            ...TEST_CATEGORIES.clientState,
-            displayName: "State Management",
-            order: 1,
-          },
-        } as Record<Category, CategoryDefinition>,
-      });
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_UNIVERSAL_COMPAT_MATRIX);
 
       const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
       const result = buildCategoriesForDomain("web", [], selections, [], [], true);
@@ -416,8 +332,7 @@ describe("buildCategoriesForDomain", () => {
 
   describe("selected skill state", () => {
     it("should mark skills as selected when in allSelections", () => {
-      const matrix = createMatrix();
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
       const allSelections: SkillId[] = ["web-framework-react"];
       const result = buildCategoriesForDomain("web", allSelections, {});
@@ -433,27 +348,7 @@ describe("buildCategoriesForDomain", () => {
     });
 
     it("should set requiredBy for unselected skills that are required by selected ones", () => {
-      // Create a skill that requires zustand
-      const reactWithRequires = createMockSkill("web-framework-react", {
-        requires: [
-          {
-            skillIds: ["web-state-zustand"],
-            needsAny: false,
-            reason: "Needs Zustand",
-          },
-        ],
-      });
-      const matrix = createMockMatrix(reactWithRequires, SKILLS.zustand, {
-        categories: {
-          [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
-          [stateCategory]: {
-            ...TEST_CATEGORIES.clientState,
-            displayName: "State Management",
-            order: 1,
-          },
-        } as Record<Category, CategoryDefinition>,
-      });
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_REQUIRES_MATRIX);
 
       // React is selected but zustand is not
       const allSelections: SkillId[] = ["web-framework-react"];
@@ -466,26 +361,7 @@ describe("buildCategoriesForDomain", () => {
     });
 
     it("should not set requiredBy for selected skills", () => {
-      const reactWithRequires = createMockSkill("web-framework-react", {
-        requires: [
-          {
-            skillIds: ["web-state-zustand"],
-            needsAny: false,
-            reason: "Needs Zustand",
-          },
-        ],
-      });
-      const matrix = createMockMatrix(reactWithRequires, SKILLS.zustand, {
-        categories: {
-          [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
-          [stateCategory]: {
-            ...TEST_CATEGORIES.clientState,
-            displayName: "State Management",
-            order: 1,
-          },
-        } as Record<Category, CategoryDefinition>,
-      });
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_REQUIRES_MATRIX);
 
       // Both selected
       const allSelections: SkillId[] = ["web-framework-react", "web-state-zustand"];
@@ -500,13 +376,7 @@ describe("buildCategoriesForDomain", () => {
 
   describe("local skills", () => {
     it("should propagate local flag from matrix skill", () => {
-      const localSkill = createMockSkill("web-framework-react", { local: true });
-      const matrix = createMockMatrix(localSkill, {
-        categories: {
-          [frameworkCategory]: { ...TEST_CATEGORIES.framework },
-        } as Record<Category, CategoryDefinition>,
-      });
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_LOCAL_SKILL_MATRIX);
 
       const result = buildCategoriesForDomain("web", [], {});
 
@@ -516,12 +386,7 @@ describe("buildCategoriesForDomain", () => {
     });
 
     it("should leave local undefined for non-local skills", () => {
-      const matrix = createMockMatrix(SKILLS.react, {
-        categories: {
-          [frameworkCategory]: { ...TEST_CATEGORIES.framework },
-        } as Record<Category, CategoryDefinition>,
-      });
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_NON_LOCAL_MATRIX);
 
       const result = buildCategoriesForDomain("web", [], {});
 
@@ -533,15 +398,7 @@ describe("buildCategoriesForDomain", () => {
 
   describe("category displayName", () => {
     it("should use displayName from category definition", () => {
-      const matrix = createMockMatrix(SKILLS.react, {
-        categories: {
-          [frameworkCategory]: {
-            ...TEST_CATEGORIES.framework,
-            displayName: "Web Framework",
-          },
-        } as Record<Category, CategoryDefinition>,
-      });
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_DISPLAY_NAME_MATRIX);
 
       const result = buildCategoriesForDomain("web", [], {});
       expect(result[0].displayName).toBe("Web Framework");
@@ -551,18 +408,7 @@ describe("buildCategoriesForDomain", () => {
   describe("sorting", () => {
     it("should sort categories by ascending order value", () => {
       const stylingCategory: Category = "web-styling";
-      const matrix = createMockMatrix(SKILLS.react, SKILLS.zustand, SKILLS.scss, {
-        categories: {
-          [stateCategory]: {
-            ...TEST_CATEGORIES.clientState,
-            displayName: "State Management",
-            order: 10,
-          },
-          [frameworkCategory]: { ...TEST_CATEGORIES.framework, order: 5 },
-          [stylingCategory]: { ...TEST_CATEGORIES.styling, order: 1 },
-        } as Record<Category, CategoryDefinition>,
-      });
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_SORTING_MATRIX);
 
       const result = buildCategoriesForDomain("web", [], {});
 
@@ -572,25 +418,62 @@ describe("buildCategoriesForDomain", () => {
     });
 
     it("should treat undefined order as 0", () => {
-      // Omit order from framework to test ?? 0 defaulting in buildCategoriesForDomain
-      const { order, ...frameworkWithoutOrder } = TEST_CATEGORIES.framework;
-      const matrix = createMockMatrix(SKILLS.react, SKILLS.zustand, {
-        categories: {
-          [stateCategory]: {
-            ...TEST_CATEGORIES.clientState,
-            displayName: "State Management",
-            order: 1,
-          },
-          [frameworkCategory]: frameworkWithoutOrder,
-        } as Record<Category, CategoryDefinition>,
-      });
-      initializeMatrix(matrix);
+      initializeMatrix(BUILD_STEP_UNDEFINED_ORDER_MATRIX);
 
       const result = buildCategoriesForDomain("web", [], {});
 
       // undefined order is treated as 0, which comes before 1
       expect(result[0].id).toBe(frameworkCategory);
       expect(result[1].id).toBe(stateCategory);
+    });
+  });
+
+  describe("exclusive category incompatibility suppression", () => {
+    it("should neutralize incompatible state in exclusive categories", () => {
+      // React and Vue conflict with each other — selecting React makes Vue incompatible
+      initializeMatrix(BUILD_STEP_CONFLICTS_EXCLUSIVE_MATRIX);
+
+      // React is selected — Vue would normally be "incompatible"
+      const allSelections: SkillId[] = ["web-framework-react"];
+      const result = buildCategoriesForDomain("web", allSelections, {});
+
+      const frameworkRow = result.find((r) => r.id === frameworkCategory);
+      const vueOption = frameworkRow?.options.find(
+        (o) => o.id === "web-framework-vue-composition-api",
+      );
+      // In an exclusive category, incompatible is suppressed to normal
+      expect(vueOption?.state).toStrictEqual({ status: "normal" });
+    });
+
+    it("should preserve incompatible state in non-exclusive categories", () => {
+      // Zustand and Pinia conflict with each other
+      initializeMatrix(BUILD_STEP_CONFLICTS_NON_EXCLUSIVE_MATRIX);
+
+      // Zustand is selected — Pinia should remain incompatible in a non-exclusive category
+      const allSelections: SkillId[] = ["web-state-zustand"];
+      const result = buildCategoriesForDomain("web", allSelections, {});
+
+      const stateRow = result.find((r) => r.id === stateCategory);
+      const piniaOption = stateRow?.options.find((o) => o.id === "web-state-pinia");
+      expect(piniaOption?.state.status).toBe("incompatible");
+    });
+
+    it("should preserve recommended and discouraged states in exclusive categories", () => {
+      initializeMatrix(BUILD_STEP_ADVISORY_STATES_MATRIX);
+
+      // No selections — React should be recommended
+      const resultNoSelection = buildCategoriesForDomain("web", [], {});
+      const frameworkRow = resultNoSelection.find((r) => r.id === frameworkCategory);
+      const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+      expect(reactOption?.state.status).toBe("recommended");
+
+      // SCSS selected — Vue should be discouraged (not suppressed)
+      const resultWithScss = buildCategoriesForDomain("web", ["web-styling-scss-modules"], {});
+      const frameworkRow2 = resultWithScss.find((r) => r.id === frameworkCategory);
+      const vueOption = frameworkRow2?.options.find(
+        (o) => o.id === "web-framework-vue-composition-api",
+      );
+      expect(vueOption?.state.status).toBe("discouraged");
     });
   });
 });

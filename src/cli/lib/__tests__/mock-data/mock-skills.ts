@@ -576,3 +576,51 @@ Implement JWT-based authentication with refresh tokens.
 Apply rate limiting to prevent abuse.
 `,
 };
+
+// ---------------------------------------------------------------------------
+// Build-step-logic test skill variants (build-step-logic.test.ts)
+// ---------------------------------------------------------------------------
+
+/** React with conflictsWith pointing at Vue (for exclusive category suppression tests) */
+export const REACT_CONFLICTS_VUE = createMockSkill("web-framework-react", {
+  conflictsWith: [{ skillId: "web-framework-vue-composition-api", reason: "Choose one framework" }],
+});
+
+/** Vue with conflictsWith pointing at React (for exclusive category suppression tests) */
+export const VUE_CONFLICTS_REACT = createMockSkill("web-framework-vue-composition-api", {
+  conflictsWith: [{ skillId: "web-framework-react", reason: "Choose one framework" }],
+});
+
+/** Zustand with conflictsWith pointing at Pinia (for non-exclusive category tests) */
+export const ZUSTAND_CONFLICTS_PINIA = createMockSkill("web-state-zustand", {
+  conflictsWith: [{ skillId: "web-state-pinia", reason: "Choose one state manager" }],
+});
+
+/** Pinia with conflictsWith pointing at Zustand (for non-exclusive category tests) */
+export const PINIA_CONFLICTS_ZUSTAND = createMockSkill("web-state-pinia", {
+  conflictsWith: [{ skillId: "web-state-zustand", reason: "Choose one state manager" }],
+});
+
+/** React that requires Zustand (for requiredBy badge tests) */
+export const REACT_REQUIRES_ZUSTAND = createMockSkill("web-framework-react", {
+  requires: [{ skillIds: ["web-state-zustand"], needsAny: false, reason: "Needs Zustand" }],
+});
+
+/** React marked as recommended (for state preservation in exclusive categories) */
+export const REACT_RECOMMENDED = createMockSkill("web-framework-react", {
+  isRecommended: true,
+  recommendedReason: "Popular choice",
+});
+
+/** Vue that discourages SCSS Modules (for state preservation in exclusive categories) */
+export const VUE_DISCOURAGES_SCSS = createMockSkill("web-framework-vue-composition-api", {
+  discourages: [{ skillId: "web-styling-scss-modules", reason: "Prefer other styling" }],
+});
+
+/** Zustand with empty compatibleWith — universally compatible with any framework */
+export const ZUSTAND_UNIVERSAL = createMockSkill("web-state-zustand", {
+  compatibleWith: [],
+});
+
+/** React with local: true — for local skill propagation tests */
+export const REACT_LOCAL = createMockSkill("web-framework-react", { local: true });

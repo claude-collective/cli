@@ -1523,4 +1523,163 @@ describe("WizardStore", () => {
       expect(result).toBe("plugin");
     });
   });
+
+  describe("toggleFilterIncompatible", () => {
+    it("should deselect framework-incompatible skills from web categories when enabling filter", () => {
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      // Select React as framework, then select pinia (Vue-only) in client-state
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-client-state", "web-state-pinia", false);
+
+      // Verify pinia is selected
+      expect(useWizardStore.getState().domainSelections.web!["web-client-state"]).toContain(
+        "web-state-pinia",
+      );
+
+      // Enable filter
+      store.toggleFilterIncompatible();
+
+      const state = useWizardStore.getState();
+      expect(state.filterIncompatible).toBe(true);
+      // Pinia should be deselected (incompatible with React)
+      expect(state.domainSelections.web!["web-client-state"]).not.toContain("web-state-pinia");
+    });
+
+    it("should NOT deselect framework-compatible skills when enabling filter", () => {
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      // Select React as framework, then select zustand (React-compatible) in client-state
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-client-state", "web-state-zustand", false);
+
+      store.toggleFilterIncompatible();
+
+      const state = useWizardStore.getState();
+      expect(state.filterIncompatible).toBe(true);
+      // Zustand should remain (compatible with React)
+      expect(state.domainSelections.web!["web-client-state"]).toContain("web-state-zustand");
+    });
+
+    it("should NOT deselect skills in non-web domains when enabling filter", () => {
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
+
+      store.toggleFilterIncompatible();
+
+      const state = useWizardStore.getState();
+      // API domain should be untouched
+      expect(state.domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
+    });
+
+    it("should NOT deselect the framework category itself when enabling filter", () => {
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      store.toggleFilterIncompatible();
+
+      const state = useWizardStore.getState();
+      // Framework selection should be untouched
+      expect(state.domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
+    });
+
+    it("should respect lockedSkillIds when enabling filter", () => {
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-client-state", "web-state-pinia", false);
+
+      // Lock pinia so it cannot be deselected
+      useWizardStore.setState({ lockedSkillIds: ["web-state-pinia"] });
+
+      store.toggleFilterIncompatible();
+
+      const state = useWizardStore.getState();
+      // Pinia should remain because it's locked, even though it's incompatible
+      expect(state.domainSelections.web!["web-client-state"]).toContain("web-state-pinia");
+      expect(state.skillConfigs.some((sc) => sc.id === "web-state-pinia")).toBe(true);
+    });
+
+    it("should NOT deselect anything when disabling filter", () => {
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-client-state", "web-state-zustand", false);
+
+      // Enable then disable
+      store.toggleFilterIncompatible();
+      store.toggleFilterIncompatible();
+
+      const state = useWizardStore.getState();
+      expect(state.filterIncompatible).toBe(false);
+      // Zustand should still be selected (was compatible, not removed on enable)
+      expect(state.domainSelections.web!["web-client-state"]).toContain("web-state-zustand");
+    });
+
+    it("should remove deselected skills from both domainSelections and skillConfigs", () => {
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-client-state", "web-state-pinia", false);
+      store.toggleTechnology("web", "web-client-state", "web-state-zustand", false);
+
+      // Verify both are in skillConfigs
+      expect(useWizardStore.getState().skillConfigs.some((sc) => sc.id === "web-state-pinia")).toBe(
+        true,
+      );
+      expect(
+        useWizardStore.getState().skillConfigs.some((sc) => sc.id === "web-state-zustand"),
+      ).toBe(true);
+
+      store.toggleFilterIncompatible();
+
+      const state = useWizardStore.getState();
+      // Pinia removed from both
+      expect(state.domainSelections.web!["web-client-state"]).not.toContain("web-state-pinia");
+      expect(state.skillConfigs.some((sc) => sc.id === "web-state-pinia")).toBe(false);
+      // Zustand kept in both
+      expect(state.domainSelections.web!["web-client-state"]).toContain("web-state-zustand");
+      expect(state.skillConfigs.some((sc) => sc.id === "web-state-zustand")).toBe(true);
+    });
+
+    it("should just toggle the boolean when no frameworks are selected", () => {
+      initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      // Select a client-state skill but no framework
+      store.toggleTechnology("web", "web-client-state", "web-state-pinia", false);
+
+      store.toggleFilterIncompatible();
+
+      const state = useWizardStore.getState();
+      expect(state.filterIncompatible).toBe(true);
+      // Pinia should remain (no framework to check against)
+      expect(state.domainSelections.web!["web-client-state"]).toContain("web-state-pinia");
+    });
+
+    it("should not deselect skills with empty compatibleWith when enabling filter", () => {
+      initializeMatrix(ALL_SKILLS_TEST_CATEGORIES_MATRIX);
+      const store = useWizardStore.getState();
+
+      // Select React, then SCSS (which has empty compatibleWith — compatible with everything)
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", false);
+
+      store.toggleFilterIncompatible();
+
+      const state = useWizardStore.getState();
+      // SCSS has compatibleWith: [] so it should remain
+      expect(state.domainSelections.web!["web-styling"]).toContain("web-styling-scss-modules");
+    });
+  });
 });
