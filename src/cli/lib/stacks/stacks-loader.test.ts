@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { StackAgentConfig } from "../../types";
 import {
+  createMockMatrix,
   createMockRawStacksConfig,
   createMockRawStacksConfigWithArrays,
   createMockRawStacksConfigWithObjects,
+  createMockSkill,
   createMockSkillAssignment,
   createMockStack,
 } from "../__tests__/helpers";
+import { SKILLS } from "../__tests__/test-fixtures";
 
 vi.mock("../configuration/config-loader", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../configuration/config-loader")>()),
@@ -18,12 +21,28 @@ vi.mock("../../utils/logger");
 import { resolveAgentConfigToSkills, resolveStackSkills } from "./stacks-loader";
 import { loadConfig } from "../configuration/config-loader";
 import { warn } from "../../utils/logger";
+import { initializeMatrix } from "../matrix/matrix-provider";
+
+// Matrix containing all skills referenced in stacks-loader test data
+const stacksTestMatrix = createMockMatrix(
+  SKILLS.react,
+  SKILLS.vue,
+  SKILLS.scss,
+  SKILLS.tailwind,
+  SKILLS.hono,
+  SKILLS.drizzle,
+  SKILLS.antiOverEng,
+  createMockSkill("meta-methodology-research-methodology"),
+  createMockSkill("meta-reviewing-cli-reviewing"),
+);
 
 describe("stacks-loader", () => {
   beforeEach(() => {
     // Clear the internal cache between tests by re-importing
     // The module has a stacksCache Map that persists across calls
     vi.resetModules();
+    vi.clearAllMocks();
+    initializeMatrix(stacksTestMatrix);
   });
 
   describe("loadStacks", () => {
@@ -257,16 +276,19 @@ describe("stacks-loader", () => {
       expect(skills[0].usage).toContain("api-database");
     });
 
-    it("warns and skips invalid skill IDs", () => {
-      // Boundary cast: intentionally invalid skill ID (uppercase) to test validation
+    it("passes through unknown skill IDs for downstream validation and warns", () => {
+      // Boundary cast: intentionally invalid skill ID to verify pass-through
       const agentConfig = {
         "web-framework": [{ id: "Not-A-Valid-Id", preloaded: false }],
       } as unknown as StackAgentConfig;
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      expect(skills).toHaveLength(0);
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"));
+      expect(skills).toHaveLength(1);
+      expect(skills[0].id).toBe("Not-A-Valid-Id");
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining("Not-A-Valid-Id"),
+      );
     });
 
     it("handles empty agent config", () => {
@@ -334,8 +356,8 @@ describe("stacks-loader", () => {
       expect(skills).toEqual([]);
     });
 
-    it("warns and skips invalid skill IDs within arrays", () => {
-      // Boundary cast: intentionally invalid skill ID (uppercase) within array to test validation
+    it("passes through all skill IDs within arrays including unknown ones and warns", () => {
+      // Boundary cast: intentionally invalid skill ID within array to verify pass-through
       const agentConfig = {
         "meta-reviewing": [
           { id: "meta-methodology-research-methodology", preloaded: true },
@@ -346,11 +368,17 @@ describe("stacks-loader", () => {
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      // Should include valid IDs and skip invalid one
-      expect(skills).toHaveLength(2);
+      // All IDs passed through for downstream validation
+      expect(skills).toHaveLength(3);
       expect(skills.find((s) => s.id === "meta-methodology-research-methodology")).toBeDefined();
+      // Boundary cast: SkillId union doesn't include invalid IDs, cast to string for assertion
+      expect(skills.find((s) => (s.id as string) === "Not-A-Valid-Id")).toBeDefined();
       expect(skills.find((s) => s.id === "meta-reviewing-reviewing")).toBeDefined();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"));
+      // Only warns for the unknown ID, not the valid ones
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining("Not-A-Valid-Id"),
+      );
     });
 
     it("reads preloaded from each assignment individually", () => {
@@ -370,16 +398,20 @@ describe("stacks-loader", () => {
       expect(dynamicSkill!.preloaded).toBe(false);
     });
 
-    it("rejects skill IDs that don't match SKILL_ID_PATTERN", () => {
-      // Boundary cast: intentionally invalid skill ID to test validation
+    it("passes through skill IDs not found in the matrix for downstream handling and warns", () => {
+      // Boundary cast: intentionally unknown skill ID to verify pass-through
       const agentConfig = {
         "web-framework": [{ id: "acme-pipeline-deploy", preloaded: true }],
       } as unknown as StackAgentConfig;
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      expect(skills).toHaveLength(0);
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("acme-pipeline-deploy"));
+      expect(skills).toHaveLength(1);
+      expect(skills[0].id).toBe("acme-pipeline-deploy");
+      expect(skills[0].preloaded).toBe(true);
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining("acme-pipeline-deploy"),
+      );
     });
   });
 

@@ -2,6 +2,7 @@ import path from "path";
 import { mapValues, pipe, flatMap, unique } from "remeda";
 import { getErrorMessage } from "../../utils/errors";
 import { verbose, warn } from "../../utils/logger";
+import { hasSkill } from "../matrix/matrix-provider";
 import type {
   AgentName,
   SkillAssignment,
@@ -12,9 +13,8 @@ import type {
   StacksConfig,
   Category,
 } from "../../types";
-import { SKILL_ID_PATTERN, stacksConfigSchema } from "../schemas";
+import { stacksConfigSchema } from "../schemas";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
-import { getCustomSkillIds } from "../matrix/matrix-provider";
 import { STACKS_FILE_PATH } from "../../consts";
 import { loadConfig } from "../configuration/config-loader";
 import { defaultStacks } from "../configuration/default-stacks";
@@ -113,22 +113,18 @@ export async function loadStackById(stackId: string, configDir: string): Promise
 // Values are already normalized to SkillAssignment[] by loadStacks().
 export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): SkillReference[] {
   return typedEntries<Category, SkillAssignment[]>(agentConfig).flatMap(([category, assignments]) =>
-    (assignments ?? [])
-      .filter((assignment) => {
-        if (SKILL_ID_PATTERN.test(assignment.id)) return true;
-        if (getCustomSkillIds().has(assignment.id)) return true;
+    (assignments ?? []).map((assignment): SkillReference => {
+      if (!hasSkill(assignment.id)) {
         warn(
-          `Invalid skill ID '${assignment.id}' for category '${category}' in stack config. Skipping.`,
+          `Skill '${assignment.id}' for category '${category}' not found in matrix. It may be a custom or local skill.`,
         );
-        return false;
-      })
-      .map(
-        (assignment): SkillReference => ({
-          id: assignment.id,
-          usage: `when working with ${category}`,
-          preloaded: assignment.preloaded ?? false,
-        }),
-      ),
+      }
+      return {
+        id: assignment.id,
+        usage: `when working with ${category}`,
+        preloaded: assignment.preloaded ?? false,
+      };
+    }),
   );
 }
 
