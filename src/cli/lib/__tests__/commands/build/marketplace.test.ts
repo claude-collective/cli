@@ -453,7 +453,7 @@ describe("build:marketplace command", () => {
 
       expect(reactPlugin?.category).toBe("web");
       expect(drizzlePlugin?.category).toBe("api");
-      expect(metaPlugin?.category).toBe("methodology");
+      expect(metaPlugin?.category).toBe("meta");
     });
 
     it("should generate correct source paths referencing plugin directories", async () => {

@@ -7,32 +7,12 @@ import { readFileSafe, writeFile, glob, ensureDir } from "../utils/fs";
 import { verbose, warn } from "../utils/logger";
 import type { Marketplace, MarketplacePlugin, PluginManifest } from "../types";
 import { pluginManifestSchema } from "./schemas";
+import { DOMAINS } from "../types/generated/source-types";
 
 const PLUGIN_MANIFEST_PATH = ".claude-plugin/plugin.json";
 const MARKETPLACE_SCHEMA_URL = "https://anthropic.com/claude-code/marketplace.schema.json";
 
-/**
- * Category patterns for marketplace plugins.
- *
- * Plugin names match skill IDs directly (e.g., "web-framework-react").
- * The category is the first segment of the ID:
- * - web-* -> web
- * - api-* -> api
- * - cli-* -> cli
- * - meta-* -> methodology
- * - infra-* -> infra
- * - mobile-* -> mobile
- * - security-* -> security
- */
-const CATEGORY_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
-  { pattern: /^web-/, category: "web" },
-  { pattern: /^api-/, category: "api" },
-  { pattern: /^cli-/, category: "cli" },
-  { pattern: /^meta-/, category: "methodology" },
-  { pattern: /^infra-/, category: "infra" },
-  { pattern: /^mobile-/, category: "mobile" },
-  { pattern: /^security-/, category: "security" },
-];
+const DOMAIN_SET = new Set<string>(DOMAINS);
 
 type MarketplaceOptions = {
   name: string;
@@ -44,12 +24,9 @@ type MarketplaceOptions = {
 };
 
 function inferCategoryFromPluginName(pluginName: string): string | undefined {
-  for (const { pattern, category } of CATEGORY_PATTERNS) {
-    if (pattern.test(pluginName)) {
-      return category;
-    }
-  }
-  return undefined;
+  const domainPrefix = pluginName.split("-")[0];
+  if (!domainPrefix || !DOMAIN_SET.has(domainPrefix)) return undefined;
+  return domainPrefix;
 }
 
 async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {

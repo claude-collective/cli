@@ -23,8 +23,6 @@ import type { SourceOption } from "../components/wizard/source-grid.js";
 import { warn } from "../utils/logger.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
 
-const BUILT_IN_DOMAINS: Domain[] = ["web", "api", "cli", "mobile", "shared"];
-
 function createDefaultSkillConfig(id: SkillId): SkillConfig {
   const skill = matrix.skills[id];
   const primarySource = skill?.availableSources?.find((s) => s.primary)?.name;
@@ -38,7 +36,7 @@ function getAllDomainsFromCategories(categories: CategoryDomainMap): Domain[] {
       .map((cat) => cat?.domain)
       .filter((d): d is Domain => d != null),
   );
-  return [...BUILT_IN_DOMAINS, ...allDomains.filter((d) => !BUILT_IN_DOMAINS.includes(d))];
+  return [...BUILT_IN_DOMAIN_ORDER, ...allDomains.filter((d) => !BUILT_IN_DOMAIN_ORDER.includes(d))];
 }
 
 /** Sort domains into canonical order: custom domains first (alphabetically), then built-in domains per BUILT_IN_DOMAIN_ORDER. */
