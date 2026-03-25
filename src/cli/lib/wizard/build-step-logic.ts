@@ -35,7 +35,7 @@ function getSelectedFrameworks(selections: CategorySelections): SkillId[] {
   return (selections[FRAMEWORK_CATEGORY_ID] ?? []).map((alias) => resolveAlias(alias));
 }
 
-function isCompatibleWithSelectedFrameworks(
+export function isCompatibleWithSelectedFrameworks(
   skillId: SkillId,
   selectedFrameworkIds: SkillId[],
 ): boolean {
@@ -75,9 +75,14 @@ export function buildCategoriesForDomain(
           )
         : skillOptions;
 
+    const isExclusive = cat.exclusive ?? true;
+
     const options: CategoryOption[] = filteredOptions.map((skill) => ({
       id: skill.id,
-      state: skill.advisoryState,
+      state:
+        isExclusive && skill.advisoryState.status === "incompatible"
+          ? { status: "normal" }
+          : skill.advisoryState,
       selected: skill.selected,
       local: getSkillById(skill.id).local,
       installed: installedSkillIds?.includes(skill.id) || false,

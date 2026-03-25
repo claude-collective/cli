@@ -1,4 +1,4 @@
-import { unique } from "remeda";
+import { unique, flatMap } from "remeda";
 import { create } from "zustand";
 import { BUILT_IN_DOMAIN_ORDER, DEFAULT_PUBLIC_SOURCE_NAME } from "../consts.js";
 import type { InstallMode } from "../lib/installation/index.js";
@@ -6,6 +6,7 @@ import { deriveInstallMode as sharedDeriveInstallMode } from "../lib/installatio
 import type { AgentScopeConfig, SkillConfig } from "../types/config.js";
 import { resolveAlias } from "../lib/matrix/index.js";
 import { matrix, getSkillById, getCategoryDomain } from "../lib/matrix/matrix-provider.js";
+import { isCompatibleWithSelectedFrameworks } from "../lib/wizard/index.js";
 import type {
   AgentName,
   BoundSkill,
@@ -18,6 +19,7 @@ import type {
   SkillSource,
   Category,
   CategoryDomainMap,
+  CategorySelections,
 } from "../types/index.js";
 import type { SourceOption } from "../components/wizard/source-grid.js";
 import { warn } from "../utils/logger.js";
@@ -36,7 +38,10 @@ function getAllDomainsFromCategories(categories: CategoryDomainMap): Domain[] {
       .map((cat) => cat?.domain)
       .filter((d): d is Domain => d != null),
   );
-  return [...BUILT_IN_DOMAIN_ORDER, ...allDomains.filter((d) => !BUILT_IN_DOMAIN_ORDER.includes(d))];
+  return [
+    ...BUILT_IN_DOMAIN_ORDER,
+    ...allDomains.filter((d) => !BUILT_IN_DOMAIN_ORDER.includes(d)),
+  ];
 }
 
 /** Sort domains into canonical order: custom domains first (alphabetically), then built-in domains per BUILT_IN_DOMAIN_ORDER. */
@@ -46,6 +51,42 @@ function sortDomainsCanonically(domains: Domain[]): Domain[] {
     ...domains.filter((d) => !builtInSet.has(d)).sort(),
     ...BUILT_IN_DOMAIN_ORDER.filter((d) => domains.includes(d)),
   ];
+}
+
+/** Finds framework-incompatible skill IDs in web domain selections, respecting locked skills. */
+function findIncompatibleWebSkills(
+  webSelections: CategorySelections,
+  lockedSkillIds: SkillId[],
+): Set<SkillId> {
+  const frameworkSelections = webSelections["web-framework"] ?? [];
+  if (frameworkSelections.length === 0) return new Set();
+
+  const selectedFrameworkIds = frameworkSelections.map((alias) => resolveAlias(alias));
+
+  return new Set(
+    flatMap(typedEntries(webSelections), ([cat, skills]) =>
+      cat === "web-framework" || !skills
+        ? []
+        : skills.filter(
+            (id) =>
+              !lockedSkillIds.includes(id) &&
+              !isCompatibleWithSelectedFrameworks(id, selectedFrameworkIds),
+          ),
+    ),
+  );
+}
+
+/** Returns selections with the given skill IDs removed from all categories. */
+function removeSkillsFromSelections(
+  selections: CategorySelections,
+  toRemove: Set<SkillId>,
+): CategorySelections {
+  return Object.fromEntries(
+    typedEntries(selections).map(([cat, skills]) => [
+      cat,
+      skills?.filter((id) => !toRemove.has(id)) ?? [],
+    ]),
+  ) as CategorySelections; // Object.fromEntries widens to Record<string, ...>
 }
 
 /** Built-in agent names grouped by domain prefix. Custom domains return no preselected agents. */
@@ -754,7 +795,24 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleShowLabels: () => set((state) => ({ showLabels: !state.showLabels })),
   toggleFilterIncompatible: () =>
-    set((state) => ({ filterIncompatible: !state.filterIncompatible })),
+    set((state) => {
+      if (state.filterIncompatible) return { filterIncompatible: false };
+
+      const webSelections = state.domainSelections.web;
+      if (!webSelections) return { filterIncompatible: true };
+
+      const removed = findIncompatibleWebSkills(webSelections, state.lockedSkillIds);
+      if (removed.size === 0) return { filterIncompatible: true };
+
+      return {
+        filterIncompatible: true,
+        domainSelections: {
+          ...state.domainSelections,
+          web: removeSkillsFromSelections(webSelections, removed),
+        },
+        skillConfigs: state.skillConfigs.filter((sc) => !removed.has(sc.id)),
+      };
+    }),
 
   deriveInstallMode: (): InstallMode => {
     const { skillConfigs } = get();
