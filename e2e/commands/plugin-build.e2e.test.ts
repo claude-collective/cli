@@ -33,7 +33,7 @@ const E2E_SKILL_NAMES = [
   "meta-reviewing-cli-reviewing",
 ];
 
-const EXPECTED_SKILL_COUNT = 7;
+const EXPECTED_SKILL_COUNT = 9;
 const MARKETPLACE_NAME = "test-mp";
 
 describe("build pipeline (plugin chain)", () => {

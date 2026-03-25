@@ -43,6 +43,11 @@ export abstract class BaseStep {
     await this.delay(INTERNAL_DELAYS.KEYSTROKE);
   }
 
+  protected async pressArrowRight(): Promise<void> {
+    this.session.arrowRight();
+    await this.delay(INTERNAL_DELAYS.KEYSTROKE);
+  }
+
   protected async pressCtrlC(): Promise<void> {
     this.session.ctrlC();
     await this.delay(INTERNAL_DELAYS.KEYSTROKE);
@@ -123,6 +128,11 @@ export abstract class BaseStep {
   /** Navigate up one item (arrow up). */
   async navigateUp(): Promise<void> {
     await this.pressArrowUp();
+  }
+
+  /** Navigate right one item (arrow right). */
+  async navigateRight(): Promise<void> {
+    await this.pressArrowRight();
   }
 
   protected delay(ms: number): Promise<void> {

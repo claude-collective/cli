@@ -108,6 +108,22 @@ const E2E_SKILLS: E2ESkill[] = [
     domain: "meta",
     displayName: "CLI Reviewing",
   },
+  {
+    category: "web-framework",
+    id: "web-framework-vue-composition-api",
+    slug: "vue-composition-api",
+    description: "Vue.js composition API framework",
+    domain: "web",
+    displayName: "Vue Composition Api",
+  },
+  {
+    category: "web-client-state",
+    id: "web-state-pinia",
+    slug: "pinia",
+    description: "Vue state management",
+    domain: "web",
+    displayName: "web-state-pinia",
+  },
 ];
 
 const webDeveloperAgentConfig: StackAgentConfig = {

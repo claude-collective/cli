@@ -243,8 +243,8 @@ describe("validate command", () => {
 
       const { output } = await CLI.run(["validate", "--source", sourceDir], { dir: tempDir });
 
-      // E2E source has exactly 7 skills across web, api, and shared domains
-      expect(output).toContain("Checked 7 skill(s)");
+      // E2E source has exactly 9 skills across web, api, and meta domains
+      expect(output).toContain("Checked 9 skill(s)");
       expect(output).toContain("Validating source:");
     });
   });

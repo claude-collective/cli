@@ -203,7 +203,7 @@ describe("slug-based relationship rules", () => {
         dir: tempDir,
       });
 
-      expect(output).toContain("Checked 7 skill(s)");
+      expect(output).toContain("Checked 9 skill(s)");
 
       // Default rules may produce unresolved references for slugs not in E2E source
       // (e.g., "angular", "vue"), but E2E source slugs should all resolve cleanly.
@@ -241,8 +241,8 @@ describe("slug-based relationship rules", () => {
         relationships: {
           discourages: [
             {
-              skills: ["react", "vue-composition-api"],
-              reason: "React and Vue are discouraged together",
+              skills: ["react", "angular-standalone"],
+              reason: "React and Angular are discouraged together",
             },
           ],
         },
@@ -253,9 +253,9 @@ describe("slug-based relationship rules", () => {
         dir: tempDir,
       });
 
-      // "vue-composition-api" slug does not exist in the E2E source
+      // "angular-standalone" slug does not exist in the E2E source
       expect(output).toContain("Unresolved slug");
-      expect(output).toContain("vue-composition-api");
+      expect(output).toContain("angular-standalone");
     });
   });
 
