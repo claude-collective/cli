@@ -82,8 +82,6 @@ vi.mock("../configuration/config-generator", async (importOriginal) => {
       skills: [{ id: "test-skill", scope: "project", source: "local" }],
     }),
     buildStackProperty: vi.fn().mockReturnValue({}),
-    // Use real compactStackForYaml so configs with stack properties serialize correctly
-    compactStackForYaml: original.compactStackForYaml,
     // Use real splitConfigByScope for scope-aware config writing
     splitConfigByScope: original.splitConfigByScope,
   };
@@ -469,12 +467,11 @@ describe("local-installer", () => {
       // Also verify it's written correctly to the config file
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsedConfig = await readTestTsConfig<ProjectConfig>(configPath);
-      // compactStackForYaml converts preloaded: true to { id, preloaded: true } object form
+      // Inlined path preserves SkillAssignment[] arrays with preloaded objects
       const parsedWebDev = parsedConfig.stack?.["web-developer"] as Record<string, unknown>;
-      expect(parsedWebDev?.["web-framework"]).toEqual({
-        id: "web-framework-react",
-        preloaded: true,
-      });
+      expect(parsedWebDev?.["web-framework"]).toStrictEqual([
+        { id: "web-framework-react", preloaded: true },
+      ]);
     });
   });
 
@@ -1013,8 +1010,10 @@ describe("local-installer", () => {
       // Project config should have the project-scoped skill
       const projectContent = await readFile(projectConfigPath, "utf-8");
       expect(projectContent).toContain("web-testing-vitest");
-      // Project config should import from global
-      expect(projectContent).toContain("import globalConfig");
+      // Project config should inline global data (no import globalConfig)
+      expect(projectContent).not.toContain("import globalConfig");
+      expect(projectContent).toContain("// global");
+      expect(projectContent).toContain("web-framework-react");
     });
   });
 });

@@ -22,8 +22,9 @@ import "../matchers/setup.js";
  * Scenario: A project has both global and project configs. The global config has
  * web-framework-react (scope: global). The project config has web-testing-vitest
  * (scope: project). After a no-op edit (navigate through wizard without changes),
- * the project config should still only contain the project-scoped skill. The
- * global skill must not leak into the project config.
+ * the project config should inline the global skill with scope: "global" exactly
+ * once, alongside the project-scoped skill. The global skill must not be
+ * duplicated or accumulated across re-edits.
  *
  * Code path under test:
  *   edit.tsx -> buildAndMergeConfig() -> writeScopedConfigs() -> splitConfigByScope()
@@ -129,26 +130,28 @@ describe("project config does not accumulate global skills after edit", () => {
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // --- Assert: project config should not contain global skills in the skills array ---
+      // --- Assert: project config inlines global skills with scope: "global" (no spread) ---
       const updatedProjectConfig = await readTestFile(projectConfigPath);
 
       // The project config MUST contain the project-scoped skill
       expect(updatedProjectConfig).toContain("web-testing-vitest");
 
-      // The skills array in the project config should NOT contain the global skill as an
-      // inline entry. It may reference global skills via `...globalConfig.skills` spread
-      // (which is correct), but it must not have `"id":"web-framework-react"` as a literal
-      // skill object in the project config.
-      const hasInlineGlobalSkill =
-        updatedProjectConfig.includes('"id":"web-framework-react"') ||
-        updatedProjectConfig.includes('"id": "web-framework-react"');
-      expect(
-        hasInlineGlobalSkill,
-        "Global skill 'web-framework-react' should not appear as an inline skill config in the project config",
-      ).toBe(false);
+      // The project config MUST inline the global skill (new behavior: no spread import)
+      expect(updatedProjectConfig).toContain("web-framework-react");
 
-      // The project config should use `...globalConfig.skills` spread to inherit global skills
-      expect(updatedProjectConfig).toContain("globalConfig.skills");
+      // The project config must NOT use the old `...globalConfig.skills` spread pattern
+      expect(updatedProjectConfig).not.toContain("globalConfig.skills");
+      expect(updatedProjectConfig).not.toContain("globalConfig.agents");
+
+      // Key invariant: the global skill must appear exactly once (no accumulation).
+      // Count occurrences of the skill ID in the config to detect duplication.
+      const reactSkillOccurrences = updatedProjectConfig
+        .split("web-framework-react")
+        .length - 1;
+      expect(
+        reactSkillOccurrences,
+        "Global skill 'web-framework-react' should appear exactly once in project config (no accumulation)",
+      ).toBe(1);
 
       // Also verify the global config still has its skill (it wasn't removed)
       const globalConfigPath = path.join(tempHOME, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);

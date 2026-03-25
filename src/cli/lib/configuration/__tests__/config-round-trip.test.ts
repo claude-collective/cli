@@ -81,9 +81,9 @@ describe("config round-trip", () => {
     expect(loaded.agents).toEqual(buildAgentConfigs(["web-developer", "api-developer"]));
     expect(loaded.skills).toEqual(buildSkillConfigs(["web-framework-react", "api-framework-hono"]));
 
-    // After compaction, bare strings
+    // After compaction, bare strings inside arrays
     const webDev = loaded.stack?.["web-developer"] as Record<string, unknown>;
-    expect(webDev["web-framework"]).toBe("web-framework-react");
+    expect(webDev["web-framework"]).toStrictEqual(["web-framework-react"]);
   });
 
   it("round-trips a config with preloaded stack skills", async () => {
@@ -100,8 +100,8 @@ describe("config round-trip", () => {
 
     const loaded = (await writeAndLoad(config)) as ProjectConfig;
     const apiDev = loaded.stack?.["api-developer"] as Record<string, unknown>;
-    // Preloaded stays as object
-    expect(apiDev["api-api"]).toEqual({ id: "api-framework-hono", preloaded: true });
+    // Preloaded stays as object inside array
+    expect(apiDev["api-api"]).toStrictEqual([{ id: "api-framework-hono", preloaded: true }]);
   });
 
   it("round-trips a full config with all optional fields", async () => {

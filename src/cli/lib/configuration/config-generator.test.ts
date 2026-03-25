@@ -32,6 +32,7 @@ import {
   FULLSTACK_PAIR_MATRIX,
   REACT_SCSS_MATRIX,
   REACT_SCSS_HONO_MATRIX,
+  MULTI_STYLING_MATRIX,
 } from "../__tests__/mock-data/mock-matrices.js";
 
 /** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
@@ -76,6 +77,31 @@ describe("config-generator", () => {
       expect(webDev).toBeDefined();
       expect(webDev["web-framework"]?.[0]?.id).toBe("web-framework-react");
       expect(webDev["web-styling"]?.[0]?.id).toBe("web-styling-scss-modules");
+    });
+
+    it("preserves all skills in the same category (multi-select categories)", () => {
+      initializeMatrix(MULTI_STYLING_MATRIX);
+      const selectedAgents: AgentName[] = ["web-developer"];
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react", "web-styling-scss-modules", "web-styling-tailwind"],
+        { selectedAgents },
+      );
+
+      expect(config.stack).toBeDefined();
+      const webDev = config.stack!["web-developer"];
+      expect(webDev).toBeDefined();
+
+      // Both styling skills must survive — regression: Object.fromEntries overwrote duplicates
+      expect(webDev["web-styling"]).toStrictEqual([
+        { id: "web-styling-scss-modules", preloaded: false },
+        { id: "web-styling-tailwind", preloaded: false },
+      ]);
+      // Framework skill in its own category is unaffected
+      expect(webDev["web-framework"]).toStrictEqual([
+        { id: "web-framework-react", preloaded: false },
+      ]);
     });
 
     it("uses selectedAgents when provided", () => {
@@ -603,9 +629,7 @@ describe("config-generator", () => {
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
           { id: "web-testing-vitest", scope: "project", source: "local" },
         ],
-        agents: [
-          { name: "web-developer", scope: "global" },
-        ],
+        agents: [{ name: "web-developer", scope: "global" }],
         stack: {
           "web-developer": {
             "web-framework": [{ id: "web-framework-react", preloaded: false }],

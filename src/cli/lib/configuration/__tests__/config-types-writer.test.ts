@@ -148,7 +148,7 @@ describe("generateConfigTypesSource", () => {
     const matrix = EMPTY_MATRIX;
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain(
-      "export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;",
+      "export type StackAgentConfig = Partial<Record<Category, SkillAssignment[]>>;",
     );
   });
 
@@ -159,7 +159,7 @@ describe("generateConfigTypesSource", () => {
     const matrix = createMockMatrix(SKILLS.react, { categories });
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain("export type StackAgentConfig = {");
-    expect(source).toContain('  "web-framework"?: SkillAssignment<"web-framework-react">;');
+    expect(source).toContain('  "web-framework"?: SkillAssignment<"web-framework-react">[];');
     expect(source).toContain("};");
   });
 
@@ -172,9 +172,9 @@ describe("generateConfigTypesSource", () => {
     const matrix = createMockMatrix(SKILLS.react, SKILLS.scss, SKILLS.hono, { categories });
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain("export type StackAgentConfig = {");
-    expect(source).toContain('  "api-api"?: SkillAssignment<"api-framework-hono">;');
-    expect(source).toContain('  "web-framework"?: SkillAssignment<"web-framework-react">;');
-    expect(source).toContain('  "web-styling"?: SkillAssignment<"web-styling-scss-modules">;');
+    expect(source).toContain('  "api-api"?: SkillAssignment<"api-framework-hono">[];');
+    expect(source).toContain('  "web-framework"?: SkillAssignment<"web-framework-react">[];');
+    expect(source).toContain('  "web-styling"?: SkillAssignment<"web-styling-scss-modules">[];');
   });
 
   it("generates multi-line union for categories with more than 3 skills", () => {
@@ -195,7 +195,7 @@ describe("generateConfigTypesSource", () => {
     expect(source).toContain('    | "web-framework-react"');
     expect(source).toContain('    | "web-framework-simple"');
     expect(source).toContain('    | "web-framework-vue-composition-api"');
-    expect(source).toContain("  >;");
+    expect(source).toContain("  >[];");
   });
 
   it("omits categories that have no matching skills from StackAgentConfig", () => {
