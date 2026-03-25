@@ -2,23 +2,25 @@
 
 | ID    | Task                                                                                      | Status        |
 | ----- | ----------------------------------------------------------------------------------------- | ------------- |
+| D-146 | Replace `SKILL_ID_PATTERN` regex with generated data. See [plan](./D-146-replace-skill-id-pattern.md) | Ready for Dev |
+| D-145 | Operations layer — centralize repeated command sequences. See [proposal](./D-145-operations-layer.md) | Investigate |
 | D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                           | Ready for Dev |
 | D-123 | Local mode ENOENT on consuming projects — empty `sourcePath` for built-in matrix          | Ready for Dev |
 | D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                   | In Progress   |
 | D-144 | Info panel — replace `?` help overlay with `I` info panel showing stats, context, toggles | Investigate   |
 | D-118 | Investigate renaming "project/global" scope to "project/user"                             | Investigate   |
-| D-142 | Rename `scribe` → `codex-keeper`, keep `convention-keeper`                                | Ready for Dev |
+| D-142 | Rename `scribe` → `codex-keeper`, keep `convention-keeper`                                | Complete      |
 | D-97  | Improve startup time — lazy-load matrix generation                                        | Investigate   |
 | D-138 | Iterate on sub-agents — review and improve all agent definitions                          | Ready for Dev |
 | D-116 | Filter Incompatible toggle should also deselect incompatible skills                       | Ready for Dev |
 | D-132 | Skip incompatibility markers in exclusive (radio) categories                              | Ready for Dev |
 | D-131 | Track project installations in global config                                              | Investigate   |
-| D-141 | Merge AI docs — consolidate `.ai-docs/` with `reference/` and `standards/` split          | Ready for Dev |
+| D-141 | Merge AI docs — consolidate `.ai-docs/` with `reference/` and `standards/` split          | Complete      |
 | D-140 | Agent gap analysis — add 5 new agents. See [proposal](./D-140-agent-gap-analysis.md)      | Ready for Dev |
 | D-111 | Create a GIF demo for the README                                                          | Ready for Dev |
 | D-110 | Fix the logo in the README                                                                | Ready for Dev |
 | D-109 | Fix the screenshots in the README                                                         | Ready for Dev |
-| D-119 | Update READMEs with current stats (100+ skills, 13 stacks)                                | Ready for Dev |
+| D-119 | Update READMEs with current stats (154 skills, 16 stacks)                                 | Complete      |
 | D-130 | Narrow stack type safety — category-scoped SkillId unions. Depends on D-97                | Investigate   |
 | D-129 | Add visibility into global config contents from project config                            | Investigate   |
 | D-127 | UX for claiming global skills/agents into project scope                                   | Investigate   |
@@ -167,8 +169,8 @@ All agent definitions in `src/agents/` should be reviewed and improved using the
 
 1. Read the current source files (`metadata.yaml`, `intro.md`, `workflow.md`, `critical-requirements.md`, `output-format.md`, `critical-reminders.md`, `examples.md`)
 2. Cross-reference against CLAUDE.md NEVER/ALWAYS rules — does the agent enforce them?
-3. Check `.agents-docs/findings/` for findings where `reporting_agent` matches — does the agent's instructions prevent recurrence?
-4. Ensure the agent includes the findings capture instruction (write to `.agents-docs/findings/` when anti-patterns are discovered)
+3. Check `.ai-docs/agent-findings/` for findings where `reporting_agent` matches — does the agent's instructions prevent recurrence?
+4. Ensure the agent includes the findings capture instruction (write to `.ai-docs/agent-findings/` when anti-patterns are discovered)
 5. Use agent-summoner Improve Mode to propose and apply improvements
 6. Recompile and verify
 
@@ -185,103 +187,21 @@ All agent definitions in `src/agents/` should be reviewed and improved using the
 
 ---
 
-#### D-141: Merge AI documentation — consolidate `.ai-docs/` and `docs/standards/`
+#### D-141: Merge AI documentation — consolidate `.ai-docs/` with `reference/` and `standards/` split
 
 **Priority:** Medium
+**Status:** Complete (2026-03-25)
 
-All AI-consumed documentation currently lives in two places: `.ai-docs/` (codebase reference — architecture, types, store map) and `docs/standards/` (prescriptive coding standards — clean code, E2E testing, prompt engineering). Both are exclusively for AI agents, but they serve different purposes and have different validation lifecycles.
-
-**Goal:** Single home for all AI documentation (`.ai-docs/`), with a clear internal split between descriptive reference and prescriptive standards.
-
-**New structure:**
+All AI-consumed documentation now lives in `.ai-docs/` with a clear internal split:
 
 ```
 .ai-docs/
   DOCUMENTATION_MAP.md              # master index for both sections
-  reference/                        # descriptive — "how things work" (existing docs, moved)
-    architecture-overview.md
-    commands.md
-    type-system.md
-    store-map.md
-    component-patterns.md
-    utilities.md
-    test-infrastructure.md
-    features/
-      compilation-pipeline.md
-      configuration.md
-      wizard-flow.md
-      skills-and-matrix.md
-      plugin-system.md
+  reference/                        # descriptive — "how things work"
   standards/                        # prescriptive — "how to write code" (moved from docs/standards/)
-    clean-code-standards.md
-    e2e-testing-bible.md
-    e2e/
-      README.md
-      assertions.md
-      anti-patterns.md
-      page-objects.md
-      patterns.md
-      test-data.md
-      test-structure.md
-    prompt-bible.md
-    loop-prompts-bible.md
-    skill-atomicity-bible.md
-    skill-atomicity-primer.md
-    typescript-types-bible.md
-    documentation-bible.md
-    commit-protocol.md              # moved from docs/guides/ (AI-consumed)
 ```
 
-**After cleanup, `docs/` becomes human-only:**
-
-```
-docs/
-  index.md                          # updated to reflect removals
-  guides/                           # human how-to guides only
-    creating-a-marketplace.md
-    writing-custom-skills.md
-    importing-skills.md
-    customizing-subagents.md
-    editing-config.md
-    agent-reminders.md
-    install-modes.md
-  reference/
-    architecture.md                 # keep or remove (overlaps with .ai-docs/reference/)
-  features/                         # specs and research
-  research/
-```
-
-**Implementation steps:**
-
-1. Create `.ai-docs/reference/` and `.ai-docs/standards/` directories
-2. Move existing `.ai-docs/*.md` files (except DOCUMENTATION_MAP.md) into `.ai-docs/reference/`
-3. Move `.ai-docs/features/` into `.ai-docs/reference/features/`
-4. Move `docs/standards/*` into `.ai-docs/standards/`
-5. Move `docs/guides/commit-protocol.md` into `.ai-docs/standards/`
-6. Update DOCUMENTATION_MAP.md: add a Standards section with lighter validation cadence
-7. Update `docs/index.md`: remove standards section, update references
-8. Update CLAUDE.md: single instruction to read `.ai-docs/DOCUMENTATION_MAP.md` covers everything
-9. Update all cross-references within moved docs (grep for `docs/standards/` paths)
-10. Update codex-keeper agent to know the `reference/` vs `standards/` split
-11. Evaluate `docs/reference/architecture.md` — remove if fully superseded by `.ai-docs/reference/architecture-overview.md`
-
-**Scribe agent updates:**
-
-The codex-keeper agent (`src/agents/meta/codex-keeper/` after D-142 rename) needs these changes:
-
-- `workflow.md`: Replace `.claude/docs/` references with `.ai-docs/` throughout
-- `workflow.md`: Add awareness of the `reference/` vs `standards/` split — codex-keeper creates/validates reference docs, NOT standards (standards are managed by convention-keeper)
-- `workflow.md`: Update Output Location Standards section to show new directory structure
-- `workflow.md`: Update Documentation Map Structure section
-- `output-format.md`: Update file location examples from `.claude/docs/` to `.ai-docs/reference/`
-- `intro.md`: Clarify scope — codex-keeper handles `.ai-docs/reference/`, convention-keeper handles `.ai-docs/standards/`
-
-**Validation lifecycle difference:**
-
-- `reference/` — audited aggressively (7-30 day cadence, line numbers drift with code)
-- `standards/` — lighter cadence (validate when convention-keeper proposes updates, or quarterly)
-
-**CLAUDE.md already says:** "ALWAYS read `.ai-docs/DOCUMENTATION_MAP.md` before working on any area" — once the map indexes standards too, this single instruction covers everything.
+See `.ai-docs/DOCUMENTATION_MAP.md` for the full file listing.
 
 ---
 

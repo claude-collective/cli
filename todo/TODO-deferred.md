@@ -42,7 +42,7 @@ Depends on P4-17. Test coverage for multi-item creation.
 ## General Deferred Tasks
 
 **M | D-01 | Update skill documentation conventions**
-Replace `examples-*.md` files with folder structure. Split examples vs patterns. Namespace files (e.g., `examples/core.md`, `patterns/testing.md`). Update Section 8 of `docs/standards/content/skill-atomicity-bible.md` accordingly.
+Replace `examples-*.md` files with folder structure. Split examples vs patterns. Namespace files (e.g., `examples/core.md`, `patterns/testing.md`). Update Section 8 of `.ai-docs/standards/skill-atomicity-bible.md` accordingly.
 
 ---
 

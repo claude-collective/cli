@@ -18,7 +18,7 @@ With the domain reorganization (D-139) creating `ai`, `meta`, and `infra` domain
 | **Researcher** | -             | web-researcher                  | api-researcher | -                                                         |
 | **Planning**   | -             | web-pm                          | -              | -                                                         |
 | **Pattern**    | -             | web-pattern-critique            | -              | pattern-scout                                             |
-| **Meta**       | -             | -                               | -              | agent-summoner, skill-summoner, scribe, convention-keeper |
+| **Meta**       | -             | -                               | -              | agent-summoner, skill-summoner, codex-keeper, convention-keeper |
 
 ### Coverage Gaps
 
@@ -94,7 +94,7 @@ Planning        -      ✓      ✗     -      -       -      -
 | `ai-researcher`    | ai-developer can research during implementation. Add when AI skill count exceeds 30+.                                             |
 | `ai-tester`        | AI testing is still an emerging practice. Add when patterns stabilize.                                                            |
 | `infra-developer`  | Infrastructure code (Dockerfiles, CI pipelines) is typically templated, not implemented from spec.                                |
-| `meta-*` agents    | Meta domain contains methodology/review skills — the existing meta agents (scribe, convention-keeper) already serve this purpose. |
+| `meta-*` agents    | Meta domain contains methodology/review skills — the existing meta agents (codex-keeper, convention-keeper) already serve this purpose. |
 
 ---
 
@@ -108,7 +108,7 @@ Planning        -      ✓      ✗     -      -       -      -
 | **Researcher** | -             | web-researcher                  | api-researcher | -                | -                  | -                                                         |
 | **Planning**   | -             | web-pm                          | **api-pm**     | -                | -                  | -                                                         |
 | **Pattern**    | -             | web-pattern-critique            | -              | -                | -                  | pattern-scout                                             |
-| **Meta**       | -             | -                               | -              | -                | -                  | agent-summoner, skill-summoner, scribe, convention-keeper |
+| **Meta**       | -             | -                               | -              | -                | -                  | agent-summoner, skill-summoner, codex-keeper, convention-keeper |
 
 ---
 

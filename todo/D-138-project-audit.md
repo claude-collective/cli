@@ -130,7 +130,7 @@ This document collects findings from a full-project audit by ~30 specialized sub
 
 ### 15-16. E2E Interactive and Lifecycle Tests
 
-**Audit Scope:** 74 E2E test files across `e2e/interactive/` (27 files) and `e2e/lifecycle/` (13 files), plus commands and other categories. Checked against standards in `docs/standards/e2e/`.
+**Audit Scope:** 74 E2E test files across `e2e/interactive/` (27 files) and `e2e/lifecycle/` (13 files), plus commands and other categories. Checked against standards in `.ai-docs/standards/e2e/`.
 
 **Methodology:** Sampled 10 test files (5 interactive + 5 lifecycle), then conducted pattern-wide grep searches for anti-patterns, constant usage, production imports, cleanup patterns, and fixture hygiene.
 
