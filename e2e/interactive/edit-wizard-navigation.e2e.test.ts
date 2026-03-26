@@ -69,38 +69,16 @@ describe("edit wizard — navigation and hotkeys", () => {
       expect(output).toContain(STEP_TEXT.SOURCES);
     });
 
-    it("should navigate to stack step when pressing ESC (known bug: should cancel in edit mode)", async () => {
+    it("should navigate to domain selection when pressing ESC from build step", async () => {
       const project = await ProjectBuilder.editable();
 
       wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
 
-      // ESC from build step triggers goBack() but history is empty because
-      // initialStep="build" is set via setState() without pushing to history.
-      // Falls back to "stack" step.
       await wizard.build.goBack();
 
       const screen = wizard.build.getScreen();
-      expect(screen).toContain(STEP_TEXT.STACK);
+      expect(screen).toContain("Select domains");
     });
-
-    // BUG: ESC from edit build step goes to stack step instead of cancelling
-    it.fails(
-      "should cancel wizard when pressing ESC on the initial build step in edit mode",
-      async () => {
-        const project = await ProjectBuilder.editable();
-
-        wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
-
-        await wizard.build.goBack();
-
-        // Wait for the stack step to actually render before asserting
-        await new Promise((r) => setTimeout(r, 500));
-        const screen = wizard.build.getScreen();
-        // ESC on the first step in edit mode should cancel the wizard, not go to stack.
-        // The stack step shows "Choose a stack", so "Framework" should NOT be present.
-        expect(screen).not.toContain(STEP_TEXT.STACK);
-      },
-    );
   });
 
   describe("wizard hotkeys", () => {

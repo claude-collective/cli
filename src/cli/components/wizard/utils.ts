@@ -13,7 +13,7 @@ export function getDomainDisplayName(domain: string): string {
     cli: "CLI",
     mobile: "Mobile",
     infra: "Infrastructure",
-    meta: "Methodology",
+    meta: "Meta",
     shared: "Shared",
   };
   return (

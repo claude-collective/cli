@@ -1,10 +1,10 @@
-import type { CategoryMap } from "../../types";
+import type { Category, CategoryDefinition } from "../../types";
 
 /**
  * Built-in category definitions, equivalent to config/skill-categories.ts.
  * Source repos may override or extend these via their own config files.
  */
-export const defaultCategories: CategoryMap = {
+export const defaultCategories = {
   "web-framework": {
     id: "web-framework",
     displayName: "Framework",
@@ -311,6 +311,52 @@ export const defaultCategories: CategoryMap = {
     required: false,
     order: 9,
   },
+  "api-cms": {
+    id: "api-cms",
+    displayName: "CMS",
+    description: "CMS platforms (Payload, Sanity, Strapi)",
+    domain: "api",
+    exclusive: false,
+    required: false,
+    order: 10,
+  },
+  "api-commerce": {
+    id: "api-commerce",
+    displayName: "Commerce",
+    description: "Commerce platforms (Stripe)",
+    domain: "api",
+    exclusive: false,
+    required: false,
+    order: 11,
+  },
+  // NOTE: api-framework may be a duplicate of api-api that needs investigation
+  "api-framework": {
+    id: "api-framework",
+    displayName: "API Framework",
+    description: "API frameworks (Elysia)",
+    domain: "api",
+    exclusive: true,
+    required: false,
+    order: 12,
+  },
+  "api-search": {
+    id: "api-search",
+    displayName: "Search",
+    description: "Search engines (Elasticsearch, Meilisearch)",
+    domain: "api",
+    exclusive: false,
+    required: false,
+    order: 13,
+  },
+  "api-vector-db": {
+    id: "api-vector-db",
+    displayName: "Vector Database",
+    description: "Vector databases (Pinecone, Qdrant, Chroma, Weaviate)",
+    domain: "api",
+    exclusive: false,
+    required: false,
+    order: 14,
+  },
   "mobile-framework": {
     id: "mobile-framework",
     displayName: "Mobile Framework",
@@ -365,6 +411,15 @@ export const defaultCategories: CategoryMap = {
     required: false,
     order: 2,
   },
+  "meta-design": {
+    id: "meta-design",
+    displayName: "Software Design",
+    description: "Software design patterns and paradigms",
+    domain: "meta",
+    exclusive: false,
+    required: false,
+    order: 3,
+  },
   "infra-ci-cd": {
     id: "infra-ci-cd",
     displayName: "CI/CD",
@@ -401,4 +456,4 @@ export const defaultCategories: CategoryMap = {
     required: true,
     order: 1,
   },
-};
+} as const satisfies Record<Category, CategoryDefinition>;

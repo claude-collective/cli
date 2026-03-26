@@ -14,7 +14,7 @@ const BUILT_IN_DOMAIN_DESCRIPTIONS: Record<Domain, string> = {
   cli: "Command-line tools",
   mobile: "Mobile applications",
   infra: "CI/CD, deployment, and infrastructure",
-  meta: "Code review and research methodology",
+  meta: "Design patterns, code review, and research methodology",
   shared: "Shared utilities and methodology",
 };
 

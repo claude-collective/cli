@@ -259,12 +259,20 @@ describe("agent-plugin-compiler", () => {
       const results = [
         {
           pluginPath: "/out/agent-web-developer",
-          manifest: { name: "agent-web-developer", version: "1.0.0", category: "meta-reviewing" as const },
+          manifest: {
+            name: "agent-web-developer",
+            version: "1.0.0",
+            category: "meta-reviewing" as const,
+          },
           agentName: "web-developer",
         },
         {
           pluginPath: "/out/agent-api-developer",
-          manifest: { name: "agent-api-developer", version: "2.0.0", category: "meta-reviewing" as const },
+          manifest: {
+            name: "agent-api-developer",
+            version: "2.0.0",
+            category: "meta-reviewing" as const,
+          },
           agentName: "api-developer",
         },
       ];
@@ -282,7 +290,11 @@ describe("agent-plugin-compiler", () => {
       const results = [
         {
           pluginPath: "/out/agent-web-developer",
-          manifest: { name: "agent-web-developer", version: "1.0.0", category: "meta-reviewing" as const },
+          manifest: {
+            name: "agent-web-developer",
+            version: "1.0.0",
+            category: "meta-reviewing" as const,
+          },
           agentName: "web-developer",
         },
       ];

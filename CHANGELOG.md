@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.89.0] - 2026-03-27
+
+**Exhaustive categories, meta domain rename, wizard navigation fix**
+
+- 6 missing categories added to `defaultCategories` with exhaustive `satisfies` type check
+- Meta domain renamed from "Methodology" to "Meta" in wizard
+- Fixed ESC from build step skipping domain selection in edit mode
+
+See [changelogs/0.89.0.md](./changelogs/0.89.0.md) for full details.
+
 ## [0.88.0] - 2026-03-26
 
 **Plugin category separation — category belongs in metadata, not manifests**

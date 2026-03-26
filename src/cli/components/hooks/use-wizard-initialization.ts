@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
+import { WIZARD_STEPS } from "../wizard/wizard-tabs.js";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import type { AgentName, Domain, SkillId } from "../../types/index.js";
 
@@ -39,7 +40,15 @@ export function useWizardInitialization({
       if (installedSkillIds?.length) {
         useWizardStore.getState().populateFromSkillIds(installedSkillIds, installedSkillConfigs);
       }
-      useWizardStore.setState({ step: initialStep, approach: "scratch" });
+      // Walk through steps via setStep() so history builds naturally.
+      // E.g. initialStep="build" → setStep("domains") then setStep("build")
+      // → history=["stack", "domains"], step="build".
+      useWizardStore.setState({ approach: "scratch" });
+      const stepIds = WIZARD_STEPS.map((s) => s.id);
+      const targetIndex = stepIds.indexOf(initialStep);
+      for (let i = 1; i <= targetIndex; i++) {
+        useWizardStore.getState().setStep(stepIds[i]!);
+      }
     }
     // Restore saved domains from config, overriding the domains
     // derived by populateFromSkillIds
