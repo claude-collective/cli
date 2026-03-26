@@ -2,9 +2,13 @@
 
 | ID    | Task                                                                                                                                                               | Status        |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| D-155 | Declarative commands — move single-use operations back to commands, apply two-tier orchestrator pattern to all commands. See [plan](./D-155-declarative-commands.md) | Ready for Dev |
+| D-152 | Fix ENOENT in dual-scope skill copy — `skill-copier.ts:215` resolves global skill `localPath` against `process.cwd()` instead of discovery context (`homedir`). 8 E2E tests use `it.fails()` as workaround. Root cause: `localPath` stored as relative path during discovery, no context tracking. | Ready for Dev |
 | D-149 | Stop inferring metadata from skill names/paths — use metadata source. See [findings](../.ai-docs/agent-findings/2026-03-25-skill-metadata-inference-from-names.md) | Ready for Dev |
 | D-148 | Remove unnecessary test mocks (`getErrorMessage`, `consts`, `DEFAULT_SOURCE`) in 3 plugin test files                                                               | Ready for Dev |
-| D-145 | Operations layer — centralize repeated command sequences. See [proposal](./D-145-operations-layer.md)                                                              | Investigate   |
+| D-154 | Organize operations into domain folders — group 26 operation files into `source/`, `skills/`, `plugins/`, `config/`, `agents/`, `scaffold/`, `lifecycle/` subdirectories. Update barrel exports and all import paths. | Ready for Dev |
+| D-153 | Standardize operations result types — define consistent patterns: list operations return `{ succeeded: T[], failed: Array<{item, error}>, total }`, single-action operations return `{ success, result?, error? }`. Currently inconsistent (some use counts, some arrays, some booleans). Touches every operation + call site + test. | Investigate   |
+| D-145 | Operations layer — centralize repeated command sequences. See [proposal](./D-145-operations-layer.md)                                                              | Complete      |
 | D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                                                                                                    | Ready for Dev |
 | D-123 | Local mode ENOENT on consuming projects — empty `sourcePath` for built-in matrix                                                                                   | Ready for Dev |
 | D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                                                                                            | In Progress   |
@@ -34,6 +38,7 @@
 | D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                                                                                    | Ready for Dev |
 | D-66  | AI-assisted PR review: categorize diffs by type                                                                                                                    | Investigate   |
 | D-69  | Config migration strategy for outdated config shapes                                                                                                               | Investigate   |
+| D-151 | E2E session-level timeout override — `TerminalSession`/`BaseStep` holds a `defaultTimeout` overridable at construction, replacing per-call timeout threading       | Ready for Dev |
 
 ---
 

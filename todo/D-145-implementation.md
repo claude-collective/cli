@@ -1,6 +1,6 @@
 # D-145 Implementation Guide: Operations Layer
 
-**Status:** Ready for execution
+**Status:** COMPLETE — all 6 phases implemented, all tests passing
 **Spec:** `todo/D-145-operations-layer.md`
 **Target:** `src/cli/lib/operations/`
 
@@ -2709,3 +2709,110 @@ Cross-referenced every line number, function signature, and before/after block a
 - Added 5 missing test files: doctor.test.ts, eject.test.ts, search.test.ts, init-flow.integration.test.ts, init-end-to-end.integration.test.ts
 - Updated edit.test.ts risk description: clarified that import paths won't change (operations are additive) but mock expectations may break due to command code restructuring
 - Added detailed explanation of WHY edit.test.ts is HIGH risk (transitive mocking, call order changes)
+
+---
+
+## Phase 6: Deep Command Refactoring (Outstanding)
+
+Phases 1-5 created the operations layer and did shallow wiring. Most commands only got `loadSource` swapped in (~5 line change). The deep refactoring that actually eliminates duplicated code was not completed. This phase finishes the job.
+
+**Current state vs spec target:**
+
+| Command | Current | Target | Lines to remove | Key work |
+|---------|---------|--------|-----------------|----------|
+| compile.ts | 349 | ~150 | ~200 | Extract `discoverAllSkills`, wire `compileAgents` deeper |
+| update.tsx | 357 | ~200 | ~157 | Wire `compileAgents` (replace direct `recompileAgents`), extract `updateLocalSkill` |
+| doctor.ts | 443 | ~300 | ~143 | Wire `detectProject`, consolidate config loading |
+| diff.ts | 297 | ~200 | ~97 | Extract inline sourceSkills map to shared helper |
+| init.tsx | 424 | ~250 | ~174 | Remove remaining lower-level imports, inline `handleInstallation` |
+| edit.tsx | 480 | ~350 | ~130 | Extract migration block to operation |
+
+### 6A: compile.ts — Extract skill discovery, remove private method shells
+
+**Lines 23-92: Top-level skill helpers (70 lines)**
+`loadSkillsFromDir()`, `discoverLocalProjectSkills()`, `mergeSkills()` are 70 lines of skill discovery code that exist ONLY for compile.ts. These should move into `recompile-project.ts` as the 4-way skill discovery the spec describes.
+
+**Lines 188-238: `discoverAllSkills()` method (50 lines)**
+Calls the above helpers + `discoverAllPluginSkills`. Should be extracted into `recompile-project.ts` as `discoverInstalledSkills()`.
+
+**Lines 240-317: `runCompilePass()` method (77 lines)**
+Contains user-facing log messages (7 E2E tests assert on these). The inner `compileAgents` call is correct, but the orchestration (config loading, scope map building, agent filtering) duplicates what `compileAgents` already does with `scopeFilter`. Strategy: have `compileAgents` handle scope filtering internally (it already does), then `runCompilePass` becomes ~30 lines of logging + one `compileAgents` call.
+
+**Lines 319-351: `resolveSourceForCompile()` + `loadAgentDefsForCompile()` (33 lines)**
+`loadAgentDefsForCompile` is a thin wrapper around `loadAgentDefs` — can be inlined. `resolveSourceForCompile` is 10 lines that can be inlined.
+
+**Gate:** compile E2E tests (7 tests in compile*.e2e.test.ts)
+
+### 6B: update.tsx — Wire compileAgents, extract updateLocalSkill
+
+**Line 309: Direct `recompileAgents` call**
+Replace with `compileAgents` operation. The options mapping is straightforward.
+
+**Lines 29-54: `updateSkill()` helper (26 lines)**
+Uses `copy()` and `injectForkedFromMetadata()` directly. Could be extracted but is only used here — keep for now, just wire the recompile.
+
+**Lines 279-330: Recompile block (51 lines)**
+Loads agent defs, discovers skills, calls recompileAgents — all of this is what `compileAgents` does. Replace with single `compileAgents` call.
+
+**Gate:** update E2E tests
+
+### 6C: doctor.ts — Wire detectProject, consolidate config loading
+
+**Lines 29-62: `checkConfigValid()` (34 lines)**
+Calls `loadProjectConfig` directly. Should use `detectProject` and access `config` from the result.
+
+**Lines 64-106: `checkSkillsResolved()` (43 lines)**
+Calls skill discovery directly. Could use the detection result from `detectProject` + `loadSource`.
+
+**Lines 108-186: Other check functions (~78 lines)**
+Several call `loadProjectConfig` independently. All should share a single `detectProject` call at the top of `run()`.
+
+**Strategy:** Call `detectProject()` once in `run()`, pass the result to all check functions. This eliminates 3-4 redundant `loadProjectConfig` calls.
+
+**Gate:** doctor E2E tests
+
+### 6D: diff.ts — Share sourceSkills map building
+
+**Lines 42-123: `diffSkill()` function (82 lines)**
+This is genuinely diff-specific logic (produces unified diff output). Keep it.
+
+**Lines 189-199: Inline sourceSkills map building (11 lines)**
+Same pattern as `compareSkillsWithSource` operation's internal logic. Could use a shared exported helper `buildSourceSkillsMap()` from compare-skills.ts, but the savings are minimal (~8 lines).
+
+**Strategy:** Export `buildSourceSkillsMap` from compare-skills.ts, use in diff.ts. Minimal but consistent.
+
+**Gate:** diff E2E tests
+
+### 6E: init.tsx — Remove remaining lower-level imports
+
+**Remaining direct imports that bypass operations:**
+- `detectProjectInstallation` — replace with `detectProject`
+- `resolveInstallPaths` — only used for success message paths, keep or extract
+- `buildAgentScopeMap` — used for `compileAgents` call, keep (it's a utility, not an operation)
+- `deriveInstallMode` — used for mode detection, keep (utility)
+
+**Lines 97-115: Dashboard detection block**
+Uses `detectProjectInstallation` + `loadProjectConfig` directly. Replace with `detectProject`.
+
+**Strategy:** Replace dashboard detection with `detectProject`, remove `detectProjectInstallation` import. Keep `deriveInstallMode` and `buildAgentScopeMap` as direct utility imports (they're pure functions, not orchestration).
+
+**Gate:** init E2E tests (all interactive init tests)
+
+### 6F: edit.tsx — Extract migration block
+
+**Lines 289-335: Migration + scope change block (~60 lines)**
+`detectMigrations()` + `executeMigration()` + per-skill scope migration with direct `claudePluginInstall`/`claudePluginUninstall`. This is domain logic that stays in lib/ per the spec ("Migration detection/execution stays in lib/"). The direct `claudePluginInstall`/`claudePluginUninstall` calls for scope changes are intentionally NOT wrapped in operations (operations handle add/remove, NOT scope changes).
+
+**Strategy:** This block is correctly NOT an operation per the spec. No change needed. The remaining reduction comes from removing unused imports only.
+
+### Phase 6 Execution Order
+
+1. **6B** (update.tsx) — smallest, lowest risk, validates compileAgents wiring
+2. **6E** (init.tsx) — medium, replaces dashboard detection
+3. **6C** (doctor.ts) — medium, consolidates config loading
+4. **6A** (compile.ts) — largest, highest risk (7 E2E tests)
+5. **6D** (diff.ts) — smallest, extract shared helper
+6. **6F** (edit.tsx) — no-op per spec, verify only
+
+**Gate per step:** tsc --noEmit + relevant E2E tests
+**Final gate:** Full E2E suite + full unit tests + tsc --noEmit
