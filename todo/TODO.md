@@ -1,44 +1,44 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                                                                                                                                                                                                                                                                                  | Status        |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-155 | Declarative commands — move single-use operations back to commands, apply two-tier orchestrator pattern to all commands. See [plan](./D-155-declarative-commands.md)                                                                                                                                                                  | Ready for Dev |
-| D-152 | Fix ENOENT in dual-scope skill copy — `skill-copier.ts:215` resolves global skill `localPath` against `process.cwd()` instead of discovery context (`homedir`). 8 E2E tests use `it.fails()` as workaround. Root cause: `localPath` stored as relative path during discovery, no context tracking.                                    | Ready for Dev |
-| D-149 | Stop inferring metadata from skill names/paths — use metadata source. See [findings](../.ai-docs/agent-findings/2026-03-25-skill-metadata-inference-from-names.md)                                                                                                                                                                    | Ready for Dev |
-| D-148 | Remove unnecessary test mocks (`getErrorMessage`, `consts`, `DEFAULT_SOURCE`) in 3 plugin test files                                                                                                                                                                                                                                  | Ready for Dev |
-| D-154 | Organize operations into domain folders — group 26 operation files into `source/`, `skills/`, `plugins/`, `config/`, `agents/`, `scaffold/`, `lifecycle/` subdirectories. Update barrel exports and all import paths.                                                                                                                 | Ready for Dev |
-| D-153 | Standardize operations result types — define consistent patterns: list operations return `{ succeeded: T[], failed: Array<{item, error}>, total }`, single-action operations return `{ success, result?, error? }`. Currently inconsistent (some use counts, some arrays, some booleans). Touches every operation + call site + test. | Investigate   |
-| D-145 | Operations layer — centralize repeated command sequences. See [proposal](./D-145-operations-layer.md)                                                                                                                                                                                                                                 | Complete      |
-| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                                                                                                                                                                                                                                                                       | Ready for Dev |
-| D-123 | Local mode ENOENT on consuming projects — empty `sourcePath` for built-in matrix                                                                                                                                                                                                                                                      | Ready for Dev |
-| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                                                                                                                                                                                                                                                               | In Progress   |
-| D-144 | Info panel — replace `?` help overlay with `I` info panel showing stats, context, toggles                                                                                                                                                                                                                                             | Investigate   |
-| D-118 | Investigate renaming "project/global" scope to "project/user"                                                                                                                                                                                                                                                                         | Investigate   |
-| D-97  | Improve startup time — lazy-load matrix generation                                                                                                                                                                                                                                                                                    | Investigate   |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions                                                                                                                                                                                                                                                                      | Ready for Dev |
-| D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting                                                                                                                                                                                                                                                      | Ready for Dev |
-| D-116 | Filter Incompatible toggle should also deselect incompatible skills                                                                                                                                                                                                                                                                   | Complete      |
-| D-132 | Skip incompatibility markers in exclusive (radio) categories                                                                                                                                                                                                                                                                          | Complete      |
-| D-131 | Track project installations in global config                                                                                                                                                                                                                                                                                          | Investigate   |
-| D-140 | Agent gap analysis — add 5 new agents. See [proposal](./D-140-agent-gap-analysis.md)                                                                                                                                                                                                                                                  | Ready for Dev |
-| D-111 | Create a GIF demo for the README                                                                                                                                                                                                                                                                                                      | Ready for Dev |
-| D-110 | Fix the logo in the README                                                                                                                                                                                                                                                                                                            | Ready for Dev |
-| D-109 | Fix the screenshots in the README                                                                                                                                                                                                                                                                                                     | Ready for Dev |
-| D-130 | Narrow stack type safety — category-scoped SkillId unions. Depends on D-97                                                                                                                                                                                                                                                            | Investigate   |
-| D-129 | Add visibility into global config contents from project config                                                                                                                                                                                                                                                                        | Investigate   |
-| D-127 | UX for claiming global skills/agents into project scope                                                                                                                                                                                                                                                                               | Investigate   |
-| D-125 | Fix weak E2E test assertions — scope-blind `\|\|` checks and fragile display names                                                                                                                                                                                                                                                    | Ready for Dev |
-| D-122 | Auto-update marketplace before plugin install                                                                                                                                                                                                                                                                                         | Ready for Dev |
-| D-62  | Review default stacks: add reviewing/research skills                                                                                                                                                                                                                                                                                  | Ready for Dev |
-| D-112 | Create a guide for setting up AI documentation                                                                                                                                                                                                                                                                                        | Ready for Dev |
-| D-111 | Replace E2E text anchors with stable test identifiers for active state detection                                                                                                                                                                                                                                                      | Investigate   |
-| D-90  | Add Sentry tracking for unresolved matrix references                                                                                                                                                                                                                                                                                  | Ready for Dev |
-| D-41  | Create `agents-inc` configuration skill. See [plan](./D-41-config-sub-agent.md)                                                                                                                                                                                                                                                       | Ready for Dev |
-| D-52  | Expand `new agent` command. See [plan](./D-52-expand-new-agent.md)                                                                                                                                                                                                                                                                    | Ready for Dev |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                                                                                                                                                                                                                                                       | Ready for Dev |
-| D-66  | AI-assisted PR review: categorize diffs by type                                                                                                                                                                                                                                                                                       | Investigate   |
-| D-69  | Config migration strategy for outdated config shapes                                                                                                                                                                                                                                                                                  | Investigate   |
-| D-151 | E2E session-level timeout override — `TerminalSession`/`BaseStep` holds a `defaultTimeout` overridable at construction, replacing per-call timeout threading                                                                                                                                                                          | Ready for Dev |
+| ID    | Task                                                                                            | Status        |
+| ----- | ----------------------------------------------------------------------------------------------- | ------------- |
+| D-155 | Declarative commands — two-tier orchestrator for all commands. [Plan](./D-155-declarative-commands.md) | Complete      |
+| D-152 | Fix ENOENT in dual-scope skill copy — global `localPath` resolved against cwd not homedir       | Ready for Dev |
+| D-149 | Stop inferring metadata from names/paths. [Findings](../.ai-docs/agent-findings/2026-03-25-skill-metadata-inference-from-names.md) | Ready for Dev |
+| D-148 | Remove unnecessary test mocks in 3 plugin test files                                            | Ready for Dev |
+| D-154 | Organize 26 operation files into domain subfolders, update barrel exports and imports            | Ready for Dev |
+| D-153 | Standardize operation result types — consistent list/single-action return patterns               | Investigate   |
+| D-145 | Operations layer — centralize repeated command sequences. [Proposal](./D-145-operations-layer.md) | Complete      |
+| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                                 | Ready for Dev |
+| D-123 | Local mode ENOENT — empty `sourcePath` for built-in matrix on consuming projects                | Ready for Dev |
+| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                         | In Progress   |
+| D-144 | Info panel — replace `?` overlay with `I` panel (stats, context, toggles)                       | Investigate   |
+| D-118 | Investigate renaming "project/global" scope to "project/user"                                   | Investigate   |
+| D-97  | Improve startup time — lazy-load matrix generation                                              | Investigate   |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions                                | Ready for Dev |
+| D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting                | Ready for Dev |
+| D-116 | Filter Incompatible toggle should also deselect incompatible skills                             | Complete      |
+| D-132 | Skip incompatibility markers in exclusive (radio) categories                                    | Complete      |
+| D-131 | Track project installations in global config                                                    | Investigate   |
+| D-140 | Agent gap analysis — add 5 new agents. [Proposal](./D-140-agent-gap-analysis.md)                | Ready for Dev |
+| D-111 | Create a GIF demo for the README                                                                | Ready for Dev |
+| D-110 | Fix the logo in the README                                                                      | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                                               | Ready for Dev |
+| D-130 | Narrow stack type safety — category-scoped SkillId unions. Depends on D-97                      | Investigate   |
+| D-129 | Add visibility into global config contents from project config                                  | Complete      |
+| D-127 | UX for claiming global skills/agents into project scope                                         | Investigate   |
+| D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names                   | Ready for Dev |
+| D-122 | Auto-update marketplace before plugin install                                                   | Ready for Dev |
+| D-62  | Review default stacks: add reviewing/research skills                                            | Ready for Dev |
+| D-112 | Create a guide for setting up AI documentation                                                  | Ready for Dev |
+| D-111 | Replace E2E text anchors with stable test identifiers                                           | Investigate   |
+| D-90  | Add Sentry tracking for unresolved matrix references                                            | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)                     | Ready for Dev |
+| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                                  | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                 | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type                                                 | Investigate   |
+| D-69  | Config migration strategy for outdated config shapes                                            | Investigate   |
+| D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`                  | Ready for Dev |
 
 ---
 
@@ -66,6 +66,14 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 When running `cc init` from a project directory and selecting global-scoped skills, the global config at `~/.claude-src/config.ts` is written without `source`, `marketplace`, or `selectedAgents`. These fields only appear in the project config. The global config should include them so that `cc edit` from global context can resolve the marketplace and install plugins.
 
 **Reproduction:** Run `cc init` from a project dir, select global-scoped skills. Compare `~/.claude-src/config.ts` (missing fields) with `<project>/.claude-src/config.ts` (has all fields).
+
+---
+
+#### D-152: Fix ENOENT in dual-scope skill copy
+
+**Priority:** High
+
+`skill-copier.ts:215` resolves global skill `localPath` against `process.cwd()` instead of the discovery context (`homedir`). Root cause: `localPath` is stored as a relative path during discovery with no context tracking. 8 E2E tests currently use `it.fails()` as a workaround.
 
 ---
 
@@ -106,6 +114,45 @@ Add `projects?: string[]` to global config, updated by init/edit/uninstall. Warn
 **Priority:** Low
 
 The `...globalConfig.skills` spread hides what's available. Consider generating comments listing the spread contents, or another approach to make the project config self-documenting without duplicating data.
+
+---
+
+### Operations Layer
+
+#### D-155: Declarative commands
+
+**Priority:** High
+
+Move single-use operations back into commands, apply the two-tier orchestrator pattern to all commands. See [D-155-declarative-commands.md](./D-155-declarative-commands.md) for the full plan.
+
+---
+
+#### D-154: Organize operations into domain folders
+
+**Priority:** Medium
+
+Group the 26 operation files into domain subdirectories: `source/`, `skills/`, `plugins/`, `config/`, `agents/`, `scaffold/`, `lifecycle/`. Update barrel exports and all import paths across the codebase.
+
+---
+
+#### D-153: Standardize operation result types
+
+**Priority:** Medium
+
+Current return types are inconsistent — some use counts, some arrays, some booleans. Define consistent patterns:
+
+- **List operations** return `{ succeeded: T[], failed: Array<{item, error}>, total }`
+- **Single-action operations** return `{ success, result?, error? }`
+
+Touches every operation file, call site, and test.
+
+---
+
+#### D-148: Remove unnecessary test mocks in plugin test files
+
+**Priority:** Low
+
+Three plugin test files mock modules that don't need mocking: `getErrorMessage`, `consts`, and `DEFAULT_SOURCE`. Remove these unnecessary mocks.
 
 ---
 
@@ -259,6 +306,50 @@ The "summoner" pair shares a role word differentiated by domain. The documentati
 
 ### Wizard UX
 
+#### D-144: Info panel
+
+**Priority:** Medium
+
+Replace the `?` help overlay with an `I` info panel (opened via the `I` key) that shows all selected skills and agents in a table layout.
+
+**Layout:** Plugin/Local on Y axis (rows), Global/Project on X axis (columns). Two sub-columns per scope to use horizontal space. Local row collapses to 1-2 lines or disappears when empty.
+
+```
+┌─ Info ─────────────────────────────────────────────────────────────┐
+│                                                                    │
+│  SKILLS (9)     Global                     Project                 │
+│  ──────────────────────────────────────────────────────────────── │
+│  Plugin         react       hono           tailwind    prisma      │
+│                 vitest      eslint         zod                     │
+│                                                                    │
+│  Local          my-custom-auth             my-project-util         │
+│                                                                    │
+│  AGENTS (5)     Global                     Project                 │
+│  ──────────────────────────────────────────────────────────────── │
+│                 web-developer  cli-developer   api-reviewer        │
+│                 web-reviewer   codex-keeper                        │
+│                                                                    │
+│  I close                                                           │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Design rationale:**
+- Local skills are rare, so they sit on the Y axis — the row naturally collapses to 1 line or disappears
+- Two sub-columns per scope halve the row count for large selections
+- Gap between Global and Project columns acts as the visual divider (no border needed)
+- No separator between Plugin and Local — just an empty row for breathing room
+
+**Scrolling:** Use `useRowScroll` for the content area — `Box overflow="hidden"` with negative `marginTop` offset. The unused `useVirtualScroll` hook already calculates `hiddenAbove`/`hiddenBelow` counts for scroll indicators.
+
+**First implementation scope:**
+- `I` key toggles the panel as a full overlay
+- Show all selected skills grouped in the 2x2 grid (scope x mode)
+- Show all selected agents grouped by scope
+- Scrollable when content exceeds viewport
+- No other stats/toggles in v1
+
+---
+
 #### D-132: Skip incompatibility markers in exclusive categories
 
 **Priority:** Low
@@ -364,6 +455,14 @@ E2E tests currently use `STEP_TEXT` display strings (e.g., `"Choose a stack"`, `
 
 - Parse raw ANSI escape sequences from the PTY buffer instead of using `getScreen()`. Active items already emit distinct ANSI codes (bold + warning color). A `TerminalSession` method like `hasStyledText("Shared", { bold: true })` could check the raw stream without any UI changes.
 - Alternative: xterm's buffer API may expose cell-level style attributes that survive processing.
+
+---
+
+#### D-151: E2E session-level timeout override
+
+**Priority:** Low
+
+`TerminalSession` and `BaseStep` should hold a `defaultTimeout` property overridable at construction time, replacing the current pattern of threading timeout values through every per-call method parameter.
 
 ---
 

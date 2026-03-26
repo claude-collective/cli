@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.87.0] - 2026-03-26
+
+**Declarative commands, operation dissolution, global skill discovery fix**
+
+- 14 commands restructured with declarative two-tier pattern — `run()` reads like pseudocode
+- 12 single-use operations dissolved back into their respective commands; operations layer trimmed to 17 shared files
+- Fix: init/edit/update now discover all skills (global + project) before compiling agents
+
+See [changelogs/0.87.0.md](./changelogs/0.87.0.md) for full details.
+
 ## [0.86.0] - 2026-03-26
 
 **Operations layer — composable building blocks for all CLI commands**
