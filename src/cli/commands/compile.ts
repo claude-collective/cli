@@ -4,7 +4,9 @@ import { BaseCommand } from "../base-command";
 import { setVerbose, verbose } from "../utils/logger";
 import {
   detectBothInstallations,
+  type BothInstallations,
   loadAgentDefs,
+  type AgentDefs,
   compileAgents,
   discoverInstalledSkills,
   type DiscoveredSkills,
@@ -40,75 +42,88 @@ export default class Compile extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Compile);
-
     setVerbose(flags.verbose);
-
     const cwd = process.cwd();
-    const homeDir = os.homedir();
 
-    const {
-      global: globalInstallation,
-      project: projectInstallation,
-      hasBoth: hasBothScopes,
-    } = await detectBothInstallations(cwd);
+    const installations = await this.detectInstallations(cwd);
+    await this.resolveAndLogSource(flags.source);
+    const agentDefs = await this.loadAgentDefsOrFail(flags, cwd);
+    await this.compileAllScopes(installations, agentDefs, cwd);
+  }
 
-    if (!globalInstallation && !projectInstallation) {
+  private async detectInstallations(cwd: string): Promise<BothInstallations> {
+    const installations = await detectBothInstallations(cwd);
+
+    if (!installations.global && !installations.project) {
       this.error(ERROR_MESSAGES.NO_INSTALLATION, {
         exit: EXIT_CODES.ERROR,
       });
     }
 
-    // Resolve source
+    return installations;
+  }
+
+  private async resolveAndLogSource(sourceFlag?: string): Promise<void> {
     this.log(STATUS_MESSAGES.RESOLVING_SOURCE);
     try {
-      const sourceConfig = await resolveSource(flags.source);
+      const sourceConfig = await resolveSource(sourceFlag);
       this.log(`Source: ${sourceConfig.sourceOrigin}`);
     } catch (error) {
       this.log(ERROR_MESSAGES.FAILED_RESOLVE_SOURCE);
       this.handleError(error);
     }
+  }
 
-    // Load agent definitions
+  private async loadAgentDefsOrFail(
+    flags: { "agent-source"?: string },
+    cwd: string,
+  ): Promise<AgentDefs> {
     this.log(
       flags["agent-source"]
         ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS
         : STATUS_MESSAGES.LOADING_AGENT_PARTIALS,
     );
-    let agentDefs;
     try {
       const defs = await loadAgentDefs(flags["agent-source"], { projectDir: cwd });
       this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");
       verbose(`  Agents: ${defs.agentSourcePaths.agentsDir}`);
       verbose(`  Templates: ${defs.agentSourcePaths.templatesDir}`);
-      agentDefs = defs;
+      return defs;
     } catch (error) {
       this.log(ERROR_MESSAGES.FAILED_LOAD_AGENT_PARTIALS);
-      return this.handleError(error);
+      this.handleError(error);
     }
+  }
 
+  private async compileAllScopes(
+    installations: BothInstallations,
+    agentDefs: AgentDefs,
+    cwd: string,
+  ): Promise<void> {
+    const homeDir = os.homedir();
     let totalPassesWithSkills = 0;
 
     // When both installations exist, filter each pass to its own scope to prevent
     // the project pass from overwriting global agents with zero-skill versions
     // (the project config's stack only has project agent entries).
-    if (globalInstallation) {
+    if (installations.global) {
       const hadSkills = await this.runCompilePass({
         label: "Global",
         projectDir: homeDir,
-        installation: globalInstallation,
+        installation: installations.global,
         sourcePath: agentDefs.sourcePath,
-        scopeFilter: hasBothScopes ? "global" : undefined,
+        scopeFilter: installations.hasBoth ? "global" : undefined,
       });
       if (hadSkills) totalPassesWithSkills++;
     }
 
-    if (projectInstallation) {
+    if (installations.project) {
       const hadSkills = await this.runCompilePass({
         label: "Project",
         projectDir: cwd,
-        installation: projectInstallation,
+        installation: installations.project,
         sourcePath: agentDefs.sourcePath,
-        scopeFilter: hasBothScopes ? "project" : undefined,
+        scopeFilter: installations.hasBoth ? "project" : undefined,
       });
       if (hadSkills) totalPassesWithSkills++;
     }

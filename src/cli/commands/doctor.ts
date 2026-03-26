@@ -335,6 +335,8 @@ function formatTips(results: CheckResult[]): string[] {
   return tips;
 }
 
+const SKIP_RESULT: CheckResult = { status: "skip", message: "Skipped (config invalid)" };
+
 export default class Doctor extends BaseCommand {
   static summary = "Diagnose common configuration issues";
 
@@ -360,94 +362,71 @@ export default class Doctor extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Doctor);
-
     setVerbose(flags.verbose);
-
     const projectDir = process.cwd();
 
+    this.printHeader();
+    const results = await this.runAllChecks(projectDir, flags);
+    this.printResults(results);
+
+    if (results.some((r) => r.status === "fail")) {
+      this.exit(EXIT_CODES.ERROR);
+    }
+  }
+
+  private printHeader(): void {
     this.log("");
     this.log(`${DEFAULT_BRANDING.NAME} Doctor`);
     this.log("");
     this.log("  Checking configuration health...");
     this.log("");
+  }
 
-    const results: CheckResult[] = [];
-
-    // Use detectProject operation to get installation + config in one call
+  private async runAllChecks(
+    projectDir: string,
+    flags: { source?: string; verbose: boolean },
+  ): Promise<CheckResult[]> {
     const detected = await detectProject(projectDir);
     const { result: configResult, config } = checkConfigValid(detected?.config ?? null);
-    results.push(configResult);
-    formatCheckLine("Config Valid", configResult, flags.verbose).forEach((line) => this.log(line));
-
-    const sourceResult = await checkSourceReachable(flags.source, projectDir);
+    this.logCheck("Config Valid", configResult, flags.verbose);
 
     // loadSource (called by checkSourceReachable) populates the matrix automatically
-    if (config) {
-      const skillsResult = await checkSkillsResolved(config, matrix, projectDir);
-      results.push(skillsResult);
-      formatCheckLine("Skills Resolved", skillsResult, flags.verbose).forEach((line) =>
-        this.log(line),
-      );
-    } else {
-      const skipResult: CheckResult = {
-        status: "skip",
-        message: "Skipped (config invalid)",
-      };
-      results.push(skipResult);
-      formatCheckLine("Skills Resolved", skipResult, flags.verbose).forEach((line) =>
-        this.log(line),
-      );
+    const sourceResult = await checkSourceReachable(flags.source, projectDir);
+
+    const skillsResult = config
+      ? await checkSkillsResolved(config, matrix, projectDir)
+      : SKIP_RESULT;
+    this.logCheck("Skills Resolved", skillsResult, flags.verbose);
+
+    const agentsResult = config ? await checkAgentsCompiled(config, projectDir) : SKIP_RESULT;
+    this.logCheck("Agents Compiled", agentsResult, flags.verbose);
+
+    const orphansResult = config ? await checkNoOrphans(config, projectDir) : SKIP_RESULT;
+    this.logCheck("No Orphans", orphansResult, flags.verbose);
+
+    this.logCheck("Source Reachable", sourceResult, flags.verbose);
+
+    return [configResult, skillsResult, agentsResult, orphansResult, sourceResult];
+  }
+
+  private logCheck(name: string, result: CheckResult, verbose: boolean): void {
+    for (const line of formatCheckLine(name, result, verbose)) {
+      this.log(line);
     }
+  }
 
-    if (config) {
-      const agentsResult = await checkAgentsCompiled(config, projectDir);
-      results.push(agentsResult);
-      formatCheckLine("Agents Compiled", agentsResult, flags.verbose).forEach((line) =>
-        this.log(line),
-      );
-    } else {
-      const skipResult: CheckResult = {
-        status: "skip",
-        message: "Skipped (config invalid)",
-      };
-      results.push(skipResult);
-      formatCheckLine("Agents Compiled", skipResult, flags.verbose).forEach((line) =>
-        this.log(line),
-      );
-    }
-
-    if (config) {
-      const orphansResult = await checkNoOrphans(config, projectDir);
-      results.push(orphansResult);
-      formatCheckLine("No Orphans", orphansResult, flags.verbose).forEach((line) => this.log(line));
-    } else {
-      const skipResult: CheckResult = {
-        status: "skip",
-        message: "Skipped (config invalid)",
-      };
-      results.push(skipResult);
-      formatCheckLine("No Orphans", skipResult, flags.verbose).forEach((line) => this.log(line));
-    }
-
-    results.push(sourceResult);
-    formatCheckLine("Source Reachable", sourceResult, flags.verbose).forEach((line) =>
-      this.log(line),
-    );
-
+  private printResults(results: CheckResult[]): void {
     this.log("");
     this.log(formatSummary(results));
 
     const tips = formatTips(results);
     if (tips.length > 0) {
       this.log("");
-      tips.forEach((tip) => this.log(tip));
+      for (const tip of tips) {
+        this.log(tip);
+      }
     }
 
     this.log("");
-
-    const hasErrors = results.some((r) => r.status === "fail");
-    if (hasErrors) {
-      this.exit(EXIT_CODES.ERROR);
-    }
   }
 }

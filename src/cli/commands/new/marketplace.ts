@@ -26,7 +26,7 @@ import { generateMarketplace, writeMarketplace } from "../../lib/marketplace-gen
 import {
   generateSkillCategoriesTs,
   generateSkillRulesTs,
-} from "../../lib/operations/scaffold-skill.js";
+} from "../../lib/skills/generators.js";
 import type { Category, SkillId } from "../../types/index.js";
 
 export function validateMarketplaceName(name: string): string | null {

@@ -2,8 +2,7 @@ import React, { useState, useCallback } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { cliTheme } from "../themes/default.js";
-import type { SkillId } from "../../types/index.js";
-import type { SourcedSkill } from "../../lib/operations/search-skills.js";
+import type { SkillId, ResolvedSkill } from "../../types/index.js";
 import { CLI_COLORS, UI_SYMBOLS, UI_LAYOUT } from "../../consts.js";
 import {
   HOTKEY_COPY_LINK,
@@ -17,7 +16,11 @@ import { useTextInput } from "../hooks/use-text-input.js";
 import { useFilteredResults } from "../hooks/use-filtered-results.js";
 import { truncateText } from "../../utils/string.js";
 
-export type { SourcedSkill };
+/** A skill with source provenance info, used for search results and imports. */
+export type SourcedSkill = ResolvedSkill & {
+  sourceName: string;
+  sourceUrl?: string;
+};
 
 export type SkillSearchResult = {
   selectedSkills: SourcedSkill[];

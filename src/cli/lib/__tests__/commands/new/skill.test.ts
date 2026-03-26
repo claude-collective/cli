@@ -12,13 +12,15 @@ import {
 } from "../../helpers";
 import { EXIT_CODES } from "../../../exit-codes";
 import {
-  validateSkillName,
   toTitleCase,
-  generateSkillMd,
-  generateMetadataYaml,
   generateSkillCategoriesTs,
   generateSkillRulesTs,
-} from "../../../operations/scaffold-skill";
+} from "../../../skills/generators";
+import {
+  validateSkillName,
+  generateSkillMd,
+  generateMetadataYaml,
+} from "../../../../commands/new/skill";
 import {
   LOCAL_SKILLS_PATH,
   SKILL_CATEGORIES_PATH,

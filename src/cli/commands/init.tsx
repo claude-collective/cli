@@ -15,10 +15,12 @@ import {
   installPluginSkills,
   writeProjectConfig,
   compileAgents,
-  getDashboardData,
-  type DashboardData,
+  discoverInstalledSkills,
 } from "../lib/operations/index.js";
+import { getInstallationInfo } from "../lib/plugins/plugin-info.js";
+import { loadProjectConfig } from "../lib/configuration/project-config.js";
 import {
+  type InstallMode,
   detectProjectInstallation,
   deriveInstallMode,
   resolveInstallPaths,
@@ -90,9 +92,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelect, onCancel }) => {
     </Box>
   );
 };
-
-// Re-export from operations so existing consumers can keep importing from init.
-export { getDashboardData, type DashboardData } from "../lib/operations/index.js";
 
 /** Formats the dashboard summary as plain text lines (for non-interactive/test output). */
 export function formatDashboardText(data: DashboardData): string {
@@ -180,17 +179,32 @@ export default class Init extends BaseCommand {
     const { flags } = await this.parse(Init);
     const projectDir = process.cwd();
 
-    // For "already initialized" check, only look at the target directory (no global fallback)
-    const existingInstallation = await detectProjectInstallation(projectDir);
+    if (await this.showDashboardIfInitialized(projectDir)) return;
+    await this.ensureGlobalConfig(projectDir);
 
-    if (existingInstallation) {
-      const selectedCommand = await showDashboard(projectDir, (msg) => this.log(msg));
-      if (selectedCommand) {
-        await this.config.runCommand(selectedCommand);
-      }
-      return;
+    const { sourceResult, startupMessages } = await this.loadSourceOrFail(flags);
+    const result = await this.runWizard(sourceResult, startupMessages, projectDir);
+    if (!result) this.exit(EXIT_CODES.CANCELLED);
+
+    if (result.skills.length === 0) {
+      this.error("No skills selected", { exit: EXIT_CODES.ERROR });
     }
 
+    await this.handleInstallation(result, sourceResult, flags);
+  }
+
+  private async showDashboardIfInitialized(projectDir: string): Promise<boolean> {
+    const existingInstallation = await detectProjectInstallation(projectDir);
+    if (!existingInstallation) return false;
+
+    const selectedCommand = await showDashboard(projectDir, (msg) => this.log(msg));
+    if (selectedCommand) {
+      await this.config.runCommand(selectedCommand);
+    }
+    return true;
+  }
+
+  private async ensureGlobalConfig(projectDir: string): Promise<void> {
     // Auto-create blank global config on first init from a project directory.
     // This ensures the project config can always import from global.
     // Resolve both paths through realpathSync — on macOS /var is a symlink to
@@ -203,24 +217,32 @@ export default class Init extends BaseCommand {
         this.log("Created blank global config at ~/" + CLAUDE_SRC_DIR);
       }
     }
+  }
 
-    let sourceResult: SourceLoadResult;
-    let startupMessages: StartupMessage[] = [];
+  private async loadSourceOrFail(flags: {
+    source?: string;
+    refresh: boolean;
+  }): Promise<{ sourceResult: SourceLoadResult; startupMessages: StartupMessage[] }> {
     try {
       const loaded = await loadSource({
         sourceFlag: flags.source,
-        projectDir,
+        projectDir: process.cwd(),
         forceRefresh: flags.refresh,
         captureStartupMessages: true,
       });
-      sourceResult = loaded.sourceResult;
-      startupMessages = loaded.startupMessages;
+      return { sourceResult: loaded.sourceResult, startupMessages: loaded.startupMessages };
     } catch (error) {
       this.error(getErrorMessage(error), {
         exit: EXIT_CODES.ERROR,
       });
     }
+  }
 
+  private async runWizard(
+    sourceResult: SourceLoadResult,
+    startupMessages: StartupMessage[],
+    projectDir: string,
+  ): Promise<WizardResultV2 | null> {
     let wizardResult: WizardResultV2 | null = null;
 
     const { waitUntilExit } = render(
@@ -242,16 +264,8 @@ export default class Init extends BaseCommand {
 
     // TypeScript can't track that onComplete callback mutates wizardResult before waitUntilExit resolves
     const result = wizardResult as WizardResultV2 | null;
-
-    if (!result || result.cancelled) {
-      this.exit(EXIT_CODES.CANCELLED);
-    }
-
-    if (result.skills.length === 0) {
-      this.error("No skills selected", { exit: EXIT_CODES.ERROR });
-    }
-
-    await this.handleInstallation(result, sourceResult, flags);
+    if (result?.cancelled) return null;
+    return result;
   }
 
   private async handleInstallation(
@@ -261,10 +275,60 @@ export default class Init extends BaseCommand {
   ): Promise<void> {
     const projectDir = process.cwd();
     let installMode = deriveInstallMode(result.skills);
-
     const localSkills = result.skills.filter((s) => s.source === "local");
     const pluginSkills = result.skills.filter((s) => s.source !== "local");
 
+    this.logInstallPlan(result, installMode, localSkills, pluginSkills);
+
+    let copiedSkills = [...localSkills];
+    let pluginModeSucceeded = false;
+
+    if (installMode === "local" || installMode === "mixed") {
+      await this.copyLocalSkillsStep(localSkills, projectDir, sourceResult, installMode);
+    }
+
+    if (installMode === "plugin" || installMode === "mixed") {
+      const pluginStepResult = await this.installPluginsStep(
+        pluginSkills,
+        sourceResult,
+        projectDir,
+        installMode,
+        copiedSkills,
+        result.skills,
+      );
+      copiedSkills = pluginStepResult.copiedSkills;
+      installMode = pluginStepResult.installMode;
+      pluginModeSucceeded = pluginStepResult.succeeded;
+    }
+
+    try {
+      const { configResult, compileResult, projectPaths } =
+        await this.writeConfigAndCompile(result, sourceResult, flags, installMode);
+      this.reportSuccess(
+        configResult,
+        compileResult,
+        projectPaths,
+        installMode,
+        pluginModeSucceeded,
+        copiedSkills,
+      );
+
+      const permissionWarning = await checkPermissions(projectDir);
+      if (permissionWarning) {
+        const { waitUntilExit } = render(permissionWarning);
+        await waitUntilExit();
+      }
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  private logInstallPlan(
+    result: WizardResultV2,
+    installMode: InstallMode,
+    localSkills: WizardResultV2["skills"],
+    pluginSkills: WizardResultV2["skills"],
+  ): void {
     this.log("\n");
     this.log(`Selected ${result.skills.length} skills`);
     this.log(
@@ -276,133 +340,177 @@ export default class Init extends BaseCommand {
             : "Local (copy to .claude/skills/)"
       }`,
     );
+  }
 
-    // Step 1: Copy local skills (for local or mixed modes)
-    let copiedSkills: typeof localSkills = [];
-    if (installMode === "local" || installMode === "mixed") {
-      this.log("Copying skills to local directory...");
-      const copyResult = await copyLocalSkills(localSkills, projectDir, sourceResult);
-      copiedSkills = localSkills;
+  private async copyLocalSkillsStep(
+    localSkills: WizardResultV2["skills"],
+    projectDir: string,
+    sourceResult: SourceLoadResult,
+    installMode: InstallMode,
+  ): Promise<void> {
+    this.log("Copying skills to local directory...");
+    const copyResult = await copyLocalSkills(localSkills, projectDir, sourceResult);
 
-      if (installMode === "mixed") {
-        if (copyResult.projectCopied.length > 0 && copyResult.globalCopied.length > 0) {
-          this.log(
-            `Copied ${copyResult.totalCopied} local skills (${copyResult.projectCopied.length} project, ${copyResult.globalCopied.length} global)`,
-          );
-        } else if (copyResult.globalCopied.length > 0) {
-          this.log(`Copied ${copyResult.globalCopied.length} local skills to ~/.claude/skills/`);
-        } else {
-          this.log(`Copied ${copyResult.projectCopied.length} local skills to .claude/skills/`);
-        }
-      } else {
-        this.log(`Copied ${copyResult.totalCopied} skills to .claude/skills/\n`);
-      }
-    }
-
-    // Step 2: Marketplace + plugin installation (for plugin or mixed modes)
-    let pluginModeSucceeded = false;
-    if (installMode === "plugin" || installMode === "mixed") {
-      const mpResult = await ensureMarketplace(sourceResult);
-
-      if (!mpResult.marketplace) {
-        this.warn("Could not resolve marketplace. Falling back to Local Mode...");
-        // Marketplace unavailable — copy all plugin-intended skills locally as fallback.
-        // In "mixed" mode, localSkills were already copied in Step 1; only copy plugin-intended skills.
-        // In "plugin" mode, no skills were copied yet; copy all skills.
-        const fallbackSkills = installMode === "mixed" ? pluginSkills : result.skills;
-        const fallbackCopyResult = await copyLocalSkills(fallbackSkills, projectDir, sourceResult);
-        copiedSkills = [...copiedSkills, ...fallbackSkills];
-        installMode = "local";
-        this.log(`Copied ${fallbackCopyResult.totalCopied} skills to .claude/skills/\n`);
-      } else {
-        if (mpResult.registered) {
-          this.log(`Registering marketplace "${mpResult.marketplace}"...`);
-        }
-
-        this.log("Installing skill plugins...");
-        const pluginResult = await installPluginSkills(
-          pluginSkills,
-          mpResult.marketplace,
-          projectDir,
+    if (installMode === "mixed") {
+      if (copyResult.projectCopied.length > 0 && copyResult.globalCopied.length > 0) {
+        this.log(
+          `Copied ${copyResult.totalCopied} local skills (${copyResult.projectCopied.length} project, ${copyResult.globalCopied.length} global)`,
         );
-
-        for (const item of pluginResult.installed) {
-          this.log(`  Installed ${item.ref}`);
-        }
-        for (const item of pluginResult.failed) {
-          this.warn(`Failed to install plugin ${item.id}: ${item.error}`);
-        }
-
-        this.log(`Installed ${pluginResult.installed.length} skill plugins\n`);
-        pluginModeSucceeded = true;
+      } else if (copyResult.globalCopied.length > 0) {
+        this.log(`Copied ${copyResult.globalCopied.length} local skills to ~/.claude/skills/`);
+      } else {
+        this.log(`Copied ${copyResult.projectCopied.length} local skills to .claude/skills/`);
       }
-    }
-
-    // Step 3: Write config (all modes)
-    this.log("Generating configuration...");
-    try {
-      const configResult = await writeProjectConfig({
-        wizardResult: result,
-        sourceResult,
-        projectDir,
-        sourceFlag: flags.source,
-      });
-
-      if (configResult.wasMerged) {
-        this.log(`Merged with existing config at ${configResult.existingConfigPath}`);
-      }
-
-      this.log(`Configuration saved (${configResult.config.agents.length} agents)\n`);
-
-      // Step 4: Compile agents
-      this.log(STATUS_MESSAGES.COMPILING_AGENTS);
-      const projectPaths = resolveInstallPaths(projectDir, "project");
-      const agentDefs = await loadAgentDefs();
-      const compileResult = await compileAgents({
-        projectDir,
-        sourcePath: agentDefs.sourcePath,
-        installMode,
-        agentScopeMap: buildAgentScopeMap(configResult.config),
-        outputDir: projectPaths.agentsDir,
-      });
-      this.log(`Compiled ${compileResult.compiled.length} agents to .claude/agents/\n`);
-
-      // Step 5: Report success
-      this.log(`${SUCCESS_MESSAGES.INIT_SUCCESS}\n`);
-
-      // Show copied skills summary for local/mixed modes (when not in plugin-only mode)
-      const isLocalOutput =
-        installMode === "local" || (installMode === "mixed" && !pluginModeSucceeded);
-      if (isLocalOutput && copiedSkills.length > 0) {
-        this.log("Skills copied to:");
-        this.log(`  ${projectPaths.skillsDir}`);
-        for (const skill of copiedSkills) {
-          const displayName = getSkillById(skill.id).displayName;
-          this.log(`    ${displayName}/`);
-        }
-        this.log("");
-      }
-      this.log("Agents compiled to:");
-      this.log(`  ${projectPaths.agentsDir}`);
-      for (const agentName of compileResult.compiled) {
-        this.log(`    ${agentName}.md`);
-      }
-      this.log("");
-      this.log("Configuration:");
-      this.log(`  ${configResult.configPath}`);
-      this.log("");
-      this.log("To customize agent-skill assignments:");
-      this.log(`  1. Edit .claude-src/config.ts`);
-      this.log(`  2. Run '${CLI_BIN_NAME} compile' to regenerate agents`);
-      this.log("");
-
-      const permissionWarning = await checkPermissions(projectDir);
-      if (permissionWarning) {
-        const { waitUntilExit } = render(permissionWarning);
-        await waitUntilExit();
-      }
-    } catch (error) {
-      this.handleError(error);
+    } else {
+      this.log(`Copied ${copyResult.totalCopied} skills to .claude/skills/\n`);
     }
   }
+
+  private async installPluginsStep(
+    pluginSkills: WizardResultV2["skills"],
+    sourceResult: SourceLoadResult,
+    projectDir: string,
+    installMode: InstallMode,
+    copiedSkills: WizardResultV2["skills"],
+    allSkills: WizardResultV2["skills"],
+  ): Promise<{
+    copiedSkills: WizardResultV2["skills"];
+    installMode: InstallMode;
+    succeeded: boolean;
+  }> {
+    const mpResult = await ensureMarketplace(sourceResult);
+
+    if (!mpResult.marketplace) {
+      this.warn("Could not resolve marketplace. Falling back to Local Mode...");
+      // Marketplace unavailable — copy all plugin-intended skills locally as fallback.
+      // In "mixed" mode, localSkills were already copied; only copy plugin-intended skills.
+      // In "plugin" mode, no skills were copied yet; copy all skills.
+      const fallbackSkills = installMode === "mixed" ? pluginSkills : allSkills;
+      const fallbackCopyResult = await copyLocalSkills(fallbackSkills, projectDir, sourceResult);
+      this.log(`Copied ${fallbackCopyResult.totalCopied} skills to .claude/skills/\n`);
+      return {
+        copiedSkills: [...copiedSkills, ...fallbackSkills],
+        installMode: "local",
+        succeeded: false,
+      };
+    }
+
+    if (mpResult.registered) {
+      this.log(`Registering marketplace "${mpResult.marketplace}"...`);
+    }
+
+    this.log("Installing skill plugins...");
+    const pluginResult = await installPluginSkills(
+      pluginSkills,
+      mpResult.marketplace,
+      projectDir,
+    );
+
+    for (const item of pluginResult.installed) {
+      this.log(`  Installed ${item.ref}`);
+    }
+    for (const item of pluginResult.failed) {
+      this.warn(`Failed to install plugin ${item.id}: ${item.error}`);
+    }
+
+    this.log(`Installed ${pluginResult.installed.length} skill plugins\n`);
+    return { copiedSkills, installMode, succeeded: true };
+  }
+
+  private async writeConfigAndCompile(
+    result: WizardResultV2,
+    sourceResult: SourceLoadResult,
+    flags: { source?: string; refresh: boolean },
+    installMode: InstallMode,
+  ): Promise<{
+    configResult: Awaited<ReturnType<typeof writeProjectConfig>>;
+    compileResult: Awaited<ReturnType<typeof compileAgents>>;
+    projectPaths: ReturnType<typeof resolveInstallPaths>;
+  }> {
+    this.log("Generating configuration...");
+    const configResult = await writeProjectConfig({
+      wizardResult: result,
+      sourceResult,
+      projectDir: process.cwd(),
+      sourceFlag: flags.source,
+    });
+
+    if (configResult.wasMerged) {
+      this.log(`Merged with existing config at ${configResult.existingConfigPath}`);
+    }
+
+    this.log(`Configuration saved (${configResult.config.agents.length} agents)\n`);
+
+    this.log(STATUS_MESSAGES.COMPILING_AGENTS);
+    const projectPaths = resolveInstallPaths(process.cwd(), "project");
+    const agentDefs = await loadAgentDefs();
+    const { allSkills } = await discoverInstalledSkills(process.cwd());
+    const compileResult = await compileAgents({
+      projectDir: process.cwd(),
+      sourcePath: agentDefs.sourcePath,
+      skills: allSkills,
+      installMode,
+      agentScopeMap: buildAgentScopeMap(configResult.config),
+      outputDir: projectPaths.agentsDir,
+    });
+    this.log(`Compiled ${compileResult.compiled.length} agents to .claude/agents/\n`);
+
+    return { configResult, compileResult, projectPaths };
+  }
+
+  private reportSuccess(
+    configResult: Awaited<ReturnType<typeof writeProjectConfig>>,
+    compileResult: Awaited<ReturnType<typeof compileAgents>>,
+    projectPaths: ReturnType<typeof resolveInstallPaths>,
+    installMode: InstallMode,
+    pluginModeSucceeded: boolean,
+    copiedSkills: WizardResultV2["skills"],
+  ): void {
+    this.log(`${SUCCESS_MESSAGES.INIT_SUCCESS}\n`);
+
+    const isLocalOutput =
+      installMode === "local" || (installMode === "mixed" && !pluginModeSucceeded);
+    if (isLocalOutput && copiedSkills.length > 0) {
+      this.log("Skills copied to:");
+      this.log(`  ${projectPaths.skillsDir}`);
+      for (const skill of copiedSkills) {
+        const displayName = getSkillById(skill.id).displayName;
+        this.log(`    ${displayName}/`);
+      }
+      this.log("");
+    }
+    this.log("Agents compiled to:");
+    this.log(`  ${projectPaths.agentsDir}`);
+    for (const agentName of compileResult.compiled) {
+      this.log(`    ${agentName}.md`);
+    }
+    this.log("");
+    this.log("Configuration:");
+    this.log(`  ${configResult.configPath}`);
+    this.log("");
+    this.log("To customize agent-skill assignments:");
+    this.log(`  1. Edit .claude-src/config.ts`);
+    this.log(`  2. Run '${CLI_BIN_NAME} compile' to regenerate agents`);
+    this.log("");
+  }
+}
+
+export type DashboardData = {
+  skillCount: number;
+  agentCount: number;
+  mode: string;
+  source?: string;
+};
+
+/** Gathers dashboard data from the installation and project config. */
+export async function getDashboardData(projectDir: string): Promise<DashboardData> {
+  const [info, loaded] = await Promise.all([getInstallationInfo(), loadProjectConfig(projectDir)]);
+
+  const skillCount = loaded?.config?.skills?.length ?? 0;
+  const agentCount = info?.agentCount ?? 0;
+  const mode =
+    info?.mode ?? (loaded?.config?.skills ? deriveInstallMode(loaded.config.skills) : "local");
+  const source = loaded?.config?.source;
+
+  return { skillCount, agentCount, mode, source };
 }

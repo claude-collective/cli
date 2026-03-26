@@ -1,1 +1,1 @@
-export { SkillSearch, type SkillSearchResult } from "./skill-search.js";
+export { SkillSearch, type SkillSearchResult, type SourcedSkill } from "./skill-search.js";

@@ -14,23 +14,25 @@ import {
   ensureMarketplace,
   installPluginSkills,
   uninstallPluginSkills,
-  migratePluginSkillScopes,
   loadAgentDefs,
   type AgentDefs,
   writeProjectConfig,
   compileAgents,
-  detectConfigChanges,
+  discoverInstalledSkills,
 } from "../lib/operations/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
+  type Installation,
   detectMigrations,
   executeMigration,
   deriveInstallMode,
 } from "../lib/installation/index.js";
 import { matrix, getSkillById } from "../lib/matrix/matrix-provider";
+import type { SourceLoadResult } from "../lib/loading/index.js";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
-import type { SkillId } from "../types/index.js";
+import type { SkillId, AgentName, ProjectConfig } from "../types/index.js";
+import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { remove } from "../utils/fs.js";
 import { type StartupMessage } from "../utils/logger.js";
@@ -39,6 +41,15 @@ import { ERROR_MESSAGES, INFO_MESSAGES, STATUS_MESSAGES } from "../utils/message
 function formatSourceDisplayName(sourceName: string): string {
   return SOURCE_DISPLAY_NAMES[sourceName] ?? sourceName;
 }
+
+type EditContext = {
+  installation: Installation;
+  projectConfig: ProjectConfig | null;
+  projectDir: string;
+  sourceResult: SourceLoadResult;
+  startupMessages: StartupMessage[];
+  currentSkillIds: SkillId[];
+};
 
 export default class Edit extends BaseCommand {
   static summary = "Edit skills in the plugin";
@@ -74,6 +85,31 @@ export default class Edit extends BaseCommand {
     const { flags } = await this.parse(Edit);
     const cwd = process.cwd();
 
+    const context = await this.loadContext(flags);
+    const result = await this.runEditWizard(context, cwd);
+    if (!result) this.error("Cancelled", { exit: EXIT_CODES.CANCELLED });
+
+    this.reportValidationErrors(result);
+
+    const changes = detectConfigChanges(context.projectConfig, result, context.currentSkillIds);
+    if (!hasAnyChanges(changes)) {
+      this.log(INFO_MESSAGES.NO_CHANGES_MADE);
+      this.log("Plugin unchanged\n");
+      return;
+    }
+
+    this.logChangeSummary(changes);
+    const migratedSkillIds = await this.applyMigrations(changes, result, context, cwd);
+    await this.applyScopeChanges(changes, result, context, cwd);
+    await this.applySourceChanges(changes, result, context, cwd, migratedSkillIds);
+    await this.applyPluginChanges(changes, result, context, cwd);
+    await this.copyNewLocalSkills(changes, result, context, cwd);
+    await this.writeConfigAndCompile(result, context, flags, cwd);
+    await this.cleanupStaleAgentFiles(changes, cwd);
+    this.logCompletionSummary(changes);
+  }
+
+  private async loadContext(flags: { source?: string; refresh: boolean }): Promise<EditContext> {
     const detected = await detectProject();
     if (!detected) {
       this.error(ERROR_MESSAGES.NO_INSTALLATION, {
@@ -87,7 +123,7 @@ export default class Edit extends BaseCommand {
     // and for the locked-items check (determining whether global items are read-only).
     const projectDir = installation.projectDir;
 
-    let sourceResult;
+    let sourceResult: SourceLoadResult;
     let startupMessages: StartupMessage[] = [];
     try {
       const loaded = await loadSource({
@@ -128,6 +164,15 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
+    return { installation, projectConfig, projectDir, sourceResult, startupMessages, currentSkillIds };
+  }
+
+  private async runEditWizard(
+    context: EditContext,
+    cwd: string,
+  ): Promise<WizardResultV2 | null> {
+    const { projectConfig, projectDir, currentSkillIds } = context;
+
     let wizardResult: WizardResultV2 | null = null;
 
     // D9: In project context, existing global items are read-only (locked).
@@ -155,7 +200,7 @@ export default class Edit extends BaseCommand {
         lockedAgentNames={lockedAgentNames}
         isEditingFromGlobalScope={isGlobalDir}
         projectDir={projectDir}
-        startupMessages={startupMessages}
+        startupMessages={context.startupMessages}
         onComplete={(result) => {
           wizardResult = result;
         }}
@@ -170,17 +215,19 @@ export default class Edit extends BaseCommand {
     // TypeScript can't track that onComplete callback mutates wizardResult before waitUntilExit resolves
     const result = wizardResult as WizardResultV2 | null;
 
-    if (!result || result.cancelled) {
-      this.error("Cancelled", { exit: EXIT_CODES.CANCELLED });
-    }
+    if (!result || result.cancelled) return null;
+    return result;
+  }
 
+  private reportValidationErrors(result: WizardResultV2): void {
     if (result.validation.errors.length > 0) {
       for (const err of result.validation.errors) {
         this.warn(err.message);
       }
     }
+  }
 
-    const changes = detectConfigChanges(projectConfig, result, currentSkillIds);
+  private logChangeSummary(changes: ConfigChanges): void {
     const {
       addedSkills,
       removedSkills,
@@ -190,24 +237,6 @@ export default class Edit extends BaseCommand {
       scopeChanges,
       agentScopeChanges,
     } = changes;
-
-    const hasSourceChanges = sourceChanges.size > 0;
-    const hasScopeChanges = scopeChanges.size > 0;
-    const hasAgentScopeChanges = agentScopeChanges.size > 0;
-    const hasSkillChanges = addedSkills.length > 0 || removedSkills.length > 0;
-    const hasAgentChanges = addedAgents.length > 0 || removedAgents.length > 0;
-
-    if (
-      !hasSkillChanges &&
-      !hasAgentChanges &&
-      !hasSourceChanges &&
-      !hasScopeChanges &&
-      !hasAgentScopeChanges
-    ) {
-      this.log(INFO_MESSAGES.NO_CHANGES_MADE);
-      this.log("Plugin unchanged\n");
-      return;
-    }
 
     this.log("\nChanges:");
     for (const skillId of addedSkills) {
@@ -239,9 +268,15 @@ export default class Edit extends BaseCommand {
       this.log(`  ~ ${agentName} (${fromLabel} \u2192 ${toLabel})`);
     }
     this.log("");
+  }
 
-    // Handle per-skill mode migrations (local <-> plugin)
-    const oldSkills = projectConfig?.skills ?? [];
+  private async applyMigrations(
+    _changes: ConfigChanges,
+    result: WizardResultV2,
+    context: EditContext,
+    cwd: string,
+  ): Promise<Set<SkillId>> {
+    const oldSkills = context.projectConfig?.skills ?? [];
     const migrationPlan = detectMigrations(oldSkills, result.skills);
     const hasMigrations = migrationPlan.toLocal.length > 0 || migrationPlan.toPlugin.length > 0;
 
@@ -259,19 +294,28 @@ export default class Edit extends BaseCommand {
         }
       }
 
-      const migrationResult = await executeMigration(migrationPlan, cwd, sourceResult);
+      const migrationResult = await executeMigration(migrationPlan, cwd, context.sourceResult);
 
       for (const warning of migrationResult.warnings) {
         this.warn(warning);
       }
     }
 
-    const migratedSkillIds = new Set([
+    return new Set([
       ...migrationPlan.toLocal.map((m) => m.id),
       ...migrationPlan.toPlugin.map((m) => m.id),
     ]);
+  }
 
-    // Handle scope migrations (P→G or G→P) for local-mode skills
+  private async applyScopeChanges(
+    changes: ConfigChanges,
+    result: WizardResultV2,
+    context: EditContext,
+    cwd: string,
+  ): Promise<void> {
+    const { scopeChanges } = changes;
+
+    // Handle scope migrations (P->G or G->P) for local-mode skills
     for (const [skillId, change] of scopeChanges) {
       const skillConfig = result.skills.find((s) => s.id === skillId);
       if (skillConfig?.source === "local") {
@@ -280,17 +324,27 @@ export default class Edit extends BaseCommand {
     }
 
     // Handle scope migrations for plugin-mode skills
-    if (sourceResult.marketplace && scopeChanges.size > 0) {
+    if (context.sourceResult.marketplace && scopeChanges.size > 0) {
       const pluginScopeResult = await migratePluginSkillScopes(
         scopeChanges,
         result.skills,
-        sourceResult.marketplace,
+        context.sourceResult.marketplace,
         cwd,
       );
       for (const item of pluginScopeResult.failed) {
         this.warn(`Failed to migrate plugin scope for ${item.id}: ${item.error}`);
       }
     }
+  }
+
+  private async applySourceChanges(
+    changes: ConfigChanges,
+    _result: WizardResultV2,
+    context: EditContext,
+    cwd: string,
+    migratedSkillIds: Set<SkillId>,
+  ): Promise<void> {
+    const { sourceChanges } = changes;
 
     // Handle remaining non-migration source changes (e.g., marketplace A -> marketplace B)
     for (const [skillId, change] of sourceChanges) {
@@ -299,14 +353,23 @@ export default class Edit extends BaseCommand {
         continue;
       }
       if (change.from === "local") {
-        const oldSkill = projectConfig?.skills?.find((s) => s.id === skillId);
+        const oldSkill = context.projectConfig?.skills?.find((s) => s.id === skillId);
         const deleteDir = oldSkill?.scope === "global" ? os.homedir() : cwd;
         await deleteLocalSkill(deleteDir, skillId);
       }
     }
+  }
 
-    if (sourceResult.marketplace) {
-      const mpResult = await ensureMarketplace(sourceResult);
+  private async applyPluginChanges(
+    changes: ConfigChanges,
+    result: WizardResultV2,
+    context: EditContext,
+    cwd: string,
+  ): Promise<void> {
+    const { addedSkills, removedSkills } = changes;
+
+    if (context.sourceResult.marketplace) {
+      const mpResult = await ensureMarketplace(context.sourceResult);
       if (mpResult.registered) {
         this.log(`Registered marketplace: ${mpResult.marketplace}`);
       }
@@ -317,7 +380,7 @@ export default class Edit extends BaseCommand {
       if (addedPluginSkills.length > 0) {
         const pluginResult = await installPluginSkills(
           addedPluginSkills,
-          sourceResult.marketplace,
+          context.sourceResult.marketplace,
           cwd,
         );
         for (const item of pluginResult.installed) {
@@ -331,7 +394,7 @@ export default class Edit extends BaseCommand {
       if (removedSkills.length > 0) {
         const uninstallResult = await uninstallPluginSkills(
           removedSkills,
-          projectConfig?.skills ?? [],
+          context.projectConfig?.skills ?? [],
           cwd,
         );
         for (const id of uninstallResult.uninstalled) {
@@ -342,6 +405,15 @@ export default class Edit extends BaseCommand {
         }
       }
     }
+  }
+
+  private async copyNewLocalSkills(
+    changes: ConfigChanges,
+    result: WizardResultV2,
+    context: EditContext,
+    cwd: string,
+  ): Promise<void> {
+    const { addedSkills } = changes;
 
     // Copy newly added local-source skills to .claude/skills/ (split by scope)
     const addedLocalSkills = result.skills.filter(
@@ -349,10 +421,17 @@ export default class Edit extends BaseCommand {
     );
 
     if (addedLocalSkills.length > 0) {
-      const copyResult = await copyLocalSkills(addedLocalSkills, cwd, sourceResult);
+      const copyResult = await copyLocalSkills(addedLocalSkills, cwd, context.sourceResult);
       this.log(`Copied ${copyResult.totalCopied} local skill(s) to .claude/skills/`);
     }
+  }
 
+  private async writeConfigAndCompile(
+    result: WizardResultV2,
+    context: EditContext,
+    flags: { source?: string; refresh: boolean; "agent-source"?: string },
+    cwd: string,
+  ): Promise<void> {
     // Load agent definitions — needed for both config-types.ts and recompilation
     let agentDefsResult: AgentDefs;
     this.log(
@@ -373,7 +452,7 @@ export default class Edit extends BaseCommand {
     try {
       await writeProjectConfig({
         wizardResult: result,
-        sourceResult,
+        sourceResult: context.sourceResult,
         projectDir: cwd,
         sourceFlag: flags.source,
         agents: agentDefsResult.agents,
@@ -385,9 +464,11 @@ export default class Edit extends BaseCommand {
     this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
       const agentScopeMap = new Map(result.agentConfigs.map((a) => [a.name, a.scope] as const));
+      const { allSkills } = await discoverInstalledSkills(cwd);
       const compilationResult = await compileAgents({
         projectDir: cwd,
         sourcePath: agentDefsResult.sourcePath,
+        skills: allSkills,
         pluginDir: cwd,
         outputDir: path.join(cwd, CLAUDE_DIR, "agents"),
         installMode: deriveInstallMode(result.skills),
@@ -410,6 +491,10 @@ export default class Edit extends BaseCommand {
       this.warn(`Agent recompilation failed: ${getErrorMessage(error)}`);
       this.log(`You can manually recompile with '${CLI_BIN_NAME} compile'.\n`);
     }
+  }
+
+  private async cleanupStaleAgentFiles(changes: ConfigChanges, cwd: string): Promise<void> {
+    const { agentScopeChanges } = changes;
 
     // Clean up old agent .md files after scope changes.
     // Recompilation wrote the new file to the correct scope directory;
@@ -423,6 +508,23 @@ export default class Edit extends BaseCommand {
         this.warn(`Could not remove old agent file ${oldAgentPath}: ${getErrorMessage(error)}`);
       }
     }
+  }
+
+  private logCompletionSummary(changes: ConfigChanges): void {
+    const {
+      addedSkills,
+      removedSkills,
+      addedAgents,
+      removedAgents,
+      sourceChanges,
+      scopeChanges,
+      agentScopeChanges,
+    } = changes;
+
+    const hasAgentChanges = addedAgents.length > 0 || removedAgents.length > 0;
+    const hasSourceChanges = sourceChanges.size > 0;
+    const hasScopeChanges = scopeChanges.size > 0;
+    const hasAgentScopeChanges = agentScopeChanges.size > 0;
 
     const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];
     if (hasAgentChanges) {
@@ -439,4 +541,123 @@ export default class Edit extends BaseCommand {
     }
     this.log(`\n\u2713 Plugin updated! (${summaryParts.join(", ")})\n`);
   }
+}
+
+type ConfigChanges = {
+  addedSkills: SkillId[];
+  removedSkills: SkillId[];
+  addedAgents: AgentName[];
+  removedAgents: AgentName[];
+  sourceChanges: Map<SkillId, { from: string; to: string }>;
+  scopeChanges: Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>;
+  agentScopeChanges: Map<AgentName, { from: "project" | "global"; to: "project" | "global" }>;
+};
+
+function detectConfigChanges(
+  oldConfig: ProjectConfig | null,
+  wizardResult: WizardResultV2,
+  currentSkillIds: SkillId[],
+): ConfigChanges {
+  const newSkillIds = wizardResult.skills.map((s) => s.id);
+  const addedSkills = newSkillIds.filter((id) => !currentSkillIds.includes(id));
+  const removedSkills = currentSkillIds.filter((id) => !newSkillIds.includes(id));
+
+  const oldAgentNames = oldConfig?.agents?.map((a) => a.name) ?? [];
+  const newAgentNames = wizardResult.agentConfigs.map((a) => a.name);
+  const addedAgents = newAgentNames.filter((name) => !oldAgentNames.includes(name));
+  const removedAgents = oldAgentNames.filter((name) => !newAgentNames.includes(name));
+
+  const sourceChanges = new Map<SkillId, { from: string; to: string }>();
+  const scopeChanges = new Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>();
+  if (oldConfig?.skills) {
+    for (const newSkill of wizardResult.skills) {
+      const oldSkill = oldConfig.skills.find((s) => s.id === newSkill.id);
+      if (oldSkill && oldSkill.source !== newSkill.source) {
+        sourceChanges.set(newSkill.id, {
+          from: oldSkill.source,
+          to: newSkill.source,
+        });
+      }
+      if (oldSkill && oldSkill.scope !== newSkill.scope) {
+        scopeChanges.set(newSkill.id, {
+          from: oldSkill.scope,
+          to: newSkill.scope,
+        });
+      }
+    }
+  }
+
+  const agentScopeChanges = new Map<
+    AgentName,
+    { from: "project" | "global"; to: "project" | "global" }
+  >();
+  if (oldConfig?.agents) {
+    for (const newAgent of wizardResult.agentConfigs) {
+      const oldAgent = oldConfig.agents.find((a) => a.name === newAgent.name);
+      if (oldAgent && oldAgent.scope !== newAgent.scope) {
+        agentScopeChanges.set(newAgent.name, {
+          from: oldAgent.scope,
+          to: newAgent.scope,
+        });
+      }
+    }
+  }
+
+  return {
+    addedSkills,
+    removedSkills,
+    addedAgents,
+    removedAgents,
+    sourceChanges,
+    scopeChanges,
+    agentScopeChanges,
+  };
+}
+
+function hasAnyChanges(changes: ConfigChanges): boolean {
+  return (
+    changes.addedSkills.length > 0 ||
+    changes.removedSkills.length > 0 ||
+    changes.addedAgents.length > 0 ||
+    changes.removedAgents.length > 0 ||
+    changes.sourceChanges.size > 0 ||
+    changes.scopeChanges.size > 0 ||
+    changes.agentScopeChanges.size > 0
+  );
+}
+
+type PluginScopeMigrationResult = {
+  migrated: SkillId[];
+  failed: Array<{ id: SkillId; error: string }>;
+};
+
+async function migratePluginSkillScopes(
+  scopeChanges: Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>,
+  skills: Array<{ id: SkillId; source: string }>,
+  marketplace: string,
+  projectDir: string,
+): Promise<PluginScopeMigrationResult> {
+  const migrated: SkillId[] = [];
+  const failed: PluginScopeMigrationResult["failed"] = [];
+
+  for (const [skillId, change] of scopeChanges) {
+    const skillConfig = skills.find((s) => s.id === skillId);
+    if (!skillConfig || skillConfig.source === "local") {
+      continue;
+    }
+
+    const oldPluginScope = change.from === "global" ? "user" : "project";
+    const newPluginScope = change.to === "global" ? "user" : "project";
+    const pluginRef = `${skillId}@${marketplace}`;
+
+    try {
+      await claudePluginUninstall(skillId, oldPluginScope, projectDir);
+      await claudePluginInstall(pluginRef, newPluginScope, projectDir);
+      migrated.push(skillId);
+    } catch (error) {
+      failed.push({ id: skillId, error: getErrorMessage(error) });
+    }
+  }
+
+  return { migrated, failed };
 }

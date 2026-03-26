@@ -93,62 +93,79 @@ export default class Info extends BaseCommand {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Info);
+    const projectDir = process.cwd();
 
     try {
-      this.log(STATUS_MESSAGES.LOADING_SKILLS);
-
-      const { sourceResult } = await loadSource({
-        sourceFlag: flags.source,
-        projectDir: process.cwd(),
-      });
-      const { sourcePath, isLocal } = sourceResult;
-
-      this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
-
+      const { sourcePath, isLocal } = await this.loadSourceAndLog(flags.source, projectDir);
       const result = await resolveSkillInfo({
         query: args.skill,
         skills: matrix.skills,
         slugToId: matrix.slugMap.slugToId,
-        projectDir: process.cwd(),
+        projectDir,
         sourcePath,
         isLocal,
         includePreview: flags.preview,
       });
 
       if (!result.resolved) {
-        this.log("");
-        this.error(`Skill "${args.skill}" not found.`, { exit: false });
-
-        if (result.suggestions.length > 0) {
-          this.log("");
-          this.log("Did you mean one of these?");
-          for (const suggestion of result.suggestions) {
-            this.log(`  - ${suggestion}`);
-          }
-        }
-
-        this.log("");
-        this.logInfo(`Use '${CLI_BIN_NAME} search <query>' to find available skills.`);
-        this.log("");
-        this.exit(EXIT_CODES.ERROR);
+        this.reportNotFound(args.skill, result.suggestions);
+        return;
       }
 
-      const { skill, isInstalled, preview } = result.resolved;
-
-      this.log("");
-      this.log(formatSkillInfo(skill, isInstalled));
-
-      if (flags.preview && preview.length > 0) {
-        this.log("");
-        this.log(`--- Content Preview (first ${CONTENT_PREVIEW_LINES} lines) ---`);
-        for (const line of preview) {
-          this.log(line);
-        }
-      }
-
-      this.log("");
+      this.displaySkillInfo(result.resolved, flags.preview);
     } catch (error) {
       this.handleError(error);
     }
+  }
+
+  private async loadSourceAndLog(
+    sourceFlag: string | undefined,
+    projectDir: string,
+  ): Promise<{ sourcePath: string; isLocal: boolean }> {
+    this.log(STATUS_MESSAGES.LOADING_SKILLS);
+
+    const { sourceResult } = await loadSource({ sourceFlag, projectDir });
+    const { sourcePath, isLocal } = sourceResult;
+
+    this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
+    return { sourcePath, isLocal };
+  }
+
+  private reportNotFound(query: string, suggestions: string[]): never {
+    this.log("");
+    this.error(`Skill "${query}" not found.`, { exit: false });
+
+    if (suggestions.length > 0) {
+      this.log("");
+      this.log("Did you mean one of these?");
+      for (const suggestion of suggestions) {
+        this.log(`  - ${suggestion}`);
+      }
+    }
+
+    this.log("");
+    this.logInfo(`Use '${CLI_BIN_NAME} search <query>' to find available skills.`);
+    this.log("");
+    this.exit(EXIT_CODES.ERROR);
+  }
+
+  private displaySkillInfo(
+    resolved: { skill: ResolvedSkill; isInstalled: boolean; preview: string[] },
+    showPreview: boolean,
+  ): void {
+    const { skill, isInstalled, preview } = resolved;
+
+    this.log("");
+    this.log(formatSkillInfo(skill, isInstalled));
+
+    if (showPreview && preview.length > 0) {
+      this.log("");
+      this.log(`--- Content Preview (first ${CONTENT_PREVIEW_LINES} lines) ---`);
+      for (const line of preview) {
+        this.log(line);
+      }
+    }
+
+    this.log("");
   }
 }
