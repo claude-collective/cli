@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.86.0] - 2026-03-26
+
+**Operations layer — composable building blocks for all CLI commands**
+
+- 26 typed operations extracted from 15 commands into `src/cli/lib/operations/` (D-145)
+- All commands refactored to use operations layer; compile.ts reduced 40%, uninstall.tsx 39%, import/skill.ts 47%
+- Shared utilities: `truncateText()`, `warn({ suppressInTest })`, `buildSourceSkillsMap()`
+
+See [changelogs/0.86.0.md](./changelogs/0.86.0.md) for full details.
+
 ## [0.85.0] - 2026-03-25
 
 **Exclusive incompatibility markers, filter deselection, declarative test data**
