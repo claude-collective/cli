@@ -23,10 +23,7 @@ import {
 } from "../../lib/configuration/config-types-writer.js";
 import { generateConfigSource } from "../../lib/configuration/config-writer.js";
 import { generateMarketplace, writeMarketplace } from "../../lib/marketplace-generator.js";
-import {
-  generateSkillCategoriesTs,
-  generateSkillRulesTs,
-} from "../../lib/skills/generators.js";
+import { generateSkillCategoriesTs, generateSkillRulesTs } from "../../lib/skills/generators.js";
 import type { Category, SkillId } from "../../types/index.js";
 
 export function validateMarketplaceName(name: string): string | null {

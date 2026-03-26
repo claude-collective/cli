@@ -346,9 +346,7 @@ export default class Update extends BaseCommand {
     if (updateResult.totalFailed === 0) {
       const agentMsg =
         recompiledAgents.length > 0 ? `, ${recompiledAgents.length} agent(s) recompiled` : "";
-      this.logSuccess(
-        `Update complete! ${updateResult.totalUpdated} skill(s) updated${agentMsg}.`,
-      );
+      this.logSuccess(`Update complete! ${updateResult.totalUpdated} skill(s) updated${agentMsg}.`);
     } else {
       this.warn(
         `Update finished with errors: ${updateResult.totalUpdated} updated, ${updateResult.totalFailed} failed.`,

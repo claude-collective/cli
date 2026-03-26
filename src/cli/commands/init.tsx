@@ -302,8 +302,12 @@ export default class Init extends BaseCommand {
     }
 
     try {
-      const { configResult, compileResult, projectPaths } =
-        await this.writeConfigAndCompile(result, sourceResult, flags, installMode);
+      const { configResult, compileResult, projectPaths } = await this.writeConfigAndCompile(
+        result,
+        sourceResult,
+        flags,
+        installMode,
+      );
       this.reportSuccess(
         configResult,
         compileResult,
@@ -400,11 +404,7 @@ export default class Init extends BaseCommand {
     }
 
     this.log("Installing skill plugins...");
-    const pluginResult = await installPluginSkills(
-      pluginSkills,
-      mpResult.marketplace,
-      projectDir,
-    );
+    const pluginResult = await installPluginSkills(pluginSkills, mpResult.marketplace, projectDir);
 
     for (const item of pluginResult.installed) {
       this.log(`  Installed ${item.ref}`);

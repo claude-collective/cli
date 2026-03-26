@@ -171,10 +171,7 @@ export default class Search extends BaseCommand {
     return searchResultPromise;
   }
 
-  private async importSelectedSkills(
-    skills: SourcedSkill[],
-    projectDir: string,
-  ): Promise<void> {
+  private async importSelectedSkills(skills: SourcedSkill[], projectDir: string): Promise<void> {
     this.log("");
     this.log(`Importing ${skills.length} skill(s)...`);
 

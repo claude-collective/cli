@@ -8,7 +8,7 @@ import { render, Box, Text, useApp } from "ink";
 import { BaseCommand } from "../base-command";
 import { Confirm } from "../components/common/confirm";
 import { getErrorMessage } from "../utils/errors";
-import { directoryExists, listDirectories, remove } from "../utils/fs";
+import { directoryExists, glob, listDirectories, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { listPluginNames, getProjectPluginsDir } from "../lib/plugins/index";
 import { readForkedFromMetadata } from "../lib/skills/index";
@@ -584,7 +584,7 @@ async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 
 async function listAgentFiles(agentsDir: string): Promise<string[]> {
   try {
-    return (await readdir(agentsDir)).filter((f) => f.endsWith(".md"));
+    return await glob("*.md", agentsDir);
   } catch {
     return [];
   }

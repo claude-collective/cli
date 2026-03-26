@@ -358,9 +358,7 @@ contentHash: ${contentHash}
 `;
 }
 
-async function scaffoldSkillFiles(
-  options: ScaffoldSkillOptions,
-): Promise<ScaffoldSkillResult> {
+async function scaffoldSkillFiles(options: ScaffoldSkillOptions): Promise<ScaffoldSkillResult> {
   const { name, author, category, domain, skillDir } = options;
 
   const skillMdContent = generateSkillMd(name);

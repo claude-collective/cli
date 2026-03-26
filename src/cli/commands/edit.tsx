@@ -164,13 +164,17 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
-    return { installation, projectConfig, projectDir, sourceResult, startupMessages, currentSkillIds };
+    return {
+      installation,
+      projectConfig,
+      projectDir,
+      sourceResult,
+      startupMessages,
+      currentSkillIds,
+    };
   }
 
-  private async runEditWizard(
-    context: EditContext,
-    cwd: string,
-  ): Promise<WizardResultV2 | null> {
+  private async runEditWizard(context: EditContext, cwd: string): Promise<WizardResultV2 | null> {
     const { projectConfig, projectDir, currentSkillIds } = context;
 
     let wizardResult: WizardResultV2 | null = null;

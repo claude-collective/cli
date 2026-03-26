@@ -128,10 +128,7 @@ export default class Eject extends BaseCommand {
     return typeArg;
   }
 
-  private async resolveOutputBase(
-    flags: { output?: string },
-    projectDir: string,
-  ): Promise<string> {
+  private async resolveOutputBase(flags: { output?: string }, projectDir: string): Promise<string> {
     if (flags.output) {
       const expandedPath = flags.output.startsWith("~")
         ? path.join(os.homedir(), flags.output.slice(1))
