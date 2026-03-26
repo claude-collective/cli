@@ -37,7 +37,6 @@ const pluginManifestValidationSchema = z
     description: z.string().optional(),
     author: pluginAuthorSchema.optional(),
     keywords: z.array(z.string()).optional(),
-    category: z.enum(CATEGORIES),
     commands: z.union([z.string(), z.array(z.string())]).optional(),
     agents: z.union([z.string(), z.array(z.string())]).optional(),
     skills: z.union([z.string(), z.array(z.string())]).optional(),

@@ -123,7 +123,6 @@ describe("plugin-finder", () => {
         name: "my-plugin",
         version: "1.0.0",
         description: "A test plugin",
-        category: "web-testing",
         skills: "./skills/",
       };
 
@@ -212,7 +211,6 @@ describe("plugin-finder", () => {
         name: "full-plugin",
         version: "2.0.0",
         description: "Full featured plugin",
-        category: "web-testing",
         author: { name: "@vince", email: "vince@example.com" },
         keywords: ["web", "react"],
         skills: "./skills/",

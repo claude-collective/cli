@@ -44,7 +44,6 @@ function convertManifestToMarketplacePlugin(
     version: manifest.version,
     author: manifest.author,
     keywords: manifest.keywords,
-    category: manifest.category,
   };
 }
 
@@ -120,7 +119,8 @@ export function getMarketplaceStats(marketplace: Marketplace): {
   const byCategory: Record<string, number> = {};
 
   for (const plugin of marketplace.plugins) {
-    byCategory[plugin.category] = (byCategory[plugin.category] ?? 0) + 1;
+    const cat = plugin.category ?? "uncategorized";
+    byCategory[cat] = (byCategory[cat] ?? 0) + 1;
   }
 
   return {

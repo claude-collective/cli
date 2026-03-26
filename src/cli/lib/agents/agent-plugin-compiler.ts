@@ -78,7 +78,6 @@ export async function compileAgentPlugin(
     agentName,
     description: frontmatter.description,
     version,
-    category: "meta-reviewing",
   });
 
   await writePluginManifest(pluginDir, manifest);

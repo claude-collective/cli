@@ -191,7 +191,6 @@ export const pluginManifestSchema: z.ZodType<PluginManifest> = z.object({
   description: z.string().optional(),
   author: pluginAuthorSchema.optional(),
   keywords: z.array(z.string()).optional(),
-  category: z.enum(CATEGORIES) as z.ZodType<Category>,
   commands: z.union([z.string(), z.array(z.string())]).optional(),
   agents: z.union([z.string(), z.array(z.string())]).optional(),
   skills: z.union([z.string(), z.array(z.string())]).optional(),
@@ -206,7 +205,6 @@ export const pluginManifestValidationSchema = z
     description: z.string().optional(),
     author: pluginAuthorSchema.optional(),
     keywords: z.array(z.string()).optional(),
-    category: z.enum(CATEGORIES) as z.ZodType<Category>,
     commands: z.union([z.string(), z.array(z.string())]).optional(),
     agents: z.union([z.string(), z.array(z.string())]).optional(),
     skills: z.union([z.string(), z.array(z.string())]).optional(),
@@ -439,8 +437,8 @@ const marketplacePluginSchema: z.ZodType<MarketplacePlugin> = z.object({
   description: z.string().optional(),
   version: z.string().optional(),
   author: pluginAuthorSchema.optional(),
-  /** Marketplace category for grouping (e.g., "web-framework", "api-database") */
-  category: z.enum(CATEGORIES) as z.ZodType<Category>,
+  /** Lenient: external data may have any category string or none at all */
+  category: z.string().optional(),
   keywords: z.array(z.string()).optional(),
 });
 

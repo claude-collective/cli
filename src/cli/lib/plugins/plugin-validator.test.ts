@@ -91,7 +91,6 @@ describe("plugin-validator", () => {
           name: "test-plugin",
           version: "1.0.0",
           description: "A test plugin",
-          category: "web-testing",
         }),
       );
 
@@ -124,7 +123,6 @@ describe("plugin-validator", () => {
         manifestPath,
         JSON.stringify({
           version: "1.0.0",
-          category: "web-testing",
         }),
       );
 
@@ -140,7 +138,6 @@ describe("plugin-validator", () => {
         manifestPath,
         JSON.stringify({
           name: "TestPlugin", // PascalCase - invalid
-          category: "web-testing",
         }),
       );
 
@@ -157,7 +154,6 @@ describe("plugin-validator", () => {
         JSON.stringify({
           name: "test-plugin",
           version: 1, // Integer - should be semver string
-          category: "web-testing",
         }),
       );
 
@@ -175,7 +171,6 @@ describe("plugin-validator", () => {
           name: "test-plugin",
           version: "3.2.1",
           description: "Test plugin",
-          category: "web-testing",
         }),
       );
 
@@ -191,7 +186,6 @@ describe("plugin-validator", () => {
         JSON.stringify({
           name: "test-plugin",
           version: "v1.0", // Invalid semver format
-          category: "web-testing",
         }),
       );
 
@@ -207,7 +201,6 @@ describe("plugin-validator", () => {
         manifestPath,
         JSON.stringify({
           name: "test-plugin",
-          category: "web-testing",
         }),
       );
 
@@ -218,7 +211,7 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if skills path does not exist", async () => {
-      await writePluginJson(tempDir, { name: "test-plugin", category: "web-testing", skills: "./skills/" });
+      await writePluginJson(tempDir, { name: "test-plugin", skills: "./skills/" });
       const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
 
       const result = await validatePluginManifest(manifestPath);
@@ -231,7 +224,6 @@ describe("plugin-validator", () => {
       await writePluginJson(tempDir, {
         name: "test-plugin",
         description: "Test",
-        category: "web-testing",
         skills: "./skills/",
       });
       await mkdir(path.join(tempDir, STANDARD_DIRS.SKILLS), { recursive: true });
@@ -456,7 +448,6 @@ permissionMode: acceptEdits
         name: "test-plugin",
         version: "1.0.0",
         description: "A test plugin",
-        category: "web-testing",
         skills: "./skills/",
         agents: "./agents/",
       });
@@ -493,7 +484,7 @@ tools: Read, Write
     });
 
     it("should aggregate errors from all validations", async () => {
-      await writePluginJson(tempDir, { name: "BadName", category: "web-testing", skills: "./skills/" });
+      await writePluginJson(tempDir, { name: "BadName", skills: "./skills/" });
       await mkdir(path.join(tempDir, STANDARD_DIRS.SKILLS, "bad-skill"), { recursive: true });
 
       await writeFile(
@@ -516,7 +507,6 @@ name: bad-skill
       await writePluginJson(tempDir, {
         name: "test-plugin",
         description: "Test",
-        category: "web-testing",
         skills: "./skills/",
       });
       await mkdir(path.join(tempDir, STANDARD_DIRS.SKILLS), { recursive: true });
@@ -533,7 +523,7 @@ name: bad-skill
     it("should validate multiple plugins", async () => {
       for (const name of ["plugin-one", "plugin-two"]) {
         const pluginDir = path.join(tempDir, name);
-        await writePluginJson(pluginDir, { name, description: `${name} description`, category: "web-testing" });
+        await writePluginJson(pluginDir, { name, description: `${name} description` });
         await writeFile(path.join(pluginDir, "README.md"), `# ${name}`);
       }
 
@@ -554,11 +544,11 @@ name: bad-skill
 
     it("should report mix of valid and invalid plugins", async () => {
       const validDir = path.join(tempDir, "valid-plugin");
-      await writePluginJson(validDir, { name: "valid-plugin", description: "Valid", category: "web-testing" });
+      await writePluginJson(validDir, { name: "valid-plugin", description: "Valid" });
       await writeFile(path.join(validDir, "README.md"), "# Valid");
 
       const invalidDir = path.join(tempDir, "invalid-plugin");
-      await writePluginJson(invalidDir, { description: "Invalid - missing name", category: "web-testing" });
+      await writePluginJson(invalidDir, { description: "Invalid - missing name" });
 
       const result = await validateAllPlugins(tempDir);
 
@@ -570,7 +560,7 @@ name: bad-skill
 
     it("should count plugins with warnings", async () => {
       const pluginDir = path.join(tempDir, "warn-plugin");
-      await writePluginJson(pluginDir, { name: "warn-plugin", category: "web-testing" }); // Missing description triggers warning
+      await writePluginJson(pluginDir, { name: "warn-plugin" }); // Missing description triggers warning
       await writeFile(path.join(pluginDir, "README.md"), "# Warn");
 
       const result = await validateAllPlugins(tempDir);

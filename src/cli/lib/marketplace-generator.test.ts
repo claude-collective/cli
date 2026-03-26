@@ -41,13 +41,11 @@ describe("marketplace-generator", () => {
         name: "web-framework-react",
         description: "React skills",
         version: "1.0.0",
-        category: "web-framework",
       });
       await createPlugin("web-framework-vue", {
         name: "web-framework-vue",
         description: "Vue skills",
         version: "1.0.0",
-        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -62,12 +60,11 @@ describe("marketplace-generator", () => {
       expect(names).toContain("web-framework-vue");
     });
 
-    it("should preserve category from plugin manifest", async () => {
+    it("should generate plugin without category (category comes from metadata, not manifest)", async () => {
       await createPlugin("web-framework-react", {
         name: "web-framework-react",
         description: "React framework",
         version: "1.0.0",
-        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -77,7 +74,7 @@ describe("marketplace-generator", () => {
       });
 
       const reactPlugin = marketplace.plugins.find((p) => p.name === "web-framework-react");
-      expect(reactPlugin?.category).toBe("web-framework");
+      expect(reactPlugin?.category).toBeUndefined();
     });
 
     it("should sort plugins alphabetically", async () => {
@@ -85,19 +82,16 @@ describe("marketplace-generator", () => {
         name: "web-state-zustand",
         description: "Zustand state",
         version: "1.0.0",
-        category: "web-framework",
       });
       await createPlugin("api-http-axios", {
         name: "api-http-axios",
         description: "Axios HTTP",
         version: "1.0.0",
-        category: "api-framework",
       });
       await createPlugin("web-state-mobx", {
         name: "web-state-mobx",
         description: "MobX state",
         version: "1.0.0",
-        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -115,7 +109,6 @@ describe("marketplace-generator", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
-        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -140,7 +133,6 @@ describe("marketplace-generator", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
-        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -157,7 +149,6 @@ describe("marketplace-generator", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
-        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -185,7 +176,6 @@ describe("marketplace-generator", () => {
         name: "web-valid-a",
         description: "Valid plugin",
         version: "1.0.0",
-        category: "web-framework",
       });
 
       // Create an invalid directory (no .claude-plugin)
@@ -207,7 +197,6 @@ describe("marketplace-generator", () => {
         name: "web-with-author",
         description: "Plugin with author",
         version: "1.0.0",
-        category: "web-framework",
         author: {
           name: "@vince",
           email: "vince@example.com",
@@ -230,7 +219,6 @@ describe("marketplace-generator", () => {
         name: "web-with-keywords",
         description: "Plugin with keywords",
         version: "1.0.0",
-        category: "web-framework",
         keywords: ["web", "react", "ui"],
       });
 
@@ -249,7 +237,6 @@ describe("marketplace-generator", () => {
         name: "web-test-a",
         description: "Test plugin",
         version: "1.0.0",
-        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -293,7 +280,6 @@ describe("marketplace-generator", () => {
             source: "./plugins/web-framework-react",
             description: "React skills",
             version: "1.0.0",
-            category: "web-framework",
           },
         ],
       };

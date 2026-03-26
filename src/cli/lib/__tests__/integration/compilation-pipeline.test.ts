@@ -389,14 +389,9 @@ describe("Integration: Marketplace Integrity", () => {
 
     const stats = getMarketplaceStats(marketplace);
 
-    // Should have multiple categories (web-framework from react, api-framework from hono, etc.)
-    expect(Object.keys(stats.byCategory).length).toBeGreaterThan(1);
-
-    // Categories from our test skills (valid Category values from metadata)
-    const expectedCategories = ["web-framework", "api-api"];
-    for (const category of expectedCategories) {
-      expect(stats.byCategory[category]).toBeGreaterThan(0);
-    }
+    // Plugin manifests don't carry category — all plugins are uncategorized
+    // Categories come from skill metadata.yaml, not from plugin.json
+    expect(stats.byCategory["uncategorized"]).toBe(marketplace.plugins.length);
 
     consoleSpy.mockRestore();
     warnSpy.mockRestore();

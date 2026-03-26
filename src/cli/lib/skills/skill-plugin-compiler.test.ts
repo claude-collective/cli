@@ -382,17 +382,17 @@ describe("skill-plugin-compiler", () => {
       const results: CompiledSkillPlugin[] = [
         {
           pluginPath: "/out/react",
-          manifest: { name: "react", version: "1.0.0", category: "web-testing" },
+          manifest: { name: "react", version: "1.0.0" },
           skillName: "react",
         },
         {
           pluginPath: "/out/zustand",
-          manifest: { name: "zustand", version: "2.0.0", category: "web-testing" },
+          manifest: { name: "zustand", version: "2.0.0" },
           skillName: "zustand",
         },
         {
           pluginPath: "/out/hono",
-          manifest: { name: "hono", version: "3.0.0", category: "web-testing" },
+          manifest: { name: "hono", version: "3.0.0" },
           skillName: "hono",
         },
       ];
@@ -410,12 +410,12 @@ describe("skill-plugin-compiler", () => {
       const results: CompiledSkillPlugin[] = [
         {
           pluginPath: "/out/react",
-          manifest: { name: "react", version: "1.0.0", category: "web-testing" },
+          manifest: { name: "react", version: "1.0.0" },
           skillName: "react",
         },
         {
           pluginPath: "/out/zustand",
-          manifest: { name: "zustand", version: "5.0.0", category: "web-testing" },
+          manifest: { name: "zustand", version: "5.0.0" },
           skillName: "zustand",
         },
       ];
@@ -446,7 +446,7 @@ describe("skill-plugin-compiler", () => {
       const results: CompiledSkillPlugin[] = [
         {
           pluginPath: "/out/react",
-          manifest: { name: "react", version: "1.0.0", category: "web-testing" },
+          manifest: { name: "react", version: "1.0.0" },
           skillName: "react",
         },
       ];
