@@ -9,10 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.88.0] - 2026-03-26
 
-**Category type safety — no more string-typed categories in plugins**
+**Plugin category separation — category belongs in metadata, not manifests**
 
-- `PluginManifest.category` required and typed as `Category` union (D-149)
-- Removed all category inference from names — categories must come from metadata
+- Removed `category` from `PluginManifest` — plugin.json doesn't carry skill metadata (D-149)
+- Removed all category inference from names — categories come from `metadata.yaml`
 - Removed unnecessary test mocks in plugin test files (D-148)
 
 See [changelogs/0.88.0.md](./changelogs/0.88.0.md) for full details.
