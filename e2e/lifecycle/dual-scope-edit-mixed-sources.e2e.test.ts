@@ -121,7 +121,7 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
 
   it.fails(
     "Test 9: compiled agents reference both plugin and local skills correctly (expected fail -- plugin-mode compilation missing skill content)",
-    { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
+    { timeout: TIMEOUTS.EXTENDED_LIFECYCLE, retry: 0 },
     async () => {
       const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 

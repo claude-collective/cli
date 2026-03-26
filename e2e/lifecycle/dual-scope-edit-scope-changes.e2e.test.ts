@@ -48,7 +48,7 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
 
   it.fails(
     "Test 2: toggle a project skill's scope to global (expected fail -- ENOENT in project-scoped skill copy)",
-    { timeout: TIMEOUTS.LIFECYCLE },
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
       const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 
@@ -114,7 +114,7 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
 
   it.fails(
     "Test 3: toggle a project agent's scope to global (expected fail -- ENOENT in project-scoped skill copy)",
-    { timeout: TIMEOUTS.LIFECYCLE },
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
       const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 

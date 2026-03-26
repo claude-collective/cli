@@ -70,7 +70,7 @@ describe("init -> edit merge: config preserved across lifecycle", () => {
 
     it.fails(
       "should merge config after init -> edit with skill addition (no duplicates)",
-      { timeout: TIMEOUTS.LIFECYCLE },
+      { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
       async () => {
         tempDir = await createTempDir();
         const projectDir = tempDir;

@@ -58,7 +58,7 @@ describe("dual-scope edit lifecycle -- display and locking", () => {
 
   it.fails(
     "Test 1: edit shows global items as locked, project items as editable (expected fail -- ENOENT in project-scoped skill copy)",
-    { timeout: TIMEOUTS.LIFECYCLE },
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
       const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 
