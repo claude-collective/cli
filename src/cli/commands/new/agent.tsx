@@ -2,33 +2,22 @@ import React, { useState } from "react";
 
 import { Args, Flags } from "@oclif/core";
 import { TextInput } from "@inkjs/ui";
-import { spawn } from "child_process";
-import matter from "gray-matter";
 import { render, Box, Text, useApp, useInput } from "ink";
 import path from "path";
 
 import { BaseCommand } from "../../base-command.js";
 import { CLAUDE_DIR, CLI_COLORS, STANDARD_FILES } from "../../consts.js";
-import { getAgentDefinitions } from "../../lib/agents/index.js";
 import { resolveSource } from "../../lib/configuration/index.js";
 import {
   loadConfigTypesDataInBackground,
   regenerateConfigTypes,
 } from "../../lib/configuration/config-types-writer.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { buildAgentPrompt, invokeMetaAgent, loadMetaAgent } from "../../lib/operations/index.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import { isClaudeCLIAvailable } from "../../utils/exec.js";
-import { fileExists, readFile } from "../../utils/fs.js";
 
-const META_AGENT_NAME = "agent-summoner";
 const SEPARATOR_WIDTH = 60;
-
-type NewAgentInput = {
-  description: string;
-  prompt: string;
-  model?: string;
-  tools?: string[];
-};
 
 type PurposeInputProps = {
   onSubmit: (purpose: string) => void;
@@ -71,113 +60,6 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
     </Box>
   );
 };
-
-function parseCompiledAgent(content: string): NewAgentInput {
-  const { data: frontmatter, content: body } = matter(content);
-  const tools =
-    typeof frontmatter.tools === "string"
-      ? frontmatter.tools.split(",").map((t: string) => t.trim())
-      : frontmatter.tools;
-
-  return {
-    description: frontmatter.description || "Creates new agents",
-    prompt: body.trim(),
-    model: frontmatter.model,
-    tools,
-  };
-}
-
-async function loadMetaAgent(
-  projectDir: string,
-  source: string,
-  forceRefresh: boolean,
-): Promise<NewAgentInput> {
-  const compiledFileName = `${META_AGENT_NAME}.md`;
-
-  // Check for compiled agent in the current project
-  const localAgentPath = path.join(projectDir, CLAUDE_DIR, "agents", compiledFileName);
-  if (await fileExists(localAgentPath)) {
-    return parseCompiledAgent(await readFile(localAgentPath));
-  }
-
-  // Fall back to remote source (may not have agents)
-  try {
-    const agentPaths = await getAgentDefinitions(source, { forceRefresh, projectDir });
-    const remoteAgentPath = path.join(
-      agentPaths.sourcePath,
-      CLAUDE_DIR,
-      "agents",
-      compiledFileName,
-    );
-    if (await fileExists(remoteAgentPath)) {
-      return parseCompiledAgent(await readFile(remoteAgentPath));
-    }
-  } catch {
-    // Source does not contain agents — fall through to error
-  }
-
-  throw new Error(
-    `Agent '${META_AGENT_NAME}' not found.\n\n` + `Run 'compile' first to generate agents.`,
-  );
-}
-
-export function buildAgentPrompt(agentName: string, purpose: string, outputDir: string): string {
-  return `Create a new Claude Code agent named "${agentName}" in the directory "${outputDir}".
-
-Agent Purpose: ${purpose}
-
-Requirements:
-1. Create the agent directory structure at ${outputDir}/${agentName}/
-2. Create metadata.yaml with appropriate configuration
-3. Create intro.md with the agent's role and context
-4. Create workflow.md with the agent's operational process
-5. Optionally create examples.md if relevant examples would help
-6. Optionally create critical-requirements.md for important rules
-7. Include \`custom: true\` in the metadata.yaml configuration
-
-Follow the existing agent patterns in the codebase. Keep the agent focused and practical.`;
-}
-
-async function invokeMetaAgent(
-  agentDef: NewAgentInput,
-  prompt: string,
-  nonInteractive: boolean,
-): Promise<void> {
-  const agentsJson = JSON.stringify({
-    [META_AGENT_NAME]: {
-      description: agentDef.description,
-      prompt: agentDef.prompt,
-      model: agentDef.model,
-      tools: agentDef.tools,
-    },
-  });
-
-  const args = ["--agents", agentsJson, "--agent", META_AGENT_NAME];
-
-  if (nonInteractive) {
-    args.push("-p", prompt);
-  } else {
-    args.push("--prompt", prompt);
-  }
-
-  return new Promise((resolve, reject) => {
-    const child = spawn("claude", args, {
-      stdio: "inherit",
-    });
-
-    child.on("error", (error) => {
-      reject(new Error(`Failed to spawn claude CLI: ${error.message}`));
-    });
-
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`Claude CLI exited with code ${code}`));
-      }
-    });
-  });
-}
 
 export default class NewAgent extends BaseCommand {
   static summary = "Create a new custom agent using AI generation";
@@ -265,7 +147,11 @@ export default class NewAgent extends BaseCommand {
 
     try {
       const sourceConfig = await resolveSource(flags.source, projectDir);
-      const agentDef = await loadMetaAgent(projectDir, sourceConfig.source, flags.refresh);
+      const agentDef = await loadMetaAgent({
+        projectDir,
+        source: sourceConfig.source,
+        forceRefresh: flags.refresh,
+      });
       this.log("Meta-agent loaded");
       this.log("");
 
@@ -275,7 +161,11 @@ export default class NewAgent extends BaseCommand {
       this.log("─".repeat(SEPARATOR_WIDTH));
       this.log("");
 
-      await invokeMetaAgent(agentDef, agentPrompt, flags["non-interactive"]);
+      await invokeMetaAgent({
+        agentDef,
+        prompt: agentPrompt,
+        nonInteractive: flags["non-interactive"],
+      });
 
       // Regenerate config-types.ts to include the new agent
       try {

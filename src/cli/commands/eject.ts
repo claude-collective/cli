@@ -2,33 +2,18 @@ import { Args, Flags } from "@oclif/core";
 import path from "path";
 import os from "os";
 import { BaseCommand } from "../base-command.js";
-import {
-  copy,
-  ensureDir,
-  directoryExists,
-  fileExists,
-  listDirectories,
-  writeFile,
-} from "../utils/fs.js";
-import {
-  CLAUDE_SRC_DIR,
-  DEFAULT_BRANDING,
-  DIRS,
-  LOCAL_SKILLS_PATH,
-  PROJECT_ROOT,
-  STANDARD_FILES,
-} from "../consts.js";
+import { fileExists } from "../utils/fs.js";
+import { CLAUDE_SRC_DIR, DEFAULT_BRANDING } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
-import { matrix } from "../lib/matrix/matrix-provider";
-import { copySkillsToLocalFlattened } from "../lib/skills/index.js";
-import type { SkillId } from "../types/index.js";
-import { typedKeys } from "../utils/typed-object.js";
+import { type SourceLoadResult } from "../lib/loading/index.js";
 import {
-  loadProjectSourceConfig,
-  resolveSource,
-  saveSourceToProjectConfig,
-} from "../lib/configuration/index.js";
+  loadSource,
+  ejectAgentPartials,
+  ejectSkills,
+  ensureMinimalConfig,
+} from "../lib/operations/index.js";
+import { matrix } from "../lib/matrix/matrix-provider";
+import { saveSourceToProjectConfig } from "../lib/configuration/index.js";
 
 const EJECT_TYPES = ["agent-partials", "templates", "skills", "all"] as const;
 type EjectType = (typeof EJECT_TYPES)[number];
@@ -137,39 +122,28 @@ export default class Eject extends BaseCommand {
 
     let sourceResult: SourceLoadResult | undefined;
     if (ejectType === "skills" || ejectType === "all") {
-      sourceResult = await loadSkillsMatrixFromSource({
+      const loaded = await loadSource({
         sourceFlag: flags.source,
         projectDir,
         forceRefresh: flags.refresh,
       });
+      sourceResult = loaded.sourceResult;
     }
 
     switch (ejectType) {
       case "agent-partials":
-        await this.ejectAgentPartials(outputBase, flags.force, directOutput, false);
+        await this.handleAgentPartials(outputBase, flags.force, directOutput, false);
         break;
       case "templates":
-        await this.ejectAgentPartials(outputBase, flags.force, directOutput, true);
+        await this.handleAgentPartials(outputBase, flags.force, directOutput, true);
         break;
       case "skills":
-        await this.ejectSkills(
-          projectDir,
-          flags.force,
-          sourceResult!,
-          directOutput,
-          directOutput ? outputBase : undefined,
-        );
+        await this.handleSkills(projectDir, flags.force, sourceResult!, directOutput, outputBase);
         break;
       case "all":
-        await this.ejectAgentPartials(outputBase, flags.force, directOutput, false);
-        await this.ejectAgentPartials(outputBase, true, directOutput, true);
-        await this.ejectSkills(
-          projectDir,
-          flags.force,
-          sourceResult!,
-          directOutput,
-          directOutput ? outputBase : undefined,
-        );
+        await this.handleAgentPartials(outputBase, flags.force, directOutput, false);
+        await this.handleAgentPartials(outputBase, true, directOutput, true);
+        await this.handleSkills(projectDir, flags.force, sourceResult!, directOutput, outputBase);
         break;
       default:
         break;
@@ -180,172 +154,78 @@ export default class Eject extends BaseCommand {
       this.log(`Source saved to .claude-src/config.ts`);
     }
 
-    await this.ensureMinimalConfig(projectDir, flags.source, sourceResult);
+    const configResult = await ensureMinimalConfig({
+      projectDir,
+      sourceFlag: flags.source,
+      sourceResult,
+    });
+    if (configResult.created) {
+      this.logSuccess(`Created ${CLAUDE_SRC_DIR}/config.ts`);
+    }
 
     this.log("");
     this.logSuccess("Eject complete!");
     this.log("");
   }
 
-  // Ensures a minimal config exists so `agentsinc compile` works after eject
-  private async ensureMinimalConfig(
-    projectDir: string,
-    sourceFlag?: string,
-    sourceResult?: SourceLoadResult,
-  ): Promise<void> {
-    const tsConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-
-    if (await fileExists(tsConfigPath)) {
-      return;
-    }
-
-    const projectName = path.basename(projectDir);
-
-    const config: Record<string, unknown> = {
-      name: projectName,
-    };
-
-    const resolvedConfig =
-      sourceResult?.sourceConfig ?? (await resolveSource(sourceFlag, projectDir));
-
-    if (sourceFlag) {
-      config.source = sourceFlag;
-    } else if (resolvedConfig.source) {
-      config.source = resolvedConfig.source;
-    }
-
-    if (resolvedConfig.marketplace) {
-      config.marketplace = resolvedConfig.marketplace;
-    }
-
-    const existingProjectConfig = await loadProjectSourceConfig(projectDir);
-    if (existingProjectConfig?.author) {
-      config.author = existingProjectConfig.author;
-    }
-    if (existingProjectConfig?.agentsSource) {
-      config.agentsSource = existingProjectConfig.agentsSource;
-    }
-
-    await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
-
-    // JSON.parse(JSON.stringify(x)) removes undefined values
-    const cleaned = JSON.parse(JSON.stringify(config));
-    const body = JSON.stringify(cleaned, null, 2);
-    const content = `export default ${body};\n`;
-
-    await writeFile(tsConfigPath, content);
-
-    this.logSuccess(`Created ${CLAUDE_SRC_DIR}/config.ts`);
-  }
-
-  private async ejectAgentPartials(
+  private async handleAgentPartials(
     outputBase: string,
     force: boolean,
-    directOutput = false,
-    templatesFlag = false,
+    directOutput: boolean,
+    templatesOnly: boolean,
   ): Promise<void> {
-    const sourceDir = templatesFlag
-      ? path.join(PROJECT_ROOT, DIRS.templates)
-      : path.join(PROJECT_ROOT, DIRS.agents);
+    const result = await ejectAgentPartials({
+      outputBase,
+      force,
+      directOutput,
+      templatesOnly,
+    });
 
-    if (!(await directoryExists(sourceDir))) {
-      this.warn(
-        templatesFlag ? "No agent templates found in CLI." : "No agent partials found in CLI.",
-      );
+    if (result.skipped) {
+      this.warn(result.skipReason!);
       return;
     }
 
-    const destDir = directOutput
-      ? outputBase
-      : templatesFlag
-        ? path.join(outputBase, path.basename(DIRS.agents), path.basename(DIRS.templates))
-        : path.join(outputBase, path.basename(DIRS.agents));
-
-    const templatesBasename = path.basename(DIRS.templates);
-
-    if ((await directoryExists(destDir)) && !force) {
-      if (templatesFlag) {
-        this.warn(`Agent templates already exist at ${destDir}. Use --force to overwrite.`);
-        return;
-      }
-
-      const hasTemplates = await directoryExists(path.join(destDir, templatesBasename));
-      if ((await this.hasAgentPartialDirs(destDir)) && !hasTemplates) {
-        this.warn(`Agent partials already exist at ${destDir}. Use --force to overwrite.`);
-        return;
-      }
-    }
-
-    await ensureDir(destDir);
-
-    const skipTemplates =
-      !templatesFlag && !force && (await directoryExists(path.join(destDir, templatesBasename)));
-
-    if (skipTemplates) {
-      const sourceEntries = await listDirectories(sourceDir);
-      const nonTemplateEntries = sourceEntries.filter((entry) => entry !== templatesBasename);
-      for (const entry of nonTemplateEntries) {
-        await copy(path.join(sourceDir, entry), path.join(destDir, entry));
-      }
+    if (result.templatesSkipped) {
       this.warn(
         "Agent templates already exist — skipping templates, only ejecting agent partials.",
       );
-    } else {
-      await copy(sourceDir, destDir);
     }
 
     this.logSuccess(
-      `${templatesFlag ? "Agent templates" : "Agent partials"} ejected to ${destDir}`,
+      `${templatesOnly ? "Agent templates" : "Agent partials"} ejected to ${result.destDir}`,
     );
     this.log(
-      templatesFlag
+      templatesOnly
         ? "You can now customize agent templates locally."
         : "You can now customize templates, agent intro, workflow, and examples locally.",
     );
   }
 
-  /** Checks whether the agents directory contains any agent subdirectories (not just _templates). */
-  private async hasAgentPartialDirs(agentsDir: string): Promise<boolean> {
-    const subdirs = await listDirectories(agentsDir);
-    const templatesBasename = path.basename(DIRS.templates);
-    return subdirs.some((dir) => dir !== templatesBasename);
-  }
-
-  private async ejectSkills(
+  private async handleSkills(
     projectDir: string,
     force: boolean,
     sourceResult: SourceLoadResult,
-    directOutput = false,
-    customOutputBase?: string,
+    directOutput: boolean,
+    outputBase: string,
   ): Promise<void> {
-    const destDir =
-      directOutput && customOutputBase
-        ? customOutputBase
-        : path.join(projectDir, LOCAL_SKILLS_PATH);
+    const result = await ejectSkills({
+      projectDir,
+      force,
+      sourceResult,
+      matrix,
+      directOutput,
+      customOutputBase: directOutput ? outputBase : undefined,
+    });
 
-    if ((await directoryExists(destDir)) && !force) {
-      this.warn(`Skills already exist at ${destDir}. Use --force to overwrite.`);
+    if (result.skipped) {
+      this.warn(result.skipReason!);
       return;
     }
 
-    const skillIds = typedKeys<SkillId>(matrix.skills).filter(
-      (skillId) => !matrix.skills[skillId]?.local,
+    this.logSuccess(
+      `${result.copiedSkills.length} skills ejected to ${result.destDir} from ${result.sourceLabel}`,
     );
-
-    if (skillIds.length === 0) {
-      this.warn("No skills found in source to eject.");
-      return;
-    }
-
-    await ensureDir(destDir);
-
-    const copiedSkills = await copySkillsToLocalFlattened(skillIds, destDir, matrix, sourceResult);
-
-    const sourceLabel = sourceResult.isLocal
-      ? sourceResult.sourcePath
-      : sourceResult.marketplace || sourceResult.sourceConfig.source;
-
-    this.logSuccess(`${copiedSkills.length} skills ejected to ${destDir} from ${sourceLabel}`);
     this.log("You can now customize skill content locally.");
   }
 }

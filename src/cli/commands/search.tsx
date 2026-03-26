@@ -6,105 +6,22 @@ import { sortBy } from "remeda";
 
 import { BaseCommand } from "../base-command.js";
 import { SkillSearch, type SkillSearchResult } from "../components/skill-search/index.js";
-import type { SourcedSkill } from "../components/skill-search/skill-search.js";
-import { DEFAULT_SKILLS_SUBDIR, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts.js";
+import { LOCAL_SKILLS_PATH } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { resolveAllSources, type SourceEntry } from "../lib/configuration/index.js";
+import { resolveAllSources } from "../lib/configuration/index.js";
 import {
-  loadSkillsMatrixFromSource,
-  fetchFromSource,
-  parseFrontmatter,
-} from "../lib/loading/index.js";
-import type { CategoryPath, ResolvedSkill, SkillSlug } from "../types/index.js";
-import { listDirectories, fileExists, readFile, copy, ensureDir } from "../utils/fs.js";
+  loadSource,
+  fetchSkillsFromExternalSource,
+  filterSkillsByQuery,
+  toSourcedSkill,
+  copySearchedSkillsToLocal,
+  type SourcedSkill,
+} from "../lib/operations/index.js";
+import type { ResolvedSkill } from "../types/index.js";
 import { SUCCESS_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";
+import { truncateText } from "../utils/string.js";
 
 const MAX_DESCRIPTION_WIDTH = 50;
-
-function truncate(str: string, maxLength: number): string {
-  if (str.length <= maxLength) return str;
-  return `${str.slice(0, maxLength - 3)}...`;
-}
-
-function matchesQuery(skill: ResolvedSkill, query: string): boolean {
-  const lowerQuery = query.toLowerCase();
-
-  if (skill.id.toLowerCase().includes(lowerQuery)) return true;
-  if (skill.displayName.toLowerCase().includes(lowerQuery)) return true;
-  if (skill.slug.toLowerCase().includes(lowerQuery)) return true;
-  if (skill.description.toLowerCase().includes(lowerQuery)) return true;
-  if (skill.category.toLowerCase().includes(lowerQuery)) return true;
-
-  return false;
-}
-
-function matchesCategory(skill: ResolvedSkill, category: string): boolean {
-  const lowerCategory = category.toLowerCase();
-  return skill.category.toLowerCase().includes(lowerCategory);
-}
-
-function toSourcedSkill(
-  skill: ResolvedSkill,
-  sourceName: string,
-  sourceUrl?: string,
-): SourcedSkill {
-  return {
-    ...skill,
-    sourceName,
-    sourceUrl,
-  };
-}
-
-async function fetchSkillsFromSource(
-  source: SourceEntry,
-  forceRefresh: boolean,
-): Promise<SourcedSkill[]> {
-  try {
-    const result = await fetchFromSource(source.url, { forceRefresh });
-    const skillsDir = path.join(result.path, DEFAULT_SKILLS_SUBDIR);
-
-    if (!(await fileExists(skillsDir))) {
-      return [];
-    }
-
-    const skillDirs = await listDirectories(skillsDir);
-    const skills: SourcedSkill[] = [];
-
-    for (const skillDir of skillDirs) {
-      const skillMdPath = path.join(skillsDir, skillDir, STANDARD_FILES.SKILL_MD);
-      if (!(await fileExists(skillMdPath))) continue;
-
-      const content = await readFile(skillMdPath);
-      const frontmatter = parseFrontmatter(content, skillMdPath);
-      if (!frontmatter) continue;
-
-      skills.push({
-        id: frontmatter.name,
-        description: frontmatter.description,
-        // Boundary cast: directory name used as slug for third-party source skill
-        slug: skillDir as SkillSlug,
-        displayName: skillDir,
-        // Boundary cast: external source skills have no real category; "imported" is a display-only placeholder
-        category: "imported" as CategoryPath,
-        author: `@${source.name}`,
-        conflictsWith: [],
-        isRecommended: false,
-        requires: [],
-        alternatives: [],
-        discourages: [],
-        compatibleWith: [],
-        sourceName: source.name,
-        sourceUrl: source.url,
-        path: path.join(skillsDir, skillDir),
-      });
-    }
-
-    return skills;
-  } catch {
-    // Source unavailable, return empty
-    return [];
-  }
-}
 
 export default class Search extends BaseCommand {
   static summary = "Search available skills";
@@ -177,11 +94,12 @@ export default class Search extends BaseCommand {
     this.log("Loading skills from all sources...");
 
     try {
-      const { matrix, sourcePath } = await loadSkillsMatrixFromSource({
+      const { sourceResult } = await loadSource({
         sourceFlag: undefined,
         projectDir,
         forceRefresh,
       });
+      const { matrix, sourcePath } = sourceResult;
 
       const primarySkills = Object.values(matrix.skills)
         .filter((skill): skill is ResolvedSkill => skill !== undefined)
@@ -190,7 +108,7 @@ export default class Search extends BaseCommand {
       const { extras } = await resolveAllSources(projectDir);
 
       const extraSkillArrays = await Promise.all(
-        extras.map((source) => fetchSkillsFromSource(source, forceRefresh)),
+        extras.map((source) => fetchSkillsFromExternalSource(source, forceRefresh)),
       );
 
       const allSkills: SourcedSkill[] = [...primarySkills, ...extraSkillArrays.flat()];
@@ -234,19 +152,17 @@ export default class Search extends BaseCommand {
       this.log("");
       this.log(`Importing ${searchResult.selectedSkills.length} skill(s)...`);
 
-      const destDir = path.join(projectDir, LOCAL_SKILLS_PATH);
+      const copyResults = await copySearchedSkillsToLocal(searchResult.selectedSkills, projectDir);
 
-      for (const skill of searchResult.selectedSkills) {
-        if (skill.path) {
-          const destPath = path.join(destDir, skill.id);
-          await ensureDir(path.dirname(destPath));
-          await copy(skill.path, destPath);
-          this.logSuccess(`Imported: ${skill.id}`);
+      for (const result of copyResults) {
+        if (result.copied) {
+          this.logSuccess(`Imported: ${result.id}`);
         } else {
-          this.warn(`Skipping ${skill.id}: No source path available`);
+          this.warn(`Skipping ${result.id}: ${result.reason}`);
         }
       }
 
+      const destDir = path.join(projectDir, LOCAL_SKILLS_PATH);
       this.log("");
       this.logSuccess(SUCCESS_MESSAGES.IMPORT_COMPLETE);
       this.log(`Skills location: ${destDir}`);
@@ -263,9 +179,11 @@ export default class Search extends BaseCommand {
     try {
       this.log(STATUS_MESSAGES.LOADING_SKILLS);
 
-      const { matrix, sourcePath, isLocal } = await loadSkillsMatrixFromSource({
+      const { sourceResult } = await loadSource({
         sourceFlag: flags.source,
+        projectDir: process.cwd(),
       });
+      const { matrix, sourcePath, isLocal } = sourceResult;
 
       this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
 
@@ -273,13 +191,10 @@ export default class Search extends BaseCommand {
         (skill): skill is ResolvedSkill => skill !== undefined,
       );
 
-      let results = allSkills.filter((skill) => matchesQuery(skill, query));
-
-      if (flags.category) {
-        results = results.filter((skill) => matchesCategory(skill, flags.category!));
-      }
-
-      results = sortBy(results, (r) => r.displayName.toLowerCase());
+      const results = sortBy(
+        filterSkillsByQuery(allSkills, { query, category: flags.category }),
+        (r) => r.displayName.toLowerCase(),
+      );
 
       this.log("");
       if (results.length === 0) {
@@ -300,7 +215,7 @@ export default class Search extends BaseCommand {
           data: results.map((skill) => ({
             id: skill.displayName,
             category: skill.category,
-            description: truncate(skill.description, MAX_DESCRIPTION_WIDTH),
+            description: truncateText(skill.description, MAX_DESCRIPTION_WIDTH),
           })),
           columns: [
             { key: "id", name: "ID" },

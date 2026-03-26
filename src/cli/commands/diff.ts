@@ -1,126 +1,17 @@
 import { Args, Flags } from "@oclif/core";
 import chalk from "chalk";
-import os from "os";
-import path from "path";
-import { createTwoFilesPatch } from "diff";
 import { BaseCommand } from "../base-command.js";
 import { getErrorMessage } from "../utils/errors.js";
-import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import {
+  loadSource,
+  buildSourceSkillsMap,
+  collectScopedSkillDirs,
+  generateSkillDiff,
+  formatColoredDiff,
+  type SkillDiffResult,
+} from "../lib/operations/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { readForkedFromMetadata, type ForkedFromMetadata } from "../lib/skills/index.js";
-import { fileExists, readFile, listDirectories } from "../utils/fs.js";
-import { CLI_BIN_NAME, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts.js";
-
-type SkillDiffResult = {
-  skillDirName: string;
-  forkedFrom: ForkedFromMetadata | null;
-  hasDiff: boolean;
-  diffOutput: string;
-};
-
-function colorDiff(diffText: string): string {
-  return diffText
-    .split("\n")
-    .map((line) => {
-      if (line.startsWith("+++") || line.startsWith("---")) {
-        return chalk.bold(line);
-      }
-      if (line.startsWith("+")) {
-        return chalk.green(line);
-      }
-      if (line.startsWith("-")) {
-        return chalk.red(line);
-      }
-      if (line.startsWith("@@")) {
-        return chalk.cyan(line);
-      }
-      return line;
-    })
-    .join("\n");
-}
-
-async function diffSkill(
-  localSkillsPath: string,
-  skillDirName: string,
-  sourcePath: string,
-  sourceSkills: Record<string, { path: string }>,
-): Promise<SkillDiffResult> {
-  const skillDir = path.join(localSkillsPath, skillDirName);
-  const forkedFrom = await readForkedFromMetadata(skillDir);
-
-  if (!forkedFrom) {
-    return {
-      skillDirName,
-      forkedFrom: null,
-      hasDiff: false,
-      diffOutput: "",
-    };
-  }
-
-  const sourceSkill = sourceSkills[forkedFrom.skillId];
-
-  if (!sourceSkill) {
-    return {
-      skillDirName,
-      forkedFrom,
-      hasDiff: false,
-      diffOutput: `Source skill '${forkedFrom.skillId}' no longer exists`,
-    };
-  }
-
-  const sourceSkillMdPath = path.join(sourcePath, "src", sourceSkill.path, STANDARD_FILES.SKILL_MD);
-
-  if (!(await fileExists(sourceSkillMdPath))) {
-    return {
-      skillDirName,
-      forkedFrom,
-      hasDiff: false,
-      diffOutput: `Source ${STANDARD_FILES.SKILL_MD} not found at ${sourceSkillMdPath}`,
-    };
-  }
-
-  const sourceContent = await readFile(sourceSkillMdPath);
-
-  const localSkillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
-
-  if (!(await fileExists(localSkillMdPath))) {
-    return {
-      skillDirName,
-      forkedFrom,
-      hasDiff: false,
-      diffOutput: `Local ${STANDARD_FILES.SKILL_MD} not found at ${localSkillMdPath}`,
-    };
-  }
-
-  const localContent = await readFile(localSkillMdPath);
-
-  const sourceLabel = `source/${sourceSkill.path}/SKILL.md`;
-  const localLabel = `local/${LOCAL_SKILLS_PATH}/${skillDirName}/SKILL.md`;
-
-  const diff = createTwoFilesPatch(
-    sourceLabel,
-    localLabel,
-    sourceContent,
-    localContent,
-    "", // No source header
-    "", // No local header
-  );
-
-  const hasDiff = diff.split("\n").some((line) => {
-    return (
-      (line.startsWith("+") || line.startsWith("-")) &&
-      !line.startsWith("+++") &&
-      !line.startsWith("---")
-    );
-  });
-
-  return {
-    skillDirName,
-    forkedFrom,
-    hasDiff,
-    diffOutput: diff,
-  };
-}
+import { CLI_BIN_NAME } from "../consts.js";
 
 export default class Diff extends BaseCommand {
   static summary = "Show differences between local forked skills and their source versions";
@@ -161,11 +52,7 @@ export default class Diff extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Diff);
     const projectDir = process.cwd();
-    const homeDir = os.homedir();
-    const projectLocalPath = path.join(projectDir, LOCAL_SKILLS_PATH);
-    const globalLocalPath = path.join(homeDir, LOCAL_SKILLS_PATH);
-    const hasProject = await fileExists(projectLocalPath);
-    const hasGlobal = projectDir !== homeDir && (await fileExists(globalLocalPath));
+    const { dirs: scopedDirs, hasProject, hasGlobal } = await collectScopedSkillDirs(projectDir);
 
     if (!hasProject && !hasGlobal) {
       if (!flags.quiet) {
@@ -181,59 +68,35 @@ export default class Diff extends BaseCommand {
         this.log("Loading skills...");
       }
 
-      const { matrix, sourcePath, isLocal } = await loadSkillsMatrixFromSource({
+      const { sourceResult } = await loadSource({
         sourceFlag: flags.source,
         projectDir,
       });
+      const { matrix, sourcePath, isLocal } = sourceResult;
 
       if (!flags.quiet) {
         this.log(chalk.dim(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`));
       }
 
-      const sourceSkills: Record<string, { path: string }> = {};
-      for (const [skillId, skill] of Object.entries(matrix.skills)) {
-        if (!skill) continue;
-        if (!skill.local) {
-          sourceSkills[skillId] = { path: skill.path };
-        }
-      }
+      const sourceSkills = buildSourceSkillsMap(matrix);
 
-      // Collect skill dirs from both project and global scopes
-      type ScopedSkillDir = { dirName: string; localSkillsPath: string };
-      const scopedDirs: ScopedSkillDir[] = [];
-      if (hasProject) {
-        for (const dirName of await listDirectories(projectLocalPath)) {
-          scopedDirs.push({ dirName, localSkillsPath: projectLocalPath });
-        }
-      }
-      if (hasGlobal) {
-        const projectDirNames = new Set(scopedDirs.map((d) => d.dirName));
-        for (const dirName of await listDirectories(globalLocalPath)) {
-          // Project-scoped takes precedence
-          if (!projectDirNames.has(dirName)) {
-            scopedDirs.push({ dirName, localSkillsPath: globalLocalPath });
-          }
-        }
-      }
-
+      let filteredDirs = scopedDirs;
       if (args.skill) {
-        const filtered = scopedDirs.filter((d) => d.dirName === args.skill);
-        if (filtered.length === 0) {
+        filteredDirs = scopedDirs.filter((d) => d.dirName === args.skill);
+        if (filteredDirs.length === 0) {
           if (!flags.quiet) {
             this.error(`Skill '${args.skill}' not found in local skills`, {
               exit: EXIT_CODES.ERROR,
             });
           }
         }
-        scopedDirs.length = 0;
-        scopedDirs.push(...filtered);
       }
 
       const results: SkillDiffResult[] = [];
       const skillsWithoutForkedFrom: string[] = [];
 
-      for (const { dirName, localSkillsPath } of scopedDirs) {
-        const result = await diffSkill(localSkillsPath, dirName, sourcePath, sourceSkills);
+      for (const { dirName, localSkillsPath } of filteredDirs) {
+        const result = await generateSkillDiff(localSkillsPath, dirName, sourcePath, sourceSkills);
         results.push(result);
 
         if (!result.forkedFrom) {
@@ -266,7 +129,7 @@ export default class Diff extends BaseCommand {
                 `\n=== ${result.skillDirName} (forked from ${result.forkedFrom?.skillId}) ===\n`,
               ),
             );
-            this.log(colorDiff(result.diffOutput));
+            this.log(formatColoredDiff(result.diffOutput));
           }
 
           this.log("");

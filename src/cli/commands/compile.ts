@@ -1,107 +1,19 @@
 import { Flags } from "@oclif/core";
 import os from "os";
-import path from "path";
 import { BaseCommand } from "../base-command";
-import { setVerbose, verbose, warn } from "../utils/logger";
-import { discoverAllPluginSkills } from "../lib/plugins";
-import { getAgentDefinitions } from "../lib/agents";
-import { resolveSource, loadProjectConfigFromDir } from "../lib/configuration";
-import { directoryExists, glob, readFile, fileExists } from "../utils/fs";
-import { recompileAgents } from "../lib/agents";
-import { parseFrontmatter } from "../lib/loading";
-import { CLI_BIN_NAME, GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts";
+import { setVerbose, verbose } from "../utils/logger";
+import {
+  detectBothInstallations,
+  loadAgentDefs,
+  compileAgents,
+  discoverInstalledSkills,
+  type DiscoveredSkills,
+} from "../lib/operations";
+import { resolveSource } from "../lib/configuration";
+import { CLI_BIN_NAME } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { ERROR_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages";
-import {
-  buildAgentScopeMap,
-  detectGlobalInstallation,
-  detectProjectInstallation,
-  type Installation,
-} from "../lib/installation";
-import type { AgentSourcePaths, SkillDefinition, SkillDefinitionMap, SkillId } from "../types";
-import { typedEntries, typedKeys } from "../utils/typed-object";
-
-async function loadSkillsFromDir(skillsDir: string, pathPrefix = ""): Promise<SkillDefinitionMap> {
-  const skills: SkillDefinitionMap = {};
-
-  if (!(await directoryExists(skillsDir))) {
-    return skills;
-  }
-
-  const skillFiles = await glob("**/SKILL.md", skillsDir);
-
-  for (const skillFile of skillFiles) {
-    const skillPath = path.join(skillsDir, skillFile);
-    const skillDir = path.dirname(skillPath);
-    const relativePath = path.relative(skillsDir, skillDir);
-    const skillDirName = path.basename(skillDir);
-
-    const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
-    if (!(await fileExists(metadataPath))) {
-      const displayPath = pathPrefix ? `${pathPrefix}/${relativePath}/` : `${relativePath}/`;
-      warn(
-        `Skill '${skillDirName}' in '${displayPath}' is missing ${STANDARD_FILES.METADATA_YAML} — skipped. Add ${STANDARD_FILES.METADATA_YAML} to register it with the CLI.`,
-      );
-      continue;
-    }
-
-    try {
-      const content = await readFile(skillPath);
-      const frontmatter = parseFrontmatter(content, skillPath);
-
-      if (!frontmatter?.name) {
-        warn(`Skipping skill in '${skillDirName}': missing or invalid frontmatter name`);
-        continue;
-      }
-
-      const canonicalId = frontmatter.name;
-
-      const skill: SkillDefinition = {
-        id: canonicalId,
-        path: pathPrefix ? `${pathPrefix}/${relativePath}/` : `${relativePath}/`,
-        description: frontmatter?.description || "",
-      };
-
-      skills[canonicalId] = skill;
-      verbose(`  Loaded skill: ${canonicalId}`);
-    } catch (error) {
-      verbose(`  Failed to load skill: ${skillFile} - ${error}`);
-    }
-  }
-
-  return skills;
-}
-
-async function discoverLocalProjectSkills(projectDir: string): Promise<SkillDefinitionMap> {
-  const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
-  return loadSkillsFromDir(localSkillsDir, LOCAL_SKILLS_PATH);
-}
-
-/** Later sources take precedence over earlier ones */
-function mergeSkills(...skillSources: SkillDefinitionMap[]): SkillDefinitionMap {
-  const merged: SkillDefinitionMap = {};
-
-  for (const source of skillSources) {
-    for (const [id, skill] of typedEntries<SkillId, SkillDefinition | undefined>(source)) {
-      if (skill) {
-        merged[id] = skill;
-      }
-    }
-  }
-
-  return merged;
-}
-
-type CompileFlags = {
-  source?: string;
-  "agent-source"?: string;
-  verbose: boolean;
-};
-
-type DiscoveredSkills = {
-  allSkills: SkillDefinitionMap;
-  totalSkillCount: number;
-};
+import { type Installation } from "../lib/installation";
 
 export default class Compile extends BaseCommand {
   static summary = "Compile agents using local skills and agent definitions";
@@ -134,9 +46,8 @@ export default class Compile extends BaseCommand {
     const cwd = process.cwd();
     const homeDir = os.homedir();
 
-    const globalInstallation = await detectGlobalInstallation();
-    // Skip project detection when cwd is home directory to avoid double-compile
-    const projectInstallation = cwd === homeDir ? null : await detectProjectInstallation(cwd);
+    const { global: globalInstallation, project: projectInstallation, hasBoth: hasBothScopes } =
+      await detectBothInstallations(cwd);
 
     if (!globalInstallation && !projectInstallation) {
       this.error(ERROR_MESSAGES.NO_INSTALLATION, {
@@ -144,23 +55,45 @@ export default class Compile extends BaseCommand {
       });
     }
 
-    await this.resolveSourceForCompile(flags);
-    const agentDefs = await this.loadAgentDefsForCompile(flags);
+    // Resolve source
+    this.log(STATUS_MESSAGES.RESOLVING_SOURCE);
+    try {
+      const sourceConfig = await resolveSource(flags.source);
+      this.log(`Source: ${sourceConfig.sourceOrigin}`);
+    } catch (error) {
+      this.log(ERROR_MESSAGES.FAILED_RESOLVE_SOURCE);
+      this.handleError(error);
+    }
+
+    // Load agent definitions
+    this.log(
+      flags["agent-source"]
+        ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS
+        : STATUS_MESSAGES.LOADING_AGENT_PARTIALS,
+    );
+    let agentDefs;
+    try {
+      const defs = await loadAgentDefs(flags["agent-source"], { projectDir: cwd });
+      this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");
+      verbose(`  Agents: ${defs.agentSourcePaths.agentsDir}`);
+      verbose(`  Templates: ${defs.agentSourcePaths.templatesDir}`);
+      agentDefs = defs;
+    } catch (error) {
+      this.log(ERROR_MESSAGES.FAILED_LOAD_AGENT_PARTIALS);
+      return this.handleError(error);
+    }
 
     let totalPassesWithSkills = 0;
 
     // When both installations exist, filter each pass to its own scope to prevent
     // the project pass from overwriting global agents with zero-skill versions
     // (the project config's stack only has project agent entries).
-    const hasBothScopes = !!globalInstallation && !!projectInstallation;
-
     if (globalInstallation) {
       const hadSkills = await this.runCompilePass({
         label: "Global",
         projectDir: homeDir,
         installation: globalInstallation,
-        agentDefs,
-        flags,
+        sourcePath: agentDefs.sourcePath,
         scopeFilter: hasBothScopes ? "global" : undefined,
       });
       if (hadSkills) totalPassesWithSkills++;
@@ -171,8 +104,7 @@ export default class Compile extends BaseCommand {
         label: "Project",
         projectDir: cwd,
         installation: projectInstallation,
-        agentDefs,
-        flags,
+        sourcePath: agentDefs.sourcePath,
         scopeFilter: hasBothScopes ? "project" : undefined,
       });
       if (hadSkills) totalPassesWithSkills++;
@@ -186,68 +118,36 @@ export default class Compile extends BaseCommand {
     }
   }
 
-  private async discoverAllSkills(projectDir: string = process.cwd()): Promise<DiscoveredSkills> {
+  private async discoverAllSkills(projectDir: string): Promise<DiscoveredSkills> {
     this.log(STATUS_MESSAGES.DISCOVERING_SKILLS);
+    const result = await discoverInstalledSkills(projectDir);
 
-    // Load global plugins (skip if projectDir is already the home directory to avoid double-loading)
-    const isGlobalProject = projectDir === os.homedir();
-    const globalPluginSkills = isGlobalProject ? {} : await discoverAllPluginSkills(os.homedir());
-    const globalPluginSkillCount = typedKeys<SkillId>(globalPluginSkills).length;
-    if (globalPluginSkillCount > 0) {
-      verbose(`  Found ${globalPluginSkillCount} skills from global plugins`);
+    if (result.totalSkillCount === 0) {
+      return result;
     }
 
-    // Load global local skills (skip if projectDir is already the home directory to avoid double-loading)
-    const globalLocalSkillsDir = path.join(GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH);
-    const globalLocalSkills = isGlobalProject
-      ? {}
-      : await loadSkillsFromDir(globalLocalSkillsDir, LOCAL_SKILLS_PATH);
-    const globalLocalSkillCount = typedKeys<SkillId>(globalLocalSkills).length;
-    if (globalLocalSkillCount > 0) {
-      verbose(`  Found ${globalLocalSkillCount} global local skills from ~/.claude/skills/`);
-    }
-
-    const pluginSkills = await discoverAllPluginSkills(projectDir);
-    const pluginSkillCount = typedKeys<SkillId>(pluginSkills).length;
-    verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
-
-    const localSkills = await discoverLocalProjectSkills(projectDir);
-    const localSkillCount = typedKeys<SkillId>(localSkills).length;
-    verbose(`  Found ${localSkillCount} local skills from .claude/skills/`);
-
-    // Global skills loaded first, project skills second — project wins on conflict (later sources override)
-    const allSkills = mergeSkills(globalPluginSkills, globalLocalSkills, pluginSkills, localSkills);
-    const totalSkillCount = typedKeys<SkillId>(allSkills).length;
-
-    if (totalSkillCount === 0) {
-      return { allSkills, totalSkillCount };
-    }
-
-    const totalPluginSkillCount = globalPluginSkillCount + pluginSkillCount;
-    if (totalPluginSkillCount > 0 && totalSkillCount > totalPluginSkillCount) {
-      const localCount = totalSkillCount - totalPluginSkillCount;
+    if (result.pluginSkillCount > 0 && result.totalSkillCount > result.pluginSkillCount) {
+      const localCount = result.totalSkillCount - result.pluginSkillCount;
       this.log(
-        `Discovered ${totalSkillCount} skills (${totalPluginSkillCount} from plugins, ${localCount} local)`,
+        `Discovered ${result.totalSkillCount} skills (${result.pluginSkillCount} from plugins, ${localCount} local)`,
       );
-    } else if (totalPluginSkillCount > 0) {
-      this.log(`Discovered ${totalPluginSkillCount} skills from plugins`);
+    } else if (result.pluginSkillCount > 0) {
+      this.log(`Discovered ${result.pluginSkillCount} skills from plugins`);
     } else {
-      this.log(`Discovered ${totalSkillCount} local skills`);
+      this.log(`Discovered ${result.totalSkillCount} local skills`);
     }
 
-    return { allSkills, totalSkillCount };
+    return result;
   }
 
   private async runCompilePass(params: {
     label: string;
     projectDir: string;
     installation: Installation;
-    agentDefs: AgentSourcePaths;
-    flags: CompileFlags;
-    /** When true, only compile agents matching this scope (filters out agents handled by another pass) */
+    sourcePath: string;
     scopeFilter?: "project" | "global";
   }): Promise<boolean> {
-    const { label, projectDir, installation, agentDefs, flags, scopeFilter } = params;
+    const { label, projectDir, installation, sourcePath, scopeFilter } = params;
 
     this.log("");
     this.log(`Compiling ${label.toLowerCase()} agents...`);
@@ -263,30 +163,15 @@ export default class Compile extends BaseCommand {
       return false;
     }
 
-    // Load config to build scope map so agents are routed to the correct directory
-    const loadedConfig = await loadProjectConfigFromDir(projectDir);
-    const agentScopeMap = loadedConfig?.config
-      ? buildAgentScopeMap(loadedConfig.config)
-      : undefined;
-
-    // When a scope filter is active, only compile agents matching that scope.
-    // This prevents the project pass from overwriting global agents (which were already compiled
-    // in the global pass) with zero-skill versions (the project stack only has project entries).
-    const filteredAgents =
-      scopeFilter && loadedConfig?.config?.agents
-        ? loadedConfig.config.agents.filter((a) => a.scope === scopeFilter).map((a) => a.name)
-        : undefined;
-
     this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
-      const recompileResult = await recompileAgents({
-        pluginDir: projectDir,
-        sourcePath: agentDefs.sourcePath,
-        skills: allSkills,
+      const recompileResult = await compileAgents({
         projectDir,
+        sourcePath,
+        skills: allSkills,
+        pluginDir: projectDir,
         outputDir: installation.agentsDir,
-        agentScopeMap,
-        agents: filteredAgents,
+        scopeFilter,
       });
 
       if (recompileResult.failed.length > 0) {
@@ -315,38 +200,5 @@ export default class Compile extends BaseCommand {
     this.log("");
 
     return true;
-  }
-
-  private async resolveSourceForCompile(flags: CompileFlags): Promise<void> {
-    this.log(STATUS_MESSAGES.RESOLVING_SOURCE);
-    try {
-      const sourceConfig = await resolveSource(flags.source);
-      this.log(`Source: ${sourceConfig.sourceOrigin}`);
-    } catch (error) {
-      this.log(ERROR_MESSAGES.FAILED_RESOLVE_SOURCE);
-      this.handleError(error);
-    }
-  }
-
-  private async loadAgentDefsForCompile(flags: CompileFlags): Promise<AgentSourcePaths> {
-    const projectDir = process.cwd();
-    this.log(
-      flags["agent-source"]
-        ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS
-        : STATUS_MESSAGES.LOADING_AGENT_PARTIALS,
-    );
-
-    try {
-      const agentDefs = await getAgentDefinitions(flags["agent-source"], {
-        projectDir,
-      });
-      this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");
-      verbose(`  Agents: ${agentDefs.agentsDir}`);
-      verbose(`  Templates: ${agentDefs.templatesDir}`);
-      return agentDefs;
-    } catch (error) {
-      this.log(ERROR_MESSAGES.FAILED_LOAD_AGENT_PARTIALS);
-      return this.handleError(error);
-    }
   }
 }

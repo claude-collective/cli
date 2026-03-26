@@ -4,21 +4,19 @@ import { Flags, Args } from "@oclif/core";
 import { printTable } from "@oclif/table";
 import { render } from "ink";
 import os from "os";
-import path from "path";
 
 import { BaseCommand } from "../base-command.js";
 import { getErrorMessage } from "../utils/errors.js";
-import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
-import { matrix } from "../lib/matrix/matrix-provider";
-import { recompileAgents } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
-  compareLocalSkillsWithSource,
-  injectForkedFromMetadata,
-  type SkillComparisonResult,
-} from "../lib/skills/index.js";
-import { fileExists, copy } from "../utils/fs.js";
-import { CLI_BIN_NAME, LOCAL_SKILLS_PATH } from "../consts.js";
+  loadSource,
+  compareSkillsWithSource,
+  compileAgents,
+  updateLocalSkills,
+  collectScopedSkillDirs,
+  findSkillMatch,
+} from "../lib/operations/index.js";
+import { CLI_BIN_NAME } from "../consts.js";
 import {
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
@@ -26,66 +24,6 @@ import {
   INFO_MESSAGES,
 } from "../utils/messages.js";
 import { Confirm } from "../components/common/confirm.js";
-
-async function updateSkill(
-  skill: SkillComparisonResult,
-  projectDir: string,
-  sourceResult: SourceLoadResult,
-): Promise<{ success: boolean; newHash: string | null; error?: string }> {
-  if (!skill.sourcePath || !skill.sourceHash) {
-    return { success: false, newHash: null, error: "No source path available" };
-  }
-
-  const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
-  const destPath = path.join(localSkillsPath, skill.dirName);
-  const srcPath = path.join(sourceResult.sourcePath, "src", skill.sourcePath);
-
-  try {
-    await copy(srcPath, destPath);
-    await injectForkedFromMetadata(destPath, skill.id, skill.sourceHash);
-
-    return { success: true, newHash: skill.sourceHash };
-  } catch (error) {
-    return {
-      success: false,
-      newHash: null,
-      error: getErrorMessage(error),
-    };
-  }
-}
-
-function findSkillByPartialMatch(
-  skillName: string,
-  results: SkillComparisonResult[],
-): SkillComparisonResult | null {
-  const exact = results.find((r) => r.id === skillName);
-  if (exact) return exact;
-
-  const partial = results.find((r) => {
-    const nameWithoutAuthor = r.id.replace(/\s*\(@\w+\)$/, "").toLowerCase();
-    return nameWithoutAuthor === skillName.toLowerCase();
-  });
-  if (partial) return partial;
-
-  const byDir = results.find((r) => r.dirName.toLowerCase() === skillName.toLowerCase());
-  if (byDir) return byDir;
-
-  return null;
-}
-
-function findSimilarSkills(skillName: string, results: SkillComparisonResult[]): string[] {
-  const lowered = skillName.toLowerCase();
-  return results
-    .filter((r) => {
-      const name = r.id.toLowerCase();
-      const dir = r.dirName.toLowerCase();
-      return (
-        name.includes(lowered) || dir.includes(lowered) || lowered.includes(name.split(" ")[0])
-      );
-    })
-    .map((r) => r.id)
-    .slice(0, 3);
-}
 
 type UpdateConfirmProps = {
   onConfirm: () => void;
@@ -143,11 +81,8 @@ export default class Update extends BaseCommand {
     const shouldRecompile = !flags["no-recompile"];
 
     try {
-      const projectLocalPath = path.join(projectDir, LOCAL_SKILLS_PATH);
       const homeDir = os.homedir();
-      const globalLocalPath = path.join(homeDir, LOCAL_SKILLS_PATH);
-      const hasProject = await fileExists(projectLocalPath);
-      const hasGlobal = projectDir !== homeDir && (await fileExists(globalLocalPath));
+      const { hasProject, hasGlobal } = await collectScopedSkillDirs(projectDir);
 
       if (!hasProject && !hasGlobal) {
         this.warn(ERROR_MESSAGES.NO_LOCAL_SKILLS);
@@ -156,7 +91,7 @@ export default class Update extends BaseCommand {
 
       this.log(STATUS_MESSAGES.LOADING_SKILLS);
 
-      const sourceResult = await loadSkillsMatrixFromSource({
+      const { sourceResult } = await loadSource({
         sourceFlag: flags.source,
         projectDir,
       });
@@ -165,44 +100,29 @@ export default class Update extends BaseCommand {
         `Loaded from ${sourceResult.isLocal ? "local" : "remote"}: ${sourceResult.sourcePath}`,
       );
 
-      const sourceSkills: Record<string, { path: string }> = {};
-      for (const [skillId, skill] of Object.entries(matrix.skills)) {
-        if (!skill) continue;
-        if (!skill.local) {
-          sourceSkills[skillId] = { path: skill.path };
-        }
-      }
-
-      // Check both project-scoped and global-scoped local skills
-      const projectResults = hasProject
-        ? await compareLocalSkillsWithSource(projectDir, sourceResult.sourcePath, sourceSkills)
-        : [];
-      const globalResults = hasGlobal
-        ? await compareLocalSkillsWithSource(homeDir, sourceResult.sourcePath, sourceSkills)
-        : [];
-
-      // Track which base dir each skill lives in (for updateSkill dest path)
+      const comparison = await compareSkillsWithSource(
+        projectDir,
+        sourceResult.sourcePath,
+        sourceResult.matrix,
+      );
+      const allResults = comparison.merged;
+      // Build skillBaseDir from separate results for updateLocalSkills dest path
       const skillBaseDir = new Map<string, string>();
-      for (const r of projectResults) skillBaseDir.set(r.id, projectDir);
-      for (const r of globalResults) {
+      for (const r of comparison.projectResults) skillBaseDir.set(r.id, projectDir);
+      for (const r of comparison.globalResults) {
         if (!skillBaseDir.has(r.id)) skillBaseDir.set(r.id, homeDir);
       }
-
-      // Merge results, project-scoped takes precedence
-      const seenIds = new Set(projectResults.map((r) => r.id));
-      const allResults = [...projectResults, ...globalResults.filter((r) => !seenIds.has(r.id))];
 
       let outdatedSkills = allResults.filter((r) => r.status === "outdated");
 
       if (args.skill) {
-        const foundSkill = findSkillByPartialMatch(args.skill, allResults);
+        const { match: foundSkill, similar } = findSkillMatch(args.skill, allResults);
 
         if (!foundSkill) {
           this.log("");
           this.log(`Error: Skill "${args.skill}" not found.`);
           this.log("");
 
-          const similar = findSimilarSkills(args.skill, allResults);
           if (similar.length > 0) {
             this.log("Did you mean one of these?");
             for (const name of similar) {
@@ -296,35 +216,30 @@ export default class Update extends BaseCommand {
 
       this.log("");
 
-      const updated: string[] = [];
-      const failed: string[] = [];
+      const updateResult = await updateLocalSkills({
+        skills: outdatedSkills,
+        sourceResult,
+        skillBaseDir,
+        onProgress: (skillId) => this.log(`Updating ${skillId}...`),
+      });
 
-      for (const skill of outdatedSkills) {
-        this.log(`Updating ${skill.id}...`);
-
-        const baseDir = skillBaseDir.get(skill.id) ?? projectDir;
-        const result = await updateSkill(skill, baseDir, sourceResult);
-
-        if (result.success) {
-          this.log(`  Updated ${skill.id}`);
-          updated.push(skill.id);
-        } else {
-          this.log(`  Failed to update ${skill.id}: ${result.error}`);
-          failed.push(skill.id);
-        }
+      for (const item of updateResult.updated) {
+        this.log(`  Updated ${item.id}`);
+      }
+      for (const item of updateResult.failed) {
+        this.log(`  Failed to update ${item.id}: ${item.error}`);
       }
 
       let recompiledAgents: string[] = [];
 
-      if (shouldRecompile && updated.length > 0) {
+      if (shouldRecompile && updateResult.totalUpdated > 0) {
         this.log("");
         this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
 
         try {
-          const recompileResult = await recompileAgents({
-            pluginDir: projectDir,
-            sourcePath: sourceResult.sourcePath,
+          const recompileResult = await compileAgents({
             projectDir,
+            sourcePath: sourceResult.sourcePath,
           });
 
           recompiledAgents = recompileResult.compiled;
@@ -350,18 +265,20 @@ export default class Update extends BaseCommand {
       }
 
       this.log("");
-      if (failed.length === 0) {
+      if (updateResult.totalFailed === 0) {
         const agentMsg =
           recompiledAgents.length > 0 ? `, ${recompiledAgents.length} agent(s) recompiled` : "";
-        this.logSuccess(`Update complete! ${updated.length} skill(s) updated${agentMsg}.`);
+        this.logSuccess(
+          `Update complete! ${updateResult.totalUpdated} skill(s) updated${agentMsg}.`,
+        );
       } else {
         this.warn(
-          `Update finished with errors: ${updated.length} updated, ${failed.length} failed.`,
+          `Update finished with errors: ${updateResult.totalUpdated} updated, ${updateResult.totalFailed} failed.`,
         );
       }
       this.log("");
 
-      if (failed.length > 0) {
+      if (updateResult.totalFailed > 0) {
         this.error("Some updates failed", { exit: EXIT_CODES.ERROR });
       }
     } catch (error) {

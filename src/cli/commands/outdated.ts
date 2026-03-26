@@ -6,13 +6,11 @@ import { countBy } from "remeda";
 
 import { BaseCommand } from "../base-command.js";
 import { getErrorMessage } from "../utils/errors.js";
-import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { detectInstallation } from "../lib/installation/index.js";
-import { compareLocalSkillsWithSource, type SkillComparisonResult } from "../lib/skills/index.js";
+import { loadSource, compareSkillsWithSource, detectProject } from "../lib/operations/index.js";
+import { type SkillComparisonResult } from "../lib/skills/index.js";
 import { fileExists } from "../utils/fs.js";
 import { CLI_BIN_NAME, LOCAL_SKILLS_PATH } from "../consts.js";
-import { typedEntries } from "../utils/typed-object.js";
 
 type ComparisonSummary = {
   outdated: number;
@@ -66,8 +64,8 @@ export default class Outdated extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Outdated);
-    const installation = await detectInstallation();
-    const projectDir = installation?.projectDir ?? process.cwd();
+    const detected = await detectProject();
+    const projectDir = detected?.installation.projectDir ?? process.cwd();
 
     try {
       const projectLocalPath = path.join(projectDir, LOCAL_SKILLS_PATH);
@@ -96,34 +94,17 @@ export default class Outdated extends BaseCommand {
         this.log("Loading skills...");
       }
 
-      const { matrix, sourcePath, isLocal } = await loadSkillsMatrixFromSource({
+      const { sourceResult } = await loadSource({
         sourceFlag: flags.source,
         projectDir,
       });
+      const { matrix, sourcePath, isLocal } = sourceResult;
 
       if (!flags.json) {
         this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
       }
 
-      const sourceSkills: Record<string, { path: string }> = {};
-      for (const [skillId, skill] of typedEntries(matrix.skills)) {
-        if (!skill) continue;
-        if (!skill.local) {
-          sourceSkills[skillId] = { path: skill.path };
-        }
-      }
-
-      // Check both project-scoped and global-scoped local skills
-      const projectResults = hasProject
-        ? await compareLocalSkillsWithSource(projectDir, sourcePath, sourceSkills)
-        : [];
-      const globalResults = hasGlobal
-        ? await compareLocalSkillsWithSource(homeDir, sourcePath, sourceSkills)
-        : [];
-
-      // Merge results, project-scoped takes precedence
-      const seenIds = new Set(projectResults.map((r) => r.id));
-      const results = [...projectResults, ...globalResults.filter((r) => !seenIds.has(r.id))];
+      const { merged: results } = await compareSkillsWithSource(projectDir, sourcePath, matrix);
       const summary = calculateSummary(results);
 
       if (flags.json) {

@@ -2,7 +2,8 @@ import React, { useState, useCallback } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { cliTheme } from "../themes/default.js";
-import type { ResolvedSkill, SkillId } from "../../types/index.js";
+import type { SkillId } from "../../types/index.js";
+import type { SourcedSkill } from "../../lib/operations/search-skills.js";
 import { CLI_COLORS, UI_SYMBOLS, UI_LAYOUT } from "../../consts.js";
 import {
   HOTKEY_COPY_LINK,
@@ -14,11 +15,9 @@ import {
 } from "../wizard/hotkeys.js";
 import { useTextInput } from "../hooks/use-text-input.js";
 import { useFilteredResults } from "../hooks/use-filtered-results.js";
+import { truncateText } from "../../utils/string.js";
 
-export type SourcedSkill = ResolvedSkill & {
-  sourceName: string;
-  sourceUrl?: string;
-};
+export type { SourcedSkill };
 
 export type SkillSearchResult = {
   selectedSkills: SourcedSkill[];
@@ -52,11 +51,6 @@ function matchesQuery(skill: SourcedSkill, query: string): boolean {
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
   return skill.sourceName.toLowerCase().includes(lowerQuery);
-}
-
-function truncate(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength - 3)}...`;
 }
 
 type HeaderProps = {
@@ -118,14 +112,14 @@ const ResultItem: React.FC<ResultItemProps> = ({ skill, isSelected, isFocused })
         {checkbox}{" "}
       </Text>
       <Box width={14}>
-        <Text dimColor>{truncate(skill.sourceName, 12)}</Text>
+        <Text dimColor>{truncateText(skill.sourceName, 12)}</Text>
       </Box>
       <Box width={24}>
         <Text color={isFocused ? CLI_COLORS.FOCUS : undefined} bold={isFocused || isSelected}>
-          {truncate(displayName, 22)}
+          {truncateText(displayName, 22)}
         </Text>
       </Box>
-      <Text dimColor>{truncate(skill.description, DESCRIPTION_WIDTH)}</Text>
+      <Text dimColor>{truncateText(skill.description, DESCRIPTION_WIDTH)}</Text>
     </Box>
   );
 };

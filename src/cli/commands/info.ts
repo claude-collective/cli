@@ -1,55 +1,13 @@
 import { Args, Flags } from "@oclif/core";
-import path from "path";
 import { BaseCommand } from "../base-command.js";
-import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import { loadSource, resolveSkillInfo } from "../lib/operations/index.js";
 import { matrix } from "../lib/matrix/matrix-provider";
-import { discoverLocalSkills } from "../lib/skills/index.js";
-import { fileExists, readFile } from "../utils/fs.js";
-import { CLI_BIN_NAME, STANDARD_FILES } from "../consts.js";
+import { CLI_BIN_NAME } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { STATUS_MESSAGES } from "../utils/messages.js";
-import type { ResolvedSkill, SkillId, SkillSlug, SkillRequirement } from "../types/index.js";
+import type { ResolvedSkill, SkillRequirement } from "../types/index.js";
 
 const CONTENT_PREVIEW_LINES = 10;
-const MAX_LINE_LENGTH = 80;
-const MAX_SUGGESTIONS = 5;
-
-function stripFrontmatter(content: string): string {
-  const lines = content.split("\n");
-  let inFrontmatter = false;
-  let frontmatterEndIndex = 0;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line === "---") {
-      if (!inFrontmatter) {
-        inFrontmatter = true;
-      } else {
-        frontmatterEndIndex = i + 1;
-        break;
-      }
-    }
-  }
-
-  return lines.slice(frontmatterEndIndex).join("\n");
-}
-
-function getPreviewLines(content: string, maxLines: number): string[] {
-  const body = stripFrontmatter(content);
-  const lines = body.split("\n");
-  const result: string[] = [];
-
-  for (const line of lines) {
-    if (result.length >= maxLines) break;
-    if (line.trim() || result.length > 0) {
-      const truncated =
-        line.length > MAX_LINE_LENGTH ? `${line.slice(0, MAX_LINE_LENGTH - 3)}...` : line;
-      result.push(truncated);
-    }
-  }
-
-  return result;
-}
 
 function formatRequirements(requirements: SkillRequirement[]): string {
   if (requirements.length === 0) {
@@ -61,29 +19,6 @@ function formatRequirements(requirements: SkillRequirement[]): string {
       return prefix + req.skillIds.join(", ");
     })
     .join("; ");
-}
-
-function findSuggestions(
-  skills: Partial<Record<SkillId, ResolvedSkill>>,
-  query: string,
-  maxSuggestions: number,
-): string[] {
-  const lowerQuery = query.toLowerCase();
-  const matches: string[] = [];
-
-  for (const skill of Object.values(skills)) {
-    if (!skill) continue;
-    if (matches.length >= maxSuggestions) break;
-    if (
-      skill.id.toLowerCase().includes(lowerQuery) ||
-      skill.displayName.toLowerCase().includes(lowerQuery) ||
-      skill.slug.toLowerCase().includes(lowerQuery)
-    ) {
-      matches.push(skill.id);
-    }
-  }
-
-  return matches;
 }
 
 function formatSkillInfo(skill: ResolvedSkill, isInstalled: boolean): string {
@@ -162,28 +97,32 @@ export default class Info extends BaseCommand {
     try {
       this.log(STATUS_MESSAGES.LOADING_SKILLS);
 
-      const { sourcePath, isLocal } = await loadSkillsMatrixFromSource({
+      const { sourceResult } = await loadSource({
         sourceFlag: flags.source,
+        projectDir: process.cwd(),
       });
+      const { sourcePath, isLocal } = sourceResult;
 
       this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
 
-      // CLI arg is an untyped string — try as skill ID first, then as slug
-      const slugResolvedId = matrix.slugMap.slugToId[args.skill as SkillSlug];
-      let skill =
-        matrix.skills[args.skill as SkillId] ??
-        (slugResolvedId ? matrix.skills[slugResolvedId] : undefined);
+      const result = await resolveSkillInfo({
+        query: args.skill,
+        skills: matrix.skills,
+        slugToId: matrix.slugMap.slugToId,
+        projectDir: process.cwd(),
+        sourcePath,
+        isLocal,
+        includePreview: flags.preview,
+      });
 
-      if (!skill) {
-        const suggestions = findSuggestions(matrix.skills, args.skill, MAX_SUGGESTIONS);
-
+      if (!result.resolved) {
         this.log("");
         this.error(`Skill "${args.skill}" not found.`, { exit: false });
 
-        if (suggestions.length > 0) {
+        if (result.suggestions.length > 0) {
           this.log("");
           this.log("Did you mean one of these?");
-          for (const suggestion of suggestions) {
+          for (const suggestion of result.suggestions) {
             this.log(`  - ${suggestion}`);
           }
         }
@@ -194,34 +133,16 @@ export default class Info extends BaseCommand {
         this.exit(EXIT_CODES.ERROR);
       }
 
-      const localSkillsResult = await discoverLocalSkills(process.cwd());
-      const localSkillIds = localSkillsResult?.skills.map((s) => s.id) || [];
-      const isInstalled = localSkillIds.includes(skill.id);
+      const { skill, isInstalled, preview } = result.resolved;
 
       this.log("");
       this.log(formatSkillInfo(skill, isInstalled));
 
-      if (flags.preview) {
-        let skillMdPath: string;
-
-        if (skill.local && skill.localPath) {
-          skillMdPath = path.join(process.cwd(), skill.localPath, STANDARD_FILES.SKILL_MD);
-        } else {
-          const sourceDir = isLocal ? sourcePath : path.dirname(sourcePath);
-          skillMdPath = path.join(sourceDir, skill.path, STANDARD_FILES.SKILL_MD);
-        }
-
-        if (await fileExists(skillMdPath)) {
-          const content = await readFile(skillMdPath);
-          const previewLines = getPreviewLines(content, CONTENT_PREVIEW_LINES);
-
-          if (previewLines.length > 0) {
-            this.log("");
-            this.log(`--- Content Preview (first ${CONTENT_PREVIEW_LINES} lines) ---`);
-            for (const line of previewLines) {
-              this.log(line);
-            }
-          }
+      if (flags.preview && preview.length > 0) {
+        this.log("");
+        this.log(`--- Content Preview (first ${CONTENT_PREVIEW_LINES} lines) ---`);
+        for (const line of preview) {
+          this.log(line);
         }
       }
 

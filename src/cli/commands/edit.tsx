@@ -8,50 +8,40 @@ import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import {
   CLAUDE_DIR,
-  CLAUDE_SRC_DIR,
   CLI_BIN_NAME,
   GLOBAL_INSTALL_ROOT,
-  PROJECT_ROOT,
   SOURCE_DISPLAY_NAMES,
-  STANDARD_FILES,
 } from "../consts.js";
-import { getAgentDefinitions, recompileAgents } from "../lib/agents/index.js";
-import { loadProjectConfig } from "../lib/configuration/index.js";
-import { ensureBlankGlobalConfig } from "../lib/configuration/config-writer.js";
+import {
+  detectProject,
+  loadSource,
+  copyLocalSkills,
+  ensureMarketplace,
+  installPluginSkills,
+  uninstallPluginSkills,
+  migratePluginSkillScopes,
+  loadAgentDefs,
+  type AgentDefs,
+  writeProjectConfig,
+  compileAgents,
+  detectConfigChanges,
+} from "../lib/operations/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
-  detectInstallation,
-  buildAndMergeConfig,
-  writeScopedConfigs,
   detectMigrations,
   executeMigration,
   deriveInstallMode,
-  resolveInstallPaths,
 } from "../lib/installation/index.js";
-import { loadAllAgents, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { matrix, getSkillById } from "../lib/matrix/matrix-provider";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import {
   deleteLocalSkill,
   migrateLocalSkillScope,
-  copySkillsToLocalFlattened,
 } from "../lib/skills/index.js";
-import type { AgentDefinition, AgentName, SkillId } from "../types/index.js";
+import type { SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
-import { ensureDir, remove } from "../utils/fs.js";
-import {
-  claudePluginInstall,
-  claudePluginUninstall,
-  claudePluginMarketplaceExists,
-  claudePluginMarketplaceAdd,
-} from "../utils/exec.js";
-import {
-  enableBuffering,
-  drainBuffer,
-  disableBuffering,
-  pushBufferMessage,
-  type StartupMessage,
-} from "../utils/logger.js";
+import { remove } from "../utils/fs.js";
+import { type StartupMessage } from "../utils/logger.js";
 import { ERROR_MESSAGES, INFO_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
 
 function formatSourceDisplayName(sourceName: string): string {
@@ -92,41 +82,39 @@ export default class Edit extends BaseCommand {
     const { flags } = await this.parse(Edit);
     const cwd = process.cwd();
 
-    const installation = await detectInstallation();
-
-    if (!installation) {
+    const detected = await detectProject();
+    if (!detected) {
       this.error(ERROR_MESSAGES.NO_INSTALLATION, {
         exit: EXIT_CODES.ERROR,
       });
     }
+    const { installation, config: projectConfig } = detected;
 
     // Use installation.projectDir for reads (loading config, discovering installed skills).
     // Use cwd for writes (config saves, plugin installs, scope migrations, recompilation output)
     // and for the locked-items check (determining whether global items are read-only).
     const projectDir = installation.projectDir;
 
-    enableBuffering();
-
     let sourceResult;
     let startupMessages: StartupMessage[] = [];
     try {
-      sourceResult = await loadSkillsMatrixFromSource({
+      const loaded = await loadSource({
         sourceFlag: flags.source,
         projectDir,
         forceRefresh: flags.refresh,
+        captureStartupMessages: true,
       });
+      sourceResult = loaded.sourceResult;
+      startupMessages = loaded.startupMessages;
 
       const sourceInfo = sourceResult.isLocal ? "local" : sourceResult.sourceConfig.sourceOrigin;
-      pushBufferMessage(
-        "info",
-        `Loaded ${Object.keys(matrix.skills).length} skills (${sourceInfo})`,
-      );
+      startupMessages.push({
+        level: "info",
+        text: `Loaded ${Object.keys(matrix.skills).length} skills (${sourceInfo})`,
+      });
     } catch (error) {
-      disableBuffering();
       this.handleError(error);
     }
-
-    const projectConfig = await loadProjectConfig(projectDir);
 
     let currentSkillIds: SkillId[];
     try {
@@ -136,18 +124,14 @@ export default class Edit extends BaseCommand {
 
       // Merge plugin-discovered skills with config skills (catches local skills and
       // global-scoped plugins that discoverAllPluginSkills doesn't find).
-      const configSkillIds = projectConfig?.config?.skills?.map((s) => s.id) ?? [];
+      const configSkillIds = projectConfig?.skills?.map((s) => s.id) ?? [];
       const mergedIds = new Set<SkillId>([...pluginSkillIds, ...configSkillIds]);
       currentSkillIds = [...mergedIds];
 
-      pushBufferMessage("info", `Found ${currentSkillIds.length} installed skills`);
+      startupMessages.push({ level: "info", text: `Found ${currentSkillIds.length} installed skills` });
     } catch (error) {
-      disableBuffering();
       this.handleError(error);
     }
-
-    startupMessages = drainBuffer();
-    disableBuffering();
 
     let wizardResult: WizardResultV2 | null = null;
 
@@ -158,21 +142,21 @@ export default class Edit extends BaseCommand {
     const isGlobalDir = cwd === GLOBAL_INSTALL_ROOT;
     const lockedSkillIds = isGlobalDir
       ? undefined
-      : projectConfig?.config?.skills?.filter((s) => s.scope === "global").map((s) => s.id);
+      : projectConfig?.skills?.filter((s) => s.scope === "global").map((s) => s.id);
     const lockedAgentNames = isGlobalDir
       ? undefined
-      : projectConfig?.config?.agents?.filter((a) => a.scope === "global").map((a) => a.name);
+      : projectConfig?.agents?.filter((a) => a.scope === "global").map((a) => a.name);
 
     const { waitUntilExit } = render(
       <Wizard
         version={this.config.version}
         initialStep="build"
-        initialDomains={projectConfig?.config?.domains}
-        initialAgents={projectConfig?.config?.selectedAgents}
+        initialDomains={projectConfig?.domains}
+        initialAgents={projectConfig?.selectedAgents}
         installedSkillIds={currentSkillIds}
-        installedSkillConfigs={projectConfig?.config?.skills}
+        installedSkillConfigs={projectConfig?.skills}
         lockedSkillIds={lockedSkillIds}
-        installedAgentConfigs={projectConfig?.config?.agents}
+        installedAgentConfigs={projectConfig?.agents}
         lockedAgentNames={lockedAgentNames}
         isEditingFromGlobalScope={isGlobalDir}
         projectDir={projectDir}
@@ -201,53 +185,8 @@ export default class Edit extends BaseCommand {
       }
     }
 
-    const newSkillIds = result.skills.map((s) => s.id);
-    const addedSkills = newSkillIds.filter((id) => !currentSkillIds.includes(id));
-    const removedSkills = currentSkillIds.filter((id) => !newSkillIds.includes(id));
-
-    const oldAgentNames = projectConfig?.config?.agents?.map((a) => a.name) ?? [];
-    const newAgentNames = result.agentConfigs.map((a) => a.name);
-    const addedAgents = newAgentNames.filter((name) => !oldAgentNames.includes(name));
-    const removedAgents = oldAgentNames.filter((name) => !newAgentNames.includes(name));
-
-    const sourceChanges = new Map<SkillId, { from: string; to: string }>();
-    const scopeChanges = new Map<
-      SkillId,
-      { from: "project" | "global"; to: "project" | "global" }
-    >();
-    if (projectConfig?.config?.skills) {
-      for (const newSkill of result.skills) {
-        const oldSkill = projectConfig.config.skills.find((s) => s.id === newSkill.id);
-        if (oldSkill && oldSkill.source !== newSkill.source) {
-          sourceChanges.set(newSkill.id, {
-            from: oldSkill.source,
-            to: newSkill.source,
-          });
-        }
-        if (oldSkill && oldSkill.scope !== newSkill.scope) {
-          scopeChanges.set(newSkill.id, {
-            from: oldSkill.scope,
-            to: newSkill.scope,
-          });
-        }
-      }
-    }
-
-    const agentScopeChanges = new Map<
-      AgentName,
-      { from: "project" | "global"; to: "project" | "global" }
-    >();
-    if (projectConfig?.config?.agents) {
-      for (const newAgent of result.agentConfigs) {
-        const oldAgent = projectConfig.config.agents.find((a) => a.name === newAgent.name);
-        if (oldAgent && oldAgent.scope !== newAgent.scope) {
-          agentScopeChanges.set(newAgent.name, {
-            from: oldAgent.scope,
-            to: newAgent.scope,
-          });
-        }
-      }
-    }
+    const changes = detectConfigChanges(projectConfig, result, currentSkillIds);
+    const { addedSkills, removedSkills, addedAgents, removedAgents, sourceChanges, scopeChanges, agentScopeChanges } = changes;
 
     const hasSourceChanges = sourceChanges.size > 0;
     const hasScopeChanges = scopeChanges.size > 0;
@@ -299,7 +238,7 @@ export default class Edit extends BaseCommand {
     this.log("");
 
     // Handle per-skill mode migrations (local <-> plugin)
-    const oldSkills = projectConfig?.config?.skills ?? [];
+    const oldSkills = projectConfig?.skills ?? [];
     const migrationPlan = detectMigrations(oldSkills, result.skills);
     const hasMigrations = migrationPlan.toLocal.length > 0 || migrationPlan.toPlugin.length > 0;
 
@@ -334,17 +273,19 @@ export default class Edit extends BaseCommand {
       const skillConfig = result.skills.find((s) => s.id === skillId);
       if (skillConfig?.source === "local") {
         await migrateLocalSkillScope(skillId, change.from, cwd);
-      } else if (sourceResult.marketplace && skillConfig) {
-        // Plugin-mode scope change: uninstall from old scope, install to new scope
-        const oldPluginScope = change.from === "global" ? "user" : "project";
-        const newPluginScope = change.to === "global" ? "user" : "project";
-        try {
-          await claudePluginUninstall(skillId, oldPluginScope, cwd);
-          const pluginRef = `${skillId}@${sourceResult.marketplace}`;
-          await claudePluginInstall(pluginRef, newPluginScope, cwd);
-        } catch (error) {
-          this.warn(`Failed to migrate plugin scope for ${skillId}: ${getErrorMessage(error)}`);
-        }
+      }
+    }
+
+    // Handle scope migrations for plugin-mode skills
+    if (sourceResult.marketplace && scopeChanges.size > 0) {
+      const pluginScopeResult = await migratePluginSkillScopes(
+        scopeChanges,
+        result.skills,
+        sourceResult.marketplace,
+        cwd,
+      );
+      for (const item of pluginScopeResult.failed) {
+        this.warn(`Failed to migrate plugin scope for ${item.id}: ${item.error}`);
       }
     }
 
@@ -355,44 +296,42 @@ export default class Edit extends BaseCommand {
         continue;
       }
       if (change.from === "local") {
-        const oldSkill = projectConfig?.config?.skills?.find((s) => s.id === skillId);
+        const oldSkill = projectConfig?.skills?.find((s) => s.id === skillId);
         const deleteDir = oldSkill?.scope === "global" ? os.homedir() : cwd;
         await deleteLocalSkill(deleteDir, skillId);
       }
     }
 
     if (sourceResult.marketplace) {
-      const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
-      if (!marketplaceExists) {
-        this.log(`Registering marketplace "${sourceResult.marketplace}"...`);
-        const marketplaceSource = sourceResult.sourceConfig.source.replace(/^github:/, "");
-        await claudePluginMarketplaceAdd(marketplaceSource);
-        this.log(`Registered marketplace: ${sourceResult.marketplace}`);
+      const mpResult = await ensureMarketplace(sourceResult);
+      if (mpResult.registered) {
+        this.log(`Registered marketplace: ${mpResult.marketplace}`);
       }
 
-      for (const skillId of addedSkills) {
-        // Find the skill config to get its scope
-        const skillConfig = result.skills.find((s) => s.id === skillId);
-        if (!skillConfig || skillConfig.source === "local") continue;
-
-        const pluginRef = `${skillId}@${sourceResult.marketplace}`;
-        const pluginScope = skillConfig.scope === "global" ? "user" : "project";
-        this.log(`Installing plugin: ${pluginRef}...`);
-        try {
-          await claudePluginInstall(pluginRef, pluginScope, cwd);
-        } catch (error) {
-          this.warn(`Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`);
+      const addedPluginSkills = result.skills.filter(
+        (s) => addedSkills.includes(s.id) && s.source !== "local",
+      );
+      if (addedPluginSkills.length > 0) {
+        const pluginResult = await installPluginSkills(addedPluginSkills, sourceResult.marketplace, cwd);
+        for (const item of pluginResult.installed) {
+          this.log(`Installing plugin: ${item.ref}...`);
+        }
+        for (const item of pluginResult.failed) {
+          this.warn(`Failed to install plugin ${item.id}: ${item.error}`);
         }
       }
-      for (const skillId of removedSkills) {
-        // For removed skills, use old config to determine scope
-        const oldSkill = projectConfig?.config?.skills?.find((s) => s.id === skillId);
-        const pluginScope = oldSkill?.scope === "global" ? "user" : "project";
-        this.log(`Uninstalling plugin: ${skillId}...`);
-        try {
-          await claudePluginUninstall(skillId, pluginScope, cwd);
-        } catch (error) {
-          this.warn(`Failed to uninstall plugin ${skillId}: ${getErrorMessage(error)}`);
+
+      if (removedSkills.length > 0) {
+        const uninstallResult = await uninstallPluginSkills(
+          removedSkills,
+          projectConfig?.skills ?? [],
+          cwd,
+        );
+        for (const id of uninstallResult.uninstalled) {
+          this.log(`Uninstalling plugin: ${id}...`);
+        }
+        for (const item of uninstallResult.failed) {
+          this.warn(`Failed to uninstall plugin ${item.id}: ${item.error}`);
         }
       }
     }
@@ -403,47 +342,21 @@ export default class Edit extends BaseCommand {
     );
 
     if (addedLocalSkills.length > 0) {
-      const projectLocalSkills = addedLocalSkills.filter((s) => s.scope !== "global");
-      const globalLocalSkills = addedLocalSkills.filter((s) => s.scope === "global");
-
-      const projectPaths = resolveInstallPaths(cwd, "project");
-      const globalPaths = resolveInstallPaths(cwd, "global");
-
-      if (projectLocalSkills.length > 0) {
-        await ensureDir(projectPaths.skillsDir);
-        await copySkillsToLocalFlattened(
-          projectLocalSkills.map((s) => s.id),
-          projectPaths.skillsDir,
-          sourceResult.matrix,
-          sourceResult,
-        );
-      }
-
-      if (globalLocalSkills.length > 0) {
-        await ensureDir(globalPaths.skillsDir);
-        await copySkillsToLocalFlattened(
-          globalLocalSkills.map((s) => s.id),
-          globalPaths.skillsDir,
-          sourceResult.matrix,
-          sourceResult,
-        );
-      }
-
-      this.log(`Copied ${addedLocalSkills.length} local skill(s) to .claude/skills/`);
+      const copyResult = await copyLocalSkills(addedLocalSkills, cwd, sourceResult);
+      this.log(`Copied ${copyResult.totalCopied} local skill(s) to .claude/skills/`);
     }
 
-    // Load agent definitions first — needed for both config-types.ts and recompilation
-    let sourcePath: string;
+    // Load agent definitions — needed for both config-types.ts and recompilation
+    let agentDefsResult: AgentDefs;
     this.log(
       flags["agent-source"]
         ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS
         : STATUS_MESSAGES.LOADING_AGENT_PARTIALS,
     );
     try {
-      const agentDefs = await getAgentDefinitions(flags["agent-source"], {
+      agentDefsResult = await loadAgentDefs(flags["agent-source"], {
         forceRefresh: flags.refresh,
       });
-      sourcePath = agentDefs.sourcePath;
       this.log(flags["agent-source"] ? "✓ Agent partials fetched\n" : "✓ Agent partials loaded\n");
     } catch (error) {
       this.handleError(error);
@@ -451,70 +364,38 @@ export default class Edit extends BaseCommand {
 
     // Persist wizard result to config.ts and config-types.ts (split by scope when in project context)
     try {
-      const mergeResult = await buildAndMergeConfig(result, sourceResult, cwd, flags.source);
-
-      // Load full agent definitions for config-types.ts generation
-      const cliAgents = await loadAllAgents(PROJECT_ROOT);
-      const sourceAgents = await loadAllAgents(sourcePath);
-      const agents: Record<AgentName, AgentDefinition> = { ...cliAgents, ...sourceAgents };
-
-      // Ensure global config exists before writing project config (so the
-      // `import globalConfig from "~/.claude-src/config"` doesn't throw)
-      if (cwd !== os.homedir()) {
-        await ensureBlankGlobalConfig();
-      }
-
-      // Recompute configPath from cwd — when detectInstallation() fell back to
-      // global, installation.configPath points to ~/.claude-src/config.ts, but
-      // writeScopedConfigs uses it as the project config path.
-      const configPath = path.join(cwd, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-
-      // Determine whether a project installation already exists:
-      // If detectInstallation() found a project config, projectDir differs from homedir.
-      // If it fell back to global, projectDir === homedir (no project installation).
-      const projectInstallationExists =
-        path.resolve(installation.projectDir) !== path.resolve(os.homedir());
-
-      await writeScopedConfigs(
-        mergeResult.config,
-        sourceResult.matrix,
-        agents,
-        cwd,
-        configPath,
-        projectInstallationExists,
-      );
+      await writeProjectConfig({
+        wizardResult: result,
+        sourceResult,
+        projectDir: cwd,
+        sourceFlag: flags.source,
+        agents: agentDefsResult.agents,
+      });
     } catch (error) {
       this.warn(`Could not update config: ${getErrorMessage(error)}`);
     }
 
     this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
-      const recompileSkills = await discoverAllPluginSkills(cwd);
-
-      // Build scope map so recompileAgents routes agents to the correct directory:
-      // global agents -> ~/.claude/agents/, project agents -> <cwd>/.claude/agents/
       const agentScopeMap = new Map(result.agentConfigs.map((a) => [a.name, a.scope] as const));
-      const outputDir = path.join(cwd, CLAUDE_DIR, "agents");
-
-      const recompileResult = await recompileAgents({
-        pluginDir: cwd,
-        sourcePath,
-        skills: recompileSkills,
+      const compilationResult = await compileAgents({
         projectDir: cwd,
-        outputDir,
+        sourcePath: agentDefsResult.sourcePath,
+        pluginDir: cwd,
+        outputDir: path.join(cwd, CLAUDE_DIR, "agents"),
         installMode: deriveInstallMode(result.skills),
         agentScopeMap,
       });
 
-      if (recompileResult.failed.length > 0) {
+      if (compilationResult.failed.length > 0) {
         this.log(
-          `✓ Recompiled ${recompileResult.compiled.length} agents (${recompileResult.failed.length} failed)\n`,
+          `✓ Recompiled ${compilationResult.compiled.length} agents (${compilationResult.failed.length} failed)\n`,
         );
-        for (const warning of recompileResult.warnings) {
+        for (const warning of compilationResult.warnings) {
           this.warn(warning);
         }
-      } else if (recompileResult.compiled.length > 0) {
-        this.log(`✓ Recompiled ${recompileResult.compiled.length} agents\n`);
+      } else if (compilationResult.compiled.length > 0) {
+        this.log(`✓ Recompiled ${compilationResult.compiled.length} agents\n`);
       } else {
         this.log("✓ No agents to recompile\n");
       }

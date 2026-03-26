@@ -1,102 +1,17 @@
 import { Args, Flags } from "@oclif/core";
 import path from "path";
-import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../../base-command.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
-import { fetchFromSource } from "../../lib/loading/index.js";
-import { importedSkillMetadataSchema } from "../../lib/schemas.js";
-import { getCurrentDate, computeFileHash } from "../../lib/versioning.js";
-import {
-  copy,
-  directoryExists,
-  fileExists,
-  listDirectories,
-  readFile,
-  writeFile,
-  ensureDir,
-} from "../../utils/fs.js";
-import {
-  DEFAULT_SKILLS_SUBDIR,
-  GITHUB_SOURCE,
-  LOCAL_SKILLS_PATH,
-  STANDARD_FILES,
-  YAML_FORMATTING,
-} from "../../consts.js";
-import { IMPORT_DEFAULTS } from "../../lib/metadata-keys.js";
+import { directoryExists } from "../../utils/fs.js";
+import { DEFAULT_SKILLS_SUBDIR, LOCAL_SKILLS_PATH } from "../../consts.js";
 import { STATUS_MESSAGES, INFO_MESSAGES } from "../../utils/messages.js";
-
-/**
- * Metadata for tracking third-party imports. Different from ForkedFromMetadata
- * in skill-metadata.ts which tracks internal fork lineage (uses skillId
- * instead of source/skillName).
- */
-type ImportedForkedFromMetadata = {
-  source: string;
-  skillName: string;
-  contentHash: string;
-  date: string;
-};
-
-type SkillMetadata = {
-  forkedFrom?: ImportedForkedFromMetadata;
-  [key: string]: unknown;
-};
-
-const SKILL_MD_FILE = STANDARD_FILES.SKILL_MD;
-const METADATA_YAML_FILE = STANDARD_FILES.METADATA_YAML;
-const METADATA_JSON_FILE = STANDARD_FILES.METADATA_JSON;
-
-function parseGitHubSource(source: string): {
-  gigetSource: string;
-  displaySource: string;
-} {
-  if (source.startsWith(GITHUB_SOURCE.HTTPS_PREFIX)) {
-    const path = source.replace(GITHUB_SOURCE.HTTPS_PREFIX, "");
-    return {
-      gigetSource: `${GITHUB_SOURCE.GITHUB_PREFIX}${path}`,
-      displaySource: source,
-    };
-  }
-
-  if (
-    source.startsWith(GITHUB_SOURCE.GITHUB_PREFIX) ||
-    source.startsWith(GITHUB_SOURCE.GH_PREFIX)
-  ) {
-    const normalized = source.startsWith(GITHUB_SOURCE.GH_PREFIX)
-      ? GITHUB_SOURCE.GITHUB_PREFIX + source.slice(GITHUB_SOURCE.GH_PREFIX.length)
-      : source;
-    return {
-      gigetSource: normalized,
-      displaySource: `${GITHUB_SOURCE.HTTPS_PREFIX}${normalized.replace(GITHUB_SOURCE.GITHUB_PREFIX, "")}`,
-    };
-  }
-
-  if (source.includes("/") && !source.includes(":")) {
-    return {
-      gigetSource: `${GITHUB_SOURCE.GITHUB_PREFIX}${source}`,
-      displaySource: `${GITHUB_SOURCE.HTTPS_PREFIX}${source}`,
-    };
-  }
-
-  return {
-    gigetSource: source,
-    displaySource: source,
-  };
-}
-
-async function discoverValidSkills(skillsDir: string, skillDirs: string[]): Promise<string[]> {
-  const validSkills: string[] = [];
-
-  for (const skillDir of skillDirs) {
-    const skillMdPath = path.join(skillsDir, skillDir, SKILL_MD_FILE);
-    if (await fileExists(skillMdPath)) {
-      validSkills.push(skillDir);
-    }
-  }
-
-  return validSkills.sort();
-}
+import {
+  parseGitHubSource,
+  fetchSkillSource,
+  discoverValidSkills,
+  importSkillFromSource,
+} from "../../lib/operations/import-skill.js";
 
 export default class ImportSkill extends BaseCommand {
   static summary = "Import a skill from a third-party GitHub repository";
@@ -192,7 +107,8 @@ export default class ImportSkill extends BaseCommand {
 
     let repoPath: string;
     try {
-      const result = await fetchFromSource(gigetSource, {
+      const result = await fetchSkillSource({
+        gigetSource,
         forceRefresh: flags.refresh,
       });
       repoPath = result.path;
@@ -232,8 +148,7 @@ export default class ImportSkill extends BaseCommand {
       );
     }
 
-    const skillDirs = await listDirectories(skillsDir);
-    const availableSkills = await discoverValidSkills(skillsDir, skillDirs);
+    const availableSkills = await discoverValidSkills(skillsDir);
 
     if (availableSkills.length === 0) {
       this.error(`No valid skills found in ${flags.subdir}/\nSkills must have a SKILL.md file.`, {
@@ -290,7 +205,7 @@ export default class ImportSkill extends BaseCommand {
       }
 
       try {
-        await this.importSkill(sourcePath, destPath, skillName, displaySource);
+        await importSkillFromSource({ sourcePath, destPath, skillName, displaySource });
         this.logSuccess(`Imported: ${skillName}`);
         imported++;
       } catch (error) {
@@ -305,119 +220,5 @@ export default class ImportSkill extends BaseCommand {
     this.log("");
     this.log(INFO_MESSAGES.RUN_COMPILE);
     this.log("");
-  }
-
-  private async importSkill(
-    sourcePath: string,
-    destPath: string,
-    skillName: string,
-    source: string,
-  ): Promise<void> {
-    const skillMdPath = path.join(sourcePath, SKILL_MD_FILE);
-    if (!(await fileExists(skillMdPath))) {
-      throw new Error(
-        `Missing required SKILL.md file at ${skillMdPath}\n` +
-          `Every skill must have a SKILL.md file containing the skill's prompt content.\n` +
-          `Create one with:\n` +
-          `  echo "# ${skillName}" > ${path.join(sourcePath, SKILL_MD_FILE)}`,
-      );
-    }
-
-    const contentHash = await computeFileHash(skillMdPath);
-
-    await ensureDir(path.dirname(destPath));
-    await copy(sourcePath, destPath);
-
-    await this.injectForkedFromMetadata(destPath, skillName, source, contentHash);
-  }
-
-  private async injectForkedFromMetadata(
-    destPath: string,
-    skillName: string,
-    source: string,
-    contentHash: string,
-  ): Promise<void> {
-    const metadataYamlPath = path.join(destPath, METADATA_YAML_FILE);
-    const metadataJsonPath = path.join(destPath, METADATA_JSON_FILE);
-
-    const forkedFrom: ImportedForkedFromMetadata = {
-      source,
-      skillName: skillName,
-      contentHash: contentHash,
-      date: getCurrentDate(),
-    };
-
-    if (await fileExists(metadataYamlPath)) {
-      const rawContent = await readFile(metadataYamlPath);
-      const lines = rawContent.split("\n");
-      let yamlContent = rawContent;
-      let schemaComment = "";
-
-      if (lines[0]?.startsWith("# yaml-language-server:")) {
-        schemaComment = `${lines[0]}\n`;
-        yamlContent = lines.slice(1).join("\n");
-      }
-
-      const raw = parseYaml(yamlContent);
-      const parseResult = importedSkillMetadataSchema.safeParse(raw);
-      if (!parseResult.success) {
-        this.warn(
-          `Malformed metadata.yaml at ${metadataYamlPath} — existing fields may be lost\n` +
-            `  Validation errors: ${parseResult.error.issues.map((i) => i.message).join(", ")}\n` +
-            `  Expected fields: displayName (string), cliDescription (string), category (string)\n` +
-            `  Validate your YAML syntax at https://yamllint.com`,
-        );
-      }
-      const metadata = parseResult.success
-        ? (parseResult.data as SkillMetadata)
-        : { forkedFrom: undefined };
-      metadata.forkedFrom = forkedFrom;
-
-      const newYamlContent = stringifyYaml(metadata, {
-        lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE,
-      });
-      await writeFile(metadataYamlPath, schemaComment + newYamlContent);
-      return;
-    }
-
-    if (await fileExists(metadataJsonPath)) {
-      const rawContent = await readFile(metadataJsonPath);
-      let jsonParsed: unknown;
-      try {
-        jsonParsed = JSON.parse(rawContent);
-      } catch {
-        this.warn(
-          `Malformed JSON in ${metadataJsonPath} — skipping metadata injection\n` +
-            `  Common issues: trailing commas, unquoted keys, single quotes instead of double quotes\n` +
-            `  Validate your JSON at https://jsonlint.com`,
-        );
-        return;
-      }
-      const jsonResult = importedSkillMetadataSchema.safeParse(jsonParsed);
-      const metadata = jsonResult.success
-        ? (jsonResult.data as SkillMetadata)
-        : { forkedFrom: undefined };
-      metadata.forkedFrom = forkedFrom;
-
-      const yamlContent = stringifyYaml(metadata, { lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE });
-      await writeFile(metadataYamlPath, yamlContent);
-      return;
-    }
-
-    const minimalMetadata: SkillMetadata = {
-      displayName: skillName
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" "),
-      cliDescription: "Imported from third-party repository",
-      category: IMPORT_DEFAULTS.CATEGORY,
-      author: IMPORT_DEFAULTS.AUTHOR,
-      forkedFrom: forkedFrom,
-    };
-
-    const yamlContent = stringifyYaml(minimalMetadata, {
-      lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE,
-    });
-    await writeFile(metadataYamlPath, yamlContent);
   }
 }

@@ -4,12 +4,12 @@ import path from "path";
 import { BaseCommand } from "../base-command";
 import { getErrorMessage } from "../utils/errors";
 import { EXIT_CODES } from "../lib/exit-codes";
-import { loadProjectConfig, validateProjectConfig } from "../lib/configuration";
-import { loadSkillsMatrixFromSource } from "../lib/loading";
+import { validateProjectConfig } from "../lib/configuration";
+import { loadSource, detectProject } from "../lib/operations";
 import { matrix } from "../lib/matrix/matrix-provider";
 import { discoverLocalSkills } from "../lib/skills";
 import { getStackSkillIds } from "../lib/stacks";
-import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
+import type { MergedSkillsMatrix, ProjectConfig } from "../types";
 import { fileExists, glob, directoryExists } from "../utils/fs";
 import {
   CLAUDE_DIR,
@@ -26,38 +26,53 @@ type CheckResult = {
   details?: string[];
 };
 
-async function checkConfigValid(projectDir: string): Promise<CheckResult> {
-  const loaded = await loadProjectConfig(projectDir);
+type ConfigCheckOutput = {
+  result: CheckResult;
+  config: ProjectConfig | null;
+};
 
-  if (!loaded) {
+function checkConfigValid(config: ProjectConfig | null): ConfigCheckOutput {
+  if (!config) {
     return {
-      status: "fail",
-      message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} not found`,
-      details: [`Run '${CLI_BIN_NAME} init' to create a configuration`],
+      result: {
+        status: "fail",
+        message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} not found`,
+        details: [`Run '${CLI_BIN_NAME} init' to create a configuration`],
+      },
+      config: null,
     };
   }
 
-  const validation = validateProjectConfig(loaded.config);
+  const validation = validateProjectConfig(config);
 
   if (!validation.valid) {
     return {
-      status: "fail",
-      message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} has errors`,
-      details: validation.errors,
+      result: {
+        status: "fail",
+        message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} has errors`,
+        details: validation.errors,
+      },
+      config: null,
     };
   }
 
   if (validation.warnings.length > 0) {
     return {
-      status: "warn",
-      message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} has warnings`,
-      details: validation.warnings,
+      result: {
+        status: "warn",
+        message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} has warnings`,
+        details: validation.warnings,
+      },
+      config,
     };
   }
 
   return {
-    status: "pass",
-    message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} is valid`,
+    result: {
+      status: "pass",
+      message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} is valid`,
+    },
+    config,
   };
 }
 
@@ -191,7 +206,7 @@ async function checkSourceReachable(
   projectDir: string,
 ): Promise<CheckResult> {
   try {
-    const result = await loadSkillsMatrixFromSource({
+    const { sourceResult: result } = await loadSource({
       sourceFlag,
       projectDir,
     });
@@ -358,20 +373,15 @@ export default class Doctor extends BaseCommand {
 
     const results: CheckResult[] = [];
 
-    const configResult = await checkConfigValid(projectDir);
+    // Use detectProject operation to get installation + config in one call
+    const detected = await detectProject(projectDir);
+    const { result: configResult, config } = checkConfigValid(detected?.config ?? null);
     results.push(configResult);
     formatCheckLine("Config Valid", configResult, flags.verbose).forEach((line) => this.log(line));
 
-    let config: ProjectConfig | null = null;
-
-    if (configResult.status !== "fail") {
-      const loaded = await loadProjectConfig(projectDir);
-      config = loaded?.config ?? null;
-    }
-
     const sourceResult = await checkSourceReachable(flags.source, projectDir);
 
-    // loadSkillsMatrixFromSource (called by checkSourceReachable) populates the matrix automatically
+    // loadSource (called by checkSourceReachable) populates the matrix automatically
     if (config) {
       const skillsResult = await checkSkillsResolved(config, matrix, projectDir);
       results.push(skillsResult);
