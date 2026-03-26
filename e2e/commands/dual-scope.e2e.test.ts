@@ -170,6 +170,58 @@ describe("dual-scope compile", () => {
     expect(globalMdFiles.length).toBe(0);
   });
 
+  it("should include global-only skills in project agent when project has no local skills", async () => {
+    tempDir = await createTempDir();
+
+    const globalHome = path.join(tempDir, "global-home");
+    const projectDir = path.join(tempDir, "project");
+
+    // Global installation: one global skill
+    await writeProjectConfig(globalHome, {
+      name: "global-test",
+      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+      agents: [{ name: "web-developer", scope: "global" }],
+      domains: ["web"],
+      stack: {
+        "web-developer": {
+          "web-testing": [{ id: "web-testing-cypress-e2e", preloaded: true }],
+        },
+      },
+    });
+
+    await createLocalSkill(globalHome, "web-testing-cypress-e2e", {
+      description: "Global skill for cross-scope test",
+      metadata: `author: "@test"\ncontentHash: "hash-global"\n`,
+    });
+
+    // Project installation: agent references the global skill but has NO local skills
+    await writeProjectConfig(projectDir, {
+      name: "project-test",
+      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+      agents: [{ name: "api-developer", scope: "project" }],
+      domains: ["web"],
+      stack: {
+        "api-developer": {
+          "web-testing": [{ id: "web-testing-cypress-e2e", preloaded: true }],
+        },
+      },
+    });
+
+    const { exitCode } = await CLI.run(
+      ["compile"],
+      { dir: projectDir },
+      { env: { HOME: globalHome } },
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+    // The project agent must contain the global skill even though the project
+    // directory has no local skills — the compiler must discover ~/.claude/skills/.
+    await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+      contains: ["web-testing-cypress-e2e"],
+    });
+  });
+
   it("should show both passes in verbose output", async () => {
     const { project, globalHome } = await ProjectBuilder.dualScope();
     tempDir = path.dirname(project.dir);
