@@ -3,7 +3,7 @@ import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { runCliCommand, fileExists, createTempDir, cleanupTempDir } from "../../helpers";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../../../consts";
-import type { Marketplace, PluginManifest } from "../../../../types";
+import type { Category, Marketplace, PluginManifest } from "../../../../types";
 
 /** Creates a plugin directory with a valid plugin.json manifest */
 async function createPluginDir(
@@ -288,6 +288,7 @@ describe("build:marketplace command", () => {
         name: "web-framework-react",
         description: "React framework skills",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       const { stdout, error } = await runCliCommand([
@@ -316,6 +317,7 @@ describe("build:marketplace command", () => {
         name: "web-test-a",
         description: "Test plugin",
         version: "0.1.0",
+        category: "web-framework",
       });
 
       // oclif runCommand splits space-containing flag values, so use single-word values
@@ -348,12 +350,12 @@ describe("build:marketplace command", () => {
     });
 
     it("should include all 5 plugins from a populated plugins directory", async () => {
-      const plugins: Array<{ name: string; description: string }> = [
-        { name: "web-framework-react", description: "React framework" },
-        { name: "web-state-zustand", description: "Zustand state management" },
-        { name: "web-styling-scss-modules", description: "SCSS Modules styling" },
-        { name: "api-framework-hono", description: "Hono API framework" },
-        { name: "api-database-drizzle", description: "Drizzle ORM" },
+      const plugins: Array<{ name: string; description: string; category: Category }> = [
+        { name: "web-framework-react", description: "React framework", category: "web-framework" },
+        { name: "web-state-zustand", description: "Zustand state management", category: "web-client-state" },
+        { name: "web-styling-scss-modules", description: "SCSS Modules styling", category: "web-styling" },
+        { name: "api-framework-hono", description: "Hono API framework", category: "api-framework" },
+        { name: "api-database-drizzle", description: "Drizzle ORM", category: "api-database" },
       ];
 
       for (const plugin of plugins) {
@@ -361,6 +363,7 @@ describe("build:marketplace command", () => {
           name: plugin.name,
           description: plugin.description,
           version: "1.0.0",
+          category: plugin.category,
         });
       }
 
@@ -392,16 +395,19 @@ describe("build:marketplace command", () => {
         name: "web-state-zustand",
         description: "Zustand",
         version: "1.0.0",
+        category: "web-client-state",
       });
       await createPluginDir(pluginsDir, "api-framework-hono", {
         name: "api-framework-hono",
         description: "Hono",
         version: "1.0.0",
+        category: "api-framework",
       });
       await createPluginDir(pluginsDir, "web-framework-react", {
         name: "web-framework-react",
         description: "React",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       await runCliCommand([
@@ -418,21 +424,24 @@ describe("build:marketplace command", () => {
       expect(names).toEqual(["api-framework-hono", "web-framework-react", "web-state-zustand"]);
     });
 
-    it("should infer correct categories from skill ID prefixes", async () => {
+    it("should preserve explicit categories from plugin manifests", async () => {
       await createPluginDir(pluginsDir, "web-framework-react", {
         name: "web-framework-react",
         description: "React",
         version: "1.0.0",
+        category: "web-framework",
       });
       await createPluginDir(pluginsDir, "api-database-drizzle", {
         name: "api-database-drizzle",
         description: "Drizzle",
         version: "1.0.0",
+        category: "api-database",
       });
       await createPluginDir(pluginsDir, "meta-methodology-anti-over-engineering", {
         name: "meta-methodology-anti-over-engineering",
         description: "Anti over-engineering",
         version: "1.0.0",
+        category: "meta-methodology",
       });
 
       await runCliCommand([
@@ -451,9 +460,9 @@ describe("build:marketplace command", () => {
         (p) => p.name === "meta-methodology-anti-over-engineering",
       );
 
-      expect(reactPlugin?.category).toBe("web");
-      expect(drizzlePlugin?.category).toBe("api");
-      expect(metaPlugin?.category).toBe("meta");
+      expect(reactPlugin?.category).toBe("web-framework");
+      expect(drizzlePlugin?.category).toBe("api-database");
+      expect(metaPlugin?.category).toBe("meta-methodology");
     });
 
     it("should generate correct source paths referencing plugin directories", async () => {
@@ -461,6 +470,7 @@ describe("build:marketplace command", () => {
         name: "web-framework-react",
         description: "React",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       await runCliCommand([
@@ -484,6 +494,7 @@ describe("build:marketplace command", () => {
         name: "web-framework-react",
         description: "React framework",
         version: "1.0.0",
+        category: "web-framework",
         author: { name: "@vince", email: "vince@example.com" },
         keywords: ["react", "framework", "web"],
       });
@@ -509,6 +520,7 @@ describe("build:marketplace command", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       await runCliCommand([
@@ -532,6 +544,7 @@ describe("build:marketplace command", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       await runCliCommand([
@@ -553,6 +566,7 @@ describe("build:marketplace command", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       // First build with version 1.0.0
@@ -575,6 +589,7 @@ describe("build:marketplace command", () => {
         name: "api-framework-hono",
         description: "Hono",
         version: "1.0.0",
+        category: "api-framework",
       });
 
       await runCliCommand([
@@ -598,6 +613,7 @@ describe("build:marketplace command", () => {
         name: "web-framework-react",
         description: "React",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       // Invalid: directory without .claude-plugin/plugin.json
@@ -644,6 +660,7 @@ describe("build:marketplace command", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       await runCliCommand([
@@ -671,11 +688,13 @@ describe("build:marketplace command", () => {
         name: "web-framework-react",
         description: "React",
         version: "1.0.0",
+        category: "web-framework",
       });
       await createPluginDir(pluginsDir, "api-framework-hono", {
         name: "api-framework-hono",
         description: "Hono",
         version: "1.0.0",
+        category: "api-framework",
       });
 
       const { stdout, error } = await runCliCommand([

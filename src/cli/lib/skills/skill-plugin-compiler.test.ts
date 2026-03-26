@@ -5,6 +5,7 @@ import {
   compileSkillPlugin,
   compileAllSkillPlugins,
   printCompilationSummary,
+  type CompiledSkillPlugin,
 } from "./skill-plugin-compiler";
 import {
   createTempDir,
@@ -378,20 +379,20 @@ describe("skill-plugin-compiler", () => {
     it("should print count of compiled plugins", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const results = [
+      const results: CompiledSkillPlugin[] = [
         {
           pluginPath: "/out/react",
-          manifest: { name: "react", version: "1.0.0" },
+          manifest: { name: "react", version: "1.0.0", category: "web-testing" },
           skillName: "react",
         },
         {
           pluginPath: "/out/zustand",
-          manifest: { name: "zustand", version: "2.0.0" },
+          manifest: { name: "zustand", version: "2.0.0", category: "web-testing" },
           skillName: "zustand",
         },
         {
           pluginPath: "/out/hono",
-          manifest: { name: "hono", version: "3.0.0" },
+          manifest: { name: "hono", version: "3.0.0", category: "web-testing" },
           skillName: "hono",
         },
       ];
@@ -406,15 +407,15 @@ describe("skill-plugin-compiler", () => {
     it("should print each skill name with version", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const results = [
+      const results: CompiledSkillPlugin[] = [
         {
           pluginPath: "/out/react",
-          manifest: { name: "react", version: "1.0.0" },
+          manifest: { name: "react", version: "1.0.0", category: "web-testing" },
           skillName: "react",
         },
         {
           pluginPath: "/out/zustand",
-          manifest: { name: "zustand", version: "5.0.0" },
+          manifest: { name: "zustand", version: "5.0.0", category: "web-testing" },
           skillName: "zustand",
         },
       ];
@@ -442,10 +443,10 @@ describe("skill-plugin-compiler", () => {
     it("should handle single result", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const results = [
+      const results: CompiledSkillPlugin[] = [
         {
           pluginPath: "/out/react",
-          manifest: { name: "react", version: "1.0.0" },
+          manifest: { name: "react", version: "1.0.0", category: "web-testing" },
           skillName: "react",
         },
       ];

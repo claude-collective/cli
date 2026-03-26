@@ -21,6 +21,7 @@ import {
   agentFrontmatterValidationSchema,
 } from "../schemas";
 import { MAX_PLUGIN_FILE_SIZE, PLUGIN_MANIFEST_DIR, STANDARD_FILES } from "../../consts";
+import { CATEGORIES } from "../../types/generated/source-types";
 
 const PLUGIN_DIR = PLUGIN_MANIFEST_DIR;
 const PLUGIN_MANIFEST = STANDARD_FILES.PLUGIN_JSON;
@@ -36,6 +37,7 @@ const pluginManifestValidationSchema = z
     description: z.string().optional(),
     author: pluginAuthorSchema.optional(),
     keywords: z.array(z.string()).optional(),
+    category: z.enum(CATEGORIES),
     commands: z.union([z.string(), z.array(z.string())]).optional(),
     agents: z.union([z.string(), z.array(z.string())]).optional(),
     skills: z.union([z.string(), z.array(z.string())]).optional(),

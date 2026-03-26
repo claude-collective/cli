@@ -316,6 +316,7 @@ describe("schema-validator", () => {
           name: "test-plugin",
           version: "1.0.0",
           description: "A test plugin",
+          category: "web-testing",
         }),
       );
 

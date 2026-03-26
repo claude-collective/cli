@@ -177,7 +177,7 @@ describe("source-fetcher", () => {
         name: "test-marketplace",
         version: "1.0.0",
         owner: { name: "test-owner" },
-        plugins: [{ name: "test-plugin", source: "./plugins/test" }],
+        plugins: [{ name: "test-plugin", source: "./plugins/test", category: "web-framework" }],
         ...overrides,
       };
     }
@@ -236,6 +236,7 @@ describe("source-fetcher", () => {
       const plugins = Array.from({ length: 10_001 }, (_, i) => ({
         name: `plugin-${i}`,
         source: `./plugins/plugin-${i}`,
+        category: "web-framework" as const,
       }));
       const marketplace = createValidMarketplace({ plugins });
       const source = await writeMarketplace(JSON.stringify(marketplace));
@@ -247,6 +248,7 @@ describe("source-fetcher", () => {
       const plugins = Array.from({ length: 100 }, (_, i) => ({
         name: `plugin-${i}`,
         source: `./plugins/plugin-${i}`,
+        category: "web-framework" as const,
       }));
       const marketplace = createValidMarketplace({ plugins });
       const source = await writeMarketplace(JSON.stringify(marketplace));

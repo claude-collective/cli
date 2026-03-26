@@ -1,4 +1,5 @@
 import type { AgentHookDefinition } from "./agents";
+import type { Category } from "./generated/source-types";
 
 /** Plugin author metadata */
 export type PluginAuthor = {
@@ -14,6 +15,8 @@ export type PluginManifest = {
   description?: string;
   author?: PluginAuthor;
   keywords?: string[];
+  /** Category for marketplace generation (e.g., "web-framework", "api-database") */
+  category: Category;
   commands?: string | string[];
   agents?: string | string[];
   skills?: string | string[];
@@ -38,7 +41,8 @@ export type MarketplacePlugin = {
   description?: string;
   version?: string;
   author?: PluginAuthor;
-  category?: string;
+  /** Category for marketplace grouping (e.g., "web-framework", "api-database") */
+  category: Category;
   keywords?: string[];
 };
 

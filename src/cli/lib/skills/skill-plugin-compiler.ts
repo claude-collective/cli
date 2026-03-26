@@ -10,7 +10,8 @@ import {
 } from "../plugins";
 import { parseFrontmatter } from "../loading";
 import { computeSkillFolderHash, determinePluginVersion, writeContentHash } from "../versioning";
-import type { PluginManifest, SkillFrontmatter } from "../../types";
+import type { Category, PluginManifest, SkillFrontmatter } from "../../types";
+import { isCategory } from "../../utils/type-guards";
 import { formatZodErrors, skillMetadataLoaderSchema } from "../schemas";
 import type { z } from "zod";
 
@@ -140,11 +141,17 @@ export async function compileSkillPlugin(
     getPluginManifestPath,
   );
 
+  // Category from metadata.yaml — always present for published skills (boundary cast from CategoryPath)
+  const metadataCategory = metadata?.category;
+  const category: Category =
+    metadataCategory && isCategory(metadataCategory) ? metadataCategory : "web-framework";
+
   const manifest = generateSkillPluginManifest({
     skillName,
     description: frontmatter.description,
     author: metadata?.author,
     version,
+    category,
   });
 
   await writePluginManifest(pluginDir, manifest);

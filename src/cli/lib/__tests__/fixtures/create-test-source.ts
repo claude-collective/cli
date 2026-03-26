@@ -81,6 +81,7 @@ export type TestPluginManifest = {
   name: string;
   version: string;
   description?: string;
+  category?: string;
 };
 
 export type TestStack = {
@@ -320,6 +321,7 @@ permissionMode: {{ agent.permissionMode }}
       name: DEFAULT_PLUGIN_NAME,
       version: "1.0.0",
       description: "Test plugin",
+      category: "web-testing",
     };
     await writeFile(
       path.join(pluginDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE),

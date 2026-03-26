@@ -389,11 +389,11 @@ describe("Integration: Marketplace Integrity", () => {
 
     const stats = getMarketplaceStats(marketplace);
 
-    // Should have multiple categories (web from web-framework-react, api from api-framework-hono)
+    // Should have multiple categories (web-framework from react, api-framework from hono, etc.)
     expect(Object.keys(stats.byCategory).length).toBeGreaterThan(1);
 
-    // Categories from our test skills
-    const expectedCategories = ["web", "api"];
+    // Categories from our test skills (valid Category values from metadata)
+    const expectedCategories = ["web-framework", "api-api"];
     for (const category of expectedCategories) {
       expect(stats.byCategory[category]).toBeGreaterThan(0);
     }

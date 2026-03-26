@@ -1125,7 +1125,7 @@ export function createMockCompiledStackPlugin(
 ): CompiledStackPlugin {
   return {
     pluginPath: "/tmp/cc-stack-123456/test-stack",
-    manifest: { name: "test-stack", version: "1.0.0" },
+    manifest: { name: "test-stack", version: "1.0.0", category: "web-testing" },
     stackName: "Test Stack",
     agents: ["web-developer"],
     skillPlugins: ["web-framework-react"],
@@ -1230,10 +1230,12 @@ export function createMockMarketplace(plugins: MarketplacePlugin[] = []): Market
 export function createMockMarketplacePlugin(
   name: string,
   source: MarketplacePlugin["source"] = "local",
+  category: MarketplacePlugin["category"] = "web-framework",
 ): MarketplacePlugin {
   return {
     name,
     source,
+    category,
   };
 }
 

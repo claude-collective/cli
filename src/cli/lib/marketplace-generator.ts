@@ -7,12 +7,9 @@ import { readFileSafe, writeFile, glob, ensureDir } from "../utils/fs";
 import { verbose, warn } from "../utils/logger";
 import type { Marketplace, MarketplacePlugin, PluginManifest } from "../types";
 import { pluginManifestSchema } from "./schemas";
-import { DOMAINS } from "../types/generated/source-types";
 
 const PLUGIN_MANIFEST_PATH = ".claude-plugin/plugin.json";
 const MARKETPLACE_SCHEMA_URL = "https://anthropic.com/claude-code/marketplace.schema.json";
-
-const DOMAIN_SET = new Set<string>(DOMAINS);
 
 type MarketplaceOptions = {
   name: string;
@@ -22,12 +19,6 @@ type MarketplaceOptions = {
   ownerEmail?: string;
   pluginRoot: string;
 };
-
-function inferCategoryFromPluginName(pluginName: string): string | undefined {
-  const domainPrefix = pluginName.split("-")[0];
-  if (!domainPrefix || !DOMAIN_SET.has(domainPrefix)) return undefined;
-  return domainPrefix;
-}
 
 async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
   const manifestPath = path.join(pluginDir, PLUGIN_MANIFEST_PATH);
@@ -46,22 +37,15 @@ function convertManifestToMarketplacePlugin(
   pluginRoot: string,
   pluginDirName: string,
 ): MarketplacePlugin {
-  const category = inferCategoryFromPluginName(manifest.name);
-
-  const plugin: MarketplacePlugin = {
+  return {
     name: manifest.name,
     source: `./${pluginRoot}/${pluginDirName}`,
     description: manifest.description,
     version: manifest.version,
     author: manifest.author,
     keywords: manifest.keywords,
+    category: manifest.category,
   };
-
-  if (category) {
-    plugin.category = category;
-  }
-
-  return plugin;
 }
 
 export async function generateMarketplace(
@@ -136,8 +120,7 @@ export function getMarketplaceStats(marketplace: Marketplace): {
   const byCategory: Record<string, number> = {};
 
   for (const plugin of marketplace.plugins) {
-    const category = plugin.category ?? "uncategorized";
-    byCategory[category] = (byCategory[category] ?? 0) + 1;
+    byCategory[plugin.category] = (byCategory[plugin.category] ?? 0) + 1;
   }
 
   return {

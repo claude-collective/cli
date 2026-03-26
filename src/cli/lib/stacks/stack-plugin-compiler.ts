@@ -327,6 +327,7 @@ export async function compileStackPlugin(
     author: stack.author,
     version,
     keywords: undefined,
+    category: "web-meta-framework",
     hasAgents: true,
     hasHooks: false,
     hasSkills: true,

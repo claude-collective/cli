@@ -41,11 +41,13 @@ describe("marketplace-generator", () => {
         name: "web-framework-react",
         description: "React skills",
         version: "1.0.0",
+        category: "web-framework",
       });
       await createPlugin("web-framework-vue", {
         name: "web-framework-vue",
         description: "Vue skills",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -60,14 +62,12 @@ describe("marketplace-generator", () => {
       expect(names).toContain("web-framework-vue");
     });
 
-    it("should extract category from skill ID prefix", async () => {
-      // Plugin name = skill ID, category is inferred from ID prefix
-      // web-* -> web
-      // api-* -> api
+    it("should preserve category from plugin manifest", async () => {
       await createPlugin("web-framework-react", {
         name: "web-framework-react",
         description: "React framework",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -77,7 +77,7 @@ describe("marketplace-generator", () => {
       });
 
       const reactPlugin = marketplace.plugins.find((p) => p.name === "web-framework-react");
-      expect(reactPlugin?.category).toBe("web");
+      expect(reactPlugin?.category).toBe("web-framework");
     });
 
     it("should sort plugins alphabetically", async () => {
@@ -85,16 +85,19 @@ describe("marketplace-generator", () => {
         name: "web-state-zustand",
         description: "Zustand state",
         version: "1.0.0",
+        category: "web-framework",
       });
       await createPlugin("api-http-axios", {
         name: "api-http-axios",
         description: "Axios HTTP",
         version: "1.0.0",
+        category: "api-framework",
       });
       await createPlugin("web-state-mobx", {
         name: "web-state-mobx",
         description: "MobX state",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -112,6 +115,7 @@ describe("marketplace-generator", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -136,6 +140,7 @@ describe("marketplace-generator", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -152,6 +157,7 @@ describe("marketplace-generator", () => {
         name: "web-test-a",
         description: "Test",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -179,6 +185,7 @@ describe("marketplace-generator", () => {
         name: "web-valid-a",
         description: "Valid plugin",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       // Create an invalid directory (no .claude-plugin)
@@ -200,6 +207,7 @@ describe("marketplace-generator", () => {
         name: "web-with-author",
         description: "Plugin with author",
         version: "1.0.0",
+        category: "web-framework",
         author: {
           name: "@vince",
           email: "vince@example.com",
@@ -222,6 +230,7 @@ describe("marketplace-generator", () => {
         name: "web-with-keywords",
         description: "Plugin with keywords",
         version: "1.0.0",
+        category: "web-framework",
         keywords: ["web", "react", "ui"],
       });
 
@@ -240,6 +249,7 @@ describe("marketplace-generator", () => {
         name: "web-test-a",
         description: "Test plugin",
         version: "1.0.0",
+        category: "web-framework",
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -283,6 +293,7 @@ describe("marketplace-generator", () => {
             source: "./plugins/web-framework-react",
             description: "React skills",
             version: "1.0.0",
+            category: "web-framework",
           },
         ],
       };
@@ -357,9 +368,9 @@ describe("marketplace-generator", () => {
         version: "1.0.0",
         owner: { name: "Test" },
         plugins: [
-          { name: "plugin-1", source: "./p1" },
-          { name: "plugin-2", source: "./p2" },
-          { name: "plugin-3", source: "./p3" },
+          { name: "plugin-1", source: "./p1", category: "web-framework" },
+          { name: "plugin-2", source: "./p2", category: "api-framework" },
+          { name: "plugin-3", source: "./p3", category: "web-testing" },
         ],
       };
 
@@ -373,36 +384,18 @@ describe("marketplace-generator", () => {
         version: "1.0.0",
         owner: { name: "Test" },
         plugins: [
-          { name: "web-framework-react", source: "./p1", category: "web" },
-          { name: "web-framework-vue", source: "./p2", category: "web" },
-          { name: "api-framework-express", source: "./p3", category: "api" },
-          { name: "web-testing-vitest", source: "./p4", category: "testing" },
+          { name: "web-framework-react", source: "./p1", category: "web-framework" },
+          { name: "web-framework-vue", source: "./p2", category: "web-framework" },
+          { name: "api-framework-express", source: "./p3", category: "api-framework" },
+          { name: "web-testing-vitest", source: "./p4", category: "web-testing" },
         ],
       };
 
       const stats = getMarketplaceStats(marketplace);
 
-      expect(stats.byCategory.web).toBe(2);
-      expect(stats.byCategory.api).toBe(1);
-      expect(stats.byCategory.testing).toBe(1);
-    });
-
-    it("should categorize plugins without category as uncategorized", () => {
-      const marketplace: Marketplace = {
-        name: "test",
-        version: "1.0.0",
-        owner: { name: "Test" },
-        plugins: [
-          { name: "web-framework-react", source: "./p1", category: "web" },
-          { name: "unknown-thing", source: "./p2" }, // No category
-          { name: "misc-thing", source: "./p3" }, // No category
-        ],
-      };
-
-      const stats = getMarketplaceStats(marketplace);
-
-      expect(stats.byCategory.web).toBe(1);
-      expect(stats.byCategory.uncategorized).toBe(2);
+      expect(stats.byCategory["web-framework"]).toBe(2);
+      expect(stats.byCategory["api-framework"]).toBe(1);
+      expect(stats.byCategory["web-testing"]).toBe(1);
     });
 
     it("should handle empty plugins array", () => {
@@ -424,13 +417,13 @@ describe("marketplace-generator", () => {
         name: "test",
         version: "1.0.0",
         owner: { name: "Test" },
-        plugins: [{ name: "web-solo-a", source: "./p1", category: "tools" }],
+        plugins: [{ name: "web-solo-a", source: "./p1", category: "shared-tooling" }],
       };
 
       const stats = getMarketplaceStats(marketplace);
 
       expect(stats.total).toBe(1);
-      expect(stats.byCategory.tools).toBe(1);
+      expect(stats.byCategory["shared-tooling"]).toBe(1);
     });
 
     it("should return correct stats structure", () => {
@@ -439,8 +432,8 @@ describe("marketplace-generator", () => {
         version: "1.0.0",
         owner: { name: "Test" },
         plugins: [
-          { name: "p1", source: "./p1", category: "a" },
-          { name: "p2", source: "./p2", category: "b" },
+          { name: "p1", source: "./p1", category: "web-framework" },
+          { name: "p2", source: "./p2", category: "api-database" },
         ],
       };
 

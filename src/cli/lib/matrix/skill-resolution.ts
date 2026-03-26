@@ -27,6 +27,9 @@ const AUTO_SYNTH_ORDER = 999;
  * skill authors to maintain proper skill-categories.ts entries.
  */
 export function synthesizeCategory(category: Category, domain: Domain): CategoryDefinition {
+  verbose(
+    `Category '${category}' has no definition in skill-categories.ts — using auto-generated placeholder`,
+  );
   const displayName = category
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

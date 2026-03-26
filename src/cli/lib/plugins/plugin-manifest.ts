@@ -2,7 +2,7 @@ import path from "path";
 
 import { ensureDir, writeFile } from "../../utils/fs";
 import { DEFAULT_VERSION, PLUGIN_MANIFEST_DIR, STANDARD_FILES } from "../../consts";
-import type { PluginAuthor, PluginManifest } from "../../types";
+import type { Category, PluginAuthor, PluginManifest } from "../../types";
 
 const PLUGIN_DIR_NAME = PLUGIN_MANIFEST_DIR;
 const PLUGIN_MANIFEST_FILE = STANDARD_FILES.PLUGIN_JSON;
@@ -16,12 +16,14 @@ export type SkillManifestOptions = {
   authorEmail?: string;
   version?: string;
   keywords?: string[];
+  category: Category;
 };
 
 export type AgentManifestOptions = {
   agentName: string;
   description?: string;
   version?: string;
+  category: Category;
 };
 
 export type StackManifestOptions = {
@@ -31,6 +33,7 @@ export type StackManifestOptions = {
   authorEmail?: string;
   version?: string;
   keywords?: string[];
+  category: Category;
   hasSkills?: boolean;
   hasAgents?: boolean;
   hasHooks?: boolean;
@@ -48,9 +51,11 @@ function buildAuthor(name?: string, email?: string): PluginAuthor | undefined {
 }
 
 export function generateSkillPluginManifest(options: SkillManifestOptions): PluginManifest {
+  const name = `${SKILL_PLUGIN_PREFIX}${options.skillName}`;
   const manifest: PluginManifest = {
-    name: `${SKILL_PLUGIN_PREFIX}${options.skillName}`,
+    name,
     version: options.version ?? DEFAULT_VERSION,
+    category: options.category,
     skills: "./skills/",
   };
 
@@ -71,9 +76,11 @@ export function generateSkillPluginManifest(options: SkillManifestOptions): Plug
 }
 
 export function generateAgentPluginManifest(options: AgentManifestOptions): PluginManifest {
+  const name = `${AGENT_PLUGIN_PREFIX}${options.agentName}`;
   const manifest: PluginManifest = {
-    name: `${AGENT_PLUGIN_PREFIX}${options.agentName}`,
+    name,
     version: options.version ?? DEFAULT_VERSION,
+    category: options.category,
     agents: "./agents/",
   };
 
@@ -88,6 +95,7 @@ export function generateStackPluginManifest(options: StackManifestOptions): Plug
   const manifest: PluginManifest = {
     name: options.stackName,
     version: options.version ?? DEFAULT_VERSION,
+    category: options.category,
   };
 
   if (options.hasSkills) {
