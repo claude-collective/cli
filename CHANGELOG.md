@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.88.0] - 2026-03-26
+
+**Category type safety — no more string-typed categories in plugins**
+
+- `PluginManifest.category` required and typed as `Category` union (D-149)
+- Removed all category inference from names — categories must come from metadata
+- Removed unnecessary test mocks in plugin test files (D-148)
+
+See [changelogs/0.88.0.md](./changelogs/0.88.0.md) for full details.
+
 ## [0.87.0] - 2026-03-26
 
 **Declarative commands, operation dissolution, global skill discovery fix**
