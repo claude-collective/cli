@@ -20,6 +20,8 @@ export type InitWizardOptions = {
   noSource?: boolean;
   /** Skip creating permissions file. */
   skipPermissions?: boolean;
+  /** Override the default wizard load timeout (default: TIMEOUTS.WIZARD_LOAD). */
+  loadTimeout?: number;
 };
 
 /**
@@ -105,7 +107,7 @@ export class InitWizard {
     const { session, projectDir, cleanupDirs } = await InitWizard.setupSession(options);
 
     const stack = new StackStep(session, projectDir);
-    await stack.waitForReady();
+    await stack.waitForReady(options?.loadTimeout);
 
     return new InitWizard(session, stack, cleanupDirs);
   }

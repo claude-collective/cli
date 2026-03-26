@@ -4,9 +4,9 @@ import { DomainStep } from "./domain-step.js";
 
 export class StackStep extends BaseStep {
   /** Wait for the stack step to be ready. */
-  async waitForReady(): Promise<void> {
-    await this.waitForStep(STEP_TEXT.STACK);
-    await this.waitForStableRender();
+  async waitForReady(timeout?: number): Promise<void> {
+    await this.waitForStep(STEP_TEXT.STACK, timeout);
+    await this.waitForStableRender(timeout);
   }
 
   /** Select the first stack in the list (Enter on default selection). */

@@ -96,13 +96,13 @@ export abstract class BaseStep {
   }
 
   /** Wait for a specific step to be visible. */
-  protected async waitForStep(stepText: string): Promise<void> {
-    await this.screen.waitForText(stepText, TIMEOUTS.WIZARD_LOAD);
+  protected async waitForStep(stepText: string, timeout?: number): Promise<void> {
+    await this.screen.waitForText(stepText, timeout ?? TIMEOUTS.WIZARD_LOAD);
   }
 
   /** Wait for stable render (footer visible). */
-  protected async waitForStableRender(): Promise<void> {
-    await this.screen.waitForStableRender(TIMEOUTS.WIZARD_LOAD);
+  protected async waitForStableRender(timeout?: number): Promise<void> {
+    await this.screen.waitForStableRender(timeout ?? TIMEOUTS.WIZARD_LOAD);
   }
 
   /** Get the full output including scrollback (for test assertions). */

@@ -17,7 +17,7 @@ root_cause: convention-undocumented
 
 ## Core Principle: Code Should Not Require Context to Understand
 
-When reading code, the reader should never need to mentally simulate a block to understand _why_ it's there. This applies everywhere — store actions, rendering logic, test setup, configuration, utilities.
+When reading code, the reader should never need to mentally simulate a block to understand _why_ it's there. This applies everywhere — store actions, rendering logic, test setup, configuration, utilities. Extract when the name communicates intent that the expression doesn't already communicate
 
 This is sometimes called the **Single Level of Abstraction Principle** (SLAP) — each function should operate at one level of abstraction. But the sharper framing is about **reader cognitive load**: can someone understand the code's flow without simulating any of its parts?
 

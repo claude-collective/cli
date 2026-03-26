@@ -57,6 +57,7 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
     wizard = await InitWizard.launch({
       source: { sourceDir: SKILLS_SOURCE, tempDir: "" },
       projectDir,
+      loadTimeout: TIMEOUTS.INSTALL,
     });
     // Real source has variable domains (Web, API, CLI, Shared), use generic path
     const domain = await wizard.stack.selectFirstStack();
