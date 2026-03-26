@@ -31,7 +31,6 @@ vi.mock("../../utils/fs", async (importOriginal) => {
     glob: vi.fn(),
   };
 });
-vi.mock("../../utils/logger");
 
 import { fileExists, readFile, readFileSafe, glob } from "../../utils/fs";
 
@@ -124,6 +123,7 @@ describe("plugin-finder", () => {
         name: "my-plugin",
         version: "1.0.0",
         description: "A test plugin",
+        category: "web-testing",
         skills: "./skills/",
       };
 
@@ -167,7 +167,9 @@ describe("plugin-finder", () => {
 
     it("should return manifest with optional fields missing", async () => {
       mockedFileExists.mockResolvedValue(true);
-      mockedReadFileSafe.mockResolvedValue(JSON.stringify({ name: "minimal-plugin" }));
+      mockedReadFileSafe.mockResolvedValue(
+        JSON.stringify({ name: "minimal-plugin", category: "web-testing" }),
+      );
 
       const result = await readPluginManifest("/path/to/plugin");
 
@@ -210,6 +212,7 @@ describe("plugin-finder", () => {
         name: "full-plugin",
         version: "2.0.0",
         description: "Full featured plugin",
+        category: "web-testing",
         author: { name: "@vince", email: "vince@example.com" },
         keywords: ["web", "react"],
         skills: "./skills/",
