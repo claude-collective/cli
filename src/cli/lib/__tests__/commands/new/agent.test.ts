@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../../helpers";
-import { buildAgentPrompt } from "../../../../commands/new/agent";
+import { buildAgentPrompt } from "../../../operations/scaffold-agent";
 import { STANDARD_FILES } from "../../../../consts";
 
 describe("buildAgentPrompt", () => {

@@ -63,7 +63,7 @@ export function generateProjectConfigFromSkills(
 
   const looked = selectedSkillIds.map((skillId) => {
     const skill = matrix.skills[skillId];
-    if (!skill) warn(`Skill '${skillId}' NOT FOUND in matrix`);
+    if (!skill) warn(`Skill '${skillId}' NOT FOUND in matrix`, { suppressInTest: true });
     return { skillId, skill };
   });
 
@@ -90,6 +90,7 @@ export function generateProjectConfigFromSkills(
     warn(
       `${skippedCount}/${selectedSkillIds.length} skills not found in matrix. ` +
         `Matrix keys sample: [${matrixSample}]`,
+      { suppressInTest: true },
     );
   }
 

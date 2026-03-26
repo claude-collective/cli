@@ -63,7 +63,15 @@ export function pushBufferMessage(level: StartupMessage["level"], text: string):
 //   - Do NOT prefix the message with "Warning:" — this function adds it automatically
 //   - After a colon, use lowercase (e.g., "Skipping 'foo': invalid frontmatter")
 //   - Use em dash for supplemental info (e.g., "Missing category — defaulting to 'local'")
-export function warn(msg: string): void {
+export type WarnOptions = {
+  /** When true, suppresses this warning in test environments (VITEST=true). */
+  suppressInTest?: boolean;
+};
+
+export function warn(msg: string, options?: WarnOptions): void {
+  if (options?.suppressInTest && process.env.VITEST) {
+    return;
+  }
   if (bufferMode) {
     messageBuffer.push({ level: "warn", text: msg });
     return;

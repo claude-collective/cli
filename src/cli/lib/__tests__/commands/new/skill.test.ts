@@ -18,7 +18,7 @@ import {
   generateMetadataYaml,
   generateSkillCategoriesTs,
   generateSkillRulesTs,
-} from "../../../../commands/new/skill";
+} from "../../../operations/scaffold-skill";
 import {
   LOCAL_SKILLS_PATH,
   SKILL_CATEGORIES_PATH,

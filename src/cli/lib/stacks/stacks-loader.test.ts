@@ -286,7 +286,7 @@ describe("stacks-loader", () => {
 
       expect(skills).toHaveLength(1);
       expect(skills[0].id).toBe("Not-A-Valid-Id");
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"), { suppressInTest: true });
     });
 
     it("handles empty agent config", () => {
@@ -374,7 +374,7 @@ describe("stacks-loader", () => {
       expect(skills.find((s) => s.id === "meta-reviewing-reviewing")).toBeDefined();
       // Only warns for the unknown ID, not the valid ones
       expect(warn).toHaveBeenCalledTimes(1);
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"), { suppressInTest: true });
     });
 
     it("reads preloaded from each assignment individually", () => {
@@ -405,7 +405,7 @@ describe("stacks-loader", () => {
       expect(skills).toHaveLength(1);
       expect(skills[0].id).toBe("acme-pipeline-deploy");
       expect(skills[0].preloaded).toBe(true);
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("acme-pipeline-deploy"));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("acme-pipeline-deploy"), { suppressInTest: true });
     });
   });
 

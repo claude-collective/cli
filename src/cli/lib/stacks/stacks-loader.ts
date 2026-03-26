@@ -117,6 +117,7 @@ export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): Skill
       if (!hasSkill(assignment.id)) {
         warn(
           `Skill '${assignment.id}' for category '${category}' not found in matrix. It may be a custom or local skill.`,
+          { suppressInTest: true },
         );
       }
       return {

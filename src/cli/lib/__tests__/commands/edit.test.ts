@@ -33,6 +33,7 @@ const {
   mockDiscoverAllPluginSkills,
   mockCopySkillsToLocalFlattened,
   mockEnsureDir,
+  mockGetAgentDefinitions,
 } = vi.hoisted(() => ({
   mockRender: vi.fn().mockReturnValue({ waitUntilExit: () => Promise.resolve() }),
   mockDetectInstallation: vi.fn().mockResolvedValue(null),
@@ -41,6 +42,11 @@ const {
   mockDiscoverAllPluginSkills: vi.fn().mockResolvedValue({}),
   mockCopySkillsToLocalFlattened: vi.fn().mockResolvedValue(undefined),
   mockEnsureDir: vi.fn().mockResolvedValue(undefined),
+  mockGetAgentDefinitions: vi.fn().mockResolvedValue({
+    agentsDir: "/mock/agents",
+    templatesDir: "/mock/templates",
+    sourcePath: "/mock/source",
+  }),
 }));
 
 vi.mock("ink", async (importOriginal) => {
@@ -78,6 +84,14 @@ vi.mock("../../plugins/index.js", async (importOriginal) => {
   return {
     ...original,
     discoverAllPluginSkills: (...args: unknown[]) => mockDiscoverAllPluginSkills(...(args as [])),
+  };
+});
+
+vi.mock("../../agents/index.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../agents/index.js")>();
+  return {
+    ...original,
+    getAgentDefinitions: (...args: unknown[]) => mockGetAgentDefinitions(...(args as [])),
   };
 });
 
@@ -673,10 +687,9 @@ describe("edit command detects added agents", () => {
     }
 
     // With the fix, the command detects agent changes and proceeds past the
-    // early return. discoverAllPluginSkills is called twice: once during startup
-    // (line 129) and once during recompilation (line 482). Without the fix,
-    // the command exits early and only calls it once.
-    expect(mockDiscoverAllPluginSkills).toHaveBeenCalledTimes(2);
+    // early return into agent loading (loadAgentDefs -> getAgentDefinitions).
+    // Without the fix, the command exits early and getAgentDefinitions is never called.
+    expect(mockGetAgentDefinitions).toHaveBeenCalledTimes(1);
   });
 });
 
