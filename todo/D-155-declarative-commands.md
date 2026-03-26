@@ -22,20 +22,20 @@ After D-145 (operations layer extraction), we over-extracted. ~30 functions were
 
 These operation files should be deleted. Their functions move to the bottom of the respective command file (or a co-located `.helpers.ts` file if the command exceeds ~300 lines).
 
-| Operation file | Functions | Move to |
-|---|---|---|
-| `eject-project.ts` | `ejectAgentPartials`, `ejectSkills`, `ensureMinimalConfig` | `commands/eject.ts` |
-| `uninstall-project.ts` | `detectUninstallTarget`, `removeMatchingSkills`, `removeMatchingAgents`, `uninstallPlugins`, `cleanupEmptyDirs` | `commands/uninstall.tsx` |
-| `scaffold-agent.ts` | `parseCompiledAgent`, `buildAgentPrompt`, `invokeMetaAgent`, `loadMetaAgent` | `commands/new/agent.tsx` |
-| `scaffold-skill.ts` | `validateSkillName`, `scaffoldSkillFiles`, `updateSkillRegistryConfig`, `generateSkillMd`, `generateMetadataYaml`, `generateSkillCategoriesTs`, `generateSkillRulesTs`, `toTitleCase` | `commands/new/skill.ts` (+ shared generators used by `new/marketplace.ts` stay exported from a shared location) |
-| `import-skill.ts` | `parseGitHubSource`, `fetchSkillSource`, `discoverValidSkills`, `importSkillFromSource` | `commands/import/skill.ts` |
-| `generate-skill-diff.ts` | `generateSkillDiff`, `formatColoredDiff` | `commands/diff.ts` |
-| `resolve-skill-info.ts` | `resolveSkillInfo` | `commands/info.ts` |
-| `search-skills.ts` | `fetchSkillsFromExternalSource`, `filterSkillsByQuery`, `copySearchedSkillsToLocal`, `toSourcedSkill` | `commands/search.tsx` |
-| `detect-config-changes.ts` | `detectConfigChanges` | `commands/edit.tsx` |
-| `migrate-plugin-scope.ts` | `migratePluginSkillScopes` | `commands/edit.tsx` |
-| `get-dashboard-data.ts` | `getDashboardData` | `commands/init.tsx` |
-| `update-local-skills.ts` | `updateLocalSkills` | `commands/update.tsx` |
+| Operation file             | Functions                                                                                                                                                                             | Move to                                                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `eject-project.ts`         | `ejectAgentPartials`, `ejectSkills`, `ensureMinimalConfig`                                                                                                                            | `commands/eject.ts`                                                                                             |
+| `uninstall-project.ts`     | `detectUninstallTarget`, `removeMatchingSkills`, `removeMatchingAgents`, `uninstallPlugins`, `cleanupEmptyDirs`                                                                       | `commands/uninstall.tsx`                                                                                        |
+| `scaffold-agent.ts`        | `parseCompiledAgent`, `buildAgentPrompt`, `invokeMetaAgent`, `loadMetaAgent`                                                                                                          | `commands/new/agent.tsx`                                                                                        |
+| `scaffold-skill.ts`        | `validateSkillName`, `scaffoldSkillFiles`, `updateSkillRegistryConfig`, `generateSkillMd`, `generateMetadataYaml`, `generateSkillCategoriesTs`, `generateSkillRulesTs`, `toTitleCase` | `commands/new/skill.ts` (+ shared generators used by `new/marketplace.ts` stay exported from a shared location) |
+| `import-skill.ts`          | `parseGitHubSource`, `fetchSkillSource`, `discoverValidSkills`, `importSkillFromSource`                                                                                               | `commands/import/skill.ts`                                                                                      |
+| `generate-skill-diff.ts`   | `generateSkillDiff`, `formatColoredDiff`                                                                                                                                              | `commands/diff.ts`                                                                                              |
+| `resolve-skill-info.ts`    | `resolveSkillInfo`                                                                                                                                                                    | `commands/info.ts`                                                                                              |
+| `search-skills.ts`         | `fetchSkillsFromExternalSource`, `filterSkillsByQuery`, `copySearchedSkillsToLocal`, `toSourcedSkill`                                                                                 | `commands/search.tsx`                                                                                           |
+| `detect-config-changes.ts` | `detectConfigChanges`                                                                                                                                                                 | `commands/edit.tsx`                                                                                             |
+| `migrate-plugin-scope.ts`  | `migratePluginSkillScopes`                                                                                                                                                            | `commands/edit.tsx`                                                                                             |
+| `get-dashboard-data.ts`    | `getDashboardData`                                                                                                                                                                    | `commands/init.tsx`                                                                                             |
+| `update-local-skills.ts`   | `updateLocalSkills`                                                                                                                                                                   | `commands/update.tsx`                                                                                           |
 
 ### Special cases
 
@@ -49,24 +49,24 @@ These operation files should be deleted. Their functions move to the bottom of t
 
 These are used by 2+ commands and belong in the operations layer:
 
-| Function | Callers |
-|---|---|
-| `loadSource` | 10 commands |
-| `compileAgents` | 4 commands |
-| `loadAgentDefs` | 3 commands |
-| `detectProject` | 3 commands |
-| `copyLocalSkills` | 2 commands |
-| `ensureMarketplace` | 2 commands |
-| `installPluginSkills` | 2 commands |
-| `uninstallPluginSkills` | edit.tsx (single, but pairs with installPluginSkills — keep together) |
-| `writeProjectConfig` | 2 commands |
-| `collectScopedSkillDirs` | 2 commands |
-| `compareSkillsWithSource` | 2 commands |
-| `buildSourceSkillsMap` | diff.ts + compare-skills.ts internal |
-| `detectBothInstallations` | compile.ts + recompile-project.ts |
-| `discoverInstalledSkills` | compile.ts + recompile-project.ts |
-| `executeInstallation` | programmatic use (not directly in commands, but designed as composed pipeline) |
-| `recompileProject` | programmatic use |
+| Function                  | Callers                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `loadSource`              | 10 commands                                                                    |
+| `compileAgents`           | 4 commands                                                                     |
+| `loadAgentDefs`           | 3 commands                                                                     |
+| `detectProject`           | 3 commands                                                                     |
+| `copyLocalSkills`         | 2 commands                                                                     |
+| `ensureMarketplace`       | 2 commands                                                                     |
+| `installPluginSkills`     | 2 commands                                                                     |
+| `uninstallPluginSkills`   | edit.tsx (single, but pairs with installPluginSkills — keep together)          |
+| `writeProjectConfig`      | 2 commands                                                                     |
+| `collectScopedSkillDirs`  | 2 commands                                                                     |
+| `compareSkillsWithSource` | 2 commands                                                                     |
+| `buildSourceSkillsMap`    | diff.ts + compare-skills.ts internal                                           |
+| `detectBothInstallations` | compile.ts + recompile-project.ts                                              |
+| `discoverInstalledSkills` | compile.ts + recompile-project.ts                                              |
+| `executeInstallation`     | programmatic use (not directly in commands, but designed as composed pipeline) |
+| `recompileProject`        | programmatic use                                                               |
 
 ---
 
@@ -118,22 +118,22 @@ function formatScopeLabel(scope: "project" | "global"): string { ... }
 
 ### Commands to restructure
 
-| Command | Current lines | Estimated after | Key restructuring |
-|---|---|---|---|
-| `edit.tsx` | ~435 | ~450 (+ helpers) | Split `run()` into 8-10 named methods |
-| `init.tsx` | ~407 | ~420 (+ helpers) | Split `handleInstallation` into 5 named methods |
-| `compile.ts` | ~210 | ~220 | Split `runCompilePass` + `discoverAllSkills` inline into named methods |
-| `update.tsx` | ~300 | ~310 | Split run() into load/compare/confirm/update/recompile methods |
-| `eject.ts` | ~265 | ~350 (absorbs eject-project.ts) | Already has named methods; absorb operations back |
-| `uninstall.tsx` | ~256 | ~400 (absorbs uninstall-project.ts) | Already well-structured; absorb operations back |
-| `diff.ts` | ~165 | ~280 (absorbs generate-skill-diff.ts) | Split run() into load/diff/display methods |
-| `doctor.ts` | ~450 | ~450 | Already has named check functions; just clean up run() |
-| `outdated.ts` | ~184 | ~184 | Already clean; minimal changes |
-| `search.tsx` | ~237 | ~320 (absorbs search-skills.ts) | Split interactive/static into named steps |
-| `info.ts` | ~147 | ~235 (absorbs resolve-skill-info.ts) | Absorb + split run() |
-| `import/skill.ts` | ~225 | ~420 (absorbs import-skill.ts) | Absorb + split run() into validate/discover/select/import |
-| `new/skill.ts` | ~197 | ~380 (absorbs scaffold-skill.ts) | Absorb + keep named generators |
-| `new/agent.tsx` | ~187 | ~300 (absorbs scaffold-agent.ts) | Absorb + split into load/prompt/invoke |
+| Command           | Current lines | Estimated after                       | Key restructuring                                                      |
+| ----------------- | ------------- | ------------------------------------- | ---------------------------------------------------------------------- |
+| `edit.tsx`        | ~435          | ~450 (+ helpers)                      | Split `run()` into 8-10 named methods                                  |
+| `init.tsx`        | ~407          | ~420 (+ helpers)                      | Split `handleInstallation` into 5 named methods                        |
+| `compile.ts`      | ~210          | ~220                                  | Split `runCompilePass` + `discoverAllSkills` inline into named methods |
+| `update.tsx`      | ~300          | ~310                                  | Split run() into load/compare/confirm/update/recompile methods         |
+| `eject.ts`        | ~265          | ~350 (absorbs eject-project.ts)       | Already has named methods; absorb operations back                      |
+| `uninstall.tsx`   | ~256          | ~400 (absorbs uninstall-project.ts)   | Already well-structured; absorb operations back                        |
+| `diff.ts`         | ~165          | ~280 (absorbs generate-skill-diff.ts) | Split run() into load/diff/display methods                             |
+| `doctor.ts`       | ~450          | ~450                                  | Already has named check functions; just clean up run()                 |
+| `outdated.ts`     | ~184          | ~184                                  | Already clean; minimal changes                                         |
+| `search.tsx`      | ~237          | ~320 (absorbs search-skills.ts)       | Split interactive/static into named steps                              |
+| `info.ts`         | ~147          | ~235 (absorbs resolve-skill-info.ts)  | Absorb + split run()                                                   |
+| `import/skill.ts` | ~225          | ~420 (absorbs import-skill.ts)        | Absorb + split run() into validate/discover/select/import              |
+| `new/skill.ts`    | ~197          | ~380 (absorbs scaffold-skill.ts)      | Absorb + keep named generators                                         |
+| `new/agent.tsx`   | ~187          | ~300 (absorbs scaffold-agent.ts)      | Absorb + split into load/prompt/invoke                                 |
 
 ### The test: "Can you read `run()` without simulating any of its parts?"
 
@@ -144,6 +144,7 @@ Every command's `run()` should pass this test after restructuring. If you have t
 ## Part 4: Barrel export cleanup
 
 After dissolving single-use operations:
+
 - Remove deleted files from `operations/index.ts` barrel exports
 - Remove deleted types from `operations/types.ts`
 - Update any test files that import from operations to import from the command file instead
@@ -165,6 +166,7 @@ Parts 1 and 2 can be done per-command (e.g., do edit.tsx fully, then init.tsx, e
 ## Verification
 
 After each command is restructured:
+
 - `run()` method reads like pseudocode (no inline data transforms, no simulation needed)
 - All private methods are named for their purpose
 - Pure functions are at the bottom of the file (or in `.helpers.ts`)
@@ -172,6 +174,7 @@ After each command is restructured:
 - All tests pass (unit + E2E for that command)
 
 Final gate:
+
 - `tsc --noEmit`
 - `npm test -- --run` (4885 tests)
 - `npx vitest run --config e2e/vitest.config.ts` (558 tests)

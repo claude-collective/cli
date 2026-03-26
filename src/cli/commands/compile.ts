@@ -46,8 +46,11 @@ export default class Compile extends BaseCommand {
     const cwd = process.cwd();
     const homeDir = os.homedir();
 
-    const { global: globalInstallation, project: projectInstallation, hasBoth: hasBothScopes } =
-      await detectBothInstallations(cwd);
+    const {
+      global: globalInstallation,
+      project: projectInstallation,
+      hasBoth: hasBothScopes,
+    } = await detectBothInstallations(cwd);
 
     if (!globalInstallation && !projectInstallation) {
       this.error(ERROR_MESSAGES.NO_INSTALLATION, {

@@ -156,8 +156,14 @@ export type EjectSkillsResult = {
  * Returns structured data — the command decides what to log.
  */
 export async function ejectSkills(options: EjectSkillsOptions): Promise<EjectSkillsResult> {
-  const { projectDir, force, sourceResult, matrix, directOutput = false, customOutputBase } =
-    options;
+  const {
+    projectDir,
+    force,
+    sourceResult,
+    matrix,
+    directOutput = false,
+    customOutputBase,
+  } = options;
 
   const destDir =
     directOutput && customOutputBase ? customOutputBase : path.join(projectDir, LOCAL_SKILLS_PATH);

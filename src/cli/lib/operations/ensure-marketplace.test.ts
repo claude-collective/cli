@@ -97,7 +97,12 @@ describe("ensureMarketplace", () => {
   it("should lazily resolve marketplace name via fetchMarketplace", async () => {
     const sourceResult = makeSourceResult(undefined);
     mockFetchMarketplace.mockResolvedValue({
-      marketplace: { name: "resolved-marketplace", version: "1.0.0", owner: { name: "test" }, plugins: [] },
+      marketplace: {
+        name: "resolved-marketplace",
+        version: "1.0.0",
+        owner: { name: "test" },
+        plugins: [],
+      },
       sourcePath: "/tmp/resolved",
       fromCache: false,
     });

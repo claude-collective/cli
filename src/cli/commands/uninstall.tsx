@@ -183,10 +183,8 @@ export default class Uninstall extends BaseCommand {
       this.log("Uninstalling plugins...");
 
       try {
-        const pluginResult = await uninstallPlugins(
-          target,
-          projectDir,
-          (name) => this.log(`  Uninstalled plugin '${name}'`),
+        const pluginResult = await uninstallPlugins(target, projectDir, (name) =>
+          this.log(`  Uninstalled plugin '${name}'`),
         );
 
         this.logSuccess(
@@ -229,9 +227,8 @@ export default class Uninstall extends BaseCommand {
       );
     }
 
-    const agentResult = await removeMatchingAgents(
-      target,
-      (agentName) => this.log(`  Uninstalled agent '${agentName}'`),
+    const agentResult = await removeMatchingAgents(target, (agentName) =>
+      this.log(`  Uninstalled agent '${agentName}'`),
     );
 
     if (agentResult.removedCount > 0) {

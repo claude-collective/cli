@@ -27,10 +27,7 @@ describe("uninstallPluginSkills", () => {
   });
 
   it("should uninstall skills with scope from old config", async () => {
-    const skillIds = [
-      "web-framework-react" as SkillId,
-      "api-framework-hono" as SkillId,
-    ];
+    const skillIds = ["web-framework-react" as SkillId, "api-framework-hono" as SkillId];
     const oldSkills = [
       makeSkillConfig("web-framework-react", "project"),
       makeSkillConfig("api-framework-hono", "global"),
@@ -50,10 +47,7 @@ describe("uninstallPluginSkills", () => {
       PROJECT_DIR,
     );
 
-    expect(result.uninstalled).toStrictEqual([
-      "web-framework-react",
-      "api-framework-hono",
-    ]);
+    expect(result.uninstalled).toStrictEqual(["web-framework-react", "api-framework-hono"]);
     expect(result.failed).toStrictEqual([]);
   });
 
@@ -71,10 +65,7 @@ describe("uninstallPluginSkills", () => {
   });
 
   it("should collect failures without throwing", async () => {
-    const skillIds = [
-      "web-framework-react" as SkillId,
-      "api-framework-hono" as SkillId,
-    ];
+    const skillIds = ["web-framework-react" as SkillId, "api-framework-hono" as SkillId];
     const oldSkills = [
       makeSkillConfig("web-framework-react", "project"),
       makeSkillConfig("api-framework-hono", "project"),
@@ -87,9 +78,7 @@ describe("uninstallPluginSkills", () => {
     const result = await uninstallPluginSkills(skillIds, oldSkills, PROJECT_DIR);
 
     expect(result.uninstalled).toStrictEqual(["web-framework-react"]);
-    expect(result.failed).toStrictEqual([
-      { id: "api-framework-hono", error: "Plugin not found" },
-    ]);
+    expect(result.failed).toStrictEqual([{ id: "api-framework-hono", error: "Plugin not found" }]);
   });
 
   it("should return uninstalled skill IDs", async () => {

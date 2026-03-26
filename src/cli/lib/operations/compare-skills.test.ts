@@ -34,9 +34,7 @@ function makeScopedResult(hasProject: boolean, hasGlobal: boolean): ScopedSkillD
 
 const SOURCE_PATH = "/tmp/test-source";
 
-function makeMatrix(
-  skills: Record<string, { path: string; local?: boolean }>,
-): MergedSkillsMatrix {
+function makeMatrix(skills: Record<string, { path: string; local?: boolean }>): MergedSkillsMatrix {
   const matrixSkills: MergedSkillsMatrix["skills"] = {};
   for (const [id, skill] of Object.entries(skills)) {
     matrixSkills[id as SkillId] = {
@@ -45,9 +43,7 @@ function makeMatrix(
       path: skill.path,
       local: skill.local,
       description: "",
-      category: "framework" as MergedSkillsMatrix["skills"][SkillId] extends
-        | infer S
-        | undefined
+      category: "framework" as MergedSkillsMatrix["skills"][SkillId] extends infer S | undefined
         ? S extends { category: infer C }
           ? C
           : never
@@ -90,9 +86,7 @@ describe("compareSkillsWithSource", () => {
 
     mockCollectScopedSkillDirs.mockResolvedValueOnce(makeScopedResult(true, true));
 
-    const projectResults = [
-      makeComparisonResult("web-framework-react", "current"),
-    ];
+    const projectResults = [makeComparisonResult("web-framework-react", "current")];
     const globalResults = [
       makeComparisonResult("web-framework-react", "outdated"),
       makeComparisonResult("api-framework-hono", "current"),
@@ -166,13 +160,9 @@ describe("compareSkillsWithSource", () => {
     await compareSkillsWithSource("/tmp/project", SOURCE_PATH, matrix);
 
     // The sourceSkills map should exclude local skills
-    expect(mockCompareLocalSkills).toHaveBeenCalledWith(
-      "/tmp/project",
-      SOURCE_PATH,
-      {
-        "web-framework-react": { path: "skills/web/framework/react" },
-        "api-framework-hono": { path: "skills/api/hono" },
-      },
-    );
+    expect(mockCompareLocalSkills).toHaveBeenCalledWith("/tmp/project", SOURCE_PATH, {
+      "web-framework-react": { path: "skills/web/framework/react" },
+      "api-framework-hono": { path: "skills/api/hono" },
+    });
   });
 });

@@ -15,9 +15,7 @@ export type SkillComparisonResults = {
  * Builds a map of source skill IDs to their paths, excluding local-only skills.
  * Used by both compareSkillsWithSource and diff command.
  */
-export function buildSourceSkillsMap(
-  matrix: MergedSkillsMatrix,
-): Record<string, { path: string }> {
+export function buildSourceSkillsMap(matrix: MergedSkillsMatrix): Record<string, { path: string }> {
   const sourceSkills: Record<string, { path: string }> = {};
   for (const [skillId, skill] of typedEntries(matrix.skills)) {
     if (!skill) continue;

@@ -189,7 +189,11 @@ describe("execute-installation", () => {
 
     expect(mockCopyLocalSkills).toHaveBeenCalledWith(localSkill, projectDir, sourceResult);
     expect(mockEnsureMarketplace).toHaveBeenCalledWith(sourceResult);
-    expect(mockInstallPluginSkills).toHaveBeenCalledWith(pluginSkill, "test-marketplace", projectDir);
+    expect(mockInstallPluginSkills).toHaveBeenCalledWith(
+      pluginSkill,
+      "test-marketplace",
+      projectDir,
+    );
     expect(mockInstallPluginConfig).toHaveBeenCalled();
     expect(result.mode).toBe("mixed");
     expect(result.copiedSkills).toStrictEqual([copiedSkill]);

@@ -10,11 +10,7 @@ import { loadAllAgents, type SourceLoadResult } from "../loading/index.js";
 import { ensureBlankGlobalConfig } from "../configuration/config-writer.js";
 import { ensureDir } from "../../utils/fs.js";
 import { PROJECT_ROOT } from "../../consts.js";
-import type {
-  ProjectConfig,
-  AgentDefinition,
-  AgentName,
-} from "../../types/index.js";
+import type { ProjectConfig, AgentDefinition, AgentName } from "../../types/index.js";
 import type { WizardResultV2 } from "../../components/wizard/wizard.js";
 
 export type ConfigWriteOptions = {

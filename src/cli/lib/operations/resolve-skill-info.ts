@@ -115,8 +115,7 @@ export async function resolveSkillInfo(options: ResolveSkillInfoOptions): Promis
 
   // CLI arg is an untyped string — try as skill ID first, then as slug
   const slugResolvedId = slugToId[query as SkillSlug];
-  const skill =
-    skills[query as SkillId] ?? (slugResolvedId ? skills[slugResolvedId] : undefined);
+  const skill = skills[query as SkillId] ?? (slugResolvedId ? skills[slugResolvedId] : undefined);
 
   if (!skill) {
     const suggestions = findSuggestions(skills, query, MAX_SUGGESTIONS);

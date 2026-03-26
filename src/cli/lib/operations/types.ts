@@ -19,12 +19,20 @@ export type {
   ExecuteInstallationResult,
 } from "./execute-installation.js";
 export type { RecompileProjectOptions, RecompileProjectResult } from "./recompile-project.js";
-export type { SkillUpdateResult, UpdateLocalSkillsResult, UpdateLocalSkillsOptions } from "./update-local-skills.js";
+export type {
+  SkillUpdateResult,
+  UpdateLocalSkillsResult,
+  UpdateLocalSkillsOptions,
+} from "./update-local-skills.js";
 export type { DiscoveredSkills } from "./discover-skills.js";
 export type { ScopedSkillDir, ScopedSkillDirsResult } from "./collect-scoped-skill-dirs.js";
 export type { SkillMatchResult } from "./find-skill-match.js";
 export type { SkillDiffResult } from "./generate-skill-diff.js";
-export type { ResolveSkillInfoOptions, ResolvedSkillInfo, SkillInfoResult } from "./resolve-skill-info.js";
+export type {
+  ResolveSkillInfoOptions,
+  ResolvedSkillInfo,
+  SkillInfoResult,
+} from "./resolve-skill-info.js";
 export type {
   EjectAgentPartialsOptions,
   EjectAgentPartialsResult,
@@ -40,7 +48,11 @@ export type {
   UninstallPluginsResult,
   CleanupResult,
 } from "./uninstall-project.js";
-export type { SourcedSkill, FilterSkillsOptions, CopySearchedSkillResult } from "./search-skills.js";
+export type {
+  SourcedSkill,
+  FilterSkillsOptions,
+  CopySearchedSkillResult,
+} from "./search-skills.js";
 export type {
   ImportedForkedFromMetadata,
   ParsedGitHubSource,
@@ -50,7 +62,11 @@ export type {
   ImportSkillResult,
 } from "./import-skill.js";
 export type { PluginScopeMigrationResult } from "./migrate-plugin-scope.js";
-export type { NewAgentInput, LoadMetaAgentOptions, InvokeMetaAgentOptions } from "./scaffold-agent.js";
+export type {
+  NewAgentInput,
+  LoadMetaAgentOptions,
+  InvokeMetaAgentOptions,
+} from "./scaffold-agent.js";
 export type {
   ScaffoldSkillOptions,
   ScaffoldSkillResult,

@@ -150,7 +150,13 @@ export async function removeMatchingSkills(
   onSkipped?: (dirName: string) => void,
 ): Promise<SkillRemovalResult> {
   if (!target.hasLocalSkills) {
-    return { removedCount: 0, skippedCount: 0, removedNames: [], skippedNames: [], dirCleaned: false };
+    return {
+      removedCount: 0,
+      skippedCount: 0,
+      removedNames: [],
+      skippedNames: [],
+      dirCleaned: false,
+    };
   }
 
   const skillDirNames = await listDirectories(target.skillsDir);

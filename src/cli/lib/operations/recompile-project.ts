@@ -39,8 +39,11 @@ export async function recompileProject(
     setVerbose(true);
   }
 
-  const { global: globalInstallation, project: projectInstallation, hasBoth } =
-    await detectBothInstallations(projectDir);
+  const {
+    global: globalInstallation,
+    project: projectInstallation,
+    hasBoth,
+  } = await detectBothInstallations(projectDir);
 
   if (!globalInstallation && !projectInstallation) {
     throw new Error(ERROR_MESSAGES.NO_INSTALLATION);

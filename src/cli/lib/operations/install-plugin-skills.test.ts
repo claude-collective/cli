@@ -13,11 +13,7 @@ const mockClaudePluginInstall = vi.mocked(claudePluginInstall);
 const PROJECT_DIR = "/tmp/test-project";
 const MARKETPLACE = "agents-inc";
 
-function makeSkillConfig(
-  id: string,
-  scope: "project" | "global",
-  source: string,
-): SkillConfig {
+function makeSkillConfig(id: string, scope: "project" | "global", source: string): SkillConfig {
   return { id: id as SkillConfig["id"], scope, source };
 }
 

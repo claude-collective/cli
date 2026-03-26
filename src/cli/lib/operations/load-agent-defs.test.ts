@@ -69,12 +69,8 @@ describe("loadAgentDefs", () => {
       "web-developer": SOURCE_AGENT,
     };
 
-    mockLoadAllAgents.mockResolvedValueOnce(
-      cliAgents as Record<AgentName, AgentDefinition>,
-    );
-    mockLoadAllAgents.mockResolvedValueOnce(
-      sourceAgents as Record<AgentName, AgentDefinition>,
-    );
+    mockLoadAllAgents.mockResolvedValueOnce(cliAgents as Record<AgentName, AgentDefinition>);
+    mockLoadAllAgents.mockResolvedValueOnce(sourceAgents as Record<AgentName, AgentDefinition>);
 
     const result = await loadAgentDefs();
 
@@ -85,9 +81,7 @@ describe("loadAgentDefs", () => {
   });
 
   it("should return sourcePath from agentSourcePaths", async () => {
-    mockLoadAllAgents.mockResolvedValue(
-      {} as Record<AgentName, AgentDefinition>,
-    );
+    mockLoadAllAgents.mockResolvedValue({} as Record<AgentName, AgentDefinition>);
 
     const result = await loadAgentDefs();
 
@@ -95,9 +89,7 @@ describe("loadAgentDefs", () => {
   });
 
   it("should pass agentSource and options to getAgentDefinitions", async () => {
-    mockLoadAllAgents.mockResolvedValue(
-      {} as Record<AgentName, AgentDefinition>,
-    );
+    mockLoadAllAgents.mockResolvedValue({} as Record<AgentName, AgentDefinition>);
 
     await loadAgentDefs("github:test/agents", {
       projectDir: "/tmp/project",
@@ -111,9 +103,7 @@ describe("loadAgentDefs", () => {
   });
 
   it("should return complete agentSourcePaths", async () => {
-    mockLoadAllAgents.mockResolvedValue(
-      {} as Record<AgentName, AgentDefinition>,
-    );
+    mockLoadAllAgents.mockResolvedValue({} as Record<AgentName, AgentDefinition>);
 
     const result = await loadAgentDefs();
 

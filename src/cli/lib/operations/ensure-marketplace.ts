@@ -23,7 +23,9 @@ export type MarketplaceResult = {
  * Operation is intentionally SILENT — commands decide what to log based on the
  * `registered` flag.
  */
-export async function ensureMarketplace(sourceResult: SourceLoadResult): Promise<MarketplaceResult> {
+export async function ensureMarketplace(
+  sourceResult: SourceLoadResult,
+): Promise<MarketplaceResult> {
   if (!sourceResult.marketplace) {
     try {
       const marketplaceResult = await fetchMarketplace(sourceResult.sourceConfig.source, {});

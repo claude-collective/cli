@@ -9,7 +9,11 @@ export { loadAgentDefs, type AgentDefs } from "./load-agent-defs.js";
 export { copyLocalSkills, type SkillCopyResult } from "./copy-local-skills.js";
 export { installPluginSkills, type PluginInstallResult } from "./install-plugin-skills.js";
 export { uninstallPluginSkills, type PluginUninstallResult } from "./uninstall-plugin-skills.js";
-export { compareSkillsWithSource, buildSourceSkillsMap, type SkillComparisonResults } from "./compare-skills.js";
+export {
+  compareSkillsWithSource,
+  buildSourceSkillsMap,
+  type SkillComparisonResults,
+} from "./compare-skills.js";
 export { ensureMarketplace, type MarketplaceResult } from "./ensure-marketplace.js";
 export {
   writeProjectConfig,
@@ -50,10 +54,7 @@ export {
   type ScopedSkillDir,
   type ScopedSkillDirsResult,
 } from "./collect-scoped-skill-dirs.js";
-export {
-  findSkillMatch,
-  type SkillMatchResult,
-} from "./find-skill-match.js";
+export { findSkillMatch, type SkillMatchResult } from "./find-skill-match.js";
 export {
   generateSkillDiff,
   formatColoredDiff,

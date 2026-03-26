@@ -2718,14 +2718,14 @@ Phases 1-5 created the operations layer and did shallow wiring. Most commands on
 
 **Current state vs spec target:**
 
-| Command | Current | Target | Lines to remove | Key work |
-|---------|---------|--------|-----------------|----------|
-| compile.ts | 349 | ~150 | ~200 | Extract `discoverAllSkills`, wire `compileAgents` deeper |
-| update.tsx | 357 | ~200 | ~157 | Wire `compileAgents` (replace direct `recompileAgents`), extract `updateLocalSkill` |
-| doctor.ts | 443 | ~300 | ~143 | Wire `detectProject`, consolidate config loading |
-| diff.ts | 297 | ~200 | ~97 | Extract inline sourceSkills map to shared helper |
-| init.tsx | 424 | ~250 | ~174 | Remove remaining lower-level imports, inline `handleInstallation` |
-| edit.tsx | 480 | ~350 | ~130 | Extract migration block to operation |
+| Command    | Current | Target | Lines to remove | Key work                                                                            |
+| ---------- | ------- | ------ | --------------- | ----------------------------------------------------------------------------------- |
+| compile.ts | 349     | ~150   | ~200            | Extract `discoverAllSkills`, wire `compileAgents` deeper                            |
+| update.tsx | 357     | ~200   | ~157            | Wire `compileAgents` (replace direct `recompileAgents`), extract `updateLocalSkill` |
+| doctor.ts  | 443     | ~300   | ~143            | Wire `detectProject`, consolidate config loading                                    |
+| diff.ts    | 297     | ~200   | ~97             | Extract inline sourceSkills map to shared helper                                    |
+| init.tsx   | 424     | ~250   | ~174            | Remove remaining lower-level imports, inline `handleInstallation`                   |
+| edit.tsx   | 480     | ~350   | ~130            | Extract migration block to operation                                                |
 
 ### 6A: compile.ts — Extract skill discovery, remove private method shells
 
@@ -2741,7 +2741,7 @@ Contains user-facing log messages (7 E2E tests assert on these). The inner `comp
 **Lines 319-351: `resolveSourceForCompile()` + `loadAgentDefsForCompile()` (33 lines)**
 `loadAgentDefsForCompile` is a thin wrapper around `loadAgentDefs` — can be inlined. `resolveSourceForCompile` is 10 lines that can be inlined.
 
-**Gate:** compile E2E tests (7 tests in compile*.e2e.test.ts)
+**Gate:** compile E2E tests (7 tests in compile\*.e2e.test.ts)
 
 ### 6B: update.tsx — Wire compileAgents, extract updateLocalSkill
 
@@ -2786,6 +2786,7 @@ Same pattern as `compareSkillsWithSource` operation's internal logic. Could use 
 ### 6E: init.tsx — Remove remaining lower-level imports
 
 **Remaining direct imports that bypass operations:**
+
 - `detectProjectInstallation` — replace with `detectProject`
 - `resolveInstallPaths` — only used for success message paths, keep or extract
 - `buildAgentScopeMap` — used for `compileAgents` call, keep (it's a utility, not an operation)

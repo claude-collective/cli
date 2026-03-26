@@ -25,6 +25,7 @@ This caused 8+ E2E test files to fail with: `Expected skill "web-framework-react
 ## Fix Applied
 
 Added local skill copy fallback when marketplace resolution fails in `handleInstallation`:
+
 - In "plugin" mode: copy ALL skills locally (none were copied in Step 1)
 - In "mixed" mode: copy only plugin-intended skills locally (local-source skills were already copied in Step 1)
 - Set `installMode = "local"` so downstream Steps 3-5 use the correct mode for compilation and output reporting
@@ -32,10 +33,12 @@ Added local skill copy fallback when marketplace resolution fails in `handleInst
 ## Proposed Standard
 
 When extracting multi-step operations into separate functions, document the fallback/recovery paths as first-class concerns, not just the happy path. Each operation module should document:
+
 1. What happens when this step fails
 2. Which other steps depend on this step's output
 3. Whether fallback requires re-running a different step
 
 Add to `CLAUDE.md` or `.ai-docs/standards/clean-code-standards.md`:
+
 - ALWAYS preserve marketplace fallback behavior when refactoring install flows -- if marketplace is unavailable, skills MUST be copied locally as fallback
 - NEVER assume `deriveInstallMode()` will return "local" for default wizard selections -- `createDefaultSkillConfig()` uses the marketplace source name by default

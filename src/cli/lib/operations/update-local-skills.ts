@@ -44,7 +44,12 @@ export async function updateLocalSkills(
   for (const skill of skills) {
     onProgress?.(skill.id);
     if (!skill.sourcePath || !skill.sourceHash) {
-      failed.push({ id: skill.id, success: false, newHash: null, error: "No source path available" });
+      failed.push({
+        id: skill.id,
+        success: false,
+        newHash: null,
+        error: "No source path available",
+      });
       continue;
     }
 

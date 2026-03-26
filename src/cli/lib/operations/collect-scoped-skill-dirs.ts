@@ -23,9 +23,7 @@ export type ScopedSkillDirsResult = {
  *
  * @returns directories with scope annotations, plus path/existence metadata
  */
-export async function collectScopedSkillDirs(
-  projectDir: string,
-): Promise<ScopedSkillDirsResult> {
+export async function collectScopedSkillDirs(projectDir: string): Promise<ScopedSkillDirsResult> {
   const homeDir = os.homedir();
   const projectLocalPath = path.join(projectDir, LOCAL_SKILLS_PATH);
   const globalLocalPath = path.join(homeDir, LOCAL_SKILLS_PATH);

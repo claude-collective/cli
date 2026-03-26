@@ -371,7 +371,8 @@ export default class Init extends BaseCommand {
       this.log(`${SUCCESS_MESSAGES.INIT_SUCCESS}\n`);
 
       // Show copied skills summary for local/mixed modes (when not in plugin-only mode)
-      const isLocalOutput = installMode === "local" || (installMode === "mixed" && !pluginModeSucceeded);
+      const isLocalOutput =
+        installMode === "local" || (installMode === "mixed" && !pluginModeSucceeded);
       if (isLocalOutput && copiedSkills.length > 0) {
         this.log("Skills copied to:");
         this.log(`  ${projectPaths.skillsDir}`);

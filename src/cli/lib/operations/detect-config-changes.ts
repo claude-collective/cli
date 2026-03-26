@@ -35,10 +35,7 @@ export function detectConfigChanges(
   const removedAgents = oldAgentNames.filter((name) => !newAgentNames.includes(name));
 
   const sourceChanges = new Map<SkillId, { from: string; to: string }>();
-  const scopeChanges = new Map<
-    SkillId,
-    { from: "project" | "global"; to: "project" | "global" }
-  >();
+  const scopeChanges = new Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>();
   if (oldConfig?.skills) {
     for (const newSkill of wizardResult.skills) {
       const oldSkill = oldConfig.skills.find((s) => s.id === newSkill.id);

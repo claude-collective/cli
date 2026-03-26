@@ -12,11 +12,7 @@ import {
   ensureDir,
 } from "../../utils/fs.js";
 import { warn } from "../../utils/logger.js";
-import {
-  GITHUB_SOURCE,
-  STANDARD_FILES,
-  YAML_FORMATTING,
-} from "../../consts.js";
+import { GITHUB_SOURCE, STANDARD_FILES, YAML_FORMATTING } from "../../consts.js";
 import { IMPORT_DEFAULTS } from "../metadata-keys.js";
 
 /**

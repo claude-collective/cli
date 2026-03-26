@@ -1,11 +1,7 @@
 import path from "path";
 import { loadConfig } from "../configuration/config-loader.js";
 import { computeSkillFolderHash } from "../versioning.js";
-import {
-  writeFile,
-  fileExists,
-  ensureDir,
-} from "../../utils/fs.js";
+import { writeFile, fileExists, ensureDir } from "../../utils/fs.js";
 import { verbose } from "../../utils/logger.js";
 import {
   DEFAULT_VERSION,

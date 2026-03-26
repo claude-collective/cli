@@ -67,7 +67,10 @@ describe("copyLocalSkills", () => {
       makeSkillConfig("web-styling-tailwind", "project"),
     ];
 
-    const projectCopied = [makeCopiedSkill("web-framework-react"), makeCopiedSkill("web-styling-tailwind")];
+    const projectCopied = [
+      makeCopiedSkill("web-framework-react"),
+      makeCopiedSkill("web-styling-tailwind"),
+    ];
     const globalCopied = [makeCopiedSkill("api-framework-hono")];
 
     mockCopySkillsToLocalFlattened
@@ -122,7 +125,10 @@ describe("copyLocalSkills", () => {
       makeSkillConfig("web-styling-tailwind", "project"),
     ];
 
-    const projectCopied = [makeCopiedSkill("web-framework-react"), makeCopiedSkill("web-styling-tailwind")];
+    const projectCopied = [
+      makeCopiedSkill("web-framework-react"),
+      makeCopiedSkill("web-styling-tailwind"),
+    ];
     mockCopySkillsToLocalFlattened.mockResolvedValueOnce(projectCopied);
 
     const result = await copyLocalSkills(skills, PROJECT_DIR, MOCK_SOURCE_RESULT);
@@ -144,7 +150,10 @@ describe("copyLocalSkills", () => {
       makeSkillConfig("api-database-drizzle", "global"),
     ];
 
-    const globalCopied = [makeCopiedSkill("api-framework-hono"), makeCopiedSkill("api-database-drizzle")];
+    const globalCopied = [
+      makeCopiedSkill("api-framework-hono"),
+      makeCopiedSkill("api-database-drizzle"),
+    ];
     mockCopySkillsToLocalFlattened.mockResolvedValueOnce(globalCopied);
 
     const result = await copyLocalSkills(skills, PROJECT_DIR, MOCK_SOURCE_RESULT);

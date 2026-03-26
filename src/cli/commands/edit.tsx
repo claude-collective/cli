@@ -6,12 +6,7 @@ import { render } from "ink";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import {
-  CLAUDE_DIR,
-  CLI_BIN_NAME,
-  GLOBAL_INSTALL_ROOT,
-  SOURCE_DISPLAY_NAMES,
-} from "../consts.js";
+import { CLAUDE_DIR, CLI_BIN_NAME, GLOBAL_INSTALL_ROOT, SOURCE_DISPLAY_NAMES } from "../consts.js";
 import {
   detectProject,
   loadSource,
@@ -34,10 +29,7 @@ import {
 } from "../lib/installation/index.js";
 import { matrix, getSkillById } from "../lib/matrix/matrix-provider";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
-import {
-  deleteLocalSkill,
-  migrateLocalSkillScope,
-} from "../lib/skills/index.js";
+import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
 import type { SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { remove } from "../utils/fs.js";
@@ -128,7 +120,10 @@ export default class Edit extends BaseCommand {
       const mergedIds = new Set<SkillId>([...pluginSkillIds, ...configSkillIds]);
       currentSkillIds = [...mergedIds];
 
-      startupMessages.push({ level: "info", text: `Found ${currentSkillIds.length} installed skills` });
+      startupMessages.push({
+        level: "info",
+        text: `Found ${currentSkillIds.length} installed skills`,
+      });
     } catch (error) {
       this.handleError(error);
     }
@@ -186,7 +181,15 @@ export default class Edit extends BaseCommand {
     }
 
     const changes = detectConfigChanges(projectConfig, result, currentSkillIds);
-    const { addedSkills, removedSkills, addedAgents, removedAgents, sourceChanges, scopeChanges, agentScopeChanges } = changes;
+    const {
+      addedSkills,
+      removedSkills,
+      addedAgents,
+      removedAgents,
+      sourceChanges,
+      scopeChanges,
+      agentScopeChanges,
+    } = changes;
 
     const hasSourceChanges = sourceChanges.size > 0;
     const hasScopeChanges = scopeChanges.size > 0;
@@ -312,7 +315,11 @@ export default class Edit extends BaseCommand {
         (s) => addedSkills.includes(s.id) && s.source !== "local",
       );
       if (addedPluginSkills.length > 0) {
-        const pluginResult = await installPluginSkills(addedPluginSkills, sourceResult.marketplace, cwd);
+        const pluginResult = await installPluginSkills(
+          addedPluginSkills,
+          sourceResult.marketplace,
+          cwd,
+        );
         for (const item of pluginResult.installed) {
           this.log(`Installing plugin: ${item.ref}...`);
         }

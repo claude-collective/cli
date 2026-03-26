@@ -1,5 +1,9 @@
 import os from "os";
-import { detectGlobalInstallation, detectProjectInstallation, type Installation } from "../installation/index.js";
+import {
+  detectGlobalInstallation,
+  detectProjectInstallation,
+  type Installation,
+} from "../installation/index.js";
 
 export type BothInstallations = {
   global: Installation | null;

@@ -78,9 +78,7 @@ export async function loadSkillsFromDir(
 /**
  * Discovers local project skills from the .claude/skills/ directory.
  */
-export async function discoverLocalProjectSkills(
-  projectDir: string,
-): Promise<SkillDefinitionMap> {
+export async function discoverLocalProjectSkills(projectDir: string): Promise<SkillDefinitionMap> {
   const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
   return loadSkillsFromDir(localSkillsDir, LOCAL_SKILLS_PATH);
 }
@@ -110,9 +108,7 @@ export function mergeSkills(...skillSources: SkillDefinitionMap[]): SkillDefinit
  * Pure function — no user-facing logging. Callers add their own log messages.
  * Uses verbose() for diagnostic output only.
  */
-export async function discoverInstalledSkills(
-  projectDir: string,
-): Promise<DiscoveredSkills> {
+export async function discoverInstalledSkills(projectDir: string): Promise<DiscoveredSkills> {
   const isGlobalProject = projectDir === os.homedir();
 
   // 1. Global plugins
