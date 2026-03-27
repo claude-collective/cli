@@ -467,23 +467,23 @@ describe("WizardStore", () => {
       expect(showLabels).toBe(true);
     });
 
-    it("should toggle help on", () => {
+    it("should toggle info on", () => {
       const store = useWizardStore.getState();
 
-      store.toggleHelp();
+      store.toggleInfo();
 
-      const { showHelp } = useWizardStore.getState();
-      expect(showHelp).toBe(true);
+      const { showInfo } = useWizardStore.getState();
+      expect(showInfo).toBe(true);
     });
 
-    it("should toggle help off (show then hide)", () => {
+    it("should toggle info off (show then hide)", () => {
       const store = useWizardStore.getState();
 
-      store.toggleHelp();
-      store.toggleHelp();
+      store.toggleInfo();
+      store.toggleInfo();
 
-      const { showHelp } = useWizardStore.getState();
-      expect(showHelp).toBe(false);
+      const { showInfo } = useWizardStore.getState();
+      expect(showInfo).toBe(false);
     });
 
     it("should toggle settings on", () => {
@@ -505,9 +505,9 @@ describe("WizardStore", () => {
       expect(showSettings).toBe(false);
     });
 
-    it("should start with showHelp false", () => {
-      const { showHelp } = useWizardStore.getState();
-      expect(showHelp).toBe(false);
+    it("should start with showInfo false", () => {
+      const { showInfo } = useWizardStore.getState();
+      expect(showInfo).toBe(false);
     });
 
     it("should start with showSettings false", () => {
@@ -515,13 +515,13 @@ describe("WizardStore", () => {
       expect(showSettings).toBe(false);
     });
 
-    it("should reset showHelp to false after reset", () => {
+    it("should reset showInfo to false after reset", () => {
       const store = useWizardStore.getState();
-      store.toggleHelp();
+      store.toggleInfo();
       store.reset();
 
-      const { showHelp } = useWizardStore.getState();
-      expect(showHelp).toBe(false);
+      const { showInfo } = useWizardStore.getState();
+      expect(showInfo).toBe(false);
     });
 
     it("should reset showSettings to false after reset", () => {

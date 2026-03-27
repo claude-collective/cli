@@ -3,14 +3,14 @@
  *
  * Every character-based hotkey and its display label lives here so that
  * changing a binding updates the key check, the footer hint, and the
- * help modal in one place.
+ * info panel in one place.
  */
 
 // ---------------------------------------------------------------------------
 // Global hotkeys (active across multiple wizard steps)
 // ---------------------------------------------------------------------------
 
-export const HOTKEY_HELP = { key: "?", label: "?" } as const;
+export const HOTKEY_INFO = { key: "i", label: "I" } as const;
 export const HOTKEY_ACCEPT_DEFAULTS = { key: "a", label: "A" } as const;
 export const HOTKEY_SCOPE = { key: "s", label: "S" } as const;
 export const HOTKEY_SETTINGS = { key: "s", label: "S" } as const;

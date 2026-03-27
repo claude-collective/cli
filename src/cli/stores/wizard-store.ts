@@ -210,7 +210,7 @@ export type WizardState = {
   customizeSources: boolean;
 
   showSettings: boolean;
-  showHelp: boolean;
+  showInfo: boolean;
   enabledSources: Record<string, boolean>;
 
   selectedAgents: AgentName[];
@@ -382,8 +382,8 @@ export type WizardState = {
   setCustomizeSources: (customize: boolean) => void;
   /** Toggle the settings overlay (source management). */
   toggleSettings: () => void;
-  /** Toggle the help overlay (hotkey reference). */
-  toggleHelp: () => void;
+  /** Toggle the info overlay (selected skills and agents). */
+  toggleInfo: () => void;
   /**
    * Replace the full set of enabled/disabled sources.
    * @param sources - Record of source name to enabled boolean. Empty-string keys are filtered out.
@@ -509,7 +509,7 @@ type WizardStateData = Pick<
   | "focusedSkillId"
   | "customizeSources"
   | "showSettings"
-  | "showHelp"
+  | "showInfo"
   | "enabledSources"
   | "selectedAgents"
   | "agentConfigs"
@@ -537,7 +537,7 @@ const createInitialState = (): WizardStateData => ({
   focusedSkillId: null,
   customizeSources: false,
   showSettings: false,
-  showHelp: false,
+  showInfo: false,
   enabledSources: {},
   selectedAgents: [],
   agentConfigs: [],
@@ -859,7 +859,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleSettings: () => set((state) => ({ showSettings: !state.showSettings })),
 
-  toggleHelp: () => set((state) => ({ showHelp: !state.showHelp })),
+  toggleInfo: () => set((state) => ({ showInfo: !state.showInfo })),
 
   setEnabledSources: (sources) => {
     const invalidKeys = Object.keys(sources).filter((key) => !key.trim());

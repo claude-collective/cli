@@ -576,9 +576,24 @@ function detectConfigChanges(
     removedSkills: difference(currentSkillIds, newSkillIds),
     addedAgents: difference(newAgentNames, oldAgentNames),
     removedAgents: difference(oldAgentNames, newAgentNames),
-    sourceChanges: detectPropertyChanges(wizardResult.skills, oldSkillsById, (s) => s.id, (s) => s.source),
-    scopeChanges: detectPropertyChanges(wizardResult.skills, oldSkillsById, (s) => s.id, (s) => s.scope),
-    agentScopeChanges: detectPropertyChanges(wizardResult.agentConfigs, oldAgentsByName, (a) => a.name, (a) => a.scope),
+    sourceChanges: detectPropertyChanges(
+      wizardResult.skills,
+      oldSkillsById,
+      (s) => s.id,
+      (s) => s.source,
+    ),
+    scopeChanges: detectPropertyChanges(
+      wizardResult.skills,
+      oldSkillsById,
+      (s) => s.id,
+      (s) => s.scope,
+    ),
+    agentScopeChanges: detectPropertyChanges(
+      wizardResult.agentConfigs,
+      oldAgentsByName,
+      (a) => a.name,
+      (a) => a.scope,
+    ),
   };
 }
 

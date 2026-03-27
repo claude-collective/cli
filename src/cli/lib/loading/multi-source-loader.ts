@@ -68,7 +68,12 @@ export async function loadSkillsFromAllSources(
   const primarySourceName = resolvedMarketplace ?? DEFAULT_PUBLIC_SOURCE_NAME;
   const primarySourceType: SkillSourceType = isDefaultPublicSource ? "public" : "private";
 
-  tagPrimarySourceSkills(primaryMatrix, primarySourceName, primarySourceType, marketplaceDisplayName);
+  tagPrimarySourceSkills(
+    primaryMatrix,
+    primarySourceName,
+    primarySourceType,
+    marketplaceDisplayName,
+  );
   tagLocalSkills(primaryMatrix);
   await tagPluginSkills(primaryMatrix, projectDir, primarySourceName, primarySourceType);
 

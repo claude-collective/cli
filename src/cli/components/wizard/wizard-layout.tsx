@@ -5,9 +5,9 @@ import type { StartupMessage } from "../../utils/logger.js";
 import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
 import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
-import { HelpModal } from "./help-modal.js";
+import { InfoPanel } from "./info-panel.js";
 import {
-  HOTKEY_HELP,
+  HOTKEY_INFO,
   HOTKEY_SCOPE,
   HOTKEY_SET_ALL_LOCAL,
   HOTKEY_SET_ALL_PLUGIN,
@@ -183,8 +183,8 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
           domainNav={domainNav}
           dropdowns={dropdowns}
         />
-        {store.showHelp ? (
-          <HelpModal currentStep={store.step} />
+        {FEATURE_FLAGS.INFO_PANEL && store.showInfo ? (
+          <InfoPanel />
         ) : (
           <>
             <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
@@ -226,7 +226,11 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
                 isVisible={store.step === "sources" && FEATURE_FLAGS.SOURCE_SEARCH}
                 isActive={store.showSettings}
               />
-              <DefinitionItem label="Help" values={[HOTKEY_HELP.label]} />
+              <DefinitionItem
+                label="Info"
+                values={[HOTKEY_INFO.label]}
+                isVisible={FEATURE_FLAGS.INFO_PANEL}
+              />
             </Box>
             <WizardFooter />
           </>

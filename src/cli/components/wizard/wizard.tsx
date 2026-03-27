@@ -16,7 +16,7 @@ import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
 import { matrix, findStack } from "../../lib/matrix/matrix-provider.js";
 import {
   HOTKEY_ACCEPT_DEFAULTS,
-  HOTKEY_HELP,
+  HOTKEY_INFO,
   HOTKEY_SCOPE,
   HOTKEY_SETTINGS,
   isHotkey,
@@ -27,6 +27,7 @@ import { getStackName } from "./utils.js";
 import type { StartupMessage } from "../../utils/logger.js";
 import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
 import { useBuildStepProps } from "../hooks/use-build-step-props.js";
+import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 
 export type WizardResultV2 = {
   skills: SkillConfig[];
@@ -113,16 +114,18 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    if (store.showHelp) {
-      if (key.escape || isHotkey(input, HOTKEY_HELP)) {
-        store.toggleHelp();
+    if (FEATURE_FLAGS.INFO_PANEL) {
+      if (store.showInfo) {
+        if (key.escape || isHotkey(input, HOTKEY_INFO)) {
+          store.toggleInfo();
+        }
+        return;
       }
-      return;
-    }
 
-    if (isHotkey(input, HOTKEY_HELP)) {
-      store.toggleHelp();
-      return;
+      if (isHotkey(input, HOTKEY_INFO)) {
+        store.toggleInfo();
+        return;
+      }
     }
 
     if (key.escape) {
