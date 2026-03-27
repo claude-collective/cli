@@ -12,6 +12,7 @@ const SEARCH_PILL_LABEL = "\u2315 Search";
 
 export type SourceOption = {
   id: string;
+  displayName?: string;
   selected: boolean;
   installed: boolean;
 };
@@ -62,9 +63,9 @@ type SourceSectionProps = {
 };
 
 function formatSourceLabel(option: SourceOption): string {
-  const displayName = SOURCE_DISPLAY_NAMES[option.id] ?? option.id;
+  const label = option.displayName ?? SOURCE_DISPLAY_NAMES[option.id] ?? option.id;
   const prefix = option.installed ? "\u2713 " : "";
-  return `${prefix}${displayName}`;
+  return `${prefix}${label}`;
 }
 
 const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({

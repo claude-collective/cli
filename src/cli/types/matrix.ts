@@ -257,6 +257,8 @@ export type SkillSourceType = "public" | "private" | "local";
 export type SkillSource = {
   /** Source identifier: "public", marketplace name, "local" */
   name: string;
+  /** Human-readable label from marketplace.json owner.name (e.g., "Agents Inc.") */
+  displayName?: string;
   type: SkillSourceType;
   /** Source URL for remote sources (e.g., "github:acme-corp/claude-skills") */
   url?: string;

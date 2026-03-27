@@ -1,6 +1,7 @@
 import os from "os";
 import path from "path";
 import {
+  DEFAULT_BRANDING,
   PROJECT_ROOT,
   SKILL_CATEGORIES_PATH,
   SKILL_RULES_PATH,
@@ -64,6 +65,7 @@ export type SourceLoadResult = {
   sourcePath: string;
   isLocal: boolean;
   marketplace?: string;
+  marketplaceDisplayName?: string;
 };
 
 export async function loadSkillsMatrixFromSource(
@@ -95,6 +97,7 @@ export async function loadSkillsMatrixFromSource(
       sourcePath: fetchResult.path,
       isLocal: false,
       marketplace: sourceConfig.marketplace,
+      marketplaceDisplayName: DEFAULT_BRANDING.NAME,
     };
   } else {
     const isLocal = isLocalSource(source) || devMode === true;
@@ -135,6 +138,7 @@ export async function loadSkillsMatrixFromSource(
       resolvedProjectDir,
       forceRefresh,
       result.marketplace,
+      result.marketplaceDisplayName,
     );
   }
 
@@ -186,15 +190,14 @@ async function loadFromRemote(
   // This handles the case where sourceConfig.marketplace is undefined (e.g. during
   // `agentsinc init --source github:user/repo` before any project config exists).
   let marketplace = sourceConfig.marketplace;
-  if (!marketplace) {
-    try {
-      const marketplaceResult = await fetchMarketplace(source, { forceRefresh });
-      marketplace = marketplaceResult.marketplace.name;
-      verbose(`Using marketplace name from marketplace.json: ${marketplace}`);
-    } catch {
-      // No marketplace.json — source name is used as fallback
-      verbose(`Source does not have a marketplace.json — using source name as label`);
-    }
+  let marketplaceDisplayName: string | undefined;
+  try {
+    const marketplaceResult = await fetchMarketplace(source, { forceRefresh });
+    marketplace ??= marketplaceResult.marketplace.name;
+    marketplaceDisplayName = marketplaceResult.marketplace.owner.name;
+    verbose(`Using marketplace name from marketplace.json: ${marketplace}`);
+  } catch {
+    verbose(`Source does not have a marketplace.json — using source name as label`);
   }
 
   return {
@@ -203,6 +206,7 @@ async function loadFromRemote(
     sourcePath: fetchResult.path,
     isLocal: false,
     marketplace,
+    marketplaceDisplayName,
   };
 }
 

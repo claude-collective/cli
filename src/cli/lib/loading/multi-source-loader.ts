@@ -46,6 +46,8 @@ import { fetchFromSource, fetchMarketplace } from "./source-fetcher";
  * @param forceRefresh - Whether to bypass cached source data
  * @param marketplace - Optional marketplace name resolved from the source's marketplace.json.
  *                      Takes precedence over `sourceConfig.marketplace` when provided.
+ * @param marketplaceDisplayName - Optional human-readable label from marketplace.json owner.name
+ *                                 (e.g., "Agents Inc."). Threaded to SkillSource.displayName.
  *
  * @remarks
  * **Side effects:** Mutates `primaryMatrix` in place. May perform network requests
@@ -58,6 +60,7 @@ export async function loadSkillsFromAllSources(
   projectDir: string,
   forceRefresh = false,
   marketplace?: string,
+  marketplaceDisplayName?: string,
 ): Promise<void> {
   const resolvedMarketplace = marketplace ?? sourceConfig.marketplace;
   const isDefaultPublicSource = sourceConfig.source === DEFAULT_SOURCE;
@@ -65,7 +68,7 @@ export async function loadSkillsFromAllSources(
   const primarySourceName = resolvedMarketplace ?? DEFAULT_PUBLIC_SOURCE_NAME;
   const primarySourceType: SkillSourceType = isDefaultPublicSource ? "public" : "private";
 
-  tagPrimarySourceSkills(primaryMatrix, primarySourceName, primarySourceType);
+  tagPrimarySourceSkills(primaryMatrix, primarySourceName, primarySourceType, marketplaceDisplayName);
   tagLocalSkills(primaryMatrix);
   await tagPluginSkills(primaryMatrix, projectDir, primarySourceName, primarySourceType);
 
@@ -81,12 +84,14 @@ function tagPrimarySourceSkills(
   matrix: MergedSkillsMatrix,
   sourceName: string,
   sourceType: SkillSourceType,
+  displayName?: string,
 ): void {
   for (const [, skill] of typedEntries(matrix.skills)) {
     if (!skill) continue;
 
     const source: SkillSource = {
       name: sourceName,
+      displayName,
       type: sourceType,
       installed: false,
       primary: true,

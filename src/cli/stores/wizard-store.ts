@@ -1067,10 +1067,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         (a, b) => getSourceSortTier(a) - getSourceSortTier(b),
       );
 
-      const options =
+      const options: SourceOption[] =
         sortedSources.length > 0
           ? sortedSources.map((source) => ({
               id: source.name,
+              displayName: source.displayName,
               selected: selectedSource === source.name,
               installed: source.installed,
             }))
