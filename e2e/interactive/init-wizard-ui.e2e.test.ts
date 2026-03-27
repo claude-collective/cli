@@ -66,24 +66,6 @@ describe("init wizard — UI elements", () => {
       expect(output).toContain("Framework");
     });
 
-    it("should open help modal when ? key is pressed and close it with ESC", async () => {
-      wizard = await InitWizard.launch();
-
-      // Press ? to open help modal
-      await wizard.stack.openHelp();
-
-      const helpScreen = wizard.stack.getScreen();
-      expect(helpScreen).toContain("Navigation");
-      expect(helpScreen).toContain("Toggles");
-
-      // Press ESC to close help modal
-      await wizard.stack.closeHelp();
-
-      const afterCloseScreen = wizard.stack.getScreen();
-      expect(afterCloseScreen).toContain(STEP_TEXT.STACK);
-      expect(afterCloseScreen).not.toContain("Keyboard Shortcuts");
-    });
-
     it("should open settings overlay when S key is pressed during sources step", async () => {
       wizard = await InitWizard.launch();
 

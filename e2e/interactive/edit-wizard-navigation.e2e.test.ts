@@ -99,7 +99,7 @@ describe("edit wizard — navigation and hotkeys", () => {
       const output = wizard.build.getOutput();
       // The build step footer shows these hotkey indicators
       expect(output).toContain("Labels");
-      expect(output).toContain("Help");
+      expect(output).toContain("Filter incompatible");
     });
 
     it("should toggle focused skill scope with S key", async () => {

@@ -101,11 +101,7 @@ describe("edit wizard — skill detection across sources and scopes", () => {
 
         const webOutput = wizard.build.getOutput();
 
-        // Verify we're on the build step by checking stats panel content
-        expect(webOutput).toContain("0 plugin");
-        expect(webOutput).toContain("2 local");
-
-        // Web domain categories should be visible with pre-selected skills
+        // Verify we're on the build step — web domain categories should be visible
         expect(webOutput).toContain("Framework");
         expect(webOutput).toContain("Testing");
 
@@ -115,8 +111,6 @@ describe("edit wizard — skill detection across sources and scopes", () => {
         const apiOutput = wizard.build.getOutput();
         // The API domain's category header confirms we navigated to the API build step
         expect(apiOutput).toContain("API Framework");
-        // Stats panel still visible confirms we're on the build step
-        expect(apiOutput).toContain("0 plugin");
       },
     );
 

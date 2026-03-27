@@ -33,14 +33,4 @@ export class StackStep extends BaseStep {
   async cancel(): Promise<void> {
     await this.pressEscape();
   }
-
-  /** Open help modal (press "?"). */
-  async openHelp(): Promise<void> {
-    await this.pressKey("?");
-  }
-
-  /** Close help modal (Escape). */
-  async closeHelp(): Promise<void> {
-    await this.pressEscape();
-  }
 }
