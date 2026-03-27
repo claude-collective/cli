@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.93.0] - 2026-03-28
+
+**Absolute localPath fix, operations reorganization**
+
+- Local skill `localPath` changed from relative to absolute, fixing ENOENT in dual-scope edit
+- Operations reorganized into `source/`, `skills/`, `project/` subfolders (D-154)
+- Dead lifecycle operations removed (`executeInstallation`, `recompileProject`)
+
+See [changelogs/0.93.0.md](./changelogs/0.93.0.md) for full details.
+
 ## [0.92.0] - 2026-03-27
 
 **Info panel feature flag, help modal removal, task tracking cleanup**

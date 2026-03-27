@@ -1,34 +1,31 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                                                                                      | Status        |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-152 | Fix ENOENT in dual-scope skill copy — global `localPath` resolved against cwd not homedir                                                 | Ready for Dev |
-| D-123 | Local mode ENOENT — empty `sourcePath` for built-in matrix on consuming projects                                                          | Ready for Dev |
-| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                                                                           | Ready for Dev |
-| D-156 | Rename "local mode" to "eject mode" across CLI commands, config, types, and documentation                                                 | Ready for Dev |
-| D-144 | Info panel — replace `?` overlay with `I` panel (stats, context, toggles)                                                                 | Investigate   |
-| D-111 | Create a GIF demo for the README                                                                                                          | Ready for Dev |
-| D-112 | Create a guide for setting up AI documentation                                                                                            | Ready for Dev |
-| D-157 | Eliminate hardcoded marketplace data from CLI — categories, rules, domain-agents. [Plan](./D-157-eliminate-hardcoded-marketplace-data.md) | Investigate   |
-| D-154 | Organize 26 operation files into domain subfolders, update barrel exports and imports                                                     | Ready for Dev |
-| D-110 | Fix the logo in the README                                                                                                                | Ready for Dev |
-| D-109 | Fix the screenshots in the README                                                                                                         | Ready for Dev |
-| D-62  | Review default stacks: add reviewing/research skills                                                                                      | Ready for Dev |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions                                                                          | Ready for Dev |
-| D-118 | Investigate renaming "project/global" scope to "project/user"                                                                             | Investigate   |
-| D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting                                                          | Ready for Dev |
-| D-131 | Track project installations in global config                                                                                              | Investigate   |
-| D-127 | UX for claiming global skills/agents into project scope                                                                                   | Investigate   |
-| D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names                                                             | Ready for Dev |
-| D-122 | Auto-update marketplace before plugin install                                                                                             | Ready for Dev |
-| D-111 | Replace E2E text anchors with stable test identifiers                                                                                     | Investigate   |
-| D-90  | Add Sentry tracking for unresolved matrix references                                                                                      | Ready for Dev |
-| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)                                                               | Ready for Dev |
-| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                                                                            | Ready for Dev |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                                                           | Ready for Dev |
-| D-66  | AI-assisted PR review: categorize diffs by type                                                                                           | Investigate   |
-| D-69  | Config migration strategy for outdated config shapes                                                                                      | Investigate   |
-| D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`                                                            | Ready for Dev |
+| ID    | Task                                                                                      | Status        |
+| ----- | ----------------------------------------------------------------------------------------- | ------------- |
+| D-123 | Local mode ENOENT — empty `sourcePath` for built-in matrix on consuming projects          | Ready for Dev |
+| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                           | Ready for Dev |
+| D-156 | Rename "local mode" to "eject mode" across CLI commands, config, types, and documentation | Ready for Dev |
+| D-144 | Info panel — replace `?` overlay with `I` panel (stats, context, toggles)                 | Investigate   |
+| D-111 | Create a GIF demo for the README                                                          | Ready for Dev |
+| D-112 | Create a guide for setting up AI documentation                                            | Ready for Dev |
+| D-110 | Fix the logo in the README                                                                | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                                         | Ready for Dev |
+| D-62  | Review default stacks: add reviewing/research skills                                      | Ready for Dev |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions                          | Ready for Dev |
+| D-118 | Investigate renaming "project/global" scope to "project/user"                             | Investigate   |
+| D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting          | Ready for Dev |
+| D-131 | Track project installations in global config                                              | Investigate   |
+| D-127 | UX for claiming global skills/agents into project scope                                   | Investigate   |
+| D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names             | Ready for Dev |
+| D-122 | Auto-update marketplace before plugin install                                             | Ready for Dev |
+| D-111 | Replace E2E text anchors with stable test identifiers                                     | Investigate   |
+| D-90  | Add Sentry tracking for unresolved matrix references                                      | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)               | Ready for Dev |
+| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                            | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                           | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type                                           | Investigate   |
+| D-69  | Config migration strategy for outdated config shapes                                      | Investigate   |
+| D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`            | Ready for Dev |
 
 ---
 
@@ -48,14 +45,6 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ## Active Tasks
 
 ### Bugs
-
-#### D-152: Fix ENOENT in dual-scope skill copy
-
-**Priority:** High
-
-`skill-copier.ts:215` resolves global skill `localPath` against `process.cwd()` instead of the discovery context (`homedir`). Root cause: `localPath` is stored as a relative path during discovery with no context tracking. 8 E2E tests currently use `it.fails()` as a workaround.
-
----
 
 #### D-123: Local mode ENOENT on consuming projects
 
@@ -78,16 +67,6 @@ Stale Claude CLI marketplace clone causes "not found" errors for renamed/new ski
 **Priority:** Medium
 
 Add `projects?: string[]` to global config, updated by init/edit/uninstall. Warn on global uninstall if project installations still depend on it. Prevents broken TypeScript imports when global is uninstalled before projects. Stale entries handled by `fileExists` check.
-
----
-
-### Operations Layer
-
-#### D-154: Organize operations into domain folders
-
-**Priority:** Medium
-
-Group the 26 operation files into domain subdirectories: `source/`, `skills/`, `plugins/`, `config/`, `agents/`, `scaffold/`, `lifecycle/`. Update barrel exports and all import paths across the codebase.
 
 ---
 
