@@ -7,16 +7,12 @@
 | D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                                                                           | Ready for Dev |
 | D-156 | Rename "local mode" to "eject mode" across CLI commands, config, types, and documentation                                                 | Ready for Dev |
 | D-144 | Info panel — replace `?` overlay with `I` panel (stats, context, toggles)                                                                 | Investigate   |
-| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                                                                   | In Progress   |
-| D-140 | Agent gap analysis — add 5 new agents. [Proposal](./D-140-agent-gap-analysis.md)                                                          | Ready for Dev |
 | D-111 | Create a GIF demo for the README                                                                                                          | Ready for Dev |
-| D-97  | Improve startup time — lazy-load matrix generation                                                                                        | Investigate   |
 | D-112 | Create a guide for setting up AI documentation                                                                                            | Ready for Dev |
 | D-157 | Eliminate hardcoded marketplace data from CLI — categories, rules, domain-agents. [Plan](./D-157-eliminate-hardcoded-marketplace-data.md) | Investigate   |
 | D-154 | Organize 26 operation files into domain subfolders, update barrel exports and imports                                                     | Ready for Dev |
 | D-110 | Fix the logo in the README                                                                                                                | Ready for Dev |
 | D-109 | Fix the screenshots in the README                                                                                                         | Ready for Dev |
-| D-130 | Narrow stack type safety — category-scoped SkillId unions. Depends on D-97                                                                | Investigate   |
 | D-62  | Review default stacks: add reviewing/research skills                                                                                      | Ready for Dev |
 | D-138 | Iterate on sub-agents — review and improve all agent definitions                                                                          | Ready for Dev |
 | D-118 | Investigate renaming "project/global" scope to "project/user"                                                                             | Investigate   |
@@ -53,16 +49,6 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 
 ### Bugs
 
-#### D-92: Global config missing `source`, `marketplace`, `selectedAgents`
-
-**Priority:** High
-
-When running `cc init` from a project directory and selecting global-scoped skills, the global config at `~/.claude-src/config.ts` is written without `source`, `marketplace`, or `selectedAgents`. These fields only appear in the project config. The global config should include them so that `cc edit` from global context can resolve the marketplace and install plugins.
-
-**Reproduction:** Run `cc init` from a project dir, select global-scoped skills. Compare `~/.claude-src/config.ts` (missing fields) with `<project>/.claude-src/config.ts` (has all fields).
-
----
-
 #### D-152: Fix ENOENT in dual-scope skill copy
 
 **Priority:** High
@@ -92,14 +78,6 @@ Stale Claude CLI marketplace clone causes "not found" errors for renamed/new ski
 **Priority:** Medium
 
 Add `projects?: string[]` to global config, updated by init/edit/uninstall. Warn on global uninstall if project installations still depend on it. Prevents broken TypeScript imports when global is uninstalled before projects. Stale entries handled by `fileExists` check.
-
----
-
-#### D-130: Narrow stack type safety
-
-**Priority:** Low
-
-`StackAgentConfig` allows any `SkillId` in any `Category`. Generate a discriminated type where each category key only accepts skill IDs that belong to that category (e.g., `"web-framework"` only accepts `"web-framework-react" | "web-framework-vue"`). Depends on D-97 (pre-generated matrix) to avoid regeneration overhead.
 
 ---
 
@@ -378,25 +356,6 @@ In `src/cli/lib/matrix/matrix-resolver.ts`, `getDiscourageReason()` (lines 213-2
 Add Sentry `captureMessage` (or `captureException`) calls on every fallback path so we can track unresolved matrix references in production. Include the referencing skill ID, the missing referenced ID, and the relationship type (`requires`, `conflictsWith`, `providesSetupFor`) in the Sentry context.
 
 **Key file:** `src/cli/lib/matrix/matrix-resolver.ts`
-
----
-
-### Performance
-
-#### D-97: Improve startup time — lazy-load matrix generation
-
-**Priority:** High
-
-The CLI is unresponsive for up to ~5 seconds on startup (varies by machine speed). The likely cause is that the entire skills matrix is generated eagerly on startup — including resolving all marketplace skills, local skills, and custom skills.
-
-**Proposed approach:** Only generate the matrix for custom/local skills on startup, then merge them into the pre-existing marketplace matrix rather than recreating everything from scratch. The marketplace matrix is static between CLI updates and could be cached or loaded as a pre-built artifact, with only the user's custom additions computed at runtime.
-
-**Investigation needed:**
-
-- Profile startup to confirm matrix generation is the bottleneck
-- Determine which parts of matrix generation are expensive (YAML parsing, skill resolution, category building)
-- Design a merge strategy: pre-built marketplace matrix + incremental custom skill overlay
-- Consider caching the marketplace matrix to disk after first generation
 
 ---
 
