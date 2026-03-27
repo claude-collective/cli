@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { SkillId } from "../../types/index.js";
-import type { SkillConfig } from "../../types/config.js";
+import type { SkillId } from "../../../types/index.js";
+import type { SkillConfig } from "../../../types/config.js";
 
-vi.mock("../../utils/exec.js", () => ({
+vi.mock("../../../utils/exec.js", () => ({
   claudePluginUninstall: vi.fn(),
 }));
 
 import { uninstallPluginSkills } from "./uninstall-plugin-skills";
-import { claudePluginUninstall } from "../../utils/exec.js";
+import { claudePluginUninstall } from "../../../utils/exec.js";
 
 const mockClaudePluginUninstall = vi.mocked(claudePluginUninstall);
 

@@ -1,13 +1,13 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { discoverAllPluginSkills } from "../plugins/index.js";
-import { directoryExists, glob, readFile, fileExists } from "../../utils/fs.js";
-import { parseFrontmatter } from "../loading/index.js";
-import { verbose, warn } from "../../utils/logger.js";
-import { GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../consts.js";
-import { typedEntries, typedKeys } from "../../utils/typed-object.js";
-import type { SkillDefinition, SkillDefinitionMap, SkillId } from "../../types/index.js";
+import { discoverAllPluginSkills } from "../../plugins/index.js";
+import { directoryExists, glob, readFile, fileExists } from "../../../utils/fs.js";
+import { parseFrontmatter } from "../../loading/index.js";
+import { verbose, warn } from "../../../utils/logger.js";
+import { GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts.js";
+import { typedEntries, typedKeys } from "../../../utils/typed-object.js";
+import type { SkillDefinition, SkillDefinitionMap, SkillId } from "../../../types/index.js";
 
 export type DiscoveredSkills = {
   allSkills: SkillDefinitionMap;

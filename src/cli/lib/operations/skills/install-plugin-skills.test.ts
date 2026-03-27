@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { SkillConfig } from "../../types/config.js";
+import type { SkillConfig } from "../../../types/config.js";
 
-vi.mock("../../utils/exec.js", () => ({
+vi.mock("../../../utils/exec.js", () => ({
   claudePluginInstall: vi.fn(),
 }));
 
 import { installPluginSkills } from "./install-plugin-skills";
-import { claudePluginInstall } from "../../utils/exec.js";
+import { claudePluginInstall } from "../../../utils/exec.js";
 
 const mockClaudePluginInstall = vi.mocked(claudePluginInstall);
 

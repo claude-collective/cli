@@ -1,4 +1,4 @@
-import type { SkillComparisonResult } from "../skills/index.js";
+import type { SkillComparisonResult } from "../../skills/index.js";
 
 export type SkillMatchResult = {
   match: SkillComparisonResult | null;

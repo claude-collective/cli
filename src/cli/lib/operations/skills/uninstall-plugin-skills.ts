@@ -1,7 +1,7 @@
-import { claudePluginUninstall } from "../../utils/exec.js";
-import { getErrorMessage } from "../../utils/errors.js";
-import type { SkillId } from "../../types/index.js";
-import type { SkillConfig } from "../../types/config.js";
+import { claudePluginUninstall } from "../../../utils/exec.js";
+import { getErrorMessage } from "../../../utils/errors.js";
+import type { SkillId } from "../../../types/index.js";
+import type { SkillConfig } from "../../../types/config.js";
 
 export type PluginUninstallResult = {
   uninstalled: SkillId[];

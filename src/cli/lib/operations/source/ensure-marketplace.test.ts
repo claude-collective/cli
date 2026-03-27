@@ -1,17 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { SourceLoadResult } from "../loading/source-loader.js";
+import type { SourceLoadResult } from "../../loading/source-loader.js";
 
-vi.mock("../../utils/exec.js", () => ({
+vi.mock("../../../utils/exec.js", () => ({
   claudePluginMarketplaceExists: vi.fn(),
   claudePluginMarketplaceAdd: vi.fn(),
   claudePluginMarketplaceUpdate: vi.fn(),
 }));
 
-vi.mock("../loading/index.js", () => ({
+vi.mock("../../loading/index.js", () => ({
   fetchMarketplace: vi.fn(),
 }));
 
-vi.mock("../../utils/logger.js", () => ({
+vi.mock("../../../utils/logger.js", () => ({
   warn: vi.fn(),
   verbose: vi.fn(),
   log: vi.fn(),
@@ -23,9 +23,9 @@ import {
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
   claudePluginMarketplaceUpdate,
-} from "../../utils/exec.js";
-import { fetchMarketplace } from "../loading/index.js";
-import { warn } from "../../utils/logger.js";
+} from "../../../utils/exec.js";
+import { fetchMarketplace } from "../../loading/index.js";
+import { warn } from "../../../utils/logger.js";
 
 const mockMarketplaceExists = vi.mocked(claudePluginMarketplaceExists);
 const mockMarketplaceAdd = vi.mocked(claudePluginMarketplaceAdd);

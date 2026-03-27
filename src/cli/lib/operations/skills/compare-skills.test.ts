@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { MergedSkillsMatrix, SkillId } from "../../types/index.js";
-import type { SkillComparisonResult } from "../skills/index.js";
+import type { MergedSkillsMatrix, SkillId } from "../../../types/index.js";
+import type { SkillComparisonResult } from "../../skills/index.js";
 import type { ScopedSkillDirsResult } from "./collect-scoped-skill-dirs.js";
 
-vi.mock("../skills/index.js", () => ({
+vi.mock("../../skills/index.js", () => ({
   compareLocalSkillsWithSource: vi.fn(),
 }));
 
@@ -16,7 +16,7 @@ vi.mock("os", () => ({
 }));
 
 import { compareSkillsWithSource } from "./compare-skills";
-import { compareLocalSkillsWithSource } from "../skills/index.js";
+import { compareLocalSkillsWithSource } from "../../skills/index.js";
 import { collectScopedSkillDirs } from "./collect-scoped-skill-dirs.js";
 
 const mockCompareLocalSkills = vi.mocked(compareLocalSkillsWithSource);

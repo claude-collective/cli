@@ -1,7 +1,7 @@
-import { getAgentDefinitions } from "../agents/index.js";
-import { loadAllAgents } from "../loading/index.js";
-import { PROJECT_ROOT } from "../../consts.js";
-import type { AgentDefinition, AgentName, AgentSourcePaths } from "../../types/index.js";
+import { getAgentDefinitions } from "../../agents/index.js";
+import { loadAllAgents } from "../../loading/index.js";
+import { PROJECT_ROOT } from "../../../consts.js";
+import type { AgentDefinition, AgentName, AgentSourcePaths } from "../../../types/index.js";
 
 export type AgentDefs = {
   /** Merged agent definitions (CLI defaults + source overrides). Source takes precedence. */

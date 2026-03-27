@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { AgentDefinition, AgentName, ProjectConfig } from "../../types";
-import type { WizardResultV2 } from "../../components/wizard/wizard";
-import type { SourceLoadResult } from "../loading/source-loader";
+import type { AgentDefinition, AgentName, ProjectConfig } from "../../../types";
+import type { WizardResultV2 } from "../../../components/wizard/wizard";
+import type { SourceLoadResult } from "../../loading/source-loader";
 import {
   buildWizardResult,
   buildSkillConfigs,
   buildProjectConfig,
   buildSourceResult,
   createMockAgent,
-} from "../__tests__/helpers";
-import { EMPTY_MATRIX } from "../__tests__/mock-data/mock-matrices";
+} from "../../__tests__/helpers";
+import { EMPTY_MATRIX } from "../../__tests__/mock-data/mock-matrices";
 
 // --- Module-level mocks ---
 
@@ -29,21 +29,21 @@ vi.mock("fs", async (importOriginal) => {
   };
 });
 
-vi.mock("../installation/index.js", () => ({
+vi.mock("../../installation/index.js", () => ({
   buildAndMergeConfig: vi.fn(),
   writeScopedConfigs: vi.fn(),
   resolveInstallPaths: vi.fn(),
 }));
 
-vi.mock("../loading/index.js", () => ({
+vi.mock("../../loading/index.js", () => ({
   loadAllAgents: vi.fn(),
 }));
 
-vi.mock("../configuration/config-writer.js", () => ({
+vi.mock("../../configuration/config-writer.js", () => ({
   ensureBlankGlobalConfig: vi.fn(),
 }));
 
-vi.mock("../../utils/fs.js", () => ({
+vi.mock("../../../utils/fs.js", () => ({
   ensureDir: vi.fn(),
 }));
 
@@ -54,10 +54,10 @@ import {
   buildAndMergeConfig,
   writeScopedConfigs,
   resolveInstallPaths,
-} from "../installation/index.js";
-import { loadAllAgents } from "../loading/index.js";
-import { ensureBlankGlobalConfig } from "../configuration/config-writer.js";
-import { ensureDir } from "../../utils/fs.js";
+} from "../../installation/index.js";
+import { loadAllAgents } from "../../loading/index.js";
+import { ensureBlankGlobalConfig } from "../../configuration/config-writer.js";
+import { ensureDir } from "../../../utils/fs.js";
 
 const mockBuildAndMergeConfig = vi.mocked(buildAndMergeConfig);
 const mockWriteScopedConfigs = vi.mocked(writeScopedConfigs);

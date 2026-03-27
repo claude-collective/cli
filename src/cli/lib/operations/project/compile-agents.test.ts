@@ -1,25 +1,25 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { AgentName } from "../../types";
+import type { AgentName } from "../../../types";
 
 // --- Module-level mocks ---
 
-vi.mock("../agents/index.js", () => ({
+vi.mock("../../agents/index.js", () => ({
   recompileAgents: vi.fn(),
 }));
 
-vi.mock("../configuration/index.js", () => ({
+vi.mock("../../configuration/index.js", () => ({
   loadProjectConfigFromDir: vi.fn(),
 }));
 
-vi.mock("../installation/index.js", () => ({
+vi.mock("../../installation/index.js", () => ({
   buildAgentScopeMap: vi.fn(),
 }));
 
 // --- Imports after mocks ---
 
 import { compileAgents } from "./compile-agents";
-import { recompileAgents } from "../agents/index.js";
-import { loadProjectConfigFromDir } from "../configuration/index.js";
+import { recompileAgents } from "../../agents/index.js";
+import { loadProjectConfigFromDir } from "../../configuration/index.js";
 
 const mockRecompileAgents = vi.mocked(recompileAgents);
 const mockLoadProjectConfigFromDir = vi.mocked(loadProjectConfigFromDir);

@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
-import { fileExists, listDirectories } from "../../utils/fs.js";
-import { LOCAL_SKILLS_PATH } from "../../consts.js";
+import { fileExists, listDirectories } from "../../../utils/fs.js";
+import { LOCAL_SKILLS_PATH } from "../../../consts.js";
 
 export type ScopedSkillDir = {
   dirName: string;

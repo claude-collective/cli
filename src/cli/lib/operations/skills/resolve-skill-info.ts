@@ -1,9 +1,9 @@
 import path from "path";
-import { fileExists, readFile } from "../../utils/fs.js";
-import { discoverLocalSkills } from "../skills/index.js";
-import { STANDARD_FILES } from "../../consts.js";
-import type { ResolvedSkill, SkillId, SkillSlug } from "../../types/index.js";
-import { truncateText } from "../../utils/string.js";
+import { fileExists, readFile } from "../../../utils/fs.js";
+import { discoverLocalSkills } from "../../skills/index.js";
+import { STANDARD_FILES } from "../../../consts.js";
+import type { ResolvedSkill, SkillId, SkillSlug } from "../../../types/index.js";
+import { truncateText } from "../../../utils/string.js";
 
 const CONTENT_PREVIEW_LINES = 10;
 const MAX_LINE_LENGTH = 80;
@@ -131,7 +131,7 @@ export async function resolveSkillInfo(options: ResolveSkillInfoOptions): Promis
     let skillMdPath: string;
 
     if (skill.local && skill.localPath) {
-      skillMdPath = path.join(projectDir, skill.localPath, STANDARD_FILES.SKILL_MD);
+      skillMdPath = path.join(skill.localPath, STANDARD_FILES.SKILL_MD);
     } else {
       const sourceDir = isLocal ? sourcePath : path.dirname(sourcePath);
       skillMdPath = path.join(sourceDir, skill.path, STANDARD_FILES.SKILL_MD);

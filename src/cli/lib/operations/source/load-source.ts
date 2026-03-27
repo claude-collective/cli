@@ -1,10 +1,10 @@
-import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../loading/index.js";
+import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../../loading/index.js";
 import {
   enableBuffering,
   drainBuffer,
   disableBuffering,
   type StartupMessage,
-} from "../../utils/logger.js";
+} from "../../../utils/logger.js";
 
 export type LoadSourceOptions = {
   sourceFlag?: string;

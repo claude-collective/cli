@@ -1,6 +1,6 @@
-import { detectInstallation, type Installation } from "../installation/index.js";
-import { loadProjectConfig } from "../configuration/index.js";
-import type { ProjectConfig } from "../../types/index.js";
+import { detectInstallation, type Installation } from "../../installation/index.js";
+import { loadProjectConfig } from "../../configuration/index.js";
+import type { ProjectConfig } from "../../../types/index.js";
 
 export type DetectedProject = {
   installation: Installation;

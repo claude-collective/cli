@@ -1,8 +1,8 @@
-import { recompileAgents } from "../agents/index.js";
-import { loadProjectConfigFromDir } from "../configuration/index.js";
-import { buildAgentScopeMap } from "../installation/index.js";
-import type { AgentName, SkillDefinitionMap } from "../../types/index.js";
-import type { InstallMode } from "../installation/index.js";
+import { recompileAgents } from "../../agents/index.js";
+import { loadProjectConfigFromDir } from "../../configuration/index.js";
+import { buildAgentScopeMap } from "../../installation/index.js";
+import type { AgentName, SkillDefinitionMap } from "../../../types/index.js";
+import type { InstallMode } from "../../installation/index.js";
 
 export type CompileAgentsOptions = {
   projectDir: string;

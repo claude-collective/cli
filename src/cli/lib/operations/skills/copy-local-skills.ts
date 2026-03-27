@@ -1,8 +1,8 @@
-import { resolveInstallPaths } from "../installation/index.js";
-import { copySkillsToLocalFlattened, type CopiedSkill } from "../skills/index.js";
-import { ensureDir } from "../../utils/fs.js";
-import type { SkillConfig } from "../../types/config.js";
-import type { SourceLoadResult } from "../loading/source-loader.js";
+import { resolveInstallPaths } from "../../installation/index.js";
+import { copySkillsToLocalFlattened, type CopiedSkill } from "../../skills/index.js";
+import { ensureDir } from "../../../utils/fs.js";
+import type { SkillConfig } from "../../../types/config.js";
+import type { SourceLoadResult } from "../../loading/source-loader.js";
 
 export type SkillCopyResult = {
   projectCopied: CopiedSkill[];

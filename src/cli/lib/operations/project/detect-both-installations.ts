@@ -4,7 +4,7 @@ import {
   detectGlobalInstallation,
   detectProjectInstallation,
   type Installation,
-} from "../installation/index.js";
+} from "../../installation/index.js";
 
 export type BothInstallations = {
   global: Installation | null;

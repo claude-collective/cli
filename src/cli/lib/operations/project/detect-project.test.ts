@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { Installation } from "../installation/index.js";
-import type { ProjectConfig } from "../../types/index.js";
+import type { Installation } from "../../installation/index.js";
+import type { ProjectConfig } from "../../../types/index.js";
 
-vi.mock("../installation/index.js", () => ({
+vi.mock("../../installation/index.js", () => ({
   detectInstallation: vi.fn(),
 }));
 
-vi.mock("../configuration/index.js", () => ({
+vi.mock("../../configuration/index.js", () => ({
   loadProjectConfig: vi.fn(),
 }));
 
 import { detectProject } from "./detect-project";
-import { detectInstallation } from "../installation/index.js";
-import { loadProjectConfig } from "../configuration/index.js";
+import { detectInstallation } from "../../installation/index.js";
+import { loadProjectConfig } from "../../configuration/index.js";
 
 const mockDetectInstallation = vi.mocked(detectInstallation);
 const mockLoadProjectConfig = vi.mocked(loadProjectConfig);

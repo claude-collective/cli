@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("../loading/index.js", () => ({
+vi.mock("../../loading/index.js", () => ({
   loadSkillsMatrixFromSource: vi.fn(),
 }));
 
-vi.mock("../../utils/logger.js", () => ({
+vi.mock("../../../utils/logger.js", () => ({
   enableBuffering: vi.fn(),
   drainBuffer: vi.fn(),
   disableBuffering: vi.fn(),
@@ -16,9 +16,9 @@ vi.mock("../../utils/logger.js", () => ({
 }));
 
 import { loadSource } from "./load-source";
-import { loadSkillsMatrixFromSource } from "../loading/index.js";
-import { enableBuffering, drainBuffer, disableBuffering } from "../../utils/logger.js";
-import type { SourceLoadResult } from "../loading/index.js";
+import { loadSkillsMatrixFromSource } from "../../loading/index.js";
+import { enableBuffering, drainBuffer, disableBuffering } from "../../../utils/logger.js";
+import type { SourceLoadResult } from "../../loading/index.js";
 
 const mockLoadSkillsMatrixFromSource = vi.mocked(loadSkillsMatrixFromSource);
 const mockEnableBuffering = vi.mocked(enableBuffering);

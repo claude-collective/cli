@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { AgentDefinition, AgentName, AgentSourcePaths } from "../../types/index.js";
+import type { AgentDefinition, AgentName, AgentSourcePaths } from "../../../types/index.js";
 
-vi.mock("../agents/index.js", () => ({
+vi.mock("../../agents/index.js", () => ({
   getAgentDefinitions: vi.fn(),
 }));
 
-vi.mock("../loading/index.js", () => ({
+vi.mock("../../loading/index.js", () => ({
   loadAllAgents: vi.fn(),
 }));
 
-vi.mock("../../consts.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../consts.js")>();
+vi.mock("../../../consts.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../consts.js")>();
   return {
     ...actual,
     PROJECT_ROOT: "/mock/cli/root",
@@ -18,8 +18,8 @@ vi.mock("../../consts.js", async (importOriginal) => {
 });
 
 import { loadAgentDefs } from "./load-agent-defs";
-import { getAgentDefinitions } from "../agents/index.js";
-import { loadAllAgents } from "../loading/index.js";
+import { getAgentDefinitions } from "../../agents/index.js";
+import { loadAllAgents } from "../../loading/index.js";
 
 const mockGetAgentDefinitions = vi.mocked(getAgentDefinitions);
 const mockLoadAllAgents = vi.mocked(loadAllAgents);

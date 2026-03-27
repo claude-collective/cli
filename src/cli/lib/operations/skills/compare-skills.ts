@@ -1,8 +1,8 @@
 import os from "os";
-import { compareLocalSkillsWithSource, type SkillComparisonResult } from "../skills/index.js";
-import { typedEntries } from "../../utils/typed-object.js";
+import { compareLocalSkillsWithSource, type SkillComparisonResult } from "../../skills/index.js";
+import { typedEntries } from "../../../utils/typed-object.js";
 import { collectScopedSkillDirs } from "./collect-scoped-skill-dirs.js";
-import type { MergedSkillsMatrix } from "../../types/index.js";
+import type { MergedSkillsMatrix } from "../../../types/index.js";
 
 export type SkillComparisonResults = {
   projectResults: SkillComparisonResult[];

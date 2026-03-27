@@ -1,24 +1,24 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { SkillConfig } from "../../types/config.js";
-import type { SourceLoadResult } from "../loading/source-loader.js";
-import type { CopiedSkill } from "../skills/index.js";
+import type { SkillConfig } from "../../../types/config.js";
+import type { SourceLoadResult } from "../../loading/source-loader.js";
+import type { CopiedSkill } from "../../skills/index.js";
 
-vi.mock("../installation/index.js", () => ({
+vi.mock("../../installation/index.js", () => ({
   resolveInstallPaths: vi.fn(),
 }));
 
-vi.mock("../skills/index.js", () => ({
+vi.mock("../../skills/index.js", () => ({
   copySkillsToLocalFlattened: vi.fn(),
 }));
 
-vi.mock("../../utils/fs.js", () => ({
+vi.mock("../../../utils/fs.js", () => ({
   ensureDir: vi.fn(),
 }));
 
 import { copyLocalSkills } from "./copy-local-skills";
-import { resolveInstallPaths } from "../installation/index.js";
-import { copySkillsToLocalFlattened } from "../skills/index.js";
-import { ensureDir } from "../../utils/fs.js";
+import { resolveInstallPaths } from "../../installation/index.js";
+import { copySkillsToLocalFlattened } from "../../skills/index.js";
+import { ensureDir } from "../../../utils/fs.js";
 
 const mockResolveInstallPaths = vi.mocked(resolveInstallPaths);
 const mockCopySkillsToLocalFlattened = vi.mocked(copySkillsToLocalFlattened);

@@ -2,10 +2,10 @@ import {
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
   claudePluginMarketplaceUpdate,
-} from "../../utils/exec.js";
-import { fetchMarketplace } from "../loading/index.js";
-import { warn } from "../../utils/logger.js";
-import type { SourceLoadResult } from "../loading/source-loader.js";
+} from "../../../utils/exec.js";
+import { fetchMarketplace } from "../../loading/index.js";
+import { warn } from "../../../utils/logger.js";
+import type { SourceLoadResult } from "../../loading/source-loader.js";
 
 export type MarketplaceResult = {
   /** The resolved marketplace name, or null if no marketplace is configured. */
