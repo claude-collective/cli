@@ -100,31 +100,14 @@ export default class Compile extends BaseCommand {
     agentDefs: AgentDefs,
     cwd: string,
   ): Promise<void> {
-    const homeDir = os.homedir();
-    let totalPassesWithSkills = 0;
-
     // When both installations exist, filter each pass to its own scope to prevent
     // the project pass from overwriting global agents with zero-skill versions
     // (the project config's stack only has project agent entries).
-    if (installations.global) {
-      const hadSkills = await this.runCompilePass({
-        label: "Global",
-        projectDir: homeDir,
-        installation: installations.global,
-        sourcePath: agentDefs.sourcePath,
-        scopeFilter: installations.hasBoth ? "global" : undefined,
-      });
-      if (hadSkills) totalPassesWithSkills++;
-    }
+    const passes = buildCompilePasses(installations, cwd, agentDefs.sourcePath);
 
-    if (installations.project) {
-      const hadSkills = await this.runCompilePass({
-        label: "Project",
-        projectDir: cwd,
-        installation: installations.project,
-        sourcePath: agentDefs.sourcePath,
-        scopeFilter: installations.hasBoth ? "project" : undefined,
-      });
+    let totalPassesWithSkills = 0;
+    for (const pass of passes) {
+      const hadSkills = await this.runCompilePass(pass);
       if (hadSkills) totalPassesWithSkills++;
     }
 
@@ -139,32 +122,12 @@ export default class Compile extends BaseCommand {
   private async discoverAllSkills(projectDir: string): Promise<DiscoveredSkills> {
     this.log(STATUS_MESSAGES.DISCOVERING_SKILLS);
     const result = await discoverInstalledSkills(projectDir);
-
-    if (result.totalSkillCount === 0) {
-      return result;
-    }
-
-    if (result.pluginSkillCount > 0 && result.totalSkillCount > result.pluginSkillCount) {
-      const localCount = result.totalSkillCount - result.pluginSkillCount;
-      this.log(
-        `Discovered ${result.totalSkillCount} skills (${result.pluginSkillCount} from plugins, ${localCount} local)`,
-      );
-    } else if (result.pluginSkillCount > 0) {
-      this.log(`Discovered ${result.pluginSkillCount} skills from plugins`);
-    } else {
-      this.log(`Discovered ${result.totalSkillCount} local skills`);
-    }
-
+    if (result.totalSkillCount === 0) return result;
+    this.log(formatDiscoveryMessage(result));
     return result;
   }
 
-  private async runCompilePass(params: {
-    label: string;
-    projectDir: string;
-    installation: Installation;
-    sourcePath: string;
-    scopeFilter?: "project" | "global";
-  }): Promise<boolean> {
+  private async runCompilePass(params: CompilePass): Promise<boolean> {
     const { label, projectDir, installation, sourcePath, scopeFilter } = params;
 
     this.log("");
@@ -219,4 +182,55 @@ export default class Compile extends BaseCommand {
 
     return true;
   }
+}
+
+type CompilePass = {
+  label: string;
+  projectDir: string;
+  installation: Installation;
+  sourcePath: string;
+  scopeFilter?: "project" | "global";
+};
+
+function buildCompilePasses(
+  installations: BothInstallations,
+  cwd: string,
+  sourcePath: string,
+): CompilePass[] {
+  const passes: CompilePass[] = [];
+
+  if (installations.global) {
+    passes.push({
+      label: "Global",
+      projectDir: os.homedir(),
+      installation: installations.global,
+      sourcePath,
+      scopeFilter: installations.hasBoth ? "global" : undefined,
+    });
+  }
+
+  if (installations.project) {
+    passes.push({
+      label: "Project",
+      projectDir: cwd,
+      installation: installations.project,
+      sourcePath,
+      scopeFilter: installations.hasBoth ? "project" : undefined,
+    });
+  }
+
+  return passes;
+}
+
+function formatDiscoveryMessage(result: DiscoveredSkills): string {
+  const { totalSkillCount, pluginSkillCount } = result;
+  const localCount = totalSkillCount - pluginSkillCount;
+
+  if (pluginSkillCount > 0 && localCount > 0) {
+    return `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localCount} local)`;
+  }
+
+  return pluginSkillCount > 0
+    ? `Discovered ${pluginSkillCount} skills from plugins`
+    : `Discovered ${totalSkillCount} local skills`;
 }

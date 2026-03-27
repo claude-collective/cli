@@ -392,63 +392,61 @@ function shouldRemoveSkill(forkedFrom: { source?: string } | null): boolean {
   return forkedFrom !== null;
 }
 
-/**
- * Removes local skills that were installed by the CLI (have forked-from metadata).
- *
- * Scans the skills directory, checks each skill for CLI-installed metadata,
- * and removes matching skills. User-created skills (without metadata) are preserved.
- *
- * @param onRemoved - Called for each removed skill directory name (for logging)
- * @param onSkipped - Called for each skipped skill directory name (for logging)
- */
 async function removeMatchingSkills(
   target: Pick<UninstallTarget, "hasLocalSkills" | "skillsDir">,
   onRemoved?: (dirName: string) => void,
   onSkipped?: (dirName: string) => void,
 ): Promise<SkillRemovalResult> {
   if (!target.hasLocalSkills) {
-    return {
-      removedCount: 0,
-      skippedCount: 0,
-      removedNames: [],
-      skippedNames: [],
-      dirCleaned: false,
-    };
+    return { removedCount: 0, skippedCount: 0, removedNames: [], skippedNames: [], dirCleaned: false };
   }
 
-  const skillDirNames = await listDirectories(target.skillsDir);
-  const removedNames: string[] = [];
-  const skippedNames: string[] = [];
-
-  for (const skillDirName of skillDirNames) {
-    const skillDir = path.join(target.skillsDir, skillDirName);
-    const forkedFrom = await readForkedFromMetadata(skillDir);
-
-    if (shouldRemoveSkill(forkedFrom)) {
-      await remove(skillDir);
-      removedNames.push(skillDirName);
-      onRemoved?.(skillDirName);
-    } else {
-      skippedNames.push(skillDirName);
-      onSkipped?.(skillDirName);
-    }
-  }
-
-  let dirCleaned = false;
-  if (skippedNames.length === 0 && (await directoryExists(target.skillsDir))) {
-    if (await isDirectoryEmpty(target.skillsDir)) {
-      await remove(target.skillsDir);
-      dirCleaned = true;
-    }
-  }
+  const classified = await classifySkillDirs(target.skillsDir);
+  const removedNames = await removeClassifiedSkills(classified.toRemove, target.skillsDir, onRemoved);
+  classified.toSkip.forEach((name) => onSkipped?.(name));
+  const dirCleaned = await cleanupSkillsDir(target.skillsDir, classified.toSkip.length === 0);
 
   return {
     removedCount: removedNames.length,
-    skippedCount: skippedNames.length,
+    skippedCount: classified.toSkip.length,
     removedNames,
-    skippedNames,
+    skippedNames: classified.toSkip,
     dirCleaned,
   };
+}
+
+async function classifySkillDirs(
+  skillsDir: string,
+): Promise<{ toRemove: string[]; toSkip: string[] }> {
+  const dirNames = await listDirectories(skillsDir);
+  const toRemove: string[] = [];
+  const toSkip: string[] = [];
+
+  for (const name of dirNames) {
+    const forkedFrom = await readForkedFromMetadata(path.join(skillsDir, name));
+    (shouldRemoveSkill(forkedFrom) ? toRemove : toSkip).push(name);
+  }
+
+  return { toRemove, toSkip };
+}
+
+async function removeClassifiedSkills(
+  names: string[],
+  skillsDir: string,
+  onRemoved?: (name: string) => void,
+): Promise<string[]> {
+  for (const name of names) {
+    await remove(path.join(skillsDir, name));
+    onRemoved?.(name);
+  }
+  return names;
+}
+
+async function cleanupSkillsDir(dir: string, allRemoved: boolean): Promise<boolean> {
+  if (!allRemoved || !(await directoryExists(dir))) return false;
+  if (!(await isDirectoryEmpty(dir))) return false;
+  await remove(dir);
+  return true;
 }
 
 /**

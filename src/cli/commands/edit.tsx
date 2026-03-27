@@ -4,6 +4,8 @@ import path from "path";
 import { Flags } from "@oclif/core";
 import { render } from "ink";
 
+import { difference, indexBy } from "remeda";
+
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import { CLAUDE_DIR, CLI_BIN_NAME, GLOBAL_INSTALL_ROOT, SOURCE_DISPLAY_NAMES } from "../consts.js";
@@ -563,59 +565,38 @@ function detectConfigChanges(
   currentSkillIds: SkillId[],
 ): ConfigChanges {
   const newSkillIds = wizardResult.skills.map((s) => s.id);
-  const addedSkills = newSkillIds.filter((id) => !currentSkillIds.includes(id));
-  const removedSkills = currentSkillIds.filter((id) => !newSkillIds.includes(id));
-
   const oldAgentNames = oldConfig?.agents?.map((a) => a.name) ?? [];
   const newAgentNames = wizardResult.agentConfigs.map((a) => a.name);
-  const addedAgents = newAgentNames.filter((name) => !oldAgentNames.includes(name));
-  const removedAgents = oldAgentNames.filter((name) => !newAgentNames.includes(name));
 
-  const sourceChanges = new Map<SkillId, { from: string; to: string }>();
-  const scopeChanges = new Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>();
-  if (oldConfig?.skills) {
-    for (const newSkill of wizardResult.skills) {
-      const oldSkill = oldConfig.skills.find((s) => s.id === newSkill.id);
-      if (oldSkill && oldSkill.source !== newSkill.source) {
-        sourceChanges.set(newSkill.id, {
-          from: oldSkill.source,
-          to: newSkill.source,
-        });
-      }
-      if (oldSkill && oldSkill.scope !== newSkill.scope) {
-        scopeChanges.set(newSkill.id, {
-          from: oldSkill.scope,
-          to: newSkill.scope,
-        });
-      }
-    }
-  }
-
-  const agentScopeChanges = new Map<
-    AgentName,
-    { from: "project" | "global"; to: "project" | "global" }
-  >();
-  if (oldConfig?.agents) {
-    for (const newAgent of wizardResult.agentConfigs) {
-      const oldAgent = oldConfig.agents.find((a) => a.name === newAgent.name);
-      if (oldAgent && oldAgent.scope !== newAgent.scope) {
-        agentScopeChanges.set(newAgent.name, {
-          from: oldAgent.scope,
-          to: newAgent.scope,
-        });
-      }
-    }
-  }
+  const oldSkillsById = indexBy(oldConfig?.skills ?? [], (s) => s.id);
+  const oldAgentsByName = indexBy(oldConfig?.agents ?? [], (a) => a.name);
 
   return {
-    addedSkills,
-    removedSkills,
-    addedAgents,
-    removedAgents,
-    sourceChanges,
-    scopeChanges,
-    agentScopeChanges,
+    addedSkills: difference(newSkillIds, currentSkillIds),
+    removedSkills: difference(currentSkillIds, newSkillIds),
+    addedAgents: difference(newAgentNames, oldAgentNames),
+    removedAgents: difference(oldAgentNames, newAgentNames),
+    sourceChanges: detectPropertyChanges(wizardResult.skills, oldSkillsById, (s) => s.id, (s) => s.source),
+    scopeChanges: detectPropertyChanges(wizardResult.skills, oldSkillsById, (s) => s.id, (s) => s.scope),
+    agentScopeChanges: detectPropertyChanges(wizardResult.agentConfigs, oldAgentsByName, (a) => a.name, (a) => a.scope),
   };
+}
+
+function detectPropertyChanges<T, K extends string, V>(
+  newItems: T[],
+  oldByKey: Record<string, T>,
+  getKey: (item: T) => K,
+  getValue: (item: T) => V,
+): Map<K, { from: V; to: V }> {
+  const changes = new Map<K, { from: V; to: V }>();
+  for (const item of newItems) {
+    const key = getKey(item);
+    const old = oldByKey[key];
+    if (old && getValue(old) !== getValue(item)) {
+      changes.set(key, { from: getValue(old), to: getValue(item) });
+    }
+  }
+  return changes;
 }
 
 function hasAnyChanges(changes: ConfigChanges): boolean {

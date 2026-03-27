@@ -55,54 +55,19 @@ export default class BuildPlugins extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(BuildPlugins);
-
     setVerbose(flags.verbose);
 
     const projectRoot = process.cwd();
     const skillsDir = path.resolve(projectRoot, flags["skills-dir"]);
     const outputDir = path.resolve(projectRoot, flags["output-dir"]);
 
-    this.log("");
-    this.log("Compiling skill plugins");
-    this.log(`  Skills directory: ${skillsDir}`);
-    this.log(`  Output directory: ${outputDir}`);
-    this.log("");
+    this.printHeader(skillsDir, outputDir);
 
     try {
-      if (flags.skill) {
-        const skillPath = path.resolve(skillsDir, flags.skill);
-        this.log(`Compiling skill at ${skillPath}...`);
-
-        const result = await compileSkillPlugin({
-          skillPath,
-          outputDir,
-        });
-
-        this.log(`Compiled ${result.skillName}`);
-        this.log(`  Plugin path: ${result.pluginPath}`);
-      } else {
-        this.log("Finding and compiling all skills...");
-
-        const results = await compileAllSkillPlugins(skillsDir, outputDir);
-
-        this.log(`Compiled ${results.length} skill plugins`);
-        printCompilationSummary(results);
-      }
+      await this.compileSkills(flags.skill, skillsDir, outputDir);
 
       if (flags["agents-dir"]) {
-        const agentsDir = path.resolve(projectRoot, flags["agents-dir"]);
-
-        this.log("");
-        this.log("Compiling agent plugins");
-        this.log(`  Agents directory: ${agentsDir}`);
-        this.log("");
-
-        this.log("Finding and compiling all agents...");
-
-        const agentResults = await compileAllAgentPlugins(agentsDir, outputDir);
-
-        this.log(`Compiled ${agentResults.length} agent plugins`);
-        printAgentCompilationSummary(agentResults);
+        await this.compileAgents(projectRoot, flags["agents-dir"], outputDir);
       }
 
       this.log("");
@@ -111,5 +76,59 @@ export default class BuildPlugins extends BaseCommand {
       this.log("Compilation failed");
       this.handleError(error);
     }
+  }
+
+  private printHeader(skillsDir: string, outputDir: string): void {
+    this.log("");
+    this.log("Compiling skill plugins");
+    this.log(`  Skills directory: ${skillsDir}`);
+    this.log(`  Output directory: ${outputDir}`);
+    this.log("");
+  }
+
+  private async compileSkills(
+    skillFlag: string | undefined,
+    skillsDir: string,
+    outputDir: string,
+  ): Promise<void> {
+    if (skillFlag) {
+      const skillPath = path.resolve(skillsDir, skillFlag);
+      this.log(`Compiling skill at ${skillPath}...`);
+
+      const result = await compileSkillPlugin({
+        skillPath,
+        outputDir,
+      });
+
+      this.log(`Compiled ${result.skillName}`);
+      this.log(`  Plugin path: ${result.pluginPath}`);
+    } else {
+      this.log("Finding and compiling all skills...");
+
+      const results = await compileAllSkillPlugins(skillsDir, outputDir);
+
+      this.log(`Compiled ${results.length} skill plugins`);
+      printCompilationSummary(results);
+    }
+  }
+
+  private async compileAgents(
+    projectRoot: string,
+    agentsDir: string,
+    outputDir: string,
+  ): Promise<void> {
+    const resolvedAgentsDir = path.resolve(projectRoot, agentsDir);
+
+    this.log("");
+    this.log("Compiling agent plugins");
+    this.log(`  Agents directory: ${resolvedAgentsDir}`);
+    this.log("");
+
+    this.log("Finding and compiling all agents...");
+
+    const agentResults = await compileAllAgentPlugins(resolvedAgentsDir, outputDir);
+
+    this.log(`Compiled ${agentResults.length} agent plugins`);
+    printAgentCompilationSummary(agentResults);
   }
 }

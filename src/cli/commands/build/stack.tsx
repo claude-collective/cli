@@ -75,63 +75,79 @@ export default class BuildStack extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(BuildStack);
-
     setVerbose(flags.verbose);
 
     const projectRoot = process.cwd();
     const outputDir = path.resolve(projectRoot, flags["output-dir"]);
 
-    let stackId = flags.stack;
+    const stackId = flags.stack ?? (await this.selectStackInteractively(projectRoot));
 
-    if (!stackId) {
-      const stacks = await loadStacks(projectRoot);
-      const availableStacks = stacks.map((s) => s.id).sort();
+    this.printCompileHeader(stackId, outputDir);
+    const agentSourcePath = await this.loadAgentPartials(flags);
+    await this.compileStack(stackId, outputDir, projectRoot, agentSourcePath);
+  }
 
-      if (availableStacks.length === 0) {
-        this.error(`No stacks found in ${STACKS_FILE_PATH}`, {
-          exit: EXIT_CODES.ERROR,
-        });
-      }
+  private async selectStackInteractively(projectRoot: string): Promise<string> {
+    const stacks = await loadStacks(projectRoot);
+    const availableStacks = stacks.map((s) => s.id).sort();
 
-      stackId = await new Promise<string>((resolve, reject) => {
-        const { waitUntilExit } = render(
-          <StackSelector
-            availableStacks={availableStacks}
-            onSelect={(selected) => {
-              resolve(selected);
-            }}
-          />,
-        );
-
-        waitUntilExit().catch(reject);
-      }).catch(() => {
-        this.log("Cancelled");
-        this.exit(EXIT_CODES.CANCELLED);
+    if (availableStacks.length === 0) {
+      this.error(`No stacks found in ${STACKS_FILE_PATH}`, {
+        exit: EXIT_CODES.ERROR,
       });
     }
 
+    return new Promise<string>((resolve, reject) => {
+      const { waitUntilExit } = render(
+        <StackSelector
+          availableStacks={availableStacks}
+          onSelect={(selected) => {
+            resolve(selected);
+          }}
+        />,
+      );
+
+      waitUntilExit().catch(reject);
+    }).catch(() => {
+      this.log("Cancelled");
+      this.exit(EXIT_CODES.CANCELLED);
+    });
+  }
+
+  private printCompileHeader(stackId: string, outputDir: string): void {
     this.log("");
     this.log(`Compiling stack plugin: ${stackId}`);
     this.log(`  Output directory: ${outputDir}`);
     this.log("");
+  }
 
-    let agentSourcePath: string;
+  private async loadAgentPartials(flags: {
+    "agent-source"?: string;
+    refresh: boolean;
+  }): Promise<string> {
     try {
       this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
       const agentDefs = await getAgentDefinitions(flags["agent-source"], {
         forceRefresh: flags.refresh,
       });
-      agentSourcePath = agentDefs.sourcePath;
       this.log(
         flags["agent-source"]
           ? `Agent partials fetched from: ${flags["agent-source"]}`
           : `Agent partials loaded from: ${PROJECT_ROOT}`,
       );
+      return agentDefs.sourcePath;
     } catch (error) {
       this.log("Failed to load agent partials");
       this.handleError(error);
     }
+  }
 
+  private async compileStack(
+    stackId: string,
+    outputDir: string,
+    projectRoot: string,
+    agentSourcePath: string,
+  ): Promise<void> {
     try {
       this.log(`Compiling stack "${stackId}"...`);
 
@@ -143,7 +159,6 @@ export default class BuildStack extends BaseCommand {
       });
 
       this.log(`Compiled stack plugin: ${result.stackName}`);
-
       printStackCompilationSummary(result);
 
       this.log("");

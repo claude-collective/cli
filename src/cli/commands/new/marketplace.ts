@@ -149,130 +149,144 @@ export default class NewMarketplace extends BaseCommand {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(NewMarketplace);
-
-    this.log("");
-    this.log("Create New Marketplace");
-    this.log("");
-
     const parentDir = flags.output ? path.resolve(flags.output) : process.cwd();
     const useCurrentDir = args.name === ".";
 
     const marketplaceName = useCurrentDir ? path.basename(parentDir) : args.name;
     const marketplaceDir = useCurrentDir ? parentDir : path.join(parentDir, args.name);
 
-    const validationError = validateMarketplaceName(marketplaceName);
-    if (validationError) {
-      if (useCurrentDir) {
-        this.error(
-          `Current directory name '${marketplaceName}' is not valid kebab-case. Rename it or pass an explicit name.`,
-          { exit: EXIT_CODES.INVALID_ARGS },
-        );
-      }
-      this.error(validationError, { exit: EXIT_CODES.INVALID_ARGS });
-    }
-
-    // Skip existing directory check when using "." (the directory obviously exists)
-    if (!useCurrentDir && (await directoryExists(marketplaceDir))) {
-      if (!flags.force) {
-        this.error(`Directory already exists: ${marketplaceDir}\nUse --force to overwrite.`, {
-          exit: EXIT_CODES.ERROR,
-        });
-      }
-      this.warn(`Overwriting existing directory at ${marketplaceDir}`);
-    }
+    this.printHeader();
+    this.validateName(marketplaceName, useCurrentDir);
+    await this.checkExistingDir(marketplaceDir, useCurrentDir, flags.force);
 
     this.log(`Marketplace: ${marketplaceName}`);
     this.log(`Directory: ${marketplaceDir}`);
     this.log("");
 
+    try {
+      await this.createMarketplaceFiles(marketplaceName, marketplaceDir, flags.force);
+      await this.buildMarketplace(marketplaceDir, marketplaceName);
+      this.printNextSteps(marketplaceName, useCurrentDir);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  private printHeader(): void {
+    this.log("");
+    this.log("Create New Marketplace");
+    this.log("");
+  }
+
+  private validateName(name: string, useCurrentDir: boolean): void {
+    const validationError = validateMarketplaceName(name);
+    if (validationError) {
+      if (useCurrentDir) {
+        this.error(
+          `Current directory name '${name}' is not valid kebab-case. Rename it or pass an explicit name.`,
+          { exit: EXIT_CODES.INVALID_ARGS },
+        );
+      }
+      this.error(validationError, { exit: EXIT_CODES.INVALID_ARGS });
+    }
+  }
+
+  private async checkExistingDir(
+    dir: string,
+    useCurrentDir: boolean,
+    force: boolean,
+  ): Promise<void> {
+    if (!useCurrentDir && (await directoryExists(dir))) {
+      if (!force) {
+        this.error(`Directory already exists: ${dir}\nUse --force to overwrite.`, {
+          exit: EXIT_CODES.ERROR,
+        });
+      }
+      this.warn(`Overwriting existing directory at ${dir}`);
+    }
+  }
+
+  private async createMarketplaceFiles(
+    marketplaceName: string,
+    marketplaceDir: string,
+    force: boolean,
+  ): Promise<void> {
     const skillName = "dummy-skill";
 
     this.log("Creating marketplace structure...");
 
-    try {
-      // Create config/stacks.ts
-      const stacksContent = generateStacksTs(marketplaceName);
-      const stacksPath = path.join(marketplaceDir, STACKS_FILE_PATH);
-      await ensureDir(path.dirname(stacksPath));
-      await writeFile(stacksPath, stacksContent);
+    const stacksContent = generateStacksTs(marketplaceName);
+    const stacksPath = path.join(marketplaceDir, STACKS_FILE_PATH);
+    await ensureDir(path.dirname(stacksPath));
+    await writeFile(stacksPath, stacksContent);
 
-      // Create config/skill-categories.ts
-      const categoriesContent = generateSkillCategoriesTs(
-        LOCAL_DEFAULTS.CATEGORY,
-        LOCAL_DEFAULTS.DOMAIN,
-      );
-      const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_PATH);
-      await writeFile(categoriesPath, categoriesContent);
+    const categoriesContent = generateSkillCategoriesTs(
+      LOCAL_DEFAULTS.CATEGORY,
+      LOCAL_DEFAULTS.DOMAIN,
+    );
+    const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_PATH);
+    await writeFile(categoriesPath, categoriesContent);
 
-      // Create config/skill-rules.ts
-      const rulesContent = generateSkillRulesTs();
-      const rulesPath = path.join(marketplaceDir, SKILL_RULES_PATH);
-      await writeFile(rulesPath, rulesContent);
+    const rulesContent = generateSkillRulesTs();
+    const rulesPath = path.join(marketplaceDir, SKILL_RULES_PATH);
+    await writeFile(rulesPath, rulesContent);
 
-      // Delegate skill creation to the new:skill command
-      const skillsDir = path.join(marketplaceDir, SKILLS_DIR_PATH);
+    const skillsDir = path.join(marketplaceDir, SKILLS_DIR_PATH);
+    const skillArgs = [skillName, "--output", skillsDir, "--domain", LOCAL_DEFAULTS.DOMAIN];
+    if (force) skillArgs.push("--force");
+    await this.config.runCommand("new:skill", skillArgs);
 
-      const skillArgs = [skillName, "--output", skillsDir, "--domain", LOCAL_DEFAULTS.DOMAIN];
-      if (flags.force) skillArgs.push("--force");
-      await this.config.runCommand("new:skill", skillArgs);
+    const readmeContent = generateReadme(marketplaceName);
+    const readmePath = path.join(marketplaceDir, "README.md");
+    await writeFile(readmePath, readmeContent);
 
-      // Create README.md
-      const readmeContent = generateReadme(marketplaceName);
-      const readmePath = path.join(marketplaceDir, "README.md");
-      await writeFile(readmePath, readmeContent);
-
-      // Create .claude-src/config.ts so the marketplace is a valid installation
-      const configDir = path.join(marketplaceDir, CLAUDE_SRC_DIR);
-      await ensureDir(configDir);
-      // Boundary cast: custom marketplace dummy skill/category not in standard unions
-      const configContent = generateConfigSource({
-        name: marketplaceName,
-        skills: [{ id: skillName as SkillId, scope: "project", source: "local" }],
-        agents: [],
-        source: ".",
-        marketplace: marketplaceName,
-        stack: {
-          "web-developer": {
-            // Boundary cast: dummy-category is not in the generated Category union
-            [LOCAL_DEFAULTS.CATEGORY as Category]: [{ id: skillName as SkillId }],
-          },
+    const configDir = path.join(marketplaceDir, CLAUDE_SRC_DIR);
+    await ensureDir(configDir);
+    // Boundary cast: custom marketplace dummy skill/category not in standard unions
+    const configContent = generateConfigSource({
+      name: marketplaceName,
+      skills: [{ id: skillName as SkillId, scope: "project", source: "local" }],
+      agents: [],
+      source: ".",
+      marketplace: marketplaceName,
+      stack: {
+        "web-developer": {
+          // Boundary cast: dummy-category is not in the generated Category union
+          [LOCAL_DEFAULTS.CATEGORY as Category]: [{ id: skillName as SkillId }],
         },
-      });
-      const marketplaceComment =
-        "// Marketplaces house skills only — agents are defined by consumer projects.\n\n";
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_TS),
-        marketplaceComment + configContent,
-      );
+      },
+    });
+    const marketplaceComment =
+      "// Marketplaces house skills only — agents are defined by consumer projects.\n\n";
+    await writeFile(
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
+      marketplaceComment + configContent,
+    );
 
-      this.log("");
-      this.logSuccess(`Created ${STACKS_FILE_PATH}`);
-      this.logSuccess(`Created ${SKILL_CATEGORIES_PATH}`);
-      this.logSuccess(`Created ${SKILL_RULES_PATH}`);
-      this.logSuccess("Created README.md");
-      this.logSuccess("Created .claude-src/config.ts");
-      this.log("");
+    this.log("");
+    this.logSuccess(`Created ${STACKS_FILE_PATH}`);
+    this.logSuccess(`Created ${SKILL_CATEGORIES_PATH}`);
+    this.logSuccess(`Created ${SKILL_RULES_PATH}`);
+    this.logSuccess("Created README.md");
+    this.logSuccess("Created .claude-src/config.ts");
+    this.log("");
+  }
 
-      // Build plugins and marketplace.json so the marketplace is immediately valid
-      await this.buildMarketplace(marketplaceDir, marketplaceName);
-
-      this.log("Marketplace created successfully!");
-      this.log("");
-      this.log("Next steps:");
-      if (!useCurrentDir) {
-        this.log(`  1. cd ${marketplaceName}`);
-      }
-      this.log(
-        `  ${useCurrentDir ? "1" : "2"}. ${CLI_BIN_NAME} new skill <name> --category <category-name>`,
-      );
-      this.log(`  ${useCurrentDir ? "2" : "3"}. Push to a git repository`);
-      this.log(
-        `  ${useCurrentDir ? "3" : "4"}. ${CLI_BIN_NAME} init --source github:your-org/${marketplaceName}`,
-      );
-      this.log("");
-    } catch (error) {
-      this.handleError(error);
+  private printNextSteps(marketplaceName: string, useCurrentDir: boolean): void {
+    this.log("Marketplace created successfully!");
+    this.log("");
+    this.log("Next steps:");
+    if (!useCurrentDir) {
+      this.log(`  1. cd ${marketplaceName}`);
     }
+    this.log(
+      `  ${useCurrentDir ? "1" : "2"}. ${CLI_BIN_NAME} new skill <name> --category <category-name>`,
+    );
+    this.log(`  ${useCurrentDir ? "2" : "3"}. Push to a git repository`);
+    this.log(
+      `  ${useCurrentDir ? "3" : "4"}. ${CLI_BIN_NAME} init --source github:your-org/${marketplaceName}`,
+    );
+    this.log("");
   }
 
   private async buildMarketplace(marketplaceDir: string, marketplaceName: string): Promise<void> {

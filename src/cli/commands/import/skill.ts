@@ -434,9 +434,6 @@ async function injectImportedForkedFromMetadata(
   source: string,
   contentHash: string,
 ): Promise<void> {
-  const metadataYamlPath = path.join(destPath, STANDARD_FILES.METADATA_YAML);
-  const metadataJsonPath = path.join(destPath, STANDARD_FILES.METADATA_JSON);
-
   const forkedFrom: ImportedForkedFromMetadata = {
     source,
     skillName,
@@ -444,68 +441,87 @@ async function injectImportedForkedFromMetadata(
     date: getCurrentDate(),
   };
 
-  if (await fileExists(metadataYamlPath)) {
-    const rawContent = await readFile(metadataYamlPath);
-    const lines = rawContent.split("\n");
-    let yamlContent = rawContent;
-    let schemaComment = "";
+  const yamlPath = path.join(destPath, STANDARD_FILES.METADATA_YAML);
+  const jsonPath = path.join(destPath, STANDARD_FILES.METADATA_JSON);
 
-    if (lines[0]?.startsWith("# yaml-language-server:")) {
-      schemaComment = `${lines[0]}\n`;
-      yamlContent = lines.slice(1).join("\n");
-    }
+  if (await fileExists(yamlPath)) {
+    return mergeForkedFromIntoYaml(yamlPath, forkedFrom);
+  }
+  if (await fileExists(jsonPath)) {
+    return convertJsonToYamlWithForkedFrom(jsonPath, yamlPath, forkedFrom);
+  }
+  return createMinimalMetadata(yamlPath, skillName, forkedFrom);
+}
 
-    const raw = parseYaml(yamlContent);
-    const parseResult = importedSkillMetadataSchema.safeParse(raw);
-    if (!parseResult.success) {
-      warn(
-        `Malformed metadata.yaml at ${metadataYamlPath} — existing fields may be lost\n` +
-          `  Validation errors: ${parseResult.error.issues.map((i) => i.message).join(", ")}\n` +
-          `  Expected fields: displayName (string), cliDescription (string), category (string)\n` +
-          `  Validate your YAML syntax at https://yamllint.com`,
-      );
-    }
-    const metadata = parseResult.success
-      ? (parseResult.data as SkillMetadata)
-      : { forkedFrom: undefined };
-    metadata.forkedFrom = forkedFrom;
+async function mergeForkedFromIntoYaml(
+  yamlPath: string,
+  forkedFrom: ImportedForkedFromMetadata,
+): Promise<void> {
+  const rawContent = await readFile(yamlPath);
+  const lines = rawContent.split("\n");
+  let yamlContent = rawContent;
+  let schemaComment = "";
 
-    const newYamlContent = stringifyYaml(metadata, {
-      lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE,
-    });
-    await writeFile(metadataYamlPath, schemaComment + newYamlContent);
-    return;
+  if (lines[0]?.startsWith("# yaml-language-server:")) {
+    schemaComment = `${lines[0]}\n`;
+    yamlContent = lines.slice(1).join("\n");
   }
 
-  if (await fileExists(metadataJsonPath)) {
-    const rawContent = await readFile(metadataJsonPath);
-    let jsonParsed: unknown;
-    try {
-      jsonParsed = JSON.parse(rawContent);
-    } catch {
-      warn(
-        `Malformed JSON in ${metadataJsonPath} — skipping metadata injection\n` +
-          `  Common issues: trailing commas, unquoted keys, single quotes instead of double quotes\n` +
-          `  Validate your JSON at https://jsonlint.com`,
-      );
-      return;
-    }
-    const jsonResult = importedSkillMetadataSchema.safeParse(jsonParsed);
-    const metadata = jsonResult.success
-      ? (jsonResult.data as SkillMetadata)
-      : { forkedFrom: undefined };
-    metadata.forkedFrom = forkedFrom;
+  const raw = parseYaml(yamlContent);
+  const parseResult = importedSkillMetadataSchema.safeParse(raw);
+  if (!parseResult.success) {
+    warn(
+      `Malformed metadata.yaml at ${yamlPath} — existing fields may be lost\n` +
+        `  Validation errors: ${parseResult.error.issues.map((i) => i.message).join(", ")}\n` +
+        `  Expected fields: displayName (string), cliDescription (string), category (string)\n` +
+        `  Validate your YAML syntax at https://yamllint.com`,
+    );
+  }
+  const metadata = parseResult.success
+    ? (parseResult.data as SkillMetadata)
+    : { forkedFrom: undefined };
+  metadata.forkedFrom = forkedFrom;
 
-    const yamlContent = stringifyYaml(metadata, { lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE });
-    await writeFile(metadataYamlPath, yamlContent);
+  const newYamlContent = stringifyYaml(metadata, {
+    lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE,
+  });
+  await writeFile(yamlPath, schemaComment + newYamlContent);
+}
+
+async function convertJsonToYamlWithForkedFrom(
+  jsonPath: string,
+  yamlPath: string,
+  forkedFrom: ImportedForkedFromMetadata,
+): Promise<void> {
+  const rawContent = await readFile(jsonPath);
+  let jsonParsed: unknown;
+  try {
+    jsonParsed = JSON.parse(rawContent);
+  } catch {
+    warn(
+      `Malformed JSON in ${jsonPath} — skipping metadata injection\n` +
+        `  Common issues: trailing commas, unquoted keys, single quotes instead of double quotes\n` +
+        `  Validate your JSON at https://jsonlint.com`,
+    );
     return;
   }
+  const jsonResult = importedSkillMetadataSchema.safeParse(jsonParsed);
+  const metadata = jsonResult.success
+    ? (jsonResult.data as SkillMetadata)
+    : { forkedFrom: undefined };
+  metadata.forkedFrom = forkedFrom;
 
+  const yamlContent = stringifyYaml(metadata, { lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE });
+  await writeFile(yamlPath, yamlContent);
+}
+
+async function createMinimalMetadata(
+  yamlPath: string,
+  skillName: string,
+  forkedFrom: ImportedForkedFromMetadata,
+): Promise<void> {
   const minimalMetadata: SkillMetadata = {
-    displayName: skillName
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" "),
+    displayName: toTitleCase(skillName),
     cliDescription: "Imported from third-party repository",
     category: IMPORT_DEFAULTS.CATEGORY,
     author: IMPORT_DEFAULTS.AUTHOR,
@@ -515,5 +531,12 @@ async function injectImportedForkedFromMetadata(
   const yamlContent = stringifyYaml(minimalMetadata, {
     lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE,
   });
-  await writeFile(metadataYamlPath, yamlContent);
+  await writeFile(yamlPath, yamlContent);
+}
+
+function toTitleCase(kebab: string): string {
+  return kebab
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }

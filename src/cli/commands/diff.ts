@@ -268,13 +268,7 @@ async function generateSkillDiff(
     "", // No local header
   );
 
-  const hasDiff = diff.split("\n").some((line) => {
-    return (
-      (line.startsWith("+") || line.startsWith("-")) &&
-      !line.startsWith("+++") &&
-      !line.startsWith("---")
-    );
-  });
+  const hasDiff = diff.split("\n").some(isContentChangeLine);
 
   return {
     skillDirName,
@@ -303,4 +297,13 @@ function formatColoredDiff(diffText: string): string {
       return line;
     })
     .join("\n");
+}
+
+/** A content-change line starts with +/- but is not a file header (+++ / ---). */
+function isContentChangeLine(line: string): boolean {
+  return (
+    (line.startsWith("+") || line.startsWith("-")) &&
+    !line.startsWith("+++") &&
+    !line.startsWith("---")
+  );
 }

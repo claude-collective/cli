@@ -18,6 +18,7 @@ import {
   DEFAULT_BRANDING,
   STANDARD_FILES,
 } from "../consts";
+import { countBy } from "remeda";
 import { setVerbose } from "../utils/logger";
 
 type CheckResult = {
@@ -272,41 +273,14 @@ function formatCheckLine(name: string, result: CheckResult, verbose: boolean): s
 }
 
 function formatSummary(results: CheckResult[]): string {
-  let passed = 0;
-  let warnings = 0;
-  let errors = 0;
+  const counts = countBy(results, (r) => r.status);
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-  for (const result of results) {
-    switch (result.status) {
-      case "pass":
-        passed++;
-        break;
-      case "warn":
-        warnings++;
-        break;
-      case "fail":
-        errors++;
-        break;
-      // skip doesn't count
-      default:
-        break;
-    }
-  }
-
-  const parts: string[] = [];
-  parts.push(`${passed} passed`);
-
-  if (warnings > 0) {
-    parts.push(`${warnings} warning${warnings === 1 ? "" : "s"}`);
-  } else {
-    parts.push(`0 warnings`);
-  }
-
-  if (errors > 0) {
-    parts.push(`${errors} error${errors === 1 ? "" : "s"}`);
-  } else {
-    parts.push(`0 errors`);
-  }
+  const parts = [
+    `${counts.pass ?? 0} passed`,
+    plural(counts.warn ?? 0, "warning"),
+    plural(counts.fail ?? 0, "error"),
+  ];
 
   return `  Summary: ${parts.join(", ")}`;
 }
