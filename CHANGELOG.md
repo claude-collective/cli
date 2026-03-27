@@ -7,6 +7,15 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.91.0] - 2026-03-27
+
+**Command refactors — extract private methods from 11 command run() bodies**
+
+- All command `run()` methods decomposed into focused private methods and pure helper functions
+- Added remeda `countBy`, `difference`, `indexBy` usage in doctor, edit, outdated commands
+
+See [changelogs/0.91.0.md](./changelogs/0.91.0.md) for full details.
+
 ## [0.90.0] - 2026-03-27
 
 **Dynamic marketplace display name, macOS symlink fix**
