@@ -2,37 +2,29 @@
 
 | ID    | Task                                                                                                                                      | Status        |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-157 | Eliminate hardcoded marketplace data from CLI — categories, rules, domain-agents. [Plan](./D-157-eliminate-hardcoded-marketplace-data.md) | Investigate   |
-| D-156 | Rename "local mode" to "eject mode" across CLI commands, config, types, and documentation                                                 | Ready for Dev |
-| D-155 | Declarative commands — two-tier orchestrator for all commands. [Plan](./D-155-declarative-commands.md)                                    | Complete      |
 | D-152 | Fix ENOENT in dual-scope skill copy — global `localPath` resolved against cwd not homedir                                                 | Ready for Dev |
-| D-149 | Stop inferring metadata from names/paths. [Findings](../.ai-docs/agent-findings/2026-03-25-skill-metadata-inference-from-names.md)        | Complete      |
-| D-148 | Remove unnecessary test mocks in 3 plugin test files                                                                                      | Complete      |
-| D-154 | Organize 26 operation files into domain subfolders, update barrel exports and imports                                                     | Ready for Dev |
-| D-153 | Standardize operation result types — consistent list/single-action return patterns                                                        | Deferred      |
-| D-145 | Operations layer — centralize repeated command sequences. [Proposal](./D-145-operations-layer.md)                                         | Complete      |
-| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                                                                           | Ready for Dev |
 | D-123 | Local mode ENOENT — empty `sourcePath` for built-in matrix on consuming projects                                                          | Ready for Dev |
-| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                                                                   | In Progress   |
+| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                                                                           | Ready for Dev |
+| D-156 | Rename "local mode" to "eject mode" across CLI commands, config, types, and documentation                                                 | Ready for Dev |
 | D-144 | Info panel — replace `?` overlay with `I` panel (stats, context, toggles)                                                                 | Investigate   |
-| D-118 | Investigate renaming "project/global" scope to "project/user"                                                                             | Investigate   |
-| D-97  | Improve startup time — lazy-load matrix generation                                                                                        | Investigate   |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions                                                                          | Ready for Dev |
-| D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting                                                          | Ready for Dev |
-| D-116 | Filter Incompatible toggle should also deselect incompatible skills                                                                       | Complete      |
-| D-132 | Skip incompatibility markers in exclusive (radio) categories                                                                              | Complete      |
-| D-131 | Track project installations in global config                                                                                              | Investigate   |
+| D-92  | Global config missing `source`, `marketplace`, `selectedAgents` on init                                                                   | In Progress   |
 | D-140 | Agent gap analysis — add 5 new agents. [Proposal](./D-140-agent-gap-analysis.md)                                                          | Ready for Dev |
 | D-111 | Create a GIF demo for the README                                                                                                          | Ready for Dev |
+| D-97  | Improve startup time — lazy-load matrix generation                                                                                        | Investigate   |
+| D-112 | Create a guide for setting up AI documentation                                                                                            | Ready for Dev |
+| D-157 | Eliminate hardcoded marketplace data from CLI — categories, rules, domain-agents. [Plan](./D-157-eliminate-hardcoded-marketplace-data.md) | Investigate   |
+| D-154 | Organize 26 operation files into domain subfolders, update barrel exports and imports                                                     | Ready for Dev |
 | D-110 | Fix the logo in the README                                                                                                                | Ready for Dev |
 | D-109 | Fix the screenshots in the README                                                                                                         | Ready for Dev |
 | D-130 | Narrow stack type safety — category-scoped SkillId unions. Depends on D-97                                                                | Investigate   |
-| D-129 | Add visibility into global config contents from project config                                                                            | Complete      |
+| D-62  | Review default stacks: add reviewing/research skills                                                                                      | Ready for Dev |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions                                                                          | Ready for Dev |
+| D-118 | Investigate renaming "project/global" scope to "project/user"                                                                             | Investigate   |
+| D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting                                                          | Ready for Dev |
+| D-131 | Track project installations in global config                                                                                              | Investigate   |
 | D-127 | UX for claiming global skills/agents into project scope                                                                                   | Investigate   |
 | D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names                                                             | Ready for Dev |
 | D-122 | Auto-update marketplace before plugin install                                                                                             | Ready for Dev |
-| D-62  | Review default stacks: add reviewing/research skills                                                                                      | Ready for Dev |
-| D-112 | Create a guide for setting up AI documentation                                                                                            | Ready for Dev |
 | D-111 | Replace E2E text anchors with stable test identifiers                                                                                     | Investigate   |
 | D-90  | Add Sentry tracking for unresolved matrix references                                                                                      | Ready for Dev |
 | D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)                                                               | Ready for Dev |
@@ -111,50 +103,13 @@ Add `projects?: string[]` to global config, updated by init/edit/uninstall. Warn
 
 ---
 
-#### D-129: Add visibility into global config contents from project config
-
-**Priority:** Low
-
-The `...globalConfig.skills` spread hides what's available. Consider generating comments listing the spread contents, or another approach to make the project config self-documenting without duplicating data.
-
----
-
 ### Operations Layer
-
-#### D-155: Declarative commands
-
-**Priority:** High
-
-Move single-use operations back into commands, apply the two-tier orchestrator pattern to all commands. See [D-155-declarative-commands.md](./D-155-declarative-commands.md) for the full plan.
-
----
 
 #### D-154: Organize operations into domain folders
 
 **Priority:** Medium
 
 Group the 26 operation files into domain subdirectories: `source/`, `skills/`, `plugins/`, `config/`, `agents/`, `scaffold/`, `lifecycle/`. Update barrel exports and all import paths across the codebase.
-
----
-
-#### D-153: Standardize operation result types
-
-**Priority:** Medium
-
-Current return types are inconsistent — some use counts, some arrays, some booleans. Define consistent patterns:
-
-- **List operations** return `{ succeeded: T[], failed: Array<{item, error}>, total }`
-- **Single-action operations** return `{ success, result?, error? }`
-
-Touches every operation file, call site, and test.
-
----
-
-#### D-148: Remove unnecessary test mocks in plugin test files
-
-**Priority:** Low
-
-Three plugin test files mock modules that don't need mocking: `getErrorMessage`, `consts`, and `DEFAULT_SOURCE`. Remove these unnecessary mocks.
 
 ---
 
@@ -240,72 +195,6 @@ All agent definitions in `src/agents/` should be reviewed and improved using the
 
 ---
 
-#### D-141: Merge AI documentation — consolidate `.ai-docs/` with `reference/` and `standards/` split
-
-**Priority:** Medium
-**Status:** Complete (2026-03-25)
-
-All AI-consumed documentation now lives in `.ai-docs/` with a clear internal split:
-
-```
-.ai-docs/
-  DOCUMENTATION_MAP.md              # master index for both sections
-  reference/                        # descriptive — "how things work"
-  standards/                        # prescriptive — "how to write code" (moved from docs/standards/)
-```
-
-See `.ai-docs/DOCUMENTATION_MAP.md` for the full file listing.
-
----
-
-#### D-142: Rename meta documentation agents — scribe → codex-keeper
-
-**Priority:** Low (naming only, no behavior change)
-
-**Depends on:** D-141 (doc merge should land first so references are stable)
-
-The meta agent category currently has four agents with two naming patterns:
-
-| Current Name      | Role                                | Pattern      |
-| ----------------- | ----------------------------------- | ------------ |
-| agent-summoner    | Creates/improves agents             | `*-summoner` |
-| skill-summoner    | Creates/improves skills             | `*-summoner` |
-| scribe            | Creates AI reference docs           | standalone   |
-| convention-keeper | Synthesizes findings into standards | `*-keeper`   |
-
-The "summoner" pair shares a role word differentiated by domain. The documentation pair should share "keeper" — both keep knowledge, differentiated by what they maintain:
-
-| New Name          | Role                                                            | Pattern    |
-| ----------------- | --------------------------------------------------------------- | ---------- |
-| codex-keeper      | Descriptive docs (architecture, types, store maps, commands)    | `*-keeper` |
-| convention-keeper | Prescriptive docs (standards, rules from anti-pattern findings) | `*-keeper` |
-
-**Naming rationale:** "Keeper" fits the lore/fantasy theme (summoners summon, keepers keep knowledge). A "codex" is a structured body of reference knowledge — maps directly to `.ai-docs/reference/`. Convention-keeper already has the right name and keeps `.ai-docs/standards/`.
-
-**Implementation steps:**
-
-1. Rename directory:
-   - `src/agents/meta/scribe/` → `src/agents/meta/codex-keeper/`
-
-2. Update `metadata.yaml`:
-   - `id: scribe` → `id: codex-keeper`, `title: Codex Keeper Agent`
-
-3. Update cross-references (grep for `scribe` excluding skill-summoner's unrelated uses):
-   - `CLAUDE.md` — delegation rules, agent mentions
-   - `todo/TODO.md` — D-137 spec mentions scribe by name
-   - `src/agents/meta/agent-summoner/workflow.md` — agent category tables
-   - `src/agents/meta/scribe/workflow.md` — self-references, `documentation-bible.md` reference
-   - `src/agents/meta/convention-keeper/workflow.md` — mentions scribe as distinct from itself
-   - D-138 agent audit table
-   - D-141 scribe agent update references
-   - Any stacks or config referencing the `scribe` agent ID
-
-4. Update generated types if `AgentName` union includes `scribe`
-
-5. Verify: `tsc --noEmit`, `npm test`, grep for orphaned references
-
----
-
 ### Wizard UX
 
 #### D-144: Info panel
@@ -351,14 +240,6 @@ Replace the `?` help overlay with an `I` info panel (opened via the `I` key) tha
 - Show all selected agents grouped by scope
 - Scrollable when content exceeds viewport
 - No other stats/toggles in v1
-
----
-
-#### D-132: Skip incompatibility markers in exclusive categories
-
-**Priority:** Low
-
-In radio (max 1) categories like Framework and Meta-Framework, the single-selection constraint already prevents conflicts. Incompatibility styling is redundant noise there. Only show incompatibility markers in non-exclusive (checkbox) categories where users could select conflicting skills. Check `exclusive: true` on the category definition.
 
 ---
 

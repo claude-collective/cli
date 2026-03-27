@@ -112,15 +112,97 @@ Planning        -      ✓      ✗     -      -       -      -
 
 ---
 
+## Implementation Progress
+
+### Agent Creation (2026-03-27) — COMPLETE
+
+All 5 agents created with full 7-file structure (metadata.yaml, intro.md, workflow.md, critical-requirements.md, critical-reminders.md, output-format.md, examples.md):
+
+| Agent            | Directory                             | Model  | Status  |
+| ---------------- | ------------------------------------- | ------ | ------- |
+| `ai-developer`   | `src/agents/developer/ai-developer/`  | opus   | Created |
+| `api-tester`     | `src/agents/tester/api-tester/`       | sonnet | Created |
+| `api-pm`         | `src/agents/planning/api-pm/`         | opus   | Created |
+| `ai-reviewer`    | `src/agents/reviewer/ai-reviewer/`    | opus   | Created |
+| `infra-reviewer` | `src/agents/reviewer/infra-reviewer/` | sonnet | Created |
+
+### Improvement Passes
+
+| Pass | Focus                      | Status   |
+| ---- | -------------------------- | -------- |
+| 1    | Structural alignment       | Complete |
+| 2    | Domain knowledge precision | Complete |
+| 3    | Verbosity reduction        | Complete |
+| 4    | Cross-agent consistency    | Complete |
+| 5    | Final surgical polish      | Complete |
+
+**Pass 1 fixes applied:**
+
+- Added missing `<investigation_requirement>` blocks (api-tester, infra-reviewer)
+- Schema URL alignment to full URLs (ai-reviewer, infra-reviewer, api-pm)
+- Positive framing conversion in critical-reminders (ai-developer)
+- Added `<domain_scope>` sections (ai-reviewer, infra-reviewer)
+- Added `<core_principles>` self-reminder loop (api-tester)
+- Arrow/emoji consistency with reference agents (ai-developer)
+- Added Write/Edit tools to api-pm metadata (PM saves specs)
+- Added approval decision framework (infra-reviewer)
+
+**Pass 2 fixes applied (domain knowledge precision):**
+
+- Fixed deprecated OpenAI SDK grep pattern in ai-developer (createChatCompletion -> modern patterns)
+- Fixed rate limit test off-by-one error in api-tester workflow example
+- Fixed `@latest` -> `@main` for GitHub Actions tag example in infra-reviewer
+- Removed template-injected duplicates from api-tester (core_principles, write_verification)
+- Added findings capture instruction to ai-developer, api-tester, ai-reviewer, infra-reviewer
+- Added git safety self-correction trigger to api-tester
+- Removed custom core_principles from infra-reviewer intro.md (conflicts with template)
+- Added findings capture handoff instruction to api-pm workflow
+- Fixed arrow convention in api-pm (ASCII `->` to Unicode `→` in self-correction triggers)
+- Removed stale template paths (.claude/conventions.md, .claude/patterns.md) from ai-developer
+
+**Pass 3 fixes applied (verbosity reduction):**
+
+- Removed redundant "Skipping investigation leads to..." warning from ai-developer workflow (already enforced by self-correction triggers and critical-requirements)
+
+**Pass 4 fixes applied (cross-agent consistency):**
+
+- Standardized arrow convention across all 5 agents: `→` in self-correction triggers, `->` in defer-to lists
+- Fixed ai-developer intro.md and workflow.md: `→` to `->` in defer-to lists
+- Fixed api-tester workflow.md: `->` to `→` in all 11 self-correction triggers
+- Fixed ai-reviewer workflow.md: `->` to `→` in all 9 self-correction triggers
+- Fixed infra-reviewer workflow.md: `->` to `→` in all 10 self-correction triggers
+- Expanded infra-reviewer domain_scope from prose to bullet list format (matching all other agents)
+- Removed template artifact "DISPLAY ALL 5 CORE PRINCIPLES..." from infra-reviewer critical-reminders.md
+
+**Pass 5 fixes applied (final surgical polish):**
+
+- Fixed api-tester metadata.yaml schema URL from relative to full URL (matching all other agents)
+- Verified no stale template references remain across all 5 agents
+- Verified all metadata.yaml files have correct model, tools, and description
+- Verified all critical-requirements and critical-reminders match (emphatic repetition)
+- Verified all domain_scope tags are properly opened and closed
+
+### Remaining Work
+
+- [ ] Compile agents with `agentsinc compile` and verify output
+- [ ] Register agents in config (`.claude-src/config.yaml` when it exists)
+- [ ] Update `AgentName` union in generated types
+
+---
+
 ## Implementation Notes
 
-### Files to Create
+### Files Created Per Agent
 
-Each new agent needs:
+Each agent has 7 source files:
 
-- `src/agents/{role}/{agent-id}/metadata.yaml` — agent metadata (name, display_name, description, agent_role, domain)
-- `src/agents/{role}/{agent-id}/AGENT.md` — system prompt with domain-specific instructions
-- Optional: `src/agents/{role}/{agent-id}/workflow.md` — workflow steps if the agent follows a structured process
+- `metadata.yaml` — id, title, description, model, tools
+- `intro.md` — role definition, focus areas, defer-to-specialists
+- `workflow.md` — investigation-first, development/review workflow, self-correction triggers
+- `critical-requirements.md` — emphatic MUST rules (top of compiled prompt)
+- `critical-reminders.md` — emphatic repetition of rules (bottom of compiled prompt)
+- `output-format.md` — structured output template
+- `examples.md` — concrete example of good agent output
 
 ### Files to Update
 

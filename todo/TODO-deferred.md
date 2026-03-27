@@ -2,6 +2,7 @@
 
 | ID    | Task                                                                                 | Status                  |
 | ----- | ------------------------------------------------------------------------------------ | ----------------------- |
+| D-153 | Standardize operation result types — consistent list/single-action return patterns   | Deferred                |
 | D-25  | Auto-version check + source staleness (see [plan](./D-25-auto-version-check.md))     | Ready for Dev           |
 | D-14  | Import skills from third-party marketplaces                                          | Needs Assistance        |
 | UX-04 | Interactive skill search polish                                                      | Needs Assistance        |
