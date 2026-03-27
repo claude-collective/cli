@@ -192,7 +192,7 @@ export const LOCAL_SKILL_MATRIX = createMockMatrix(
   // Boundary cast: fictional skill ID for testing local skill matrix
   createMockSkill("web-local-skill" as SkillId, {
     local: true,
-    localPath: ".claude/skills/my-local-skill/",
+    localPath: "/mock-project/.claude/skills/my-local-skill/",
   }),
 );
 
@@ -201,7 +201,7 @@ export const MIXED_LOCAL_REMOTE_MATRIX = createMockMatrix(
   // Boundary cast: fictional skill ID for testing mixed local/remote matrix
   createMockSkill("meta-company-patterns" as SkillId, {
     local: true,
-    localPath: ".claude/skills/company-patterns/",
+    localPath: "/mock-project/.claude/skills/company-patterns/",
   }),
 );
 

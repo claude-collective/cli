@@ -203,7 +203,7 @@ export type ResolvedSkill = {
   local?: boolean;
   /** True if this skill was created outside the CLI's built-in vocabulary */
   custom?: boolean;
-  /** Relative path from project root for local skills */
+  /** Absolute path to local skill directory */
   localPath?: string;
   /** All known sources that provide this skill (populated by multi-source-loader) */
   availableSources?: SkillSource[];
@@ -364,7 +364,7 @@ export type ExtractedSkillMetadata = {
   path: string;
   /** True if from .claude/skills/ (user-defined local skill) */
   local?: boolean;
-  /** Relative path from project root for local skills */
+  /** Absolute path to local skill directory */
   localPath?: string;
   /** Domain this skill belongs to (e.g., "web", "api", "cli") */
   domain: Domain;

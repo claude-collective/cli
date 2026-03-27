@@ -220,7 +220,9 @@ describe("source-loader local skills integration", () => {
     expect(localSkill.category).toBe("dummy-category");
     expect(localSkill.author).toBe("@dummy-author");
     expect(localSkill.local).toBe(true);
-    expect(localSkill.localPath).toBe(".claude/skills/test-my-skill/");
+    expect(localSkill.localPath).toBe(
+      path.join(tempDir, ".claude/skills", "test-my-skill") + path.sep,
+    );
   });
 
   it("should not inject fake local category definitions into the matrix", async () => {
@@ -399,7 +401,9 @@ describe("source-loader local skills integration", () => {
     expect(overriddenSkill.author).toBe("@dummy-author");
     // When overwriting a remote skill, the remote skill's category is inherited
     expect(overriddenSkill.category).toBe(existingSkill.category);
-    expect(overriddenSkill.localPath).toBe(".claude/skills/local-vitest/");
+    expect(overriddenSkill.localPath).toBe(
+      path.join(tempDir, ".claude/skills", "local-vitest") + path.sep,
+    );
   });
 });
 
@@ -894,7 +898,7 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-tooling-custom" as SkillId, {
           local: true,
-          localPath: ".claude/skills/custom-skill/",
+          localPath: "/project/.claude/skills/custom-skill/",
           domain: "web",
         }),
       ],
@@ -918,7 +922,7 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-framework-react", {
           local: true,
-          localPath: ".claude/skills/react-override/",
+          localPath: "/project/.claude/skills/react-override/",
           // Local skill declares different category, but remote's should be preserved
           category: "web-styling",
         }),
@@ -940,7 +944,7 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-tooling-custom" as SkillId, {
           local: true,
-          localPath: ".claude/skills/custom/",
+          localPath: "/project/.claude/skills/custom/",
           // Boundary cast: custom category not in generated union
           category: "web-tooling" as CategoryPath,
           domain: "web",
@@ -966,7 +970,7 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-framework-react", {
           local: true,
-          localPath: ".claude/skills/react/",
+          localPath: "/project/.claude/skills/react/",
           // Boundary cast: test slug not in generated union
           slug: "local-react" as SkillSlug,
           displayName: "Local React",
@@ -991,7 +995,7 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-tooling-custom" as SkillId, {
           local: true,
-          localPath: ".claude/skills/custom/",
+          localPath: "/project/.claude/skills/custom/",
           domain: "web",
         }),
       ],
@@ -1014,7 +1018,7 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-tooling-custom" as SkillId, {
           local: true,
-          localPath: ".claude/skills/custom/",
+          localPath: "/project/.claude/skills/custom/",
           // Boundary cast: custom category not in generated union
           category: "web-tooling" as CategoryPath,
           domain: "web",
@@ -1038,7 +1042,7 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-local-skill" as SkillId, {
           local: true,
-          localPath: ".claude/skills/custom/",
+          localPath: "/project/.claude/skills/custom/",
           category: "local",
           domain: "web",
         }),
@@ -1058,12 +1062,12 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-tooling-custom" as SkillId, {
           local: true,
-          localPath: ".claude/skills/custom/",
+          localPath: "/project/.claude/skills/custom/",
           domain: "web",
         }),
         createMockExtractedSkill("api-database-drizzle", {
           local: true,
-          localPath: ".claude/skills/drizzle/",
+          localPath: "/project/.claude/skills/drizzle/",
           domain: "api",
         }),
       ],
@@ -1092,7 +1096,7 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-framework-react", {
           local: true,
-          localPath: ".claude/skills/react/",
+          localPath: "/project/.claude/skills/react/",
         }),
       ],
       localSkillsPath: "/project/.claude/skills",
@@ -1118,7 +1122,7 @@ describe("mergeLocalSkillsIntoMatrix", () => {
       skills: [
         createMockExtractedSkill("web-tooling-custom" as SkillId, {
           local: true,
-          localPath: ".claude/skills/custom/",
+          localPath: "/project/.claude/skills/custom/",
           custom: true,
           domain: "web",
         }),

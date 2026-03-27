@@ -147,8 +147,7 @@ export async function copySkillsToPluginFromSource(
 
       let result: CopiedSkill;
       if (skill.local && skill.localPath && !userSelectedRemote) {
-        const localSkillPath = path.join(process.cwd(), skill.localPath);
-        const contentHash = await generateSkillHash(localSkillPath);
+        const contentHash = await generateSkillHash(skill.localPath);
 
         result = {
           skillId: skill.id,
@@ -212,8 +211,7 @@ export async function copySkillsToLocalFlattened(
       const userSelectedRemote = selectedSource && selectedSource !== "local";
 
       if (skill.local && skill.localPath && !userSelectedRemote) {
-        const localSkillPath = path.join(process.cwd(), skill.localPath);
-        const contentHash = await generateSkillHash(localSkillPath);
+        const contentHash = await generateSkillHash(skill.localPath);
 
         return {
           skillId: skill.id,

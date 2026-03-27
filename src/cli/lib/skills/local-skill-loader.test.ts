@@ -72,7 +72,9 @@ describe("local-skill-loader", () => {
       expect(result?.skills[0].category).toBe("web-framework");
       expect(result?.skills[0].author).toBe("@dummy-author");
       expect(result?.skills[0].local).toBe(true);
-      expect(result?.skills[0].localPath).toBe(`${LOCAL_SKILLS_PATH}/my-normal-skill/`);
+      expect(result?.skills[0].localPath).toBe(
+        path.join(tempDir, LOCAL_SKILLS_PATH, "my-normal-skill") + path.sep,
+      );
     });
 
     it("skips skill without metadata.yaml", async () => {
@@ -179,7 +181,7 @@ describe("local-skill-loader", () => {
       // Location
       expect(skill?.path).toBe(`${LOCAL_SKILLS_PATH}/full-skill/`);
       expect(skill?.local).toBe(true);
-      expect(skill?.localPath).toBe(`${LOCAL_SKILLS_PATH}/full-skill/`);
+      expect(skill?.localPath).toBe(path.join(tempDir, LOCAL_SKILLS_PATH, "full-skill") + path.sep);
     });
 
     it("uses category from metadata.yaml when provided", async () => {

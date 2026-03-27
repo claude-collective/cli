@@ -406,7 +406,7 @@ function buildEjectMatrix(localSkillIds: SkillId[] = []): MergedSkillsMatrix {
   return createMockMatrix(
     ...baseSkills.map((skill) =>
       localSkillIds.includes(skill.id)
-        ? { ...skill, local: true, localPath: `.claude/skills/${skill.id}/` }
+        ? { ...skill, local: true, localPath: `/mock-project/.claude/skills/${skill.id}/` }
         : skill,
     ),
   );

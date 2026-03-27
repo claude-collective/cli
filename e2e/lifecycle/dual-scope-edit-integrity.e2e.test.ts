@@ -85,8 +85,8 @@ describe("dual-scope edit lifecycle -- agent content and config integrity", () =
     },
   );
 
-  it.fails(
-    "Test 7: config split preserves source fields after edit (expected fail -- ENOENT in project-scoped skill copy)",
+  it(
+    "Test 7: config split preserves source fields after edit",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
       const { tempDir, fakeHome, projectDir } = await createTestEnvironment();

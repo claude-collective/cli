@@ -95,6 +95,7 @@ async function extractLocalSkill(
   }
 
   const relativePath = `${LOCAL_SKILLS_PATH}/${skillDirName}/`;
+  const absolutePath = path.join(localSkillsPath, skillDirName) + path.sep;
   const skillId = frontmatter.name;
 
   const extracted: ExtractedSkillMetadata = {
@@ -106,7 +107,7 @@ async function extractLocalSkill(
     author: LOCAL_DEFAULTS.AUTHOR,
     path: relativePath,
     local: true,
-    localPath: relativePath,
+    localPath: absolutePath,
     domain: metadata.domain,
     custom: metadata.custom,
     slug: metadata.slug,

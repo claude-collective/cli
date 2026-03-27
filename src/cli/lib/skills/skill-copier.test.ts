@@ -22,14 +22,15 @@ import { renderSkillMd } from "../__tests__/content-generators";
 
 /**
  * Write a local skill SKILL.md to .claude/skills/<skillId>/ in the project directory.
- * Returns the relative local skill path (e.g., ".claude/skills/web-framework-react/").
+ * Returns the absolute local skill path (e.g., "/tmp/xxx/.claude/skills/web-framework-react/").
  */
 async function writeLocalSkillOnDisk(projectDir: string, skillId: SkillId): Promise<string> {
   const skill = matrix.skills[skillId];
   if (!skill) {
     throw new Error(`writeLocalSkillOnDisk: "${skillId}" not found in matrix store`);
   }
-  const localSkillPath = `${CLAUDE_DIR}/${STANDARD_DIRS.SKILLS}/${skillId}/`;
+  const localSkillPath =
+    path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, skillId) + path.sep;
   await writeTestSkill(path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS), skillId, {
     skillContent: renderSkillMd(`${skillId} (@local)`, skill.description, `${skillId} content`),
     skipMetadata: true,

@@ -169,7 +169,7 @@ describe("multi-source-loader", () => {
       const matrix = createMockMatrix({
         ...SKILLS.react,
         local: true,
-        localPath: ".claude/skills/react/",
+        localPath: "/mock-project/.claude/skills/react/",
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -205,7 +205,7 @@ describe("multi-source-loader", () => {
       const matrix = createMockMatrix({
         ...SKILLS.react,
         local: true,
-        localPath: ".claude/skills/react/",
+        localPath: "/mock-project/.claude/skills/react/",
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -231,7 +231,7 @@ describe("multi-source-loader", () => {
       const matrix = createMockMatrix({
         ...SKILLS.react,
         local: true,
-        localPath: ".claude/skills/react/",
+        localPath: "/mock-project/.claude/skills/react/",
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
