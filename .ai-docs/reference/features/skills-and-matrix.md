@@ -1,6 +1,6 @@
 # Skills & Matrix System
 
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-28
 
 ## Overview
 
@@ -18,6 +18,17 @@
 | Slug Map           | Bidirectional `SkillSlug <-> SkillId` mapping built during merge            |
 | Source             | Where skills come from (public marketplace, private, local)                 |
 
+## Current Counts (2026-03-28)
+
+| Type        | Count | Source File                              |
+| ----------- | ----- | ---------------------------------------- |
+| SKILL_MAP   | 155   | `src/cli/types/generated/source-types.ts` |
+| Categories  | 50    | `src/cli/types/generated/source-types.ts` |
+| Domains     | 8     | `src/cli/types/generated/source-types.ts` |
+| AgentNames  | 18    | `src/cli/types/generated/source-types.ts` |
+
+**Domains:** ai, api, cli, infra, meta, mobile, shared, web
+
 ## File Structure
 
 ### Matrix System (`src/cli/lib/matrix/`)
@@ -33,15 +44,16 @@
 
 ### Skills System (`src/cli/lib/skills/`)
 
-| File                       | Path                                          | Purpose                                          |
-| -------------------------- | --------------------------------------------- | ------------------------------------------------ |
-| `skill-fetcher.ts`         | `src/cli/lib/skills/skill-fetcher.ts`         | Fetch skills from source directories             |
-| `skill-metadata.ts`        | `src/cli/lib/skills/skill-metadata.ts`        | Read/write skill metadata, hashing               |
-| `skill-copier.ts`          | `src/cli/lib/skills/skill-copier.ts`          | Copy skills to local/plugin dirs                 |
-| `skill-plugin-compiler.ts` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Compile skill as Claude plugin                   |
-| `local-skill-loader.ts`    | `src/cli/lib/skills/local-skill-loader.ts`    | Discover local skills in project                 |
-| `source-switcher.ts`       | `src/cli/lib/skills/source-switcher.ts`       | Delete/migrate local skills for source switching |
-| `index.ts`                 | `src/cli/lib/skills/index.ts`                 | Barrel exports                                   |
+| File                       | Path                                          | Purpose                                              |
+| -------------------------- | --------------------------------------------- | ---------------------------------------------------- |
+| `skill-fetcher.ts`         | `src/cli/lib/skills/skill-fetcher.ts`         | Fetch skills from source directories                 |
+| `skill-metadata.ts`        | `src/cli/lib/skills/skill-metadata.ts`        | Read/write skill metadata, hashing                   |
+| `skill-copier.ts`          | `src/cli/lib/skills/skill-copier.ts`          | Copy skills to local/plugin dirs                     |
+| `skill-plugin-compiler.ts` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Compile skill as Claude plugin                       |
+| `local-skill-loader.ts`    | `src/cli/lib/skills/local-skill-loader.ts`    | Discover local skills in project                     |
+| `source-switcher.ts`       | `src/cli/lib/skills/source-switcher.ts`       | Delete/migrate local skills for source switching     |
+| `generators.ts`            | `src/cli/lib/skills/generators.ts`            | Generate skill-categories.ts and skill-rules.ts content |
+| `index.ts`                 | `src/cli/lib/skills/index.ts`                 | Barrel exports                                       |
 
 ### Loading System (`src/cli/lib/loading/`)
 
@@ -103,13 +115,16 @@ Singleton module holding the current `MergedSkillsMatrix` instance. Starts as `B
 
 **Exported functions:**
 
-- `matrix` (let) - The current matrix instance
-- `initializeMatrix(merged)` - Replace the singleton (called once on startup)
-- `getSkillById(id: SkillId): ResolvedSkill` - Asserting lookup, throws if not found
-- `getSkillBySlug(slug: SkillSlug): ResolvedSkill` - Resolves slug to ID via `slugMap`, throws if not found
-- `getCustomSkillIds(): Set<SkillId>` - Returns IDs of all custom skills
-- `getCategoryDomain(category: string): Domain | undefined` - Look up category's domain
-- `findStack(stackId: string): ResolvedStack | undefined` - Optional stack lookup by ID
+- `matrix` (let) - The current matrix instance (line 14)
+- `initializeMatrix(merged)` - Replace the singleton (line 17)
+- `getSkillById(id: SkillId): ResolvedSkill` - Asserting lookup, throws if not found (line 22)
+- `getSkillBySlug(slug: SkillSlug): ResolvedSkill` - Resolves slug to ID via `slugMap`, throws if not found (line 29)
+- `getCustomSkillIds(): Set<SkillId>` - Returns IDs of all custom skills (line 36)
+- `getCategoryDomain(category: string): Domain | undefined` - Look up category's domain (line 45)
+- `hasSkill(id: string): boolean` - Check if a skill ID exists in the matrix (line 51)
+- `findStack(stackId: string): ResolvedStack | undefined` - Optional stack lookup by ID (line 56)
+
+**Barrel re-exports** (from `matrix/index.ts`): `matrix`, `initializeMatrix`, `getSkillById`, `getSkillBySlug`, `findStack`. Note: `getCustomSkillIds`, `getCategoryDomain`, `hasSkill` are exported from `matrix-provider.ts` but NOT re-exported from the barrel. Import them directly from `matrix-provider.ts`.
 
 ## Skill Resolution (`src/cli/lib/matrix/skill-resolution.ts`)
 
@@ -117,14 +132,14 @@ Contains the core merge logic that combines categories, relationship rules, and 
 
 **Exported functions:**
 
-- `mergeMatrixWithSkills(categories, relationships, skills)` - Main merge function (line 97)
+- `mergeMatrixWithSkills(categories, relationships, skills)` - Main merge function (line 100)
 - `synthesizeCategory(category, domain)` - Create a basic CategoryDefinition for undefined categories (line 29)
 
 **Internal function:**
 
-- `resolveRelationships(skillId, relationships, resolve)` - Unified resolver (R-08) that resolves all five relationship types (conflicts, discourages, compatibleWith, requires, alternatives) in a single pass for each skill (line 147)
+- `resolveRelationships(skillId, relationships, resolve)` - Unified resolver (R-08) that resolves all five relationship types (conflicts, discourages, compatibleWith, requires, alternatives) in a single pass for each skill (line 150)
 
-## SourceLoadResult (`src/cli/lib/loading/source-loader.ts:61-67`)
+## SourceLoadResult (`src/cli/lib/loading/source-loader.ts:62-69`)
 
 ```typescript
 type SourceLoadResult = {
@@ -133,6 +148,7 @@ type SourceLoadResult = {
   sourcePath: string;
   isLocal: boolean;
   marketplace?: string;
+  marketplaceDisplayName?: string;
 };
 ```
 
@@ -160,16 +176,19 @@ author: "@vince"
 slug: react
 domain: web
 displayName: React
-tags: ["react", "hooks", "components"]
 ```
 
-Validated with `rawMetadataSchema` in `src/cli/lib/matrix/matrix-loader.ts:26-37`.
+Validated with `rawMetadataSchema` in `src/cli/lib/matrix/matrix-loader.ts:26-36`.
+
+**Schema fields:** `category` (required), `author` (required), `slug` (required), `domain` (required), `displayName` (optional), `cliDescription` (optional), `usageGuidance` (optional), `custom` (optional boolean).
 
 **Note:** Relationship fields (`compatibleWith`, `conflictsWith`, `requires`, etc.) are NOT in per-skill metadata. They are defined centrally in `config/skill-rules.ts` as slug-based group rules and resolved during the merge step.
 
+**Note:** `tags` and `version` are NOT part of the schema. Do not add them to metadata.yaml.
+
 ## Alias Resolution
 
-**Function:** `resolveAlias()` at `src/cli/lib/matrix/matrix-resolver.ts:20`
+**Function:** `resolveAlias()` at `src/cli/lib/matrix/matrix-resolver.ts:33`
 
 Validates that a skill ID exists in the matrix:
 
@@ -192,26 +211,40 @@ Defined in `config/skill-rules.ts` under `relationships` using skill slugs:
 
 All relationship rules use `SkillSlug` references (e.g., `"react"`, `"zustand"`) which are resolved to canonical `SkillId`s during the merge step via the slug map.
 
-Checked per-skill by functions in `matrix-resolver.ts`:
+### Relationship Query Functions (`matrix-resolver.ts`)
 
-- `getDependentSkills()` (line 48) - Find skills that depend on a given skill
-- `isDiscouraged()` (line 94) - Check if skill is discouraged (conflicts, unmet requirements, or discourages relationships)
-- `getDiscourageReason()` (line 153) - Get human-readable reason for discouragement
-- `isRecommended()` (line 234) - Check if skill is recommended by selected skills
-- `getRecommendReason()` (line 266) - Get human-readable recommendation reason
-- `getAvailableSkills()` (line 454) - Get skills available for a category with state annotations (discouraged, recommended, selected)
-- `getSkillsByCategory()` (line 485) - Get all resolved skills belonging to a category
+Checked per-skill by exported functions:
+
+| Function | Line | Purpose |
+| -------- | ---- | ------- |
+| `resolveAlias()` | 33 | Validate skill ID exists in matrix |
+| `getDependentSkills()` | 61 | Find skills that depend on a given skill |
+| `getUnmetRequiredBy()` | 97 | Find first selected skill with unmet need for this skill |
+| `isDiscouraged()` | 139 | Check if skill is discouraged by discourages relationships |
+| `isIncompatible()` | 170 | Check if skill conflicts or has unsatisfiable requires |
+| `hasUnmetRequirements()` | 226 | Check if selected skill has unmet dependencies |
+| `getDiscourageReason()` | 253 | Get human-readable discouragement reason |
+| `getIncompatibleReason()` | 291 | Get human-readable incompatibility reason |
+| `getUnmetRequirementsReason()` | 359 | Get human-readable unmet requirements reason |
+| `isRecommended()` | 403 | Check if skill is recommended by selected skills |
+| `getRecommendReason()` | 435 | Get human-readable recommendation reason |
+| `getAvailableSkills()` | 645 | Get skills for a category with state annotations |
+| `getSkillsByCategory()` | 673 | Get all resolved skills belonging to a category |
+
+**Barrel re-exports** (from `matrix/index.ts`): All 13 functions above. Additionally exports `validateConflicts`, `validateRequirements`, `validateExclusivity`, `validateRecommendations` only from `matrix-resolver.ts` directly (not from barrel).
 
 ## Validation
 
-**Function:** `validateSelection()` at `src/cli/lib/matrix/matrix-resolver.ts:424`
+**Function:** `validateSelection()` at `src/cli/lib/matrix/matrix-resolver.ts:593`
 
 Runs four validation passes via helper functions:
 
-- `validateConflicts()` (line 282) - Mutually exclusive skill pairs
-- `validateRequirements()` (line 305) - Required dependencies
-- `validateExclusivity()` (line 341) - Category exclusive violations
-- `validateRecommendations()` (line 372) - Missing recommended companions (warnings only)
+| Function | Line | What it validates |
+| -------- | ---- | ----------------- |
+| `validateConflicts()` | 451 | Mutually exclusive skill pairs |
+| `validateRequirements()` | 474 | Required dependencies |
+| `validateExclusivity()` | 510 | Category exclusive violations |
+| `validateRecommendations()` | 541 | Missing recommended companions (warnings only) |
 
 Returns `SelectionValidation` with `valid` flag, error list, and warning list.
 
@@ -235,6 +268,17 @@ When changing a skill's source:
 - `computeSkillFolderHash()` - SHA-256 hash of skill directory contents
 - Used for `forkedFrom.contentHash` in metadata to detect local modifications
 
+## Skill Generators
+
+**File:** `src/cli/lib/skills/generators.ts`
+
+Generates config file content for custom skills:
+
+- `generateSkillCategoriesTs(category, domain)` - Generate a `skill-categories.ts` with one category entry
+- `generateSkillRulesTs()` - Generate an empty `skill-rules.ts`
+- `buildCategoryEntry(category, domain)` - Build a single category definition object
+- `toTitleCase(kebabCase)` - Convert kebab-case to Title Case
+
 ## Stacks System (`src/cli/lib/stacks/`)
 
 | File                       | Path                                          | Purpose                        |
@@ -245,10 +289,29 @@ When changing a skill's source:
 
 Stacks are pre-configured bundles of skills mapped to agents. Defined in `config/stacks.ts`.
 
-**Key functions:**
+**Key functions (`stacks-loader.ts`):**
 
-- `loadStacks()` - Load all stacks from TS config
-- `loadStackById()` - Load specific stack
-- `resolveAgentConfigToSkills()` - Resolve stack agent config to skill assignments
-- `getStackSkillIds()` - Extract flat skill ID list from stack
-- `normalizeStackRecord()` - Normalize stack values to `SkillAssignment[]` arrays
+- `loadStacks()` - Load all stacks from TS config (line 56)
+- `loadStackById()` - Load specific stack (line 93)
+- `resolveAgentConfigToSkills()` - Resolve stack agent config to skill assignments (line 114)
+- `getStackSkillIds()` - Extract flat skill ID list from stack (line 133)
+- `normalizeStackRecord()` - Normalize stack values to `SkillAssignment[]` arrays (line 50)
+- `normalizeAgentConfig()` - Normalize agent config entries (line 32)
+- `resolveStackSkills()` - Resolve all stack skills by agent (line 142)
+
+## Operations Layer Integration
+
+The operations layer (`src/cli/lib/operations/skills/`) provides higher-level wrappers used by commands:
+
+| Operation | File | Wraps |
+| --------- | ---- | ----- |
+| `discoverInstalledSkills()` | `operations/skills/discover-skills.ts` | 4-way merge: global plugins + global local + project plugins + project local skills |
+| `compareSkillsWithSource()` | `operations/skills/compare-skills.ts` | `compareLocalSkillsWithSource()` from `skill-metadata.ts` for both scopes |
+| `findSkillMatch()` | `operations/skills/find-skill-match.ts` | Skill lookup by exact ID, partial name, or directory name |
+| `resolveSkillInfo()` | `operations/skills/resolve-skill-info.ts` | Full skill info resolution for display (ID/slug lookup, install status) |
+| `installPluginSkills()` | `operations/skills/install-plugin-skills.ts` | Install skill plugins via Claude CLI by scope |
+| `uninstallPluginSkills()` | `operations/skills/uninstall-plugin-skills.ts` | Uninstall skill plugins via Claude CLI by scope |
+| `copyLocalSkills()` | `operations/skills/copy-local-skills.ts` | Copy local-source skills to scope-appropriate directories |
+| `collectScopedSkillDirs()` | `operations/skills/collect-scoped-skill-dirs.ts` | List local skill directories with scope annotations |
+
+See `reference/features/operations-layer.md` for the full operations layer documentation.

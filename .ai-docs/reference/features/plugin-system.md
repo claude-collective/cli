@@ -1,6 +1,6 @@
 # Plugin System
 
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-28
 
 ## Overview
 
@@ -112,23 +112,23 @@ Types:
 
 ## Plugin Validation
 
-**Function:** `validatePlugin()` at `src/cli/lib/plugins/plugin-validator.ts:350`
+**Function:** `validatePlugin()` at `src/cli/lib/plugins/plugin-validator.ts:351`
 
 Validates:
 
-- Plugin structure via `validatePluginStructure()` (manifest dir exists, line `:63`)
-- Plugin manifest via `validatePluginManifest()` (valid JSON, required fields, line `:113`)
+- Plugin structure via `validatePluginStructure()` (manifest dir exists, line `:64`)
+- Plugin manifest via `validatePluginManifest()` (valid JSON, required fields, line `:114`)
 - Skill files via `validatePluginSkillFiles()` (SKILL.md has valid frontmatter)
 - Agent files via `validatePluginAgentFiles()` (agent .md files have valid frontmatter)
 
 Individual frontmatter validators (exported):
 
-- `validateSkillFrontmatter()` at `:184` - Validate a single SKILL.md file
-- `validateAgentFrontmatter()` at `:220` - Validate a single agent .md file
+- `validateSkillFrontmatter()` at `:185` - Validate a single SKILL.md file
+- `validateAgentFrontmatter()` at `:221` - Validate a single agent .md file
 
-**Function:** `validateAllPlugins()` - Validate all plugins in a directory.
+**Function:** `validateAllPlugins()` at `:381` - Validate all plugins in a directory.
 
-**Function:** `printPluginValidationResult()` - Format validation results for display.
+**Function:** `printPluginValidationResult()` at `:459` - Format validation results for display.
 
 ## Manifest Generation
 
@@ -163,7 +163,7 @@ Types:
 
 ## Marketplace
 
-### Marketplace Type (`src/cli/types/plugins.ts:58-66`)
+### Marketplace Type (`src/cli/types/plugins.ts:59-67`)
 
 ```typescript
 type Marketplace = {
@@ -187,15 +187,18 @@ Generates `marketplace.json` from a source directory containing skills.
 
 Executed through `src/cli/utils/exec.ts`:
 
-| Function                          | Shell Command                                    |
-| --------------------------------- | ------------------------------------------------ |
-| `claudePluginInstall()`           | `claude plugin install {path} --scope {scope}`   |
-| `claudePluginUninstall()`         | `claude plugin uninstall {name} --scope {scope}` |
-| `claudePluginMarketplaceList()`   | `claude plugin marketplace list --json`          |
-| `claudePluginMarketplaceExists()` | Checks if marketplace is registered              |
-| `claudePluginMarketplaceAdd()`    | `claude plugin marketplace add {source}`         |
+| Function                              | Shell Command                                        |
+| ------------------------------------- | ---------------------------------------------------- |
+| `claudePluginInstall()`               | `claude plugin install {path} --scope {scope}`       |
+| `claudePluginUninstall()`             | `claude plugin uninstall {name} --scope {scope}`     |
+| `claudePluginMarketplaceList()`       | `claude plugin marketplace list --json`              |
+| `claudePluginMarketplaceExists()`     | Checks if marketplace is registered (calls List)     |
+| `claudePluginMarketplaceAdd()`        | `claude plugin marketplace add {source}`             |
+| `claudePluginMarketplaceRemove()`     | `claude plugin marketplace remove {name}`            |
+| `claudePluginMarketplaceUpdate()`     | `claude plugin marketplace update {name}`            |
+| `isClaudeCLIAvailable()`              | `claude --version` (returns boolean)                 |
 
-`claudePluginInstall()` and `claudePluginUninstall()` accept `scope: "project" | "user"` and `projectDir` parameters. All inputs validated for injection prevention before execution.
+`claudePluginInstall()` and `claudePluginUninstall()` accept `scope: "project" | "user"` and `projectDir` parameters. User-scoped operations run from `os.homedir()` via `resolvePluginCwd()` so Claude CLI writes to `~/.claude/settings.json`. All inputs validated for injection prevention before execution.
 
 ## Installation Modes
 
@@ -203,19 +206,19 @@ Executed through `src/cli/utils/exec.ts`:
 
 Skills copied to `.claude/skills/`, agents compiled to `.claude/agents/`.
 
-**Function:** `installLocal()` at `src/cli/lib/installation/local-installer.ts:634`
+**Function:** `installLocal()` at `src/cli/lib/installation/local-installer.ts:584`
 (Re-exported from `src/cli/lib/installation/index.ts`)
 
 ### Plugin Mode
 
 Skills installed as Claude Code plugins, agents compiled to `.claude/agents/`.
 
-**Function:** `installPluginConfig()` at `src/cli/lib/installation/local-installer.ts:542`
+**Function:** `installPluginConfig()` at `src/cli/lib/installation/local-installer.ts:492`
 (Re-exported from `src/cli/lib/installation/index.ts`)
 
 ### Scope-Aware Installation
 
-Both `installLocal()` and `installPluginConfig()` use `writeScopedConfigs()` (line `:422`) to split config by scope:
+Both `installLocal()` and `installPluginConfig()` use `writeScopedConfigs()` (line `:369`) to split config by scope:
 
 - Global-scoped skills/agents go to `~/.claude-src/config.ts` and `~/.claude/agents/`
 - Project-scoped skills/agents go to `{projectDir}/.claude-src/config.ts` and `{projectDir}/.claude/agents/`
@@ -224,24 +227,24 @@ Key helper functions in `local-installer.ts`:
 
 | Function                | Line   | Purpose                                          |
 | ----------------------- | ------ | ------------------------------------------------ |
-| `resolveInstallPaths()` | `:98`  | Resolve skill/agent/config paths for a scope     |
-| `buildAndMergeConfig()` | `:284` | Build config from wizard and merge with existing |
-| `writeConfigFile()`     | `:302` | Write config.ts using `generateConfigSource()`   |
-| `writeScopedConfigs()`  | `:422` | Split and write configs by scope                 |
-| `buildCompileAgents()`  | `:311` | Build agent compile config from ProjectConfig    |
-| `buildAgentScopeMap()`  | `:338` | Map agent names to their scope                   |
-| `setConfigMetadata()`   | `:253` | Set source/marketplace/domains on config         |
+| `resolveInstallPaths()` | `:96`  | Resolve skill/agent/config paths for a scope     |
+| `setConfigMetadata()`   | `:251` | Set source/marketplace/domains on config         |
+| `buildAndMergeConfig()` | `:282` | Build config from wizard and merge with existing |
+| `writeConfigFile()`     | `:300` | Write config.ts using `generateConfigSource()`   |
+| `buildCompileAgents()`  | `:309` | Build agent compile config from ProjectConfig    |
+| `buildAgentScopeMap()`  | `:336` | Map agent names to their scope                   |
+| `writeScopedConfigs()`  | `:369` | Split and write configs by scope                 |
 
 ### Detection
 
-**Function:** `detectInstallation()` at `src/cli/lib/installation/installation.ts:103`
+**Function:** `detectInstallation()` at `src/cli/lib/installation/installation.ts:84`
 
 Returns `Installation` type with `mode`, `configPath`, `agentsDir`, `skillsDir`, `projectDir`.
 
 Detection logic:
 
 1. Check for project-level installation via `detectProjectInstallation()` (line `:35`)
-2. If not found, fall back to global installation via `detectGlobalInstallation()` (line `:68`)
+2. If not found, fall back to global installation via `detectGlobalInstallation()` (line `:59`)
 3. Each checks for `.claude-src/config.ts` and loads config to determine mode
 
 Install mode is derived at runtime from the skills array via `deriveInstallMode()` (line `:26`):
@@ -251,4 +254,64 @@ Install mode is derived at runtime from the skills array via `deriveInstallMode(
 - All non-local sources = `"plugin"` mode
 - Mixed = `"mixed"` mode
 
-**Function:** `getInstallationOrThrow()` at `src/cli/lib/installation/installation.ts:114` - Same as `detectInstallation()` but throws if no installation found.
+**Function:** `getInstallationOrThrow()` at `src/cli/lib/installation/installation.ts:95` - Same as `detectInstallation()` but throws if no installation found.
+
+## Mode Migration
+
+**File:** `src/cli/lib/installation/mode-migrator.ts`
+(Re-exported from `src/cli/lib/installation/index.ts`)
+
+Handles skill source and scope migrations when editing an installation:
+
+| Function              | Purpose                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `detectMigrations()`  | Compare old/new `SkillConfig[]` to detect source/scope changes |
+| `executeMigration()`  | Execute per-skill migration: copy/delete locals, install/uninstall plugins |
+
+Types:
+
+- `SkillMigration` - Single skill migration with id, old/new source, old/new scope
+- `MigrationPlan` - Contains `toLocal`, `toPlugin`, `scopeChanges` arrays
+- `MigrationResult` - Contains `localizedSkills`, `pluginizedSkills`, `warnings`
+
+Migration splits skills by scope before copying (project skills to `{projectDir}/.claude/skills/`, global to `~/.claude/skills/`). Plugin install/uninstall uses per-skill scope mapping (`"global"` -> `"user"`, `"project"` -> `"project"`).
+
+## Operations Layer (Plugin Operations)
+
+Plugin-related operations extracted to `src/cli/lib/operations/`:
+
+### Install Plugin Skills
+
+**File:** `src/cli/lib/operations/skills/install-plugin-skills.ts`
+
+**Function:** `installPluginSkills(skills, marketplace, projectDir)` - Installs non-local skills as Claude CLI plugins. Constructs `{skillId}@{marketplace}` refs, routes by scope (`"global"` -> `"user"`, `"project"` -> `"project"`).
+
+**Type:** `PluginInstallResult` - `{ installed: Array<{ id, ref }>, failed: Array<{ id, error }> }`
+
+### Uninstall Plugin Skills
+
+**File:** `src/cli/lib/operations/skills/uninstall-plugin-skills.ts`
+
+**Function:** `uninstallPluginSkills(skillIds, oldSkills, projectDir)` - Uninstalls plugins using scope from old config entries.
+
+**Type:** `PluginUninstallResult` - `{ uninstalled: SkillId[], failed: Array<{ id, error }> }`
+
+### Ensure Marketplace
+
+**File:** `src/cli/lib/operations/source/ensure-marketplace.ts`
+
+**Function:** `ensureMarketplace(sourceResult)` - Registers or updates the marketplace with the Claude CLI. Lazy-resolves marketplace name if `sourceResult.marketplace` is undefined. Silent operation -- callers decide logging.
+
+**Type:** `MarketplaceResult` - `{ marketplace: string | null, registered: boolean }`
+
+Uses `claudePluginMarketplaceExists()`, `claudePluginMarketplaceAdd()`, and `claudePluginMarketplaceUpdate()` from exec.ts.
+
+## Installation Barrel Exports
+
+**File:** `src/cli/lib/installation/index.ts`
+
+Re-exports from `installation.ts`: `InstallMode`, `Installation`, `detectGlobalInstallation`, `detectInstallation`, `detectProjectInstallation`, `getInstallationOrThrow`, `deriveInstallMode`
+
+Re-exports from `local-installer.ts`: `LocalInstallOptions`, `LocalInstallResult`, `PluginConfigResult`, `installLocal`, `installPluginConfig`, `buildAndMergeConfig`, `writeConfigFile`, `writeScopedConfigs`, `setConfigMetadata`, `resolveInstallPaths`, `buildLocalSkillsMap`, `buildCompileAgents`, `buildAgentScopeMap`
+
+Re-exports from `mode-migrator.ts`: `SkillMigration`, `MigrationPlan`, `MigrationResult`, `detectMigrations`, `executeMigration`

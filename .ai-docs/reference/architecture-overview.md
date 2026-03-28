@@ -1,13 +1,13 @@
 # Architecture Overview
 
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-28
 
 ## Project Identity
 
 | Field       | Value                                                                    |
 | ----------- | ------------------------------------------------------------------------ |
 | Package     | `@agents-inc/cli`                                                        |
-| Version     | 0.74.10                                                                  |
+| Version     | 0.94.0                                                                   |
 | Binary      | `agentsinc` (also `CLI_BIN_NAME` in `src/cli/consts.ts:27`)              |
 | Type        | ESM (`"type": "module"` in package.json)                                 |
 | Entry Point | `src/cli/index.ts` (runs oclif with `run()`)                             |
@@ -66,25 +66,29 @@ src/cli/
     init.ts                 # oclif init hook: resolves source, attaches to config
   lib/                      # Core business logic (no UI)
     agents/                 # Agent fetching, compilation, recompilation
-    configuration/          # Config loading/saving/merging/source management/config-writer
+    configuration/          # Config loading/saving/merging/source management/config-writer/config-generator
     installation/           # Install mode detection, local installer, mode migrator
     loading/                # YAML/frontmatter loading, source fetching, multi-source
     matrix/                 # Skills matrix loading, resolving, health checks
       matrix-provider.ts    # getSkillById(), getSkillBySlug() lookups
       skill-resolution.ts   # resolveRelationships() — unified resolution
+    operations/             # Composable building blocks for CLI commands
+      source/               # loadSource(), ensureMarketplace()
+      skills/               # discoverSkills(), copyLocalSkills(), installPluginSkills(), etc.
+      project/              # detectProject(), writeProjectConfig(), compileAgents(), loadAgentDefs()
     plugins/                # Plugin discovery, validation, manifest, settings
     skills/                 # Skill fetching, copying, metadata, source switching
     stacks/                 # Stack loading, installing, plugin compilation
     wizard/                 # Build step logic (pure functions)
     compiler.ts             # Liquid template engine, agent/skill compilation
     exit-codes.ts           # Named EXIT_CODES constants
-    feature-flags.ts        # Runtime feature flags (e.g., SOURCE_SEARCH)
+    feature-flags.ts        # Runtime feature flags (SOURCE_SEARCH, SOURCE_CHOICE, INFO_PANEL)
     metadata-keys.ts        # Metadata key constants
     output-validator.ts     # Compiled agent output validation
     permission-checker.tsx  # Claude Code permissions check
     resolver.ts             # Skill/agent reference resolution
     schema-validator.ts     # JSON Schema validation
-    schemas.ts              # ALL Zod schemas (30+)
+    schemas.ts              # ALL Zod schemas (39 exported)
     source-validator.ts     # Source directory validation
     versioning.ts           # Content hashing for versioning
     marketplace-generator.ts # Marketplace.json generation
@@ -109,6 +113,7 @@ src/cli/
     fs.ts                   # File system wrappers (fs-extra + fast-glob)
     logger.ts               # log(), warn(), verbose(), setVerbose()
     messages.ts             # All user-facing message constants
+    string.ts               # truncateText() string utility
     type-guards.ts          # isCategory(), isDomain(), isAgentName(), isCategoryPath()
     typed-object.ts         # typedEntries(), typedKeys()
     yaml.ts                 # safeLoadYamlFile() (Zod-validated YAML loading)
@@ -133,13 +138,14 @@ Command.run() (commands/init.tsx)
 Wizard (Ink/React UI)
   -> Imports matrix from matrix-provider.ts (not via props)
   -> Zustand store (useWizardStore) manages step-by-step state
-  -> Steps: stack -> build -> sources -> agents -> confirm
+  -> Steps: stack -> domains -> build -> sources -> agents -> confirm
   -> Returns WizardResultV2
   |
   v
-Installation
-  -> installLocal() or installPluginConfig()
-  -> Copies skills, generates config via generateConfigSource(), compiles agents
+Installation (commands use operations layer as composable building blocks)
+  -> Operations: loadSource(), detectProject(), copyLocalSkills(), installPluginSkills()
+  -> writeProjectConfig() generates config via generateConfigSource()
+  -> compileAgents() compiles agent prompts
   -> writeScopedConfigs() splits config into global + project scopes
   |
   v
@@ -188,9 +194,9 @@ Implemented in: `src/cli/lib/configuration/config.ts:84-132`
 | local  | `.claude/skills/`   | `.claude/agents/` | `.claude-src/config.ts` |
 | plugin | Claude plugin cache | `.claude/agents/` | `.claude-src/config.ts` |
 
-Detection: `src/cli/lib/installation/installation.ts` — `detectInstallation()` at line 103, `detectProjectInstallation()` at line 35
+Detection: `src/cli/lib/installation/installation.ts` — `detectInstallation()` at line 84, `detectProjectInstallation()` at line 35
 
-Scope-aware config splitting: `writeScopedConfigs()` in `src/cli/lib/installation/local-installer.ts:422` splits config into global and project-scoped files.
+Scope-aware config splitting: `writeScopedConfigs()` in `src/cli/lib/installation/local-installer.ts:369` splits config into global and project-scoped files.
 
 ### 5. Liquid Template Compilation
 
@@ -202,11 +208,11 @@ Template root resolution order (first match wins):
 2. `{project}/.claude/templates/` (legacy)
 3. `{CLI_ROOT}/templates/` (built-in)
 
-Implemented in: `src/cli/lib/compiler.ts:400-434`
+Implemented in: `src/cli/lib/compiler.ts:394-419` (`createLiquidEngine()`)
 
 ### 6. Zod Schema Validation
 
-All YAML/JSON parse boundaries use Zod schemas from `src/cli/lib/schemas.ts`.
+All YAML/JSON parse boundaries use Zod schemas from `src/cli/lib/schemas.ts` (39 exported schemas).
 
 Pattern: Lenient "loader" schemas with `.passthrough()` at parse boundaries, strict schemas for validation. Bridge pattern: `z.ZodType<ExistingType>` ensures Zod output matches TypeScript interfaces.
 
@@ -227,14 +233,14 @@ The `src/cli/types/generated/matrix.ts` file contains the full `BUILT_IN_MATRIX`
 - `getSkillById(id)` — asserting lookup by SkillId
 - `getSkillBySlug(slug)` — asserting lookup by SkillSlug
 
-`src/cli/lib/matrix/skill-resolution.ts` contains `resolveRelationships()` (line 147) — a single unified function that resolves all skill relationships (replaces 5 separate resolve functions).
+`src/cli/lib/matrix/skill-resolution.ts` contains `resolveRelationships()` (line 150) — a single unified function that resolves all skill relationships (replaces 5 separate resolve functions).
 
 ### 9. Security Measures
 
 - Source validation: `validateSourceFormat()` in `src/cli/lib/configuration/config.ts:291-320` (with helper functions through line 447)
   - Blocks null bytes, UNC paths, private IPs, path traversal
   - Validates remote and local source formats
-- Liquid injection prevention: `sanitizeCompiledAgentData()` in `src/cli/lib/compiler.ts:77-112`
+- Liquid injection prevention: `sanitizeCompiledAgentData()` in `src/cli/lib/compiler.ts:77-111`
   - Strips `{{`, `}}`, `{%`, `%}` from all user-controlled fields
 - File size limits: `MAX_MARKETPLACE_FILE_SIZE`, `MAX_PLUGIN_FILE_SIZE`, `MAX_CONFIG_FILE_SIZE` in `src/cli/consts.ts:143-145`
 - Command injection prevention: Input validation in `src/cli/utils/exec.ts:7-87`
@@ -243,4 +249,4 @@ The `src/cli/types/generated/matrix.ts` file contains the full `BUILT_IN_MATRIX`
 
 `src/cli/lib/configuration/config-writer.ts` — `generateConfigSource()` generates TypeScript config files from `ProjectConfig` objects. Supports standalone configs and project configs that import/extend global configs.
 
-Key function: `generateConfigSource(config, options?)` at line 29. When `options.isProjectConfig` is true, generates config that imports from the global `~/.claude-src/config` and spreads global arrays.
+Key function: `generateConfigSource(config, options?)` at line 35. When `options.isProjectConfig` is true, generates config that imports from the global `~/.claude-src/config` and spreads global arrays.

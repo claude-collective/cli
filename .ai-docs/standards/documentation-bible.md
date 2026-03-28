@@ -26,19 +26,26 @@
 ```
 .ai-docs/
   DOCUMENTATION_MAP.md          # THE INDEX - load this first
-  architecture-overview.md      # System architecture, data flow, directory structure
-  commands.md                   # All CLI commands, flags, exit codes
-  component-patterns.md         # Ink component conventions, hooks, styling constants
-  store-map.md                  # Zustand wizard store state, actions, consumers
-  test-infrastructure.md        # Test helpers, factories, fixtures, E2E infrastructure
-  type-system.md                # Union types, branded types, Zod schemas, typed helpers
-  utilities.md                  # Shared utilities, constants, logger, fs helpers
-  features/
-    compilation-pipeline.md     # Liquid templates, agent assembly, output validation
-    configuration.md            # Config loading, resolution hierarchy, config writer
-    plugin-system.md            # Plugin discovery, manifest generation, installation
-    skills-and-matrix.md        # Skills matrix, categories, resolution, source loading
-    wizard-flow.md              # Wizard steps, state transitions, keyboard navigation
+  reference/
+    architecture-overview.md    # System architecture, data flow, directory structure
+    boundary-map.md             # System boundaries: input, parse, write, exec, security
+    commands.md                 # All CLI commands, flags, exit codes
+    component-patterns.md       # Ink component conventions, hooks, styling constants
+    dependency-graph.md         # Cross-cutting import maps: commands -> ops -> lib -> utils
+    findings-impact-report.md   # Agent findings cross-referenced against reference docs
+    state-transitions.md        # Wizard state machine: steps, actions, resets, hotkeys
+    store-map.md                # Zustand wizard store state, actions, consumers
+    test-infrastructure.md      # Test helpers, factories, fixtures, E2E infrastructure
+    type-system.md              # Union types, branded types, Zod schemas, typed helpers
+    utilities.md                # Shared utilities, constants, logger, fs helpers
+    features/
+      agent-system.md           # Agent templates, partials, Liquid compilation, metadata
+      compilation-pipeline.md   # Liquid templates, agent assembly, output validation
+      configuration.md          # Config loading, resolution hierarchy, config writer
+      operations-layer.md       # Composable operations: source, skills, project
+      plugin-system.md          # Plugin discovery, manifest generation, installation
+      skills-and-matrix.md      # Skills matrix, categories, resolution, source loading
+      wizard-flow.md            # Wizard steps, state transitions, keyboard navigation
 ```
 
 ### Loading Decision Tree
@@ -72,6 +79,12 @@ Need to work on any area of the codebase?
 | `features/plugin-system.md`        | Plugin discovery, manifest, installation, marketplace integration                 | Working on plugins          |
 | `features/skills-and-matrix.md`    | Skills matrix loading, category resolution, source switching                      | Working on skills/matrix    |
 | `features/wizard-flow.md`          | Wizard steps (stack -> skills -> sources -> agents -> confirm), state transitions | Modifying wizard flow       |
+| `features/operations-layer.md`     | Composable operations (source, skills, project), typed options/results            | Working on commands or ops  |
+| `features/agent-system.md`         | Agent templates, partials, metadata.yaml, Liquid compilation                      | Working on agents           |
+| `dependency-graph.md`              | Command -> operations -> lib -> utils import maps, layer boundaries               | Understanding import chains |
+| `boundary-map.md`                  | CLI input, file parse, file write, shell exec, security boundaries                | Adding validation or I/O    |
+| `state-transitions.md`             | Wizard state machine: step sequence, action->state table, reset matrix            | Debugging wizard state      |
+| `findings-impact-report.md`        | Agent findings cross-referenced against reference docs, priority list             | Prioritizing doc validation |
 
 ---
 

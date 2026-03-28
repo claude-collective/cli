@@ -1,90 +1,113 @@
 # Compilation Pipeline
 
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-03-28
 
 ## Overview
 
-**Purpose:** Compile agent prompt files from partials (intro, workflow, examples, etc.) + skill assignments using Liquid templates.
+**Purpose:** Compile agent prompt files from partials (identity, playbook, output, etc.) + skill assignments using Liquid templates.
 
 **Entry Points:**
 
-| Entry Point          | File                                     | When Called                    |
-| -------------------- | ---------------------------------------- | ------------------------------ |
-| `recompileAgents()`  | `src/cli/lib/agents/agent-recompiler.ts` | `compile` command, `edit` flow |
-| `compileAllAgents()` | `src/cli/lib/compiler.ts:234`            | Called by recompileAgents      |
-| `compileAllSkills()` | `src/cli/lib/compiler.ts:281`            | Called by recompileAgents      |
+| Entry Point          | File                                                | When Called                             |
+| -------------------- | --------------------------------------------------- | --------------------------------------- |
+| `recompileAgents()`  | `src/cli/lib/agents/agent-recompiler.ts:157`        | `compile` command, `edit` flow          |
+| `compileAllAgents()` | `src/cli/lib/compiler.ts:216`                       | Called by standalone compilation flow   |
+| `compileAllSkills()` | `src/cli/lib/compiler.ts:263`                       | Called by standalone compilation flow   |
+| `compileAgents()`    | `src/cli/lib/operations/project/compile-agents.ts:32` | Operations layer wrapper (thin facade) |
 
 ## Pipeline Flow
 
 ```
-1. Agent Definitions Discovery
-   -> getAgentDefinitions() (src/cli/lib/agents/agent-fetcher.ts)
+1. Installation Detection
+   -> detectBothInstallations() (src/cli/lib/operations/project/detect-both-installations.ts)
+   -> Returns global + project Installation objects
+   -> Compile command builds separate passes per scope (global, project)
+
+2. Agent Definitions Discovery
+   -> loadAgentDefs() (src/cli/lib/operations/project/load-agent-defs.ts)
+   -> getAgentDefinitions() (src/cli/lib/agents/agent-fetcher.ts:13)
    -> Returns AgentSourcePaths { agentsDir, templatesDir, sourcePath }
+   -> Merges CLI built-in agents with source repository agents (source overrides CLI)
 
-2. Skill Discovery
-   -> discoverAllPluginSkills() (src/cli/lib/plugins/plugin-discovery.ts)
-   -> discoverLocalProjectSkills() (commands/compile.ts:78-83)
-   -> Merge: plugin skills + local (.claude/skills/) skills
+3. Skill Discovery (4-way merge)
+   -> discoverInstalledSkills() (src/cli/lib/operations/skills/discover-skills.ts:112)
+   -> 4-way merge:
+      a. Global plugins (from ~/.claude/plugins/)
+      b. Global local skills (from ~/.claude/skills/)
+      c. Project plugins (from <projectDir>/.claude/plugins/)
+      d. Project local skills (from <projectDir>/.claude/skills/)
+   -> Later sources take precedence (project wins on conflict)
 
-3. Agent Resolution
-   -> resolveAgentConfigs() in agent-recompiler.ts
-   -> Reads project config (config.yaml)
-   -> Resolves stack skills per agent
-   -> Maps SkillReference -> Skill (with path, usage, preloaded flag)
+4. Agent Resolution
+   -> recompileAgents() in agent-recompiler.ts:157
+   -> loadProjectConfig() reads project config (.claude-src/config.ts)
+   -> resolveAgentNames() determines which agents to compile
+   -> buildCompileConfig() builds CompileConfig from agent names + project config
+   -> resolveAgents() (src/cli/lib/resolver.ts:153) materializes skill references
+   -> For each agent: resolveAgentSkillRefs() -> resolveSkillReferences() -> Skill[]
 
-4. Liquid Engine Setup
-   -> createLiquidEngine() (src/cli/lib/compiler.ts:412-437)
-   -> Template root hierarchy:
-      a. {project}/.claude-src/agents/_templates/
-      b. {project}/.claude/templates/ (legacy)
-      c. {CLI_ROOT}/templates/ (built-in)
+5. Liquid Engine Setup
+   -> createLiquidEngine() (src/cli/lib/compiler.ts:394)
+   -> Template root hierarchy (first match wins):
+      a. {projectDir}/.claude-src/agents/_templates/
+      b. {projectDir}/.claude/templates/ (legacy)
+      c. {PROJECT_ROOT}/src/agents/_templates/ (built-in, via DIRS.templates)
+   -> Config: extname=".liquid", strictVariables=false, strictFilters=true
 
-5. Per-Agent Compilation
-   -> readAgentFiles() (src/cli/lib/compiler.ts:126-167)
+6. Per-Agent Compilation
+   -> readAgentFiles() (src/cli/lib/compiler.ts:118-149)
       Reads: identity.md, playbook.md, output.md, critical-requirements.md,
              critical-reminders.md
-   -> buildAgentTemplateContext() (src/cli/lib/compiler.ts:169-190)
+      Uses STANDARD_FILES constants from consts.ts:56-60
+   -> buildAgentTemplateContext() (src/cli/lib/compiler.ts:151-172)
       Splits skills into preloaded vs dynamic
-   -> sanitizeCompiledAgentData() (src/cli/lib/compiler.ts:77-115)
+   -> sanitizeCompiledAgentData() (src/cli/lib/compiler.ts:77-111)
       Strips Liquid template syntax from all user-controlled fields
    -> engine.renderFile("agent", data) using LiquidJS
 
-6. Output Validation
-   -> validateCompiledAgent() (src/cli/lib/output-validator.ts)
-   -> Checks: XML tag balance, template artifacts, placeholder text
+7. Output Validation
+   -> validateCompiledAgent() (src/cli/lib/output-validator.ts:108)
+   -> Checks: XML tag balance, template artifacts, frontmatter validity, required patterns
 
-7. Skill Compilation
-   -> compileAllSkills() (src/cli/lib/compiler.ts:281-339)
-   -> Deduplicates across agents
+8. Skill Compilation
+   -> compileAllSkills() (src/cli/lib/compiler.ts:263-321)
+   -> Deduplicates across agents (uniqueBy skill ID)
    -> For folder skills: copies SKILL.md, reference.md, examples/, scripts/
    -> For single-file skills: copies as SKILL.md
 
-8. CLAUDE.md Copy
-   -> copyClaudeMdToOutput() (src/cli/lib/compiler.ts:350-357)
-   -> Resolves from stack directory
+9. CLAUDE.md Copy
+   -> copyClaudeMdToOutput() (src/cli/lib/compiler.ts:332-339)
+   -> Resolves from stack directory via resolveClaudeMd() in resolver.ts
 
-9. Commands Copy
-   -> compileAllCommands() (src/cli/lib/compiler.ts:368-399)
-   -> Copies *.md from src/commands/ to output
+10. Commands Copy
+    -> compileAllCommands() (src/cli/lib/compiler.ts:350-381)
+    -> Copies *.md from src/commands/ to output
+
+11. Cleanup (on recompilation)
+    -> removeCompiledOutputDirs() (src/cli/lib/compiler.ts:422-426)
+    -> Removes agents/, skills/, commands/ from output directory
 ```
 
 ## Key Files
 
-| File                                          | Purpose                                              |
-| --------------------------------------------- | ---------------------------------------------------- |
-| `src/cli/lib/compiler.ts`                     | Core compilation: Liquid engine, agent/skill compile |
-| `src/cli/lib/agents/agent-recompiler.ts`      | Orchestrates recompilation flow                      |
-| `src/cli/lib/agents/agent-fetcher.ts`         | Fetches agent definitions (local or remote)          |
-| `src/cli/lib/agents/agent-plugin-compiler.ts` | Plugin-mode agent compilation                        |
-| `src/cli/lib/resolver.ts`                     | Resolves skill references, CLAUDE.md path            |
-| `src/cli/lib/output-validator.ts`             | Validates compiled agent output                      |
+| File                                          | Purpose                                                  |
+| --------------------------------------------- | -------------------------------------------------------- |
+| `src/cli/lib/compiler.ts`                     | Core compilation: Liquid engine, agent/skill compile     |
+| `src/cli/lib/agents/agent-recompiler.ts`      | Orchestrates recompilation flow                          |
+| `src/cli/lib/agents/agent-fetcher.ts`         | Fetches agent definitions (local or remote)              |
+| `src/cli/lib/agents/agent-plugin-compiler.ts` | Plugin-mode agent compilation (individual agent plugins) |
+| `src/cli/lib/resolver.ts`                     | Resolves skill references, agent configs, CLAUDE.md path |
+| `src/cli/lib/output-validator.ts`             | Validates compiled agent output                          |
+| `src/cli/lib/operations/project/compile-agents.ts` | Operations layer wrapper for compilation            |
+| `src/cli/lib/operations/project/load-agent-defs.ts` | Operations layer for agent definition loading       |
+| `src/cli/lib/operations/skills/discover-skills.ts`  | 4-way skill discovery and merge                     |
 
 ## Agent File Structure
 
 Each agent has a directory with these files:
 
 ```
-src/agents/{agent-name}/
+src/agents/{category}/{agent-name}/
   identity.md                 # Required: agent identity/role
   playbook.md                 # Required: agent workflow/process
   output.md                   # Optional: examples and output format
@@ -95,14 +118,66 @@ src/agents/{agent-name}/
 
 Output format resolution falls back from agent-specific dir to parent category dir.
 
+Agent directories are organized by category:
+
+```
+src/agents/
+  _templates/                 # Liquid templates
+    agent.liquid              # Main agent template
+    methodologies/            # Shared methodology partials
+      investigation-requirements.liquid
+      anti-over-engineering.liquid
+      write-verification.liquid
+      success-criteria.liquid
+      context-management.liquid
+      improvement-protocol.liquid
+  developer/
+    web-developer/
+    api-developer/
+    cli-developer/
+    ai-developer/
+    web-architecture/
+  reviewer/
+  tester/
+  planning/
+  meta/
+  pattern/
+  researcher/
+```
+
+## Agent Template Structure
+
+**Main template:** `src/agents/_templates/agent.liquid`
+
+The Liquid template renders agent prompts with this structure:
+
+1. YAML frontmatter (name, description, tools, model, permissionMode, preloaded skillIds)
+2. `<role>` section from `identity.md`
+3. `<core_principles>` (5 hardcoded principles)
+4. `<methodologies>` - renders 5 methodology partials:
+   - `methodologies/investigation-requirements`
+   - `methodologies/anti-over-engineering`
+   - `methodologies/write-verification`
+   - `methodologies/success-criteria`
+   - `methodologies/context-management`
+5. `<critical_requirements>` from `critical-requirements.md` (if non-empty)
+6. `<skill_activation_protocol>` for dynamic skills (or `<skills_note>` if all preloaded)
+7. Playbook content from `playbook.md`
+8. `## Standards and Conventions` static section (hardcoded in template)
+9. Output content from `output.md`
+10. `<critical_reminders>` from `critical-reminders.md` (if non-empty)
+11. Footer reminders (display principles, re-read files)
+
+**Note:** The `improvement-protocol.liquid` methodology partial exists in the directory but is NOT rendered in the main `agent.liquid` template (only the 5 listed above are included).
+
 ## Skill Types in Compilation
 
-| Type      | In Compiled Agent                             | Loaded How                       |
-| --------- | --------------------------------------------- | -------------------------------- |
-| Preloaded | Content embedded directly in .md file         | Listed in frontmatter `skills:`  |
-| Dynamic   | Metadata only (id, usage) in skill activation | Loaded via Skill tool at runtime |
+| Type      | In Compiled Agent                                    | Loaded How                       |
+| --------- | ---------------------------------------------------- | -------------------------------- |
+| Preloaded | Content embedded directly in .md file                | Listed in frontmatter `skills:`  |
+| Dynamic   | Metadata only (id, description, usage) in skill list | Loaded via Skill tool at runtime |
 
-Split logic: `src/cli/lib/compiler.ts:174-176`
+Split logic: `src/cli/lib/compiler.ts:156-158`
 
 ## Output Structure
 
@@ -126,16 +201,47 @@ Split logic: `src/cli/lib/compiler.ts:174-176`
 
 ## Security: Liquid Injection Prevention
 
-File: `src/cli/lib/compiler.ts:31-115`
+File: `src/cli/lib/compiler.ts:31-111`
 
-`sanitizeCompiledAgentData()` strips Liquid template syntax (`{{`, `}}`, `{%`, `%}`) from:
+Pattern constant: `LIQUID_SYNTAX_PATTERN` at line 31
 
-- Agent metadata: name, title, description, tools, model, permissionMode
-- Skill metadata: id, description, usage, pluginRef
-- File content: intro, workflow, examples, critical requirements/reminders, output format
+`sanitizeLiquidSyntax()` (exported, line 41) strips individual strings of Liquid delimiters.
+
+`sanitizeCompiledAgentData()` (exported, line 77) strips Liquid template syntax (`{{`, `}}`, `{%`, `%}`) from:
+
+- Agent metadata: name, title, description, tools, disallowedTools, model, permissionMode
+- Skill metadata: id, description, usage, pluginRef (via `sanitizeSkills()`)
+- File content: identity, playbook, output, criticalRequirementsTop, criticalReminders
 - Preloaded skill IDs
 
-This prevents user-controlled data (from YAML files) from executing as Liquid template code.
+This prevents user-controlled data (from YAML/TS config files) from executing as Liquid template code.
+
+## Exported Functions Reference
+
+### compiler.ts
+
+| Function                       | Line  | Signature                                                             | Purpose                                      |
+| ------------------------------ | ----- | --------------------------------------------------------------------- | -------------------------------------------- |
+| `sanitizeLiquidSyntax()`       | :41   | `<T extends string>(value: T, fieldName: string): T`                 | Strip Liquid syntax from a string            |
+| `sanitizeCompiledAgentData()`  | :77   | `(data: CompiledAgentData): CompiledAgentData`                       | Sanitize all fields before template render   |
+| `buildAgentTemplateContext()`  | :151  | `(name: AgentName, agent: AgentConfig, files: AgentFiles): CompiledAgentData` | Build template data from agent files + skills |
+| `compileAllAgents()`           | :216  | `(resolvedAgents: Record<AgentName, AgentConfig>, ctx: CompileContext, engine: Liquid): Promise<void>` | Compile + validate + write all agents |
+| `compileAllSkills()`           | :263  | `(resolvedAgents: Record<AgentName, AgentConfig>, ctx: CompileContext): Promise<void>` | Deduplicate and copy skill files |
+| `copyClaudeMdToOutput()`      | :332  | `(ctx: CompileContext): Promise<void>`                                | Copy stack CLAUDE.md to output               |
+| `compileAllCommands()`         | :350  | `(ctx: CompileContext): Promise<void>`                                | Copy command *.md files to output            |
+| `createLiquidEngine()`         | :394  | `(projectDir?: string): Promise<Liquid>`                             | Create Liquid engine with layered roots      |
+| `removeCompiledOutputDirs()`   | :422  | `(outputDir: string): Promise<void>`                                 | Remove agents/, skills/, commands/ dirs      |
+
+### output-validator.ts
+
+| Function                       | Line  | Signature                                                   | Purpose                              |
+| ------------------------------ | ----- | ----------------------------------------------------------- | ------------------------------------ |
+| `checkXmlTagBalance()`         | :5    | `(content: string): string[]`                               | Check for unclosed/extra XML tags    |
+| `checkTemplateArtifacts()`     | :37   | `(content: string): string[]`                               | Find unprocessed {{ }} or {% %} tags |
+| `checkRequiredPatterns()`      | :53   | `(content: string): string[]`                               | Check frontmatter, <role>, principles, min length |
+| `validateFrontmatter()`        | :76   | `(content: string): { errors: string[]; warnings: string[] }` | Validate YAML frontmatter fields   |
+| `validateCompiledAgent()`      | :108  | `(content: string): ValidationResult`                       | Full validation (all checks)         |
+| `printOutputValidationResult()`| :140  | `(agentName: AgentName, result: ValidationResult): void`    | Print validation results             |
 
 ## Plugin-Mode Compilation
 
@@ -143,6 +249,42 @@ For native Claude Code plugin distribution:
 
 | Compiler               | File                                          | Output                       |
 | ---------------------- | --------------------------------------------- | ---------------------------- |
-| `compileSkillPlugin()` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Individual skill plugin dirs |
-| `compileAgentPlugin()` | `src/cli/lib/agents/agent-plugin-compiler.ts` | Individual agent plugin dirs |
-| `compileStackPlugin()` | `src/cli/lib/stacks/stack-plugin-compiler.ts` | Bundled stack plugin dir     |
+| `compileSkillPlugin()` | `src/cli/lib/skills/skill-plugin-compiler.ts:99` | Individual skill plugin dirs |
+| `compileAgentPlugin()` | `src/cli/lib/agents/agent-plugin-compiler.ts:44` | Individual agent plugin dirs |
+| `compileStackPlugin()` | `src/cli/lib/stacks/stack-plugin-compiler.ts:191` | Bundled stack plugin dir    |
+| `compileAgentForPlugin()` | `src/cli/lib/stacks/stack-plugin-compiler.ts:72` | Single agent for plugin mode (handles pluginRef) |
+
+**Plugin-mode difference:** `compileAgentForPlugin()` in `stack-plugin-compiler.ts` differs from the standard `compileAgent()` in `compiler.ts` by:
+- Optionally adding `pluginRef` format (`{id}:{id}`) to skills when `installMode === "plugin"`
+- Using `pluginRef` for preloaded skill IDs in frontmatter (instead of bare skill IDs)
+- Reading agent files directly (not via `readAgentFiles()` helper)
+
+## Operations Layer Integration
+
+The compilation pipeline is wrapped by the operations layer for use by commands:
+
+| Operation                 | File                                                        | Purpose                                    |
+| ------------------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| `compileAgents()`         | `src/cli/lib/operations/project/compile-agents.ts:32`       | Thin wrapper around `recompileAgents()`    |
+| `loadAgentDefs()`         | `src/cli/lib/operations/project/load-agent-defs.ts:21`      | Load + merge CLI/source agent definitions  |
+| `discoverInstalledSkills()` | `src/cli/lib/operations/skills/discover-skills.ts:112`     | 4-way skill discovery and merge            |
+| `detectBothInstallations()` | `src/cli/lib/operations/project/detect-both-installations.ts` | Find global + project installations     |
+
+The `compile` command (`src/cli/commands/compile.ts`) uses these operations to:
+1. Detect both global and project installations
+2. Build separate compile passes per scope (global, project)
+3. For each pass: discover skills -> compile agents via `compileAgents()` with `scopeFilter`
+
+## Recompilation Flow (agent-recompiler.ts)
+
+`recompileAgents()` at line 157 orchestrates the full recompilation:
+
+1. Load project config via `loadProjectConfig()` (from `.claude-src/config.ts`)
+2. Load agent definitions: `loadAllAgents()` for built-in + `loadProjectAgents()` for project overrides
+3. Merge: project agents override built-in agents
+4. Resolve agent names (from explicit list, config, or existing agents on disk)
+5. Discover skills if not provided: `discoverAllPluginSkills()`
+6. Build compile config: `buildCompileConfig()` creates `CompileConfig` from agent names + project config
+7. Create Liquid engine: `createLiquidEngine()` with project template overrides
+8. Resolve agents: `resolveAgents()` materializes skill references into full `AgentConfig` objects
+9. Compile and write: `compileAndWriteAgents()` routes output by agent scope (global vs project)

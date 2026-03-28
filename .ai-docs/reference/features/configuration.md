@@ -1,6 +1,6 @@
 # Configuration System
 
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-28
 
 ## Overview
 
@@ -137,23 +137,21 @@ Generates `ProjectConfig` from wizard result:
 - Builds stack property from agent-skill mappings
 - Resolves agent names from selected domains
 
-**Function:** `buildStackProperty()` at `src/cli/lib/configuration/config-generator.ts:142` - Builds the `stack` record in config from a loaded Stack definition.
+**Function:** `buildStackProperty()` at `src/cli/lib/configuration/config-generator.ts:146` - Builds the `stack` record in config from a loaded Stack definition.
 
-**Function:** `splitConfigByScope()` at `src/cli/lib/configuration/config-generator.ts:199` - Splits a `ProjectConfig` into global and project partitions by skill/agent scope. Returns `SplitConfigResult` (`{ global: ProjectConfig; project: ProjectConfig }`).
-
-**Function:** `compactStackForYaml()` at `src/cli/lib/configuration/config-generator.ts:171` - Compacts `SkillAssignment[]` to minimal form for serialization.
+**Function:** `splitConfigByScope()` at `src/cli/lib/configuration/config-generator.ts:169` - Splits a `ProjectConfig` into global and project partitions by skill/agent scope. Returns `SplitConfigResult` (`{ global: ProjectConfig; project: ProjectConfig }`).
 
 ## Config Merging
 
-**Function:** `mergeWithExistingConfig()` at `src/cli/lib/configuration/config-merger.ts:83`
+**Function:** `mergeWithExistingConfig()` at `src/cli/lib/configuration/config-merger.ts:89`
 
 When `edit` command modifies skills:
 
 - Loads existing config
-- Merges new selections with existing via `mergeConfigs()` (line `:24`)
+- Merges new selections with existing via `mergeConfigs()` (line `:25`)
 - Preserves user customizations (author, source, etc.)
 
-**Pure merge function:** `mergeConfigs()` at `src/cli/lib/configuration/config-merger.ts:24`
+**Pure merge function:** `mergeConfigs()` at `src/cli/lib/configuration/config-merger.ts:25`
 
 - Existing values take precedence for identity fields (name, description, source, author)
 - Agents are unioned by name
@@ -169,7 +167,7 @@ When `edit` command modifies skills:
 | `loadProjectConfig()`         | Load + validate with global fallback    | `project-config.ts:75` |
 | `loadProjectConfigFromDir()`  | Load + validate from specific dir only  | `project-config.ts:18` |
 | `validateProjectConfig()`     | Validate project config structure       | `project-config.ts:88` |
-| `generateConfigSource()`      | Generate TypeScript source string       | `config-writer.ts:29`  |
+| `generateConfigSource()`      | Generate TypeScript source string       | `config-writer.ts:35`  |
 | `saveSourceToProjectConfig()` | Save source field to config file        | `config-saver.ts:8`    |
 | `loadConfig()`                | Generic TypeScript config loader (jiti) | `config-loader.ts:26`  |
 | `defineConfig()`              | Type-safe config helper (identity fn)   | `define-config.ts:10`  |
@@ -215,7 +213,7 @@ When a global installation exists, project `config-types.ts` imports from global
 Config supports `"project"` and `"global"` scopes on both skills and agents. During installation:
 
 1. `splitConfigByScope()` partitions the merged config into global and project parts
-2. `writeScopedConfigs()` (in `local-installer.ts:422`) writes:
+2. `writeScopedConfigs()` (in `local-installer.ts:369`) writes:
    - Global config to `~/.claude-src/config.ts` (standalone)
    - Project config to `{projectDir}/.claude-src/config.ts` (imports from global)
 3. Config-types files are split similarly: global gets standalone types, project extends global
@@ -250,7 +248,7 @@ export default {
 } satisfies ProjectConfig;
 ```
 
-Falls back to `DEFAULT_BRANDING` from `src/cli/consts.ts:163-166`:
+Falls back to `DEFAULT_BRANDING` from `src/cli/consts.ts:162-165`:
 
 - Name: "Agents Inc."
 - Tagline: "AI-powered development tools"
@@ -264,4 +262,23 @@ Config files are validated at parse boundaries using Zod schemas from `src/cli/l
 | `projectSourceConfigSchema` | Lenient loader for source config fields |
 | `projectConfigLoaderSchema` | Lenient loader for full ProjectConfig   |
 
-Schema URLs defined in `SCHEMA_PATHS` at `src/cli/consts.ts:79-86`.
+Schema URLs defined in `SCHEMA_PATHS` at `src/cli/consts.ts:78-85`.
+
+## Operations Layer: writeProjectConfig
+
+**File:** `src/cli/lib/operations/project/write-project-config.ts`
+
+The operations layer provides `writeProjectConfig()` (line `:43`) as a high-level orchestrator that runs the full config pipeline:
+
+1. `buildAndMergeConfig()` -- generates config from wizard result, merges with existing
+2. `loadAllAgents()` -- loads agent definitions for config-types generation
+3. `ensureBlankGlobalConfig()` -- ensures global config exists (when in project context)
+4. `writeScopedConfigs()` -- writes config.ts and config-types.ts split by scope
+
+| Type                | Name                  | Purpose                                              |
+| ------------------- | --------------------- | ---------------------------------------------------- |
+| `ConfigWriteOptions`  | Input options type    | wizardResult, sourceResult, projectDir, sourceFlag, agents |
+| `ConfigWriteResult`   | Return type           | config, configPath, globalConfigPath, wasMerged, existingConfigPath, filesWritten |
+| `writeProjectConfig()`| Orchestrator function | Builds, merges, and writes project config (init/edit) |
+
+Used by `init.tsx` and `edit.tsx` commands. Replaces inlined config writing logic with a single operation call.
