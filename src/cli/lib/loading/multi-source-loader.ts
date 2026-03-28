@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 
 import { DEFAULT_PUBLIC_SOURCE_NAME, SKILLS_DIR_PATH } from "../../consts";
@@ -174,6 +175,19 @@ async function collectPluginSkillIds(
 ): Promise<SkillId[]> {
   const pluginSkills = await discoverAllPluginSkills(projectDir);
   const skillIds = typedKeys<SkillId>(pluginSkills);
+
+  // D-160: Also discover global plugins when editing from a project directory.
+  // Follows the same global+project merge pattern as local skills in source-loader.ts.
+  const homeDir = os.homedir();
+  if (projectDir !== homeDir) {
+    const globalPluginSkills = await discoverAllPluginSkills(homeDir);
+    const globalSkillIds = typedKeys<SkillId>(globalPluginSkills);
+    if (globalSkillIds.length > 0) {
+      verbose(`Found ${globalSkillIds.length} global plugin skill(s)`);
+      const merged = new Set([...skillIds, ...globalSkillIds]);
+      return [...merged];
+    }
+  }
 
   if (skillIds.length === 0) {
     verbose("No plugin skills discovered from settings.json");
