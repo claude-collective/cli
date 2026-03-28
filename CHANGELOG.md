@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.94.0] - 2026-03-28
+
+**Agent template restructuring, wizard bug fixes, E2E node-pty fix**
+
+- All 20 agent templates restructured: `identity.md` / `playbook.md` / `output.md` convention (D-138)
+- Fixed exclusive categories deselecting locked global skills in edit mode (D-161)
+- Fixed sources step missing installed check for global-scope plugins (D-160)
+- Fixed node-pty converting `undefined` env values to string `"undefined"` in E2E tests
+
+See [changelogs/0.94.0.md](./changelogs/0.94.0.md) for full details.
+
 ## [0.93.0] - 2026-03-28
 
 **Absolute localPath fix, operations reorganization**
