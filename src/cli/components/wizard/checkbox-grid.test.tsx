@@ -62,15 +62,14 @@ describe("CheckboxGrid component", () => {
       expect(output).toContain("Gamma");
     });
 
-    it("should render focused item description", () => {
+    it("should render all item descriptions", () => {
       const { lastFrame, unmount } = renderCheckboxGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      // Only the focused item (first by default) shows its description
       expect(output).toContain("First item");
-      expect(output).not.toContain("Second item");
-      expect(output).not.toContain("Third item");
+      expect(output).toContain("Second item");
+      expect(output).toContain("Third item");
     });
 
     it("should show unchecked checkboxes when nothing selected", () => {

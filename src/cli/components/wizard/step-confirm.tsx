@@ -5,7 +5,7 @@ import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import type { Domain, DomainSelections } from "../../types/index.js";
 import { KEY_LABEL_ENTER, KEY_LABEL_ESC } from "./hotkeys.js";
 import { getDomainDisplayName } from "./utils.js";
-import { ViewTitle } from "./view-title.js";
+import { Toast } from "./toast.js";
 
 type StepConfirmProps = {
   onComplete: () => void;

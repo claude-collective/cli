@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import { CLI_COLORS } from "../../consts.js";
-import { ViewTitle } from "./view-title.js";
+import { Toast } from "./toast.js";
 import { getSourceSummary, type SourceSummary } from "../../lib/configuration/source-manager.js";
 import { DEFAULT_SOURCE } from "../../lib/configuration/config.js";
 import { useKeyboardNavigation } from "../hooks/use-keyboard-navigation.js";
@@ -140,7 +140,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({
   if (isLoading) {
     return (
       <Box flexDirection="column" paddingX={2}>
-        {/* <ViewTitle>Skill Sources</ViewTitle> */}
+        {/* <Toast>Skill Sources</Toast> */}
         <Text dimColor>Loading sources...</Text>
       </Box>
     );
@@ -169,7 +169,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({
 
   return (
     <Box flexDirection="column" paddingX={2}>
-      {/* <ViewTitle>Skill Sources</ViewTitle> */}
+      {/* <Toast>Skill Sources</Toast> */}
       <Box marginTop={1} />
 
       <Text bold>Configured marketplaces:</Text>

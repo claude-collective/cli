@@ -2,7 +2,7 @@ import { Box, Text, useInput } from "ink";
 import React, { useState } from "react";
 import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
 import { useRowScroll } from "../hooks/use-row-scroll.js";
-import { ViewTitle } from "./view-title.js";
+import { Toast } from "./toast.js";
 
 export type CheckboxItem<T extends string = string> = {
   id: T;
@@ -91,7 +91,7 @@ export const CheckboxGrid = <T extends string = string>({
           {" "}
           {checkbox} {item.label}
         </Text>
-        {isFocused && (
+        {item.description && (
           <Text dimColor>
             {"  "}
             {item.description}
@@ -115,7 +115,7 @@ export const CheckboxGrid = <T extends string = string>({
 
   return (
     <Box flexDirection="column">
-      {/* <ViewTitle>{title}</ViewTitle> */}
+      {/* <Toast>{title}</Toast> */}
       {subtitle && <Text dimColor>{subtitle}</Text>}
       <Box
         flexDirection="column"
