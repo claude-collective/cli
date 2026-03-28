@@ -208,7 +208,7 @@ When running `cc edit` from a project directory, global-scoped skills are locked
 
 **Design:**
 
-1. **Lock badge on scope indicator** — Replace ` G ` with `🔒 G ` (one space between lock and G) for locked global skills. Same yellow text on dark background. Unlocked project skills keep the existing ` P ` gray badge.
+1. **Lock badge on scope indicator** — Replace `G` with `🔒 G ` (one space between lock and G) for locked global skills. Same yellow text on dark background. Unlocked project skills keep the existing `P` gray badge.
 
 2. **Toast on toggle attempt** — When the user presses space on a locked skill, show a warning message below the grid: `⚠ React is globally installed — run cc edit from ~/.claude to modify`. Auto-clears after 2s (matching `COPIED_MESSAGE_TIMEOUT_MS`). Follows the `statusMessage` pattern from `step-settings.tsx`.
 

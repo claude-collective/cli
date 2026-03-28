@@ -276,7 +276,7 @@ export const StepAgents: React.FC = () => {
                 {checkbox}{" "}
               </Text>
               <Text color={scope === "global" ? CLI_COLORS.WARNING : "#eee"}>
-                {isLocked && scope === "global" ? `${UI_SYMBOLS.LOCK} [G]` : scope === "global" ? "[G]" : "[P]"}
+                {scope === "global" ? "[G]" : "[P]"}
               </Text>
               <Text
                 color={isSelected || isFocused ? CLI_COLORS.PRIMARY : undefined}
