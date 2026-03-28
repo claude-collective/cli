@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.95.0] - 2026-03-28
+
+**Lock badges and toast feedback for globally-installed skills in project-scope edit**
+
+- Lock badge (`🔒 G` / `🔒 [G]`) on globally-installed skills and agents in project-scope edit (D-159)
+- Toast when attempting to toggle a locked skill or an exclusive category locked by a global install
+- Domain descriptions always visible in the domain selection step
+
+See [changelogs/0.95.0.md](./changelogs/0.95.0.md) for full details.
+
 ## [0.94.0] - 2026-03-28
 
 **Agent template restructuring, wizard bug fixes, E2E node-pty fix**
