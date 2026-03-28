@@ -2,6 +2,7 @@ import { TerminalSession } from "../../helpers/terminal-session.js";
 import { createE2ESource } from "../../helpers/create-e2e-source.js";
 import { TIMEOUTS } from "../constants.js";
 import { DashboardSession } from "../dashboard-session.js";
+import { ConfirmStep } from "../steps/confirm-step.js";
 import { StackStep } from "../steps/stack-step.js";
 import type { WizardResult } from "../wizard-result.js";
 import { cleanupTempDir, createPermissionsFile, createTempDir } from "../../helpers/test-utils.js";
@@ -45,6 +46,7 @@ export class InitWizard {
 
   private constructor(
     private session: TerminalSession,
+    private projectDir: string,
     stack: StackStep,
     cleanupDirs: string[],
   ) {
@@ -109,7 +111,7 @@ export class InitWizard {
     const stack = new StackStep(session, projectDir);
     await stack.waitForReady(options?.loadTimeout);
 
-    return new InitWizard(session, stack, cleanupDirs);
+    return new InitWizard(session, projectDir, stack, cleanupDirs);
   }
 
   /**
@@ -130,7 +132,7 @@ export class InitWizard {
     }
 
     const stack = new StackStep(session, projectDir);
-    return new InitWizard(session, stack, cleanupDirs);
+    return new InitWizard(session, projectDir, stack, cleanupDirs);
   }
 
   /**
@@ -146,6 +148,20 @@ export class InitWizard {
     const sources = await build.passThroughAllDomains();
     const agents = await sources.acceptDefaults();
     const confirm = await agents.acceptDefaults("init");
+    return confirm.confirm();
+  }
+
+  /**
+   * Select first stack and accept its defaults via "A" hotkey.
+   * Skips domain/build/sources/agents traversal entirely.
+   * Use when domain count is unknown (e.g., BUILT_IN_MATRIX).
+   * Flow: Stack -> Domain -> Build -> "A" -> Confirm
+   */
+  async acceptStackDefaults(): Promise<WizardResult> {
+    const domain = await this.stack.selectFirstStack();
+    await domain.acceptDefaults();
+    this.session.write("a");
+    const confirm = new ConfirmStep(this.session, this.projectDir, "init");
     return confirm.confirm();
   }
 

@@ -95,10 +95,9 @@ export async function initProject(
 
     // API domain: toggle first skill to project scope
     await build.toggleScopeOnFocusedSkill();
-    await build.advanceDomain();
 
-    // Shared domain (pass through)
-    const sources = await build.advanceToSources();
+    // Advance through remaining domains (API -> Meta -> Sources)
+    const sources = await build.passThroughAllDomainsGeneric();
 
     // Sources step -- optionally set ALL sources to local (default: yes)
     await sources.waitForReady();

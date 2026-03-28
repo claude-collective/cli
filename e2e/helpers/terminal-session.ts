@@ -45,18 +45,27 @@ export class TerminalSession {
 
     this.xterm = new Terminal({ allowProposedApi: true, cols, rows });
 
+    // Build env: merge process.env, defaults, and overrides.
+    // node-pty converts `undefined` values to the string "undefined" instead of
+    // removing them, so we must strip undefined entries before spawning.
+    const rawEnv: Record<string, string | undefined> = {
+      ...process.env,
+      HOME: cwd,
+      ...options?.env,
+      NO_COLOR: "1",
+      FORCE_COLOR: "0",
+    };
+    const cleanEnv: Record<string, string> = {};
+    for (const [key, value] of Object.entries(rawEnv)) {
+      if (value !== undefined) cleanEnv[key] = value;
+    }
+
     this.ptyProcess = pty.spawn("node", [BIN_RUN, ...args], {
       name: "xterm-256color",
       cols,
       rows,
       cwd,
-      env: {
-        ...process.env,
-        HOME: cwd,
-        ...options?.env,
-        NO_COLOR: "1",
-        FORCE_COLOR: "0",
-      },
+      env: cleanEnv,
     });
 
     this.ptyProcess.onData((data) => {

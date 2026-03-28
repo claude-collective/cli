@@ -123,7 +123,7 @@ describe("uninstall preservation behavior", () => {
       "id: my-custom-agent\ntitle: My Custom Agent\ndescription: A user-defined agent\ntools:\n  - Read\n",
     );
     await writeFile(
-      path.join(customAgentSrcDir, FILES.INTRO_MD),
+      path.join(customAgentSrcDir, FILES.IDENTITY_MD),
       "# My Custom Agent\n\nThis is a custom agent created by the user.",
     );
 
@@ -154,7 +154,7 @@ describe("uninstall preservation behavior", () => {
     // Custom agent SOURCE in .claude-src/ should be preserved (--yes does not touch .claude-src/)
     expect(await directoryExists(customAgentSrcDir)).toBe(true);
     expect(await fileExists(path.join(customAgentSrcDir, FILES.METADATA_YAML))).toBe(true);
-    expect(await fileExists(path.join(customAgentSrcDir, FILES.INTRO_MD))).toBe(true);
+    expect(await fileExists(path.join(customAgentSrcDir, FILES.IDENTITY_MD))).toBe(true);
 
     // Compiled agent artifact in .claude/agents/ should be removed (it was in config)
     expect(await fileExists(path.join(agentsDir, "my-custom-agent.md"))).toBe(false);

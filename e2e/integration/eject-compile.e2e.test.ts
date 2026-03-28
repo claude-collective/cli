@@ -122,26 +122,26 @@ describe("template ejection + custom compilation", () => {
       const ejectedAgentsDir = path.join(projectDir, DIRS.CLAUDE_SRC, "agents");
       expect(await directoryExists(ejectedAgentsDir)).toBe(true);
 
-      // Step 3: Find a specific agent's intro.md and modify it
+      // Step 3: Find a specific agent's identity.md and modify it
       // The eject copies from PROJECT_ROOT/src/agents/ which has developer/web-developer/
       const webDevIntroPath = path.join(
         ejectedAgentsDir,
         "developer",
         "web-developer",
-        FILES.INTRO_MD,
+        FILES.IDENTITY_MD,
       );
 
-      // If the direct path doesn't exist, try finding the intro.md
+      // If the direct path doesn't exist, try finding the identity.md
       if (await fileExists(webDevIntroPath)) {
         await writeFile(webDevIntroPath, `# Custom Web Developer\n\n${CUSTOM_INTRO_MARKER}\n`);
       } else {
         // List what was actually ejected to understand the structure
         const ejectedContents = await listFiles(ejectedAgentsDir);
 
-        // Find any agent directory that has intro.md
+        // Find any agent directory that has identity.md
         let foundIntroPath: string | undefined;
         for (const entry of ejectedContents) {
-          const possibleIntro = path.join(ejectedAgentsDir, entry, FILES.INTRO_MD);
+          const possibleIntro = path.join(ejectedAgentsDir, entry, FILES.IDENTITY_MD);
           if (await fileExists(possibleIntro)) {
             foundIntroPath = possibleIntro;
             break;
@@ -151,7 +151,7 @@ describe("template ejection + custom compilation", () => {
           if (await directoryExists(nestedDir)) {
             const subEntries = await listFiles(nestedDir);
             for (const sub of subEntries) {
-              const nestedIntro = path.join(nestedDir, sub, FILES.INTRO_MD);
+              const nestedIntro = path.join(nestedDir, sub, FILES.IDENTITY_MD);
               if (await fileExists(nestedIntro)) {
                 foundIntroPath = nestedIntro;
                 break;
@@ -161,7 +161,7 @@ describe("template ejection + custom compilation", () => {
           if (foundIntroPath) break;
         }
 
-        if (!foundIntroPath) throw new Error("No intro.md found in ejected agents");
+        if (!foundIntroPath) throw new Error("No identity.md found in ejected agents");
         await writeFile(foundIntroPath, `# Custom Web Developer\n\n${CUSTOM_INTRO_MARKER}\n`);
       }
 

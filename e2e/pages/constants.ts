@@ -17,8 +17,8 @@ export const FILES = {
   METADATA_YAML: "metadata.yaml",
   SETTINGS_JSON: "settings.json",
   INSTALLED_PLUGINS_JSON: "installed_plugins.json",
-  INTRO_MD: "intro.md",
-  WORKFLOW_MD: "workflow.md",
+  IDENTITY_MD: "identity.md",
+  PLAYBOOK_MD: "playbook.md",
   PLUGIN_JSON: "plugin.json",
 } as const;
 

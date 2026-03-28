@@ -24,14 +24,14 @@ function agentsPath(projectDir: string): string {
 
 /**
  * Writes a custom agent structure under .claude-src/agents/<agentName>/
- * with metadata.yaml, intro.md, and optionally workflow.md.
+ * with metadata.yaml, identity.md, and optionally playbook.md.
  */
 async function createCustomAgent(
   projectDir: string,
   agentName: string,
   options: {
-    introContent: string;
-    workflowContent?: string;
+    identityContent: string;
+    playbookContent?: string;
     metadataYaml?: string;
     description?: string;
     tools?: string[];
@@ -49,10 +49,10 @@ async function createCustomAgent(
     }) + (options.domain ? `\ndomain: ${options.domain}` : "");
 
   await writeFile(path.join(agentDir, FILES.METADATA_YAML), metadataYaml);
-  await writeFile(path.join(agentDir, FILES.INTRO_MD), options.introContent);
+  await writeFile(path.join(agentDir, FILES.IDENTITY_MD), options.identityContent);
 
-  if (options.workflowContent !== undefined) {
-    await writeFile(path.join(agentDir, FILES.WORKFLOW_MD), options.workflowContent);
+  if (options.playbookContent !== undefined) {
+    await writeFile(path.join(agentDir, FILES.PLAYBOOK_MD), options.playbookContent);
   }
 
   return agentDir;
@@ -78,8 +78,8 @@ describe("custom sub-agents", () => {
 
       // Create a custom agent structure
       await createCustomAgent(projectDir, "my-custom-agent", {
-        introContent: "E2E-CUSTOM-AGENT-INTRO",
-        workflowContent: "E2E-CUSTOM-AGENT-WORKFLOW",
+        identityContent: "E2E-CUSTOM-AGENT-INTRO",
+        playbookContent: "E2E-CUSTOM-AGENT-WORKFLOW",
         description: "A custom E2E test agent",
         domain: "web",
       });
@@ -112,8 +112,8 @@ describe("custom sub-agents", () => {
 
       // Create a custom agent that overrides the built-in web-developer
       await createCustomAgent(projectDir, "web-developer", {
-        introContent: "E2E-OVERRIDE-INTRO",
-        workflowContent: "E2E-OVERRIDE-WORKFLOW",
+        identityContent: "E2E-OVERRIDE-INTRO",
+        playbookContent: "E2E-OVERRIDE-WORKFLOW",
         description: "Custom override of web-developer",
         domain: "web",
       });
@@ -136,8 +136,8 @@ describe("custom sub-agents", () => {
 
       // Create a custom agent
       await createCustomAgent(projectDir, "my-custom-agent", {
-        introContent: "E2E-CUSTOM-ONLY-CONTENT",
-        workflowContent: "E2E-CUSTOM-ONLY-WORKFLOW",
+        identityContent: "E2E-CUSTOM-ONLY-CONTENT",
+        playbookContent: "E2E-CUSTOM-ONLY-WORKFLOW",
         description: "A custom agent for coexistence test",
         domain: "web",
       });
@@ -179,7 +179,7 @@ describe("custom sub-agents", () => {
 
       // Create a custom agent without workflow.md
       await createCustomAgent(projectDir, "incomplete-agent", {
-        introContent: "E2E-INCOMPLETE-AGENT-INTRO",
+        identityContent: "E2E-INCOMPLETE-AGENT-INTRO",
         // workflow.md intentionally omitted (undefined means skip creation)
         description: "An agent with missing workflow.md",
         domain: "web",
@@ -209,8 +209,8 @@ describe("custom sub-agents", () => {
 
       // Write an empty metadata.yaml (missing required fields)
       await writeFile(path.join(agentDir, FILES.METADATA_YAML), "");
-      await writeFile(path.join(agentDir, FILES.INTRO_MD), "Some intro");
-      await writeFile(path.join(agentDir, FILES.WORKFLOW_MD), "Some workflow");
+      await writeFile(path.join(agentDir, FILES.IDENTITY_MD), "Some intro");
+      await writeFile(path.join(agentDir, FILES.PLAYBOOK_MD), "Some workflow");
 
       await writeProjectConfig(projectDir, {
         name: "e2e-empty-metadata-test",

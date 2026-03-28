@@ -281,12 +281,12 @@ async function writeAgents(sourceDir: string): Promise<void> {
     );
 
     await writeFile(
-      path.join(agentDir, STANDARD_FILES.INTRO_MD),
+      path.join(agentDir, STANDARD_FILES.IDENTITY_MD),
       `# ${agent.title}\n\n${agent.description}\n`,
     );
 
     await writeFile(
-      path.join(agentDir, STANDARD_FILES.WORKFLOW_MD),
+      path.join(agentDir, STANDARD_FILES.PLAYBOOK_MD),
       `## Workflow\n\n1. Analyze requirements\n2. Implement solution\n`,
     );
   }

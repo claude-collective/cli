@@ -88,19 +88,19 @@ describe("eject command integration", () => {
       for (const subdir of subdirs) {
         const agentPath = path.join(groupPath, subdir);
 
-        const hasIntro = await fileExists(path.join(agentPath, FILES.INTRO_MD));
-        const hasWorkflow = await fileExists(path.join(agentPath, FILES.WORKFLOW_MD));
+        const hasIdentity = await fileExists(path.join(agentPath, FILES.IDENTITY_MD));
+        const hasPlaybook = await fileExists(path.join(agentPath, FILES.PLAYBOOK_MD));
         const hasMetadata = await fileExists(path.join(agentPath, FILES.METADATA_YAML));
 
-        if (hasIntro && hasWorkflow && hasMetadata) {
+        if (hasIdentity && hasPlaybook && hasMetadata) {
           foundAgent = true;
 
           // Verify the files are non-empty (readAgentFiles expects content)
-          const intro = await readTestFile(path.join(agentPath, FILES.INTRO_MD));
-          expect(intro.length).toBeGreaterThan(0);
+          const identity = await readTestFile(path.join(agentPath, FILES.IDENTITY_MD));
+          expect(identity.length).toBeGreaterThan(0);
 
-          const workflow = await readTestFile(path.join(agentPath, FILES.WORKFLOW_MD));
-          expect(workflow.length).toBeGreaterThan(0);
+          const playbook = await readTestFile(path.join(agentPath, FILES.PLAYBOOK_MD));
+          expect(playbook.length).toBeGreaterThan(0);
           break;
         }
       }

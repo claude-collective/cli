@@ -27,14 +27,6 @@ import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-he
  *         .claude/skills/api-framework-hono/ <- project local skill
  *         .claude/settings.json           <- permissions
  *
- * KNOWN BUG (affects Test 1):
- * When Phase A installs skills locally (no marketplace -> plugin mode falls back
- * to local), the skills land in HOME/.claude/skills/. During Phase B,
- * loadSkillsMatrixFromSource -> discoverLocalSkills(homeDir) finds them and marks
- * them as local: true with localPath relative to HOME. Then copySkillsToLocalFlattened
- * in skill-copier.ts checks `skill.local && skill.localPath` (line 214) and reads
- * from `path.join(process.cwd(), skill.localPath)` -- but process.cwd() is the
- * projectDir, not homeDir. This causes ENOENT.
  */
 
 // =====================================================================
