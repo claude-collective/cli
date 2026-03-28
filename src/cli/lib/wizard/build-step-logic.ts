@@ -52,6 +52,7 @@ export function buildCategoriesForDomain(
   installedSkillIds?: SkillId[],
   skillConfigs?: SkillConfig[],
   filterIncompatible?: boolean,
+  lockedSkillIds?: SkillId[],
 ): CategoryRow[] {
   const selectedFrameworkIds = getSelectedFrameworks(selections);
   const shouldFilter =
@@ -87,6 +88,7 @@ export function buildCategoriesForDomain(
       local: getSkillById(skill.id).local,
       installed: installedSkillIds?.includes(skill.id) || false,
       scope: skillConfigs?.find((sc) => sc.id === skill.id)?.scope,
+      locked: lockedSkillIds?.includes(skill.id) ?? false,
       hasUnmetRequirements: skill.hasUnmetRequirements,
       unmetRequirementsReason: skill.unmetRequirementsReason,
       requiredBy: skill.selected ? undefined : getUnmetRequiredBy(skill.id, allSelections),

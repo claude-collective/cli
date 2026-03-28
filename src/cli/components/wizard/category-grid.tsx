@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { Box, Text } from "ink";
 
-import { CLI_COLORS } from "../../consts.js";
+import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
 import { getSkillById } from "../../lib/matrix/matrix-provider.js";
 import type { Category, OptionState, SkillId } from "../../types/index.js";
 import { isSectionLocked, useCategoryGridInput } from "../hooks/use-category-grid-input.js";
@@ -16,6 +16,8 @@ export type CategoryOption = {
   local?: boolean;
   installed?: boolean;
   scope?: "project" | "global";
+  /** True when this skill is globally installed and cannot be toggled in project context */
+  locked?: boolean;
   /** True when selected but has unmet dependency requirements (shown dimmed) */
   hasUnmetRequirements?: boolean;
   /** Explains unmet requirements (shown in label when D pressed) */
@@ -48,6 +50,10 @@ export type CategoryGridProps = {
   onFocusChange?: (row: number, col: number) => void;
   /** Optional callback fired with the resolved SkillId of the focused cell */
   onFocusedSkillChange?: (skillId: SkillId | null) => void;
+  /** Fired when a user attempts to toggle a locked (globally-installed) skill */
+  onLockedToggleAttempt?: (skillId: SkillId) => void;
+  /** Fired when a user attempts to select in an exclusive category that has a locked global skill */
+  onLockedCategoryAttempt?: () => void;
 };
 
 const SYMBOL_REQUIRED = "*";
@@ -230,6 +236,8 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   defaultFocusedCol = 0,
   onFocusChange,
   onFocusedSkillChange,
+  onLockedToggleAttempt,
+  onLockedCategoryAttempt,
 }) => {
   const processedCategories = useMemo(
     () => categories.map((category) => ({ ...category, sortedOptions: category.options })),
@@ -301,6 +309,8 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     onToggle,
     onToggleLabels,
     onToggleFilterIncompatible,
+    onLockedToggleAttempt,
+    onLockedCategoryAttempt,
   });
 
   const { setSectionRef, scrollEnabled, scrollTopPx } = useSectionScroll({

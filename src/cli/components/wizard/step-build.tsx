@@ -1,11 +1,14 @@
 import { Box, useInput } from "ink";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import type { Domain, SkillId, Category, CategorySelections } from "../../types/index.js";
 import type { SkillConfig } from "../../types/config.js";
+import { UI_LAYOUT, UI_MESSAGES } from "../../consts.js";
+import { getSkillById } from "../../lib/matrix/matrix-provider.js";
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { CategoryGrid } from "./category-grid.js";
+import { Toast } from "./toast.js";
 
 export type StepBuildProps = {
   domain: Domain;
@@ -39,6 +42,26 @@ export const StepBuild: React.FC<StepBuildProps> = ({
 }) => {
   const { ref: gridRef, measuredHeight: gridHeight } = useMeasuredHeight();
   const skillConfigs = useWizardStore((s) => s.skillConfigs);
+  const lockedSkillIds = useWizardStore((s) => s.lockedSkillIds);
+  const [lockedToast, setLockedToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!lockedToast) return;
+    const timer = setTimeout(() => setLockedToast(null), UI_LAYOUT.COPIED_MESSAGE_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [lockedToast]);
+
+  const handleLockedToggleAttempt = useCallback(
+    (skillId: SkillId) => {
+      const displayName = getSkillById(skillId).displayName;
+      setLockedToast(`${displayName} ${UI_MESSAGES.GLOBALLY_INSTALLED}`);
+    },
+    [],
+  );
+
+  const handleLockedCategoryAttempt = useCallback(() => {
+    setLockedToast(UI_MESSAGES.GLOBALLY_LOCKED_CATEGORY);
+  }, []);
 
   const handleFocusedSkillChange = useCallback(
     (id: SkillId | null) => useWizardStore.getState().setFocusedSkillId(id),
@@ -52,6 +75,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     installedSkillIds,
     skillConfigs,
     filterIncompatible,
+    lockedSkillIds,
   });
 
   useInput((_input, key) => {
@@ -74,8 +98,11 @@ export const StepBuild: React.FC<StepBuildProps> = ({
           onToggleLabels={onToggleLabels}
           onToggleFilterIncompatible={onToggleFilterIncompatible}
           onFocusedSkillChange={handleFocusedSkillChange}
+          onLockedToggleAttempt={handleLockedToggleAttempt}
+          onLockedCategoryAttempt={handleLockedCategoryAttempt}
         />
       </Box>
+      {lockedToast && <Toast>{lockedToast}</Toast>}
     </Box>
   );
 };

@@ -107,6 +107,7 @@ export const UI_SYMBOLS = {
   SKIPPED: "\u2013",
   DISCOURAGED: "!",
   DISABLED: "\u2013",
+  LOCK: "\uD83D\uDD12",
   SCROLL_UP: "\u25B2",
   SCROLL_DOWN: "\u25BC",
 } as const;
@@ -116,6 +117,11 @@ export const UI_LAYOUT = {
   DESCRIPTION_WIDTH: 30,
   COPIED_MESSAGE_TIMEOUT_MS: 2000,
   FALLBACK_MESSAGE_TIMEOUT_MS: 3000,
+} as const;
+
+export const UI_MESSAGES = {
+  GLOBALLY_INSTALLED: "is globally installed, modify from ~/",
+  GLOBALLY_LOCKED_CATEGORY: "Category is locked from global install, modify from ~/",
 } as const;
 
 export const GITHUB_SOURCE = {

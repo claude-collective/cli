@@ -55,6 +55,8 @@ type UseCategoryGridInputOptions = {
   onToggle: (categoryId: Category, technologyId: SkillId) => void;
   onToggleLabels: () => void;
   onToggleFilterIncompatible?: () => void;
+  onLockedToggleAttempt?: (skillId: SkillId) => void;
+  onLockedCategoryAttempt?: () => void;
 };
 
 export function useCategoryGridInput({
@@ -67,6 +69,8 @@ export function useCategoryGridInput({
   onToggle,
   onToggleLabels,
   onToggleFilterIncompatible,
+  onLockedToggleAttempt,
+  onLockedCategoryAttempt,
 }: UseCategoryGridInputOptions): void {
   const currentRow = processedCategories[focusedRow];
   const currentOptions = currentRow?.sortedOptions || [];
@@ -140,7 +144,17 @@ export function useCategoryGridInput({
       if (currentLocked) return;
       const currentOption = currentOptions[focusedCol];
       if (currentOption) {
-        onToggle(currentRow.id, currentOption.id);
+        if (currentOption.locked) {
+          onLockedToggleAttempt?.(currentOption.id);
+        } else if (
+          currentRow.exclusive &&
+          !currentOption.selected &&
+          currentOptions.some((o) => o.locked && o.selected)
+        ) {
+          onLockedCategoryAttempt?.();
+        } else {
+          onToggle(currentRow.id, currentOption.id);
+        }
       }
       return;
     }
