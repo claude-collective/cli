@@ -6,7 +6,7 @@ import { StackStep } from "./stack-step.js";
 export class DomainStep extends BaseStep {
   /** Accept the default domain selection (Enter). Returns BuildStep. */
   async acceptDefaults(): Promise<BuildStep> {
-    await this.waitForStableRender();
+    await this.waitForStep(STEP_TEXT.DOMAINS);
     await this.pressEnter();
     return new BuildStep(this.session, this.projectDir);
   }

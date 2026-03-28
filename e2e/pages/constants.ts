@@ -26,6 +26,7 @@ export const FILES = {
 export const STEP_TEXT = {
   // Step identification
   STACK: "Choose a stack",
+  DOMAINS: "Select domains",
   DOMAIN_WEB: "Web",
   DOMAIN_API: "API",
   DOMAIN_META: "Methodology",
