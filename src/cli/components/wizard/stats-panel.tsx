@@ -8,9 +8,9 @@ const SCOPE_COLOR_PROJECT = "#eee";
 export type StatsData = {
   skillsTotal: number;
   globalPlugin: number;
-  globalLocal: number;
+  globalEject: number;
   projectPlugin: number;
-  projectLocal: number;
+  projectEject: number;
   agentsTotal: number;
   agentsGlobal: number;
   agentsProject: number;
@@ -21,17 +21,17 @@ export function computeStats(
   agentConfigs: AgentScopeConfig[],
 ): StatsData {
   let globalPlugin = 0;
-  let globalLocal = 0;
+  let globalEject = 0;
   let projectPlugin = 0;
-  let projectLocal = 0;
+  let projectEject = 0;
 
   for (const sc of skillConfigs) {
-    const isLocal = sc.source === "local";
+    const isEject = sc.source === "eject";
     if (sc.scope === "global") {
-      if (isLocal) globalLocal++;
+      if (isEject) globalEject++;
       else globalPlugin++;
     } else {
-      if (isLocal) projectLocal++;
+      if (isEject) projectEject++;
       else projectPlugin++;
     }
   }
@@ -46,9 +46,9 @@ export function computeStats(
   return {
     skillsTotal: skillConfigs.length,
     globalPlugin,
-    globalLocal,
+    globalEject,
     projectPlugin,
-    projectLocal,
+    projectEject,
     agentsTotal: agentConfigs.length,
     agentsGlobal,
     agentsProject,
@@ -80,9 +80,9 @@ export const StatsPanel: React.FC<{ stats: StatsData }> = ({ stats }) => {
             <Text color={CLI_COLORS.PRIMARY}>{stats.globalPlugin}</Text>
             <Text> plugin </Text>
           </Text>
-          <Text dimColor={stats.globalLocal === 0}>
-            <Text color={CLI_COLORS.PRIMARY}>{stats.globalLocal}</Text>
-            <Text> local</Text>
+          <Text dimColor={stats.globalEject === 0}>
+            <Text color={CLI_COLORS.PRIMARY}>{stats.globalEject}</Text>
+            <Text> eject</Text>
           </Text>
         </Text>
         <Text>
@@ -94,9 +94,9 @@ export const StatsPanel: React.FC<{ stats: StatsData }> = ({ stats }) => {
             <Text color={CLI_COLORS.PRIMARY}>{stats.projectPlugin}</Text>
             <Text> plugin </Text>
           </Text>
-          <Text dimColor={stats.projectLocal === 0}>
-            <Text color={CLI_COLORS.PRIMARY}>{stats.projectLocal}</Text>
-            <Text> local</Text>
+          <Text dimColor={stats.projectEject === 0}>
+            <Text color={CLI_COLORS.PRIMARY}>{stats.projectEject}</Text>
+            <Text> eject</Text>
           </Text>
         </Text>
       </Box>

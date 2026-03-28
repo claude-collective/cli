@@ -54,15 +54,15 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 
 ### UI State
 
-| Field                      | Type                | Purpose                                                           |
-| -------------------------- | ------------------- | ----------------------------------------------------------------- |
-| `showLabels`               | `boolean`           | Show compatibility labels on skill tags                           |
-| `filterIncompatible`       | `boolean`           | Filter incompatible skills in build step grid                     |
-| `showSettings`             | `boolean`           | Settings overlay visible                                          |
-| `showInfo`                 | `boolean`           | Info overlay visible (selected skills and agents)                 |
-| `focusedSkillId`           | `SkillId \| null`   | Currently focused skill (for S hotkey)                            |
-| `focusedAgentId`           | `AgentName \| null` | Currently focused agent (for S hotkey)                            |
-| `isEditingFromGlobalScope` | `boolean`           | When true, scope toggling is disabled (editing from ~/.claude/)   |
+| Field                      | Type                | Purpose                                                         |
+| -------------------------- | ------------------- | --------------------------------------------------------------- |
+| `showLabels`               | `boolean`           | Show compatibility labels on skill tags                         |
+| `filterIncompatible`       | `boolean`           | Filter incompatible skills in build step grid                   |
+| `showSettings`             | `boolean`           | Settings overlay visible                                        |
+| `showInfo`                 | `boolean`           | Info overlay visible (selected skills and agents)               |
+| `focusedSkillId`           | `SkillId \| null`   | Currently focused skill (for S hotkey)                          |
+| `focusedAgentId`           | `AgentName \| null` | Currently focused agent (for S hotkey)                          |
+| `isEditingFromGlobalScope` | `boolean`           | When true, scope toggling is disabled (editing from ~/.claude/) |
 
 ### Source State
 
@@ -90,15 +90,15 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 
 ### Selection
 
-| Action             | Signature                                           | Effect                                  |
-| ------------------ | --------------------------------------------------- | --------------------------------------- |
-| `toggleDomain`     | `(domain: Domain) => void`                          | Add/remove domain, manages selections   |
-| `toggleTechnology` | `(domain, category, technology, exclusive) => void` | Radio (exclusive) or checkbox toggle    |
-| `toggleAgent`      | `(agent: AgentName) => void`                        | Add/remove agent, syncs agentConfigs    |
-| `bindSkill`        | `(skill: BoundSkill) => void`                       | Add foreign skill from search           |
-| `nextDomain`             | `() => boolean`                                     | Advance to next domain, returns success              |
-| `prevDomain`             | `() => boolean`                                     | Go to previous domain, returns success               |
-| `setCurrentDomainIndex`  | `(index: number) => void`                           | Set domain index directly (no-op if out of range)    |
+| Action                  | Signature                                           | Effect                                            |
+| ----------------------- | --------------------------------------------------- | ------------------------------------------------- |
+| `toggleDomain`          | `(domain: Domain) => void`                          | Add/remove domain, manages selections             |
+| `toggleTechnology`      | `(domain, category, technology, exclusive) => void` | Radio (exclusive) or checkbox toggle              |
+| `toggleAgent`           | `(agent: AgentName) => void`                        | Add/remove agent, syncs agentConfigs              |
+| `bindSkill`             | `(skill: BoundSkill) => void`                       | Add foreign skill from search                     |
+| `nextDomain`            | `() => boolean`                                     | Advance to next domain, returns success           |
+| `prevDomain`            | `() => boolean`                                     | Go to previous domain, returns success            |
+| `setCurrentDomainIndex` | `(index: number) => void`                           | Set domain index directly (no-op if out of range) |
 
 ### Scope / Source Per-Skill
 

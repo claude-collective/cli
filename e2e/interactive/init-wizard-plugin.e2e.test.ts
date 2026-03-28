@@ -103,7 +103,7 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
     });
   });
 
-  describe("local mode fallback", () => {
+  describe("eject mode fallback", () => {
     it("should install locally when source has no marketplace", async () => {
       const localSource = await createE2ESource();
 

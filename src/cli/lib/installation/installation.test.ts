@@ -64,7 +64,7 @@ describe("installation", () => {
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result!.mode).toBe("local");
+      expect(result!.mode).toBe("eject");
 
       expect(result!.configPath).toBe(path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS));
       expect(result!.agentsDir).toBe(path.join(tempDir, CLAUDE_DIR, "agents"));
@@ -72,13 +72,13 @@ describe("installation", () => {
       expect(result!.projectDir).toBe(tempDir);
     });
 
-    it("defaults to local mode when installMode is not set", async () => {
+    it("defaults to eject mode when installMode is not set", async () => {
       await createLocalProject(tempDir, { configContent: LOCAL_CONFIG });
 
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result!.mode).toBe("local");
+      expect(result!.mode).toBe("eject");
     });
 
     it("detects plugin installation when installMode is plugin", async () => {
@@ -111,7 +111,7 @@ describe("installation", () => {
       expect(projectResult).toBeNull();
     });
 
-    it("falls through to local even when config is invalid TS", async () => {
+    it("falls through to eject even when config is invalid TS", async () => {
       // Create a config file that exists but has invalid content
       // loadProjectConfig returns null for unparseable configs
       const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
@@ -124,9 +124,9 @@ describe("installation", () => {
       const result = await detectInstallation(tempDir);
 
       // loadProjectConfig returns null, but the file exists so detectInstallation
-      // still enters the local branch. mode defaults to "local" via ?? operator.
+      // still enters the local branch. mode defaults to "eject" via ?? operator.
       expect(result).not.toBeNull();
-      expect(result!.mode).toBe("local");
+      expect(result!.mode).toBe("eject");
     });
 
     it("uses provided projectDir parameter", async () => {
@@ -194,7 +194,7 @@ describe("installation", () => {
 
       const result = await getInstallationOrThrow(tempDir);
 
-      expect(result.mode).toBe("local");
+      expect(result.mode).toBe("eject");
 
       expect(result.projectDir).toBe(tempDir);
     });

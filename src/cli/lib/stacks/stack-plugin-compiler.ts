@@ -230,7 +230,7 @@ export async function compileStackPlugin(
         name,
         scope: "project" as const,
       })),
-      skills: [...agentSkillIds].map((id) => ({ id, scope: "project" as const, source: "local" })),
+      skills: [...agentSkillIds].map((id) => ({ id, scope: "project" as const, source: "eject" })),
       // Structural cast: Partial<Record<AgentName, V>> to Record<string, V> (no undefined values in practice)
       stack: buildStackProperty(newStack) as ProjectConfig["stack"],
     };

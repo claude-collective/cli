@@ -19,7 +19,7 @@ export async function installPluginSkills(
   marketplace: string,
   projectDir: string,
 ): Promise<PluginInstallResult> {
-  const pluginSkills = skills.filter((s) => s.source !== "local");
+  const pluginSkills = skills.filter((s) => s.source !== "eject");
   const installed: PluginInstallResult["installed"] = [];
   const failed: PluginInstallResult["failed"] = [];
 

@@ -33,7 +33,7 @@
     },
     "installMode": {
       "type": "string",
-      "enum": ["local", "plugin"]
+      "enum": ["eject", "plugin"]
     },
     "domains": {
       "type": "array",

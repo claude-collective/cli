@@ -3,7 +3,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile } from "fs/promises";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
-import { installLocal, installPluginConfig } from "../../installation/local-installer";
+import { installEject, installPluginConfig } from "../../installation/local-installer";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import { STANDARD_FILES } from "../../../consts";
@@ -26,7 +26,7 @@ import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
 
 // ── Test Suites ─────────────────────────────────────────────────────────────────
 
-describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
+describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
   let dirs: TestDirs;
   let originalCwd: string;
   let matrix: MergedSkillsMatrix;
@@ -76,7 +76,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       expect(wizardResult.selectedAgents).toEqual(sortedAgents);
 
       // Install
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -98,7 +98,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       useWizardStore.getState().preselectAgentsFromDomains();
 
       const wizardResult = buildWizardResultFromStore(matrix);
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -132,7 +132,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       useWizardStore.getState().preselectAgentsFromDomains();
 
       const wizardResult = buildWizardResultFromStore(matrix);
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -165,7 +165,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       const wizardResult = buildWizardResultFromStore(matrix);
       expect(wizardResult.selectedAgents).toEqual([]);
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -189,7 +189,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       // No preselectAgentsFromDomains call -> selectedAgents stays []
 
       const wizardResult = buildWizardResultFromStore(matrix);
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -243,7 +243,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       expect("copiedSkills" in result).toBe(false);
     });
 
-    it("should produce same agent list as local mode for same selections", async () => {
+    it("should produce same agent list as eject mode for same selections", async () => {
       const selectedSkillIds: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
       // Setup for plugin mode
@@ -252,19 +252,19 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       const pluginResult = buildWizardResultFromStore(matrix);
       const pluginAgents = [...pluginResult.selectedAgents].sort();
 
-      // Reset and setup for local mode with same selections
+      // Reset and setup for eject mode with same selections
       useWizardStore.getState().reset();
       simulateSkillSelections(selectedSkillIds, matrix, ["web", "api"]);
       useWizardStore.getState().preselectAgentsFromDomains();
-      const localResult = buildWizardResultFromStore(matrix);
-      const localAgents = [...localResult.selectedAgents].sort();
+      const ejectResult = buildWizardResultFromStore(matrix);
+      const ejectAgents = [...ejectResult.selectedAgents].sort();
 
       // Same selections should produce same agent list
-      expect(pluginAgents).toEqual(localAgents);
+      expect(pluginAgents).toEqual(ejectAgents);
 
       // Same skills (including methodology)
       expect([...pluginResult.skills.map((s) => s.id)].sort()).toEqual(
-        [...localResult.skills.map((s) => s.id)].sort(),
+        [...ejectResult.skills.map((s) => s.id)].sort(),
       );
     });
   });
@@ -284,7 +284,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       useWizardStore.getState().preselectAgentsFromDomains();
 
       const wizardResult = buildWizardResultFromStore(matrix);
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -311,7 +311,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       useWizardStore.getState().preselectAgentsFromDomains();
 
       const wizardResult = buildWizardResultFromStore(matrix);
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -344,7 +344,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       expect(store.selectedAgents).not.toContain("codex-keeper");
 
       const wizardResult = buildWizardResultFromStore(matrix);
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -464,7 +464,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         expect(wizardResult.skills.map((s) => s.id)).toContain(skillId);
       }
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -487,7 +487,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       useWizardStore.getState().preselectAgentsFromDomains();
 
       const wizardResult = buildWizardResultFromStore(matrix);
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -516,7 +516,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
       const wizardResult = buildWizardResultFromStore(matrix);
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -542,7 +542,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
       const wizardResult = buildWizardResultFromStore(matrix);
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,

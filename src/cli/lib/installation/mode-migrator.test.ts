@@ -34,36 +34,36 @@ describe("mode-migrator", () => {
       return { id: id as SkillId, source, scope };
     }
 
-    it("should detect skills moving from plugin to local", () => {
+    it("should detect skills moving from plugin to eject", () => {
       const result = detectMigrations(
         [skill("web-framework-react", "agents-inc")],
-        [skill("web-framework-react", "local")],
+        [skill("web-framework-react", "eject")],
       );
 
-      expect(result.toLocal).toHaveLength(1);
-      expect(result.toLocal[0].id).toBe("web-framework-react");
+      expect(result.toEject).toHaveLength(1);
+      expect(result.toEject[0].id).toBe("web-framework-react");
       expect(result.toPlugin).toEqual([]);
     });
 
-    it("should detect skills moving from local to plugin", () => {
+    it("should detect skills moving from eject to plugin", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "local")],
+        [skill("web-framework-react", "eject")],
         [skill("web-framework-react", "agents-inc")],
       );
 
-      expect(result.toLocal).toEqual([]);
+      expect(result.toEject).toEqual([]);
       expect(result.toPlugin).toHaveLength(1);
       expect(result.toPlugin[0].id).toBe("web-framework-react");
     });
 
     it("should detect mixed migrations", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "agents-inc"), skill("web-state-zustand", "local")],
-        [skill("web-framework-react", "local"), skill("web-state-zustand", "agents-inc")],
+        [skill("web-framework-react", "agents-inc"), skill("web-state-zustand", "eject")],
+        [skill("web-framework-react", "eject"), skill("web-state-zustand", "agents-inc")],
       );
 
-      expect(result.toLocal).toHaveLength(1);
-      expect(result.toLocal[0].id).toBe("web-framework-react");
+      expect(result.toEject).toHaveLength(1);
+      expect(result.toEject[0].id).toBe("web-framework-react");
       expect(result.toPlugin).toHaveLength(1);
       expect(result.toPlugin[0].id).toBe("web-state-zustand");
     });
@@ -74,35 +74,35 @@ describe("mode-migrator", () => {
         [skill("web-framework-react", "agents-inc")],
       );
 
-      expect(result.toLocal).toEqual([]);
+      expect(result.toEject).toEqual([]);
       expect(result.toPlugin).toEqual([]);
     });
 
     it("should handle skills with no previous selection (new skill, no migration)", () => {
-      const result = detectMigrations([], [skill("web-framework-react", "local")]);
+      const result = detectMigrations([], [skill("web-framework-react", "eject")]);
 
       // New skills are not migrations (no old entry to compare)
-      expect(result.toLocal).toEqual([]);
+      expect(result.toEject).toEqual([]);
       expect(result.toPlugin).toEqual([]);
     });
 
     it("should handle skills removed in new selection (no migration)", () => {
-      const result = detectMigrations([skill("web-framework-react", "local")], []);
+      const result = detectMigrations([skill("web-framework-react", "eject")], []);
 
       // Removed skills are not migrations (no new entry to compare)
-      expect(result.toLocal).toEqual([]);
+      expect(result.toEject).toEqual([]);
       expect(result.toPlugin).toEqual([]);
     });
 
     it("should only detect migrations for skills present in both old and new", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "agents-inc"), skill("web-state-zustand", "local")],
-        [skill("web-framework-react", "local")],
+        [skill("web-framework-react", "agents-inc"), skill("web-state-zustand", "eject")],
+        [skill("web-framework-react", "eject")],
       );
 
       // Only react is in both old and new with a source change
-      expect(result.toLocal).toHaveLength(1);
-      expect(result.toLocal[0].id).toBe("web-framework-react");
+      expect(result.toEject).toHaveLength(1);
+      expect(result.toEject[0].id).toBe("web-framework-react");
       expect(result.toPlugin).toEqual([]);
     });
   });
@@ -124,7 +124,7 @@ describe("mode-migrator", () => {
       await cleanupTempDir(tempDir);
     });
 
-    it("should copy skills to local and uninstall plugins for toLocal skills", async () => {
+    it("should copy skills to local and uninstall plugins for toEject skills", async () => {
       vi.mocked(copySkillsToLocalFlattened).mockResolvedValue([
         {
           skillId: "web-framework-react",
@@ -135,11 +135,11 @@ describe("mode-migrator", () => {
       ]);
 
       const plan: MigrationPlan = {
-        toLocal: [
+        toEject: [
           {
             id: "web-framework-react",
             oldSource: "agents-inc",
-            newSource: "local",
+            newSource: "eject",
             oldScope: "project",
             newScope: "project",
           },
@@ -157,17 +157,17 @@ describe("mode-migrator", () => {
         sourceResult,
       );
       expect(claudePluginUninstall).toHaveBeenCalledWith("web-framework-react", "project", tempDir);
-      expect(result.localizedSkills).toEqual(["web-framework-react"]);
+      expect(result.ejectedSkills).toEqual(["web-framework-react"]);
       expect(result.warnings).toEqual([]);
     });
 
     it("should archive and install plugins for toPlugin skills", async () => {
       const plan: MigrationPlan = {
-        toLocal: [],
+        toEject: [],
         toPlugin: [
           {
             id: "web-state-zustand",
-            oldSource: "local",
+            oldSource: "eject",
             newSource: "agents-inc",
             oldScope: "project",
             newScope: "project",
@@ -190,7 +190,7 @@ describe("mode-migrator", () => {
 
     it("should handle empty migration plan", async () => {
       const plan: MigrationPlan = {
-        toLocal: [],
+        toEject: [],
         toPlugin: [],
         scopeChanges: [],
       };
@@ -201,7 +201,7 @@ describe("mode-migrator", () => {
       expect(deleteLocalSkill).not.toHaveBeenCalled();
       expect(claudePluginInstall).not.toHaveBeenCalled();
       expect(claudePluginUninstall).not.toHaveBeenCalled();
-      expect(result.localizedSkills).toEqual([]);
+      expect(result.ejectedSkills).toEqual([]);
       expect(result.pluginizedSkills).toEqual([]);
       expect(result.warnings).toEqual([]);
     });
@@ -210,11 +210,11 @@ describe("mode-migrator", () => {
       vi.mocked(claudePluginInstall).mockRejectedValue(new Error("install failed"));
 
       const plan: MigrationPlan = {
-        toLocal: [],
+        toEject: [],
         toPlugin: [
           {
             id: "web-state-zustand",
-            oldSource: "local",
+            oldSource: "eject",
             newSource: "agents-inc",
             oldScope: "project",
             newScope: "project",
@@ -236,11 +236,11 @@ describe("mode-migrator", () => {
       const noMarketplaceSource = buildSourceResult(sourceResult.matrix, "/test/source");
 
       const plan: MigrationPlan = {
-        toLocal: [],
+        toEject: [],
         toPlugin: [
           {
             id: "web-state-zustand",
-            oldSource: "local",
+            oldSource: "eject",
             newSource: "agents-inc",
             oldScope: "project",
             newScope: "project",

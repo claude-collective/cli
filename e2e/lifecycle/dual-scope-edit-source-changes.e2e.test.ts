@@ -131,7 +131,7 @@ describe.skipIf(!claudeAvailable)(
         try {
           // Phase A + B: Init with plugin source -- initProject forces all sources
           // to local via the "l" hotkey. So after Phase B, all skills have
-          // source: "local" in config, even though the source has a marketplace.
+          // source: "eject" in config, even though the source has a marketplace.
           const phaseA = await initGlobal(pluginFixture.sourceDir, pluginFixture.tempDir, fakeHome);
           expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
 

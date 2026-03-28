@@ -60,7 +60,7 @@ describe("uninstall command", () => {
     // Overwrite config with source field so skills match
     await writeProjectConfig(projectDir, {
       name: "test-edit-project",
-      skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+      skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
       agents: [{ name: "web-developer", scope: "project" }],
       domains: ["web"],
     });

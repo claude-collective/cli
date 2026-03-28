@@ -49,8 +49,8 @@ describe("compile command edge cases", () => {
       await writeProjectConfig(projectDir, {
         name: "test-custom-stack",
         skills: [
-          { id: "web-framework-react", scope: "project", source: "local" },
-          { id: "web-custom-e2e-tool" as SkillId, scope: "project", source: "local" }, // fabricated E2E test ID
+          { id: "web-framework-react", scope: "project", source: "eject" },
+          { id: "web-custom-e2e-tool" as SkillId, scope: "project", source: "eject" }, // fabricated E2E test ID
         ],
         agents: [{ name: "web-developer", scope: "project" }],
         domains: ["web"],
@@ -180,8 +180,8 @@ This skill has invalid YAML frontmatter.
       await writeProjectConfig(projectDir, {
         name: "e2e-missing-skill",
         skills: [
-          { id: "web-testing-e2e-exists" as SkillId, scope: "project", source: "local" },
-          { id: "web-testing-e2e-phantom" as SkillId, scope: "project", source: "local" },
+          { id: "web-testing-e2e-exists" as SkillId, scope: "project", source: "eject" },
+          { id: "web-testing-e2e-phantom" as SkillId, scope: "project", source: "eject" },
         ],
         agents: [{ name: "web-developer", scope: "project" }],
         stack: {
@@ -225,7 +225,7 @@ This skill has invalid YAML frontmatter.
 
       await writeProjectConfig(projectDir, {
         name: "e2e-empty-stack",
-        skills: [{ id: "web-testing-e2e-orphan" as SkillId, scope: "project", source: "local" }],
+        skills: [{ id: "web-testing-e2e-orphan" as SkillId, scope: "project", source: "eject" }],
         agents: [{ name: "web-developer", scope: "project" }],
         stack: {},
       });

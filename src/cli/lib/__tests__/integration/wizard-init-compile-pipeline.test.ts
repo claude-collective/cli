@@ -3,7 +3,7 @@ import path from "path";
 import { readFile, readdir } from "fs/promises";
 import { readTestTsConfig } from "../helpers";
 
-import { installLocal } from "../../installation/local-installer";
+import { installEject } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents/agent-recompiler";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import type { AgentName, ProjectConfig, SkillId } from "../../../types";
@@ -61,7 +61,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
-      const installResult = await installLocal({
+      const installResult = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -108,7 +108,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       });
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
-      const installResult = await installLocal({
+      const installResult = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -133,13 +133,13 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
   });
 
   describe("Scenario 2: Compile round-trip (init then recompile)", () => {
-    it("should recompile agents from installLocal output", async () => {
+    it("should recompile agents from installEject output", async () => {
       const wizardResult = buildWizardResult(buildSkillConfigs(SKILL_NAMES), {
         selectedAgents: PIPELINE_AGENTS,
       });
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
-      const installResult = await installLocal({
+      const installResult = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -154,7 +154,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         initialAgentContents[agentName] = await readFile(agentPath, "utf-8");
       }
 
-      // In local mode, pluginDir is the project dir itself
+      // In eject mode, pluginDir is the project dir itself
       const recompileResult = await recompileAgents({
         pluginDir: dirs.projectDir,
         sourcePath: dirs.sourceDir,
@@ -185,7 +185,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       });
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
-      const installResult = await installLocal({
+      const installResult = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -218,7 +218,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         marketplace: "test-marketplace",
       });
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -242,7 +242,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       });
       const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,

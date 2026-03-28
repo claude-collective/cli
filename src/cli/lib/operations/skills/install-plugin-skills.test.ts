@@ -51,9 +51,9 @@ describe("installPluginSkills", () => {
 
   it("should filter out local-source skills", async () => {
     const skills = [
-      makeSkillConfig("web-framework-react", "project", "local"),
+      makeSkillConfig("web-framework-react", "project", "eject"),
       makeSkillConfig("api-framework-hono", "project", MARKETPLACE),
-      makeSkillConfig("web-styling-tailwind", "global", "local"),
+      makeSkillConfig("web-styling-tailwind", "global", "eject"),
     ];
 
     const result = await installPluginSkills(skills, MARKETPLACE, PROJECT_DIR);

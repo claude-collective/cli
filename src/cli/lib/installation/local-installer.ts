@@ -45,12 +45,12 @@ type LocalResolvedSkill = SkillDefinition & {
 };
 
 /**
- * Options for the local skill installation pipeline.
+ * Options for the eject skill installation pipeline.
  *
- * Passed to {@link installLocal} to drive the full installation flow:
+ * Passed to {@link installEject} to drive the full installation flow:
  * skill copying, config generation, agent compilation, and file writing.
  */
-export type LocalInstallOptions = {
+export type EjectInstallOptions = {
   /** Wizard output containing selected skills, stack, install mode, and source selections */
   wizardResult: WizardResultV2;
   /** Loaded source data including the skills matrix, source path, and source configuration */
@@ -63,12 +63,12 @@ export type LocalInstallOptions = {
 };
 
 /**
- * Result of a completed local skill installation.
+ * Result of a completed eject skill installation.
  *
- * Returned by {@link installLocal} with details about what was written to disk,
+ * Returned by {@link installEject} with details about what was written to disk,
  * enabling the caller to display a summary to the user.
  */
-export type LocalInstallResult = {
+export type EjectInstallResult = {
   /** Skills that were copied to `.claude/skills/`, with source and destination paths */
   copiedSkills: CopiedSkill[];
   /** Final project configuration (may be merged with existing config.ts) */
@@ -120,7 +120,7 @@ async function deleteAndCopySkills(
   skillsDir: string,
 ): Promise<CopiedSkill[]> {
   for (const skill of skills) {
-    if (skill.source && skill.source !== "local") {
+    if (skill.source && skill.source !== "eject") {
       verbose(`Using alternate source '${skill.source}' for ${skill.id}`);
       await deleteLocalSkill(baseDir, skill.id);
     }
@@ -130,7 +130,7 @@ async function deleteAndCopySkills(
   return copySkillsToLocalFlattened(skillIds, skillsDir, sourceResult.matrix, sourceResult);
 }
 
-export function buildLocalSkillsMap(
+export function buildEjectSkillsMap(
   copiedSkills: CopiedSkill[],
 ): Partial<Record<SkillId, LocalResolvedSkill>> {
   // Boundary cast: Object.fromEntries returns { [k: string]: V }
@@ -155,13 +155,13 @@ async function loadMergedAgents(sourcePath: string): Promise<Record<AgentName, A
   return { ...cliAgents, ...sourceAgents };
 }
 
-async function buildLocalConfig(
+async function buildEjectConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
 ): Promise<{ config: ProjectConfig; loadedStack: Stack | null }> {
   const skillIds = wizardResult.skills.map((s) => s.id);
   verbose(
-    `buildLocalConfig: selectedStackId='${wizardResult.selectedStackId}', ` +
+    `buildEjectConfig: selectedStackId='${wizardResult.selectedStackId}', ` +
       `skills=[${skillIds.join(", ")}], ` +
       `selectedAgents=[${wizardResult.selectedAgents.join(", ")}]`,
   );
@@ -170,7 +170,7 @@ async function buildLocalConfig(
   if (wizardResult.selectedStackId) {
     loadedStack = await loadStackById(wizardResult.selectedStackId, sourceResult.sourcePath);
     verbose(
-      `buildLocalConfig: loadedStack=${loadedStack ? `found (id='${loadedStack.id}')` : "NOT FOUND"}`,
+      `buildEjectConfig: loadedStack=${loadedStack ? `found (id='${loadedStack.id}')` : "NOT FOUND"}`,
     );
   }
 
@@ -241,7 +241,7 @@ async function buildLocalConfig(
   }
 
   verbose(
-    `buildLocalConfig result: stack=${localConfig.stack ? Object.keys(localConfig.stack).length + " agents" : "UNDEFINED"}, ` +
+    `buildEjectConfig result: stack=${localConfig.stack ? Object.keys(localConfig.stack).length + " agents" : "UNDEFINED"}, ` +
       `agents=[${localConfig.agents.map((a) => a.name).join(", ")}], skills=${localConfig.skills.length}`,
   );
 
@@ -285,7 +285,7 @@ export async function buildAndMergeConfig(
   projectDir: string,
   sourceFlag?: string,
 ): Promise<MergeResult> {
-  const { config } = await buildLocalConfig(wizardResult, sourceResult);
+  const { config } = await buildEjectConfig(wizardResult, sourceResult);
   verbose(
     `buildAndMergeConfig: before merge — stack=${config.stack ? Object.keys(config.stack).length + " agents" : "UNDEFINED"}`,
   );
@@ -468,8 +468,8 @@ async function compileAndWriteAgents(
   return compiledAgentNames;
 }
 
-/** Result of plugin-mode config installation — same as LocalInstallResult without copied skills or skillsDir */
-export type PluginConfigResult = Omit<LocalInstallResult, "copiedSkills" | "skillsDir">;
+/** Result of plugin-mode config installation — same as EjectInstallResult without copied skills or skillsDir */
+export type PluginConfigResult = Omit<EjectInstallResult, "copiedSkills" | "skillsDir">;
 
 /**
  * Generates config and compiles agents for plugin mode (without copying skills).
@@ -490,7 +490,7 @@ export type PluginConfigResult = Omit<LocalInstallResult, "copiedSkills" | "skil
  * @throws {Error} If the selected stack ID is not found in config/stacks.ts
  */
 export async function installPluginConfig(
-  options: LocalInstallOptions,
+  options: EjectInstallOptions,
 ): Promise<PluginConfigResult> {
   const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
 
@@ -558,9 +558,9 @@ export async function installPluginConfig(
 }
 
 /**
- * Executes the full local skill installation pipeline.
+ * Executes the full eject skill installation pipeline.
  *
- * This is the main entry point for the "local" install mode (as opposed to plugin mode).
+ * This is the main entry point for the "eject" install mode (as opposed to plugin mode).
  * It performs the following steps in order:
  * 1. Creates `.claude/skills/` and `.claude/agents/` directories
  * 2. Deletes local skills switching to alternate sources, then copies selected
@@ -581,7 +581,7 @@ export async function installPluginConfig(
  * @remarks
  * **Side effects:** Creates directories and writes files under `{projectDir}/.claude/`.
  */
-export async function installLocal(options: LocalInstallOptions): Promise<LocalInstallResult> {
+export async function installEject(options: EjectInstallOptions): Promise<EjectInstallResult> {
   const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
 
   const projectPaths = resolveInstallPaths(projectDir, "project");
@@ -615,7 +615,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
       : [];
   const copiedSkills = [...projectCopied, ...globalCopied];
 
-  const localSkillsForResolution = buildLocalSkillsMap(copiedSkills);
+  const ejectSkillsForResolution = buildEjectSkillsMap(copiedSkills);
 
   const agents = await loadMergedAgents(sourceResult.sourcePath);
   const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
@@ -636,13 +636,13 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {
     name: DEFAULT_PLUGIN_NAME,
-    description: finalConfig.description || `Local setup with ${wizardResult.skills.length} skills`,
+    description: finalConfig.description || `Eject setup with ${wizardResult.skills.length} skills`,
     agents: compileAgentsConfig,
   };
   const compiledAgentNames = await compileAndWriteAgents(
     compileConfig,
     agents,
-    localSkillsForResolution,
+    ejectSkillsForResolution,
     sourceResult,
     projectDir,
     projectPaths.agentsDir,

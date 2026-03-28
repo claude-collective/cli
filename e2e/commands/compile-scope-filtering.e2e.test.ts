@@ -46,7 +46,7 @@ describe("compile scope filtering", () => {
       // Global installation: web-developer agent with a skill
       await writeProjectConfig(globalHome, {
         name: "global-test",
-        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
         stack: {
@@ -68,8 +68,8 @@ describe("compile scope filtering", () => {
       await writeProjectConfig(projectDir, {
         name: "project-test",
         skills: [
-          { id: "web-testing-playwright-e2e", scope: "project", source: "local" },
-          { id: "web-testing-cypress-e2e", scope: "global", source: "local" },
+          { id: "web-testing-playwright-e2e", scope: "project", source: "eject" },
+          { id: "web-testing-cypress-e2e", scope: "global", source: "eject" },
         ],
         agents: [{ name: "api-developer", scope: "project" }],
         domains: ["web"],
@@ -119,8 +119,8 @@ describe("compile scope filtering", () => {
       await writeProjectConfig(globalHome, {
         name: "global-test",
         skills: [
-          { id: "web-testing-cypress-e2e", scope: "global", source: "local" },
-          { id: "web-framework-react", scope: "global", source: "local" },
+          { id: "web-testing-cypress-e2e", scope: "global", source: "eject" },
+          { id: "web-framework-react", scope: "global", source: "eject" },
         ],
         agents: [
           { name: "web-developer", scope: "global" },
@@ -149,7 +149,7 @@ describe("compile scope filtering", () => {
       // Project installation: completely different agent, no overlap with global
       await writeProjectConfig(projectDir, {
         name: "project-test",
-        skills: [{ id: "web-testing-playwright-e2e", scope: "project", source: "local" }],
+        skills: [{ id: "web-testing-playwright-e2e", scope: "project", source: "eject" }],
         agents: [{ name: "cli-developer", scope: "project" }],
         domains: ["web"],
         stack: {
@@ -193,7 +193,7 @@ describe("compile scope filtering", () => {
       // Global installation: one global skill
       await writeProjectConfig(globalHome, {
         name: "global-test",
-        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
         stack: {
@@ -214,8 +214,8 @@ describe("compile scope filtering", () => {
       await writeProjectConfig(projectDir, {
         name: "project-test",
         skills: [
-          { id: "web-testing-cypress-e2e", scope: "global", source: "local" },
-          { id: "web-testing-playwright-e2e", scope: "project", source: "local" },
+          { id: "web-testing-cypress-e2e", scope: "global", source: "eject" },
+          { id: "web-testing-playwright-e2e", scope: "project", source: "eject" },
         ],
         agents: [{ name: "api-developer", scope: "project" }],
         domains: ["web"],
@@ -258,7 +258,7 @@ describe("compile scope filtering", () => {
       // Global installation with a skill
       await writeProjectConfig(globalHome, {
         name: "global-test",
-        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
         stack: {
@@ -277,7 +277,7 @@ describe("compile scope filtering", () => {
       // but only has project-scoped skills in config
       await writeProjectConfig(projectDir, {
         name: "project-test",
-        skills: [{ id: "web-testing-playwright-e2e", scope: "project", source: "local" }],
+        skills: [{ id: "web-testing-playwright-e2e", scope: "project", source: "eject" }],
         agents: [{ name: "api-developer", scope: "project" }],
         domains: ["web"],
         stack: {
@@ -318,7 +318,7 @@ describe("compile scope filtering", () => {
       // Global installation: web-developer only
       await writeProjectConfig(globalHome, {
         name: "global-test",
-        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
         stack: {
@@ -337,8 +337,8 @@ describe("compile scope filtering", () => {
       await writeProjectConfig(projectDir, {
         name: "project-test",
         skills: [
-          { id: "web-testing-playwright-e2e", scope: "project", source: "local" },
-          { id: "web-testing-cypress-e2e", scope: "global", source: "local" },
+          { id: "web-testing-playwright-e2e", scope: "project", source: "eject" },
+          { id: "web-testing-cypress-e2e", scope: "global", source: "eject" },
         ],
         agents: [{ name: "api-developer", scope: "project" }],
         domains: ["web"],
@@ -382,7 +382,7 @@ describe("compile scope filtering", () => {
       // Global: web-developer
       await writeProjectConfig(globalHome, {
         name: "global-test",
-        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
         stack: {
@@ -401,8 +401,8 @@ describe("compile scope filtering", () => {
       await writeProjectConfig(projectDir, {
         name: "project-test",
         skills: [
-          { id: "web-testing-playwright-e2e", scope: "project", source: "local" },
-          { id: "web-testing-cypress-e2e", scope: "global", source: "local" },
+          { id: "web-testing-playwright-e2e", scope: "project", source: "eject" },
+          { id: "web-testing-cypress-e2e", scope: "global", source: "eject" },
         ],
         agents: [{ name: "api-developer", scope: "project" }],
         domains: ["web"],
@@ -448,7 +448,7 @@ describe("compile scope filtering", () => {
       // Global: web-developer
       await writeProjectConfig(globalHome, {
         name: "global-test",
-        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+        skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
         stack: {
@@ -466,7 +466,7 @@ describe("compile scope filtering", () => {
       // Project: api-developer
       await writeProjectConfig(projectDir, {
         name: "project-test",
-        skills: [{ id: "web-testing-playwright-e2e", scope: "project", source: "local" }],
+        skills: [{ id: "web-testing-playwright-e2e", scope: "project", source: "eject" }],
         agents: [{ name: "api-developer", scope: "project" }],
         domains: ["web"],
         stack: {

@@ -87,7 +87,7 @@ describe("source-loader", () => {
 
   describe("loadSkillsMatrixFromSource", () => {
     describe("dev mode detection", () => {
-      it("should use local mode when devMode flag is explicitly set", async () => {
+      it("should use eject mode when devMode flag is explicitly set", async () => {
         const result = await loadSkillsMatrixFromSource({
           sourceFlag: fixtureDirs.sourceDir,
           projectDir: tempDir,

@@ -3,10 +3,10 @@ import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  installLocal,
+  installEject,
   writeScopedConfigs,
   resolveInstallPaths,
-  buildLocalSkillsMap,
+  buildEjectSkillsMap,
   buildCompileAgents,
   buildAgentScopeMap,
   setConfigMetadata,
@@ -79,7 +79,7 @@ vi.mock("../configuration/config-generator", async (importOriginal) => {
       // Uses literal values because vi.mock factories are hoisted above imports
       name: "agents-inc",
       agents: ["web-developer"],
-      skills: [{ id: "test-skill", scope: "project", source: "local" }],
+      skills: [{ id: "test-skill", scope: "project", source: "eject" }],
     }),
     buildStackProperty: vi.fn().mockReturnValue({}),
     // Use real splitConfigByScope for scope-aware config writing
@@ -110,13 +110,13 @@ describe("local-installer", () => {
     await rm(globalClaudeSrc, { recursive: true, force: true }).catch(() => {});
   });
 
-  describe("installLocal", () => {
+  describe("installEject", () => {
     it("should create required directories", async () => {
       const matrix = EMPTY_MATRIX;
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -134,7 +134,7 @@ describe("local-installer", () => {
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -153,7 +153,7 @@ describe("local-installer", () => {
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -176,7 +176,7 @@ describe("local-installer", () => {
         },
       });
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -195,7 +195,7 @@ describe("local-installer", () => {
         marketplace: "my-marketplace",
       });
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -212,7 +212,7 @@ describe("local-installer", () => {
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -246,7 +246,7 @@ describe("local-installer", () => {
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -263,18 +263,18 @@ describe("local-installer", () => {
     it("should derive local installMode from skill configs", async () => {
       const matrix = EMPTY_MATRIX;
       const wizardResult = buildWizardResult(
-        buildSkillConfigs([TEST_SKILL_ID], { source: "local" }),
+        buildSkillConfigs([TEST_SKILL_ID], { source: "eject" }),
       );
       const sourceResult = buildSourceResult(matrix, tempDir);
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
       });
 
       // installMode is derived from skills at runtime, not stored on config
-      expect(result.config.skills.every((s) => s.source === "local")).toBe(true);
+      expect(result.config.skills.every((s) => s.source === "eject")).toBe(true);
     });
 
     it("should not set wasMerged when no existing config", async () => {
@@ -282,7 +282,7 @@ describe("local-installer", () => {
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -325,7 +325,7 @@ describe("local-installer", () => {
 
       mockCompileAgentForPlugin.mockClear();
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -357,13 +357,13 @@ describe("local-installer", () => {
 
       const matrix = EMPTY_MATRIX;
       const wizardResult = buildWizardResult(
-        buildSkillConfigs([TEST_SKILL_ID], { source: "local" }),
+        buildSkillConfigs([TEST_SKILL_ID], { source: "eject" }),
       );
       const sourceResult = buildSourceResult(matrix, tempDir);
 
       mockCompileAgentForPlugin.mockClear();
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -374,7 +374,7 @@ describe("local-installer", () => {
         expect.any(Object),
         expect.any(String),
         expect.any(Object),
-        "local",
+        "eject",
       );
     });
 
@@ -383,7 +383,7 @@ describe("local-installer", () => {
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
       const sourceResult = buildSourceResult(matrix, tempDir);
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -449,7 +449,7 @@ describe("local-installer", () => {
       });
       const sourceResult = buildSourceResult(matrix, tempDir);
 
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult,
         sourceResult,
         projectDir: tempDir,
@@ -515,7 +515,7 @@ describe("local-installer", () => {
       const config = buildProjectConfig({
         skills: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "local" },
+          { id: "web-testing-vitest", scope: "project", source: "eject" },
         ],
         agents: [
           { name: "web-developer", scope: "global" },
@@ -575,7 +575,7 @@ describe("local-installer", () => {
     });
   });
 
-  describe("buildLocalSkillsMap", () => {
+  describe("buildEjectSkillsMap", () => {
     it("should map copied skills that exist in the matrix", () => {
       initializeMatrix(SINGLE_REACT_MATRIX);
 
@@ -588,7 +588,7 @@ describe("local-installer", () => {
         },
       ];
 
-      const result = buildLocalSkillsMap(copiedSkills);
+      const result = buildEjectSkillsMap(copiedSkills);
 
       expect(result["web-framework-react"]).toBeDefined();
       expect(result["web-framework-react"]!.id).toBe("web-framework-react");
@@ -613,7 +613,7 @@ describe("local-installer", () => {
         },
       ];
 
-      const result = buildLocalSkillsMap(copiedSkills);
+      const result = buildEjectSkillsMap(copiedSkills);
 
       expect(Object.keys(result)).toHaveLength(0);
     });
@@ -621,7 +621,7 @@ describe("local-installer", () => {
     it("should return empty map when no skills are copied", () => {
       initializeMatrix(SINGLE_REACT_MATRIX);
 
-      const result = buildLocalSkillsMap([]);
+      const result = buildEjectSkillsMap([]);
 
       expect(Object.keys(result)).toHaveLength(0);
     });
@@ -644,7 +644,7 @@ describe("local-installer", () => {
         },
       ];
 
-      const result = buildLocalSkillsMap(copiedSkills);
+      const result = buildEjectSkillsMap(copiedSkills);
 
       expect(Object.keys(result)).toHaveLength(1);
       expect(result["web-framework-react"]).toBeDefined();
@@ -715,8 +715,8 @@ describe("local-installer", () => {
       const config = buildProjectConfig({
         agents: [{ name: "web-developer" as AgentName, scope: "global" }],
         skills: [
-          { id: "web-framework-react", scope: "project", source: "local" },
-          { id: "web-testing-vitest", scope: "global", source: "local" },
+          { id: "web-framework-react", scope: "project", source: "eject" },
+          { id: "web-testing-vitest", scope: "global", source: "eject" },
         ],
         stack: {
           "web-developer": {
@@ -749,8 +749,8 @@ describe("local-installer", () => {
       const config = buildProjectConfig({
         agents: [{ name: "web-developer" as AgentName, scope: "project" }],
         skills: [
-          { id: "web-framework-react", scope: "project", source: "local" },
-          { id: "web-testing-vitest", scope: "global", source: "local" },
+          { id: "web-framework-react", scope: "project", source: "eject" },
+          { id: "web-testing-vitest", scope: "global", source: "eject" },
         ],
         stack: {
           "web-developer": {
@@ -982,7 +982,7 @@ describe("local-installer", () => {
       const config = buildProjectConfig({
         skills: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "local" },
+          { id: "web-testing-vitest", scope: "project", source: "eject" },
         ],
         agents: [
           { name: "web-developer", scope: "global" },

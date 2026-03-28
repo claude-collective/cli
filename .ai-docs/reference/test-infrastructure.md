@@ -12,11 +12,11 @@
 
 Vitest is configured with 3 test projects:
 
-| Project       | Include Pattern                                                                   | Purpose           | Retry |
-| ------------- | --------------------------------------------------------------------------------- | ----------------- | ----- |
-| `unit`        | `src/**/*.test.{ts,tsx}`, `scripts/**/*.test.ts` (excluding integration/commands) | Unit + component  | 0     |
+| Project       | Include Pattern                                                                                            | Purpose           | Retry |
+| ------------- | ---------------------------------------------------------------------------------------------------------- | ----------------- | ----- |
+| `unit`        | `src/**/*.test.{ts,tsx}`, `scripts/**/*.test.ts` (excluding integration/commands)                          | Unit + component  | 0     |
 | `integration` | `src/cli/lib/__tests__/integration/**/*.test.{ts,tsx}`, `src/cli/lib/__tests__/user-journeys/**/*.test.ts` | Integration tests | 0     |
-| `commands`    | `src/cli/lib/__tests__/commands/**/*.test.ts`                                     | CLI command tests | 1     |
+| `commands`    | `src/cli/lib/__tests__/commands/**/*.test.ts`                                                              | CLI command tests | 1     |
 
 ## Configuration
 
@@ -362,31 +362,31 @@ The E2E tests use a Page Object Model pattern in `e2e/pages/`. Constants are sel
 
 **Constants (`e2e/pages/constants.ts`):**
 
-| Export           | Purpose                                                        |
-| ---------------- | -------------------------------------------------------------- |
-| `DIRS`           | Directory names (`.claude`, `.claude-src`, `skills`, etc.)     |
-| `FILES`          | File names (`config.ts`, `metadata.yaml`, `SKILL.md`, etc.)   |
-| `STEP_TEXT`      | Text used to identify wizard steps and completion states       |
-| `TIMEOUTS`       | Test timeouts (WIZARD_LOAD=15s, INSTALL=30s, PLUGIN_INSTALL=60s, EXIT=10s, EXIT_WAIT=30s, SETUP=60s, LIFECYCLE=180s, EXTENDED_LIFECYCLE=300s, INTERACTIVE=120s, PLUGIN_TEST=90s) |
-| `INTERNAL_DELAYS`| Framework-internal delays (STEP_TRANSITION=500ms, KEYSTROKE=150ms) |
-| `EXIT_CODES`     | Process exit codes (SUCCESS=0, ERROR=1, CANCELLED=4, etc.)    |
-| `SOURCE_PATHS`   | Paths within source directories (skills, config, stacks)      |
+| Export            | Purpose                                                                                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DIRS`            | Directory names (`.claude`, `.claude-src`, `skills`, etc.)                                                                                                                       |
+| `FILES`           | File names (`config.ts`, `metadata.yaml`, `SKILL.md`, etc.)                                                                                                                      |
+| `STEP_TEXT`       | Text used to identify wizard steps and completion states                                                                                                                         |
+| `TIMEOUTS`        | Test timeouts (WIZARD_LOAD=15s, INSTALL=30s, PLUGIN_INSTALL=60s, EXIT=10s, EXIT_WAIT=30s, SETUP=60s, LIFECYCLE=180s, EXTENDED_LIFECYCLE=300s, INTERACTIVE=120s, PLUGIN_TEST=90s) |
+| `INTERNAL_DELAYS` | Framework-internal delays (STEP_TRANSITION=500ms, KEYSTROKE=150ms)                                                                                                               |
+| `EXIT_CODES`      | Process exit codes (SUCCESS=0, ERROR=1, CANCELLED=4, etc.)                                                                                                                       |
+| `SOURCE_PATHS`    | Paths within source directories (skills, config, stacks)                                                                                                                         |
 
 **Page Objects:**
 
-| Page Object        | File                           | Purpose                           |
-| ------------------ | ------------------------------ | --------------------------------- |
-| `BaseStep`         | `pages/base-step.ts`          | Base class for step page objects  |
-| `TerminalScreen`   | `pages/terminal-screen.ts`    | Terminal output parsing           |
-| `DashboardSession` | `pages/dashboard-session.ts`  | Dashboard interaction             |
-| `WizardResult`     | `pages/wizard-result.ts`      | ProjectHandle type, result type   |
-| `AgentsStep`       | `pages/steps/agents-step.ts`  | Agents step interactions          |
-| `BuildStep`        | `pages/steps/build-step.ts`   | Build step interactions           |
-| `ConfirmStep`      | `pages/steps/confirm-step.ts` | Confirm step interactions         |
-| `DomainStep`       | `pages/steps/domain-step.ts`  | Domain selection interactions     |
-| `SearchModal`      | `pages/steps/search-modal.ts` | Search modal interactions         |
-| `SourcesStep`      | `pages/steps/sources-step.ts` | Sources step interactions         |
-| `StackStep`        | `pages/steps/stack-step.ts`   | Stack selection interactions      |
+| Page Object        | File                           | Purpose                          |
+| ------------------ | ------------------------------ | -------------------------------- |
+| `BaseStep`         | `pages/base-step.ts`           | Base class for step page objects |
+| `TerminalScreen`   | `pages/terminal-screen.ts`     | Terminal output parsing          |
+| `DashboardSession` | `pages/dashboard-session.ts`   | Dashboard interaction            |
+| `WizardResult`     | `pages/wizard-result.ts`       | ProjectHandle type, result type  |
+| `AgentsStep`       | `pages/steps/agents-step.ts`   | Agents step interactions         |
+| `BuildStep`        | `pages/steps/build-step.ts`    | Build step interactions          |
+| `ConfirmStep`      | `pages/steps/confirm-step.ts`  | Confirm step interactions        |
+| `DomainStep`       | `pages/steps/domain-step.ts`   | Domain selection interactions    |
+| `SearchModal`      | `pages/steps/search-modal.ts`  | Search modal interactions        |
+| `SourcesStep`      | `pages/steps/sources-step.ts`  | Sources step interactions        |
+| `StackStep`        | `pages/steps/stack-step.ts`    | Stack selection interactions     |
 | `EditWizard`       | `pages/wizards/edit-wizard.ts` | Composed edit wizard flows       |
 | `InitWizard`       | `pages/wizards/init-wizard.ts` | Composed init wizard flows       |
 
@@ -406,12 +406,12 @@ Imported per-test via `import "../matchers/setup.js"`. Provides:
 
 **E2E Fixtures (`e2e/fixtures/`):**
 
-| File                    | Exports                                                                  |
-| ----------------------- | ------------------------------------------------------------------------ |
+| File                    | Exports                                                                             |
+| ----------------------- | ----------------------------------------------------------------------------------- |
 | `cli.ts`                | `CLI` class with `static run(args, project, options?)` for non-interactive commands |
-| `dual-scope-helpers.ts` | `createTestEnvironment()`, `initGlobal()`, `initProject()`, `setupDualScope()` |
-| `interactive-prompt.ts` | `InteractivePrompt` class for PTY-based wizard tests                     |
-| `project-builder.ts`    | `ProjectBuilder` class with `minimal()`, `editable()`, plugin project factories |
+| `dual-scope-helpers.ts` | `createTestEnvironment()`, `initGlobal()`, `initProject()`, `setupDualScope()`      |
+| `interactive-prompt.ts` | `InteractivePrompt` class for PTY-based wizard tests                                |
+| `project-builder.ts`    | `ProjectBuilder` class with `minimal()`, `editable()`, plugin project factories     |
 
 ## Test Helpers (`src/cli/lib/__tests__/helpers.ts`)
 
@@ -469,18 +469,18 @@ Imported per-test via `import "../matchers/setup.js"`. Provides:
 
 ### Test Utilities
 
-| Helper                   | Purpose                                              |
-| ------------------------ | ---------------------------------------------------- |
-| `runCliCommand()`        | Run CLI command, capture stdout/stderr/error         |
-| `readTestYaml<T>()`      | Read and parse YAML test file                        |
-| `readTestTsConfig<T>()`  | Load TS config file via jiti                         |
-| `writeTestTsConfig()`    | Write a config.ts file to a project directory        |
-| `parseTestFrontmatter()` | Lightweight frontmatter parser for assertions        |
-| `createTestDirs()`       | Create plugin test directory structure               |
-| `cleanupTestDirs()`      | Clean up plugin test directory structure             |
-| `createTempDir()`        | Create temp directory (re-export from test-fs-utils) |
-| `cleanupTempDir()`       | Remove temp directory (re-export from test-fs-utils) |
-| `fileExists()`           | Check if file exists (re-export from test-fs-utils)  |
+| Helper                   | Purpose                                                  |
+| ------------------------ | -------------------------------------------------------- |
+| `runCliCommand()`        | Run CLI command, capture stdout/stderr/error             |
+| `readTestYaml<T>()`      | Read and parse YAML test file                            |
+| `readTestTsConfig<T>()`  | Load TS config file via jiti                             |
+| `writeTestTsConfig()`    | Write a config.ts file to a project directory            |
+| `parseTestFrontmatter()` | Lightweight frontmatter parser for assertions            |
+| `createTestDirs()`       | Create plugin test directory structure                   |
+| `cleanupTestDirs()`      | Clean up plugin test directory structure                 |
+| `createTempDir()`        | Create temp directory (re-export from test-fs-utils)     |
+| `cleanupTempDir()`       | Remove temp directory (re-export from test-fs-utils)     |
+| `fileExists()`           | Check if file exists (re-export from test-fs-utils)      |
 | `directoryExists()`      | Check if directory exists (re-export from test-fs-utils) |
 
 ### Content Generators (`src/cli/lib/__tests__/content-generators.ts`)
@@ -543,23 +543,23 @@ Single source of truth for all test ResolvedSkills. Use `SKILLS.react`, `SKILLS.
 
 Base category fixtures for spread-based customization:
 
-| Key               | Category ID          | Display Name      |
-| ----------------- | -------------------- | ----------------- |
-| `framework`       | `web-framework`      | Framework         |
-| `clientState`     | `web-client-state`   | Client State      |
-| `styling`         | `web-styling`        | Styling           |
-| `testing`         | `web-testing`        | Testing           |
-| `serverState`     | `web-server-state`   | Server State      |
-| `animation`       | `web-animation`      | Animation         |
-| `accessibility`   | `web-accessibility`  | Accessibility     |
-| `api`             | `api-api`            | Backend Framework |
-| `database`        | `api-database`       | Database          |
-| `observability`   | `api-observability`  | Observability     |
-| `methodology`     | `meta-reviewing`     | Meta              |
-| `tooling`         | `shared-tooling`     | Tooling           |
-| `security`        | `shared-security`    | Security          |
-| `cliFramework`    | `cli-framework`      | CLI Framework     |
-| `mobileFramework` | `mobile-framework`   | Mobile Framework  |
+| Key               | Category ID         | Display Name      |
+| ----------------- | ------------------- | ----------------- |
+| `framework`       | `web-framework`     | Framework         |
+| `clientState`     | `web-client-state`  | Client State      |
+| `styling`         | `web-styling`       | Styling           |
+| `testing`         | `web-testing`       | Testing           |
+| `serverState`     | `web-server-state`  | Server State      |
+| `animation`       | `web-animation`     | Animation         |
+| `accessibility`   | `web-accessibility` | Accessibility     |
+| `api`             | `api-api`           | Backend Framework |
+| `database`        | `api-database`      | Database          |
+| `observability`   | `api-observability` | Observability     |
+| `methodology`     | `meta-reviewing`    | Meta              |
+| `tooling`         | `shared-tooling`    | Tooling           |
+| `security`        | `shared-security`   | Security          |
+| `cliFramework`    | `cli-framework`     | CLI Framework     |
+| `mobileFramework` | `mobile-framework`  | Mobile Framework  |
 
 ## Mock Data Module (`src/cli/lib/__tests__/mock-data/`)
 

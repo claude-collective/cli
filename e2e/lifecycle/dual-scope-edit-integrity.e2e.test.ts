@@ -105,8 +105,8 @@ describe("dual-scope edit lifecycle -- agent content and config integrity", () =
         expect(projectConfig).toContain("source");
 
         // D-5: No source field lost during the split
-        expect(globalConfig).toContain("local");
-        expect(projectConfig).toContain("local");
+        expect(globalConfig).toContain("eject");
+        expect(projectConfig).toContain("eject");
       } finally {
         await cleanupTempDir(tempDir);
       }

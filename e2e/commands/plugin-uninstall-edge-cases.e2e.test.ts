@@ -122,7 +122,7 @@ describe("uninstall with plugin config but no installed plugins", () => {
     tempDir = await createTempDir();
     const { projectDir, skillDir } = await createUninstallableProject(tempDir, {
       configName: "local-only-project",
-      skillSource: "local",
+      skillSource: "eject",
       settingsJson: JSON.stringify({
         permissions: { allow: ["Read(*)"] },
         enabledPlugins: {

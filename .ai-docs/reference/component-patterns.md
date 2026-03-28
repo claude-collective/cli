@@ -223,6 +223,7 @@ Displays a bordered summary panel showing all selected skills and agents grouped
 **Exports:** `InfoPanel` (React.FC, no props -- reads `skillConfigs` and `agentConfigs` from wizard store).
 
 **Internal helpers:**
+
 - `groupSkillsByBucket(configs)` -- groups skills into `SkillBuckets { globalPlugin, globalLocal, projectPlugin, projectLocal }`
 - `groupAgentsByScope(configs)` -- groups agents into `AgentBuckets { global, project }`
 
@@ -233,6 +234,7 @@ Displays a bordered summary panel showing all selected skills and agents grouped
 Compact stats display showing skill/agent counts by scope and source type. Currently defined but not imported by any other component.
 
 **Exports:**
+
 - `StatsData` type -- `{ skillsTotal, globalPlugin, globalLocal, projectPlugin, projectLocal, agentsTotal, agentsGlobal, agentsProject }`
 - `computeStats(skillConfigs, agentConfigs)` -- computes `StatsData` from config arrays
 - `StatsPanel` (React.FC, props: `{ stats: StatsData }`)

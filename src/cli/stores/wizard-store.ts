@@ -105,7 +105,7 @@ const DOMAIN_AGENTS: Partial<Record<string, AgentName[]>> = {
 
 /**
  * Fixed source sort tiers (lower = higher priority):
- * 1 = local/global (installed on disk -- type "local" or installed via plugin)
+ * 1 = eject/global (installed on disk -- type "eject" or installed via plugin)
  * 2 = scoped marketplace (primary source from --source flag)
  * 3 = default public marketplace (Agents Inc)
  * 4 = third-party marketplaces (extra configured sources)
@@ -339,8 +339,8 @@ export type WizardState = {
   toggleFilterIncompatible: () => void;
   /**
    * Derive the install mode from skillConfigs source values.
-   * If all skills use "local" source, returns "local". If all use non-local, returns "plugin".
-   * If mixed, returns "mixed". Returns "local" when no skills are configured.
+   * If all skills use "eject" source, returns "eject". If all use non-eject, returns "plugin".
+   * If mixed, returns "mixed". Returns "eject" when no skills are configured.
    */
   deriveInstallMode: () => InstallMode;
   /**
@@ -353,7 +353,7 @@ export type WizardState = {
   /**
    * Update the source for a specific skill in skillConfigs.
    * @param skillId - Skill to update
-   * @param source - Source identifier (e.g., "local", marketplace name)
+   * @param source - Source identifier (e.g., "eject", marketplace name)
    *
    * Side effects: updates `skillConfigs` entry for the skill
    */
@@ -368,7 +368,7 @@ export type WizardState = {
   /**
    * Set which source provides a specific skill.
    * @param skillId - Skill to configure the source for
-   * @param sourceId - Source identifier (e.g., "public", "local", marketplace name)
+   * @param sourceId - Source identifier (e.g., "public", "eject", marketplace name)
    *
    * Side effects: updates `skillConfigs` entry for the skill. No-op with warning if either param is empty.
    */
@@ -469,8 +469,8 @@ export type WizardState = {
   canGoToNextDomain: () => boolean;
   /** @returns true if there is a previous domain before the current one */
   canGoToPreviousDomain: () => boolean;
-  /** Set all selected skills to "local" source. */
-  setAllSourcesLocal: () => void;
+  /** Set all selected skills to "eject" source. */
+  setAllSourcesEject: () => void;
   /** Set all selected skills to their first non-local (marketplace) source. */
   setAllSourcesPlugin: () => void;
 
@@ -1030,9 +1030,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     return state.currentDomainIndex > 0;
   },
 
-  setAllSourcesLocal: () => {
+  setAllSourcesEject: () => {
     set((state) => ({
-      skillConfigs: state.skillConfigs.map((sc) => ({ ...sc, source: "local" })),
+      skillConfigs: state.skillConfigs.map((sc) => ({ ...sc, source: "eject" })),
     }));
   },
 
@@ -1088,10 +1088,10 @@ export const useWizardStore = create<WizardState>((set, get) => ({
               },
             ];
 
-      if (!options.some((o) => o.id === "local")) {
+      if (!options.some((o) => o.id === "eject")) {
         options.unshift({
-          id: "local",
-          selected: selectedSource === "local",
+          id: "eject",
+          selected: selectedSource === "eject",
           installed: false,
         });
       }

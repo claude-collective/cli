@@ -14,32 +14,32 @@ function getSkillDisplayName(config: SkillConfig): string {
   return matrix.skills[config.id]?.slug ?? config.id;
 }
 
-function isLocalSource(config: SkillConfig): boolean {
-  return config.source === "local";
+function isEjectSource(config: SkillConfig): boolean {
+  return config.source === "eject";
 }
 
 type SkillBuckets = {
   globalPlugin: string[];
-  globalLocal: string[];
+  globalEject: string[];
   projectPlugin: string[];
-  projectLocal: string[];
+  projectEject: string[];
 };
 
 function groupSkillsByBucket(configs: SkillConfig[]): SkillBuckets {
   const buckets: SkillBuckets = {
     globalPlugin: [],
-    globalLocal: [],
+    globalEject: [],
     projectPlugin: [],
-    projectLocal: [],
+    projectEject: [],
   };
 
   for (const config of configs) {
     const name = getSkillDisplayName(config);
     if (config.scope === "global") {
-      if (isLocalSource(config)) buckets.globalLocal.push(name);
+      if (isEjectSource(config)) buckets.globalEject.push(name);
       else buckets.globalPlugin.push(name);
     } else {
-      if (isLocalSource(config)) buckets.projectLocal.push(name);
+      if (isEjectSource(config)) buckets.projectEject.push(name);
       else buckets.projectPlugin.push(name);
     }
   }
@@ -105,7 +105,7 @@ export const InfoPanel: React.FC = () => {
   const skills = groupSkillsByBucket(skillConfigs);
   const agents = groupAgentsByScope(agentConfigs);
 
-  const hasLocalSkills = skills.globalLocal.length > 0 || skills.projectLocal.length > 0;
+  const hasEjectSkills = skills.globalEject.length > 0 || skills.projectEject.length > 0;
 
   return (
     <Box
@@ -145,12 +145,12 @@ export const InfoPanel: React.FC = () => {
         <ScopeColumns globalItems={skills.globalPlugin} projectItems={skills.projectPlugin} />
       </Box>
 
-      {hasLocalSkills && (
+      {hasEjectSkills && (
         <Box flexDirection="row" marginTop={1}>
           <Box width={LABEL_WIDTH}>
-            <Text dimColor>Local</Text>
+            <Text dimColor>Eject</Text>
           </Box>
-          <ScopeColumns globalItems={skills.globalLocal} projectItems={skills.projectLocal} />
+          <ScopeColumns globalItems={skills.globalEject} projectItems={skills.projectEject} />
         </Box>
       )}
 

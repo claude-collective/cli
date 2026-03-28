@@ -186,7 +186,7 @@ describe("multi-source-loader", () => {
       const localSource = react.availableSources!.find((s) => s.type === "local");
       expect(localSource).toBeDefined();
       expect(localSource!.installed).toBe(true);
-      expect(localSource!.installMode).toBe("local");
+      expect(localSource!.installMode).toBe("eject");
 
       // activeSource should be the local source (installed)
       expect(react.activeSource).toBeDefined();
@@ -214,9 +214,9 @@ describe("multi-source-loader", () => {
       expect(react.availableSources).toBeDefined();
       const localSource = react.availableSources!.find((s) => s.type === "local");
       expect(localSource).toBeDefined();
-      expect(localSource!.name).toBe("local");
+      expect(localSource!.name).toBe("eject");
       expect(localSource!.installed).toBe(true);
-      expect(localSource!.installMode).toBe("local");
+      expect(localSource!.installMode).toBe("eject");
     });
   });
 

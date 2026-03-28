@@ -19,25 +19,25 @@
 
 Machine-readable staleness tracker. Thresholds from `standards/documentation-bible.md`.
 
-| Doc | Days Stale | Threshold | Status |
-|-----|-----------|-----------|--------|
-| architecture-overview.md | 0 | 30 | OK |
-| commands.md | 0 | 14 | OK |
-| type-system.md | 0 | 14 | OK |
-| store-map.md | 0 | 7 | OK |
-| compilation-pipeline.md | 0 | 14 | OK |
-| configuration.md | 0 | 14 | OK |
-| wizard-flow.md | 0 | 14 | OK |
-| skills-and-matrix.md | 0 | 14 | OK |
-| plugin-system.md | 0 | 14 | OK |
-| component-patterns.md | 0 | 14 | OK |
-| utilities.md | 0 | 14 | OK |
-| test-infrastructure.md | 0 | 14 | OK |
-| operations-layer.md | 0 | 14 | OK |
-| agent-system.md | 0 | 14 | OK |
-| dependency-graph.md | 0 | 14 | OK |
-| boundary-map.md | 0 | 14 | OK |
-| state-transitions.md | 0 | 14 | OK |
+| Doc                      | Days Stale | Threshold | Status |
+| ------------------------ | ---------- | --------- | ------ |
+| architecture-overview.md | 0          | 30        | OK     |
+| commands.md              | 0          | 14        | OK     |
+| type-system.md           | 0          | 14        | OK     |
+| store-map.md             | 0          | 7         | OK     |
+| compilation-pipeline.md  | 0          | 14        | OK     |
+| configuration.md         | 0          | 14        | OK     |
+| wizard-flow.md           | 0          | 14        | OK     |
+| skills-and-matrix.md     | 0          | 14        | OK     |
+| plugin-system.md         | 0          | 14        | OK     |
+| component-patterns.md    | 0          | 14        | OK     |
+| utilities.md             | 0          | 14        | OK     |
+| test-infrastructure.md   | 0          | 14        | OK     |
+| operations-layer.md      | 0          | 14        | OK     |
+| agent-system.md          | 0          | 14        | OK     |
+| dependency-graph.md      | 0          | 14        | OK     |
+| boundary-map.md          | 0          | 14        | OK     |
+| state-transitions.md     | 0          | 14        | OK     |
 
 **Status values:** `OK` = within threshold, `DUE` = at or past threshold, `OVERDUE` = at or past 2x threshold.
 **Date basis:** 2026-03-28. compilation-pipeline.md validated 2026-03-28.
@@ -46,26 +46,26 @@ Machine-readable staleness tracker. Thresholds from `standards/documentation-bib
 
 Descriptive docs -- "how things work". Validated aggressively (7-30 day cadence).
 
-| Area                  | Status             | File                                         | Last Updated | Last Validated | Next Action              |
-| --------------------- | ------------------ | -------------------------------------------- | ------------ | -------------- | ------------------------ |
-| Architecture Overview | [DONE]             | `reference/architecture-overview.md`         | 2026-03-28   | 2026-03-28     | Validate in 30 days      |
-| Commands Reference    | [DONE]             | `reference/commands.md`                      | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Type System           | [DONE]             | `reference/type-system.md`                   | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| State Management      | [DONE]             | `reference/store-map.md`                     | 2026-03-28   | 2026-03-28     | Validate in 7 days       |
-| Compilation Pipeline  | [DONE]             | `reference/features/compilation-pipeline.md` | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Configuration System  | [DONE]             | `reference/features/configuration.md`        | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Wizard Flow           | [DONE]             | `reference/features/wizard-flow.md`          | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Skills & Matrix       | [DONE]             | `reference/features/skills-and-matrix.md`    | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Plugin System         | [DONE]             | `reference/features/plugin-system.md`        | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Component Patterns    | [DONE]             | `reference/component-patterns.md`            | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Utilities Reference   | [DONE]             | `reference/utilities.md`                     | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Test Infrastructure   | [DONE]             | `reference/test-infrastructure.md`           | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Operations Layer      | [DONE]             | `reference/features/operations-layer.md`     | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Agent System          | [DONE]             | `reference/features/agent-system.md`         | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Dependency Graph      | [DONE]             | `reference/dependency-graph.md`              | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Boundary Map          | [DONE]             | `reference/boundary-map.md`                  | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| State Transitions     | [DONE]             | `reference/state-transitions.md`             | 2026-03-28   | 2026-03-28     | Validate in 14 days      |
-| Findings Impact       | [DONE]             | `reference/findings-impact-report.md`        | 2026-03-28   | 2026-03-28     | Regenerate as needed     |
+| Area                  | Status | File                                         | Last Updated | Last Validated | Next Action          |
+| --------------------- | ------ | -------------------------------------------- | ------------ | -------------- | -------------------- |
+| Architecture Overview | [DONE] | `reference/architecture-overview.md`         | 2026-03-28   | 2026-03-28     | Validate in 30 days  |
+| Commands Reference    | [DONE] | `reference/commands.md`                      | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Type System           | [DONE] | `reference/type-system.md`                   | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| State Management      | [DONE] | `reference/store-map.md`                     | 2026-03-28   | 2026-03-28     | Validate in 7 days   |
+| Compilation Pipeline  | [DONE] | `reference/features/compilation-pipeline.md` | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Configuration System  | [DONE] | `reference/features/configuration.md`        | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Wizard Flow           | [DONE] | `reference/features/wizard-flow.md`          | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Skills & Matrix       | [DONE] | `reference/features/skills-and-matrix.md`    | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Plugin System         | [DONE] | `reference/features/plugin-system.md`        | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Component Patterns    | [DONE] | `reference/component-patterns.md`            | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Utilities Reference   | [DONE] | `reference/utilities.md`                     | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Test Infrastructure   | [DONE] | `reference/test-infrastructure.md`           | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Operations Layer      | [DONE] | `reference/features/operations-layer.md`     | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Agent System          | [DONE] | `reference/features/agent-system.md`         | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Dependency Graph      | [DONE] | `reference/dependency-graph.md`              | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Boundary Map          | [DONE] | `reference/boundary-map.md`                  | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| State Transitions     | [DONE] | `reference/state-transitions.md`             | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
+| Findings Impact       | [DONE] | `reference/findings-impact-report.md`        | 2026-03-28   | 2026-03-28     | Regenerate as needed |
 
 ## Standards Documentation
 

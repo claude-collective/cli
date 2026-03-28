@@ -68,7 +68,7 @@ describe("init command", () => {
       const data = await getDashboardData(projectDir);
       expect(data.skillCount).toBe(2);
       expect(data.agentCount).toBe(2);
-      expect(data.mode).toBe("local");
+      expect(data.mode).toBe("eject");
 
       const text = formatDashboardText(data);
       expect(text).toContain("2 installed");
@@ -163,21 +163,21 @@ describe("init command", () => {
       const text = formatDashboardText({
         skillCount: 0,
         agentCount: 0,
-        mode: "local",
+        mode: "eject",
       });
 
-      expect(text).toContain("Local");
+      expect(text).toContain("Eject");
       expect(text).not.toContain("Source:");
     });
 
-    it("should show Local for local mode", () => {
+    it("should show Eject for eject mode", () => {
       const text = formatDashboardText({
         skillCount: 5,
         agentCount: 2,
-        mode: "local",
+        mode: "eject",
       });
 
-      expect(text).toContain("Local");
+      expect(text).toContain("Eject");
     });
 
     it("should show Plugin for plugin mode", () => {

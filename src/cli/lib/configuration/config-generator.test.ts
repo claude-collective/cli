@@ -542,7 +542,7 @@ describe("config-generator", () => {
 
     it("puts project-scoped skills and agents into the project partition", () => {
       const config = buildProjectConfig({
-        skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
       });
 
       const result = splitConfigByScope(config);
@@ -559,7 +559,7 @@ describe("config-generator", () => {
       const config = buildProjectConfig({
         skills: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "local" },
+          { id: "web-testing-vitest", scope: "project", source: "eject" },
         ],
         agents: [
           { name: "web-developer", scope: "global" },
@@ -596,7 +596,7 @@ describe("config-generator", () => {
         description: "A test project",
         author: "@vince",
         source: "github:org/repo",
-        skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
       });
 
       const result = splitConfigByScope(config);
@@ -627,7 +627,7 @@ describe("config-generator", () => {
       const config = buildProjectConfig({
         skills: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "local" },
+          { id: "web-testing-vitest", scope: "project", source: "eject" },
         ],
         agents: [{ name: "web-developer", scope: "global" }],
         stack: {
@@ -677,7 +677,7 @@ describe("config-generator", () => {
       const config = buildProjectConfig({
         skills: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "local" },
+          { id: "web-testing-vitest", scope: "project", source: "eject" },
         ],
         agents: [
           { name: "web-developer", scope: "global" },

@@ -51,13 +51,10 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     return () => clearTimeout(timer);
   }, [lockedToast]);
 
-  const handleLockedToggleAttempt = useCallback(
-    (skillId: SkillId) => {
-      const displayName = getSkillById(skillId).displayName;
-      setLockedToast(`${displayName} ${UI_MESSAGES.GLOBALLY_INSTALLED}`);
-    },
-    [],
-  );
+  const handleLockedToggleAttempt = useCallback((skillId: SkillId) => {
+    const displayName = getSkillById(skillId).displayName;
+    setLockedToast(`${displayName} ${UI_MESSAGES.GLOBALLY_INSTALLED}`);
+  }, []);
 
   const handleLockedCategoryAttempt = useCallback(() => {
     setLockedToast(UI_MESSAGES.GLOBALLY_LOCKED_CATEGORY);

@@ -216,7 +216,7 @@ export function buildSkillConfigs(
   return skillIds.map((id) => ({
     id,
     scope: overrides?.scope ?? "project",
-    source: overrides?.source ?? "local",
+    source: overrides?.source ?? "eject",
   }));
 }
 
@@ -488,7 +488,7 @@ export function createMockSkillSource(
       url: "github:org/skills",
       installed: false,
     },
-    local: { name: "local", type: "local", installed: true, installMode: "local" },
+    local: { name: "eject", type: "local", installed: true, installMode: "eject" },
   };
   return { ...defaults[type], ...overrides };
 }

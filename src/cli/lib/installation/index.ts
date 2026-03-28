@@ -8,17 +8,17 @@ export {
 } from "./installation";
 
 export {
-  type LocalInstallOptions,
-  type LocalInstallResult,
+  type EjectInstallOptions,
+  type EjectInstallResult,
   type PluginConfigResult,
-  installLocal,
+  installEject,
   installPluginConfig,
   buildAndMergeConfig,
   writeConfigFile,
   writeScopedConfigs,
   setConfigMetadata,
   resolveInstallPaths,
-  buildLocalSkillsMap,
+  buildEjectSkillsMap,
   buildCompileAgents,
   buildAgentScopeMap,
 } from "./local-installer";

@@ -16,15 +16,15 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 ## Commands Index
 
-| Command             | File                                    | Type | Summary                                           |
-| ------------------- | --------------------------------------- | ---- | ------------------------------------------------- |
+| Command             | File                                    | Type | Summary                                            |
+| ------------------- | --------------------------------------- | ---- | -------------------------------------------------- |
 | `init`              | `src/cli/commands/init.tsx`             | tsx  | Initialize project (interactive wizard/dashboard)  |
 | `edit`              | `src/cli/commands/edit.tsx`             | tsx  | Edit installed skills via wizard                   |
 | `compile`           | `src/cli/commands/compile.ts`           | ts   | Compile agents from skills (global + project pass) |
 | `validate`          | `src/cli/commands/validate.ts`          | ts   | Validate schemas, plugins, or skills source        |
 | `info`              | `src/cli/commands/info.ts`              | ts   | Show detailed info about a skill                   |
 | `list`              | `src/cli/commands/list.ts`              | ts   | Show installation information (alias: `ls`)        |
-| `diff`              | `src/cli/commands/diff.ts`             | ts   | Show diffs between local forked skills and source  |
+| `diff`              | `src/cli/commands/diff.ts`              | ts   | Show diffs between local forked skills and source  |
 | `doctor`            | `src/cli/commands/doctor.ts`            | ts   | Diagnose configuration issues                      |
 | `eject`             | `src/cli/commands/eject.ts`             | ts   | Eject skills, agent partials, or templates         |
 | `outdated`          | `src/cli/commands/outdated.ts`          | ts   | Check for skill updates against source             |
@@ -50,10 +50,10 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Flags:**
 
-| Flag      | Type    | Description                    |
-| --------- | ------- | ------------------------------ |
-| --refresh | boolean | Force refresh from remote      |
-| --source  | string  | Skills source path or URL      |
+| Flag      | Type    | Description               |
+| --------- | ------- | ------------------------- |
+| --refresh | boolean | Force refresh from remote |
+| --source  | string  | Skills source path or URL |
 
 **Flow:**
 
@@ -92,11 +92,11 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Flags:**
 
-| Flag           | Type    | Description                                      |
-| -------------- | ------- | ------------------------------------------------ |
-| --refresh      | boolean | Force refresh from remote sources                |
+| Flag           | Type    | Description                                       |
+| -------------- | ------- | ------------------------------------------------- |
+| --refresh      | boolean | Force refresh from remote sources                 |
 | --agent-source | string  | Remote agent partials source (default: local CLI) |
-| --source       | string  | Skills source path or URL                        |
+| --source       | string  | Skills source path or URL                         |
 
 **Flow:**
 
@@ -126,11 +126,11 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Flags:**
 
-| Flag           | Type    | Description                                      |
-| -------------- | ------- | ------------------------------------------------ |
-| --verbose (-v) | boolean | Enable verbose logging                           |
+| Flag           | Type    | Description                                       |
+| -------------- | ------- | ------------------------------------------------- |
+| --verbose (-v) | boolean | Enable verbose logging                            |
 | --agent-source | string  | Remote agent partials source (default: local CLI) |
-| --source       | string  | Skills source path or URL                        |
+| --source       | string  | Skills source path or URL                         |
 
 **Flow:**
 
@@ -154,18 +154,18 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg  | Required | Description                                          |
-| ---- | -------- | ---------------------------------------------------- |
-| path | no       | Path to plugin or plugins directory to validate      |
+| Arg  | Required | Description                                     |
+| ---- | -------- | ----------------------------------------------- |
+| path | no       | Path to plugin or plugins directory to validate |
 
 **Flags:**
 
-| Flag           | Short | Type    | Description                       |
-| -------------- | ----- | ------- | --------------------------------- |
-| --verbose      | -v    | boolean | Enable verbose logging            |
-| --all          | -a    | boolean | Validate all plugins in directory |
-| --plugins      | -p    | boolean | Validate plugins instead of schemas |
-| --source       | -s    | string  | Skills source path or URL         |
+| Flag      | Short | Type    | Description                         |
+| --------- | ----- | ------- | ----------------------------------- |
+| --verbose | -v    | boolean | Enable verbose logging              |
+| --all     | -a    | boolean | Validate all plugins in directory   |
+| --plugins | -p    | boolean | Validate plugins instead of schemas |
+| --source  | -s    | string  | Skills source path or URL           |
 
 **Modes:**
 
@@ -179,16 +179,16 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg   | Required | Description                    |
-| ----- | -------- | ------------------------------ |
-| skill | yes      | Skill ID or alias to look up   |
+| Arg   | Required | Description                  |
+| ----- | -------- | ---------------------------- |
+| skill | yes      | Skill ID or alias to look up |
 
 **Flags:**
 
-| Flag      | Type    | Description                        |
-| --------- | ------- | ---------------------------------- |
+| Flag      | Type    | Description                                                      |
+| --------- | ------- | ---------------------------------------------------------------- |
 | --preview | boolean | Show content preview (default true, use --no-preview to disable) |
-| --source  | string  | Skills source path or URL          |
+| --source  | string  | Skills source path or URL                                        |
 
 **Key dependencies:** **Operation: `loadSource()`**, **Operation: `resolveSkillInfo()`**
 
@@ -206,16 +206,16 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg   | Required | Description                        |
-| ----- | -------- | ---------------------------------- |
-| skill | no       | Show diff for specific skill only  |
+| Arg   | Required | Description                       |
+| ----- | -------- | --------------------------------- |
+| skill | no       | Show diff for specific skill only |
 
 **Flags:**
 
-| Flag      | Short | Type    | Description                                |
-| --------- | ----- | ------- | ------------------------------------------ |
-| --quiet   | -q    | boolean | Suppress output, only return exit code     |
-| --source  | -s    | string  | Skills source path or URL                  |
+| Flag     | Short | Type    | Description                            |
+| -------- | ----- | ------- | -------------------------------------- |
+| --quiet  | -q    | boolean | Suppress output, only return exit code |
+| --source | -s    | string  | Skills source path or URL              |
 
 **Key dependencies:** **Operation: `loadSource()`**, **Operation: `collectScopedSkillDirs()`**, **Operation: `buildSourceSkillsMap()`**. Uses `readForkedFromMetadata()` from skills, `createTwoFilesPatch()` from `diff` package.
 
@@ -225,10 +225,10 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Flags (defined directly, not via BaseCommand.baseFlags):**
 
-| Flag      | Short | Type    | Description                |
-| --------- | ----- | ------- | -------------------------- |
-| --source  | -s    | string  | Skills source path or URL  |
-| --verbose | -v    | boolean | Show detailed output       |
+| Flag      | Short | Type    | Description               |
+| --------- | ----- | ------- | ------------------------- |
+| --source  | -s    | string  | Skills source path or URL |
+| --verbose | -v    | boolean | Show detailed output      |
 
 **Checks run:** Config Valid, Skills Resolved, Agents Compiled, No Orphans, Source Reachable.
 
@@ -240,18 +240,18 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg  | Required | Description                                          |
-| ---- | -------- | ---------------------------------------------------- |
+| Arg  | Required | Description                                                   |
+| ---- | -------- | ------------------------------------------------------------- |
 | type | no       | What to eject: `agent-partials`, `templates`, `skills`, `all` |
 
 **Flags:**
 
-| Flag      | Short | Type    | Description                             |
-| --------- | ----- | ------- | --------------------------------------- |
-| --force   | -f    | boolean | Overwrite existing files                |
-| --output  | -o    | string  | Output directory (default: .claude/)    |
-| --refresh |       | boolean | Force refresh from remote source        |
-| --source  | -s    | string  | Skills source path or URL               |
+| Flag      | Short | Type    | Description                          |
+| --------- | ----- | ------- | ------------------------------------ |
+| --force   | -f    | boolean | Overwrite existing files             |
+| --output  | -o    | string  | Output directory (default: .claude/) |
+| --refresh |       | boolean | Force refresh from remote source     |
+| --source  | -s    | string  | Skills source path or URL            |
 
 **Key dependencies:** **Operation: `loadSource()`**. Uses `saveSourceToProjectConfig()`, `resolveSource()`, `loadProjectSourceConfig()` from configuration. `copySkillsToLocalFlattened()` from skills.
 
@@ -261,9 +261,9 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Flags:**
 
-| Flag     | Type    | Description             |
-| -------- | ------- | ----------------------- |
-| --json   | boolean | Output results as JSON  |
+| Flag     | Type    | Description               |
+| -------- | ------- | ------------------------- |
+| --json   | boolean | Output results as JSON    |
 | --source | string  | Skills source path or URL |
 
 **Key dependencies:** **Operation: `detectProject()`**, **Operation: `loadSource()`**, **Operation: `compareSkillsWithSource()`**. Uses `@oclif/table` for formatted output.
@@ -274,18 +274,18 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg   | Required | Description                                |
-| ----- | -------- | ------------------------------------------ |
+| Arg   | Required | Description                                 |
+| ----- | -------- | ------------------------------------------- |
 | query | no       | Search query (matches name, desc, category) |
 
 **Flags:**
 
-| Flag          | Short | Type    | Description                              |
-| ------------- | ----- | ------- | ---------------------------------------- |
+| Flag          | Short | Type    | Description                                 |
+| ------------- | ----- | ------- | ------------------------------------------- |
 | --interactive | -i    | boolean | Launch interactive search with multi-select |
-| --category    | -c    | string  | Filter by category                       |
-| --refresh     |       | boolean | Force refresh from remote sources        |
-| --source      | -s    | string  | Skills source path or URL                |
+| --category    | -c    | string  | Filter by category                          |
+| --refresh     |       | boolean | Force refresh from remote sources           |
+| --source      | -s    | string  | Skills source path or URL                   |
 
 **Key dependencies:** **Operation: `loadSource()`**. Uses `resolveAllSources()` from configuration, `fetchFromSource()`, `parseFrontmatter()` from loading, `SkillSearch` component.
 
@@ -295,11 +295,11 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Flags:**
 
-| Flag   | Short | Type    | Description                            |
-| ------ | ----- | ------- | -------------------------------------- |
-| --yes  | -y    | boolean | Skip confirmation prompt               |
-| --all  |       | boolean | Also remove .claude-src/ config dir    |
-| --source | -s  | string  | Skills source path or URL              |
+| Flag     | Short | Type    | Description                         |
+| -------- | ----- | ------- | ----------------------------------- |
+| --yes    | -y    | boolean | Skip confirmation prompt            |
+| --all    |       | boolean | Also remove .claude-src/ config dir |
+| --source | -s    | string  | Skills source path or URL           |
 
 **Key dependencies:** `listPluginNames()`, `getProjectPluginsDir()` from plugins. `readForkedFromMetadata()` from skills. `loadProjectConfigFromDir()` from configuration. `claudePluginUninstall()`, `isClaudeCLIAvailable()` from exec.
 
@@ -309,17 +309,17 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg   | Required | Description                        |
-| ----- | -------- | ---------------------------------- |
+| Arg   | Required | Description                         |
+| ----- | -------- | ----------------------------------- |
 | skill | no       | Specific skill to update (optional) |
 
 **Flags:**
 
-| Flag           | Short | Type    | Description                         |
-| -------------- | ----- | ------- | ----------------------------------- |
-| --yes          | -y    | boolean | Skip confirmation prompt            |
+| Flag           | Short | Type    | Description                           |
+| -------------- | ----- | ------- | ------------------------------------- |
+| --yes          | -y    | boolean | Skip confirmation prompt              |
 | --no-recompile |       | boolean | Skip agent recompilation after update |
-| --source       | -s    | string  | Skills source path or URL           |
+| --source       | -s    | string  | Skills source path or URL             |
 
 **Key dependencies:** **Operation: `loadSource()`**, **Operation: `compareSkillsWithSource()`**, **Operation: `collectScopedSkillDirs()`**, **Operation: `findSkillMatch()`**, **Operation: `compileAgents()`**, **Operation: `discoverInstalledSkills()`**. Uses `injectForkedFromMetadata()` from skills.
 
@@ -329,21 +329,21 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg    | Required | Description                                  |
-| ------ | -------- | -------------------------------------------- |
+| Arg    | Required | Description                                        |
+| ------ | -------- | -------------------------------------------------- |
 | source | yes      | GitHub repository source (github:owner/repo, etc.) |
 
 **Flags:**
 
-| Flag      | Short | Type    | Description                            |
-| --------- | ----- | ------- | -------------------------------------- |
-| --skill   | -n    | string  | Name of the specific skill to import   |
-| --all     | -a    | boolean | Import all skills from the repository  |
-| --list    | -l    | boolean | List available skills without importing |
+| Flag      | Short | Type    | Description                                        |
+| --------- | ----- | ------- | -------------------------------------------------- |
+| --skill   | -n    | string  | Name of the specific skill to import               |
+| --all     | -a    | boolean | Import all skills from the repository              |
+| --list    | -l    | boolean | List available skills without importing            |
 | --subdir  |       | string  | Subdirectory containing skills (default: `skills`) |
-| --force   | -f    | boolean | Overwrite existing skills              |
-| --refresh |       | boolean | Force refresh from remote (ignore cache) |
-| --source  | -s    | string  | Skills source path or URL              |
+| --force   | -f    | boolean | Overwrite existing skills                          |
+| --refresh |       | boolean | Force refresh from remote (ignore cache)           |
+| --source  | -s    | string  | Skills source path or URL                          |
 
 **Key dependencies:** `fetchFromSource()` from loading. `importedSkillMetadataSchema` from schemas. `computeFileHash()`, `getCurrentDate()` from versioning.
 
@@ -353,20 +353,20 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg  | Required | Description                         |
-| ---- | -------- | ----------------------------------- |
-| name | yes      | Name of the skill (kebab-case)      |
+| Arg  | Required | Description                    |
+| ---- | -------- | ------------------------------ |
+| name | yes      | Name of the skill (kebab-case) |
 
 **Flags:**
 
-| Flag       | Short | Type    | Description                                     |
-| ---------- | ----- | ------- | ----------------------------------------------- |
-| --author   | -a    | string  | Author identifier (e.g., @myhandle)             |
-| --category | -c    | string  | Skill category (default: from LOCAL_DEFAULTS)   |
-| --domain   | -d    | string  | Domain (e.g., web, api, cli)                    |
-| --force    | -f    | boolean | Overwrite existing skill directory              |
+| Flag       | Short | Type    | Description                                        |
+| ---------- | ----- | ------- | -------------------------------------------------- |
+| --author   | -a    | string  | Author identifier (e.g., @myhandle)                |
+| --category | -c    | string  | Skill category (default: from LOCAL_DEFAULTS)      |
+| --domain   | -d    | string  | Domain (e.g., web, api, cli)                       |
+| --force    | -f    | boolean | Overwrite existing skill directory                 |
 | --output   | -o    | string  | Output directory (overrides marketplace detection) |
-| --source   | -s    | string  | Skills source path or URL                       |
+| --source   | -s    | string  | Skills source path or URL                          |
 
 **Key dependencies:** `resolveAuthor()` from configuration. `loadConfigTypesDataInBackground()`, `regenerateConfigTypes()` from config-types-writer. `detectInstallation()` from installation. `generateSkillCategoriesTs()`, `generateSkillRulesTs()` from skills/generators.
 
@@ -376,18 +376,18 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg  | Required | Description                |
-| ---- | -------- | -------------------------- |
-| name | yes      | Name of the agent          |
+| Arg  | Required | Description       |
+| ---- | -------- | ----------------- |
+| name | yes      | Name of the agent |
 
 **Flags:**
 
-| Flag              | Short | Type    | Description                         |
-| ----------------- | ----- | ------- | ----------------------------------- |
-| --purpose         | -p    | string  | Purpose/description of the agent    |
-| --non-interactive | -n    | boolean | Run in non-interactive mode         |
-| --refresh         | -r    | boolean | Force refresh remote source         |
-| --source          | -s    | string  | Skills source path or URL           |
+| Flag              | Short | Type    | Description                      |
+| ----------------- | ----- | ------- | -------------------------------- |
+| --purpose         | -p    | string  | Purpose/description of the agent |
+| --non-interactive | -n    | boolean | Run in non-interactive mode      |
+| --refresh         | -r    | boolean | Force refresh remote source      |
+| --source          | -s    | string  | Skills source path or URL        |
 
 **Key dependencies:** `resolveSource()` from configuration. `getAgentDefinitions()` from agents. `isClaudeCLIAvailable()` from exec. Spawns `claude` CLI process. `loadConfigTypesDataInBackground()`, `regenerateConfigTypes()` from config-types-writer.
 
@@ -397,17 +397,17 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Args:**
 
-| Arg  | Required | Description                                         |
-| ---- | -------- | --------------------------------------------------- |
+| Arg  | Required | Description                                           |
+| ---- | -------- | ----------------------------------------------------- |
 | name | yes      | Marketplace name (kebab-case), or "." for current dir |
 
 **Flags:**
 
-| Flag     | Short | Type    | Description                                      |
-| -------- | ----- | ------- | ------------------------------------------------ |
-| --force  | -f    | boolean | Overwrite existing directory                     |
-| --output | -o    | string  | Parent directory to create marketplace in        |
-| --source | -s    | string  | Skills source path or URL                        |
+| Flag     | Short | Type    | Description                               |
+| -------- | ----- | ------- | ----------------------------------------- |
+| --force  | -f    | boolean | Overwrite existing directory              |
+| --output | -o    | string  | Parent directory to create marketplace in |
+| --source | -s    | string  | Skills source path or URL                 |
 
 **Key dependencies:** `generateConfigSource()` from config-writer. `generateMarketplace()`, `writeMarketplace()` from marketplace-generator. `compileAllSkillPlugins()` from skill-plugin-compiler. `generateSkillCategoriesTs()`, `generateSkillRulesTs()` from skills/generators. `loadConfigTypesDataInBackground()`, `regenerateConfigTypes()` from config-types-writer.
 
@@ -419,17 +419,17 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Flags:**
 
-| Flag          | Short | Type    | Description              |
-| ------------- | ----- | ------- | ------------------------ |
-| --plugins-dir | -p    | string  | Plugins directory (default: `dist/plugins`) |
+| Flag          | Short | Type    | Description                                              |
+| ------------- | ----- | ------- | -------------------------------------------------------- |
+| --plugins-dir | -p    | string  | Plugins directory (default: `dist/plugins`)              |
 | --output      | -o    | string  | Output file (default: `.claude-plugin/marketplace.json`) |
-| --name        |       | string  | Marketplace name         |
-| --version     |       | string  | Marketplace version      |
-| --description |       | string  | Marketplace description  |
-| --owner-name  |       | string  | Owner name               |
-| --owner-email |       | string  | Owner email              |
-| --verbose     | -v    | boolean | Enable verbose logging   |
-| --source      | -s    | string  | Skills source path or URL |
+| --name        |       | string  | Marketplace name                                         |
+| --version     |       | string  | Marketplace version                                      |
+| --description |       | string  | Marketplace description                                  |
+| --owner-name  |       | string  | Owner name                                               |
+| --owner-email |       | string  | Owner email                                              |
+| --verbose     | -v    | boolean | Enable verbose logging                                   |
+| --source      | -s    | string  | Skills source path or URL                                |
 
 **Key dependencies:** `generateMarketplace()`, `writeMarketplace()`, `getMarketplaceStats()` from marketplace-generator.
 
@@ -439,14 +439,14 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Flags:**
 
-| Flag         | Short | Type    | Description                                |
-| ------------ | ----- | ------- | ------------------------------------------ |
+| Flag         | Short | Type    | Description                                      |
+| ------------ | ----- | ------- | ------------------------------------------------ |
 | --skills-dir | -s    | string  | Skills source directory (default: `DIRS.skills`) |
-| --agents-dir | -a    | string  | Agents source directory (optional)         |
-| --output-dir | -o    | string  | Output directory (default: `dist/plugins`) |
-| --skill      |       | string  | Compile only a specific skill              |
-| --verbose    | -v    | boolean | Enable verbose logging                     |
-| --source     | -s    | string  | Skills source path or URL                  |
+| --agents-dir | -a    | string  | Agents source directory (optional)               |
+| --output-dir | -o    | string  | Output directory (default: `dist/plugins`)       |
+| --skill      |       | string  | Compile only a specific skill                    |
+| --verbose    | -v    | boolean | Enable verbose logging                           |
+| --source     | -s    | string  | Skills source path or URL                        |
 
 **Note:** `--skills-dir` and `--source` both use `-s` short flag; the BaseCommand `--source` flag is inherited but the `--skills-dir` flag takes precedence for `-s`.
 
@@ -458,14 +458,14 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Flags:**
 
-| Flag           | Short | Type    | Description                         |
-| -------------- | ----- | ------- | ----------------------------------- |
-| --stack        |       | string  | Stack ID to compile                 |
+| Flag           | Short | Type    | Description                               |
+| -------------- | ----- | ------- | ----------------------------------------- |
+| --stack        |       | string  | Stack ID to compile                       |
 | --output-dir   | -o    | string  | Output directory (default: `dist/stacks`) |
-| --agent-source |       | string  | Agent partials source               |
-| --refresh      |       | boolean | Force refresh remote agent source   |
-| --verbose      | -v    | boolean | Enable verbose logging              |
-| --source       | -s    | string  | Skills source path or URL           |
+| --agent-source |       | string  | Agent partials source                     |
+| --refresh      |       | boolean | Force refresh remote agent source         |
+| --verbose      | -v    | boolean | Enable verbose logging                    |
+| --source       | -s    | string  | Skills source path or URL                 |
 
 **Key dependencies:** `compileStackPlugin()`, `loadStacks()` from stacks. `getAgentDefinitions()` from agents. Uses `<Select>` from `@inkjs/ui` for interactive stack selection.
 
@@ -518,24 +518,24 @@ All message constants centralized in `src/cli/utils/messages.ts`:
 
 ## Operations Layer Usage by Command
 
-| Command        | Operations Used                                                                                              |
-| -------------- | ----------------------------------------------------------------------------------------------------------- |
-| `init`         | `loadSource`, `ensureMarketplace`, `installPluginSkills`, `copyLocalSkills`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills`, `loadAgentDefs` |
-| `edit`         | `detectProject`, `loadSource`, `ensureMarketplace`, `installPluginSkills`, `uninstallPluginSkills`, `copyLocalSkills`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills`, `loadAgentDefs` |
-| `compile`      | `detectBothInstallations`, `loadAgentDefs`, `compileAgents`, `discoverInstalledSkills`                       |
-| `info`         | `loadSource`, `resolveSkillInfo`                                                                             |
-| `diff`         | `loadSource`, `collectScopedSkillDirs`, `buildSourceSkillsMap`                                               |
-| `doctor`       | `detectProject`, `loadSource`                                                                                |
-| `eject`        | `loadSource`                                                                                                 |
-| `outdated`     | `detectProject`, `loadSource`, `compareSkillsWithSource`                                                     |
-| `search`       | `loadSource`                                                                                                 |
-| `update`       | `loadSource`, `compareSkillsWithSource`, `collectScopedSkillDirs`, `findSkillMatch`, `compileAgents`, `discoverInstalledSkills` |
-| `validate`     | (none -- uses lib functions directly)                                                                        |
-| `list`         | (none -- uses plugin-info directly)                                                                          |
-| `uninstall`    | (none -- uses lib functions directly)                                                                        |
-| `import skill` | (none -- uses loading/fetching directly)                                                                     |
-| `new skill`    | (none -- uses configuration/installation directly)                                                           |
-| `new agent`    | (none -- uses agents/configuration directly)                                                                 |
-| `new marketplace` | (none -- uses generators directly)                                                                        |
-| `build *`      | (none -- uses skill/agent compilers directly)                                                                |
-| `config *`     | (none -- uses configuration directly)                                                                        |
+| Command           | Operations Used                                                                                                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `init`            | `loadSource`, `ensureMarketplace`, `installPluginSkills`, `copyLocalSkills`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills`, `loadAgentDefs`                                           |
+| `edit`            | `detectProject`, `loadSource`, `ensureMarketplace`, `installPluginSkills`, `uninstallPluginSkills`, `copyLocalSkills`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills`, `loadAgentDefs` |
+| `compile`         | `detectBothInstallations`, `loadAgentDefs`, `compileAgents`, `discoverInstalledSkills`                                                                                                                   |
+| `info`            | `loadSource`, `resolveSkillInfo`                                                                                                                                                                         |
+| `diff`            | `loadSource`, `collectScopedSkillDirs`, `buildSourceSkillsMap`                                                                                                                                           |
+| `doctor`          | `detectProject`, `loadSource`                                                                                                                                                                            |
+| `eject`           | `loadSource`                                                                                                                                                                                             |
+| `outdated`        | `detectProject`, `loadSource`, `compareSkillsWithSource`                                                                                                                                                 |
+| `search`          | `loadSource`                                                                                                                                                                                             |
+| `update`          | `loadSource`, `compareSkillsWithSource`, `collectScopedSkillDirs`, `findSkillMatch`, `compileAgents`, `discoverInstalledSkills`                                                                          |
+| `validate`        | (none -- uses lib functions directly)                                                                                                                                                                    |
+| `list`            | (none -- uses plugin-info directly)                                                                                                                                                                      |
+| `uninstall`       | (none -- uses lib functions directly)                                                                                                                                                                    |
+| `import skill`    | (none -- uses loading/fetching directly)                                                                                                                                                                 |
+| `new skill`       | (none -- uses configuration/installation directly)                                                                                                                                                       |
+| `new agent`       | (none -- uses agents/configuration directly)                                                                                                                                                             |
+| `new marketplace` | (none -- uses generators directly)                                                                                                                                                                       |
+| `build *`         | (none -- uses skill/agent compilers directly)                                                                                                                                                            |
+| `config *`        | (none -- uses configuration directly)                                                                                                                                                                    |

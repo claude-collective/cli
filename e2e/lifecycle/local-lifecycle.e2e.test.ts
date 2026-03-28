@@ -14,7 +14,7 @@ import {
 } from "../helpers/test-utils.js";
 
 /**
- * Full lifecycle E2E test for local mode: Init -> Compile -> Uninstall.
+ * Full lifecycle E2E test for eject mode: Init -> Compile -> Uninstall.
  *
  * Phase 1: Init wizard creates config, compiles agents, copies skills
  * Phase 2: Compile recompiles agents from existing installation
@@ -22,7 +22,7 @@ import {
  * Phase 4: Verify clean state (config preserved, artifacts removed)
  */
 
-describe("local mode lifecycle: init -> compile -> uninstall", () => {
+describe("eject mode lifecycle: init -> compile -> uninstall", () => {
   let tempDir: string;
   let sourceDir: string;
   let sourceTempDir: string;

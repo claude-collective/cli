@@ -133,7 +133,7 @@ describe("generateConfigTypesSource", () => {
   it("generates InstallMode type", () => {
     const matrix = EMPTY_MATRIX;
     const source = generateConfigTypesSource(matrix, []);
-    expect(source).toContain('export type InstallMode = "local" | "plugin" | "mixed";');
+    expect(source).toContain('export type InstallMode = "eject" | "plugin" | "mixed";');
   });
 
   it("generates generic SkillAssignment type with default type parameter", () => {
@@ -703,7 +703,7 @@ describe("generateProjectConfigTypesSource", () => {
       projectDomains: [],
     });
     expect(source).toContain("export interface ProjectConfig {");
-    expect(source).toContain('export type InstallMode = "local" | "plugin" | "mixed"');
+    expect(source).toContain('export type InstallMode = "eject" | "plugin" | "mixed"');
   });
 
   it("sorts multiple project members alphabetically", () => {

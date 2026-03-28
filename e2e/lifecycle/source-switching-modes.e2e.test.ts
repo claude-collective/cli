@@ -55,19 +55,19 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
 
   describe("init local, edit switch all to plugin", () => {
     it(
-      "should switch all skills from local to plugin mode via edit wizard",
+      "should switch all skills from eject to plugin mode via edit wizard",
       { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
       async () => {
         tempDir = await createTempDir();
         const projectDir = path.join(tempDir, "project");
 
-        // Phase 1: Init in local mode using page objects
+        // Phase 1: Init in eject mode using page objects
         const initWizard = await InitWizard.launch({
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           projectDir,
         });
 
-        // Navigate through init with local source selection
+        // Navigate through init with eject source selection
         const domain = await initWizard.stack.selectFirstStack();
         const build = await domain.acceptDefaults();
         const sources = await build.passThroughAllDomains();
@@ -79,11 +79,11 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
         expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
         await initResult.destroy();
 
-        // Verify Phase 1: all skills are local
+        // Verify Phase 1: all skills are eject
         await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
         await expect({ dir: projectDir }).toHaveConfig({
           skillIds: ["web-framework-react"],
-          source: "local",
+          source: "eject",
         });
 
         // Inject marketplace into config (fixture setup for Phase 2)
@@ -118,9 +118,9 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
     );
   });
 
-  describe("init plugin, edit switch all to local", () => {
+  describe("init plugin, edit switch all to eject", () => {
     it(
-      "should switch all skills from plugin to local mode via edit wizard",
+      "should switch all skills from plugin to eject mode via edit wizard",
       { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
       async () => {
         tempDir = await createTempDir();
@@ -142,7 +142,7 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
         });
         await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
 
-        // Phase 2: Edit -- switch ALL to local via "l" hotkey
+        // Phase 2: Edit -- switch ALL to eject via "l" hotkey
         const editWizard = await EditWizard.launch({
           projectDir,
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
@@ -158,13 +158,13 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
 
         const rawOutput = editResult.rawOutput;
         expect(rawOutput).toContain("Switching");
-        expect(rawOutput).toContain("to local");
+        expect(rawOutput).toContain("to eject");
 
         await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
 
         await expect({ dir: projectDir }).toHaveConfig({
           skillIds: ["web-framework-react"],
-          source: "local",
+          source: "eject",
         });
 
         // Agent may be compiled at project or global scope

@@ -21,14 +21,14 @@ type StepConfirmProps = {
 };
 
 const getInstallModeLabel = (skillConfigs: SkillConfig[]): string => {
-  if (skillConfigs.length === 0) return "Local (editable copies)";
+  if (skillConfigs.length === 0) return "Eject (editable copies)";
 
-  const localCount = skillConfigs.filter((s) => s.source === "local").length;
-  const pluginCount = skillConfigs.length - localCount;
+  const ejectCount = skillConfigs.filter((s) => s.source === "eject").length;
+  const pluginCount = skillConfigs.length - ejectCount;
 
-  if (localCount === 0) return "Plugin";
-  if (pluginCount === 0) return "Local (editable copies)";
-  return `Mixed (${localCount} local, ${pluginCount} plugin)`;
+  if (ejectCount === 0) return "Plugin";
+  if (pluginCount === 0) return "Eject (editable copies)";
+  return `Mixed (${ejectCount} eject, ${pluginCount} plugin)`;
 };
 
 export const StepConfirm: React.FC<StepConfirmProps> = ({

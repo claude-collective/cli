@@ -86,7 +86,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({ projectDir, onContinue
       if (isGridSearching) return;
 
       if (isHotkey(input, HOTKEY_SET_ALL_LOCAL)) {
-        store.setAllSourcesLocal();
+        store.setAllSourcesEject();
       }
       if (isHotkey(input, HOTKEY_SET_ALL_PLUGIN)) {
         store.setAllSourcesPlugin();
@@ -125,7 +125,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({ projectDir, onContinue
   const rows = store.buildSourceRows();
   const isRecommendedSelected = choiceIndex === 0;
   const hasLocalSkills = rows.some((row) =>
-    row.options.some((o) => o.installed && o.id === "local"),
+    row.options.some((o) => o.installed && o.id === "eject"),
   );
 
   return (

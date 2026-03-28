@@ -6,7 +6,7 @@ import {
   cleanupTestSource,
   type TestDirs,
 } from "../__tests__/fixtures/create-test-source";
-import { installLocal } from "../installation/local-installer";
+import { installEject } from "../installation/local-installer";
 import {
   validateSelection,
   getAvailableSkills,
@@ -122,7 +122,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const reactSkill = matrix.skills["web-framework-react"]!;
       const acmeSource = reactSkill.availableSources!.find((s) => s.name === "acme-corp")!;
       acmeSource.installed = true;
-      acmeSource.installMode = "local";
+      acmeSource.installMode = "eject";
 
       // Re-compute active source (same logic as setActiveSources in multi-source-loader)
       const installedSource = reactSkill.availableSources!.find((s) => s.installed);
@@ -491,7 +491,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     );
     const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
-    const installResult = await installLocal({
+    const installResult = await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -525,7 +525,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       marketplace: "test-marketplace",
     });
 
-    const installResult = await installLocal({
+    const installResult = await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,

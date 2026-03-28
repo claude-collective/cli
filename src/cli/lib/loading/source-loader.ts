@@ -83,7 +83,7 @@ export async function loadSkillsMatrixFromSource(
   if (source === DEFAULT_SOURCE && !devMode) {
     // Default source: use pre-computed BUILT_IN_MATRIX instead of loading from disk.
     // Still resolve sourcePath via fetchFromSource so skill files can be read
-    // (e.g. for local-mode copy). The fetch is cached, so no network call if
+    // (e.g. for eject-mode copy). The fetch is cached, so no network call if
     // the clone already exists.
     const fetchResult = await fetchFromSource(source, { forceRefresh });
     result = {

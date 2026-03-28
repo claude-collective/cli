@@ -20,12 +20,12 @@
 
 ## Current Counts (2026-03-28)
 
-| Type        | Count | Source File                              |
-| ----------- | ----- | ---------------------------------------- |
-| SKILL_MAP   | 155   | `src/cli/types/generated/source-types.ts` |
-| Categories  | 50    | `src/cli/types/generated/source-types.ts` |
-| Domains     | 8     | `src/cli/types/generated/source-types.ts` |
-| AgentNames  | 18    | `src/cli/types/generated/source-types.ts` |
+| Type       | Count | Source File                               |
+| ---------- | ----- | ----------------------------------------- |
+| SKILL_MAP  | 155   | `src/cli/types/generated/source-types.ts` |
+| Categories | 50    | `src/cli/types/generated/source-types.ts` |
+| Domains    | 8     | `src/cli/types/generated/source-types.ts` |
+| AgentNames | 18    | `src/cli/types/generated/source-types.ts` |
 
 **Domains:** ai, api, cli, infra, meta, mobile, shared, web
 
@@ -44,16 +44,16 @@
 
 ### Skills System (`src/cli/lib/skills/`)
 
-| File                       | Path                                          | Purpose                                              |
-| -------------------------- | --------------------------------------------- | ---------------------------------------------------- |
-| `skill-fetcher.ts`         | `src/cli/lib/skills/skill-fetcher.ts`         | Fetch skills from source directories                 |
-| `skill-metadata.ts`        | `src/cli/lib/skills/skill-metadata.ts`        | Read/write skill metadata, hashing                   |
-| `skill-copier.ts`          | `src/cli/lib/skills/skill-copier.ts`          | Copy skills to local/plugin dirs                     |
-| `skill-plugin-compiler.ts` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Compile skill as Claude plugin                       |
-| `local-skill-loader.ts`    | `src/cli/lib/skills/local-skill-loader.ts`    | Discover local skills in project                     |
-| `source-switcher.ts`       | `src/cli/lib/skills/source-switcher.ts`       | Delete/migrate local skills for source switching     |
+| File                       | Path                                          | Purpose                                                 |
+| -------------------------- | --------------------------------------------- | ------------------------------------------------------- |
+| `skill-fetcher.ts`         | `src/cli/lib/skills/skill-fetcher.ts`         | Fetch skills from source directories                    |
+| `skill-metadata.ts`        | `src/cli/lib/skills/skill-metadata.ts`        | Read/write skill metadata, hashing                      |
+| `skill-copier.ts`          | `src/cli/lib/skills/skill-copier.ts`          | Copy skills to local/plugin dirs                        |
+| `skill-plugin-compiler.ts` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Compile skill as Claude plugin                          |
+| `local-skill-loader.ts`    | `src/cli/lib/skills/local-skill-loader.ts`    | Discover local skills in project                        |
+| `source-switcher.ts`       | `src/cli/lib/skills/source-switcher.ts`       | Delete/migrate local skills for source switching        |
 | `generators.ts`            | `src/cli/lib/skills/generators.ts`            | Generate skill-categories.ts and skill-rules.ts content |
-| `index.ts`                 | `src/cli/lib/skills/index.ts`                 | Barrel exports                                       |
+| `index.ts`                 | `src/cli/lib/skills/index.ts`                 | Barrel exports                                          |
 
 ### Loading System (`src/cli/lib/loading/`)
 
@@ -215,21 +215,21 @@ All relationship rules use `SkillSlug` references (e.g., `"react"`, `"zustand"`)
 
 Checked per-skill by exported functions:
 
-| Function | Line | Purpose |
-| -------- | ---- | ------- |
-| `resolveAlias()` | 33 | Validate skill ID exists in matrix |
-| `getDependentSkills()` | 61 | Find skills that depend on a given skill |
-| `getUnmetRequiredBy()` | 97 | Find first selected skill with unmet need for this skill |
-| `isDiscouraged()` | 139 | Check if skill is discouraged by discourages relationships |
-| `isIncompatible()` | 170 | Check if skill conflicts or has unsatisfiable requires |
-| `hasUnmetRequirements()` | 226 | Check if selected skill has unmet dependencies |
-| `getDiscourageReason()` | 253 | Get human-readable discouragement reason |
-| `getIncompatibleReason()` | 291 | Get human-readable incompatibility reason |
-| `getUnmetRequirementsReason()` | 359 | Get human-readable unmet requirements reason |
-| `isRecommended()` | 403 | Check if skill is recommended by selected skills |
-| `getRecommendReason()` | 435 | Get human-readable recommendation reason |
-| `getAvailableSkills()` | 645 | Get skills for a category with state annotations |
-| `getSkillsByCategory()` | 673 | Get all resolved skills belonging to a category |
+| Function                       | Line | Purpose                                                    |
+| ------------------------------ | ---- | ---------------------------------------------------------- |
+| `resolveAlias()`               | 33   | Validate skill ID exists in matrix                         |
+| `getDependentSkills()`         | 61   | Find skills that depend on a given skill                   |
+| `getUnmetRequiredBy()`         | 97   | Find first selected skill with unmet need for this skill   |
+| `isDiscouraged()`              | 139  | Check if skill is discouraged by discourages relationships |
+| `isIncompatible()`             | 170  | Check if skill conflicts or has unsatisfiable requires     |
+| `hasUnmetRequirements()`       | 226  | Check if selected skill has unmet dependencies             |
+| `getDiscourageReason()`        | 253  | Get human-readable discouragement reason                   |
+| `getIncompatibleReason()`      | 291  | Get human-readable incompatibility reason                  |
+| `getUnmetRequirementsReason()` | 359  | Get human-readable unmet requirements reason               |
+| `isRecommended()`              | 403  | Check if skill is recommended by selected skills           |
+| `getRecommendReason()`         | 435  | Get human-readable recommendation reason                   |
+| `getAvailableSkills()`         | 645  | Get skills for a category with state annotations           |
+| `getSkillsByCategory()`        | 673  | Get all resolved skills belonging to a category            |
 
 **Barrel re-exports** (from `matrix/index.ts`): All 13 functions above. Additionally exports `validateConflicts`, `validateRequirements`, `validateExclusivity`, `validateRecommendations` only from `matrix-resolver.ts` directly (not from barrel).
 
@@ -239,12 +239,12 @@ Checked per-skill by exported functions:
 
 Runs four validation passes via helper functions:
 
-| Function | Line | What it validates |
-| -------- | ---- | ----------------- |
-| `validateConflicts()` | 451 | Mutually exclusive skill pairs |
-| `validateRequirements()` | 474 | Required dependencies |
-| `validateExclusivity()` | 510 | Category exclusive violations |
-| `validateRecommendations()` | 541 | Missing recommended companions (warnings only) |
+| Function                    | Line | What it validates                              |
+| --------------------------- | ---- | ---------------------------------------------- |
+| `validateConflicts()`       | 451  | Mutually exclusive skill pairs                 |
+| `validateRequirements()`    | 474  | Required dependencies                          |
+| `validateExclusivity()`     | 510  | Category exclusive violations                  |
+| `validateRecommendations()` | 541  | Missing recommended companions (warnings only) |
 
 Returns `SelectionValidation` with `valid` flag, error list, and warning list.
 
@@ -303,15 +303,15 @@ Stacks are pre-configured bundles of skills mapped to agents. Defined in `config
 
 The operations layer (`src/cli/lib/operations/skills/`) provides higher-level wrappers used by commands:
 
-| Operation | File | Wraps |
-| --------- | ---- | ----- |
-| `discoverInstalledSkills()` | `operations/skills/discover-skills.ts` | 4-way merge: global plugins + global local + project plugins + project local skills |
-| `compareSkillsWithSource()` | `operations/skills/compare-skills.ts` | `compareLocalSkillsWithSource()` from `skill-metadata.ts` for both scopes |
-| `findSkillMatch()` | `operations/skills/find-skill-match.ts` | Skill lookup by exact ID, partial name, or directory name |
-| `resolveSkillInfo()` | `operations/skills/resolve-skill-info.ts` | Full skill info resolution for display (ID/slug lookup, install status) |
-| `installPluginSkills()` | `operations/skills/install-plugin-skills.ts` | Install skill plugins via Claude CLI by scope |
-| `uninstallPluginSkills()` | `operations/skills/uninstall-plugin-skills.ts` | Uninstall skill plugins via Claude CLI by scope |
-| `copyLocalSkills()` | `operations/skills/copy-local-skills.ts` | Copy local-source skills to scope-appropriate directories |
-| `collectScopedSkillDirs()` | `operations/skills/collect-scoped-skill-dirs.ts` | List local skill directories with scope annotations |
+| Operation                   | File                                             | Wraps                                                                               |
+| --------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `discoverInstalledSkills()` | `operations/skills/discover-skills.ts`           | 4-way merge: global plugins + global local + project plugins + project local skills |
+| `compareSkillsWithSource()` | `operations/skills/compare-skills.ts`            | `compareLocalSkillsWithSource()` from `skill-metadata.ts` for both scopes           |
+| `findSkillMatch()`          | `operations/skills/find-skill-match.ts`          | Skill lookup by exact ID, partial name, or directory name                           |
+| `resolveSkillInfo()`        | `operations/skills/resolve-skill-info.ts`        | Full skill info resolution for display (ID/slug lookup, install status)             |
+| `installPluginSkills()`     | `operations/skills/install-plugin-skills.ts`     | Install skill plugins via Claude CLI by scope                                       |
+| `uninstallPluginSkills()`   | `operations/skills/uninstall-plugin-skills.ts`   | Uninstall skill plugins via Claude CLI by scope                                     |
+| `copyLocalSkills()`         | `operations/skills/copy-local-skills.ts`         | Copy local-source skills to scope-appropriate directories                           |
+| `collectScopedSkillDirs()`  | `operations/skills/collect-scoped-skill-dirs.ts` | List local skill directories with scope annotations                                 |
 
 See `reference/features/operations-layer.md` for the full operations layer documentation.

@@ -155,7 +155,7 @@ describe("plugin-info", () => {
       const agentsDir = path.join("/project", CLAUDE_DIR, "agents");
       const skillsDir = path.join("/project", CLAUDE_DIR, "skills");
       const installation: Installation = {
-        mode: "local",
+        mode: "eject",
         configPath,
         agentsDir,
         skillsDir,
@@ -190,9 +190,9 @@ describe("plugin-info", () => {
       const result = await getInstallationInfo();
 
       expect(result).not.toBeNull();
-      expect(result!.mode).toBe("local");
+      expect(result!.mode).toBe("eject");
       expect(result!.name).toBe("my-local-project");
-      expect(result!.version).toBe("local");
+      expect(result!.version).toBe("eject");
       expect(result!.skillCount).toBe(2);
       expect(result!.agentCount).toBe(1);
       expect(result!.configPath).toBe(configPath);
@@ -254,7 +254,7 @@ describe("plugin-info", () => {
     it("should use default name when local config has no name", async () => {
       const mockConfigPath = path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const installation: Installation = {
-        mode: "local",
+        mode: "eject",
         configPath: mockConfigPath,
         agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
         skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
@@ -276,7 +276,7 @@ describe("plugin-info", () => {
 
     it("should use default name when loadProjectConfig returns null", async () => {
       const installation: Installation = {
-        mode: "local",
+        mode: "eject",
         configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
         agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
         skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
@@ -297,7 +297,7 @@ describe("plugin-info", () => {
     it("should handle readdir errors gracefully for skills", async () => {
       const mockConfigPath = path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const installation: Installation = {
-        mode: "local",
+        mode: "eject",
         configPath: mockConfigPath,
         agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
         skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
@@ -322,13 +322,13 @@ describe("plugin-info", () => {
   });
 
   describe("formatInstallationDisplay", () => {
-    it("should format local installation info", () => {
+    it("should format eject installation info", () => {
       const configPath = path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const agentsDir = path.join("/project", CLAUDE_DIR, "agents");
       const info: InstallationInfo = {
-        mode: "local",
+        mode: "eject",
         name: "my-project",
-        version: "local",
+        version: "eject",
         skillCount: 5,
         agentCount: 3,
         configPath,
@@ -338,8 +338,8 @@ describe("plugin-info", () => {
 
       const result = formatInstallationDisplay(info);
 
-      expect(result).toContain("Installation: my-project (local mode)");
-      expect(result).toContain("Mode:    Local");
+      expect(result).toContain("Installation: my-project (eject mode)");
+      expect(result).toContain("Mode:    Eject");
       expect(result).toContain("Skills:  5");
       expect(result).toContain("Agents:  3");
       expect(result).toContain(`Config:  ${configPath}`);
@@ -368,9 +368,9 @@ describe("plugin-info", () => {
 
     it("should show zero counts correctly", () => {
       const info: InstallationInfo = {
-        mode: "local",
+        mode: "eject",
         name: "empty-project",
-        version: "local",
+        version: "eject",
         skillCount: 0,
         agentCount: 0,
         configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),

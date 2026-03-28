@@ -99,7 +99,7 @@ describe("init wizard — source management", () => {
         expect(output).toContain("Skills copied to:");
         expect(output).not.toContain("Installing skill plugins");
 
-        await expect(result.project).toHaveConfig({ source: "local" });
+        await expect(result.project).toHaveConfig({ source: "eject" });
         await expect(result.project).toHaveSkillCopied("web-framework-react");
       },
     );

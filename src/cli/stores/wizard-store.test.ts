@@ -625,10 +625,10 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      store.setSkillSource("web-framework-react", "local");
+      store.setSkillSource("web-framework-react", "eject");
 
       const { skillConfigs } = useWizardStore.getState();
-      expect(skillConfigs[0].source).toBe("local");
+      expect(skillConfigs[0].source).toBe("eject");
     });
 
     it("should set and clear focusedSkillId", () => {
@@ -645,10 +645,10 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      store.setSourceSelection("web-framework-react", "local");
+      store.setSourceSelection("web-framework-react", "eject");
 
       const { skillConfigs } = useWizardStore.getState();
-      expect(skillConfigs[0].source).toBe("local");
+      expect(skillConfigs[0].source).toBe("eject");
     });
 
     it("should populate skillConfigs from populateFromStack", () => {
@@ -733,21 +733,21 @@ describe("WizardStore", () => {
       expect(state.focusedSkillId).toBeNull();
     });
 
-    it("should set all sources to local via setAllSourcesLocal", () => {
+    it("should set all sources to eject via setAllSourcesEject", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("api", "api-api", "api-framework-hono", true);
 
-      store.setAllSourcesLocal();
+      store.setAllSourcesEject();
 
       const { skillConfigs } = useWizardStore.getState();
-      expect(skillConfigs.every((sc) => sc.source === "local")).toBe(true);
+      expect(skillConfigs.every((sc) => sc.source === "eject")).toBe(true);
     });
 
     it("should set all sources to plugin via setAllSourcesPlugin", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
-      store.setSourceSelection("web-framework-react", "local");
+      store.setSourceSelection("web-framework-react", "eject");
 
       initializeMatrix(
         createMockMatrix({
@@ -1107,7 +1107,7 @@ describe("WizardStore", () => {
         ...SKILLS.react,
         availableSources: [
           makeSource({ name: "Acme Corp", type: "private", primary: true }),
-          makeSource({ name: "local", type: "local", installed: true, installMode: "local" }),
+          makeSource({ name: "eject", type: "local", installed: true, installMode: "eject" }),
         ],
       };
 
@@ -1117,7 +1117,7 @@ describe("WizardStore", () => {
 
       const rows = store.buildSourceRows();
       expect(rows).toHaveLength(1);
-      expect(rows[0].options[0].id).toBe("local");
+      expect(rows[0].options[0].id).toBe("eject");
       expect(rows[0].options[1].id).toBe("Acme Corp");
     });
 
@@ -1138,7 +1138,7 @@ describe("WizardStore", () => {
 
       const rows = store.buildSourceRows();
       expect(rows).toHaveLength(1);
-      expect(rows[0].options[0].id).toBe("local");
+      expect(rows[0].options[0].id).toBe("eject");
       expect(rows[0].options[1].id).toBe("Acme Corp");
       expect(rows[0].options[2].id).toBe("agents-inc");
     });
@@ -1160,7 +1160,7 @@ describe("WizardStore", () => {
 
       const rows = store.buildSourceRows();
       expect(rows).toHaveLength(1);
-      expect(rows[0].options[0].id).toBe("local");
+      expect(rows[0].options[0].id).toBe("eject");
       expect(rows[0].options[1].id).toBe("agents-inc");
       expect(rows[0].options[2].id).toBe("Extra Corp");
     });
@@ -1174,7 +1174,7 @@ describe("WizardStore", () => {
           makeSource({ name: "Extra Corp", type: "private" }),
           makeSource({ name: "agents-inc", type: "public" }),
           makeSource({ name: "Acme Corp", type: "private", primary: true }),
-          makeSource({ name: "local", type: "local", installed: true, installMode: "local" }),
+          makeSource({ name: "eject", type: "local", installed: true, installMode: "eject" }),
         ],
       };
 
@@ -1186,7 +1186,7 @@ describe("WizardStore", () => {
       expect(rows).toHaveLength(1);
 
       const sourceNames = rows[0].options.map((opt) => opt.id);
-      expect(sourceNames).toEqual(["local", "Acme Corp", "agents-inc", "Extra Corp"]);
+      expect(sourceNames).toEqual(["eject", "Acme Corp", "agents-inc", "Extra Corp"]);
     });
   });
 
@@ -1477,22 +1477,22 @@ describe("WizardStore", () => {
       expect(result).toBe("plugin");
     });
 
-    it("should return 'local' when all skills are set to local", () => {
+    it("should return 'eject' when all skills are set to eject", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("api", "api-api", "api-framework-hono", true);
-      store.setSourceSelection("web-framework-react", "local");
-      store.setSourceSelection("api-framework-hono", "local");
+      store.setSourceSelection("web-framework-react", "eject");
+      store.setSourceSelection("api-framework-hono", "eject");
 
       const result = store.deriveInstallMode();
-      expect(result).toBe("local");
+      expect(result).toBe("eject");
     });
 
     it("should return 'mixed' when some skills are local and some are not", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("api", "api-api", "api-framework-hono", true);
-      store.setSourceSelection("web-framework-react", "local");
+      store.setSourceSelection("web-framework-react", "eject");
       store.setSourceSelection("api-framework-hono", "agents-inc");
 
       const result = store.deriveInstallMode();
@@ -1503,16 +1503,16 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
 
       const result = store.deriveInstallMode();
-      expect(result).toBe("local");
+      expect(result).toBe("eject");
     });
 
     it("should handle single skill as local", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
-      store.setSourceSelection("web-framework-react", "local");
+      store.setSourceSelection("web-framework-react", "eject");
 
       const result = store.deriveInstallMode();
-      expect(result).toBe("local");
+      expect(result).toBe("eject");
     });
 
     it("should handle single skill as plugin", () => {

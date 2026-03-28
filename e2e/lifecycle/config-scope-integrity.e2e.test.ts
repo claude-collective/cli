@@ -99,10 +99,10 @@ describe("config-scope integrity -- source priority preservation", () => {
         const initResult = await initGlobalWithLocalSource(sourceDir, sourceTempDir, fakeHome);
         expect(initResult.exitCode, `Init failed: ${initResult.output}`).toBe(EXIT_CODES.SUCCESS);
 
-        // Verify Phase A: config has source: "local"
+        // Verify Phase A: config has source: "eject"
         const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
         const configAfterInit = await readTestFile(globalConfigPath);
-        expect(configAfterInit).toContain('"local"');
+        expect(configAfterInit).toContain('"eject"');
 
         // Phase B: Edit from HOME -- pass through without changes.
         const wizard = await EditWizard.launch({
@@ -123,25 +123,25 @@ describe("config-scope integrity -- source priority preservation", () => {
           throw e;
         }
 
-        // Phase C: Verify config still has source: "local"
+        // Phase C: Verify config still has source: "eject"
         const configAfterEdit = await readTestFile(globalConfigPath);
 
         const skillsMatch = configAfterEdit.match(/const skills[\s\S]*?\[([\s\S]*?)\];/);
         expect(skillsMatch, "Config must have a skills variable").not.toBeNull();
         const skillsBlock = skillsMatch![1];
 
-        // Every skill should still have source: "local" (not overridden by marketplace)
-        const localSourceMatches = skillsBlock.match(/"source":"local"/g);
+        // Every skill should still have source: "eject" (not overridden by marketplace)
+        const localSourceMatches = skillsBlock.match(/"source":"eject"/g);
         expect(
           localSourceMatches,
-          "All skills should retain source: local after edit",
+          "All skills should retain source: eject after edit",
         ).not.toBeNull();
         expect(localSourceMatches!.length).toBeGreaterThan(0);
 
-        // No skill should have a non-local source (which would indicate override)
+        // No skill should have a non-eject source (which would indicate override)
         const allSourceMatches = skillsBlock.match(/"source":"([^"]+)"/g) ?? [];
         for (const match of allSourceMatches) {
-          expect(match).toContain('"local"');
+          expect(match).toContain('"eject"');
         }
       } finally {
         await cleanupTempDir(tempDir);

@@ -275,10 +275,10 @@ The operations layer provides `writeProjectConfig()` (line `:43`) as a high-leve
 3. `ensureBlankGlobalConfig()` -- ensures global config exists (when in project context)
 4. `writeScopedConfigs()` -- writes config.ts and config-types.ts split by scope
 
-| Type                | Name                  | Purpose                                              |
-| ------------------- | --------------------- | ---------------------------------------------------- |
-| `ConfigWriteOptions`  | Input options type    | wizardResult, sourceResult, projectDir, sourceFlag, agents |
-| `ConfigWriteResult`   | Return type           | config, configPath, globalConfigPath, wasMerged, existingConfigPath, filesWritten |
-| `writeProjectConfig()`| Orchestrator function | Builds, merges, and writes project config (init/edit) |
+| Type                   | Name                  | Purpose                                                                           |
+| ---------------------- | --------------------- | --------------------------------------------------------------------------------- |
+| `ConfigWriteOptions`   | Input options type    | wizardResult, sourceResult, projectDir, sourceFlag, agents                        |
+| `ConfigWriteResult`    | Return type           | config, configPath, globalConfigPath, wasMerged, existingConfigPath, filesWritten |
+| `writeProjectConfig()` | Orchestrator function | Builds, merges, and writes project config (init/edit)                             |
 
 Used by `init.tsx` and `edit.tsx` commands. Replaces inlined config writing logic with a single operation call.

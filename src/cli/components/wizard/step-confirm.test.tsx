@@ -97,7 +97,7 @@ describe("StepConfirm component", () => {
       expect(output).toContain("Plugin");
     });
 
-    it("should show install mode as Local", () => {
+    it("should show install mode as Eject", () => {
       const onComplete = vi.fn();
       const onBack = vi.fn();
 
@@ -115,7 +115,7 @@ describe("StepConfirm component", () => {
 
       const output = lastFrame();
       expect(output).toContain("Install mode:");
-      expect(output).toContain("Local");
+      expect(output).toContain("Eject");
     });
 
     it("should render confirm step stats content", () => {
@@ -341,7 +341,7 @@ describe("StepConfirm component", () => {
       expect(output).toContain("Plugin");
     });
 
-    it('should show "Local (editable copies)" when all skills are local', () => {
+    it('should show "Eject (editable copies)" when all skills are eject', () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(
@@ -354,7 +354,7 @@ describe("StepConfirm component", () => {
 
       const output = lastFrame();
       expect(output).toContain("Install mode:");
-      expect(output).toContain("Local (editable copies)");
+      expect(output).toContain("Eject (editable copies)");
     });
 
     it('should show "Mixed" with counts when skills have mixed sources', () => {
@@ -375,7 +375,7 @@ describe("StepConfirm component", () => {
       const output = lastFrame();
       expect(output).toContain("Install mode:");
       expect(output).toContain("Mixed");
-      expect(output).toContain("2 local");
+      expect(output).toContain("2 eject");
       expect(output).toContain("1 plugin");
     });
 

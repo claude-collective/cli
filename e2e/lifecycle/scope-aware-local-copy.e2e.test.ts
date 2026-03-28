@@ -203,7 +203,7 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
         await createPermissionsFile(fakeHome);
         await createPermissionsFile(projectDir);
 
-        // Phase 1: Init in local mode -- all skills global scope
+        // Phase 1: Init in eject mode -- all skills global scope
         const initWizard = await InitWizard.launch({
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           projectDir,

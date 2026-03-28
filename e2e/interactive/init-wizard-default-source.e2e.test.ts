@@ -99,9 +99,9 @@ describe.skipIf(!claudeAvailable)("init wizard — stale marketplace update (D-1
   );
 });
 
-// --- Bug D-123: Local mode ENOENT on consuming projects ---
+// --- Bug D-123: Eject mode ENOENT on consuming projects ---
 
-describe("init wizard — default source local mode ENOENT (D-123)", () => {
+describe("init wizard — default source eject mode ENOENT (D-123)", () => {
   let wizard: InitWizard | undefined;
 
   beforeAll(ensureBinaryExists);

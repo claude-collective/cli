@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
 
 import { deleteLocalSkill } from "../../skills/source-switcher";
-import { installLocal } from "../../installation/local-installer";
+import { installEject } from "../../installation/local-installer";
 import {
   createTestSource,
   cleanupTestSource,
@@ -102,20 +102,20 @@ describe("Integration: Source Switching with Delete", () => {
       await deleteLocalSkill(dirs.projectDir, REACT_SKILL_ID);
       expect(await directoryExists(skillDir)).toBe(false);
 
-      // Re-copy from source using installLocal
+      // Re-copy from source using installEject
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
       initializeMatrix(matrix);
       const skillConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
         id: id as SkillId,
         scope: "project" as const,
-        source: id === REACT_SKILL_ID ? "local" : "local",
+        source: "eject",
       }));
       const wizardResult = buildWizardResult(skillConfigs, {
         selectedAgents: ["web-developer"],
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -131,7 +131,7 @@ describe("Integration: Source Switching with Delete", () => {
       // Delete react skill
       await deleteLocalSkill(dirs.projectDir, REACT_SKILL_ID);
 
-      // Run installLocal with all skills
+      // Run installEject with all skills
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
       initializeMatrix(matrix);
       const wizardResult = buildWizardResult(buildSkillConfigs(ALL_SKILL_NAMES), {
@@ -139,7 +139,7 @@ describe("Integration: Source Switching with Delete", () => {
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
-      const installResult = await installLocal({
+      const installResult = await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
@@ -163,32 +163,32 @@ describe("Integration: Source Switching with Delete", () => {
     });
   });
 
-  describe("Mode migration: local to plugin to local round-trip", () => {
-    it("should delete local skills when switching to plugin, re-copy when switching back", async () => {
+  describe("Mode migration: eject to plugin to eject round-trip", () => {
+    it("should delete eject skills when switching to plugin, re-copy when switching back", async () => {
       const skillDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH, REACT_SKILL_ID);
 
       // Read original local content
       const originalContent = await readFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), "utf-8");
       expect(originalContent).toContain("Local Version");
 
-      // Delete (simulates local -> plugin switch)
+      // Delete (simulates eject -> plugin switch)
       await deleteLocalSkill(dirs.projectDir, REACT_SKILL_ID);
       expect(await directoryExists(skillDir)).toBe(false);
 
-      // Re-copy from source (simulates plugin -> local switch)
+      // Re-copy from source (simulates plugin -> eject switch)
       const matrix = buildMatrixFromTestSkills(SWITCHABLE_SKILLS);
       initializeMatrix(matrix);
       const roundTripConfigs: SkillConfig[] = ALL_SKILL_NAMES.map((id) => ({
         id: id as SkillId,
         scope: "project" as const,
-        source: id === REACT_SKILL_ID ? "local" : "local",
+        source: "eject",
       }));
       const wizardResult = buildWizardResult(roundTripConfigs, {
         selectedAgents: ["web-developer"],
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
-      await installLocal({
+      await installEject({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,

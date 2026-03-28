@@ -387,7 +387,7 @@ describe("skill-copier", () => {
           pluginDir,
           matrix,
           sourceResult,
-          { "web-framework-react": "public" } as Partial<Record<SkillId, string>>,
+          { "web-framework-react": "public" },
         );
 
         // Should copy from remote, NOT preserve local
@@ -423,7 +423,7 @@ describe("skill-copier", () => {
           pluginDir,
           matrix,
           sourceResult,
-          { "web-framework-react": "local" } as Partial<Record<SkillId, string>>,
+          { "web-framework-react": "eject" },
         );
 
         // Should preserve local
@@ -840,7 +840,7 @@ describe("skill-copier", () => {
           localSkillsDir,
           matrix,
           sourceResult,
-          { "web-framework-react": "public" } as Partial<Record<SkillId, string>>,
+          { "web-framework-react": "public" },
         );
 
         // Should copy from remote, NOT preserve local
@@ -885,7 +885,7 @@ describe("skill-copier", () => {
           localSkillsDir,
           matrix,
           sourceResult,
-          { "web-framework-react": "local" } as Partial<Record<SkillId, string>>,
+          { "web-framework-react": "eject" },
         );
 
         // Should preserve local

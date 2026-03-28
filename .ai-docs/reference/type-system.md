@@ -233,19 +233,19 @@ Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix
 
 ### Wizard/UI Types in `matrix.ts`
 
-| Type                  | Lines   | Purpose                                                               |
-| --------------------- | ------- | --------------------------------------------------------------------- |
+| Type                  | Lines   | Purpose                                                                                    |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------ |
 | `OptionState`         | 302-306 | Discriminated union for skill advisory state (normal/recommended/discouraged/incompatible) |
-| `SkillOption`         | 312-324 | Skill as displayed in wizard (advisoryState/selected/unmetRequirements state) |
-| `SelectionValidation` | 327-331 | Result of validating skill selections                                 |
-| `ValidationError`     | 334-338 | Blocking validation error                                             |
-| `ValidationWarning`   | 341-345 | Non-blocking validation warning                                       |
-| `SkillSource`         | 257-271 | Source from which a skill can be obtained                             |
-| `SkillSourceType`     | 254     | `"public" \| "private" \| "local"`                                    |
-| `BoundSkill`          | 274-285 | Foreign skill bound to category via search                            |
-| `BoundSkillCandidate` | 288-299 | Search result candidate before binding                                |
-| `ResolvedStack`       | 239-248 | Stack with resolved skill IDs                                         |
-| `SuggestedStack`      | 129-136 | Pre-configured stack from stacks.ts (before resolution)               |
+| `SkillOption`         | 312-324 | Skill as displayed in wizard (advisoryState/selected/unmetRequirements state)              |
+| `SelectionValidation` | 327-331 | Result of validating skill selections                                                      |
+| `ValidationError`     | 334-338 | Blocking validation error                                                                  |
+| `ValidationWarning`   | 341-345 | Non-blocking validation warning                                                            |
+| `SkillSource`         | 257-271 | Source from which a skill can be obtained                                                  |
+| `SkillSourceType`     | 254     | `"public" \| "private" \| "local"`                                                         |
+| `BoundSkill`          | 274-285 | Foreign skill bound to category via search                                                 |
+| `BoundSkillCandidate` | 288-299 | Search result candidate before binding                                                     |
+| `ResolvedStack`       | 239-248 | Stack with resolved skill IDs                                                              |
+| `SuggestedStack`      | 129-136 | Pre-configured stack from stacks.ts (before resolution)                                    |
 
 ## Operations Layer Types (`src/cli/lib/operations/types.ts`)
 
@@ -253,39 +253,39 @@ The operations layer defines focused result types for each operation, re-exporte
 
 ### Source Operations
 
-| Type                | File                            | Purpose                                   |
-| ------------------- | ------------------------------- | ----------------------------------------- |
-| `LoadSourceOptions` | `operations/source/load-source.ts:9`  | Options for loading a skills source       |
-| `LoadedSource`      | `operations/source/load-source.ts:17` | Result of loading a source (matrix + paths) |
-| `MarketplaceResult` | `operations/source/ensure-marketplace.ts:10` | Result of marketplace registration  |
+| Type                | File                                         | Purpose                                     |
+| ------------------- | -------------------------------------------- | ------------------------------------------- |
+| `LoadSourceOptions` | `operations/source/load-source.ts:9`         | Options for loading a skills source         |
+| `LoadedSource`      | `operations/source/load-source.ts:17`        | Result of loading a source (matrix + paths) |
+| `MarketplaceResult` | `operations/source/ensure-marketplace.ts:10` | Result of marketplace registration          |
 
 ### Skill Operations
 
-| Type                     | File                                          | Purpose                                        |
-| ------------------------ | --------------------------------------------- | ---------------------------------------------- |
-| `DiscoveredSkills`       | `operations/skills/discover-skills.ts:12`     | Result of skill discovery (local + marketplace) |
-| `ScopedSkillDir`         | `operations/skills/collect-scoped-skill-dirs.ts:6` | Single scoped skill directory entry       |
-| `ScopedSkillDirsResult`  | `operations/skills/collect-scoped-skill-dirs.ts:12` | Collected scoped dirs with counts       |
-| `SkillCopyResult`        | `operations/skills/copy-local-skills.ts:7`    | Result of copying local skills                 |
-| `SkillComparisonResults` | `operations/skills/compare-skills.ts:7`       | Comparison results (added/removed/changed)     |
-| `SkillMatchResult`       | `operations/skills/find-skill-match.ts:3`     | Result of matching a skill to a source         |
-| `ResolveSkillInfoOptions`| `operations/skills/resolve-skill-info.ts:23`  | Options for resolving skill info               |
-| `ResolvedSkillInfo`      | `operations/skills/resolve-skill-info.ts:12`  | Resolved skill info with metadata              |
-| `SkillInfoResult`        | `operations/skills/resolve-skill-info.ts:18`  | Result wrapping resolved skill info            |
-| `PluginInstallResult`    | `operations/skills/install-plugin-skills.ts:6`| Result of plugin skill installation            |
-| `PluginUninstallResult`  | `operations/skills/uninstall-plugin-skills.ts:6` | Result of plugin skill uninstallation       |
+| Type                      | File                                                | Purpose                                         |
+| ------------------------- | --------------------------------------------------- | ----------------------------------------------- |
+| `DiscoveredSkills`        | `operations/skills/discover-skills.ts:12`           | Result of skill discovery (local + marketplace) |
+| `ScopedSkillDir`          | `operations/skills/collect-scoped-skill-dirs.ts:6`  | Single scoped skill directory entry             |
+| `ScopedSkillDirsResult`   | `operations/skills/collect-scoped-skill-dirs.ts:12` | Collected scoped dirs with counts               |
+| `SkillCopyResult`         | `operations/skills/copy-local-skills.ts:7`          | Result of copying local skills                  |
+| `SkillComparisonResults`  | `operations/skills/compare-skills.ts:7`             | Comparison results (added/removed/changed)      |
+| `SkillMatchResult`        | `operations/skills/find-skill-match.ts:3`           | Result of matching a skill to a source          |
+| `ResolveSkillInfoOptions` | `operations/skills/resolve-skill-info.ts:23`        | Options for resolving skill info                |
+| `ResolvedSkillInfo`       | `operations/skills/resolve-skill-info.ts:12`        | Resolved skill info with metadata               |
+| `SkillInfoResult`         | `operations/skills/resolve-skill-info.ts:18`        | Result wrapping resolved skill info             |
+| `PluginInstallResult`     | `operations/skills/install-plugin-skills.ts:6`      | Result of plugin skill installation             |
+| `PluginUninstallResult`   | `operations/skills/uninstall-plugin-skills.ts:6`    | Result of plugin skill uninstallation           |
 
 ### Project Operations
 
-| Type                   | File                                              | Purpose                                    |
-| ---------------------- | ------------------------------------------------- | ------------------------------------------ |
-| `DetectedProject`      | `operations/project/detect-project.ts:5`          | Detected project installation state        |
-| `BothInstallations`    | `operations/project/detect-both-installations.ts:9` | Combined project + global installation   |
-| `ConfigWriteOptions`   | `operations/project/write-project-config.ts:16`   | Options for writing project config         |
-| `ConfigWriteResult`    | `operations/project/write-project-config.ts:25`   | Result of config write operation           |
-| `CompileAgentsOptions` | `operations/project/compile-agents.ts:7`          | Options for agent compilation              |
-| `CompilationResult`    | `operations/project/compile-agents.ts:20`         | Result of agent compilation                |
-| `AgentDefs`            | `operations/project/load-agent-defs.ts:6`         | Loaded agent definitions with source paths |
+| Type                   | File                                                | Purpose                                    |
+| ---------------------- | --------------------------------------------------- | ------------------------------------------ |
+| `DetectedProject`      | `operations/project/detect-project.ts:5`            | Detected project installation state        |
+| `BothInstallations`    | `operations/project/detect-both-installations.ts:9` | Combined project + global installation     |
+| `ConfigWriteOptions`   | `operations/project/write-project-config.ts:16`     | Options for writing project config         |
+| `ConfigWriteResult`    | `operations/project/write-project-config.ts:25`     | Result of config write operation           |
+| `CompileAgentsOptions` | `operations/project/compile-agents.ts:7`            | Options for agent compilation              |
+| `CompilationResult`    | `operations/project/compile-agents.ts:20`           | Result of agent compilation                |
+| `AgentDefs`            | `operations/project/load-agent-defs.ts:6`           | Loaded agent definitions with source paths |
 
 ## Type Narrowing Rules
 
@@ -322,62 +322,62 @@ All schemas in `src/cli/lib/schemas.ts`. 39 exported schemas total.
 
 ### Bridge Schemas (union type validation)
 
-| Schema                  | Validates                | Pattern                         |
-| ----------------------- | ------------------------ | ------------------------------- |
-| `domainSchema`          | Domain union             | `z.enum(DOMAINS)` bridge        |
-| `categorySchema`        | Category union           | `z.enum(CATEGORIES)` bridge     |
-| `agentNameSchema`       | AgentName union          | `z.enum(AGENT_NAMES)` bridge    |
-| `skillSlugSchema`       | SkillSlug union          | `z.enum(SKILL_SLUGS)` bridge    |
-| `skillIdSchema`         | SkillId membership       | `.refine()` against `SKILL_IDS` |
-| `categoryPathSchema`    | CategoryPath             | Custom refine + enum            |
-| `modelNameSchema`       | ModelName union           | `z.enum(["sonnet", ...])` bridge |
-| `permissionModeSchema`  | PermissionMode union      | `z.enum([...])` bridge          |
-| `skillSourceTypeSchema` | SkillSourceType union     | `z.enum(["public", ...])` bridge |
+| Schema                  | Validates             | Pattern                          |
+| ----------------------- | --------------------- | -------------------------------- |
+| `domainSchema`          | Domain union          | `z.enum(DOMAINS)` bridge         |
+| `categorySchema`        | Category union        | `z.enum(CATEGORIES)` bridge      |
+| `agentNameSchema`       | AgentName union       | `z.enum(AGENT_NAMES)` bridge     |
+| `skillSlugSchema`       | SkillSlug union       | `z.enum(SKILL_SLUGS)` bridge     |
+| `skillIdSchema`         | SkillId membership    | `.refine()` against `SKILL_IDS`  |
+| `categoryPathSchema`    | CategoryPath          | Custom refine + enum             |
+| `modelNameSchema`       | ModelName union       | `z.enum(["sonnet", ...])` bridge |
+| `permissionModeSchema`  | PermissionMode union  | `z.enum([...])` bridge           |
+| `skillSourceTypeSchema` | SkillSourceType union | `z.enum(["public", ...])` bridge |
 
 ### Loader Schemas (lenient, `.passthrough()`)
 
-| Schema                         | Validates                  | Pattern                         |
-| ------------------------------ | -------------------------- | ------------------------------- |
-| `skillFrontmatterLoaderSchema` | SKILL.md frontmatter       | Lenient object                  |
-| `skillMetadataLoaderSchema`    | metadata.yaml              | `.passthrough()` + superRefine  |
-| `projectConfigLoaderSchema`    | .claude-src/config.ts      | `.passthrough()`                |
-| `projectSourceConfigSchema`    | Source config              | `.passthrough()`                |
-| `localRawMetadataSchema`       | Local skill metadata.yaml  | `.passthrough()` + superRefine  |
-| `localSkillMetadataSchema`     | Local skill forkedFrom     | `.passthrough()`                |
-| `settingsFileSchema`           | settings.yaml              | `.passthrough()`                |
-| `importedSkillMetadataSchema`  | Imported skill metadata    | `.passthrough()`                |
+| Schema                         | Validates                 | Pattern                        |
+| ------------------------------ | ------------------------- | ------------------------------ |
+| `skillFrontmatterLoaderSchema` | SKILL.md frontmatter      | Lenient object                 |
+| `skillMetadataLoaderSchema`    | metadata.yaml             | `.passthrough()` + superRefine |
+| `projectConfigLoaderSchema`    | .claude-src/config.ts     | `.passthrough()`               |
+| `projectSourceConfigSchema`    | Source config             | `.passthrough()`               |
+| `localRawMetadataSchema`       | Local skill metadata.yaml | `.passthrough()` + superRefine |
+| `localSkillMetadataSchema`     | Local skill forkedFrom    | `.passthrough()`               |
+| `settingsFileSchema`           | settings.yaml             | `.passthrough()`               |
+| `importedSkillMetadataSchema`  | Imported skill metadata   | `.passthrough()`               |
 
 ### Structural Schemas (data shapes)
 
-| Schema                      | Validates                 | Pattern                         |
-| --------------------------- | ------------------------- | ------------------------------- |
-| `skillCategoriesFileSchema` | skill-categories.ts       | `z.object()`                    |
-| `skillRulesFileSchema`      | skill-rules.ts            | `z.object()`                    |
-| `stacksConfigSchema`        | stacks.ts                 | `z.object()`                    |
-| `marketplaceSchema`         | marketplace.json          | Bridge pattern                  |
-| `pluginManifestSchema`      | plugin.json               | Bridge pattern                  |
-| `agentYamlConfigSchema`     | agent metadata.yaml       | Bridge pattern                  |
-| `boundSkillSchema`          | BoundSkill                | Bridge pattern                  |
-| `skillAssignmentSchema`     | SkillAssignment           | Bridge pattern                  |
-| `stackAgentConfigSchema`    | Stack agent config record | `z.record()` + union            |
-| `pluginAuthorSchema`        | PluginAuthor              | Bridge pattern                  |
-| `compatibilityGroupSchema`  | CompatibilityGroup        | Bridge pattern                  |
-| `agentHookActionSchema`     | AgentHookAction           | Bridge pattern                  |
-| `agentHookDefinitionSchema` | AgentHookDefinition       | Bridge pattern                  |
-| `hooksRecordSchema`         | Hooks record (lenient)    | `z.record()` + array            |
-| `strictHooksRecordSchema`   | Hooks record (strict)     | `z.record()` + min(1)           |
+| Schema                      | Validates                 | Pattern               |
+| --------------------------- | ------------------------- | --------------------- |
+| `skillCategoriesFileSchema` | skill-categories.ts       | `z.object()`          |
+| `skillRulesFileSchema`      | skill-rules.ts            | `z.object()`          |
+| `stacksConfigSchema`        | stacks.ts                 | `z.object()`          |
+| `marketplaceSchema`         | marketplace.json          | Bridge pattern        |
+| `pluginManifestSchema`      | plugin.json               | Bridge pattern        |
+| `agentYamlConfigSchema`     | agent metadata.yaml       | Bridge pattern        |
+| `boundSkillSchema`          | BoundSkill                | Bridge pattern        |
+| `skillAssignmentSchema`     | SkillAssignment           | Bridge pattern        |
+| `stackAgentConfigSchema`    | Stack agent config record | `z.record()` + union  |
+| `pluginAuthorSchema`        | PluginAuthor              | Bridge pattern        |
+| `compatibilityGroupSchema`  | CompatibilityGroup        | Bridge pattern        |
+| `agentHookActionSchema`     | AgentHookAction           | Bridge pattern        |
+| `agentHookDefinitionSchema` | AgentHookDefinition       | Bridge pattern        |
+| `hooksRecordSchema`         | Hooks record (lenient)    | `z.record()` + array  |
+| `strictHooksRecordSchema`   | Hooks record (strict)     | `z.record()` + min(1) |
 
 ### Strict Validation Schemas (`.strict()`, reject unknown fields)
 
-| Schema                             | Validates               | Pattern    |
-| ---------------------------------- | ----------------------- | ---------- |
-| `metadataValidationSchema`         | Strict metadata         | `.strict()` |
-| `customMetadataValidationSchema`   | Custom skill metadata   | `z.object()` |
-| `agentYamlGenerationSchema`        | Compiled agent output   | `.strict()` |
-| `agentFrontmatterValidationSchema` | AGENT.md frontmatter    | `.strict()` |
-| `skillFrontmatterValidationSchema` | SKILL.md frontmatter    | `.strict()` |
-| `pluginManifestValidationSchema`   | plugin.json strict      | `.strict()` |
-| `stackConfigValidationSchema`      | Published stack config  | `.strict()` |
+| Schema                             | Validates              | Pattern      |
+| ---------------------------------- | ---------------------- | ------------ |
+| `metadataValidationSchema`         | Strict metadata        | `.strict()`  |
+| `customMetadataValidationSchema`   | Custom skill metadata  | `z.object()` |
+| `agentYamlGenerationSchema`        | Compiled agent output  | `.strict()`  |
+| `agentFrontmatterValidationSchema` | AGENT.md frontmatter   | `.strict()`  |
+| `skillFrontmatterValidationSchema` | SKILL.md frontmatter   | `.strict()`  |
+| `pluginManifestValidationSchema`   | plugin.json strict     | `.strict()`  |
+| `stackConfigValidationSchema`      | Published stack config | `.strict()`  |
 
 Schema bridge pattern: `z.enum(GENERATED_ARRAY) as z.ZodType<UnionType>` ensures Zod output matches TypeScript union types from generated source.
 

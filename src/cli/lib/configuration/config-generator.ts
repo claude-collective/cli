@@ -115,7 +115,7 @@ export function generateProjectConfigFromSkills(
 
   const skills: SkillConfig[] =
     options?.skillConfigs ??
-    selectedSkillIds.map((id) => ({ id, scope: "project" as const, source: "local" }));
+    selectedSkillIds.map((id) => ({ id, scope: "project" as const, source: "eject" }));
 
   const agentConfigs: AgentScopeConfig[] = options?.agentConfigs
     ? agentList.map((agentName) => {

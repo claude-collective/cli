@@ -64,7 +64,7 @@ describe("edit recompile routes agents to correct scope directory", () => {
       // --- Setup global config at <tempHOME>/.claude-src/config.ts ---
       await writeProjectConfig(tempHOME, {
         name: "global",
-        skills: [{ id: "web-framework-react", scope: "global", source: "local" }],
+        skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
       });
@@ -91,9 +91,9 @@ describe("edit recompile routes agents to correct scope directory", () => {
       await writeProjectConfig(projectDir, {
         name: "bug-a-test",
         skills: [
-          { id: "web-framework-react", scope: "global", source: "local" },
-          { id: "web-testing-vitest", scope: "project", source: "local" },
-          { id: "web-styling-tailwind", scope: "project", source: "local" },
+          { id: "web-framework-react", scope: "global", source: "eject" },
+          { id: "web-testing-vitest", scope: "project", source: "eject" },
+          { id: "web-styling-tailwind", scope: "project", source: "eject" },
         ],
         agents: [
           { name: "web-developer", scope: "global" },

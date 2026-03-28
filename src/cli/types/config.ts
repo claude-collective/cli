@@ -23,7 +23,7 @@ export type BrandingConfig = {
 export type SkillConfig = {
   id: SkillId;
   scope: "project" | "global";
-  source: string; // "local" | marketplace name (e.g., "agents-inc")
+  source: string; // "eject" | marketplace name (e.g., "agents-inc")
 };
 
 /** Per-agent configuration with scope (mirrors SkillConfig pattern) */

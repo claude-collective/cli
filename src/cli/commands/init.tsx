@@ -95,7 +95,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelect, onCancel }) => {
 
 /** Formats the dashboard summary as plain text lines (for non-interactive/test output). */
 export function formatDashboardText(data: DashboardData): string {
-  const modeLabel = data.mode === "plugin" ? "Plugin" : data.mode === "mixed" ? "Mixed" : "Local";
+  const modeLabel = data.mode === "plugin" ? "Plugin" : data.mode === "mixed" ? "Mixed" : "Eject";
   const lines = [
     DEFAULT_BRANDING.NAME,
     "",
@@ -150,7 +150,7 @@ export async function showDashboard(
 export default class Init extends BaseCommand {
   static summary = `Initialize ${DEFAULT_BRANDING.NAME} in this project`;
   static description =
-    "Interactive wizard to set up skills and agents. Supports Plugin Mode (native install) and Local Mode (copy to .claude/).";
+    "Interactive wizard to set up skills and agents. Supports Plugin Mode (native install) and Eject Mode (copy to .claude/).";
 
   static examples = [
     {
@@ -275,16 +275,16 @@ export default class Init extends BaseCommand {
   ): Promise<void> {
     const projectDir = process.cwd();
     let installMode = deriveInstallMode(result.skills);
-    const localSkills = result.skills.filter((s) => s.source === "local");
-    const pluginSkills = result.skills.filter((s) => s.source !== "local");
+    const ejectedSkills = result.skills.filter((s) => s.source === "eject");
+    const pluginSkills = result.skills.filter((s) => s.source !== "eject");
 
-    this.logInstallPlan(result, installMode, localSkills, pluginSkills);
+    this.logInstallPlan(result, installMode, ejectedSkills, pluginSkills);
 
-    let copiedSkills = [...localSkills];
+    let copiedSkills = [...ejectedSkills];
     let pluginModeSucceeded = false;
 
-    if (installMode === "local" || installMode === "mixed") {
-      await this.copyLocalSkillsStep(localSkills, projectDir, sourceResult, installMode);
+    if (installMode === "eject" || installMode === "mixed") {
+      await this.copyEjectSkillsStep(ejectedSkills, projectDir, sourceResult, installMode);
     }
 
     if (installMode === "plugin" || installMode === "mixed") {
@@ -330,7 +330,7 @@ export default class Init extends BaseCommand {
   private logInstallPlan(
     result: WizardResultV2,
     installMode: InstallMode,
-    localSkills: WizardResultV2["skills"],
+    ejectedSkills: WizardResultV2["skills"],
     pluginSkills: WizardResultV2["skills"],
   ): void {
     this.log("\n");
@@ -340,13 +340,13 @@ export default class Init extends BaseCommand {
         installMode === "plugin"
           ? "Plugin (native install)"
           : installMode === "mixed"
-            ? `Mixed (${localSkills.length} local, ${pluginSkills.length} plugin)`
-            : "Local (copy to .claude/skills/)"
+            ? `Mixed (${ejectedSkills.length} eject, ${pluginSkills.length} plugin)`
+            : "Eject (copy to .claude/skills/)"
       }`,
     );
   }
 
-  private async copyLocalSkillsStep(
+  private async copyEjectSkillsStep(
     localSkills: WizardResultV2["skills"],
     projectDir: string,
     sourceResult: SourceLoadResult,
@@ -385,16 +385,16 @@ export default class Init extends BaseCommand {
     const mpResult = await ensureMarketplace(sourceResult);
 
     if (!mpResult.marketplace) {
-      this.warn("Could not resolve marketplace. Falling back to Local Mode...");
+      this.warn("Could not resolve marketplace. Falling back to Eject Mode...");
       // Marketplace unavailable — copy all plugin-intended skills locally as fallback.
-      // In "mixed" mode, localSkills were already copied; only copy plugin-intended skills.
+      // In "mixed" mode, ejectedSkills were already copied; only copy plugin-intended skills.
       // In "plugin" mode, no skills were copied yet; copy all skills.
       const fallbackSkills = installMode === "mixed" ? pluginSkills : allSkills;
       const fallbackCopyResult = await copyLocalSkills(fallbackSkills, projectDir, sourceResult);
       this.log(`Copied ${fallbackCopyResult.totalCopied} skills to .claude/skills/\n`);
       return {
         copiedSkills: [...copiedSkills, ...fallbackSkills],
-        installMode: "local",
+        installMode: "eject",
         succeeded: false,
       };
     }
@@ -468,9 +468,9 @@ export default class Init extends BaseCommand {
   ): void {
     this.log(`${SUCCESS_MESSAGES.INIT_SUCCESS}\n`);
 
-    const isLocalOutput =
-      installMode === "local" || (installMode === "mixed" && !pluginModeSucceeded);
-    if (isLocalOutput && copiedSkills.length > 0) {
+    const isEjectOutput =
+      installMode === "eject" || (installMode === "mixed" && !pluginModeSucceeded);
+    if (isEjectOutput && copiedSkills.length > 0) {
       this.log("Skills copied to:");
       this.log(`  ${projectPaths.skillsDir}`);
       for (const skill of copiedSkills) {
@@ -509,7 +509,7 @@ export async function getDashboardData(projectDir: string): Promise<DashboardDat
   const skillCount = loaded?.config?.skills?.length ?? 0;
   const agentCount = info?.agentCount ?? 0;
   const mode =
-    info?.mode ?? (loaded?.config?.skills ? deriveInstallMode(loaded.config.skills) : "local");
+    info?.mode ?? (loaded?.config?.skills ? deriveInstallMode(loaded.config.skills) : "eject");
   const source = loaded?.config?.source;
 
   return { skillCount, agentCount, mode, source };

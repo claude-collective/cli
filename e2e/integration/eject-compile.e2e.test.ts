@@ -197,8 +197,8 @@ describe("template ejection + custom compilation", () => {
       await writeProjectConfig(projectDir, {
         name: "multi-skill-test",
         skills: [
-          { id: E2E_FIRST_SKILL, scope: "project", source: "local" },
-          { id: E2E_SECOND_SKILL, scope: "project", source: "local" },
+          { id: E2E_FIRST_SKILL, scope: "project", source: "eject" },
+          { id: E2E_SECOND_SKILL, scope: "project", source: "eject" },
         ],
         agents: [
           { name: "web-developer", scope: "project" },

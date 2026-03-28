@@ -33,7 +33,7 @@ const MOCK_SOURCE_RESULT = {
   isLocal: false,
 } as unknown as SourceLoadResult;
 
-function makeSkillConfig(id: string, scope: "project" | "global", source = "local"): SkillConfig {
+function makeSkillConfig(id: string, scope: "project" | "global", source = "eject"): SkillConfig {
   return { id: id as SkillConfig["id"], scope, source };
 }
 

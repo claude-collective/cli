@@ -7,18 +7,18 @@ import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import "../matchers/setup.js";
 
 /**
- * E2E tests for the edit wizard in local mode — skill add and remove.
+ * E2E tests for the edit wizard in eject mode — skill add and remove.
  *
- * Local mode differs from plugin mode:
+ * Eject mode differs from plugin mode:
  * - No `claude plugin install/uninstall` calls
  * - Skills are copied from the source directory to .claude/skills/
- * - Removal in local mode updates config but does NOT delete skill files
+ * - Removal in eject mode updates config but does NOT delete skill files
  */
 
 /** Timeout for individual edit test cases including wizard navigation + edit completion */
 const EDIT_TEST_TIMEOUT_MS = TIMEOUTS.PLUGIN_INSTALL;
 
-describe("edit wizard — local mode", () => {
+describe("edit wizard — eject mode", () => {
   let sourceFixture: { sourceDir: string; tempDir: string };
   let wizard: EditWizard | undefined;
 
@@ -266,9 +266,9 @@ describe("edit wizard — local mode", () => {
 
         await result.exitCode;
 
-        // The wizard preserves the saved source ("local") from the existing config
+        // The wizard preserves the saved source ("eject") from the existing config
         // when the user doesn't explicitly change it. No source migration is triggered,
-        // so local skill files remain intact.
+        // so eject skill files remain intact.
         await expect(result.project).toHaveSkillCopied("web-framework-react");
       },
     );

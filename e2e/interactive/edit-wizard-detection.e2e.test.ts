@@ -63,10 +63,10 @@ describe("edit wizard — skill detection across sources and scopes", () => {
         await writeProjectConfig(projectDir, {
           name: "test-mixed-detection",
           skills: [
-            { id: "web-framework-react", scope: "project", source: "local" },
-            { id: "web-testing-vitest", scope: "global", source: "local" },
-            { id: "web-state-zustand", scope: "project", source: "local" },
-            { id: "api-framework-hono", scope: "global", source: "local" },
+            { id: "web-framework-react", scope: "project", source: "eject" },
+            { id: "web-testing-vitest", scope: "global", source: "eject" },
+            { id: "web-state-zustand", scope: "project", source: "eject" },
+            { id: "api-framework-hono", scope: "global", source: "eject" },
           ],
           agents: [
             { name: "web-developer", scope: "project" },
@@ -131,9 +131,9 @@ describe("edit wizard — skill detection across sources and scopes", () => {
         await writeProjectConfig(projectDir, {
           name: "test-count-detection",
           skills: [
-            { id: "web-framework-react", scope: "project", source: "local" },
-            { id: "web-testing-vitest", scope: "project", source: "local" },
-            { id: "web-state-zustand", scope: "global", source: "local" },
+            { id: "web-framework-react", scope: "project", source: "eject" },
+            { id: "web-testing-vitest", scope: "project", source: "eject" },
+            { id: "web-state-zustand", scope: "global", source: "eject" },
           ],
           agents: [{ name: "web-developer", scope: "project" }],
           domains: ["web"],

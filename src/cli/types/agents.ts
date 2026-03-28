@@ -100,7 +100,7 @@ export type CompiledAgentData = {
   preloadedSkills: Skill[];
   /** Skills loaded via Skill tool (metadata only) */
   dynamicSkills: Skill[];
-  /** Skill IDs (local mode) or plugin refs (plugin mode) for frontmatter */
+  /** Skill IDs (eject mode) or plugin refs (plugin mode) for frontmatter */
   preloadedSkillIds: (SkillId | PluginSkillRef)[];
 };
 

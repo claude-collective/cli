@@ -115,10 +115,10 @@ function tagLocalSkills(matrix: MergedSkillsMatrix): void {
     if (!skill.local) continue;
 
     const source: SkillSource = {
-      name: "local",
+      name: "eject",
       type: "local",
       installed: true,
-      installMode: "local",
+      installMode: "eject",
     };
 
     skill.availableSources = skill.availableSources ?? [];

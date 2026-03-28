@@ -143,7 +143,7 @@ export async function copySkillsToPluginFromSource(
       const skill = getSkillById(skillId);
 
       const selectedSource = sourceSelections?.[skillId];
-      const userSelectedRemote = selectedSource && selectedSource !== "local";
+      const userSelectedRemote = selectedSource && selectedSource !== "eject";
 
       let result: CopiedSkill;
       if (skill.local && skill.localPath && !userSelectedRemote) {
@@ -208,7 +208,7 @@ export async function copySkillsToLocalFlattened(
       const skill = getSkillById(skillId);
 
       const selectedSource = sourceSelections?.[skillId];
-      const userSelectedRemote = selectedSource && selectedSource !== "local";
+      const userSelectedRemote = selectedSource && selectedSource !== "eject";
 
       if (skill.local && skill.localPath && !userSelectedRemote) {
         const contentHash = await generateSkillHash(skill.localPath);

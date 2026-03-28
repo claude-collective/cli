@@ -95,7 +95,7 @@ describe("dual-scope compile", () => {
 
     await writeProjectConfig(globalHome, {
       name: "global-test",
-      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
       agents: [{ name: "web-developer", scope: "global" }],
       domains: ["web"],
       stack: {
@@ -136,7 +136,7 @@ describe("dual-scope compile", () => {
 
     await writeProjectConfig(projectDir, {
       name: "project-test",
-      skills: [{ id: "web-testing-playwright-e2e", scope: "project", source: "local" }],
+      skills: [{ id: "web-testing-playwright-e2e", scope: "project", source: "eject" }],
       agents: [{ name: "api-developer", scope: "project" }],
       domains: ["web"],
       stack: {
@@ -179,7 +179,7 @@ describe("dual-scope compile", () => {
     // Global installation: one global skill
     await writeProjectConfig(globalHome, {
       name: "global-test",
-      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
       agents: [{ name: "web-developer", scope: "global" }],
       domains: ["web"],
       stack: {
@@ -197,7 +197,7 @@ describe("dual-scope compile", () => {
     // Project installation: agent references the global skill but has NO local skills
     await writeProjectConfig(projectDir, {
       name: "project-test",
-      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
       agents: [{ name: "api-developer", scope: "project" }],
       domains: ["web"],
       stack: {

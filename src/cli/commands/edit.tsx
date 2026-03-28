@@ -284,12 +284,12 @@ export default class Edit extends BaseCommand {
   ): Promise<Set<SkillId>> {
     const oldSkills = context.projectConfig?.skills ?? [];
     const migrationPlan = detectMigrations(oldSkills, result.skills);
-    const hasMigrations = migrationPlan.toLocal.length > 0 || migrationPlan.toPlugin.length > 0;
+    const hasMigrations = migrationPlan.toEject.length > 0 || migrationPlan.toPlugin.length > 0;
 
     if (hasMigrations) {
-      if (migrationPlan.toLocal.length > 0) {
-        this.log(`Switching ${migrationPlan.toLocal.length} skill(s) to local:`);
-        for (const migration of migrationPlan.toLocal) {
+      if (migrationPlan.toEject.length > 0) {
+        this.log(`Switching ${migrationPlan.toEject.length} skill(s) to eject:`);
+        for (const migration of migrationPlan.toEject) {
           this.log(`  - ${migration.id}`);
         }
       }
@@ -308,7 +308,7 @@ export default class Edit extends BaseCommand {
     }
 
     return new Set([
-      ...migrationPlan.toLocal.map((m) => m.id),
+      ...migrationPlan.toEject.map((m) => m.id),
       ...migrationPlan.toPlugin.map((m) => m.id),
     ]);
   }
@@ -321,10 +321,10 @@ export default class Edit extends BaseCommand {
   ): Promise<void> {
     const { scopeChanges } = changes;
 
-    // Handle scope migrations (P->G or G->P) for local-mode skills
+    // Handle scope migrations (P->G or G->P) for eject-mode skills
     for (const [skillId, change] of scopeChanges) {
       const skillConfig = result.skills.find((s) => s.id === skillId);
-      if (skillConfig?.source === "local") {
+      if (skillConfig?.source === "eject") {
         await migrateLocalSkillScope(skillId, change.from, cwd);
       }
     }
@@ -358,7 +358,7 @@ export default class Edit extends BaseCommand {
       if (migratedSkillIds.has(skillId)) {
         continue;
       }
-      if (change.from === "local") {
+      if (change.from === "eject") {
         const oldSkill = context.projectConfig?.skills?.find((s) => s.id === skillId);
         const deleteDir = oldSkill?.scope === "global" ? os.homedir() : cwd;
         await deleteLocalSkill(deleteDir, skillId);
@@ -381,7 +381,7 @@ export default class Edit extends BaseCommand {
       }
 
       const addedPluginSkills = result.skills.filter(
-        (s) => addedSkills.includes(s.id) && s.source !== "local",
+        (s) => addedSkills.includes(s.id) && s.source !== "eject",
       );
       if (addedPluginSkills.length > 0) {
         const pluginResult = await installPluginSkills(
@@ -423,7 +423,7 @@ export default class Edit extends BaseCommand {
 
     // Copy newly added local-source skills to .claude/skills/ (split by scope)
     const addedLocalSkills = result.skills.filter(
-      (s) => addedSkills.includes(s.id) && s.source === "local",
+      (s) => addedSkills.includes(s.id) && s.source === "eject",
     );
 
     if (addedLocalSkills.length > 0) {
@@ -642,7 +642,7 @@ async function migratePluginSkillScopes(
 
   for (const [skillId, change] of scopeChanges) {
     const skillConfig = skills.find((s) => s.id === skillId);
-    if (!skillConfig || skillConfig.source === "local") {
+    if (!skillConfig || skillConfig.source === "eject") {
       continue;
     }
 

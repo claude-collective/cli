@@ -37,7 +37,7 @@ describe("unified config view -- split writes", () => {
       // Create global config with a global skill and agent
       await writeProjectConfig(globalHome, {
         name: "global",
-        skills: [{ id: "web-framework-react", scope: "global", source: "local" }],
+        skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
         stack: {
@@ -68,7 +68,7 @@ import type { ProjectConfig } from "./config-types";
 
 const skills = [
   ...globalConfig.skills,
-  {"id":"web-testing-vitest","scope":"project","source":"local"},
+  {"id":"web-testing-vitest","scope":"project","source":"eject"},
 ];
 
 const agents = [

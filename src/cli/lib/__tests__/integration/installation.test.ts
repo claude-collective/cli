@@ -24,8 +24,8 @@ describe("installation", () => {
     await cleanupTempDir(tempDir);
   });
 
-  describe("detectInstallation - local mode", () => {
-    it("should return local installation when .claude-src/config.ts exists", async () => {
+  describe("detectInstallation - eject mode", () => {
+    it("should return eject installation when .claude-src/config.ts exists", async () => {
       const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -36,12 +36,12 @@ describe("installation", () => {
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result?.mode).toBe("local");
+      expect(result?.mode).toBe("eject");
       expect(result?.configPath).toBe(path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS));
       expect(result?.projectDir).toBe(tempDir);
     });
 
-    it("should default to local mode when installMode is not in config", async () => {
+    it("should default to eject mode when installMode is not in config", async () => {
       const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -52,10 +52,10 @@ describe("installation", () => {
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result?.mode).toBe("local");
+      expect(result?.mode).toBe("eject");
     });
 
-    it("should use correct paths for agentsDir and skillsDir in local mode", async () => {
+    it("should use correct paths for agentsDir and skillsDir in eject mode", async () => {
       const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
       const claudeDir = path.join(tempDir, CLAUDE_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
@@ -156,7 +156,7 @@ describe("installation", () => {
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result?.mode).toBe("local");
+      expect(result?.mode).toBe("eject");
     });
   });
 
@@ -182,7 +182,7 @@ describe("installation", () => {
       const result = await getInstallationOrThrow(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result.mode).toBe("local");
+      expect(result.mode).toBe("eject");
       expect(result.projectDir).toBe(tempDir);
     });
 
@@ -226,7 +226,7 @@ describe("installation", () => {
       expect(result?.configPath).toBe(path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS));
     });
 
-    it("should treat invalid config file as local mode (file exists)", async () => {
+    it("should treat invalid config file as eject mode (file exists)", async () => {
       const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -236,11 +236,11 @@ describe("installation", () => {
 
       // When config file exists but is invalid, loadProjectConfig returns null
       // The detection logic sees file exists but config is invalid,
-      // so mode defaults to "local"
+      // so mode defaults to "eject"
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result?.mode).toBe("local");
+      expect(result?.mode).toBe("eject");
     });
 
     it("should use process.cwd() as default when projectDir is not provided", async () => {
@@ -259,7 +259,7 @@ describe("installation", () => {
         const result = await detectInstallation();
 
         expect(result).not.toBeNull();
-        expect(result?.mode).toBe("local");
+        expect(result?.mode).toBe("eject");
         expect(result?.projectDir).toBe(fs.realpathSync(tempDir));
       } finally {
         process.chdir(originalCwd);

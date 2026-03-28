@@ -508,11 +508,11 @@ describe("edit wizard domain filtering", () => {
   });
 });
 
-// The edit command has a local-mode fallback: when discoverAllPluginSkills returns
+// The edit command has an eject-mode fallback: when discoverAllPluginSkills returns
 // empty (no plugin-based skills found), it falls back to project config skills.
 // These tests verify that the correct installedSkillIds reach the Wizard component.
 
-describe("edit command local-mode skill fallback", () => {
+describe("edit command eject-mode skill fallback", () => {
   let tempDir: string;
   let projectDir: string;
   let originalCwd: string;
@@ -521,7 +521,7 @@ describe("edit command local-mode skill fallback", () => {
   const CONFIG_SKILLS = CONFIG_SKILL_IDS.map((id) => ({
     id,
     scope: "project" as const,
-    source: "local",
+    source: "eject",
   }));
 
   const testMatrix = FULLSTACK_PAIR_MATRIX;
@@ -548,7 +548,7 @@ describe("edit command local-mode skill fallback", () => {
     mockRender.mockReturnValue({ waitUntilExit: () => Promise.resolve() });
 
     mockDetectInstallation.mockResolvedValue({
-      mode: "local",
+      mode: "eject",
       scope: "project",
       configPath: path.join(projectDir, ".claude-src/config.ts"),
       agentsDir: path.join(projectDir, ".claude/agents"),
@@ -625,7 +625,7 @@ describe("edit command detects added agents", () => {
   const EXISTING_SKILL_IDS: SkillId[] = ["web-framework-react"];
   const EXISTING_SKILLS = buildSkillConfigs(EXISTING_SKILL_IDS, {
     scope: "project",
-    source: "local",
+    source: "eject",
   });
 
   const testMatrix = FULLSTACK_PAIR_MATRIX;
@@ -640,7 +640,7 @@ describe("edit command detects added agents", () => {
 
     mockRender.mockClear();
     mockDetectInstallation.mockResolvedValue({
-      mode: "local",
+      mode: "eject",
       scope: "project",
       configPath: path.join(projectDir, ".claude-src/config.ts"),
       agentsDir: path.join(projectDir, ".claude/agents"),
@@ -716,7 +716,7 @@ describe("edit command copies newly added local skills", () => {
     mockCopySkillsToLocalFlattened.mockClear();
     mockEnsureDir.mockClear();
     mockDetectInstallation.mockResolvedValue({
-      mode: "local",
+      mode: "eject",
       scope: "project",
       configPath: path.join(projectDir, ".claude-src/config.ts"),
       agentsDir: path.join(projectDir, ".claude/agents"),
@@ -747,7 +747,7 @@ describe("edit command copies newly added local skills", () => {
 
     const newLocalSkills = buildSkillConfigs(["web-framework-react"], {
       scope: "project",
-      source: "local",
+      source: "eject",
     });
 
     // Mock render to invoke onComplete with a wizard result that adds a local skill

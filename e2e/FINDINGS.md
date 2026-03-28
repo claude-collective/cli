@@ -11,8 +11,8 @@
 
 ### Finding 2: Minimal file structure for edit command
 
-- **What happened:** The edit command requires `detectInstallation()` to succeed, which checks for `.claude-src/config.yaml` (or `.claude/config.yaml`). For local install mode, `discoverAllPluginSkills()` returns empty (no settings.json with plugin paths), so the command falls back to `projectConfig.config.skills` from the YAML config.
-- **Why:** The edit command has two skill discovery paths: (1) discover installed plugin skills from filesystem, and (2) fall back to the `skills` array in config.yaml. For E2E testing, we only need the config.yaml path since we test in local mode without actual Claude plugin infrastructure.
+- **What happened:** The edit command requires `detectInstallation()` to succeed, which checks for `.claude-src/config.yaml` (or `.claude/config.yaml`). For eject install mode, `discoverAllPluginSkills()` returns empty (no settings.json with plugin paths), so the command falls back to `projectConfig.config.skills` from the YAML config.
+- **Why:** The edit command has two skill discovery paths: (1) discover installed plugin skills from filesystem, and (2) fall back to the `skills` array in config.yaml. For E2E testing, we only need the config.yaml path since we test in eject mode without actual Claude plugin infrastructure.
 - **Workaround/Pattern:** Create a minimal project with just `.claude-src/config.yaml` containing `name`, `installMode`, `skills`, `agents`, and `domains` fields. Optionally create `.claude/skills/<id>/SKILL.md` and `metadata.yaml` files for completeness. The `createEditableProject()` helper encapsulates this.
 - **Should this become a standard?** YES. The helper should be extracted to `test-utils.ts` if other tests need editable projects.
 

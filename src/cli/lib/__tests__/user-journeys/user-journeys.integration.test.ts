@@ -4,7 +4,7 @@ import { readFile } from "fs/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
-import { installLocal } from "../../installation/local-installer";
+import { installEject } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
@@ -67,7 +67,7 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const initialWizardResult = buildWizardResultFromStore(matrix);
-    const initialResult = await installLocal({
+    const initialResult = await installEject({
       wizardResult: initialWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -91,7 +91,7 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const editWizardResult = buildWizardResultFromStore(matrix);
-    const editResult = await installLocal({
+    const editResult = await installEject({
       wizardResult: editWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -131,7 +131,7 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const initialWizardResult = buildWizardResultFromStore(matrix);
-    const initialResult = await installLocal({
+    const initialResult = await installEject({
       wizardResult: initialWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -147,7 +147,7 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const editWizardResult = buildWizardResultFromStore(matrix);
-    const editResult = await installLocal({
+    const editResult = await installEject({
       wizardResult: editWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -207,7 +207,7 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const initialWizardResult = buildWizardResultFromStore(matrix);
-    await installLocal({
+    await installEject({
       wizardResult: initialWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -220,7 +220,7 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const editWizardResult = buildWizardResultFromStore(matrix);
-    const editResult = await installLocal({
+    const editResult = await installEject({
       wizardResult: editWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -253,7 +253,7 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const initialWizardResult = buildWizardResultFromStore(matrix);
-    await installLocal({
+    await installEject({
       wizardResult: initialWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -266,7 +266,7 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const editWizardResult = buildWizardResultFromStore(matrix);
-    const editResult = await installLocal({
+    const editResult = await installEject({
       wizardResult: editWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -322,7 +322,7 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
-    const installResult = await installLocal({
+    const installResult = await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -368,7 +368,7 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
-    const installResult = await installLocal({
+    const installResult = await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -431,7 +431,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const firstWizardResult = buildWizardResultFromStore(matrix);
-    const firstResult = await installLocal({
+    const firstResult = await installEject({
       wizardResult: firstWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -447,7 +447,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const secondWizardResult = buildWizardResultFromStore(matrix);
-    const secondResult = await installLocal({
+    const secondResult = await installEject({
       wizardResult: secondWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -478,7 +478,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const firstWizardResult = buildWizardResultFromStore(matrix);
-    await installLocal({
+    await installEject({
       wizardResult: firstWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -495,7 +495,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const secondWizardResult = buildWizardResultFromStore(matrix);
-    const secondResult = await installLocal({
+    const secondResult = await installEject({
       wizardResult: secondWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -514,7 +514,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     simulateSkillSelections(firstSkills, matrix, ["web"]);
 
     const firstWizardResult = buildWizardResultFromStore(matrix);
-    const firstResult = await installLocal({
+    const firstResult = await installEject({
       wizardResult: firstWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -529,7 +529,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     simulateSkillSelections(secondSkills, matrix, ["api"]);
 
     const secondWizardResult = buildWizardResultFromStore(matrix);
-    const secondResult = await installLocal({
+    const secondResult = await installEject({
       wizardResult: secondWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -585,7 +585,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -658,7 +658,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -689,7 +689,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -753,7 +753,7 @@ describe("Recompile Idempotency", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
-    const installResult = await installLocal({
+    const installResult = await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -839,7 +839,7 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const wizardResult = buildWizardResultFromStore(matrix);
-    await installLocal({
+    await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
@@ -874,7 +874,7 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     simulateSkillSelections(selectedSkills, matrix, ["web"]);
 
     const wizardResult = buildWizardResultFromStore(matrix);
-    const installResult = await installLocal({
+    const installResult = await installEject({
       wizardResult,
       sourceResult,
       projectDir: dirs.projectDir,

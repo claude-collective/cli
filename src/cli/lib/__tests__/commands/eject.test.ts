@@ -18,7 +18,7 @@ import {
 } from "../helpers";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
-import { installLocal, installPluginConfig } from "../../installation/local-installer";
+import { installEject, installPluginConfig } from "../../installation/local-installer";
 import { copySkillsToLocalFlattened } from "../../skills/skill-copier";
 import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 import { typedKeys } from "../../../utils/typed-object";
@@ -444,11 +444,11 @@ describe("eject skills from initialized project", () => {
     dirs = await createTestSource();
     process.chdir(dirs.projectDir);
 
-    // Run installLocal to create a real initialized project with 2 skills
+    // Run installEject to create a real initialized project with 2 skills
     const installMatrix = buildEjectMatrix();
     initializeMatrix(installMatrix);
     const installSource = buildSourceResult(installMatrix, dirs.sourceDir);
-    await installLocal({
+    await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(EJECT_INSTALLED_SKILL_IDS)),
       sourceResult: installSource,
       projectDir: dirs.projectDir,
@@ -600,7 +600,7 @@ describe("eject in plugin mode", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(configPath);
     // installMode is derived at runtime from skills; all skills should have non-local source
-    expect(config.skills.every((s) => s.source !== "local")).toBe(true);
+    expect(config.skills.every((s) => s.source !== "eject")).toBe(true);
   });
 
   it("should copy all skill directories to output in plugin mode", async () => {

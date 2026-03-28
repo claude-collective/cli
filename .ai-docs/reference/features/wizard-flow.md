@@ -72,11 +72,11 @@ Additional wizard components (not in main render tree):
 
 Feature flags live at `src/cli/lib/feature-flags.ts`:
 
-| Flag | Default | Controls |
-| --- | --- | --- |
-| `SOURCE_SEARCH` | `false` | Search pill in source grid, settings overlay access |
+| Flag            | Default | Controls                                                       |
+| --------------- | ------- | -------------------------------------------------------------- |
+| `SOURCE_SEARCH` | `false` | Search pill in source grid, settings overlay access            |
 | `SOURCE_CHOICE` | `false` | Intermediate "recommended vs customize" screen in sources step |
-| `INFO_PANEL` | `false` | `I` key opens info panel overlay in wizard-layout |
+| `INFO_PANEL`    | `false` | `I` key opens info panel overlay in wizard-layout              |
 
 ## Wizard Props (from commands)
 
@@ -124,24 +124,24 @@ type WizardResultV2 = {
 
 ## Wizard Hooks
 
-| Hook | File | Purpose |
-| --- | --- | --- |
-| `useWizardInitialization` | `src/cli/components/hooks/use-wizard-initialization.ts` | Initialize store from props |
-| `useBuildStepProps` | `src/cli/components/hooks/use-build-step-props.ts` | Compute build step derived data |
-| `useCategoryGridInput` | `src/cli/components/hooks/use-category-grid-input.ts` | Keyboard navigation for grid |
-| `useKeyboardNavigation` | `src/cli/components/hooks/use-keyboard-navigation.ts` | Arrow key + Enter handling |
-| `useFilteredResults` | `src/cli/components/hooks/use-filtered-results.ts` | Text search filtering |
-| `useFocusedListItem` | `src/cli/components/hooks/use-focused-list-item.ts` | Focus tracking for lists |
-| `useFrameworkFiltering` | `src/cli/components/hooks/use-framework-filtering.ts` | Framework-first skill filtering |
-| `useMeasuredHeight` | `src/cli/components/hooks/use-measured-height.ts` | Component height measurement |
-| `useModalState` | `src/cli/components/hooks/use-modal-state.ts` | Modal open/close state |
-| `useRowScroll` | `src/cli/components/hooks/use-row-scroll.ts` | Row-based scroll position |
-| `useSectionScroll` | `src/cli/components/hooks/use-section-scroll.ts` | Section-based scroll position |
-| `useSourceGridSearchModal` | `src/cli/components/hooks/use-source-grid-search-modal.ts` | Search modal for sources |
-| `useSourceOperations` | `src/cli/components/hooks/use-source-operations.ts` | Source add/remove operations |
-| `useTerminalDimensions` | `src/cli/components/hooks/use-terminal-dimensions.ts` | Terminal width/height tracking |
-| `useTextInput` | `src/cli/components/hooks/use-text-input.ts` | Text input handling |
-| `useVirtualScroll` | `src/cli/components/hooks/use-virtual-scroll.ts` | Virtual scrolling for long lists |
+| Hook                       | File                                                       | Purpose                          |
+| -------------------------- | ---------------------------------------------------------- | -------------------------------- |
+| `useWizardInitialization`  | `src/cli/components/hooks/use-wizard-initialization.ts`    | Initialize store from props      |
+| `useBuildStepProps`        | `src/cli/components/hooks/use-build-step-props.ts`         | Compute build step derived data  |
+| `useCategoryGridInput`     | `src/cli/components/hooks/use-category-grid-input.ts`      | Keyboard navigation for grid     |
+| `useKeyboardNavigation`    | `src/cli/components/hooks/use-keyboard-navigation.ts`      | Arrow key + Enter handling       |
+| `useFilteredResults`       | `src/cli/components/hooks/use-filtered-results.ts`         | Text search filtering            |
+| `useFocusedListItem`       | `src/cli/components/hooks/use-focused-list-item.ts`        | Focus tracking for lists         |
+| `useFrameworkFiltering`    | `src/cli/components/hooks/use-framework-filtering.ts`      | Framework-first skill filtering  |
+| `useMeasuredHeight`        | `src/cli/components/hooks/use-measured-height.ts`          | Component height measurement     |
+| `useModalState`            | `src/cli/components/hooks/use-modal-state.ts`              | Modal open/close state           |
+| `useRowScroll`             | `src/cli/components/hooks/use-row-scroll.ts`               | Row-based scroll position        |
+| `useSectionScroll`         | `src/cli/components/hooks/use-section-scroll.ts`           | Section-based scroll position    |
+| `useSourceGridSearchModal` | `src/cli/components/hooks/use-source-grid-search-modal.ts` | Search modal for sources         |
+| `useSourceOperations`      | `src/cli/components/hooks/use-source-operations.ts`        | Source add/remove operations     |
+| `useTerminalDimensions`    | `src/cli/components/hooks/use-terminal-dimensions.ts`      | Terminal width/height tracking   |
+| `useTextInput`             | `src/cli/components/hooks/use-text-input.ts`               | Text input handling              |
+| `useVirtualScroll`         | `src/cli/components/hooks/use-virtual-scroll.ts`           | Virtual scrolling for long lists |
 
 ## Build Step Logic
 
@@ -224,16 +224,16 @@ Default scratch domains (`src/cli/consts.ts:202`): `["web", "api", "mobile"]`.
 
 Domain descriptions defined in `domain-selection.tsx`:
 
-| Domain | Description |
-| --- | --- |
-| `web` | Frontend web applications |
-| `api` | Backend APIs and services |
-| `ai` | AI and LLM integrations |
-| `cli` | Command-line tools |
-| `mobile` | Mobile applications |
-| `infra` | CI/CD, deployment, and infrastructure |
-| `meta` | Design patterns, code review, and research methodology |
-| `shared` | Shared utilities and methodology |
+| Domain   | Description                                            |
+| -------- | ------------------------------------------------------ |
+| `web`    | Frontend web applications                              |
+| `api`    | Backend APIs and services                              |
+| `ai`     | AI and LLM integrations                                |
+| `cli`    | Command-line tools                                     |
+| `mobile` | Mobile applications                                    |
+| `infra`  | CI/CD, deployment, and infrastructure                  |
+| `meta`   | Design patterns, code review, and research methodology |
+| `shared` | Shared utilities and methodology                       |
 
 ## Framework-First Filtering
 

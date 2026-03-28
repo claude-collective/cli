@@ -196,8 +196,8 @@ describe("buildCategoriesForDomain", () => {
     initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
     const skillConfigs: SkillConfig[] = [
-      { id: "web-framework-react", scope: "global", source: "local" },
-      { id: "web-state-zustand", scope: "project", source: "local" },
+      { id: "web-framework-react", scope: "global", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
     ];
 
     const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
@@ -215,7 +215,7 @@ describe("buildCategoriesForDomain", () => {
     initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
     const skillConfigs: SkillConfig[] = [
-      { id: "web-framework-react", scope: "project", source: "local" },
+      { id: "web-framework-react", scope: "project", source: "eject" },
     ];
 
     const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);

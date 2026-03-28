@@ -190,7 +190,7 @@ export const Wizard: React.FC<WizardProps> = ({
 
     const skillConfigs: SkillConfig[] = allSkills.map((id) => {
       const existing = store.skillConfigs.find((sc) => sc.id === id);
-      return existing ?? { id, scope: "global" as const, source: "local" };
+      return existing ?? { id, scope: "global" as const, source: "eject" };
     });
 
     const validation = validateSelection(allSkills);

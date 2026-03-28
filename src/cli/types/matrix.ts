@@ -265,7 +265,7 @@ export type SkillSource = {
   /** Whether this source's version is currently installed on disk */
   installed: boolean;
   /** How the skill was installed on disk (separate from provenance) */
-  installMode?: "plugin" | "local";
+  installMode?: "plugin" | "eject";
   /** True for the primary marketplace source (scoped or default public). Set by multi-source-loader. */
   primary?: boolean;
 };

@@ -435,7 +435,7 @@ describe("compile command", () => {
       const globalHome = path.join(tempDir, "global-home");
       await writeProjectConfig(globalHome, {
         name: "global-test",
-        skills: [{ id: "web-testing-cypress-e2e", scope: "project", source: "local" }],
+        skills: [{ id: "web-testing-cypress-e2e", scope: "project", source: "eject" }],
         agents: [{ name: "web-developer", scope: "project" }],
       });
 

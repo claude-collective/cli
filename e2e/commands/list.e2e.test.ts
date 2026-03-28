@@ -80,7 +80,7 @@ describe("list command", () => {
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Installation:");
-      expect(stdout).toContain("Local");
+      expect(stdout).toContain("Eject");
       expect(stdout).toContain("Skills:");
       expect(stdout).toContain("Agents:");
     });
@@ -108,7 +108,7 @@ describe("list command", () => {
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Mode:");
-      expect(stdout).toContain("Local");
+      expect(stdout).toContain("Eject");
     });
 
     it("should show config path in output", async () => {
@@ -217,7 +217,7 @@ describe("list command", () => {
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Installation:");
-      expect(stdout).toContain("Local");
+      expect(stdout).toContain("Eject");
     });
   });
 
@@ -229,7 +229,7 @@ describe("list command", () => {
       const globalHome = path.join(tempDir, "global-home");
       await writeProjectConfig(globalHome, {
         name: "global-test",
-        skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
         agents: [{ name: "web-developer", scope: "project" }],
       });
 
@@ -258,7 +258,7 @@ describe("list command", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // detectInstallation should fall back to the global config and show installation info
       expect(stdout).toContain("Installation:");
-      expect(stdout).toContain("Local");
+      expect(stdout).toContain("Eject");
       expect(stdout).toContain("Skills:");
     });
   });

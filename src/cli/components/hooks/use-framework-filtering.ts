@@ -34,6 +34,14 @@ export function useFrameworkFiltering({
         filterIncompatible,
         lockedSkillIds,
       ),
-    [domain, allSelections, selections, installedSkillIds, skillConfigs, filterIncompatible, lockedSkillIds],
+    [
+      domain,
+      allSelections,
+      selections,
+      installedSkillIds,
+      skillConfigs,
+      filterIncompatible,
+      lockedSkillIds,
+    ],
   );
 }

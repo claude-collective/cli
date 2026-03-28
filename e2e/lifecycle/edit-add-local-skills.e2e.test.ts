@@ -21,7 +21,7 @@ import {
 /**
  * Edit: add new local-source skills lifecycle E2E test.
  *
- * Verifies that `cc edit` copies newly added skills with `source: "local"`
+ * Verifies that `cc edit` copies newly added skills with `source: "eject"`
  * to the `.claude/skills/` directory.
  *
  * Phase 1: Init with plugin source. Select all defaults (all skills as plugin).
@@ -97,15 +97,15 @@ describe.skipIf(!claudeAvailable)("edit: add new local-source skills", () => {
       const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       expect(await fileExists(configPath)).toBe(true);
       const configAfterInit = await readTestFile(configPath);
-      // All skills should be plugin (not local)
-      expect(configAfterInit).not.toContain('"source":"local"');
+      // All skills should be plugin (not eject)
+      expect(configAfterInit).not.toContain('"source":"eject"');
 
       // ================================================================
-      // Phase 2: Edit — switch first skill to local source
+      // Phase 2: Edit — switch first skill to eject source
       //
       // The focused item in sources is the first skill (web-framework-react).
-      // Toggle it to local. This tests that edit correctly copies a skill
-      // that switches from plugin to local source.
+      // Toggle it to eject. This tests that edit correctly copies a skill
+      // that switches from plugin to eject source.
       // ================================================================
 
       const editWizard = await EditWizard.launch({
@@ -119,7 +119,7 @@ describe.skipIf(!claudeAvailable)("edit: add new local-source skills", () => {
         // Build step: pass through all domains without changes
         const sources = await editWizard.build.passThroughAllDomains();
 
-        // Sources step: toggle first skill to local (cursor is already on it)
+        // Sources step: toggle first skill to eject (cursor is already on it)
         await sources.waitForReady();
         await sources.toggleFocusedSource();
         const agents = await sources.advance();
@@ -140,11 +140,11 @@ describe.skipIf(!claudeAvailable)("edit: add new local-source skills", () => {
       // ================================================================
 
       const configAfterEdit = await readTestFile(configPath);
-      // The switched skill should now have source "local"
-      expect(configAfterEdit).toContain('"source":"local"');
+      // The switched skill should now have source "eject"
+      expect(configAfterEdit).toContain('"source":"eject"');
 
-      // The local-sourced skill should be copied to .claude/skills/
-      // This validates the source migration path (plugin → local) in edit.
+      // The eject-sourced skill should be copied to .claude/skills/
+      // This validates the source migration path (plugin → eject) in edit.
       await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
     },
   );

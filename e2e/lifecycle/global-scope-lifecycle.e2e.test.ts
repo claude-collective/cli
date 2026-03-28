@@ -94,8 +94,8 @@ async function createDualScopeInstallation(): Promise<{
   await writeProjectConfig(fakeHome, {
     name: "global-test",
     skills: [
-      { id: "web-framework-react", scope: "global", source: "local" },
-      { id: "web-testing-vitest", scope: "global", source: "local" },
+      { id: "web-framework-react", scope: "global", source: "eject" },
+      { id: "web-testing-vitest", scope: "global", source: "eject" },
     ],
     agents: [{ name: "web-developer", scope: "global" }],
     domains: ["web"],
@@ -131,9 +131,9 @@ async function createDualScopeInstallation(): Promise<{
   await writeProjectConfig(projectDir, {
     name: "project-test",
     skills: [
-      { id: "api-framework-hono", scope: "project", source: "local" },
-      { id: "web-framework-react", scope: "global", source: "local" },
-      { id: "web-testing-vitest", scope: "global", source: "local" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+      { id: "web-framework-react", scope: "global", source: "eject" },
+      { id: "web-testing-vitest", scope: "global", source: "eject" },
     ],
     agents: [
       { name: "api-developer", scope: "project" },
@@ -307,14 +307,14 @@ describe("global scope lifecycle -- outdated command", () => {
 
       await writeProjectConfig(fakeHome, {
         name: "global-only",
-        skills: [{ id: "web-framework-react", scope: "global", source: "local" }],
+        skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
       });
 
       await writeProjectConfig(projectDir, {
         name: "project-ref",
-        skills: [{ id: "web-framework-react", scope: "global", source: "local" }],
+        skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
       });

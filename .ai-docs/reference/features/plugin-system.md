@@ -187,16 +187,16 @@ Generates `marketplace.json` from a source directory containing skills.
 
 Executed through `src/cli/utils/exec.ts`:
 
-| Function                              | Shell Command                                        |
-| ------------------------------------- | ---------------------------------------------------- |
-| `claudePluginInstall()`               | `claude plugin install {path} --scope {scope}`       |
-| `claudePluginUninstall()`             | `claude plugin uninstall {name} --scope {scope}`     |
-| `claudePluginMarketplaceList()`       | `claude plugin marketplace list --json`              |
-| `claudePluginMarketplaceExists()`     | Checks if marketplace is registered (calls List)     |
-| `claudePluginMarketplaceAdd()`        | `claude plugin marketplace add {source}`             |
-| `claudePluginMarketplaceRemove()`     | `claude plugin marketplace remove {name}`            |
-| `claudePluginMarketplaceUpdate()`     | `claude plugin marketplace update {name}`            |
-| `isClaudeCLIAvailable()`              | `claude --version` (returns boolean)                 |
+| Function                          | Shell Command                                    |
+| --------------------------------- | ------------------------------------------------ |
+| `claudePluginInstall()`           | `claude plugin install {path} --scope {scope}`   |
+| `claudePluginUninstall()`         | `claude plugin uninstall {name} --scope {scope}` |
+| `claudePluginMarketplaceList()`   | `claude plugin marketplace list --json`          |
+| `claudePluginMarketplaceExists()` | Checks if marketplace is registered (calls List) |
+| `claudePluginMarketplaceAdd()`    | `claude plugin marketplace add {source}`         |
+| `claudePluginMarketplaceRemove()` | `claude plugin marketplace remove {name}`        |
+| `claudePluginMarketplaceUpdate()` | `claude plugin marketplace update {name}`        |
+| `isClaudeCLIAvailable()`          | `claude --version` (returns boolean)             |
 
 `claudePluginInstall()` and `claudePluginUninstall()` accept `scope: "project" | "user"` and `projectDir` parameters. User-scoped operations run from `os.homedir()` via `resolvePluginCwd()` so Claude CLI writes to `~/.claude/settings.json`. All inputs validated for injection prevention before execution.
 
@@ -263,10 +263,10 @@ Install mode is derived at runtime from the skills array via `deriveInstallMode(
 
 Handles skill source and scope migrations when editing an installation:
 
-| Function              | Purpose                                                     |
-| --------------------- | ----------------------------------------------------------- |
-| `detectMigrations()`  | Compare old/new `SkillConfig[]` to detect source/scope changes |
-| `executeMigration()`  | Execute per-skill migration: copy/delete locals, install/uninstall plugins |
+| Function             | Purpose                                                                    |
+| -------------------- | -------------------------------------------------------------------------- |
+| `detectMigrations()` | Compare old/new `SkillConfig[]` to detect source/scope changes             |
+| `executeMigration()` | Execute per-skill migration: copy/delete locals, install/uninstall plugins |
 
 Types:
 

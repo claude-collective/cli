@@ -12,7 +12,7 @@ import {
 } from "../../consts";
 import type { SkillConfig } from "../../types/config";
 
-export type InstallMode = "local" | "plugin" | "mixed";
+export type InstallMode = "eject" | "plugin" | "mixed";
 
 export type Installation = {
   mode: InstallMode;
@@ -24,11 +24,11 @@ export type Installation = {
 
 /** Derive install mode from skills array at runtime */
 export function deriveInstallMode(skills: SkillConfig[]): InstallMode {
-  if (skills.length === 0) return "local";
-  const hasLocal = skills.some((s) => s.source === "local");
-  const hasPlugin = skills.some((s) => s.source !== "local");
-  if (hasLocal && hasPlugin) return "mixed";
-  return hasLocal ? "local" : "plugin";
+  if (skills.length === 0) return "eject";
+  const hasEject = skills.some((s) => s.source === "eject");
+  const hasPlugin = skills.some((s) => s.source !== "eject");
+  if (hasEject && hasPlugin) return "mixed";
+  return hasEject ? "eject" : "plugin";
 }
 
 /** Detect installation in a specific directory only (no global fallback). */
@@ -49,7 +49,7 @@ export async function detectProjectInstallation(projectDir: string): Promise<Ins
     configPath,
     agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
     // Mixed mode has local skills in .claude/skills/ and plugins in cache;
-    // use .claude/skills/ as the primary skillsDir (same as local mode)
+    // use .claude/skills/ as the primary skillsDir (same as eject mode)
     skillsDir: path.join(projectDir, CLAUDE_DIR, mode === "plugin" ? PLUGINS_SUBDIR : "skills"),
     projectDir,
   };

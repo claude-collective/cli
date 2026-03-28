@@ -63,7 +63,7 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- per-skill s
         tempDir = await createTempDir();
         const projectDir = path.join(tempDir, "project");
 
-        // Phase 1: Init in local mode using page objects
+        // Phase 1: Init in eject mode using page objects
         const initWizard = await InitWizard.launch({
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           projectDir,
@@ -83,7 +83,7 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- per-skill s
         await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
         await expect({ dir: projectDir }).toHaveConfig({
           skillIds: ["web-framework-react"],
-          source: "local",
+          source: "eject",
         });
 
         // Inject marketplace into config (fixture setup for Phase 2)

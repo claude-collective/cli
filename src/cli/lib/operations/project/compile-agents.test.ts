@@ -44,7 +44,7 @@ describe("compile-agents", () => {
       sourcePath,
       pluginDir: "/test/plugin",
       outputDir: "/test/output",
-      installMode: "local",
+      installMode: "eject",
     });
 
     expect(mockRecompileAgents).toHaveBeenCalledWith({
@@ -54,7 +54,7 @@ describe("compile-agents", () => {
       skills: undefined,
       projectDir,
       outputDir: "/test/output",
-      installMode: "local",
+      installMode: "eject",
       agentScopeMap: undefined,
     });
     expect(result.compiled).toStrictEqual(["web-developer"]);

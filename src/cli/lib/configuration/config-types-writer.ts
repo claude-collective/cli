@@ -50,7 +50,7 @@ const STACK_AGENT_CONFIG_INLINE_THRESHOLD = 3;
  * Types emitted before the dynamically-generated StackAgentConfig.
  * Includes InstallMode, SkillConfig, AgentScopeConfig, and the generic SkillAssignment.
  */
-export const PROJECT_CONFIG_TYPES_BEFORE = `export type InstallMode = "local" | "plugin" | "mixed";
+export const PROJECT_CONFIG_TYPES_BEFORE = `export type InstallMode = "eject" | "plugin" | "mixed";
 
 export type SkillConfig = {
   id: SkillId;

@@ -66,7 +66,7 @@ describe("project config does not accumulate global skills after edit", () => {
       // --- Setup global config at <tempHOME>/.claude-src/config.ts ---
       await writeProjectConfig(tempHOME, {
         name: "global",
-        skills: [{ id: "web-framework-react", scope: "global", source: "local" }],
+        skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
         agents: [{ name: "web-developer", scope: "global" }],
         domains: ["web"],
       });
@@ -89,8 +89,8 @@ describe("project config does not accumulate global skills after edit", () => {
       await writeProjectConfig(projectDir, {
         name: "bug-b-test",
         skills: [
-          { id: "web-framework-react", scope: "global", source: "local" },
-          { id: "web-testing-vitest", scope: "project", source: "local" },
+          { id: "web-framework-react", scope: "global", source: "eject" },
+          { id: "web-testing-vitest", scope: "project", source: "eject" },
         ],
         agents: [{ name: "web-developer", scope: "project" }],
         domains: ["web"],

@@ -18,7 +18,7 @@ const mockDetectInstallation = vi.mocked(detectInstallation);
 const mockLoadProjectConfig = vi.mocked(loadProjectConfig);
 
 const MOCK_INSTALLATION: Installation = {
-  mode: "local",
+  mode: "eject",
   configPath: "/tmp/project/.claude-src/config.ts",
   agentsDir: "/tmp/project/.claude/agents",
   skillsDir: "/tmp/project/.claude/skills",

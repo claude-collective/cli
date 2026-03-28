@@ -100,7 +100,7 @@ export async function getInstallationInfo(): Promise<InstallationInfo | null> {
   const loaded = await loadProjectConfig(installation.projectDir);
   if (loaded?.config) {
     name = loaded.config.name || DEFAULT_PLUGIN_NAME;
-    version = installation.mode === "local" ? "local" : "plugin";
+    version = installation.mode === "eject" ? "eject" : "plugin";
   }
 
   return {
@@ -116,8 +116,8 @@ export async function getInstallationInfo(): Promise<InstallationInfo | null> {
 }
 
 export function formatInstallationDisplay(info: InstallationInfo): string {
-  const modeLabel = info.mode === "local" ? "Local" : "Plugin";
-  const versionDisplay = info.mode === "local" ? "(local mode)" : `v${info.version}`;
+  const modeLabel = info.mode === "eject" ? "Eject" : "Plugin";
+  const versionDisplay = info.mode === "eject" ? "(eject mode)" : `v${info.version}`;
 
   return `Installation: ${info.name} ${versionDisplay}
   Mode:    ${modeLabel}

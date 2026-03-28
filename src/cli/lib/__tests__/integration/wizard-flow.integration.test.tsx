@@ -879,7 +879,7 @@ describe("Wizard integration", () => {
     });
   });
 
-  describe("Flow F: Edit mode pre-selection (local mode)", () => {
+  describe("Flow F: Edit mode pre-selection (eject mode)", () => {
     it("should pre-select skills from installedSkillIds in edit mode", async () => {
       initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
@@ -916,7 +916,7 @@ describe("Wizard integration", () => {
       expect(lastFrame()).toContain("Skills");
     });
 
-    it("should not pre-select when installedSkillIds is empty (regression: local mode bug)", async () => {
+    it("should not pre-select when installedSkillIds is empty (regression: eject mode bug)", async () => {
       initializeMatrix(createComprehensiveMatrix());
       const onComplete = vi.fn();
       const onCancel = vi.fn();

@@ -18,13 +18,13 @@ export type SkillMigration = {
 };
 
 export type MigrationPlan = {
-  toLocal: SkillMigration[];
+  toEject: SkillMigration[];
   toPlugin: SkillMigration[];
   scopeChanges: SkillMigration[];
 };
 
 export type MigrationResult = {
-  localizedSkills: SkillId[];
+  ejectedSkills: SkillId[];
   pluginizedSkills: SkillId[];
   warnings: string[];
 };
@@ -37,7 +37,7 @@ export function detectMigrations(
   oldSkills: SkillConfig[],
   newSkills: SkillConfig[],
 ): MigrationPlan {
-  const toLocal: SkillMigration[] = [];
+  const toEject: SkillMigration[] = [];
   const toPlugin: SkillMigration[] = [];
   const scopeChanges: SkillMigration[] = [];
 
@@ -55,22 +55,22 @@ export function detectMigrations(
       newScope: newSkill.scope,
     };
 
-    const wasLocal = oldSkill.source === "local";
-    const isLocal = newSkill.source === "local";
+    const wasEject = oldSkill.source === "eject";
+    const isEject = newSkill.source === "eject";
 
-    if (wasLocal && !isLocal) {
+    if (wasEject && !isEject) {
       toPlugin.push(migration);
-    } else if (!wasLocal && isLocal) {
-      toLocal.push(migration);
+    } else if (!wasEject && isEject) {
+      toEject.push(migration);
     }
 
     // Detect scope changes (independent of source changes)
-    if (oldSkill.scope !== newSkill.scope && wasLocal === isLocal) {
+    if (oldSkill.scope !== newSkill.scope && wasEject === isEject) {
       scopeChanges.push(migration);
     }
   }
 
-  return { toLocal, toPlugin, scopeChanges };
+  return { toEject, toPlugin, scopeChanges };
 }
 
 /**
@@ -84,14 +84,14 @@ export async function executeMigration(
   sourceResult: SourceLoadResult,
 ): Promise<MigrationResult> {
   const warnings: string[] = [];
-  const localizedSkills: SkillId[] = [];
+  const ejectedSkills: SkillId[] = [];
   const pluginizedSkills: SkillId[] = [];
 
-  // Migrate skills from plugin to local, split by scope
-  if (plan.toLocal.length > 0) {
+  // Migrate skills from plugin to eject, split by scope
+  if (plan.toEject.length > 0) {
     try {
-      const projectMigrations = plan.toLocal.filter((m) => m.newScope !== "global");
-      const globalMigrations = plan.toLocal.filter((m) => m.newScope === "global");
+      const projectMigrations = plan.toEject.filter((m) => m.newScope !== "global");
+      const globalMigrations = plan.toEject.filter((m) => m.newScope === "global");
 
       if (projectMigrations.length > 0) {
         const projectSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
@@ -102,7 +102,7 @@ export async function executeMigration(
           sourceResult,
         );
         for (const skill of copied) {
-          localizedSkills.push(skill.skillId);
+          ejectedSkills.push(skill.skillId);
         }
       }
 
@@ -115,12 +115,12 @@ export async function executeMigration(
           sourceResult,
         );
         for (const skill of copied) {
-          localizedSkills.push(skill.skillId);
+          ejectedSkills.push(skill.skillId);
         }
       }
 
       // Uninstall plugin references using per-skill scope
-      for (const migration of plan.toLocal) {
+      for (const migration of plan.toEject) {
         try {
           const pluginScope = migration.oldScope === "global" ? "user" : "project";
           await claudePluginUninstall(migration.id, pluginScope, projectDir);
@@ -132,11 +132,11 @@ export async function executeMigration(
         }
       }
     } catch (error) {
-      warnings.push(`Could not copy skills to local: ${getErrorMessage(error)}`);
+      warnings.push(`Could not copy skills for eject: ${getErrorMessage(error)}`);
     }
   }
 
-  // Migrate skills from local to plugin
+  // Migrate skills from eject to plugin
   if (plan.toPlugin.length > 0) {
     // Delete local copies from the scope-appropriate directory
     for (const migration of plan.toPlugin) {
@@ -164,5 +164,5 @@ export async function executeMigration(
     }
   }
 
-  return { localizedSkills, pluginizedSkills, warnings };
+  return { ejectedSkills, pluginizedSkills, warnings };
 }

@@ -84,9 +84,9 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode migration", () =>
     );
   });
 
-  describe("mode migration plugin -> local", () => {
+  describe("mode migration plugin -> eject", () => {
     it(
-      "should switch skills from plugin to local mode",
+      "should switch skills from plugin to eject mode",
       { timeout: PLUGIN_TEST_TIMEOUT_MS },
       async () => {
         const project = await ProjectBuilder.pluginProject({
@@ -104,7 +104,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode migration", () =>
         // Build -> Sources (customize view)
         const sources = await wizard.build.advanceToSources();
 
-        // Press "l" hotkey to set ALL skills to local mode
+        // Press "l" hotkey to set ALL skills to eject mode
         await sources.setAllLocal();
 
         // Sources -> Agents -> Confirm -> Complete
@@ -116,12 +116,12 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode migration", () =>
 
         const rawOutput = result.rawOutput;
         expect(rawOutput).toContain("Switching");
-        expect(rawOutput).toContain("to local");
+        expect(rawOutput).toContain("to eject");
 
         await expect(result.project).toHaveSkillCopied("web-framework-react");
         await expect(result.project).toHaveConfig({
           skillIds: ["web-framework-react"],
-          source: "local",
+          source: "eject",
         });
       },
     );

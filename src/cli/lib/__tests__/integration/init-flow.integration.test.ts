@@ -5,7 +5,7 @@ import { readFile, rm } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { INIT_TEST_SKILLS } from "../mock-data/mock-skills";
-import { installLocal } from "../../installation/local-installer";
+import { installEject } from "../../installation/local-installer";
 import type { AgentName, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
@@ -51,7 +51,7 @@ afterEach(async () => {
 
 // ── Test Suites ────────────────────────────────────────────────────────────────
 
-describe("Init Flow Integration: Local Mode", () => {
+describe("Init Flow Integration: Eject Mode", () => {
   let dirs: TestDirs;
   let originalCwd: string;
   let sourceResult: SourceLoadResult;
@@ -71,7 +71,7 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should create .claude-src/config.ts with correct structure", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WEB_API,
       }),
@@ -92,12 +92,12 @@ describe("Init Flow Integration: Local Mode", () => {
     expect(Array.isArray(config.agents)).toBe(true);
     expect(config.agents.map((a) => a.name)).toEqual(["api-developer", "web-developer"]);
     expect(config.skills).toBeDefined();
-    expect(deriveInstallMode(config.skills)).toBe("local");
+    expect(deriveInstallMode(config.skills)).toBe("eject");
     expect(config.source).toBe(dirs.sourceDir);
   });
 
   it("should copy selected skills to .claude/skills/", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO)),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -123,7 +123,7 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should compile agents to .claude/agents/", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WEB_API,
       }),
@@ -152,7 +152,7 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should include selected skills in config.ts skills array", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_ALL)),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -168,7 +168,7 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should assign all skills to all selected agents", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WEB_API,
       }),
@@ -212,7 +212,7 @@ describe("Init Flow Integration: Single Skill Selection", () => {
   it("should handle single skill selection correctly", async () => {
     const selectedSkills: SkillId[] = ["web-testing-vitest"];
 
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(selectedSkills)),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -248,7 +248,7 @@ describe("Init Flow Integration: All Skills Selection", () => {
   });
 
   it("should handle all skills selected from matrix", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_ALL), {
         selectedAgents: SELECTED_AGENTS_WEB_API,
       }),
@@ -287,7 +287,7 @@ describe("Init Flow Integration: Source Configuration", () => {
   });
 
   it("should save source flag to config.ts when provided", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(["web-framework-react"])),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -299,7 +299,7 @@ describe("Init Flow Integration: Source Configuration", () => {
   });
 
   it("should use sourceConfig source when no source flag provided", async () => {
-    await installLocal({
+    await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(["web-framework-react"])),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -333,7 +333,7 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
   });
 
   it("should create complete directory structure", async () => {
-    await installLocal({
+    await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO)),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -357,7 +357,7 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
   });
 
   it("should create skill directories with SKILL.md files", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(["web-framework-react"])),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -376,7 +376,7 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
   });
 
   it("should produce agent markdown with valid frontmatter", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WEB_API,
       }),
@@ -424,7 +424,7 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
 
   it("should merge with existing config on second init", async () => {
     // First init with one skill
-    const firstResult = await installLocal({
+    const firstResult = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(["web-framework-react"])),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -433,7 +433,7 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
     expect(firstResult.wasMerged).toBe(false);
 
     // Second init with additional skill
-    const secondResult = await installLocal({
+    const secondResult = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO)),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -467,21 +467,21 @@ describe("Init Flow Integration: Install Mode in Config", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should set installMode to local in config", async () => {
-    const result = await installLocal({
+  it("should set installMode to eject in config", async () => {
+    const result = await installEject({
       wizardResult: buildWizardResult(
-        buildSkillConfigs(["web-framework-react"], { source: "local" }),
+        buildSkillConfigs(["web-framework-react"], { source: "eject" }),
       ),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(deriveInstallMode(config.skills)).toBe("local");
+    expect(deriveInstallMode(config.skills)).toBe("eject");
   });
 
   it("should set installMode to plugin when wizard selects plugin mode", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(
         buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
       ),
@@ -513,7 +513,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
   });
 
   it("should preserve skill content when copying", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO)),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -543,7 +543,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
   });
 
   it("should inject forkedFrom metadata on copied skills", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(["web-framework-react"])),
       sourceResult,
       projectDir: dirs.projectDir,
@@ -554,7 +554,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
     expect(await fileExists(metadataPath)).toBe(true);
 
     const metadata = await readTestYaml<Record<string, unknown>>(metadataPath);
-    // installLocal calls injectForkedFromMetadata which adds forkedFrom
+    // installEject calls injectForkedFromMetadata which adds forkedFrom
     expect(metadata).toHaveProperty("forkedFrom");
 
     const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
@@ -582,7 +582,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
   });
 
   it("should only include selected agents in config.agents", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WITH_REVIEWER,
       }),
@@ -597,7 +597,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
   });
 
   it("should only have stack entries for selected agents, not DEFAULT_AGENTS", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WITH_REVIEWER,
       }),
@@ -622,7 +622,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
   });
 
   it("should assign all skills to all selected agents", async () => {
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WITH_REVIEWER,
       }),

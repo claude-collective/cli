@@ -137,7 +137,7 @@ describe("uninstall preservation behavior", () => {
     // Add the custom agent to config so uninstall will track it
     await writeProjectConfig(projectDir, {
       name: "test-edit-project",
-      skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+      skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
       agents: [
         { name: "web-developer", scope: "project" },
         { name: "my-custom-agent" as AgentName, scope: "project" }, // fabricated E2E test ID

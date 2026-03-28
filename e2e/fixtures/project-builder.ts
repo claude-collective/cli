@@ -67,7 +67,7 @@ export class ProjectBuilder {
 
     const config: ProjectConfig = {
       name: "e2e-compile-test",
-      skills: [{ id: "web-testing-vitest", scope: "project", source: "local" }],
+      skills: [{ id: "web-testing-vitest", scope: "project", source: "eject" }],
       agents: [
         { name: "web-developer", scope: "project" },
         { name: "api-developer", scope: "project" },
@@ -107,7 +107,7 @@ export class ProjectBuilder {
     await mkdir(skillsDir, { recursive: true });
     await mkdir(agentsDir, { recursive: true });
 
-    const skillConfigs = skills.map((id) => ({ id, scope: "project" as const, source: "local" }));
+    const skillConfigs = skills.map((id) => ({ id, scope: "project" as const, source: "eject" }));
     const agentConfigs = agents.map((name) => ({ name, scope: "project" as const }));
 
     const config: ProjectConfig = {
@@ -163,7 +163,7 @@ export class ProjectBuilder {
     // --- Global installation ---
     const globalConfig: ProjectConfig = {
       name: "global-test",
-      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "local" }],
+      skills: [{ id: "web-testing-cypress-e2e", scope: "global", source: "eject" }],
       agents: [{ name: "web-developer", scope: "global" }],
       domains: ["web"],
       stack: {
@@ -183,8 +183,8 @@ export class ProjectBuilder {
     const projectConfig: ProjectConfig = {
       name: "project-test",
       skills: [
-        { id: "web-testing-playwright-e2e", scope: "project", source: "local" },
-        { id: "web-testing-cypress-e2e", scope: "global", source: "local" },
+        { id: "web-testing-playwright-e2e", scope: "project", source: "eject" },
+        { id: "web-testing-cypress-e2e", scope: "global", source: "eject" },
       ],
       agents: [{ name: "api-developer", scope: "project" }],
       domains: ["web"],
@@ -287,7 +287,7 @@ export interface ProjectConfig {
 export default {
   name: "test-custom-skill-project",
   agents: [{ name: "web-developer", scope: "project" }],
-  skills: [{ id: "web-custom-e2e-widget", scope: "project", source: "local" }],
+  skills: [{ id: "web-custom-e2e-widget", scope: "project", source: "eject" }],
   domains: ["web"],
   stack: {
     "web-developer": {
@@ -385,8 +385,8 @@ contentHash: "e5f6a7b"
   }
 
   /**
-   * Creates a project initialized in local mode but with a marketplace configured.
-   * Skills have source "local" but the config has a marketplace field.
+   * Creates a project initialized in eject mode but with a marketplace configured.
+   * Skills have source "eject" but the config has a marketplace field.
    */
   static async localProjectWithMarketplace(options: PluginProjectOptions): Promise<ProjectHandle> {
     const tempDir = await createTempDir();
@@ -401,7 +401,7 @@ contentHash: "e5f6a7b"
       skills: skills.map((id) => ({
         id,
         scope: "project" as const,
-        source: "local",
+        source: "eject",
       })),
       agents: agents.map((name) => ({ name, scope: "project" as const })),
       domains,
@@ -455,7 +455,7 @@ contentHash: "e5f6a7b"
 
     await writeProjectConfig(tempDir, {
       name: "global-test",
-      skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+      skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
       agents: [{ name: "web-developer", scope: "project" }],
       domains: ["web"],
     });

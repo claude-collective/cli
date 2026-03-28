@@ -245,7 +245,7 @@ export default class NewMarketplace extends BaseCommand {
     // Boundary cast: custom marketplace dummy skill/category not in standard unions
     const configContent = generateConfigSource({
       name: marketplaceName,
-      skills: [{ id: skillName as SkillId, scope: "project", source: "local" }],
+      skills: [{ id: skillName as SkillId, scope: "project", source: "eject" }],
       agents: [],
       source: ".",
       marketplace: marketplaceName,

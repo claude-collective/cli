@@ -865,13 +865,13 @@ describe("stack-plugin-compiler", () => {
       expect(output).toContain('skill: "web-testing-vitest:web-testing-vitest"');
     });
 
-    it("should emit bare skill IDs when installMode is local", async () => {
+    it("should emit bare skill IDs when installMode is eject", async () => {
       const output = await compileAgentForPlugin(
         "web-developer",
         AGENT_WITH_BOTH_SKILLS,
         projectRoot,
         engine,
-        "local",
+        "eject",
       );
 
       // Frontmatter should contain bare skill IDs (no colon format)

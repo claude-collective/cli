@@ -268,7 +268,7 @@ describe("projectConfigLoaderSchema", () => {
       const config = {
         name: "test-project",
         agents: buildAgentConfigs(["web-developer"]),
-        skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
+        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
       };
 
       const result = projectConfigLoaderSchema.safeParse(config);
@@ -668,8 +668,8 @@ describe("lenient schemas accept custom values without pre-registration", () => 
       name: "test-project",
       agents: buildAgentConfigs(["web-developer"]),
       skills: [
-        { id: "web-framework-react", scope: "project", source: "local" },
-        { id: "acme-pipeline-deploy", scope: "project", source: "local" },
+        { id: "web-framework-react", scope: "project", source: "eject" },
+        { id: "acme-pipeline-deploy", scope: "project", source: "eject" },
       ],
     });
     expect(result.success).toBe(true);

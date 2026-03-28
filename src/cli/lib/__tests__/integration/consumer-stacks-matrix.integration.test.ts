@@ -5,7 +5,7 @@ import { writeSourceSkill, SKILLS } from "../helpers";
 import { STANDARD_FILES } from "../../../consts";
 
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
-import { installLocal } from "../../installation/local-installer";
+import { installEject } from "../../installation/local-installer";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { ProjectConfig, ResolvedSkill, SkillId } from "../../../types";
 import {
@@ -94,7 +94,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
     initializeMatrix(consumerMatrix);
     const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
 
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(
         buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
       ),
@@ -284,7 +284,7 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
     initializeMatrix(consumerMatrix);
     const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
 
-    const result = await installLocal({
+    const result = await installEject({
       wizardResult: buildWizardResult(
         buildSkillConfigs(["web-framework-react", "api-framework-hono", "web-testing-vitest"]),
         { selectedAgents: ["web-developer", "api-developer"] },
@@ -502,7 +502,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       const consumerMatrix = buildConsumerMatrix();
       initializeMatrix(consumerMatrix);
       const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
-      const result = await installLocal({
+      const result = await installEject({
         wizardResult: buildWizardResult(
           buildSkillConfigs(["web-framework-react", "web-testing-vitest", "api-framework-hono"]),
           { selectedAgents: ["web-developer", "api-developer"] },
