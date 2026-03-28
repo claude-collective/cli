@@ -293,9 +293,9 @@ Boundary casts are **NOT** acceptable for: mid-pipeline workarounds (fix the ups
 
 ```ts
 // OK: no abstraction needed
-const intro = await readFile(path.join(dir, STANDARD_FILES.INTRO_MD));
-const workflow = await readFile(path.join(dir, STANDARD_FILES.WORKFLOW_MD));
-const examples = await readFileOptional(path.join(dir, STANDARD_FILES.EXAMPLES_MD), "");
+const identity = await readFile(path.join(dir, STANDARD_FILES.IDENTITY_MD));
+const playbook = await readFile(path.join(dir, STANDARD_FILES.PLAYBOOK_MD));
+const output = await readFileOptional(path.join(dir, STANDARD_FILES.OUTPUT_MD), "");
 ```
 
 **8.3** Compose existing functions before creating new ones.

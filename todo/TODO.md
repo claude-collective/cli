@@ -2,16 +2,14 @@
 
 | ID    | Task                                                                                      | Status        |
 | ----- | ----------------------------------------------------------------------------------------- | ------------- |
-| D-123 | Local mode ENOENT — empty `sourcePath` for built-in matrix on consuming projects          | Ready for Dev |
-| D-124 | E2E tests for default source path (`BUILT_IN_MATRIX` code path)                           | Ready for Dev |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions                          | Ready for Dev |
 | D-156 | Rename "local mode" to "eject mode" across CLI commands, config, types, and documentation | Ready for Dev |
 | D-144 | Info panel — replace `?` overlay with `I` panel (stats, context, toggles)                 | Investigate   |
 | D-111 | Create a GIF demo for the README                                                          | Ready for Dev |
-| D-112 | Create a guide for setting up AI documentation                                            | Ready for Dev |
+| D-112 | Write "Using the codex-keeper subagent" guide — invoke, workflow, outputs, maintenance    | Ready for Dev |
 | D-110 | Fix the logo in the README                                                                | Ready for Dev |
 | D-109 | Fix the screenshots in the README                                                         | Ready for Dev |
 | D-62  | Review default stacks: add reviewing/research skills                                      | Ready for Dev |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions                          | Ready for Dev |
 | D-118 | Investigate renaming "project/global" scope to "project/user"                             | Investigate   |
 | D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting          | Ready for Dev |
 | D-131 | Track project installations in global config                                              | Investigate   |
@@ -26,6 +24,8 @@
 | D-66  | AI-assisted PR review: categorize diffs by type                                           | Investigate   |
 | D-69  | Config migration strategy for outdated config shapes                                      | Investigate   |
 | D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`            | Ready for Dev |
+| D-159 | Show visual feedback when toggling locked global skills/agents in project-scope edit       | Ready for Dev |
+| D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena  | Investigate   |
 
 ---
 
@@ -335,6 +335,16 @@ In `src/cli/lib/matrix/matrix-resolver.ts`, `getDiscourageReason()` (lines 213-2
 Add Sentry `captureMessage` (or `captureException`) calls on every fallback path so we can track unresolved matrix references in production. Include the referencing skill ID, the missing referenced ID, and the relationship type (`requires`, `conflictsWith`, `providesSetupFor`) in the Sentry context.
 
 **Key file:** `src/cli/lib/matrix/matrix-resolver.ts`
+
+---
+
+### Skill Quality
+
+#### D-162: Skill Olympics — benchmark and optimize expressive-typescript skill
+
+**Priority:** Medium | **Plan:** [D-162-skill-olympics/plan.md](./D-162-skill-olympics/plan.md) | **Catalog:** [D-162-skill-olympics/test-catalog.md](./D-162-skill-olympics/test-catalog.md)
+
+Competitive arena: 10 contestants (clean-code prompts from Cursor rules, Claude skills, ChatGPT prompts, system prompts, reference docs) × 5 test cases from codebase anti-patterns. Score on 10-axis rubric, Frankenstein winners. Phase 1 (harvest) done — 10 contestants selected, 6 honorable mentions for later. Next: Phase 2 (extract test cases).
 
 ---
 
