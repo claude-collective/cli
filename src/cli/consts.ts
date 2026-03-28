@@ -120,8 +120,8 @@ export const UI_LAYOUT = {
 } as const;
 
 export const UI_MESSAGES = {
-  GLOBALLY_INSTALLED: "is globally installed, modify from ~/",
-  GLOBALLY_LOCKED_CATEGORY: "Category is locked from global install, modify from ~/",
+  GLOBALLY_INSTALLED: "is globally installed, modify from home dir",
+  GLOBALLY_LOCKED_CATEGORY: "Category is locked from global install, modify from home dir",
 } as const;
 
 export const GITHUB_SOURCE = {
@@ -176,7 +176,7 @@ export const DEFAULT_PUBLIC_SOURCE_NAME = "agents-inc";
 /** Human-readable labels for skill source types shown in the wizard and edit command */
 export const SOURCE_DISPLAY_NAMES: Record<string, string> = {
   public: "Public",
-  local: "Local",
+  eject: "Eject",
   "agents-inc": "Agents Inc",
 };
 
