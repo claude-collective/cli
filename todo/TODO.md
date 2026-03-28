@@ -10,6 +10,7 @@
 | D-110 | Fix the logo in the README                                                                | Ready for Dev |
 | D-109 | Fix the screenshots in the README                                                         | Ready for Dev |
 | D-62  | Review default stacks: add reviewing/research skills                                      | Ready for Dev |
+| D-159 | Lock badge + toast for locked global skills in project-scope edit                         | Ready for Dev |
 | D-118 | Investigate renaming "project/global" scope to "project/user"                             | Investigate   |
 | D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting          | Ready for Dev |
 | D-131 | Track project installations in global config                                              | Investigate   |
@@ -24,7 +25,6 @@
 | D-66  | AI-assisted PR review: categorize diffs by type                                           | Investigate   |
 | D-69  | Config migration strategy for outdated config shapes                                      | Investigate   |
 | D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`            | Ready for Dev |
-| D-159 | Show visual feedback when toggling locked global skills/agents in project-scope edit      | Ready for Dev |
 | D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena | Investigate   |
 
 ---
@@ -200,6 +200,43 @@ Replace the `?` help overlay with an `I` info panel (opened via the `I` key) tha
 
 ---
 
+#### D-159: Visual feedback for locked global skills in project-scope edit
+
+**Priority:** Medium
+
+When running `cc edit` from a project directory, global-scoped skills are locked (can't be toggled), but there's no visual indicator — pressing space silently does nothing.
+
+**Design:**
+
+1. **Lock badge on scope indicator** — Replace ` G ` with `🔒 G ` (one space between lock and G) for locked global skills. Same yellow text on dark background. Unlocked project skills keep the existing ` P ` gray badge.
+
+2. **Toast on toggle attempt** — When the user presses space on a locked skill, show a warning message below the grid: `⚠ React is globally installed — run cc edit from ~/.claude to modify`. Auto-clears after 2s (matching `COPIED_MESSAGE_TIMEOUT_MS`). Follows the `statusMessage` pattern from `step-settings.tsx`.
+
+```
+  Frameworks *
+  ┌─────────────────┐ ┌──────────────┐ ┌──────────────┐
+  │  🔒 G  React    │ │  🔒 G  Vue   │ │  P  Next.js  │
+  └─────────────────┘ └──────────────┘ └──────────────┘
+
+  Styling
+  ┌────────────────────┐ ┌──────────────────┐ ┌──────────────┐
+  │  🔒 G  Tailwind    │ │  P  CSS Modules  │ │  P  Sass     │
+  └────────────────────┘ └──────────────────┘ └──────────────┘
+
+  ⚠ React is globally installed — run cc edit from ~/.claude to modify
+```
+
+**Key files:**
+
+- `src/cli/components/wizard/category-grid.tsx` — `SkillTag` component, scope badge rendering (lines 135-144)
+- `src/cli/components/hooks/use-category-grid-input.ts` — locked skill toggle suppression (line 140), add toast callback
+- `src/cli/consts.ts` — add `LOCK` to `UI_SYMBOLS`
+- `src/cli/components/wizard/step-build.tsx` — wire toast state and display
+
+**Scope:** Build step and agents step (both use `CategoryGrid` with locked items).
+
+---
+
 #### D-127: UX for claiming global skills/agents into project scope
 
 **Priority:** Low
@@ -344,7 +381,7 @@ Add Sentry `captureMessage` (or `captureException`) calls on every fallback path
 
 **Priority:** Medium | **Plan:** [D-162-skill-olympics/plan.md](./D-162-skill-olympics/plan.md) | **Catalog:** [D-162-skill-olympics/test-catalog.md](./D-162-skill-olympics/test-catalog.md)
 
-Competitive arena: 10 contestants (clean-code prompts from Cursor rules, Claude skills, ChatGPT prompts, system prompts, reference docs) × 5 test cases from codebase anti-patterns. Score on 10-axis rubric, Frankenstein winners. Phase 1 (harvest) done — 10 contestants selected, 6 honorable mentions for later. Next: Phase 2 (extract test cases).
+Competitive arena: 100 contestants catalogued, 10 selected for proof of concept × 5 test cases from codebase anti-patterns. Score on 10-axis rubric, Frankenstein winners, then chain skills (run A→B to test post-processing combos). Phases 1-4 done (harvest, test case extraction, constraints, contestant prompts). Next: Phase 3 (arena runs).
 
 ---
 
