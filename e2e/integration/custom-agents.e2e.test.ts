@@ -172,16 +172,16 @@ describe("custom sub-agents", () => {
   });
 
   describe("edge cases", () => {
-    it("should fail gracefully when custom agent is missing workflow.md", async () => {
+    it("should fail gracefully when custom agent is missing playbook.md", async () => {
       const project = await ProjectBuilder.minimal();
       tempDir = path.dirname(project.dir);
       const projectDir = project.dir;
 
-      // Create a custom agent without workflow.md
+      // Create a custom agent without playbook.md
       await createCustomAgent(projectDir, "incomplete-agent", {
         identityContent: "E2E-INCOMPLETE-AGENT-INTRO",
-        // workflow.md intentionally omitted (undefined means skip creation)
-        description: "An agent with missing workflow.md",
+        // playbook.md intentionally omitted (undefined means skip creation)
+        description: "An agent with missing playbook.md",
         domain: "web",
       });
 
@@ -193,10 +193,10 @@ describe("custom sub-agents", () => {
 
       const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
-      // Compile should fail or warn about the missing workflow.md
-      // readAgentFiles() calls readFile() (not readFileOptional) for workflow.md,
+      // Compile should fail or warn about the missing playbook.md
+      // readAgentFiles() calls readFile() (not readFileOptional) for playbook.md,
       // so a missing file should cause a compile failure for that agent
-      expect(output).toMatch(/failed|error|workflow/i);
+      expect(output).toMatch(/failed|error|playbook/i);
     });
 
     it("should report useful error when custom agent has empty metadata.yaml", async () => {

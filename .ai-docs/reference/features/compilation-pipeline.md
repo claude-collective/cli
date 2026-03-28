@@ -41,8 +41,8 @@
 
 5. Per-Agent Compilation
    -> readAgentFiles() (src/cli/lib/compiler.ts:126-167)
-      Reads: intro.md, workflow.md, examples.md, critical-requirements.md,
-             critical-reminders.md, output-format.md
+      Reads: identity.md, playbook.md, output.md, critical-requirements.md,
+             critical-reminders.md
    -> buildAgentTemplateContext() (src/cli/lib/compiler.ts:169-190)
       Splits skills into preloaded vs dynamic
    -> sanitizeCompiledAgentData() (src/cli/lib/compiler.ts:77-115)
@@ -85,12 +85,11 @@ Each agent has a directory with these files:
 
 ```
 src/agents/{agent-name}/
-  intro.md                    # Required: agent introduction/role
-  workflow.md                 # Required: agent workflow/process
-  examples.md                 # Optional: usage examples
+  identity.md                 # Required: agent identity/role
+  playbook.md                 # Required: agent workflow/process
+  output.md                   # Optional: examples and output format
   critical-requirements.md    # Optional: top-of-prompt requirements
   critical-reminders.md       # Optional: bottom-of-prompt reminders
-  output-format.md            # Optional: output format specification
   metadata.yaml               # Agent configuration (tools, model, permissions)
 ```
 

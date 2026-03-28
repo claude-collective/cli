@@ -144,7 +144,7 @@ Installation
   |
   v
 Compilation (lib/compiler.ts)
-  -> readAgentFiles() -> agent partials (intro.md, workflow.md, etc.)
+  -> readAgentFiles() -> agent partials (identity.md, playbook.md, etc.)
   -> buildAgentTemplateContext() -> CompiledAgentData
   -> sanitizeCompiledAgentData() -> prevent Liquid injection
   -> Liquid engine renders agent.liquid template

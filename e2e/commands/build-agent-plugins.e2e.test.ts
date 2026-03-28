@@ -22,7 +22,7 @@ import { CLI } from "../fixtures/cli.js";
  * 2. `compileAllAgentPlugins()` in `agent-plugin-compiler.ts` expects
  *    pre-compiled `.md` files with YAML frontmatter (`name` and `description`
  *    fields required). It does NOT consume raw agent source directories
- *    (`metadata.yaml` + `intro.md` + `workflow.md`).
+ *    (`metadata.yaml` + `identity.md` + `playbook.md`).
  *
  * 3. The existing `createE2EPluginSource()` helper runs `build plugins`
  *    WITHOUT `--agents-dir`, so no agent plugins are built in existing tests.

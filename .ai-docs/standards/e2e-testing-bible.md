@@ -331,7 +331,7 @@ expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
 **8.2 The E2E source defines 1 stack** ("E2E Test Stack") mapping skills to 2 agents (`web-developer`, `api-developer`).
 
-**8.3 `createE2ESource()` creates the full source directory** -- skills with `SKILL.md` + `metadata.yaml`, agents with `metadata.yaml` + `intro.md` + `workflow.md`, a `stacks.ts` config, and an `agent.liquid` template.
+**8.3 `createE2ESource()` creates the full source directory** -- skills with `SKILL.md` + `metadata.yaml`, agents with `metadata.yaml` + `identity.md` + `playbook.md`, a `stacks.ts` config, and an `agent.liquid` template.
 
 **8.4 `createE2EPluginSource()` extends the above** by running `runCLI(["build", "plugins"])` and `runCLI(["build", "marketplace", "--name", ...])` on the source. Returns `{ sourceDir, tempDir, marketplaceName, pluginsDir }`.
 

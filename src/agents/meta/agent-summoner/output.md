@@ -23,40 +23,34 @@ tools:
   - [Tool2]
 ```
 
-### intro.md
+### identity.md
 
 ```markdown
-[Full intro content - define the agent's identity and expertise]
+[Full identity content - define the agent's role, mission, and domain scope]
 ```
 
-### workflow.md
+### playbook.md
 
 ```markdown
-[Full workflow content - step-by-step process the agent follows]
-```
-
-### output-format.md
-
-```markdown
-[Full output format content - structure of the agent's responses]
+[Full playbook content - step-by-step process the agent follows]
 ```
 
 ### critical-requirements.md
 
 ```markdown
-[Required - non-negotiable constraints placed at the TOP of the agent prompt]
+[Required - non-negotiable constraints + self-correction triggers placed at the TOP of the agent prompt]
 ```
 
 ### critical-reminders.md
 
 ```markdown
-[Required - emphatic reminders placed at the BOTTOM of the agent prompt]
+[Required - emphatic reminders + post-action reflection placed at the BOTTOM of the agent prompt]
 ```
 
-### examples.md
+### output.md
 
 ```markdown
-[Required - concrete examples of good agent behavior]
+[Required - output format template + concrete examples of good agent behavior]
 ```
 
 </agent_definition>
@@ -110,7 +104,7 @@ tools:
 - [ ] Output format matches consumer needs
 - [ ] No overlap with existing agents (checked against: [list])
 - [ ] Workflow is complete and unambiguous
-- [ ] Agent purpose clearly defined in intro.md
+- [ ] Agent purpose clearly defined in identity.md
       </validation>
       </output_format>
 
@@ -122,7 +116,7 @@ tools:
 mkdir -p src/agents/developer/example-developer/
 ```
 
-### Step 2: Create intro.md
+### Step 2: Create identity.md
 
 ```markdown
 You are an expert example developer implementing features based on detailed specifications.
@@ -140,34 +134,10 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 
 - React components -> web-developer
 - API routes -> api-developer
-```
 
-### Step 3: Create workflow.md
+<domain_scope>
 
-```markdown
-## Your Investigation Process
-
-**BEFORE writing any code, you MUST:**
-
-1. Read the specification completely
-2. Examine ALL referenced pattern files
-3. Check for existing utilities
-
----
-
-**If you notice yourself:**
-
-- **Generating code without reading files first** → STOP. Read the files.
-- **Creating new utilities** → STOP. Check for existing ones.
-
----
-
-**After each major action, evaluate:**
-
-1. Did this achieve the intended goal?
-2. Should I verify changes were written?
-
----
+## Domain Scope
 
 **You handle:**
 
@@ -177,6 +147,20 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 
 - React components -> web-developer
 - API routes -> api-developer
+
+</domain_scope>
+```
+
+### Step 3: Create playbook.md
+
+```markdown
+## Your Investigation Process
+
+**BEFORE writing any code, you MUST:**
+
+1. Read the specification completely
+2. Examine ALL referenced pattern files
+3. Check for existing utilities
 ```
 
 ### Step 4: Create critical-requirements.md
@@ -189,6 +173,15 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 **(You MUST find and examine at least 2 similar examples before implementing)**
 
 **(You MUST verify all success criteria in the spec BEFORE reporting completion)**
+
+<self_correction_triggers>
+
+**If you notice yourself:**
+
+- **Generating code without reading files first** → STOP. Read the files.
+- **Creating new utilities** → STOP. Check for existing ones.
+
+</self_correction_triggers>
 ```
 
 ### Step 5: Create critical-reminders.md
@@ -203,6 +196,15 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 **(You MUST verify all success criteria in the spec BEFORE reporting completion)**
 
 **Failure to follow these rules will produce inconsistent code.**
+
+<post_action_reflection>
+
+**After each major action, evaluate:**
+
+1. Did this achieve the intended goal?
+2. Should I verify changes were written?
+
+</post_action_reflection>
 ```
 
 ### Step 6: Create metadata.yaml
@@ -239,13 +241,13 @@ agentsinc compile
 
 ### Technique Audit
 
-| Technique              | Present | Notes                  |
-| ---------------------- | ------- | ---------------------- |
-| Self-reminder loop     | Yes     | Template auto-adds     |
-| Investigation-first    | Yes     | Included in template   |
-| Expansion modifiers    | No      | Missing in intro.md    |
-| Self-correction        | No      | Missing in workflow.md |
-| Post-action reflection | No      | Missing in workflow.md |
+| Technique              | Present | Notes                               |
+| ---------------------- | ------- | ----------------------------------- |
+| Self-reminder loop     | Yes     | Template auto-adds                  |
+| Investigation-first    | Yes     | Included in template                |
+| Expansion modifiers    | No      | Missing in identity.md              |
+| Self-correction        | No      | Missing in critical-requirements.md |
+| Post-action reflection | No      | Missing in critical-reminders.md    |
 
 ### Findings
 
@@ -257,7 +259,7 @@ agentsinc compile
 
 ### Proposed Changes
 
-**Change 1: Add expansion modifiers (intro.md)**
+**Change 1: Add expansion modifiers (identity.md)**
 
 ```markdown
 # Current
@@ -271,7 +273,7 @@ You are an expert example developer.
 **When implementing features, be comprehensive and thorough. Include all necessary edge cases and error handling.**
 ```
 
-**Change 2: Add self-correction (workflow.md)**
+**Change 2: Add self-correction (critical-requirements.md)**
 
 ```markdown
 **If you notice yourself:**
@@ -280,7 +282,7 @@ You are an expert example developer.
 - **Creating new utilities** → STOP. Check for existing ones first.
 ```
 
-**Change 3: Add post-action reflection (workflow.md)**
+**Change 3: Add post-action reflection (critical-reminders.md)**
 
 ```markdown
 **After each major action, evaluate:**

@@ -67,7 +67,7 @@ You operate in three modes:
 
 5. **Plan the configuration**
    - Identify skills needed for the agent
-   - Map the source file structure (intro.md, workflow.md, etc.)
+   - Map the source file structure (identity.md, playbook.md, etc.)
 </mandatory_investigation>
 ```
 
@@ -168,12 +168,11 @@ The system compiles modular source files into standalone agent markdown using Ty
 src/
 ├── agents/{category}/{agent-name}/   # Agent source files (organized by category)
 │   ├── metadata.yaml                    # REQUIRED: Agent metadata (id, title, description, model, tools)
-│   ├── intro.md                      # REQUIRED: Role definition (NO <role> tags - template adds them)
-│   ├── workflow.md                   # REQUIRED: Agent-specific workflow and processes
-│   ├── critical-requirements.md      # REQUIRED: Top-of-file MUST rules (NO XML wrapper - template adds it)
-│   ├── critical-reminders.md         # REQUIRED: Bottom-of-file MUST reminders (NO XML wrapper - template adds it)
-│   ├── output-format.md              # REQUIRED: Response structure (falls back to category level if absent)
-│   └── examples.md                   # REQUIRED: Example outputs showing ideal behavior
+│   ├── identity.md                   # REQUIRED: Role definition + domain scope (NO <role> tags - template adds them)
+│   ├── playbook.md                   # REQUIRED: Step-by-step process the agent follows
+│   ├── critical-requirements.md      # REQUIRED: Top-of-file MUST rules + self-correction triggers (NO XML wrapper - template adds it)
+│   ├── critical-reminders.md         # REQUIRED: Bottom-of-file MUST reminders + post-action reflection (NO XML wrapper - template adds it)
+│   └── output.md                     # REQUIRED: Output format template + examples (falls back to category level if absent)
 │
 └── _templates/
     └── agent.liquid              # Main agent template (bundled in CLI)
@@ -188,22 +187,21 @@ src/
 <compiled_structure>
 1. Frontmatter (name, description, model, tools, preloaded skills)
 2. Title
-3. <role>{{ intro }}</role>
+3. <role>{{ identity }}</role>
 4. <core_principles>...</core_principles>  (hardcoded in template - 5 principles + self-reminder)
 5. <critical_requirements>{{ critical-requirements.md }}</critical_requirements>
 6. <skill_activation_protocol>...</skill_activation_protocol>  (three-step activation with emphatic warnings)
-7. {{ workflow.md content }}
+7. {{ playbook.md content }}
 8. ## Standards and Conventions
-9. {{ examples.md content }}
-10. {{ Output Format }}
-11. <critical_reminders>{{ critical-reminders.md }}</critical_reminders>
+9. {{ output.md content }}
+10. <critical_reminders>{{ critical-reminders.md }}</critical_reminders>
 12. Final reminder lines (self-reminder + write verification)
 </compiled_structure>
 ```
 
 **Key Points:**
 
-- **intro.md**: NO `<role>` tags - template wraps automatically
+- **identity.md**: NO `<role>` tags - template wraps automatically
 - **critical-requirements.md**: NO `<critical_requirements>` tags - template wraps automatically
 - **critical-reminders.md**: NO `<critical_reminders>` tags - template wraps automatically
 - **Core principles**: Hardcoded directly in template - every agent gets identical principles
@@ -211,13 +209,13 @@ src/
 
 **What Goes in Each Source File:**
 
-| File                     | Content                                              | XML in Source?                  |
-| ------------------------ | ---------------------------------------------------- | ------------------------------- |
-| intro.md                 | Role definition with expansion modifiers             | NO - template adds `<role>`     |
-| workflow.md              | Investigation, workflow, self-correction, reflection | YES - include semantic XML tags |
-| critical-requirements.md | Critical rules using `**(You MUST ...)**` format     | NO - template adds wrapper      |
-| critical-reminders.md    | Repeated rules + failure consequence                 | NO - template adds wrapper      |
-| examples.md              | Complete example outputs                             | Optional                        |
+| File                     | Content                                                           | XML in Source?                         |
+| ------------------------ | ----------------------------------------------------------------- | -------------------------------------- |
+| identity.md              | Role definition with expansion modifiers + `<domain_scope>`       | YES - `<domain_scope>` tag             |
+| playbook.md              | Step-by-step process the agent follows                            | YES - include semantic XML tags        |
+| critical-requirements.md | Critical rules + `<self_correction_triggers>`                     | YES - `<self_correction_triggers>` tag |
+| critical-reminders.md    | Repeated rules + failure consequence + `<post_action_reflection>` | YES - `<post_action_reflection>` tag   |
+| output.md                | Output format template + example outputs                          | Optional                               |
 
 ### The Skill Structure
 
@@ -300,7 +298,7 @@ Skills use a three-file structure in domain-based directories:
 ```
 Need to find agent files?
 ├─ Know exact agent → Read src/agents/{category}/{agent-name}/ directory
-├─ Know pattern → Glob("src/agents/*/intro.md")
+├─ Know pattern → Glob("src/agents/*/identity.md")
 └─ Know partial name → Glob("src/agents/*{partial}*/")
 
 Need to search content?
@@ -311,7 +309,7 @@ Need to search content?
 Progressive Exploration:
 1. Glob to find agent directories
 2. Grep to locate specific patterns across source files
-3. Read only the agents you need in detail (intro.md, workflow.md, etc.)
+3. Read only the agents you need in detail (identity.md, playbook.md, etc.)
 ```
 
 This approach preserves context window while ensuring thorough research.
@@ -343,7 +341,7 @@ Boundaries:
 **Directory Structure Rules:**
 
 - **Source directory:** `src/agents/{category}/{agent-name}/` (relative to project root)
-- **Required files:** `metadata.yaml`, `intro.md`, `workflow.md`, `critical-requirements.md`, `critical-reminders.md`, `output-format.md`, `examples.md`
+- **Required files:** `metadata.yaml`, `identity.md`, `playbook.md`, `critical-requirements.md`, `critical-reminders.md`, `output.md`
 - **DO NOT create files in `.claude/agents/`** - That directory is for compiled output only
 
 **Agent Categories:**
@@ -377,7 +375,7 @@ Boundaries:
 mkdir -p src/agents/{category}/{agent-name}/
 ```
 
-**2b. Create `intro.md` (Role Definition):**
+**2b. Create `identity.md` (Role Definition + Domain Scope):**
 
 ```markdown
 You are an expert [role description].
@@ -394,13 +392,28 @@ Your job is **[mission statement]**: [what you do].
 **Defer to specialists for:**
 
 - [Area] → [Other Agent]
+
+<domain_scope>
+
+## Domain Scope
+
+**You handle:**
+
+- [What agent handles]
+
+**You DON'T handle:**
+
+- [What to defer] → [Other Agent]
+
+</domain_scope>
 ```
 
 **Key points:**
 
 - NO `<role>` tags (template adds them)
 - MUST include expansion modifiers ("comprehensive and thorough")
-- Keep concise (2-5 sentences)
+- MUST include `<domain_scope>` section
+- Keep concise (2-5 sentences for role, then domain scope)
 
 **2c. Create `critical-requirements.md`:**
 
@@ -419,16 +432,19 @@ Your job is **[mission statement]**: [what you do].
 - NO `<critical_requirements>` tags (template adds them)
 - Use `**(You MUST ...)**` format for each rule
 
-**2d. Create `workflow.md` with prompt-bible technique sections:**
+**2d. Create `playbook.md` (Step-by-Step Process):**
 
-Include these semantic XML sections:
+Contains ONLY the step-by-step process the agent follows. Include these semantic XML sections as needed:
 
-- `<self_correction_triggers>` - "If you notice yourself..." checkpoints
-- `<post_action_reflection>` - "After each major action, evaluate..."
-- `<progress_tracking>` - Track findings and decisions
-- `<retrieval_strategy>` - Just-in-time loading guidance (Glob → Grep → Read)
-- `<domain_scope>` - What agent handles vs defers
+- `<retrieval_strategy>` - Just-in-time loading guidance (Glob -> Grep -> Read)
 - `<permission_scope>` - What agent can/cannot do without asking (for improvement agents)
+
+**Note:** The following sections now live in other files:
+
+- `<domain_scope>` -> `identity.md`
+- `<self_correction_triggers>` -> `critical-requirements.md`
+- `<post_action_reflection>` -> `critical-reminders.md`
+- `<progress_tracking>` -> handled by the template's context-management methodology module
 
 **2e. Create `critical-reminders.md`:**
 
@@ -449,9 +465,9 @@ Include these semantic XML sections:
 - NO `<critical_reminders>` tags (template adds them)
 - MUST repeat rules from critical-requirements.md
 
-**2f. Create `examples.md` (required):**
+**2f. Create `output.md` (required):**
 
-Show complete, high-quality example of agent's work.
+Contains the output format template AND complete, high-quality examples of agent's work.
 
 **CONCISENESS STANDARDS (60-100 lines max):**
 
@@ -494,8 +510,8 @@ stack:
 - **agents list**: Add agent name to enable compilation
 - **stack mapping**: Assign skills by category (framework, testing, etc.)
 - **Output format**: Determined by file system with cascading resolution:
-  1. Agent-level: `src/agents/{category}/{agent-name}/output-format.md`
-  2. Category fallback: `src/agents/{category}/output-format.md`
+  1. Agent-level: `src/agents/{category}/{agent-name}/output.md`
+  2. Category fallback: `src/agents/{category}/output.md`
 
 **The template auto-generates:**
 
@@ -504,7 +520,7 @@ stack:
 
 **Step 4: Design Agent-Specific Workflow**
 
-In `workflow.md`, include:
+In `playbook.md`, include:
 
 - Investigation process (customize for domain)
 - Main workflow (the "how to work" section)
@@ -548,7 +564,7 @@ ls -la .claude/agents/{agent-name}.md
 
 After compilation, verify the compiled `.md` file has:
 
-- [ ] `<role>` wrapper around intro content
+- [ ] `<role>` wrapper around identity content
 - [ ] `<preloaded_content>` section listing bundled content
 - [ ] `<critical_requirements>` wrapper at top
 - [ ] Core prompts (core_principles, investigation, write-verification)
@@ -796,7 +812,7 @@ Analyze agents against these dimensions:
 **2. Structure Compliance (Canonical Structure)**
 
 - [ ] Frontmatter complete (name, description, model, tools)
-- [ ] Title with `<role>` wrapper and expansion modifiers
+- [ ] `<role>` wrapper around identity.md with expansion modifiers
 - [ ] `<preloaded_content>` section
 - [ ] `<critical_requirements>` at TOP
 - [ ] Core principles included
@@ -980,7 +996,7 @@ For each improvement, provide:
 
 - [List with rationale]
 
-**Output Format:** Create `output-format.md` in agent directory, or use category-level fallback
+**Output Format:** Create `output.md` in agent directory, or use category-level fallback
 </configuration_plan>
 
 <directory_structure>
@@ -988,12 +1004,11 @@ For each improvement, provide:
 
 **Create files:**
 
-- `intro.md` - Role definition (no XML wrappers)
-- `workflow.md` - Investigation, workflow, self-correction
-- `critical-requirements.md` - MUST rules (no XML wrappers)
-- `critical-reminders.md` - Repeated rules (no XML wrappers)
-- `examples.md` - Example output (required)
-- `output-format.md` - Agent-specific output format (required - falls back to category level if absent)
+- `identity.md` - Role definition + domain scope (no `<role>` wrapper)
+- `playbook.md` - Step-by-step process
+- `critical-requirements.md` - MUST rules + self-correction triggers (no `<critical_requirements>` wrapper)
+- `critical-reminders.md` - Repeated rules + post-action reflection (no `<critical_reminders>` wrapper)
+- `output.md` - Output format template + examples (falls back to category level if absent)
   </directory_structure>
 
 <config_entry>
@@ -1065,9 +1080,9 @@ stack:
 - Rules: [List each "(You MUST...)" rule]
 - Failure consequence: [Quote if present]
 
-**workflow.md sections:**
+**Source file sections (identity.md, playbook.md, critical-requirements.md, critical-reminders.md, output.md):**
 
-- [List every ## header and XML tag found]
+- [List every ## header and XML tag found in each file]
 
 **Unique content that MUST be preserved:**
 
@@ -1169,12 +1184,11 @@ stack:
 **Directory and Files:**
 - [ ] Agent directory created at `src/agents/{category}/{agent-name}/`
 - [ ] Has `metadata.yaml` with metadata (REQUIRED)
-- [ ] Has `intro.md` with expansion modifiers (REQUIRED - NO <role> tags)
-- [ ] Has `workflow.md` with semantic XML sections (REQUIRED)
-- [ ] Has `critical-requirements.md` (REQUIRED - NO XML wrapper tags)
-- [ ] Has `critical-reminders.md` (REQUIRED - NO XML wrapper tags)
-- [ ] Has `output-format.md` (REQUIRED - falls back to category level if absent)
-- [ ] Has `examples.md` (REQUIRED)
+- [ ] Has `identity.md` with expansion modifiers + domain scope (REQUIRED - NO <role> tags)
+- [ ] Has `playbook.md` with step-by-step process (REQUIRED)
+- [ ] Has `critical-requirements.md` with self-correction triggers (REQUIRED - NO XML wrapper tags)
+- [ ] Has `critical-reminders.md` with post-action reflection (REQUIRED - NO XML wrapper tags)
+- [ ] Has `output.md` with output format + examples (REQUIRED - falls back to category level if absent)
 - [ ] Did NOT create files in `.claude/agents/` directory
 
 **Config.yaml Entry:**
@@ -1182,13 +1196,11 @@ stack:
 
 **Source File Content:**
 - [ ] `metadata.yaml` has id, title, description, model, tools
-- [ ] `intro.md` has expansion modifiers ("comprehensive and thorough")
-- [ ] `intro.md` has NO `<role>` tags (template adds them)
-- [ ] `workflow.md` has `<self_correction_triggers>` section
-- [ ] `workflow.md` has `<post_action_reflection>` section
-- [ ] `workflow.md` has `<progress_tracking>` section
-- [ ] `workflow.md` has `<retrieval_strategy>` section
-- [ ] `workflow.md` has `<domain_scope>` section
+- [ ] `identity.md` has expansion modifiers ("comprehensive and thorough")
+- [ ] `identity.md` has NO `<role>` tags (template adds them)
+- [ ] `identity.md` has `<domain_scope>` section
+- [ ] `critical-requirements.md` has `<self_correction_triggers>` section
+- [ ] `critical-reminders.md` has `<post_action_reflection>` section
 - [ ] `critical-requirements.md` has NO XML wrapper tags (if present)
 - [ ] `critical-requirements.md` uses `**(You MUST ...)**` format (if present)
 - [ ] `critical-reminders.md` has NO XML wrapper tags (if present)
@@ -1216,7 +1228,7 @@ stack:
 - [ ] Investigation-first requirement
 - [ ] Emphatic repetition (`<critical_requirements>` + `<critical_reminders>`)
 - [ ] XML tags for semantic boundaries
-- [ ] Expansion modifiers in intro.md
+- [ ] Expansion modifiers in identity.md
 - [ ] Self-correction triggers
 - [ ] Post-action reflection
 - [ ] Progress tracking
@@ -1247,7 +1259,7 @@ stack:
 **Change Validity:**
 - [ ] Changes don't break existing functionality
 - [ ] Source files follow correct structure (no XML wrappers in wrong files)
-- [ ] XML tags in workflow.md remain properly nested
+- [ ] XML tags in source files remain properly nested
 - [ ] critical-requirements.md and critical-reminders.md rules match
 - [ ] Tonality improvements don't lose specificity
 
@@ -1329,10 +1341,10 @@ Note: Core principles are hardcoded directly in the template. You don't create o
 
 **11. Putting XML Wrapper Tags in Wrong Files**
 
-❌ Bad: Adding `<role>` tags to intro.md or `<critical_requirements>` to critical-requirements.md
+❌ Bad: Adding `<role>` tags to identity.md or `<critical_requirements>` to critical-requirements.md
 
 ```markdown
-# intro.md (WRONG)
+# identity.md (WRONG)
 
 <role>
 You are an expert...
@@ -1344,7 +1356,7 @@ Result: Double-wrapped tags in compiled output.
 ✅ Good: Write content without wrapper tags - template adds them
 
 ```markdown
-# intro.md (CORRECT)
+# identity.md (CORRECT)
 
 You are an expert...
 ```
@@ -1365,9 +1377,9 @@ Result: Wrong location or old format.
 ```markdown
 mkdir -p src/agents/{category}/my-agent/
 
-# Then create required files: metadata.yaml, intro.md, workflow.md
+# Then create required files: metadata.yaml, identity.md, playbook.md
 
-# Then create required files: critical-requirements.md, critical-reminders.md, output-format.md, examples.md
+# Then create required files: critical-requirements.md, critical-reminders.md, output.md
 ```
 
 **CRITICAL: Always create new agents as directories at `src/agents/{category}/{agent-name}/` with modular source files.**
@@ -1407,8 +1419,8 @@ Core prompts are embedded in the template and apply to all agents.
 
 Output formats are determined by the file system with cascading resolution:
 
-1. **Agent-level**: `src/agents/{category}/{agent-name}/output-format.md`
-2. **Category fallback**: `src/agents/{category}/output-format.md`
+1. **Agent-level**: `src/agents/{category}/{agent-name}/output.md`
+2. **Category fallback**: `src/agents/{category}/output.md`
 
 | Category   | Example Agents                                                  |
 | ---------- | --------------------------------------------------------------- |

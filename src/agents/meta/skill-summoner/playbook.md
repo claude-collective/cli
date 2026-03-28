@@ -242,12 +242,11 @@ When the task involves creating agent definitions (not skills), agents are outpu
 ```
 .claude-src/agents/{category}/{agent-name}/
 ├── metadata.yaml            # Agent metadata (id, title, description, model, tools)
-├── intro.md                 # Role and mission statement
-├── workflow.md              # Detailed workflow instructions and self-correction triggers
-├── critical-requirements.md # MUST rules (top of prompt)
-├── critical-reminders.md    # Repeated MUST rules + self-correction checkpoints (bottom of prompt)
-├── output-format.md         # Structured output template
-└── examples.md              # Concrete examples
+├── identity.md              # Role, mission statement, and domain scope
+├── playbook.md              # Step-by-step process the agent follows
+├── critical-requirements.md # MUST rules + self-correction triggers (top of prompt)
+├── critical-reminders.md    # Repeated MUST rules + post-action reflection (bottom of prompt)
+└── output.md                # Output format template + concrete examples
 ```
 
 **Agent categories:** `meta`, `developer`, `reviewer`, `tester`, `pattern`, `planning`, `researcher`

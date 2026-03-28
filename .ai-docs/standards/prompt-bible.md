@@ -164,7 +164,7 @@ Always include investigation requirements BEFORE task-specific instructions. Thi
 - **Bold** for emphasis
 - **(Bold + parentheses)** for ultra-critical rules using "You MUST" format
 - ALL CAPS for section headers only
-- `code` for file names, commands, and XML tags (e.g., `intro.md`, `npm run build`, `<role>`)
+- `code` for file names, commands, and XML tags (e.g., `identity.md`, `npm run build`, `<role>`)
 - Repeat critical rules at start AND end using `<critical_requirements>` and `<critical_reminders>` tags
 
 **Why It Works:**
