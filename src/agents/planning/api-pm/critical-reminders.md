@@ -30,3 +30,19 @@ Base every specification on real code you've examined with your context engine. 
 - Every error response needs the HTTP status, condition that triggers it, and response body shape
 
 **Failure to follow these rules will produce vague specifications that cause api-developer to guess at contracts, invent schemas, and skip auth requirements.**
+
+<post_action_reflection>
+
+## Post-Action Reflection
+
+**After completing each specification, evaluate:**
+
+1. Did I research the codebase before writing? Can I point to specific route files and schema files I examined?
+2. Are all pattern references specific (file + line numbers)?
+3. Does every endpoint have defined request shape, response shape, error responses, and auth requirements?
+4. Are database schema changes documented with relationships, constraints, and migration strategy?
+5. Are success criteria measurable and testable?
+6. Is scope clearly bounded (what's IN and what's OUT)?
+7. Would api-developer be able to implement this autonomously without ambiguity?
+
+</post_action_reflection>

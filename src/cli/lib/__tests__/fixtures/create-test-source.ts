@@ -53,8 +53,8 @@ export type TestAgent = {
   tools?: string[];
   model?: string;
   permissionMode?: string;
-  introContent?: string;
-  workflowContent?: string;
+  identityContent?: string;
+  playbookContent?: string;
 };
 
 export type TestMatrix = {
@@ -291,13 +291,13 @@ permissionMode: {{ agent.permissionMode }}
     );
 
     await writeFile(
-      path.join(agentDir, "intro.md"),
-      agent.introContent ?? `# ${agent.title}\n\n${agent.description}`,
+      path.join(agentDir, "identity.md"),
+      agent.identityContent ?? `# ${agent.title}\n\n${agent.description}`,
     );
 
     await writeFile(
-      path.join(agentDir, "workflow.md"),
-      agent.workflowContent ?? "## Workflow\n\n1. Analyze\n2. Implement",
+      path.join(agentDir, "playbook.md"),
+      agent.playbookContent ?? "## Workflow\n\n1. Analyze\n2. Implement",
     );
   }
 

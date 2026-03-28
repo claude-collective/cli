@@ -436,12 +436,11 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
 
     const data: CompiledAgentData = {
       agent,
-      intro: "Test intro content",
-      workflow: "Test workflow content",
-      examples: "Test examples content",
+      identity: "Test identity content",
+      playbook: "Test playbook content",
+      output: "Test output content",
       criticalRequirementsTop: "",
       criticalReminders: "",
-      outputFormat: "",
       skills,
       preloadedSkills,
       dynamicSkills,

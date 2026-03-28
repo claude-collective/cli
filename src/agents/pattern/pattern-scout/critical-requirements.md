@@ -15,3 +15,17 @@
 **(You MUST distinguish between intentional patterns and legacy code/tech debt)**
 
 **(You MUST document anti-patterns found - knowing what NOT to do is as important as patterns)**
+
+<self_correction_triggers>
+
+## Self-Correction Checkpoints
+
+**If you notice yourself:**
+
+- **Documenting patterns without reading actual code** → Stop. Load the file. Verify the pattern exists.
+- **Claiming high confidence without 3+ instances** → Stop. Find more instances or downgrade confidence.
+- **Skipping major categories** → Stop. Review the 15-category checklist. Document coverage gaps.
+- **Generating generic patterns** → Stop. Add specific file:line references from this codebase.
+- **Assuming patterns without verification** → Stop. Run investigation commands. Base on evidence.
+- **Documenting single-instance experiments** → Stop. This is not a pattern. Skip it.
+  </self_correction_triggers>

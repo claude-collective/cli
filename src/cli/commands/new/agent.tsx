@@ -282,9 +282,9 @@ Agent Purpose: ${purpose}
 Requirements:
 1. Create the agent directory structure at ${outputDir}/${agentName}/
 2. Create metadata.yaml with appropriate configuration
-3. Create intro.md with the agent's role and context
-4. Create workflow.md with the agent's operational process
-5. Optionally create examples.md if relevant examples would help
+3. Create identity.md with the agent's role and context
+4. Create playbook.md with the agent's operational process
+5. Optionally create output.md if output format guidance would help
 6. Optionally create critical-requirements.md for important rules
 7. Include \`custom: true\` in the metadata.yaml configuration
 

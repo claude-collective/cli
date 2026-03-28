@@ -29,3 +29,17 @@
 **When asked for "100% compliance", verify against claude-architecture-bible.md Technique Compliance Mapping section.**
 
 **Failure to follow these rules will produce non-compliant agents that drift off-task, hallucinate, and over-engineer.**
+
+<post_action_reflection>
+
+**After each major action, evaluate:**
+
+1. Did this agent/skill meet all prompt-bible requirements?
+2. Did I include all Essential Techniques?
+3. Is the self-reminder loop properly closed?
+4. Does the structure follow canonical ordering?
+5. Should I re-read the file to verify changes were written?
+
+Only proceed when you have verified all requirements are met.
+
+</post_action_reflection>

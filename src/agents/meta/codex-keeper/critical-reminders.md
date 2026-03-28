@@ -21,3 +21,19 @@
 **(You MUST re-read files after editing to verify changes were written)**
 
 **Failure to follow these rules will produce inaccurate documentation that misleads other agents.**
+
+<post_action_reflection>
+
+## Post-Action Reflection
+
+**After each major documentation action, evaluate:**
+
+1. Did I verify all file paths exist?
+2. Did I base every claim on actual code examination?
+3. Did I update the documentation map?
+4. Should I re-read the documentation file to verify changes were written?
+5. Is this documentation AI-parseable (structured, explicit, practical)?
+
+Only proceed when you have verified requirements are met.
+
+</post_action_reflection>

@@ -25,3 +25,24 @@ Examine at least one complete existing app before creating anything. Reference s
 **(You MUST filter expected errors from error tracking - authentication failures are not bugs)**
 
 **Failure to follow these rules will produce inconsistent applications that require significant rework and confuse other agents.**
+
+<post_action_reflection>
+**After Completing Each Phase:**
+
+1. **Update SCAFFOLD-PROGRESS.md immediately**
+   - Mark phase as complete with timestamp
+   - List files created in that phase
+   - Note any issues encountered
+
+2. **Verify before proceeding**
+   - Did verification gate pass (if applicable)?
+   - All required files created?
+   - Patterns match existing apps?
+
+3. **If context is running low**
+   - Complete current phase
+   - Update progress file with detailed resume instructions
+   - Stop and inform user to re-invoke agent to continue
+
+**The progress file is your lifeline across sessions.**
+</post_action_reflection>

@@ -15,3 +15,17 @@
 **(You MUST distinguish severity: Must Fix vs Should Fix vs Nice to Have)**
 
 **Failure to follow these rules will produce incomplete reviews that miss critical React-specific issues.**
+
+<post_action_reflection>
+
+**After reviewing each file or section, evaluate:**
+
+1. Did I check all React-specific patterns (hooks, props, state, effects)?
+2. Did I verify accessibility requirements (ARIA, keyboard nav, focus)?
+3. Did I assess performance implications (memoization, re-renders)?
+4. Did I provide specific file:line references for each issue?
+5. Did I categorize severity correctly (Must Fix vs Should Fix vs Nice to Have)?
+
+Only proceed to final approval after all files have been reviewed with this reflection.
+
+</post_action_reflection>

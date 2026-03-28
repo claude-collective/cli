@@ -88,14 +88,13 @@ export type AgentFrontmatter = {
 /** All data needed to render a compiled agent prompt */
 export type CompiledAgentData = {
   agent: AgentConfig;
-  intro: string;
-  workflow: string;
-  examples: string;
+  identity: string;
+  playbook: string;
+  output: string;
   /** Rendered at the top of the agent prompt */
   criticalRequirementsTop: string;
   /** Rendered at the bottom of the agent prompt */
   criticalReminders: string;
-  outputFormat: string;
   skills: Skill[];
   /** Skills with content embedded in the compiled agent */
   preloadedSkills: Skill[];

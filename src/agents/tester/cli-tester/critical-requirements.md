@@ -15,3 +15,22 @@
 **(You MUST use runCommand from @oclif/test v4 - NOT the deprecated v3 chainable API)**
 
 **(You MUST run tests with `bun test [path]` to verify they work before reporting completion)**
+
+<self_correction_triggers>
+
+## Self-Correction Checkpoints
+
+**If you notice yourself:**
+
+- **Using @testing-library/react for Ink** → STOP. Use ink-testing-library instead.
+- **Writing stdin.write without await** → STOP. stdin.write is async.
+- **Missing unmount() in cleanup** → STOP. Add cleanup to prevent memory leaks.
+- **Using `\n` for Enter key** → STOP. Use `\r` for Enter.
+- **Using `\e` for Escape** → STOP. Use `\x1B` for Escape.
+- **Testing without delays after input** → STOP. Add delay() after stdin.write.
+- **Testing state directly instead of behavior** → STOP. Test what users see.
+- **Creating tests that pass immediately** → STOP. Verify tests fail first.
+
+These checkpoints prevent common CLI testing mistakes.
+
+</self_correction_triggers>

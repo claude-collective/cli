@@ -84,12 +84,8 @@ export async function compileAgentForPlugin(
   const agentBaseDir = agent.agentBaseDir || DIRS.agents;
   const agentDir = path.join(agentSourceRoot, agentBaseDir, agent.path || name);
 
-  const intro = await readFile(path.join(agentDir, STANDARD_FILES.INTRO_MD));
-  const workflow = await readFile(path.join(agentDir, STANDARD_FILES.WORKFLOW_MD));
-  const examples = await readFileOptional(
-    path.join(agentDir, STANDARD_FILES.EXAMPLES_MD),
-    "## Examples\n\n_No examples defined._",
-  );
+  const identity = await readFile(path.join(agentDir, STANDARD_FILES.IDENTITY_MD));
+  const playbook = await readFile(path.join(agentDir, STANDARD_FILES.PLAYBOOK_MD));
   const criticalRequirementsTop = await readFileOptional(
     path.join(agentDir, STANDARD_FILES.CRITICAL_REQUIREMENTS_MD),
     "",
@@ -103,13 +99,13 @@ export async function compileAgentForPlugin(
   const category = agentPath.split("/")[0];
   const categoryDir = path.join(agentSourceRoot, agentBaseDir, category);
 
-  let outputFormat = await readFileOptional(
-    path.join(agentDir, STANDARD_FILES.OUTPUT_FORMAT_MD),
+  let output = await readFileOptional(
+    path.join(agentDir, STANDARD_FILES.OUTPUT_MD),
     "",
   );
-  if (!outputFormat) {
-    outputFormat = await readFileOptional(
-      path.join(categoryDir, STANDARD_FILES.OUTPUT_FORMAT_MD),
+  if (!output) {
+    output = await readFileOptional(
+      path.join(categoryDir, STANDARD_FILES.OUTPUT_MD),
       "",
     );
   }
@@ -131,12 +127,11 @@ export async function compileAgentForPlugin(
 
   const data: CompiledAgentData = {
     agent,
-    intro,
-    workflow,
-    examples,
+    identity,
+    playbook,
+    output,
     criticalRequirementsTop,
     criticalReminders,
-    outputFormat,
     skills,
     preloadedSkills,
     dynamicSkills,

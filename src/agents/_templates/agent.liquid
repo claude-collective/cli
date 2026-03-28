@@ -12,7 +12,7 @@ permissionMode: {{ agent.permission_mode | default: "default" }}
 # {{ agent.title }}
 
 <role>
-{{ intro }}
+{{ identity }}
 </role>
 
 ---
@@ -133,7 +133,7 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
 
 ---
 
-{{ workflow }}
+{{ playbook }}
 
 ---
 
@@ -143,11 +143,7 @@ All code must follow established patterns and conventions:
 
 ---
 
-{{ examples }}
-
----
-
-{{ outputFormat }}
+{{ output }}
 
 ---
 

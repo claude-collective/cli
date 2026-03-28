@@ -78,12 +78,11 @@ async function createProjectFromFixtures(): Promise<string> {
 
   // Agent fixtures
   const WEB_DEV_FILES = [
-    "intro.md",
-    "workflow.md",
-    "examples.md",
+    "identity.md",
+    "playbook.md",
+    "output.md",
     "critical-requirements.md",
     "critical-reminders.md",
-    "output-format.md",
   ] as const;
   const webDevDir = path.join(tempDir, "src/agents/web-developer");
   await mkdir(webDevDir, { recursive: true });
@@ -97,7 +96,7 @@ async function createProjectFromFixtures(): Promise<string> {
 
   const apiDevDir = path.join(tempDir, "src/agents/api-developer");
   await mkdir(apiDevDir, { recursive: true });
-  for (const file of ["intro.md", "workflow.md"] as const) {
+  for (const file of ["identity.md", "playbook.md"] as const) {
     const content = await fsReadFile(
       path.join(FIXTURES_ROOT, "agents/api-developer", file),
       "utf-8",
@@ -241,13 +240,13 @@ describe("compiler", () => {
         expect(engine.renderFile).toHaveBeenCalledWith(
           "agent",
           expect.objectContaining({
-            intro: expect.stringContaining("API Developer"),
-            workflow: expect.stringContaining("Design the API"),
+            identity: expect.stringContaining("API Developer"),
+            playbook: expect.stringContaining("Design the API"),
           }),
         );
       });
 
-      it("when compiling an agent, should read optional files like examples.md", async () => {
+      it("when compiling an agent, should read optional output.md file", async () => {
         const engine = { renderFile: vi.fn().mockResolvedValue(STUB_OUTPUT) };
 
         const ctx = contextForProject(projectDir);
@@ -256,7 +255,7 @@ describe("compiler", () => {
         expect(engine.renderFile).toHaveBeenCalledWith(
           "agent",
           expect.objectContaining({
-            examples: expect.stringContaining("Build a React component"),
+            output: expect.any(String),
           }),
         );
       });
@@ -504,7 +503,7 @@ describe("compiler", () => {
       expect(result.agent.name).toBe("test-agent");
       expect(result.agent.title).toBe("Test Agent");
       expect(result.agent.description).toBe("A test agent");
-      expect(result.intro).toBe("Test intro");
+      expect(result.identity).toBe("Test identity");
     });
 
     it("sanitizes Liquid syntax in agent.name", () => {
@@ -540,15 +539,15 @@ describe("compiler", () => {
 
     it("sanitizes Liquid syntax in file content fields", () => {
       const data = createMockCompiledAgentData();
-      data.intro = "Normal text {{ inject }} more text";
-      data.workflow = "{% assign x = 1 %} workflow";
-      data.examples = "{{ forked_from }} examples";
+      data.identity = "Normal text {{ inject }} more text";
+      data.playbook = "{% assign x = 1 %} playbook";
+      data.output = "{{ forked_from }} output";
 
       const result = sanitizeCompiledAgentData(data);
 
-      expect(result.intro).not.toContain("{{");
-      expect(result.workflow).not.toContain("{%");
-      expect(result.examples).not.toContain("{{");
+      expect(result.identity).not.toContain("{{");
+      expect(result.playbook).not.toContain("{%");
+      expect(result.output).not.toContain("{{");
     });
 
     it("sanitizes Liquid syntax in skill metadata", () => {
@@ -605,12 +604,11 @@ describe("compiler", () => {
 
   describe("buildAgentTemplateContext", () => {
     const agentFiles = {
-      intro: "Test intro content",
-      workflow: "Test workflow content",
-      examples: "Test examples content",
+      identity: "Test identity content",
+      playbook: "Test playbook content",
+      output: "Test output content",
       criticalRequirementsTop: "Test requirements",
       criticalReminders: "Test reminders",
-      outputFormat: "Test output format",
     };
 
     it("should build template context with all file content", () => {
@@ -619,12 +617,11 @@ describe("compiler", () => {
       const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
 
       expect(result.agent).toBe(agent);
-      expect(result.intro).toBe("Test intro content");
-      expect(result.workflow).toBe("Test workflow content");
-      expect(result.examples).toBe("Test examples content");
+      expect(result.identity).toBe("Test identity content");
+      expect(result.playbook).toBe("Test playbook content");
+      expect(result.output).toBe("Test output content");
       expect(result.criticalRequirementsTop).toBe("Test requirements");
       expect(result.criticalReminders).toBe("Test reminders");
-      expect(result.outputFormat).toBe("Test output format");
     });
 
     it("should include all skills from agent config", () => {

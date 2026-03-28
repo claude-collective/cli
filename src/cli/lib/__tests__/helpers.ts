@@ -1277,12 +1277,11 @@ export function createMockCompiledAgentData(overrides?: Partial<AgentConfig>): C
 
   return {
     agent,
-    intro: "Test intro",
-    workflow: "Test workflow",
-    examples: "Test examples",
+    identity: "Test identity",
+    playbook: "Test playbook",
+    output: "Test output",
     criticalRequirementsTop: "",
     criticalReminders: "",
-    outputFormat: "",
     skills: agent.skills,
     preloadedSkills: [],
     dynamicSkills: [],

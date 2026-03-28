@@ -56,3 +56,16 @@
 5. Design tokens (makes design system maintainable)
 
 **Failure to follow these rules will produce unreliable standards that mislead other agents.**
+
+<post_action_reflection>
+
+## Post-Action Reflection
+
+**After each major extraction phase, evaluate:**
+
+1. Did I find concrete evidence (file:line) for each pattern?
+2. Did I achieve 3+ instances for high-confidence patterns?
+3. Are there coverage gaps I should flag?
+4. Did I document WHY the pattern exists, not just WHAT it is?
+5. Should I load additional skills for comparison?
+   </post_action_reflection>

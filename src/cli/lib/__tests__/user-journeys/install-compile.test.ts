@@ -24,7 +24,7 @@ function uniqueStackId(base = "test"): string {
   return `${base}-${testCounter}-${Date.now()}`;
 }
 
-/** Write agent files (metadata.yaml, intro.md, workflow.md) into the agents directory */
+/** Write agent files (metadata.yaml, identity.md, playbook.md) into the agents directory */
 async function createAgent(
   agentsDir: string,
   agentId: string,
@@ -32,8 +32,8 @@ async function createAgent(
     title: string;
     description: string;
     tools: string[];
-    intro?: string;
-    workflow?: string;
+    identity?: string;
+    playbook?: string;
   },
 ) {
   const agentDir = path.join(agentsDir, agentId);
@@ -44,12 +44,12 @@ async function createAgent(
     renderAgentYaml(agentId, config.description, { title: config.title, tools: config.tools }),
   );
   await writeTestFile(
-    path.join(agentDir, STANDARD_FILES.INTRO_MD),
-    config.intro ?? `# ${config.title}\n\nThis is the ${agentId} agent.`,
+    path.join(agentDir, STANDARD_FILES.IDENTITY_MD),
+    config.identity ?? `# ${config.title}\n\nThis is the ${agentId} agent.`,
   );
   await writeTestFile(
-    path.join(agentDir, STANDARD_FILES.WORKFLOW_MD),
-    config.workflow ?? "## Workflow\n\n1. Analyze\n2. Implement\n3. Test",
+    path.join(agentDir, STANDARD_FILES.PLAYBOOK_MD),
+    config.playbook ?? "## Workflow\n\n1. Analyze\n2. Implement\n3. Test",
   );
 }
 
@@ -159,8 +159,8 @@ describe("User Journey: Install -> Compile -> Verify", () => {
       title: "Web Developer",
       description: "Full-stack web development specialist",
       tools: ["Read", "Write", "Edit"],
-      intro: "# Web Developer\n\nYou are a web developer agent.",
-      workflow: "## Workflow\n\n1. Build components\n2. Write tests",
+      identity: "# Web Developer\n\nYou are a web developer agent.",
+      playbook: "## Workflow\n\n1. Build components\n2. Write tests",
     });
 
     const stackId = uniqueStackId();
@@ -235,24 +235,24 @@ describe("User Journey: Install -> Compile -> Verify", () => {
       title: "Web Developer",
       description: "Frontend development specialist",
       tools: ["Read", "Write", "Edit"],
-      intro: "# Web Developer\n\nYou build user interfaces.",
-      workflow: "## Workflow\n\n1. Design components\n2. Implement UI",
+      identity: "# Web Developer\n\nYou build user interfaces.",
+      playbook: "## Workflow\n\n1. Design components\n2. Implement UI",
     });
 
     await createAgent(dirs.agentsDir, "api-developer", {
       title: "API Developer",
       description: "Backend API development specialist",
       tools: ["Read", "Write", "Edit", "Bash"],
-      intro: "# API Developer\n\nYou build APIs and services.",
-      workflow: "## Workflow\n\n1. Design API\n2. Implement endpoints",
+      identity: "# API Developer\n\nYou build APIs and services.",
+      playbook: "## Workflow\n\n1. Design API\n2. Implement endpoints",
     });
 
     await createAgent(dirs.agentsDir, "web-tester", {
       title: "Test Engineer",
       description: "Testing and quality assurance specialist",
       tools: ["Read", "Write", "Bash"],
-      intro: "# Test Engineer\n\nYou write comprehensive tests.",
-      workflow: "## Workflow\n\n1. Write tests\n2. Verify coverage",
+      identity: "# Test Engineer\n\nYou write comprehensive tests.",
+      playbook: "## Workflow\n\n1. Write tests\n2. Verify coverage",
     });
 
     const stackId = uniqueStackId("full-stack");
@@ -464,7 +464,7 @@ You are a specialized web developer with deep expertise in:
       title: "Web Developer",
       description: "Specialized web developer",
       tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
-      intro: customIntro,
+      identity: customIntro,
     });
 
     const stackId = uniqueStackId();
@@ -503,7 +503,7 @@ You are a specialized web developer with deep expertise in:
       title: "Web Developer",
       description: "Methodical web developer",
       tools: ["Read", "Write"],
-      workflow: customWorkflow,
+      playbook: customWorkflow,
     });
 
     const stackId = uniqueStackId();

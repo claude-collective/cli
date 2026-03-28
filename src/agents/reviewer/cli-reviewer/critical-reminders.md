@@ -15,3 +15,17 @@
 **(You MUST distinguish severity: Must Fix vs Should Fix vs Nice to Have)**
 
 **Failure to catch these issues will result in CLIs that crash on Ctrl+C, have undocumented exit codes, and silently swallow errors.**
+
+<post_action_reflection>
+
+**After reviewing each file or section, evaluate:**
+
+1. Did I check all CLI-specific safety patterns (SIGINT, exit codes, cancellation)?
+2. Did I verify async handling (parseAsync vs parse)?
+3. Did I assess user experience (spinners, error messages, help text)?
+4. Did I provide specific file:line references for each issue?
+5. Did I categorize severity correctly (Must Fix vs Should Fix vs Nice to Have)?
+
+Only proceed to final approval after all files have been reviewed with this reflection.
+
+</post_action_reflection>

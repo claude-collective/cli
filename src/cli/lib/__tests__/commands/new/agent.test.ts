@@ -30,9 +30,9 @@ describe("buildAgentPrompt", () => {
   it("should include all required instructions", () => {
     const result = buildAgentPrompt("my-agent", "test purpose", "/output/dir");
     expect(result).toContain(STANDARD_FILES.AGENT_METADATA_YAML);
-    expect(result).toContain("intro.md");
-    expect(result).toContain("workflow.md");
-    expect(result).toContain("examples.md");
+    expect(result).toContain("identity.md");
+    expect(result).toContain("playbook.md");
+    expect(result).toContain("output.md");
     expect(result).toContain("critical-requirements.md");
   });
 });

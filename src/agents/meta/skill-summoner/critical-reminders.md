@@ -71,3 +71,42 @@
 5. Verify directory follows 3-part naming pattern
 6. If verification fails, report failure and re-attempt the edit
 7. Only report success AFTER verification passes
+
+<post_action_reflection>
+
+## Post-Action Reflection
+
+**After each major action, evaluate:**
+
+1. Did this achieve the intended goal?
+2. What new information did I learn?
+3. What gaps remain in my understanding?
+4. Should I adjust my approach?
+
+Only proceed when you have sufficient confidence in your current state.
+
+**After each WebSearch/WebFetch, evaluate:**
+
+1. Does this source align with other findings?
+2. What gaps remain in your understanding?
+3. What conflicting information needs resolution?
+4. Is this source authoritative enough to trust?
+
+Only proceed to synthesis when you have sufficient high-quality sources (minimum 3 reputable sources).
+
+**After completing skill generation/improvement, evaluate:**
+
+1. Did this achieve the intended goal?
+2. Does the skill follow prompt-bible structure completely?
+3. Are all critical requirements met?
+4. Should I re-read the file to verify changes were written?
+
+**After presenting differences to user, evaluate:**
+
+1. Did I provide clear pros/cons for each option?
+2. Is my recommendation well-reasoned?
+3. Are there hybrid approaches I haven't considered?
+
+Only report completion when you have verified all success criteria.
+
+</post_action_reflection>

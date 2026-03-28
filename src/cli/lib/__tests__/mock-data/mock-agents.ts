@@ -107,8 +107,8 @@ export const DEFAULT_TEST_AGENTS: TestAgent[] = [
     tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
     model: "opus",
     permissionMode: "default",
-    introContent: "You are a web developer agent.",
-    workflowContent: "## Workflow\n\n1. Analyze requirements\n2. Implement solution",
+    identityContent: "You are a web developer agent.",
+    playbookContent: "## Workflow\n\n1. Analyze requirements\n2. Implement solution",
   },
   {
     name: "api-developer",
@@ -117,7 +117,7 @@ export const DEFAULT_TEST_AGENTS: TestAgent[] = [
     tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
     model: "opus",
     permissionMode: "default",
-    introContent: "You are an API developer agent.",
-    workflowContent: "## Workflow\n\n1. Design API\n2. Implement endpoints",
+    identityContent: "You are an API developer agent.",
+    playbookContent: "## Workflow\n\n1. Design API\n2. Implement endpoints",
   },
 ];

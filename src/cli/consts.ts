@@ -53,10 +53,9 @@ export const STANDARD_FILES = {
   CONFIG_TYPES_TS: "config-types.ts",
   CLAUDE_MD: "CLAUDE.md",
   REFERENCE_MD: "reference.md",
-  INTRO_MD: "intro.md",
-  WORKFLOW_MD: "workflow.md",
-  EXAMPLES_MD: "examples.md",
-  OUTPUT_FORMAT_MD: "output-format.md",
+  IDENTITY_MD: "identity.md",
+  PLAYBOOK_MD: "playbook.md",
+  OUTPUT_MD: "output.md",
   CRITICAL_REQUIREMENTS_MD: "critical-requirements.md",
   CRITICAL_REMINDERS_MD: "critical-reminders.md",
 } as const;

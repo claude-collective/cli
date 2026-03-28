@@ -48,15 +48,15 @@ describe("stack-plugin-compiler", () => {
     await cleanupTestSource(dirs);
   });
 
-  /** Write agent files (metadata.yaml, intro.md, workflow.md) into the agents directory */
+  /** Write agent files (metadata.yaml, identity.md, playbook.md) into the agents directory */
   async function createAgent(
     agentId: string,
     config: {
       title: string;
       description: string;
       tools: string[];
-      intro?: string;
-      workflow?: string;
+      identity?: string;
+      playbook?: string;
     },
   ) {
     const agentDir = path.join(dirs.agentsDir, agentId);
@@ -67,12 +67,12 @@ describe("stack-plugin-compiler", () => {
       renderAgentYaml(agentId, config.description, { title: config.title, tools: config.tools }),
     );
     await writeTestFile(
-      path.join(agentDir, STANDARD_FILES.INTRO_MD),
-      config.intro || `# ${config.title}\n\nThis is the ${agentId} agent.`,
+      path.join(agentDir, STANDARD_FILES.IDENTITY_MD),
+      config.identity || `# ${config.title}\n\nThis is the ${agentId} agent.`,
     );
     await writeTestFile(
-      path.join(agentDir, STANDARD_FILES.WORKFLOW_MD),
-      config.workflow || `## Workflow\n\n1. Analyze\n2. Implement\n3. Test`,
+      path.join(agentDir, STANDARD_FILES.PLAYBOOK_MD),
+      config.playbook || `## Workflow\n\n1. Analyze\n2. Implement\n3. Test`,
     );
   }
 
@@ -198,8 +198,8 @@ describe("stack-plugin-compiler", () => {
       await createAgent("web-developer", {
         ...AGENT_DEFS.webDev,
         tools: ["Read", "Write"],
-        intro: "# Frontend Developer\n\nThis is the intro.",
-        workflow: "## Workflow\n\n1. Build components",
+        identity: "# Frontend Developer\n\nThis is the intro.",
+        playbook: "## Workflow\n\n1. Build components",
       });
 
       const stackId = uniqueStackId();
@@ -837,8 +837,8 @@ describe("stack-plugin-compiler", () => {
       await createAgent("web-developer", {
         ...AGENT_DEFS.webDev,
         tools: ["Read", "Write"],
-        intro: "# Frontend Dev\n\nIntro.",
-        workflow: "## Workflow\n\n1. Build",
+        identity: "# Frontend Dev\n\nIntro.",
+        playbook: "## Workflow\n\n1. Build",
       });
 
       const { Liquid } = await import("liquidjs");

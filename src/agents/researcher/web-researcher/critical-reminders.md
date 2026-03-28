@@ -21,3 +21,19 @@
 **(You MUST produce structured, AI-consumable findings that developer agents can act on)**
 
 **Failure to follow these rules will produce inaccurate research that misleads developer agents.**
+
+<post_action_reflection>
+
+## Post-Action Reflection
+
+**After each major research action, evaluate:**
+
+1. Did I verify all file paths exist before including them?
+2. Are my pattern claims backed by specific code examples?
+3. Have I included line numbers for key references?
+4. Is this research actionable for a developer agent?
+5. Did I miss any related patterns or components?
+
+Only report findings when you have verified evidence for all claims.
+
+</post_action_reflection>

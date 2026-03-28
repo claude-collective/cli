@@ -95,15 +95,14 @@ export function sanitizeCompiledAgentData(data: CompiledAgentData): CompiledAgen
 
   return {
     agent: sanitizedAgent,
-    intro: sanitizeLiquidSyntax(data.intro, "intro"),
-    workflow: sanitizeLiquidSyntax(data.workflow, "workflow"),
-    examples: sanitizeLiquidSyntax(data.examples, "examples"),
+    identity: sanitizeLiquidSyntax(data.identity, "identity"),
+    playbook: sanitizeLiquidSyntax(data.playbook, "playbook"),
+    output: sanitizeLiquidSyntax(data.output, "output"),
     criticalRequirementsTop: sanitizeLiquidSyntax(
       data.criticalRequirementsTop,
       "criticalRequirementsTop",
     ),
     criticalReminders: sanitizeLiquidSyntax(data.criticalReminders, "criticalReminders"),
-    outputFormat: sanitizeLiquidSyntax(data.outputFormat, "outputFormat"),
     skills: sanitizedSkills,
     preloadedSkills: sanitizedPreloaded,
     dynamicSkills: sanitizedDynamic,
@@ -113,12 +112,11 @@ export function sanitizeCompiledAgentData(data: CompiledAgentData): CompiledAgen
 
 type AgentFiles = Pick<
   CompiledAgentData,
-  | "intro"
-  | "workflow"
-  | "examples"
+  | "identity"
+  | "playbook"
+  | "output"
   | "criticalRequirementsTop"
   | "criticalReminders"
-  | "outputFormat"
 >;
 
 async function readAgentFiles(
@@ -130,12 +128,8 @@ async function readAgentFiles(
   const agentBaseDir = agent.agentBaseDir || DIRS.agents;
   const agentDir = path.join(agentSourceRoot, agentBaseDir, agent.path || name);
 
-  const intro = await readFile(path.join(agentDir, STANDARD_FILES.INTRO_MD));
-  const workflow = await readFile(path.join(agentDir, STANDARD_FILES.WORKFLOW_MD));
-  const examples = await readFileOptional(
-    path.join(agentDir, STANDARD_FILES.EXAMPLES_MD),
-    "## Examples\n\n_No examples defined._",
-  );
+  const identity = await readFile(path.join(agentDir, STANDARD_FILES.IDENTITY_MD));
+  const playbook = await readFile(path.join(agentDir, STANDARD_FILES.PLAYBOOK_MD));
   const criticalRequirementsTop = await readFileOptional(
     path.join(agentDir, STANDARD_FILES.CRITICAL_REQUIREMENTS_MD),
     "",
@@ -150,18 +144,18 @@ async function readAgentFiles(
   const category = parts[0] || name;
   const categoryDir = path.join(agentSourceRoot, agentBaseDir, category);
 
-  let outputFormat = await readFileOptional(
-    path.join(agentDir, STANDARD_FILES.OUTPUT_FORMAT_MD),
+  let output = await readFileOptional(
+    path.join(agentDir, STANDARD_FILES.OUTPUT_MD),
     "",
   );
-  if (!outputFormat) {
-    outputFormat = await readFileOptional(
-      path.join(categoryDir, STANDARD_FILES.OUTPUT_FORMAT_MD),
+  if (!output) {
+    output = await readFileOptional(
+      path.join(categoryDir, STANDARD_FILES.OUTPUT_MD),
       "",
     );
   }
 
-  return { intro, workflow, examples, criticalRequirementsTop, criticalReminders, outputFormat };
+  return { identity, playbook, output, criticalRequirementsTop, criticalReminders };
 }
 
 export function buildAgentTemplateContext(
@@ -189,11 +183,11 @@ export function buildAgentTemplateContext(
 
 /**
  * Compiles a single agent into a rendered Markdown prompt by reading its
- * constituent files (intro, workflow, examples, critical requirements/reminders,
- * output format) and rendering them through a Liquid template.
+ * constituent files (identity, playbook, output, critical requirements/reminders)
+ * and rendering them through a Liquid template.
  *
  * Skills are split into preloaded (content embedded in the compiled agent) and
- * dynamic (loaded via Skill tool at runtime). Output format resolution falls back
+ * dynamic (loaded via Skill tool at runtime). Output resolution falls back
  * from the agent-specific directory to the parent category directory.
  *
  * @param name - Agent identifier used for logging and as a directory name fallback
@@ -201,7 +195,7 @@ export function buildAgentTemplateContext(
  * @param projectRoot - Root directory of the project (used as base for agent file resolution)
  * @param engine - Pre-configured Liquid template engine with template roots
  * @returns Rendered Markdown string ready to be written to the output directory
- * @throws When required agent files (intro.md, workflow.md) are missing from disk
+ * @throws When required agent files (identity.md, playbook.md) are missing from disk
  */
 async function compileAgent(
   name: AgentName,
