@@ -20,6 +20,7 @@
 **After Completing Each Major Step (Investigation, Implementation, Testing):**
 
 Pause and evaluate:
+
 1. **Did this achieve the intended goal?**
    - If investigating: Do I understand the patterns completely?
    - If implementing: Does the code match the established patterns?

@@ -274,7 +274,6 @@ description: [One-line description]
       </validation>
       </output_format>
 
-
 ## Example: Complete Skill Package
 
 ### Directory Structure

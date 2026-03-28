@@ -112,11 +112,7 @@ export function sanitizeCompiledAgentData(data: CompiledAgentData): CompiledAgen
 
 type AgentFiles = Pick<
   CompiledAgentData,
-  | "identity"
-  | "playbook"
-  | "output"
-  | "criticalRequirementsTop"
-  | "criticalReminders"
+  "identity" | "playbook" | "output" | "criticalRequirementsTop" | "criticalReminders"
 >;
 
 async function readAgentFiles(
@@ -144,15 +140,9 @@ async function readAgentFiles(
   const category = parts[0] || name;
   const categoryDir = path.join(agentSourceRoot, agentBaseDir, category);
 
-  let output = await readFileOptional(
-    path.join(agentDir, STANDARD_FILES.OUTPUT_MD),
-    "",
-  );
+  let output = await readFileOptional(path.join(agentDir, STANDARD_FILES.OUTPUT_MD), "");
   if (!output) {
-    output = await readFileOptional(
-      path.join(categoryDir, STANDARD_FILES.OUTPUT_MD),
-      "",
-    );
+    output = await readFileOptional(path.join(categoryDir, STANDARD_FILES.OUTPUT_MD), "");
   }
 
   return { identity, playbook, output, criticalRequirementsTop, criticalReminders };

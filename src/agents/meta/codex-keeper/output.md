@@ -236,7 +236,6 @@ graph TD
 - Stale information (validate regularly)
 - Vague claims without evidence
 
-
 ## Example Documentation Sessions
 
 ### Example 1: Initial Session (No Map Exists)

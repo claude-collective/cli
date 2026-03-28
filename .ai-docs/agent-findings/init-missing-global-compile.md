@@ -33,7 +33,7 @@ const compileResult = await compileAgents({
   skills: allSkills,
   installMode,
   agentScopeMap: buildAgentScopeMap(configResult.config),
-  outputDir: projectPaths.agentsDir,  // ONLY PROJECT DIR
+  outputDir: projectPaths.agentsDir, // ONLY PROJECT DIR
   // NOTE: scopeFilter is NOT set, no separate passes for global agents
 });
 ```
@@ -41,7 +41,7 @@ const compileResult = await compileAgents({
 The issue is:
 
 1. **No multi-scope detection**: Does not call `detectBothInstallations()` to check if both global and project installations exist
-2. **No scope filtering**: Does not use the `scopeFilter` parameter of `compileAgents()` 
+2. **No scope filtering**: Does not use the `scopeFilter` parameter of `compileAgents()`
 3. **Single pass only**: Makes one compilation call, passing `outputDir` to project directory only
 4. **Ignores agent scope map**: Although `buildAgentScopeMap(configResult.config)` is passed, it only directs where outputs go if agents are being compiled in the same pass — but global agents are never routed to `~/.claude/agents/`
 
@@ -128,7 +128,7 @@ await writeFile(path.join(targetDir, `${agentName}.md`), output);
 5. **Config written** → `writeProjectConfig()` merges wizard result into config with agent scopes
 6. **Scope map built** → `init.tsx:453` builds `agentScopeMap` from config agents
 7. **Single compile call** → `init.tsx:448-455` calls `compileAgents()` with:
-   - `projectDir: process.cwd()` 
+   - `projectDir: process.cwd()`
    - `outputDir: projectPaths.agentsDir` (PROJECT ONLY)
    - **Missing**: No `scopeFilter`, no separate global pass
 8. **Only project agents compiled** → global agents skip compilation silently
@@ -137,16 +137,19 @@ await writeFile(path.join(targetDir, `${agentName}.md`), output);
 ## Exact File:Line References
 
 **Bug location:**
+
 - `src/cli/commands/init.tsx:420-459` — `writeConfigAndCompile()` method (single-pass compilation)
 - `src/cli/commands/init.tsx:444-456` — `compileAgents()` call lacking multi-scope logic
 
 **Correct pattern (for reference):**
+
 - `src/cli/commands/compile.ts:98-120` — `compileAllScopes()` detects and handles both scopes
 - `src/cli/commands/compile.ts:195-223` — `buildCompilePasses()` creates separate passes with `scopeFilter`
 - `src/cli/lib/operations/project/detect-both-installations.ts` — Function to detect both installations
 - `src/cli/lib/operations/project/compile-agents.ts:7-18` — `CompileAgentsOptions` type with `scopeFilter` field
 
 **Related agent-routing code:**
+
 - `src/cli/lib/agents/agent-recompiler.ts:140-149` — Correct scope routing when `agentScopeMap` is used
 - `src/cli/lib/installation/local-installer.ts:336-342` — `buildAgentScopeMap()` extraction from config
 
@@ -168,7 +171,7 @@ await writeFile(path.join(targetDir, `${agentName}.md`), output);
    - Set `scopeFilter: "global"` for global pass, `scopeFilter: "project"` for project pass
 
 3. **Output directories must match scope:**
-   - Global pass: output to `~/.claude/agents/` 
+   - Global pass: output to `~/.claude/agents/`
    - Project pass: output to project `.claude/agents/`
 
 4. **Skills discovery per pass:**
@@ -183,6 +186,7 @@ await writeFile(path.join(targetDir, `${agentName}.md`), output);
 ### Enforcement Mechanism
 
 Update `src/cli/commands/init.tsx` to match the compile.ts pattern:
+
 1. Import `detectBothInstallations` from operations
 2. Detect both installations in `writeConfigAndCompile()`
 3. Build separate passes using the compile.ts pattern

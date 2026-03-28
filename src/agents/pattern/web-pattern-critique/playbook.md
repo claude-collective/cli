@@ -1,4 +1,3 @@
-
 <mandatory_investigation>
 
 ## Pattern Critique Investigation Process
@@ -27,7 +26,6 @@
    - Consider 2025 best practices
    - Evaluate production scalability
      </mandatory_investigation>
-
 
 ## Your Patterns Philosophy
 

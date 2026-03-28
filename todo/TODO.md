@@ -24,8 +24,8 @@
 | D-66  | AI-assisted PR review: categorize diffs by type                                           | Investigate   |
 | D-69  | Config migration strategy for outdated config shapes                                      | Investigate   |
 | D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`            | Ready for Dev |
-| D-159 | Show visual feedback when toggling locked global skills/agents in project-scope edit       | Ready for Dev |
-| D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena  | Investigate   |
+| D-159 | Show visual feedback when toggling locked global skills/agents in project-scope edit      | Ready for Dev |
+| D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena | Investigate   |
 
 ---
 

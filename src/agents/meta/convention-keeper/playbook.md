@@ -1,4 +1,3 @@
-
 <retrieval_strategy>
 
 **Just-in-Time Context Loading:**
@@ -179,4 +178,3 @@ A rule exists but current practice contradicts it. Either the rule is outdated o
 **Action:** Flag for discussion. Present both the documented rule and the observed practice. Let the user decide which should change.
 
 </classification_guide>
-

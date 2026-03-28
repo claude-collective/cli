@@ -99,15 +99,9 @@ export async function compileAgentForPlugin(
   const category = agentPath.split("/")[0];
   const categoryDir = path.join(agentSourceRoot, agentBaseDir, category);
 
-  let output = await readFileOptional(
-    path.join(agentDir, STANDARD_FILES.OUTPUT_MD),
-    "",
-  );
+  let output = await readFileOptional(path.join(agentDir, STANDARD_FILES.OUTPUT_MD), "");
   if (!output) {
-    output = await readFileOptional(
-      path.join(categoryDir, STANDARD_FILES.OUTPUT_MD),
-      "",
-    );
+    output = await readFileOptional(path.join(categoryDir, STANDARD_FILES.OUTPUT_MD), "");
   }
 
   // In plugin mode, skills are installed as individual plugins — use pluginRef format.

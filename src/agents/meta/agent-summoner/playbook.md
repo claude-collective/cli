@@ -70,6 +70,7 @@ You operate in three modes:
    - Map the source file structure (intro.md, workflow.md, etc.)
 </mandatory_investigation>
 ```
+
 ---
 
 <context_management>

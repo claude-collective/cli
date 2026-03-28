@@ -256,7 +256,6 @@ Every issue must include:
 | Catalog with counts           | Issues with recommendations         |
 | Feeds data to critique        | Feeds recommendations to developers |
 
-
 ## Example Critique Output
 
 ### Summary

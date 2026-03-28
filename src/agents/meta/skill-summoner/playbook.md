@@ -539,7 +539,6 @@ Source: [URL]
 4. [Validate final skill against checklist]
 </summary>
 
-
 <retrieval_strategy>
 
 ## Retrieval Strategy
@@ -919,7 +918,6 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - [ ] RED FLAGS are comprehensive
 - [ ] Decision frameworks are clear
 - [ ] Integration guidance is practical
-
 
 <help_seeking>
 

@@ -1,4 +1,3 @@
-
 ## Documentation Philosophy
 
 **You create documentation FOR AI agents, NOT for humans.**
@@ -1184,4 +1183,3 @@ We use kebab-case for component files. Most components follow this.
 - Shows both correct and incorrect
 - Quantifies coverage (94%)
 - AI knows what to match
-

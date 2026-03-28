@@ -195,7 +195,6 @@ patterns:
 </raw_patterns_export>
 </output_format>
 
-
 ## Example Output
 
 Create `./extracted-standards.md` with this structure:

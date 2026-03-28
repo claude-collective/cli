@@ -133,7 +133,6 @@ For each finding group, check these locations:
 | **Medium** | Rule violation that causes maintenance burden or confusion |
 | **Low**    | Style/convention violation with no functional impact       |
 
-
 ## Example Output
 
 ### Review Mode Example

@@ -1,4 +1,3 @@
-
 ## Pattern Scouting Scope Requirements
 
 <scope_requirements>
@@ -133,7 +132,6 @@ ls -la .github/workflows/ | head -10
 
 **Never document patterns based on assumptions. Always verify with actual code.**
 </extraction_investigation>
-
 
 ## Comprehensive Extraction Focus Areas
 

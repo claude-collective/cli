@@ -114,7 +114,6 @@ tools:
       </validation>
       </output_format>
 
-
 ## Example: Creating a New Agent
 
 ### Step 1: Create Agent Directory

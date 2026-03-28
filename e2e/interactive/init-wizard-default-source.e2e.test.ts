@@ -115,24 +115,25 @@ describe("init wizard — default source local mode ENOENT (D-123)", () => {
     "should complete init with default source without ENOENT",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-    wizard = await InitWizard.launch({
-      noSource: true,
-      env: { CC_SOURCE: undefined },
-    });
+      wizard = await InitWizard.launch({
+        noSource: true,
+        env: { CC_SOURCE: undefined },
+      });
 
-    // Use acceptStackDefaults() — selects first stack and presses "A" to
-    // accept defaults, skipping domain traversal (BUILT_IN_MATRIX has more
-    // domains than the E2E fixture so passThroughAllDomains() doesn't work).
-    const result = await wizard.acceptStackDefaults();
+      // Use acceptStackDefaults() — selects first stack and presses "A" to
+      // accept defaults, skipping domain traversal (BUILT_IN_MATRIX has more
+      // domains than the E2E fixture so passThroughAllDomains() doesn't work).
+      const result = await wizard.acceptStackDefaults();
 
-    expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const output = result.output;
-    expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
-    expect(output).not.toContain("ENOENT");
-    await expect(result.project).toHaveConfig();
-    await expect(result.project).toHaveCompiledAgents();
-  });
+      const output = result.output;
+      expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
+      expect(output).not.toContain("ENOENT");
+      await expect(result.project).toHaveConfig();
+      await expect(result.project).toHaveCompiledAgents();
+    },
+  );
 
   it("should load wizard with BUILT_IN_MATRIX when no source is provided", async () => {
     wizard = await InitWizard.launch({
