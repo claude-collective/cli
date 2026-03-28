@@ -734,6 +734,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       let newSelections: SkillId[];
       if (exclusive) {
+        // D-161: If selecting a new skill in an exclusive category would deselect
+        // a locked skill, reject the toggle — locked skills cannot be swapped out.
+        if (!isSelected && currentSelections.some((id) => state.lockedSkillIds.includes(id))) {
+          return state;
+        }
         newSelections = isSelected ? [] : [technology];
       } else {
         newSelections = isSelected
