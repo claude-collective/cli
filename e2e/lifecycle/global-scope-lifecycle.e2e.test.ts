@@ -173,55 +173,60 @@ async function createDualScopeInstallation(): Promise<{
 // =====================================================================
 
 describe("global scope lifecycle -- source loader merge", () => {
+  let tempDir: string;
+  let wizard: EditWizard | undefined;
+
+  afterEach(async () => {
+    await wizard?.destroy();
+    wizard = undefined;
+    if (tempDir) {
+      await cleanupTempDir(tempDir);
+      tempDir = undefined!;
+    }
+  });
+
   it(
     "edit wizard should detect both global and project local skills after dual-scope init",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-      const { tempDir, fakeHome, projectDir } = await createDualScopeInstallation();
+      const installation = await createDualScopeInstallation();
+      tempDir = installation.tempDir;
+      const { fakeHome, projectDir } = installation;
 
-      try {
-        // Run edit from the project directory -- the wizard should load BOTH scopes
-        const wizard = await EditWizard.launch({
-          projectDir,
-          source: { sourceDir, tempDir: sourceTempDir },
-          env: { HOME: fakeHome },
-          rows: 60,
-          cols: 120,
-        });
+      // Run edit from the project directory -- the wizard should load BOTH scopes
+      wizard = await EditWizard.launch({
+        projectDir,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
 
-        try {
-          // Pass through build to reach sources
-          const sources = await wizard.build.passThroughAllDomainsGeneric();
+      // Pass through build to reach sources
+      const sources = await wizard.build.passThroughAllDomainsGeneric();
 
-          await sources.waitForReady();
+      await sources.waitForReady();
 
-          // Verify ALL skills from both scopes appear in the output
-          const sourcesOutput = wizard.getOutput();
-          expect(sourcesOutput).toContain("web-framework-react");
-          expect(sourcesOutput).toContain("web-testing-vitest");
-          expect(sourcesOutput).toContain("api-framework-hono");
+      // Verify ALL skills from both scopes appear in the output
+      const sourcesOutput = wizard.getOutput();
+      expect(sourcesOutput).toContain("web-framework-react");
+      expect(sourcesOutput).toContain("web-testing-vitest");
+      expect(sourcesOutput).toContain("api-framework-hono");
 
-          // Complete the wizard
-          const agents = await sources.advance();
-          const confirm = await agents.acceptDefaults("edit");
-          const result = await confirm.confirm();
+      // Complete the wizard
+      const agents = await sources.advance();
+      const confirm = await agents.acceptDefaults("edit");
+      const result = await confirm.confirm();
 
-          const exitCode = await result.exitCode;
-          expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      const exitCode = await result.exitCode;
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // After edit, verify both scopes of skills still exist on disk
-          await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
-          await expect({ dir: fakeHome }).toHaveSkillCopied("web-testing-vitest");
-          await expect({ dir: projectDir }).toHaveSkillCopied("api-framework-hono");
+      // After edit, verify both scopes of skills still exist on disk
+      await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
+      await expect({ dir: fakeHome }).toHaveSkillCopied("web-testing-vitest");
+      await expect({ dir: projectDir }).toHaveSkillCopied("api-framework-hono");
 
-          await result.destroy();
-        } catch (e) {
-          await wizard.destroy();
-          throw e;
-        }
-      } finally {
-        await cleanupTempDir(tempDir);
-      }
+      await result.destroy();
     },
   );
 });
@@ -231,41 +236,46 @@ describe("global scope lifecycle -- source loader merge", () => {
 // =====================================================================
 
 describe("global scope lifecycle -- doctor command", () => {
-  it("should not report false 'missing' for global-scoped agents", async () => {
-    const { tempDir, fakeHome, projectDir } = await createDualScopeInstallation();
+  let tempDir: string;
 
-    try {
-      const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--source", sourceDir],
-        { dir: projectDir },
-        { env: { HOME: fakeHome } },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).not.toContain("web-developer (missing)");
-      expect(stdout).toContain("agents compiled");
-    } finally {
+  afterEach(async () => {
+    if (tempDir) {
       await cleanupTempDir(tempDir);
+      tempDir = undefined!;
     }
   });
 
+  it("should not report false 'missing' for global-scoped agents", async () => {
+    const installation = await createDualScopeInstallation();
+    tempDir = installation.tempDir;
+    const { fakeHome, projectDir } = installation;
+
+    const { exitCode, stdout } = await CLI.run(
+      ["doctor", "--source", sourceDir],
+      { dir: projectDir },
+      { env: { HOME: fakeHome } },
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).not.toContain("web-developer (missing)");
+    expect(stdout).toContain("agents compiled");
+  });
+
   it("should not report false 'missing' for global-scoped skills", async () => {
-    const { tempDir, fakeHome, projectDir } = await createDualScopeInstallation();
+    const installation = await createDualScopeInstallation();
+    tempDir = installation.tempDir;
+    const { fakeHome, projectDir } = installation;
 
-    try {
-      const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--source", sourceDir],
-        { dir: projectDir },
-        { env: { HOME: fakeHome } },
-      );
+    const { exitCode, stdout } = await CLI.run(
+      ["doctor", "--source", sourceDir],
+      { dir: projectDir },
+      { env: { HOME: fakeHome } },
+    );
 
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).not.toContain("web-framework-react (not found)");
-      expect(stdout).not.toContain("web-testing-vitest (not found)");
-      expect(stdout).toContain("skills found");
-    } finally {
-      await cleanupTempDir(tempDir);
-    }
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).not.toContain("web-framework-react (not found)");
+    expect(stdout).not.toContain("web-testing-vitest (not found)");
+    expect(stdout).toContain("skills found");
   });
 });
 
@@ -274,68 +284,71 @@ describe("global scope lifecycle -- doctor command", () => {
 // =====================================================================
 
 describe("global scope lifecycle -- outdated command", () => {
-  it("should detect global-scoped local skills in outdated check", async () => {
-    const { tempDir, fakeHome, projectDir } = await createDualScopeInstallation();
+  let tempDir: string;
 
-    try {
-      const { exitCode, stdout } = await CLI.run(
-        ["outdated", "--json", "--source", sourceDir],
-        { dir: projectDir },
-        { env: { HOME: fakeHome } },
-      );
-
-      const parsed = JSON.parse(stdout);
-      const skillIds = parsed.skills.map((s: { id: string }) => s.id);
-
-      expect(skillIds).toContain("web-framework-react");
-      expect(skillIds).toContain("web-testing-vitest");
-      expect(skillIds).toContain("api-framework-hono");
-      expect(parsed.skills.length).toBeGreaterThanOrEqual(3);
-    } finally {
+  afterEach(async () => {
+    if (tempDir) {
       await cleanupTempDir(tempDir);
+      tempDir = undefined!;
     }
   });
 
+  it("should detect global-scoped local skills in outdated check", async () => {
+    const installation = await createDualScopeInstallation();
+    tempDir = installation.tempDir;
+    const { fakeHome, projectDir } = installation;
+
+    const { exitCode, stdout } = await CLI.run(
+      ["outdated", "--json", "--source", sourceDir],
+      { dir: projectDir },
+      { env: { HOME: fakeHome } },
+    );
+
+    const parsed = JSON.parse(stdout);
+    const skillIds = parsed.skills.map((s: { id: string }) => s.id);
+
+    expect(skillIds).toContain("web-framework-react");
+    expect(skillIds).toContain("web-testing-vitest");
+    expect(skillIds).toContain("api-framework-hono");
+    expect(parsed.skills.length).toBeGreaterThanOrEqual(3);
+  });
+
   it("should not warn 'No local skills found' when only global skills exist", async () => {
-    const tempDir = await createTempDir();
+    tempDir = await createTempDir();
     const fakeHome = path.join(tempDir, "fake-home");
     const projectDir = path.join(fakeHome, "project");
 
-    try {
-      await mkdir(fakeHome, { recursive: true });
-      await mkdir(projectDir, { recursive: true });
+    await mkdir(fakeHome, { recursive: true });
+    await mkdir(projectDir, { recursive: true });
 
-      await writeProjectConfig(fakeHome, {
-        name: "global-only",
-        skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
-        agents: [{ name: "web-developer", scope: "global" }],
-        domains: ["web"],
-      });
+    await writeProjectConfig(fakeHome, {
+      name: "global-only",
+      skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+      agents: [{ name: "web-developer", scope: "global" }],
+      domains: ["web"],
+    });
 
-      await writeProjectConfig(projectDir, {
-        name: "project-ref",
-        skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
-        agents: [{ name: "web-developer", scope: "global" }],
-        domains: ["web"],
-      });
+    await writeProjectConfig(projectDir, {
+      name: "project-ref",
+      skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+      agents: [{ name: "web-developer", scope: "global" }],
+      domains: ["web"],
+    });
 
-      await createLocalSkillWithForkedFrom(fakeHome, "web-framework-react", {
-        slug: "react",
-        category: "web-framework",
-        contentHash: "a1b2c3d",
-      });
+    await createLocalSkillWithForkedFrom(fakeHome, "web-framework-react", {
+      slug: "react",
+      category: "web-framework",
+      contentHash: "a1b2c3d",
+    });
 
-      const { stdout, output } = await CLI.run(
-        ["outdated", "--source", sourceDir],
-        { dir: projectDir },
-        { env: { HOME: fakeHome } },
-      );
+    const { stdout, output } = await CLI.run(
+      ["outdated", "--source", sourceDir],
+      { dir: projectDir },
+      { env: { HOME: fakeHome } },
+    );
 
-      expect(output).not.toContain("No local skills found");
-      expect(output).toContain("web-framework-react");
-    } finally {
-      await cleanupTempDir(tempDir);
-    }
+    expect(output).not.toContain("No local skills found");
+    expect(output).toContain("web-framework-react");
   });
 });
 
@@ -344,49 +357,52 @@ describe("global scope lifecycle -- outdated command", () => {
 // =====================================================================
 
 describe("global scope lifecycle -- diff command", () => {
-  it("should find global-scoped local skills when diffing", async () => {
-    const { tempDir, fakeHome, projectDir } = await createDualScopeInstallation();
+  let tempDir: string;
 
-    try {
-      const { exitCode, output } = await CLI.run(
-        ["diff", "--source", sourceDir],
-        { dir: projectDir },
-        { env: { HOME: fakeHome } },
-      );
-
-      expect(output).not.toContain("No local skills found");
-      expect(output).toContain("web-framework-react");
-      expect([EXIT_CODES.SUCCESS, EXIT_CODES.ERROR]).toContain(exitCode);
-    } finally {
+  afterEach(async () => {
+    if (tempDir) {
       await cleanupTempDir(tempDir);
+      tempDir = undefined!;
     }
   });
 
+  it("should find global-scoped local skills when diffing", async () => {
+    const installation = await createDualScopeInstallation();
+    tempDir = installation.tempDir;
+    const { fakeHome, projectDir } = installation;
+
+    const { exitCode, output } = await CLI.run(
+      ["diff", "--source", sourceDir],
+      { dir: projectDir },
+      { env: { HOME: fakeHome } },
+    );
+
+    expect(output).not.toContain("No local skills found");
+    expect(output).toContain("web-framework-react");
+    expect([EXIT_CODES.SUCCESS, EXIT_CODES.ERROR]).toContain(exitCode);
+  });
+
   it("should not warn 'No local skills found' when only global skills exist", async () => {
-    const tempDir = await createTempDir();
+    tempDir = await createTempDir();
     const fakeHome = path.join(tempDir, "fake-home");
     const projectDir = path.join(fakeHome, "project");
 
-    try {
-      await mkdir(fakeHome, { recursive: true });
-      await mkdir(projectDir, { recursive: true });
+    await mkdir(fakeHome, { recursive: true });
+    await mkdir(projectDir, { recursive: true });
 
-      await createLocalSkillWithForkedFrom(fakeHome, "web-framework-react", {
-        slug: "react",
-        category: "web-framework",
-        contentHash: "a1b2c3d",
-      });
+    await createLocalSkillWithForkedFrom(fakeHome, "web-framework-react", {
+      slug: "react",
+      category: "web-framework",
+      contentHash: "a1b2c3d",
+    });
 
-      const { output } = await CLI.run(
-        ["diff", "--source", sourceDir],
-        { dir: projectDir },
-        { env: { HOME: fakeHome } },
-      );
+    const { output } = await CLI.run(
+      ["diff", "--source", sourceDir],
+      { dir: projectDir },
+      { env: { HOME: fakeHome } },
+    );
 
-      expect(output).not.toContain("No local skills found");
-    } finally {
-      await cleanupTempDir(tempDir);
-    }
+    expect(output).not.toContain("No local skills found");
   });
 });
 
@@ -395,26 +411,33 @@ describe("global scope lifecycle -- diff command", () => {
 // =====================================================================
 
 describe("global scope lifecycle -- uninstall with dual scope", () => {
-  it("should remove project-scoped skills from project dir via uninstall --yes", async () => {
-    const { tempDir, fakeHome, projectDir } = await createDualScopeInstallation();
+  let tempDir: string;
 
-    try {
-      const { exitCode, output } = await CLI.run(
-        ["uninstall", "--yes"],
-        { dir: projectDir },
-        { env: { HOME: fakeHome } },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(output).toContain("Uninstall complete!");
-
-      await expect({ dir: projectDir }).not.toHaveSkillCopied("api-framework-hono");
-      await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
-      await expect({ dir: fakeHome }).toHaveSkillCopied("web-testing-vitest");
-      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
-    } finally {
+  afterEach(async () => {
+    if (tempDir) {
       await cleanupTempDir(tempDir);
+      tempDir = undefined!;
     }
+  });
+
+  it("should remove project-scoped skills from project dir via uninstall --yes", async () => {
+    const installation = await createDualScopeInstallation();
+    tempDir = installation.tempDir;
+    const { fakeHome, projectDir } = installation;
+
+    const { exitCode, output } = await CLI.run(
+      ["uninstall", "--yes"],
+      { dir: projectDir },
+      { env: { HOME: fakeHome } },
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(output).toContain("Uninstall complete!");
+
+    await expect({ dir: projectDir }).not.toHaveSkillCopied("api-framework-hono");
+    await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
+    await expect({ dir: fakeHome }).toHaveSkillCopied("web-testing-vitest");
+    await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
   });
 });
 
@@ -423,12 +446,15 @@ describe("global scope lifecycle -- uninstall with dual scope", () => {
 // =====================================================================
 
 describe("global scope lifecycle -- init wizard with scope toggling", () => {
-  let tempDir: string | undefined;
+  let tempDir: string;
+  let wizard: InitWizard | undefined;
 
   afterEach(async () => {
+    await wizard?.destroy();
+    wizard = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined;
+      tempDir = undefined!;
     }
   });
 
@@ -446,7 +472,7 @@ describe("global scope lifecycle -- init wizard with scope toggling", () => {
       await createPermissionsFile(projectDir);
 
       // Run init wizard from project dir with HOME pointing to fakeHome
-      const wizard = await InitWizard.launch({
+      wizard = await InitWizard.launch({
         source: { sourceDir, tempDir: sourceTempDir },
         projectDir,
         env: { HOME: fakeHome },
@@ -454,44 +480,39 @@ describe("global scope lifecycle -- init wizard with scope toggling", () => {
         cols: 120,
       });
 
-      try {
-        // Stack -> Domain -> Build
-        const domain = await wizard.stack.selectFirstStack();
-        const build = await domain.acceptDefaults();
+      // Stack -> Domain -> Build
+      const domain = await wizard.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
 
-        // Web domain -- toggle first skill to project scope
-        await build.toggleScopeOnFocusedSkill();
-        await build.advanceDomain();
+      // Web domain -- toggle first skill to project scope
+      await build.toggleScopeOnFocusedSkill();
+      await build.advanceDomain();
 
-        // API domain (all skills stay global)
-        await build.advanceDomain();
+      // API domain (all skills stay global)
+      await build.advanceDomain();
 
-        // Shared domain (pass through)
-        const sources = await build.advanceToSources();
+      // Shared domain (pass through)
+      const sources = await build.advanceToSources();
 
-        // Sources -- set ALL to local
-        await sources.waitForReady();
-        await sources.setAllLocal();
-        const agents = await sources.advance();
+      // Sources -- set ALL to local
+      await sources.waitForReady();
+      await sources.setAllLocal();
+      const agents = await sources.advance();
 
-        // Agents -- accept defaults
-        const confirm = await agents.acceptDefaults("init");
+      // Agents -- accept defaults
+      const confirm = await agents.acceptDefaults("init");
 
-        // Confirm
-        const result = await confirm.confirm();
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      // Confirm
+      const result = await confirm.confirm();
+      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-        // --- Scope-aware copy assertions ---
-        await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
-        await expect({ dir: fakeHome }).toHaveSkillCopied("web-testing-vitest");
-        await expect({ dir: fakeHome }).not.toHaveSkillCopied("web-framework-react");
-        await expect({ dir: projectDir }).not.toHaveSkillCopied("web-testing-vitest");
+      // --- Scope-aware copy assertions ---
+      await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
+      await expect({ dir: fakeHome }).toHaveSkillCopied("web-testing-vitest");
+      await expect({ dir: fakeHome }).not.toHaveSkillCopied("web-framework-react");
+      await expect({ dir: projectDir }).not.toHaveSkillCopied("web-testing-vitest");
 
-        await result.destroy();
-      } catch (e) {
-        await wizard.destroy();
-        throw e;
-      }
+      await result.destroy();
     },
   );
 });

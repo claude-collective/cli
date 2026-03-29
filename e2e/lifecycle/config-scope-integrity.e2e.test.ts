@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
@@ -76,6 +76,8 @@ async function initGlobalWithLocalSource(
 describe("config-scope integrity -- source priority preservation", () => {
   let sourceDir: string;
   let sourceTempDir: string;
+  let tempDir: string;
+  let wizard: Awaited<ReturnType<typeof EditWizard.launch>> | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
@@ -83,6 +85,15 @@ describe("config-scope integrity -- source priority preservation", () => {
     sourceDir = source.sourceDir;
     sourceTempDir = source.tempDir;
   }, TIMEOUTS.SETUP * 2);
+
+  afterEach(async () => {
+    await wizard?.destroy();
+    wizard = undefined;
+    if (tempDir) {
+      await cleanupTempDir(tempDir);
+      tempDir = undefined!;
+    }
+  });
 
   afterAll(async () => {
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
@@ -92,59 +103,53 @@ describe("config-scope integrity -- source priority preservation", () => {
     "should preserve source: local after edit re-open (not overridden by primarySource)",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-      const { tempDir, fakeHome } = await createTestEnvironment();
+      const env = await createTestEnvironment();
+      tempDir = env.tempDir;
+      const { fakeHome } = env;
 
-      try {
-        // Phase A: Init from HOME with all sources set to local
-        const initResult = await initGlobalWithLocalSource(sourceDir, sourceTempDir, fakeHome);
-        expect(initResult.exitCode, `Init failed: ${initResult.output}`).toBe(EXIT_CODES.SUCCESS);
+      // Phase A: Init from HOME with all sources set to local
+      const initResult = await initGlobalWithLocalSource(sourceDir, sourceTempDir, fakeHome);
+      expect(initResult.exitCode, `Init failed: ${initResult.output}`).toBe(EXIT_CODES.SUCCESS);
 
-        // Verify Phase A: config has source: "eject"
-        const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-        const configAfterInit = await readTestFile(globalConfigPath);
-        expect(configAfterInit).toContain('"eject"');
+      // Verify Phase A: config has source: "eject"
+      const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const configAfterInit = await readTestFile(globalConfigPath);
+      expect(configAfterInit).toContain('"eject"');
 
-        // Phase B: Edit from HOME -- pass through without changes.
-        const wizard = await EditWizard.launch({
-          projectDir: fakeHome,
-          source: { sourceDir, tempDir: sourceTempDir },
-          env: { HOME: fakeHome },
-          rows: 60,
-          cols: 120,
-        });
+      // Phase B: Edit from HOME -- pass through without changes.
+      wizard = await EditWizard.launch({
+        projectDir: fakeHome,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
 
-        try {
-          const result = await wizard.passThrough();
-          const exitCode = await result.exitCode;
-          expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-          await result.destroy();
-        } catch (e) {
-          await wizard.destroy();
-          throw e;
-        }
+      const result = await wizard.passThrough();
+      const exitCode = await result.exitCode;
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      await result.destroy();
+      wizard = undefined;
 
-        // Phase C: Verify config still has source: "eject"
-        const configAfterEdit = await readTestFile(globalConfigPath);
+      // Phase C: Verify config still has source: "eject"
+      const configAfterEdit = await readTestFile(globalConfigPath);
 
-        const skillsMatch = configAfterEdit.match(/const skills[\s\S]*?\[([\s\S]*?)\];/);
-        expect(skillsMatch, "Config must have a skills variable").not.toBeNull();
-        const skillsBlock = skillsMatch![1];
+      const skillsMatch = configAfterEdit.match(/const skills[\s\S]*?\[([\s\S]*?)\];/);
+      expect(skillsMatch, "Config must have a skills variable").not.toBeNull();
+      const skillsBlock = skillsMatch![1];
 
-        // Every skill should still have source: "eject" (not overridden by marketplace)
-        const localSourceMatches = skillsBlock.match(/"source":"eject"/g);
-        expect(
-          localSourceMatches,
-          "All skills should retain source: eject after edit",
-        ).not.toBeNull();
-        expect(localSourceMatches!.length).toBeGreaterThan(0);
+      // Every skill should still have source: "eject" (not overridden by marketplace)
+      const localSourceMatches = skillsBlock.match(/"source":"eject"/g);
+      expect(
+        localSourceMatches,
+        "All skills should retain source: eject after edit",
+      ).not.toBeNull();
+      expect(localSourceMatches!.length).toBeGreaterThan(0);
 
-        // No skill should have a non-eject source (which would indicate override)
-        const allSourceMatches = skillsBlock.match(/"source":"([^"]+)"/g) ?? [];
-        for (const match of allSourceMatches) {
-          expect(match).toContain('"eject"');
-        }
-      } finally {
-        await cleanupTempDir(tempDir);
+      // No skill should have a non-eject source (which would indicate override)
+      const allSourceMatches = skillsBlock.match(/"source":"([^"]+)"/g) ?? [];
+      for (const match of allSourceMatches) {
+        expect(match).toContain('"eject"');
       }
     },
   );
@@ -186,6 +191,8 @@ describe("config-scope integrity -- domains in global config only", () => {
 describe("config-scope integrity -- config-types Domain type includes config.domains", () => {
   let sourceDir: string;
   let sourceTempDir: string;
+  let tempDir: string;
+  let wizard: Awaited<ReturnType<typeof EditWizard.launch>> | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
@@ -193,6 +200,15 @@ describe("config-scope integrity -- config-types Domain type includes config.dom
     sourceDir = source.sourceDir;
     sourceTempDir = source.tempDir;
   }, TIMEOUTS.SETUP * 2);
+
+  afterEach(async () => {
+    await wizard?.destroy();
+    wizard = undefined;
+    if (tempDir) {
+      await cleanupTempDir(tempDir);
+      tempDir = undefined!;
+    }
+  });
 
   afterAll(async () => {
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
@@ -202,84 +218,74 @@ describe("config-scope integrity -- config-types Domain type includes config.dom
     "should include all config.domains in config-types.ts Domain type even when some domains have no skills",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-      const tempDir = await createTempDir();
+      tempDir = await createTempDir();
       const fakeHome = path.join(tempDir, "fake-home");
 
       await mkdir(fakeHome, { recursive: true });
       await createPermissionsFile(fakeHome);
 
-      try {
-        // Phase A: Init from HOME -- accept all defaults.
-        const initResult = await initGlobal(sourceDir, sourceTempDir, fakeHome);
-        expect(initResult.exitCode, `Phase A init failed`).toBe(EXIT_CODES.SUCCESS);
+      // Phase A: Init from HOME -- accept all defaults.
+      const initResult = await initGlobal(sourceDir, sourceTempDir, fakeHome);
+      expect(initResult.exitCode, `Phase A init failed`).toBe(EXIT_CODES.SUCCESS);
 
-        // Phase B: Manually edit the config to remove api skills while keeping
-        // domains: ["web", "api", "shared"].
-        const configPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-        const originalConfig = await readTestFile(configPath);
+      // Phase B: Manually edit the config to remove api skills while keeping
+      // domains: ["web", "api", "shared"].
+      const configPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const originalConfig = await readTestFile(configPath);
 
-        // Remove api-framework-hono from the skills array (but stack refs remain).
-        const modifiedConfig = originalConfig.replace(
-          /\{[^}]*"id"\s*:\s*"api-framework-hono"[^}]*\},?\s*/g,
-          "",
-        );
+      // Remove api-framework-hono from the skills array (but stack refs remain).
+      const modifiedConfig = originalConfig.replace(
+        /\{[^}]*"id"\s*:\s*"api-framework-hono"[^}]*\},?\s*/g,
+        "",
+      );
 
-        await writeFile(configPath, modifiedConfig);
+      await writeFile(configPath, modifiedConfig);
 
-        // Verify modification: config should still have domains with "api"
-        // but the skills array should not contain api-framework-hono as an id
-        const verifyConfig = await readTestFile(configPath);
-        expect(verifyConfig).toContain('"api"');
-        // Extract just the skills array section to verify the skill was removed
-        const skillsMatch = verifyConfig.match(/const skills[\s\S]*?\];/);
-        expect(skillsMatch?.[0] ?? "").not.toContain("api-framework-hono");
+      // Verify modification: config should still have domains with "api"
+      // but the skills array should not contain api-framework-hono as an id
+      const verifyConfig = await readTestFile(configPath);
+      expect(verifyConfig).toContain('"api"');
+      // Extract just the skills array section to verify the skill was removed
+      const skillsMatch = verifyConfig.match(/const skills[\s\S]*?\];/);
+      expect(skillsMatch?.[0] ?? "").not.toContain("api-framework-hono");
 
-        // Phase C: Run edit from HOME -- pass through without changes.
-        const wizard = await EditWizard.launch({
-          projectDir: fakeHome,
-          source: { sourceDir, tempDir: sourceTempDir },
-          env: { HOME: fakeHome },
-          rows: 60,
-          cols: 120,
-        });
+      // Phase C: Run edit from HOME -- pass through without changes.
+      wizard = await EditWizard.launch({
+        projectDir: fakeHome,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
 
-        try {
-          // Skills were removed from config, so domain count may differ — use generic
-          const sources = await wizard.build.passThroughAllDomainsGeneric();
-          const agents = await sources.acceptDefaults();
-          const confirm = await agents.acceptDefaults("edit");
-          const result = await confirm.confirm();
-          const exitCodeB = await result.exitCode;
-          expect(exitCodeB, `Phase C edit failed`).toBe(EXIT_CODES.SUCCESS);
-          await result.destroy();
-        } catch (e) {
-          await wizard.destroy();
-          throw e;
-        }
+      // Skills were removed from config, so domain count may differ — use generic
+      const sources = await wizard.build.passThroughAllDomainsGeneric();
+      const agents = await sources.acceptDefaults();
+      const confirm = await agents.acceptDefaults("edit");
+      const result = await confirm.confirm();
+      const exitCodeB = await result.exitCode;
+      expect(exitCodeB, `Phase C edit failed`).toBe(EXIT_CODES.SUCCESS);
+      await result.destroy();
+      wizard = undefined;
 
-        // Phase D: Verify config-types.ts Domain type includes ALL config.domains
-        const configTypesPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TYPES_TS);
-        expect(await fileExists(configTypesPath), "config-types.ts must exist after edit").toBe(
-          true,
-        );
+      // Phase D: Verify config-types.ts Domain type includes ALL config.domains
+      const configTypesPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TYPES_TS);
+      expect(await fileExists(configTypesPath), "config-types.ts must exist after edit").toBe(true);
 
-        const configTypesContent = await readTestFile(configTypesPath);
+      const configTypesContent = await readTestFile(configTypesPath);
 
-        // The file must be auto-generated
-        expect(configTypesContent).toContain("AUTO-GENERATED");
+      // The file must be auto-generated
+      expect(configTypesContent).toContain("AUTO-GENERATED");
 
-        // Extract the Domain type union from config-types.ts
-        const domainTypeMatch = configTypesContent.match(/export type Domain\s*=\s*([\s\S]*?);/);
-        expect(domainTypeMatch, "config-types.ts must contain a Domain type").not.toBeNull();
-        const domainTypeBlock = domainTypeMatch![1];
+      // Extract the Domain type union from config-types.ts
+      const domainTypeMatch = configTypesContent.match(/export type Domain\s*=\s*([\s\S]*?);/);
+      expect(domainTypeMatch, "config-types.ts must contain a Domain type").not.toBeNull();
+      const domainTypeBlock = domainTypeMatch![1];
 
-        // All 3 domains must appear in the Domain type -- including "api"
-        expect(domainTypeBlock).toContain('"web"');
-        expect(domainTypeBlock).toContain('"api"');
-        expect(domainTypeBlock).toContain('"meta"');
-      } finally {
-        await cleanupTempDir(tempDir);
-      }
+      // All 3 domains must appear in the Domain type -- including "api"
+      expect(domainTypeBlock).toContain('"web"');
+      expect(domainTypeBlock).toContain('"api"');
+      expect(domainTypeBlock).toContain('"meta"');
     },
   );
 });
@@ -291,6 +297,7 @@ describe("config-scope integrity -- config-types Domain type includes config.dom
 describe("config-scope integrity -- global config includes source field", () => {
   let sourceDir: string;
   let sourceTempDir: string;
+  let tempDir: string;
 
   beforeAll(async () => {
     await ensureBinaryExists();
@@ -298,6 +305,13 @@ describe("config-scope integrity -- global config includes source field", () => 
     sourceDir = source.sourceDir;
     sourceTempDir = source.tempDir;
   }, TIMEOUTS.SETUP * 2);
+
+  afterEach(async () => {
+    if (tempDir) {
+      await cleanupTempDir(tempDir);
+      tempDir = undefined!;
+    }
+  });
 
   afterAll(async () => {
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
@@ -312,40 +326,38 @@ describe("config-scope integrity -- global config includes source field", () => 
     "should include source field in both global and project configs after scope split",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-      const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
+      const env = await createTestEnvironment();
+      tempDir = env.tempDir;
+      const { fakeHome, projectDir } = env;
 
-      try {
-        const phaseA = await initGlobal(sourceDir, sourceTempDir, fakeHome);
-        expect(phaseA.exitCode, `Phase A init failed: ${phaseA.output}`).toBe(EXIT_CODES.SUCCESS);
+      const phaseA = await initGlobal(sourceDir, sourceTempDir, fakeHome);
+      expect(phaseA.exitCode, `Phase A init failed: ${phaseA.output}`).toBe(EXIT_CODES.SUCCESS);
 
-        const phaseB = await initProject(sourceDir, sourceTempDir, fakeHome, projectDir, {
-          setLocal: false,
-        });
-        expect(phaseB.exitCode, `Phase B init failed: ${phaseB.output}`).toBe(EXIT_CODES.SUCCESS);
+      const phaseB = await initProject(sourceDir, sourceTempDir, fakeHome, projectDir, {
+        setLocal: false,
+      });
+      expect(phaseB.exitCode, `Phase B init failed: ${phaseB.output}`).toBe(EXIT_CODES.SUCCESS);
 
-        // Phase C: Verify global config includes the source field.
-        // Before the D-92 fix, splitConfigByScope did not spread ...config,
-        // so source (and marketplace) were lost in the global partition.
-        const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-        const globalConfig = await readTestFile(globalConfigPath);
+      // Phase C: Verify global config includes the source field.
+      // Before the D-92 fix, splitConfigByScope did not spread ...config,
+      // so source (and marketplace) were lost in the global partition.
+      const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const globalConfig = await readTestFile(globalConfigPath);
 
-        // The top-level "source" field in the export default block should reference
-        // the E2E source directory. The config writer formats it as:
-        //   "source": "/path/to/source",
-        expect(globalConfig, "Global config must contain a top-level source field").toContain(
-          `"source": "${sourceDir}"`,
-        );
+      // The top-level "source" field in the export default block should reference
+      // the E2E source directory. The config writer formats it as:
+      //   "source": "/path/to/source",
+      expect(globalConfig, "Global config must contain a top-level source field").toContain(
+        `"source": "${sourceDir}"`,
+      );
 
-        // Phase D: Verify project config also includes the source field
-        const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-        const projectConfig = await readTestFile(projectConfigPath);
+      // Phase D: Verify project config also includes the source field
+      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const projectConfig = await readTestFile(projectConfigPath);
 
-        expect(projectConfig, "Project config must contain a top-level source field").toContain(
-          `"source": "${sourceDir}"`,
-        );
-      } finally {
-        await cleanupTempDir(tempDir);
-      }
+      expect(projectConfig, "Project config must contain a top-level source field").toContain(
+        `"source": "${sourceDir}"`,
+      );
     },
   );
 });

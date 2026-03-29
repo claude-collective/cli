@@ -1,6 +1,6 @@
 import path from "path";
 import { stat } from "fs/promises";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
@@ -121,21 +121,26 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
   });
 
   describe("edit with real marketplace", () => {
+    let editWizard: EditWizard | undefined;
+
+    afterEach(async () => {
+      if (editWizard) {
+        editWizard.abort();
+        await editWizard.waitForExit(TIMEOUTS.EXIT);
+        await editWizard.destroy();
+        editWizard = undefined;
+      }
+    });
+
     it("should show the build step with pre-selected skills", async () => {
-      const editWizard = await EditWizard.launch({
+      editWizard = await EditWizard.launch({
         projectDir,
         cols: 120,
         rows: 40,
       });
 
-      try {
-        const output = editWizard.build.getOutput();
-        expect(output).toMatch(/Framework \*/);
-      } finally {
-        editWizard.abort();
-        await editWizard.waitForExit(TIMEOUTS.EXIT);
-        await editWizard.destroy();
-      }
+      const output = editWizard.build.getOutput();
+      expect(output).toMatch(/Framework \*/);
     });
   });
 

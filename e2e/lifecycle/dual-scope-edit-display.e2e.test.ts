@@ -1,5 +1,5 @@
 import path from "path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
@@ -36,6 +36,8 @@ import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-he
 describe("dual-scope edit lifecycle -- display and locking", () => {
   let sourceDir: string;
   let sourceTempDir: string;
+  let tempDir: string;
+  let wizard: EditWizard | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
@@ -43,6 +45,15 @@ describe("dual-scope edit lifecycle -- display and locking", () => {
     sourceDir = source.sourceDir;
     sourceTempDir = source.tempDir;
   }, TIMEOUTS.SETUP * 2);
+
+  afterEach(async () => {
+    await wizard?.destroy();
+    wizard = undefined;
+    if (tempDir) {
+      await cleanupTempDir(tempDir);
+      tempDir = undefined!;
+    }
+  });
 
   afterAll(async () => {
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
@@ -52,56 +63,49 @@ describe("dual-scope edit lifecycle -- display and locking", () => {
     "Test 1: edit shows global items as locked, project items as editable",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
-      const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
+      const env = await createTestEnvironment();
+      tempDir = env.tempDir;
+      const { fakeHome, projectDir } = env;
 
-      try {
-        await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+      await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
 
-        // Phase C: Edit from project dir -- navigate through without changes
-        const wizard = await EditWizard.launch({
-          projectDir,
-          source: { sourceDir, tempDir: sourceTempDir },
-          env: { HOME: fakeHome },
-          rows: 60,
-          cols: 120,
-        });
+      // Phase C: Edit from project dir -- navigate through without changes
+      wizard = await EditWizard.launch({
+        projectDir,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
 
-        try {
-          const result = await wizard.passThrough();
+      const result = await wizard.passThrough();
 
-          // Phase D: Assertions
+      // Phase D: Assertions
 
-          // D-1: Exit code 0
-          const exitCode = await result.exitCode;
-          expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // D-1: Exit code 0
+      const exitCode = await result.exitCode;
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // D-2: Scope indicators visible in output
-          const rawOutput = result.rawOutput;
-          expect(rawOutput).toContain("G ");
-          expect(rawOutput).toContain("P ");
+      // D-2: Scope indicators visible in output
+      const rawOutput = result.rawOutput;
+      expect(rawOutput).toContain("G ");
+      expect(rawOutput).toContain("P ");
 
-          // D-3: Agent scope badges
-          expect(rawOutput).toContain("[G]");
-          expect(rawOutput).toContain("[P]");
+      // D-3: Agent scope badges
+      expect(rawOutput).toContain("[G]");
+      expect(rawOutput).toContain("[P]");
 
-          // D-4: Config files unchanged -- both still exist
-          const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-          const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-          expect(await fileExists(globalConfigPath)).toBe(true);
-          expect(await fileExists(projectConfigPath)).toBe(true);
+      // D-4: Config files unchanged -- both still exist
+      const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      expect(await fileExists(globalConfigPath)).toBe(true);
+      expect(await fileExists(projectConfigPath)).toBe(true);
 
-          // D-5: Agent files preserved
-          await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
-          await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+      // D-5: Agent files preserved
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
-          await result.destroy();
-        } catch (e) {
-          await wizard.destroy();
-          throw e;
-        }
-      } finally {
-        await cleanupTempDir(tempDir);
-      }
+      await result.destroy();
     },
   );
 });

@@ -56,6 +56,15 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- per-skill s
   });
 
   describe("per-skill source switching -- mixed local and plugin", () => {
+    let prompt: InteractivePrompt | undefined;
+
+    afterEach(async () => {
+      if (prompt) {
+        await prompt.destroy();
+        prompt = undefined;
+      }
+    });
+
     it(
       "should support mixed source modes with per-skill switching via customize view",
       { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
@@ -94,55 +103,51 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- per-skill s
         // is not exposed through the SourcesStep page object.
         await createPermissionsFile(projectDir);
 
-        const prompt = new InteractivePrompt(["edit", "--source", fixture.sourceDir], projectDir, {
+        prompt = new InteractivePrompt(["edit", "--source", fixture.sourceDir], projectDir, {
           env: { AGENTSINC_SOURCE: undefined },
           rows: 60,
           cols: 120,
         });
 
-        try {
-          await prompt.waitForRawText(STEP_TEXT.BUILD, TIMEOUTS.WIZARD_LOAD);
-          await prompt.pressEnter();
+        await prompt.waitForRawText(STEP_TEXT.BUILD, TIMEOUTS.WIZARD_LOAD);
+        await prompt.pressEnter();
 
-          await prompt.waitForRawText(STEP_TEXT.DOMAIN_API, TIMEOUTS.WIZARD_LOAD);
-          await prompt.pressEnter();
+        await prompt.waitForRawText(STEP_TEXT.DOMAIN_API, TIMEOUTS.WIZARD_LOAD);
+        await prompt.pressEnter();
 
-          await prompt.waitForRawText(STEP_TEXT.DOMAIN_META, TIMEOUTS.WIZARD_LOAD);
-          await prompt.pressEnter();
+        await prompt.waitForRawText(STEP_TEXT.DOMAIN_META, TIMEOUTS.WIZARD_LOAD);
+        await prompt.pressEnter();
 
-          await prompt.waitForRawText(STEP_TEXT.SOURCES, TIMEOUTS.WIZARD_LOAD);
-          await prompt.waitForRawText(STEP_TEXT.SOURCES, TIMEOUTS.WIZARD_LOAD);
+        await prompt.waitForRawText(STEP_TEXT.SOURCES, TIMEOUTS.WIZARD_LOAD);
+        await prompt.waitForRawText(STEP_TEXT.SOURCES, TIMEOUTS.WIZARD_LOAD);
 
-          // Arrow right to marketplace source column for the first skill
-          await prompt.arrowRight();
-          // Space to select the marketplace source for this skill only
-          await prompt.space();
+        // Arrow right to marketplace source column for the first skill
+        await prompt.arrowRight();
+        // Space to select the marketplace source for this skill only
+        await prompt.space();
 
-          await prompt.pressEnter();
+        await prompt.pressEnter();
 
-          await prompt.waitForRawText(STEP_TEXT.AGENTS, TIMEOUTS.WIZARD_LOAD);
-          await prompt.pressEnter();
+        await prompt.waitForRawText(STEP_TEXT.AGENTS, TIMEOUTS.WIZARD_LOAD);
+        await prompt.pressEnter();
 
-          await prompt.waitForRawText(STEP_TEXT.CONFIRM, TIMEOUTS.WIZARD_LOAD);
-          await prompt.pressEnter();
+        await prompt.waitForRawText(STEP_TEXT.CONFIRM, TIMEOUTS.WIZARD_LOAD);
+        await prompt.pressEnter();
 
-          await prompt.waitForRawText(STEP_TEXT.EDIT_SUCCESS, TIMEOUTS.PLUGIN_INSTALL);
+        await prompt.waitForRawText(STEP_TEXT.EDIT_SUCCESS, TIMEOUTS.PLUGIN_INSTALL);
 
-          const editExitCode = await prompt.waitForExit(TIMEOUTS.EXIT_WAIT);
-          expect(editExitCode).toBe(EXIT_CODES.SUCCESS);
+        const editExitCode = await prompt.waitForExit(TIMEOUTS.EXIT_WAIT);
+        expect(editExitCode).toBe(EXIT_CODES.SUCCESS);
 
-          const rawOutput = prompt.getRawOutput();
-          expect(rawOutput).toMatch(/[Ss]witch|[Ii]nstall/);
+        const rawOutput = prompt.getRawOutput();
+        expect(rawOutput).toMatch(/[Ss]witch|[Ii]nstall/);
 
-          const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, "config.ts");
-          expect(await fileExists(configPath)).toBe(true);
-          const configContent = await readTestFile(configPath);
-          expect(configContent).toContain(fixture.marketplaceName);
+        const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, "config.ts");
+        expect(await fileExists(configPath)).toBe(true);
+        const configContent = await readTestFile(configPath);
+        expect(configContent).toContain(fixture.marketplaceName);
 
-          await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
-        } finally {
-          await prompt.destroy();
-        }
+        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
       },
     );
   });
