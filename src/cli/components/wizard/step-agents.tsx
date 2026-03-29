@@ -247,9 +247,15 @@ export const StepAgents: React.FC = () => {
         return (
           <Box key={`header-${row.label}`} flexShrink={0}>
             {row.label === focusedGroupLabel ? (
-              <Text color={CLI_COLORS.WHITE} backgroundColor={CLI_COLORS.LABEL_BG}>{` ${row.label} `}</Text>
+              <Text
+                color={CLI_COLORS.WHITE}
+                backgroundColor={CLI_COLORS.LABEL_BG}
+              >{` ${row.label} `}</Text>
             ) : (
-              <Text dimColor bold>{"  "}{row.label}</Text>
+              <Text dimColor bold>
+                {"  "}
+                {row.label}
+              </Text>
             )}
           </Box>
         );

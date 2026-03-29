@@ -109,7 +109,10 @@ const SourceSection: React.FC<SourceSectionProps> = ({
     <Box flexDirection="column">
       <Box flexDirection="row">
         {isFocused ? (
-          <Text color={CLI_COLORS.WHITE} backgroundColor={CLI_COLORS.LABEL_BG}>{` ${getSkillById(row.skillId).displayName} `}</Text>
+          <Text
+            color={CLI_COLORS.WHITE}
+            backgroundColor={CLI_COLORS.LABEL_BG}
+          >{` ${getSkillById(row.skillId).displayName} `}</Text>
         ) : (
           <Text color={CLI_COLORS.NEUTRAL}>{getSkillById(row.skillId).displayName}</Text>
         )}
