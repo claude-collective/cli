@@ -2,6 +2,9 @@
 
 | ID    | Task                                                                                      | Status        |
 | ----- | ----------------------------------------------------------------------------------------- | ------------- |
+| D-165 | Fix 4 type-system critical issues from D-138 audit (double casts, non-null, invalid casts) | Ready for Dev |
+| D-166 | Fix E2E try/finally blocks in 6 lifecycle/interactive test files                          | Ready for Dev |
+| D-167 | Remove task IDs from describe() blocks in init-wizard test files                          | Ready for Dev |
 | D-138 | Iterate on sub-agents — review and improve all agent definitions                          | Ready for Dev |
 | D-111 | Create a GIF demo for the README                                                          | Ready for Dev |
 | D-110 | Fix the logo in the README                                                                | Ready for Dev |
@@ -21,6 +24,7 @@
 | D-66  | AI-assisted PR review: categorize diffs by type                                           | Investigate   |
 | D-69  | Config migration strategy for outdated config shapes                                      | Investigate   |
 | D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`            | Ready for Dev |
+| D-164 | Improve confirm step UI — structured summary with scope/mode breakdown                    | Investigate   |
 | D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena | Investigate   |
 
 ---
@@ -39,6 +43,22 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
+
+### Code Quality
+
+#### D-165: Fix 4 type-system critical issues from D-138 audit
+
+**Priority:** Medium
+
+Identified during the comprehensive D-138 project audit. All four are straightforward violations of CLAUDE.md rules.
+
+1. **`src/cli/commands/base-command.ts:23` + `src/cli/hooks/init.ts:45`** — `as unknown as ConfigWithSource` double casts. Violates "NEVER use `as unknown as T` double casts — fix the upstream type instead." Create a proper type helper or narrow the type at the oclif boundary.
+
+2. **`src/cli/commands/eject.ts:193,198`** — `sourceResult!` non-null assertions after conditional switch assignment. Restructure the switch so `sourceResult` is always assigned before use, eliminating the need for non-null assertions.
+
+3. **`src/cli/commands/new/marketplace.ts:248,255`** — `skillName as SkillId` and `LOCAL_DEFAULTS.CATEGORY as Category` casts on values that are not in the respective unions (dummy values for generated config). Either change these to use real valid members, or if intentionally invalid, document why at the boundary.
+
+---
 
 ### Bugs
 
@@ -150,6 +170,28 @@ All agent definitions in `src/agents/` should be reviewed and improved using the
 
 ### Wizard UX
 
+#### D-164: Improve confirm step UI
+
+**Priority:** Medium
+
+The current confirm step (`step-confirm.tsx`) shows a flat list of plain text lines (Technologies, Skills, Agents, Install mode, Scope). It doesn't match the visual style of the rest of the wizard and gives no breakdown of what's actually being installed.
+
+**Goals:**
+
+- Show a two-column layout matching the info panel style: Global | Project, broken down by Plugin / Eject
+- List skill slugs grouped by domain (not just a count), truncated if too long
+- Show agent names grouped by scope
+- Surface the install mode per scope — e.g. "3 plugin, 1 eject" rather than the flat `Mixed (1 eject, 3 plugin)` label
+- Use `computeStats` from `stats-panel.js` for counts to stay consistent with the info panel
+
+**Key files:**
+
+- `src/cli/components/wizard/step-confirm.tsx` — component to redesign
+- `src/cli/components/wizard/stats-panel.js` — `computeStats` to reuse
+- `src/cli/components/wizard/info-panel.tsx` — visual reference
+
+---
+
 #### D-127: UX for claiming global skills/agents into project scope
 
 **Priority:** Low
@@ -210,6 +252,38 @@ The current skill covers oclif command structure and Ink component patterns but 
 ---
 
 ### Testing
+
+#### D-166: Fix E2E try/finally blocks in 6 lifecycle/interactive test files
+
+**Priority:** Medium
+
+Identified during D-138 audit. Violates `test-structure.md`: "Do not use `try/finally` for cleanup in test bodies. `afterEach` runs even when tests throw."
+
+Affected files:
+- `e2e/lifecycle/global-scope-lifecycle.e2e.test.ts` — 8 finally blocks
+- `e2e/lifecycle/config-scope-integrity.e2e.test.ts` — 3 finally blocks
+- `e2e/lifecycle/dual-scope-edit-mixed-sources.e2e.test.ts`
+- `e2e/lifecycle/dual-scope-edit-source-changes.e2e.test.ts`
+- `e2e/lifecycle/source-switching-per-skill.e2e.test.ts`
+- `e2e/interactive/real-marketplace.e2e.test.ts`
+
+Pattern: `cleanupTempDir(tempDir)` in finally blocks inside `it()` bodies. Fix: lift `tempDir` to describe scope, assign in test body, clean in `afterEach`.
+
+---
+
+#### D-167: Remove task IDs from describe() blocks
+
+**Priority:** Low
+
+Violates convention: task IDs belong in file-level JSDoc, not embedded in describe() strings.
+
+- `e2e/interactive/init-wizard-default-source.e2e.test.ts:27` — `"(D-122)"` in describe string
+- `e2e/interactive/init-wizard-default-source.e2e.test.ts:104` — `"(D-123)"` in describe string
+- `e2e/interactive/init-wizard-sources.e2e.test.ts` — `"(Gap 8)"` in describe string
+
+Move IDs to JSDoc comment above the describe block. Also fix: `e2e/interactive/search-interactive.e2e.test.ts:40` uses `sourceTempDir = undefined` instead of `sourceTempDir = undefined!` per documented reset pattern.
+
+---
 
 #### D-150: Migrate E2E tests from `toggleSkill` to `selectSkill`
 
