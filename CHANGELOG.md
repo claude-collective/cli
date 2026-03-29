@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.97.0] - 2026-03-29
+
+**Confirm step redesign and wizard label polish**
+
+- Confirm step replaced with 2-box layout (Skills / Agents), scope sections, bullet/+/- markers, eject icon
+- Focused section headers now highlight with dark background across build, sources, and agents steps
+- Init dashboard shows ASCII logo and fills terminal viewport
+
+See [changelogs/0.97.0.md](./changelogs/0.97.0.md) for full details.
+
 ## [0.96.3] - 2026-03-29
 
 **Test coverage gaps and two bug fixes**
