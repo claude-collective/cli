@@ -2,6 +2,7 @@
 
 | ID    | Task                                                                                       | Status        |
 | ----- | ------------------------------------------------------------------------------------------ | ------------- |
+| D-169 | Improve `list` command — show all installed skills and agents                              | Investigate   |
 | D-168 | Audit E2E tests — replace manual file construction with CLI commands throughout            | Ready for Dev |
 | D-165 | Fix 4 type-system critical issues from D-138 audit (double casts, non-null, invalid casts) | Ready for Dev |
 | D-166 | Fix E2E try/finally blocks in 6 lifecycle/interactive test files                           | Ready for Dev |
@@ -189,6 +190,27 @@ All agent definitions in `src/agents/` should be reviewed and improved using the
 - Missing domain knowledge that would prevent common mistakes
 
 **Approach:** Do 2-3 agents per session. Start with the most-used agents (cli-developer, cli-tester, cli-reviewer).
+
+---
+
+### Commands
+
+#### D-169: Improve `list` command — show all installed skills and agents
+
+**Priority:** Medium
+
+The current `list` command output is minimal. It should show a complete picture of what's installed — all skills (by scope and install mode) and all compiled agents (by scope).
+
+**Goals:**
+
+- List all installed skills grouped by scope (global / project) with their install mode (plugin / eject)
+- List all compiled agents grouped by scope (global / project)
+- Match the visual style used in the confirm step (bordered tables, scope-grouped columns)
+
+**Key files:**
+
+- `src/cli/commands/list.ts` — command to redesign
+- `src/cli/components/wizard/step-confirm.tsx` — visual reference for the table layout
 
 ---
 
