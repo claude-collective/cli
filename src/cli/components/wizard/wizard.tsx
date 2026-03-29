@@ -257,8 +257,6 @@ export const Wizard: React.FC<WizardProps> = ({
             onComplete={handleComplete}
             skillConfigs={store.skillConfigs}
             agentConfigs={store.agentConfigs}
-            previousSkillConfigs={installedSkillConfigs}
-            previousAgentConfigs={installedAgentConfigs}
             onBack={store.goBack}
           />
         );

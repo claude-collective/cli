@@ -219,6 +219,10 @@ export type WizardState = {
 
   boundSkills: BoundSkill[];
 
+  /** Snapshot of configs that were installed before the wizard opened, used for diff rendering */
+  installedSkillConfigs: SkillConfig[] | null;
+  installedAgentConfigs: AgentScopeConfig[] | null;
+
   /** Skill IDs that cannot be toggled or removed (D9: existing global items in project context) */
   lockedSkillIds: SkillId[];
   /** Agent names that cannot be toggled or removed (D9: existing global agents in project context) */
@@ -515,6 +519,8 @@ type WizardStateData = Pick<
   | "agentConfigs"
   | "focusedAgentId"
   | "boundSkills"
+  | "installedSkillConfigs"
+  | "installedAgentConfigs"
   | "lockedSkillIds"
   | "lockedAgentNames"
   | "isEditingFromGlobalScope"
@@ -543,6 +549,8 @@ const createInitialState = (): WizardStateData => ({
   agentConfigs: [],
   focusedAgentId: null,
   boundSkills: [],
+  installedSkillConfigs: null,
+  installedAgentConfigs: null,
   lockedSkillIds: [],
   lockedAgentNames: [],
   isEditingFromGlobalScope: false,

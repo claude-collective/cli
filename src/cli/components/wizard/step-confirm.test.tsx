@@ -5,6 +5,7 @@ import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-
 import { buildAgentConfigs, buildSkillConfigs } from "../../lib/__tests__/helpers";
 import { initializeMatrix } from "../../lib/matrix/matrix-provider";
 import { WEB_PAIR_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
+import { useWizardStore } from "../../stores/wizard-store";
 import type { SkillConfig } from "../../types/config";
 
 describe("StepConfirm component", () => {
@@ -12,6 +13,7 @@ describe("StepConfirm component", () => {
 
   beforeEach(() => {
     initializeMatrix(WEB_PAIR_MATRIX);
+    useWizardStore.setState({ installedSkillConfigs: null, installedAgentConfigs: null });
   });
 
   afterEach(() => {
@@ -120,7 +122,7 @@ describe("StepConfirm component", () => {
   });
 
   describe("bullet markers - init mode", () => {
-    it("should show bullet prefix when previousSkillConfigs is absent", () => {
+    it("should show bullet prefix when installedSkillConfigs is absent", () => {
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={vi.fn()}
@@ -137,7 +139,7 @@ describe("StepConfirm component", () => {
       }
     });
 
-    it("should show bullet prefix for agents when previousAgentConfigs is absent", () => {
+    it("should show bullet prefix for agents when installedAgentConfigs is absent", () => {
       const { lastFrame, unmount } = render(
         <StepConfirm onComplete={vi.fn()} agentConfigs={buildAgentConfigs(["web-developer"])} />,
       );
@@ -152,12 +154,13 @@ describe("StepConfirm component", () => {
   });
 
   describe("new item markers - edit mode", () => {
-    it("should show + for a skill not in previousSkillConfigs", () => {
+    it("should show + for a skill not in installedSkillConfigs", () => {
+      useWizardStore.setState({ installedSkillConfigs: [] });
+
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={vi.fn()}
           skillConfigs={buildSkillConfigs(["web-framework-react"])}
-          previousSkillConfigs={[]}
         />,
       );
       cleanup = unmount;
@@ -168,11 +171,12 @@ describe("StepConfirm component", () => {
       expect(reactLine).toContain("+");
     });
 
-    it("should show bullet for a skill that IS in previousSkillConfigs", () => {
+    it("should show bullet for a skill that IS in installedSkillConfigs", () => {
       const configs = buildSkillConfigs(["web-framework-react"]);
+      useWizardStore.setState({ installedSkillConfigs: configs });
 
       const { lastFrame, unmount } = render(
-        <StepConfirm onComplete={vi.fn()} skillConfigs={configs} previousSkillConfigs={configs} />,
+        <StepConfirm onComplete={vi.fn()} skillConfigs={configs} />,
       );
       cleanup = unmount;
 
@@ -189,13 +193,10 @@ describe("StepConfirm component", () => {
         ...existingConfigs,
         ...buildSkillConfigs(["web-state-zustand"]),
       ];
+      useWizardStore.setState({ installedSkillConfigs: existingConfigs });
 
       const { lastFrame, unmount } = render(
-        <StepConfirm
-          onComplete={vi.fn()}
-          skillConfigs={allConfigs}
-          previousSkillConfigs={existingConfigs}
-        />,
+        <StepConfirm onComplete={vi.fn()} skillConfigs={allConfigs} />,
       );
       cleanup = unmount;
 
@@ -211,12 +212,13 @@ describe("StepConfirm component", () => {
       expect(reactLine).not.toMatch(/\+.*React/);
     });
 
-    it("should show + on new agent when previousAgentConfigs provided and agent not in it", () => {
+    it("should show + on new agent when installedAgentConfigs is empty", () => {
+      useWizardStore.setState({ installedAgentConfigs: [] });
+
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={vi.fn()}
           agentConfigs={buildAgentConfigs(["web-developer"])}
-          previousAgentConfigs={[]}
         />,
       );
       cleanup = unmount;
@@ -227,11 +229,12 @@ describe("StepConfirm component", () => {
       expect(agentLine).toContain("+");
     });
 
-    it("should show bullet on agent that was already in previousAgentConfigs", () => {
+    it("should show bullet on agent that was already in installedAgentConfigs", () => {
       const agents = buildAgentConfigs(["web-developer"]);
+      useWizardStore.setState({ installedAgentConfigs: agents });
 
       const { lastFrame, unmount } = render(
-        <StepConfirm onComplete={vi.fn()} agentConfigs={agents} previousAgentConfigs={agents} />,
+        <StepConfirm onComplete={vi.fn()} agentConfigs={agents} />,
       );
       cleanup = unmount;
 
@@ -244,13 +247,13 @@ describe("StepConfirm component", () => {
   });
 
   describe("removed item markers - edit mode", () => {
-    it("should show - for a skill in previousSkillConfigs but not in skillConfigs", () => {
+    it("should show - for a skill in installedSkillConfigs but not in skillConfigs", () => {
+      useWizardStore.setState({
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"]),
+      });
+
       const { lastFrame, unmount } = render(
-        <StepConfirm
-          onComplete={vi.fn()}
-          skillConfigs={[]}
-          previousSkillConfigs={buildSkillConfigs(["web-framework-react"])}
-        />,
+        <StepConfirm onComplete={vi.fn()} skillConfigs={[]} />,
       );
       cleanup = unmount;
 
@@ -261,12 +264,12 @@ describe("StepConfirm component", () => {
     });
 
     it("should show - for a removed agent", () => {
+      useWizardStore.setState({
+        installedAgentConfigs: buildAgentConfigs(["web-developer"]),
+      });
+
       const { lastFrame, unmount } = render(
-        <StepConfirm
-          onComplete={vi.fn()}
-          agentConfigs={[]}
-          previousAgentConfigs={buildAgentConfigs(["web-developer"])}
-        />,
+        <StepConfirm onComplete={vi.fn()} agentConfigs={[]} />,
       );
       cleanup = unmount;
 
@@ -277,14 +280,14 @@ describe("StepConfirm component", () => {
     });
 
     it("should show mix of bullet and - items", () => {
-      const previousConfigs = buildSkillConfigs(["web-framework-react", "web-state-zustand"]);
-      const currentConfigs = buildSkillConfigs(["web-framework-react"]);
+      useWizardStore.setState({
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react", "web-state-zustand"]),
+      });
 
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={vi.fn()}
-          skillConfigs={currentConfigs}
-          previousSkillConfigs={previousConfigs}
+          skillConfigs={buildSkillConfigs(["web-framework-react"])}
         />,
       );
       cleanup = unmount;
@@ -303,12 +306,12 @@ describe("StepConfirm component", () => {
     });
 
     it("should show scope heading when all skills in scope are removed", () => {
+      useWizardStore.setState({
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+      });
+
       const { lastFrame, unmount } = render(
-        <StepConfirm
-          onComplete={vi.fn()}
-          skillConfigs={[]}
-          previousSkillConfigs={buildSkillConfigs(["web-framework-react"], { scope: "global" })}
-        />,
+        <StepConfirm onComplete={vi.fn()} skillConfigs={[]} />,
       );
       cleanup = unmount;
 

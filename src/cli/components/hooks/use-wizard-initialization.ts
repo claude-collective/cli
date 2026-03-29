@@ -63,6 +63,13 @@ export function useWizardInitialization({
     if (initialAgents?.length && installedAgentConfigs?.length) {
       useWizardStore.setState({ agentConfigs: installedAgentConfigs });
     }
+    // Snapshot installed configs for diff rendering in SkillAgentSummary
+    if (installedSkillConfigs?.length || installedAgentConfigs?.length) {
+      useWizardStore.setState({
+        installedSkillConfigs: installedSkillConfigs ?? null,
+        installedAgentConfigs: installedAgentConfigs ?? null,
+      });
+    }
     // Set locked IDs (D9: global items read-only in project context)
     if (lockedSkillIds?.length || lockedAgentNames?.length) {
       useWizardStore.setState({
