@@ -36,7 +36,7 @@ export const InfoPanel: React.FC = () => {
             <Text>{"    "}</Text>
             <Text dimColor={stats.globalPlugin === 0}>
               <Text color={CLI_COLORS.PRIMARY}>{stats.globalPlugin}</Text>
-              <Text> plugin  </Text>
+              <Text> plugin </Text>
             </Text>
             <Text dimColor={stats.globalEject === 0}>
               <Text color={CLI_COLORS.PRIMARY}>{stats.globalEject}</Text>
@@ -50,7 +50,7 @@ export const InfoPanel: React.FC = () => {
             <Text>{"   "}</Text>
             <Text dimColor={stats.projectPlugin === 0}>
               <Text color={CLI_COLORS.PRIMARY}>{stats.projectPlugin}</Text>
-              <Text> plugin  </Text>
+              <Text> plugin </Text>
             </Text>
             <Text dimColor={stats.projectEject === 0}>
               <Text color={CLI_COLORS.PRIMARY}>{stats.projectEject}</Text>
