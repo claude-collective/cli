@@ -1,7 +1,8 @@
 # D-136: Test Coverage Gap Analysis
 
 **Created:** 2026-03-21
-**Status:** In Progress
+**Last Audited:** 2026-03-29
+**Status:** In Progress — Phase 1 unit tests done, Phase 2 E2E partially done, Phase 3 integration cleanup pending
 
 ---
 
@@ -124,8 +125,8 @@ Missing:
 Missing:
 
 - [x] `--no-recompile` flag behavior — `flag validation` tests in `commands/uninstall.test.ts`
-- [ ] Uninstall when only global skills exist
-- [ ] Uninstall preserving project skills when removing global
+- [x] Uninstall when only global skills exist — run `cc uninstall` from global dir (uses `process.cwd()`); no `--global` flag needed
+- [x] Uninstall preserving project skills when removing global — project scope uninstall only touches `projectDir/.claude/`; global is separate invocation
 - [x] `--yes` auto-confirm flag — `flag validation` tests
 
 #### 11. `help` — Comprehensive command coverage
