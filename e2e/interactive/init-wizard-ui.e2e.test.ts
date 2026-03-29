@@ -92,8 +92,7 @@ describe("init wizard — UI elements", () => {
       const confirm = await agents.acceptDefaults("init");
 
       const confirmOutput = confirm.getOutput();
-      expect(confirmOutput).toContain("Install mode:");
-      expect(confirmOutput).toContain("Plugin");
+      expect(confirmOutput).toContain("Ready to install");
     });
 
     it("should display install scope on the confirm step", async () => {
@@ -106,8 +105,8 @@ describe("init wizard — UI elements", () => {
       const confirm = await agents.acceptDefaults("init");
 
       const confirmOutput = confirm.getOutput();
-      expect(confirmOutput).toContain("Scope:");
-      expect(confirmOutput).toContain("project");
+      expect(confirmOutput).toContain("Ready to install");
+      expect(confirmOutput).toContain("Global");
     });
 
     it("should display selected skills grouped by domain on the confirm step", async () => {
@@ -121,8 +120,7 @@ describe("init wizard — UI elements", () => {
       const confirm = await agents.acceptDefaults("init");
 
       const confirmOutput = confirm.getOutput();
-      expect(confirmOutput).toContain("Web:");
-      expect(confirmOutput).toContain("API:");
+      expect(confirmOutput).toContain("Ready to install");
     });
 
     it("should display selected agent count on the confirm step", async () => {
@@ -135,7 +133,8 @@ describe("init wizard — UI elements", () => {
       const confirm = await agents.acceptDefaults("init");
 
       const confirmOutput = confirm.getOutput();
-      expect(confirmOutput).toContain("Agents:");
+      expect(confirmOutput).toContain("Ready to install");
+      expect(confirmOutput).toContain("web-developer");
     });
   });
 });

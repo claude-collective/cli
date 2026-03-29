@@ -38,10 +38,11 @@ describe("edit wizard — confirm step and completion", () => {
 
       await confirm.waitForReady();
       const screen = confirm.getScreen();
-      // Confirm step shows summary with skill/agent counts and install mode
-      expect(screen).toContain("Skills:");
-      expect(screen).toContain("Agents:");
-      expect(screen).toContain("Install mode:");
+      // Confirm step shows "Ready to install" header and actual skill/agent names
+      expect(screen).toContain("Ready to install");
+      expect(screen).toContain("React");
+      expect(screen).toContain("Tailwind CSS");
+      expect(screen).toContain("web-developer");
       expect(screen).toContain("ENTER");
       expect(screen).toContain("ESC");
     });

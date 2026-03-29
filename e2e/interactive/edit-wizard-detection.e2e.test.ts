@@ -10,7 +10,7 @@ import {
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import { DIRS, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
+import { DIRS, TIMEOUTS } from "../pages/constants.js";
 
 /**
  * E2E tests for edit wizard skill detection (Gap 6).
@@ -161,9 +161,13 @@ describe("edit wizard — skill detection across sources and scopes", () => {
           cols: 120,
         });
 
-        const rawOutput = wizard.getRawOutput();
-        // "Found 3 installed skills" — edit.tsx:137
-        expect(rawOutput).toContain("Found 3 installed skills");
+        const buildOutput = wizard.build.getOutput();
+        // All 3 installed skills should be pre-selected in the build step.
+        // Framework (1 of 1) and Testing (1 of 1) confirm 2 of the 3 are detected;
+        // the P/G scope badges confirm scope was loaded from config.
+        expect(buildOutput).toContain("(1 of 1)");
+        expect(buildOutput).toContain("web-framework-react");
+        expect(buildOutput).toContain("web-testing-vitest");
       },
     );
   });

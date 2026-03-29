@@ -83,8 +83,10 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
 
   describe("init with real marketplace", () => {
     it("should have rendered real stacks during stack selection", () => {
-      // The CLI's built-in stacks include "Next.js Full-Stack" as the first stack
-      expect(initOutput).toContain("Next.js Full-Stack");
+      // The CLI's built-in stacks include "Next.js Full-Stack" — verify its
+      // skills were installed (stack selection screen is cleared after wizard)
+      expect(initOutput).toContain("web-framework-react@agents-inc");
+      expect(initOutput).toContain("web-meta-framework-nextjs@agents-inc");
     });
 
     it("should have used the real marketplace for plugin installation", () => {

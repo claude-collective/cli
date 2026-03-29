@@ -59,7 +59,7 @@ export const STEP_TEXT = {
   SEARCH: "Search Skills",
 
   // Dashboard
-  DASHBOARD: "Agents Inc.",
+  DASHBOARD: "Doctor",
 
   // UI elements
   FOOTER_SELECT: "select", // Footer text used for stable render detection

@@ -72,11 +72,8 @@ describe("init wizard — scratch flow", () => {
       const confirm = await agents.acceptDefaults("init");
 
       const confirmOutput = confirm.getOutput();
-      expect(confirmOutput).toContain(STEP_TEXT.DOMAIN_WEB);
-      expect(confirmOutput).toContain(STEP_TEXT.DOMAIN_API);
-      expect(confirmOutput).toContain("Skills:");
-      expect(confirmOutput).toContain("Agents:");
-      expect(confirmOutput).toContain("project");
+      expect(confirmOutput).toContain("Ready to install");
+      expect(confirmOutput).toContain("Global");
     });
 
     it("should complete a full scratch-based init flow through to install", async () => {

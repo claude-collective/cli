@@ -135,9 +135,8 @@ describe("edit wizard — navigation and hotkeys", () => {
       const confirm = await agents.acceptDefaults("edit");
 
       const confirmOutput = confirm.getOutput();
-      // The confirm step shows "Scope:" with counts of project/global skills.
-      expect(confirmOutput).toContain("Scope:");
-      expect(confirmOutput).toContain("global");
+      // The confirm step shows scope as section headers (Project/Global).
+      expect(confirmOutput).toContain("Global");
     });
   });
 

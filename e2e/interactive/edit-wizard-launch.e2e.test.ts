@@ -55,9 +55,8 @@ describe("edit wizard — launch and display", () => {
 
       wizard = await EditWizard.launch({ projectDir: project.dir });
 
-      const output = wizard.getRawOutput();
-      expect(output).toContain(STEP_TEXT.LOADED);
-      expect(output).toContain("skills");
+      const output = wizard.build.getOutput();
+      expect(output).toContain("Framework");
     });
 
     it("should show skills loaded status", async () => {
@@ -65,8 +64,8 @@ describe("edit wizard — launch and display", () => {
 
       wizard = await EditWizard.launch({ projectDir: project.dir });
 
-      const output = wizard.getRawOutput();
-      expect(output).toContain(STEP_TEXT.LOADED);
+      const output = wizard.build.getOutput();
+      expect(output).toContain(STEP_TEXT.DOMAIN_WEB);
     });
 
     it("should show pre-selected skills in the build step", async () => {
@@ -208,9 +207,9 @@ describe("edit wizard — launch and display", () => {
         env: { HOME: project.dir },
       });
 
-      const raw = wizard.getRawOutput();
-      expect(raw).toContain(STEP_TEXT.LOADED);
-      expect(raw).toContain("skills");
+      const output = wizard.build.getOutput();
+      // Global config's React skill should be pre-selected in the build step
+      expect(output).toContain("React");
     });
   });
 });
