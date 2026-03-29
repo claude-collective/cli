@@ -6,6 +6,7 @@ import fs from "fs";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
+import { useTerminalDimensions } from "../components/hooks/use-terminal-dimensions.js";
 import { type SourceLoadResult } from "../lib/loading/index.js";
 import {
   loadSource,
@@ -35,11 +36,6 @@ import {
   GLOBAL_INSTALL_ROOT,
 } from "../consts.js";
 import { SelectList, type SelectListItem } from "../components/common/select-list.js";
-import {
-  KEY_LABEL_ARROWS_VERT,
-  KEY_LABEL_ENTER,
-  KEY_LABEL_ESC,
-} from "../components/wizard/hotkeys.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { getSkillById } from "../lib/matrix/matrix-provider";
@@ -66,11 +62,13 @@ type DashboardProps = {
 
 const Dashboard: React.FC<DashboardProps> = ({ onSelect, onCancel }) => {
   const { exit } = useApp();
+  const { rows: terminalHeight } = useTerminalDimensions();
 
   return (
-    <Box flexDirection="column">
-      <Text bold>{DEFAULT_BRANDING.NAME}</Text>
-      <Text> </Text>
+    <Box flexDirection="column" height={terminalHeight}>
+      <Box marginBottom={1}>
+        <Text>{ASCII_LOGO}</Text>
+      </Box>
       <SelectList
         items={DASHBOARD_OPTIONS}
         onSelect={(command) => {
@@ -82,13 +80,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelect, onCancel }) => {
           exit();
         }}
       />
-      <Text> </Text>
-      <Text dimColor>
-        {" "}
-        {KEY_LABEL_ARROWS_VERT} Navigate {"  "}
-        {KEY_LABEL_ENTER} Confirm {"  "}
-        {KEY_LABEL_ESC} Exit
-      </Text>
     </Box>
   );
 };
