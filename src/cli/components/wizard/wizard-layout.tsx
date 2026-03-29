@@ -184,7 +184,12 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
           dropdowns={dropdowns}
         />
         {FEATURE_FLAGS.INFO_PANEL && store.showInfo ? (
-          <InfoPanel />
+          <>
+            <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
+              <InfoPanel />
+            </Box>
+            <WizardFooter />
+          </>
         ) : (
           <>
             <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
