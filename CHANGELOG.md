@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.98.0] - 2026-03-29
+
+**Info panel, confirm scroll, terminal clear**
+
+- Info panel redesigned with scrollable skill/agent summary (marketplace, stack, scope sections)
+- Confirm step uses standard scroll pattern for large skill/agent lists
+- Terminal clears after wizard exits so install logs start clean
+
+See [changelogs/0.98.0.md](./changelogs/0.98.0.md) for full details.
+
 ## [0.97.0] - 2026-03-29
 
 **Confirm step redesign and wizard label polish**
