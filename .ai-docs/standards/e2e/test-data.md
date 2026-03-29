@@ -89,14 +89,21 @@ Only create sources inline when the test requires a unique or modified source (e
 
 **Interactive dual-scope lifecycle tests:** Use `dual-scope-helpers.ts`, which builds dual-scope state through actual wizard interactions:
 
-| Helper                                                           | Purpose                                                      |
-| ---------------------------------------------------------------- | ------------------------------------------------------------ |
-| `createTestEnvironment()`                                        | Creates tempDir/fakeHome/project with permissions files      |
-| `initGlobal(sourceDir, sourceTempDir, homeDir)`                  | Runs init wizard in HOME dir with defaults                   |
-| `initProject(sourceDir, sourceTempDir, homeDir, projectDir)`     | Runs init with scope toggling (API skill + agent to project) |
-| `setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir)` | Runs both phases and asserts success                         |
+| Helper                                                                    | Purpose                                                                       |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `createTestEnvironment()`                                                 | Creates tempDir/fakeHome/project with permissions files                       |
+| `initGlobal(sourceDir, sourceTempDir, homeDir)`                           | Runs init wizard in HOME dir with defaults                                    |
+| `initGlobalWithEject(sourceDir, sourceTempDir, homeDir)`                  | Like initGlobal but sets all sources to eject mode                            |
+| `initProject(sourceDir, sourceTempDir, homeDir, projectDir)`              | Runs init with scope toggling (API skill + agent to project)                  |
+| `initProjectAllGlobal(sourceDir, sourceTempDir, homeDir, projectDir)`     | Runs init with eject mode, all skills stay global (no scope toggling)         |
+| `setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir)`          | Runs both phases and asserts success                                          |
+| `setupDualScopeWithEject(sourceDir, sourceTempDir, fakeHome, projectDir)` | Like setupDualScope but Phase A uses eject mode                               |
+| `createDualScopeEnv(sourceDir, sourceTempDir)`                            | Creates env + runs dual-scope setup with eject, returns `DualScopeEnv`        |
+| `createGlobalOnlyEnv(sourceDir, sourceTempDir)`                           | Creates env with all-global skills (no project scope), returns `DualScopeEnv` |
 
-Use `createTestEnvironment` + `setupDualScope` when you need realistic dual-scope state built through user interactions. Use `ProjectBuilder.dualScope()` when you only need the file structure without running the wizard.
+**Convenience wrappers:** `createDualScopeEnv` and `createGlobalOnlyEnv` combine environment creation + wizard setup + cleanup into a single call. They return a `DualScopeEnv` with `{ fakeHome, projectDir, destroy() }` -- call `destroy()` in `afterEach`/`afterAll` for automatic cleanup.
+
+Use `createTestEnvironment` + `setupDualScope` when you need fine-grained control. Use `createDualScopeEnv`/`createGlobalOnlyEnv` for simpler test setup. Use `ProjectBuilder.dualScope()` when you only need the file structure without running the wizard.
 
 ---
 
