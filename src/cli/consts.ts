@@ -108,6 +108,8 @@ export const UI_SYMBOLS = {
   DISCOURAGED: "!",
   DISABLED: "\u2013",
   LOCK: "\uD83D\uDD12",
+  EJECT: "\u23CF",
+  BULLET: "\u2022",
   SCROLL_UP: "\u25B2",
   SCROLL_DOWN: "\u25BC",
 } as const;
@@ -190,6 +192,7 @@ export const CLI_COLORS = {
   FOCUS: "cyan",
   UNFOCUSED: "white",
   WHITE: "white",
+  LABEL_BG: "#383838",
 } as const;
 
 /** Canonical display order for built-in domains. Custom domains appear before these, alphabetically. */
