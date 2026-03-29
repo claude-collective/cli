@@ -1,31 +1,32 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                                      | Status        |
-| ----- | ----------------------------------------------------------------------------------------- | ------------- |
+| ID    | Task                                                                                       | Status        |
+| ----- | ------------------------------------------------------------------------------------------ | ------------- |
+| D-168 | Audit E2E tests — replace manual file construction with CLI commands throughout            | Ready for Dev |
 | D-165 | Fix 4 type-system critical issues from D-138 audit (double casts, non-null, invalid casts) | Ready for Dev |
-| D-166 | Fix E2E try/finally blocks in 6 lifecycle/interactive test files                          | Ready for Dev |
-| D-167 | Remove task IDs from describe() blocks in init-wizard test files                          | Ready for Dev |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions                          | Ready for Dev |
-| D-111 | Create a GIF demo for the README                                                          | Ready for Dev |
-| D-110 | Fix the logo in the README                                                                | Ready for Dev |
-| D-109 | Fix the screenshots in the README                                                         | Ready for Dev |
-| D-62  | Review default stacks: add reviewing/research skills                                      | Ready for Dev |
-| D-118 | Investigate renaming "project/global" scope to "project/user"                             | Investigate   |
-| D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting          | Ready for Dev |
-| D-131 | Track project installations in global config                                              | Investigate   |
-| D-127 | UX for claiming global skills/agents into project scope                                   | Investigate   |
-| D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names             | Ready for Dev |
-| D-122 | Auto-update marketplace before plugin install                                             | Ready for Dev |
-| D-111 | Replace E2E text anchors with stable test identifiers                                     | Investigate   |
-| D-90  | Add Sentry tracking for unresolved matrix references                                      | Ready for Dev |
-| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)               | Ready for Dev |
-| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                            | Ready for Dev |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                           | Ready for Dev |
-| D-66  | AI-assisted PR review: categorize diffs by type                                           | Investigate   |
-| D-69  | Config migration strategy for outdated config shapes                                      | Investigate   |
-| D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`            | Ready for Dev |
-| D-164 | Improve confirm step UI — structured summary with scope/mode breakdown                    | Investigate   |
-| D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena | Investigate   |
+| D-166 | Fix E2E try/finally blocks in 6 lifecycle/interactive test files                           | Ready for Dev |
+| D-167 | Remove task IDs from describe() blocks in init-wizard test files                           | Ready for Dev |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions                           | Ready for Dev |
+| D-111 | Create a GIF demo for the README                                                           | Ready for Dev |
+| D-110 | Fix the logo in the README                                                                 | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                                          | Ready for Dev |
+| D-62  | Review default stacks: add reviewing/research skills                                       | Ready for Dev |
+| D-118 | Investigate renaming "project/global" scope to "project/user"                              | Investigate   |
+| D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting           | Ready for Dev |
+| D-131 | Track project installations in global config                                               | Investigate   |
+| D-127 | UX for claiming global skills/agents into project scope                                    | Investigate   |
+| D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names              | Ready for Dev |
+| D-122 | Auto-update marketplace before plugin install                                              | Ready for Dev |
+| D-111 | Replace E2E text anchors with stable test identifiers                                      | Investigate   |
+| D-90  | Add Sentry tracking for unresolved matrix references                                       | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)                | Ready for Dev |
+| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                             | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                            | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type                                            | Investigate   |
+| D-69  | Config migration strategy for outdated config shapes                                       | Investigate   |
+| D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`             | Ready for Dev |
+| D-164 | Improve confirm step UI — structured summary with scope/mode breakdown                     | Investigate   |
+| D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena  | Investigate   |
 
 ---
 
@@ -45,6 +46,29 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ## Active Tasks
 
 ### Code Quality
+
+#### D-168: Audit E2E tests — replace manual file construction with CLI commands
+
+**Priority:** Medium
+
+E2E tests must only use CLI commands to create state. Manual file system construction (writing config files, skill dirs, agent files directly via `fs`) bypasses the CLI and creates fragile, divergence-prone setups that break silently when the CLI's internal format changes.
+
+**What to look for:**
+
+- `writeProjectConfig()` calls inside `it()` bodies or local helper functions — replace with `cc init` via `InitWizard` or `EditWizard`
+- `writeFile()` / `mkdir()` calls constructing `.claude/skills/`, `.claude/agents/`, or config files manually
+- Local helper functions like `createDualScopeInstallation()`, `createLocalSkillWithForkedFrom()` that build internal state by hand
+- Any test that imports `writeFile`, `mkdir`, `fs-extra` directly and uses them to set up preconditions
+
+**Exceptions (acceptable):**
+
+- `beforeAll` source fixture setup (`createE2ESource`, `createE2EPluginSource`) — these create a skill _source_, not CLI state
+- `createPermissionsFile()` — sets up `.claude/settings.json` which has no CLI command equivalent
+- `ProjectBuilder` fixture methods — these are acceptable scaffolding for non-wizard lifecycle tests
+
+**Process:** Go file by file through `e2e/lifecycle/`, `e2e/interactive/`, and `e2e/commands/`. For each manual construction found, either replace with wizard-based setup or document why it cannot be replaced and what CLI gap it represents.
+
+---
 
 #### D-165: Fix 4 type-system critical issues from D-138 audit
 
@@ -260,6 +284,7 @@ The current skill covers oclif command structure and Ink component patterns but 
 Identified during D-138 audit. Violates `test-structure.md`: "Do not use `try/finally` for cleanup in test bodies. `afterEach` runs even when tests throw."
 
 Affected files:
+
 - `e2e/lifecycle/global-scope-lifecycle.e2e.test.ts` — 8 finally blocks
 - `e2e/lifecycle/config-scope-integrity.e2e.test.ts` — 3 finally blocks
 - `e2e/lifecycle/dual-scope-edit-mixed-sources.e2e.test.ts`

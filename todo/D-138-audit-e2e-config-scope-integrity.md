@@ -20,6 +20,7 @@ This violates `.ai-docs/standards/e2e/test-structure.md`: "Do not use `try/final
 For each affected describe block:
 
 ### Before pattern
+
 ```typescript
 it("test name", async () => {
   const { tempDir, fakeHome } = await createTestEnvironment();
@@ -41,6 +42,7 @@ it("test name", async () => {
 ```
 
 ### After pattern
+
 ```typescript
 let tempDir: string;
 let wizard: Awaited<ReturnType<typeof EditWizard.launch>> | undefined;
@@ -69,6 +71,7 @@ it("test name", async () => {
 ```
 
 ### Key changes
+
 - Declared `tempDir` and `wizard` at describe scope
 - Added `afterEach` with cleanup + `undefined!` reset for each affected describe block
 - Removed all 3 `try/finally` blocks from `it()` bodies
@@ -79,6 +82,7 @@ it("test name", async () => {
 ## Compliance
 
 The file now fully complies with `test-structure.md`:
+
 - Zero `finally` blocks in the file
 - Only remaining `try` block is in the extracted helper `initGlobalWithLocalSource()` (allowed by exception)
 - All cleanup done via `afterEach` hooks

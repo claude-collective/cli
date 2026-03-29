@@ -68,6 +68,7 @@ describe("edit with real marketplace", () => {
 ## Compliance
 
 The file now fully complies with `test-structure.md`:
+
 - No `try/finally` in test bodies
 - Cleanup handled by `afterEach` which runs even when tests throw
 - Variables reset after cleanup (`editWizard = undefined`)

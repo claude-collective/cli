@@ -6,17 +6,17 @@ Removed all `try/finally` and `try/catch` blocks from `it()` test bodies in `e2e
 
 ## Violations Found: 9 total (7 try/finally + 2 try/catch)
 
-| Describe Block | Test | Pattern | Fixed |
-|---|---|---|---|
-| source loader merge | edit wizard should detect... | nested: outer try/finally (tempDir) + inner try/catch (wizard) | Yes |
-| doctor command | should not report false 'missing' for global-scoped agents | try/finally (tempDir) | Yes |
-| doctor command | should not report false 'missing' for global-scoped skills | try/finally (tempDir) | Yes |
-| outdated command | should detect global-scoped local skills... | try/finally (tempDir) | Yes |
-| outdated command | should not warn 'No local skills found'... | try/finally (tempDir) | Yes |
-| diff command | should find global-scoped local skills... | try/finally (tempDir) | Yes |
-| diff command | should not warn 'No local skills found'... | try/finally (tempDir) | Yes |
-| uninstall with dual scope | should remove project-scoped skills... | try/finally (tempDir) | Yes |
-| init wizard with scope toggling | should place global-scoped local skills... | try/catch (wizard) -- tempDir afterEach already existed | Yes |
+| Describe Block                  | Test                                                       | Pattern                                                        | Fixed |
+| ------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------- | ----- |
+| source loader merge             | edit wizard should detect...                               | nested: outer try/finally (tempDir) + inner try/catch (wizard) | Yes   |
+| doctor command                  | should not report false 'missing' for global-scoped agents | try/finally (tempDir)                                          | Yes   |
+| doctor command                  | should not report false 'missing' for global-scoped skills | try/finally (tempDir)                                          | Yes   |
+| outdated command                | should detect global-scoped local skills...                | try/finally (tempDir)                                          | Yes   |
+| outdated command                | should not warn 'No local skills found'...                 | try/finally (tempDir)                                          | Yes   |
+| diff command                    | should find global-scoped local skills...                  | try/finally (tempDir)                                          | Yes   |
+| diff command                    | should not warn 'No local skills found'...                 | try/finally (tempDir)                                          | Yes   |
+| uninstall with dual scope       | should remove project-scoped skills...                     | try/finally (tempDir)                                          | Yes   |
+| init wizard with scope toggling | should place global-scoped local skills...                 | try/catch (wizard) -- tempDir afterEach already existed        | Yes   |
 
 ## Before/After Pattern
 
@@ -96,6 +96,7 @@ it("test name", async () => {
 ## Compliance
 
 The file now fully complies with `test-structure.md`:
+
 - Zero `try`/`finally`/`catch` blocks in any `it()` body
 - All cleanup via `afterEach` with `tempDir = undefined!` reset pattern
 - Wizard cleanup via `wizard?.destroy()` in `afterEach`

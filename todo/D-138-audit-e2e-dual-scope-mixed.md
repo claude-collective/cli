@@ -70,6 +70,7 @@ it("Test N", async () => {
 ## Compliance
 
 The file now fully complies with `test-structure.md`:
+
 - No try/finally in test bodies
 - Cleanup in afterEach
 - `tempDir = undefined!` reset pattern

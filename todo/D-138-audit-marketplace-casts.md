@@ -95,6 +95,7 @@ export const LOCAL_DEFAULTS = {
 Where `CategoryPath = Category | "local"`.
 
 So the chain is:
+
 1. `"dummy-category"` cast to `CategoryPath` in `metadata-keys.ts` (already questionable -- `"dummy-category"` is neither a valid `Category` nor `"local"`)
 2. Then `LOCAL_DEFAULTS.CATEGORY as Category` in `marketplace.ts` narrows `CategoryPath` to `Category` (still invalid -- `"dummy-category"` is not in the `Category` union)
 
@@ -137,11 +138,11 @@ export const LOCAL_DEFAULTS = {
 
 ## Conclusion
 
-| Cast Site | Value | Target Type | In Union? | Legitimate? | Action |
-|---|---|---|---|---|---|
-| Line 248: `skillName as SkillId` | `"dummy-skill"` | `SkillId` (156-member union) | No | Yes -- code-generation boundary | Keep, comments exist |
-| Line 255: `skillName as SkillId` | `"dummy-skill"` | `SkillId` (156-member union) | No | Yes -- code-generation boundary | Keep, comments exist |
-| Line 255: `LOCAL_DEFAULTS.CATEGORY as Category` | `"dummy-category"` | `Category` (49-member union) | No | Yes -- code-generation boundary | Keep, comments exist |
+| Cast Site                                       | Value              | Target Type                  | In Union? | Legitimate?                     | Action               |
+| ----------------------------------------------- | ------------------ | ---------------------------- | --------- | ------------------------------- | -------------------- |
+| Line 248: `skillName as SkillId`                | `"dummy-skill"`    | `SkillId` (156-member union) | No        | Yes -- code-generation boundary | Keep, comments exist |
+| Line 255: `skillName as SkillId`                | `"dummy-skill"`    | `SkillId` (156-member union) | No        | Yes -- code-generation boundary | Keep, comments exist |
+| Line 255: `LOCAL_DEFAULTS.CATEGORY as Category` | `"dummy-category"` | `Category` (49-member union) | No        | Yes -- code-generation boundary | Keep, comments exist |
 
 **These casts are boundary casts at a code-generation boundary.** The dummy values are written to a scaffolded `config.ts` file for a new marketplace project. They never enter this CLI's runtime type system. The CLAUDE.md rule "Only cast at parse boundaries" applies here -- code generation that produces TypeScript source is analogous to a parse boundary (data crosses a trust/type boundary).
 

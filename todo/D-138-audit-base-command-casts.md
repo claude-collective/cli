@@ -114,10 +114,10 @@ export interface Config {
 
 ```typescript
 // node_modules/@oclif/core/lib/command.d.ts
-import { Config } from './config';  // This is the CLASS, not the interface
+import { Config } from "./config"; // This is the CLASS, not the interface
 
 export declare abstract class Command {
-  config: Config;  // Typed as the Config class
+  config: Config; // Typed as the Config class
   // ...
 }
 ```
@@ -128,11 +128,11 @@ export declare abstract class Command {
 // node_modules/@oclif/core/lib/interfaces/hooks.d.ts
 export type Hook<T extends keyof P, P extends Hooks = Hooks> = (
   this: Hook.Context,
-  options: P[T]['options'] & {
-    config: Config;  // This is the Config INTERFACE from interfaces/config.d.ts
+  options: P[T]["options"] & {
+    config: Config; // This is the Config INTERFACE from interfaces/config.d.ts
     context: Context;
-  }
-) => Promise<P[T]['return']>;
+  },
+) => Promise<P[T]["return"]>;
 ```
 
 ---
@@ -195,6 +195,7 @@ Even if you augmented both the class namespace AND the interface, TypeScript cla
 The CLAUDE.md rule says: "NEVER use `as unknown as T` double casts -- **fix the upstream type instead**."
 
 In this case, the upstream type is a third-party library (`@oclif/core`) that:
+
 - Uses a class (not an interface) for `Config`
 - Has no index signature
 - Has no extensibility mechanism for user-defined properties
@@ -208,23 +209,23 @@ In this case, the upstream type is a third-party library (`@oclif/core`) that:
 
 Searched `src/` for all `as unknown as` occurrences. Found 25 total:
 
-| Location | Pattern | Legitimate? |
-|----------|---------|-------------|
-| `base-command.ts:23` | oclif Config boundary | **Yes** -- framework limitation |
-| `hooks/init.ts:45` | oclif Config boundary | **Yes** -- framework limitation |
-| `project-config.ts:49` | `config.stack as unknown as Record<string, Record<string, unknown>>` | Needs investigation |
-| `mock-matrices.ts:85` | Test data cast for categories | Test error-path data |
-| `local-installer.test.ts:307,356` | Test data cast for AgentConfig | Test error-path data |
-| `ensure-marketplace.test.ts:43` | Test data cast for SourceLoadResult | Test error-path data |
-| `config-types-writer.test.ts:351,390,419,448` | Test data casts | Test error-path data |
-| `config-merger.test.ts:29` | Test data cast | Test error-path data |
-| `copy-local-skills.test.ts:34` | Test data cast for SourceLoadResult | Test error-path data |
-| `compare-skills.test.ts:59` | Test data cast | Test error-path data |
-| `edit.test.ts:323` | Test data cast | Test error-path data |
-| `plugin-info.test.ts:175,180,182,239,241,402` | Test data casts for readdir/Dirent | Test error-path data |
-| `helpers.ts:873` | Test data cast | Test error-path data |
-| `stacks-loader.test.ts:283,367,405` | Test data casts for StackAgentConfig | Test error-path data |
-| `compilation-pipeline.test.ts:162` | Test data cast | Test error-path data |
+| Location                                      | Pattern                                                              | Legitimate?                     |
+| --------------------------------------------- | -------------------------------------------------------------------- | ------------------------------- |
+| `base-command.ts:23`                          | oclif Config boundary                                                | **Yes** -- framework limitation |
+| `hooks/init.ts:45`                            | oclif Config boundary                                                | **Yes** -- framework limitation |
+| `project-config.ts:49`                        | `config.stack as unknown as Record<string, Record<string, unknown>>` | Needs investigation             |
+| `mock-matrices.ts:85`                         | Test data cast for categories                                        | Test error-path data            |
+| `local-installer.test.ts:307,356`             | Test data cast for AgentConfig                                       | Test error-path data            |
+| `ensure-marketplace.test.ts:43`               | Test data cast for SourceLoadResult                                  | Test error-path data            |
+| `config-types-writer.test.ts:351,390,419,448` | Test data casts                                                      | Test error-path data            |
+| `config-merger.test.ts:29`                    | Test data cast                                                       | Test error-path data            |
+| `copy-local-skills.test.ts:34`                | Test data cast for SourceLoadResult                                  | Test error-path data            |
+| `compare-skills.test.ts:59`                   | Test data cast                                                       | Test error-path data            |
+| `edit.test.ts:323`                            | Test data cast                                                       | Test error-path data            |
+| `plugin-info.test.ts:175,180,182,239,241,402` | Test data casts for readdir/Dirent                                   | Test error-path data            |
+| `helpers.ts:873`                              | Test data cast                                                       | Test error-path data            |
+| `stacks-loader.test.ts:283,367,405`           | Test data casts for StackAgentConfig                                 | Test error-path data            |
+| `compilation-pipeline.test.ts:162`            | Test data cast                                                       | Test error-path data            |
 
 **Summary:** Of 25 occurrences, 2 are the oclif boundary casts (legitimate), ~21 are in test files (acceptable per CLAUDE.md for "deliberately invalid error-path test data"), and 1 in `project-config.ts` may warrant separate investigation.
 

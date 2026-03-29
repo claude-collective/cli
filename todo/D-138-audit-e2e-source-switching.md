@@ -62,6 +62,7 @@ The outer `tempDir` variable is typed as `string | undefined` (line 40) rather t
 ## Compliance
 
 The file now fully complies with `test-structure.md` cleanup conventions:
+
 - No `try/finally` in test bodies
 - Cleanup handled via `afterEach`
 - Resources declared at describe scope and reset after cleanup

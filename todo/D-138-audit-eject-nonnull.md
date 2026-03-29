@@ -68,12 +68,12 @@ switch (ejectType) {
 
 ### Code Path Analysis
 
-| ejectType | `loadSourceIfNeeded` returns | `sourceResult!` used? | Safe? |
-|---|---|---|---|
-| `"agent-partials"` | `undefined` | No | N/A |
-| `"templates"` | `undefined` | No | N/A |
-| `"skills"` | `SourceLoadResult` | Yes, line 193 | Logically safe (loaded) |
-| `"all"` | `SourceLoadResult` | Yes, line 198 | Logically safe (loaded) |
+| ejectType          | `loadSourceIfNeeded` returns | `sourceResult!` used? | Safe?                   |
+| ------------------ | ---------------------------- | --------------------- | ----------------------- |
+| `"agent-partials"` | `undefined`                  | No                    | N/A                     |
+| `"templates"`      | `undefined`                  | No                    | N/A                     |
+| `"skills"`         | `SourceLoadResult`           | Yes, line 193         | Logically safe (loaded) |
+| `"all"`            | `SourceLoadResult`           | Yes, line 198         | Logically safe (loaded) |
 
 **The assertions are logically correct** -- `loadSourceIfNeeded` returns a value (not undefined) when `ejectType` is `"skills"` or `"all"`, which are exactly the branches that use `sourceResult!`. TypeScript cannot infer this because the `loadSourceIfNeeded` call and the `switch` are separate -- TS doesn't track the correlation between the `ejectType` argument and the return type.
 
@@ -191,6 +191,7 @@ if (result.skipped) {
 ### Analysis
 
 The types `EjectAgentPartialsResult` and `EjectSkillsResult` both define:
+
 ```typescript
 skipped: boolean;
 skipReason?: string;
@@ -221,7 +222,10 @@ Or more simply, just use `result.skipReason ?? "Operation skipped"` as a fallbac
 ### search.tsx:367 -- `options.category!`
 
 ```typescript
-function filterSkillsByQuery(skills: ResolvedSkill[], options: FilterSkillsOptions): ResolvedSkill[] {
+function filterSkillsByQuery(
+  skills: ResolvedSkill[],
+  options: FilterSkillsOptions,
+): ResolvedSkill[] {
   let results = skills.filter((skill) => matchesQuery(skill, options.query));
   if (options.category) {
     results = results.filter((skill) => matchesCategory(skill, options.category!));
@@ -279,12 +283,12 @@ if (details.length > 0 && (verbose || result.status === "fail" || result.status 
 
 ## Summary
 
-| Location | Pattern | Severity | Fix Complexity |
-|---|---|---|---|
-| eject.ts:193,198 | `sourceResult!` after conditional load | Medium | Simple (move load into switch branches) |
-| eject.ts:244,281 | `result.skipReason!` after `skipped` check | Low | Medium (discriminated union or fallback) |
-| search.tsx:367 | `options.category!` in closure | Low | Trivial (local variable) |
-| doctor.ts:308 | `result.details!` after boolean guard | Low | Trivial (inline check or local variable) |
+| Location         | Pattern                                    | Severity | Fix Complexity                           |
+| ---------------- | ------------------------------------------ | -------- | ---------------------------------------- |
+| eject.ts:193,198 | `sourceResult!` after conditional load     | Medium   | Simple (move load into switch branches)  |
+| eject.ts:244,281 | `result.skipReason!` after `skipped` check | Low      | Medium (discriminated union or fallback) |
+| search.tsx:367   | `options.category!` in closure             | Low      | Trivial (local variable)                 |
+| doctor.ts:308    | `result.details!` after boolean guard      | Low      | Trivial (inline check or local variable) |
 
 ### Priority Recommendation
 

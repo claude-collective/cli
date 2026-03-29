@@ -81,6 +81,7 @@ it("Test N: ...", async () => {
 ## Compliance
 
 The file now fully complies with `.ai-docs/standards/e2e/test-structure.md`:
+
 - No `try/finally` in test bodies
 - No `try/catch` for cleanup in test bodies
 - All cleanup in `afterEach`
