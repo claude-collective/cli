@@ -233,6 +233,8 @@ export const StepAgents: React.FC = () => {
     useWizardStore.getState().setFocusedAgentId(focusedId === "continue" ? null : focusedId);
   }, [focusedId]);
 
+  const focusedGroupLabel = agentGroups.find((g) => g.items.some((a) => a.id === focusedId))?.label;
+
   const selectedCount = selectedAgents.length;
   const continueLabel =
     selectedCount > 0 ? `Continue with ${selectedCount} agent(s)` : "Continue without agents";
@@ -244,10 +246,11 @@ export const StepAgents: React.FC = () => {
       case "header":
         return (
           <Box key={`header-${row.label}`} flexShrink={0}>
-            <Text dimColor bold>
-              {"  "}
-              {row.label}
-            </Text>
+            {row.label === focusedGroupLabel ? (
+              <Text color={CLI_COLORS.WHITE} backgroundColor={CLI_COLORS.LABEL_BG}>{` ${row.label} `}</Text>
+            ) : (
+              <Text dimColor bold>{"  "}{row.label}</Text>
+            )}
           </Box>
         );
       case "spacer":
