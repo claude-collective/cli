@@ -3,14 +3,10 @@
 | ID    | Task                                                                                      | Status        |
 | ----- | ----------------------------------------------------------------------------------------- | ------------- |
 | D-138 | Iterate on sub-agents — review and improve all agent definitions                          | Ready for Dev |
-| D-156 | Rename "local mode" to "eject mode" across CLI commands, config, types, and documentation | Ready for Dev |
-| D-144 | Info panel — replace `?` overlay with `I` panel (stats, context, toggles)                 | Investigate   |
 | D-111 | Create a GIF demo for the README                                                          | Ready for Dev |
-| D-112 | Write "Using the codex-keeper subagent" guide — invoke, workflow, outputs, maintenance    | Ready for Dev |
 | D-110 | Fix the logo in the README                                                                | Ready for Dev |
 | D-109 | Fix the screenshots in the README                                                         | Ready for Dev |
 | D-62  | Review default stacks: add reviewing/research skills                                      | Ready for Dev |
-| D-159 | Lock badge + toast for locked global skills in project-scope edit                         | Ready for Dev |
 | D-118 | Investigate renaming "project/global" scope to "project/user"                             | Investigate   |
 | D-150 | Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting          | Ready for Dev |
 | D-131 | Track project installations in global config                                              | Investigate   |
@@ -153,89 +149,6 @@ All agent definitions in `src/agents/` should be reviewed and improved using the
 ---
 
 ### Wizard UX
-
-#### D-144: Info panel
-
-**Priority:** Medium
-
-Replace the `?` help overlay with an `I` info panel (opened via the `I` key) that shows all selected skills and agents in a table layout.
-
-**Layout:** Plugin/Local on Y axis (rows), Global/Project on X axis (columns). Two sub-columns per scope to use horizontal space. Local row collapses to 1-2 lines or disappears when empty.
-
-```
-┌─ Info ─────────────────────────────────────────────────────────────┐
-│                                                                    │
-│  SKILLS (9)     Global                     Project                 │
-│  ──────────────────────────────────────────────────────────────── │
-│  Plugin         react       hono           tailwind    prisma      │
-│                 vitest      eslint         zod                     │
-│                                                                    │
-│  Local          my-custom-auth             my-project-util         │
-│                                                                    │
-│  AGENTS (5)     Global                     Project                 │
-│  ──────────────────────────────────────────────────────────────── │
-│                 web-developer  cli-developer   api-reviewer        │
-│                 web-reviewer   codex-keeper                        │
-│                                                                    │
-│  I close                                                           │
-└────────────────────────────────────────────────────────────────────┘
-```
-
-**Design rationale:**
-
-- Local skills are rare, so they sit on the Y axis — the row naturally collapses to 1 line or disappears
-- Two sub-columns per scope halve the row count for large selections
-- Gap between Global and Project columns acts as the visual divider (no border needed)
-- No separator between Plugin and Local — just an empty row for breathing room
-
-**Scrolling:** Use `useRowScroll` for the content area — `Box overflow="hidden"` with negative `marginTop` offset. The unused `useVirtualScroll` hook already calculates `hiddenAbove`/`hiddenBelow` counts for scroll indicators.
-
-**First implementation scope:**
-
-- `I` key toggles the panel as a full overlay
-- Show all selected skills grouped in the 2x2 grid (scope x mode)
-- Show all selected agents grouped by scope
-- Scrollable when content exceeds viewport
-- No other stats/toggles in v1
-
----
-
-#### D-159: Visual feedback for locked global skills in project-scope edit
-
-**Priority:** Medium
-
-When running `cc edit` from a project directory, global-scoped skills are locked (can't be toggled), but there's no visual indicator — pressing space silently does nothing.
-
-**Design:**
-
-1. **Lock badge on scope indicator** — Replace `G` with `🔒 G ` (one space between lock and G) for locked global skills. Same yellow text on dark background. Unlocked project skills keep the existing `P` gray badge.
-
-2. **Toast on toggle attempt** — When the user presses space on a locked skill, show a warning message below the grid: `⚠ React is globally installed — run cc edit from ~/.claude to modify`. Auto-clears after 2s (matching `COPIED_MESSAGE_TIMEOUT_MS`). Follows the `statusMessage` pattern from `step-settings.tsx`.
-
-```
-  Frameworks *
-  ┌─────────────────┐ ┌──────────────┐ ┌──────────────┐
-  │  🔒 G  React    │ │  🔒 G  Vue   │ │  P  Next.js  │
-  └─────────────────┘ └──────────────┘ └──────────────┘
-
-  Styling
-  ┌────────────────────┐ ┌──────────────────┐ ┌──────────────┐
-  │  🔒 G  Tailwind    │ │  P  CSS Modules  │ │  P  Sass     │
-  └────────────────────┘ └──────────────────┘ └──────────────┘
-
-  ⚠ React is globally installed — run cc edit from ~/.claude to modify
-```
-
-**Key files:**
-
-- `src/cli/components/wizard/category-grid.tsx` — `SkillTag` component, scope badge rendering (lines 135-144)
-- `src/cli/components/hooks/use-category-grid-input.ts` — locked skill toggle suppression (line 140), add toast callback
-- `src/cli/consts.ts` — add `LOCK` to `UI_SYMBOLS`
-- `src/cli/components/wizard/step-build.tsx` — wire toast state and display
-
-**Scope:** Build step and agents step (both use `CategoryGrid` with locked items).
-
----
 
 #### D-127: UX for claiming global skills/agents into project scope
 

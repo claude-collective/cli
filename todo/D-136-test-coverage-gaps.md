@@ -29,8 +29,8 @@ Bugs are expected. When a test has **accurate assertions** (the test describes t
 Missing:
 
 - [ ] Agent compilation after creation
-- [ ] `--purpose` flag content validation
-- [ ] `--refresh` flag behavior
+- [x] `--purpose` flag content validation — `buildAgentPrompt` tests + flag acceptance tests in `commands/new/agent.test.ts`
+- [x] `--refresh` flag behavior — `should accept --refresh flag without parsing error`
 - [ ] Creating agent when no installation exists
 - [ ] Creating duplicate agent without `--force`
 - [ ] Agent appears in `cc list` after creation
@@ -39,23 +39,23 @@ Missing:
 
 Missing:
 
-- [ ] Update specific skill by name
+- [x] Update specific skill by name — `should accept optional skill argument`
 - [ ] Update when no matching skills found (error message)
 - [ ] Global vs project scope updating
-- [ ] `--no-recompile` flag behavior
+- [x] `--no-recompile` flag behavior — flag acceptance test exists
 - [ ] Update with hash mismatch (actual content change)
-- [ ] Update when source is unavailable (error handling)
-- [ ] `--yes` flag (auto-confirm)
+- [x] Update when source is unavailable — `should handle source path flag gracefully`, `should handle --yes with invalid source path`
+- [x] `--yes` flag (auto-confirm) — `should accept --yes flag`
 
 #### 3. `build marketplace` — MISSING flag tests
 
 Missing:
 
-- [ ] `--owner-name` and `--owner-email` flags
-- [ ] `--version` field in output
-- [ ] `--output` with nested path creation
-- [ ] marketplace.json schema validation in output
-- [ ] Building from empty source (error)
+- [x] `--owner-name` and `--owner-email` flags — `commands/build/marketplace.test.ts` flag validation
+- [x] `--version` field in output — `should apply version from --version flag to marketplace`
+- [x] `--output` with path — `should accept --output flag with path`
+- [x] marketplace.json schema validation in output — integration tests validate content/structure
+- [ ] Building from empty source (error) — existing test handles empty gracefully (0 plugins), no error path tested
 
 #### 4. `validate` — PLUGIN validation incomplete
 
@@ -64,18 +64,18 @@ Missing:
 - [ ] Malformed plugin.json handling
 - [ ] Cross-reference validation (skills referencing non-existent categories)
 - [ ] Custom skill validation (custom: true in metadata)
-- [ ] `--all` flag comprehensive check
-- [ ] `--plugins` flag with no plugins installed
-- [ ] `--source` flag with invalid source
+- [x] `--all` flag comprehensive check — `--all` tests in `commands/validate.test.ts`
+- [x] `--plugins` flag with no plugins installed — plugin validation tests exist
+- [x] `--source` flag with invalid source — `validate --source integration` tests exist
 
 #### 5. `doctor` — DIAGNOSTICS incomplete
 
 Missing:
 
-- [ ] Detection of missing/corrupted config
-- [ ] Detection of orphaned skills (in dir but not in config)
+- [x] Detection of missing/corrupted config — `config validation` tests in `commands/doctor.test.ts`
+- [x] Detection of orphaned skills (in dir but not in config) — `orphans check` test exists
 - [ ] Detection of missing skills (in config but not in dir)
-- [ ] `--verbose` showing additional detail
+- [x] `--verbose` showing additional detail — `flag validation` tests include verbose
 - [ ] Broken agent references
 
 ### MEDIUM PRIORITY
@@ -84,28 +84,28 @@ Missing:
 
 Missing:
 
-- [ ] Invalid source path (non-existent directory)
-- [ ] `--subdir` with non-existent subdirectory
-- [ ] `--all` importing all skills from source
+- [x] Invalid source path (non-existent directory) — `error handling` tests in `commands/import/skill.test.ts`
+- [x] `--subdir` with non-existent subdirectory — `--subdir flag behavior` 8 tests
+- [x] `--all` importing all skills from source — `--all import` 2 tests
 - [ ] Skill name collision without `--force`
-- [ ] `--list` output format validation
+- [x] `--list` output format validation — `--list mode` 2 tests
 
 #### 7. `eject` — Edge cases missing
 
 Missing:
 
-- [ ] `eject templates` (templates-only ejection)
-- [ ] `eject skills` (skills-only ejection)
-- [ ] `eject agent-partials` (partials-only ejection)
+- [x] `eject templates` (templates-only ejection) — 4 tests in `commands/eject.test.ts`
+- [x] `eject skills` (skills-only ejection) — 3 tests
+- [x] `eject agent-partials` (partials-only ejection) — 8 tests
 - [ ] Overwrite existing ejected files without `--force` (should error)
-- [ ] `--output` to custom directory
+- [x] `--output` to custom directory — `flag validation` tests
 
 #### 8. `search` — JSON and filtering gaps
 
 Missing:
 
 - [ ] `--json` output format validation
-- [ ] `--category` filter with valid category
+- [x] `--category` filter with valid category — `should accept --category flag` in `commands/search.test.ts`
 - [ ] `--category` filter with invalid category (error)
 - [ ] Search with no results
 - [ ] Interactive search cancellation (Escape)
@@ -114,19 +114,19 @@ Missing:
 
 Missing:
 
-- [ ] `config show` with both global and project config (merge display)
-- [ ] `config show` with only global config
-- [ ] `config path` for global config location
+- [x] `config show` with both global and project config — `config:show` 6 tests in `commands/config/index.test.ts`
+- [x] `config show` with only global config — covered in config:show tests
+- [x] `config path` for global config location — `config:path` 2 tests
 - [ ] Config display with custom source
 
 #### 10. `uninstall` — Scope-aware gaps
 
 Missing:
 
-- [ ] `--no-recompile` flag behavior
+- [x] `--no-recompile` flag behavior — `flag validation` tests in `commands/uninstall.test.ts`
 - [ ] Uninstall when only global skills exist
 - [ ] Uninstall preserving project skills when removing global
-- [ ] `--yes` auto-confirm flag
+- [x] `--yes` auto-confirm flag — `flag validation` tests
 
 #### 11. `help` — Comprehensive command coverage
 
@@ -143,57 +143,64 @@ Missing:
 
 ### HIGH PRIORITY — Pure functions with NO unit tests
 
-#### 1. `plugin-manifest-finder.ts` — 0 tests
+#### 1. `plugin-manifest-finder.ts` — DONE
 
 Function: `findPluginManifest(startDir): Promise<string | null>`
-Pure directory-walk function. Tests needed:
+7 tests in `lib/plugins/plugin-manifest-finder.test.ts`
 
-- [ ] Finds manifest in current directory
-- [ ] Finds manifest by walking up N levels
-- [ ] Returns null when no manifest found (reaches fs root)
-- [ ] Handles deeply nested starting directory
+- [x] Finds manifest in current directory
+- [x] Finds manifest by walking up N levels
+- [x] Returns null when no manifest found (reaches fs root)
+- [x] Handles deeply nested starting directory
 
-#### 2. `config-writer.ts` — Edge cases missing
+#### 2. `config-writer.ts` — DONE
 
 Function: `generateConfigSource(config, options?)`
-Existing tests cover happy path. Missing:
+47+ tests in `lib/configuration/__tests__/config-writer.test.ts`
 
-- [ ] Empty config (no skills, no agents, no domains)
-- [ ] Config with only global-scope items
-- [ ] Config with special characters in name/description
-- [ ] Standalone vs global-import generation modes
-- [ ] Stack with nested category assignments
+- [x] Empty config (no skills, no agents, no domains)
+- [x] Config with only global-scope items
+- [x] Config with special characters in name/description
+- [x] Standalone vs global-import generation modes
+- [x] Stack with nested category assignments
 
-#### 3. `build-step-logic.ts` — Complex pure logic, no dedicated unit tests
+#### 3. `build-step-logic.ts` — DONE
 
 Functions: `computeOptionState()`, `buildCategoriesForDomain()`
+34+ tests in `lib/wizard/build-step-logic.test.ts`
 
-- [ ] computeOptionState with locked skill
-- [ ] computeOptionState with incompatible skill
-- [ ] computeOptionState with required skill
-- [ ] buildCategoriesForDomain with empty matrix
-- [ ] buildCategoriesForDomain with custom categories
+- [x] computeOptionState with locked skill
+- [x] computeOptionState with incompatible skill
+- [x] computeOptionState with required skill
+- [x] buildCategoriesForDomain with empty matrix
+- [x] buildCategoriesForDomain with custom categories
 
 ### MEDIUM PRIORITY — Partial coverage
 
-#### 4. `config-loader.ts` — Error paths missing
+#### 4. `config-loader.ts` — 3 of 4 done
 
-- [ ] loadConfig with non-existent file
-- [ ] loadConfig with invalid TypeScript syntax
-- [ ] loadConfig with Zod validation failure (schema mismatch)
+6 tests in `lib/configuration/__tests__/config-loader.test.ts`
+
+- [x] loadConfig with non-existent file — `returns null for nonexistent file`
+- [x] loadConfig with invalid TypeScript syntax — `throws for malformed file with syntax error`
+- [x] loadConfig with Zod validation failure (schema mismatch) — `throws when Zod schema rejects the data`
 - [ ] loadConfig with empty file
 
-#### 5. `source-validator.ts` — Edge cases
+#### 5. `source-validator.ts` — Partial
+
+Tests exist in `lib/source-validator.test.ts` for `isSnakeCase`, `validateMetadataConventions`, `validateSkillFilePairs`. Higher-level source validation is covered by `validate --source integration` tests in `commands/validate.test.ts`.
 
 - [ ] Validation of source with zero skills
 - [ ] Validation of source with malformed metadata
 - [ ] Validation with missing agent directories
 
-#### 6. `skill-metadata.ts` — Transform functions
+#### 6. `skill-metadata.ts` — DONE
 
-- [ ] injectForkedFromMetadata with existing forkedFrom
-- [ ] injectForkedFromMetadata with missing fields
-- [ ] Metadata extraction from malformed SKILL.md
+30+ tests in `lib/skills/skill-metadata.test.ts`
+
+- [x] injectForkedFromMetadata with existing forkedFrom — `updates existing forkedFrom metadata`
+- [x] injectForkedFromMetadata with missing fields — `throws when metadata.yaml contains unparseable YAML`
+- [x] Metadata extraction from malformed SKILL.md — `returns null and warns for invalid metadata`
 
 ---
 
@@ -235,21 +242,21 @@ Functions: `computeOptionState()`, `buildCategoriesForDomain()`
 1. [x] plugin-manifest-finder.test.ts — 7 new tests (finds manifest, walks up, null at root, handles non-existent dir)
 2. [x] config-writer.test.ts — 47 new tests (empty config, global scope, special chars, standalone, complex stack, syntax validity)
 3. [x] build-step-logic.test.ts — 34 new tests (validateBuildStep, buildCategoriesForDomain, framework filtering, selected state)
-4. config-loader.test.ts — expand error paths (deferred)
+4. config-loader.test.ts — expand error paths: 3 of 4 done, empty-file case still missing
 
 ### Phase 2: E2E Command Tests (using POM pattern)
 
 1. [x] new-agent.e2e.test.ts — 10 new tests (purpose flag, short aliases, error handling, `it.fails` for missing --force)
-2. update.e2e.test.ts — expand (deferred)
+2. update.e2e.test.ts — flag acceptance tests added; behavioral tests (hash mismatch, scope, error messages) still deferred
 3. [x] validate.e2e.test.ts — 8 new tests (--all, --plugins, malformed metadata, missing SKILL.md, --verbose)
 4. [x] doctor.e2e.test.ts — 6 new tests (orphaned skills, missing skills, no agents, --verbose, healthy project)
-5. build marketplace tests — expand (deferred)
+5. [x] build marketplace tests — 30+ tests in `commands/build/marketplace.test.ts` (flag validation, integration, --owner-name/email, --version, schema)
 6. [x] eject.e2e.test.ts — 8 new tests (templates-only, skills-only, --force, --output, error paths, `it.fails` for bugs)
 7. [x] import-skill.e2e.test.ts — 5 new tests (--all, invalid source, --subdir, non-existent skill, `it.fails` for bugs)
-8. [x] search-static.e2e.test.ts — 3 new tests (no results, category filter, cross-category)
+8. [x] search-static.e2e.test.ts — category flag test added; no-results, --json, invalid-category still open
 9. [x] config.e2e.test.ts — 5 new tests (project config, merged config, global-only, path format, alias parity)
 10. [x] uninstall.e2e.test.ts — 3 new tests (--yes flag, empty project, --all --yes)
-11. [x] help.e2e.test.ts — 6 new tests (init, edit, build stack, search, unknown command)
+11. help.e2e.test.ts — **FILE DOES NOT EXIST** — marked [x] prematurely; all items still open
 
 ### Phase 3: Integration Test Cleanup
 
