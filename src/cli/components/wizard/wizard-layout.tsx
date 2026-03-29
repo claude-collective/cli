@@ -1,4 +1,4 @@
-import { Box, Static, Text } from "ink";
+import { Box, Text } from "ink";
 import React, { Fragment } from "react";
 import { CLI_COLORS } from "../../consts.js";
 import type { StartupMessage } from "../../utils/logger.js";
@@ -98,7 +98,6 @@ type WizardLayoutProps = {
 export const WizardLayout: React.FC<WizardLayoutProps> = ({
   version,
   logo,
-  startupMessages,
   children,
 }) => {
   const store = useWizardStore();
@@ -154,93 +153,78 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
   }
 
   return (
-    <>
-      {startupMessages && startupMessages.length > 0 && (
-        <Static items={startupMessages}>
-          {(msg, index) => (
-            <Box key={index}>
-              <Text
-                color={msg.level === "warn" ? "yellow" : msg.level === "error" ? "red" : undefined}
-              >
-                {msg.level === "warn" ? `  Warning: ${msg.text}` : msg.text}
-              </Text>
-            </Box>
-          )}
-        </Static>
+    <Box flexDirection="column" paddingX={1} height={terminalHeight}>
+      {logo && store.step === "stack" && (
+        <Box flexDirection="row" marginTop={1} columnGap={1}>
+          <Text>{logo}</Text>
+        </Box>
       )}
-      <Box flexDirection="column" paddingX={1} height={terminalHeight}>
-        {logo && store.step === "stack" && (
-          <Box flexDirection="row" marginTop={1} columnGap={1}>
-            <Text>{logo}</Text>
+      <WizardTabs
+        steps={WIZARD_STEPS}
+        currentStep={store.step}
+        completedSteps={completedSteps}
+        skippedSteps={skippedSteps}
+        version={version}
+        domainNav={domainNav}
+        dropdowns={dropdowns}
+      />
+      {FEATURE_FLAGS.INFO_PANEL && store.showInfo ? (
+        <>
+          <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
+            <InfoPanel />
           </Box>
-        )}
-        <WizardTabs
-          steps={WIZARD_STEPS}
-          currentStep={store.step}
-          completedSteps={completedSteps}
-          skippedSteps={skippedSteps}
-          version={version}
-          domainNav={domainNav}
-          dropdowns={dropdowns}
-        />
-        {FEATURE_FLAGS.INFO_PANEL && store.showInfo ? (
-          <>
-            <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
-              <InfoPanel />
-            </Box>
-            <WizardFooter />
-          </>
-        ) : (
-          <>
-            <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
-              {children}
-            </Box>
-            <Box paddingX={1} columnGap={2} marginTop={2}>
-              <DefinitionItem
-                label="Labels"
-                values={[HOTKEY_TOGGLE_LABELS.label]}
-                isVisible={store.step === "build"}
-              />
-              <DefinitionItem
-                label="Filter incompatible"
-                values={[HOTKEY_FILTER_INCOMPATIBLE.label]}
-                isVisible={store.step === "build"}
-                isActive={store.filterIncompatible}
-              />
-              <DefinitionItem
-                label="Scope"
-                values={[HOTKEY_SCOPE.label]}
-                isVisible={
-                  (store.step === "build" || store.step === "agents") &&
-                  !store.isEditingFromGlobalScope
-                }
-              />
-              <DefinitionItem
-                label="Set all local"
-                values={[HOTKEY_SET_ALL_LOCAL.label]}
-                isVisible={store.step === "sources"}
-              />
-              <DefinitionItem
-                label="Set all plugin"
-                values={[HOTKEY_SET_ALL_PLUGIN.label]}
-                isVisible={store.step === "sources"}
-              />
-              <DefinitionItem
-                label="Settings"
-                values={[HOTKEY_SETTINGS.label]}
-                isVisible={store.step === "sources" && FEATURE_FLAGS.SOURCE_SEARCH}
-                isActive={store.showSettings}
-              />
-              <DefinitionItem
-                label="Info"
-                values={[HOTKEY_INFO.label]}
-                isVisible={FEATURE_FLAGS.INFO_PANEL}
-              />
-            </Box>
-            <WizardFooter />
-          </>
-        )}
-      </Box>
-    </>
+          <WizardFooter />
+        </>
+      ) : (
+        <>
+          <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
+            {children}
+          </Box>
+          <Box paddingX={1} columnGap={2} marginTop={2}>
+            <DefinitionItem
+              label="Labels"
+              values={[HOTKEY_TOGGLE_LABELS.label]}
+              isVisible={store.step === "build"}
+            />
+            <DefinitionItem
+              label="Filter incompatible"
+              values={[HOTKEY_FILTER_INCOMPATIBLE.label]}
+              isVisible={store.step === "build"}
+              isActive={store.filterIncompatible}
+            />
+            <DefinitionItem
+              label="Scope"
+              values={[HOTKEY_SCOPE.label]}
+              isVisible={
+                (store.step === "build" || store.step === "agents") &&
+                !store.isEditingFromGlobalScope
+              }
+            />
+            <DefinitionItem
+              label="Set all local"
+              values={[HOTKEY_SET_ALL_LOCAL.label]}
+              isVisible={store.step === "sources"}
+            />
+            <DefinitionItem
+              label="Set all plugin"
+              values={[HOTKEY_SET_ALL_PLUGIN.label]}
+              isVisible={store.step === "sources"}
+            />
+            <DefinitionItem
+              label="Settings"
+              values={[HOTKEY_SETTINGS.label]}
+              isVisible={store.step === "sources" && FEATURE_FLAGS.SOURCE_SEARCH}
+              isActive={store.showSettings}
+            />
+            <DefinitionItem
+              label="Info"
+              values={[HOTKEY_INFO.label]}
+              isVisible={FEATURE_FLAGS.INFO_PANEL}
+            />
+          </Box>
+          <WizardFooter />
+        </>
+      )}
+    </Box>
   );
 };
