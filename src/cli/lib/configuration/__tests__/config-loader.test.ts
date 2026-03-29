@@ -67,6 +67,20 @@ describe("loadConfig", () => {
     expect(result!.name).toBe("validated");
   });
 
+  it("returns null for empty file (zero bytes)", async () => {
+    const configPath = path.join(tempDir, STANDARD_FILES.CONFIG_TS);
+    await writeFile(configPath, "");
+    const result = await loadConfig(configPath);
+    expect(result).toBeNull();
+  });
+
+  it("returns null for whitespace-only file", async () => {
+    const configPath = path.join(tempDir, STANDARD_FILES.CONFIG_TS);
+    await writeFile(configPath, "   \n\n  \n");
+    const result = await loadConfig(configPath);
+    expect(result).toBeNull();
+  });
+
   it("handles config that uses defineConfig identity function", async () => {
     // Write a helper module that the config imports
     const helperPath = path.join(tempDir, "helper.ts");
