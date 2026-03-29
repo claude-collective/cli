@@ -4,5 +4,5 @@ export const FEATURE_FLAGS = {
   // Controls whether the intermediate source choice screen is shown (recommended vs customize)
   SOURCE_CHOICE: false,
   // Controls whether the I key opens the info panel overlay
-  INFO_PANEL: false,
+  INFO_PANEL: true,
 } as const;
