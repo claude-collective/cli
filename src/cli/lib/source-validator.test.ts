@@ -1,9 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import path from "path";
+import { mkdir, writeFile } from "fs/promises";
 import {
   isSnakeCase,
   validateMetadataConventions,
   validateSkillFilePairs,
+  validateSource,
 } from "./source-validator";
+import { createTempDir, cleanupTempDir } from "./__tests__/helpers";
+import { STANDARD_DIRS, STANDARD_FILES } from "../consts";
+import { renderSkillMd } from "./__tests__/content-generators";
 
 describe("source-validator", () => {
   describe("isSnakeCase", () => {
@@ -218,6 +224,70 @@ describe("source-validator", () => {
       const issues = validateSkillFilePairs(skillMdDirs, metadataDirs, SKILLS_DIR);
 
       expect(issues).toHaveLength(2);
+    });
+  });
+
+  describe("validateSource", () => {
+    let tempDir: string;
+
+    beforeEach(async () => {
+      tempDir = await createTempDir("source-validator-");
+    });
+
+    afterEach(async () => {
+      await cleanupTempDir(tempDir);
+    });
+
+    it("should handle source with zero skills gracefully", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+      await mkdir(skillsDir, { recursive: true });
+
+      const result = await validateSource(sourceDir);
+
+      expect(result.skillCount).toBe(0);
+      // Zero skills is not an error — the source simply has no skills yet
+      expect(result.issues.every((i) => !i.message.includes("does not exist"))).toBe(true);
+    });
+
+    it("should report specific error for malformed YAML in metadata", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+      const skillDir = path.join(skillsDir, "web", "framework", "react");
+      await mkdir(skillDir, { recursive: true });
+
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react", "React"),
+      );
+
+      // Write invalid YAML that will fail parsing
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        "category: web-framework\n  bad-indent: [\nunmatched bracket",
+      );
+
+      const result = await validateSource(sourceDir);
+
+      expect(result.errorCount).toBeGreaterThan(0);
+      const yamlErrors = result.issues.filter((i) => i.message.includes("Failed to parse YAML"));
+      expect(yamlErrors).toHaveLength(1);
+      expect(yamlErrors[0]?.severity).toBe("error");
+    });
+
+    it("should not crash when source has skills dir but no agent directories", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+      await mkdir(skillsDir, { recursive: true });
+
+      // Source with skills dir but no agents dir — should not crash
+      const result = await validateSource(sourceDir);
+
+      // Should complete without throwing
+      expect(result).toHaveProperty("issues");
+      expect(result).toHaveProperty("skillCount");
+      expect(result).toHaveProperty("errorCount");
+      expect(result).toHaveProperty("warningCount");
     });
   });
 });

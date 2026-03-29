@@ -2,7 +2,7 @@ import path from "path";
 import { parse as parseYaml } from "yaml";
 import { glob, readFile, fileExists, directoryExists } from "../utils/fs";
 import { SKILL_CATEGORIES_PATH, SKILLS_DIR_PATH, STANDARD_FILES } from "../consts";
-import { metadataValidationSchema } from "./schemas";
+import { metadataValidationSchema, customMetadataValidationSchema } from "./schemas";
 import { loadProjectSourceConfig } from "./configuration";
 import { checkMatrixHealth } from "./matrix";
 import { loadSkillsMatrixFromSource } from "./loading/source-loader";
@@ -180,8 +180,14 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
       continue;
     }
 
-    // Validate against strict metadata schema
-    const result = metadataValidationSchema.safeParse(rawMetadata);
+    // Use relaxed schema for custom skills (any category/slug), strict schema for built-in skills
+    const isCustom =
+      rawMetadata != null &&
+      typeof rawMetadata === "object" &&
+      "custom" in rawMetadata &&
+      (rawMetadata as Record<string, unknown>).custom === true;
+    const schema = isCustom ? customMetadataValidationSchema : metadataValidationSchema;
+    const result = schema.safeParse(rawMetadata);
     if (!result.success) {
       // Check for snake_case keys even on schema failure (useful diagnostics)
       issues.push(
