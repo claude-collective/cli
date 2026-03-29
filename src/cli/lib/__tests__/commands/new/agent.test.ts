@@ -1,9 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import { mkdir } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir } from "../../helpers";
+import { mkdir, writeFile } from "fs/promises";
+import {
+  runCliCommand,
+  createTempDir,
+  cleanupTempDir,
+  writeTestTsConfig,
+  buildSourceConfig,
+  buildAgentConfigs,
+} from "../../helpers";
 import { buildAgentPrompt } from "../../../../commands/new/agent";
-import { STANDARD_FILES } from "../../../../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../../consts";
+import { renderConfigTs } from "../../content-generators";
+import { EXIT_CODES } from "../../../exit-codes";
 
 describe("buildAgentPrompt", () => {
   it("should include agent name in prompt", () => {
@@ -136,5 +145,220 @@ describe("new:agent command", () => {
       expect(output.toLowerCase()).not.toContain("missing required arg");
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
+
+    it("should fail when agent-summoner meta-agent is not available", async () => {
+      // In a fresh project without compiled agents, the command fails because
+      // the agent-summoner meta-agent cannot be found at the expected locations.
+      const { error } = await runCliCommand(["new:agent", "my-agent", "--purpose", "test purpose"]);
+
+      expect(error).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(error?.message).toContain("agent-summoner");
+    });
+
+    it("should fail with agent-summoner error regardless of .claude-src/ existence", async () => {
+      // Without config — command fails trying to load meta-agent
+      const { error: noConfigError } = await runCliCommand([
+        "new:agent",
+        "my-agent",
+        "--purpose",
+        "test",
+      ]);
+
+      // With config — should still fail at meta-agent loading
+      await writeTestTsConfig(projectDir, buildSourceConfig({ skills: [] }));
+      const { error: withConfigError } = await runCliCommand([
+        "new:agent",
+        "my-agent",
+        "--purpose",
+        "test",
+      ]);
+
+      // Both should fail — the agent-summoner is not present in either case
+      expect(noConfigError).toBeDefined();
+      expect(noConfigError?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(withConfigError).toBeDefined();
+      expect(withConfigError?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+    });
+
+    it("should reject unknown --force flag", async () => {
+      // The new:agent command currently has no --force flag and no duplicate checking.
+      // This test documents the current behavior. When duplicate protection is added,
+      // this test should be updated to verify the --force flag works.
+      const { error } = await runCliCommand([
+        "new:agent",
+        "my-agent",
+        "--force",
+        "--purpose",
+        "test",
+      ]);
+
+      // oclif rejects unknown flags
+      expect(error).toBeDefined();
+    });
+  });
+});
+
+describe("agent visibility in list command", () => {
+  let tempDir: string;
+  let projectDir: string;
+  let originalCwd: string;
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    tempDir = await createTempDir("cc-new-agent-list-");
+    projectDir = path.join(tempDir, "project");
+    await mkdir(projectDir, { recursive: true });
+    process.chdir(projectDir);
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await cleanupTempDir(tempDir);
+  });
+
+  it("should show no installation when project is empty", async () => {
+    const { stdout } = await runCliCommand(["list"]);
+
+    expect(stdout).toContain("No installation found");
+  });
+
+  it("should count agent .md files in .claude/agents/ directory", async () => {
+    // Set up a minimal installation with agents
+    const claudeDir = path.join(projectDir, CLAUDE_DIR);
+    const agentsDir = path.join(claudeDir, "agents");
+    const skillsDir = path.join(claudeDir, "skills");
+
+    await mkdir(agentsDir, { recursive: true });
+    await mkdir(skillsDir, { recursive: true });
+
+    // Write config
+    const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+    await mkdir(claudeSrcDir, { recursive: true });
+    await writeFile(
+      path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+      renderConfigTs({
+        name: "test-project",
+        agents: buildAgentConfigs(["web-developer"]),
+      }),
+    );
+
+    // Write agent files (simulating what the new:agent command would produce)
+    await writeFile(
+      path.join(agentsDir, "web-developer.md"),
+      "# Web Developer\n\nBuilds web applications.",
+    );
+
+    const { stdout, error } = await runCliCommand(["list"]);
+
+    expect(error).toBeUndefined();
+    expect(stdout).toContain("Agents:  1");
+  });
+
+  it("should count multiple agents after additional agent files are created", async () => {
+    // Set up installation
+    const claudeDir = path.join(projectDir, CLAUDE_DIR);
+    const agentsDir = path.join(claudeDir, "agents");
+    const skillsDir = path.join(claudeDir, "skills");
+
+    await mkdir(agentsDir, { recursive: true });
+    await mkdir(skillsDir, { recursive: true });
+
+    const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+    await mkdir(claudeSrcDir, { recursive: true });
+    await writeFile(
+      path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+      renderConfigTs({
+        name: "test-project",
+        agents: buildAgentConfigs(["web-developer", "api-developer"]),
+      }),
+    );
+
+    // Write two agent files
+    await writeFile(
+      path.join(agentsDir, "web-developer.md"),
+      "# Web Developer\n\nBuilds web applications.",
+    );
+    await writeFile(path.join(agentsDir, "api-developer.md"), "# API Developer\n\nBuilds APIs.");
+
+    const { stdout, error } = await runCliCommand(["list"]);
+
+    expect(error).toBeUndefined();
+    expect(stdout).toContain("Agents:  2");
+  });
+
+  it("should count a custom agent file as an agent in list output", async () => {
+    // Set up installation with a custom agent (simulating new:agent output)
+    const claudeDir = path.join(projectDir, CLAUDE_DIR);
+    const agentsDir = path.join(claudeDir, "agents");
+    const skillsDir = path.join(claudeDir, "skills");
+
+    await mkdir(agentsDir, { recursive: true });
+    await mkdir(skillsDir, { recursive: true });
+
+    const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+    await mkdir(claudeSrcDir, { recursive: true });
+    await writeFile(
+      path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+      renderConfigTs({
+        name: "test-project",
+        agents: buildAgentConfigs(["web-developer"]),
+      }),
+    );
+
+    // Write existing agent
+    await writeFile(
+      path.join(agentsDir, "web-developer.md"),
+      "# Web Developer\n\nBuilds web applications.",
+    );
+
+    // Verify initial count
+    const { stdout: before } = await runCliCommand(["list"]);
+    expect(before).toContain("Agents:  1");
+
+    // Add a custom agent (simulating what new:agent creates via claude CLI)
+    await writeFile(
+      path.join(agentsDir, "db-migrator.md"),
+      "# DB Migrator\n\nManages database migrations with rollback support.",
+    );
+
+    // Verify updated count
+    const { stdout: after } = await runCliCommand(["list"]);
+    expect(after).toContain("Agents:  2");
+  });
+
+  it("should not count non-.md files in agents directory", async () => {
+    const claudeDir = path.join(projectDir, CLAUDE_DIR);
+    const agentsDir = path.join(claudeDir, "agents");
+    const skillsDir = path.join(claudeDir, "skills");
+
+    await mkdir(agentsDir, { recursive: true });
+    await mkdir(skillsDir, { recursive: true });
+
+    const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+    await mkdir(claudeSrcDir, { recursive: true });
+    await writeFile(
+      path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+      renderConfigTs({
+        name: "test-project",
+        agents: buildAgentConfigs(["web-developer"]),
+      }),
+    );
+
+    // Write one real agent and one non-.md file
+    await writeFile(
+      path.join(agentsDir, "web-developer.md"),
+      "# Web Developer\n\nBuilds web applications.",
+    );
+    await writeFile(
+      path.join(agentsDir, "metadata.yaml"),
+      "id: web-developer\ntitle: Web Developer",
+    );
+
+    const { stdout, error } = await runCliCommand(["list"]);
+
+    expect(error).toBeUndefined();
+    // Should only count .md files
+    expect(stdout).toContain("Agents:  1");
   });
 });

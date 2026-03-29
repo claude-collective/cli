@@ -685,12 +685,78 @@ describe("uninstall command", () => {
     });
   });
 
-  describe("uninstall -- global", () => {
-    // The uninstall command does not currently support a --global flag.
-    // Global uninstall mechanism is not implemented. These tests are
-    // placeholders for when/if global uninstall is added.
-    it.todo("should remove CLI global artifacts with --global --yes");
-    it.todo("should preserve user global MCP servers");
-    it.todo("should preserve user global agents");
+  describe("global scope handling", () => {
+    it("should not remove global-scoped skills when only global skills exist", async () => {
+      // Config has global-scoped skills, but uninstall only looks at projectDir/.claude/skills/
+      await createProjectConfig(projectDir, {
+        skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+      });
+
+      // Place the skill at the global location (~/.claude/skills/)
+      const globalSkillsDir = path.join(fakeHome, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+      await mkdir(globalSkillsDir, { recursive: true });
+      await createCLISkill(globalSkillsDir, "web-framework-react");
+
+      const { stdout, stderr } = await runCliCommand(["uninstall", "--yes"]);
+
+      // Global skills should be untouched — uninstall only operates on project dir
+      expect(await directoryExists(globalSkillsDir)).toBe(true);
+      expect(await directoryExists(path.join(globalSkillsDir, "web-framework-react"))).toBe(true);
+
+      // Nothing to uninstall in the project directory for skills
+      const output = stdout + stderr;
+      expect(output).not.toContain("Removed");
+      expect(output).not.toContain("CLI-installed skill");
+    });
+
+    it("should remove project-scoped skills without touching global-scoped skills", async () => {
+      await createProjectConfig(projectDir, {
+        skills: [
+          { id: "web-framework-react", scope: "project", source: "eject" },
+          { id: "web-state-zustand", scope: "global", source: "eject" },
+        ],
+      });
+
+      // Project skill at projectDir/.claude/skills/
+      const projectSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+      await mkdir(projectSkillsDir, { recursive: true });
+      const projectSkillDir = await createCLISkill(projectSkillsDir, "web-framework-react");
+
+      // Global skill at ~/.claude/skills/
+      const globalSkillsDir = path.join(fakeHome, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+      await mkdir(globalSkillsDir, { recursive: true });
+      await createCLISkill(globalSkillsDir, "web-state-zustand");
+
+      const { stdout } = await runCliCommand(["uninstall", "--yes"]);
+
+      // Project skill should be removed
+      expect(await directoryExists(projectSkillDir)).toBe(false);
+      expect(stdout).toContain("Removed 1 CLI-installed skill");
+
+      // Global skill should be untouched
+      expect(await directoryExists(path.join(globalSkillsDir, "web-state-zustand"))).toBe(true);
+    });
+  });
+
+  describe("global uninstall", () => {
+    // Global uninstall is done by running cc uninstall from ~/.claude/ (or wherever
+    // global config lives). No --global flag needed — the command uses process.cwd().
+    it("should remove global artifacts when run from global dir", async () => {
+      // The command uses process.cwd() as the project directory, so we must chdir
+      // to fakeHome for global uninstall to find the right .claude/skills/.
+      const globalSkillsDir = path.join(fakeHome, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+      await mkdir(globalSkillsDir, { recursive: true });
+      await createCLISkill(globalSkillsDir, "web-framework-react");
+
+      await createProjectConfig(fakeHome, {
+        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+      });
+
+      process.chdir(fakeHome);
+      const { stdout } = await runCliCommand(["uninstall", "--yes"]);
+
+      expect(stdout).toContain("Removed 1 CLI-installed skill");
+      expect(await directoryExists(path.join(globalSkillsDir, "web-framework-react"))).toBe(false);
+    });
   });
 });

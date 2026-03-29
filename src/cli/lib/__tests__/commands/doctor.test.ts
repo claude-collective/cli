@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
-import { renderConfigTs } from "../content-generators";
-import { CLAUDE_DIR, STANDARD_FILES } from "../../../consts";
+import { renderConfigTs, renderSkillMd } from "../content-generators";
+import { CLAUDE_DIR, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 
 describe("doctor command", () => {
   let tempDir: string;
@@ -210,6 +210,150 @@ describe("doctor command", () => {
       // Command should run (orphans are warnings, not errors)
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unexpected argument");
+    });
+  });
+
+  describe("skills installed check", () => {
+    it("should warn when eject-mode skill is missing from disk", async () => {
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+
+      // Config lists an eject-mode skill, but no skill directory exists on disk
+      await writeFile(
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          name: "test-project",
+          agents: [],
+          skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        }),
+      );
+
+      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const output = stdout + (error?.message || "");
+
+      // Should report the missing skill
+      expect(output).toContain("missing from disk");
+      expect(output).toContain("web-framework-react");
+    });
+
+    it("should pass when eject-mode skill files exist on disk", async () => {
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+
+      // Create config listing an eject-mode skill
+      await writeFile(
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          name: "test-project",
+          agents: [],
+          skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        }),
+      );
+
+      // Create the skill file on disk
+      const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react"),
+      );
+
+      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const output = stdout + (error?.message || "");
+
+      // Should NOT report missing skills
+      expect(output).not.toContain("missing from disk");
+      expect(output).toContain("eject-mode skills installed");
+    });
+
+    it("should not check plugin-mode skills for disk presence", async () => {
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+
+      // Config lists a plugin-mode skill (no files needed on disk)
+      await writeFile(
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          name: "test-project",
+          agents: [],
+          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
+        }),
+      );
+
+      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const output = stdout + (error?.message || "");
+
+      // Plugin skills should not be checked for disk presence
+      expect(output).not.toContain("missing from disk");
+      expect(output).toContain("No eject-mode skills configured");
+    });
+  });
+
+  describe("broken agent references", () => {
+    it("should report skills in stack that cannot be resolved", async () => {
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+
+      // Config has a stack referencing a skill that doesn't exist
+      // anywhere (not in matrix, not in local skills)
+      await writeFile(
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          name: "test-project",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+          stack: {
+            "web-developer": {
+              "web-framework": [{ id: "web-framework-nonexistent" }],
+            },
+          },
+        }),
+      );
+
+      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const output = stdout + (error?.message || "");
+
+      // Should report the unresolvable skill in the stack
+      expect(output).toContain("web-framework-nonexistent");
+      expect(output).toContain("not found");
+    });
+
+    it("should pass when stack skills exist as local skills", async () => {
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+
+      // Config has a stack referencing a skill
+      await writeFile(
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          name: "test-project",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+          stack: {
+            "web-developer": {
+              "web-framework": [{ id: "web-framework-react" }],
+            },
+          },
+        }),
+      );
+
+      // Create the local skill so it resolves
+      const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react"),
+      );
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        "name: web-framework-react\ndescription: React framework\ncategory: web-framework\ndomain: web\n",
+      );
+
+      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const output = stdout + (error?.message || "");
+
+      // The skill should be resolved (found as local skill)
+      expect(output).not.toContain("web-framework-react (not found)");
     });
   });
 

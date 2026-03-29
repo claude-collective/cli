@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 import { validateSource } from "../../source-validator";
+import { validatePlugin } from "../../plugins/plugin-validator";
 import {
   PLUGIN_MANIFEST_DIR,
   PLUGIN_MANIFEST_FILE,
@@ -210,6 +211,28 @@ describe("validate command", () => {
       const { error } = await runCliCommand(["validate", "--plugins"]);
 
       // Should fail because plugin structure is invalid
+      expect(error?.oclif?.exit).toBeDefined();
+    });
+
+    it("should report specific error for malformed plugin.json (invalid JSON)", async () => {
+      const pluginManifestDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
+      await mkdir(pluginManifestDir, { recursive: true });
+      await writeFile(path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE), "{ not valid json !!!");
+
+      const result = await validatePlugin(projectDir);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes("Invalid JSON"))).toBe(true);
+    });
+
+    it("should not crash when validating directory with malformed plugin.json via CLI", async () => {
+      const pluginManifestDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
+      await mkdir(pluginManifestDir, { recursive: true });
+      await writeFile(path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE), "<<<broken>>>");
+
+      const { error } = await runCliCommand(["validate", "--plugins"]);
+
+      // Should exit with a validation error, not an unhandled crash
       expect(error?.oclif?.exit).toBeDefined();
     });
   });
@@ -575,6 +598,112 @@ describe("source validation (validateSource)", () => {
 
     expect(result.skillCount).toBe(2);
     expect(result.errorCount).toBe(0);
+  });
+
+  it("should run cross-reference validation and report no issues for well-formed source", async () => {
+    const sourceDir = path.join(tempDir, "source");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+    const configDir = path.join(sourceDir, "config");
+    await mkdir(configDir, { recursive: true });
+
+    await writeValidSourceSkill(skillsDir, "web/framework/react", {
+      id: "web-framework-react",
+      description: "React framework",
+      category: "web-framework",
+      domain: "web",
+      displayName: "react",
+      cliDescription: "React JavaScript framework",
+      usageGuidance: "Use React for building component-based UIs",
+      slug: "react",
+      author: "@test",
+    });
+
+    await writeTestMatrix(configDir, {
+      "web-framework": { domain: "web", displayName: "Framework" },
+    });
+
+    const result = await validateSource(sourceDir);
+
+    // Phase 3 cross-reference ran and found no issues
+    expect(result.errorCount).toBe(0);
+    // No cross-reference skipped warnings
+    const crossRefSkipped = result.issues.filter((i) =>
+      i.message.includes("Cross-reference validation skipped"),
+    );
+    expect(crossRefSkipped).toHaveLength(0);
+  });
+
+  it("should report warning when cross-reference validation cannot load matrix", async () => {
+    const sourceDir = path.join(tempDir, "source");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+    await mkdir(skillsDir, { recursive: true });
+
+    // Create a valid skill but with a malformed categories config to trigger Phase 3 failure
+    await writeValidSourceSkill(skillsDir, "web/framework/react", {
+      id: "web-framework-react",
+      description: "React framework",
+      category: "web-framework",
+      domain: "web",
+      displayName: "react",
+      cliDescription: "React JavaScript framework",
+      usageGuidance: "Use React for building component-based UIs",
+      slug: "react",
+      author: "@test",
+    });
+
+    // Write a malformed categories file so loadSkillsMatrixFromSource throws
+    const configDir = path.join(sourceDir, "config");
+    await mkdir(configDir, { recursive: true });
+    await writeFile(path.join(configDir, "skill-categories.ts"), "export default INVALID;");
+
+    const result = await validateSource(sourceDir);
+
+    // Phase 3 should gracefully catch the error and report a warning
+    const crossRefWarnings = result.issues.filter((i) =>
+      i.message.includes("Cross-reference validation skipped"),
+    );
+    expect(crossRefWarnings).toHaveLength(1);
+    expect(crossRefWarnings[0].severity).toBe("warning");
+  });
+
+  it("should validate custom skills with non-standard categories without errors", async () => {
+    const sourceDir = path.join(tempDir, "source");
+    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+    const configDir = path.join(sourceDir, "config");
+    await mkdir(configDir, { recursive: true });
+
+    // Create a skill with custom: true and a non-standard category
+    const skillDir = path.join(skillsDir, "custom", "tools", "my-linter");
+    await mkdir(skillDir, { recursive: true });
+
+    await writeFile(
+      path.join(skillDir, STANDARD_FILES.SKILL_MD),
+      renderSkillMd("custom-tools-my-linter", "My custom linter skill"),
+    );
+
+    await writeFile(
+      path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+      stringifyYaml({
+        category: "custom-tools",
+        domain: "custom",
+        author: "@test",
+        displayName: "my-linter",
+        cliDescription: "A custom linting skill",
+        usageGuidance: "Use this for custom linting checks on your codebase",
+        slug: "my-linter",
+        custom: true,
+      }),
+    );
+
+    await writeTestMatrix(configDir, {});
+
+    const result = await validateSource(sourceDir);
+
+    // Custom skills should not fail schema validation for non-standard categories/slugs
+    const schemaErrors = result.issues.filter(
+      (i) => i.severity === "error" && i.file.includes("my-linter"),
+    );
+    expect(schemaErrors).toHaveLength(0);
   });
 });
 

@@ -271,6 +271,82 @@ describe("build:marketplace command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
+
+    it("should skip plugins with invalid plugin.json and not crash", async () => {
+      const pluginsDir = path.join(projectDir, "dist", "plugins");
+      const outputPath = path.join(projectDir, "marketplace.json");
+      await mkdir(pluginsDir, { recursive: true });
+
+      // Valid plugin
+      await createPluginDir(pluginsDir, "web-framework-react", {
+        name: "web-framework-react",
+        description: "React framework",
+        version: "1.0.0",
+      });
+
+      // Invalid plugin: plugin.json exists but contains invalid JSON
+      const invalidPluginDir = path.join(pluginsDir, "broken-plugin");
+      const invalidManifestDir = path.join(invalidPluginDir, PLUGIN_MANIFEST_DIR);
+      await mkdir(invalidManifestDir, { recursive: true });
+      await writeFile(
+        path.join(invalidManifestDir, PLUGIN_MANIFEST_FILE),
+        "{ this is not valid json }",
+      );
+
+      const { stdout, error } = await runCliCommand([
+        "build:marketplace",
+        "--plugins-dir",
+        pluginsDir,
+        "--output",
+        outputPath,
+      ]);
+
+      // Should complete without crashing, skipping the broken plugin
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("1 plugins");
+
+      const marketplace = await readMarketplaceJson(outputPath);
+      expect(marketplace.plugins).toHaveLength(1);
+      expect(marketplace.plugins[0].name).toBe("web-framework-react");
+    });
+
+    it("should skip plugins with missing required name field in plugin.json", async () => {
+      const pluginsDir = path.join(projectDir, "dist", "plugins");
+      const outputPath = path.join(projectDir, "marketplace.json");
+      await mkdir(pluginsDir, { recursive: true });
+
+      // Valid plugin
+      await createPluginDir(pluginsDir, "api-framework-hono", {
+        name: "api-framework-hono",
+        description: "Hono framework",
+        version: "1.0.0",
+      });
+
+      // Invalid plugin: valid JSON but missing required 'name' field
+      const invalidPluginDir = path.join(pluginsDir, "nameless-plugin");
+      const invalidManifestDir = path.join(invalidPluginDir, PLUGIN_MANIFEST_DIR);
+      await mkdir(invalidManifestDir, { recursive: true });
+      await writeFile(
+        path.join(invalidManifestDir, PLUGIN_MANIFEST_FILE),
+        JSON.stringify({ description: "No name field", version: "1.0.0" }),
+      );
+
+      const { stdout, error } = await runCliCommand([
+        "build:marketplace",
+        "--plugins-dir",
+        pluginsDir,
+        "--output",
+        outputPath,
+      ]);
+
+      // Should complete without crashing, skipping the nameless plugin
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("1 plugins");
+
+      const marketplace = await readMarketplaceJson(outputPath);
+      expect(marketplace.plugins).toHaveLength(1);
+      expect(marketplace.plugins[0].name).toBe("api-framework-hono");
+    });
   });
 
   describe("marketplace generation integration", () => {

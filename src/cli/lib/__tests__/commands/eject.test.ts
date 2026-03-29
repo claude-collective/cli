@@ -282,14 +282,63 @@ describe("eject command", () => {
       expect(entries).toEqual([path.basename(DIRS.templates)]);
     });
 
-    it("should work with --force flag", async () => {
-      // First eject
+    it("should warn with --force suggestion when templates already exist without --force", async () => {
+      // First eject creates the templates
       await runCliCommand(["eject", "templates"]);
 
-      // Second eject with --force
+      // Second eject without --force should warn
+      const { stderr } = await runCliCommand(["eject", "templates"]);
+
+      expect(stderr).toContain("already exist");
+      expect(stderr).toContain("--force");
+    });
+
+    it("should preserve existing templates without --force", async () => {
+      // First eject creates the templates
+      await runCliCommand(["eject", "templates"]);
+
+      const templatesDir = path.join(
+        projectDir,
+        CLAUDE_SRC_DIR,
+        path.basename(DIRS.agents),
+        path.basename(DIRS.templates),
+      );
+
+      // Modify a template file to detect overwrites
+      const agentLiquidPath = path.join(templatesDir, "agent.liquid");
+      await writeFile(agentLiquidPath, "custom template content");
+
+      // Second eject without --force
+      await runCliCommand(["eject", "templates"]);
+
+      // Custom content should be preserved
+      const afterContent = await readFile(agentLiquidPath, "utf-8");
+      expect(afterContent).toBe("custom template content");
+    });
+
+    it("should overwrite existing templates with --force", async () => {
+      // First eject creates the templates
+      await runCliCommand(["eject", "templates"]);
+
+      const templatesDir = path.join(
+        projectDir,
+        CLAUDE_SRC_DIR,
+        path.basename(DIRS.agents),
+        path.basename(DIRS.templates),
+      );
+
+      // Modify a template file
+      const agentLiquidPath = path.join(templatesDir, "agent.liquid");
+      await writeFile(agentLiquidPath, "custom template content");
+
+      // Second eject with --force should overwrite
       const { stdout } = await runCliCommand(["eject", "templates", "--force"]);
 
       expect(stdout).toContain("Agent templates ejected");
+
+      // Content should be replaced with fresh copy from CLI source
+      const afterContent = await readFile(agentLiquidPath, "utf-8");
+      expect(afterContent).not.toBe("custom template content");
     });
 
     it("should work with --output flag", async () => {

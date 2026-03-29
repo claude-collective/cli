@@ -425,9 +425,7 @@ export default class Doctor extends BaseCommand {
     const orphansResult = config ? await checkNoOrphans(config, projectDir) : SKIP_RESULT;
     this.logCheck("No Orphans", orphansResult, flags.verbose);
 
-    const installedResult = config
-      ? await checkSkillsInstalled(config, projectDir)
-      : SKIP_RESULT;
+    const installedResult = config ? await checkSkillsInstalled(config, projectDir) : SKIP_RESULT;
     this.logCheck("Skills Installed", installedResult, flags.verbose);
 
     this.logCheck("Source Reachable", sourceResult, flags.verbose);

@@ -474,8 +474,9 @@ describe("User Journey: Config Edge Cases", () => {
     await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), "export default {};");
 
     const config = await loadProjectSourceConfig(projectDir);
-    // Empty config object is valid — all fields are optional
-    expect(config).toEqual({});
+    // Empty config (zero keys) is treated as "not installed" — loadConfig returns null
+    // for empty module objects since they are indistinguishable from files with no default export.
+    expect(config).toBeNull();
   });
 
   it("should allow extra unknown fields (passthrough schema)", async () => {

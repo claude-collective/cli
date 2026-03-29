@@ -81,6 +81,20 @@ describe("config commands", () => {
       expect(stdout).toContain("/project/source");
     });
 
+    it("should display custom source name from project config", async () => {
+      const projectConfigDir = path.join(projectDir, ".claude-src");
+      await mkdir(projectConfigDir, { recursive: true });
+      await writeFile(
+        path.join(projectConfigDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({ source: "github:acme-corp/custom-skills" }),
+      );
+
+      const { stdout } = await runCliCommand(["config:show"]);
+
+      expect(stdout).toContain("github:acme-corp/custom-skills");
+      expect(stdout).toContain("project config");
+    });
+
     it("should show precedence order", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 

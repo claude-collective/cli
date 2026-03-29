@@ -349,6 +349,59 @@ describe("import:skill command", () => {
       expect(content).toBe("# Original content\n");
     });
 
+    it("should warn with --force suggestion when skill exists without --force", async () => {
+      await createLocalSource(projectDir, ["existing-skill"]);
+
+      // Pre-create the destination skill directory
+      const destSkillDir = path.join(projectDir, LOCAL_SKILLS_DIR, "existing-skill");
+      await mkdir(destSkillDir, { recursive: true });
+      await writeFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), "# Original content\n");
+
+      const { stderr } = await runCliCommand([
+        "import:skill",
+        LOCAL_SOURCE_NAME,
+        "--skill",
+        "existing-skill",
+      ]);
+
+      // Warning should mention --force
+      expect(stderr).toContain("already exists");
+      expect(stderr).toContain("--force");
+    });
+
+    it("should skip only existing skills in --all mode without --force", async () => {
+      await createLocalSource(projectDir, ["skill-a", "skill-b", "skill-c"]);
+
+      // Pre-create only skill-b at the destination
+      const destSkillB = path.join(projectDir, LOCAL_SKILLS_DIR, "skill-b");
+      await mkdir(destSkillB, { recursive: true });
+      await writeFile(path.join(destSkillB, STANDARD_FILES.SKILL_MD), "# Original B\n");
+
+      const { error, stderr } = await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--all"]);
+
+      expect(error?.oclif?.exit).toBeUndefined();
+
+      // skill-b should be skipped with a warning
+      expect(stderr).toContain("skill-b");
+      expect(stderr).toContain("--force");
+
+      // skill-a and skill-c should be imported
+      expect(
+        await fileExists(
+          path.join(projectDir, LOCAL_SKILLS_DIR, "skill-a", STANDARD_FILES.SKILL_MD),
+        ),
+      ).toBe(true);
+      expect(
+        await fileExists(
+          path.join(projectDir, LOCAL_SKILLS_DIR, "skill-c", STANDARD_FILES.SKILL_MD),
+        ),
+      ).toBe(true);
+
+      // skill-b should retain original content
+      const contentB = await readFile(path.join(destSkillB, STANDARD_FILES.SKILL_MD), "utf-8");
+      expect(contentB).toBe("# Original B\n");
+    });
+
     it("should overwrite existing skills with --force", async () => {
       await createLocalSource(projectDir, ["existing-skill"]);
 
@@ -371,6 +424,38 @@ describe("import:skill command", () => {
       const content = await readFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), "utf-8");
       expect(content).toContain("existing-skill");
       expect(content).not.toBe("# Original content\n");
+    });
+
+    it("should overwrite all existing skills with --force in --all mode", async () => {
+      await createLocalSource(projectDir, ["skill-a", "skill-b"]);
+
+      // Pre-create both destination skill directories
+      for (const name of ["skill-a", "skill-b"]) {
+        const destDir = path.join(projectDir, LOCAL_SKILLS_DIR, name);
+        await mkdir(destDir, { recursive: true });
+        await writeFile(path.join(destDir, STANDARD_FILES.SKILL_MD), "# Original\n");
+      }
+
+      const { error, stderr } = await runCliCommand([
+        "import:skill",
+        LOCAL_SOURCE_NAME,
+        "--all",
+        "--force",
+      ]);
+
+      expect(error?.oclif?.exit).toBeUndefined();
+
+      // No skip warnings should appear
+      expect(stderr).not.toContain("already exists");
+
+      // Both skills should be overwritten
+      for (const name of ["skill-a", "skill-b"]) {
+        const content = await readFile(
+          path.join(projectDir, LOCAL_SKILLS_DIR, name, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(content).not.toBe("# Original\n");
+      }
     });
   });
 

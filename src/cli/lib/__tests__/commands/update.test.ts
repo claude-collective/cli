@@ -1,9 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import { mkdir } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
-import { LOCAL_SKILL_FORKED, LOCAL_SKILL_FORKED_MINIMAL } from "../mock-data/mock-skills";
+import {
+  LOCAL_SKILL_FORKED,
+  LOCAL_SKILL_FORKED_MINIMAL,
+  DEFAULT_TEST_SKILLS,
+} from "../mock-data/mock-skills";
+import { EXIT_CODES } from "../../exit-codes";
+import { STANDARD_FILES } from "../../../consts";
+import { computeFileHash } from "../../versioning";
+import { renderSkillMd } from "../content-generators";
+import { stringify as stringifyYaml } from "yaml";
+import type { SkillId, SkillSlug } from "../../../types";
 
 describe("update command", () => {
   let tempDir: string;
@@ -234,6 +244,302 @@ describe("update command", () => {
 
       // Should error on unknown flag
       expect(error).toBeDefined();
+    });
+  });
+
+  describe("nonexistent skill argument", () => {
+    let localDirs: TestDirs;
+
+    beforeEach(async () => {
+      // Set up a project with a forked local skill AND a matching source
+      // so the command gets past loadContext and into resolveTargetSkills
+      localDirs = await createTestSource({
+        skills: DEFAULT_TEST_SKILLS,
+        agents: [],
+        localSkills: [LOCAL_SKILL_FORKED],
+      });
+      process.chdir(localDirs.projectDir);
+    });
+
+    afterEach(async () => {
+      await cleanupTestSource(localDirs);
+    });
+
+    it("should error with 'not found' when skill arg does not match any local skill", async () => {
+      const { stdout, error } = await runCliCommand([
+        "update",
+        "totally-nonexistent-skill",
+        "--yes",
+        "--source",
+        localDirs.sourceDir,
+      ]);
+
+      // The command should exit with error code
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+
+      // The stdout should contain the skill-not-found message
+      const combinedOutput = stdout + (error?.message ?? "");
+      expect(combinedOutput).toContain("not found");
+    });
+
+    it("should suggest similar skills when a partial match exists", async () => {
+      // LOCAL_SKILL_FORKED has id "web-tooling-forked-skill" — searching for "forked"
+      // should suggest it as a similar match
+      const { stdout, error } = await runCliCommand([
+        "update",
+        "forked",
+        "--yes",
+        "--source",
+        localDirs.sourceDir,
+      ]);
+
+      // The command should exit with error (no exact match)
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+
+      // Should mention "Did you mean" with suggestions
+      const combinedOutput = stdout + (error?.message ?? "");
+      expect(combinedOutput).toContain("not found");
+    });
+  });
+
+  describe("hash mismatch detection (outdated skills)", () => {
+    let localDirs: TestDirs;
+    const REACT_SKILL_ID: SkillId = "web-framework-react";
+
+    beforeEach(async () => {
+      // Create source with default skills (includes react)
+      localDirs = await createTestSource({
+        skills: DEFAULT_TEST_SKILLS,
+        agents: [],
+        localSkills: [],
+      });
+    });
+
+    afterEach(async () => {
+      process.chdir(originalCwd);
+      await cleanupTestSource(localDirs);
+    });
+
+    it("should detect outdated skill when local hash differs from source hash", async () => {
+      // 1. Compute the real source hash for the react skill
+      const sourceSkillDir = path.join(
+        localDirs.sourceDir,
+        "src",
+        "skills",
+        "web-framework",
+        REACT_SKILL_ID,
+      );
+      const realSourceHash = await computeFileHash(
+        path.join(sourceSkillDir, STANDARD_FILES.SKILL_MD),
+      );
+
+      // 2. Create a local skill that claims to be forked from react but with a STALE hash
+      const localSkillsDir = path.join(localDirs.projectDir, ".claude", "skills");
+      const localSkillDir = path.join(localSkillsDir, REACT_SKILL_ID);
+      await mkdir(localSkillDir, { recursive: true });
+
+      // Write SKILL.md with DIFFERENT content than source (simulating local modifications)
+      await writeFile(
+        path.join(localSkillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd(REACT_SKILL_ID, "Modified locally"),
+      );
+
+      // Write metadata.yaml with a contentHash that does NOT match source
+      const staleHash = "0000000000";
+      await writeFile(
+        path.join(localSkillDir, STANDARD_FILES.METADATA_YAML),
+        stringifyYaml({
+          displayName: "React",
+          forkedFrom: {
+            skillId: REACT_SKILL_ID,
+            contentHash: staleHash,
+            date: "2025-01-01",
+          },
+        }),
+      );
+
+      process.chdir(localDirs.projectDir);
+
+      // 3. Run update with --yes to skip prompt, pointing to the source
+      const { stdout, error } = await runCliCommand([
+        "update",
+        "--yes",
+        "--source",
+        localDirs.sourceDir,
+      ]);
+
+      const combinedOutput = stdout + (error?.message ?? "");
+
+      // The stale hash (0000000000) != real source hash, so react should be detected as outdated
+      // and the update table should be displayed showing the skill
+      expect(combinedOutput).toContain(REACT_SKILL_ID);
+    });
+
+    it("should report 'up to date' when targeting a skill whose hash matches source", async () => {
+      // 1. Compute the real source hash
+      const sourceSkillDir = path.join(
+        localDirs.sourceDir,
+        "src",
+        "skills",
+        "web-framework",
+        REACT_SKILL_ID,
+      );
+      const realSourceHash = await computeFileHash(
+        path.join(sourceSkillDir, STANDARD_FILES.SKILL_MD),
+      );
+
+      // 2. Create a local skill with a matching hash
+      const localSkillsDir = path.join(localDirs.projectDir, ".claude", "skills");
+      const localSkillDir = path.join(localSkillsDir, REACT_SKILL_ID);
+      await mkdir(localSkillDir, { recursive: true });
+
+      await writeFile(
+        path.join(localSkillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd(REACT_SKILL_ID, "Same content"),
+      );
+
+      await writeFile(
+        path.join(localSkillDir, STANDARD_FILES.METADATA_YAML),
+        stringifyYaml({
+          displayName: "React",
+          forkedFrom: {
+            skillId: REACT_SKILL_ID,
+            contentHash: realSourceHash,
+            date: "2025-01-01",
+          },
+        }),
+      );
+
+      process.chdir(localDirs.projectDir);
+
+      // 3. Run update targeting the specific skill
+      const { stdout, error } = await runCliCommand([
+        "update",
+        REACT_SKILL_ID,
+        "--yes",
+        "--source",
+        localDirs.sourceDir,
+      ]);
+
+      const combinedOutput = stdout + (error?.message ?? "");
+
+      // Skill should be reported as already up to date
+      expect(combinedOutput).toContain("up to date");
+    });
+  });
+
+  describe("all skills up to date", () => {
+    let localDirs: TestDirs;
+
+    afterEach(async () => {
+      process.chdir(originalCwd);
+      await cleanupTestSource(localDirs);
+    });
+
+    it("should report all skills up to date when no skills are outdated", async () => {
+      const skillId: SkillId = "web-framework-react";
+
+      // Create source with skills
+      localDirs = await createTestSource({
+        skills: DEFAULT_TEST_SKILLS,
+        agents: [],
+        localSkills: [],
+      });
+
+      // Compute the real source hash
+      const sourceSkillDir = path.join(
+        localDirs.sourceDir,
+        "src",
+        "skills",
+        "web-framework",
+        skillId,
+      );
+      const realSourceHash = await computeFileHash(
+        path.join(sourceSkillDir, STANDARD_FILES.SKILL_MD),
+      );
+
+      // Create local skill with matching hash
+      const localSkillsDir = path.join(localDirs.projectDir, ".claude", "skills");
+      const localSkillDir = path.join(localSkillsDir, skillId);
+      await mkdir(localSkillDir, { recursive: true });
+
+      await writeFile(
+        path.join(localSkillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd(skillId, "React"),
+      );
+      await writeFile(
+        path.join(localSkillDir, STANDARD_FILES.METADATA_YAML),
+        stringifyYaml({
+          displayName: "React",
+          forkedFrom: {
+            skillId,
+            contentHash: realSourceHash,
+            date: "2025-01-01",
+          },
+        }),
+      );
+
+      process.chdir(localDirs.projectDir);
+
+      // Run update without targeting a specific skill
+      const { stdout, error } = await runCliCommand([
+        "update",
+        "--yes",
+        "--source",
+        localDirs.sourceDir,
+      ]);
+
+      const combinedOutput = stdout + (error?.message ?? "");
+
+      // Should report all skills are up to date
+      expect(combinedOutput).toContain("up to date");
+    });
+  });
+
+  describe("local-only skill (no forkedFrom)", () => {
+    let localDirs: TestDirs;
+
+    afterEach(async () => {
+      process.chdir(originalCwd);
+      await cleanupTestSource(localDirs);
+    });
+
+    it("should report local-only skill cannot be updated when targeted by name", async () => {
+      // Boundary cast: fictional skill ID for test isolation
+      const skillId = "web-tooling-my-skill" as SkillId;
+
+      localDirs = await createTestSource({
+        skills: DEFAULT_TEST_SKILLS,
+        agents: [],
+        localSkills: [
+          {
+            id: skillId,
+            // Boundary cast: fictional slug for test isolation
+            slug: "tooling" as SkillSlug,
+            displayName: "My Skill",
+            description: "A local-only skill",
+            category: "web-tooling",
+            author: "@test",
+            domain: "web",
+            // No forkedFrom — this is a local-only skill
+          },
+        ],
+      });
+
+      process.chdir(localDirs.projectDir);
+
+      const { stdout, error } = await runCliCommand([
+        "update",
+        skillId,
+        "--yes",
+        "--source",
+        localDirs.sourceDir,
+      ]);
+
+      const combinedOutput = stdout + (error?.message ?? "");
+
+      // Should inform user that local-only skills cannot be updated
+      expect(combinedOutput).toContain("local-only");
     });
   });
 });
