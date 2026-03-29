@@ -7,6 +7,15 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.96.2] - 2026-03-29
+
+**E2E test cleanup and type safety fixes**
+
+- E2E lifecycle/interactive tests: try/finally → afterEach, task IDs moved to JSDoc (D-166, D-167)
+- Non-null assertions eliminated in `eject.ts`, `search.tsx`, `doctor.ts` via proper TypeScript narrowing (D-165)
+
+See [changelogs/0.96.2.md](./changelogs/0.96.2.md) for full details.
+
 ## [0.96.1] - 2026-03-29
 
 **Compact info panel stats view**
