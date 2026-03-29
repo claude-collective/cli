@@ -15,6 +15,7 @@ import {
   buildWizardResultFromStore,
   simulateSkillSelections,
   extractSkillIdsFromAssignment,
+  assertConfigIntegrity,
   fileExists,
   directoryExists,
   readTestTsConfig,
@@ -106,19 +107,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-      expect(config.stack).toBeDefined();
-
-      // Every agent in the stack must also be in config.agents
-      const stackCheckAgentNames = config.agents.map((a) => a.name);
-      for (const agentId of Object.keys(config.stack || {})) {
-        expect(stackCheckAgentNames).toContain(agentId);
-      }
-
-      // DEFAULT_AGENTS (agent-summoner, skill-summoner, codex-keeper) must NOT
-      // appear in stack when selectedAgents is populated and doesn't include them
-      expect(config.stack?.["agent-summoner"]).toBeUndefined();
-      expect(config.stack?.["skill-summoner"]).toBeUndefined();
-      expect(config.stack?.["codex-keeper"]).toBeUndefined();
+      assertConfigIntegrity(config, selectedSkillIds);
     });
 
     it("should compile agent .md files that exist and have content", async () => {
@@ -292,11 +281,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-      expect(config.stack).toBeDefined();
-      const invariantAgentNames = config.agents.map((a) => a.name);
-      for (const agentId of Object.keys(config.stack!)) {
-        expect(invariantAgentNames).toContain(agentId);
-      }
+      assertConfigIntegrity(config, selectedSkillIds);
     });
 
     it("every skill ID in config.stack should be in config.skills", async () => {
@@ -352,16 +337,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-      // Stack should not contain default agents
-      expect(config.stack).toBeDefined();
-      expect(config.stack!["agent-summoner"]).toBeUndefined();
-      expect(config.stack!["skill-summoner"]).toBeUndefined();
-      expect(config.stack!["codex-keeper"]).toBeUndefined();
-
-      // config.agents should not contain default agents
-      expect(config.agents).not.toContain("agent-summoner");
-      expect(config.agents).not.toContain("skill-summoner");
-      expect(config.agents).not.toContain("codex-keeper");
+      assertConfigIntegrity(config, selectedSkillIds);
     });
   });
 

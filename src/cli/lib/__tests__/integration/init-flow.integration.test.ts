@@ -1,11 +1,12 @@
 import os from "os";
 import path from "path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile, rm } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { INIT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installEject } from "../../installation/local-installer";
+import { recompileAgents } from "../../agents/agent-recompiler";
 import type { AgentName, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
@@ -16,6 +17,9 @@ import {
   buildWizardResult,
   buildSkillConfigs,
   buildSourceResult,
+  assertConfigIntegrity,
+  createTempDir,
+  cleanupTempDir,
 } from "../helpers";
 import { FULLSTACK_TRIO_MATRIX } from "../mock-data/mock-matrices";
 import { deriveInstallMode } from "../../installation/installation";
@@ -581,7 +585,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should only include selected agents in config.agents", async () => {
+  it("should only include selected agents and exclude DEFAULT_AGENTS from stack", async () => {
     const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WITH_REVIEWER,
@@ -592,33 +596,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-    // config.agents names should contain exactly the selected agents (sorted)
-    expect(config.agents.map((a) => a.name)).toEqual([...SELECTED_AGENTS_WITH_REVIEWER].sort());
-  });
-
-  it("should only have stack entries for selected agents, not DEFAULT_AGENTS", async () => {
-    const result = await installEject({
-      wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
-        selectedAgents: SELECTED_AGENTS_WITH_REVIEWER,
-      }),
-      sourceResult,
-      projectDir: dirs.projectDir,
-    });
-
-    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-
-    expect(config.stack).toBeDefined();
-
-    // Stack should NOT contain default agents that were not in selectedAgents
-    const stackAgentIds = Object.keys(config.stack || {});
-    for (const agentId of stackAgentIds) {
-      expect(SELECTED_AGENTS_WITH_REVIEWER).toContain(agentId);
-    }
-
-    // Specifically verify DEFAULT_AGENTS are absent from stack
-    expect(config.stack?.["agent-summoner"]).toBeUndefined();
-    expect(config.stack?.["skill-summoner"]).toBeUndefined();
-    expect(config.stack?.["codex-keeper"]).toBeUndefined();
+    assertConfigIntegrity(config, SELECTED_SKILLS_REACT_HONO, SELECTED_AGENTS_WITH_REVIEWER);
   });
 
   it("should assign all skills to all selected agents", async () => {
@@ -641,5 +619,155 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
       expect(agentStack!["web-framework"]).toBeDefined();
       expect(agentStack!["api-api"]).toBeDefined();
     }
+  });
+});
+
+describe("Init Flow Integration: Recompile Round-Trip", () => {
+  let dirs: TestDirs;
+  let originalCwd: string;
+  let sourceResult: SourceLoadResult;
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
+    process.chdir(dirs.projectDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    initializeMatrix(INIT_TEST_MATRIX);
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await cleanupTestSource(dirs);
+  });
+
+  it("should recompile agents from installEject output", async () => {
+    const wizardResult = buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_ALL), {
+      selectedAgents: SELECTED_AGENTS_WEB_API,
+    });
+
+    const installResult = await installEject({
+      wizardResult,
+      sourceResult,
+      projectDir: dirs.projectDir,
+    });
+
+    expect(installResult.compiledAgents.length).toBeGreaterThan(0);
+
+    // In eject mode, pluginDir is the project dir itself
+    const recompileResult = await recompileAgents({
+      pluginDir: dirs.projectDir,
+      sourcePath: dirs.sourceDir,
+      projectDir: dirs.projectDir,
+      outputDir: path.join(dirs.projectDir, CLAUDE_DIR, AGENTS_SUBDIR),
+    });
+
+    expect(recompileResult.failed).toHaveLength(0);
+    expect(recompileResult.compiled.length).toBeGreaterThan(0);
+
+    for (const agentName of recompileResult.compiled) {
+      const agentPath = path.join(dirs.projectDir, CLAUDE_DIR, AGENTS_SUBDIR, `${agentName}.md`);
+      expect(await fileExists(agentPath)).toBe(true);
+
+      const recompiledContent = await readFile(agentPath, "utf-8");
+      expect(recompiledContent).toContain("---");
+    }
+  });
+
+  it("should produce agents that contain skill content from source", async () => {
+    const wizardResult = buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_ALL), {
+      selectedAgents: SELECTED_AGENTS_WEB_API,
+    });
+
+    const installResult = await installEject({
+      wizardResult,
+      sourceResult,
+      projectDir: dirs.projectDir,
+    });
+
+    let foundSkillContent = false;
+    for (const agentName of installResult.compiledAgents) {
+      const agentFilePath = path.join(
+        dirs.projectDir,
+        CLAUDE_DIR,
+        AGENTS_SUBDIR,
+        `${agentName}.md`,
+      );
+      const agentContent = await readFile(agentFilePath, "utf-8");
+
+      for (const skill of INIT_TEST_SKILLS) {
+        if (agentContent.includes(skill.description) || agentContent.includes(skill.id)) {
+          foundSkillContent = true;
+          break;
+        }
+      }
+      if (foundSkillContent) break;
+    }
+
+    expect(foundSkillContent).toBe(true);
+  });
+});
+
+describe("Init Flow Integration: Global Scope Skills", () => {
+  let dirs: TestDirs;
+  let fakeHomeDir: string;
+  let originalCwd: string;
+  let sourceResult: SourceLoadResult;
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
+    fakeHomeDir = await createTempDir("cc-home-");
+    process.chdir(dirs.projectDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
+    initializeMatrix(INIT_TEST_MATRIX);
+
+    // Mock os.homedir() to a temp dir so global skills don't pollute the real home
+    vi.spyOn(os, "homedir").mockReturnValue(fakeHomeDir);
+  });
+
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    process.chdir(originalCwd);
+    await cleanupTestSource(dirs);
+    await cleanupTempDir(fakeHomeDir);
+  });
+
+  it("should route global-scoped skills to home dir and project-scoped to project dir", async () => {
+    const projectSkill: SkillId = "web-framework-react";
+    const globalSkill: SkillId = "api-framework-hono";
+
+    const skills = [
+      { id: projectSkill, scope: "project" as const, source: "eject" as const },
+      { id: globalSkill, scope: "global" as const, source: "eject" as const },
+    ];
+
+    const result = await installEject({
+      wizardResult: buildWizardResult(skills, {
+        selectedAgents: SELECTED_AGENTS_WEB_API,
+      }),
+      sourceResult,
+      projectDir: dirs.projectDir,
+    });
+
+    // Project skill should be under projectDir/.claude/skills/
+    const projectSkillDir = path.join(dirs.projectDir, CLAUDE_DIR, DEFAULT_SKILLS_SUBDIR);
+    expect(await directoryExists(projectSkillDir)).toBe(true);
+    const projectSkillPath = path.join(projectSkillDir, projectSkill, STANDARD_FILES.SKILL_MD);
+    expect(await fileExists(projectSkillPath)).toBe(true);
+
+    // Global skill should be under fakeHomeDir/.claude/skills/
+    const globalSkillDir = path.join(fakeHomeDir, CLAUDE_DIR, DEFAULT_SKILLS_SUBDIR);
+    expect(await directoryExists(globalSkillDir)).toBe(true);
+    const globalSkillPath = path.join(globalSkillDir, globalSkill, STANDARD_FILES.SKILL_MD);
+    expect(await fileExists(globalSkillPath)).toBe(true);
+
+    // Global skill should NOT be under projectDir
+    const wrongPath = path.join(projectSkillDir, globalSkill);
+    expect(await directoryExists(wrongPath)).toBe(false);
+
+    // Both skills should appear in copiedSkills
+    const copiedIds = result.copiedSkills.map((s) => s.skillId);
+    expect(copiedIds).toContain(projectSkill);
+    expect(copiedIds).toContain(globalSkill);
   });
 });

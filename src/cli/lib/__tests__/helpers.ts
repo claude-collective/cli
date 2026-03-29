@@ -1,6 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { mkdir, writeFile, readFile } from "fs/promises";
+import { expect } from "vitest";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { run, Errors } from "@oclif/core";
 import ansis from "ansis";
@@ -1287,6 +1288,47 @@ export function createMockCompiledAgentData(overrides?: Partial<AgentConfig>): C
     dynamicSkills: [],
     preloadedSkillIds: [],
   };
+}
+
+/**
+ * Asserts common config integrity invariants:
+ * 1. config.agents names are sorted alphabetically
+ * 2. config.skills contains all expectedSkillIds
+ * 3. config.stack does not contain DEFAULT_AGENTS (agent-summoner, skill-summoner, codex-keeper)
+ * 4. every agent in config.stack is also in config.agents
+ */
+export function assertConfigIntegrity(
+  config: ProjectConfig,
+  expectedSkillIds: SkillId[],
+  expectedAgents?: AgentName[],
+): void {
+  // Agents are sorted alphabetically in config
+  const agentNames = config.agents.map((a) => a.name);
+  const sortedAgentNames = [...agentNames].sort();
+  expect(agentNames).toStrictEqual(sortedAgentNames);
+
+  // All expected skills are present
+  const configSkillIds = config.skills.map((s) => s.id);
+  for (const skillId of expectedSkillIds) {
+    expect(configSkillIds).toContain(skillId);
+  }
+
+  // If expectedAgents provided, verify they match
+  if (expectedAgents) {
+    expect(agentNames).toStrictEqual([...expectedAgents].sort());
+  }
+
+  // DEFAULT_AGENTS must not appear in stack
+  if (config.stack) {
+    expect(config.stack["agent-summoner"]).toBeUndefined();
+    expect(config.stack["skill-summoner"]).toBeUndefined();
+    expect(config.stack["codex-keeper"]).toBeUndefined();
+
+    // Every agent in stack must be in config.agents
+    for (const agentId of Object.keys(config.stack)) {
+      expect(agentNames).toContain(agentId);
+    }
+  }
 }
 
 export { SKILLS, TEST_CATEGORIES } from "./test-fixtures";

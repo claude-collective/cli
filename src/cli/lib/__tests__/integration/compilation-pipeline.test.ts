@@ -46,6 +46,8 @@ describe("Integration: Full Skill Pipeline", () => {
   let outputDir: string;
 
   beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     dirs = await createTestSource();
     tempDir = await createTempDir("skill-pipeline-test-");
     outputDir = path.join(tempDir, "plugins");
@@ -53,14 +55,12 @@ describe("Integration: Full Skill Pipeline", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await cleanupTestSource(dirs);
     await cleanupTempDir(tempDir);
   });
 
   it("should compile all skills to plugins without errors", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     const results = await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
     expect(results).toHaveLength(DEFAULT_TEST_SKILLS.length);
@@ -70,30 +70,18 @@ describe("Integration: Full Skill Pipeline", () => {
       expect(result.manifest.name).toBe(result.skillName);
       expect(result.skillName).toBeTruthy();
     }
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should validate all compiled skill plugins", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
     const validationResult = await validateAllPlugins(outputDir);
 
     expect(validationResult.summary.total).toBe(DEFAULT_TEST_SKILLS.length);
     expect(validationResult.summary.invalid).toBe(0);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should generate marketplace with correct plugin count", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     const compileResults = await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
     const marketplace = await generateMarketplace(outputDir, {
@@ -112,24 +100,15 @@ describe("Integration: Full Skill Pipeline", () => {
     const stats = getMarketplaceStats(marketplace);
     expect(stats.total).toBe(compileResults.length);
     expect(Object.keys(stats.byCategory).length).toBeGreaterThan(0);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should produce plugins with unique names", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     const results = await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
     const names = results.map((r) => r.manifest.name);
     const uniqueNames = new Set(names);
 
     expect(uniqueNames.size).toBe(names.length);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 });
 
@@ -263,6 +242,8 @@ describe("Integration: Marketplace Integrity", () => {
   let marketplacePath: string;
 
   beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     dirs = await createTestSource();
     tempDir = await createTempDir("marketplace-test-");
     pluginsDir = path.join(tempDir, "plugins");
@@ -271,14 +252,12 @@ describe("Integration: Marketplace Integrity", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await cleanupTestSource(dirs);
     await cleanupTempDir(tempDir);
   });
 
   it("should generate valid marketplace.json", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
     const marketplace = await generateMarketplace(pluginsDir, {
@@ -302,15 +281,9 @@ describe("Integration: Marketplace Integrity", () => {
     expect(parsed.owner.email).toBe("hello@example.com");
     expect(parsed.metadata?.pluginRoot).toBe("./plugins");
     expect(parsed.plugins.length).toBe(DEFAULT_TEST_SKILLS.length);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should have no duplicate plugin names", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
     const marketplace = await generateMarketplace(pluginsDir, {
@@ -323,15 +296,9 @@ describe("Integration: Marketplace Integrity", () => {
     const uniqueNames = new Set(names);
 
     expect(uniqueNames.size).toBe(names.length);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should have all plugin source paths resolvable", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
     const marketplace = await generateMarketplace(pluginsDir, {
@@ -349,15 +316,9 @@ describe("Integration: Marketplace Integrity", () => {
         expect(exists).toBe(true);
       }
     }
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should have plugins sorted alphabetically", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
     const marketplace = await generateMarketplace(pluginsDir, {
@@ -370,15 +331,9 @@ describe("Integration: Marketplace Integrity", () => {
     const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
 
     expect(names).toEqual(sortedNames);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should categorize plugins correctly", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
     const marketplace = await generateMarketplace(pluginsDir, {
@@ -392,9 +347,6 @@ describe("Integration: Marketplace Integrity", () => {
     // Plugin manifests don't carry category — all plugins are uncategorized
     // Categories come from skill metadata.yaml, not from plugin.json
     expect(stats.byCategory["uncategorized"]).toBe(marketplace.plugins.length);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 });
 
@@ -405,6 +357,8 @@ describe("Integration: End-to-End Pipeline", () => {
   let stacksDir: string;
 
   beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     dirs = await createTestSource();
     tempDir = await createTempDir("e2e-pipeline-test-");
     pluginsDir = path.join(tempDir, "plugins");
@@ -414,14 +368,12 @@ describe("Integration: End-to-End Pipeline", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await cleanupTestSource(dirs);
     await cleanupTempDir(tempDir);
   });
 
   it("should compile skills then stacks in sequence", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     const skillResults = await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
     expect(skillResults.length).toBe(DEFAULT_TEST_SKILLS.length);
 
@@ -446,15 +398,9 @@ describe("Integration: End-to-End Pipeline", () => {
       pluginRoot: "./plugins",
     });
     expect(marketplace.plugins.length).toBe(skillResults.length);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should have valid skill plugin reference format", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     const stackResult = await compileStackPlugin({
       stackId: COMPILATION_TEST_STACK.id,
       outputDir: stacksDir,
@@ -468,15 +414,9 @@ describe("Integration: End-to-End Pipeline", () => {
     for (const skillPlugin of stackResult.skillPlugins) {
       expect(skillPlugin).toMatch(/^[a-z0-9-]+$/);
     }
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should compile skills and stacks that share common patterns", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     const skillResults = await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
     const stackResult = await compileStackPlugin({
@@ -494,8 +434,5 @@ describe("Integration: End-to-End Pipeline", () => {
 
     const commonSkills = [...stackBaseNames].filter((name) => compiledBaseNames.has(name));
     expect(commonSkills.length).toBeGreaterThan(0);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 });
