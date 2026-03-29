@@ -20,11 +20,10 @@ import "../matchers/setup.js";
  * `DEFAULT_SOURCE` / `BUILT_IN_MATRIX` code path entirely.
  */
 
-// --- Bug D-122: Stale marketplace clone ---
-
 const claudeAvailable = await isClaudeCLIAvailable();
 
-describe.skipIf(!claudeAvailable)("init wizard — stale marketplace update (D-122)", () => {
+/** D-122: Auto-update marketplace before plugin install */
+describe.skipIf(!claudeAvailable)("init wizard — stale marketplace update", () => {
   let fixtureV1: E2EPluginSource;
   let fixtureV2: E2EPluginSource;
   let wizard: InitWizard | undefined;
@@ -99,9 +98,8 @@ describe.skipIf(!claudeAvailable)("init wizard — stale marketplace update (D-1
   );
 });
 
-// --- Bug D-123: Eject mode ENOENT on consuming projects ---
-
-describe("init wizard — default source eject mode ENOENT (D-123)", () => {
+/** D-123: Eject mode ENOENT on consuming projects */
+describe("init wizard — default source eject mode ENOENT", () => {
   let wizard: InitWizard | undefined;
 
   beforeAll(ensureBinaryExists);

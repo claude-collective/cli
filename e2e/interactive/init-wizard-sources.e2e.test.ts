@@ -77,7 +77,8 @@ describe("init wizard — source management", () => {
     });
   });
 
-  describe("source management — outcome verification (Gap 8)", () => {
+  /** Gap 8: Source management outcome verification */
+  describe("source management — outcome verification", () => {
     it(
       "should complete install with all local sources after pressing L hotkey",
       { timeout: TIMEOUTS.INTERACTIVE },

@@ -122,7 +122,8 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
     });
   });
 
-  describe("plugin scope routing (Gap 3)", () => {
+  /** Gap 3: Plugin scope routing */
+  describe("plugin scope routing", () => {
     it("should install plugin skills with correct scope routing", async () => {
       wizard = await InitWizard.launch({
         source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
