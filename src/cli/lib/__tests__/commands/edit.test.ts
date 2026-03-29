@@ -35,7 +35,7 @@ const {
   mockEnsureDir,
   mockGetAgentDefinitions,
 } = vi.hoisted(() => ({
-  mockRender: vi.fn().mockReturnValue({ waitUntilExit: () => Promise.resolve() }),
+  mockRender: vi.fn().mockReturnValue({ waitUntilExit: () => Promise.resolve(), clear: vi.fn() }),
   mockDetectInstallation: vi.fn().mockResolvedValue(null),
   mockLoadSkillsMatrixFromSource: vi.fn(),
   mockLoadProjectConfig: vi.fn().mockResolvedValue(null),
@@ -545,7 +545,7 @@ describe("edit command eject-mode skill fallback", () => {
 
     // Reset all mocks to known state for each test
     mockRender.mockClear();
-    mockRender.mockReturnValue({ waitUntilExit: () => Promise.resolve() });
+    mockRender.mockReturnValue({ waitUntilExit: () => Promise.resolve(), clear: vi.fn() });
 
     mockDetectInstallation.mockResolvedValue({
       mode: "eject",
@@ -677,7 +677,7 @@ describe("edit command detects added agents", () => {
         agentConfigs: buildAgentConfigs(["web-developer", "web-tester"]),
       });
       onComplete(wizardResult);
-      return { waitUntilExit: () => Promise.resolve() };
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn() };
     });
 
     try {
@@ -757,7 +757,7 @@ describe("edit command copies newly added local skills", () => {
         agentConfigs: buildAgentConfigs(["web-developer"]),
       });
       onComplete(wizardResult);
-      return { waitUntilExit: () => Promise.resolve() };
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn() };
     });
 
     try {

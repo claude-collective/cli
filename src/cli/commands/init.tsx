@@ -45,7 +45,7 @@ import { ensureBlankGlobalConfig } from "../lib/configuration/config-writer.js";
 
 /** Clears the visible terminal area so the next render starts clean. */
 function clearTerminalOutput(): void {
-  process.stdout.write("\x1b[2J\x1b[H");
+  process.stdout.write("\x1b[H\x1b[2J\x1b[3J");
 }
 
 const DASHBOARD_OPTIONS: SelectListItem<string>[] = [
@@ -121,7 +121,7 @@ export async function showDashboard(
 
   let selectedCommand: string | null = null;
 
-  const { waitUntilExit } = render(
+  const { waitUntilExit, clear } = render(
     <Dashboard
       onSelect={(command) => {
         selectedCommand = command;
@@ -133,6 +133,7 @@ export async function showDashboard(
   );
 
   await waitUntilExit();
+  clear();
   clearTerminalOutput();
 
   return selectedCommand;
@@ -236,7 +237,7 @@ export default class Init extends BaseCommand {
   ): Promise<WizardResultV2 | null> {
     let wizardResult: WizardResultV2 | null = null;
 
-    const { waitUntilExit } = render(
+    const { waitUntilExit, clear } = render(
       <Wizard
         version={this.config.version}
         logo={ASCII_LOGO}
@@ -252,6 +253,8 @@ export default class Init extends BaseCommand {
     );
 
     await waitUntilExit();
+    clear();
+    clearTerminalOutput();
 
     // TypeScript can't track that onComplete callback mutates wizardResult before waitUntilExit resolves
     const result = wizardResult as WizardResultV2 | null;

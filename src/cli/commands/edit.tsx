@@ -40,6 +40,11 @@ import { remove } from "../utils/fs.js";
 import { type StartupMessage } from "../utils/logger.js";
 import { ERROR_MESSAGES, INFO_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
 
+/** Clears the visible terminal area so the next render starts clean. */
+function clearTerminalOutput(): void {
+  process.stdout.write("\x1b[H\x1b[2J\x1b[3J");
+}
+
 function formatSourceDisplayName(sourceName: string): string {
   return SOURCE_DISPLAY_NAMES[sourceName] ?? sourceName;
 }
@@ -193,7 +198,7 @@ export default class Edit extends BaseCommand {
       ? undefined
       : projectConfig?.agents?.filter((a) => a.scope === "global").map((a) => a.name);
 
-    const { waitUntilExit } = render(
+    const { waitUntilExit, clear } = render(
       <Wizard
         version={this.config.version}
         initialStep="build"
@@ -217,6 +222,8 @@ export default class Edit extends BaseCommand {
     );
 
     await waitUntilExit();
+    clear();
+    clearTerminalOutput();
 
     // TypeScript can't track that onComplete callback mutates wizardResult before waitUntilExit resolves
     const result = wizardResult as WizardResultV2 | null;
