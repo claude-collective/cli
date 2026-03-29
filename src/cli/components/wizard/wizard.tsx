@@ -23,7 +23,6 @@ import {
 } from "./hotkeys.js";
 import type { AgentName, Domain, DomainSelections, SkillId } from "../../types/index.js";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
-import { getStackName } from "./utils.js";
 import type { StartupMessage } from "../../utils/logger.js";
 import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
 import { useBuildStepProps } from "../hooks/use-build-step-props.js";
@@ -253,19 +252,13 @@ export const Wizard: React.FC<WizardProps> = ({
         return <StepAgents />;
 
       case "confirm": {
-        const stackName = getStackName(store.selectedStackId);
-        const selectedSkills = store.getAllSelectedTechnologies();
         return (
           <StepConfirm
             onComplete={handleComplete}
-            stackName={stackName}
-            selectedDomains={store.selectedDomains}
-            domainSelections={store.domainSelections}
-            technologyCount={selectedSkills.length}
-            skillCount={selectedSkills.length}
-            agentCount={store.selectedAgents.length}
             skillConfigs={store.skillConfigs}
             agentConfigs={store.agentConfigs}
+            previousSkillConfigs={installedSkillConfigs}
+            previousAgentConfigs={installedAgentConfigs}
             onBack={store.goBack}
           />
         );
