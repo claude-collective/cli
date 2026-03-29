@@ -9,13 +9,14 @@ import { loadSource, detectProject } from "../lib/operations";
 import { matrix } from "../lib/matrix/matrix-provider";
 import { discoverLocalSkills } from "../lib/skills";
 import { getStackSkillIds } from "../lib/stacks";
-import type { MergedSkillsMatrix, ProjectConfig } from "../types";
+import type { MergedSkillsMatrix, ProjectConfig, SkillConfig } from "../types";
 import { fileExists, glob, directoryExists } from "../utils/fs";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
   CLI_BIN_NAME,
   DEFAULT_BRANDING,
+  LOCAL_SKILLS_PATH,
   STANDARD_FILES,
 } from "../consts";
 import { countBy } from "remeda";
@@ -202,6 +203,46 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
   };
 }
 
+async function checkSkillsInstalled(
+  config: ProjectConfig,
+  projectDir: string,
+): Promise<CheckResult> {
+  const skills: SkillConfig[] = config.skills ?? [];
+  const ejectSkills = skills.filter((s) => s.source === "eject");
+
+  if (ejectSkills.length === 0) {
+    return {
+      status: "pass",
+      message: "No eject-mode skills configured",
+    };
+  }
+
+  const missingSkills: string[] = [];
+
+  for (const skill of ejectSkills) {
+    const baseDir = skill.scope === "global" ? os.homedir() : projectDir;
+    const skillDir = path.join(baseDir, LOCAL_SKILLS_PATH, skill.id);
+    const skillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
+
+    if (!(await fileExists(skillMdPath))) {
+      missingSkills.push(skill.id);
+    }
+  }
+
+  if (missingSkills.length > 0) {
+    return {
+      status: "warn",
+      message: `${missingSkills.length} skill${missingSkills.length === 1 ? "" : "s"} missing from disk`,
+      details: missingSkills.map((s) => `- ${s} (not found in ${LOCAL_SKILLS_PATH}/)`),
+    };
+  }
+
+  return {
+    status: "pass",
+    message: `${ejectSkills.length}/${ejectSkills.length} eject-mode skills installed`,
+  };
+}
+
 async function checkSourceReachable(
   sourceFlag: string | undefined,
   projectDir: string,
@@ -258,13 +299,13 @@ function formatCheckLine(name: string, result: CheckResult, verbose: boolean): s
 
   lines.push(`  ${nameFormatted}${statusIcon}  ${result.message}`);
 
-  const shouldShowDetails =
-    result.details &&
-    result.details.length > 0 &&
-    (verbose || result.status === "fail" || result.status === "warn");
-
-  if (shouldShowDetails) {
-    for (const detail of result.details!) {
+  const { details } = result;
+  if (
+    details &&
+    details.length > 0 &&
+    (verbose || result.status === "fail" || result.status === "warn")
+  ) {
+    for (const detail of details) {
       lines.push(`  ${" ".repeat(CHECK_WIDTH)}   ${detail}`);
     }
   }
@@ -304,6 +345,12 @@ function formatTips(results: CheckResult[]): string[] {
   }
   if (hasSkillError) {
     tips.push("  Tip: Check skill IDs in config match available skills");
+  }
+  const hasMissingSkills = results.some(
+    (r) => r.status === "warn" && r.message.includes("missing from disk"),
+  );
+  if (hasMissingSkills) {
+    tips.push(`  Tip: Run '${CLI_BIN_NAME} compile' to reinstall missing skill files`);
   }
 
   return tips;
@@ -378,9 +425,14 @@ export default class Doctor extends BaseCommand {
     const orphansResult = config ? await checkNoOrphans(config, projectDir) : SKIP_RESULT;
     this.logCheck("No Orphans", orphansResult, flags.verbose);
 
+    const installedResult = config
+      ? await checkSkillsInstalled(config, projectDir)
+      : SKIP_RESULT;
+    this.logCheck("Skills Installed", installedResult, flags.verbose);
+
     this.logCheck("Source Reachable", sourceResult, flags.verbose);
 
-    return [configResult, skillsResult, agentsResult, orphansResult, sourceResult];
+    return [configResult, skillsResult, agentsResult, orphansResult, installedResult, sourceResult];
   }
 
   private logCheck(name: string, result: CheckResult, verbose: boolean): void {

@@ -241,7 +241,7 @@ export default class Eject extends BaseCommand {
     });
 
     if (result.skipped) {
-      this.warn(result.skipReason!);
+      this.warn(result.skipReason);
       return;
     }
 
@@ -278,7 +278,7 @@ export default class Eject extends BaseCommand {
     });
 
     if (result.skipped) {
-      this.warn(result.skipReason!);
+      this.warn(result.skipReason);
       return;
     }
 
@@ -298,16 +298,19 @@ type EjectAgentPartialsOptions = {
   templatesOnly?: boolean;
 };
 
-type EjectAgentPartialsResult = {
-  /** Whether the operation was skipped (e.g. destination already exists without --force). */
-  skipped: boolean;
-  /** Human-readable reason when skipped. */
-  skipReason?: string;
-  /** Destination directory that was written to (undefined when skipped). */
-  destDir?: string;
-  /** Whether templates were skipped during a full agent-partials eject (existing templates preserved). */
-  templatesSkipped: boolean;
-};
+type EjectAgentPartialsResult =
+  | {
+      skipped: true;
+      skipReason: string;
+      templatesSkipped: false;
+    }
+  | {
+      skipped: false;
+      /** Destination directory that was written to. */
+      destDir: string;
+      /** Whether templates were skipped during a full agent-partials eject (existing templates preserved). */
+      templatesSkipped: boolean;
+    };
 
 /**
  * Copies agent partials or templates from the CLI source to a target directory.
@@ -395,18 +398,21 @@ type EjectSkillsOptions = {
   customOutputBase?: string;
 };
 
-type EjectSkillsResult = {
-  /** Whether the operation was skipped. */
-  skipped: boolean;
-  /** Human-readable reason when skipped. */
-  skipReason?: string;
-  /** Array of skills that were copied. */
-  copiedSkills: CopiedSkill[];
-  /** Destination directory that was written to. */
-  destDir?: string;
-  /** Label describing the source that skills were copied from. */
-  sourceLabel?: string;
-};
+type EjectSkillsResult =
+  | {
+      skipped: true;
+      skipReason: string;
+      copiedSkills: [];
+    }
+  | {
+      skipped: false;
+      /** Array of skills that were copied. */
+      copiedSkills: CopiedSkill[];
+      /** Destination directory that was written to. */
+      destDir: string;
+      /** Label describing the source that skills were copied from. */
+      sourceLabel: string;
+    };
 
 /**
  * Copies non-local skills from source to a target directory.

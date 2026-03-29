@@ -71,18 +71,22 @@ export default class Search extends BaseCommand {
       description: "Force refresh from remote sources",
       default: false,
     }),
+    json: Flags.boolean({
+      description: "Output results as JSON",
+      default: false,
+    }),
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Search);
     const projectDir = process.cwd();
 
-    const isInteractive = flags.interactive || !args.query;
+    const isInteractive = !flags.json && (flags.interactive || !args.query);
 
     if (isInteractive) {
       await this.runInteractive(args.query, flags.refresh, projectDir);
     } else {
-      await this.runStatic(args.query!, flags);
+      await this.runStatic(args.query ?? "", flags);
     }
   }
 
@@ -194,10 +198,10 @@ export default class Search extends BaseCommand {
 
   private async runStatic(
     query: string,
-    flags: { source?: string; category?: string },
+    flags: { source?: string; category?: string; json?: boolean },
   ): Promise<void> {
     try {
-      this.log(STATUS_MESSAGES.LOADING_SKILLS);
+      if (!flags.json) this.log(STATUS_MESSAGES.LOADING_SKILLS);
 
       const { sourceResult } = await loadSource({
         sourceFlag: flags.source,
@@ -205,7 +209,7 @@ export default class Search extends BaseCommand {
       });
       const { matrix, sourcePath, isLocal } = sourceResult;
 
-      this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
+      if (!flags.json) this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
 
       const allSkills = Object.values(matrix.skills).filter(
         (skill): skill is ResolvedSkill => skill !== undefined,
@@ -215,6 +219,27 @@ export default class Search extends BaseCommand {
         filterSkillsByQuery(allSkills, { query, category: flags.category }),
         (r) => r.displayName.toLowerCase(),
       );
+
+      if (flags.json) {
+        this.log(
+          JSON.stringify(
+            {
+              query,
+              category: flags.category ?? null,
+              results: results.map((skill) => ({
+                id: skill.id,
+                displayName: skill.displayName,
+                category: skill.category,
+                description: skill.description,
+              })),
+              total: results.length,
+            },
+            null,
+            2,
+          ),
+        );
+        return;
+      }
 
       this.log("");
       if (results.length === 0) {
@@ -338,8 +363,9 @@ function filterSkillsByQuery(
 ): ResolvedSkill[] {
   let results = skills.filter((skill) => matchesQuery(skill, options.query));
 
-  if (options.category) {
-    results = results.filter((skill) => matchesCategory(skill, options.category!));
+  const category = options.category;
+  if (category) {
+    results = results.filter((skill) => matchesCategory(skill, category));
   }
 
   return results;
