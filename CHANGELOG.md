@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.99.0] - 2026-03-30
+
+**Remove stale commands, expand rules and matrix**
+
+- Removed `config`, `diff`, `outdated` commands (no longer needed)
+- 12 new mutual-exclusion groups, 15+ new skill requirements, React Native state library compat
+- 6 new categories and 40+ new skills in built-in matrix
+- Confirm step scroll viewport fix for border rows
+
+See [changelogs/0.99.0.md](./changelogs/0.99.0.md) for full details.
+
 ## [0.98.0] - 2026-03-29
 
 **Info panel, confirm scroll, terminal clear**
