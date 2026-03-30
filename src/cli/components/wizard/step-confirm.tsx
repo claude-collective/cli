@@ -12,6 +12,8 @@ type StepConfirmProps = {
   onBack?: () => void;
 };
 
+const BORDER_ROWS = 2;
+
 export const StepConfirm: React.FC<StepConfirmProps> = ({
   onComplete,
   skillConfigs,
@@ -31,8 +33,10 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
     }
   });
 
+  const viewportHeight = Math.max(0, measuredHeight - BORDER_ROWS);
   const scrollEnabled = measuredHeight >= SCROLL_VIEWPORT.MIN_VIEWPORT_ROWS;
-  const maxScroll = Math.max(0, contentHeight - measuredHeight);
+  const needsScroll = scrollEnabled && contentHeight > viewportHeight;
+  const maxScroll = Math.max(0, contentHeight - viewportHeight);
 
   useInput((_input, key) => {
     if (key.return) {
@@ -41,35 +45,28 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
     if (key.escape && onBack) {
       onBack();
     }
-    if (!scrollEnabled) return;
+    if (!needsScroll) return;
     if (key.upArrow) setScrollOffset((prev) => Math.max(0, prev - 1));
     if (key.downArrow) setScrollOffset((prev) => Math.min(maxScroll, prev + 1));
   });
 
   return (
-    <Box
-      flexDirection="column"
-      paddingX={1}
-      flexGrow={1}
-      flexBasis={0}
-      borderStyle="single"
-      borderColor={CLI_COLORS.NEUTRAL}
-      borderDimColor
-    >
-      <Box ref={scrollRef} flexDirection="column" flexGrow={1} flexBasis={0}>
+    <Box ref={scrollRef} flexDirection="column" flexGrow={1} flexBasis={0}>
+      <Box
+        flexDirection="column"
+        paddingX={1}
+        borderStyle="single"
+        borderColor={CLI_COLORS.NEUTRAL}
+        borderDimColor
+        {...(needsScroll && { flexGrow: 1, flexBasis: 0, overflow: "hidden" as const })}
+      >
         <Box
+          ref={contentRef}
           flexDirection="column"
-          flexGrow={1}
-          {...(scrollEnabled && { overflow: "hidden" as const })}
+          marginTop={scrollOffset > 0 ? -scrollOffset : 0}
+          {...(needsScroll && { flexShrink: 0 })}
         >
-          <Box
-            ref={contentRef}
-            flexDirection="column"
-            marginTop={scrollOffset > 0 ? -scrollOffset : 0}
-            {...(scrollEnabled && { flexShrink: 0 })}
-          >
-            <SkillAgentSummary skillConfigs={skillConfigs} agentConfigs={agentConfigs} />
-          </Box>
+          <SkillAgentSummary skillConfigs={skillConfigs} agentConfigs={agentConfigs} />
         </Box>
       </Box>
     </Box>
