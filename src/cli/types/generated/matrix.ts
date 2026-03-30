@@ -323,6 +323,51 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       required: false,
       order: 9,
     },
+    "api-cms": {
+      id: "api-cms",
+      displayName: "CMS",
+      description: "CMS platforms (Payload, Sanity, Strapi)",
+      domain: "api",
+      exclusive: false,
+      required: false,
+      order: 10,
+    },
+    "api-commerce": {
+      id: "api-commerce",
+      displayName: "Commerce",
+      description: "Commerce platforms (Stripe)",
+      domain: "api",
+      exclusive: false,
+      required: false,
+      order: 11,
+    },
+    "api-framework": {
+      id: "api-framework",
+      displayName: "API Framework",
+      description: "API frameworks (Elysia)",
+      domain: "api",
+      exclusive: true,
+      required: false,
+      order: 12,
+    },
+    "api-search": {
+      id: "api-search",
+      displayName: "Search",
+      description: "Search engines (Elasticsearch, Meilisearch)",
+      domain: "api",
+      exclusive: false,
+      required: false,
+      order: 13,
+    },
+    "api-vector-db": {
+      id: "api-vector-db",
+      displayName: "Vector Database",
+      description: "Vector databases (Pinecone, Qdrant, Chroma, Weaviate)",
+      domain: "api",
+      exclusive: false,
+      required: false,
+      order: 14,
+    },
     "mobile-framework": {
       id: "mobile-framework",
       displayName: "Mobile Framework",
@@ -377,6 +422,15 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       required: false,
       order: 2,
     },
+    "meta-design": {
+      id: "meta-design",
+      displayName: "Software Design",
+      description: "Software design patterns and paradigms",
+      domain: "meta",
+      exclusive: false,
+      required: false,
+      order: 3,
+    },
     "infra-ci-cd": {
       id: "infra-ci-cd",
       displayName: "CI/CD",
@@ -413,56 +467,11 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       required: true,
       order: 1,
     },
-    "meta-design": {
-      id: "meta-design",
-      displayName: "Meta Design",
-      description: "Auto-generated category for meta-design",
-      domain: "meta",
-      exclusive: false,
-      required: false,
-      order: 999,
-    },
-    "api-cms": {
-      id: "api-cms",
-      displayName: "Api Cms",
-      description: "Auto-generated category for api-cms",
-      domain: "api",
-      exclusive: false,
-      required: false,
-      order: 999,
-    },
-    "api-framework": {
-      id: "api-framework",
-      displayName: "Api Framework",
-      description: "Auto-generated category for api-framework",
-      domain: "api",
-      exclusive: false,
-      required: false,
-      order: 999,
-    },
-    "api-search": {
-      id: "api-search",
-      displayName: "Api Search",
-      description: "Auto-generated category for api-search",
-      domain: "api",
-      exclusive: false,
-      required: false,
-      order: 999,
-    },
-    "api-vector-db": {
-      id: "api-vector-db",
-      displayName: "Api Vector Db",
-      description: "Auto-generated category for api-vector-db",
-      domain: "api",
-      exclusive: false,
-      required: false,
-      order: 999,
-    },
-    "api-commerce": {
-      id: "api-commerce",
-      displayName: "Api Commerce",
-      description: "Auto-generated category for api-commerce",
-      domain: "api",
+    "desktop-framework": {
+      id: "desktop-framework",
+      displayName: "Desktop Framework",
+      description: "Auto-generated category for desktop-framework",
+      domain: "desktop",
       exclusive: false,
       required: false,
       order: 999,
@@ -713,6 +722,29 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       isRecommended: false,
       path: "skills/meta-design-expressive-typescript",
     },
+    "web-ui-vuetify": {
+      id: "web-ui-vuetify",
+      slug: "vuetify",
+      displayName: "Vuetify",
+      description: "Material Design component library for Vue 3",
+      usageGuidance:
+        "Use when building Vue 3 UIs with Vuetify — theming, global defaults, data tables, form validation, SASS variable customization, composables, and Material Design 3 patterns.",
+      category: "web-ui-components",
+      author: "@vince",
+      conflictsWith: [],
+      discourages: [],
+      compatibleWith: ["web-framework-vue-composition-api", "web-meta-framework-nuxt"],
+      requires: [
+        {
+          skillIds: ["web-framework-vue-composition-api", "web-meta-framework-nuxt"],
+          needsAny: true,
+          reason: "Vuetify is Vue only",
+        },
+      ],
+      alternatives: [],
+      isRecommended: false,
+      path: "skills/web-ui-vuetify",
+    },
     "api-database-mongodb": {
       id: "api-database-mongodb",
       slug: "mongodb",
@@ -731,7 +763,12 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       discourages: [],
       compatibleWith: [],
       requires: [],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "api-database-mongoose",
+          purpose: "MongoDB",
+        },
+      ],
       isRecommended: false,
       path: "skills/api-database-mongodb",
     },
@@ -786,6 +823,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-files-file-upload-patterns",
         "web-files-image-handling",
         "web-forms-react-hook-form",
+        "mobile-framework-react-native",
         "web-i18n-react-intl",
         "web-server-state-react-query",
         "web-data-fetching-swr",
@@ -805,17 +843,17 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nuxt",
         "web-data-fetching-graphql-urql",
         "web-framework-solidjs",
+        "web-framework-svelte",
+        "web-meta-framework-sveltekit",
         "web-routing-react-router",
         "web-ui-chakra-ui",
         "web-ui-mantine",
         "web-ui-mui",
         "web-ui-ant-design",
         "web-ui-headless-ui",
-        "mobile-framework-expo",
-        "mobile-framework-react-native",
         "web-tooling-storybook",
-        "web-framework-svelte",
-        "web-meta-framework-sveltekit",
+        "web-forms-tanstack-form",
+        "api-email-resend-react-email",
       ],
       requires: [],
       alternatives: [
@@ -851,15 +889,19 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       conflictsWith: [
         {
           skillId: "api-database-drizzle",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
         {
           skillId: "api-database-prisma",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
         {
           skillId: "api-database-sequelize",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
+        },
+        {
+          skillId: "api-database-knex",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
       ],
       discourages: [],
@@ -879,7 +921,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           purpose: "Database ORM / ODM",
         },
         {
-          skillId: "api-database-mongoose",
+          skillId: "api-database-knex",
           purpose: "Database ORM / ODM",
         },
       ],
@@ -951,15 +993,19 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       conflictsWith: [
         {
           skillId: "api-database-drizzle",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
         {
           skillId: "api-database-sequelize",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
         {
           skillId: "api-database-typeorm",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
+        },
+        {
+          skillId: "api-database-knex",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
       ],
       discourages: [],
@@ -979,7 +1025,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           purpose: "Database ORM / ODM",
         },
         {
-          skillId: "api-database-mongoose",
+          skillId: "api-database-knex",
           purpose: "Database ORM / ODM",
         },
       ],
@@ -1013,6 +1059,10 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           skillId: "api-baas-turso",
           purpose: "Managed Database",
         },
+        {
+          skillId: "api-database-cockroachdb",
+          purpose: "Managed Database",
+        },
       ],
       isRecommended: false,
       path: "skills/api-database-vercel-postgres",
@@ -1032,7 +1082,17 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
       ],
-      requires: [],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+          ],
+          needsAny: true,
+          reason: "Skill teaches React-based file upload patterns",
+        },
+      ],
       alternatives: [],
       isRecommended: false,
       path: "skills/web-files-file-upload-patterns",
@@ -1150,11 +1210,21 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when interacting directly with MySQL -- connection pools, prepared statements, transactions, streaming, and promise-based API with mysql2.",
       category: "api-database",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-database-postgresql",
+          reason: "SQL database engines are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "api-database-postgresql",
+          purpose: "SQL Database",
+        },
+      ],
       isRecommended: false,
       path: "skills/api-database-mysql",
     },
@@ -1222,8 +1292,10 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-remix",
         "web-meta-framework-nuxt",
         "web-tooling-storybook",
+        "web-framework-solidjs",
         "web-framework-svelte",
         "web-meta-framework-sveltekit",
+        "web-forms-tanstack-form",
       ],
       requires: [],
       alternatives: [
@@ -1308,7 +1380,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       author: "@vince",
       conflictsWith: [],
       discourages: [],
-      compatibleWith: ["web-framework-react", "mobile-framework-react-native"],
+      compatibleWith: ["mobile-framework-react-native"],
       requires: [
         {
           skillIds: ["mobile-framework-react-native"],
@@ -1345,11 +1417,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       compatibleWith: ["web-framework-react", "web-meta-framework-remix"],
       requires: [
         {
-          skillIds: [
-            "web-framework-react",
-            "web-meta-framework-nextjs",
-            "web-meta-framework-remix",
-          ],
+          skillIds: ["web-framework-react", "web-meta-framework-remix"],
           needsAny: true,
           reason: "React Router is a React routing library",
         },
@@ -1390,8 +1458,20 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-framework-react",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
+        "mobile-framework-react-native",
       ],
-      requires: [],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+            "mobile-framework-react-native",
+          ],
+          needsAny: true,
+          reason: "Jotai is a React atomic state library",
+        },
+      ],
       alternatives: [
         {
           skillId: "web-state-zustand",
@@ -1614,6 +1694,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-framework-react",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
+        "mobile-framework-react-native",
       ],
       requires: [
         {
@@ -1670,6 +1751,10 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           skillId: "api-database-vercel-postgres",
           purpose: "Managed Database",
         },
+        {
+          skillId: "api-database-cockroachdb",
+          purpose: "Managed Database",
+        },
       ],
       isRecommended: false,
       path: "skills/api-baas-turso",
@@ -1706,7 +1791,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when building with Clerk for auth, user management, organizations, or pre-built UI components.",
       category: "api-auth",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-auth-better-auth-drizzle-hono",
+          reason: "Authentication solutions are mutually exclusive",
+        },
+        {
+          skillId: "api-auth-nextauth",
+          reason: "Authentication solutions are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
@@ -1877,13 +1971,30 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-framework-react",
         "web-framework-vue-composition-api",
         "web-framework-angular-standalone",
+        "web-framework-solidjs",
         "web-framework-svelte",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
         "web-meta-framework-nuxt",
         "web-meta-framework-sveltekit",
       ],
-      requires: [],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-framework-vue-composition-api",
+            "web-framework-angular-standalone",
+            "web-framework-solidjs",
+            "web-framework-svelte",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+            "web-meta-framework-nuxt",
+            "web-meta-framework-sveltekit",
+          ],
+          needsAny: true,
+          reason: "Storybook requires a UI framework",
+        },
+      ],
       alternatives: [],
       isRecommended: false,
       path: "skills/web-tooling-storybook",
@@ -1956,6 +2067,10 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           skillId: "api-database-vercel-postgres",
           purpose: "Managed Database",
         },
+        {
+          skillId: "api-database-cockroachdb",
+          purpose: "Managed Database",
+        },
       ],
       isRecommended: false,
       path: "skills/api-baas-planetscale",
@@ -1964,12 +2079,21 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "api-database-upstash",
       slug: "upstash",
       displayName: "Upstash",
-      description: "Serverless Redis with REST API for edge and serverless functions",
+      description: "Serverless Redis via REST for edge and serverless runtimes",
       usageGuidance:
         "Use when deploying Redis on Upstash -- REST-based Redis for edge/serverless compatibility, automatic JSON serialization, pipeline support, rate limiting with @upstash/ratelimit, and global replication.",
       category: "api-database",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-database-redis",
+          reason: "Cache and KV store providers are mutually exclusive",
+        },
+        {
+          skillId: "api-database-vercel-kv",
+          reason: "Cache and KV store providers are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
@@ -2065,7 +2189,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when implementing authentication with Auth.js/NextAuth for Next.js, SvelteKit, or other frameworks.",
       category: "api-auth",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-auth-better-auth-drizzle-hono",
+          reason: "Authentication solutions are mutually exclusive",
+        },
+        {
+          skillId: "api-auth-clerk",
+          reason: "Authentication solutions are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
@@ -2088,7 +2221,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       displayName: "OpenAI Whisper",
       description: "Speech-to-text transcription and translation via OpenAI Audio API",
       usageGuidance:
-        "Use when transcribing or translating audio with OpenAI Whisper -- file transcription, real-time transcription, translation to English, timestamp generation, and custom vocabulary prompting.",
+        "Use when transcribing or translating audio with OpenAI Whisper -- file transcription, streaming transcription, translation to English, timestamp generation, and custom vocabulary prompting.",
       category: "ai-provider",
       author: "@vince",
       conflictsWith: [],
@@ -2118,7 +2251,12 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       discourages: [],
       compatibleWith: [],
       requires: [],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "ai-observability-langfuse",
+          purpose: "AI Evaluation / Observability",
+        },
+      ],
       isRecommended: false,
       path: "skills/ai-observability-promptfoo",
     },
@@ -2133,7 +2271,19 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       author: "@vince",
       conflictsWith: [],
       discourages: [],
-      compatibleWith: ["mobile-framework-expo", "web-framework-react"],
+      compatibleWith: [
+        "web-forms-react-hook-form",
+        "web-framework-react",
+        "web-meta-framework-nextjs",
+        "web-meta-framework-remix",
+        "web-server-state-react-query",
+        "web-data-fetching-swr",
+        "web-state-jotai",
+        "web-state-mobx",
+        "web-state-redux-toolkit",
+        "web-state-zustand",
+        "mobile-framework-expo",
+      ],
       requires: [
         {
           skillIds: ["web-framework-react"],
@@ -2149,6 +2299,33 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       ],
       isRecommended: false,
       path: "skills/mobile-framework-react-native",
+    },
+    "desktop-framework-tauri": {
+      id: "desktop-framework-tauri",
+      slug: "tauri",
+      displayName: "Tauri",
+      description: "Desktop and mobile apps with system webview and Rust backend",
+      usageGuidance:
+        "Use when building desktop or mobile applications with Tauri 2.x, defining Rust commands and IPC bridge, configuring the permission/capability system, using official plugins, system tray, window management, or packaging for distribution.",
+      category: "desktop-framework",
+      author: "@vince",
+      conflictsWith: [
+        {
+          skillId: "desktop-framework-electron",
+          reason: "Desktop frameworks are mutually exclusive",
+        },
+      ],
+      discourages: [],
+      compatibleWith: [],
+      requires: [],
+      alternatives: [
+        {
+          skillId: "desktop-framework-electron",
+          purpose: "Desktop Framework",
+        },
+      ],
+      isRecommended: false,
+      path: "skills/desktop-framework-tauri",
     },
     "web-realtime-sse": {
       id: "web-realtime-sse",
@@ -2216,11 +2393,13 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-remix",
         "web-data-fetching-graphql-urql",
         "web-framework-solidjs",
+        "web-framework-svelte",
+        "web-meta-framework-sveltekit",
         "web-ui-headless-ui",
         "web-utilities-vueuse",
         "web-tooling-storybook",
-        "web-framework-svelte",
-        "web-meta-framework-sveltekit",
+        "web-forms-tanstack-form",
+        "web-ui-vuetify",
       ],
       requires: [],
       alternatives: [
@@ -2322,7 +2501,12 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       usageGuidance: "Use when building forms in Vue with useForm, useField, or schema validation.",
       category: "web-forms",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "web-forms-tanstack-form",
+          reason: "Vue form libraries are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: ["web-framework-vue-composition-api", "web-meta-framework-nuxt"],
       requires: [
@@ -2332,7 +2516,12 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           reason: "VeeValidate is Vue only",
         },
       ],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "web-forms-tanstack-form",
+          purpose: "Forms (Vue)",
+        },
+      ],
       isRecommended: true,
       recommendedReason: "Vue community standard form validation",
       path: "skills/web-forms-vee-validate",
@@ -2454,6 +2643,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-framework-react",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
+        "mobile-framework-react-native",
       ],
       requires: [
         {
@@ -2501,7 +2691,17 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
       ],
-      requires: [],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+          ],
+          needsAny: true,
+          reason: "Radix UI primitives are React-specific",
+        },
+      ],
       alternatives: [],
       isRecommended: true,
       recommendedReason: "Accessible unstyled component primitives",
@@ -2556,6 +2756,39 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       ],
       isRecommended: false,
       path: "skills/ai-orchestration-llamaindex",
+    },
+    "web-meta-framework-vitepress": {
+      id: "web-meta-framework-vitepress",
+      slug: "vitepress",
+      displayName: "VitePress",
+      description: "VitePress documentation site generator",
+      usageGuidance:
+        "Use when building documentation sites with VitePress — configuring navigation, extending themes, writing data loaders, and customizing markdown rendering.",
+      category: "web-meta-framework",
+      author: "@vince",
+      conflictsWith: [
+        {
+          skillId: "web-meta-framework-docusaurus",
+          reason: "Documentation frameworks are mutually exclusive",
+        },
+      ],
+      discourages: [],
+      compatibleWith: [],
+      requires: [
+        {
+          skillIds: ["web-framework-vue-composition-api"],
+          needsAny: false,
+          reason: "VitePress is built on Vue",
+        },
+      ],
+      alternatives: [
+        {
+          skillId: "web-meta-framework-docusaurus",
+          purpose: "Documentation Framework",
+        },
+      ],
+      isRecommended: false,
+      path: "skills/web-meta-framework-vitepress",
     },
     "api-flags-posthog-flags": {
       id: "api-flags-posthog-flags",
@@ -2670,7 +2903,17 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
       ],
-      requires: [],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+          ],
+          needsAny: true,
+          reason: "Motion (Framer Motion) is a React animation library",
+        },
+      ],
       alternatives: [
         {
           skillId: "web-animation-css-animations",
@@ -2774,7 +3017,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       description:
         "Official TypeScript SDK for Mistral AI with chat, embeddings, function calling, and code generation",
       usageGuidance:
-        "Use when integrating Mistral AI models — chat completions, streaming, function calling, embeddings, JSON mode, structured outputs with Zod, vision with Pixtral, and Codestral for code generation / FIM.",
+        "Use when integrating Mistral AI models — chat completions, streaming, function calling, embeddings, JSON mode, structured outputs with Zod, vision with supported models, and Codestral for code generation / FIM.",
       category: "ai-provider",
       author: "@vince",
       conflictsWith: [],
@@ -2881,7 +3124,17 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
       ],
-      requires: [],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+          ],
+          needsAny: true,
+          reason: "Error boundaries are a React concept",
+        },
+      ],
       alternatives: [],
       isRecommended: false,
       path: "skills/web-error-handling-error-boundaries",
@@ -2904,7 +3157,12 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           reason: "next-intl is built specifically for Next.js",
         },
       ],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "web-i18n-react-intl",
+          purpose: "Internationalization (React)",
+        },
+      ],
       isRecommended: false,
       path: "skills/web-i18n-next-intl",
     },
@@ -2939,9 +3197,14 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-data-fetching-graphql-urql",
         "web-framework-react",
         "web-framework-vue-composition-api",
+        "web-framework-svelte",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
         "web-meta-framework-nuxt",
+        "web-meta-framework-sveltekit",
+        "web-tooling-storybook",
+        "web-framework-angular-standalone",
+        "web-forms-tanstack-form",
       ],
       requires: [],
       alternatives: [
@@ -3050,6 +3313,10 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           skillId: "api-database-vercel-postgres",
           purpose: "Managed Database",
         },
+        {
+          skillId: "api-database-cockroachdb",
+          purpose: "Managed Database",
+        },
       ],
       isRecommended: false,
       path: "skills/api-baas-neon",
@@ -3130,6 +3397,63 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       alternatives: [],
       isRecommended: false,
       path: "skills/web-pwa-service-workers",
+    },
+    "web-forms-tanstack-form": {
+      id: "web-forms-tanstack-form",
+      slug: "tanstack-form",
+      displayName: "TanStack Form",
+      description: "Type-safe, headless form management",
+      usageGuidance:
+        "Use when building forms with TanStack Form — type-safe, framework-agnostic form state, validation, and submission.",
+      category: "web-forms",
+      author: "@vince",
+      conflictsWith: [
+        {
+          skillId: "web-forms-react-hook-form",
+          reason: "React form libraries are mutually exclusive",
+        },
+        {
+          skillId: "web-forms-vee-validate",
+          reason: "Vue form libraries are mutually exclusive",
+        },
+      ],
+      discourages: [],
+      compatibleWith: [
+        "web-framework-react",
+        "web-framework-vue-composition-api",
+        "web-framework-angular-standalone",
+        "web-framework-solidjs",
+        "web-meta-framework-nextjs",
+        "web-meta-framework-remix",
+        "web-meta-framework-nuxt",
+      ],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-framework-vue-composition-api",
+            "web-framework-angular-standalone",
+            "web-framework-solidjs",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+            "web-meta-framework-nuxt",
+          ],
+          needsAny: true,
+          reason: "TanStack Form requires a UI framework",
+        },
+      ],
+      alternatives: [
+        {
+          skillId: "web-forms-react-hook-form",
+          purpose: "Forms (React)",
+        },
+        {
+          skillId: "web-forms-vee-validate",
+          purpose: "Forms (Vue)",
+        },
+      ],
+      isRecommended: false,
+      path: "skills/web-forms-tanstack-form",
     },
     "infra-platform-cloudflare-workers": {
       id: "infra-platform-cloudflare-workers",
@@ -3259,11 +3583,45 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when building SQL queries programmatically -- fluent query builder, schema builder, migrations, seeds, transactions, and raw queries with parameter binding.",
       category: "api-database",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-database-drizzle",
+          reason: "SQL ORMs and query builders are mutually exclusive",
+        },
+        {
+          skillId: "api-database-prisma",
+          reason: "SQL ORMs and query builders are mutually exclusive",
+        },
+        {
+          skillId: "api-database-sequelize",
+          reason: "SQL ORMs and query builders are mutually exclusive",
+        },
+        {
+          skillId: "api-database-typeorm",
+          reason: "SQL ORMs and query builders are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "api-database-drizzle",
+          purpose: "Database ORM / ODM",
+        },
+        {
+          skillId: "api-database-prisma",
+          purpose: "Database ORM / ODM",
+        },
+        {
+          skillId: "api-database-sequelize",
+          purpose: "Database ORM / ODM",
+        },
+        {
+          skillId: "api-database-typeorm",
+          purpose: "Database ORM / ODM",
+        },
+      ],
       isRecommended: false,
       path: "skills/api-database-knex",
     },
@@ -3394,7 +3752,13 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       conflictsWith: [],
       discourages: [],
       compatibleWith: ["web-framework-vue-composition-api", "web-meta-framework-nuxt"],
-      requires: [],
+      requires: [
+        {
+          skillIds: ["web-framework-vue-composition-api", "web-meta-framework-nuxt"],
+          needsAny: true,
+          reason: "vue-i18n is Vue 3 only",
+        },
+      ],
       alternatives: [],
       isRecommended: false,
       path: "skills/web-i18n-vue-i18n",
@@ -3508,7 +3872,17 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
       ],
-      requires: [],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+          ],
+          needsAny: true,
+          reason: "Skill teaches React-based image handling hooks",
+        },
+      ],
       alternatives: [],
       isRecommended: false,
       path: "skills/web-files-image-handling",
@@ -3549,6 +3923,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-framework-react",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
+        "mobile-framework-react-native",
       ],
       requires: [
         {
@@ -3605,14 +3980,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       ],
       discourages: [],
       compatibleWith: [
-        "web-tooling-storybook",
+        "web-data-fetching-graphql-urql",
         "web-framework-react",
         "web-framework-vue-composition-api",
-        "web-framework-angular-standalone",
+        "web-framework-solidjs",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
         "web-meta-framework-nuxt",
         "web-meta-framework-sveltekit",
+        "web-tooling-storybook",
+        "web-framework-angular-standalone",
       ],
       requires: [],
       alternatives: [
@@ -3672,9 +4049,11 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-framework-react",
         "web-framework-vue-composition-api",
         "web-framework-solidjs",
+        "web-framework-svelte",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
         "web-meta-framework-nuxt",
+        "web-meta-framework-sveltekit",
       ],
       requires: [
         {
@@ -3682,12 +4061,14 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
             "web-framework-react",
             "web-framework-vue-composition-api",
             "web-framework-solidjs",
+            "web-framework-svelte",
             "web-meta-framework-nextjs",
             "web-meta-framework-remix",
             "web-meta-framework-nuxt",
+            "web-meta-framework-sveltekit",
           ],
           needsAny: true,
-          reason: "URQL supports React, Vue, and Solid",
+          reason: "URQL supports React, Vue, Solid, and Svelte",
         },
       ],
       alternatives: [
@@ -3808,11 +4189,13 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-remix",
         "web-data-fetching-graphql-urql",
         "web-framework-solidjs",
+        "web-framework-svelte",
+        "web-meta-framework-sveltekit",
         "web-ui-headless-ui",
         "web-utilities-vueuse",
         "web-tooling-storybook",
-        "web-framework-svelte",
-        "web-meta-framework-sveltekit",
+        "web-forms-tanstack-form",
+        "web-ui-vuetify",
       ],
       requires: [
         {
@@ -3855,7 +4238,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when building with Supabase Auth, Database, Realtime, Storage, or Edge Functions. Covers client setup, typed queries, RLS policies, realtime subscriptions, file storage, and Deno edge functions.",
       category: "api-baas",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-baas-firebase",
+          reason: "Backend-as-a-Service platforms are mutually exclusive",
+        },
+        {
+          skillId: "api-baas-appwrite",
+          reason: "Backend-as-a-Service platforms are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
@@ -3892,20 +4284,8 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       requires: [],
       alternatives: [
         {
-          skillId: "api-database-drizzle",
-          purpose: "Database ORM / ODM",
-        },
-        {
-          skillId: "api-database-prisma",
-          purpose: "Database ORM / ODM",
-        },
-        {
-          skillId: "api-database-sequelize",
-          purpose: "Database ORM / ODM",
-        },
-        {
-          skillId: "api-database-typeorm",
-          purpose: "Database ORM / ODM",
+          skillId: "api-database-mongodb",
+          purpose: "MongoDB",
         },
       ],
       isRecommended: false,
@@ -3939,6 +4319,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-framework-react",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
+        "mobile-framework-react-native",
       ],
       requires: [
         {
@@ -3946,9 +4327,10 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
             "web-framework-react",
             "web-meta-framework-nextjs",
             "web-meta-framework-remix",
+            "mobile-framework-react-native",
           ],
           needsAny: true,
-          reason: "Our MobX skill teaches React patterns",
+          reason: "Our MobX skill teaches React/React Native patterns",
         },
       ],
       alternatives: [
@@ -4002,14 +4384,23 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       usageGuidance: "Use when implementing authentication, sessions, OAuth, or user management.",
       category: "api-auth",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-auth-nextauth",
+          reason: "Authentication solutions are mutually exclusive",
+        },
+        {
+          skillId: "api-auth-clerk",
+          reason: "Authentication solutions are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [
         {
-          skillIds: ["api-database-drizzle", "api-database-prisma"],
-          needsAny: true,
-          reason: "Better Auth requires a database adapter",
+          skillIds: ["api-database-drizzle"],
+          needsAny: false,
+          reason: "Skill teaches Better Auth with the Drizzle adapter",
         },
       ],
       alternatives: [
@@ -4062,7 +4453,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when building with Appwrite — client/server SDKs for authentication, TablesDB (tables, rows, columns), file storage with buckets, serverless functions, and realtime subscriptions.",
       category: "api-baas",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-baas-supabase",
+          reason: "Backend-as-a-Service platforms are mutually exclusive",
+        },
+        {
+          skillId: "api-baas-firebase",
+          reason: "Backend-as-a-Service platforms are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
@@ -4173,7 +4573,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when building with Firebase — Firestore, Authentication, Cloud Functions, Storage, Hosting, Realtime Database, and Firebase Admin SDK.",
       category: "api-baas",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-baas-supabase",
+          reason: "Backend-as-a-Service platforms are mutually exclusive",
+        },
+        {
+          skillId: "api-baas-appwrite",
+          reason: "Backend-as-a-Service platforms are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
@@ -4199,7 +4608,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when implementing caching, session storage, rate limiting, pub/sub messaging, queues, or real-time leaderboards with Redis.",
       category: "api-database",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-database-upstash",
+          reason: "Cache and KV store providers are mutually exclusive",
+        },
+        {
+          skillId: "api-database-vercel-kv",
+          reason: "Cache and KV store providers are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
@@ -4215,6 +4633,39 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       ],
       isRecommended: false,
       path: "skills/api-database-redis",
+    },
+    "web-meta-framework-docusaurus": {
+      id: "web-meta-framework-docusaurus",
+      slug: "docusaurus",
+      displayName: "Docusaurus",
+      description: "Docusaurus 3.x documentation site framework",
+      usageGuidance:
+        "Use when building or maintaining documentation sites with Docusaurus 3.x — configuring docs/blog plugins, sidebars, versioning, MDX content, swizzling theme components, or deploying static builds.",
+      category: "web-meta-framework",
+      author: "@vince",
+      conflictsWith: [
+        {
+          skillId: "web-meta-framework-vitepress",
+          reason: "Documentation frameworks are mutually exclusive",
+        },
+      ],
+      discourages: [],
+      compatibleWith: [],
+      requires: [
+        {
+          skillIds: ["web-framework-react"],
+          needsAny: false,
+          reason: "Docusaurus is built on React",
+        },
+      ],
+      alternatives: [
+        {
+          skillId: "web-meta-framework-vitepress",
+          purpose: "Documentation Framework",
+        },
+      ],
+      isRecommended: false,
+      path: "skills/web-meta-framework-docusaurus",
     },
     "shared-monorepo-pnpm-workspaces": {
       id: "shared-monorepo-pnpm-workspaces",
@@ -4342,15 +4793,19 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       conflictsWith: [
         {
           skillId: "api-database-prisma",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
         {
           skillId: "api-database-sequelize",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
         {
           skillId: "api-database-typeorm",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
+        },
+        {
+          skillId: "api-database-knex",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
       ],
       discourages: [],
@@ -4370,7 +4825,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           purpose: "Database ORM / ODM",
         },
         {
-          skillId: "api-database-mongoose",
+          skillId: "api-database-knex",
           purpose: "Database ORM / ODM",
         },
       ],
@@ -4400,9 +4855,9 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "web-testing-vitest",
       slug: "vitest",
       displayName: "Vitest",
-      description: "E2E, unit, and integration testing",
+      description: "Vite-native test runner",
       usageGuidance:
-        "Use when writing E2E tests (Playwright), unit tests, integration tests, or configuring Vitest.",
+        "Use when writing unit tests, integration tests, configuring Vitest, or using vi.fn/vi.mock/vi.spyOn.",
       category: "web-testing",
       author: "@vince",
       conflictsWith: [],
@@ -4454,6 +4909,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-files-file-upload-patterns",
         "web-files-image-handling",
         "web-forms-react-hook-form",
+        "mobile-framework-react-native",
         "web-i18n-react-intl",
         "web-server-state-react-query",
         "web-data-fetching-swr",
@@ -4473,14 +4929,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nuxt",
         "web-data-fetching-graphql-urql",
         "web-framework-solidjs",
+        "web-framework-svelte",
+        "web-meta-framework-sveltekit",
         "web-ui-chakra-ui",
         "web-ui-mantine",
         "web-ui-mui",
         "web-ui-ant-design",
         "web-ui-headless-ui",
         "web-tooling-storybook",
-        "web-framework-svelte",
-        "web-meta-framework-sveltekit",
+        "web-forms-tanstack-form",
+        "api-email-resend-react-email",
       ],
       requires: [
         {
@@ -4518,8 +4976,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "api-database-cockroachdb",
       slug: "cockroachdb",
       displayName: "CockroachDB",
-      description:
-        "Distributed SQL database with PostgreSQL compatibility and automatic replication",
+      description: "Distributed SQL with PostgreSQL wire protocol",
       usageGuidance:
         "Use when working with CockroachDB -- PostgreSQL-compatible wire protocol, distributed transactions with serializable isolation, automatic sharding, multi-region locality, and transaction retry logic.",
       category: "api-database",
@@ -4528,7 +4985,24 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       discourages: [],
       compatibleWith: [],
       requires: [],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "api-baas-neon",
+          purpose: "Managed Database",
+        },
+        {
+          skillId: "api-baas-planetscale",
+          purpose: "Managed Database",
+        },
+        {
+          skillId: "api-baas-turso",
+          purpose: "Managed Database",
+        },
+        {
+          skillId: "api-database-vercel-postgres",
+          purpose: "Managed Database",
+        },
+      ],
       isRecommended: false,
       path: "skills/api-database-cockroachdb",
     },
@@ -4618,8 +5092,22 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       author: "@vince",
       conflictsWith: [],
       discourages: [],
-      compatibleWith: [],
-      requires: [],
+      compatibleWith: [
+        "web-framework-react",
+        "web-meta-framework-nextjs",
+        "web-meta-framework-remix",
+      ],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+          ],
+          needsAny: true,
+          reason: "React Email uses React for email templates",
+        },
+      ],
       alternatives: [],
       isRecommended: false,
       path: "skills/api-email-resend-react-email",
@@ -4689,7 +5177,17 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
       ],
-      requires: [],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+          ],
+          needsAny: true,
+          reason: "Skill teaches @tanstack/react-table patterns",
+        },
+      ],
       alternatives: [],
       isRecommended: false,
       path: "skills/web-ui-tanstack-table",
@@ -4707,7 +5205,12 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       discourages: [],
       compatibleWith: [],
       requires: [],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "ai-observability-promptfoo",
+          purpose: "AI Evaluation / Observability",
+        },
+      ],
       isRecommended: false,
       path: "skills/ai-observability-langfuse",
     },
@@ -4750,6 +5253,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-files-file-upload-patterns",
         "web-files-image-handling",
         "web-forms-react-hook-form",
+        "mobile-framework-react-native",
         "web-i18n-react-intl",
         "web-server-state-react-query",
         "web-data-fetching-swr",
@@ -4768,6 +5272,8 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nuxt",
         "web-data-fetching-graphql-urql",
         "web-framework-solidjs",
+        "web-framework-svelte",
+        "web-meta-framework-sveltekit",
         "web-routing-react-router",
         "web-ui-chakra-ui",
         "web-ui-mantine",
@@ -4775,8 +5281,8 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-ui-ant-design",
         "web-ui-headless-ui",
         "web-tooling-storybook",
-        "web-framework-svelte",
-        "web-meta-framework-sveltekit",
+        "web-forms-tanstack-form",
+        "api-email-resend-react-email",
       ],
       requires: [
         {
@@ -4892,12 +5398,18 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when building forms in React with validation, field arrays, or Controller.",
       category: "web-forms",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "web-forms-tanstack-form",
+          reason: "React form libraries are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [
         "web-framework-react",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
+        "mobile-framework-react-native",
       ],
       requires: [
         {
@@ -4911,7 +5423,12 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           reason: "React Hook Form is React only",
         },
       ],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "web-forms-tanstack-form",
+          purpose: "Forms (React)",
+        },
+      ],
       isRecommended: true,
       recommendedReason: "Best React form library",
       path: "skills/web-forms-react-hook-form",
@@ -4925,11 +5442,21 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when interacting directly with PostgreSQL -- connection pools, parameterized queries, transactions, migrations, and type-safe query results with pg.",
       category: "api-database",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-database-mysql",
+          reason: "SQL database engines are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
-      alternatives: [],
+      alternatives: [
+        {
+          skillId: "api-database-mysql",
+          purpose: "SQL Database",
+        },
+      ],
       isRecommended: false,
       path: "skills/api-database-postgresql",
     },
@@ -4966,14 +5493,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       ],
       discourages: [],
       compatibleWith: [
-        "web-tooling-storybook",
+        "web-data-fetching-graphql-urql",
         "web-framework-react",
         "web-framework-vue-composition-api",
-        "web-framework-angular-standalone",
+        "web-framework-solidjs",
         "web-framework-svelte",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
         "web-meta-framework-nuxt",
+        "web-tooling-storybook",
+        "web-framework-angular-standalone",
       ],
       requires: [
         {
@@ -5031,6 +5560,33 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       ],
       isRecommended: false,
       path: "skills/web-realtime-socket-io",
+    },
+    "desktop-framework-electron": {
+      id: "desktop-framework-electron",
+      slug: "electron",
+      displayName: "Electron",
+      description: "Cross-platform desktop apps with web technologies",
+      usageGuidance:
+        "Use when building desktop applications with Electron, configuring main/renderer process architecture, IPC communication, preload scripts, security hardening, native API integration, or packaging for distribution.",
+      category: "desktop-framework",
+      author: "@vince",
+      conflictsWith: [
+        {
+          skillId: "desktop-framework-tauri",
+          reason: "Desktop frameworks are mutually exclusive",
+        },
+      ],
+      discourages: [],
+      compatibleWith: [],
+      requires: [],
+      alternatives: [
+        {
+          skillId: "desktop-framework-tauri",
+          purpose: "Desktop Framework",
+        },
+      ],
+      isRecommended: false,
+      path: "skills/desktop-framework-electron",
     },
     "api-vector-db-pinecone": {
       id: "api-vector-db-pinecone",
@@ -5333,7 +5889,16 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "Use when deploying Redis-compatible KV storage on Vercel -- automatic connection via UPSTASH_REDIS_REST_URL env vars, edge-compatible REST API, Redis command compatibility, and TTL-based caching.",
       category: "api-database",
       author: "@vince",
-      conflictsWith: [],
+      conflictsWith: [
+        {
+          skillId: "api-database-redis",
+          reason: "Cache and KV store providers are mutually exclusive",
+        },
+        {
+          skillId: "api-database-upstash",
+          reason: "Cache and KV store providers are mutually exclusive",
+        },
+      ],
       discourages: [],
       compatibleWith: [],
       requires: [],
@@ -5534,6 +6099,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-framework-react",
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
+        "mobile-framework-react-native",
       ],
       requires: [
         {
@@ -5572,15 +6138,19 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       conflictsWith: [
         {
           skillId: "api-database-drizzle",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
         {
           skillId: "api-database-prisma",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
         {
           skillId: "api-database-typeorm",
-          reason: "SQL ORMs are mutually exclusive",
+          reason: "SQL ORMs and query builders are mutually exclusive",
+        },
+        {
+          skillId: "api-database-knex",
+          reason: "SQL ORMs and query builders are mutually exclusive",
         },
       ],
       discourages: [],
@@ -5600,7 +6170,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
           purpose: "Database ORM / ODM",
         },
         {
-          skillId: "api-database-mongoose",
+          skillId: "api-database-knex",
           purpose: "Database ORM / ODM",
         },
       ],
@@ -5622,8 +6192,23 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
         "web-meta-framework-nextjs",
         "web-meta-framework-remix",
       ],
-      requires: [],
-      alternatives: [],
+      requires: [
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-meta-framework-nextjs",
+            "web-meta-framework-remix",
+          ],
+          needsAny: true,
+          reason: "React Intl (FormatJS) is React only",
+        },
+      ],
+      alternatives: [
+        {
+          skillId: "web-i18n-next-intl",
+          purpose: "Internationalization (React)",
+        },
+      ],
       isRecommended: false,
       path: "skills/web-i18n-react-intl",
     },
@@ -8503,6 +9088,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       biome: "shared-tooling-biome",
       hono: "api-framework-hono",
       "expressive-typescript": "meta-design-expressive-typescript",
+      vuetify: "web-ui-vuetify",
       mongodb: "api-database-mongodb",
       "setup-posthog": "api-analytics-setup-posthog",
       react: "web-framework-react",
@@ -8548,6 +9134,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       "openai-whisper": "ai-provider-openai-whisper",
       promptfoo: "ai-observability-promptfoo",
       "react-native": "mobile-framework-react-native",
+      tauri: "desktop-framework-tauri",
       sse: "web-realtime-sse",
       "vue-composition-api": "web-framework-vue-composition-api",
       langchain: "ai-orchestration-langchain",
@@ -8559,6 +9146,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       "radix-ui": "web-ui-radix-ui",
       "ngrx-signalstore": "web-state-ngrx-signalstore",
       llamaindex: "ai-orchestration-llamaindex",
+      vitepress: "web-meta-framework-vitepress",
       "posthog-flags": "api-flags-posthog-flags",
       "eslint-prettier": "shared-tooling-eslint-prettier",
       "openai-sdk": "ai-provider-openai-sdk",
@@ -8576,6 +9164,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       edgedb: "api-database-edgedb",
       weaviate: "api-vector-db-weaviate",
       "service-workers": "web-pwa-service-workers",
+      "tanstack-form": "web-forms-tanstack-form",
       "cloudflare-workers": "infra-platform-cloudflare-workers",
       "react-testing-library": "web-testing-react-testing-library",
       "research-methodology": "meta-methodology-research-methodology",
@@ -8609,6 +9198,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       vueuse: "web-utilities-vueuse",
       firebase: "api-baas-firebase",
       redis: "api-database-redis",
+      docusaurus: "web-meta-framework-docusaurus",
       "pnpm-workspaces": "shared-monorepo-pnpm-workspaces",
       reviewing: "meta-reviewing-reviewing",
       mui: "web-ui-mui",
@@ -8633,6 +9223,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       postgresql: "api-database-postgresql",
       sveltekit: "web-meta-framework-sveltekit",
       "socket-io": "web-realtime-socket-io",
+      electron: "desktop-framework-electron",
       pinecone: "api-vector-db-pinecone",
       "web-accessibility": "web-accessibility-web-accessibility",
       docker: "infra-ci-cd-docker",
@@ -8660,6 +9251,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       "shared-tooling-biome": "biome",
       "api-framework-hono": "hono",
       "meta-design-expressive-typescript": "expressive-typescript",
+      "web-ui-vuetify": "vuetify",
       "api-database-mongodb": "mongodb",
       "api-analytics-setup-posthog": "setup-posthog",
       "web-framework-react": "react",
@@ -8705,6 +9297,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       "ai-provider-openai-whisper": "openai-whisper",
       "ai-observability-promptfoo": "promptfoo",
       "mobile-framework-react-native": "react-native",
+      "desktop-framework-tauri": "tauri",
       "web-realtime-sse": "sse",
       "web-framework-vue-composition-api": "vue-composition-api",
       "ai-orchestration-langchain": "langchain",
@@ -8716,6 +9309,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       "web-ui-radix-ui": "radix-ui",
       "web-state-ngrx-signalstore": "ngrx-signalstore",
       "ai-orchestration-llamaindex": "llamaindex",
+      "web-meta-framework-vitepress": "vitepress",
       "api-flags-posthog-flags": "posthog-flags",
       "shared-tooling-eslint-prettier": "eslint-prettier",
       "ai-provider-openai-sdk": "openai-sdk",
@@ -8733,6 +9327,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       "api-database-edgedb": "edgedb",
       "api-vector-db-weaviate": "weaviate",
       "web-pwa-service-workers": "service-workers",
+      "web-forms-tanstack-form": "tanstack-form",
       "infra-platform-cloudflare-workers": "cloudflare-workers",
       "web-testing-react-testing-library": "react-testing-library",
       "meta-methodology-research-methodology": "research-methodology",
@@ -8766,6 +9361,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       "web-utilities-vueuse": "vueuse",
       "api-baas-firebase": "firebase",
       "api-database-redis": "redis",
+      "web-meta-framework-docusaurus": "docusaurus",
       "shared-monorepo-pnpm-workspaces": "pnpm-workspaces",
       "meta-reviewing-reviewing": "reviewing",
       "web-ui-mui": "mui",
@@ -8790,6 +9386,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       "api-database-postgresql": "postgresql",
       "web-meta-framework-sveltekit": "sveltekit",
       "web-realtime-socket-io": "socket-io",
+      "desktop-framework-electron": "electron",
       "api-vector-db-pinecone": "pinecone",
       "web-accessibility-web-accessibility": "web-accessibility",
       "infra-ci-cd-docker": "docker",
@@ -8897,6 +9494,7 @@ export const SKILL_IDS_BY_CATEGORY: Record<Category, readonly SkillId[]> = {
     "api-vector-db-weaviate",
   ],
   "cli-framework": ["cli-framework-cli-commander", "cli-framework-oclif-ink"],
+  "desktop-framework": ["desktop-framework-electron", "desktop-framework-tauri"],
   "infra-ci-cd": ["infra-ci-cd-docker", "infra-ci-cd-github-actions"],
   "infra-config": ["infra-config-setup-env"],
   "infra-platform": ["infra-platform-cloudflare-workers"],
@@ -8933,7 +9531,12 @@ export const SKILL_IDS_BY_CATEGORY: Record<Category, readonly SkillId[]> = {
   "web-error-handling": ["web-error-handling-error-boundaries", "web-error-handling-result-types"],
   "web-file-upload": ["web-files-file-upload-patterns"],
   "web-files": ["web-files-image-handling"],
-  "web-forms": ["web-forms-react-hook-form", "web-forms-vee-validate", "web-forms-zod-validation"],
+  "web-forms": [
+    "web-forms-react-hook-form",
+    "web-forms-tanstack-form",
+    "web-forms-vee-validate",
+    "web-forms-zod-validation",
+  ],
   "web-framework": [
     "web-framework-angular-standalone",
     "web-framework-react",
@@ -8944,11 +9547,13 @@ export const SKILL_IDS_BY_CATEGORY: Record<Category, readonly SkillId[]> = {
   "web-i18n": ["web-i18n-next-intl", "web-i18n-react-intl", "web-i18n-vue-i18n"],
   "web-meta-framework": [
     "web-meta-framework-astro",
+    "web-meta-framework-docusaurus",
     "web-meta-framework-nextjs",
     "web-meta-framework-nuxt",
     "web-meta-framework-qwik",
     "web-meta-framework-remix",
     "web-meta-framework-sveltekit",
+    "web-meta-framework-vitepress",
   ],
   "web-mocking": ["web-mocks-msw"],
   "web-performance": ["web-performance-web-performance"],
@@ -8980,6 +9585,7 @@ export const SKILL_IDS_BY_CATEGORY: Record<Category, readonly SkillId[]> = {
     "web-ui-radix-ui",
     "web-ui-shadcn-ui",
     "web-ui-tanstack-table",
+    "web-ui-vuetify",
   ],
   "web-utilities": [
     "web-utilities-date-fns",
@@ -9007,6 +9613,7 @@ export const CATEGORIES_BY_DOMAIN: Record<Domain, readonly Category[]> = {
     "api-vector-db",
   ],
   cli: ["cli-framework"],
+  desktop: ["desktop-framework"],
   infra: ["infra-ci-cd", "infra-config", "infra-platform"],
   meta: ["meta-design", "meta-methodology", "meta-reviewing"],
   mobile: ["mobile-framework"],
