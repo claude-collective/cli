@@ -124,16 +124,16 @@ Commands import from `operations/index.js`. Operations import from lower-level l
 
 ## Command Consumers
 
-| Command    | File                           | Operations Used                                                                                                                                                                                          |
-| ---------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `init`     | `src/cli/commands/init.tsx`    | `loadSource`, `loadAgentDefs`, `copyLocalSkills`, `ensureMarketplace`, `installPluginSkills`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills`                                           |
-| `edit`     | `src/cli/commands/edit.tsx`    | `detectProject`, `loadSource`, `copyLocalSkills`, `ensureMarketplace`, `installPluginSkills`, `uninstallPluginSkills`, `loadAgentDefs`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills` |
-| `compile`  | `src/cli/commands/compile.ts`  | `detectBothInstallations`, `loadAgentDefs`, `compileAgents`, `discoverInstalledSkills`                                                                                                                   |
-| `update`   | `src/cli/commands/update.tsx`  | `loadSource`, `compareSkillsWithSource`, `compileAgents`, `collectScopedSkillDirs`, `findSkillMatch`, `discoverInstalledSkills`                                                                          |
-| `info`     | `src/cli/commands/info.ts`     | `loadSource`, `resolveSkillInfo`                                                                                                                                                                         |
-| `doctor`   | `src/cli/commands/doctor.ts`   | `loadSource`, `detectProject`                                                                                                                                                                            |
-| `search`   | `src/cli/commands/search.tsx`  | `loadSource`                                                                                                                                                                                             |
-| `eject`    | `src/cli/commands/eject.ts`    | `loadSource`                                                                                                                                                                                             |
+| Command   | File                          | Operations Used                                                                                                                                                                                          |
+| --------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `init`    | `src/cli/commands/init.tsx`   | `loadSource`, `loadAgentDefs`, `copyLocalSkills`, `ensureMarketplace`, `installPluginSkills`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills`                                           |
+| `edit`    | `src/cli/commands/edit.tsx`   | `detectProject`, `loadSource`, `copyLocalSkills`, `ensureMarketplace`, `installPluginSkills`, `uninstallPluginSkills`, `loadAgentDefs`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills` |
+| `compile` | `src/cli/commands/compile.ts` | `detectBothInstallations`, `loadAgentDefs`, `compileAgents`, `discoverInstalledSkills`                                                                                                                   |
+| `update`  | `src/cli/commands/update.tsx` | `loadSource`, `compareSkillsWithSource`, `compileAgents`, `collectScopedSkillDirs`, `findSkillMatch`, `discoverInstalledSkills`                                                                          |
+| `info`    | `src/cli/commands/info.ts`    | `loadSource`, `resolveSkillInfo`                                                                                                                                                                         |
+| `doctor`  | `src/cli/commands/doctor.ts`  | `loadSource`, `detectProject`                                                                                                                                                                            |
+| `search`  | `src/cli/commands/search.tsx` | `loadSource`                                                                                                                                                                                             |
+| `eject`   | `src/cli/commands/eject.ts`   | `loadSource`                                                                                                                                                                                             |
 
 ## Data Flow
 

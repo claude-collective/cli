@@ -13,10 +13,7 @@ import {
   createTempDir,
   ensureBinaryExists,
 } from "../helpers/test-utils.js";
-import {
-  createDualScopeEnv,
-  type DualScopeEnv,
-} from "../fixtures/dual-scope-helpers.js";
+import { createDualScopeEnv, type DualScopeEnv } from "../fixtures/dual-scope-helpers.js";
 
 /**
  * Global scope lifecycle E2E tests -- regression coverage for scope-blind bugs.
