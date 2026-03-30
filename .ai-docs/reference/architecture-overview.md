@@ -40,18 +40,16 @@ src/cli/
   consts.ts                 # ALL global constants (paths, colors, symbols, limits)
   commands/                 # oclif command classes (one per CLI command)
     build/                  # Build subcommands (marketplace, plugins, stack)
-    config/                 # Config subcommands (show, path)
+    config/                 # Config subcommands
     import/                 # Import subcommands (skill)
     new/                    # New subcommands (agent, marketplace, skill)
     compile.ts              # Compile agents from installed skills
-    diff.ts                 # Show skill differences
     doctor.ts               # Health check
     edit.tsx                # Edit installed skills (wizard re-entry, per-agent scope)
     eject.ts                # Eject to local mode
     info.ts                 # Show installation info
     init.tsx                # Initialize project (wizard)
     list.ts                 # List installed skills
-    outdated.ts             # Check for skill updates
     search.tsx              # Search for skills across sources
     uninstall.tsx           # Uninstall from project
     update.tsx              # Update skills

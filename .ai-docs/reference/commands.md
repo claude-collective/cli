@@ -24,10 +24,8 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 | `validate`          | `src/cli/commands/validate.ts`          | ts   | Validate schemas, plugins, or skills source        |
 | `info`              | `src/cli/commands/info.ts`              | ts   | Show detailed info about a skill                   |
 | `list`              | `src/cli/commands/list.ts`              | ts   | Show installation information (alias: `ls`)        |
-| `diff`              | `src/cli/commands/diff.ts`              | ts   | Show diffs between local forked skills and source  |
 | `doctor`            | `src/cli/commands/doctor.ts`            | ts   | Diagnose configuration issues                      |
 | `eject`             | `src/cli/commands/eject.ts`             | ts   | Eject skills, agent partials, or templates         |
-| `outdated`          | `src/cli/commands/outdated.ts`          | ts   | Check for skill updates against source             |
 | `search`            | `src/cli/commands/search.tsx`           | tsx  | Search skills across sources                       |
 | `uninstall`         | `src/cli/commands/uninstall.tsx`        | tsx  | Uninstall from project                             |
 | `update`            | `src/cli/commands/update.tsx`           | tsx  | Update local skills from source                    |
@@ -38,9 +36,7 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 | `build marketplace` | `src/cli/commands/build/marketplace.ts` | ts   | Generate marketplace.json from built plugins       |
 | `build plugins`     | `src/cli/commands/build/plugins.ts`     | ts   | Build skill/agent plugins                          |
 | `build stack`       | `src/cli/commands/build/stack.tsx`      | tsx  | Build a stack into a standalone plugin             |
-| `config`            | `src/cli/commands/config/index.ts`      | ts   | Show config overview (alias for show)              |
-| `config show`       | `src/cli/commands/config/show.ts`       | ts   | Display all resolved config values                 |
-| `config path`       | `src/cli/commands/config/path.ts`       | ts   | Show config file paths                             |
+| `config`            | `src/cli/commands/config/index.ts`      | ts   | Show config overview                               |
 
 ## Primary Commands (Detailed)
 
@@ -200,25 +196,6 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Key dependencies:** `getInstallationInfo()`, `formatInstallationDisplay()` from `src/cli/lib/plugins/index.ts`
 
-### `diff` (src/cli/commands/diff.ts)
-
-**Purpose:** Show differences between local forked skills and their source versions using unified diff format with colored output.
-
-**Args:**
-
-| Arg   | Required | Description                       |
-| ----- | -------- | --------------------------------- |
-| skill | no       | Show diff for specific skill only |
-
-**Flags:**
-
-| Flag     | Short | Type    | Description                            |
-| -------- | ----- | ------- | -------------------------------------- |
-| --quiet  | -q    | boolean | Suppress output, only return exit code |
-| --source | -s    | string  | Skills source path or URL              |
-
-**Key dependencies:** **Operation: `loadSource()`**, **Operation: `collectScopedSkillDirs()`**, **Operation: `buildSourceSkillsMap()`**. Uses `readForkedFromMetadata()` from skills, `createTwoFilesPatch()` from `diff` package.
-
 ### `doctor` (src/cli/commands/doctor.ts)
 
 **Purpose:** Diagnose common configuration issues (config validity, skills resolved, agents compiled, orphan detection, source reachable).
@@ -254,19 +231,6 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 | --source  | -s    | string  | Skills source path or URL            |
 
 **Key dependencies:** **Operation: `loadSource()`**. Uses `saveSourceToProjectConfig()`, `resolveSource()`, `loadProjectSourceConfig()` from configuration. `copySkillsToLocalFlattened()` from skills.
-
-### `outdated` (src/cli/commands/outdated.ts)
-
-**Purpose:** Check which local skills are out of date compared to source.
-
-**Flags:**
-
-| Flag     | Type    | Description               |
-| -------- | ------- | ------------------------- |
-| --json   | boolean | Output results as JSON    |
-| --source | string  | Skills source path or URL |
-
-**Key dependencies:** **Operation: `detectProject()`**, **Operation: `loadSource()`**, **Operation: `compareSkillsWithSource()`**. Uses `@oclif/table` for formatted output.
 
 ### `search` (src/cli/commands/search.tsx)
 
@@ -469,18 +433,6 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Key dependencies:** `compileStackPlugin()`, `loadStacks()` from stacks. `getAgentDefinitions()` from agents. Uses `<Select>` from `@inkjs/ui` for interactive stack selection.
 
-## Config Subcommands
-
-Manage `.claude-src/config.ts` project configuration.
-
-| Subcommand    | Purpose                                                        |
-| ------------- | -------------------------------------------------------------- |
-| `config`      | Overview showing source resolution layers (alias for `show`)   |
-| `config show` | Display all resolved config values (source, marketplace, etc.) |
-| `config path` | Show config file locations                                     |
-
-**Config `show` key functions:** `resolveSource()`, `resolveAgentsSource()`, `loadProjectSourceConfig()`, `getProjectConfigPath()`, `formatOrigin()` from configuration.
-
 ## Error Handling Pattern
 
 All commands follow this pattern:
@@ -524,10 +476,8 @@ All message constants centralized in `src/cli/utils/messages.ts`:
 | `edit`            | `detectProject`, `loadSource`, `ensureMarketplace`, `installPluginSkills`, `uninstallPluginSkills`, `copyLocalSkills`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills`, `loadAgentDefs` |
 | `compile`         | `detectBothInstallations`, `loadAgentDefs`, `compileAgents`, `discoverInstalledSkills`                                                                                                                   |
 | `info`            | `loadSource`, `resolveSkillInfo`                                                                                                                                                                         |
-| `diff`            | `loadSource`, `collectScopedSkillDirs`, `buildSourceSkillsMap`                                                                                                                                           |
 | `doctor`          | `detectProject`, `loadSource`                                                                                                                                                                            |
 | `eject`           | `loadSource`                                                                                                                                                                                             |
-| `outdated`        | `detectProject`, `loadSource`, `compareSkillsWithSource`                                                                                                                                                 |
 | `search`          | `loadSource`                                                                                                                                                                                             |
 | `update`          | `loadSource`, `compareSkillsWithSource`, `collectScopedSkillDirs`, `findSkillMatch`, `compileAgents`, `discoverInstalledSkills`                                                                          |
 | `validate`        | (none -- uses lib functions directly)                                                                                                                                                                    |
@@ -538,4 +488,4 @@ All message constants centralized in `src/cli/utils/messages.ts`:
 | `new agent`       | (none -- uses agents/configuration directly)                                                                                                                                                             |
 | `new marketplace` | (none -- uses generators directly)                                                                                                                                                                       |
 | `build *`         | (none -- uses skill/agent compilers directly)                                                                                                                                                            |
-| `config *`        | (none -- uses configuration directly)                                                                                                                                                                    |
+| `config`          | (none -- uses configuration directly)                                                                                                                                                                    |

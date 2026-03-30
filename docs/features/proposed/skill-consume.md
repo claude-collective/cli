@@ -427,7 +427,7 @@ consumed_from:
 
 ```bash
 # Check if consumed sources have updates
-agentsinc outdated --consumed
+agentsinc consume --check-updates
 
 # Re-consume with updates
 agentsinc consume --update-all
@@ -662,7 +662,7 @@ agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices -
 agentsinc consume
 
 # Check for updates to consumed sources
-agentsinc outdated --consumed
+agentsinc consume --check-updates
 
 # Re-consume updated sources
 agentsinc consume --update

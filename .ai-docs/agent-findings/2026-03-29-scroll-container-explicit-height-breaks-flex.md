@@ -31,6 +31,7 @@ The standard scroll pattern used by every other scrollable step (`step-agents.ts
 ```
 
 Key aspects of the standard pattern:
+
 - NO explicit `height` prop -- flex constraints determine viewport height
 - `overflow: "hidden"` is CONDITIONAL on `scrollEnabled` (spread syntax)
 - `flexShrink: 0` on the inner content wrapper is CONDITIONAL on `scrollEnabled`

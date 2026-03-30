@@ -260,7 +260,7 @@ Deep verification of every claim in commands.md and utilities.md against actual 
 **commands.md -- 8 errors fixed:**
 
 - Removed phantom `--dry-run` base flag (does not exist in BaseCommand; only `--source` is a base flag)
-- Removed 3 phantom config subcommands: `config get` (get.ts does not exist), `config set-project` (set-project.ts does not exist), `config unset-project` (unset-project.ts does not exist). Only `config`, `config show`, `config path` exist.
+- Removed 3 phantom config subcommands: `config get` (get.ts does not exist), `config set-project` (set-project.ts does not exist), `config unset-project` (unset-project.ts does not exist). Only `config` exists (show/path subcommands later removed).
 - Removed phantom `--dry-run` from init flags (init only has `--refresh`, `--source`)
 - Removed phantom `--dry-run` from edit flags (edit only has `--refresh`, `--agent-source`, `--source`)
 - Removed phantom `--output` and `--dry-run` from compile flags (compile only has `--verbose`, `--agent-source`, `--source`)

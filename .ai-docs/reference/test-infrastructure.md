@@ -56,8 +56,6 @@ src/cli/lib/__tests__/
       plugins.test.ts
       stack.test.ts
     compile.test.ts
-    config/index.test.ts
-    diff.test.ts
     doctor.test.ts
     edit.test.ts
     eject.test.ts
@@ -68,7 +66,6 @@ src/cli/lib/__tests__/
     new/agent.test.ts
     new/marketplace.test.ts
     new/skill.test.ts
-    outdated.test.ts
     search.test.ts
     uninstall.test.ts
     update.test.ts
@@ -260,14 +257,12 @@ e2e/
     dual-scope-helpers.ts            # createTestEnvironment, initGlobal, initProject, setupDualScope
     interactive-prompt.ts            # InteractivePrompt class for PTY-based tests
     project-builder.ts               # ProjectBuilder class (minimal, editable, plugin project factories)
-  commands/                          # Command E2E tests (26 files)
+  commands/                          # Command E2E tests (23 files)
     build.e2e.test.ts
     build-agent-plugins.e2e.test.ts
     compile.e2e.test.ts
     compile-edge-cases.e2e.test.ts
     compile-scope-filtering.e2e.test.ts
-    config.e2e.test.ts
-    diff.e2e.test.ts
     doctor.e2e.test.ts
     doctor-diagnostics.e2e.test.ts
     dual-scope.e2e.test.ts
@@ -279,7 +274,6 @@ e2e/
     new-agent.e2e.test.ts
     new-marketplace.e2e.test.ts
     new-skill.e2e.test.ts
-    outdated.e2e.test.ts
     plugin-build.e2e.test.ts
     plugin-uninstall-core.e2e.test.ts
     plugin-uninstall-edge-cases.e2e.test.ts

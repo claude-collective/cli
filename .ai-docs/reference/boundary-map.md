@@ -63,16 +63,12 @@ Every command extends `BaseCommand` and defines `static flags`. oclif handles ty
 | `init`              | `commands/init.tsx:170-176`           | `--refresh` (boolean)                                                                         |
 | `edit`              | `commands/edit.tsx:75-84`             | `--refresh` (boolean), `--agent-source` (string)                                              |
 | `compile`           | `commands/compile.ts:31-41`           | `--verbose` (boolean), `--agent-source` (string)                                              |
-| `config show`       | `commands/config/show.ts:18-20`       | (base only)                                                                                   |
-| `config path`       | `commands/config/path.ts:8-10`        | (base only)                                                                                   |
 | `list`              | `commands/list.ts:17-19`              | (base only)                                                                                   |
 | `info`              | `commands/info.ts:85-92`              | `--preview` (boolean, allowNo)                                                                |
-| `diff`              | `commands/diff.ts:45-52`              | `--quiet` (boolean)                                                                           |
 | `eject`             | `commands/eject.ts:79-94`             | `--force` (boolean), `--output` (string), `--refresh` (boolean)                               |
 | `search`            | `commands/search.tsx:58-73`           | `--interactive` (boolean), `--category` (string), `--refresh` (boolean)                       |
 | `update`            | `commands/update.tsx:69-80`           | `--yes` (boolean), `--no-recompile` (boolean)                                                 |
 | `uninstall`         | `commands/uninstall.tsx:96-107`       | `--yes` (boolean), `--all` (boolean)                                                          |
-| `outdated`          | `commands/outdated.ts:57-63`          | `--json` (boolean)                                                                            |
 | `validate`          | `commands/validate.ts:60-77`          | `--verbose` (boolean), `--all` (boolean), `--plugins` (boolean)                               |
 | `doctor`            | `commands/doctor.ts:325-335`          | `--source` (string, own definition), `--verbose` (boolean)                                    |
 | `import skill`      | `commands/import/skill.ts:65-80`      | `--skill` (string), `--all` (boolean), `--list` (boolean)                                     |

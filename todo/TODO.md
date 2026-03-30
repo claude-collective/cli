@@ -2,6 +2,7 @@
 
 | ID    | Task                                                                                       | Status        |
 | ----- | ------------------------------------------------------------------------------------------ | ------------- |
+| D-171 | Style edit command output — green added, red removed, white titles, gray body, proper spacing | Ready for Dev |
 | D-170 | Add PostHog anonymous telemetry — skill installs, wizard funnel, command errors, platform  | Investigate   |
 | D-169 | Improve `list` command — show all installed skills and agents                              | Investigate   |
 | D-168 | Audit E2E tests — replace manual file construction with CLI commands throughout            | Ready for Dev |

@@ -189,7 +189,6 @@ recompileAgents() (agent-recompiler.ts)
 | `zustand`         | Wizard state management                                         |
 | `@oclif/plugin-*` | CLI plugins                                                     |
 | `terminal-image`  | ASCII art                                                       |
-| `diff`            | Diff display                                                    |
 | `execa`           | Child process execution                                         |
 | `giget`           | Git repo fetching                                               |
 | `gray-matter`     | Only used in skill-plugin-compiler.ts, not in core compile path |

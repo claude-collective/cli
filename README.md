@@ -72,6 +72,7 @@ After init, use `agentsinc edit` to change selections and `agentsinc compile` to
 | [Writing custom skills and subagents](docs/guides/writing-custom-skills.md) | Author skills and subagents from scratch or iterate on existing ones |
 | [Importing third-party skills](docs/guides/importing-skills.md)             | Install skills from external repositories                            |
 | [Creating a marketplace](docs/guides/creating-a-marketplace.md)             | Build a personal or org-level marketplace with curated skills        |
+| [Using the codex-keeper subagent](docs/guides/using-codex-keeper.md)        | Generate and maintain AI-focused reference documentation             |
 
 ## Skills
 
@@ -133,25 +134,15 @@ Each subagent is composed from modular partials (role, workflow, output format) 
 | `build plugins`     | Build skill and agent plugins for distribution |
 | `build stack`       | Build a stack as a single plugin               |
 
-### Configuration
-
-| Command       | Description                        |
-| ------------- | ---------------------------------- |
-| `config`      | Show config overview               |
-| `config show` | Display all resolved config values |
-| `config path` | Show config file paths             |
-
 ### Diagnostics
 
-| Command     | Description                                  |
-| ----------- | -------------------------------------------- |
-| `doctor`    | Diagnose setup issues                        |
-| `diff`      | Show changes between local and source skills |
-| `list`      | List installed skills                        |
-| `outdated`  | Check for skill updates                      |
-| `validate`  | Validate config and skill structure          |
-| `info`      | Show project configuration details           |
-| `uninstall` | Remove Agents Inc from your project          |
+| Command     | Description                         |
+| ----------- | ----------------------------------- |
+| `doctor`    | Diagnose setup issues               |
+| `list`      | List installed skills               |
+| `validate`  | Validate config and skill structure |
+| `info`      | Show project configuration details  |
+| `uninstall` | Remove Agents Inc from your project |
 
 Run `agentsinc --help` for full usage.
 
