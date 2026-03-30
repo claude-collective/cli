@@ -15,7 +15,6 @@ import {
 } from "../helpers/test-utils.js";
 import {
   createDualScopeEnv,
-  createGlobalOnlyEnv,
   type DualScopeEnv,
 } from "../fixtures/dual-scope-helpers.js";
 
@@ -78,10 +77,10 @@ describe("global scope lifecycle -- source loader merge", () => {
 });
 
 // =====================================================================
-// Test Suites 2-4 -- Doctor, Outdated, Diff: shared read-only dual-scope state
+// Test Suite 2 -- Doctor: shared read-only dual-scope state
 // =====================================================================
 
-describe("global scope lifecycle -- doctor, outdated, diff commands", () => {
+describe("global scope lifecycle -- doctor command", () => {
   let sharedEnv: DualScopeEnv;
 
   beforeAll(async () => {
@@ -91,8 +90,6 @@ describe("global scope lifecycle -- doctor, outdated, diff commands", () => {
   afterAll(async () => {
     await sharedEnv?.destroy();
   });
-
-  // --- Doctor ---
 
   it("should not report false 'missing' for global-scoped agents", async () => {
     const { fakeHome, projectDir } = sharedEnv;
@@ -121,85 +118,6 @@ describe("global scope lifecycle -- doctor, outdated, diff commands", () => {
     expect(stdout).not.toContain("web-framework-react (not found)");
     expect(stdout).not.toContain("web-testing-vitest (not found)");
     expect(stdout).toContain("skills found");
-  });
-
-  // --- Outdated ---
-
-  it("should detect global-scoped local skills in outdated check", async () => {
-    const { fakeHome, projectDir } = sharedEnv;
-
-    const { exitCode, stdout } = await CLI.run(
-      ["outdated", "--json", "--source", sourceDir],
-      { dir: projectDir },
-      { env: { HOME: fakeHome } },
-    );
-
-    const parsed = JSON.parse(stdout);
-    const skillIds = parsed.skills.map((s: { id: string }) => s.id);
-
-    expect(skillIds).toContain("web-framework-react");
-    expect(skillIds).toContain("web-testing-vitest");
-    expect(skillIds).toContain("api-framework-hono");
-    expect(parsed.skills.length).toBeGreaterThanOrEqual(3);
-  });
-
-  // --- Diff ---
-
-  it("should find global-scoped local skills when diffing", async () => {
-    const { fakeHome, projectDir } = sharedEnv;
-
-    const { exitCode, output } = await CLI.run(
-      ["diff", "--source", sourceDir],
-      { dir: projectDir },
-      { env: { HOME: fakeHome } },
-    );
-
-    expect(output).not.toContain("No local skills found");
-    // Wizard-installed skills are in sync with source, so diff reports them
-    // as up-to-date rather than listing individual names
-    expect(output).toContain("forked skill");
-    expect([EXIT_CODES.SUCCESS, EXIT_CODES.ERROR]).toContain(exitCode);
-  });
-});
-
-// =====================================================================
-// Test Suites 3b-4b -- Outdated/Diff with global-only skills
-// =====================================================================
-
-describe("global scope lifecycle -- global-only skill scenarios", () => {
-  let sharedEnv: DualScopeEnv;
-
-  beforeAll(async () => {
-    sharedEnv = await createGlobalOnlyEnv(sourceDir, sourceTempDir);
-  }, TIMEOUTS.LIFECYCLE);
-
-  afterAll(async () => {
-    await sharedEnv?.destroy();
-  });
-
-  it("outdated should not warn 'No local skills found' when only global skills exist", async () => {
-    const { fakeHome, projectDir } = sharedEnv;
-
-    const { stdout, output } = await CLI.run(
-      ["outdated", "--source", sourceDir],
-      { dir: projectDir },
-      { env: { HOME: fakeHome } },
-    );
-
-    expect(output).not.toContain("No local skills found");
-    expect(output).toContain("web-framework-react");
-  });
-
-  it("diff should not warn 'No local skills found' when only global skills exist", async () => {
-    const { fakeHome, projectDir } = sharedEnv;
-
-    const { output } = await CLI.run(
-      ["diff", "--source", sourceDir],
-      { dir: projectDir },
-      { env: { HOME: fakeHome } },
-    );
-
-    expect(output).not.toContain("No local skills found");
   });
 });
 

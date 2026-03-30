@@ -446,7 +446,7 @@ Test content here.
   },
 );
 
-/** A forked local skill with forkedFrom metadata for diff/update/outdated commands */
+/** A forked local skill with forkedFrom metadata for update commands */
 export const LOCAL_SKILL_FORKED: TestSkill = createTestSkill(
   // Boundary cast: fictional skill ID for test isolation
   "web-tooling-forked-skill" as SkillId,
