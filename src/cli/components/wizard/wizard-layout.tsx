@@ -95,11 +95,7 @@ type WizardLayoutProps = {
   children: React.ReactNode;
 };
 
-export const WizardLayout: React.FC<WizardLayoutProps> = ({
-  version,
-  logo,
-  children,
-}) => {
+export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, logo, children }) => {
   const store = useWizardStore();
   const { completedSteps, skippedSteps } = store.getStepProgress();
   const { rows: terminalHeight } = useTerminalDimensions();

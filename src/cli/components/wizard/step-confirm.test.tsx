@@ -216,10 +216,7 @@ describe("StepConfirm component", () => {
       useWizardStore.setState({ installedAgentConfigs: [] });
 
       const { lastFrame, unmount } = render(
-        <StepConfirm
-          onComplete={vi.fn()}
-          agentConfigs={buildAgentConfigs(["web-developer"])}
-        />,
+        <StepConfirm onComplete={vi.fn()} agentConfigs={buildAgentConfigs(["web-developer"])} />,
       );
       cleanup = unmount;
 
@@ -252,9 +249,7 @@ describe("StepConfirm component", () => {
         installedSkillConfigs: buildSkillConfigs(["web-framework-react"]),
       });
 
-      const { lastFrame, unmount } = render(
-        <StepConfirm onComplete={vi.fn()} skillConfigs={[]} />,
-      );
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={vi.fn()} skillConfigs={[]} />);
       cleanup = unmount;
 
       const lines = lastFrame()?.split("\n") ?? [];
@@ -268,9 +263,7 @@ describe("StepConfirm component", () => {
         installedAgentConfigs: buildAgentConfigs(["web-developer"]),
       });
 
-      const { lastFrame, unmount } = render(
-        <StepConfirm onComplete={vi.fn()} agentConfigs={[]} />,
-      );
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={vi.fn()} agentConfigs={[]} />);
       cleanup = unmount;
 
       const lines = lastFrame()?.split("\n") ?? [];
@@ -310,9 +303,7 @@ describe("StepConfirm component", () => {
         installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
       });
 
-      const { lastFrame, unmount } = render(
-        <StepConfirm onComplete={vi.fn()} skillConfigs={[]} />,
-      );
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={vi.fn()} skillConfigs={[]} />);
       cleanup = unmount;
 
       expect(lastFrame()).toContain("Global");

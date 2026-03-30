@@ -76,10 +76,7 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
   if (!hasSkills && !hasAgents) return null;
 
   return (
-    <Box
-      flexDirection="row"
-      width="100%"
-    >
+    <Box flexDirection="row" width="100%">
       <Box
         flexDirection="column"
         borderStyle="single"

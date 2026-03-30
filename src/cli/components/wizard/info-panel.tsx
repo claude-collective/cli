@@ -1,6 +1,11 @@
 import { Box, Text, type DOMElement, measureElement, useInput } from "ink";
 import React, { useEffect, useRef, useState } from "react";
-import { CLI_COLORS, DEFAULT_PUBLIC_SOURCE_NAME, SCROLL_VIEWPORT, SOURCE_DISPLAY_NAMES } from "../../consts.js";
+import {
+  CLI_COLORS,
+  DEFAULT_PUBLIC_SOURCE_NAME,
+  SCROLL_VIEWPORT,
+  SOURCE_DISPLAY_NAMES,
+} from "../../consts.js";
 import { findStack } from "../../lib/matrix/matrix-provider.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
