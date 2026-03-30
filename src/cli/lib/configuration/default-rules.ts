@@ -37,8 +37,8 @@ export const defaultRules: SkillRulesConfig = {
         reason: "API frameworks are mutually exclusive within a single service",
       },
       {
-        skills: ["drizzle", "prisma", "sequelize", "typeorm"],
-        reason: "SQL ORMs are mutually exclusive",
+        skills: ["drizzle", "prisma", "sequelize", "typeorm", "knex"],
+        reason: "SQL ORMs and query builders are mutually exclusive",
       },
       {
         skills: ["cli-commander", "oclif-ink"],
@@ -76,6 +76,50 @@ export const defaultRules: SkillRulesConfig = {
         skills: ["react-router", "tanstack-router"],
         reason: "React client-side routers are mutually exclusive",
       },
+      {
+        skills: ["docusaurus", "vitepress"],
+        reason: "Documentation frameworks are mutually exclusive",
+      },
+      {
+        skills: ["electron", "tauri"],
+        reason: "Desktop frameworks are mutually exclusive",
+      },
+      {
+        skills: ["react-hook-form", "tanstack-form"],
+        reason: "React form libraries are mutually exclusive",
+      },
+      {
+        skills: ["supabase", "firebase", "appwrite"],
+        reason: "Backend-as-a-Service platforms are mutually exclusive",
+      },
+      {
+        skills: ["better-auth-drizzle-hono", "nextauth", "clerk"],
+        reason: "Authentication solutions are mutually exclusive",
+      },
+      {
+        skills: ["redis", "upstash", "vercel-kv"],
+        reason: "Cache and KV store providers are mutually exclusive",
+      },
+      {
+        skills: ["vee-validate", "tanstack-form"],
+        reason: "Vue form libraries are mutually exclusive",
+      },
+      {
+        skills: ["postgresql", "mysql"],
+        reason: "SQL database engines are mutually exclusive",
+      },
+      {
+        skills: ["neon", "vercel-postgres", "cockroachdb"],
+        reason: "Managed PostgreSQL-compatible providers are mutually exclusive",
+      },
+      {
+        skills: ["react-intl", "next-intl"],
+        reason: "React internationalization libraries are mutually exclusive",
+      },
+      {
+        skills: ["websockets", "socket-io"],
+        reason: "Socket.IO replaces raw WebSocket usage with its own protocol",
+      },
     ],
     discourages: [],
     compatibleWith: [
@@ -97,7 +141,7 @@ export const defaultRules: SkillRulesConfig = {
         reason: "Skill teaches React-based image handling hooks",
       },
       {
-        skills: ["react-hook-form", "react", "nextjs", "remix"],
+        skills: ["react-hook-form", "react", "nextjs", "remix", "react-native"],
         reason: "React Hook Form is React only",
       },
       {
@@ -105,11 +149,11 @@ export const defaultRules: SkillRulesConfig = {
         reason: "React Intl (FormatJS) is React only",
       },
       {
-        skills: ["react-query", "react", "nextjs", "remix"],
+        skills: ["react-query", "react", "nextjs", "remix", "react-native"],
         reason: "TanStack Query React adapter",
       },
       {
-        skills: ["swr", "react", "nextjs", "remix"],
+        skills: ["swr", "react", "nextjs", "remix", "react-native"],
         reason: "SWR is a React Hooks library",
       },
       {
@@ -117,20 +161,20 @@ export const defaultRules: SkillRulesConfig = {
         reason: "tRPC skill teaches React Query integration",
       },
       {
-        skills: ["jotai", "react", "nextjs", "remix"],
+        skills: ["jotai", "react", "nextjs", "remix", "react-native"],
         reason: "Jotai is a React atomic state library",
       },
       {
-        skills: ["mobx", "react", "nextjs", "remix"],
+        skills: ["mobx", "react", "nextjs", "remix", "react-native"],
         reason: "Skill teaches MobX with mobx-react-lite",
       },
       {
-        skills: ["redux-toolkit", "react", "nextjs", "remix"],
+        skills: ["redux-toolkit", "react", "nextjs", "remix", "react-native"],
         reason: "Redux Toolkit skill teaches React Redux patterns",
       },
       {
-        skills: ["zustand", "react", "nextjs", "remix"],
-        reason: "Zustand is a React state library",
+        skills: ["zustand", "react", "nextjs", "remix", "react-native"],
+        reason: "Zustand skill teaches React patterns",
       },
       {
         skills: ["react-testing-library", "react", "nextjs", "remix"],
@@ -152,10 +196,18 @@ export const defaultRules: SkillRulesConfig = {
         skills: ["tanstack-router", "react"],
         reason: "TanStack Router is a React routing library",
       },
+      {
+        skills: ["graphql-apollo", "react", "nextjs", "remix"],
+        reason: "Skill teaches React Apollo Client patterns",
+      },
       // Next.js specific
       {
         skills: ["next-intl", "nextjs"],
         reason: "next-intl is Next.js only",
+      },
+      {
+        skills: ["clerk", "nextjs"],
+        reason: "Skill teaches @clerk/nextjs patterns",
       },
       // Vue ecosystem (includes Nuxt as meta-framework)
       {
@@ -182,27 +234,17 @@ export const defaultRules: SkillRulesConfig = {
       // Multi-framework
       {
         skills: [
-          "graphql-apollo",
-          "react",
-          "vue-composition-api",
-          "angular-standalone",
-          "nextjs",
-          "remix",
-          "nuxt",
-        ],
-        reason: "Apollo Client has bindings for React, Vue, and Angular",
-      },
-      {
-        skills: [
           "graphql-urql",
           "react",
           "vue-composition-api",
           "solidjs",
+          "svelte",
           "nextjs",
           "remix",
           "nuxt",
+          "sveltekit",
         ],
-        reason: "URQL has bindings for React, Vue, and Solid",
+        reason: "URQL has bindings for React, Vue, Solid, and Svelte",
       },
       // React Router
       {
@@ -227,8 +269,8 @@ export const defaultRules: SkillRulesConfig = {
         reason: "Ant Design is a React component library",
       },
       {
-        skills: ["headless-ui", "react", "vue-composition-api", "nextjs", "remix", "nuxt"],
-        reason: "Headless UI supports React and Vue",
+        skills: ["headless-ui", "react", "nextjs", "remix"],
+        reason: "Headless UI v2 is React only",
       },
       // Vue ecosystem
       {
@@ -237,7 +279,7 @@ export const defaultRules: SkillRulesConfig = {
       },
       // Mobile
       {
-        skills: ["expo", "react", "react-native"],
+        skills: ["expo", "react-native"],
         reason: "Expo is a React Native framework",
       },
       // Cross-framework tools
@@ -247,6 +289,7 @@ export const defaultRules: SkillRulesConfig = {
           "react",
           "vue-composition-api",
           "angular-standalone",
+          "solidjs",
           "svelte",
           "nextjs",
           "remix",
@@ -254,6 +297,27 @@ export const defaultRules: SkillRulesConfig = {
           "sveltekit",
         ],
         reason: "Storybook supports all major frameworks",
+      },
+      {
+        skills: [
+          "tanstack-form",
+          "react",
+          "vue-composition-api",
+          "angular-standalone",
+          "solidjs",
+          "nextjs",
+          "remix",
+          "nuxt",
+        ],
+        reason: "TanStack Form supports React, Vue, Angular, and Solid",
+      },
+      {
+        skills: ["vuetify", "vue-composition-api", "nuxt"],
+        reason: "Vuetify is Vue only",
+      },
+      {
+        skills: ["resend-react-email", "react", "nextjs", "remix"],
+        reason: "React Email uses React for email templates",
       },
     ],
     recommends: [
@@ -314,19 +378,19 @@ export const defaultRules: SkillRulesConfig = {
         skill: "zustand",
         needs: ["react", "nextjs", "remix", "react-native"],
         needsAny: true,
-        reason: "Our Zustand skill covers React/React Native patterns",
+        reason: "Skill teaches React/React Native patterns",
       },
       {
         skill: "redux-toolkit",
         needs: ["react", "nextjs", "remix", "react-native"],
         needsAny: true,
-        reason: "Our Redux Toolkit skill covers React/React Native patterns",
+        reason: "Skill teaches React/React Native patterns",
       },
       {
         skill: "mobx",
-        needs: ["react", "nextjs", "remix"],
+        needs: ["react", "nextjs", "remix", "react-native"],
         needsAny: true,
-        reason: "Our MobX skill teaches React patterns",
+        reason: "Skill teaches React/React Native patterns",
       },
       {
         skill: "react-query",
@@ -377,9 +441,8 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         skill: "better-auth-drizzle-hono",
-        needs: ["drizzle", "prisma"],
-        needsAny: true,
-        reason: "Better Auth requires a database adapter",
+        needs: ["drizzle"],
+        reason: "Skill teaches Better Auth with the Drizzle adapter",
       },
       {
         skill: "shadcn-ui",
@@ -394,19 +457,28 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         skill: "graphql-apollo",
-        needs: ["react", "vue-composition-api", "angular-standalone", "nextjs", "remix", "nuxt"],
+        needs: ["react", "nextjs", "remix"],
         needsAny: true,
-        reason: "Apollo Client requires a UI framework",
+        reason: "Skill teaches React Apollo Client patterns",
       },
       {
         skill: "graphql-urql",
-        needs: ["react", "vue-composition-api", "solidjs", "nextjs", "remix", "nuxt"],
+        needs: [
+          "react",
+          "vue-composition-api",
+          "solidjs",
+          "svelte",
+          "nextjs",
+          "remix",
+          "nuxt",
+          "sveltekit",
+        ],
         needsAny: true,
-        reason: "URQL supports React, Vue, and Solid",
+        reason: "URQL supports React, Vue, Solid, and Svelte",
       },
       {
         skill: "react-router",
-        needs: ["react", "nextjs", "remix"],
+        needs: ["react", "remix"],
         needsAny: true,
         reason: "React Router is a React routing library",
       },
@@ -436,9 +508,9 @@ export const defaultRules: SkillRulesConfig = {
       },
       {
         skill: "headless-ui",
-        needs: ["react", "vue-composition-api", "nextjs", "remix", "nuxt"],
+        needs: ["react", "nextjs", "remix"],
         needsAny: true,
-        reason: "Headless UI supports React and Vue",
+        reason: "Headless UI v2 is React only",
       },
       {
         skill: "vueuse",
@@ -472,10 +544,121 @@ export const defaultRules: SkillRulesConfig = {
         reason: "next-intl is built specifically for Next.js",
       },
       {
+        skill: "clerk",
+        needs: ["nextjs"],
+        reason: "Skill teaches @clerk/nextjs patterns",
+      },
+      {
         skill: "trpc",
         needs: ["react", "nextjs", "remix"],
         needsAny: true,
-        reason: "Our tRPC skill teaches React Query integration patterns",
+        reason: "Skill teaches React Query integration patterns",
+      },
+      {
+        skill: "framer-motion",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Motion (Framer Motion) is a React animation library",
+      },
+      {
+        skill: "error-boundaries",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Error boundaries are a React concept",
+      },
+      {
+        skill: "file-upload-patterns",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Skill teaches React-based file upload patterns",
+      },
+      {
+        skill: "image-handling",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Skill teaches React-based image handling hooks",
+      },
+      {
+        skill: "react-intl",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "React Intl (FormatJS) is React only",
+      },
+      {
+        skill: "tanstack-table",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Skill teaches @tanstack/react-table patterns",
+      },
+      {
+        skill: "radix-ui",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "Radix UI primitives are React-specific",
+      },
+      {
+        skill: "jotai",
+        needs: ["react", "nextjs", "remix", "react-native"],
+        needsAny: true,
+        reason: "Jotai is a React atomic state library",
+      },
+      {
+        skill: "vue-i18n",
+        needs: ["vue-composition-api", "nuxt"],
+        needsAny: true,
+        reason: "vue-i18n is Vue 3 only",
+      },
+      {
+        skill: "storybook",
+        needs: [
+          "react",
+          "vue-composition-api",
+          "angular-standalone",
+          "solidjs",
+          "svelte",
+          "nextjs",
+          "remix",
+          "nuxt",
+          "sveltekit",
+        ],
+        needsAny: true,
+        reason: "Storybook requires a UI framework",
+      },
+      {
+        skill: "docusaurus",
+        needs: ["react"],
+        reason: "Docusaurus is built on React",
+      },
+      {
+        skill: "vitepress",
+        needs: ["vue-composition-api"],
+        reason: "VitePress is built on Vue",
+      },
+      {
+        skill: "vuetify",
+        needs: ["vue-composition-api", "nuxt"],
+        needsAny: true,
+        reason: "Vuetify is Vue only",
+      },
+      {
+        skill: "tanstack-form",
+        needs: [
+          "react",
+          "vue-composition-api",
+          "angular-standalone",
+          "solidjs",
+          "nextjs",
+          "remix",
+          "nuxt",
+        ],
+        needsAny: true,
+        reason: "TanStack Form requires a UI framework",
+      },
+      {
+        skill: "resend-react-email",
+        needs: ["react", "nextjs", "remix"],
+        needsAny: true,
+        reason: "React Email uses React for email templates",
       },
     ],
     alternatives: [
@@ -511,11 +694,12 @@ export const defaultRules: SkillRulesConfig = {
         skills: ["hono", "express", "fastify", "elysia", "nestjs"],
       },
       {
-        purpose: "Database ORM / ODM",
-        skills: ["drizzle", "prisma", "sequelize", "typeorm", "mongoose"],
+        purpose: "SQL ORM / Query Builder",
+        skills: ["drizzle", "prisma", "sequelize", "typeorm", "knex"],
       },
-      { purpose: "Forms (React)", skills: ["react-hook-form"] },
-      { purpose: "Forms (Vue)", skills: ["vee-validate"] },
+      { purpose: "MongoDB", skills: ["mongodb", "mongoose"] },
+      { purpose: "Forms (React)", skills: ["react-hook-form", "tanstack-form"] },
+      { purpose: "Forms (Vue)", skills: ["vee-validate", "tanstack-form"] },
       { purpose: "Validation", skills: ["zod-validation"] },
       { purpose: "Unit Testing", skills: ["vitest"] },
       { purpose: "Component Testing (React)", skills: ["react-testing-library"] },
@@ -555,13 +739,21 @@ export const defaultRules: SkillRulesConfig = {
       { purpose: "Vector Database", skills: ["pinecone", "qdrant", "chroma", "weaviate"] },
       { purpose: "Search Engine", skills: ["elasticsearch", "meilisearch"] },
       { purpose: "CMS", skills: ["payload", "sanity", "strapi"] },
-      { purpose: "Managed Database", skills: ["neon", "planetscale", "turso", "vercel-postgres"] },
+      {
+        purpose: "Managed Database",
+        skills: ["neon", "planetscale", "turso", "vercel-postgres", "cockroachdb"],
+      },
       { purpose: "Cache / KV Store", skills: ["redis", "upstash", "vercel-kv"] },
       { purpose: "Payment", skills: ["stripe"] },
       { purpose: "Realtime", skills: ["websockets", "socket-io", "sse"] },
       { purpose: "Animation", skills: ["framer-motion", "css-animations", "view-transitions"] },
       { purpose: "Monorepo Orchestrator", skills: ["turborepo", "nx"] },
       { purpose: "Linting / Formatting", skills: ["biome", "eslint-prettier"] },
+      { purpose: "Documentation Framework", skills: ["docusaurus", "vitepress"] },
+      { purpose: "Desktop Framework", skills: ["electron", "tauri"] },
+      { purpose: "AI Evaluation / Observability", skills: ["langfuse", "promptfoo"] },
+      { purpose: "SQL Database", skills: ["postgresql", "mysql"] },
+      { purpose: "Internationalization (React)", skills: ["react-intl", "next-intl"] },
     ],
   },
 };
