@@ -203,8 +203,8 @@ describe("SourceGrid component", () => {
       stdin.write(ARROW_UP);
       await delay(INPUT_DELAY_MS);
 
-      // Vertical navigation resets column to 0
-      expect(onFocusChange).toHaveBeenCalledWith(0, 0);
+      // Vertical navigation clamps column to last valid index
+      expect(onFocusChange).toHaveBeenCalledWith(0, 1);
     });
   });
 

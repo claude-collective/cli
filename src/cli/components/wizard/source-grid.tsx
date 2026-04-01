@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import type { BoundSkillCandidate, SkillAlias, SkillId } from "../../types/index.js";
-import { CLI_COLORS, SOURCE_DISPLAY_NAMES } from "../../consts.js";
+import { CLI_COLORS, SOURCE_DISPLAY_NAMES, UI_SYMBOLS } from "../../consts.js";
 import { getSkillById } from "../../lib/matrix/matrix-provider.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
 import { useSectionScroll } from "../hooks/use-section-scroll.js";
@@ -9,6 +9,15 @@ import { useSourceGridSearchModal } from "../hooks/use-source-grid-search-modal.
 import { SearchModal } from "./search-modal.js";
 
 const SEARCH_PILL_LABEL = "\u2315 Search";
+
+const SKILL_NAME_WIDTH = 24;
+const SOURCE_COL_WIDTH = 18;
+
+const SOURCE_HEADER_NAMES: Record<string, string> = {
+  eject: "Local",
+  "agents-inc": "Plugin",
+  public: "Public",
+};
 
 export type SourceOption = {
   id: string;
@@ -43,13 +52,10 @@ type SearchPillProps = {
 };
 
 const SearchPill: React.FC<SearchPillProps> = ({ isFocused }) => {
-  const borderColor = isFocused ? CLI_COLORS.UNFOCUSED : CLI_COLORS.NEUTRAL;
-
   return (
-    <Box marginRight={1} borderColor={borderColor} borderStyle="single" borderDimColor={!isFocused}>
+    <Box marginRight={1}>
       <Text dimColor={!isFocused} bold={isFocused}>
-        {" "}
-        {SEARCH_PILL_LABEL}{" "}
+        {SEARCH_PILL_LABEL}
       </Text>
     </Box>
   );
@@ -63,35 +69,21 @@ type SourceSectionProps = {
 };
 
 function formatSourceLabel(option: SourceOption): string {
-  const label = option.displayName ?? SOURCE_DISPLAY_NAMES[option.id] ?? option.id;
-  const prefix = option.installed ? "\u2713 " : "";
-  return `${prefix}${label}`;
+  return option.displayName ?? SOURCE_DISPLAY_NAMES[option.id] ?? option.id;
 }
 
 const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
   option,
   isFocused,
 }) => {
-  const getBorderColor = (): string => {
-    if (isFocused) {
-      return option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.UNFOCUSED;
-    }
-    return CLI_COLORS.NEUTRAL;
-  };
-
-  const textColor = option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.NEUTRAL;
+  const textColor = option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.WHITE;
   const isBold = isFocused || option.selected;
+  const prefix = isFocused ? `${UI_SYMBOLS.CHEVRON} ` : `${UI_SYMBOLS.CHEVRON_SPACER} `;
 
   return (
-    <Box
-      marginRight={1}
-      borderColor={getBorderColor()}
-      borderStyle="single"
-      borderDimColor={!isFocused && !option.selected}
-    >
-      <Text color={textColor} bold={isBold} dimColor={false}>
-        {" "}
-        {formatSourceLabel(option)}{" "}
+    <Box width={SOURCE_COL_WIDTH}>
+      <Text color={textColor} bold={isBold} dimColor={!option.selected && !isFocused}>
+        {prefix}{formatSourceLabel(option)}
       </Text>
     </Box>
   );
@@ -106,8 +98,8 @@ const SourceSection: React.FC<SourceSectionProps> = ({
   const searchPillIndex = row.options.length;
 
   return (
-    <Box flexDirection="column">
-      <Box flexDirection="row">
+    <Box flexDirection="row">
+      <Box width={SKILL_NAME_WIDTH}>
         {isFocused ? (
           <Text
             color={CLI_COLORS.WHITE}
@@ -240,6 +232,18 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
 
   const noShrink = scrollEnabled ? { flexShrink: 0 } : {};
 
+  const headerSources = rows[0]?.options ?? [];
+  const headerElement = (
+    <Box flexDirection="row" marginBottom={1} {...noShrink}>
+      <Box width={SKILL_NAME_WIDTH} />
+      {headerSources.map((option) => (
+        <Box key={option.id} width={SOURCE_COL_WIDTH}>
+          <Text color={CLI_COLORS.WARNING} bold>{`${UI_SYMBOLS.CHEVRON_SPACER} ${SOURCE_HEADER_NAMES[option.id] ?? option.id}`}</Text>
+        </Box>
+      ))}
+    </Box>
+  );
+
   const sectionElements = rows.map((row, rowIndex) => (
     <Box key={row.skillId} ref={(el) => setSectionRef(rowIndex, el)} {...noShrink}>
       <SourceSection
@@ -267,6 +271,7 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     >
       <Box flexDirection="column" overflow="hidden" flexGrow={1}>
         <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} {...noShrink}>
+          {headerElement}
           {sectionElements}
         </Box>
       </Box>
