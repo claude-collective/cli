@@ -39,8 +39,8 @@ export const STEP_TEXT = {
 
   // Completion
   INIT_SUCCESS: "initialized successfully",
-  EDIT_SUCCESS: "Plugin updated", // NOT "recompiled"
-  EDIT_UNCHANGED: "Plugin unchanged",
+  EDIT_SUCCESS: "Done",
+  EDIT_UNCHANGED: "No changes made",
   COMPILE_SUCCESS: "Compiled",
   EJECT_SUCCESS: "Eject complete!",
   IMPORT_SUCCESS: "Import complete:",

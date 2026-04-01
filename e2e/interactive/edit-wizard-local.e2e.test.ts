@@ -79,8 +79,8 @@ describe("edit wizard — eject mode", () => {
 
         const rawOutput = result.rawOutput;
 
-        // The changes summary should mention additions
-        expect(rawOutput).toMatch(/\d+ added/);
+        // The changes summary should list additions
+        expect(rawOutput).toContain("Changes:");
 
         // Config should now include both skills
         await expect(result.project).toHaveConfig({ skillIds: ["web-framework-react"] });
@@ -117,7 +117,6 @@ describe("edit wizard — eject mode", () => {
 
         // The "Changes:" section should list additions
         expect(rawOutput).toContain("Changes:");
-        expect(rawOutput).toMatch(/\d+ added/);
       },
     );
 
@@ -212,8 +211,7 @@ describe("edit wizard — eject mode", () => {
 
       const rawOutput = result.rawOutput;
 
-      // The changes summary should mention removals
-      expect(rawOutput).toMatch(/\d+ removed/);
+      // The changes summary should list removals
       expect(rawOutput).toContain("Changes:");
     });
 

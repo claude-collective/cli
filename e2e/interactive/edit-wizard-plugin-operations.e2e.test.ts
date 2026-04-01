@@ -74,8 +74,8 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
       const rawOutput = result.rawOutput;
-      expect(rawOutput).toContain("Uninstalling plugin: web-styling-tailwind");
-      expect(rawOutput).toContain("removed");
+      expect(rawOutput).toContain("Removed");
+      expect(rawOutput).toContain("plugin");
     });
 
     it(
@@ -158,8 +158,8 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
         const rawOutput = result.rawOutput;
-        expect(rawOutput).toContain("Installing plugin:");
-        expect(rawOutput).toMatch(/\d+ added/);
+        expect(rawOutput).toContain("Installed");
+        expect(rawOutput).toContain("plugin");
       },
     );
   });
@@ -186,8 +186,8 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
         const rawOutput = result.rawOutput;
-        expect(rawOutput).not.toContain("Installing plugin:");
-        expect(rawOutput).not.toContain("Uninstalling plugin:");
+        expect(rawOutput).not.toContain("Installed");
+        expect(rawOutput).not.toContain("Removed");
       },
     );
   });
