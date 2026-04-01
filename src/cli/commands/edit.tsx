@@ -1,6 +1,7 @@
 import os from "os";
 import path from "path";
 
+import chalk from "chalk";
 import { Flags } from "@oclif/core";
 import { render } from "ink";
 
@@ -38,7 +39,7 @@ import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { remove } from "../utils/fs.js";
 import { type StartupMessage } from "../utils/logger.js";
-import { ERROR_MESSAGES, INFO_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
+import { ERROR_MESSAGES } from "../utils/messages.js";
 
 /** Clears the visible terminal area so the next render starts clean. */
 function clearTerminalOutput(): void {
@@ -100,8 +101,7 @@ export default class Edit extends BaseCommand {
 
     const changes = detectConfigChanges(context.projectConfig, result, context.currentSkillIds);
     if (!hasAnyChanges(changes)) {
-      this.log(INFO_MESSAGES.NO_CHANGES_MADE);
-      this.log("Plugin unchanged\n");
+      this.log(chalk.gray("No changes made."));
       return;
     }
 
@@ -251,34 +251,34 @@ export default class Edit extends BaseCommand {
       agentScopeChanges,
     } = changes;
 
-    this.log("\nChanges:");
+    this.log(`\n${chalk.white.bold("Changes:")}`);
     for (const skillId of addedSkills) {
-      this.log(`  + ${getSkillById(skillId).displayName}`);
+      this.log(chalk.green(`  + ${getSkillById(skillId).displayName}`));
     }
     for (const skillId of removedSkills) {
       const skill = matrix.skills[skillId];
-      this.log(`  - ${skill?.displayName ?? skillId}`);
+      this.log(chalk.red(`  - ${skill?.displayName ?? skillId}`));
     }
     for (const agentName of addedAgents) {
-      this.log(`  + ${agentName} (agent)`);
+      this.log(chalk.green(`  + ${agentName}`) + chalk.gray(" (agent)"));
     }
     for (const agentName of removedAgents) {
-      this.log(`  - ${agentName} (agent)`);
+      this.log(chalk.red(`  - ${agentName}`) + chalk.gray(" (agent)"));
     }
     for (const [skillId, change] of sourceChanges) {
       const fromLabel = formatSourceDisplayName(change.from);
       const toLabel = formatSourceDisplayName(change.to);
-      this.log(`  ~ ${skillId} (${fromLabel} \u2192 ${toLabel})`);
+      this.log(chalk.yellow(`  ~ ${skillId}`) + chalk.gray(` (${fromLabel} \u2192 ${toLabel})`));
     }
     for (const [skillId, change] of scopeChanges) {
       const fromLabel = change.from === "global" ? "[G]" : "[P]";
       const toLabel = change.to === "global" ? "[G]" : "[P]";
-      this.log(`  ~ ${skillId} (${fromLabel} \u2192 ${toLabel})`);
+      this.log(chalk.yellow(`  ~ ${skillId}`) + chalk.gray(` (${fromLabel} \u2192 ${toLabel})`));
     }
     for (const [agentName, change] of agentScopeChanges) {
       const fromLabel = change.from === "global" ? "[G]" : "[P]";
       const toLabel = change.to === "global" ? "[G]" : "[P]";
-      this.log(`  ~ ${agentName} (${fromLabel} \u2192 ${toLabel})`);
+      this.log(chalk.yellow(`  ~ ${agentName}`) + chalk.gray(` (${fromLabel} \u2192 ${toLabel})`));
     }
     this.log("");
   }
@@ -295,16 +295,10 @@ export default class Edit extends BaseCommand {
 
     if (hasMigrations) {
       if (migrationPlan.toEject.length > 0) {
-        this.log(`Switching ${migrationPlan.toEject.length} skill(s) to eject:`);
-        for (const migration of migrationPlan.toEject) {
-          this.log(`  - ${migration.id}`);
-        }
+        this.log(chalk.gray(`Switching ${migrationPlan.toEject.length} skill(s) to eject`));
       }
       if (migrationPlan.toPlugin.length > 0) {
-        this.log(`Switching ${migrationPlan.toPlugin.length} skill(s) to plugin:`);
-        for (const migration of migrationPlan.toPlugin) {
-          this.log(`  - ${migration.id}`);
-        }
+        this.log(chalk.gray(`Switching ${migrationPlan.toPlugin.length} skill(s) to plugin`));
       }
 
       const migrationResult = await executeMigration(migrationPlan, cwd, context.sourceResult);
@@ -382,10 +376,7 @@ export default class Edit extends BaseCommand {
     const { addedSkills, removedSkills } = changes;
 
     if (context.sourceResult.marketplace) {
-      const mpResult = await ensureMarketplace(context.sourceResult);
-      if (mpResult.registered) {
-        this.log(`Registered marketplace: ${mpResult.marketplace}`);
-      }
+      await ensureMarketplace(context.sourceResult);
 
       const addedPluginSkills = result.skills.filter(
         (s) => addedSkills.includes(s.id) && s.source !== "eject",
@@ -396,8 +387,8 @@ export default class Edit extends BaseCommand {
           context.sourceResult.marketplace,
           cwd,
         );
-        for (const item of pluginResult.installed) {
-          this.log(`Installing plugin: ${item.ref}...`);
+        if (pluginResult.installed.length > 0) {
+          this.log(chalk.gray(`Installed ${pluginResult.installed.length} plugin(s)`));
         }
         for (const item of pluginResult.failed) {
           this.warn(`Failed to install plugin ${item.id}: ${item.error}`);
@@ -410,8 +401,8 @@ export default class Edit extends BaseCommand {
           context.projectConfig?.skills ?? [],
           cwd,
         );
-        for (const id of uninstallResult.uninstalled) {
-          this.log(`Uninstalling plugin: ${id}...`);
+        if (uninstallResult.uninstalled.length > 0) {
+          this.log(chalk.gray(`Removed ${uninstallResult.uninstalled.length} plugin(s)`));
         }
         for (const item of uninstallResult.failed) {
           this.warn(`Failed to uninstall plugin ${item.id}: ${item.error}`);
@@ -435,7 +426,7 @@ export default class Edit extends BaseCommand {
 
     if (addedLocalSkills.length > 0) {
       const copyResult = await copyLocalSkills(addedLocalSkills, cwd, context.sourceResult);
-      this.log(`Copied ${copyResult.totalCopied} local skill(s) to .claude/skills/`);
+      this.log(chalk.gray(`Copied ${copyResult.totalCopied} local skill(s)`));
     }
   }
 
@@ -447,16 +438,10 @@ export default class Edit extends BaseCommand {
   ): Promise<void> {
     // Load agent definitions — needed for both config-types.ts and recompilation
     let agentDefsResult: AgentDefs;
-    this.log(
-      flags["agent-source"]
-        ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS
-        : STATUS_MESSAGES.LOADING_AGENT_PARTIALS,
-    );
     try {
       agentDefsResult = await loadAgentDefs(flags["agent-source"], {
         forceRefresh: flags.refresh,
       });
-      this.log(flags["agent-source"] ? "✓ Agent partials fetched\n" : "✓ Agent partials loaded\n");
     } catch (error) {
       this.handleError(error);
     }
@@ -474,7 +459,6 @@ export default class Edit extends BaseCommand {
       this.warn(`Could not update config: ${getErrorMessage(error)}`);
     }
 
-    this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
       const agentScopeMap = new Map(result.agentConfigs.map((a) => [a.name, a.scope] as const));
       const { allSkills } = await discoverInstalledSkills(cwd);
@@ -490,19 +474,20 @@ export default class Edit extends BaseCommand {
 
       if (compilationResult.failed.length > 0) {
         this.log(
-          `✓ Recompiled ${compilationResult.compiled.length} agents (${compilationResult.failed.length} failed)\n`,
+          chalk.gray(`Recompiled ${compilationResult.compiled.length} agents`) +
+            chalk.yellow(` (${compilationResult.failed.length} failed)`),
         );
         for (const warning of compilationResult.warnings) {
           this.warn(warning);
         }
       } else if (compilationResult.compiled.length > 0) {
-        this.log(`✓ Recompiled ${compilationResult.compiled.length} agents\n`);
+        this.log(chalk.gray(`Recompiled ${compilationResult.compiled.length} agents`));
       } else {
-        this.log("✓ No agents to recompile\n");
+        this.log(chalk.gray("No agents to recompile"));
       }
     } catch (error) {
       this.warn(`Agent recompilation failed: ${getErrorMessage(error)}`);
-      this.log(`You can manually recompile with '${CLI_BIN_NAME} compile'.\n`);
+      this.log(`You can manually recompile with '${CLI_BIN_NAME} compile'.`);
     }
   }
 
@@ -523,36 +508,8 @@ export default class Edit extends BaseCommand {
     }
   }
 
-  private logCompletionSummary(changes: ConfigChanges): void {
-    const {
-      addedSkills,
-      removedSkills,
-      addedAgents,
-      removedAgents,
-      sourceChanges,
-      scopeChanges,
-      agentScopeChanges,
-    } = changes;
-
-    const hasAgentChanges = addedAgents.length > 0 || removedAgents.length > 0;
-    const hasSourceChanges = sourceChanges.size > 0;
-    const hasScopeChanges = scopeChanges.size > 0;
-    const hasAgentScopeChanges = agentScopeChanges.size > 0;
-
-    const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];
-    if (hasAgentChanges) {
-      summaryParts.push(
-        `${addedAgents.length} agent${addedAgents.length !== 1 ? "s" : ""} added, ${removedAgents.length} agent${removedAgents.length !== 1 ? "s" : ""} removed`,
-      );
-    }
-    if (hasSourceChanges) {
-      summaryParts.push(`${sourceChanges.size} source${sourceChanges.size > 1 ? "s" : ""} changed`);
-    }
-    if (hasScopeChanges || hasAgentScopeChanges) {
-      const totalScopeChanges = scopeChanges.size + agentScopeChanges.size;
-      summaryParts.push(`${totalScopeChanges} scope${totalScopeChanges > 1 ? "s" : ""} changed`);
-    }
-    this.log(`\n\u2713 Plugin updated! (${summaryParts.join(", ")})\n`);
+  private logCompletionSummary(_changes: ConfigChanges): void {
+    this.log(`\n${chalk.green("\u2713 Done")}\n`);
   }
 }
 
