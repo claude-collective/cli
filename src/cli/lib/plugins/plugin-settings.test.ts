@@ -9,11 +9,9 @@ import {
 import { CLAUDE_DIR, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts";
 
 // Use vi.hoisted so mock fns are available when vi.mock factories run (hoisted to top)
-const { mockFileExists, mockReadFileSafe, mockVerbose, mockGetErrorMessage } = vi.hoisted(() => ({
+const { mockFileExists, mockReadFileSafe } = vi.hoisted(() => ({
   mockFileExists: vi.fn(),
   mockReadFileSafe: vi.fn(),
-  mockVerbose: vi.fn(),
-  mockGetErrorMessage: vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e))),
 }));
 
 vi.mock("../../utils/fs", async (importOriginal) => ({
@@ -22,24 +20,7 @@ vi.mock("../../utils/fs", async (importOriginal) => ({
   readFileSafe: mockReadFileSafe,
 }));
 
-vi.mock("../../utils/logger", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../utils/logger")>()),
-  verbose: mockVerbose,
-}));
-
-vi.mock("../../utils/errors", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../utils/errors")>()),
-  getErrorMessage: mockGetErrorMessage,
-}));
-
-vi.mock("../../consts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../consts")>()),
-  CLAUDE_DIR: ".claude",
-  PLUGINS_SUBDIR: "plugins",
-  MAX_CONFIG_FILE_SIZE: 1048576,
-  PLUGIN_MANIFEST_DIR: ".claude-plugin",
-  PLUGIN_MANIFEST_FILE: "plugin.json",
-}));
+vi.mock("../../utils/logger");
 
 describe("plugin-settings", () => {
   beforeEach(() => {
