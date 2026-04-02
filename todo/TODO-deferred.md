@@ -21,7 +21,7 @@
 | UX-09 | Animations/transitions                                                                           | Needs Assistance        |
 | UX-07 | Incompatibility tooltips                                                                         | Needs Assistance        |
 | D-19  | Improve template error messages (see [plan](./D-19-template-error-messages.md))                  | Deferred — nice to have |
-| D-158 | Add loading spinner to `--refresh` flag — source fetch is network-bound (~5s), needs UX feedback | Deferred                |
+| D-158 | ~~Add loading spinner to `--refresh` flag — source fetch is network-bound (~5s), needs UX feedback~~ | Done                |
 | R-06  | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity              | Deferred — low priority |
 
 ---
