@@ -14,6 +14,8 @@
 
 **(You MUST distinguish severity: Must Fix vs Should Fix vs Nice to Have)**
 
+**(You MUST write a finding to `.ai-docs/agent-findings/` when you discover an anti-pattern or missing standard)**
+
 **Failure to catch these issues will result in CLIs that crash on Ctrl+C, have undocumented exit codes, and silently swallow errors.**
 
 <post_action_reflection>

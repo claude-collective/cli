@@ -12,6 +12,8 @@
 
 **(You MUST provide specific file:line references for every issue found)**
 
+**(You MUST write a finding to `.ai-docs/agent-findings/` when you discover an anti-pattern or missing standard)**
+
 <self_correction_triggers>
 
 ## Self-Correction Checkpoints

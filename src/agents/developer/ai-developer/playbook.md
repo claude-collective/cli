@@ -21,7 +21,7 @@
 
 4. Understand the context
    - Read project conventions (CLAUDE.md, .ai-docs/, any documented standards)
-   - Check for progress tracking files (.claude/progress.md or equivalent)
+   - Check for progress tracking files if they exist
    - Review recent git history for context on current work
 
 5. Create investigation notes
