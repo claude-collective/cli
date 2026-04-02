@@ -19,7 +19,7 @@ import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { getAgentDefinitions } from "../../lib/agents/index.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import { isClaudeCLIAvailable } from "../../utils/exec.js";
-import { fileExists, readFile } from "../../utils/fs.js";
+import { directoryExists, fileExists, readFile } from "../../utils/fs.js";
 
 const SEPARATOR_WIDTH = 60;
 
@@ -84,6 +84,11 @@ export default class NewAgent extends BaseCommand {
       description: "Purpose/description of the agent",
       required: false,
     }),
+    force: Flags.boolean({
+      char: "f",
+      description: "Overwrite existing agent directory",
+      default: false,
+    }),
     "non-interactive": Flags.boolean({
       char: "n",
       description: "Run in non-interactive mode",
@@ -106,6 +111,7 @@ export default class NewAgent extends BaseCommand {
     const purpose = flags.purpose ?? (await this.promptForPurpose());
     const outputDir = path.join(projectDir, CLAUDE_DIR, "agents", "_custom");
 
+    await this.checkExistingDir(path.join(outputDir, args.name), flags.force);
     this.logAgentPlan(args.name, purpose, outputDir);
     await this.generateAgent(args.name, purpose, outputDir, flags, projectDir);
     await this.updateConfigTypes(projectDir, configTypesReady, args.name);
@@ -113,6 +119,17 @@ export default class NewAgent extends BaseCommand {
     this.log("");
     this.log("─".repeat(SEPARATOR_WIDTH));
     this.logSuccess("Agent creation complete!");
+  }
+
+  private async checkExistingDir(agentDir: string, force: boolean): Promise<void> {
+    if (await directoryExists(agentDir)) {
+      if (!force) {
+        this.error(`Agent directory already exists: ${agentDir}\nUse --force to overwrite.`, {
+          exit: EXIT_CODES.ERROR,
+        });
+      }
+      this.warn(`Overwriting existing agent at ${agentDir}`);
+    }
   }
 
   private async ensureClaudeCliAvailable(): Promise<void> {

@@ -20,5 +20,8 @@ export type { PluginUninstallResult } from "./skills/uninstall-plugin-skills.js"
 export type { DetectedProject } from "./project/detect-project.js";
 export type { BothInstallations } from "./project/detect-both-installations.js";
 export type { ConfigWriteOptions, ConfigWriteResult } from "./project/write-project-config.js";
-export type { CompileAgentsOptions, CompilationResult } from "./project/compile-agents.js";
+export type {
+  CompileAgentsOptions,
+  CompilationResult,
+} from "./project/compile-agents.js";
 export type { AgentDefs } from "./project/load-agent-defs.js";

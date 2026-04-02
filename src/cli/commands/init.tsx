@@ -447,7 +447,7 @@ export default class Init extends BaseCommand {
       agentScopeMap: buildAgentScopeMap(configResult.config),
       outputDir: projectPaths.agentsDir,
     });
-    this.log(`Compiled ${compileResult.compiled.length} agents to .claude/agents/\n`);
+    this.log(`Compiled ${compileResult.compiled.length} agents\n`);
 
     return { configResult, compileResult, projectPaths };
   }

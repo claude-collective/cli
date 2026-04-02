@@ -190,12 +190,18 @@ export default class Eject extends BaseCommand {
         await this.handleAgentPartials(outputBase, flags.force, directOutput, true);
         break;
       case "skills":
-        await this.handleSkills(projectDir, flags.force, sourceResult!, directOutput, outputBase);
+        if (!sourceResult) {
+          throw new Error("Source must be loaded for skills eject");
+        }
+        await this.handleSkills(projectDir, flags.force, sourceResult, directOutput, outputBase);
         break;
       case "all":
+        if (!sourceResult) {
+          throw new Error("Source must be loaded for full eject");
+        }
         await this.handleAgentPartials(outputBase, flags.force, directOutput, false);
         await this.handleAgentPartials(outputBase, true, directOutput, true);
-        await this.handleSkills(projectDir, flags.force, sourceResult!, directOutput, outputBase);
+        await this.handleSkills(projectDir, flags.force, sourceResult, directOutput, outputBase);
         break;
       default:
         break;
