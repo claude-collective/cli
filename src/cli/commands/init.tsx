@@ -36,6 +36,7 @@ import {
   GLOBAL_INSTALL_ROOT,
 } from "../consts.js";
 import { SelectList, type SelectListItem } from "../components/common/select-list.js";
+import { Spinner } from "../components/common/spinner.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { getSkillById } from "../lib/matrix/matrix-provider";
@@ -43,10 +44,7 @@ import { type StartupMessage } from "../utils/logger.js";
 import { SUCCESS_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
 import { ensureBlankGlobalConfig } from "../lib/configuration/config-writer.js";
 
-/** Clears the visible terminal area so the next render starts clean. */
-function clearTerminalOutput(): void {
-  process.stdout.write("\x1b[H\x1b[2J\x1b[3J");
-}
+
 
 const DASHBOARD_OPTIONS: SelectListItem<string>[] = [
   { label: "Edit", value: "edit" },
@@ -134,7 +132,7 @@ export async function showDashboard(
 
   await waitUntilExit();
   clear();
-  clearTerminalOutput();
+  process.stdout.write("\x1b[H\x1b[2J\x1b[3J");
 
   return selectedCommand;
 }
@@ -174,7 +172,11 @@ export default class Init extends BaseCommand {
     if (await this.showDashboardIfInitialized(projectDir)) return;
     await this.ensureGlobalConfig(projectDir);
 
+    const { unmount, clear: clearSpinner } = render(<Spinner label="Loading skills..." />);
     const { sourceResult, startupMessages } = await this.loadSourceOrFail(flags);
+    clearSpinner();
+    unmount();
+
     const result = await this.runWizard(sourceResult, startupMessages, projectDir);
     if (!result) this.exit(EXIT_CODES.CANCELLED);
 
@@ -254,7 +256,7 @@ export default class Init extends BaseCommand {
 
     await waitUntilExit();
     clear();
-    clearTerminalOutput();
+    this.clearTerminal();
 
     // TypeScript can't track that onComplete callback mutates wizardResult before waitUntilExit resolves
     const result = wizardResult as WizardResultV2 | null;

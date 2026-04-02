@@ -238,10 +238,7 @@ describe("new agent command", () => {
     expect(output).toMatch(/invalid.*name/i);
   });
 
-  // BUG: The command does not check whether an agent directory already exists
-  // before proceeding. It should either error with a message about the existing
-  // agent or require a --force flag to overwrite.
-  it.fails("should error when agent directory already exists", async () => {
+  it("should error when agent directory already exists", async () => {
     tempDir = await createTempDir();
 
     const agentName = "existing-agent";
@@ -259,9 +256,7 @@ describe("new agent command", () => {
     expect(output).toMatch(/already exists/i);
   });
 
-  // BUG: The command does not have a --force flag. When implemented alongside
-  // the "already exists" check, --force should allow overwriting an existing agent.
-  it.fails("should overwrite existing agent with --force flag", async () => {
+  it("should overwrite existing agent with --force flag", async () => {
     tempDir = await createTempDir();
 
     const agentName = "force-agent";

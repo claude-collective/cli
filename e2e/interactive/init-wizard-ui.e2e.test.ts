@@ -19,14 +19,14 @@ describe("init wizard — UI elements", () => {
       wizard = await InitWizard.launchRaw({ cols: 40, rows: 40 });
 
       const screen = wizard.getScreen();
-      expect(screen).toContain("resize your terminal");
+      expect(screen).toContain("too narrow");
     });
 
     it("should show resize warning in a short terminal", async () => {
       wizard = await InitWizard.launchRaw({ cols: 120, rows: 10 });
 
       const screen = wizard.getScreen();
-      expect(screen).toContain("resize your terminal");
+      expect(screen).toContain("too short");
     });
   });
 

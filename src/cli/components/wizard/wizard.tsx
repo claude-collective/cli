@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
-import { Box, Text, useApp, useInput, useStdout } from "ink";
+import { useApp, useInput } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
-import { CLI_COLORS } from "../../consts.js";
 import { cliTheme } from "../themes/default.js";
 import { WizardLayout } from "./wizard-layout.js";
 import { StepStack } from "./step-stack.js";
@@ -61,9 +60,6 @@ type WizardProps = {
   startupMessages?: StartupMessage[];
 };
 
-const MIN_TERMINAL_WIDTH = 80;
-const MIN_TERMINAL_HEIGHT = 15;
-
 export const Wizard: React.FC<WizardProps> = ({
   onComplete,
   onCancel,
@@ -83,12 +79,6 @@ export const Wizard: React.FC<WizardProps> = ({
 }) => {
   const store = useWizardStore();
   const { exit } = useApp();
-  const { stdout } = useStdout();
-
-  const terminalWidth = stdout.columns || MIN_TERMINAL_WIDTH;
-  const terminalHeight = stdout.rows || MIN_TERMINAL_HEIGHT;
-  const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
-  const isShortTerminal = terminalHeight < MIN_TERMINAL_HEIGHT;
 
   useWizardInitialization({
     initialStep,
@@ -266,20 +256,6 @@ export const Wizard: React.FC<WizardProps> = ({
         return null;
     }
   };
-
-  if (isNarrowTerminal || isShortTerminal) {
-    const issue = isNarrowTerminal
-      ? `too narrow (${terminalWidth} columns, need ${MIN_TERMINAL_WIDTH})`
-      : `too short (${terminalHeight} rows, need ${MIN_TERMINAL_HEIGHT})`;
-
-    return (
-      <ThemeProvider theme={cliTheme}>
-        <Box flexDirection="column" padding={1}>
-          <Text color={CLI_COLORS.WARNING}>Terminal {issue}. Please resize your terminal.</Text>
-        </Box>
-      </ThemeProvider>
-    );
-  }
 
   return (
     <ThemeProvider theme={cliTheme}>
