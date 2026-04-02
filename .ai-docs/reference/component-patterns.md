@@ -1,6 +1,6 @@
 # Component Patterns
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Rendering Library
 
@@ -46,12 +46,11 @@ src/cli/components/
     wizard.tsx               # Main wizard orchestrator
     wizard-layout.tsx        # Layout wrapper (tabs + content + info panel)
     wizard-tabs.tsx          # Step progress indicator tabs
-    view-title.tsx           # Step title component
     step-stack.tsx           # Stack selection step
     step-build.tsx           # Technology selection step
     step-sources.tsx         # Source selection step
     step-agents.tsx          # Agent selection step
-    step-confirm.tsx         # Confirmation step
+    step-confirm.tsx         # Confirmation step (scrollable, delegates to SkillAgentSummary)
     step-settings.tsx        # Settings overlay
     step-refine.tsx          # Refine sub-step component
     category-grid.tsx        # Category grid layout
@@ -59,12 +58,13 @@ src/cli/components/
     domain-selection.tsx     # Domain tab selector
     section-progress.tsx     # Category completion progress
     selection-card.tsx       # Selected item card
-    source-grid.tsx          # Per-skill source picker
+    skill-agent-summary.tsx  # 2-box skill/agent listing with scope labels (used by StepConfirm and InfoPanel)
+    source-grid.tsx          # Per-skill source picker (inline layout with column headers)
     search-modal.tsx         # Bound skill search modal
     stack-selection.tsx      # Stack list component
     menu-item.tsx            # Menu item component
-    info-panel.tsx           # Skill/agent summary panel (scope buckets)
-    stats-panel.tsx          # Stats summary (StatsData, computeStats)
+    info-panel.tsx           # Marketplace/stack header + scrollable SkillAgentSummary
+    toast.tsx                # Toast notification component (styled text block)
     hotkeys.ts               # Centralized hotkey registry
     utils.ts                 # Wizard utility functions
 ```
@@ -100,40 +100,44 @@ export const StepBuild: React.FC<StepBuildProps> = ({ matrix }) => {
 - Named exports only (no default exports)
 - `React.FC<Props>` type annotation
 - Ink primitives: `<Box>`, `<Text>`, `useInput()`, `useApp()`, `useStdout()`
-- Colors from `CLI_COLORS` constant (`src/cli/consts.ts:177-187`)
+- Colors from `CLI_COLORS` constant (`src/cli/consts.ts:185-196`)
 - Store access via `useWizardStore()` selectors
 - No SCSS/CSS - all styling via Ink props
 
-## Color Constants (`src/cli/consts.ts:177-187`)
+## Color Constants (`src/cli/consts.ts:185-196`)
 
-| Constant    | Value    | Usage               |
-| ----------- | -------- | ------------------- |
-| `PRIMARY`   | "cyan"   | Headers, focus      |
-| `SUCCESS`   | "green"  | Checkmarks, success |
-| `ERROR`     | "red"    | Errors              |
-| `WARNING`   | "yellow" | Warnings            |
-| `INFO`      | "blue"   | Info text           |
-| `NEUTRAL`   | "gray"   | Dimmed text         |
-| `FOCUS`     | "cyan"   | Focused elements    |
-| `UNFOCUSED` | "white"  | Unfocused elements  |
-| `WHITE`     | "white"  | Default text        |
+| Constant    | Value      | Usage                                 |
+| ----------- | ---------- | ------------------------------------- |
+| `PRIMARY`   | "cyan"     | Headers, focus                        |
+| `SUCCESS`   | "green"    | Checkmarks, success                   |
+| `ERROR`     | "red"      | Errors                                |
+| `WARNING`   | "yellow"   | Warnings                              |
+| `INFO`      | "blue"     | Info text                             |
+| `NEUTRAL`   | "gray"     | Dimmed text                           |
+| `FOCUS`     | "cyan"     | Focused elements                      |
+| `UNFOCUSED` | "white"    | Unfocused elements                    |
+| `WHITE`     | "white"    | Default text                          |
+| `LABEL_BG`  | "#383838"  | Background for scope/focus labels     |
 
-## UI Symbols (`src/cli/consts.ts:99-112`)
+## UI Symbols (`src/cli/consts.ts:99-115`)
 
-| Symbol               | Value           | Usage                |
-| -------------------- | --------------- | -------------------- |
-| `CHECKBOX_CHECKED`   | `[x]`           | Selected checkbox    |
-| `CHECKBOX_UNCHECKED` | `[ ]`           | Unselected checkbox  |
-| `CHEVRON`            | unicode chevron | Navigation indicator |
-| `CHEVRON_SPACER`     | space           | Non-focused spacer   |
-| `SELECTED`           | checkmark       | Selected item        |
-| `UNSELECTED`         | circle          | Unselected item      |
-| `CURRENT`            | filled circle   | Current focus        |
-| `SKIPPED`            | dash            | Skipped step         |
-| `DISABLED`           | dash            | Disabled item        |
-| `DISCOURAGED`        | `!`             | Warning indicator    |
-| `SCROLL_UP`          | triangle up     | Scroll indicator     |
-| `SCROLL_DOWN`        | triangle down   | Scroll indicator     |
+| Symbol               | Value           | Usage                              |
+| -------------------- | --------------- | ---------------------------------- |
+| `CHECKBOX_CHECKED`   | `[x]`           | Selected checkbox                  |
+| `CHECKBOX_UNCHECKED` | `[ ]`           | Unselected checkbox                |
+| `CHEVRON`            | unicode chevron | Navigation indicator               |
+| `CHEVRON_SPACER`     | space           | Non-focused spacer                 |
+| `SELECTED`           | checkmark       | Selected item                      |
+| `UNSELECTED`         | circle          | Unselected item                    |
+| `CURRENT`            | filled circle   | Current focus                      |
+| `SKIPPED`            | dash            | Skipped step                       |
+| `DISABLED`           | dash            | Disabled item                      |
+| `DISCOURAGED`        | `!`             | Warning indicator                  |
+| `LOCK`               | lock emoji      | Locked/read-only items             |
+| `EJECT`              | eject symbol    | Local/ejected skill indicator      |
+| `BULLET`             | bullet dot      | List item marker in confirm/summary |
+| `SCROLL_UP`          | triangle up     | Scroll indicator                   |
+| `SCROLL_DOWN`        | triangle down   | Scroll indicator                   |
 
 ## SelectList Component (`src/cli/components/common/select-list.tsx`)
 
@@ -165,7 +169,7 @@ type OptionState =
   | { status: "incompatible"; reason: string };
 ```
 
-### CategoryOption and CategoryRow (`src/cli/components/wizard/category-grid.tsx:12-33`)
+### CategoryOption and CategoryRow (`src/cli/components/wizard/category-grid.tsx:12-35`)
 
 Types for the build step skill selection grid:
 
@@ -177,6 +181,7 @@ type CategoryOption = {
   local?: boolean;
   installed?: boolean;
   scope?: "project" | "global";
+  locked?: boolean;
   hasUnmetRequirements?: boolean;
   unmetRequirementsReason?: string;
   requiredBy?: string;
@@ -202,7 +207,7 @@ Centralized hotkey definitions. Each hotkey has a `key` (for matching) and `labe
 | Export                       | Key | Context                       |
 | ---------------------------- | --- | ----------------------------- |
 | `HOTKEY_INFO`                | I   | Global (toggle info panel)    |
-| `HOTKEY_ACCEPT_DEFAULTS`     | A   | Global (all steps)            |
+| `HOTKEY_ACCEPT_DEFAULTS`     | A   | Build step (with stack selected) |
 | `HOTKEY_SCOPE`               | S   | Build/agents step             |
 | `HOTKEY_SETTINGS`            | S   | Sources step                  |
 | `HOTKEY_TOGGLE_LABELS`       | D   | Build step                    |
@@ -218,26 +223,33 @@ Helper: `isHotkey(input, hotkey)` for case-insensitive matching.
 
 ## InfoPanel (`src/cli/components/wizard/info-panel.tsx`)
 
-Displays a bordered summary panel showing all selected skills and agents grouped by scope (global/project) and source type (plugin/local). Toggled via `HOTKEY_INFO` (I key). Rendered inside `wizard-layout.tsx` when `showInfo` store state is true (gated by `FEATURE_FLAGS.INFO_PANEL`).
+Scrollable panel showing marketplace/stack header and a skill/agent summary. Toggled via `HOTKEY_INFO` (I key). Rendered inside `wizard-layout.tsx` when `showInfo` store state is true (gated by `FEATURE_FLAGS.INFO_PANEL`, currently enabled).
 
-**Exports:** `InfoPanel` (React.FC, no props -- reads `skillConfigs` and `agentConfigs` from wizard store).
+**Exports:** `InfoPanel` (React.FC, no props -- reads `skillConfigs`, `agentConfigs`, `selectedStackId`, and `enabledSources` from wizard store).
 
-**Internal helpers:**
+**Layout:**
 
-- `groupSkillsByBucket(configs)` -- groups skills into `SkillBuckets { globalPlugin, globalLocal, projectPlugin, projectLocal }`
-- `groupAgentsByScope(configs)` -- groups agents into `AgentBuckets { global, project }`
+- Header: marketplace source names + selected stack name (bordered bottom separator)
+- Body: `SkillAgentSummary` component for skill/agent listing
+- Scrollable via `useMeasuredHeight()` + manual `scrollOffset` state
 
 **Consumers:** `wizard-layout.tsx`
 
-## StatsPanel (`src/cli/components/wizard/stats-panel.tsx`)
+## SkillAgentSummary (`src/cli/components/wizard/skill-agent-summary.tsx`)
 
-Compact stats display showing skill/agent counts by scope and source type. Currently defined but not imported by any other component.
+Two-column (skills | agents) summary component with scope labels (Project/Global), eject icons for local skills, and diff markers (+/- for added/removed items in edit mode). Uses `UI_SYMBOLS.BULLET` for existing items.
 
 **Exports:**
 
-- `StatsData` type -- `{ skillsTotal, globalPlugin, globalLocal, projectPlugin, projectLocal, agentsTotal, agentsGlobal, agentsProject }`
-- `computeStats(skillConfigs, agentConfigs)` -- computes `StatsData` from config arrays
-- `StatsPanel` (React.FC, props: `{ stats: StatsData }`)
+- `SkillAgentSummaryProps` type -- `{ skillConfigs?: SkillConfig[]; agentConfigs?: AgentScopeConfig[] }`
+- `SkillAgentSummary` (React.FC) -- main summary component
+- `TableHeader` (React.FC) -- bold yellow section header
+- `ScopeLabel` (React.FC) -- white-on-LABEL_BG scope badge
+- `EjectIcon` (React.FC) -- yellow eject symbol for local/ejected skills
+
+**Store access:** Reads `installedSkillConfigs` and `installedAgentConfigs` from wizard store to compute diffs (new/removed items).
+
+**Consumers:** `step-confirm.tsx`, `info-panel.tsx`
 
 ## Hook Patterns
 
@@ -299,7 +311,7 @@ Test files use:
 
 **File:** `src/cli/components/hooks/use-virtual-scroll.ts`
 
-For long skill lists that exceed terminal height. Constants in `SCROLL_VIEWPORT` (`src/cli/consts.ts:149-160`):
+For long skill lists that exceed terminal height. Constants in `SCROLL_VIEWPORT` (`src/cli/consts.ts:157-168`):
 
 | Constant                  | Value | Purpose                                    |
 | ------------------------- | ----- | ------------------------------------------ |

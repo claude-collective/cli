@@ -1,6 +1,6 @@
 # Wizard Flow
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Overview
 
@@ -55,9 +55,10 @@ Wizard (src/cli/components/wizard/wizard.tsx)
   |     |     |-> SearchModal (search-modal.tsx) - Bound skill search (feature-flagged: SOURCE_SEARCH)
   |     |-> StepAgents (step-agents.tsx) - Agent selection
   |     |-> StepConfirm (step-confirm.tsx) - Confirmation
+  |     |     |-> SkillAgentSummary (skill-agent-summary.tsx) - 2-box skill/agent listing
   |
   |-> Overlays:
-        |-> StepSettings (step-settings.tsx) - Source management (S hotkey on sources step; feature-flagged: SOURCE_SEARCH)
+        |-> StepSettings (step-settings.tsx) - Source management (S hotkey on sources step; always functional, footer label gated by SOURCE_SEARCH)
 ```
 
 Additional wizard components (not in main render tree):
@@ -65,8 +66,7 @@ Additional wizard components (not in main render tree):
 - `menu-item.tsx` - Reusable menu item component
 - `selection-card.tsx` - Selection card display (used by StepSources choice view)
 - `step-refine.tsx` - Refinement step (all-recommended vs customize); currently unused in renderStep switch
-- `view-title.tsx` - Step title component (imported by multiple steps but some usages are commented out)
-- `stats-panel.tsx` - Statistics panel (exports `StatsPanel` and `computeStats()`); currently unused in render tree
+- `toast.tsx` - Toast notification component (styled text block with padding)
 
 ## Feature Flags
 
@@ -76,12 +76,12 @@ Feature flags live at `src/cli/lib/feature-flags.ts`:
 | --------------- | ------- | -------------------------------------------------------------- |
 | `SOURCE_SEARCH` | `false` | Search pill in source grid, settings overlay access            |
 | `SOURCE_CHOICE` | `false` | Intermediate "recommended vs customize" screen in sources step |
-| `INFO_PANEL`    | `false` | `I` key opens info panel overlay in wizard-layout              |
+| `INFO_PANEL`    | `true`  | `I` key opens info panel overlay in wizard-layout              |
 
 ## Wizard Props (from commands)
 
 ```typescript
-// src/cli/components/wizard/wizard.tsx:47-63
+// src/cli/components/wizard/wizard.tsx:46-62
 type WizardProps = {
   onComplete: (result: WizardResultV2) => void; // Called on confirm
   onCancel: () => void; // Called on Escape/Ctrl+C
@@ -103,7 +103,7 @@ type WizardProps = {
 
 **Note:** The wizard does NOT receive a `matrix` prop. It accesses the matrix singleton via `matrix-provider.ts` imports.
 
-## WizardResultV2 (`src/cli/components/wizard/wizard.tsx:32-45`)
+## WizardResultV2 (`src/cli/components/wizard/wizard.tsx:31-44`)
 
 ```typescript
 type WizardResultV2 = {
@@ -180,7 +180,7 @@ Global hotkeys (handled in `wizard.tsx`):
 - `A` (build step with stack selected): Accept stack defaults, jump to confirm
 - `S` (build step): Toggle focused skill scope (project/global); disabled when `isEditingFromGlobalScope`
 - `S` (agents step): Toggle focused agent scope (project/global); disabled when `isEditingFromGlobalScope`
-- `S` (sources step): Toggle settings overlay (feature-flagged: `SOURCE_SEARCH`)
+- `S` (sources step): Toggle settings overlay (always functional; footer label gated by `SOURCE_SEARCH`)
 
 Per-step hotkeys vary by component (arrow keys, j/k vim keys, Space for toggle, Enter for confirm).
 
@@ -212,7 +212,7 @@ Common key labels exported from `hotkeys.ts`:
 
 ## Build Step Domain Order
 
-From `src/cli/consts.ts:190`:
+From `src/cli/consts.ts:199`:
 
 ```typescript
 BUILT_IN_DOMAIN_ORDER = ["web", "api", "ai", "mobile", "cli", "infra", "meta", "shared"];
@@ -220,7 +220,7 @@ BUILT_IN_DOMAIN_ORDER = ["web", "api", "ai", "mobile", "cli", "infra", "meta", "
 
 Custom domains appear before built-in domains, alphabetically.
 
-Default scratch domains (`src/cli/consts.ts:202`): `["web", "api", "mobile"]`.
+Default scratch domains (`src/cli/consts.ts:211`): `["web", "api", "mobile"]`.
 
 Domain descriptions defined in `domain-selection.tsx`:
 
@@ -246,15 +246,17 @@ Implemented in:
 - `src/cli/components/hooks/use-framework-filtering.ts` (hook)
 - `src/cli/lib/wizard/build-step-logic.ts` (`isCompatibleWithSelectedFrameworks()`, `buildCategoriesForDomain()`)
 
-## Info Panel (Feature-Flagged)
+## Info Panel
 
 `src/cli/components/wizard/info-panel.tsx`
 
-Feature-flagged behind `FEATURE_FLAGS.INFO_PANEL` (currently `false`).
+Gated by `FEATURE_FLAGS.INFO_PANEL` (currently `true`).
 
-When enabled, pressing `I` opens a panel in `wizard-layout.tsx` that replaces the step content. Shows:
+Pressing `I` opens a panel in `wizard-layout.tsx` that replaces the step content. Shows:
 
-- Skills grouped by scope (global/project) and source (plugin/local)
-- Agents grouped by scope (global/project)
-- Uses skill display names from matrix via `getSkillDisplayName()`
+- Header section with marketplace source names and selected stack name
+- Scrollable skill/agent summary via `SkillAgentSummary` component (2-box layout with scope labels)
+- Uses `useMeasuredHeight()` for scroll viewport calculation
 - Closes with `I` or `Escape`
+
+**Key difference from StepConfirm:** InfoPanel reads `skillConfigs`/`agentConfigs` directly from the wizard store. StepConfirm receives them as props.

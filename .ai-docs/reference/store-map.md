@@ -1,6 +1,6 @@
 # Store / State Map
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## State Management Library
 
@@ -12,11 +12,11 @@
 
 | Store          | File                                 | Purpose                  |
 | -------------- | ------------------------------------ | ------------------------ |
-| useWizardStore | `src/cli/stores/wizard-store.ts:552` | Entire wizard flow state |
+| useWizardStore | `src/cli/stores/wizard-store.ts:560` | Entire wizard flow state |
 
 There is exactly **one** Zustand store in the codebase.
 
-## WizardState Shape (`src/cli/stores/wizard-store.ts:190-493`)
+## WizardState Shape (`src/cli/stores/wizard-store.ts:190-497`)
 
 ### Navigation State
 
@@ -49,6 +49,8 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 | `agentConfigs`           | `AgentScopeConfig[]`       | Per-agent scope configuration (project/global)         |
 | `boundSkills`            | `BoundSkill[]`             | Foreign skills bound via search                        |
 | `skillConfigs`           | `SkillConfig[]`            | Per-skill source and scope configuration               |
+| `installedSkillConfigs`  | `SkillConfig[] \| null`    | Snapshot of configs installed before wizard opened (for diff rendering) |
+| `installedAgentConfigs`  | `AgentScopeConfig[] \| null` | Snapshot of agent configs installed before wizard opened              |
 | `lockedSkillIds`         | `SkillId[]`                | Skills that cannot be toggled (existing global items)  |
 | `lockedAgentNames`       | `AgentName[]`              | Agents that cannot be toggled (existing global agents) |
 
@@ -126,7 +128,7 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 | `setSourceSelection`  | `(skillId: SkillId, sourceId: string) => void` | Set source for a specific skill  |
 | `setCustomizeSources` | `(customize: boolean) => void`                 | Toggle per-skill source pickers  |
 | `setEnabledSources`   | `(sources: Record<string, boolean>) => void`   | Replace enabled/disabled sources |
-| `setAllSourcesLocal`  | `() => void`                                   | Set all skills to "local" source |
+| `setAllSourcesEject`  | `() => void`                                   | Set all skills to "eject" source |
 | `setAllSourcesPlugin` | `() => void`                                   | Set all skills to marketplace    |
 
 ### Derived
@@ -158,8 +160,8 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 | `getCurrentDomain`                 | `Domain \| null`                     | Domain at currentDomainIndex     |
 | `getTechnologyCount`               | `number`                             | Total selected count             |
 | `getStepProgress`                  | `{ completedSteps, skippedSteps }`   | For wizard tab indicators        |
-| `canGoToNextDomain`                | `boolean`                            | Has next domain                  |
-| `canGoToPreviousDomain`            | `boolean`                            | Has previous domain              |
+| `canGoToNextDomain`                | `() => boolean`                      | Has next domain                  |
+| `canGoToPreviousDomain`            | `() => boolean`                      | Has previous domain              |
 | `buildSourceRows`                  | `{ skillId, options }[]`             | Sources step UI data             |
 
 ## Usage Pattern
@@ -186,6 +188,7 @@ const store = useWizardStore();
 - `src/cli/components/wizard/stack-selection.tsx` - Stack list component
 - `src/cli/components/wizard/domain-selection.tsx` - Domain tab selector
 - `src/cli/components/wizard/info-panel.tsx` - Info overlay (selected skills/agents)
+- `src/cli/components/wizard/skill-agent-summary.tsx` - Skill/agent summary display
 - `src/cli/components/hooks/use-wizard-initialization.ts` - Init hook
 
 ## Internal Constants
@@ -209,14 +212,14 @@ DOMAIN_AGENTS = {
 
 **Source sort tiers** (for source ordering in buildSourceRows):
 
-1. local/installed
-2. scoped marketplace (primary)
-3. default public marketplace
-4. third-party marketplaces
+1. eject/global (installed on disk -- type "eject" or installed via plugin)
+2. scoped marketplace (primary source from --source flag)
+3. default public marketplace (Agents Inc)
+4. third-party marketplaces (extra configured sources)
 
 ## State Reset
 
-`reset()` action restores all state to `createInitialState()` defaults (`wizard-store.ts:524-550`).
+`reset()` action restores all state to `createInitialState()` defaults (`wizard-store.ts:530-558`, `reset` at `:958`).
 
 `selectStack()` also resets: domainSelections, \_stackDomainSelections, selectedDomains, skillConfigs, selectedAgents, agentConfigs, boundSkills, currentDomainIndex, stackAction.
 
@@ -227,5 +230,6 @@ Initial state:
 - `showLabels: false`, `filterIncompatible: false`, `showSettings: false`, `showInfo: false`
 - `skillConfigs: []`, `focusedSkillId: null`, `customizeSources: false`
 - `enabledSources: {}`, `selectedAgents: []`, `agentConfigs: []`, `focusedAgentId: null`
-- `boundSkills: []`, `lockedSkillIds: []`, `lockedAgentNames: []`
+- `boundSkills: []`, `installedSkillConfigs: null`, `installedAgentConfigs: null`
+- `lockedSkillIds: []`, `lockedAgentNames: []`
 - `isEditingFromGlobalScope: false`, `history: []`

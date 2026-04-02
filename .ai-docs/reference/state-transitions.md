@@ -1,6 +1,6 @@
 # State Transitions
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Overview
 
@@ -29,7 +29,7 @@ type WizardStep = "stack" | "domains" | "build" | "sources" | "agents" | "confir
 | 0     | `"stack"`   | Stack   | Select pre-built stack or "Start from scratch"    |
 | 1     | `"domains"` | Domains | Select domains to configure (web, api, cli, etc.) |
 | 2     | `"build"`   | Skills  | Per-domain skill selection via CategoryGrid       |
-| 3     | `"sources"` | Sources | Choose source per skill (local, marketplace)      |
+| 3     | `"sources"` | Sources | Choose source per skill (eject, marketplace)      |
 | 4     | `"agents"`  | Agents  | Select agents to compile                          |
 | 5     | `"confirm"` | Confirm | Review and confirm                                |
 
@@ -40,14 +40,15 @@ type WizardStep = "stack" | "domains" | "build" | "sources" | "agents" | "confir
                                 |   stack   |  (initial step)
                                 +-----+-----+
                                       |
-                      +----- ENTER ----+---- ENTER -----+
-                      |  ("scratch")   |  (stack item)  |
-                      v                v                 |
-              selectStack(null)   selectStack(id)        |
-              setApproach("scratch") setApproach("stack") |
-              toggleDomain x3     populateFromSkillIds() |
-                      |                |                 |
-                      +-------+--------+                 |
+                      +----- ENTER ----+---- ENTER ------+
+                      |  ("scratch")   |  (stack item)   |
+                      v                v                  |
+              selectStack(null)   selectStack(id)         |
+              setApproach("scratch") setStackAction("customize")
+              toggleDomain x3     populateFromSkillIds()  |
+                                  setApproach("stack")    |
+                      |                |                  |
+                      +-------+--------+                  |
                               v                          |
                         +-----------+                    |
                         |  domains  |                    |
@@ -101,9 +102,9 @@ type WizardStep = "stack" | "domains" | "build" | "sources" | "agents" | "confir
 | `domains` | `build`   | ENTER (continue, requires >= 1 domain selected)          | `domain-selection.tsx:53`                        |
 | `build`   | `build`   | ENTER when `nextDomain()` returns true (more domains)    | `use-build-step-props.ts:36`                     |
 | `build`   | `sources` | ENTER when `nextDomain()` returns false (last domain)    | `use-build-step-props.ts:37`                     |
-| `build`   | `confirm` | `A` hotkey (accept defaults, requires `selectedStackId`) | `wizard.tsx:148-149`                             |
-| `sources` | `agents`  | ENTER on "Use recommended" or ENTER in customize view    | `wizard.tsx:243-246` (via `onContinue` callback) |
-| `agents`  | `confirm` | ENTER (continue)                                         | `step-agents.tsx:207`                            |
+| `build`   | `confirm` | `A` hotkey (accept defaults, requires `selectedStackId`) | `wizard.tsx:147-148`                             |
+| `sources` | `agents`  | ENTER on "Use recommended" or ENTER in customize view    | `wizard.tsx:240-245` (via `onContinue` callback) |
+| `agents`  | `confirm` | ENTER (continue)                                         | `step-agents.tsx:216`                            |
 
 ## Backward Navigation Transitions
 
@@ -117,7 +118,7 @@ type WizardStep = "stack" | "domains" | "build" | "sources" | "agents" | "confir
 | `agents`  | `sources`           | ESC                                                      | Pops from `history`                                        |
 | `confirm` | `agents`            | ESC                                                      | Pops from `history`                                        |
 
-**`goBack()` implementation** (`wizard-store.ts:890-898`): Pops from `history[]`, sets `step` to the popped value. Falls back to `"stack"` if history is empty.
+**`goBack()` implementation** (`wizard-store.ts:898-906`): Pops from `history[]`, sets `step` to the popped value. Falls back to `"stack"` if history is empty.
 
 ## Accept-Defaults Shortcut
 
@@ -126,7 +127,7 @@ When a stack is selected and the user presses `A` during the build step:
 1. `setStackAction("defaults")` -- marks the stack for as-is use
 2. `setStep("confirm")` -- jumps directly to confirmation, skipping sources and agents
 
-**Condition:** `store.step === "build" && store.selectedStackId` (checked at `wizard.tsx:144-147`)
+**Condition:** `store.step === "build" && store.selectedStackId` (checked at `wizard.tsx:142-146`)
 
 **`getStepProgress()` response:** marks `build`, `sources`, `agents` as `skipped` (not `completed`)
 
@@ -191,8 +192,8 @@ When the wizard opens in edit mode (from `agentsinc edit`):
 | `setSourceSelection(skillId, src)` | `skillConfigs`     | Updates `source` field. No-op with warning if `skillId` or `src` is empty.                          |
 | `setCustomizeSources(customize)`   | `customizeSources` | None                                                                                                |
 | `setEnabledSources(sources)`       | `enabledSources`   | Filters out entries with empty-string keys (with warning).                                          |
-| `setAllSourcesLocal()`             | `skillConfigs`     | Sets `source: "local"` for all skill configs.                                                       |
-| `setAllSourcesPlugin()`            | `skillConfigs`     | Sets `source` to first non-local `availableSource` per skill. Falls back to current source if none. |
+| `setAllSourcesEject()`             | `skillConfigs`     | Sets `source: "eject"` for all skill configs.                                                       |
+| `setAllSourcesPlugin()`            | `skillConfigs`     | Sets `source` to first non-eject `availableSource` per skill. Falls back to current source if none. |
 | `bindSkill(skill)`                 | `boundSkills`      | Appends to array. Silently skips (with warning) if same `id + sourceUrl` already exists.            |
 
 ### UI Toggle Actions
@@ -239,7 +240,7 @@ Which actions trigger which resets:
 
 ### selectStack() Reset Detail
 
-**File:** `wizard-store.ts:563-575`
+**File:** `wizard-store.ts:571`
 
 When a new stack is selected (or deselected via `null`), the following fields are reset to empty/initial values:
 
@@ -278,21 +279,21 @@ This is the most aggressive reset in the store -- it clears all downstream selec
 
 ## Derived State (Computed Selectors)
 
-| Selector                             | Computes From                                                         | Returns                                                        |
-| ------------------------------------ | --------------------------------------------------------------------- | -------------------------------------------------------------- | -------- | --------- |
-| `getAllSelectedTechnologies()`       | `domainSelections` (all domains, all categories)                      | `SkillId[]` -- flat array of all selected skill IDs            |
-| `getSelectedTechnologiesPerDomain()` | `domainSelections`                                                    | `Partial<Record<Domain, SkillId[]>>`                           |
-| `getCurrentDomain()`                 | `selectedDomains`, `currentDomainIndex`                               | `Domain                                                        | null`    |
-| `getTechnologyCount()`               | Calls `getAllSelectedTechnologies().length`                           | `number`                                                       |
-| `getStepProgress()`                  | `step`, `approach`, `selectedStackId`, `stackAction`                  | `{ completedSteps: WizardStep[], skippedSteps: WizardStep[] }` |
-| `canGoToNextDomain()`                | `currentDomainIndex`, `selectedDomains.length`                        | `boolean`                                                      |
-| `canGoToPreviousDomain()`            | `currentDomainIndex`                                                  | `boolean`                                                      |
-| `deriveInstallMode()`                | `skillConfigs` (source values)                                        | `InstallMode` (`"local"                                        | "plugin" | "mixed"`) |
-| `buildSourceRows()`                  | `getAllSelectedTechnologies()`, `skillConfigs`, `boundSkills`, matrix | `{ skillId, options: SourceOption[] }[]`                       |
+| Selector                             | Computes From                                                        | Returns                                                        |
+| ------------------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `getAllSelectedTechnologies()`       | `domainSelections` (all domains, all categories)                     | `SkillId[]` -- flat array of all selected skill IDs            |
+| `getSelectedTechnologiesPerDomain()` | `domainSelections`                                                   | `Partial<Record<Domain, SkillId[]>>`                           |
+| `getCurrentDomain()`                 | `selectedDomains`, `currentDomainIndex`                              | `Domain \| null`                                               |
+| `getTechnologyCount()`               | Calls `getAllSelectedTechnologies().length`                          | `number`                                                       |
+| `getStepProgress()`                  | `step`, `approach`, `selectedStackId`, `stackAction`                 | `{ completedSteps: WizardStep[], skippedSteps: WizardStep[] }` |
+| `canGoToNextDomain()`                | `currentDomainIndex`, `selectedDomains.length`                       | `boolean`                                                      |
+| `canGoToPreviousDomain()`            | `currentDomainIndex`                                                 | `boolean`                                                      |
+| `deriveInstallMode()`                | `skillConfigs` (source values)                                       | `InstallMode` (`"eject" \| "plugin" \| "mixed"`)               |
+| `buildSourceRows()`                 | `getAllSelectedTechnologies()`, `skillConfigs`, `boundSkills`, matrix | `{ skillId, options: SourceOption[] }[]`                       |
 
 ### getStepProgress() Logic
 
-**File:** `wizard-store.ts:993-1021`
+**File:** `wizard-store.ts:1001`
 
 | Current Step         | Completed Steps                                  | Skipped Steps                |
 | -------------------- | ------------------------------------------------ | ---------------------------- |
@@ -333,7 +334,7 @@ The "defaults" shortcut case: `approach === "stack" && selectedStackId && stackA
 
 | Hotkey | Key | Action                               | Store Method            |
 | ------ | --- | ------------------------------------ | ----------------------- |
-| `L`    | `l` | Set all skill sources to "local"     | `setAllSourcesLocal()`  |
+| `L`    | `l` | Set all skill sources to "eject"     | `setAllSourcesEject()`  |
 | `P`    | `p` | Set all skill sources to marketplace | `setAllSourcesPlugin()` |
 
 ### Settings Step Hotkey (step-settings.tsx)
@@ -350,7 +351,7 @@ When `showSettings === true`, all input is blocked except `S` (to close settings
 
 ## Initial State
 
-**File:** `wizard-store.ts:524-550` (`createInitialState()`)
+**File:** `wizard-store.ts:530` (`createInitialState()`)
 
 | Field                      | Initial Value |
 | -------------------------- | ------------- |
@@ -374,6 +375,8 @@ When `showSettings === true`, all input is blocked except `S` (to close settings
 | `agentConfigs`             | `[]`          |
 | `focusedAgentId`           | `null`        |
 | `boundSkills`              | `[]`          |
+| `installedSkillConfigs`    | `null`        |
+| `installedAgentConfigs`    | `null`        |
 | `lockedSkillIds`           | `[]`          |
 | `lockedAgentNames`         | `[]`          |
 | `isEditingFromGlobalScope` | `false`       |
@@ -395,7 +398,7 @@ Other domains (mobile, shared, ai, infra, meta) have no preselected agents.
 
 ## Scratch Mode Default Domains
 
-**File:** `src/cli/consts.ts:202`
+**File:** `src/cli/consts.ts:211`
 
 When "Start from scratch" is selected, these domains are pre-toggled:
 
