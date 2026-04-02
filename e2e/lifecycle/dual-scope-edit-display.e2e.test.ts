@@ -51,7 +51,6 @@ describe("dual-scope edit lifecycle -- display and locking", () => {
     wizard = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

@@ -91,7 +91,6 @@ describe("config-scope integrity -- source priority preservation", () => {
     wizard = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 
@@ -206,7 +205,6 @@ describe("config-scope integrity -- config-types Domain type includes config.dom
     wizard = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 
@@ -309,7 +307,6 @@ describe("config-scope integrity -- global config includes source field", () => 
   afterEach(async () => {
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

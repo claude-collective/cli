@@ -47,7 +47,6 @@ describe.skipIf(!claudeAvailable)(
       wizard = undefined;
       if (tempDir) {
         await cleanupTempDir(tempDir);
-        tempDir = undefined!;
       }
     });
 

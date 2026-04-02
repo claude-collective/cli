@@ -167,7 +167,6 @@ describe("global scope lifecycle -- init wizard with scope toggling", () => {
     wizard = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 

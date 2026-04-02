@@ -45,7 +45,6 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
     wizard = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
-      tempDir = undefined!;
     }
   });
 
