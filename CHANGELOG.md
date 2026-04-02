@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.102.0] - 2026-04-02
+
+**Hex colors, terminal size guard, compiler Liquid fix, edit styling**
+
+- All CLI_COLORS migrated to hex values for consistent rendering
+- Terminal size check centralized in BaseCommand — runs before every command
+- Compiler preserves Liquid syntax in agent content fields (D-175)
+- Edit command output styled with hex colors, loading spinner added
+
+See [changelogs/0.102.0.md](./changelogs/0.102.0.md) for full details.
+
 ## [0.101.0] - 2026-04-02
 
 **Agent findings audit, test quality sweep, CLI fixes**
