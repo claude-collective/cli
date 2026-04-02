@@ -93,7 +93,7 @@ it("should select specific stack and toggle skills", async () => {
   await build.advanceDomain(); // API
   const sources = await build.advanceToSources(); // Shared
 
-  // Sources -> set all to local
+  // Sources -> set all to eject mode
   await sources.setAllLocal();
   const agents = await sources.advance();
 

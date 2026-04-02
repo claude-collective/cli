@@ -1,6 +1,6 @@
 # E2E Testing Standards
 
-Consolidated from 11 audit/strategy docs and 65+ E2E test files. Every rule is enforceable and grounded in actual codebase patterns.
+Consolidated from 11 audit/strategy docs and 74 E2E test files. Every rule is enforceable and grounded in actual codebase patterns.
 
 ---
 
@@ -10,37 +10,52 @@ Consolidated from 11 audit/strategy docs and 65+ E2E test files. Every rule is e
 
 ```
 e2e/
-  commands/         # Non-interactive command tests (runCLI)
-  interactive/      # Wizard and interactive component tests (TerminalSession)
+  commands/         # Non-interactive command tests (CLI.run / runCLI)
+  interactive/      # Wizard and interactive component tests (InitWizard / EditWizard)
   lifecycle/        # Multi-phase flows: init -> edit -> compile -> uninstall
   integration/      # Cross-command integration (eject -> compile, custom agents)
   smoke/            # Third-party binary probes (Claude CLI availability)
   helpers/          # Shared infrastructure (NO test files here)
-    test-utils.ts         # runCLI, createTempDir, timing constants, project factories
+    test-utils.ts         # runCLI, createTempDir, path helpers, re-exports
     terminal-session.ts   # PTY wrapper with xterm-headless screen reading
-    create-e2e-source.ts  # 10-skill source fixture (skills, agents, stacks, templates)
+    create-e2e-source.ts  # 9-skill source fixture (skills, agents, stacks, templates)
     create-e2e-plugin-source.ts  # Source + built plugins + marketplace.json
-    plugin-assertions.ts  # verifyConfig, verifyAgentCompiled, verifySkillCopiedLocally
     node-pty.d.ts         # Type declaration reference for @lydell/node-pty
+  fixtures/         # Project creation, CLI execution, scope helpers
+    project-builder.ts    # ProjectBuilder static factories
+    cli.ts                # Non-interactive CLI runner (CLI.run)
+    dual-scope-helpers.ts # Multi-phase dual-scope lifecycle helpers
+    interactive-prompt.ts # Non-wizard interactive prompt page object
+  pages/            # Page Object Model framework
+    constants.ts          # DIRS, FILES, STEP_TEXT, TIMEOUTS, EXIT_CODES
+    base-step.ts          # Abstract base for all step page objects
+    terminal-screen.ts    # Screen abstraction over TerminalSession
+    wizard-result.ts      # WizardResult + ProjectHandle types
+    dashboard-session.ts  # Dashboard mode page object
+    wizards/              # Wizard entry points (InitWizard, EditWizard)
+    steps/                # Step page objects (stack, domain, build, sources, agents, confirm)
+  matchers/         # Custom Vitest matchers for file-based assertions
+    project-matchers.ts   # Matcher implementations
+    setup.ts              # Matcher registration + type augmentation
 ```
 
 **1.2 File naming: `{feature}.e2e.test.ts`.** Smoke tests use `{feature}.smoke.test.ts`. Split files at 300 LOC or 2+ unrelated concerns. Use descriptive names: `edit-wizard-plugin-migration.e2e.test.ts`, not `edit-2.e2e.test.ts`.
 
 **1.3 No task IDs in `describe()` blocks.** No `"P-BUILD-1: ..."` or `"Bug A: ..."` prefixes. Task IDs can appear in file-level JSDoc comments only.
 
-**1.4 Vitest config:** `e2e/vitest.config.ts` uses `pool: "forks"`, `testTimeout: 30_000`, `hookTimeout: 60_000`. The include pattern is `e2e/**/*.e2e.test.ts` -- smoke tests (`*.smoke.test.ts`) are excluded and must be run explicitly. Long tests override per-test with `{ timeout: LIFECYCLE_TEST_TIMEOUT_MS }`.
+**1.4 Vitest config:** `e2e/vitest.config.ts` uses `pool: "forks"`, `testTimeout: 30_000`, `hookTimeout: 60_000`, `retry: 2`. The include pattern is `e2e/**/*.e2e.test.ts` -- smoke tests (`*.smoke.test.ts`) are excluded and must be run explicitly. Long tests override per-test with `{ timeout: TIMEOUTS.LIFECYCLE }`.
 
 ---
 
 ## 2. Test Categories
 
-**2.1 Command tests** (`commands/`): Non-interactive. Use `runCLI()`. Test flags, output text, exit codes, and file system side effects. One `describe` per command, split into files when a command has 15+ tests.
+**2.1 Command tests** (`commands/`): Non-interactive. Use `CLI.run()` (preferred) or `runCLI()`. Test flags, output text, exit codes, and file system side effects. One `describe` per command, split into files when a command has 15+ tests.
 
-**2.2 Interactive tests** (`interactive/`): Wizard flows. Use `TerminalSession`. Test keyboard navigation, step transitions, wizard completion, and resulting file output. Split by concern: `init-wizard-stack`, `init-wizard-scratch`, `edit-wizard-local`.
+**2.2 Interactive tests** (`interactive/`): Wizard flows. Use `InitWizard` / `EditWizard` page objects. Test keyboard navigation, step transitions, wizard completion, and resulting file output. Split by concern: `init-wizard-stack`, `init-wizard-scratch`, `edit-wizard-local`.
 
-**2.3 Lifecycle tests** (`lifecycle/`): Multi-phase flows spanning commands. A single `it()` block runs Phase 1 (init) -> Phase 2 (compile/edit) -> Phase 3 (uninstall) -> Phase 4 (verify clean state). Use `TerminalSession` for interactive phases, `runCLI` for non-interactive phases.
+**2.3 Lifecycle tests** (`lifecycle/`): Multi-phase flows spanning commands. A single `it()` block runs Phase 1 (init) -> Phase 2 (compile/edit) -> Phase 3 (uninstall) -> Phase 4 (verify clean state). Use page objects for interactive phases, `CLI.run()` for non-interactive phases.
 
-**2.4 Integration tests** (`integration/`): Cross-command pipelines. Example: eject templates, modify them, compile, verify custom template content appears in output. Use `runCLI` exclusively.
+**2.4 Integration tests** (`integration/`): Cross-command pipelines. Example: eject templates, modify them, compile, verify custom template content appears in output. Use `CLI.run()` exclusively.
 
 **2.5 Smoke tests** (`smoke/`): Third-party binary probes (Claude CLI). These test whether external tools work, not our CLI. Use `describe.skipIf(!claudeAvailable)`. Never import production functions except `isClaudeCLIAvailable` and other `exec.ts` utilities for guards. Smoke tests also import `exec.ts` functions (`execCommand`, `claudePluginInstall`, etc.) because they test the Claude CLI binary directly, not our CLI.
 
@@ -48,12 +63,13 @@ e2e/
 
 ## 3. CLI Execution
 
-### Non-interactive: `runCLI`
+### Non-interactive: `CLI.run()` / `runCLI`
 
-**3.1 Use `runCLI()` from `test-utils.ts` for all non-interactive commands.**
+**3.1 Use `CLI.run()` from `e2e/fixtures/cli.ts` (preferred) or `runCLI()` from `test-utils.ts` for non-interactive commands.**
 
 ```typescript
-import { runCLI, EXIT_CODES } from "../helpers/test-utils.js";
+import { runCLI } from "../helpers/test-utils.js";
+import { EXIT_CODES } from "../pages/constants.js";
 
 const { exitCode, stdout, stderr, combined } = await runCLI(["compile", "--verbose"], projectDir, {
   env: { AGENTSINC_SOURCE: undefined },
@@ -67,23 +83,22 @@ expect(combined).toContain("Discovered 1 local skills");
 
 **3.3 All output is pre-stripped of ANSI.** `runCLI` calls `stripVTControlCharacters` on stdout, stderr, and combined. No manual stripping needed.
 
-**3.4 Use `COMPILE_ENV`** (`{ AGENTSINC_SOURCE: undefined }`) to prevent remote source resolution during compile tests. Do NOT spread `process.env` into `env` -- `execa` inherits it automatically, and spreading would clobber the `HOME` override.
+**3.4 Use `{ AGENTSINC_SOURCE: undefined }` in env options** to prevent remote source resolution during compile tests. `CLI.run()` sets this by default; `runCLI()` does NOT -- callers must pass it via `options.env` if needed. Do NOT spread `process.env` into `env` -- `execa` inherits it automatically, and spreading would clobber the `HOME` override.
 
-### Interactive: `TerminalSession`
+### Interactive: Page Objects (Wizards + Steps)
 
-**3.5 Use `TerminalSession` from `terminal-session.ts` for all interactive flows.**
+**3.5 Use page objects for all interactive flows.** Tests use `InitWizard.launch()` or `EditWizard.launch()` from `e2e/pages/wizards/`. Never import `TerminalSession` in test files.
 
 ```typescript
-import { TerminalSession } from "../helpers/terminal-session.js";
+import { InitWizard } from "../pages/wizards/init-wizard.js";
 
-const session = new TerminalSession(["init", "--source", sourceDir], projectDir, {
-  cols: 120,
-  rows: 60,
-  env: { AGENTSINC_SOURCE: undefined },
-});
+const wizard = await InitWizard.launch({ source });
+const result = await wizard.completeWithDefaults();
 ```
 
-**3.6 `TerminalSession` architecture:**
+For non-wizard interactive prompts (uninstall confirmation, update), use `InteractivePrompt` from `e2e/fixtures/interactive-prompt.ts`.
+
+**3.6 `TerminalSession` architecture (framework-internal -- never used in tests):**
 
 - Spawns `node bin/run.js` via `@lydell/node-pty` (prebuilt binaries, no C++ compilation)
 - Spreads `process.env` and sets `HOME=cwd`, `NO_COLOR=1`, `FORCE_COLOR=0` (color suppression ensures clean xterm buffer reads)
@@ -92,7 +107,7 @@ const session = new TerminalSession(["init", "--source", sourceDir], projectDir,
 - `getFullOutput()`: viewport + scrollback (use for most assertions)
 - `getRawOutput()`: raw PTY data with ANSI stripped (for text that Ink overwrites in the buffer)
 - `waitForText()`: polls `getFullOutput()` every 50ms until match or timeout
-- `waitForStableRender()`: waits for wizard footer ("navigate") then returns `getFullOutput()`
+- `waitForStableRender()`: waits for wizard footer ("select") then returns `getFullOutput()`
 - `waitForExit()`: waits for process to exit, returns exit code
 - Kills process tree via `tree-kill` on destroy
 
@@ -101,13 +116,13 @@ const session = new TerminalSession(["init", "--source", sourceDir], projectDir,
 ```typescript
 // Interactive/command tests: afterEach (independent tests)
 afterEach(async () => {
-  await session?.destroy();
-  session = undefined;
+  await wizard?.destroy();
+  wizard = undefined;
 });
 
 // Lifecycle tests: afterAll (shared state across phases)
 afterAll(async () => {
-  await session?.destroy();
+  await wizard?.destroy();
   if (tempDir) await cleanupTempDir(tempDir);
 });
 ```
@@ -141,16 +156,16 @@ beforeAll(ensureBinaryExists);
 
 ```typescript
 // Wait for the step to render
-await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-// Allow rendering to stabilize
-await delay(STEP_TRANSITION_DELAY_MS);
+await session.waitForText("Choose a stack", TIMEOUTS.WIZARD_LOAD);
+// Allow rendering to stabilize (framework-internal; page objects handle this automatically)
+await delay(INTERNAL_DELAYS.STEP_TRANSITION);
 // Send input
 session.enter();
 ```
 
 Never send keystrokes without first waiting for the expected UI text. The delay after `waitForText` prevents race conditions where the UI hasn't finished rendering all elements.
 
-**4.3 Use `waitForStableRender()` for assertions on wizard content.** It waits for the footer ("navigate") to render (last element in Ink tree), guaranteeing all content above is stable:
+**4.3 Use `waitForStableRender()` for assertions on wizard content.** It waits for the footer ("select") to render (last element in Ink tree), guaranteeing all content above is stable:
 
 ```typescript
 const output = await session.waitForStableRender();
@@ -160,19 +175,19 @@ expect(output).toContain("web-framework-react");
 **4.4 For text that Ink overwrites (installation progress), use `getRawOutput()`.** The xterm buffer has limited scrollback (1000 lines). Installation warnings may exceed this. `getRawOutput()` captures everything:
 
 ```typescript
-await waitForRawText(session, "initialized successfully", INSTALL_TIMEOUT_MS);
+await screen.waitForRawText("initialized successfully", TIMEOUTS.INSTALL);
 ```
 
 **4.5 Send hotkeys with `session.write()`.** Wizard hotkeys are single characters — send them as `session.write("a")`. See `hotkeys.ts` for the full registry. Do not hardcode hotkey characters in tests; if a hotkey changes, the test should break at the `waitForText` assertion, not silently pass with the wrong key.
 
-**4.6 Use shared navigation helpers for repeated patterns:**
+**4.6 Use page object composite flows for repeated patterns.** The old `navigate*` helper functions in `test-utils.ts` have been replaced by page object methods:
 
-| Helper                                                | Purpose                                                      | Source          |
-| ----------------------------------------------------- | ------------------------------------------------------------ | --------------- |
-| `navigateInitWizardToCompletion(session, timeoutMs?)` | Stack -> Domain -> Build("a") -> Confirm -> wait for success | `test-utils.ts` |
-| `navigateEditWizardToCompletion(session, timeoutMs?)` | Build -> Sources -> Agents -> Confirm                        | `test-utils.ts` |
-| `passThroughAllBuildDomains(session, timeoutMs?)`     | Web -> API -> Shared domain build steps                      | `test-utils.ts` |
-| `waitForRawText(session, text, timeoutMs)`            | Poll raw PTY output (bypasses xterm buffer limits)           | `test-utils.ts` |
+| Page Object Method                           | Purpose                                                      | Source               |
+| -------------------------------------------- | ------------------------------------------------------------ | -------------------- |
+| `InitWizard.completeWithDefaults(stackName?)` | Stack -> Domain -> Build (all) -> Sources -> Agents -> Confirm | `wizards/init-wizard.ts` |
+| `EditWizard.passThrough()`                   | Build (all) -> Sources -> Agents -> Confirm                  | `wizards/edit-wizard.ts` |
+| `BuildStep.passThroughAllDomains()`          | Web -> API -> Methodology domain build steps                 | `steps/build-step.ts`    |
+| `TerminalScreen.waitForRawText(text, ms)`    | Poll raw PTY output (bypasses xterm buffer limits)           | `terminal-screen.ts`     |
 
 ---
 
@@ -185,7 +200,7 @@ let tempDir: string;
 
 beforeAll(async () => {
   tempDir = await createTempDir();
-}, SETUP_TIMEOUT_MS);
+}, TIMEOUTS.SETUP);
 
 afterAll(async () => {
   if (tempDir) await cleanupTempDir(tempDir);
@@ -200,21 +215,24 @@ afterAll(async () => {
 
 **5.5 Project factory functions create test fixtures:**
 
-| Factory                                        | Creates                                      | Use When                                 |
-| ---------------------------------------------- | -------------------------------------------- | ---------------------------------------- |
-| `createMinimalProject(tempDir)`                | Config + 1 skill                             | Compile tests                            |
-| `createEditableProject(tempDir, opts?)`        | Config + skills + agents dir                 | Edit wizard tests                        |
-| `createDualScopeProject(tempDir)`              | Global home + project with separate configs  | Dual-scope tests                         |
-| `createProjectWithCustomSkill(tempDir)`        | Config + custom skill ID + config-types.ts   | Custom skill validation                  |
-| `createLocalSkill(projectDir, skillId, opts?)` | Skill dir with SKILL.md + optional metadata  | Add skill to existing project            |
-| `writeProjectConfig(baseDir, config)`          | `.claude-src/config.ts`                      | Override config in any project           |
-| `createMinimalInstallation(dir)`               | Minimal config.ts for `detectInstallation()` | Commands requiring existing installation |
+| Factory                                                 | Creates                                      | Use When                                 |
+| ------------------------------------------------------- | -------------------------------------------- | ---------------------------------------- |
+| `ProjectBuilder.minimal()`                              | Config + 1 skill                             | Compile tests                            |
+| `ProjectBuilder.editable(options?)`                     | Config + skills + agents dir                 | Edit wizard tests                        |
+| `ProjectBuilder.dualScope()`                            | Global home + project with separate configs  | Dual-scope tests                         |
+| `ProjectBuilder.withCustomSkill()`                      | Config + custom skill ID + config-types.ts   | Custom skill validation                  |
+| `ProjectBuilder.pluginProject(options)`                 | Config with marketplace, skills, agents      | Plugin-mode tests                        |
+| `ProjectBuilder.localProjectWithMarketplace(options)`   | Eject mode + marketplace in config           | Eject-to-plugin migration tests          |
+| `ProjectBuilder.globalWithSubproject()`                 | Global config + skill + empty subproject     | Global installation tests                |
+| `ProjectBuilder.installation(dir)`                      | Minimal config.ts in existing dir            | Commands requiring existing installation |
+| `createLocalSkill(projectDir, skillId, opts?)`          | Skill dir with SKILL.md + optional metadata  | Add skill to existing project            |
+| `writeProjectConfig(baseDir, config)`                   | `.claude-src/config.ts`                      | Override config in any project           |
 
 **5.6 Source fixtures for wizard tests:**
 
 | Factory                        | Creates                                                                                            | Use When                |
 | ------------------------------ | -------------------------------------------------------------------------------------------------- | ----------------------- |
-| `createE2ESource(opts?)`       | 10 skills, 2 agents, 1 stack, templates. Optional `relationships` for slug-based resolution tests. | Local-mode wizard tests |
+| `createE2ESource(opts?)`       | 9 skills, 2 agents, 1 stack, templates. Optional `relationships` for slug-based resolution tests. | Eject-mode wizard tests |
 | `createE2EPluginSource(opts?)` | Above + built plugins + marketplace.json. Optional `marketplaceName`, `relationships`.             | Plugin-mode tests       |
 
 Create sources in `beforeAll` (expensive). Share across tests in a file. Each test creates its own `tempDir` with its own project for isolation.
@@ -229,17 +247,22 @@ await createPermissionsFile(projectDir);
 
 ## 6. Assertions
 
-**6.1 Use shared assertion helpers from `plugin-assertions.ts`:**
+**6.1 Use custom Vitest matchers from `e2e/matchers/project-matchers.ts`.** Import `../matchers/setup.js` in every test file. All matchers accept a `ProjectHandle` (`{ dir: string }`) via `expect()`:
 
-| Helper                                                      | Checks                                                     |
-| ----------------------------------------------------------- | ---------------------------------------------------------- |
-| `verifyConfig(projectDir, { skillIds?, source?, agents? })` | Config.ts exists and contains expected values              |
-| `verifyAgentCompiled(projectDir, agentName)`                | Agent `.md` exists with YAML frontmatter                   |
-| `verifySkillCopiedLocally(projectDir, skillId)`             | `SKILL.md` exists in `.claude/skills/<id>/`                |
-| `verifyPluginInSettings(projectDir, pluginKey)`             | Plugin enabled in `settings.json`                          |
-| `verifyPluginInRegistry(homeDir, pluginKey, scope?)`        | Plugin in `installed_plugins.json` (optional scope filter) |
-| `verifyNoLocalSkills(projectDir)`                           | No skill directories in `.claude/skills/`                  |
-| `verifyNoPlugins(projectDir)`                               | No enabled plugins in `settings.json`                      |
+| Matcher                                            | Checks                                                     |
+| -------------------------------------------------- | ---------------------------------------------------------- |
+| `toHaveConfig({ skillIds?, source?, agents? })`    | Config.ts exists and contains expected values              |
+| `toHaveCompiledAgent(name)`                        | Agent `.md` exists with YAML frontmatter                   |
+| `toHaveCompiledAgents()`                           | At least one agent `.md` exists in agents dir              |
+| `toHaveCompiledAgentContent(name, { contains?, notContains? })` | Agent content includes/excludes strings          |
+| `toHaveSkillCopied(skillId)`                       | `SKILL.md` exists in `.claude/skills/<id>/`                |
+| `toHaveLocalSkills(ids?)`                          | Skills directory exists with optional specific IDs         |
+| `toHaveNoLocalSkills()`                            | No skill directories in `.claude/skills/`                  |
+| `toHavePlugin(key)`                                | Plugin enabled in `settings.json`                          |
+| `toHavePluginInRegistry(key, scope?)`              | Plugin in `installed_plugins.json` (optional scope filter) |
+| `toHaveNoPlugins()`                                | No enabled plugins in `settings.json`                      |
+| `toHaveEjectedTemplate()`                          | Ejected `agent.liquid` template exists                     |
+| `toHaveSettings({ hasKey?, keyValue? })`           | Settings file exists with optional key/value check         |
 
 **6.2 Assert exit codes with named constants.** Never use bare numbers:
 
@@ -281,39 +304,41 @@ expect(content).toContain("web-framework-react"); // Expected skill reference
 
 ## 7. Timing & Reliability
 
-**7.1 Use named timing constants from `test-utils.ts`.** Never inline timeout numbers:
+**7.1 Use named timing constants from `e2e/pages/constants.ts`.** Never inline timeout numbers:
 
-| Constant                      | Value   | Usage                        |
-| ----------------------------- | ------- | ---------------------------- |
-| `WIZARD_LOAD_TIMEOUT_MS`      | 10,000  | Wait for wizard to render    |
-| `INSTALL_TIMEOUT_MS`          | 30,000  | Wait for installation        |
-| `STEP_TRANSITION_DELAY_MS`    | 500     | Delay after advancing a step |
-| `KEYSTROKE_DELAY_MS`          | 150     | Delay after a single key     |
-| `EXIT_TIMEOUT_MS`             | 10,000  | Wait for process exit        |
-| `PLUGIN_INSTALL_TIMEOUT_MS`   | 60,000  | Plugin install timeout       |
-| `EXIT_WAIT_TIMEOUT_MS`        | 30,000  | Lifecycle process exit       |
-| `SETUP_TIMEOUT_MS`            | 60,000  | `beforeAll` hooks            |
-| `LIFECYCLE_TEST_TIMEOUT_MS`   | 180,000 | Multi-phase lifecycle tests  |
-| `INTERACTIVE_TEST_TIMEOUT_MS` | 120,000 | Interactive wizard tests     |
+| Constant                    | Value   | Usage                        |
+| --------------------------- | ------- | ---------------------------- |
+| `TIMEOUTS.WIZARD_LOAD`     | 15,000  | Wait for wizard to render    |
+| `TIMEOUTS.INSTALL`         | 30,000  | Wait for installation        |
+| `TIMEOUTS.EXIT`            | 10,000  | Wait for process exit        |
+| `TIMEOUTS.PLUGIN_INSTALL`  | 60,000  | Plugin install timeout       |
+| `TIMEOUTS.PLUGIN_TEST`     | 90,000  | Plugin operations + exit     |
+| `TIMEOUTS.EXIT_WAIT`       | 30,000  | Lifecycle process exit       |
+| `TIMEOUTS.SETUP`           | 60,000  | `beforeAll` hooks            |
+| `TIMEOUTS.LIFECYCLE`       | 180,000 | Multi-phase lifecycle tests  |
+| `TIMEOUTS.EXTENDED_LIFECYCLE` | 300,000 | Long lifecycle tests       |
+| `TIMEOUTS.INTERACTIVE`     | 120,000 | Interactive wizard tests     |
 
-**7.2 Use `delay()` from `test-utils.ts`** for explicit waits between keystrokes or after step transitions. Never use raw `setTimeout` or `new Promise(r => setTimeout(r, ms))` in tests.
+**Framework-internal delays** (`INTERNAL_DELAYS.STEP_TRANSITION = 500`, `INTERNAL_DELAYS.KEYSTROKE = 150`) are encapsulated in `BaseStep` methods. Tests must never import or reference `INTERNAL_DELAYS`.
+
+**7.2 Tests should not call `delay()` directly.** All timing is encapsulated in page object methods (`BaseStep.pressEnter()`, `BaseStep.pressSpace()`, etc.). The `delay()` function in `test-utils.ts` is framework-internal -- used by `BaseStep`, `DashboardSession`, and `InteractivePrompt`. Never use raw `setTimeout` or `new Promise(r => setTimeout(r, ms))` in tests.
 
 **7.3 Set per-test timeouts for long tests:**
 
 ```typescript
-it("should complete full lifecycle", { timeout: LIFECYCLE_TEST_TIMEOUT_MS }, async () => {
+it("should complete full lifecycle", { timeout: TIMEOUTS.LIFECYCLE }, async () => {
   // ...
 });
 ```
 
 **7.4 `waitForText` is CI-aware.** Default timeout is 10s locally, 20s in CI (`process.env.CI`). Always pass explicit timeouts for operations that take longer than defaults.
 
-**7.5 Wait for specific text, not arbitrary delays.** The `waitForText` -> `delay` -> `keystroke` pattern is the core reliability mechanism. The `delay(STEP_TRANSITION_DELAY_MS)` after `waitForText` is not arbitrary -- it accounts for Ink rendering remaining elements after the matched text appears.
+**7.5 Wait for specific text, not arbitrary delays.** The `waitForText` -> `delay` -> `keystroke` pattern is the core reliability mechanism (encapsulated in `BaseStep` methods for page object tests). The delay after `waitForText` is not arbitrary -- it accounts for Ink rendering remaining elements after the matched text appears.
 
 **7.6 For process exit, use `waitForExit()`, not sleep:**
 
 ```typescript
-const exitCode = await session.waitForExit(INSTALL_TIMEOUT_MS);
+const exitCode = await session.waitForExit(TIMEOUTS.INSTALL);
 expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 ```
 
@@ -321,13 +346,13 @@ expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
 ## 8. Source & Marketplace Setup
 
-**8.1 The E2E source contains exactly 10 skills across 3 domains:**
+**8.1 The E2E source contains exactly 9 skills across 3 domains:**
 
-| Domain | Skills                                                           |
-| ------ | ---------------------------------------------------------------- |
-| web    | `web-framework-react`, `web-testing-vitest`, `web-state-zustand` |
-| api    | `api-framework-hono`                                             |
-| shared | 6 methodology skills (`meta-methodology-*`)                      |
+| Domain | Skills                                                                                              |
+| ------ | --------------------------------------------------------------------------------------------------- |
+| web    | `web-framework-react`, `web-testing-vitest`, `web-state-zustand`, `web-framework-vue-composition-api`, `web-state-pinia` |
+| api    | `api-framework-hono`                                                                                |
+| meta   | `meta-methodology-research-methodology`, `meta-reviewing-reviewing`, `meta-reviewing-cli-reviewing` |
 
 **8.2 The E2E source defines 1 stack** ("E2E Test Stack") mapping skills to 2 agents (`web-developer`, `api-developer`).
 
@@ -349,7 +374,7 @@ describe.skipIf(!claudeAvailable)("plugin mode lifecycle", () => {
 
 ## 9. Scope Testing
 
-**9.1 Non-interactive dual-scope tests use `createDualScopeProject()`.** Creates a fake `HOME` at `tempDir/global-home` and a project at `tempDir/project` with separate configs and pre-created skills. Interactive dual-scope lifecycle tests (e.g., `dual-scope-edit-display`) build the two-scope state through the wizard itself -- they extract helper functions like `initGlobal()`, `initProject()`, and `createTestEnvironment()` to manage multi-phase setup.
+**9.1 Non-interactive dual-scope tests use `ProjectBuilder.dualScope()`.** Creates a fake `HOME` at `tempDir/global-home` and a project at `tempDir/project` with separate configs and pre-created skills. Interactive dual-scope lifecycle tests (e.g., `dual-scope-edit-display`) build the two-scope state through the wizard itself -- they use helper functions from `e2e/fixtures/dual-scope-helpers.ts` (`initGlobal()`, `initProject()`, `createTestEnvironment()`, `createDualScopeEnv()`) to manage multi-phase setup.
 
 **9.2 Pass `HOME` in env for dual-scope commands:**
 
@@ -376,7 +401,7 @@ await verifyConfig(projectDir, { skillIds: ["api-framework-hono"] });
 
 ## 10. Anti-Patterns
 
-**10.1 Never import production functions to call them directly.** E2E tests spawn the CLI binary. Importing `installLocal()`, `splitConfigByScope()`, or `writeScopedConfigs()` makes it a unit/integration test, not E2E. Acceptable imports: constants (`CLAUDE_DIR`, `EXIT_CODES`), types (`SkillId`, `AgentName`), test data generators (`renderSkillMd`, `renderConfigTs`), `isClaudeCLIAvailable` for guards, and test factory helpers (`createMockSkillAssignment`).
+**10.1 Never import production functions to call them directly.** E2E tests spawn the CLI binary. Importing `installEject()`, `splitConfigByScope()`, or `writeScopedConfigs()` makes it a unit/integration test, not E2E. Use `e2e/pages/constants.ts` for paths (`DIRS.CLAUDE`), exit codes (`EXIT_CODES`), and text (`STEP_TEXT`) instead of importing from `src/cli/`. Acceptable imports from `src/cli/`: type-only imports (`SkillId`, `AgentName`), `isClaudeCLIAvailable` for guards, and `exec.ts` functions for smoke tests.
 
 **10.2 Never use `as SkillId` casts on valid union members.** Strings like `"web-framework-react"` are already valid `SkillId` literals. Only cast test-only IDs (e.g., `"web-custom-e2e-widget" as SkillId`), and extract those to file-level constants with a single cast.
 
@@ -384,7 +409,7 @@ await verifyConfig(projectDir, { skillIds: ["api-framework-hono"] });
 
 **10.4 Never use `readFile` from `fs/promises` directly.** Use `readTestFile()` from `test-utils.ts`.
 
-**10.5 Never hardcode path segments.** Use constants: `CLAUDE_DIR` (not `".claude"`), `CLAUDE_SRC_DIR` (not `".claude-src"`), `STANDARD_FILES.CONFIG_TS`, `STANDARD_FILES.SKILL_MD`, `STANDARD_FILES.METADATA_YAML`, `STANDARD_DIRS.SKILLS`.
+**10.5 Never hardcode path segments.** Use constants from `e2e/pages/constants.ts`: `DIRS.CLAUDE` (not `".claude"`), `DIRS.CLAUDE_SRC` (not `".claude-src"`), `FILES.CONFIG_TS`, `FILES.SKILL_MD`, `FILES.METADATA_YAML`, `DIRS.SKILLS`.
 
 **10.6 Never inline timeout numbers.** Use the named constants from Section 7.1.
 
@@ -392,7 +417,7 @@ await verifyConfig(projectDir, { skillIds: ["api-framework-hono"] });
 
 **10.8 Never skip cleanup on test failure.** Use `afterEach`/`afterAll` for cleanup in test bodies. `afterEach` runs even when tests throw. Exception: extracted helper functions in lifecycle tests (e.g., `initGlobal()`, `initProject()`) may use try/finally to destroy sessions they create and manage internally.
 
-**10.9 Never duplicate helper logic across files.** If 3+ files share the same setup or assertion pattern, extract to `test-utils.ts` or `plugin-assertions.ts`.
+**10.9 Never duplicate helper logic across files.** If 3+ files share the same setup or assertion pattern, extract to `test-utils.ts`, a custom matcher in `matchers/project-matchers.ts`, or a `ProjectBuilder` method.
 
 **10.10 Avoid hardcoding arrow-down counts for navigation.** Prefer `waitForText` to find the target content, then send keystrokes. Hardcoded counts (`for i < 7: arrowDown()`) break when list items change. In practice, some lifecycle tests (e.g., dual-scope agent step navigation) still use counted loops because the target item has no unique text to wait for -- document the assumption with a comment when this is unavoidable.
 
@@ -415,12 +440,10 @@ When the bug is fixed, removing `it.fails()` makes the test start passing -- no 
 
 ## 11. Additional Exports from `test-utils.ts`
 
-Beyond the constants and factories documented above, `test-utils.ts` exports:
+Beyond the factories documented above, `test-utils.ts` exports:
 
 | Export                               | Purpose                                                                |
 | ------------------------------------ | ---------------------------------------------------------------------- |
-| `COMPILE_ENV`                        | `{ AGENTSINC_SOURCE: undefined }` -- prevents remote source resolution |
-| `OCLIF_EXIT_CODES`                   | `{ UNKNOWN_COMMAND: 127 }` -- oclif-specific exit codes                |
 | `FORKED_FROM_METADATA`               | Standard forkedFrom metadata block for plugin/uninstall tests          |
 | `CLI_ROOT`                           | Absolute path to the repository root                                   |
 | `BIN_RUN`                            | Absolute path to `bin/run.js` (the built binary)                       |
@@ -429,6 +452,12 @@ Beyond the constants and factories documented above, `test-utils.ts` exports:
 | `getEjectedTemplatePath(projectDir)` | Returns path to ejected `agent.liquid` template                        |
 | `renderConfigTs(config)`             | Re-exported from content-generators -- renders a config.ts string      |
 | `renderSkillMd(id, desc, content?)`  | Re-exported from content-generators -- renders a SKILL.md string       |
+| `renderAgentYaml(...)`               | Re-exported from content-generators -- renders agent YAML              |
+| `cleanupTempDir(dir)`                | Re-exported -- removes temp directory                                  |
+| `directoryExists(path)`              | Re-exported -- async directory existence check                         |
+| `fileExists(path)`                   | Re-exported -- async file existence check                              |
+
+**Constants and exit codes** are now in `e2e/pages/constants.ts` (`TIMEOUTS`, `EXIT_CODES`, `DIRS`, `FILES`, `STEP_TEXT`), not in `test-utils.ts`.
 
 ---
 
@@ -436,9 +465,9 @@ Beyond the constants and factories documented above, `test-utils.ts` exports:
 
 A test is E2E if it:
 
-1. Spawns the CLI binary (via `runCLI` for non-interactive, `TerminalSession` for interactive)
+1. Spawns the CLI binary (via `CLI.run()` for non-interactive, `InitWizard.launch()` / `EditWizard.launch()` for interactive)
 2. Sends input the way a user would (command-line args, keyboard keys)
 3. Asserts on what the user sees (terminal output, files on disk, exit codes)
 4. Never calls production functions directly
 
-If a test calls `installLocal()`, `compileAllAgents()`, or `splitConfigByScope()` directly, it belongs in `src/cli/lib/__tests__/`, not in `e2e/`.
+If a test calls `installEject()`, `compileAllAgents()`, or `splitConfigByScope()` directly, it belongs in `src/cli/lib/__tests__/`, not in `e2e/`.

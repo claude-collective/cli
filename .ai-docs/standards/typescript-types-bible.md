@@ -34,7 +34,7 @@ Use union types when a value comes from a known, closed set:
 type AgentName = "web-developer" | "api-developer" | "cli-developer";
 type Domain = "web" | "api" | "cli" | "meta";
 type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
-type PermissionMode = "default" | "acceptEdits" | "dontAsk" | "bypassPermissions";
+type PermissionMode = "default" | "acceptEdits" | "dontAsk" | "bypassPermissions" | "plan" | "delegate";
 ```
 
 **Keep `string` when the set is open-ended:**
@@ -146,11 +146,11 @@ Prefer typed helper functions over raw casts for recurring patterns:
 
 ```typescript
 // Replace repeated Object.entries casts with a typed helper
-function typedEntries<K extends string, V>(obj: Record<K, V>): [K, V][] {
+function typedEntries<K extends string, V>(obj: Partial<Record<K, V>>): [K, V][] {
   return Object.entries(obj) as [K, V][];
 }
 
-function typedKeys<K extends string>(obj: Record<K, unknown>): K[] {
+function typedKeys<K extends string>(obj: Partial<Record<K, unknown>>): K[] {
   return Object.keys(obj) as K[];
 }
 ```

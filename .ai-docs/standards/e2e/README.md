@@ -65,7 +65,9 @@ e2e/
   helpers/
     test-utils.ts         # runCLI, createTempDir, path helpers, re-exports
     terminal-session.ts   # PTY wrapper (framework-internal, never imported by tests)
-    create-e2e-source.ts  # 10-skill E2E source factory
+    create-e2e-source.ts  # 9-skill E2E source factory
+    node-pty.d.ts         # Type reference for node-pty
+    create-e2e-plugin-source.ts # Plugin source factory (builds plugins + marketplace.json)
   fixtures/
     project-builder.ts    # Project directory factories (ProjectBuilder)
     cli.ts                # Non-interactive CLI runner (CLI.run)
@@ -126,7 +128,7 @@ e2e/
 | `pool`        | `"forks"`               | Process isolation between test files                     |
 | `testTimeout` | `30_000`                | Default per-test timeout                                 |
 | `hookTimeout` | `60_000`                | Default for beforeAll/afterAll                           |
-| `retry`       | `1`                     | Automatic retry on first failure                         |
+| `retry`       | `2`                     | Automatic retry (up to 2 retries on failure)             |
 | `include`     | `e2e/**/*.e2e.test.ts`  | Smoke tests (`*.smoke.test.ts`) excluded, run explicitly |
 | `globalSetup` | `./e2e/global-setup.ts` | Pre-suite setup                                          |
 
@@ -142,9 +144,9 @@ All constants live in `e2e/pages/constants.ts`. Tests import from here, never fr
 
 **Files (`FILES`):** `CONFIG_TS`, `CONFIG_TYPES_TS`, `SKILL_MD`, `METADATA_YAML`, `SETTINGS_JSON`, `INSTALLED_PLUGINS_JSON`, `IDENTITY_MD`, `PLAYBOOK_MD`, `PLUGIN_JSON`
 
-**Step text (`STEP_TEXT`):** `STACK`, `DOMAIN_WEB`, `DOMAIN_API`, `DOMAIN_SHARED`, `BUILD`, `SOURCES`, `AGENTS`, `CONFIRM`, `INIT_SUCCESS`, `EDIT_SUCCESS`, `EDIT_UNCHANGED`, `COMPILE_SUCCESS`, `EJECT_SUCCESS`, `IMPORT_SUCCESS`, `UNINSTALL_SUCCESS`, `LOADING_SKILLS`, `RECOMPILING`, `COMPILING_STACK`, `LOADED`, `LOADED_LOCAL`, `CONFIRM_UPDATE`, `CONFIRM_UNINSTALL`, `SEARCH`, `DASHBOARD`, `FOOTER_SELECT`, `START_FROM_SCRATCH`, `TOGGLE_SELECTION`, `NO_INSTALLATION`, `TOO_NARROW`, `TOO_SHORT`
+**Step text (`STEP_TEXT`):** `STACK`, `DOMAINS`, `DOMAIN_WEB`, `DOMAIN_API`, `DOMAIN_META`, `DOMAIN_MOBILE`, `BUILD`, `BUILD_CATEGORY_COUNT`, `SOURCES`, `AGENTS`, `CONFIRM`, `INIT_SUCCESS`, `EDIT_SUCCESS`, `EDIT_UNCHANGED`, `COMPILE_SUCCESS`, `EJECT_SUCCESS`, `IMPORT_SUCCESS`, `UNINSTALL_SUCCESS`, `LOADING_SKILLS`, `RECOMPILING`, `COMPILING_STACK`, `LOADED`, `LOADED_LOCAL`, `CONFIRM_UPDATE`, `CONFIRM_UNINSTALL`, `SEARCH`, `DASHBOARD`, `FOOTER_SELECT`, `START_FROM_SCRATCH`, `TOGGLE_SELECTION`, `NO_INSTALLATION`, `TOO_NARROW`, `TOO_SHORT`
 
-**Timeouts (`TIMEOUTS`):** `WIZARD_LOAD` (15s), `INSTALL` (30s), `PLUGIN_INSTALL` (60s), `PLUGIN_TEST` (90s), `EXIT` (10s), `EXIT_WAIT` (30s), `SETUP` (60s), `LIFECYCLE` (180s), `EXTENDED_LIFECYCLE` (300s), `INTERACTIVE` (120s)
+**Timeouts (`TIMEOUTS`):** `WIZARD_LOAD` (15s), `INSTALL` (30s), `PLUGIN_INSTALL` (60s), `PLUGIN_TEST` (90s = PLUGIN_INSTALL + EXIT_WAIT), `EXIT` (10s), `EXIT_WAIT` (30s), `SETUP` (60s), `LIFECYCLE` (180s), `EXTENDED_LIFECYCLE` (300s), `INTERACTIVE` (120s)
 
 **Exit codes (`EXIT_CODES`):** `SUCCESS` (0), `ERROR` (1), `INVALID_ARGS` (2), `NETWORK_ERROR` (3), `CANCELLED` (4), `UNKNOWN_COMMAND` (127)
 

@@ -39,6 +39,7 @@ Entry points that spawn a `TerminalSession` and return the first step object.
 | `env`             | `Record<string, string \| undefined>` | `{}`                   | Extra env vars (merged with defaults) |
 | `noSource`        | `boolean`                             | `false`                | Launch without `--source` flag        |
 | `skipPermissions` | `boolean`                             | `false`                | Skip creating permissions file        |
+| `loadTimeout`     | `number`                              | `TIMEOUTS.WIZARD_LOAD` | Override default wizard load timeout  |
 
 **Launch methods:**
 
@@ -53,6 +54,7 @@ Entry points that spawn a `TerminalSession` and return the first step object.
 | Method                             | Flow                                                                   | Returns        |
 | ---------------------------------- | ---------------------------------------------------------------------- | -------------- |
 | `completeWithDefaults(stackName?)` | Stack -> Domain -> Build (all domains) -> Sources -> Agents -> Confirm | `WizardResult` |
+| `acceptStackDefaults()`            | Stack -> Domain -> Build -> "A" hotkey -> Confirm                      | `WizardResult` |
 
 **Instance methods:** `getOutput()`, `getScreen()`, `getRawOutput()`, `waitForExit(timeout?)`, `abort()`, `escape()`, `destroy()`.
 
@@ -98,8 +100,6 @@ Each step class models the user actions available on one wizard screen. Methods 
 | `selectStack(name)`  | `DomainStep` | Navigate to stack by name, press Enter        |
 | `selectScratch()`    | `DomainStep` | Navigate to "Start from scratch", press Enter |
 | `cancel()`           | `void`       | Press Escape                                  |
-| `openHelp()`         | `void`       | Press "?"                                     |
-| `closeHelp()`        | `void`       | Press Escape                                  |
 
 ### DomainStep
 
@@ -120,16 +120,20 @@ Each step class models the user actions available on one wizard screen. Methods 
 | Method                             | Returns       | Action                                                           |
 | ---------------------------------- | ------------- | ---------------------------------------------------------------- |
 | `advanceDomain()`                  | `void`        | Advance current domain (Enter)                                   |
-| `toggleSkill(label)`               | `void`        | Scroll to skill, press Space                                     |
-| `toggleFocusedSkill()`             | `void`        | Press Space on current item                                      |
-| `toggleScopeOnFocusedSkill()`      | `void`        | Press "s" on current item                                        |
-| `passThroughAllDomains()`          | `SourcesStep` | Web -> API -> Shared (standard E2E source)                       |
-| `passThroughAllDomainsGeneric()`   | `SourcesStep` | Keep pressing Enter until Sources appears (non-standard sources) |
-| `passThroughScratchDomains()`      | `SourcesStep` | Web (select skill) -> API (select skill) -> Mobile (advance)     |
-| `passThroughWebAndSharedDomains()` | `SourcesStep` | Web -> Shared (when API deselected)                              |
-| `advanceToSources()`               | `SourcesStep` | Advance single domain to Sources                                 |
-| `openSearch()`                     | `SearchModal` | Press "/" to open search                                         |
-| `goBack()`                         | `void`        | Press Escape                                                     |
+| `toggleSkill(label)`                     | `void`        | Scroll to skill, press Space                                     |
+| `selectSkill(label)`                     | `void`        | Navigate grid to skill by (row, col), press Space                |
+| `toggleFocusedSkill()`                   | `void`        | Press Space on current item                                      |
+| `toggleScopeOnFocusedSkill()`            | `void`        | Press "s" on current item                                        |
+| `passThroughAllDomains()`                | `SourcesStep` | Web -> API -> Methodology (standard E2E source)                  |
+| `passThroughAllDomainsGeneric()`         | `SourcesStep` | Keep pressing Enter until Sources appears (non-standard sources) |
+| `passThroughScratchDomains()`            | `SourcesStep` | Web (select skill) -> API (select skill) -> Mobile (advance)     |
+| `passThroughWebAndMethodologyDomains()`  | `SourcesStep` | Web -> Methodology (when API deselected)                         |
+| `advanceToSources()`                     | `SourcesStep` | Advance single domain to Sources                                 |
+| `navigateToNextCategory()`               | `void`        | Tab to next category within current domain                       |
+| `toggleLabels()`                         | `void`        | Press "d" to toggle compatibility labels                         |
+| `toggleFilterIncompatible()`             | `void`        | Press "f" to toggle filter incompatible skills                   |
+| `openSearch()`                           | `SearchModal` | Press "/" to open search                                         |
+| `goBack()`                               | `void`        | Press Escape                                                     |
 
 ### SourcesStep
 
@@ -139,7 +143,7 @@ Each step class models the user actions available on one wizard screen. Methods 
 | ----------------------- | ------------ | --------------------------------- |
 | `waitForReady()`        | `void`       | Wait for sources step to render   |
 | `acceptDefaults()`      | `AgentsStep` | Wait for ready, press Enter       |
-| `setAllLocal()`         | `void`       | Press "l"                         |
+| `setAllLocal()`         | `void`       | Press "l" (sets all to eject mode) |
 | `setAllPlugin()`        | `void`       | Press "p"                         |
 | `toggleFocusedSource()` | `void`       | Press Space                       |
 | `openSettings()`        | `void`       | Press "s"                         |
@@ -202,9 +206,10 @@ All step classes extend `BaseStep`. Its methods are `protected` -- tests cannot 
 | `pressEscape()`                             | Escape + KEYSTROKE delay                     |
 | `pressArrowDown()`                          | Arrow down + KEYSTROKE delay                 |
 | `pressArrowUp()`                            | Arrow up + KEYSTROKE delay                   |
+| `pressArrowRight()`                         | Arrow right + KEYSTROKE delay                |
 | `pressCtrlC()`                              | Ctrl+C + KEYSTROKE delay                     |
 | `waitForStep(text)`                         | Wait for step identification text            |
-| `waitForStableRender()`                     | Wait for footer ("select") to render         |
+| `waitForStableRender()`                     | Wait for footer ("select") text to render    |
 | `waitForItemVisible(label, maxAttempts?)`   | Scroll down until label is on screen         |
 | `navigateCursorToItem(label, maxAttempts?)` | Scroll down until cursor line contains label |
 | `delay(ms)`                                 | Internal delay (wraps `test-utils.delay`)    |
@@ -216,8 +221,9 @@ All step classes extend `BaseStep`. Its methods are `protected` -- tests cannot 
 | `getOutput()`    | Full output including scrollback |
 | `getScreen()`    | Visible viewport only            |
 | `abort()`        | Ctrl+C                           |
-| `navigateDown()` | Arrow down                       |
-| `navigateUp()`   | Arrow up                         |
+| `navigateDown()`  | Arrow down                       |
+| `navigateUp()`    | Arrow up                         |
+| `navigateRight()` | Arrow right                      |
 
 ---
 

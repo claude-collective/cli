@@ -44,7 +44,7 @@ Skills follow a directory-based structure with modular files:
 ```
 .claude/skills/{domain}-{category}-{technology}/
 ├── SKILL.md              # Main skill file with TOC
-├── metadata.yaml         # Skill metadata (category, tags, version)
+├── metadata.yaml         # Skill metadata (category, author, slug, displayName, etc.)
 ├── reference.md          # Quick reference and decision frameworks
 └── examples/             # Technology-specific example files
     ├── core.md           # Core patterns (ALWAYS required)
@@ -614,12 +614,10 @@ When removing valuable content that belongs in another skill:
 ### Schema Compliance (REQUIRED)
 
 - [ ] `SKILL.md` has frontmatter with `name` and `description`
-- [ ] `metadata.yaml` has all required fields (category, author, version, cli_name, cli_description, usage_guidance)
-- [ ] Tags use kebab-case only (`^[a-z][a-z0-9-]*$`) - NO camelCase or dots
+- [ ] `metadata.yaml` has all required fields (category, author, slug, displayName, cliDescription, usageGuidance)
 - [ ] Author uses `@` prefix (`@vince`, not `vince`)
-- [ ] Category is from allowed enum (see claude-architecture-bible.md)
-- [ ] Version is an integer (1, 2, 3) - NOT semantic versioning
-- [ ] `bun cc:validate` passes with no errors
+- [ ] Category is from allowed enum (see `src/cli/types/generated/source-types.ts` CATEGORIES)
+- [ ] `agentsinc validate` passes with no errors
 
 ### Import Purity
 
@@ -675,7 +673,7 @@ When removing valuable content that belongs in another skill:
 - [ ] Grep verification shows 0 violation matches
 - [ ] Full read-through confirms no violations missed
 - [ ] Transformation documented in log
-- [ ] Schema validation passes (`bun cc:validate`)
+- [ ] Schema validation passes (`agentsinc validate`)
 
 ---
 

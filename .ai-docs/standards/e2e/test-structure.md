@@ -148,7 +148,7 @@ it("full lifecycle", { timeout: TIMEOUTS.LIFECYCLE }, async () => {
 });
 ```
 
-**CI-aware timeouts:** `TerminalScreen.waitForText()` defaults to 10s locally, 20s in CI (`process.env.CI`). Always pass explicit timeouts for operations that take longer than these defaults (e.g., plugin installs).
+**Timeout contract:** `TerminalScreen.waitForText()` uses whatever `timeoutMs` is passed -- there is no built-in default or CI multiplier. Callers are responsible for passing an appropriate timeout (typically via `TIMEOUTS.*` constants). For operations that may be slow in CI (e.g., plugin installs), pass a generous timeout.
 
 **Why:** Timing scattered across test files is the primary cause of flaky tests. Centralizing it in the framework means timing changes require editing one file, not dozens.
 
@@ -203,7 +203,7 @@ A test belongs in `e2e/` if it:
 1. **Spawns the CLI binary** — via `CLI.run()` for non-interactive or `InitWizard.launch()` / `EditWizard.launch()` for interactive
 2. **Sends input the way a user would** — command-line args or wizard step methods
 3. **Asserts on what the user sees** — terminal output, exit codes, file-system state through matchers
-4. **Never calls production functions directly** — no importing `installLocal()`, `compileAllAgents()`, or `splitConfigByScope()`
+4. **Never calls production functions directly** — no importing `installEject()`, `compileAllAgents()`, or `splitConfigByScope()`
 
 If a test calls production functions directly, it belongs in `src/cli/lib/__tests__/`, not in `e2e/`.
 

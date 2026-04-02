@@ -139,12 +139,13 @@ Checks that `settings.json` exists. Optionally validates a nested key path and v
 // Settings file exists
 await expect(project).toHaveSettings();
 
-// Specific key has specific value
+// Specific nested key exists
 await expect(project).toHaveSettings({
   hasKey: "permissions.allow",
-  keyValue: ["Read(*)"],
 });
 ```
+
+**Note:** `keyValue` uses strict `!==` comparison, so it works for primitive values (strings, numbers, booleans) but not for arrays or objects (reference equality). Use `hasKey` alone to check existence, then read the file in a matcher if you need deep comparison.
 
 ---
 

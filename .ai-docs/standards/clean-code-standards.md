@@ -98,7 +98,7 @@ catch (error) { verbose(`Failed to load: ${getErrorMessage(error)}`); return [];
 
 ## 4. Constants
 
-**4.1 Use `CLI_COLORS.*` from `consts.ts` for all color strings in components.** Values: `PRIMARY` (cyan), `SUCCESS` (green), `ERROR` (red), `WARNING` (yellow), `INFO` (blue), `NEUTRAL` (gray), `FOCUS` (cyan), `UNFOCUSED` (white). Exceptions: `"#000"` (literal black on colored bg), `"blackBright"` (non-semantic border shade).
+**4.1 Use `CLI_COLORS.*` from `consts.ts` for all color strings in components.** Values: `PRIMARY` (cyan), `SUCCESS` (green), `ERROR` (red), `WARNING` (yellow), `INFO` (blue), `NEUTRAL` (gray), `FOCUS` (cyan), `UNFOCUSED` (white), `WHITE` (white), `LABEL_BG` (#383838). Exceptions: `"#000"` (literal black on colored bg), `"blackBright"` (non-semantic border shade).
 
 ```tsx
 // BAD                              // GOOD
@@ -143,7 +143,7 @@ const normalizedPath = path.resolve(resolvedPath);
 return normalizedPath.startsWith(path.resolve(expectedParent) + path.sep);
 ```
 
-**5.3 Validate CLI arguments passed to `spawn()`.** Each argument type gets its own validator with: (1) empty/whitespace rejection, (2) length limit, (3) control character rejection, (4) format pattern allowlist. See `validatePluginPath()`, `validateGithubRepo()`, `validateMarketplaceName()`, `validatePluginName()` in `exec.ts`.
+**5.3 Validate CLI arguments passed to `spawn()`.** Each argument type gets its own validator with: (1) empty/whitespace rejection, (2) length limit, (3) control character rejection, (4) format pattern allowlist. See `validatePluginPath()`, `validatePluginName()` in `exec.ts` and `validateMarketplaceName()` in `commands/new/marketplace.ts`.
 
 **5.4 Sanitize user-controlled data before template rendering.** Strip Liquid syntax (`{{`, `}}`, `{%`, `%}`) before passing to the Liquid engine. See `sanitizeLiquidSyntax()` in `compiler.ts`.
 
@@ -194,7 +194,7 @@ async function expectFlagAccepted(args: string[]): Promise<void> {
 }
 ```
 
-**6.4** Use `SKILLS.*` from `test-fixtures.ts` for standard skill fixtures (e.g., `SKILLS.react`, `SKILLS.hono`). For custom skills not in the registry, use `createMockSkill(id, overrides?)` from `helpers.ts`. Do not define per-test skill factory functions. Available registry keys: `react`, `vue`, `zustand`, `pinia`, `scss`, `tailwind`, `vitest`, `hono`, `express`, `drizzle`, plus methodology skills.
+**6.4** Use `SKILLS.*` from `test-fixtures.ts` for standard skill fixtures (e.g., `SKILLS.react`, `SKILLS.hono`). For custom skills not in the registry, use `createMockSkill(id, overrides?)` from `helpers.ts`. Do not define per-test skill factory functions. Available registry keys: `react`, `vue`, `zustand`, `pinia`, `scss`, `tailwind`, `vitest`, `hono`, `drizzle`, `antiOverEng` (methodology).
 
 **6.5** Use named constants from `test-constants.ts` for keyboard input (`ARROW_UP`, `SPACE`, `ENTER`, `ESCAPE`) and timing (`RENDER_DELAY_MS`, `INPUT_DELAY_MS`, `STEP_TRANSITION_DELAY_MS`).
 
@@ -267,7 +267,7 @@ function createMockSkill(
 
 2. **Filesystem** -- directory names and filenames are untyped strings that correspond to typed identifiers by convention. Example: `loader.ts:155` casts keys from a directory-name-keyed map to `SkillId`.
 
-3. **Type narrowing after runtime validation** -- a value's compile-time type is wider than what runtime checks have established. The cast narrows to the validated subset. Example: `wizard-store.ts:107` casts `CategoryPath` to `Category` after domain lookup confirms existence.
+3. **Type narrowing after runtime validation** -- a value's compile-time type is wider than what runtime checks have established. The cast narrows to the validated subset. Example: `wizard-store.ts:146` casts `CategoryPath` to `Category` after domain lookup confirms existence.
 
 4. **Data definition** -- literal data structures where TypeScript can verify the values but the container type is wider than the union. Example: `metadata-keys.ts:21` casts `"imported"` to `CategoryPath` in a constant definition.
 
@@ -277,9 +277,9 @@ function createMockSkill(
 
 Boundary casts are **NOT** acceptable for: mid-pipeline workarounds (fix the upstream return type instead), consumer code casts (fix the library's return type so all consumers benefit), or convenience casts to silence type errors without investigation.
 
-**7.3** Use Zod schemas at JSON/YAML parse boundaries. No `JSON.parse(...) as T` in production code. For YAML files, prefer `safeLoadYamlFile(path, schema)` from `utils/yaml.ts` -- it combines `readFileSafe()` (size limit), YAML parsing, and Zod validation in one call. For JSON, parse then validate with `schema.safeParse()`.
+**7.3** Use Zod schemas at JSON/YAML parse boundaries. No `JSON.parse(...) as T` in production code. For YAML files, use `readFileSafe(path, maxSizeBytes)` from `utils/fs.ts` for size-limited reads, then `parseYaml(content)` from the `yaml` package, then `schema.safeParse(parsed)` for validation. For JSON, parse then validate with `schema.safeParse()`. See `schema-validator.ts` and `local-skill-loader.ts` for the canonical pattern.
 
-**7.4** Use `formatZodErrors(issues)` from `schemas.ts` for Zod error display. Pass `result.error.issues` (not the full error object). No inline `issues.map(...)`. Note: `plugin-validator.ts` has a local `formatZodErrors(error)` variant that takes the full `z.ZodError` for multi-error validation output.
+**7.4** Use `formatZodErrors(issues)` from `schemas.ts` for Zod error display. Pass `result.error.issues` (not the full error object). No inline `issues.map(...)`. Note: `schema-validator.ts` has a `formatZodErrors(error)` variant that takes the full `z.ZodError` and returns `string[]` for multi-error validation output (used by `plugin-validator.ts`).
 
 **7.5** Post-safeParse `as T` is acceptable when `.passthrough()` widens Zod output. The `.passthrough()` option preserves unknown fields for forward compatibility, widening the output type to `{ ...fields... } & { [k: string]: unknown }`. The cast narrows back to the validated interface. Add a `// Boundary cast:` comment.
 
@@ -300,7 +300,7 @@ const output = await readFileOptional(path.join(dir, STANDARD_FILES.OUTPUT_MD), 
 
 **8.3** Compose existing functions before creating new ones.
 
-**8.4** Prefer Remeda utilities over hand-rolled loops when they improve clarity. Production: `unique`, `uniqueBy`, `sortBy`, `groupBy`, `mapValues`, `pipe`, `flatMap`, `filter`, `countBy`, `sumBy`, `difference`, `last`, `zip`. Used across 20+ files.
+**8.4** Prefer Remeda utilities over hand-rolled loops when they improve clarity. Production: `unique`, `uniqueBy`, `sortBy`, `groupBy`, `mapValues`, `pipe`, `flatMap`, `filter`, `countBy`, `sumBy`, `difference`, `indexBy`, `zip`. Used across 20+ files.
 
 ---
 
