@@ -1,5 +1,6 @@
 import { Box, Text } from "ink";
 import React from "react";
+import { CLI_COLORS } from "../../consts.js";
 
 const TITLE_HORIZONTAL_PADDING = 6;
 
@@ -13,13 +14,13 @@ export const Toast: React.FC<ToastProps> = ({ children }) => {
 
   return (
     <Box flexDirection="column">
-      <Text backgroundColor={"#eee"}>{padding}</Text>
-      <Text bold backgroundColor={"#eee"} color={"#000"}>
+      <Text backgroundColor={CLI_COLORS.TOAST_BG}>{padding}</Text>
+      <Text bold backgroundColor={CLI_COLORS.TOAST_BG} color={CLI_COLORS.TOAST_FG}>
         {paddingHalf}
         {children}
         {paddingHalf}
       </Text>
-      <Text backgroundColor={"#eee"}>{padding}</Text>
+      <Text backgroundColor={CLI_COLORS.TOAST_BG}>{padding}</Text>
     </Box>
   );
 };

@@ -49,7 +49,7 @@ const DefinitionItem: React.FC<KeyHintProps> = ({
       {values.map((value) => (
         <Fragment key={value}>
           <Text
-            backgroundColor="black"
+            backgroundColor={CLI_COLORS.LABEL_BG}
             color={isActive ? CLI_COLORS.PRIMARY : CLI_COLORS.UNFOCUSED}
           >
             {" "}

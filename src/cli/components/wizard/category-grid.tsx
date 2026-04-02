@@ -103,16 +103,16 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
   const getTextColor = (): string => {
     if (option.selected) return CLI_COLORS.PRIMARY;
     if (option.state.status === "incompatible") return CLI_COLORS.ERROR;
-    if (option.state.status === "recommended") return CLI_COLORS.UNFOCUSED;
+    if (option.state.status === "recommended") return CLI_COLORS.GRAY_1;
     if (option.state.status === "discouraged") return CLI_COLORS.WARNING;
 
-    return CLI_COLORS.NEUTRAL;
+    return CLI_COLORS.DIM;
   };
 
   const getStateBorderColor = (): string => {
     if (option.selected) return CLI_COLORS.PRIMARY;
     if (option.state.status === "incompatible") return CLI_COLORS.ERROR;
-    if (option.state.status === "recommended") return CLI_COLORS.UNFOCUSED;
+    if (option.state.status === "recommended") return CLI_COLORS.GRAY_1;
     if (option.state.status === "discouraged") return CLI_COLORS.WARNING;
     return CLI_COLORS.UNFOCUSED;
   };
@@ -131,7 +131,8 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
   return (
     <Box
       marginRight={1}
-      borderColor={isFocused ? getStateBorderColor() : CLI_COLORS.NEUTRAL}
+      borderColor={isFocused ? getStateBorderColor() : getTextColor()}
+      borderDimColor={!isFocused}
       borderStyle="single"
       flexShrink={0}
       paddingLeft={1}
@@ -141,7 +142,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
         {option.scope && (
           <>
             <Text
-              color={option.scope === "global" ? CLI_COLORS.WARNING : "#eee"}
+              color={option.scope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.TOAST_BG}
               backgroundColor={CLI_COLORS.LABEL_BG}
             >
               {option.scope === "global" ? " G " : " P "}
@@ -196,13 +197,13 @@ const CategorySection: React.FC<CategorySectionProps> = ({
     <Box flexDirection="column" marginTop={isFirst ? 0 : 1}>
       <Box flexDirection="row">
         {isFocused ? (
-          <Text color={CLI_COLORS.WHITE} backgroundColor="#383838">
+          <Text color={CLI_COLORS.WHITE} backgroundColor={CLI_COLORS.LABEL_BG}>
             {` ${category.displayName}${category.required ? ` ${SYMBOL_REQUIRED}` : ""}${selectionCounter ? ` ${selectionCounter}` : ""} `}
           </Text>
         ) : (
           <>
-            <Text color="gray">{category.displayName}</Text>
-            {category.required && <Text color="gray"> {SYMBOL_REQUIRED}</Text>}
+            <Text color={CLI_COLORS.NEUTRAL}>{category.displayName}</Text>
+            {category.required && <Text color={CLI_COLORS.NEUTRAL}> {SYMBOL_REQUIRED}</Text>}
             {selectionCounter && <Text dimColor> {selectionCounter}</Text>}
           </>
         )}

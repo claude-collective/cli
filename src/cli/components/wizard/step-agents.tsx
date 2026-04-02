@@ -284,7 +284,7 @@ export const StepAgents: React.FC = () => {
                 {" "}
                 {checkbox}{" "}
               </Text>
-              <Text color={scope === "global" ? CLI_COLORS.WARNING : "#eee"}>
+              <Text color={scope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.TOAST_BG}>
                 {scope === "global" ? "[G]" : "[P]"}
               </Text>
               <Text

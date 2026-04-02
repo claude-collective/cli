@@ -109,7 +109,7 @@ const ResultItem: React.FC<ResultItemProps> = ({ skill, isSelected, isFocused })
       <Text
         color={isFocused ? CLI_COLORS.FOCUS : isSelected ? CLI_COLORS.SUCCESS : undefined}
         bold={isFocused}
-        backgroundColor={isFocused ? "#333333" : undefined}
+        backgroundColor={isFocused ? CLI_COLORS.HOVER_BG : undefined}
       >
         {" "}
         {checkbox}{" "}
