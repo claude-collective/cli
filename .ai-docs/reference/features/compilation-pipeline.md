@@ -1,6 +1,6 @@
 # Compilation Pipeline
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Overview
 
@@ -13,7 +13,7 @@
 | `recompileAgents()`  | `src/cli/lib/agents/agent-recompiler.ts:157`          | `compile` command, `edit` flow         |
 | `compileAllAgents()` | `src/cli/lib/compiler.ts:216`                         | Called by standalone compilation flow  |
 | `compileAllSkills()` | `src/cli/lib/compiler.ts:263`                         | Called by standalone compilation flow  |
-| `compileAgents()`    | `src/cli/lib/operations/project/compile-agents.ts:32` | Operations layer wrapper (thin facade) |
+| `compileAgents()`    | `src/cli/lib/operations/project/compile-agents.ts:32` | Operations layer wrapper (scope-filtering + delegation to `recompileAgents()`) |
 
 ## Pipeline Flow
 
@@ -266,7 +266,7 @@ The compilation pipeline is wrapped by the operations layer for use by commands:
 
 | Operation                   | File                                                          | Purpose                                   |
 | --------------------------- | ------------------------------------------------------------- | ----------------------------------------- |
-| `compileAgents()`           | `src/cli/lib/operations/project/compile-agents.ts:32`         | Thin wrapper around `recompileAgents()`   |
+| `compileAgents()`           | `src/cli/lib/operations/project/compile-agents.ts:32`         | Scope-filtering orchestrator delegating to `recompileAgents()` |
 | `loadAgentDefs()`           | `src/cli/lib/operations/project/load-agent-defs.ts:21`        | Load + merge CLI/source agent definitions |
 | `discoverInstalledSkills()` | `src/cli/lib/operations/skills/discover-skills.ts:112`        | 4-way skill discovery and merge           |
 | `detectBothInstallations()` | `src/cli/lib/operations/project/detect-both-installations.ts` | Find global + project installations       |

@@ -1,6 +1,6 @@
 # Configuration System
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Overview
 
@@ -75,7 +75,7 @@ type ProjectConfig = {
 type SkillConfig = {
   id: SkillId;
   scope: "project" | "global";
-  source: string; // "local" | marketplace name
+  source: string; // "eject" | marketplace name
 };
 ```
 
@@ -248,7 +248,7 @@ export default {
 } satisfies ProjectConfig;
 ```
 
-Falls back to `DEFAULT_BRANDING` from `src/cli/consts.ts:162-165`:
+Falls back to `DEFAULT_BRANDING` from `src/cli/consts.ts:170-173`:
 
 - Name: "Agents Inc."
 - Tagline: "AI-powered development tools"

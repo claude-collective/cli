@@ -1,6 +1,6 @@
 # Plugin System
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Overview
 
@@ -202,13 +202,6 @@ Executed through `src/cli/utils/exec.ts`:
 
 ## Installation Modes
 
-### Local Mode
-
-Skills copied to `.claude/skills/`, agents compiled to `.claude/agents/`.
-
-**Function:** `installLocal()` at `src/cli/lib/installation/local-installer.ts:584`
-(Re-exported from `src/cli/lib/installation/index.ts`)
-
 ### Plugin Mode
 
 Skills installed as Claude Code plugins, agents compiled to `.claude/agents/`.
@@ -216,9 +209,15 @@ Skills installed as Claude Code plugins, agents compiled to `.claude/agents/`.
 **Function:** `installPluginConfig()` at `src/cli/lib/installation/local-installer.ts:492`
 (Re-exported from `src/cli/lib/installation/index.ts`)
 
+### Eject Mode
+
+Skills copied locally via eject workflow.
+
+**Function:** `installEject()` (Re-exported from `src/cli/lib/installation/index.ts`)
+
 ### Scope-Aware Installation
 
-Both `installLocal()` and `installPluginConfig()` use `writeScopedConfigs()` (line `:369`) to split config by scope:
+`installPluginConfig()` uses `writeScopedConfigs()` (line `:369`) to split config by scope:
 
 - Global-scoped skills/agents go to `~/.claude-src/config.ts` and `~/.claude/agents/`
 - Project-scoped skills/agents go to `{projectDir}/.claude-src/config.ts` and `{projectDir}/.claude/agents/`
@@ -249,9 +248,9 @@ Detection logic:
 
 Install mode is derived at runtime from the skills array via `deriveInstallMode()` (line `:26`):
 
-- Empty skills array = `"local"` mode (default)
-- All `source: "local"` = `"local"` mode
-- All non-local sources = `"plugin"` mode
+- Empty skills array = `"eject"` mode (default)
+- All `source: "eject"` = `"eject"` mode
+- All non-eject sources = `"plugin"` mode
 - Mixed = `"mixed"` mode
 
 **Function:** `getInstallationOrThrow()` at `src/cli/lib/installation/installation.ts:95` - Same as `detectInstallation()` but throws if no installation found.
@@ -271,8 +270,8 @@ Handles skill source and scope migrations when editing an installation:
 Types:
 
 - `SkillMigration` - Single skill migration with id, old/new source, old/new scope
-- `MigrationPlan` - Contains `toLocal`, `toPlugin`, `scopeChanges` arrays
-- `MigrationResult` - Contains `localizedSkills`, `pluginizedSkills`, `warnings`
+- `MigrationPlan` - Contains `toEject`, `toPlugin`, `scopeChanges` arrays
+- `MigrationResult` - Contains `ejectedSkills`, `pluginizedSkills`, `warnings`
 
 Migration splits skills by scope before copying (project skills to `{projectDir}/.claude/skills/`, global to `~/.claude/skills/`). Plugin install/uninstall uses per-skill scope mapping (`"global"` -> `"user"`, `"project"` -> `"project"`).
 
@@ -312,6 +311,6 @@ Uses `claudePluginMarketplaceExists()`, `claudePluginMarketplaceAdd()`, and `cla
 
 Re-exports from `installation.ts`: `InstallMode`, `Installation`, `detectGlobalInstallation`, `detectInstallation`, `detectProjectInstallation`, `getInstallationOrThrow`, `deriveInstallMode`
 
-Re-exports from `local-installer.ts`: `LocalInstallOptions`, `LocalInstallResult`, `PluginConfigResult`, `installLocal`, `installPluginConfig`, `buildAndMergeConfig`, `writeConfigFile`, `writeScopedConfigs`, `setConfigMetadata`, `resolveInstallPaths`, `buildLocalSkillsMap`, `buildCompileAgents`, `buildAgentScopeMap`
+Re-exports from `local-installer.ts`: `EjectInstallOptions`, `EjectInstallResult`, `PluginConfigResult`, `installEject`, `installPluginConfig`, `buildAndMergeConfig`, `writeConfigFile`, `writeScopedConfigs`, `setConfigMetadata`, `resolveInstallPaths`, `buildEjectSkillsMap`, `buildCompileAgents`, `buildAgentScopeMap`
 
 Re-exports from `mode-migrator.ts`: `SkillMigration`, `MigrationPlan`, `MigrationResult`, `detectMigrations`, `executeMigration`

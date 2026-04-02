@@ -1,6 +1,6 @@
 # Agent System
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Overview
 
@@ -338,19 +338,24 @@ All methodology partials are rendered via `{% render %}` tags in `agent.liquid` 
 
 ### Generated Union Type
 
-**File:** `src/cli/types/generated/source-types.ts:550-571`
+**File:** `src/cli/types/generated/source-types.ts:579-605`
 
 ```typescript
 export const AGENT_NAMES = [
   "agent-summoner",
+  "ai-developer",
+  "ai-reviewer",
   "api-developer",
+  "api-pm",
   "api-researcher",
   "api-reviewer",
+  "api-tester",
   "cli-developer",
   "cli-reviewer",
   "cli-tester",
   "codex-keeper",
   "convention-keeper",
+  "infra-reviewer",
   "pattern-scout",
   "skill-summoner",
   "web-architecture",
@@ -365,33 +370,17 @@ export const AGENT_NAMES = [
 export type AgentName = (typeof AGENT_NAMES)[number];
 ```
 
-**Count:** 18 entries in the generated union.
+**Count:** 23 entries in the generated union. All 23 agents in `src/agents/` are represented.
 
 ### Re-export Chain
 
 ```
 src/cli/types/generated/source-types.ts  -- defines AGENT_NAMES and AgentName
-  -> src/cli/types/agents.ts:3-6         -- re-exports AgentName and AGENT_NAMES
-     -> src/cli/types/index.ts            -- barrel export
+  -> src/cli/types/agents.ts:5-6         -- re-exports AgentName (type) and AGENT_NAMES (value)
+     -> src/cli/types/index.ts            -- barrel re-exports AgentName type (export type *)
+                                             AGENT_NAMES value is NOT barrel-exported;
+                                             consumers import from agents.ts or source-types.ts directly
 ```
-
-### Agents NOT in Generated Union
-
-5 agents exist in `src/agents/` but are absent from the generated `AGENT_NAMES` array:
-
-| Agent            | Category  | metadata.yaml exists | Likely reason for absence        |
-| ---------------- | --------- | -------------------- | -------------------------------- |
-| `ai-developer`   | developer | Yes                  | Added after last type generation |
-| `ai-reviewer`    | reviewer  | Yes                  | Added after last type generation |
-| `api-pm`         | planning  | Yes                  | Added after last type generation |
-| `api-tester`     | tester    | Yes                  | Added after last type generation |
-| `infra-reviewer` | reviewer  | Yes                  | Added after last type generation |
-
-These agents compile and function correctly because:
-
-- `agentYamlConfigSchema` uses `z.string() as z.ZodType<AgentName>` (accepts any string at runtime)
-- `loadAllAgents()` at `src/cli/lib/loading/loader.ts:38-71` uses `Record<string, AgentDefinition>` internally
-- Custom/new agents bypass the union constraint via boundary cast
 
 ### Wizard Domain Mapping
 
@@ -429,7 +418,7 @@ These unmapped agents are available for manual selection in the wizard but are n
 
 | Type                  | File                              | Line     | Purpose                                                |
 | --------------------- | --------------------------------- | -------- | ------------------------------------------------------ |
-| `AgentName`           | `types/generated/source-types.ts` | :571     | Union type of known agent IDs                          |
+| `AgentName`           | `types/generated/source-types.ts` | :605     | Union type of known agent IDs                          |
 | `AgentYamlConfig`     | `types/agents.ts`                 | :62-68   | Parsed metadata.yaml structure                         |
 | `AgentDefinition`     | `types/agents.ts`                 | :41-52   | Agent definition with path/source metadata             |
 | `AgentConfig`         | `types/agents.ts`                 | :55-59   | Fully resolved config with skills list                 |
