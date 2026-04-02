@@ -537,17 +537,21 @@ describe("compiler", () => {
       expect(result.agent.tools[1]).not.toContain("{{");
     });
 
-    it("sanitizes Liquid syntax in file content fields", () => {
+    it("preserves Liquid syntax in content fields (not re-evaluated by LiquidJS)", () => {
       const data = createMockCompiledAgentData();
-      data.identity = "Normal text {{ inject }} more text";
-      data.playbook = "{% assign x = 1 %} playbook";
-      data.output = "{{ forked_from }} output";
+      data.identity = "Use ${{ secrets.DB_PASSWORD }} in GitHub Actions";
+      data.playbook = "Template structure: {{ identity }} and {% if condition %}";
+      data.output = "{{ forked_from }} output example";
+      data.criticalRequirementsTop = "Include {{ variable }} syntax";
+      data.criticalReminders = "Use {% for item in list %} loops";
 
       const result = sanitizeCompiledAgentData(data);
 
-      expect(result.identity).not.toContain("{{");
-      expect(result.playbook).not.toContain("{%");
-      expect(result.output).not.toContain("{{");
+      expect(result.identity).toBe("Use ${{ secrets.DB_PASSWORD }} in GitHub Actions");
+      expect(result.playbook).toBe("Template structure: {{ identity }} and {% if condition %}");
+      expect(result.output).toBe("{{ forked_from }} output example");
+      expect(result.criticalRequirementsTop).toBe("Include {{ variable }} syntax");
+      expect(result.criticalReminders).toBe("Use {% for item in list %} loops");
     });
 
     it("sanitizes Liquid syntax in skill metadata", () => {

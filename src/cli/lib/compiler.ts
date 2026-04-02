@@ -70,9 +70,14 @@ function sanitizeSkills(skills: Skill[]): Skill[] {
 }
 
 /**
- * Sanitizes all user-controlled fields in compiled agent data to prevent
+ * Sanitizes user-controlled metadata fields in compiled agent data to prevent
  * Liquid template injection. Strips `{{`, `}}`, `{%`, `%}` from agent
- * metadata, skill metadata, and file content before template rendering.
+ * metadata and skill metadata before template rendering.
+ *
+ * Content fields (identity, playbook, output, criticalRequirementsTop,
+ * criticalReminders) are passed through unchanged — LiquidJS does not
+ * re-evaluate template syntax inside variable values, so double-curlies
+ * in content (e.g. GitHub Actions `${{ secrets.X }}`) are safe.
  */
 export function sanitizeCompiledAgentData(data: CompiledAgentData): CompiledAgentData {
   const sanitizedAgent: AgentConfig = {
@@ -95,14 +100,11 @@ export function sanitizeCompiledAgentData(data: CompiledAgentData): CompiledAgen
 
   return {
     agent: sanitizedAgent,
-    identity: sanitizeLiquidSyntax(data.identity, "identity"),
-    playbook: sanitizeLiquidSyntax(data.playbook, "playbook"),
-    output: sanitizeLiquidSyntax(data.output, "output"),
-    criticalRequirementsTop: sanitizeLiquidSyntax(
-      data.criticalRequirementsTop,
-      "criticalRequirementsTop",
-    ),
-    criticalReminders: sanitizeLiquidSyntax(data.criticalReminders, "criticalReminders"),
+    identity: data.identity,
+    playbook: data.playbook,
+    output: data.output,
+    criticalRequirementsTop: data.criticalRequirementsTop,
+    criticalReminders: data.criticalReminders,
     skills: sanitizedSkills,
     preloadedSkills: sanitizedPreloaded,
     dynamicSkills: sanitizedDynamic,
