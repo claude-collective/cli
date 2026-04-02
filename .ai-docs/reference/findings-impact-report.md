@@ -56,13 +56,13 @@
 
 ### 2. configuration.md -- 5 findings (HIGH)
 
-| Finding                                                      | Summary                                                                                                      | Impact Type                                                                    |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `2026-03-24-inlined-global-stack-not-merged.md`              | `generateProjectConfigWithInlinedGlobal` ignored global stack entirely                                       | Stale: config-writer merge behavior not accurately documented                  |
-| `2026-03-24-object-fromEntries-overwrites-duplicate-keys.md` | `Object.fromEntries()` silently dropped skills sharing same category                                         | Missing: config-generator duplicate-key pitfall not documented                 |
+| Finding                                                      | Summary                                                                                                      | Impact Type                                                                                              |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `2026-03-24-inlined-global-stack-not-merged.md`              | `generateProjectConfigWithInlinedGlobal` ignored global stack entirely                                       | Stale: config-writer merge behavior not accurately documented                                            |
+| `2026-03-24-object-fromEntries-overwrites-duplicate-keys.md` | `Object.fromEntries()` silently dropped skills sharing same category                                         | Missing: config-generator duplicate-key pitfall not documented                                           |
 | `2026-03-24-shallow-stack-merge-loses-categories.md`         | Shallow spread lost nested categories in stack merge; config-types imports wrong for self-contained config   | Missing: `mergeConfigs()` deep-merge-at-category-level and `writeStandaloneConfigTypes()` not documented |
-| `2026-03-25-dead-code-and-type-cast-cleanup.md`              | Dead functions (`writeProjectConfigTypes`, `compactStackForYaml`), type inconsistency in blank global config | Stale: dead code removal not reflected in doc                                  |
-| `matrix-loading-performance.md`                              | Matrix loading performance characteristics and anti-patterns in source-loader.ts shallow spreads             | Missing: performance characteristics and loading strategy not documented       |
+| `2026-03-25-dead-code-and-type-cast-cleanup.md`              | Dead functions (`writeProjectConfigTypes`, `compactStackForYaml`), type inconsistency in blank global config | Stale: dead code removal not reflected in doc                                                            |
+| `matrix-loading-performance.md`                              | Matrix loading performance characteristics and anti-patterns in source-loader.ts shallow spreads             | Missing: performance characteristics and loading strategy not documented                                 |
 
 **Actions needed:**
 

@@ -83,7 +83,8 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
   return (
     <Box width={SOURCE_COL_WIDTH}>
       <Text color={textColor} bold={isBold} dimColor={!option.selected && !isFocused}>
-        {prefix}{formatSourceLabel(option)}
+        {prefix}
+        {formatSourceLabel(option)}
       </Text>
     </Box>
   );
@@ -238,7 +239,10 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
       <Box width={SKILL_NAME_WIDTH} />
       {headerSources.map((option) => (
         <Box key={option.id} width={SOURCE_COL_WIDTH}>
-          <Text color={CLI_COLORS.WARNING} bold>{`${UI_SYMBOLS.CHEVRON_SPACER} ${SOURCE_HEADER_NAMES[option.id] ?? option.id}`}</Text>
+          <Text
+            color={CLI_COLORS.WARNING}
+            bold
+          >{`${UI_SYMBOLS.CHEVRON_SPACER} ${SOURCE_HEADER_NAMES[option.id] ?? option.id}`}</Text>
         </Box>
       ))}
     </Box>

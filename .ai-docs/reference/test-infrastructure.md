@@ -399,12 +399,12 @@ Imported per-test via `import "../matchers/setup.js"`. Provides:
 
 **E2E Fixtures (`e2e/fixtures/`):**
 
-| File                    | Exports                                                                             |
-| ----------------------- | ----------------------------------------------------------------------------------- |
-| `cli.ts`                | `CLI` class with `static run(args, project, options?)` for non-interactive commands |
+| File                    | Exports                                                                                                                                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cli.ts`                | `CLI` class with `static run(args, project, options?)` for non-interactive commands                                                                                                                                                  |
 | `dual-scope-helpers.ts` | `DualScopeEnv` type, `createTestEnvironment()`, `initGlobal()`, `initProject()`, `setupDualScope()`, `initGlobalWithEject()`, `setupDualScopeWithEject()`, `createDualScopeEnv()`, `initProjectAllGlobal()`, `createGlobalOnlyEnv()` |
-| `interactive-prompt.ts` | `InteractivePrompt` class for PTY-based wizard tests                                |
-| `project-builder.ts`    | `ProjectBuilder` class with `minimal()`, `editable()`, plugin project factories     |
+| `interactive-prompt.ts` | `InteractivePrompt` class for PTY-based wizard tests                                                                                                                                                                                 |
+| `project-builder.ts`    | `ProjectBuilder` class with `minimal()`, `editable()`, plugin project factories                                                                                                                                                      |
 
 ## Test Helpers (`src/cli/lib/__tests__/helpers.ts`)
 

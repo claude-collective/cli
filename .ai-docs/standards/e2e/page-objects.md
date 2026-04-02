@@ -117,41 +117,41 @@ Each step class models the user actions available on one wizard screen. Methods 
 
 **File:** `e2e/pages/steps/build-step.ts`
 
-| Method                             | Returns       | Action                                                           |
-| ---------------------------------- | ------------- | ---------------------------------------------------------------- |
-| `advanceDomain()`                  | `void`        | Advance current domain (Enter)                                   |
-| `toggleSkill(label)`                     | `void`        | Scroll to skill, press Space                                     |
-| `selectSkill(label)`                     | `void`        | Navigate grid to skill by (row, col), press Space                |
-| `toggleFocusedSkill()`                   | `void`        | Press Space on current item                                      |
-| `toggleScopeOnFocusedSkill()`            | `void`        | Press "s" on current item                                        |
-| `passThroughAllDomains()`                | `SourcesStep` | Web -> API -> Methodology (standard E2E source)                  |
-| `passThroughAllDomainsGeneric()`         | `SourcesStep` | Keep pressing Enter until Sources appears (non-standard sources) |
-| `passThroughScratchDomains()`            | `SourcesStep` | Web (select skill) -> API (select skill) -> Mobile (advance)     |
-| `passThroughWebAndMethodologyDomains()`  | `SourcesStep` | Web -> Methodology (when API deselected)                         |
-| `advanceToSources()`                     | `SourcesStep` | Advance single domain to Sources                                 |
-| `navigateToNextCategory()`               | `void`        | Tab to next category within current domain                       |
-| `toggleLabels()`                         | `void`        | Press "d" to toggle compatibility labels                         |
-| `toggleFilterIncompatible()`             | `void`        | Press "f" to toggle filter incompatible skills                   |
-| `openSearch()`                           | `SearchModal` | Press "/" to open search                                         |
-| `goBack()`                               | `void`        | Press Escape                                                     |
+| Method                                  | Returns       | Action                                                           |
+| --------------------------------------- | ------------- | ---------------------------------------------------------------- |
+| `advanceDomain()`                       | `void`        | Advance current domain (Enter)                                   |
+| `toggleSkill(label)`                    | `void`        | Scroll to skill, press Space                                     |
+| `selectSkill(label)`                    | `void`        | Navigate grid to skill by (row, col), press Space                |
+| `toggleFocusedSkill()`                  | `void`        | Press Space on current item                                      |
+| `toggleScopeOnFocusedSkill()`           | `void`        | Press "s" on current item                                        |
+| `passThroughAllDomains()`               | `SourcesStep` | Web -> API -> Methodology (standard E2E source)                  |
+| `passThroughAllDomainsGeneric()`        | `SourcesStep` | Keep pressing Enter until Sources appears (non-standard sources) |
+| `passThroughScratchDomains()`           | `SourcesStep` | Web (select skill) -> API (select skill) -> Mobile (advance)     |
+| `passThroughWebAndMethodologyDomains()` | `SourcesStep` | Web -> Methodology (when API deselected)                         |
+| `advanceToSources()`                    | `SourcesStep` | Advance single domain to Sources                                 |
+| `navigateToNextCategory()`              | `void`        | Tab to next category within current domain                       |
+| `toggleLabels()`                        | `void`        | Press "d" to toggle compatibility labels                         |
+| `toggleFilterIncompatible()`            | `void`        | Press "f" to toggle filter incompatible skills                   |
+| `openSearch()`                          | `SearchModal` | Press "/" to open search                                         |
+| `goBack()`                              | `void`        | Press Escape                                                     |
 
 ### SourcesStep
 
 **File:** `e2e/pages/steps/sources-step.ts`
 
-| Method                  | Returns      | Action                            |
-| ----------------------- | ------------ | --------------------------------- |
-| `waitForReady()`        | `void`       | Wait for sources step to render   |
-| `acceptDefaults()`      | `AgentsStep` | Wait for ready, press Enter       |
+| Method                  | Returns      | Action                             |
+| ----------------------- | ------------ | ---------------------------------- |
+| `waitForReady()`        | `void`       | Wait for sources step to render    |
+| `acceptDefaults()`      | `AgentsStep` | Wait for ready, press Enter        |
 | `setAllLocal()`         | `void`       | Press "l" (sets all to eject mode) |
-| `setAllPlugin()`        | `void`       | Press "p"                         |
-| `toggleFocusedSource()` | `void`       | Press Space                       |
-| `openSettings()`        | `void`       | Press "s"                         |
-| `closeSettings()`       | `void`       | Press Escape                      |
-| `pressAddSource()`      | `void`       | Press "a" (within settings)       |
-| `pressDeleteSource()`   | `void`       | Press backspace (within settings) |
-| `goBack()`              | `BuildStep`  | Press Escape, wait for build step |
-| `advance()`             | `AgentsStep` | Press Enter                       |
+| `setAllPlugin()`        | `void`       | Press "p"                          |
+| `toggleFocusedSource()` | `void`       | Press Space                        |
+| `openSettings()`        | `void`       | Press "s"                          |
+| `closeSettings()`       | `void`       | Press Escape                       |
+| `pressAddSource()`      | `void`       | Press "a" (within settings)        |
+| `pressDeleteSource()`   | `void`       | Press backspace (within settings)  |
+| `goBack()`              | `BuildStep`  | Press Escape, wait for build step  |
+| `advance()`             | `AgentsStep` | Press Enter                        |
 
 ### AgentsStep
 
@@ -216,11 +216,11 @@ All step classes extend `BaseStep`. Its methods are `protected` -- tests cannot 
 
 **Public methods** available to tests via any step:
 
-| Method           | Purpose                          |
-| ---------------- | -------------------------------- |
-| `getOutput()`    | Full output including scrollback |
-| `getScreen()`    | Visible viewport only            |
-| `abort()`        | Ctrl+C                           |
+| Method            | Purpose                          |
+| ----------------- | -------------------------------- |
+| `getOutput()`     | Full output including scrollback |
+| `getScreen()`     | Visible viewport only            |
+| `abort()`         | Ctrl+C                           |
 | `navigateDown()`  | Arrow down                       |
 | `navigateUp()`    | Arrow up                         |
 | `navigateRight()` | Arrow right                      |

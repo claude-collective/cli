@@ -34,7 +34,13 @@ Use union types when a value comes from a known, closed set:
 type AgentName = "web-developer" | "api-developer" | "cli-developer";
 type Domain = "web" | "api" | "cli" | "meta";
 type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
-type PermissionMode = "default" | "acceptEdits" | "dontAsk" | "bypassPermissions" | "plan" | "delegate";
+type PermissionMode =
+  | "default"
+  | "acceptEdits"
+  | "dontAsk"
+  | "bypassPermissions"
+  | "plan"
+  | "delegate";
 ```
 
 **Keep `string` when the set is open-ended:**

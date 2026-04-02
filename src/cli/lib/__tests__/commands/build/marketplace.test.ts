@@ -491,7 +491,11 @@ describe("build:marketplace command", () => {
       const marketplace = await readMarketplaceJson(outputPath);
       const names = marketplace.plugins.map((p) => p.name);
 
-      expect(names).toStrictEqual(["api-framework-hono", "web-framework-react", "web-state-zustand"]);
+      expect(names).toStrictEqual([
+        "api-framework-hono",
+        "web-framework-react",
+        "web-state-zustand",
+      ]);
     });
 
     it("should preserve explicit categories from plugin manifests", async () => {

@@ -106,38 +106,38 @@ export const StepBuild: React.FC<StepBuildProps> = ({ matrix }) => {
 
 ## Color Constants (`src/cli/consts.ts:185-196`)
 
-| Constant    | Value      | Usage                                 |
-| ----------- | ---------- | ------------------------------------- |
-| `PRIMARY`   | "cyan"     | Headers, focus                        |
-| `SUCCESS`   | "green"    | Checkmarks, success                   |
-| `ERROR`     | "red"      | Errors                                |
-| `WARNING`   | "yellow"   | Warnings                              |
-| `INFO`      | "blue"     | Info text                             |
-| `NEUTRAL`   | "gray"     | Dimmed text                           |
-| `FOCUS`     | "cyan"     | Focused elements                      |
-| `UNFOCUSED` | "white"    | Unfocused elements                    |
-| `WHITE`     | "white"    | Default text                          |
-| `LABEL_BG`  | "#383838"  | Background for scope/focus labels     |
+| Constant    | Value     | Usage                             |
+| ----------- | --------- | --------------------------------- |
+| `PRIMARY`   | "cyan"    | Headers, focus                    |
+| `SUCCESS`   | "green"   | Checkmarks, success               |
+| `ERROR`     | "red"     | Errors                            |
+| `WARNING`   | "yellow"  | Warnings                          |
+| `INFO`      | "blue"    | Info text                         |
+| `NEUTRAL`   | "gray"    | Dimmed text                       |
+| `FOCUS`     | "cyan"    | Focused elements                  |
+| `UNFOCUSED` | "white"   | Unfocused elements                |
+| `WHITE`     | "white"   | Default text                      |
+| `LABEL_BG`  | "#383838" | Background for scope/focus labels |
 
 ## UI Symbols (`src/cli/consts.ts:99-115`)
 
-| Symbol               | Value           | Usage                              |
-| -------------------- | --------------- | ---------------------------------- |
-| `CHECKBOX_CHECKED`   | `[x]`           | Selected checkbox                  |
-| `CHECKBOX_UNCHECKED` | `[ ]`           | Unselected checkbox                |
-| `CHEVRON`            | unicode chevron | Navigation indicator               |
-| `CHEVRON_SPACER`     | space           | Non-focused spacer                 |
-| `SELECTED`           | checkmark       | Selected item                      |
-| `UNSELECTED`         | circle          | Unselected item                    |
-| `CURRENT`            | filled circle   | Current focus                      |
-| `SKIPPED`            | dash            | Skipped step                       |
-| `DISABLED`           | dash            | Disabled item                      |
-| `DISCOURAGED`        | `!`             | Warning indicator                  |
-| `LOCK`               | lock emoji      | Locked/read-only items             |
-| `EJECT`              | eject symbol    | Local/ejected skill indicator      |
+| Symbol               | Value           | Usage                               |
+| -------------------- | --------------- | ----------------------------------- |
+| `CHECKBOX_CHECKED`   | `[x]`           | Selected checkbox                   |
+| `CHECKBOX_UNCHECKED` | `[ ]`           | Unselected checkbox                 |
+| `CHEVRON`            | unicode chevron | Navigation indicator                |
+| `CHEVRON_SPACER`     | space           | Non-focused spacer                  |
+| `SELECTED`           | checkmark       | Selected item                       |
+| `UNSELECTED`         | circle          | Unselected item                     |
+| `CURRENT`            | filled circle   | Current focus                       |
+| `SKIPPED`            | dash            | Skipped step                        |
+| `DISABLED`           | dash            | Disabled item                       |
+| `DISCOURAGED`        | `!`             | Warning indicator                   |
+| `LOCK`               | lock emoji      | Locked/read-only items              |
+| `EJECT`              | eject symbol    | Local/ejected skill indicator       |
 | `BULLET`             | bullet dot      | List item marker in confirm/summary |
-| `SCROLL_UP`          | triangle up     | Scroll indicator                   |
-| `SCROLL_DOWN`        | triangle down   | Scroll indicator                   |
+| `SCROLL_UP`          | triangle up     | Scroll indicator                    |
+| `SCROLL_DOWN`        | triangle down   | Scroll indicator                    |
 
 ## SelectList Component (`src/cli/components/common/select-list.tsx`)
 
@@ -204,18 +204,18 @@ Centralized hotkey definitions. Each hotkey has a `key` (for matching) and `labe
 
 **Character hotkeys:**
 
-| Export                       | Key | Context                       |
-| ---------------------------- | --- | ----------------------------- |
-| `HOTKEY_INFO`                | I   | Global (toggle info panel)    |
+| Export                       | Key | Context                          |
+| ---------------------------- | --- | -------------------------------- |
+| `HOTKEY_INFO`                | I   | Global (toggle info panel)       |
 | `HOTKEY_ACCEPT_DEFAULTS`     | A   | Build step (with stack selected) |
-| `HOTKEY_SCOPE`               | S   | Build/agents step             |
-| `HOTKEY_SETTINGS`            | S   | Sources step                  |
-| `HOTKEY_TOGGLE_LABELS`       | D   | Build step                    |
-| `HOTKEY_FILTER_INCOMPATIBLE` | F   | Build step                    |
-| `HOTKEY_SET_ALL_LOCAL`       | L   | Sources step (customize view) |
-| `HOTKEY_SET_ALL_PLUGIN`      | P   | Sources step (customize view) |
-| `HOTKEY_ADD_SOURCE`          | A   | Settings step                 |
-| `HOTKEY_COPY_LINK`           | C   | Skill search                  |
+| `HOTKEY_SCOPE`               | S   | Build/agents step                |
+| `HOTKEY_SETTINGS`            | S   | Sources step                     |
+| `HOTKEY_TOGGLE_LABELS`       | D   | Build step                       |
+| `HOTKEY_FILTER_INCOMPATIBLE` | F   | Build step                       |
+| `HOTKEY_SET_ALL_LOCAL`       | L   | Sources step (customize view)    |
+| `HOTKEY_SET_ALL_PLUGIN`      | P   | Sources step (customize view)    |
+| `HOTKEY_ADD_SOURCE`          | A   | Settings step                    |
+| `HOTKEY_COPY_LINK`           | C   | Skill search                     |
 
 **Structural key labels** (display-only, for footer hints): `KEY_LABEL_ENTER`, `KEY_LABEL_ESC`, `KEY_LABEL_SPACE`, `KEY_LABEL_TAB`, `KEY_LABEL_DEL`, `KEY_LABEL_ARROWS`, `KEY_LABEL_ARROWS_VERT`, `KEY_LABEL_VIM`, `KEY_LABEL_VIM_VERT`.
 

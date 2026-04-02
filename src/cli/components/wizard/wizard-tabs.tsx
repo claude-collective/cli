@@ -86,7 +86,7 @@ const Tab: React.FC<TabProps> = ({ step, state }) => {
   switch (state) {
     case "current":
       return (
-        <Text color={CLI_COLORS.UNFOCUSED} backgroundColor={CLI_COLORS.WARNING} bold>
+        <Text color="black" backgroundColor={CLI_COLORS.WARNING} bold>
           {" "}
           {label}{" "}
         </Text>

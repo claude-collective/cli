@@ -79,7 +79,9 @@ describe("config round-trip", () => {
     // Stack gets compacted: non-preloaded single skills become bare strings
     expect(loaded.name).toBe("stack-project");
     expect(loaded.agents).toStrictEqual(buildAgentConfigs(["web-developer", "api-developer"]));
-    expect(loaded.skills).toStrictEqual(buildSkillConfigs(["web-framework-react", "api-framework-hono"]));
+    expect(loaded.skills).toStrictEqual(
+      buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+    );
 
     // After compaction, bare strings inside arrays
     const webDev = loaded.stack?.["web-developer"] as Record<string, unknown>;

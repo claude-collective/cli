@@ -47,13 +47,13 @@ The E2E source is an expensive fixture (creates 9 skills, 2 agents, 1 stack, tem
 
 **`createE2ESource(options?)`** -- Creates a full skills source with:
 
-| Content   | Details                                                                                                                                                                  |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Content   | Details                                                                                                                                                                             |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 9 skills  | `web-framework-react`, `web-testing-vitest`, `web-state-zustand`, `web-framework-vue-composition-api`, `web-state-pinia`, `api-framework-hono`, 3x `meta-{methodology,reviewing}-*` |
-| 3 domains | web, api, meta                                                                                                                                                           |
-| 2 agents  | web-developer, api-developer                                                                                                                                             |
-| 1 stack   | "E2E Test Stack"                                                                                                                                                         |
-| Templates | `agent.liquid` template                                                                                                                                                  |
+| 3 domains | web, api, meta                                                                                                                                                                      |
+| 2 agents  | web-developer, api-developer                                                                                                                                                        |
+| 1 stack   | "E2E Test Stack"                                                                                                                                                                    |
+| Templates | `agent.liquid` template                                                                                                                                                             |
 
 Returns `{ sourceDir, tempDir }`. The `tempDir` is the parent -- clean it up in `afterAll`.
 
@@ -186,7 +186,7 @@ These are still exported and used in some tests. Matchers are preferred for asse
 | `injectMarketplaceIntoConfig(dir, name)` | Patches marketplace field into existing config.ts                   |
 | `delay(ms)`                              | Framework-internal wait utility (not for use in test `it()` blocks) |
 | `createE2ESource()`                      | Re-export from create-e2e-source.ts                                 |
-| `ensureBinaryExists()`                   | Verifies `bin/run.js` exists, throws if not                        |
+| `ensureBinaryExists()`                   | Verifies `bin/run.js` exists, throws if not                         |
 | `BIN_RUN`                                | Absolute path to `bin/run.js` binary                                |
 | `CLI_ROOT`                               | Absolute path to repository root                                    |
 | `renderSkillMd(id, desc, body?)`         | Re-export from content-generators.ts                                |

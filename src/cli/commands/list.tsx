@@ -29,12 +29,16 @@ const ListView: React.FC<ListViewProps> = ({ mode, source, skillConfigs, agentCo
     <Box flexDirection="column" paddingX={1} paddingY={1}>
       <Box flexDirection="column" marginBottom={1}>
         <Box flexDirection="row" columnGap={1}>
-          <Text color={CLI_COLORS.WARNING} bold>Mode</Text>
+          <Text color={CLI_COLORS.WARNING} bold>
+            Mode
+          </Text>
           <Text color={CLI_COLORS.NEUTRAL}>{mode}</Text>
         </Box>
         {source && (
           <Box flexDirection="row" columnGap={1}>
-            <Text color={CLI_COLORS.WARNING} bold>Source</Text>
+            <Text color={CLI_COLORS.WARNING} bold>
+              Source
+            </Text>
             <Text color={CLI_COLORS.NEUTRAL}>{source}</Text>
           </Box>
         )}

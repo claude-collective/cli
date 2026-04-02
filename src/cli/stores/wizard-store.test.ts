@@ -361,7 +361,9 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-vue-composition-api", true);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-vue-composition-api"]);
+      expect(domainSelections.web!["web-framework"]).toStrictEqual([
+        "web-framework-vue-composition-api",
+      ]);
     });
 
     it("should toggle off technology in exclusive mode", () => {
@@ -668,7 +670,10 @@ describe("WizardStore", () => {
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(2);
-      expect(skillConfigs.map((sc) => sc.id)).toStrictEqual(["web-framework-react", "web-state-zustand"]);
+      expect(skillConfigs.map((sc) => sc.id)).toStrictEqual([
+        "web-framework-react",
+        "web-state-zustand",
+      ]);
       expect(skillConfigs.every((sc) => sc.scope === "global")).toBe(true);
       expect(skillConfigs.every((sc) => sc.source === "agents-inc")).toBe(true);
     });
@@ -1071,7 +1076,9 @@ describe("WizardStore", () => {
       expect(state.approach).toBe("scratch");
       expect(state.selectedDomains).toStrictEqual(["web", "api"]);
       expect(state.domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
-      expect(state.domainSelections.web!["web-styling"]).toStrictEqual(["web-styling-scss-modules"]);
+      expect(state.domainSelections.web!["web-styling"]).toStrictEqual([
+        "web-styling-scss-modules",
+      ]);
       expect(state.domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
     });
 

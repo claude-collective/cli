@@ -25,6 +25,7 @@ root_cause: convention-undocumented
 Deep audit of E2E sub-standards against actual code found 14 issues across 5 files:
 
 **page-objects.md (7 issues):**
+
 1. StackStep listed `openHelp()` and `closeHelp()` methods that don't exist in code
 2. BuildStep listed `passThroughWebAndSharedDomains()` -- actual method is `passThroughWebAndMethodologyDomains()`
 3. BuildStep missing 5 methods: `selectSkill()`, `navigateToNextCategory()`, `toggleLabels()`, `toggleFilterIncompatible()`, `passThroughScratchDomains()`
@@ -34,18 +35,22 @@ Deep audit of E2E sub-standards against actual code found 14 issues across 5 fil
 7. InitWizard missing `loadTimeout` launch option
 
 **test-data.md (4 issues):**
+
 1. Skill count claimed "10 skills" -- actual E2E source has 9 skills
 2. Domain listed as "shared" -- actual third domain is "meta"
 3. `runCLI()` docs claimed it sets `AGENTSINC_SOURCE=undefined` by default -- it does not (only `CLI.run()` does)
 4. Missing 13 exports from test-utils.ts table (`ensureBinaryExists`, `BIN_RUN`, `CLI_ROOT`, render helpers, fs utils, exec re-exports)
 
 **test-structure.md (1 issue):**
+
 1. Claimed `TerminalScreen.waitForText()` has CI-aware timeouts (10s local, 20s CI) -- no such logic exists; timeout is always the passed `timeoutMs` parameter
 
 **assertions.md (1 issue):**
+
 1. `toHaveSettings` example showed `keyValue: ["Read(*)"]` which wouldn't work due to reference equality (`!==`). Fixed to show `hasKey` usage with a note about the `keyValue` limitation.
 
 **README.md (1 issue):**
+
 1. Missing `create-e2e-plugin-source.ts` and `node-pty.d.ts` from directory listing
 
 ## Fix Applied

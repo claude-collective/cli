@@ -18,6 +18,7 @@ root_cause: enforcement-gap
 Two reference documentation files referenced deleted source files (`view-title.tsx` and `stats-panel.tsx`) as if they still existed. The wizard-flow.md documented `view-title.tsx` as "imported by multiple steps but some usages are commented out" and `stats-panel.tsx` as "currently unused in render tree." Both files were deleted from the codebase but the documentation was never updated.
 
 Additionally:
+
 - `FEATURE_FLAGS.INFO_PANEL` was documented as defaulting to `false` when it had been changed to `true`
 - `InfoPanel` was described with internal helpers (`groupSkillsByBucket`, `groupAgentsByScope`) that no longer exist after the component was redesigned to use `SkillAgentSummary`
 - New component `skill-agent-summary.tsx` (extracted from confirm step redesign) was completely undocumented
@@ -29,6 +30,7 @@ Additionally:
 ## Fix Applied
 
 All issues fixed in this validation session:
+
 - Removed references to deleted `view-title.tsx` and `stats-panel.tsx`
 - Updated `INFO_PANEL` default to `true`
 - Rewrote InfoPanel documentation to reflect new marketplace/stack header + SkillAgentSummary delegation

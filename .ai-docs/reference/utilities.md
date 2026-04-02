@@ -6,17 +6,17 @@
 
 All utilities in `src/cli/utils/`.
 
-| File              | Path                            | Purpose                                |
-| ----------------- | ------------------------------- | -------------------------------------- |
-| `errors.ts`       | `src/cli/utils/errors.ts`       | Error message extraction               |
-| `exec.ts`         | `src/cli/utils/exec.ts`         | Shell command execution                |
-| `frontmatter.ts`  | `src/cli/utils/frontmatter.ts`  | YAML frontmatter extraction            |
-| `fs.ts`           | `src/cli/utils/fs.ts`           | File system wrappers                   |
-| `logger.ts`       | `src/cli/utils/logger.ts`       | Logging: log, warn, verbose            |
-| `messages.ts`     | `src/cli/utils/messages.ts`     | User-facing message constants          |
-| `string.ts`       | `src/cli/utils/string.ts`       | String manipulation utilities          |
-| `type-guards.ts`  | `src/cli/utils/type-guards.ts`  | Runtime type narrowing for union types |
-| `typed-object.ts` | `src/cli/utils/typed-object.ts` | Type-safe Object.entries/keys          |
+| File              | Path                            | Purpose                                   |
+| ----------------- | ------------------------------- | ----------------------------------------- |
+| `errors.ts`       | `src/cli/utils/errors.ts`       | Error message extraction                  |
+| `exec.ts`         | `src/cli/utils/exec.ts`         | Shell command execution                   |
+| `frontmatter.ts`  | `src/cli/utils/frontmatter.ts`  | YAML frontmatter extraction               |
+| `fs.ts`           | `src/cli/utils/fs.ts`           | File system wrappers                      |
+| `logger.ts`       | `src/cli/utils/logger.ts`       | Logging: log, warn, verbose               |
+| `messages.ts`     | `src/cli/utils/messages.ts`     | User-facing message constants             |
+| `string.ts`       | `src/cli/utils/string.ts`       | String manipulation utilities             |
+| `type-guards.ts`  | `src/cli/utils/type-guards.ts`  | Runtime type narrowing for union types    |
+| `typed-object.ts` | `src/cli/utils/typed-object.ts` | Type-safe Object.entries/keys             |
 | ~~`yaml.ts`~~     | ~~`src/cli/utils/yaml.ts`~~     | **DELETED** -- was dead code, now removed |
 
 ## Error Handling
@@ -285,12 +285,12 @@ All user-facing strings centralized in constant objects:
 | Constant                     | Value                           | Line   | Purpose                             |
 | ---------------------------- | ------------------------------- | ------ | ----------------------------------- |
 | `CLI_BIN_NAME`               | `agentsinc`                     | `:27`  | CLI binary name                     |
-| `DEFAULT_BRANDING.NAME`      | `Agents Inc.`                    | `:170` | Default product name                |
-| `DEFAULT_BRANDING.TAGLINE`   | `AI-powered development tools`   | `:170` | Default tagline                     |
-| `DEFAULT_PUBLIC_SOURCE_NAME` | `agents-inc`                     | `:176` | Fallback marketplace name           |
-| `SOURCE_DISPLAY_NAMES`       | `{ public, eject, agents-inc }`  | `:179` | Human-readable source type labels   |
-| `DEFAULT_VERSION`            | `1.0.0`                          | `:69`  | Default skill version               |
-| `DEFAULT_DISPLAY_VERSION`    | `0.0.0`                          | `:72`  | Indicates no version explicitly set |
+| `DEFAULT_BRANDING.NAME`      | `Agents Inc.`                   | `:170` | Default product name                |
+| `DEFAULT_BRANDING.TAGLINE`   | `AI-powered development tools`  | `:170` | Default tagline                     |
+| `DEFAULT_PUBLIC_SOURCE_NAME` | `agents-inc`                    | `:176` | Fallback marketplace name           |
+| `SOURCE_DISPLAY_NAMES`       | `{ public, eject, agents-inc }` | `:179` | Human-readable source type labels   |
+| `DEFAULT_VERSION`            | `1.0.0`                         | `:69`  | Default skill version               |
+| `DEFAULT_DISPLAY_VERSION`    | `0.0.0`                         | `:72`  | Indicates no version explicitly set |
 
 ### Versioning and Hashing
 

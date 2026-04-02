@@ -87,7 +87,17 @@ export type AgentName = (typeof AGENT_NAMES)[number];
 ### Domain (`src/cli/types/generated/source-types.ts:563`)
 
 ```typescript
-export const DOMAINS = ["ai", "api", "cli", "desktop", "infra", "meta", "mobile", "shared", "web"] as const;
+export const DOMAINS = [
+  "ai",
+  "api",
+  "cli",
+  "desktop",
+  "infra",
+  "meta",
+  "mobile",
+  "shared",
+  "web",
+] as const;
 export type Domain = (typeof DOMAINS)[number];
 ```
 

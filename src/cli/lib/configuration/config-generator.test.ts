@@ -301,7 +301,10 @@ describe("config-generator", () => {
         { selectedAgents: ["web-developer"] },
       );
 
-      expect(config.skills.map((s) => s.id)).toStrictEqual(["web-framework-react", "web-unknown-skill"]);
+      expect(config.skills.map((s) => s.id)).toStrictEqual([
+        "web-framework-react",
+        "web-unknown-skill",
+      ]);
     });
 
     it("produces no stack when all skills are unknown", () => {
@@ -487,7 +490,9 @@ describe("config-generator", () => {
     it("preserves preloaded flag in assignments", () => {
       const result = buildStackProperty(WEB_REACT_AND_SCSS_STACK);
 
-      expect(result["web-developer"]?.["web-framework"]).toStrictEqual([sa("web-framework-react", true)]);
+      expect(result["web-developer"]?.["web-framework"]).toStrictEqual([
+        sa("web-framework-react", true),
+      ]);
       expect(result["web-developer"]?.["web-styling"]).toStrictEqual([
         sa("web-styling-scss-modules", false),
       ]);

@@ -185,10 +185,10 @@ Implemented in: `src/cli/lib/configuration/config.ts:84-132`
 
 ### 4. Install Modes
 
-| Mode   | Skills Location                              | Agents Location   | Config Location         |
-| ------ | -------------------------------------------- | ----------------- | ----------------------- |
-| eject  | `.claude/skills/`                            | `.claude/agents/` | `.claude-src/config.ts` |
-| plugin | Claude plugin cache                          | `.claude/agents/` | `.claude-src/config.ts` |
+| Mode   | Skills Location                                   | Agents Location   | Config Location         |
+| ------ | ------------------------------------------------- | ----------------- | ----------------------- |
+| eject  | `.claude/skills/`                                 | `.claude/agents/` | `.claude-src/config.ts` |
+| plugin | Claude plugin cache                               | `.claude/agents/` | `.claude-src/config.ts` |
 | mixed  | `.claude/skills/` (eject) + plugin cache (plugin) | `.claude/agents/` | `.claude-src/config.ts` |
 
 Detection: `src/cli/lib/installation/installation.ts` — `detectInstallation()` at line 84, `detectProjectInstallation()` at line 35

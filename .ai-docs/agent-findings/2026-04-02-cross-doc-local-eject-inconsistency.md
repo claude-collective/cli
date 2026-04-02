@@ -35,6 +35,7 @@ Additionally, 3 stale line numbers in boundary-map.md referenced incorrect const
 ## Fix Applied
 
 21 fixes across 7 files:
+
 - 12 local->eject rename fixes across 5 files (including utilities.md and store-map.md where the issue was first discovered)
 - 3 line number corrections in boundary-map.md
 - 6 deleted file reference updates across 3 files

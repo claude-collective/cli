@@ -39,20 +39,20 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 
 ### Selection State
 
-| Field                    | Type                       | Purpose                                                |
-| ------------------------ | -------------------------- | ------------------------------------------------------ |
-| `selectedDomains`        | `Domain[]`                 | Active domains                                         |
-| `currentDomainIndex`     | `number`                   | Currently visible domain in build step                 |
-| `domainSelections`       | `DomainSelections`         | Full skill selections by domain/category               |
-| `_stackDomainSelections` | `DomainSelections \| null` | Snapshot for restoring stack selections on re-toggle   |
-| `selectedAgents`         | `AgentName[]`              | Selected agents for compilation                        |
-| `agentConfigs`           | `AgentScopeConfig[]`       | Per-agent scope configuration (project/global)         |
-| `boundSkills`            | `BoundSkill[]`             | Foreign skills bound via search                        |
-| `skillConfigs`           | `SkillConfig[]`            | Per-skill source and scope configuration               |
-| `installedSkillConfigs`  | `SkillConfig[] \| null`    | Snapshot of configs installed before wizard opened (for diff rendering) |
-| `installedAgentConfigs`  | `AgentScopeConfig[] \| null` | Snapshot of agent configs installed before wizard opened              |
-| `lockedSkillIds`         | `SkillId[]`                | Skills that cannot be toggled (existing global items)  |
-| `lockedAgentNames`       | `AgentName[]`              | Agents that cannot be toggled (existing global agents) |
+| Field                    | Type                         | Purpose                                                                 |
+| ------------------------ | ---------------------------- | ----------------------------------------------------------------------- |
+| `selectedDomains`        | `Domain[]`                   | Active domains                                                          |
+| `currentDomainIndex`     | `number`                     | Currently visible domain in build step                                  |
+| `domainSelections`       | `DomainSelections`           | Full skill selections by domain/category                                |
+| `_stackDomainSelections` | `DomainSelections \| null`   | Snapshot for restoring stack selections on re-toggle                    |
+| `selectedAgents`         | `AgentName[]`                | Selected agents for compilation                                         |
+| `agentConfigs`           | `AgentScopeConfig[]`         | Per-agent scope configuration (project/global)                          |
+| `boundSkills`            | `BoundSkill[]`               | Foreign skills bound via search                                         |
+| `skillConfigs`           | `SkillConfig[]`              | Per-skill source and scope configuration                                |
+| `installedSkillConfigs`  | `SkillConfig[] \| null`      | Snapshot of configs installed before wizard opened (for diff rendering) |
+| `installedAgentConfigs`  | `AgentScopeConfig[] \| null` | Snapshot of agent configs installed before wizard opened                |
+| `lockedSkillIds`         | `SkillId[]`                  | Skills that cannot be toggled (existing global items)                   |
+| `lockedAgentNames`       | `AgentName[]`                | Agents that cannot be toggled (existing global agents)                  |
 
 ### UI State
 

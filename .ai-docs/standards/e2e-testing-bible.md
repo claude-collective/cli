@@ -182,12 +182,12 @@ await screen.waitForRawText("initialized successfully", TIMEOUTS.INSTALL);
 
 **4.6 Use page object composite flows for repeated patterns.** The old `navigate*` helper functions in `test-utils.ts` have been replaced by page object methods:
 
-| Page Object Method                           | Purpose                                                      | Source               |
-| -------------------------------------------- | ------------------------------------------------------------ | -------------------- |
+| Page Object Method                            | Purpose                                                        | Source                   |
+| --------------------------------------------- | -------------------------------------------------------------- | ------------------------ |
 | `InitWizard.completeWithDefaults(stackName?)` | Stack -> Domain -> Build (all) -> Sources -> Agents -> Confirm | `wizards/init-wizard.ts` |
-| `EditWizard.passThrough()`                   | Build (all) -> Sources -> Agents -> Confirm                  | `wizards/edit-wizard.ts` |
-| `BuildStep.passThroughAllDomains()`          | Web -> API -> Methodology domain build steps                 | `steps/build-step.ts`    |
-| `TerminalScreen.waitForRawText(text, ms)`    | Poll raw PTY output (bypasses xterm buffer limits)           | `terminal-screen.ts`     |
+| `EditWizard.passThrough()`                    | Build (all) -> Sources -> Agents -> Confirm                    | `wizards/edit-wizard.ts` |
+| `BuildStep.passThroughAllDomains()`           | Web -> API -> Methodology domain build steps                   | `steps/build-step.ts`    |
+| `TerminalScreen.waitForRawText(text, ms)`     | Poll raw PTY output (bypasses xterm buffer limits)             | `terminal-screen.ts`     |
 
 ---
 
@@ -215,25 +215,25 @@ afterAll(async () => {
 
 **5.5 Project factory functions create test fixtures:**
 
-| Factory                                                 | Creates                                      | Use When                                 |
-| ------------------------------------------------------- | -------------------------------------------- | ---------------------------------------- |
-| `ProjectBuilder.minimal()`                              | Config + 1 skill                             | Compile tests                            |
-| `ProjectBuilder.editable(options?)`                     | Config + skills + agents dir                 | Edit wizard tests                        |
-| `ProjectBuilder.dualScope()`                            | Global home + project with separate configs  | Dual-scope tests                         |
-| `ProjectBuilder.withCustomSkill()`                      | Config + custom skill ID + config-types.ts   | Custom skill validation                  |
-| `ProjectBuilder.pluginProject(options)`                 | Config with marketplace, skills, agents      | Plugin-mode tests                        |
-| `ProjectBuilder.localProjectWithMarketplace(options)`   | Eject mode + marketplace in config           | Eject-to-plugin migration tests          |
-| `ProjectBuilder.globalWithSubproject()`                 | Global config + skill + empty subproject     | Global installation tests                |
-| `ProjectBuilder.installation(dir)`                      | Minimal config.ts in existing dir            | Commands requiring existing installation |
-| `createLocalSkill(projectDir, skillId, opts?)`          | Skill dir with SKILL.md + optional metadata  | Add skill to existing project            |
-| `writeProjectConfig(baseDir, config)`                   | `.claude-src/config.ts`                      | Override config in any project           |
+| Factory                                               | Creates                                     | Use When                                 |
+| ----------------------------------------------------- | ------------------------------------------- | ---------------------------------------- |
+| `ProjectBuilder.minimal()`                            | Config + 1 skill                            | Compile tests                            |
+| `ProjectBuilder.editable(options?)`                   | Config + skills + agents dir                | Edit wizard tests                        |
+| `ProjectBuilder.dualScope()`                          | Global home + project with separate configs | Dual-scope tests                         |
+| `ProjectBuilder.withCustomSkill()`                    | Config + custom skill ID + config-types.ts  | Custom skill validation                  |
+| `ProjectBuilder.pluginProject(options)`               | Config with marketplace, skills, agents     | Plugin-mode tests                        |
+| `ProjectBuilder.localProjectWithMarketplace(options)` | Eject mode + marketplace in config          | Eject-to-plugin migration tests          |
+| `ProjectBuilder.globalWithSubproject()`               | Global config + skill + empty subproject    | Global installation tests                |
+| `ProjectBuilder.installation(dir)`                    | Minimal config.ts in existing dir           | Commands requiring existing installation |
+| `createLocalSkill(projectDir, skillId, opts?)`        | Skill dir with SKILL.md + optional metadata | Add skill to existing project            |
+| `writeProjectConfig(baseDir, config)`                 | `.claude-src/config.ts`                     | Override config in any project           |
 
 **5.6 Source fixtures for wizard tests:**
 
-| Factory                        | Creates                                                                                            | Use When                |
-| ------------------------------ | -------------------------------------------------------------------------------------------------- | ----------------------- |
+| Factory                        | Creates                                                                                           | Use When                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------- | ----------------------- |
 | `createE2ESource(opts?)`       | 9 skills, 2 agents, 1 stack, templates. Optional `relationships` for slug-based resolution tests. | Eject-mode wizard tests |
-| `createE2EPluginSource(opts?)` | Above + built plugins + marketplace.json. Optional `marketplaceName`, `relationships`.             | Plugin-mode tests       |
+| `createE2EPluginSource(opts?)` | Above + built plugins + marketplace.json. Optional `marketplaceName`, `relationships`.            | Plugin-mode tests       |
 
 Create sources in `beforeAll` (expensive). Share across tests in a file. Each test creates its own `tempDir` with its own project for isolation.
 
@@ -249,20 +249,20 @@ await createPermissionsFile(projectDir);
 
 **6.1 Use custom Vitest matchers from `e2e/matchers/project-matchers.ts`.** Import `../matchers/setup.js` in every test file. All matchers accept a `ProjectHandle` (`{ dir: string }`) via `expect()`:
 
-| Matcher                                            | Checks                                                     |
-| -------------------------------------------------- | ---------------------------------------------------------- |
-| `toHaveConfig({ skillIds?, source?, agents? })`    | Config.ts exists and contains expected values              |
-| `toHaveCompiledAgent(name)`                        | Agent `.md` exists with YAML frontmatter                   |
-| `toHaveCompiledAgents()`                           | At least one agent `.md` exists in agents dir              |
-| `toHaveCompiledAgentContent(name, { contains?, notContains? })` | Agent content includes/excludes strings          |
-| `toHaveSkillCopied(skillId)`                       | `SKILL.md` exists in `.claude/skills/<id>/`                |
-| `toHaveLocalSkills(ids?)`                          | Skills directory exists with optional specific IDs         |
-| `toHaveNoLocalSkills()`                            | No skill directories in `.claude/skills/`                  |
-| `toHavePlugin(key)`                                | Plugin enabled in `settings.json`                          |
-| `toHavePluginInRegistry(key, scope?)`              | Plugin in `installed_plugins.json` (optional scope filter) |
-| `toHaveNoPlugins()`                                | No enabled plugins in `settings.json`                      |
-| `toHaveEjectedTemplate()`                          | Ejected `agent.liquid` template exists                     |
-| `toHaveSettings({ hasKey?, keyValue? })`           | Settings file exists with optional key/value check         |
+| Matcher                                                         | Checks                                                     |
+| --------------------------------------------------------------- | ---------------------------------------------------------- |
+| `toHaveConfig({ skillIds?, source?, agents? })`                 | Config.ts exists and contains expected values              |
+| `toHaveCompiledAgent(name)`                                     | Agent `.md` exists with YAML frontmatter                   |
+| `toHaveCompiledAgents()`                                        | At least one agent `.md` exists in agents dir              |
+| `toHaveCompiledAgentContent(name, { contains?, notContains? })` | Agent content includes/excludes strings                    |
+| `toHaveSkillCopied(skillId)`                                    | `SKILL.md` exists in `.claude/skills/<id>/`                |
+| `toHaveLocalSkills(ids?)`                                       | Skills directory exists with optional specific IDs         |
+| `toHaveNoLocalSkills()`                                         | No skill directories in `.claude/skills/`                  |
+| `toHavePlugin(key)`                                             | Plugin enabled in `settings.json`                          |
+| `toHavePluginInRegistry(key, scope?)`                           | Plugin in `installed_plugins.json` (optional scope filter) |
+| `toHaveNoPlugins()`                                             | No enabled plugins in `settings.json`                      |
+| `toHaveEjectedTemplate()`                                       | Ejected `agent.liquid` template exists                     |
+| `toHaveSettings({ hasKey?, keyValue? })`                        | Settings file exists with optional key/value check         |
 
 **6.2 Assert exit codes with named constants.** Never use bare numbers:
 
@@ -306,18 +306,18 @@ expect(content).toContain("web-framework-react"); // Expected skill reference
 
 **7.1 Use named timing constants from `e2e/pages/constants.ts`.** Never inline timeout numbers:
 
-| Constant                    | Value   | Usage                        |
-| --------------------------- | ------- | ---------------------------- |
-| `TIMEOUTS.WIZARD_LOAD`     | 15,000  | Wait for wizard to render    |
-| `TIMEOUTS.INSTALL`         | 30,000  | Wait for installation        |
-| `TIMEOUTS.EXIT`            | 10,000  | Wait for process exit        |
-| `TIMEOUTS.PLUGIN_INSTALL`  | 60,000  | Plugin install timeout       |
-| `TIMEOUTS.PLUGIN_TEST`     | 90,000  | Plugin operations + exit     |
-| `TIMEOUTS.EXIT_WAIT`       | 30,000  | Lifecycle process exit       |
-| `TIMEOUTS.SETUP`           | 60,000  | `beforeAll` hooks            |
-| `TIMEOUTS.LIFECYCLE`       | 180,000 | Multi-phase lifecycle tests  |
-| `TIMEOUTS.EXTENDED_LIFECYCLE` | 300,000 | Long lifecycle tests       |
-| `TIMEOUTS.INTERACTIVE`     | 120,000 | Interactive wizard tests     |
+| Constant                      | Value   | Usage                       |
+| ----------------------------- | ------- | --------------------------- |
+| `TIMEOUTS.WIZARD_LOAD`        | 15,000  | Wait for wizard to render   |
+| `TIMEOUTS.INSTALL`            | 30,000  | Wait for installation       |
+| `TIMEOUTS.EXIT`               | 10,000  | Wait for process exit       |
+| `TIMEOUTS.PLUGIN_INSTALL`     | 60,000  | Plugin install timeout      |
+| `TIMEOUTS.PLUGIN_TEST`        | 90,000  | Plugin operations + exit    |
+| `TIMEOUTS.EXIT_WAIT`          | 30,000  | Lifecycle process exit      |
+| `TIMEOUTS.SETUP`              | 60,000  | `beforeAll` hooks           |
+| `TIMEOUTS.LIFECYCLE`          | 180,000 | Multi-phase lifecycle tests |
+| `TIMEOUTS.EXTENDED_LIFECYCLE` | 300,000 | Long lifecycle tests        |
+| `TIMEOUTS.INTERACTIVE`        | 120,000 | Interactive wizard tests    |
 
 **Framework-internal delays** (`INTERNAL_DELAYS.STEP_TRANSITION = 500`, `INTERNAL_DELAYS.KEYSTROKE = 150`) are encapsulated in `BaseStep` methods. Tests must never import or reference `INTERNAL_DELAYS`.
 
@@ -348,11 +348,11 @@ expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
 **8.1 The E2E source contains exactly 9 skills across 3 domains:**
 
-| Domain | Skills                                                                                              |
-| ------ | --------------------------------------------------------------------------------------------------- |
+| Domain | Skills                                                                                                                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------ |
 | web    | `web-framework-react`, `web-testing-vitest`, `web-state-zustand`, `web-framework-vue-composition-api`, `web-state-pinia` |
-| api    | `api-framework-hono`                                                                                |
-| meta   | `meta-methodology-research-methodology`, `meta-reviewing-reviewing`, `meta-reviewing-cli-reviewing` |
+| api    | `api-framework-hono`                                                                                                     |
+| meta   | `meta-methodology-research-methodology`, `meta-reviewing-reviewing`, `meta-reviewing-cli-reviewing`                      |
 
 **8.2 The E2E source defines 1 stack** ("E2E Test Stack") mapping skills to 2 agents (`web-developer`, `api-developer`).
 
@@ -442,20 +442,20 @@ When the bug is fixed, removing `it.fails()` makes the test start passing -- no 
 
 Beyond the factories documented above, `test-utils.ts` exports:
 
-| Export                               | Purpose                                                                |
-| ------------------------------------ | ---------------------------------------------------------------------- |
-| `FORKED_FROM_METADATA`               | Standard forkedFrom metadata block for plugin/uninstall tests          |
-| `CLI_ROOT`                           | Absolute path to the repository root                                   |
-| `BIN_RUN`                            | Absolute path to `bin/run.js` (the built binary)                       |
-| `ensureBinaryExists()`               | Verifies `bin/run.js` exists; throws if CLI wasn't built               |
-| `stripAnsi(text)`                    | Strips ANSI escape sequences (wraps `stripVTControlCharacters`)        |
-| `getEjectedTemplatePath(projectDir)` | Returns path to ejected `agent.liquid` template                        |
-| `renderConfigTs(config)`             | Re-exported from content-generators -- renders a config.ts string      |
-| `renderSkillMd(id, desc, content?)`  | Re-exported from content-generators -- renders a SKILL.md string       |
-| `renderAgentYaml(...)`               | Re-exported from content-generators -- renders agent YAML              |
-| `cleanupTempDir(dir)`                | Re-exported -- removes temp directory                                  |
-| `directoryExists(path)`              | Re-exported -- async directory existence check                         |
-| `fileExists(path)`                   | Re-exported -- async file existence check                              |
+| Export                               | Purpose                                                           |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| `FORKED_FROM_METADATA`               | Standard forkedFrom metadata block for plugin/uninstall tests     |
+| `CLI_ROOT`                           | Absolute path to the repository root                              |
+| `BIN_RUN`                            | Absolute path to `bin/run.js` (the built binary)                  |
+| `ensureBinaryExists()`               | Verifies `bin/run.js` exists; throws if CLI wasn't built          |
+| `stripAnsi(text)`                    | Strips ANSI escape sequences (wraps `stripVTControlCharacters`)   |
+| `getEjectedTemplatePath(projectDir)` | Returns path to ejected `agent.liquid` template                   |
+| `renderConfigTs(config)`             | Re-exported from content-generators -- renders a config.ts string |
+| `renderSkillMd(id, desc, content?)`  | Re-exported from content-generators -- renders a SKILL.md string  |
+| `renderAgentYaml(...)`               | Re-exported from content-generators -- renders agent YAML         |
+| `cleanupTempDir(dir)`                | Re-exported -- removes temp directory                             |
+| `directoryExists(path)`              | Re-exported -- async directory existence check                    |
+| `fileExists(path)`                   | Re-exported -- async file existence check                         |
 
 **Constants and exit codes** are now in `e2e/pages/constants.ts` (`TIMEOUTS`, `EXIT_CODES`, `DIRS`, `FILES`, `STEP_TEXT`), not in `test-utils.ts`.
 

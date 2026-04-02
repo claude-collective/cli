@@ -19,25 +19,25 @@
 
 Machine-readable staleness tracker. Thresholds from `standards/documentation-bible.md`.
 
-| Doc                      | Days Stale | Threshold | Status |
-| ------------------------ | ---------- | --------- | ------ |
-| architecture-overview.md | 0          | 30        | OK     |
-| commands.md              | 0          | 14        | OK     |
-| type-system.md           | 0          | 14        | OK     |
-| store-map.md             | 0          | 7         | OK     |
-| compilation-pipeline.md  | 0          | 14        | OK     |
-| configuration.md         | 0          | 14        | OK     |
-| wizard-flow.md           | 0          | 14        | OK     |
-| skills-and-matrix.md     | 0          | 14        | OK     |
-| plugin-system.md         | 0          | 14        | OK     |
-| component-patterns.md    | 0          | 14        | OK     |
-| utilities.md             | 0          | 14        | OK     |
-| test-infrastructure.md   | 0          | 14        | OK     |
-| operations-layer.md      | 0          | 14        | OK     |
-| agent-system.md          | 0          | 14        | OK     |
-| dependency-graph.md      | 0          | 14        | OK     |
-| boundary-map.md          | 0          | 14        | OK     |
-| state-transitions.md     | 0          | 14        | OK     |
+| Doc                       | Days Stale | Threshold | Status |
+| ------------------------- | ---------- | --------- | ------ |
+| architecture-overview.md  | 0          | 30        | OK     |
+| commands.md               | 0          | 14        | OK     |
+| type-system.md            | 0          | 14        | OK     |
+| store-map.md              | 0          | 7         | OK     |
+| compilation-pipeline.md   | 0          | 14        | OK     |
+| configuration.md          | 0          | 14        | OK     |
+| wizard-flow.md            | 0          | 14        | OK     |
+| skills-and-matrix.md      | 0          | 14        | OK     |
+| plugin-system.md          | 0          | 14        | OK     |
+| component-patterns.md     | 0          | 14        | OK     |
+| utilities.md              | 0          | 14        | OK     |
+| test-infrastructure.md    | 0          | 14        | OK     |
+| operations-layer.md       | 0          | 14        | OK     |
+| agent-system.md           | 0          | 14        | OK     |
+| dependency-graph.md       | 0          | 14        | OK     |
+| boundary-map.md           | 0          | 14        | OK     |
+| state-transitions.md      | 0          | 14        | OK     |
 | findings-impact-report.md | 0          | 30        | OK     |
 
 **Status values:** `OK` = within threshold, `DUE` = at or past threshold, `OVERDUE` = at or past 2x threshold.
@@ -133,6 +133,7 @@ Verified 10 behavioral claims by reading actual implementation code. Focus: does
 10. **boundary-map.md private IP blocking**: FAIL -- doc omitted `172.16-31.x.x` and `0.0.0.0` from IP ranges. **Fixed**: added both.
 
 **Fixes applied (3 edits in 2 files):**
+
 - `boundary-map.md`: Added `172.16-31.x.x` and `0.0.0.0` to private IP blocking list
 - `compilation-pipeline.md`: Replaced "thin facade" (line 16) and "Thin wrapper" (line 269) with accurate descriptions
 
@@ -176,6 +177,7 @@ Verified every code example in `clean-code-standards.md`, `typescript-types-bibl
 - Release commit format `chore(release): {version} -- brief summary`: PASS -- matches actual releases
 
 **Fixes applied (1 edit):**
+
 - `typescript-types-bible.md` Section 6: Updated `typedEntries` and `typedKeys` parameter types from `Record<K, V>` to `Partial<Record<K, V>>` to match actual `utils/typed-object.ts` signatures
 
 ### 2026-04-02 Round 10 Deep Verification (pass 9 fix verification + 10-item random deep check)
@@ -201,6 +203,7 @@ Verified every code example in `clean-code-standards.md`, `typescript-types-bibl
 10. **skill-atomicity-bible.md directory structure**: PASS -- verified against `web-framework-react` in skills repo. Directory has SKILL.md (with name/description frontmatter), metadata.yaml (category/slug/domain/author/displayName/cliDescription/usageGuidance), reference.md, examples/ (with core.md + topic files).
 
 **Fixes applied (3 edits):**
+
 - `findings-impact-report.md`: Replaced 2 stale `deepMergeStacks()` references with `mergeConfigs()` at lines 305 and 315
 - `architecture-overview.md`: Added `mixed` install mode row to Install Modes table
 
@@ -218,6 +221,7 @@ Complete line-by-line verification of the most-edited standards docs. Verified e
 **commit-protocol.md (0 fixes):** All claims verified: conventional commits format, changelog files exist, `changelogs/` directory structure matches, pre-commit hook exists in `.husky/`.
 
 **e2e/ sub-standards (0 fixes across 7 files):**
+
 - README.md: Directory structure, file counts, config values all match filesystem and `vitest.config.ts`.
 - assertions.md: All 12 matchers match `project-matchers.ts` and `setup.ts` type augmentation.
 - patterns.md: All code examples use current page object APIs (`selectSkill`, `advanceToSources`, `setAllLocal`, `toggleAgent`).
@@ -299,64 +303,64 @@ Full consistency audit across all 18 reference docs + standards docs + DOCUMENTA
 
 **Check 2: Count consistency (0 errors):**
 
-| Value | Expected | Verified Against | Docs Referencing |
-|-------|----------|------------------|------------------|
-| Skills | 161 | source-types.ts SKILL_MAP (lines 7-167) | type-system.md, skills-and-matrix.md |
-| Categories | 51 | source-types.ts CATEGORIES (lines 506-556) | type-system.md, skills-and-matrix.md |
-| Domains | 9 | source-types.ts DOMAINS (lines 563-573) | type-system.md, skills-and-matrix.md |
-| AgentNames | 23 | source-types.ts AGENT_NAMES (lines 579-603) | type-system.md, agent-system.md |
-| TypeScript files | 317 | `find src/cli -name '*.ts' -o -name '*.tsx' | wc -l` | DOCUMENTATION_MAP.md |
-| Zod schemas | 39 | `grep -c` on schemas.ts | architecture-overview.md, type-system.md |
-| Version | 0.100.0 | package.json | architecture-overview.md |
+| Value            | Expected | Verified Against                            | Docs Referencing                         |
+| ---------------- | -------- | ------------------------------------------- | ---------------------------------------- | -------------------- |
+| Skills           | 161      | source-types.ts SKILL_MAP (lines 7-167)     | type-system.md, skills-and-matrix.md     |
+| Categories       | 51       | source-types.ts CATEGORIES (lines 506-556)  | type-system.md, skills-and-matrix.md     |
+| Domains          | 9        | source-types.ts DOMAINS (lines 563-573)     | type-system.md, skills-and-matrix.md     |
+| AgentNames       | 23       | source-types.ts AGENT_NAMES (lines 579-603) | type-system.md, agent-system.md          |
+| TypeScript files | 317      | `find src/cli -name '_.ts' -o -name '_.tsx' | wc -l`                                   | DOCUMENTATION_MAP.md |
+| Zod schemas      | 39       | `grep -c` on schemas.ts                     | architecture-overview.md, type-system.md |
+| Version          | 0.100.0  | package.json                                | architecture-overview.md                 |
 
 **Check 3: Store line numbers (0 errors):**
 
 All wizard-store.ts references consistent across store-map.md, state-transitions.md, wizard-flow.md:
 
-| Reference | Actual | store-map.md | state-transitions.md | wizard-flow.md |
-|-----------|--------|-------------|---------------------|---------------|
-| useWizardStore | :560 | :560 | (not referenced) | (not referenced) |
-| createInitialState | :530 | :530-558 | :530 | (not referenced) |
-| WizardState | :190-497 | :190-497 | (refs store-map.md) | (not referenced) |
-| DOMAIN_AGENTS | :93-104 | :93-104 | :93-104 | (not referenced) |
-| goBack | :898-906 | (no line) | :898-906 | (not referenced) |
-| getStepProgress | :1001 | (no line) | :1001 | (not referenced) |
+| Reference          | Actual   | store-map.md | state-transitions.md | wizard-flow.md   |
+| ------------------ | -------- | ------------ | -------------------- | ---------------- |
+| useWizardStore     | :560     | :560         | (not referenced)     | (not referenced) |
+| createInitialState | :530     | :530-558     | :530                 | (not referenced) |
+| WizardState        | :190-497 | :190-497     | (refs store-map.md)  | (not referenced) |
+| DOMAIN_AGENTS      | :93-104  | :93-104      | :93-104              | (not referenced) |
+| goBack             | :898-906 | (no line)    | :898-906             | (not referenced) |
+| getStepProgress    | :1001    | (no line)    | :1001                | (not referenced) |
 
 **Check 4: Compiler line numbers (0 errors):**
 
 All compiler.ts references consistent across compilation-pipeline.md, agent-system.md, architecture-overview.md, boundary-map.md:
 
-| Function | Actual | All docs agree |
-|----------|--------|---------------|
-| compileAllAgents | :216 | :216 |
-| compileAgent | :190 | :190 |
-| createLiquidEngine | :394-419 | :394-419 |
-| sanitizeCompiledAgentData | :77-111 | :77-111 |
+| Function                  | Actual   | All docs agree |
+| ------------------------- | -------- | -------------- |
+| compileAllAgents          | :216     | :216           |
+| compileAgent              | :190     | :190           |
+| createLiquidEngine        | :394-419 | :394-419       |
+| sanitizeCompiledAgentData | :77-111  | :77-111        |
 
 **Check 5: Consts.ts line numbers (0 errors):**
 
 All consts.ts references consistent across utilities.md, component-patterns.md, boundary-map.md, architecture-overview.md:
 
-| Constant | Actual | All docs agree |
-|----------|--------|---------------|
-| MAX_MARKETPLACE_FILE_SIZE | :150 | :150 |
-| MAX_PLUGIN_FILE_SIZE | :151 | :151 |
-| MAX_CONFIG_FILE_SIZE | :152 | :152 |
-| MAX_JSON_NESTING_DEPTH | :154 | :154 |
-| MAX_MARKETPLACE_PLUGINS | :155 | :155 |
-| CLI_COLORS | :185-196 | :185-196 |
-| UI_SYMBOLS | :99-115 | :99-115 |
-| DEFAULT_BRANDING | :170-173 | :170-173 |
-| SCROLL_VIEWPORT | :157-168 | :157-168 |
-| UI_LAYOUT | :117 | :117 |
-| UI_MESSAGES | :124 | :124 |
-| CLI_BIN_NAME | :27 | :27 |
+| Constant                  | Actual   | All docs agree |
+| ------------------------- | -------- | -------------- |
+| MAX_MARKETPLACE_FILE_SIZE | :150     | :150           |
+| MAX_PLUGIN_FILE_SIZE      | :151     | :151           |
+| MAX_CONFIG_FILE_SIZE      | :152     | :152           |
+| MAX_JSON_NESTING_DEPTH    | :154     | :154           |
+| MAX_MARKETPLACE_PLUGINS   | :155     | :155           |
+| CLI_COLORS                | :185-196 | :185-196       |
+| UI_SYMBOLS                | :99-115  | :99-115        |
+| DEFAULT_BRANDING          | :170-173 | :170-173       |
+| SCROLL_VIEWPORT           | :157-168 | :157-168       |
+| UI_LAYOUT                 | :117     | :117           |
+| UI_MESSAGES               | :124     | :124           |
+| CLI_BIN_NAME              | :27      | :27            |
 
 **Result: 0 errors in reference documentation. 3 stale `installLocal()` references in standards/ (convention-keeper scope).**
 
 ### 2026-04-02 Round 5 Final Exhaustive Verification (boundary-map.md)
 
-Exhaustive line-by-line verification of EVERY claim in boundary-map.md -- the most error-prone document (4 errors round 1, 5 round 2, 3 cross-doc round 4). Checked all exec.ts, consts.ts, schemas.ts, command flags, plugin-*, config.ts, compiler.ts, and skill-copier.ts references.
+Exhaustive line-by-line verification of EVERY claim in boundary-map.md -- the most error-prone document (4 errors round 1, 5 round 2, 3 cross-doc round 4). Checked all exec.ts, consts.ts, schemas.ts, command flags, plugin-\*, config.ts, compiler.ts, and skill-copier.ts references.
 
 **16 errors fixed:**
 
@@ -488,6 +492,7 @@ No other deleted file references found (config/, diff.ts, outdated.ts, view-titl
 All 4 docs (architecture-overview, commands, dependency-graph, boundary-map) agree on same 11 commands + 7 subcommands. None reference deleted config/diff/outdated.
 
 **Intentionally NOT changed (legitimate "local" usages):**
+
 - `CategoryPath = Category | "local"` (type-system.md, boundary-map.md) -- "local" means local skills directory, not install mode
 - `SkillSourceType = "public" | "private" | "local"` (type-system.md) -- "local" means skill source type, not install mode
 - `copyLocalSkills`, `deleteLocalSkill`, `migrateLocalSkillScope` -- actual function names
@@ -707,7 +712,7 @@ Complete line-by-line verification of 2 docs that received only date-stamp updat
 
 - Fixed Key Observations: utils/fs.ts consumer count 54 -> 52 (table body already said 52, summary was inconsistent)
 - Fixed utils/errors.ts: added base-command.ts to Commands layer, updated count 10 -> 11, total 32 -> 33
-- Fixed utils/typed-object.ts: Lib count 17 -> 16 (was counting test helper __tests__/helpers.ts), total 24 -> 23
+- Fixed utils/typed-object.ts: Lib count 17 -> 16 (was counting test helper **tests**/helpers.ts), total 24 -> 23
 
 **All verified correct in dependency-graph.md (0 additional errors):**
 

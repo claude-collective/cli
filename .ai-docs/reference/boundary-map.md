@@ -57,25 +57,25 @@ The init hook runs before oclif parses flags. It manually extracts `--source` / 
 
 Every command extends `BaseCommand` and defines `static flags`. oclif handles type coercion, required validation, and enum constraints.
 
-| Command             | File                                  | Flags (beyond `--source`)                                                                     |
-| ------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `init`              | `commands/init.tsx:162-168`           | `--refresh` (boolean)                                                                         |
-| `edit`              | `commands/edit.tsx:81-90`             | `--refresh` (boolean), `--agent-source` (string)                                              |
-| `compile`           | `commands/compile.ts:31-41`           | `--verbose` (boolean), `--agent-source` (string)                                              |
-| `list`              | `commands/list.tsx:64-66`             | (base only)                                                                                   |
-| `info`              | `commands/info.ts:85-92`              | `--preview` (boolean, allowNo)                                                                |
-| `eject`             | `commands/eject.ts:79-94`             | `--force` (boolean), `--output` (string), `--refresh` (boolean)                               |
-| `search`            | `commands/search.tsx:58-78`           | `--interactive` (boolean), `--category` (string), `--refresh` (boolean), `--json` (boolean)   |
-| `update`            | `commands/update.tsx:69-80`           | `--yes` (boolean), `--no-recompile` (boolean)                                                 |
-| `uninstall`         | `commands/uninstall.tsx:96-107`       | `--yes` (boolean), `--all` (boolean)                                                          |
-| `validate`          | `commands/validate.ts:60-77`          | `--verbose` (boolean), `--all` (boolean), `--plugins` (boolean)                               |
-| `doctor`            | `commands/doctor.ts:372-382`          | `--source` (string, own definition), `--verbose` (boolean)                                    |
-| `import skill`      | `commands/import/skill.ts:65-95`      | `--skill` (string), `--all` (boolean), `--list` (boolean), `--subdir` (string), `--force` (boolean), `--refresh` (boolean) |
-| `new skill`         | `commands/new/skill.ts:47-73`         | `--author` (string), `--category` (string), `--domain` (string), `--force` (boolean), `--output` (string) |
-| `new agent`         | `commands/new/agent.tsx:80-97`        | `--purpose` (string), `--non-interactive` (boolean), `--refresh` (boolean)                    |
-| `new marketplace`   | `commands/new/marketplace.ts:137-148` | `--force` (boolean), `--output` (string)                                                      |
-| `build plugins`     | `commands/build/plugins.ts:30-53`     | `--skills-dir` (string), `--agents-dir` (string), `--output-dir` (string), `--skill` (string), `--verbose` (boolean) |
-| `build stack`       | `commands/build/stack.tsx:52-74`      | `--stack` (string), `--output-dir` (string), `--agent-source` (string), `--refresh` (boolean), `--verbose` (boolean) |
+| Command             | File                                  | Flags (beyond `--source`)                                                                                                                                                                  |
+| ------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `init`              | `commands/init.tsx:162-168`           | `--refresh` (boolean)                                                                                                                                                                      |
+| `edit`              | `commands/edit.tsx:81-90`             | `--refresh` (boolean), `--agent-source` (string)                                                                                                                                           |
+| `compile`           | `commands/compile.ts:31-41`           | `--verbose` (boolean), `--agent-source` (string)                                                                                                                                           |
+| `list`              | `commands/list.tsx:64-66`             | (base only)                                                                                                                                                                                |
+| `info`              | `commands/info.ts:85-92`              | `--preview` (boolean, allowNo)                                                                                                                                                             |
+| `eject`             | `commands/eject.ts:79-94`             | `--force` (boolean), `--output` (string), `--refresh` (boolean)                                                                                                                            |
+| `search`            | `commands/search.tsx:58-78`           | `--interactive` (boolean), `--category` (string), `--refresh` (boolean), `--json` (boolean)                                                                                                |
+| `update`            | `commands/update.tsx:69-80`           | `--yes` (boolean), `--no-recompile` (boolean)                                                                                                                                              |
+| `uninstall`         | `commands/uninstall.tsx:96-107`       | `--yes` (boolean), `--all` (boolean)                                                                                                                                                       |
+| `validate`          | `commands/validate.ts:60-77`          | `--verbose` (boolean), `--all` (boolean), `--plugins` (boolean)                                                                                                                            |
+| `doctor`            | `commands/doctor.ts:372-382`          | `--source` (string, own definition), `--verbose` (boolean)                                                                                                                                 |
+| `import skill`      | `commands/import/skill.ts:65-95`      | `--skill` (string), `--all` (boolean), `--list` (boolean), `--subdir` (string), `--force` (boolean), `--refresh` (boolean)                                                                 |
+| `new skill`         | `commands/new/skill.ts:47-73`         | `--author` (string), `--category` (string), `--domain` (string), `--force` (boolean), `--output` (string)                                                                                  |
+| `new agent`         | `commands/new/agent.tsx:80-97`        | `--purpose` (string), `--non-interactive` (boolean), `--refresh` (boolean)                                                                                                                 |
+| `new marketplace`   | `commands/new/marketplace.ts:137-148` | `--force` (boolean), `--output` (string)                                                                                                                                                   |
+| `build plugins`     | `commands/build/plugins.ts:30-53`     | `--skills-dir` (string), `--agents-dir` (string), `--output-dir` (string), `--skill` (string), `--verbose` (boolean)                                                                       |
+| `build stack`       | `commands/build/stack.tsx:52-74`      | `--stack` (string), `--output-dir` (string), `--agent-source` (string), `--refresh` (boolean), `--verbose` (boolean)                                                                       |
 | `build marketplace` | `commands/build/marketplace.ts:39-76` | `--plugins-dir` (string), `--output` (string), `--name` (string), `--version` (string), `--description` (string), `--owner-name` (string), `--owner-email` (string), `--verbose` (boolean) |
 
 **Validation pattern:** oclif validates flag types, required status, and enum `options` at parse time. String flags pass through without content validation -- downstream code validates semantics (e.g., `validateSourceFormat` for source strings).
@@ -115,14 +115,14 @@ Callers:
 
 ### 2.3 Direct YAML Parse + Zod safeParse (Production Call Sites)
 
-| File                              | Line | What Is Parsed                           | Schema Used                                                 |
-| --------------------------------- | ---- | ---------------------------------------- | ----------------------------------------------------------- |
+| File                              | Line | What Is Parsed                           | Schema Used                                                                                                          |
+| --------------------------------- | ---- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `matrix/matrix-loader.ts`         | :123 | `metadata.yaml` per skill                | `rawMetadataSchema` (local schema at :26, stricter than `skillMetadataLoaderSchema` — requires `author`, `category`) |
-| `skills/skill-plugin-compiler.ts` | :51  | `metadata.yaml` for skill compilation    | `skillMetadataLoaderSchema`                                 |
-| `skills/skill-metadata.ts`        | :110 | `metadata.yaml` for local skill metadata | `localSkillMetadataSchema`                                  |
-| `skills/skill-metadata.ts`        | :315 | `metadata.yaml` for fork injection       | `localSkillMetadataSchema`                                  |
-| `source-validator.ts`             | :189 | `metadata.yaml` for strict validation    | `metadataValidationSchema` / `customMetadataValidationSchema` |
-| `agents/agent-plugin-compiler.ts` | :35  | Agent `.md` frontmatter                  | `agentFrontmatterValidationSchema`                          |
+| `skills/skill-plugin-compiler.ts` | :51  | `metadata.yaml` for skill compilation    | `skillMetadataLoaderSchema`                                                                                          |
+| `skills/skill-metadata.ts`        | :110 | `metadata.yaml` for local skill metadata | `localSkillMetadataSchema`                                                                                           |
+| `skills/skill-metadata.ts`        | :315 | `metadata.yaml` for fork injection       | `localSkillMetadataSchema`                                                                                           |
+| `source-validator.ts`             | :189 | `metadata.yaml` for strict validation    | `metadataValidationSchema` / `customMetadataValidationSchema`                                                        |
+| `agents/agent-plugin-compiler.ts` | :35  | Agent `.md` frontmatter                  | `agentFrontmatterValidationSchema`                                                                                   |
 
 ### 2.4 JSON Parse Boundaries (Production)
 
@@ -176,19 +176,19 @@ Config writer uses `JSON.parse(JSON.stringify(x))` at lines :40-41, :59 to strip
 
 ### 3.3 Skill Copier
 
-| Function       | File                     | Line        | What It Writes                                    | Where                        |
-| -------------- | ------------------------ | ----------- | ------------------------------------------------- | ---------------------------- |
+| Function                                                          | File                     | Line        | What It Writes                                    | Where                        |
+| ----------------------------------------------------------------- | ------------------------ | ----------- | ------------------------------------------------- | ---------------------------- |
 | `copySkillsToPluginFromSource()` / `copySkillsToLocalFlattened()` | `skills/skill-copier.ts` | :131 / :199 | Skill directories (SKILL.md, metadata.yaml, etc.) | `.claude/skills/<skill-id>/` |
 
 Path traversal validation via `validateSkillPath()` at `skill-copier.ts:25-45` -- resolves paths and verifies they stay within the expected parent directory. Checks for null bytes at :30.
 
 ### 3.4 Local Installer
 
-| Function                       | File                              | Line      | What It Writes                            | Where                                        |
-| ------------------------------ | --------------------------------- | --------- | ----------------------------------------- | -------------------------------------------- |
-| `writeScopedConfigs()`         | `installation/local-installer.ts` | :369-425  | Scoped config.ts files (global + project) | `.claude-src/config.ts` per scope            |
-| `compileAndWriteAgents()`      | `installation/local-installer.ts` | :427-469  | Compiled agent markdown files             | `.claude/agents/<name>.md` (project or `~/`) |
-| `writeStandaloneConfigTypes()` | (called from local-installer)     |           | Config types                              | `.claude-src/config-types.ts`                |
+| Function                       | File                              | Line     | What It Writes                            | Where                                        |
+| ------------------------------ | --------------------------------- | -------- | ----------------------------------------- | -------------------------------------------- |
+| `writeScopedConfigs()`         | `installation/local-installer.ts` | :369-425 | Scoped config.ts files (global + project) | `.claude-src/config.ts` per scope            |
+| `compileAndWriteAgents()`      | `installation/local-installer.ts` | :427-469 | Compiled agent markdown files             | `.claude/agents/<name>.md` (project or `~/`) |
+| `writeStandaloneConfigTypes()` | (called from local-installer)     |          | Config types                              | `.claude-src/config-types.ts`                |
 
 ### 3.5 Compiler Agent Output
 
@@ -201,8 +201,8 @@ Template root resolution at `compiler.ts:394-419`: checks local `.claude-src/age
 
 ### 3.6 Skill Metadata Injection
 
-| Function                     | File                       | Line   | What It Writes                        | Where                   |
-| ---------------------------- | -------------------------- | ------ | ------------------------------------- | ----------------------- |
+| Function                     | File                       | Line | What It Writes                        | Where                   |
+| ---------------------------- | -------------------------- | ---- | ------------------------------------- | ----------------------- |
 | `injectForkedFromMetadata()` | `skills/skill-metadata.ts` | :299 | Updated metadata.yaml with forkedFrom | Skill's `metadata.yaml` |
 
 ---
@@ -249,16 +249,16 @@ All three validate: non-empty, length limit, no control characters (`[\x00-\x08\
 
 **Checks performed:**
 
-| Check                         | Implementation                                         | Purpose                                                                              |
-| ----------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| Null byte detection           | `NULL_BYTE_PATTERN` test at :293                       | Prevent C-level string termination bypass in git/giget                               |
-| Length limit                  | `MAX_SOURCE_LENGTH` (512) at :303                      | Prevent oversized input                                                              |
-| Path traversal in remote URLs | `PATH_TRAVERSAL_PATTERN` (`..`) at :336                | Block `?branch=../../etc/passwd`                                                     |
-| UNC path blocking             | `UNC_PATH_PATTERN` (`\\` or `//` prefix) at :418       | Prevent SMB auth credential leaks                                                    |
-| Control character blocking    | `CONTROL_CHAR_PATTERN` at :406                         | Prevent terminal injection                                                           |
-| HTTP URL hostname validation  | `validateHttpUrl()` at :357-387                        | Require valid hostname                                                               |
+| Check                         | Implementation                                         | Purpose                                                                                                          |
+| ----------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Null byte detection           | `NULL_BYTE_PATTERN` test at :293                       | Prevent C-level string termination bypass in git/giget                                                           |
+| Length limit                  | `MAX_SOURCE_LENGTH` (512) at :303                      | Prevent oversized input                                                                                          |
+| Path traversal in remote URLs | `PATH_TRAVERSAL_PATTERN` (`..`) at :336                | Block `?branch=../../etc/passwd`                                                                                 |
+| UNC path blocking             | `UNC_PATH_PATTERN` (`\\` or `//` prefix) at :418       | Prevent SMB auth credential leaks                                                                                |
+| Control character blocking    | `CONTROL_CHAR_PATTERN` at :406                         | Prevent terminal injection                                                                                       |
+| HTTP URL hostname validation  | `validateHttpUrl()` at :357-387                        | Require valid hostname                                                                                           |
 | Private IP blocking (SSRF)    | `PRIVATE_IPV4_PATTERN`, `PRIVATE_IPV6_PATTERN` at :377 | Block `127.x.x.x`, `10.x.x.x`, `172.16-31.x.x`, `192.168.x.x`, `0.0.0.0`, `169.254.x.x`, `::1`, `fd*:`, `fe80:*` |
-| Git shorthand validation      | `validateGitShorthand()` at :389-399                   | Require `owner/repo` format                                                          |
+| Git shorthand validation      | `validateGitShorthand()` at :389-399                   | Require `owner/repo` format                                                                                      |
 
 ### 5.2 Liquid Template Injection Prevention
 
@@ -329,11 +329,11 @@ Recursively checks that parsed JSON/YAML does not exceed max nesting depth. Prev
 
 ### 6.2 Plugin Validation
 
-| Function                     | File                                   | What It Validates       | Schema                                      |
-| ---------------------------- | -------------------------------------- | ----------------------- | ------------------------------------------- |
-| `validatePluginManifest()`   | `plugins/plugin-validator.ts:114-183`  | `plugin.json` structure | `pluginManifestValidationSchema` (strict)   |
-| `validateSkillFrontmatter()` | `plugins/plugin-validator.ts:185-219`  | `SKILL.md` frontmatter  | `skillFrontmatterValidationSchema` (strict) |
-| `validateAgentFrontmatter()` | `plugins/plugin-validator.ts:221-264`  | Agent `.md` frontmatter | `agentFrontmatterValidationSchema` (strict) |
+| Function                     | File                                  | What It Validates       | Schema                                      |
+| ---------------------------- | ------------------------------------- | ----------------------- | ------------------------------------------- |
+| `validatePluginManifest()`   | `plugins/plugin-validator.ts:114-183` | `plugin.json` structure | `pluginManifestValidationSchema` (strict)   |
+| `validateSkillFrontmatter()` | `plugins/plugin-validator.ts:185-219` | `SKILL.md` frontmatter  | `skillFrontmatterValidationSchema` (strict) |
+| `validateAgentFrontmatter()` | `plugins/plugin-validator.ts:221-264` | Agent `.md` frontmatter | `agentFrontmatterValidationSchema` (strict) |
 
 ### 6.3 Marketplace Registration (Shell Boundary)
 

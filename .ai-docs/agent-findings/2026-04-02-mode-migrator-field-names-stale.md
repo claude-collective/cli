@@ -25,6 +25,7 @@ The error survived because the old field names (`toLocal`, `localizedSkills`) we
 ## Fix Applied
 
 Changed in `plugin-system.md`:
+
 - `MigrationPlan` field `toLocal` -> `toEject`
 - `MigrationResult` field `localizedSkills` -> `ejectedSkills`
 

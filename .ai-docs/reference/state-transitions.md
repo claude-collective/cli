@@ -279,17 +279,17 @@ This is the most aggressive reset in the store -- it clears all downstream selec
 
 ## Derived State (Computed Selectors)
 
-| Selector                             | Computes From                                                        | Returns                                                        |
-| ------------------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `getAllSelectedTechnologies()`       | `domainSelections` (all domains, all categories)                     | `SkillId[]` -- flat array of all selected skill IDs            |
-| `getSelectedTechnologiesPerDomain()` | `domainSelections`                                                   | `Partial<Record<Domain, SkillId[]>>`                           |
-| `getCurrentDomain()`                 | `selectedDomains`, `currentDomainIndex`                              | `Domain \| null`                                               |
-| `getTechnologyCount()`               | Calls `getAllSelectedTechnologies().length`                          | `number`                                                       |
-| `getStepProgress()`                  | `step`, `approach`, `selectedStackId`, `stackAction`                 | `{ completedSteps: WizardStep[], skippedSteps: WizardStep[] }` |
-| `canGoToNextDomain()`                | `currentDomainIndex`, `selectedDomains.length`                       | `boolean`                                                      |
-| `canGoToPreviousDomain()`            | `currentDomainIndex`                                                 | `boolean`                                                      |
-| `deriveInstallMode()`                | `skillConfigs` (source values)                                       | `InstallMode` (`"eject" \| "plugin" \| "mixed"`)               |
-| `buildSourceRows()`                 | `getAllSelectedTechnologies()`, `skillConfigs`, `boundSkills`, matrix | `{ skillId, options: SourceOption[] }[]`                       |
+| Selector                             | Computes From                                                         | Returns                                                        |
+| ------------------------------------ | --------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `getAllSelectedTechnologies()`       | `domainSelections` (all domains, all categories)                      | `SkillId[]` -- flat array of all selected skill IDs            |
+| `getSelectedTechnologiesPerDomain()` | `domainSelections`                                                    | `Partial<Record<Domain, SkillId[]>>`                           |
+| `getCurrentDomain()`                 | `selectedDomains`, `currentDomainIndex`                               | `Domain \| null`                                               |
+| `getTechnologyCount()`               | Calls `getAllSelectedTechnologies().length`                           | `number`                                                       |
+| `getStepProgress()`                  | `step`, `approach`, `selectedStackId`, `stackAction`                  | `{ completedSteps: WizardStep[], skippedSteps: WizardStep[] }` |
+| `canGoToNextDomain()`                | `currentDomainIndex`, `selectedDomains.length`                        | `boolean`                                                      |
+| `canGoToPreviousDomain()`            | `currentDomainIndex`                                                  | `boolean`                                                      |
+| `deriveInstallMode()`                | `skillConfigs` (source values)                                        | `InstallMode` (`"eject" \| "plugin" \| "mixed"`)               |
+| `buildSourceRows()`                  | `getAllSelectedTechnologies()`, `skillConfigs`, `boundSkills`, matrix | `{ skillId, options: SourceOption[] }[]`                       |
 
 ### getStepProgress() Logic
 
