@@ -35,7 +35,9 @@ const {
   mockEnsureDir,
   mockGetAgentDefinitions,
 } = vi.hoisted(() => ({
-  mockRender: vi.fn().mockReturnValue({ waitUntilExit: () => Promise.resolve(), clear: vi.fn() }),
+  mockRender: vi
+    .fn()
+    .mockReturnValue({ waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() }),
   mockDetectInstallation: vi.fn().mockResolvedValue(null),
   mockLoadSkillsMatrixFromSource: vi.fn(),
   mockLoadProjectConfig: vi.fn().mockResolvedValue(null),
@@ -529,7 +531,8 @@ describe("edit command eject-mode skill fallback", () => {
   const testSourceResult = buildSourceResult(testMatrix, "/test/source");
 
   function getRenderedInstalledSkillIds(): SkillId[] | undefined {
-    const renderCall = mockRender.mock.calls[0];
+    // First render call is the spinner, second is the wizard
+    const renderCall = mockRender.mock.calls[1];
     if (!renderCall) return undefined;
     // ink.render receives a React element; props are on .props
     const element = renderCall[0] as ReactElement;
@@ -545,7 +548,11 @@ describe("edit command eject-mode skill fallback", () => {
 
     // Reset all mocks to known state for each test
     mockRender.mockClear();
-    mockRender.mockReturnValue({ waitUntilExit: () => Promise.resolve(), clear: vi.fn() });
+    mockRender.mockReturnValue({
+      waitUntilExit: () => Promise.resolve(),
+      clear: vi.fn(),
+      unmount: vi.fn(),
+    });
 
     mockDetectInstallation.mockResolvedValue({
       mode: "eject",
@@ -582,7 +589,7 @@ describe("edit command eject-mode skill fallback", () => {
       // Expected: command errors after render because wizardResult is null
     }
 
-    expect(mockRender).toHaveBeenCalledOnce();
+    expect(mockRender).toHaveBeenCalledTimes(2);
     const installedSkillIds = getRenderedInstalledSkillIds();
     expect(installedSkillIds).toStrictEqual(CONFIG_SKILL_IDS);
   });
@@ -606,7 +613,7 @@ describe("edit command eject-mode skill fallback", () => {
       // Expected: command errors after render because wizardResult is null
     }
 
-    expect(mockRender).toHaveBeenCalledOnce();
+    expect(mockRender).toHaveBeenCalledTimes(2);
     const installedSkillIds = getRenderedInstalledSkillIds();
     // Plugin discovery found react; config also has hono — both should be included
     expect(installedSkillIds).toStrictEqual(CONFIG_SKILL_IDS);
@@ -672,12 +679,14 @@ describe("edit command detects added agents", () => {
     // Mock render to invoke onComplete with a wizard result that adds web-tester
     // (same skills, but a new agent)
     mockRender.mockImplementation((element: ReactElement) => {
-      const onComplete = element.props.onComplete as (result: unknown) => void;
-      const wizardResult = buildWizardResult(EXISTING_SKILLS, {
-        agentConfigs: buildAgentConfigs(["web-developer", "web-tester"]),
-      });
-      onComplete(wizardResult);
-      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn() };
+      const onComplete = element.props.onComplete as ((result: unknown) => void) | undefined;
+      if (onComplete) {
+        const wizardResult = buildWizardResult(EXISTING_SKILLS, {
+          agentConfigs: buildAgentConfigs(["web-developer", "web-tester"]),
+        });
+        onComplete(wizardResult);
+      }
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
     });
 
     try {
@@ -752,12 +761,14 @@ describe("edit command copies newly added local skills", () => {
 
     // Mock render to invoke onComplete with a wizard result that adds a local skill
     mockRender.mockImplementation((element: ReactElement) => {
-      const onComplete = element.props.onComplete as (result: unknown) => void;
-      const wizardResult = buildWizardResult(newLocalSkills, {
-        agentConfigs: buildAgentConfigs(["web-developer"]),
-      });
-      onComplete(wizardResult);
-      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn() };
+      const onComplete = element.props.onComplete as ((result: unknown) => void) | undefined;
+      if (onComplete) {
+        const wizardResult = buildWizardResult(newLocalSkills, {
+          agentConfigs: buildAgentConfigs(["web-developer"]),
+        });
+        onComplete(wizardResult);
+      }
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
     });
 
     try {
