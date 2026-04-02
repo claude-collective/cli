@@ -1,6 +1,6 @@
 # Type System
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Type Module Structure
 
@@ -21,48 +21,53 @@ All types are defined in `src/cli/types/` and re-exported through `src/cli/types
 
 Union types for Domain, Category, AgentName, SkillId, and SkillSlug are **auto-generated** from the skills source and agent metadata. Run `bun run generate:types` to regenerate.
 
-### SkillId (`src/cli/types/generated/source-types.ts:165`)
+### SkillId (`src/cli/types/generated/source-types.ts:6`)
 
 ```typescript
 export const SKILL_MAP = {
   react: "web-framework-react",
   zustand: "web-state-zustand",
-  // ... 155 entries total
+  // ... 161 entries total
 } as const;
 
-export type SkillSlug = keyof typeof SKILL_MAP;
-export type SkillId = (typeof SKILL_MAP)[SkillSlug];
+export type SkillSlug = keyof typeof SKILL_MAP; // line 170
+export type SkillId = (typeof SKILL_MAP)[SkillSlug]; // line 171
 ```
 
 - Derived from `SKILL_MAP` constant (slug-to-ID mapping), not a template literal
 - Runtime validation uses `skillIdSchema` in `schemas.ts` with `.refine()` against `SKILL_IDS` array
-- 155 skill IDs, 155 skill slugs
+- 161 skill IDs, 161 skill slugs
 - Re-exported from `src/cli/types/skills.ts:4`
-- Examples: `"web-framework-react"`, `"meta-methodology-research-methodology"`, `"api-database-drizzle"`, `"ai-provider-anthropic-sdk"`
+- Examples: `"web-framework-react"`, `"meta-methodology-research-methodology"`, `"api-database-drizzle"`, `"ai-provider-anthropic-sdk"`, `"desktop-framework-electron"`
 
-### SkillSlug (`src/cli/types/generated/source-types.ts:164`)
+### SkillSlug (`src/cli/types/generated/source-types.ts:170`)
 
 ```typescript
 type SkillSlug = keyof typeof SKILL_MAP;
 ```
 
-- 155 members (one per skill): `"react"`, `"zustand"`, `"vitest"`, `"drizzle"`, `"anthropic-sdk"`, etc.
+- 161 members (one per skill): `"react"`, `"zustand"`, `"vitest"`, `"drizzle"`, `"anthropic-sdk"`, `"electron"`, `"tauri"`, etc.
 - Used in relationship rules (conflicts, recommends, requires) instead of full SkillId
 - Re-exported from `src/cli/types/skills.ts:4`
 
-### AgentName (`src/cli/types/generated/source-types.ts:571`)
+### AgentName (`src/cli/types/generated/source-types.ts:579`)
 
 ```typescript
 export const AGENT_NAMES = [
   "agent-summoner",
+  "ai-developer",
+  "ai-reviewer",
   "api-developer",
+  "api-pm",
   "api-researcher",
   "api-reviewer",
+  "api-tester",
   "cli-developer",
   "cli-reviewer",
   "cli-tester",
   "codex-keeper",
   "convention-keeper",
+  "infra-reviewer",
   "pattern-scout",
   "skill-summoner",
   "web-architecture",
@@ -77,24 +82,25 @@ export const AGENT_NAMES = [
 export type AgentName = (typeof AGENT_NAMES)[number];
 ```
 
-18 members total. Re-exported from `src/cli/types/agents.ts:5`.
+23 members total. Re-exported from `src/cli/types/agents.ts:5`.
 
-### Domain (`src/cli/types/generated/source-types.ts:546`)
+### Domain (`src/cli/types/generated/source-types.ts:563`)
 
 ```typescript
-export const DOMAINS = ["ai", "api", "cli", "infra", "meta", "mobile", "shared", "web"] as const;
+export const DOMAINS = ["ai", "api", "cli", "desktop", "infra", "meta", "mobile", "shared", "web"] as const;
 export type Domain = (typeof DOMAINS)[number];
 ```
 
-8 members. Re-exported from `src/cli/types/matrix.ts:4`.
+9 members. Re-exported from `src/cli/types/matrix.ts:4`.
 
-### Category (`src/cli/types/generated/source-types.ts:540`)
+### Category (`src/cli/types/generated/source-types.ts:505`)
 
-50 values covering all skill categories across domains:
+51 values covering all skill categories across domains:
 
 - ai-\*: infrastructure, observability, orchestration, patterns, provider (5)
 - api-\*: analytics, api, auth, baas, cms, commerce, database, email, framework, observability, performance, search, vector-db (13)
 - cli-\*: framework (1)
+- desktop-\*: framework (1)
 - infra-\*: ci-cd, config, platform (3)
 - meta-\*: design, methodology, reviewing (3)
 - mobile-\*: framework (1)

@@ -1,6 +1,6 @@
 # Utilities Reference
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Utility Files
 
@@ -17,7 +17,7 @@ All utilities in `src/cli/utils/`.
 | `string.ts`       | `src/cli/utils/string.ts`       | String manipulation utilities          |
 | `type-guards.ts`  | `src/cli/utils/type-guards.ts`  | Runtime type narrowing for union types |
 | `typed-object.ts` | `src/cli/utils/typed-object.ts` | Type-safe Object.entries/keys          |
-| `yaml.ts`         | `src/cli/utils/yaml.ts`         | Zod-validated YAML loading (DEAD CODE) |
+| ~~`yaml.ts`~~     | ~~`src/cli/utils/yaml.ts`~~     | **DELETED** -- was dead code, now removed |
 
 ## Error Handling
 
@@ -198,24 +198,9 @@ function typedKeys<K extends string>(obj: Partial<Record<K, unknown>>): K[];
 
 **Mandatory:** Use these instead of raw `Object.entries()` / `Object.keys()` to preserve union type information and avoid boundary casts.
 
-## YAML Loading (DEAD CODE)
+## YAML Loading
 
-### `safeLoadYamlFile()` (`src/cli/utils/yaml.ts:13`)
-
-```typescript
-function safeLoadYamlFile<T>(
-  filePath: string,
-  schema: z.ZodType<T>,
-  maxSizeBytes?: number,
-): Promise<T | null>;
-```
-
-Combines: file read (with size limit) -> YAML parse -> Zod validation.
-Returns validated data or null (with warning on failure).
-
-Default size limit: `MAX_CONFIG_FILE_SIZE` (1MB from `src/cli/consts.ts:144`).
-
-**DEAD CODE WARNING:** As of 2026-03-28, `safeLoadYamlFile` has **zero production importers**. It is only imported by its own test file (`src/cli/utils/yaml.test.ts`). All production YAML loading uses the `yaml` package's `parseYaml()` directly (imported in 10+ files as `import { parse as parseYaml } from "yaml"`). This function can likely be removed.
+**DELETED:** `src/cli/utils/yaml.ts` was removed (previously flagged as dead code with zero production importers). All production YAML loading uses the `yaml` package's `parseYaml()` directly.
 
 ## User-Facing Messages
 
@@ -300,30 +285,30 @@ All user-facing strings centralized in constant objects:
 | Constant                     | Value                           | Line   | Purpose                             |
 | ---------------------------- | ------------------------------- | ------ | ----------------------------------- |
 | `CLI_BIN_NAME`               | `agentsinc`                     | `:27`  | CLI binary name                     |
-| `DEFAULT_BRANDING.NAME`      | `Agents Inc.`                   | `:162` | Default product name                |
-| `DEFAULT_BRANDING.TAGLINE`   | `AI-powered development tools`  | `:162` | Default tagline                     |
-| `DEFAULT_PUBLIC_SOURCE_NAME` | `agents-inc`                    | `:168` | Fallback marketplace name           |
-| `SOURCE_DISPLAY_NAMES`       | `{ public, local, agents-inc }` | `:171` | Human-readable source type labels   |
-| `DEFAULT_VERSION`            | `1.0.0`                         | `:69`  | Default skill version               |
-| `DEFAULT_DISPLAY_VERSION`    | `0.0.0`                         | `:72`  | Indicates no version explicitly set |
+| `DEFAULT_BRANDING.NAME`      | `Agents Inc.`                    | `:170` | Default product name                |
+| `DEFAULT_BRANDING.TAGLINE`   | `AI-powered development tools`   | `:170` | Default tagline                     |
+| `DEFAULT_PUBLIC_SOURCE_NAME` | `agents-inc`                     | `:176` | Fallback marketplace name           |
+| `SOURCE_DISPLAY_NAMES`       | `{ public, eject, agents-inc }`  | `:179` | Human-readable source type labels   |
+| `DEFAULT_VERSION`            | `1.0.0`                          | `:69`  | Default skill version               |
+| `DEFAULT_DISPLAY_VERSION`    | `0.0.0`                          | `:72`  | Indicates no version explicitly set |
 
 ### Versioning and Hashing
 
 | Constant                       | Value | Line   | Purpose                     |
 | ------------------------------ | ----- | ------ | --------------------------- |
-| `HASH_PREFIX_LENGTH`           | 7     | `:132` | Hash prefix for display     |
-| `CACHE_HASH_LENGTH`            | 16    | `:135` | Cache directory hash length |
-| `CACHE_READABLE_PREFIX_LENGTH` | 32    | `:138` | Cache dir readable prefix   |
+| `HASH_PREFIX_LENGTH`           | 7     | `:140` | Hash prefix for display     |
+| `CACHE_HASH_LENGTH`            | 16    | `:143` | Cache directory hash length |
+| `CACHE_READABLE_PREFIX_LENGTH` | 32    | `:146` | Cache dir readable prefix   |
 
 ### Limits
 
 | Constant                    | Value  | Line   | Purpose                     |
 | --------------------------- | ------ | ------ | --------------------------- |
-| `MAX_MARKETPLACE_FILE_SIZE` | 10 MB  | `:142` | marketplace.json size limit |
-| `MAX_PLUGIN_FILE_SIZE`      | 1 MB   | `:143` | Plugin file size limit      |
-| `MAX_CONFIG_FILE_SIZE`      | 1 MB   | `:144` | Config file size limit      |
-| `MAX_JSON_NESTING_DEPTH`    | 10     | `:146` | JSON nesting limit          |
-| `MAX_MARKETPLACE_PLUGINS`   | 10,000 | `:147` | Max plugins in marketplace  |
+| `MAX_MARKETPLACE_FILE_SIZE` | 10 MB  | `:150` | marketplace.json size limit |
+| `MAX_PLUGIN_FILE_SIZE`      | 1 MB   | `:151` | Plugin file size limit      |
+| `MAX_CONFIG_FILE_SIZE`      | 1 MB   | `:152` | Config file size limit      |
+| `MAX_JSON_NESTING_DEPTH`    | 10     | `:154` | JSON nesting limit          |
+| `MAX_MARKETPLACE_PLUGINS`   | 10,000 | `:155` | Max plugins in marketplace  |
 
 ### YAML Formatting
 
@@ -335,7 +320,11 @@ All user-facing strings centralized in constant objects:
 
 ### UI Constants
 
-`UI_SYMBOLS` at line 99, `UI_LAYOUT` at line 114, `CLI_COLORS` at line 177, `SCROLL_VIEWPORT` at line 149.
+`UI_SYMBOLS` at line 99, `UI_LAYOUT` at line 117, `UI_MESSAGES` at line 124, `CLI_COLORS` at line 185, `SCROLL_VIEWPORT` at line 157.
+
+`UI_SYMBOLS` includes: `CHECKBOX_CHECKED`, `CHECKBOX_UNCHECKED`, `CHEVRON`, `CHEVRON_SPACER`, `SELECTED`, `UNSELECTED`, `CURRENT`, `SKIPPED`, `DISCOURAGED`, `DISABLED`, `LOCK`, `EJECT`, `BULLET`, `SCROLL_UP`, `SCROLL_DOWN`.
+
+`UI_MESSAGES` (line 124): `GLOBALLY_INSTALLED`, `GLOBALLY_LOCKED_CATEGORY`.
 
 These are documented in detail in `reference/component-patterns.md`.
 
@@ -358,18 +347,18 @@ Helper: `yamlSchemaComment(schemaPath: string): string` at line 88 generates a `
 
 | Constant                      | Value                             | Line   | Purpose                            |
 | ----------------------------- | --------------------------------- | ------ | ---------------------------------- |
-| `GITHUB_SOURCE.HTTPS_PREFIX`  | `https://github.com/`             | `:121` | GitHub HTTPS URL prefix            |
-| `GITHUB_SOURCE.GITHUB_PREFIX` | `github:`                         | `:121` | GitHub shorthand prefix            |
-| `GITHUB_SOURCE.GH_PREFIX`     | `gh:`                             | `:121` | GitHub short prefix                |
-| `DEFAULT_SKILLS_SUBDIR`       | `skills`                          | `:127` | Default skills subdirectory name   |
-| `KEBAB_CASE_PATTERN`          | `/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/` | `:130` | Strict kebab-case validation regex |
+| `GITHUB_SOURCE.HTTPS_PREFIX`  | `https://github.com/`             | `:129` | GitHub HTTPS URL prefix            |
+| `GITHUB_SOURCE.GITHUB_PREFIX` | `github:`                         | `:129` | GitHub shorthand prefix            |
+| `GITHUB_SOURCE.GH_PREFIX`     | `gh:`                             | `:129` | GitHub short prefix                |
+| `DEFAULT_SKILLS_SUBDIR`       | `skills`                          | `:135` | Default skills subdirectory name   |
+| `KEBAB_CASE_PATTERN`          | `/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/` | `:138` | Strict kebab-case validation regex |
 
 ### Domain Configuration
 
 | Constant                  | Value                                                              | Line   |
 | ------------------------- | ------------------------------------------------------------------ | ------ |
-| `BUILT_IN_DOMAIN_ORDER`   | `["web", "api", "ai", "mobile", "cli", "infra", "meta", "shared"]` | `:190` |
-| `DEFAULT_SCRATCH_DOMAINS` | `["web", "api", "mobile"]`                                         | `:202` |
+| `BUILT_IN_DOMAIN_ORDER`   | `["web", "api", "ai", "mobile", "cli", "infra", "meta", "shared"]` | `:199` |
+| `DEFAULT_SCRATCH_DOMAINS` | `["web", "api", "mobile"]`                                         | `:211` |
 
 ## Remeda Utilities (External)
 

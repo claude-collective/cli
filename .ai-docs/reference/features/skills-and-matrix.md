@@ -1,6 +1,6 @@
 # Skills & Matrix System
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Overview
 
@@ -18,16 +18,16 @@
 | Slug Map           | Bidirectional `SkillSlug <-> SkillId` mapping built during merge            |
 | Source             | Where skills come from (public marketplace, private, local)                 |
 
-## Current Counts (2026-03-28)
+## Current Counts (2026-04-02)
 
 | Type       | Count | Source File                               |
 | ---------- | ----- | ----------------------------------------- |
-| SKILL_MAP  | 155   | `src/cli/types/generated/source-types.ts` |
-| Categories | 50    | `src/cli/types/generated/source-types.ts` |
-| Domains    | 8     | `src/cli/types/generated/source-types.ts` |
-| AgentNames | 18    | `src/cli/types/generated/source-types.ts` |
+| SKILL_MAP  | 161   | `src/cli/types/generated/source-types.ts` |
+| Categories | 51    | `src/cli/types/generated/source-types.ts` |
+| Domains    | 9     | `src/cli/types/generated/source-types.ts` |
+| AgentNames | 23    | `src/cli/types/generated/source-types.ts` |
 
-**Domains:** ai, api, cli, infra, meta, mobile, shared, web
+**Domains:** ai, api, cli, desktop, infra, meta, mobile, shared, web
 
 ## File Structure
 
