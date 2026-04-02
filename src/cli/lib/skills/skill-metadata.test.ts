@@ -55,7 +55,7 @@ describe("skill-metadata", () => {
 
       const result = await readForkedFromMetadata("/project/.claude/skills/react");
 
-      expect(result).toEqual({
+      expect(result).toStrictEqual({
         skillId: "web-framework-react",
         contentHash: "abc1234",
         date: "2026-01-01",
@@ -144,7 +144,7 @@ describe("skill-metadata", () => {
       expect(result.has("web-framework-react")).toBe(true);
       const entry = result.get("web-framework-react");
       expect(entry?.dirName).toBe("react");
-      expect(entry?.forkedFrom).toEqual({
+      expect(entry?.forkedFrom).toStrictEqual({
         skillId: "web-framework-react",
         contentHash: "abc1234",
         date: "2026-01-01",

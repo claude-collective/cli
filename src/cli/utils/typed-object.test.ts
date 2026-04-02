@@ -7,7 +7,7 @@ describe("typedEntries", () => {
 
     const result = typedEntries(obj);
 
-    expect(result).toEqual([
+    expect(result).toStrictEqual([
       ["a", 1],
       ["b", 2],
     ]);
@@ -18,7 +18,7 @@ describe("typedEntries", () => {
 
     const result = typedEntries(obj);
 
-    expect(result).toEqual([
+    expect(result).toStrictEqual([
       ["x", "hello"],
       ["z", "world"],
     ]);
@@ -29,7 +29,7 @@ describe("typedEntries", () => {
 
     const result = typedEntries(obj);
 
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 
   it("should preserve union key types in returned tuples", () => {
@@ -62,7 +62,7 @@ describe("typedEntries", () => {
 
     const result = typedEntries(obj);
 
-    expect(result).toEqual([
+    expect(result).toStrictEqual([
       ["a", ["x", "y"]],
       ["b", ["z"]],
     ]);
@@ -75,7 +75,7 @@ describe("typedKeys", () => {
 
     const result = typedKeys(obj);
 
-    expect(result).toEqual(["a", "b", "c"]);
+    expect(result).toStrictEqual(["a", "b", "c"]);
   });
 
   it("should return an empty array for empty objects", () => {
@@ -83,7 +83,7 @@ describe("typedKeys", () => {
 
     const result = typedKeys(obj);
 
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 
   it("should work with Partial<Record<...>>", () => {
@@ -91,7 +91,7 @@ describe("typedKeys", () => {
 
     const result = typedKeys(obj);
 
-    expect(result).toEqual(["x", "z"]);
+    expect(result).toStrictEqual(["x", "z"]);
   });
 
   it("should preserve union key types", () => {
@@ -111,7 +111,7 @@ describe("typedKeys", () => {
 
     const result = typedKeys(obj);
 
-    expect(result).toEqual(["b", "d"]);
+    expect(result).toStrictEqual(["b", "d"]);
     expect(result).not.toContain("a");
     expect(result).not.toContain("c");
   });

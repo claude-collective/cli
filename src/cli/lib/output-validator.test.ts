@@ -86,7 +86,7 @@ describe("output-validator", () => {
       const result = validateCompiledAgent(content);
 
       expect(result.valid).toBe(true);
-      expect(result.errors).toEqual([]);
+      expect(result.errors).toStrictEqual([]);
     });
 
     it("should return invalid for empty string", () => {
@@ -195,7 +195,7 @@ describe("output-validator", () => {
 
       const result = validateCompiledAgent(contentWithUnclosed);
 
-      expect(result.errors).toEqual(
+      expect(result.errors).toStrictEqual(
         expect.arrayContaining([expect.stringContaining("Unclosed XML tag: <custom_section>")]),
       );
     });
@@ -206,7 +206,7 @@ describe("output-validator", () => {
 
       const result = validateCompiledAgent(contentWithExtra);
 
-      expect(result.errors).toEqual(
+      expect(result.errors).toStrictEqual(
         expect.arrayContaining([expect.stringContaining("Extra closing tag: </orphan_tag>")]),
       );
     });
@@ -239,7 +239,7 @@ describe("output-validator", () => {
 
       const result = validateCompiledAgent(contentWithTemplate);
 
-      expect(result.warnings).toEqual(
+      expect(result.warnings).toStrictEqual(
         expect.arrayContaining([
           expect.stringContaining("Template artifacts found: 1 unprocessed {{ }} tags"),
         ]),
@@ -252,7 +252,7 @@ describe("output-validator", () => {
 
       const result = validateCompiledAgent(contentWithControl);
 
-      expect(result.warnings).toEqual(
+      expect(result.warnings).toStrictEqual(
         expect.arrayContaining([
           expect.stringContaining("Template artifacts found: 2 unprocessed {% %} tags"),
         ]),
@@ -312,7 +312,7 @@ describe("output-validator", () => {
 
       const result = validateCompiledAgent(content);
 
-      expect(result.warnings).toEqual(
+      expect(result.warnings).toStrictEqual(
         expect.arrayContaining([
           expect.stringMatching(/Suspiciously short output: only \d+ lines/),
         ]),
@@ -395,18 +395,18 @@ describe("output-validator", () => {
   describe("checkXmlTagBalance", () => {
     it("should return empty array for content with no XML tags", () => {
       const errors = checkXmlTagBalance("Plain text with no tags.");
-      expect(errors).toEqual([]);
+      expect(errors).toStrictEqual([]);
     });
 
     it("should return empty array for balanced tags", () => {
       const errors = checkXmlTagBalance("<role>content</role>");
-      expect(errors).toEqual([]);
+      expect(errors).toStrictEqual([]);
     });
 
     it("should detect multiple unclosed tags of different names", () => {
       const errors = checkXmlTagBalance("<role>text\n<section>more text");
       expect(errors).toHaveLength(2);
-      expect(errors).toEqual(
+      expect(errors).toStrictEqual(
         expect.arrayContaining([
           expect.stringContaining("Unclosed XML tag: <role>"),
           expect.stringContaining("Unclosed XML tag: <section>"),
@@ -417,7 +417,7 @@ describe("output-validator", () => {
     it("should detect multiple extra closing tags", () => {
       const errors = checkXmlTagBalance("</role>\n</section>");
       expect(errors).toHaveLength(2);
-      expect(errors).toEqual(
+      expect(errors).toStrictEqual(
         expect.arrayContaining([
           expect.stringContaining("Extra closing tag: </role>"),
           expect.stringContaining("Extra closing tag: </section>"),
@@ -433,22 +433,22 @@ describe("output-validator", () => {
 
     it("should handle tags with hyphens and underscores in names", () => {
       const errors = checkXmlTagBalance("<my-tag>content</my-tag>\n<my_tag>content</my_tag>");
-      expect(errors).toEqual([]);
+      expect(errors).toStrictEqual([]);
     });
 
     it("should be case-insensitive when matching tags", () => {
       const errors = checkXmlTagBalance("<Role>content</ROLE>");
-      expect(errors).toEqual([]);
+      expect(errors).toStrictEqual([]);
     });
 
     it("should skip tags preceded by a backtick within 10 characters", () => {
       const errors = checkXmlTagBalance("use the `<tag>` syntax");
-      expect(errors).toEqual([]);
+      expect(errors).toStrictEqual([]);
     });
 
     it("should skip tags followed by a backtick within 10 characters", () => {
       const errors = checkXmlTagBalance("use <tag>` in code");
-      expect(errors).toEqual([]);
+      expect(errors).toStrictEqual([]);
     });
 
     it("should count tags that are far from backticks", () => {
@@ -460,7 +460,7 @@ describe("output-validator", () => {
 
     it("should return empty array for empty string", () => {
       const errors = checkXmlTagBalance("");
-      expect(errors).toEqual([]);
+      expect(errors).toStrictEqual([]);
     });
 
     it("should handle mixed balanced and unbalanced tags", () => {
@@ -473,7 +473,7 @@ describe("output-validator", () => {
   describe("checkTemplateArtifacts", () => {
     it("should return empty array when no template artifacts exist", () => {
       const warnings = checkTemplateArtifacts("Clean content with no templates.");
-      expect(warnings).toEqual([]);
+      expect(warnings).toStrictEqual([]);
     });
 
     it("should count multiple {{ }} tags accurately", () => {
@@ -497,7 +497,7 @@ describe("output-validator", () => {
 
     it("should return empty array for empty string", () => {
       const warnings = checkTemplateArtifacts("");
-      expect(warnings).toEqual([]);
+      expect(warnings).toStrictEqual([]);
     });
 
     it("should detect {{ }} with content inside", () => {
@@ -518,7 +518,7 @@ describe("output-validator", () => {
         ...Array.from({ length: 50 }, () => "line"),
       ];
       const warnings = checkRequiredPatterns(lines.join("\n"));
-      expect(warnings).toEqual([]);
+      expect(warnings).toStrictEqual([]);
     });
 
     it("should warn when content does not start with ---", () => {
@@ -575,7 +575,7 @@ describe("output-validator", () => {
       const content = lines.join("\n");
       expect(content.trim().split("\n")).toHaveLength(49);
       const warnings = checkRequiredPatterns(content);
-      expect(warnings).toEqual(
+      expect(warnings).toStrictEqual(
         expect.arrayContaining([expect.stringMatching(/Suspiciously short output/)]),
       );
     });
@@ -602,7 +602,7 @@ describe("output-validator", () => {
       expect(warnings).toContain("Missing YAML frontmatter at start of file");
       expect(warnings).toContain("Missing <role> section");
       expect(warnings).toContain("Missing Core Principles section");
-      expect(warnings).toEqual(
+      expect(warnings).toStrictEqual(
         expect.arrayContaining([expect.stringMatching(/Suspiciously short/)]),
       );
     });
@@ -627,15 +627,15 @@ describe("output-validator", () => {
 
       const result = validateFrontmatter(content);
 
-      expect(result.errors).toEqual([]);
-      expect(result.warnings).toEqual([]);
+      expect(result.errors).toStrictEqual([]);
+      expect(result.warnings).toStrictEqual([]);
     });
 
     it("should return parse error when frontmatter is absent", () => {
       const result = validateFrontmatter("No frontmatter here");
 
       expect(result.errors).toContain("Failed to parse YAML frontmatter");
-      expect(result.warnings).toEqual([]);
+      expect(result.warnings).toStrictEqual([]);
     });
 
     it("should return parse error when frontmatter YAML is malformed", () => {
@@ -678,8 +678,8 @@ describe("output-validator", () => {
 
       const result = validateFrontmatter(content);
 
-      expect(result.errors).toEqual([]);
-      expect(result.warnings).toEqual([]);
+      expect(result.errors).toStrictEqual([]);
+      expect(result.warnings).toStrictEqual([]);
     });
 
     it("should return error and warnings when all fields are missing from valid YAML", () => {
@@ -707,8 +707,8 @@ describe("output-validator", () => {
       const result = validateFrontmatter(content);
 
       // Should only have the parse error, no field-level warnings
-      expect(result.errors).toEqual(["Failed to parse YAML frontmatter"]);
-      expect(result.warnings).toEqual([]);
+      expect(result.errors).toStrictEqual(["Failed to parse YAML frontmatter"]);
+      expect(result.warnings).toStrictEqual([]);
     });
   });
 

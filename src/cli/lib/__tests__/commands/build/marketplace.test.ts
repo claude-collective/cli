@@ -491,7 +491,7 @@ describe("build:marketplace command", () => {
       const marketplace = await readMarketplaceJson(outputPath);
       const names = marketplace.plugins.map((p) => p.name);
 
-      expect(names).toEqual(["api-framework-hono", "web-framework-react", "web-state-zustand"]);
+      expect(names).toStrictEqual(["api-framework-hono", "web-framework-react", "web-state-zustand"]);
     });
 
     it("should preserve explicit categories from plugin manifests", async () => {
@@ -578,7 +578,7 @@ describe("build:marketplace command", () => {
 
       expect(plugin.author?.name).toBe("@vince");
       expect(plugin.author?.email).toBe("vince@example.com");
-      expect(plugin.keywords).toEqual(["react", "framework", "web"]);
+      expect(plugin.keywords).toStrictEqual(["react", "framework", "web"]);
     });
 
     it("should use default version when --version flag is omitted", async () => {

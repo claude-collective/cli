@@ -31,7 +31,7 @@ describe("plugin-discovery", () => {
 
       const result = await discoverAllPluginSkills("/project");
 
-      expect(result).toEqual({});
+      expect(result).toStrictEqual({});
     });
 
     it("should discover skills from verified plugin paths", async () => {
@@ -125,7 +125,7 @@ describe("plugin-discovery", () => {
 
       const result = await discoverAllPluginSkills("/project");
 
-      expect(result).toEqual({});
+      expect(result).toStrictEqual({});
     });
 
     it("should pass projectDir to getVerifiedPluginInstallPaths", async () => {
@@ -190,7 +190,7 @@ describe("plugin-discovery", () => {
 
       const result = await listPluginNames("/project");
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should return all verified plugin keys", async () => {
@@ -201,7 +201,7 @@ describe("plugin-discovery", () => {
 
       const result = await listPluginNames("/project");
 
-      expect(result).toEqual(["react@my-marketplace", "zustand@my-marketplace"]);
+      expect(result).toStrictEqual(["react@my-marketplace", "zustand@my-marketplace"]);
     });
 
     it("should return empty array when getVerifiedPluginInstallPaths throws", async () => {
@@ -209,7 +209,7 @@ describe("plugin-discovery", () => {
 
       const result = await listPluginNames("/project");
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should pass projectDir to getVerifiedPluginInstallPaths", async () => {

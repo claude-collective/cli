@@ -60,7 +60,7 @@ describe("source-fetcher refresh", () => {
     expect(mockDownloadTemplate).toHaveBeenCalledOnce();
 
     const callArgs = mockDownloadTemplate.mock.calls[0];
-    expect(callArgs[1]).toEqual(expect.objectContaining({ dir: cacheDir, force: true }));
+    expect(callArgs[1]).toStrictEqual(expect.objectContaining({ dir: cacheDir, force: true }));
   });
 
   it("should not leave orphan files after refresh", async () => {

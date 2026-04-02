@@ -505,7 +505,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
 
     // No duplicate agents
     const uniqueAgents = [...new Set(mergedConfig.agents)];
-    expect(mergedConfig.agents).toEqual(uniqueAgents);
+    expect(mergedConfig.agents).toStrictEqual(uniqueAgents);
   });
 
   it("should preserve description from first init when re-initializing", async () => {
@@ -796,7 +796,7 @@ describe("Recompile Idempotency", () => {
     }
 
     // Same agent list
-    expect([...result1.compiled].sort()).toEqual([...result2.compiled].sort());
+    expect([...result1.compiled].sort()).toStrictEqual([...result2.compiled].sort());
   });
 });
 
@@ -952,7 +952,7 @@ describe("per-agent scope", () => {
     const result = buildWizardResultFromStore(comprehensiveMatrix);
 
     const webDevConfig = result.agentConfigs.find((ac) => ac.name === "web-developer");
-    expect(webDevConfig).toEqual({ name: "web-developer", scope: "project" });
+    expect(webDevConfig).toStrictEqual({ name: "web-developer", scope: "project" });
 
     // Other agents should remain global
     const otherConfigs = result.agentConfigs.filter((ac) => ac.name !== "web-developer");
@@ -974,11 +974,11 @@ describe("per-agent scope", () => {
     });
 
     const state = useWizardStore.getState();
-    expect(state.agentConfigs).toEqual([
+    expect(state.agentConfigs).toStrictEqual([
       { name: "web-developer", scope: "project" },
       { name: "api-developer", scope: "global" },
     ]);
-    expect(state.selectedAgents).toEqual(["web-developer", "api-developer"]);
+    expect(state.selectedAgents).toStrictEqual(["web-developer", "api-developer"]);
   });
 
   it("locked agents cannot have scope toggled", () => {
@@ -1012,7 +1012,7 @@ describe("per-agent scope", () => {
     });
 
     expect(changes).toHaveLength(1);
-    expect(changes[0]).toEqual({ name: "web-developer", scope: "project" });
+    expect(changes[0]).toStrictEqual({ name: "web-developer", scope: "project" });
 
     // api-developer should have no change
     const apiChange = changes.find((c) => c.name === "api-developer");

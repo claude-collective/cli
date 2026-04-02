@@ -76,7 +76,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // web-pm is a simple agent that should compile without skill issues
     expect(result.compiled).toContain("web-pm");
-    expect(result.failed).toEqual([]);
+    expect(result.failed).toStrictEqual([]);
 
     // Verify the agent file was created
     const agentPath = path.join(outputDir, "web-pm.md");
@@ -128,7 +128,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     const recompileResult = await recompileAgents(recompileOptions);
     expect(recompileResult.compiled).toContain("web-pm");
-    expect(recompileResult.failed).toEqual([]);
+    expect(recompileResult.failed).toStrictEqual([]);
 
     // Step 4: Verify the agent was recompiled (file was overwritten)
     const recompiledContent = await readTestFile(agentPath);
@@ -151,7 +151,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     // Recompile the same agent with no changes to skills
     const result2 = await recompileAgents(options);
     expect(result2.compiled).toContain("web-pm");
-    expect(result2.failed).toEqual([]);
+    expect(result2.failed).toStrictEqual([]);
 
     // Content should be equivalent (same agent, same skills -> same output)
     const secondContent = await readTestFile(agentPath);
@@ -185,7 +185,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     const recompileResult = await recompileAgents(recompileOptions);
     expect(recompileResult.compiled).toContain("web-pm");
-    expect(recompileResult.failed).toEqual([]);
+    expect(recompileResult.failed).toStrictEqual([]);
 
     // The agent file should still be valid after recompile
     const recompiledContent = await readTestFile(agentPath);
@@ -226,7 +226,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     const recompileResult = await recompileAgents(recompileOptions);
     expect(recompileResult.compiled).toContain("web-pm");
-    expect(recompileResult.failed).toEqual([]);
+    expect(recompileResult.failed).toStrictEqual([]);
 
     // Verify the agent file is still valid
     const agentPath = path.join(outputDir, "web-pm.md");
@@ -245,7 +245,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // web-pm should compile, non-existent should be warned about
     expect(result.compiled).toContain("web-pm");
-    expect(result.warnings).toEqual(
+    expect(result.warnings).toStrictEqual(
       expect.arrayContaining([expect.stringContaining("non-existent-agent-xyz")]),
     );
   });

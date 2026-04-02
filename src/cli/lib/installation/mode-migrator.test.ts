@@ -42,7 +42,7 @@ describe("mode-migrator", () => {
 
       expect(result.toEject).toHaveLength(1);
       expect(result.toEject[0].id).toBe("web-framework-react");
-      expect(result.toPlugin).toEqual([]);
+      expect(result.toPlugin).toStrictEqual([]);
     });
 
     it("should detect skills moving from eject to plugin", () => {
@@ -51,7 +51,7 @@ describe("mode-migrator", () => {
         [skill("web-framework-react", "agents-inc")],
       );
 
-      expect(result.toEject).toEqual([]);
+      expect(result.toEject).toStrictEqual([]);
       expect(result.toPlugin).toHaveLength(1);
       expect(result.toPlugin[0].id).toBe("web-framework-react");
     });
@@ -74,24 +74,24 @@ describe("mode-migrator", () => {
         [skill("web-framework-react", "agents-inc")],
       );
 
-      expect(result.toEject).toEqual([]);
-      expect(result.toPlugin).toEqual([]);
+      expect(result.toEject).toStrictEqual([]);
+      expect(result.toPlugin).toStrictEqual([]);
     });
 
     it("should handle skills with no previous selection (new skill, no migration)", () => {
       const result = detectMigrations([], [skill("web-framework-react", "eject")]);
 
       // New skills are not migrations (no old entry to compare)
-      expect(result.toEject).toEqual([]);
-      expect(result.toPlugin).toEqual([]);
+      expect(result.toEject).toStrictEqual([]);
+      expect(result.toPlugin).toStrictEqual([]);
     });
 
     it("should handle skills removed in new selection (no migration)", () => {
       const result = detectMigrations([skill("web-framework-react", "eject")], []);
 
       // Removed skills are not migrations (no new entry to compare)
-      expect(result.toEject).toEqual([]);
-      expect(result.toPlugin).toEqual([]);
+      expect(result.toEject).toStrictEqual([]);
+      expect(result.toPlugin).toStrictEqual([]);
     });
 
     it("should only detect migrations for skills present in both old and new", () => {
@@ -103,7 +103,7 @@ describe("mode-migrator", () => {
       // Only react is in both old and new with a source change
       expect(result.toEject).toHaveLength(1);
       expect(result.toEject[0].id).toBe("web-framework-react");
-      expect(result.toPlugin).toEqual([]);
+      expect(result.toPlugin).toStrictEqual([]);
     });
   });
 
@@ -157,8 +157,8 @@ describe("mode-migrator", () => {
         sourceResult,
       );
       expect(claudePluginUninstall).toHaveBeenCalledWith("web-framework-react", "project", tempDir);
-      expect(result.ejectedSkills).toEqual(["web-framework-react"]);
-      expect(result.warnings).toEqual([]);
+      expect(result.ejectedSkills).toStrictEqual(["web-framework-react"]);
+      expect(result.warnings).toStrictEqual([]);
     });
 
     it("should archive and install plugins for toPlugin skills", async () => {
@@ -184,8 +184,8 @@ describe("mode-migrator", () => {
         "project",
         tempDir,
       );
-      expect(result.pluginizedSkills).toEqual(["web-state-zustand"]);
-      expect(result.warnings).toEqual([]);
+      expect(result.pluginizedSkills).toStrictEqual(["web-state-zustand"]);
+      expect(result.warnings).toStrictEqual([]);
     });
 
     it("should handle empty migration plan", async () => {
@@ -201,9 +201,9 @@ describe("mode-migrator", () => {
       expect(deleteLocalSkill).not.toHaveBeenCalled();
       expect(claudePluginInstall).not.toHaveBeenCalled();
       expect(claudePluginUninstall).not.toHaveBeenCalled();
-      expect(result.ejectedSkills).toEqual([]);
-      expect(result.pluginizedSkills).toEqual([]);
-      expect(result.warnings).toEqual([]);
+      expect(result.ejectedSkills).toStrictEqual([]);
+      expect(result.pluginizedSkills).toStrictEqual([]);
+      expect(result.warnings).toStrictEqual([]);
     });
 
     it("should collect warnings when plugin operations fail", async () => {
@@ -226,8 +226,8 @@ describe("mode-migrator", () => {
       const result = await executeMigration(plan, tempDir, sourceResult);
 
       expect(deleteLocalSkill).toHaveBeenCalledWith(tempDir, "web-state-zustand");
-      expect(result.pluginizedSkills).toEqual([]);
-      expect(result.warnings).toEqual([
+      expect(result.pluginizedSkills).toStrictEqual([]);
+      expect(result.warnings).toStrictEqual([
         expect.stringContaining("Could not install plugin for web-state-zustand"),
       ]);
     });
@@ -253,7 +253,7 @@ describe("mode-migrator", () => {
 
       expect(deleteLocalSkill).toHaveBeenCalledWith(tempDir, "web-state-zustand");
       expect(claudePluginInstall).not.toHaveBeenCalled();
-      expect(result.warnings).toEqual([expect.stringContaining("No marketplace configured")]);
+      expect(result.warnings).toStrictEqual([expect.stringContaining("No marketplace configured")]);
     });
   });
 });

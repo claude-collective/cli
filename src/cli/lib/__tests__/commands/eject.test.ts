@@ -279,7 +279,7 @@ describe("eject command", () => {
       const entries = await readdir(agentsDir);
 
       // Only _templates should exist, not developer/, reviewer/, etc.
-      expect(entries).toEqual([path.basename(DIRS.templates)]);
+      expect(entries).toStrictEqual([path.basename(DIRS.templates)]);
     });
 
     it("should warn with --force suggestion when templates already exist without --force", async () => {

@@ -54,7 +54,7 @@ describe("source-validator", () => {
 
       const issues = validateMetadataConventions(rawMetadata, VALID_METADATA, REL_PATH, DIR_NAME);
 
-      expect(issues).toEqual([]);
+      expect(issues).toStrictEqual([]);
     });
 
     describe("snake_case key detection", () => {
@@ -156,7 +156,7 @@ describe("source-validator", () => {
 
       const issues = validateSkillFilePairs(skillMdDirs, metadataDirs, SKILLS_DIR);
 
-      expect(issues).toEqual([]);
+      expect(issues).toStrictEqual([]);
     });
 
     it("should report error for directories with SKILL.md but no metadata.yaml", () => {
@@ -205,7 +205,7 @@ describe("source-validator", () => {
 
       const issues = validateSkillFilePairs(skillMdDirs, metadataDirs, SKILLS_DIR);
 
-      expect(issues).toEqual([]);
+      expect(issues).toStrictEqual([]);
     });
 
     it("should construct file paths using skillsDir", () => {

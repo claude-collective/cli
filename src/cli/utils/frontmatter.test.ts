@@ -8,7 +8,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ title: "Hello", author: "World" });
+      expect(result).toStrictEqual({ title: "Hello", author: "World" });
     });
 
     it("should parse nested YAML objects", () => {
@@ -16,7 +16,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ meta: { version: 1, draft: true } });
+      expect(result).toStrictEqual({ meta: { version: 1, draft: true } });
     });
 
     it("should parse YAML arrays", () => {
@@ -24,7 +24,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ tags: ["foo", "bar"] });
+      expect(result).toStrictEqual({ tags: ["foo", "bar"] });
     });
 
     it("should handle numeric values", () => {
@@ -32,7 +32,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ count: 42, price: 9.99 });
+      expect(result).toStrictEqual({ count: 42, price: 9.99 });
     });
 
     it("should handle boolean values", () => {
@@ -40,7 +40,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ enabled: true, archived: false });
+      expect(result).toStrictEqual({ enabled: true, archived: false });
     });
   });
 
@@ -106,7 +106,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ title: "No Body" });
+      expect(result).toStrictEqual({ title: "No Body" });
     });
 
     it("should parse frontmatter with only a trailing newline", () => {
@@ -114,7 +114,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ title: "Trailing" });
+      expect(result).toStrictEqual({ title: "Trailing" });
     });
   });
 
@@ -124,7 +124,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ first: true });
+      expect(result).toStrictEqual({ first: true });
     });
 
     it("should handle special characters in values", () => {
@@ -132,7 +132,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({
+      expect(result).toStrictEqual({
         url: "https://example.com/path?q=1&r=2",
         emoji: "hello",
       });
@@ -152,7 +152,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ title: "Windows" });
+      expect(result).toStrictEqual({ title: "Windows" });
     });
 
     it("should handle frontmatter with colons in values", () => {
@@ -160,7 +160,7 @@ describe("extractFrontmatter", () => {
 
       const result = extractFrontmatter(content);
 
-      expect(result).toEqual({ time: "12:30:00" });
+      expect(result).toStrictEqual({ time: "12:30:00" });
     });
 
     it("should return null for delimiter-only content with no YAML", () => {

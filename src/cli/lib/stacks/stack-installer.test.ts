@@ -166,8 +166,8 @@ describe("stack-installer", () => {
       expect(result.pluginName).toBe("test-stack");
       expect(result.stackName).toBe("test-stack");
       expect(result.pluginPath).toBe("test-stack@my-marketplace");
-      expect(result.agents).toEqual([]);
-      expect(result.skills).toEqual([]);
+      expect(result.agents).toStrictEqual([]);
+      expect(result.skills).toStrictEqual([]);
     });
 
     it("should skip local compilation when marketplace is specified", async () => {
@@ -219,8 +219,8 @@ describe("stack-installer", () => {
       expect(result.fromMarketplace).toBe(false);
       expect(result.pluginName).toBe("stack-test-stack");
       expect(result.stackName).toBe("Test Stack");
-      expect(result.agents).toEqual(["web-developer", "api-developer"]);
-      expect(result.skills).toEqual(["web-framework-react", "web-state-zustand"]);
+      expect(result.agents).toStrictEqual(["web-developer", "api-developer"]);
+      expect(result.skills).toStrictEqual(["web-framework-react", "web-state-zustand"]);
       expect(result.pluginPath).toBe("/tmp/cc-stack-999/test-stack");
     });
 

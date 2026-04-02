@@ -3,7 +3,7 @@ import { ERROR_MESSAGES, SUCCESS_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from
 
 describe("ERROR_MESSAGES", () => {
   it("should have all expected keys", () => {
-    expect(Object.keys(ERROR_MESSAGES)).toEqual([
+    expect(Object.keys(ERROR_MESSAGES)).toStrictEqual([
       "UNKNOWN_ERROR",
       "UNKNOWN_ERROR_SHORT",
       "NO_INSTALLATION",
@@ -27,7 +27,7 @@ describe("ERROR_MESSAGES", () => {
 
 describe("SUCCESS_MESSAGES", () => {
   it("should have all expected keys", () => {
-    expect(Object.keys(SUCCESS_MESSAGES)).toEqual([
+    expect(Object.keys(SUCCESS_MESSAGES)).toStrictEqual([
       "IMPORT_COMPLETE",
       "UNINSTALL_COMPLETE",
       "INIT_SUCCESS",
@@ -46,7 +46,7 @@ describe("SUCCESS_MESSAGES", () => {
 
 describe("STATUS_MESSAGES", () => {
   it("should have all expected keys", () => {
-    expect(Object.keys(STATUS_MESSAGES)).toEqual([
+    expect(Object.keys(STATUS_MESSAGES)).toStrictEqual([
       "LOADING_SKILLS",
       "LOADING_MARKETPLACE_SOURCE",
       "RECOMPILING_AGENTS",
@@ -78,7 +78,7 @@ describe("STATUS_MESSAGES", () => {
 
 describe("INFO_MESSAGES", () => {
   it("should have all expected keys", () => {
-    expect(Object.keys(INFO_MESSAGES)).toEqual([
+    expect(Object.keys(INFO_MESSAGES)).toStrictEqual([
       "NO_CHANGES_MADE",
       "RUN_COMPILE",
       "NO_AGENTS_TO_RECOMPILE",

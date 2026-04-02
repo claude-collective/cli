@@ -65,7 +65,7 @@ describe("stacks-loader", () => {
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project");
 
-      expect(stacks).toEqual([]);
+      expect(stacks).toStrictEqual([]);
     });
 
     it("throws descriptive error for load failure", async () => {
@@ -128,11 +128,11 @@ describe("stacks-loader", () => {
 
       const nextjsStack = stacks[0];
       // Bare strings are normalized to SkillAssignment[] with preloaded: false
-      expect(nextjsStack.agents["web-developer"]).toEqual({
+      expect(nextjsStack.agents["web-developer"]).toStrictEqual({
         "web-framework": [createMockSkillAssignment("web-framework-react")],
         "web-styling": [createMockSkillAssignment("web-styling-scss-modules")],
       });
-      expect(nextjsStack.agents["api-developer"]).toEqual({
+      expect(nextjsStack.agents["api-developer"]).toStrictEqual({
         "api-api": [createMockSkillAssignment("api-framework-hono")],
         "api-database": [createMockSkillAssignment("api-database-drizzle")],
       });
@@ -149,17 +149,17 @@ describe("stacks-loader", () => {
       expect(stack.id).toBe("multi-select-stack");
 
       // Array values should be normalized to SkillAssignment[]
-      expect(stack.agents["web-developer"]!["meta-reviewing"]).toEqual([
+      expect(stack.agents["web-developer"]!["meta-reviewing"]).toStrictEqual([
         createMockSkillAssignment("meta-methodology-research-methodology"),
         createMockSkillAssignment("meta-reviewing-reviewing"),
         createMockSkillAssignment("meta-reviewing-cli-reviewing"),
       ]);
 
       // Single values normalized to SkillAssignment[]
-      expect(stack.agents["web-developer"]!["web-framework"]).toEqual([
+      expect(stack.agents["web-developer"]!["web-framework"]).toStrictEqual([
         createMockSkillAssignment("web-framework-react"),
       ]);
-      expect(stack.agents["pattern-scout"]!["meta-reviewing"]).toEqual([
+      expect(stack.agents["pattern-scout"]!["meta-reviewing"]).toStrictEqual([
         createMockSkillAssignment("meta-methodology-research-methodology"),
       ]);
     });
@@ -174,17 +174,17 @@ describe("stacks-loader", () => {
       expect(stack.id).toBe("object-stack");
 
       // Object-form with preloaded: true preserved
-      expect(stack.agents["web-developer"]!["web-framework"]).toEqual([
+      expect(stack.agents["web-developer"]!["web-framework"]).toStrictEqual([
         createMockSkillAssignment("web-framework-react", true),
       ]);
 
       // Bare string normalized to preloaded: false
-      expect(stack.agents["web-developer"]!["web-styling"]).toEqual([
+      expect(stack.agents["web-developer"]!["web-styling"]).toStrictEqual([
         createMockSkillAssignment("web-styling-scss-modules"),
       ]);
 
       // Mixed array: object + bare string
-      expect(stack.agents["web-developer"]!["meta-reviewing"]).toEqual([
+      expect(stack.agents["web-developer"]!["meta-reviewing"]).toStrictEqual([
         createMockSkillAssignment("meta-methodology-research-methodology", true),
         createMockSkillAssignment("meta-reviewing-reviewing"),
       ]);
@@ -294,7 +294,7 @@ describe("stacks-loader", () => {
     it("handles empty agent config", () => {
       const skills = resolveAgentConfigToSkills({});
 
-      expect(skills).toEqual([]);
+      expect(skills).toStrictEqual([]);
     });
 
     it("resolves full skill IDs directly", () => {
@@ -353,7 +353,7 @@ describe("stacks-loader", () => {
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      expect(skills).toEqual([]);
+      expect(skills).toStrictEqual([]);
     });
 
     it("passes through all skill IDs within arrays including unknown ones and warns", () => {

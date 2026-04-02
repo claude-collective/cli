@@ -43,7 +43,7 @@ describe("WizardStore", () => {
 
     it("should have empty skillConfigs", () => {
       const { skillConfigs } = useWizardStore.getState();
-      expect(skillConfigs).toEqual([]);
+      expect(skillConfigs).toStrictEqual([]);
     });
 
     it("should have null focusedSkillId", () => {
@@ -53,17 +53,17 @@ describe("WizardStore", () => {
 
     it("should have empty navigation history", () => {
       const { history } = useWizardStore.getState();
-      expect(history).toEqual([]);
+      expect(history).toStrictEqual([]);
     });
 
     it("should have empty selected domains", () => {
       const { selectedDomains } = useWizardStore.getState();
-      expect(selectedDomains).toEqual([]);
+      expect(selectedDomains).toStrictEqual([]);
     });
 
     it("should have empty domain selections", () => {
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections).toEqual({});
+      expect(domainSelections).toStrictEqual({});
     });
   });
 
@@ -83,7 +83,7 @@ describe("WizardStore", () => {
       store.setStep("confirm");
 
       const { history } = useWizardStore.getState();
-      expect(history).toEqual(["stack", "build"]);
+      expect(history).toStrictEqual(["stack", "build"]);
     });
 
     it("should go back through history", () => {
@@ -95,7 +95,7 @@ describe("WizardStore", () => {
 
       const { step, history } = useWizardStore.getState();
       expect(step).toBe("build");
-      expect(history).toEqual(["stack"]);
+      expect(history).toStrictEqual(["stack"]);
     });
 
     it("when goBack is called with empty history, should return to stack step", () => {
@@ -146,11 +146,11 @@ describe("WizardStore", () => {
 
       const state = useWizardStore.getState();
       expect(state.selectedStackId).toBeNull();
-      expect(state.domainSelections).toEqual({});
-      expect(state.selectedDomains).toEqual([]);
-      expect(state.skillConfigs).toEqual([]);
-      expect(state.selectedAgents).toEqual([]);
-      expect(state.boundSkills).toEqual([]);
+      expect(state.domainSelections).toStrictEqual({});
+      expect(state.selectedDomains).toStrictEqual([]);
+      expect(state.skillConfigs).toStrictEqual([]);
+      expect(state.selectedAgents).toStrictEqual([]);
+      expect(state.boundSkills).toStrictEqual([]);
       expect(state.currentDomainIndex).toBe(0);
       expect(state.stackAction).toBeNull();
     });
@@ -169,9 +169,9 @@ describe("WizardStore", () => {
       store.selectStack(null);
 
       const stateAfterClear = useWizardStore.getState();
-      expect(stateAfterClear.domainSelections).toEqual({});
-      expect(stateAfterClear.selectedDomains).toEqual([]);
-      expect(stateAfterClear.skillConfigs).toEqual([]);
+      expect(stateAfterClear.domainSelections).toStrictEqual({});
+      expect(stateAfterClear.selectedDomains).toStrictEqual([]);
+      expect(stateAfterClear.skillConfigs).toStrictEqual([]);
     });
   });
 
@@ -200,7 +200,7 @@ describe("WizardStore", () => {
       store.toggleDomain("cli");
 
       const { selectedDomains } = useWizardStore.getState();
-      expect(selectedDomains).toEqual(["web", "api", "cli"]);
+      expect(selectedDomains).toStrictEqual(["web", "api", "cli"]);
     });
 
     it("should remove skills from deselected domain", () => {
@@ -213,7 +213,7 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
       expect(domainSelections.web).toBeUndefined();
-      expect(store.getAllSelectedTechnologies()).toEqual([]);
+      expect(store.getAllSelectedTechnologies()).toStrictEqual([]);
       expect(store.getTechnologyCount()).toBe(0);
     });
 
@@ -228,8 +228,8 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
       expect(domainSelections.web).toBeUndefined();
-      expect(domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
-      expect(store.getAllSelectedTechnologies()).toEqual(["api-framework-hono"]);
+      expect(domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
+      expect(store.getAllSelectedTechnologies()).toStrictEqual(["api-framework-hono"]);
     });
 
     it("should not auto-select skills when toggling domain on", () => {
@@ -238,7 +238,7 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
       expect(domainSelections.web).toBeUndefined();
-      expect(store.getAllSelectedTechnologies()).toEqual([]);
+      expect(store.getAllSelectedTechnologies()).toStrictEqual([]);
     });
 
     it("should reflect correct technology count after domain deselection", () => {
@@ -254,7 +254,7 @@ describe("WizardStore", () => {
       store.toggleDomain("web");
 
       expect(store.getTechnologyCount()).toBe(1);
-      expect(store.getAllSelectedTechnologies()).toEqual(["api-framework-hono"]);
+      expect(store.getAllSelectedTechnologies()).toStrictEqual(["api-framework-hono"]);
     });
 
     it("should restore stack skills when re-toggling a domain ON after populateFromStack", () => {
@@ -280,8 +280,8 @@ describe("WizardStore", () => {
       // Re-select web domain (should restore stack skills)
       store.toggleDomain("web");
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
-      expect(domainSelections.web!["web-client-state"]).toEqual(["web-state-zustand"]);
+      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
+      expect(domainSelections.web!["web-client-state"]).toStrictEqual(["web-state-zustand"]);
     });
 
     it("should restore stack skills when re-toggling a domain ON after populateFromSkillIds", () => {
@@ -298,7 +298,7 @@ describe("WizardStore", () => {
       // Re-select web domain (should restore stack skills)
       store.toggleDomain("web");
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
     });
 
     it("should not restore skills when no stack was populated", () => {
@@ -315,7 +315,7 @@ describe("WizardStore", () => {
       store.toggleDomain("web");
       const { domainSelections } = useWizardStore.getState();
       expect(domainSelections.web).toBeUndefined();
-      expect(store.getAllSelectedTechnologies()).toEqual([]);
+      expect(store.getAllSelectedTechnologies()).toStrictEqual([]);
     });
 
     it("should not affect other domains when restoring stack skills for one domain", () => {
@@ -341,8 +341,8 @@ describe("WizardStore", () => {
 
       // Web should be restored from stack, api should keep manual changes
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
-      expect(domainSelections.api!["api-api"]).toEqual(["api-framework-express"]);
+      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
+      expect(domainSelections.api!["api-api"]).toStrictEqual(["api-framework-express"]);
     });
   });
 
@@ -352,7 +352,7 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
     });
 
     it("should replace technology in exclusive mode", () => {
@@ -361,7 +361,7 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-vue-composition-api", true);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-vue-composition-api"]);
+      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-vue-composition-api"]);
     });
 
     it("should toggle off technology in exclusive mode", () => {
@@ -370,7 +370,7 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-framework"]).toEqual([]);
+      expect(domainSelections.web!["web-framework"]).toStrictEqual([]);
     });
 
     it("should allow multiple selections in non-exclusive mode", () => {
@@ -379,7 +379,7 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-testing", "web-testing-playwright-e2e", false);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-testing"]).toEqual([
+      expect(domainSelections.web!["web-testing"]).toStrictEqual([
         "web-testing-vitest",
         "web-testing-playwright-e2e",
       ]);
@@ -392,7 +392,7 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-testing"]).toEqual(["web-testing-playwright-e2e"]);
+      expect(domainSelections.web!["web-testing"]).toStrictEqual(["web-testing-playwright-e2e"]);
     });
   });
 
@@ -541,7 +541,7 @@ describe("WizardStore", () => {
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(1);
-      expect(skillConfigs[0]).toEqual({
+      expect(skillConfigs[0]).toStrictEqual({
         id: "web-framework-react",
         scope: "global",
         source: "agents-inc",
@@ -574,7 +574,7 @@ describe("WizardStore", () => {
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(2);
-      expect(skillConfigs.map((sc) => sc.id)).toEqual([
+      expect(skillConfigs.map((sc) => sc.id)).toStrictEqual([
         "web-testing-vitest",
         "web-testing-playwright-e2e",
       ]);
@@ -668,7 +668,7 @@ describe("WizardStore", () => {
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(2);
-      expect(skillConfigs.map((sc) => sc.id)).toEqual(["web-framework-react", "web-state-zustand"]);
+      expect(skillConfigs.map((sc) => sc.id)).toStrictEqual(["web-framework-react", "web-state-zustand"]);
       expect(skillConfigs.every((sc) => sc.scope === "global")).toBe(true);
       expect(skillConfigs.every((sc) => sc.source === "agents-inc")).toBe(true);
     });
@@ -682,7 +682,7 @@ describe("WizardStore", () => {
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(2);
-      expect(skillConfigs.map((sc) => sc.id)).toEqual([
+      expect(skillConfigs.map((sc) => sc.id)).toStrictEqual([
         "web-framework-react",
         "api-framework-hono",
       ]);
@@ -729,7 +729,7 @@ describe("WizardStore", () => {
       store.reset();
 
       const state = useWizardStore.getState();
-      expect(state.skillConfigs).toEqual([]);
+      expect(state.skillConfigs).toStrictEqual([]);
       expect(state.focusedSkillId).toBeNull();
     });
 
@@ -783,15 +783,15 @@ describe("WizardStore", () => {
       store.toggleTechnology("api", "api-api", "api-framework-hono", true);
 
       const perDomain = store.getSelectedTechnologiesPerDomain();
-      expect(perDomain.web).toEqual(["web-framework-react", "web-styling-scss-modules"]);
-      expect(perDomain.api).toEqual(["api-framework-hono"]);
+      expect(perDomain.web).toStrictEqual(["web-framework-react", "web-styling-scss-modules"]);
+      expect(perDomain.api).toStrictEqual(["api-framework-hono"]);
       expect(perDomain.cli).toBeUndefined();
     });
 
     it("should return empty object for getSelectedTechnologiesPerDomain with no selections", () => {
       const store = useWizardStore.getState();
       const perDomain = store.getSelectedTechnologiesPerDomain();
-      expect(perDomain).toEqual({});
+      expect(perDomain).toStrictEqual({});
     });
 
     it("should omit domains with empty category arrays from getSelectedTechnologiesPerDomain", () => {
@@ -877,8 +877,8 @@ describe("WizardStore", () => {
       expect(state.step).toBe("stack");
       expect(state.approach).toBeNull();
       expect(state.selectedStackId).toBeNull();
-      expect(state.selectedDomains).toEqual([]);
-      expect(state.history).toEqual([]);
+      expect(state.selectedDomains).toStrictEqual([]);
+      expect(state.history).toStrictEqual([]);
     });
   });
 
@@ -897,10 +897,10 @@ describe("WizardStore", () => {
 
       const { selectedDomains, domainSelections } = useWizardStore.getState();
 
-      expect(selectedDomains).toEqual(["web"]);
+      expect(selectedDomains).toStrictEqual(["web"]);
 
       expect(domainSelections.web).toBeDefined();
-      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
       expect(domainSelections.api).toBeUndefined();
     });
 
@@ -922,9 +922,9 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
-      expect(domainSelections.web!["web-client-state"]).toEqual(["web-state-zustand"]);
-      expect(domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
+      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
+      expect(domainSelections.web!["web-client-state"]).toStrictEqual(["web-state-zustand"]);
+      expect(domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
     });
 
     it("should skip entries without a domain", () => {
@@ -964,7 +964,7 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.meta!["meta-reviewing"]).toEqual([
+      expect(domainSelections.meta!["meta-reviewing"]).toStrictEqual([
         "meta-methodology-research-methodology",
         "meta-reviewing-reviewing",
         "meta-reviewing-cli-reviewing",
@@ -992,12 +992,12 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
-      expect(domainSelections.meta!["meta-reviewing"]).toEqual([
+      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
+      expect(domainSelections.meta!["meta-reviewing"]).toStrictEqual([
         "meta-methodology-research-methodology",
         "meta-reviewing-reviewing",
       ]);
-      expect(domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
+      expect(domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
     });
 
     it("should deduplicate skills from arrays across multiple agents", () => {
@@ -1026,7 +1026,7 @@ describe("WizardStore", () => {
       const { domainSelections } = useWizardStore.getState();
 
       // Should deduplicate: anti-over-engineering appears in both agents
-      expect(domainSelections.meta!["meta-reviewing"]).toEqual([
+      expect(domainSelections.meta!["meta-reviewing"]).toStrictEqual([
         "meta-methodology-research-methodology",
         "meta-reviewing-reviewing",
         "meta-reviewing-cli-reviewing",
@@ -1050,7 +1050,7 @@ describe("WizardStore", () => {
       expect(state.approach).toBe("stack");
       expect(state.selectedStackId).toBe("nextjs-fullstack");
       expect(state.stackAction).toBe("customize");
-      expect(state.history).toEqual(["stack", "build"]);
+      expect(state.history).toStrictEqual(["stack", "build"]);
     });
 
     it("should handle complete scratch flow", () => {
@@ -1069,10 +1069,10 @@ describe("WizardStore", () => {
       const state = useWizardStore.getState();
       expect(state.step).toBe("confirm");
       expect(state.approach).toBe("scratch");
-      expect(state.selectedDomains).toEqual(["web", "api"]);
-      expect(state.domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
-      expect(state.domainSelections.web!["web-styling"]).toEqual(["web-styling-scss-modules"]);
-      expect(state.domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
+      expect(state.selectedDomains).toStrictEqual(["web", "api"]);
+      expect(state.domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
+      expect(state.domainSelections.web!["web-styling"]).toStrictEqual(["web-styling-scss-modules"]);
+      expect(state.domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
     });
 
     it("should preserve selections when going back", () => {
@@ -1087,7 +1087,7 @@ describe("WizardStore", () => {
 
       const state = useWizardStore.getState();
       expect(state.selectedDomains).toContain("web");
-      expect(state.domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+      expect(state.domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
     });
   });
 
@@ -1186,14 +1186,14 @@ describe("WizardStore", () => {
       expect(rows).toHaveLength(1);
 
       const sourceNames = rows[0].options.map((opt) => opt.id);
-      expect(sourceNames).toEqual(["eject", "Acme Corp", "agents-inc", "Extra Corp"]);
+      expect(sourceNames).toStrictEqual(["eject", "Acme Corp", "agents-inc", "Extra Corp"]);
     });
   });
 
   describe("agent selection", () => {
     it("should start with empty selectedAgents", () => {
       const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toEqual([]);
+      expect(selectedAgents).toStrictEqual([]);
     });
 
     it("should toggle agent on", () => {
@@ -1220,7 +1220,7 @@ describe("WizardStore", () => {
       store.toggleAgent("web-reviewer");
 
       const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toEqual(["web-developer", "api-developer", "web-reviewer"]);
+      expect(selectedAgents).toStrictEqual(["web-developer", "api-developer", "web-reviewer"]);
     });
 
     it("should reset selectedAgents on reset", () => {
@@ -1229,14 +1229,14 @@ describe("WizardStore", () => {
       store.reset();
 
       const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toEqual([]);
+      expect(selectedAgents).toStrictEqual([]);
     });
   });
 
   describe("agentConfigs and scope management", () => {
     it("should have empty agentConfigs initially", () => {
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toEqual([]);
+      expect(agentConfigs).toStrictEqual([]);
     });
 
     it("should sync agentConfigs when toggleAgent is called", () => {
@@ -1244,7 +1244,7 @@ describe("WizardStore", () => {
       store.toggleAgent("web-developer");
 
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "global" }]);
+      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "global" }]);
     });
 
     it("should remove from agentConfigs when agent is toggled off", () => {
@@ -1253,7 +1253,7 @@ describe("WizardStore", () => {
       store.toggleAgent("web-developer");
 
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toEqual([]);
+      expect(agentConfigs).toStrictEqual([]);
     });
 
     it("should toggle agent scope between global and project", () => {
@@ -1262,10 +1262,10 @@ describe("WizardStore", () => {
       store.toggleAgentScope("web-developer");
 
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "project" }]);
+      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "project" }]);
 
       store.toggleAgentScope("web-developer");
-      expect(useWizardStore.getState().agentConfigs).toEqual([
+      expect(useWizardStore.getState().agentConfigs).toStrictEqual([
         { name: "web-developer", scope: "global" },
       ]);
     });
@@ -1286,8 +1286,8 @@ describe("WizardStore", () => {
       store.toggleAgent("web-developer");
 
       const { selectedAgents, agentConfigs } = useWizardStore.getState();
-      expect(selectedAgents).toEqual([]);
-      expect(agentConfigs).toEqual([]);
+      expect(selectedAgents).toStrictEqual([]);
+      expect(agentConfigs).toStrictEqual([]);
     });
 
     it("should not toggle scope of locked agents", () => {
@@ -1297,7 +1297,7 @@ describe("WizardStore", () => {
 
       store.toggleAgentScope("web-developer");
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "global" }]);
+      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "global" }]);
     });
 
     it("should not toggle agent scope when isEditingFromGlobalScope is true", () => {
@@ -1369,7 +1369,7 @@ describe("WizardStore", () => {
       store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toEqual([]);
+      expect(selectedAgents).toStrictEqual([]);
     });
 
     it("should produce union of agents for multiple domains", () => {
@@ -1404,7 +1404,7 @@ describe("WizardStore", () => {
 
       const { selectedAgents } = useWizardStore.getState();
       const sorted = [...selectedAgents].sort();
-      expect(selectedAgents).toEqual(sorted);
+      expect(selectedAgents).toStrictEqual(sorted);
     });
 
     it("should replace previous agent selection", () => {

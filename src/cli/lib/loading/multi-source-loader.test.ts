@@ -591,7 +591,7 @@ describe("multi-source-loader", () => {
   describe("searchExtraSources", () => {
     it("should return empty array when no sources configured", async () => {
       const result = await searchExtraSources("react", []);
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should find matching skills by alias from a single source", async () => {

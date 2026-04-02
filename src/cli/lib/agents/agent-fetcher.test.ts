@@ -76,7 +76,7 @@ describe("agent-fetcher", () => {
 
       const result = await getLocalAgentDefinitions();
 
-      expect(result).toEqual({
+      expect(result).toStrictEqual({
         agentsDir: path.join(tempDir, "src/agents"),
         templatesDir: path.join(tempDir, "src/agents/_templates"),
         sourcePath: tempDir,
@@ -144,7 +144,7 @@ describe("agent-fetcher", () => {
         forceRefresh: undefined,
         subdir: "",
       });
-      expect(result).toEqual({
+      expect(result).toStrictEqual({
         agentsDir: path.join(fetchedDir, "src", "agents"),
         templatesDir: path.join(fetchedDir, "src", "agents", "_templates"),
         sourcePath: fetchedDir,

@@ -40,7 +40,7 @@ function expectNoDuplicates(arr: string[], label: string): void {
     if (seen.has(item)) duplicates.push(item);
     seen.add(item);
   }
-  expect(duplicates, `Duplicate ${label} found: ${duplicates.join(", ")}`).toEqual([]);
+  expect(duplicates, `Duplicate ${label} found: ${duplicates.join(", ")}`).toStrictEqual([]);
 }
 
 describe("init -> edit merge: config preserved across lifecycle", () => {

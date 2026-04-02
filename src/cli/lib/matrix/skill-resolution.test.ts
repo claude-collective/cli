@@ -46,7 +46,7 @@ describe("skill-resolution", () => {
 
       const reactSkill = merged.skills["web-framework-react"];
       expect(reactSkill).toBeDefined();
-      expect(reactSkill!.conflictsWith).toEqual(
+      expect(reactSkill!.conflictsWith).toStrictEqual(
         expect.arrayContaining([
           expect.objectContaining({ skillId: "web-framework-vue-composition-api" }),
         ]),
@@ -61,7 +61,7 @@ describe("skill-resolution", () => {
       );
 
       expect(Object.keys(merged.skills)).toHaveLength(0);
-      expect(merged.suggestedStacks).toEqual([]);
+      expect(merged.suggestedStacks).toStrictEqual([]);
     });
 
     it("builds slugToId map from extracted skill metadata", () => {
@@ -89,7 +89,7 @@ describe("skill-resolution", () => {
       const reactSkill = merged.skills["web-framework-react"];
       expect(reactSkill).toBeDefined();
       // Unresolved "nonexistent" slug should be dropped, not passed through as-is
-      expect(reactSkill!.conflictsWith).toEqual([]);
+      expect(reactSkill!.conflictsWith).toStrictEqual([]);
     });
 
     it("resolves alternative groups correctly between skills", () => {
@@ -101,12 +101,12 @@ describe("skill-resolution", () => {
 
       const zustand = merged.skills["web-state-zustand"];
       const jotai = merged.skills["web-state-jotai"];
-      expect(zustand!.alternatives).toEqual(
+      expect(zustand!.alternatives).toStrictEqual(
         expect.arrayContaining([
           expect.objectContaining({ skillId: "web-state-jotai", purpose: "State management" }),
         ]),
       );
-      expect(jotai!.alternatives).toEqual(
+      expect(jotai!.alternatives).toStrictEqual(
         expect.arrayContaining([
           expect.objectContaining({ skillId: "web-state-zustand", purpose: "State management" }),
         ]),
@@ -121,7 +121,7 @@ describe("skill-resolution", () => {
       );
 
       const zustand = merged.skills["web-state-zustand"];
-      expect(zustand!.requires).toEqual(
+      expect(zustand!.requires).toStrictEqual(
         expect.arrayContaining([
           expect.objectContaining({
             skillIds: expect.arrayContaining(["web-framework-react"]),
@@ -165,7 +165,7 @@ describe("skill-resolution", () => {
 
       const react = merged.skills["web-framework-react"];
       expect(react).toBeDefined();
-      expect(react!.compatibleWith).toEqual([]);
+      expect(react!.compatibleWith).toStrictEqual([]);
       expect(react!.isRecommended).toBe(false);
     });
   });

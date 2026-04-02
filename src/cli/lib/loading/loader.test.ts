@@ -347,7 +347,7 @@ describe("loadAllAgents", () => {
 
     const result = await loadAllAgents("/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
@@ -358,7 +358,7 @@ describe("loadAllAgents", () => {
 
     const result = await loadAllAgents("/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
@@ -370,7 +370,7 @@ describe("loadAllAgents", () => {
 
     const result = await loadAllAgents("/project");
 
-    expect(Object.keys(result)).toEqual(["web-developer"]);
+    expect(Object.keys(result)).toStrictEqual(["web-developer"]);
     expect(result["web-developer"]?.title).toBe("web-developer Agent");
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
@@ -380,7 +380,7 @@ describe("loadAllAgents", () => {
 
     const result = await loadAllAgents("/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
   });
 
   it("should warn and skip when metadata.yaml has valid YAML but wrong types", async () => {
@@ -395,7 +395,7 @@ tools: not-an-array`,
 
     const result = await loadAllAgents("/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
@@ -405,7 +405,7 @@ tools: not-an-array`,
 
     const result = await loadAllAgents("/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("EACCES"));
   });
@@ -416,7 +416,7 @@ tools: not-an-array`,
 
     const result = await loadAllAgents("/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
@@ -438,7 +438,7 @@ describe("loadProjectAgents", () => {
 
     const result = await loadProjectAgents("/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
   });
 
   it("should warn and skip when project metadata.yaml parsing fails", async () => {
@@ -448,7 +448,7 @@ describe("loadProjectAgents", () => {
 
     const result = await loadProjectAgents("/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
@@ -459,7 +459,7 @@ describe("loadProjectAgents", () => {
 
     const result = await loadProjectAgents("/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
@@ -472,7 +472,7 @@ describe("loadProjectAgents", () => {
 
     const result = await loadProjectAgents("/project");
 
-    expect(Object.keys(result)).toEqual(["api-developer"]);
+    expect(Object.keys(result)).toStrictEqual(["api-developer"]);
     expect(result["api-developer"]?.title).toBe("api-developer Agent");
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
@@ -485,7 +485,7 @@ describe("loadSkillsByIds", () => {
 
     const result = await loadSkillsByIds([{ id: "nonexistent-skill" as SkillId }], "/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining("Unknown skill reference 'nonexistent-skill'"),
     );
@@ -503,7 +503,7 @@ describe("loadSkillsByIds", () => {
     const result = await loadSkillsByIds([{ id: "my-skill" as SkillId }], "/project");
 
     // The skill should be skipped due to the readFile error
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Could not load skill 'my-skill'"));
   });
 
@@ -522,7 +522,7 @@ Content`);
 
     const result = await loadSkillsByIds([{ id: "bad-skill" as SkillId }], "/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining("Skipping 'bad-skill': missing or invalid frontmatter"),
     );
@@ -539,7 +539,7 @@ Content`);
 
     const result = await loadSkillsByIds([{ id: "error-skill" as SkillId }], "/project");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining("Could not load skill 'error-skill'"),
     );
@@ -574,7 +574,7 @@ describe("loadPluginSkills", () => {
 
     const result = await loadPluginSkills("/path/to/plugin");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
   });
 
   it("should load skills from plugin skills directory", async () => {
@@ -597,7 +597,7 @@ describe("loadPluginSkills", () => {
 
     const result = await loadPluginSkills("/path/to/plugin");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping"));
   });
 
@@ -624,6 +624,6 @@ describe("loadPluginSkills", () => {
 
     const result = await loadPluginSkills("/path/to/plugin");
 
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
   });
 });

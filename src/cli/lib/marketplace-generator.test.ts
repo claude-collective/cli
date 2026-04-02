@@ -101,7 +101,7 @@ describe("marketplace-generator", () => {
       });
 
       const names = marketplace.plugins.map((p) => p.name);
-      expect(names).toEqual(["api-http-axios", "web-state-mobx", "web-state-zustand"]);
+      expect(names).toStrictEqual(["api-http-axios", "web-state-mobx", "web-state-zustand"]);
     });
 
     it("should include marketplace metadata", async () => {
@@ -229,7 +229,7 @@ describe("marketplace-generator", () => {
       });
 
       const plugin = marketplace.plugins[0];
-      expect(plugin.keywords).toEqual(["web", "react", "ui"]);
+      expect(plugin.keywords).toStrictEqual(["web", "react", "ui"]);
     });
 
     it("should generate correct source paths for plugins", async () => {

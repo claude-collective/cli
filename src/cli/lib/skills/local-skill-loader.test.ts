@@ -54,7 +54,7 @@ describe("local-skill-loader", () => {
       const result = await discoverLocalSkills(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result?.skills).toEqual([]);
+      expect(result?.skills).toStrictEqual([]);
       expect(result?.localSkillsPath).toBe(path.join(tempDir, LOCAL_SKILLS_PATH));
     });
 
@@ -84,7 +84,7 @@ describe("local-skill-loader", () => {
 
       const result = await discoverLocalSkills(tempDir);
 
-      expect(result?.skills).toEqual([]);
+      expect(result?.skills).toStrictEqual([]);
     });
 
     it("skips skill without SKILL.md", async () => {
@@ -95,7 +95,7 @@ describe("local-skill-loader", () => {
 
       const result = await discoverLocalSkills(tempDir);
 
-      expect(result?.skills).toEqual([]);
+      expect(result?.skills).toStrictEqual([]);
     });
 
     it("skips skill when metadata.yaml is missing displayName", async () => {
@@ -105,7 +105,7 @@ describe("local-skill-loader", () => {
       });
 
       const result = await discoverLocalSkills(tempDir);
-      expect(result?.skills).toEqual([]);
+      expect(result?.skills).toStrictEqual([]);
     });
 
     it("skips skill with invalid SKILL.md frontmatter", async () => {
@@ -117,7 +117,7 @@ describe("local-skill-loader", () => {
 
       const result = await discoverLocalSkills(tempDir);
 
-      expect(result?.skills).toEqual([]);
+      expect(result?.skills).toStrictEqual([]);
     });
 
     it("uses cliDescription from metadata.yaml when provided", async () => {
@@ -156,7 +156,7 @@ describe("local-skill-loader", () => {
 
       expect(result?.skills).toHaveLength(2);
       const skillIds = result?.skills.map((s) => s.id).sort();
-      expect(skillIds).toEqual(["skill-one (@local)", "skill-two (@local)"]);
+      expect(skillIds).toStrictEqual(["skill-one (@local)", "skill-two (@local)"]);
     });
 
     it("sets correct extracted metadata properties", async () => {
@@ -255,7 +255,7 @@ describe("local-skill-loader", () => {
       const result = await discoverLocalSkills(tempDir);
 
       // Empty YAML parses to null, schema validation fails — skill should be skipped
-      expect(result?.skills).toEqual([]);
+      expect(result?.skills).toStrictEqual([]);
     });
 
     it("skips skill with metadata.yaml containing only comments", async () => {
@@ -267,7 +267,7 @@ describe("local-skill-loader", () => {
       const result = await discoverLocalSkills(tempDir);
 
       // YAML with only comments parses to null — schema validation fails
-      expect(result?.skills).toEqual([]);
+      expect(result?.skills).toStrictEqual([]);
     });
 
     it("skips skill with metadata.yaml that parses to a non-object type", async () => {
@@ -280,7 +280,7 @@ describe("local-skill-loader", () => {
       const result = await discoverLocalSkills(tempDir);
 
       // Schema validation expects an object, so this should be skipped
-      expect(result?.skills).toEqual([]);
+      expect(result?.skills).toStrictEqual([]);
     });
 
     it("handles directory with only non-skill subdirectories", async () => {
@@ -292,7 +292,7 @@ describe("local-skill-loader", () => {
 
       const result = await discoverLocalSkills(tempDir);
 
-      expect(result?.skills).toEqual([]);
+      expect(result?.skills).toStrictEqual([]);
     });
   });
 });

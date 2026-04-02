@@ -611,7 +611,7 @@ describe("Conflicting skills", () => {
 
       const skillAOption = options.find((o: { id: string }) => o.id === REACT_ID);
       expect(skillAOption).toBeDefined();
-      expect(skillAOption!.advisoryState).toEqual(
+      expect(skillAOption!.advisoryState).toStrictEqual(
         expect.objectContaining({
           status: "incompatible",
           reason: expect.stringContaining("conflicts with"),
@@ -748,7 +748,7 @@ describe("Missing skill dependencies", () => {
 
       const result = validateSelection([REACT_ID]);
 
-      expect(result.errors[0].skills).toEqual([REACT_ID, VUE_ID]);
+      expect(result.errors[0].skills).toStrictEqual([REACT_ID, VUE_ID]);
     });
 
     it("should include skill display name in error message", () => {
@@ -1029,7 +1029,7 @@ describe("getDependentSkills", () => {
     initializeMatrix(matrix);
 
     const result = getDependentSkills(REACT_ID, [REACT_ID, VUE_ID]);
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 
   it("should throw when skill is not in matrix", () => {
@@ -1048,7 +1048,7 @@ describe("getDependentSkills", () => {
     initializeMatrix(matrix);
 
     const result = getDependentSkills(REACT_ID, [REACT_ID, VUE_ID]);
-    expect(result).toEqual([VUE_ID]);
+    expect(result).toStrictEqual([VUE_ID]);
   });
 
   it("should find multiple dependents", () => {
@@ -1079,7 +1079,7 @@ describe("getDependentSkills", () => {
 
     // Only A and C selected, so A is the sole satisfier of C's OR requirement
     const result = getDependentSkills(REACT_ID, [REACT_ID, ZUSTAND_ID]);
-    expect(result).toEqual([ZUSTAND_ID]);
+    expect(result).toStrictEqual([ZUSTAND_ID]);
   });
 
   it("should NOT detect OR dependency when another satisfier is also selected", () => {
@@ -1093,7 +1093,7 @@ describe("getDependentSkills", () => {
 
     // Both A and B selected, so removing A would still leave B to satisfy C
     const result = getDependentSkills(REACT_ID, [REACT_ID, VUE_ID, ZUSTAND_ID]);
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 
   it("should skip the target skill itself in selections", () => {
@@ -1106,7 +1106,7 @@ describe("getDependentSkills", () => {
 
     const result = getDependentSkills(REACT_ID, [REACT_ID]);
     // A cannot depend on itself in getDependentSkills — it skips selectedId === fullId
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 
   it("should handle transitive chain (only direct dependents returned)", () => {
@@ -1124,7 +1124,7 @@ describe("getDependentSkills", () => {
     // getDependentSkills returns DIRECT dependents only
     const result = getDependentSkills(REACT_ID, [REACT_ID, VUE_ID, ZUSTAND_ID]);
     // Only B directly depends on A; C depends on B (transitive, not returned)
-    expect(result).toEqual([VUE_ID]);
+    expect(result).toStrictEqual([VUE_ID]);
   });
 
   it("should handle circular requirements without infinite loop", () => {
@@ -1140,11 +1140,11 @@ describe("getDependentSkills", () => {
 
     // Asking "who depends on A?" -> B depends on A
     const resultA = getDependentSkills(REACT_ID, [REACT_ID, VUE_ID]);
-    expect(resultA).toEqual([VUE_ID]);
+    expect(resultA).toStrictEqual([VUE_ID]);
 
     // Asking "who depends on B?" -> A depends on B
     const resultB = getDependentSkills(VUE_ID, [REACT_ID, VUE_ID]);
-    expect(resultB).toEqual([REACT_ID]);
+    expect(resultB).toStrictEqual([REACT_ID]);
   });
 
   it("should find dependents using full skill IDs", () => {
@@ -1156,7 +1156,7 @@ describe("getDependentSkills", () => {
     initializeMatrix(matrix);
 
     const result = getDependentSkills(SCSS_ID, [SCSS_ID, TAILWIND_ID]);
-    expect(result).toEqual([TAILWIND_ID]);
+    expect(result).toStrictEqual([TAILWIND_ID]);
   });
 
   it("should handle skill with multiple AND requirements including target", () => {
@@ -1170,7 +1170,7 @@ describe("getDependentSkills", () => {
 
     // C requires both A and B (AND), so C is dependent on A
     const result = getDependentSkills(REACT_ID, [REACT_ID, VUE_ID, ZUSTAND_ID]);
-    expect(result).toEqual([ZUSTAND_ID]);
+    expect(result).toStrictEqual([ZUSTAND_ID]);
   });
 
   it("should find dependents even when target is not in current selections", () => {
@@ -1184,7 +1184,7 @@ describe("getDependentSkills", () => {
     // A is not in selections — asking who depends on A among current selections
     const result = getDependentSkills(REACT_ID, [VUE_ID]);
     // B depends on A, so it should still be returned
-    expect(result).toEqual([VUE_ID]);
+    expect(result).toStrictEqual([VUE_ID]);
   });
 });
 
@@ -1203,7 +1203,7 @@ describe("getAvailableSkills edge cases", () => {
     initializeMatrix(matrix);
 
     const result = getAvailableSkills("web-styling", []);
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 
   it("should handle large number of skills without issues", () => {
@@ -1259,7 +1259,7 @@ describe("getAvailableSkills edge cases", () => {
     const result = getAvailableSkills("web-framework", []);
     const optionA = result.find((o) => o.id === REACT_ID);
     expect(optionA).toBeDefined();
-    expect(optionA!.alternatives).toEqual([VUE_ID, ZUSTAND_ID]);
+    expect(optionA!.alternatives).toStrictEqual([VUE_ID, ZUSTAND_ID]);
   });
 
   it("should correctly mark selected skills", () => {
@@ -1311,7 +1311,7 @@ describe("getAvailableSkills edge cases", () => {
     const result = getAvailableSkills("web-framework", [REACT_ID]);
     const optionB = result.find((o) => o.id === VUE_ID);
     expect(optionB!.advisoryState.status).toBe("discouraged");
-    expect(optionB!.advisoryState).toEqual(
+    expect(optionB!.advisoryState).toStrictEqual(
       expect.objectContaining({ reason: expect.stringContaining("Not ideal pairing") }),
     );
   });
@@ -1340,7 +1340,7 @@ describe("getAvailableSkills edge cases", () => {
     const result = getAvailableSkills("web-framework", [REACT_ID]);
     const optionB = result.find((o) => o.id === VUE_ID);
     expect(optionB!.advisoryState.status).toBe("recommended");
-    expect(optionB!.advisoryState).toEqual(
+    expect(optionB!.advisoryState).toStrictEqual(
       expect.objectContaining({ reason: expect.stringContaining("Great combination") }),
     );
   });
@@ -1460,22 +1460,22 @@ describe("validateConflicts", () => {
     initializeMatrix(EMPTY_MATRIX);
 
     const result = validateConflicts([]);
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 
   it("should return no errors for a single skill", () => {
     initializeMatrix(createMockMatrix(SKILLS.react));
 
     const result = validateConflicts([REACT_ID]);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should return no errors when skills do not conflict", () => {
     initializeMatrix(createMockMatrix(SKILLS.react, SKILLS.zustand));
 
     const result = validateConflicts([REACT_ID, ZUSTAND_ID]);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should detect conflict declared on first skill against second", () => {
@@ -1488,7 +1488,7 @@ describe("validateConflicts", () => {
     const result = validateConflicts([REACT_ID, VUE_ID]);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].type).toBe("conflict");
-    expect(result.errors[0].skills).toEqual([REACT_ID, VUE_ID]);
+    expect(result.errors[0].skills).toStrictEqual([REACT_ID, VUE_ID]);
   });
 
   it("should not detect conflict when declaration is only on second skill (order-dependent)", () => {
@@ -1528,7 +1528,7 @@ describe("validateConflicts", () => {
 
     // VUE_ID is not in the matrix — should not throw, just skip
     const result = validateConflicts([REACT_ID, VUE_ID]);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should include conflict reason in error message", () => {
@@ -1551,7 +1551,7 @@ describe("validateConflicts", () => {
     initializeMatrix(createMockMatrix(skillA, skillB));
 
     const result = validateConflicts([REACT_ID, VUE_ID]);
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 });
 
@@ -1560,15 +1560,15 @@ describe("validateRequirements", () => {
     initializeMatrix(EMPTY_MATRIX);
 
     const result = validateRequirements([], new Set());
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 
   it("should return no errors for skill with no requirements", () => {
     initializeMatrix(createMockMatrix(SKILLS.react));
 
     const result = validateRequirements([REACT_ID], new Set([REACT_ID]));
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should return error when AND requirement is not satisfied", () => {
@@ -1594,7 +1594,7 @@ describe("validateRequirements", () => {
 
     const selectedSet = new Set<SkillId>([REACT_ID, ZUSTAND_ID]);
     const result = validateRequirements([REACT_ID, ZUSTAND_ID], selectedSet);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should return error listing all missing skills for multi-skill AND requirement", () => {
@@ -1651,7 +1651,7 @@ describe("validateRequirements", () => {
 
     const selectedSet = new Set<SkillId>([REACT_ID, HONO_ID]);
     const result = validateRequirements([REACT_ID, HONO_ID], selectedSet);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should return errors for multiple skills with unmet requirements", () => {
@@ -1691,7 +1691,7 @@ describe("validateRequirements", () => {
 
     // VUE_ID is not in the matrix — should not throw
     const result = validateRequirements([VUE_ID], new Set([VUE_ID]));
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should always return empty warnings array", () => {
@@ -1702,7 +1702,7 @@ describe("validateRequirements", () => {
     initializeMatrix(createMockMatrix(skillA, skillC));
 
     const result = validateRequirements([REACT_ID], new Set([REACT_ID]));
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 });
 
@@ -1711,8 +1711,8 @@ describe("validateExclusivity", () => {
     initializeMatrix(EMPTY_MATRIX);
 
     const result = validateExclusivity([]);
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 
   it("should return no errors for single skill in exclusive category", () => {
@@ -1724,7 +1724,7 @@ describe("validateExclusivity", () => {
     initializeMatrix(matrix);
 
     const result = validateExclusivity([REACT_ID]);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should return error for multiple skills in exclusive category", () => {
@@ -1755,7 +1755,7 @@ describe("validateExclusivity", () => {
     initializeMatrix(matrix);
 
     const result = validateExclusivity([REACT_ID, VUE_ID]);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should skip the 'local' pseudo-category even with multiple skills", () => {
@@ -1764,7 +1764,7 @@ describe("validateExclusivity", () => {
     initializeMatrix(createMockMatrix(skillA, skillB));
 
     const result = validateExclusivity([REACT_ID, VUE_ID]);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should handle mixed exclusive and non-exclusive categories", () => {
@@ -1792,7 +1792,7 @@ describe("validateExclusivity", () => {
 
     // VUE_ID not in matrix — should not throw
     const result = validateExclusivity([REACT_ID, VUE_ID]);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should detect exclusivity violation with 3+ skills in same category", () => {
@@ -1840,7 +1840,7 @@ describe("validateExclusivity", () => {
     initializeMatrix(matrix);
 
     const result = validateExclusivity([REACT_ID, VUE_ID]);
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 });
 
@@ -1849,8 +1849,8 @@ describe("validateRecommendations", () => {
     initializeMatrix(EMPTY_MATRIX);
 
     const result = validateRecommendations([], new Set());
-    expect(result.warnings).toEqual([]);
-    expect(result.errors).toEqual([]);
+    expect(result.warnings).toStrictEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 
   it("should return no warnings when no skills are recommended", () => {
@@ -1858,7 +1858,7 @@ describe("validateRecommendations", () => {
 
     const selectedSet = new Set<SkillId>([REACT_ID]);
     const result = validateRecommendations([REACT_ID], selectedSet);
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 
   it("should return warning for recommended skill not selected", () => {
@@ -1873,7 +1873,7 @@ describe("validateRecommendations", () => {
     const result = validateRecommendations([REACT_ID], selectedSet);
     expect(result.warnings).toHaveLength(1);
     expect(result.warnings[0].type).toBe("missing_recommendation");
-    expect(result.warnings[0].skills).toEqual([ZUSTAND_ID]);
+    expect(result.warnings[0].skills).toStrictEqual([ZUSTAND_ID]);
   });
 
   it("should not warn when recommended skill is already selected", () => {
@@ -1886,7 +1886,7 @@ describe("validateRecommendations", () => {
 
     const selectedSet = new Set<SkillId>([REACT_ID, ZUSTAND_ID]);
     const result = validateRecommendations([REACT_ID, ZUSTAND_ID], selectedSet);
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 
   it("should not warn when recommended skill is incompatible with selections", () => {
@@ -1899,7 +1899,7 @@ describe("validateRecommendations", () => {
 
     const selectedSet = new Set<SkillId>([REACT_ID]);
     const result = validateRecommendations([REACT_ID], selectedSet);
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 
   it("should warn for recommended skill with no compatibility constraints (unconditional)", () => {
@@ -1926,7 +1926,7 @@ describe("validateRecommendations", () => {
 
     const selectedSet = new Set<SkillId>([REACT_ID]);
     const result = validateRecommendations([REACT_ID], selectedSet);
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings).toStrictEqual([]);
   });
 
   it("should include recommendation reason in warning message", () => {
@@ -1986,6 +1986,6 @@ describe("validateRecommendations", () => {
 
     const selectedSet = new Set<SkillId>([REACT_ID]);
     const result = validateRecommendations([REACT_ID], selectedSet);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toStrictEqual([]);
   });
 });

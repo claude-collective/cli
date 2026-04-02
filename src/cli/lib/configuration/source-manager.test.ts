@@ -67,7 +67,7 @@ describe("source-manager", () => {
 
       // Verify it was saved to config
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.sources).toEqual([
+      expect(config?.sources).toStrictEqual([
         { name: "acme-corp", url: "github:acme-corp/claude-skills" },
       ]);
     });
@@ -131,7 +131,7 @@ describe("source-manager", () => {
       expect(result.skillCount).toBe(1);
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.sources).toEqual([{ name: "team-skills", url: "github:team/skills" }]);
+      expect(config?.sources).toStrictEqual([{ name: "team-skills", url: "github:team/skills" }]);
       expect(config?.source).toBe("github:custom/skills");
     });
 
@@ -198,7 +198,7 @@ describe("source-manager", () => {
       await removeSource(tempDir, "acme-corp");
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.sources).toEqual([{ name: "team-skills", url: "github:team/skills" }]);
+      expect(config?.sources).toStrictEqual([{ name: "team-skills", url: "github:team/skills" }]);
     });
 
     it("should throw when trying to remove 'public'", async () => {
@@ -233,7 +233,7 @@ describe("source-manager", () => {
       await removeSource(tempDir, "only-source");
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.sources).toEqual([]);
+      expect(config?.sources).toStrictEqual([]);
     });
 
     it("should throw when source not found and no config file exists", async () => {
@@ -381,7 +381,7 @@ describe("source-manager", () => {
       const summary = await getSourceSummary(tempDir);
 
       expect(summary.sources).toHaveLength(4);
-      expect(summary.sources.map((s) => s.name)).toEqual([
+      expect(summary.sources.map((s) => s.name)).toStrictEqual([
         "public",
         "source-a",
         "source-b",

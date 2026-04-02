@@ -112,7 +112,7 @@ function expectNoDuplicates(arr: string[], label: string): void {
     }
     seen.add(item);
   }
-  expect(duplicates, `Duplicate ${label} found: ${duplicates.join(", ")}`).toEqual([]);
+  expect(duplicates, `Duplicate ${label} found: ${duplicates.join(", ")}`).toStrictEqual([]);
 }
 
 describe("re-edit cycles: config stability across multiple edits", () => {
@@ -189,7 +189,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         expectNoDuplicates(edit1Arrays.agentNames, "agents after first edit");
         expectNoDuplicates(edit1Arrays.domains, "domains after first edit");
 
-        expect(edit1Arrays.skillIds.sort()).toEqual(initArrays.skillIds.sort());
+        expect(edit1Arrays.skillIds.sort()).toStrictEqual(initArrays.skillIds.sort());
 
         // ================================================================
         // Phase 3: Second edit -- navigate through without changes again
@@ -212,9 +212,9 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         expectNoDuplicates(edit2Arrays.domains, "domains after second edit");
 
         // CRITICAL: No accumulation between consecutive edits.
-        expect(edit2Arrays.skillIds.sort()).toEqual(edit1Arrays.skillIds.sort());
-        expect(edit2Arrays.agentNames.sort()).toEqual(edit1Arrays.agentNames.sort());
-        expect(edit2Arrays.domains.sort()).toEqual(edit1Arrays.domains.sort());
+        expect(edit2Arrays.skillIds.sort()).toStrictEqual(edit1Arrays.skillIds.sort());
+        expect(edit2Arrays.agentNames.sort()).toStrictEqual(edit1Arrays.agentNames.sort());
+        expect(edit2Arrays.domains.sort()).toStrictEqual(edit1Arrays.domains.sort());
 
         expect(edit2Arrays.skillIds.length).toBe(edit1Arrays.skillIds.length);
         expect(edit2Arrays.agentNames.length).toBe(edit1Arrays.agentNames.length);
@@ -323,7 +323,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         expectNoDuplicates(noChangeArrays.domains, "domains after no-change edit");
 
         // CRITICAL: No accumulation between consecutive edits.
-        expect(noChangeArrays.skillIds.sort()).toEqual(addArrays.skillIds.sort());
+        expect(noChangeArrays.skillIds.sort()).toStrictEqual(addArrays.skillIds.sort());
         expect(noChangeArrays.skillIds.length).toBe(addArrays.skillIds.length);
 
         for (const addedId of addedSkillIds) {

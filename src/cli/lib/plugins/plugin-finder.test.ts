@@ -223,8 +223,8 @@ describe("plugin-finder", () => {
       const result = await readPluginManifest("/path/to/plugin");
 
       expect(result).not.toBeNull();
-      expect(result!.author).toEqual({ name: "@vince", email: "vince@example.com" });
-      expect(result!.keywords).toEqual(["web", "react"]);
+      expect(result!.author).toStrictEqual({ name: "@vince", email: "vince@example.com" });
+      expect(result!.keywords).toStrictEqual(["web", "react"]);
       expect(result!.skills).toBe("./skills/");
       expect(result!.agents).toBe("./agents/");
     });
@@ -237,7 +237,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should match skill by frontmatter name as direct skill ID", async () => {
@@ -250,7 +250,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual(["web-framework-react"]);
+      expect(result).toStrictEqual(["web-framework-react"]);
     });
 
     it("should skip skill when frontmatter name does not match any matrix skill ID", async () => {
@@ -261,7 +261,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should skip skill when frontmatter has no name", async () => {
@@ -272,7 +272,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should match skill by directory name using last part of ID", async () => {
@@ -283,7 +283,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should handle multiple SKILL.md files", async () => {
@@ -325,7 +325,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should not match skill by case-insensitive name (exact ID required)", async () => {
@@ -336,7 +336,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should skip skill with no frontmatter regardless of directory name", async () => {
@@ -347,7 +347,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should handle frontmatter with quoted name values", async () => {
@@ -360,7 +360,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual(["web-framework-react"]);
+      expect(result).toStrictEqual(["web-framework-react"]);
     });
 
     it("should handle frontmatter with double-quoted name values", async () => {
@@ -373,7 +373,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual(["web-framework-react"]);
+      expect(result).toStrictEqual(["web-framework-react"]);
     });
 
     it("should skip nested directory when frontmatter is missing", async () => {
@@ -384,7 +384,7 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds(TEST_PLUGIN_SKILLS_PATH);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
   });
 });

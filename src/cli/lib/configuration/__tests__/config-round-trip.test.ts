@@ -57,7 +57,7 @@ describe("config round-trip", () => {
     const config = buildProjectConfig({ name: "minimal-project" });
 
     const loaded = await writeAndLoad(config);
-    expect(loaded).toEqual(normalizeForComparison(config));
+    expect(loaded).toStrictEqual(normalizeForComparison(config));
   });
 
   it("round-trips a config with stack (non-preloaded)", async () => {
@@ -78,8 +78,8 @@ describe("config round-trip", () => {
     const loaded = (await writeAndLoad(config)) as ProjectConfig;
     // Stack gets compacted: non-preloaded single skills become bare strings
     expect(loaded.name).toBe("stack-project");
-    expect(loaded.agents).toEqual(buildAgentConfigs(["web-developer", "api-developer"]));
-    expect(loaded.skills).toEqual(buildSkillConfigs(["web-framework-react", "api-framework-hono"]));
+    expect(loaded.agents).toStrictEqual(buildAgentConfigs(["web-developer", "api-developer"]));
+    expect(loaded.skills).toStrictEqual(buildSkillConfigs(["web-framework-react", "api-framework-hono"]));
 
     // After compaction, bare strings inside arrays
     const webDev = loaded.stack?.["web-developer"] as Record<string, unknown>;
@@ -119,7 +119,7 @@ describe("config round-trip", () => {
     });
 
     const loaded = await writeAndLoad(config);
-    expect(loaded).toEqual(normalizeForComparison(config));
+    expect(loaded).toStrictEqual(normalizeForComparison(config));
   });
 
   it("round-trips a config with multiple skills per category", async () => {
@@ -139,7 +139,7 @@ describe("config round-trip", () => {
     const loaded = (await writeAndLoad(config)) as ProjectConfig;
     const webDev = loaded.stack?.["web-developer"] as Record<string, unknown>;
     // Multiple skills: array with compacted elements
-    expect(webDev["web-testing"]).toEqual([
+    expect(webDev["web-testing"]).toStrictEqual([
       "web-testing-vitest",
       { id: "web-testing-playwright-e2e", preloaded: true },
     ]);
@@ -156,7 +156,7 @@ describe("config round-trip", () => {
     });
 
     const loaded = (await writeAndLoad(config)) as Record<string, unknown>;
-    expect(loaded).toEqual({ name: "sparse-project", agents: [], skills: [] });
+    expect(loaded).toStrictEqual({ name: "sparse-project", agents: [], skills: [] });
     expect("description" in loaded).toBe(false);
     expect("author" in loaded).toBe(false);
     expect("stack" in loaded).toBe(false);

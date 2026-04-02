@@ -301,7 +301,7 @@ describe("branding via projectSourceConfigSchema", () => {
       branding: { name: "Acme Dev Tools", tagline: "Build faster with Acme" },
     });
     expect(result.success).toBe(true);
-    expect(result.data?.branding).toEqual({
+    expect(result.data?.branding).toStrictEqual({
       name: "Acme Dev Tools",
       tagline: "Build faster with Acme",
     });

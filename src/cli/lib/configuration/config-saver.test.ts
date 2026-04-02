@@ -60,7 +60,7 @@ describe("config-saver", () => {
 
       expect(config.source).toBe("github:new/source");
       expect(config.name).toBe("my-project");
-      expect(config.agents).toEqual(["web-developer"]);
+      expect(config.agents).toStrictEqual(["web-developer"]);
       expect(config.author).toBe("@vince");
     });
 

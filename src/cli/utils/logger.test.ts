@@ -127,7 +127,7 @@ describe("buffering", () => {
     expect(spy).not.toHaveBeenCalled();
 
     const messages = drainBuffer();
-    expect(messages).toEqual([{ level: "warn", text: "buffered warning" }]);
+    expect(messages).toStrictEqual([{ level: "warn", text: "buffered warning" }]);
   });
 
   it("drainBuffer returns all buffered messages and empties the buffer", () => {
@@ -137,8 +137,8 @@ describe("buffering", () => {
 
     const messages = drainBuffer();
     expect(messages).toHaveLength(2);
-    expect(messages[0]).toEqual({ level: "warn", text: "first" });
-    expect(messages[1]).toEqual({ level: "warn", text: "second" });
+    expect(messages[0]).toStrictEqual({ level: "warn", text: "first" });
+    expect(messages[1]).toStrictEqual({ level: "warn", text: "second" });
 
     const empty = drainBuffer();
     expect(empty).toHaveLength(0);
@@ -186,7 +186,7 @@ describe("buffering", () => {
 
     const messages = drainBuffer();
     expect(messages).toHaveLength(3);
-    expect(messages.map((m) => m.text)).toEqual(["alpha", "beta", "gamma"]);
+    expect(messages.map((m) => m.text)).toStrictEqual(["alpha", "beta", "gamma"]);
   });
 
   it("draining twice returns empty on second call", () => {
@@ -207,8 +207,8 @@ describe("buffering", () => {
 
     const messages = drainBuffer();
     expect(messages).toHaveLength(2);
-    expect(messages[0]).toEqual({ level: "info", text: "info message" });
-    expect(messages[1]).toEqual({ level: "error", text: "error message" });
+    expect(messages[0]).toStrictEqual({ level: "info", text: "info message" });
+    expect(messages[1]).toStrictEqual({ level: "error", text: "error message" });
   });
 
   it("enableBuffering resets any previous buffer", () => {

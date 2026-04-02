@@ -330,7 +330,7 @@ describe("Integration: Marketplace Integrity", () => {
     const names = marketplace.plugins.map((p) => p.name);
     const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
 
-    expect(names).toEqual(sortedNames);
+    expect(names).toStrictEqual(sortedNames);
   });
 
   it("should categorize plugins correctly", async () => {

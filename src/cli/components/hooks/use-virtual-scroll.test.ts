@@ -24,7 +24,7 @@ describe("computeVirtualScroll", () => {
       const items = [createItem(5), createItem(5), createItem(5)];
       const result = compute({ items, availableHeight: 20 });
 
-      expect(result.visibleItems).toEqual(items);
+      expect(result.visibleItems).toStrictEqual(items);
       expect(result.startIndex).toBe(0);
       expect(result.endIndex).toBe(3);
       expect(result.hiddenAbove).toBe(0);
@@ -35,7 +35,7 @@ describe("computeVirtualScroll", () => {
     it("should return empty result for empty items", () => {
       const result = compute({ items: [], availableHeight: 20 });
 
-      expect(result.visibleItems).toEqual([]);
+      expect(result.visibleItems).toStrictEqual([]);
       expect(result.startIndex).toBe(0);
       expect(result.endIndex).toBe(0);
       expect(result.hiddenAbove).toBe(0);
@@ -48,7 +48,7 @@ describe("computeVirtualScroll", () => {
       const result = compute({ items, availableHeight: 10 });
 
       expect(result.isScrollable).toBe(false);
-      expect(result.visibleItems).toEqual(items);
+      expect(result.visibleItems).toStrictEqual(items);
     });
   });
 
@@ -144,7 +144,7 @@ describe("computeVirtualScroll", () => {
       const items = [createItem(3)];
       const result = compute({ items, availableHeight: 10, focusedIndex: 0 });
 
-      expect(result.visibleItems).toEqual(items);
+      expect(result.visibleItems).toStrictEqual(items);
       expect(result.isScrollable).toBe(false);
     });
 

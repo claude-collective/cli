@@ -701,7 +701,7 @@ describe("local-installer", () => {
 
       const result = buildCompileAgents(config, agents);
 
-      expect(result["web-developer"]).toEqual({});
+      expect(result["web-developer"]).toStrictEqual({});
     });
 
     it("should filter global agent skills to only global-scoped skills (cross-scope safety net)", async () => {
@@ -818,7 +818,7 @@ describe("local-installer", () => {
 
       const result = setConfigMetadata(config, wizardResult, sourceResult);
 
-      expect(result.domains).toEqual(["web", "api"]);
+      expect(result.domains).toStrictEqual(["web", "api"]);
     });
 
     it("should not set domains when selectedDomains is empty", () => {
@@ -842,7 +842,7 @@ describe("local-installer", () => {
 
       const result = setConfigMetadata(config, wizardResult, sourceResult);
 
-      expect(result.selectedAgents).toEqual(["web-developer", "api-developer"]);
+      expect(result.selectedAgents).toStrictEqual(["web-developer", "api-developer"]);
     });
 
     it("should not set selectedAgents when empty", () => {
@@ -914,8 +914,8 @@ describe("local-installer", () => {
       expect(config.name).toBe(originalName);
 
       // Result should have the new values
-      expect(result.domains).toEqual(["web"]);
-      expect(result.selectedAgents).toEqual(["web-developer"]);
+      expect(result.domains).toStrictEqual(["web"]);
+      expect(result.selectedAgents).toStrictEqual(["web-developer"]);
       expect(result.source).toBe("github:my/repo");
       expect(result.marketplace).toBe("my-marketplace");
     });

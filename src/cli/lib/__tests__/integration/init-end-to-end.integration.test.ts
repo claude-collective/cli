@@ -74,7 +74,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       // Verify agents were preselected from domains (sorted)
       expect(wizardResult.selectedAgents.length).toBeGreaterThan(0);
       const sortedAgents = [...wizardResult.selectedAgents].sort();
-      expect(wizardResult.selectedAgents).toEqual(sortedAgents);
+      expect(wizardResult.selectedAgents).toStrictEqual(sortedAgents);
 
       // Install
       const result = await installEject({
@@ -89,7 +89,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       // config.agents names should match the preselected agents (sorted)
       const configAgentNames = config.agents.map((a) => a.name);
-      expect(configAgentNames).toEqual([...wizardResult.selectedAgents].sort());
+      expect(configAgentNames).toStrictEqual([...wizardResult.selectedAgents].sort());
     });
 
     it("should assign skills only to agents in the user's selection", async () => {
@@ -152,7 +152,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       // Do NOT call preselectAgentsFromDomains — selectedAgents stays []
       const wizardResult = buildWizardResultFromStore(matrix);
-      expect(wizardResult.selectedAgents).toEqual([]);
+      expect(wizardResult.selectedAgents).toStrictEqual([]);
 
       const result = await installEject({
         wizardResult,
@@ -163,7 +163,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // When selectedAgents is empty, no agents are assigned
-      expect(config.agents).toEqual([]);
+      expect(config.agents).toStrictEqual([]);
 
       // Every skill in config.skills should be in selectedSkills
       for (const skillConfig of config.skills) {
@@ -187,7 +187,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // When no agents are selected, agents list is empty and no stack is built
-      expect(config.agents).toEqual([]);
+      expect(config.agents).toStrictEqual([]);
     });
   });
 
@@ -218,7 +218,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       // config.agents names should match preselected agents (sorted)
       const pluginAgentNames = config.agents.map((a) => a.name);
-      expect(pluginAgentNames).toEqual([...wizardResult.selectedAgents].sort());
+      expect(pluginAgentNames).toStrictEqual([...wizardResult.selectedAgents].sort());
 
       // Compiled agents should exist as .md files
       expect(result.compiledAgents.length).toBeGreaterThan(0);
@@ -249,10 +249,10 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const ejectAgents = [...ejectResult.selectedAgents].sort();
 
       // Same selections should produce same agent list
-      expect(pluginAgents).toEqual(ejectAgents);
+      expect(pluginAgents).toStrictEqual(ejectAgents);
 
       // Same skills (including methodology)
-      expect([...pluginResult.skills.map((s) => s.id)].sort()).toEqual(
+      expect([...pluginResult.skills.map((s) => s.id)].sort()).toStrictEqual(
         [...ejectResult.skills.map((s) => s.id)].sort(),
       );
     });
@@ -371,7 +371,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       // Should be sorted
       const sortedAgents = [...store.selectedAgents].sort();
-      expect(store.selectedAgents).toEqual(sortedAgents);
+      expect(store.selectedAgents).toStrictEqual(sortedAgents);
     });
 
     it("should select cli agents when cli domain is selected", () => {

@@ -27,20 +27,20 @@ describe("getDomainDisplayName", () => {
 describe("orderDomains", () => {
   it("should order built-in domains per BUILT_IN_DOMAIN_ORDER", () => {
     const result = orderDomains(["shared", "web", "cli", "api", "mobile"]);
-    expect(result).toEqual(["web", "api", "mobile", "cli", "shared"]);
+    expect(result).toStrictEqual(["web", "api", "mobile", "cli", "shared"]);
   });
 
   it("should place custom domains first (alphabetically), then built-in", () => {
     const result = orderDomains(["web", "zebra" as Domain, "acme" as Domain, "api"]);
-    expect(result).toEqual(["acme", "zebra", "web", "api"]);
+    expect(result).toStrictEqual(["acme", "zebra", "web", "api"]);
   });
 
   it("should handle empty array", () => {
-    expect(orderDomains([])).toEqual([]);
+    expect(orderDomains([])).toStrictEqual([]);
   });
 
   it("should handle single domain", () => {
-    expect(orderDomains(["api"])).toEqual(["api"]);
+    expect(orderDomains(["api"])).toStrictEqual(["api"]);
   });
 });
 
@@ -72,7 +72,7 @@ describe("getDomainsFromStack", () => {
     });
 
     const result = getDomainsFromStack(stack);
-    expect(result).toEqual(["api", "web"]);
+    expect(result).toStrictEqual(["api", "web"]);
   });
 
   it("should return empty array for stack with no matching categories", () => {
@@ -81,7 +81,7 @@ describe("getDomainsFromStack", () => {
       allSkillIds: [],
     });
 
-    expect(getDomainsFromStack(stack)).toEqual([]);
+    expect(getDomainsFromStack(stack)).toStrictEqual([]);
   });
 });
 

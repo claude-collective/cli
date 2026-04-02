@@ -83,7 +83,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
 
     try {
       const stacks = await loadStacks(noDirs.sourceDir);
-      expect(stacks).toEqual([]);
+      expect(stacks).toStrictEqual([]);
     } finally {
       await cleanupTestSource(noDirs);
     }
@@ -130,7 +130,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
     // to SkillAssignment[] with preloaded: false
     const webDevConfig = fullstackStack.agents["web-developer"];
     expect(webDevConfig).toBeDefined();
-    expect(webDevConfig!["web-framework"]).toEqual([
+    expect(webDevConfig!["web-framework"]).toStrictEqual([
       { id: "web-framework-react", preloaded: false },
     ]);
   });

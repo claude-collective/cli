@@ -55,7 +55,7 @@ describe("plugin-manifest", () => {
         authorEmail: "vince@example.com",
       });
 
-      expect(manifest.author).toEqual({
+      expect(manifest.author).toStrictEqual({
         name: "@vince",
         email: "vince@example.com",
       });
@@ -67,7 +67,7 @@ describe("plugin-manifest", () => {
         author: "@vince",
       });
 
-      expect(manifest.author).toEqual({ name: "@vince" });
+      expect(manifest.author).toStrictEqual({ name: "@vince" });
     });
 
     it("should include keywords when provided", () => {
@@ -76,7 +76,7 @@ describe("plugin-manifest", () => {
         keywords: ["web", "ui", "framework"],
       });
 
-      expect(manifest.keywords).toEqual(["web", "ui", "framework"]);
+      expect(manifest.keywords).toStrictEqual(["web", "ui", "framework"]);
     });
 
     it("should not include keywords when empty array", () => {
@@ -310,7 +310,7 @@ describe("plugin-manifest", () => {
         authorEmail: "claude@example.com",
       });
 
-      expect(manifest.author).toEqual({
+      expect(manifest.author).toStrictEqual({
         name: "@claude",
         email: "claude@example.com",
       });
@@ -322,7 +322,7 @@ describe("plugin-manifest", () => {
         keywords: ["web", "react", "stack"],
       });
 
-      expect(manifest.keywords).toEqual(["web", "react", "stack"]);
+      expect(manifest.keywords).toStrictEqual(["web", "react", "stack"]);
     });
 
     it("should default to version 1.0.0", () => {
@@ -348,7 +348,7 @@ describe("plugin-manifest", () => {
         author: "@claude",
       });
 
-      expect(manifest.author).toEqual({ name: "@claude" });
+      expect(manifest.author).toStrictEqual({ name: "@claude" });
     });
 
     it("should not include author when author name is not provided", () => {
@@ -410,8 +410,8 @@ describe("plugin-manifest", () => {
       expect(manifest.name).toBe("nextjs-fullstack");
       expect(manifest.version).toBe("2.0.0");
       expect(manifest.description).toBe("Full-stack Next.js");
-      expect(manifest.author).toEqual({ name: "@claude", email: "claude@example.com" });
-      expect(manifest.keywords).toEqual(["web", "react"]);
+      expect(manifest.author).toStrictEqual({ name: "@claude", email: "claude@example.com" });
+      expect(manifest.keywords).toStrictEqual(["web", "react"]);
       expect(manifest.skills).toBe("./skills/");
       expect(manifest.agents).toBeUndefined();
       expect(manifest.hooks).toBe("./hooks/hooks.json");
@@ -489,7 +489,7 @@ describe("plugin-manifest", () => {
       const content = await readFile(manifestPath, "utf-8");
       const parsed = JSON.parse(content);
 
-      expect(parsed).toEqual({
+      expect(parsed).toStrictEqual({
         name: "fullstack",
         version: "2.0.0",
         skills: "./skills/",

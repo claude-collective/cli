@@ -36,7 +36,7 @@ describe("sortedGroupBy", () => {
 
     const result = sortedGroupBy(entries, (v) => v.group);
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       fruit: ["apple", "banana", "cherry"],
       vegetable: ["broccoli", "carrot"],
     });
@@ -44,7 +44,7 @@ describe("sortedGroupBy", () => {
 
   it("returns empty object for empty input", () => {
     const result = sortedGroupBy([], () => "any");
-    expect(result).toEqual({});
+    expect(result).toStrictEqual({});
   });
 
   it("handles single entry", () => {
@@ -52,7 +52,7 @@ describe("sortedGroupBy", () => {
 
     const result = sortedGroupBy(entries, (v) => v.group);
 
-    expect(result).toEqual({ solo: ["only"] });
+    expect(result).toStrictEqual({ solo: ["only"] });
   });
 });
 
@@ -80,7 +80,7 @@ describe("resolveStack", () => {
     expect(result.name).toBe("Test Stack");
     expect(result.description).toBe("A test stack");
     expect(result.philosophy).toBe("Test philosophy");
-    expect(result.skills).toEqual({
+    expect(result.skills).toStrictEqual({
       "web-developer": {
         "web-framework": ["web-framework-react"],
       },
@@ -104,7 +104,7 @@ describe("resolveStack", () => {
 
     const result = resolveStack(stack, VALID_IDS);
 
-    expect(result.skills).toEqual({
+    expect(result.skills).toStrictEqual({
       "web-developer": {
         "web-framework": ["web-framework-react"],
       },
@@ -128,7 +128,7 @@ describe("resolveStack", () => {
 
     const result = resolveStack(stack, VALID_IDS);
 
-    expect(result.allSkillIds).toEqual(["web-framework-react"]);
+    expect(result.allSkillIds).toStrictEqual(["web-framework-react"]);
   });
 
   it("handles empty agents", () => {
@@ -141,8 +141,8 @@ describe("resolveStack", () => {
 
     const result = resolveStack(stack, VALID_IDS);
 
-    expect(result.skills).toEqual({});
-    expect(result.allSkillIds).toEqual([]);
+    expect(result.skills).toStrictEqual({});
+    expect(result.allSkillIds).toStrictEqual([]);
   });
 
   it("sets philosophy to empty string when missing", () => {
@@ -210,7 +210,7 @@ describe("extractSkills", () => {
     expect(result[0].displayName).toBe("React");
     expect(result[0].description).toBe("React framework skill");
     expect(result[0].author).toBe("@test");
-    expect(result[0].tags).toEqual(["ui", "frontend"]);
+    expect(result[0].tags).toStrictEqual(["ui", "frontend"]);
     expect(result[0].directoryPath).toBe("react");
     expect(result[0].path).toBe("skills/react");
   });
@@ -347,7 +347,7 @@ describe("extractSkills", () => {
     const result = extractSkills(tempDir);
 
     expect(result).toHaveLength(1);
-    expect(result[0].tags).toEqual([]);
+    expect(result[0].tags).toStrictEqual([]);
   });
 });
 
@@ -385,7 +385,7 @@ describe("extractAgents", () => {
     const result = extractAgents(tempDir);
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toEqual({ id: "web-developer", domain: "web" });
+    expect(result[0]).toStrictEqual({ id: "web-developer", domain: "web" });
   });
 
   it("skips _templates directory", () => {
@@ -437,7 +437,7 @@ describe("extractAgents", () => {
     const result = extractAgents(tempDir);
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toEqual({ id: "domainless-agent", domain: undefined });
+    expect(result[0]).toStrictEqual({ id: "domainless-agent", domain: undefined });
   });
 });
 

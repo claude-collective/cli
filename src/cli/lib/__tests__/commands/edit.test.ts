@@ -254,11 +254,11 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Web skills should appear under the web domain
-    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
-    expect(domainSelections.web?.["web-client-state"]).toEqual(["web-state-zustand"]);
+    expect(domainSelections.web?.["web-framework"]).toStrictEqual(["web-framework-react"]);
+    expect(domainSelections.web?.["web-client-state"]).toStrictEqual(["web-state-zustand"]);
 
     // API skill should appear under the api domain
-    expect(domainSelections.api?.["api-api"]).toEqual(["api-framework-hono"]);
+    expect(domainSelections.api?.["api-api"]).toStrictEqual(["api-framework-hono"]);
   });
 
   it("should not pre-select skills that are not in the installed list", () => {
@@ -269,7 +269,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Only web/framework should be populated
-    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
+    expect(domainSelections.web?.["web-framework"]).toStrictEqual(["web-framework-react"]);
 
     // Other categories should not exist
     expect(domainSelections.web?.["web-client-state"]).toBeUndefined();
@@ -297,7 +297,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Testing category maps to the shared domain
-    expect(domainSelections.shared?.["web-testing"]).toEqual(["web-testing-vitest"]);
+    expect(domainSelections.shared?.["web-testing"]).toStrictEqual(["web-testing-vitest"]);
 
     // No web or api entries should exist
     expect(domainSelections.web).toBeUndefined();
@@ -338,7 +338,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Only the skill with a valid category should be populated
-    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
+    expect(domainSelections.web?.["web-framework"]).toStrictEqual(["web-framework-react"]);
     expect(domainSelections.web?.["web-framework"]).toHaveLength(1);
   });
 
@@ -364,7 +364,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Only the resolvable skill should be populated
-    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
+    expect(domainSelections.web?.["web-framework"]).toStrictEqual(["web-framework-react"]);
     // No domain should contain the unresolvable skill
     const allTechs = useWizardStore.getState().getAllSelectedTechnologies();
     expect(allTechs).not.toContain("infra-tooling-linter");
@@ -378,7 +378,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Should deduplicate
-    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
+    expect(domainSelections.web?.["web-framework"]).toStrictEqual(["web-framework-react"]);
     expect(domainSelections.web?.["web-framework"]).toHaveLength(1);
   });
 
@@ -461,7 +461,7 @@ describe("edit wizard domain filtering", () => {
 
     // Only shared domain should have selections
     expect(perDomain.shared).toBeDefined();
-    expect(perDomain.shared).toEqual(["web-testing-vitest"]);
+    expect(perDomain.shared).toStrictEqual(["web-testing-vitest"]);
 
     // All other domains should be absent
     expect(perDomain.web).toBeUndefined();
@@ -584,7 +584,7 @@ describe("edit command eject-mode skill fallback", () => {
 
     expect(mockRender).toHaveBeenCalledOnce();
     const installedSkillIds = getRenderedInstalledSkillIds();
-    expect(installedSkillIds).toEqual(CONFIG_SKILL_IDS);
+    expect(installedSkillIds).toStrictEqual(CONFIG_SKILL_IDS);
   });
 
   it("should merge discovered plugin skills with config skills as installedSkillIds", async () => {
@@ -609,7 +609,7 @@ describe("edit command eject-mode skill fallback", () => {
     expect(mockRender).toHaveBeenCalledOnce();
     const installedSkillIds = getRenderedInstalledSkillIds();
     // Plugin discovery found react; config also has hono — both should be included
-    expect(installedSkillIds).toEqual(CONFIG_SKILL_IDS);
+    expect(installedSkillIds).toStrictEqual(CONFIG_SKILL_IDS);
   });
 });
 

@@ -47,7 +47,7 @@ describe("project-config", () => {
       expect(result).not.toBeNull();
 
       expect(result!.config.name).toBe("my-project");
-      expect(result!.config.agents).toEqual([
+      expect(result!.config.agents).toStrictEqual([
         { name: "web-developer", scope: "project" },
         { name: "api-developer", scope: "project" },
       ]);
@@ -68,7 +68,7 @@ describe("project-config", () => {
 
       expect(result).not.toBeNull();
       // Bare strings are normalized to SkillAssignment[] at load time
-      expect(result!.config.stack).toEqual({
+      expect(result!.config.stack).toStrictEqual({
         "web-developer": {
           "web-framework": [{ id: "web-framework-react", preloaded: false }],
           "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
@@ -95,7 +95,7 @@ describe("project-config", () => {
       const result = await loadProjectConfig(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result!.config.stack).toEqual({
+      expect(result!.config.stack).toStrictEqual({
         "web-developer": {
           // bare string -> SkillAssignment[]
           "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -249,7 +249,7 @@ describe("round-trip tests", () => {
     // Verify
     expect(loaded).not.toBeNull();
     expect(loaded!.config.name).toBe(generated.name);
-    expect(loaded!.config.agents).toEqual(generated.agents);
+    expect(loaded!.config.agents).toStrictEqual(generated.agents);
     expect(loaded!.config.stack).toBeDefined();
   });
 

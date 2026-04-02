@@ -768,8 +768,8 @@ describe("convertStackToResolvedStack", () => {
 
     expect(resolved.id).toBe("empty");
     expect(resolved.name).toBe("Empty Stack");
-    expect(resolved.allSkillIds).toEqual([]);
-    expect(resolved.skills).toEqual({});
+    expect(resolved.allSkillIds).toStrictEqual([]);
+    expect(resolved.skills).toStrictEqual({});
     expect(resolved.philosophy).toBe("");
   });
 
@@ -791,7 +791,7 @@ describe("convertStackToResolvedStack", () => {
     expect(resolved.skills["web-developer"]).toBeDefined();
     // Boundary cast: branded Category key widened to string for test indexing
     const agentSkills = resolved.skills["web-developer"] as Record<string, SkillId[]>;
-    expect(agentSkills["web-framework"]).toEqual(["web-framework-react"]);
+    expect(agentSkills["web-framework"]).toStrictEqual(["web-framework-react"]);
   });
 
   it("should convert a multi-agent stack with shared skills", () => {
@@ -836,7 +836,7 @@ describe("convertStackToResolvedStack", () => {
 
     // The same skill appears in both agents, but allSkillIds should be deduplicated
     expect(resolved.allSkillIds).toHaveLength(1);
-    expect(resolved.allSkillIds).toEqual(["web-framework-react"]);
+    expect(resolved.allSkillIds).toStrictEqual(["web-framework-react"]);
   });
 
   it("should filter out skills not present in the current matrix", () => {
@@ -857,7 +857,7 @@ describe("convertStackToResolvedStack", () => {
 
     // Only the valid skill should appear in the per-agent category mapping
     const agentSkills = resolved.skills["web-developer"] as Record<string, SkillId[]>;
-    expect(agentSkills["web-framework"]).toEqual(["web-framework-react"]);
+    expect(agentSkills["web-framework"]).toStrictEqual(["web-framework-react"]);
   });
 
   it("should preserve stack philosophy", () => {
@@ -1106,12 +1106,12 @@ describe("mergeLocalSkillsIntoMatrix", () => {
 
     const skills = result.skills as Record<string, ResolvedSkill>;
     const mergedSkill = skills["web-framework-react"];
-    expect(mergedSkill.conflictsWith).toEqual([
+    expect(mergedSkill.conflictsWith).toStrictEqual([
       { skillId: "web-framework-vue-composition-api", reason: "Choose one" },
     ]);
     expect(mergedSkill.isRecommended).toBe(true);
     expect(mergedSkill.recommendedReason).toBe("Most popular");
-    expect(mergedSkill.requires).toEqual([
+    expect(mergedSkill.requires).toStrictEqual([
       { skillIds: ["web-state-zustand"], needsAny: false, reason: "State needed" },
     ]);
   });

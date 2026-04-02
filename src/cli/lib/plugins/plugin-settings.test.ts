@@ -52,7 +52,7 @@ describe("plugin-settings", () => {
 
       const result = await getEnabledPluginKeys("/project");
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
       expect(mockFileExists).toHaveBeenCalledWith(
         path.join("/project", CLAUDE_DIR, "settings.json"),
       );
@@ -71,7 +71,7 @@ describe("plugin-settings", () => {
 
       const result = await getEnabledPluginKeys("/project");
 
-      expect(result).toEqual([
+      expect(result).toStrictEqual([
         "web-framework-react@my-marketplace",
         "web-state-zustand@my-marketplace",
       ]);
@@ -91,7 +91,7 @@ describe("plugin-settings", () => {
 
       const result = await getEnabledPluginKeys("/project");
 
-      expect(result).toEqual([
+      expect(result).toStrictEqual([
         "web-framework-react@my-marketplace",
         "api-framework-hono@my-marketplace",
       ]);
@@ -103,7 +103,7 @@ describe("plugin-settings", () => {
 
       const result = await getEnabledPluginKeys("/project");
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should return empty array when enabledPlugins is empty", async () => {
@@ -112,7 +112,7 @@ describe("plugin-settings", () => {
 
       const result = await getEnabledPluginKeys("/project");
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should enforce strict equality check (=== true)", async () => {
@@ -129,7 +129,7 @@ describe("plugin-settings", () => {
 
       const result = await getEnabledPluginKeys("/project");
 
-      expect(result).toEqual(["web-framework-react@my-marketplace"]);
+      expect(result).toStrictEqual(["web-framework-react@my-marketplace"]);
     });
 
     it("should return empty array when JSON parsing fails", async () => {
@@ -138,7 +138,7 @@ describe("plugin-settings", () => {
 
       const result = await getEnabledPluginKeys("/project");
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should return empty array when file reading fails", async () => {
@@ -147,7 +147,7 @@ describe("plugin-settings", () => {
 
       const result = await getEnabledPluginKeys("/project");
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
   });
 
@@ -158,7 +158,7 @@ describe("plugin-settings", () => {
     it("should return empty array when pluginKeys is empty", async () => {
       const result = await resolvePluginInstallPaths([], "/project");
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
       expect(mockFileExists).not.toHaveBeenCalled();
     });
 
@@ -170,7 +170,7 @@ describe("plugin-settings", () => {
         "/project",
       );
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
       expect(mockFileExists).toHaveBeenCalledWith(getRegistryPath());
     });
 
@@ -198,7 +198,7 @@ describe("plugin-settings", () => {
         "/project",
       );
 
-      expect(result).toEqual([
+      expect(result).toStrictEqual([
         {
           pluginKey: "web-framework-react@my-marketplace",
           installPath: "/cache/web-framework-react/1.0.0",
@@ -229,7 +229,7 @@ describe("plugin-settings", () => {
         "/project",
       );
 
-      expect(result).toEqual([
+      expect(result).toStrictEqual([
         {
           pluginKey: "web-framework-react@my-marketplace",
           installPath: "/cache/user/web-framework-react/1.0.0",
@@ -267,7 +267,7 @@ describe("plugin-settings", () => {
         "/project",
       );
 
-      expect(result).toEqual([
+      expect(result).toStrictEqual([
         {
           pluginKey: "web-framework-react@my-marketplace",
           installPath: "/cache/project/web-framework-react/1.0.0",
@@ -332,7 +332,7 @@ describe("plugin-settings", () => {
         "/project",
       );
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should skip plugins with empty installations array", async () => {
@@ -351,7 +351,7 @@ describe("plugin-settings", () => {
         "/project",
       );
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should return empty array when JSON parsing fails", async () => {
@@ -363,7 +363,7 @@ describe("plugin-settings", () => {
         "/project",
       );
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should return empty array when file reading fails", async () => {
@@ -375,7 +375,7 @@ describe("plugin-settings", () => {
         "/project",
       );
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
   });
 
@@ -385,7 +385,7 @@ describe("plugin-settings", () => {
 
       const result = await getVerifiedPluginInstallPaths("/project");
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("should return verified plugin paths", async () => {
@@ -423,7 +423,7 @@ describe("plugin-settings", () => {
 
       const result = await getVerifiedPluginInstallPaths("/project");
 
-      expect(result).toEqual([
+      expect(result).toStrictEqual([
         {
           pluginKey: "web-framework-react@my-marketplace",
           installPath: "/cache/web-framework-react/1.0.0",
@@ -477,7 +477,7 @@ describe("plugin-settings", () => {
 
       const result = await getVerifiedPluginInstallPaths("/project");
 
-      expect(result).toEqual([
+      expect(result).toStrictEqual([
         {
           pluginKey: "web-framework-react@my-marketplace",
           installPath: "/cache/web-framework-react/1.0.0",

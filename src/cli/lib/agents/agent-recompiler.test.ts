@@ -36,7 +36,7 @@ describe("agent-recompiler", () => {
         sourcePath: CLI_ROOT,
       });
 
-      expect(result.compiled).toEqual([]);
+      expect(result.compiled).toStrictEqual([]);
       expect(result.warnings).toContain("No agents found to recompile");
     });
 
@@ -50,7 +50,7 @@ describe("agent-recompiler", () => {
       });
 
       expect(result.compiled).toContain("web-pm");
-      expect(result.failed).toEqual([]);
+      expect(result.failed).toStrictEqual([]);
 
       const agentPath = path.join(testDirs.agentsDir, "web-pm.md");
       expect(await fileExists(agentPath)).toBe(true);
@@ -63,7 +63,7 @@ describe("agent-recompiler", () => {
         agents: ["non-existent-agent-xyz" as AgentName],
       });
 
-      expect(result.compiled).toEqual([]);
+      expect(result.compiled).toStrictEqual([]);
       expect(result.warnings).toContain(
         'Agent "non-existent-agent-xyz" not found in source definitions',
       );

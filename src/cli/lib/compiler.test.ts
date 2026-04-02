@@ -633,7 +633,7 @@ describe("compiler", () => {
 
       const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
 
-      expect(result.skills).toEqual(skills);
+      expect(result.skills).toStrictEqual(skills);
       expect(result.skills).toHaveLength(2);
     });
 
@@ -644,8 +644,8 @@ describe("compiler", () => {
 
       const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
 
-      expect(result.preloadedSkills).toEqual([preloadedSkill]);
-      expect(result.dynamicSkills).toEqual([dynamicSkill]);
+      expect(result.preloadedSkills).toStrictEqual([preloadedSkill]);
+      expect(result.dynamicSkills).toStrictEqual([dynamicSkill]);
     });
 
     it("should extract preloaded skill IDs", () => {
@@ -656,7 +656,7 @@ describe("compiler", () => {
 
       const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
 
-      expect(result.preloadedSkillIds).toEqual(["web-framework-react", "web-testing-vitest"]);
+      expect(result.preloadedSkillIds).toStrictEqual(["web-framework-react", "web-testing-vitest"]);
     });
 
     it("should handle agent with no skills", () => {
@@ -664,10 +664,10 @@ describe("compiler", () => {
 
       const result = buildAgentTemplateContext("web-developer" as AgentName, agent, agentFiles);
 
-      expect(result.skills).toEqual([]);
-      expect(result.preloadedSkills).toEqual([]);
-      expect(result.dynamicSkills).toEqual([]);
-      expect(result.preloadedSkillIds).toEqual([]);
+      expect(result.skills).toStrictEqual([]);
+      expect(result.preloadedSkills).toStrictEqual([]);
+      expect(result.dynamicSkills).toStrictEqual([]);
+      expect(result.preloadedSkillIds).toStrictEqual([]);
     });
 
     it("should handle agent with only preloaded skills", () => {

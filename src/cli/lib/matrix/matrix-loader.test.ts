@@ -183,11 +183,11 @@ describe("matrix-loader", () => {
 
       const result = await loadSkillRules("/project/skill-rules.ts");
 
-      expect(result.relationships.conflicts).toEqual([]);
-      expect(result.relationships.discourages).toEqual([]);
-      expect(result.relationships.recommends).toEqual([]);
-      expect(result.relationships.requires).toEqual([]);
-      expect(result.relationships.alternatives).toEqual([]);
+      expect(result.relationships.conflicts).toStrictEqual([]);
+      expect(result.relationships.discourages).toStrictEqual([]);
+      expect(result.relationships.recommends).toStrictEqual([]);
+      expect(result.relationships.requires).toStrictEqual([]);
+      expect(result.relationships.alternatives).toStrictEqual([]);
     });
 
     it("includes path in error message", async () => {

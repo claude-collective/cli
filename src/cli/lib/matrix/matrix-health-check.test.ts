@@ -31,7 +31,7 @@ describe("matrix-health-check", () => {
     it("returns no issues for a valid matrix", () => {
       const issues = checkMatrixHealth(HEALTH_HEALTHY_MATRIX);
 
-      expect(issues).toEqual([]);
+      expect(issues).toStrictEqual([]);
     });
 
     it("does not warn when matrix is structurally valid", () => {
@@ -187,13 +187,13 @@ describe("matrix-health-check", () => {
     it("returns no issues for empty matrix", () => {
       const issues = checkMatrixHealth(EMPTY_MATRIX);
 
-      expect(issues).toEqual([]);
+      expect(issues).toStrictEqual([]);
     });
 
     it("returns no issues for matrix with skills but no structural problems", () => {
       const issues = checkMatrixHealth(HEALTH_SINGLE_SKILL_MATRIX);
 
-      expect(issues).toEqual([]);
+      expect(issues).toStrictEqual([]);
     });
   });
 });

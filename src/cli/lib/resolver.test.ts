@@ -196,7 +196,7 @@ describe("buildSkillRefsFromConfig", () => {
   it("should return empty array for empty config", () => {
     const result = buildSkillRefsFromConfig({});
 
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 
   it("when config has undefined assignment values, should skip them and return only defined refs", () => {
@@ -242,7 +242,7 @@ describe("resolveSkillReference", () => {
 
     const result = resolveSkillReference(ref, RESOLVE_SKILL_MAP);
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       id: "web-framework-react",
       path: "skills/web/framework/react/",
       description: "React component patterns",
@@ -295,7 +295,7 @@ describe("resolveSkillReferences", () => {
 
   it("should return empty array for empty input", () => {
     const results = resolveSkillReferences([], RESOLVE_SKILLS_MAP);
-    expect(results).toEqual([]);
+    expect(results).toStrictEqual([]);
   });
 });
 
@@ -317,7 +317,7 @@ describe("convertStackToCompileConfig", () => {
 
     const result = convertStackToCompileConfig("test-stack", config);
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       name: "Test Stack",
       description: "A test stack",
       stack: "test-stack",
@@ -337,7 +337,7 @@ describe("convertStackToCompileConfig", () => {
 
     const result = convertStackToCompileConfig("empty-stack", config);
 
-    expect(result.agents).toEqual({});
+    expect(result.agents).toStrictEqual({});
   });
 
   it("when agent has no description field, should default to empty string", () => {
@@ -718,13 +718,13 @@ describe("resolveAgentSkillsFromStack", () => {
   it("should return empty array for agent not in stack", () => {
     const result = resolveAgentSkillsFromStack("web-developer", API_HONO_ONLY_STACK);
 
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 
   it("should return empty array for agent with empty config", () => {
     const result = resolveAgentSkillsFromStack("web-developer", WEB_EMPTY_AGENT_STACK);
 
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 });
 
@@ -761,7 +761,7 @@ describe("resolveAgentSkillRefs", () => {
   it("should return empty array when no stack provided", async () => {
     const result = await resolveAgentSkillRefs("web-developer", {}, undefined);
 
-    expect(result).toEqual([]);
+    expect(result).toStrictEqual([]);
   });
 });
 
@@ -851,7 +851,7 @@ describe("resolveAgents with stack", () => {
     );
 
     expect(result["web-developer"]).toBeDefined();
-    expect(result["web-developer"].skills).toEqual([]);
+    expect(result["web-developer"].skills).toStrictEqual([]);
   });
 
   it("should throw when agent is referenced in compile config but not in agent definitions", async () => {
@@ -892,6 +892,6 @@ describe("resolveAgents with stack", () => {
     expect(result["web-developer"].skills).toHaveLength(1);
     expect(result["web-developer"].skills[0].id).toBe("web-framework-react");
 
-    expect(result["api-developer"].skills).toEqual([]);
+    expect(result["api-developer"].skills).toStrictEqual([]);
   });
 });

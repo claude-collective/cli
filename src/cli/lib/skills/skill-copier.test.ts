@@ -352,7 +352,7 @@ describe("skill-copier", () => {
 
       const result = await copySkillsToPluginFromSource([], pluginDir, EMPTY_MATRIX, sourceResult);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("overrides local-skip when sourceSelections selects remote source", async () => {
@@ -633,7 +633,7 @@ describe("skill-copier", () => {
         sourceResult,
       );
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
     });
 
     it("flattens deeply nested directory structures", async () => {

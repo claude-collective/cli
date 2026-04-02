@@ -42,7 +42,7 @@ describe("skill-fetcher", () => {
 
       const result = await fetchSkills([], marketplace, OUTPUT_DIR, SOURCE_PATH);
 
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
       expect(mockEnsureDir).toHaveBeenCalledWith(SKILLS_OUTPUT_DIR);
     });
 
@@ -61,7 +61,7 @@ describe("skill-fetcher", () => {
 
       const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
 
-      expect(result).toEqual([skillId]);
+      expect(result).toStrictEqual([skillId]);
 
       // Should have called glob to find the skill
       expect(mockGlob).toHaveBeenCalledWith(`**/web-framework-react*/SKILL.md`, skillSourceDir);
@@ -115,7 +115,7 @@ describe("skill-fetcher", () => {
 
       const result = await fetchSkills(skillIds, marketplace, OUTPUT_DIR, SOURCE_PATH);
 
-      expect(result).toEqual(skillIds);
+      expect(result).toStrictEqual(skillIds);
       expect(mockCopy).toHaveBeenCalledTimes(2);
     });
 
@@ -161,7 +161,7 @@ describe("skill-fetcher", () => {
       const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
 
       // Should still copy from source path (marketplace info is logged but not used for copy)
-      expect(result).toEqual([skillId]);
+      expect(result).toStrictEqual([skillId]);
       expect(mockCopy).toHaveBeenCalledTimes(1);
     });
 
@@ -180,7 +180,7 @@ describe("skill-fetcher", () => {
 
       const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
 
-      expect(result).toEqual([skillId]);
+      expect(result).toStrictEqual([skillId]);
     });
 
     it("should resolve plugin source from string source", async () => {
@@ -194,7 +194,7 @@ describe("skill-fetcher", () => {
 
       const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
 
-      expect(result).toEqual([skillId]);
+      expect(result).toStrictEqual([skillId]);
     });
 
     it("should handle marketplace plugin with repo source but no ref", async () => {
@@ -211,7 +211,7 @@ describe("skill-fetcher", () => {
 
       const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
 
-      expect(result).toEqual([skillId]);
+      expect(result).toStrictEqual([skillId]);
     });
 
     it("should throw when marketplace plugin source has neither url nor repo", async () => {
@@ -243,7 +243,7 @@ describe("skill-fetcher", () => {
       const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
 
       // Should still work - just copies from source path
-      expect(result).toEqual([skillId]);
+      expect(result).toStrictEqual([skillId]);
     });
   });
 });

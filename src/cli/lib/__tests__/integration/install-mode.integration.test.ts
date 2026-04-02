@@ -300,8 +300,8 @@ describe("Integration: detectMigrations with Config Data", () => {
 
     const plan = detectMigrations(oldSkills, newSkills);
 
-    expect(plan.toEject.map((m) => m.id)).toEqual([REACT_SKILL_ID, HONO_SKILL_ID]);
-    expect(plan.toPlugin).toEqual([]);
+    expect(plan.toEject.map((m) => m.id)).toStrictEqual([REACT_SKILL_ID, HONO_SKILL_ID]);
+    expect(plan.toPlugin).toStrictEqual([]);
   });
 
   it("should detect local-to-plugin migration from skill configs", () => {
@@ -317,8 +317,8 @@ describe("Integration: detectMigrations with Config Data", () => {
 
     const plan = detectMigrations(oldSkills, newSkills);
 
-    expect(plan.toEject).toEqual([]);
-    expect(plan.toPlugin.map((m) => m.id)).toEqual([REACT_SKILL_ID, ZUSTAND_SKILL_ID]);
+    expect(plan.toEject).toStrictEqual([]);
+    expect(plan.toPlugin.map((m) => m.id)).toStrictEqual([REACT_SKILL_ID, ZUSTAND_SKILL_ID]);
   });
 
   it("should detect bidirectional migration", () => {
@@ -336,8 +336,8 @@ describe("Integration: detectMigrations with Config Data", () => {
 
     const plan = detectMigrations(oldSkills, newSkills);
 
-    expect(plan.toEject.map((m) => m.id)).toEqual([REACT_SKILL_ID]);
-    expect(plan.toPlugin.map((m) => m.id)).toEqual([ZUSTAND_SKILL_ID]);
+    expect(plan.toEject.map((m) => m.id)).toStrictEqual([REACT_SKILL_ID]);
+    expect(plan.toPlugin.map((m) => m.id)).toStrictEqual([ZUSTAND_SKILL_ID]);
   });
 
   it("should return empty plan when skill configs are unchanged", () => {
@@ -348,8 +348,8 @@ describe("Integration: detectMigrations with Config Data", () => {
 
     const plan = detectMigrations(skills, skills);
 
-    expect(plan.toEject).toEqual([]);
-    expect(plan.toPlugin).toEqual([]);
+    expect(plan.toEject).toStrictEqual([]);
+    expect(plan.toPlugin).toStrictEqual([]);
   });
 
   it("should detect migration when switching between marketplace sources as no migration", () => {
@@ -365,8 +365,8 @@ describe("Integration: detectMigrations with Config Data", () => {
     const plan = detectMigrations(oldSkills, newSkills);
 
     // Neither source is "eject" so no migration needed
-    expect(plan.toEject).toEqual([]);
-    expect(plan.toPlugin).toEqual([]);
+    expect(plan.toEject).toStrictEqual([]);
+    expect(plan.toPlugin).toStrictEqual([]);
   });
 
   it("should handle new skills with no previous config", () => {
@@ -380,8 +380,8 @@ describe("Integration: detectMigrations with Config Data", () => {
     const plan = detectMigrations(oldSkills, newSkills);
 
     // New skills have no old entry, so no migration detected
-    expect(plan.toEject).toEqual([]);
-    expect(plan.toPlugin).toEqual([]);
+    expect(plan.toEject).toStrictEqual([]);
+    expect(plan.toPlugin).toStrictEqual([]);
   });
 });
 

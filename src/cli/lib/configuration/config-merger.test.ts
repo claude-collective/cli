@@ -42,7 +42,7 @@ describe("config-merger", () => {
 
       expect(result.merged).toBe(false);
       expect(result.config.name).toBe("new-project");
-      expect(result.config.agents).toEqual([{ name: "web-developer", scope: "project" }]);
+      expect(result.config.agents).toStrictEqual([{ name: "web-developer", scope: "project" }]);
       expect(result.config.description).toBe("A new project");
       expect(result.existingConfigPath).toBeUndefined();
     });
@@ -196,7 +196,7 @@ describe("config-merger", () => {
         });
 
         expect(result.merged).toBe(true);
-        expect(result.config.agents).toEqual([
+        expect(result.config.agents).toStrictEqual([
           { name: "web-developer", scope: "project" },
           { name: "api-developer", scope: "project" },
           { name: "cli-developer", scope: "project" },
@@ -214,7 +214,7 @@ describe("config-merger", () => {
 
         expect(result.merged).toBe(true);
         // Empty existing agents, so new agents are used
-        expect(result.config.agents).toEqual([{ name: "web-developer", scope: "project" }]);
+        expect(result.config.agents).toStrictEqual([{ name: "web-developer", scope: "project" }]);
       });
     });
 
@@ -256,7 +256,7 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         // Existing values take precedence (framework, styling kept)
         // New values added where not existing (client-state added)
-        expect(result.config.stack).toEqual({
+        expect(result.config.stack).toStrictEqual({
           "web-developer": {
             "web-framework": sa("web-framework-react-existing"),
             "web-styling": sa("web-styling-scss-existing"),
@@ -300,7 +300,7 @@ describe("config-merger", () => {
         });
 
         expect(result.merged).toBe(true);
-        expect(result.config.stack).toEqual({
+        expect(result.config.stack).toStrictEqual({
           "web-developer": {
             "web-framework": sa("web-framework-react"), // existing takes precedence
           },
@@ -328,7 +328,7 @@ describe("config-merger", () => {
         });
 
         expect(result.merged).toBe(true);
-        expect(result.config.stack).toEqual({
+        expect(result.config.stack).toStrictEqual({
           "web-developer": {
             "web-framework": sa("web-framework-react"),
           },
@@ -357,7 +357,7 @@ describe("config-merger", () => {
 
       // Original input should be unchanged
       expect(newConfig.name).toBe("new-project");
-      expect(newConfig.agents).toEqual([{ name: "api-developer", scope: "project" }]);
+      expect(newConfig.agents).toStrictEqual([{ name: "api-developer", scope: "project" }]);
       expect(newConfig.author).toBeUndefined();
     });
 
@@ -538,7 +538,7 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.agents).toEqual([
+        expect(result.agents).toStrictEqual([
           { name: "web-developer", scope: "project" },
           { name: "api-developer", scope: "project" },
           { name: "cli-developer", scope: "project" },
@@ -559,7 +559,7 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.agents).toEqual([{ name: "web-developer", scope: "project" }]);
+        expect(result.agents).toStrictEqual([{ name: "web-developer", scope: "project" }]);
       });
     });
 
@@ -657,7 +657,7 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.stack).toEqual({
+        expect(result.stack).toStrictEqual({
           "web-developer": {
             "web-framework": sa("web-framework-react-existing"),
             "web-styling": sa("web-styling-scss-existing"),
@@ -685,7 +685,7 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.stack).toEqual({
+        expect(result.stack).toStrictEqual({
           "web-developer": { "web-framework": sa("web-framework-react") },
           "api-developer": { "api-api": sa("api-framework-hono") },
         });
@@ -703,7 +703,7 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.stack).toEqual({
+        expect(result.stack).toStrictEqual({
           "web-developer": { "web-framework": sa("web-framework-react") },
         });
       });
@@ -726,7 +726,7 @@ describe("config-merger", () => {
 
       // Original inputs should be unchanged
       expect(newConfig.name).toBe("new-project");
-      expect(newConfig.agents).toEqual([{ name: "api-developer", scope: "project" }]);
+      expect(newConfig.agents).toStrictEqual([{ name: "api-developer", scope: "project" }]);
       expect(newConfig.author).toBeUndefined();
     });
   });

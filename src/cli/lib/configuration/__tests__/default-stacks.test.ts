@@ -54,7 +54,7 @@ describe("defaultStacks", () => {
     "$stackId > $agentName > $category has normalized SkillAssignment[] values",
     ({ assignments }) => {
       expect(Array.isArray(assignments)).toBe(true);
-      expect(assignments).toEqual(
+      expect(assignments).toStrictEqual(
         expect.arrayContaining([
           expect.objectContaining({
             id: expect.any(String),

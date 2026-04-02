@@ -94,7 +94,7 @@ describe("Init Flow Integration: Eject Mode", () => {
     expect(config.name).toBeDefined();
     expect(config.agents).toBeDefined();
     expect(Array.isArray(config.agents)).toBe(true);
-    expect(config.agents.map((a) => a.name)).toEqual(["api-developer", "web-developer"]);
+    expect(config.agents.map((a) => a.name)).toStrictEqual(["api-developer", "web-developer"]);
     expect(config.skills).toBeDefined();
     expect(deriveInstallMode(config.skills)).toBe("eject");
     expect(config.source).toBe(dirs.sourceDir);
@@ -268,7 +268,7 @@ describe("Init Flow Integration: All Skills Selection", () => {
     expect(config.skills).toHaveLength(3);
 
     // Agents should be exactly the selected agents
-    expect(config.agents.map((a) => a.name)).toEqual(["api-developer", "web-developer"]);
+    expect(config.agents.map((a) => a.name)).toStrictEqual(["api-developer", "web-developer"]);
   });
 });
 
