@@ -9,7 +9,13 @@ import { difference, indexBy } from "remeda";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { CLAUDE_DIR, CLI_BIN_NAME, CLI_COLORS, GLOBAL_INSTALL_ROOT, SOURCE_DISPLAY_NAMES } from "../consts.js";
+import {
+  CLAUDE_DIR,
+  CLI_BIN_NAME,
+  CLI_COLORS,
+  GLOBAL_INSTALL_ROOT,
+  SOURCE_DISPLAY_NAMES,
+} from "../consts.js";
 import {
   detectProject,
   loadSource,
@@ -41,7 +47,6 @@ import { getErrorMessage } from "../utils/errors.js";
 import { remove } from "../utils/fs.js";
 import { type StartupMessage } from "../utils/logger.js";
 import { ERROR_MESSAGES } from "../utils/messages.js";
-
 
 function formatSourceDisplayName(sourceName: string): string {
   return SOURCE_DISPLAY_NAMES[sourceName] ?? sourceName;
@@ -261,25 +266,39 @@ export default class Edit extends BaseCommand {
       this.log(chalk.hex(CLI_COLORS.ERROR)(`  - ${skill?.displayName ?? skillId}`));
     }
     for (const agentName of addedAgents) {
-      this.log(chalk.hex(CLI_COLORS.SUCCESS)(`  + ${agentName}`) + chalk.hex(CLI_COLORS.NEUTRAL)(" (agent)"));
+      this.log(
+        chalk.hex(CLI_COLORS.SUCCESS)(`  + ${agentName}`) +
+          chalk.hex(CLI_COLORS.NEUTRAL)(" (agent)"),
+      );
     }
     for (const agentName of removedAgents) {
-      this.log(chalk.hex(CLI_COLORS.ERROR)(`  - ${agentName}`) + chalk.hex(CLI_COLORS.NEUTRAL)(" (agent)"));
+      this.log(
+        chalk.hex(CLI_COLORS.ERROR)(`  - ${agentName}`) + chalk.hex(CLI_COLORS.NEUTRAL)(" (agent)"),
+      );
     }
     for (const [skillId, change] of sourceChanges) {
       const fromLabel = formatSourceDisplayName(change.from);
       const toLabel = formatSourceDisplayName(change.to);
-      this.log(chalk.hex(CLI_COLORS.WARNING)(`  ~ ${skillId}`) + chalk.hex(CLI_COLORS.NEUTRAL)(` (${fromLabel} \u2192 ${toLabel})`));
+      this.log(
+        chalk.hex(CLI_COLORS.WARNING)(`  ~ ${skillId}`) +
+          chalk.hex(CLI_COLORS.NEUTRAL)(` (${fromLabel} \u2192 ${toLabel})`),
+      );
     }
     for (const [skillId, change] of scopeChanges) {
       const fromLabel = change.from === "global" ? "[G]" : "[P]";
       const toLabel = change.to === "global" ? "[G]" : "[P]";
-      this.log(chalk.hex(CLI_COLORS.WARNING)(`  ~ ${skillId}`) + chalk.hex(CLI_COLORS.NEUTRAL)(` (${fromLabel} \u2192 ${toLabel})`));
+      this.log(
+        chalk.hex(CLI_COLORS.WARNING)(`  ~ ${skillId}`) +
+          chalk.hex(CLI_COLORS.NEUTRAL)(` (${fromLabel} \u2192 ${toLabel})`),
+      );
     }
     for (const [agentName, change] of agentScopeChanges) {
       const fromLabel = change.from === "global" ? "[G]" : "[P]";
       const toLabel = change.to === "global" ? "[G]" : "[P]";
-      this.log(chalk.hex(CLI_COLORS.WARNING)(`  ~ ${agentName}`) + chalk.hex(CLI_COLORS.NEUTRAL)(` (${fromLabel} \u2192 ${toLabel})`));
+      this.log(
+        chalk.hex(CLI_COLORS.WARNING)(`  ~ ${agentName}`) +
+          chalk.hex(CLI_COLORS.NEUTRAL)(` (${fromLabel} \u2192 ${toLabel})`),
+      );
     }
     this.log("");
   }
@@ -296,10 +315,18 @@ export default class Edit extends BaseCommand {
 
     if (hasMigrations) {
       if (migrationPlan.toEject.length > 0) {
-        this.log(chalk.hex(CLI_COLORS.NEUTRAL)(`Switching ${migrationPlan.toEject.length} skill(s) to eject`));
+        this.log(
+          chalk.hex(CLI_COLORS.NEUTRAL)(
+            `Switching ${migrationPlan.toEject.length} skill(s) to eject`,
+          ),
+        );
       }
       if (migrationPlan.toPlugin.length > 0) {
-        this.log(chalk.hex(CLI_COLORS.NEUTRAL)(`Switching ${migrationPlan.toPlugin.length} skill(s) to plugin`));
+        this.log(
+          chalk.hex(CLI_COLORS.NEUTRAL)(
+            `Switching ${migrationPlan.toPlugin.length} skill(s) to plugin`,
+          ),
+        );
       }
 
       const migrationResult = await executeMigration(migrationPlan, cwd, context.sourceResult);
@@ -389,7 +416,9 @@ export default class Edit extends BaseCommand {
           cwd,
         );
         if (pluginResult.installed.length > 0) {
-          this.log(chalk.hex(CLI_COLORS.NEUTRAL)(`Installed ${pluginResult.installed.length} plugin(s)`));
+          this.log(
+            chalk.hex(CLI_COLORS.NEUTRAL)(`Installed ${pluginResult.installed.length} plugin(s)`),
+          );
         }
         for (const item of pluginResult.failed) {
           this.warn(`Failed to install plugin ${item.id}: ${item.error}`);
@@ -403,7 +432,11 @@ export default class Edit extends BaseCommand {
           cwd,
         );
         if (uninstallResult.uninstalled.length > 0) {
-          this.log(chalk.hex(CLI_COLORS.NEUTRAL)(`Removed ${uninstallResult.uninstalled.length} plugin(s)`));
+          this.log(
+            chalk.hex(CLI_COLORS.NEUTRAL)(
+              `Removed ${uninstallResult.uninstalled.length} plugin(s)`,
+            ),
+          );
         }
         for (const item of uninstallResult.failed) {
           this.warn(`Failed to uninstall plugin ${item.id}: ${item.error}`);
@@ -482,7 +515,9 @@ export default class Edit extends BaseCommand {
           this.warn(warning);
         }
       } else if (compilationResult.compiled.length > 0) {
-        this.log(chalk.hex(CLI_COLORS.NEUTRAL)(`Recompiled ${compilationResult.compiled.length} agents`));
+        this.log(
+          chalk.hex(CLI_COLORS.NEUTRAL)(`Recompiled ${compilationResult.compiled.length} agents`),
+        );
       } else {
         this.log(chalk.hex(CLI_COLORS.NEUTRAL)("No agents to recompile"));
       }

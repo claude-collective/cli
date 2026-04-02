@@ -44,8 +44,6 @@ import { type StartupMessage } from "../utils/logger.js";
 import { SUCCESS_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
 import { ensureBlankGlobalConfig } from "../lib/configuration/config-writer.js";
 
-
-
 const DASHBOARD_OPTIONS: SelectListItem<string>[] = [
   { label: "Edit", value: "edit" },
   { label: "Compile", value: "compile" },
