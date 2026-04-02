@@ -1,11 +1,11 @@
 # Documentation Map
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 **Total Areas:** 18
 **Documented:** 18 (100%)
 **In Progress:** 0
 **Needs Validation:** 0
-**Last Validated:** 2026-03-28 (adversarial audit of test-infrastructure.md)
+**Last Validated:** 2026-04-02 (pass 14 -- verified pass 13 fixes (3/3 confirmed), final blind spot sweep: 10 never-checked areas all passed (info, new agent, build plugins, import skill commands; agent template variables; plugin finder; matrix provider 8 functions; skills operations 12 functions; content generators 5 functions; SkillAgentSummary component))
 
 ## Status Legend
 
@@ -38,9 +38,10 @@ Machine-readable staleness tracker. Thresholds from `standards/documentation-bib
 | dependency-graph.md      | 0          | 14        | OK     |
 | boundary-map.md          | 0          | 14        | OK     |
 | state-transitions.md     | 0          | 14        | OK     |
+| findings-impact-report.md | 0          | 30        | OK     |
 
 **Status values:** `OK` = within threshold, `DUE` = at or past threshold, `OVERDUE` = at or past 2x threshold.
-**Date basis:** 2026-03-28. compilation-pipeline.md validated 2026-03-28.
+**Date basis:** 2026-04-02. All 18 reference docs validated 2026-04-02.
 
 ## Reference Documentation
 
@@ -48,41 +49,41 @@ Descriptive docs -- "how things work". Validated aggressively (7-30 day cadence)
 
 | Area                  | Status | File                                         | Last Updated | Last Validated | Next Action          |
 | --------------------- | ------ | -------------------------------------------- | ------------ | -------------- | -------------------- |
-| Architecture Overview | [DONE] | `reference/architecture-overview.md`         | 2026-03-28   | 2026-03-28     | Validate in 30 days  |
-| Commands Reference    | [DONE] | `reference/commands.md`                      | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Type System           | [DONE] | `reference/type-system.md`                   | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| State Management      | [DONE] | `reference/store-map.md`                     | 2026-03-28   | 2026-03-28     | Validate in 7 days   |
-| Compilation Pipeline  | [DONE] | `reference/features/compilation-pipeline.md` | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Configuration System  | [DONE] | `reference/features/configuration.md`        | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Wizard Flow           | [DONE] | `reference/features/wizard-flow.md`          | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Skills & Matrix       | [DONE] | `reference/features/skills-and-matrix.md`    | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Plugin System         | [DONE] | `reference/features/plugin-system.md`        | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Component Patterns    | [DONE] | `reference/component-patterns.md`            | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Utilities Reference   | [DONE] | `reference/utilities.md`                     | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Test Infrastructure   | [DONE] | `reference/test-infrastructure.md`           | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Operations Layer      | [DONE] | `reference/features/operations-layer.md`     | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Agent System          | [DONE] | `reference/features/agent-system.md`         | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Dependency Graph      | [DONE] | `reference/dependency-graph.md`              | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Boundary Map          | [DONE] | `reference/boundary-map.md`                  | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| State Transitions     | [DONE] | `reference/state-transitions.md`             | 2026-03-28   | 2026-03-28     | Validate in 14 days  |
-| Findings Impact       | [DONE] | `reference/findings-impact-report.md`        | 2026-03-28   | 2026-03-28     | Regenerate as needed |
+| Architecture Overview | [DONE] | `reference/architecture-overview.md`         | 2026-04-02   | 2026-04-02     | Validate in 30 days  |
+| Commands Reference    | [DONE] | `reference/commands.md`                      | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Type System           | [DONE] | `reference/type-system.md`                   | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| State Management      | [DONE] | `reference/store-map.md`                     | 2026-04-02   | 2026-04-02     | Validate in 7 days   |
+| Compilation Pipeline  | [DONE] | `reference/features/compilation-pipeline.md` | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Configuration System  | [DONE] | `reference/features/configuration.md`        | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Wizard Flow           | [DONE] | `reference/features/wizard-flow.md`          | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Skills & Matrix       | [DONE] | `reference/features/skills-and-matrix.md`    | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Plugin System         | [DONE] | `reference/features/plugin-system.md`        | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Component Patterns    | [DONE] | `reference/component-patterns.md`            | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Utilities Reference   | [DONE] | `reference/utilities.md`                     | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Test Infrastructure   | [DONE] | `reference/test-infrastructure.md`           | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Operations Layer      | [DONE] | `reference/features/operations-layer.md`     | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Agent System          | [DONE] | `reference/features/agent-system.md`         | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Dependency Graph      | [DONE] | `reference/dependency-graph.md`              | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Boundary Map          | [DONE] | `reference/boundary-map.md`                  | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| State Transitions     | [DONE] | `reference/state-transitions.md`             | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Findings Impact       | [DONE] | `reference/findings-impact-report.md`        | 2026-04-02   | 2026-04-02     | Regenerate as needed |
 
 ## Standards Documentation
 
 Prescriptive rules for code quality, testing, and content authoring. Lighter validation cadence -- validate when convention-keeper proposes updates, or quarterly.
 
-| Area                    | File                                  | Last Moved |
-| ----------------------- | ------------------------------------- | ---------- |
-| Clean Code Standards    | `standards/clean-code-standards.md`   | 2026-03-25 |
-| E2E Testing Bible       | `standards/e2e-testing-bible.md`      | 2026-03-25 |
-| E2E Sub-Standards       | `standards/e2e/` (7 files)            | 2026-03-25 |
-| Prompt Engineering      | `standards/prompt-bible.md`           | 2026-03-25 |
-| Loop Prompts            | `standards/loop-prompts-bible.md`     | 2026-03-25 |
-| Skill Atomicity         | `standards/skill-atomicity-bible.md`  | 2026-03-25 |
-| Skill Atomicity Primer  | `standards/skill-atomicity-primer.md` | 2026-03-25 |
-| TypeScript Types        | `standards/typescript-types-bible.md` | 2026-03-25 |
-| Documentation Standards | `standards/documentation-bible.md`    | 2026-03-25 |
-| Commit Protocol         | `standards/commit-protocol.md`        | 2026-03-25 |
+| Area                    | File                                  | Last Moved | Last Audited |
+| ----------------------- | ------------------------------------- | ---------- | ------------ |
+| Clean Code Standards    | `standards/clean-code-standards.md`   | 2026-03-25 | 2026-04-02   |
+| E2E Testing Bible       | `standards/e2e-testing-bible.md`      | 2026-03-25 | 2026-04-02   |
+| E2E Sub-Standards       | `standards/e2e/` (7 files)            | 2026-03-25 | 2026-04-02   |
+| Prompt Engineering      | `standards/prompt-bible.md`           | 2026-03-25 | 2026-04-02   |
+| Loop Prompts            | `standards/loop-prompts-bible.md`     | 2026-03-25 | 2026-04-02   |
+| Skill Atomicity         | `standards/skill-atomicity-bible.md`  | 2026-03-25 | 2026-04-02   |
+| Skill Atomicity Primer  | `standards/skill-atomicity-primer.md` | 2026-03-25 | 2026-04-02   |
+| TypeScript Types        | `standards/typescript-types-bible.md` | 2026-03-25 | 2026-04-02   |
+| Documentation Standards | `standards/documentation-bible.md`    | 2026-03-25 | 2026-04-02   |
+| Commit Protocol         | `standards/commit-protocol.md`        | 2026-03-25 | 2026-04-02   |
 
 ## Agent Findings Pipeline
 
@@ -90,7 +91,7 @@ Sub-agent feedback loop for standards improvement. See [`agent-findings/README.m
 
 ## Coverage Metrics
 
-**Source Files:** 327 TypeScript files in `src/cli/`
+**Source Files:** 317 TypeScript files in `src/cli/`
 **All major systems documented:** Yes
 
 **Technical Areas:**
@@ -115,6 +116,644 @@ Sub-agent feedback loop for standards improvement. See [`agent-findings/README.m
 - Findings Impact Report: [DONE]
 
 ## Validation History
+
+### 2026-04-02 Pass 14 -- Behavioral Claims Verification (10 claims vs source code)
+
+Verified 10 behavioral claims by reading actual implementation code. Focus: does the documentation accurately describe what the code DOES?
+
+1. **architecture-overview.md source resolution precedence**: PASS -- doc says `--source flag > CC_SOURCE env var > project config > global config > default`. Code at `config.ts:83-131` confirms exact order: flag (line 91) > env (line 102) > effectiveConfig.source (project via `??` global, line 121) > DEFAULT_SOURCE (line 131).
+2. **configuration.md isLocalSource()**: PASS -- doc says "Returns true for paths starting with `/` or `.`, false for remote protocols. Rejects `..` and `~` in non-remote sources." Code at `config.ts:431-447` confirms exact behavior.
+3. **plugin-system.md deriveInstallMode()**: PASS -- doc says "Empty skills array = eject mode." Code at `installation.ts:27` confirms `if (skills.length === 0) return "eject"`.
+4. **compilation-pipeline.md sanitizeCompiledAgentData()**: PASS -- doc lists all fields. Code at `compiler.ts:77-111` matches exactly.
+5. **wizard-flow.md INFO_PANEL feature flag**: PASS -- doc says flag gates info panel visibility and footer label. Code confirms it gates three things: panel visibility (`wizard-layout.tsx:167`), footer label (`wizard-layout.tsx:218`), and hotkey handling (`wizard.tsx:116`).
+6. **state-transitions.md goBack() from domains**: PASS -- doc correctly states side effects: `setApproach(null)`, `selectStack(null)` before `goBack()`. Code at `domain-selection.tsx:41-44` confirms.
+7. **compilation-pipeline.md compileAgents() "thin facade"**: FAIL -- doc called it "thin facade" / "thin wrapper" but code at `compile-agents.ts:32-72` has 20+ lines of scope-filtering logic. **Fixed**: replaced with "scope-filtering orchestrator" / "scope-filtering + delegation."
+8. **skills-and-matrix.md getAvailableSkills()**: PASS -- doc says "Get skills for a category with state annotations." Code confirms it annotates but does NOT filter.
+9. **store-map.md reset()**: PASS -- doc says "Restore all state to createInitialState() defaults." Code at `wizard-store.ts:958` confirms.
+10. **boundary-map.md private IP blocking**: FAIL -- doc omitted `172.16-31.x.x` and `0.0.0.0` from IP ranges. **Fixed**: added both.
+
+**Fixes applied (3 edits in 2 files):**
+- `boundary-map.md`: Added `172.16-31.x.x` and `0.0.0.0` to private IP blocking list
+- `compilation-pipeline.md`: Replaced "thin facade" (line 16) and "Thin wrapper" (line 269) with accurate descriptions
+
+### 2026-04-02 Pass 13 -- Code Example Verification (4 standards files)
+
+Verified every code example in `clean-code-standards.md`, `typescript-types-bible.md`, `e2e-testing-bible.md`, and `commit-protocol.md` against actual source files.
+
+**clean-code-standards.md (S3, S5, S6, S7, S8):**
+
+- S3 `getErrorMessage()`: PASS -- signature `(error: unknown): string` matches `utils/errors.ts:2`
+- S3.2 `handleError()`: PASS -- exists in `base-command.ts:26`, calls `getErrorMessage()` + `this.error(message, { exit: EXIT_CODES.ERROR })`
+- S5.4 `sanitizeLiquidSyntax()`: PASS -- `compiler.ts:41`, signature `<T extends string>(value: T, fieldName: string): T`
+- S6.4 SKILLS registry keys: PASS -- all 10 keys verified in `test-fixtures.ts` (react, vue, zustand, pinia, scss, tailwind, vitest, hono, drizzle, antiOverEng)
+- S6.9 `createMockSkill()` signature: PASS -- `(id: SkillId, overrides?: Partial<ResolvedSkill>): ResolvedSkill` matches `helpers.ts:439`
+- S7.1 `typedEntries` usage: PASS -- call syntax correct (actual function accepts wider `Partial<Record>` type)
+- S7.3 Zod canonical pattern: PASS -- `schema.safeParse()` used in `schema-validator.ts:200`
+- S7.4 `formatZodErrors` two variants: PASS -- `schemas.ts:776` takes `ZodIssue[]`, `schema-validator.ts:156` takes `ZodError`
+- S8.4 Remeda production list: PASS -- all 13 functions (`unique`, `uniqueBy`, `sortBy`, `groupBy`, `mapValues`, `pipe`, `flatMap`, `filter`, `countBy`, `sumBy`, `difference`, `indexBy`, `zip`) confirmed in production files
+
+**typescript-types-bible.md:**
+
+- Section 6 `typedEntries`/`typedKeys` code example: FAIL -- showed `Record<K, V>` parameter but actual signature is `Partial<Record<K, V>>`. **Fixed.**
+- All other TypeScript examples: PASS -- correct syntax, correct patterns
+- Type guard examples (`isCategory`, `isDomain`, `isAgentName`): PASS -- match `type-guards.ts`
+- Boundary cast taxonomy: PASS -- references to clean-code-standards.md Section 7.2 valid
+
+**e2e-testing-bible.md:**
+
+- Section 3.1 `runCLI` example: PASS -- destructured fields `{ exitCode, stdout, stderr, combined }` match actual return type
+- Section 3.5 `InitWizard.launch({ source })`: PASS -- matches actual static method signature
+- Section 4.6 page object methods table: PASS -- `completeWithDefaults`, `passThrough`, `passThroughAllDomains`, `waitForRawText` all verified
+- Section 5.5 `ProjectBuilder` factories: PASS -- all 8 static methods + `createLocalSkill` + `writeProjectConfig` verified
+- Section 5.6 `createE2ESource`/`createE2EPluginSource`: PASS -- both exist and are re-exported
+- Section 7.1 TIMEOUTS values: PASS -- all 10 constants match `e2e/pages/constants.ts`
+- Section 9.1 dual-scope helpers: PASS -- `initGlobal`, `initProject`, `createTestEnvironment`, `createDualScopeEnv` all exist
+- Section 11 exports table: PASS -- all listed exports verified in `test-utils.ts`
+
+**commit-protocol.md:**
+
+- Conventional commits format: PASS -- matches actual git log (e.g., `chore(release): 0.100.0 -- ...`, `feat(wizard): ...`)
+- Release commit format `chore(release): {version} -- brief summary`: PASS -- matches actual releases
+
+**Fixes applied (1 edit):**
+- `typescript-types-bible.md` Section 6: Updated `typedEntries` and `typedKeys` parameter types from `Record<K, V>` to `Partial<Record<K, V>>` to match actual `utils/typed-object.ts` signatures
+
+### 2026-04-02 Round 10 Deep Verification (pass 9 fix verification + 10-item random deep check)
+
+**Task 1: Verified pass 9 fixes (5 checks):**
+
+1. **typescript-types-bible.md PermissionMode**: PASS -- 6 members including "delegate" match `src/cli/types/matrix.ts:14-20`
+2. **e2e-testing-bible.md skill count**: PASS -- no "10-skill" or "10 skills" occurrences remain
+3. **findings-impact-report.md deepMergeStacks**: FAIL -- lines 305/315 still said `deepMergeStacks()`. Fixed to `mergeConfigs()` (confirmed function exists in `config-merger.ts`). Agent file names (identity.md, playbook.md, output.md, metadata.yaml) verified against `src/agents/developer/cli-developer/`
+4. **Agent findings (3 files)**: PASS -- all 3 findings properly documented with correct details
+
+**Task 2: 10-item random deep verification:**
+
+1. **architecture-overview.md Install Modes table**: FAIL -- missing `mixed` mode. Source `installation.ts:15` defines `InstallMode = "eject" | "plugin" | "mixed"`. Added `mixed` row to table. Line numbers for `detectInstallation()` (84) and `detectProjectInstallation()` (35) confirmed.
+2. **commands.md doctor command**: PASS -- flags (`--source`/-s string, `--verbose`/-v boolean) match source. "Defined directly, not via BaseCommand.baseFlags" confirmed. All 5 checks exist (Config Valid, Skills Resolved, Agents Compiled, No Orphans, Source Reachable).
+3. **commands.md eject command**: PASS -- args (type, not required, 4 options) and flags (--force/-f, --output/-o, --refresh, --source/-s) all match source. Key deps confirmed.
+4. **type-system.md Zod Schemas**: PASS -- 39 exported schemas confirmed. 5 random schemas verified: `domainSchema` (line 45), `boundSkillSchema` (53), `metadataValidationSchema` (612), `hooksRecordSchema` (143), `skillFrontmatterLoaderSchema` (165).
+5. **plugin-system.md Plugin Settings**: PASS -- all 3 functions (`getEnabledPluginKeys`, `resolvePluginInstallPaths`, `getVerifiedPluginInstallPaths`) and 2 types (`PluginKey`, `ResolvedPlugin`) confirmed in `plugin-settings.ts`.
+6. **configuration.md Source Manager**: PASS -- all 3 functions (`addSource`, `removeSource`, `getSourceSummary`) confirmed in `source-manager.ts`.
+7. **operations-layer.md functions**: PASS -- 3 random functions verified: `copyLocalSkills(skills, projectDir, sourceResult)`, `compileAgents(options)`, `findSkillMatch(skillName, results)` all match source signatures.
+8. **dependency-graph.md wizard-store imports**: PASS -- all 4 lib imports confirmed: `deriveInstallMode` from installation, `resolveAlias` from matrix, `matrix/getSkillById/getCategoryDomain` from matrix-provider, `isCompatibleWithSelectedFrameworks` from wizard.
+9. **clean-code-standards.md S12 Exit Codes**: PASS -- all 5 exit codes match: SUCCESS(0), ERROR(1), INVALID_ARGS(2), NETWORK_ERROR(3), CANCELLED(4).
+10. **skill-atomicity-bible.md directory structure**: PASS -- verified against `web-framework-react` in skills repo. Directory has SKILL.md (with name/description frontmatter), metadata.yaml (category/slug/domain/author/displayName/cliDescription/usageGuidance), reference.md, examples/ (with core.md + topic files).
+
+**Fixes applied (3 edits):**
+- `findings-impact-report.md`: Replaced 2 stale `deepMergeStacks()` references with `mergeConfigs()` at lines 305 and 315
+- `architecture-overview.md`: Added `mixed` install mode row to Install Modes table
+
+### 2026-04-02 Round 9 Deep Verification (e2e-testing-bible.md, commit-protocol.md, e2e/ sub-standards)
+
+Complete line-by-line verification of the most-edited standards docs. Verified every code example, constant reference, page object method, helper function, and anti-pattern against actual source files.
+
+**e2e-testing-bible.md (4 fixes):**
+
+1. Section 4.6: `BuildStep.passThroughAllDomains()` description said "Web -> API -> Shared" but actual code does "Web -> API -> Methodology". Fixed.
+2. Section 8.1: Claimed "10 skills" but source has 9. Claimed "6 methodology skills (`meta-methodology-*`)" but actual breakdown is 5 web, 1 api, 3 meta. Updated skill count and domain table to match `create-e2e-source.ts`.
+3. Section 3.4: Claimed both `CLI.run()` and `runCLI()` set `AGENTSINC_SOURCE: undefined` by default. Only `CLI.run()` does. Fixed.
+4. Section 10.5: Referenced production constants (`CLAUDE_DIR`, `STANDARD_FILES.CONFIG_TS`) instead of E2E constants (`DIRS.CLAUDE`, `FILES.CONFIG_TS`). Fixed to match section 10.1's rule about using `e2e/pages/constants.ts`.
+
+**commit-protocol.md (0 fixes):** All claims verified: conventional commits format, changelog files exist, `changelogs/` directory structure matches, pre-commit hook exists in `.husky/`.
+
+**e2e/ sub-standards (0 fixes across 7 files):**
+- README.md: Directory structure, file counts, config values all match filesystem and `vitest.config.ts`.
+- assertions.md: All 12 matchers match `project-matchers.ts` and `setup.ts` type augmentation.
+- patterns.md: All code examples use current page object APIs (`selectSkill`, `advanceToSources`, `setAllLocal`, `toggleAgent`).
+- test-data.md: Fixture references correct (9 skills, correct `runCLI` vs `CLI.run()` difference documented).
+- test-structure.md: Directory layout, naming conventions, cleanup patterns all accurate.
+- page-objects.md: All page object methods verified against source (StackStep, DomainStep, BuildStep, SourcesStep, AgentsStep, ConfirmStep, SearchModal, BaseStep, TerminalScreen, WizardResult, DashboardSession, InteractivePrompt).
+- anti-patterns.md: All anti-patterns still relevant, no banned references found.
+
+### 2026-04-02 Round 8 Standards Audit (5 previously-unaudited standards docs)
+
+Audited all 5 standards documents that had never been audited (Last Audited = `--`). Verified every technical claim, file path, function name, cross-reference, and code example against actual source.
+
+**prompt-bible.md (2 fixes):**
+
+1. Line 9: Removed dead cross-reference to `claude-architecture-bible.md` (file does not exist anywhere in the repository). Simplified the note to remove the link.
+2. Line 1768: Removed reference to `claude-architecture-bible.md` in version history entry.
+
+**skill-atomicity-bible.md (6 fixes across 3 sections):**
+
+1. Line 47: Directory structure comment claimed metadata.yaml has `category, tags, version`. Fixed to `category, author, slug, displayName, etc.` -- per MEMORY.md "metadata.yaml must NOT have version or tags fields" and actual `metadataValidationSchema` in schemas.ts.
+2. Lines 617-621: Quality Gate Checklist claimed required fields `category, author, version, cli_name, cli_description, usage_guidance` with snake_case names. Fixed to actual camelCase field names from schema: `category, author, slug, displayName, cliDescription, usageGuidance`. Removed `version` (does not exist). Removed `tags` checklist item (field does not exist). Removed `Version is an integer` checklist item.
+3. Line 620: Changed `claude-architecture-bible.md` category enum reference to `src/cli/types/generated/source-types.ts CATEGORIES` (actual location).
+4. Lines 622, 678: Changed `bun cc:validate` to `agentsinc validate` (no `cc:validate` script exists in package.json; actual CLI binary is `agentsinc`).
+
+**documentation-bible.md (0 fixes):** All file paths verified correct. Staleness thresholds match DOCUMENTATION_MAP.md implementation. Cross-references to other standards docs valid. Code examples syntactically correct.
+
+**loop-prompts-bible.md (0 fixes):** All 10 agent names verified present in AGENT_NAMES (23 agents). No codebase-specific file paths or function names to verify. Process documentation is accurate.
+
+**skill-atomicity-primer.md (0 fixes):** No codebase-specific technical claims. References to skill-atomicity-bible.md and prompt-bible.md are valid.
+
+**Result: 8 factual errors fixed across 2 files. 3 files had zero errors. All 5 standards docs now audited.**
+
+### 2026-04-02 Round 7 Standards Fixes + DOCUMENTATION_MAP Audit + Final Grep Sweep
+
+**Task 1: Fixed 3 stale `installLocal()` references in standards docs:**
+
+- `standards/e2e-testing-bible.md:404` -- `installLocal()` -> `installEject()` (anti-pattern example)
+- `standards/e2e-testing-bible.md:473` -- `installLocal()` -> `installEject()` (E2E definition)
+- `standards/e2e/test-structure.md:206` -- `installLocal()` -> `installEject()` (E2E definition)
+
+**Task 2: DOCUMENTATION_MAP.md self-audit (1 fix):**
+
+- Staleness Dashboard was missing `findings-impact-report.md` entry (17 rows for 18 docs). Added with 5 days stale, 30-day threshold, OK status.
+- Header metadata verified correct: Total Areas 18, Documented 18.
+- Reference Documentation table verified: all 18 entries present, 17 show 2026-04-02, findings-impact-report.md shows 2026-03-28.
+- Standards Documentation table verified: 10 entries, dates correct.
+- Coverage Metrics verified: 317 TypeScript files, all areas [DONE].
+- Validation history entries in chronological order (newest first), no duplicates.
+
+**Task 3: Final grep sweep of all `.ai-docs/` (0 active issues found):**
+
+- `installLocal` -- 0 hits in reference/, 0 hits in standards/ (all fixed). Remaining hits are validation history only.
+- `setAllSourcesLocal` -- 0 hits in reference/ or standards/. Remaining hits are validation history only.
+- `view-title.tsx` -- 0 hits in reference/ or standards/. Remaining hits are findings + validation history only.
+- `stats-panel.tsx` -- 0 hits in reference/ or standards/. Remaining hits are findings + validation history only.
+- `safeLoadYamlFile` -- 0 active references. Hits in reference/ are deletion notes ("was removed as dead code"). Remaining hits are findings + validation history.
+- `0.94.0` / `0.74.10` -- 0 hits in active docs. All hits are validation history entries documenting past version bumps.
+- `"local"` in reference/ -- all 5 hits are legitimate (CategoryPath type, SkillSourceType, categoryPathSchema). 0 install-mode context.
+- `"local"` in standards/ -- 0 hits.
+
+**Result: 0 active documentation issues remaining across all `.ai-docs/` files.**
+
+### 2026-04-02 Round 6 Final Cross-Document Consistency Sweep
+
+Full consistency audit across all 18 reference docs + standards docs + DOCUMENTATION_MAP.md. All 5 check axes passed.
+
+**Check 1: Stale terminology grep (0 errors in reference/):**
+
+- `installLocal` -- 0 hits in reference/ (all cleaned in prior rounds)
+- `setAllSourcesLocal` -- 0 hits in reference/ (renamed to `setAllSourcesEject` in round 4)
+- `LocalInstall` -- 0 hits in reference/
+- `view-title.tsx` -- 0 hits in reference/
+- `stats-panel.tsx` -- 0 hits in reference/
+- `yaml.ts` as existing util -- 0 hits in reference/ (all correctly marked DELETED)
+- `config/show.ts`, `config/path.ts` -- 0 hits in reference/
+- `diff.ts`, `outdated.ts` -- 0 hits in reference/
+- `safeLoadYamlFile` -- 0 active reference hits (only historical notes about deletion)
+- **Standards note (out of scope):** `installLocal()` appears 3 times in `standards/e2e-testing-bible.md` and `standards/e2e/test-structure.md` as an anti-pattern example. Convention-keeper should update to `installEject()`.
+
+**Check 2: Count consistency (0 errors):**
+
+| Value | Expected | Verified Against | Docs Referencing |
+|-------|----------|------------------|------------------|
+| Skills | 161 | source-types.ts SKILL_MAP (lines 7-167) | type-system.md, skills-and-matrix.md |
+| Categories | 51 | source-types.ts CATEGORIES (lines 506-556) | type-system.md, skills-and-matrix.md |
+| Domains | 9 | source-types.ts DOMAINS (lines 563-573) | type-system.md, skills-and-matrix.md |
+| AgentNames | 23 | source-types.ts AGENT_NAMES (lines 579-603) | type-system.md, agent-system.md |
+| TypeScript files | 317 | `find src/cli -name '*.ts' -o -name '*.tsx' | wc -l` | DOCUMENTATION_MAP.md |
+| Zod schemas | 39 | `grep -c` on schemas.ts | architecture-overview.md, type-system.md |
+| Version | 0.100.0 | package.json | architecture-overview.md |
+
+**Check 3: Store line numbers (0 errors):**
+
+All wizard-store.ts references consistent across store-map.md, state-transitions.md, wizard-flow.md:
+
+| Reference | Actual | store-map.md | state-transitions.md | wizard-flow.md |
+|-----------|--------|-------------|---------------------|---------------|
+| useWizardStore | :560 | :560 | (not referenced) | (not referenced) |
+| createInitialState | :530 | :530-558 | :530 | (not referenced) |
+| WizardState | :190-497 | :190-497 | (refs store-map.md) | (not referenced) |
+| DOMAIN_AGENTS | :93-104 | :93-104 | :93-104 | (not referenced) |
+| goBack | :898-906 | (no line) | :898-906 | (not referenced) |
+| getStepProgress | :1001 | (no line) | :1001 | (not referenced) |
+
+**Check 4: Compiler line numbers (0 errors):**
+
+All compiler.ts references consistent across compilation-pipeline.md, agent-system.md, architecture-overview.md, boundary-map.md:
+
+| Function | Actual | All docs agree |
+|----------|--------|---------------|
+| compileAllAgents | :216 | :216 |
+| compileAgent | :190 | :190 |
+| createLiquidEngine | :394-419 | :394-419 |
+| sanitizeCompiledAgentData | :77-111 | :77-111 |
+
+**Check 5: Consts.ts line numbers (0 errors):**
+
+All consts.ts references consistent across utilities.md, component-patterns.md, boundary-map.md, architecture-overview.md:
+
+| Constant | Actual | All docs agree |
+|----------|--------|---------------|
+| MAX_MARKETPLACE_FILE_SIZE | :150 | :150 |
+| MAX_PLUGIN_FILE_SIZE | :151 | :151 |
+| MAX_CONFIG_FILE_SIZE | :152 | :152 |
+| MAX_JSON_NESTING_DEPTH | :154 | :154 |
+| MAX_MARKETPLACE_PLUGINS | :155 | :155 |
+| CLI_COLORS | :185-196 | :185-196 |
+| UI_SYMBOLS | :99-115 | :99-115 |
+| DEFAULT_BRANDING | :170-173 | :170-173 |
+| SCROLL_VIEWPORT | :157-168 | :157-168 |
+| UI_LAYOUT | :117 | :117 |
+| UI_MESSAGES | :124 | :124 |
+| CLI_BIN_NAME | :27 | :27 |
+
+**Result: 0 errors in reference documentation. 3 stale `installLocal()` references in standards/ (convention-keeper scope).**
+
+### 2026-04-02 Round 5 Final Exhaustive Verification (boundary-map.md)
+
+Exhaustive line-by-line verification of EVERY claim in boundary-map.md -- the most error-prone document (4 errors round 1, 5 round 2, 3 cross-doc round 4). Checked all exec.ts, consts.ts, schemas.ts, command flags, plugin-*, config.ts, compiler.ts, and skill-copier.ts references.
+
+**16 errors fixed:**
+
+1. `doctor` command flags line: `:325-335` -> `:372-382`
+2. `import skill` flags: added `--subdir`, `--force`, `--refresh`; line range `:65-80` -> `:65-95`
+3. `new skill` flags: added `--output`; line range `:47-67` -> `:47-73`
+4. `search` flags: added `--json`; line range `:58-73` -> `:58-78`
+5. `build plugins` flags: added `--skill`, `--verbose`; line range `:30-45` -> `:30-53`
+6. `build stack` flags: added `--verbose`; line range `:52-67` -> `:52-74`
+7. `build marketplace` flags: added `--version`, `--description`; line range `:39-54` -> `:39-62`
+8. `config-loader.ts loadConfig()` range: `:26-58` -> `:26-65`
+9. `MAX_CONFIG_FILE_SIZE` Used By: `safeLoadYamlFile` (dead) -> `permission-checker.tsx`
+10. Skill copier function name: `copySkills()` -> `copySkillsToPluginFromSource()` / `copySkillsToLocalFlattened()` at `:131` / `:199`
+11. `injectForkedFromMetadata()` line: `:~305+` -> `:299`
+12. `readPluginManifest()` in plugin-finder.ts: `:57-69` -> `:49-71`
+13. Plugin validation function name: `validatePlugin()` -> `validatePluginManifest()` with line range `:~115-149` -> `:114-183`
+14. `validateSkillFrontmatter()` range: `:~184-219` -> `:185-219`
+15. `validateAgentFrontmatter()` range: `:~221-254` -> `:221-264`
+16. `plugin-validator.ts:335` description: "(test helper)" -> "(`loadManifestForValidation()`)"
+17. `source-validator.ts` metadata schema line: `:184` -> `:189`; added `customMetadataValidationSchema` alternative
+18. Init hook location range: `:24-34` -> `:24-40` (was missing `-s` short flag extraction at :37-40)
+
+**All verified correct (no additional errors):**
+
+- All exec.ts function line numbers: validatePluginPath(:20-41), validateMarketplaceSource(:43-64), validatePluginName(:66-87), execCommand(:95-130), claudePluginInstall(:137-152), isClaudeCLIAvailable(:154-161), claudePluginMarketplaceList(:170-195), claudePluginMarketplaceAdd(:202-220), claudePluginMarketplaceRemove(:222-240), claudePluginMarketplaceUpdate(:242-257), claudePluginUninstall(:259-278)
+- JSON.parse at :180, Array cast at :191 -- both correct
+- All consts.ts file size constants: MAX_MARKETPLACE_FILE_SIZE(:150), MAX_PLUGIN_FILE_SIZE(:151), MAX_CONFIG_FILE_SIZE(:152), MAX_JSON_NESTING_DEPTH(:154), MAX_MARKETPLACE_PLUGINS(:155)
+- All SAFE patterns: SAFE_PLUGIN_PATH_PATTERN and SAFE_NAME_PATTERN char classes match actual regexes
+- All command flag ranges for init(:162-168), edit(:81-90), compile(:31-41), list(:64-66), info(:85-92), eject(:79-94), update(:69-80), uninstall(:96-107), validate(:60-77), new agent(:80-97), new marketplace(:137-148)
+- All schemas.ts line numbers (30+ schemas, 3 helpers) -- every single one verified
+- pluginSettingsSchema(:34-38), installedPluginsSchema(:50-55) in plugin-settings.ts
+- getEnabledPluginKeys(:63-98), resolvePluginInstallPaths(:103-173), getVerifiedPluginInstallPaths(:179-198)
+- All config.ts security validation lines: NULL_BYTE(:293), LENGTH(:303), PATH_TRAVERSAL(:336), UNC(:418), CONTROL_CHAR(:406), validateHttpUrl(:357-387), PRIVATE_IP(:377), validateGitShorthand(:389-399), isLocalSource(:431-447)
+- compiler.ts: LIQUID_SYNTAX_PATTERN(:31), sanitizeCompiledAgentData(:77-111), createLiquidEngine(:394-419), removeCompiledOutputDirs(:422-426)
+- config-writer.ts: generateConfigSource(:35), ensureBlankGlobalConfig(:525), generateBlankGlobalConfigSource(:489), generateBlankGlobalConfigTypesSource(:503), JSON.parse(JSON.stringify) at :40-41,:59
+- skill-copier.ts: validateSkillPath(:25-45), null byte(:30), path.resolve(:34-35), startsWith(:37-39)
+- readFileSafe at utils/fs.ts:13-21
+- All JSON parse boundary line numbers in Section 2.4
+- All write boundary line numbers in Section 3
+- Trust boundary diagram and data flow descriptions accurate
+- No remaining yaml.ts references (correctly noted as removed in Section 2.1)
+- No config command references
+- No incorrect "local" references (all are legitimate local-skills/local-installer usage)
+
+### 2026-04-02 Round 4 Deep Pass (wizard-flow.md, store-map.md)
+
+Complete line-by-line reverification of 2 docs with substantial round-1 edits (7 and 8 errors respectively). Focus on areas not covered in round 3.
+
+**wizard-flow.md (4 errors fixed):**
+
+- Fixed WizardResultV2 line range: `:32-45` -> `:31-44` (off by 1)
+- Fixed WizardProps line range: `:47-63` -> `:46-62` (off by 1)
+- Fixed StepSettings feature-flag claim in component tree: was "(S hotkey on sources step; feature-flagged: SOURCE_SEARCH)" but the S hotkey in wizard.tsx:170 is NOT gated by SOURCE_SEARCH. Only the footer label visibility (wizard-layout.tsx:212) is gated. Updated to "always functional, footer label gated by SOURCE_SEARCH"
+- Fixed S hotkey on sources step description: same issue, updated from "(feature-flagged: SOURCE_SEARCH)" to "(always functional; footer label gated by SOURCE_SEARCH)"
+
+**All verified correct in wizard-flow.md (0 additional errors):**
+
+- WizardStep type at wizard-store.ts:172-178 (6 steps, all correct)
+- Step progression: stack -> domains -> build -> sources -> agents -> confirm (matches WIZARD_STEPS at wizard-tabs.tsx:41-48)
+- All component tree entries exist: wizard.tsx, wizard-layout.tsx, wizard-tabs.tsx, info-panel.tsx, step-stack.tsx, stack-selection.tsx, domain-selection.tsx, step-build.tsx, category-grid.tsx, checkbox-grid.tsx, section-progress.tsx, step-sources.tsx, selection-card.tsx, source-grid.tsx, search-modal.tsx, step-agents.tsx, step-confirm.tsx, skill-agent-summary.tsx, step-settings.tsx
+- Additional components verified: menu-item.tsx, selection-card.tsx, step-refine.tsx, toast.tsx all exist
+- Feature flags verified: SOURCE_SEARCH=false, SOURCE_CHOICE=false, INFO_PANEL=true (feature-flags.ts:1-8)
+- All 16 hooks verified to exist in src/cli/components/hooks/
+- Build step logic functions verified: validateBuildStep, isCompatibleWithSelectedFrameworks, buildCategoriesForDomain (build-step-logic.ts:16, :38, :48)
+- All hotkeys in hotkeys.ts verified: HOTKEY_INFO(I), HOTKEY_ACCEPT_DEFAULTS(A), HOTKEY_SCOPE(S), HOTKEY_SETTINGS(S), HOTKEY_TOGGLE_LABELS(D), HOTKEY_FILTER_INCOMPATIBLE(F), HOTKEY_SET_ALL_LOCAL(L), HOTKEY_SET_ALL_PLUGIN(P), HOTKEY_ADD_SOURCE(A)
+- HOTKEY_COPY_LINK(C) exists in hotkeys.ts but is correctly omitted from wizard-flow.md (used only in skill-search.tsx, outside wizard)
+- Key labels verified: KEY_LABEL_ENTER, KEY_LABEL_ESC, KEY_LABEL_SPACE, KEY_LABEL_TAB, KEY_LABEL_DEL, KEY_LABEL_ARROWS, KEY_LABEL_ARROWS_VERT, KEY_LABEL_VIM, KEY_LABEL_VIM_VERT (hotkeys.ts:48-56)
+- isHotkey helper at hotkeys.ts:63 verified
+- Hotkey contexts verified in wizard.tsx: I toggles info (116-128), A on build+stack jumps to confirm (142-149), S on build toggles skill scope (152-158), S on agents toggles agent scope (161-168), S on sources toggles settings (170-173, NOT gated by flag)
+- Settings step hotkeys verified in step-settings.tsx: A (HOTKEY_ADD_SOURCE, :134), DEL/Backspace (:120), ESC via useKeyboardNavigation(:77)
+- BUILT_IN_DOMAIN_ORDER at consts.ts:199 verified (8 domains in correct order)
+- DEFAULT_SCRATCH_DOMAINS at consts.ts:211 verified (["web", "api", "mobile"])
+- Domain descriptions table verified against BUILT_IN_DOMAIN_DESCRIPTIONS in domain-selection.tsx:10-19 (all 8 match exactly)
+- Edit mode flow verified: useWizardInitialization walks steps via setStep() building history (use-wizard-initialization.ts:43-51)
+- Framework-first filtering verified: use-framework-filtering.ts hook + build-step-logic.ts functions
+
+**store-map.md (0 errors found, 0 fixes needed):**
+
+- useWizardStore at :560 verified
+- WizardState range :190-497 verified (starts at 190, `buildSourceRows` return type ends at 497)
+- All 26 state fields verified present in WizardState type and createInitialState (lines 530-558)
+- All 26 initial values verified correct against createInitialState output
+- All 29 actions verified to exist with correct signatures (checked every one against wizard-store.ts)
+- All 8 computed getters verified with correct return types
+- DOMAIN_AGENTS at :93-104 verified (web:6, api:3, cli:3)
+- Source sort tiers verified (4 tiers at :113-116, getSourceSortTier at :118-123)
+- createInitialState at :530-558, reset at :958 -- both verified
+- selectStack reset fields verified (9 fields at :571-583)
+- All 10 production file consumers verified via grep for useWizardStore:
+  - wizard.tsx, wizard-layout.tsx, step-build.tsx, step-sources.tsx, step-agents.tsx, stack-selection.tsx, domain-selection.tsx, info-panel.tsx, skill-agent-summary.tsx, use-wizard-initialization.ts
+  - Correctly excludes: step-confirm.tsx, step-settings.tsx, source-grid.tsx (receive data via props)
+  - Correctly excludes: use-build-step-props.ts (receives store as parameter, doesn't import useWizardStore)
+
+### 2026-04-02 Cross-Document Consistency Audit (all 18 reference docs)
+
+21 fixes across 7 files. Verified 6 consistency axes: local->eject rename, count consistency, version consistency, line number cross-references, deleted file references, command list consistency.
+
+**Axis 1: local -> eject rename (12 fixes across 5 files):**
+
+- **state-transitions.md (5):** Sources step "local" -> "eject". `setAllSourcesLocal()` -> `setAllSourcesEject()`. `source: "local"` -> `source: "eject"`. `non-local` -> `non-eject`. `InstallMode ("local"` -> `("eject"`. Hotkey description "local" -> "eject".
+- **architecture-overview.md (2):** Install mode table "local" -> "eject". eject.ts comment "Eject to local mode" -> "Eject skills/templates to local filesystem".
+- **commands.md (3):** `local/plugin/mixed` -> `eject/plugin/mixed`. `local/mixed` -> `eject/mixed`. `local-to-plugin and plugin-to-local` -> `eject-to-plugin and plugin-to-eject`.
+- **configuration.md (1):** `source: "local"` comment -> `source: "eject"`.
+- **plugin-system.md (1):** All three `"local"` mode references -> `"eject"` in deriveInstallMode section.
+
+**Axis 2: Count consistency -- ALL CORRECT (0 fixes):**
+Verified: Skills=161, Categories=51, Domains=9, AgentNames=23, Source files=317, Zod schemas=39.
+
+**Axis 3: Version consistency -- ALL CORRECT (0 fixes):**
+Only version reference: architecture-overview.md says 0.100.0 (correct).
+
+**Axis 4: Line number cross-references (3 fixes in boundary-map.md):**
+
+- `MAX_CONFIG_FILE_SIZE` line: `consts.ts:144` -> `consts.ts:152`
+- `writeScopedConfigs()` range: `:~395-425` -> `:369-425`
+- `MAX_JSON_NESTING_DEPTH` line: `consts.ts:146` -> `consts.ts:154`
+
+All other cross-references verified consistent: `resolveSource` at config.ts:84, `detectInstallation` at installation.ts:84, `compileAllAgents` at compiler.ts:216, `createLiquidEngine` at compiler.ts:394, WizardState at :190-497, useWizardStore at :560.
+
+**Axis 5: Deleted file references (6 fixes across 3 files):**
+
+- **architecture-overview.md (2):** Removed `yaml.ts` from file tree. Updated `safeLoadYamlFile` reference to note deletion.
+- **boundary-map.md (2):** Removed `yaml.ts` from boundary file list. Rewrote section 2.1 to note deletion and document inline parse pattern.
+- **dependency-graph.md (2):** Marked `yaml.ts` section as DELETED. Updated observation from "is dead code" to "has been removed".
+
+No other deleted file references found (config/, diff.ts, outdated.ts, view-title.tsx, stats-panel.tsx already cleaned in prior audits).
+
+**Axis 6: Command list consistency -- ALL CORRECT (0 fixes):**
+All 4 docs (architecture-overview, commands, dependency-graph, boundary-map) agree on same 11 commands + 7 subcommands. None reference deleted config/diff/outdated.
+
+**Intentionally NOT changed (legitimate "local" usages):**
+- `CategoryPath = Category | "local"` (type-system.md, boundary-map.md) -- "local" means local skills directory, not install mode
+- `SkillSourceType = "public" | "private" | "local"` (type-system.md) -- "local" means skill source type, not install mode
+- `copyLocalSkills`, `deleteLocalSkill`, `migrateLocalSkillScope` -- actual function names
+- `local-installer.ts` -- actual file name
+- "local skills" in component descriptions -- refers to skills on local disk
+
+### 2026-04-02 Adversarial Audit (8 docs: operations-layer, configuration, plugin-system, agent-system, boundary-map, dependency-graph, state-transitions, compilation-pipeline)
+
+14 errors fixed across 6 of the 8 files. 2 files (operations-layer.md, compilation-pipeline.md) had zero errors -- only date stamps updated.
+
+**boundary-map.md (4 errors):**
+
+- Fixed `list` command file path: `commands/list.tsx:64-66` (was `commands/list.ts:17-19`)
+- Fixed `init` flags line: `commands/init.tsx:162-168` (was `:170-176`)
+- Fixed `edit` flags line: `commands/edit.tsx:81-90` (was `:75-84`)
+- Fixed file size constant lines in consts.ts: MAX_MARKETPLACE_FILE_SIZE `:150` (was `:142`), MAX_PLUGIN_FILE_SIZE `:151` (was `:143`), MAX_CONFIG_FILE_SIZE `:152` (was `:144`), MAX_JSON_NESTING_DEPTH `:154` (was `:146`), MAX_MARKETPLACE_PLUGINS `:155` (was `:147`)
+- Fixed `writeStandaloneConfigTypes` file: `installation/local-installer.ts:344` (was `configuration/config-types-writer.ts`)
+
+**dependency-graph.md (3 errors):**
+
+- Removed `config` command row (commands/config/ directory deleted)
+- Fixed `list` file path: `commands/list.tsx` (was `commands/list.ts`)
+- Updated `list` direct lib imports: added `lib/installation/` (detectInstallation), `lib/configuration/project-config` (loadProjectConfig) -- the rewrite added these
+- Added `list` to Command -> Component Imports table: imports `SkillAgentSummary` from wizard
+
+**agent-system.md (3 errors):**
+
+- Updated AGENT_NAMES: now 23 entries at `:579-605` (was 18 entries at `:550-571`). All 5 previously missing agents (ai-developer, ai-reviewer, api-pm, api-tester, infra-reviewer) are now in the generated union.
+- Removed entire "Agents NOT in Generated Union" section (no longer accurate)
+- Fixed AgentName type line: `:605` (was `:571`)
+
+**plugin-system.md (2 errors):**
+
+- Removed `installLocal()` function (no longer exists). Replaced with `installEject()`.
+- Fixed barrel exports: `LocalInstallOptions`/`LocalInstallResult`/`installLocal`/`buildLocalSkillsMap` -> `EjectInstallOptions`/`EjectInstallResult`/`installEject`/`buildEjectSkillsMap`
+- Fixed `Both installLocal() and installPluginConfig()` -> just `installPluginConfig()`
+
+**state-transitions.md (4 errors):**
+
+- Fixed `goBack()` line: `wizard-store.ts:898-906` (was `:890-898`)
+- Fixed `getStepProgress()` line: `wizard-store.ts:1001` (was `:993-1021`)
+- Fixed `createInitialState()` line: `wizard-store.ts:530` (was `:524-550`)
+- Fixed `selectStack()` line: `wizard-store.ts:571` (was `:563-575`)
+- Fixed `DEFAULT_SCRATCH_DOMAINS` line: `consts.ts:211` (was `:202`)
+
+**configuration.md (1 error):**
+
+- Fixed `DEFAULT_BRANDING` line: `consts.ts:170-173` (was `:162-165`)
+
+**All verified correct (no changes needed):**
+
+- operations-layer.md: All 20 file structure entries, all type/function tables, all command consumer mappings, all data flow diagrams verified
+- compilation-pipeline.md: All compiler.ts line numbers (sanitizeLiquidSyntax :41, sanitizeCompiledAgentData :77, readAgentFiles :118, buildAgentTemplateContext :151, compileAgent :190, compileAllAgents :216, compileAllSkills :263, copyClaudeMdToOutput :332, compileAllCommands :350, createLiquidEngine :394, removeCompiledOutputDirs :422), output-validator.ts lines, recompileAgents :157, discoverInstalledSkills :112
+- boundary-map.md: exec.ts validation functions (:20, :43, :66), shell commands (:137, :154, :170, :202, :222, :242, :259), schemas.ts helper functions (:776, :784, :803), all schema line numbers verified, source validation chain (:84, :142, :291, :431) all correct
+- configuration.md: ProjectConfig :66-146, SkillConfig :23-27, AgentScopeConfig :30-33, ResolvedConfig :18-22, resolveSource :84, validateSourceFormat :291, resolveAgentsSource :142, all config I/O function lines, all config-generator.ts lines (:47, :146, :169), all config-merger.ts lines (:25, :89), writeProjectConfig operation :43
+- agent-system.md: All agent type lines in agents.ts (:9, :17, :27, :41, :55, :62, :71, :89, :108), compiler.ts function lines (:77, :118, :151, :190, :216, :394), STANDARD_FILES :50-60, agentYamlConfigSchema :215-227, DOMAIN_AGENTS :93-104, loadAllAgents :38, getAgentDefinitions :13
+- plugin-system.md: All plugin-validator.ts lines (:64, :114, :185, :221, :351, :381, :459), all local-installer.ts lines (:96, :251, :282, :300, :309, :336, :369, :492), detection functions (:26, :35, :59, :84, :95), all exec.ts function lines
+
+### 2026-04-02 Adversarial Audit (architecture-overview.md)
+
+4 errors fixed, 0 additions. Version bump, command removal, file rename, and line drift since 2026-03-28 (version 0.94.0 -> 0.100.0).
+
+**Errors fixed:**
+
+- Fixed version: 0.100.0 (was 0.94.0)
+- Removed `config/` subdirectory from directory structure (commands `config show`, `config path` deleted)
+- Fixed `list.ts` -> `list.tsx` and updated description: "Show installation information (Ink component)" (was "List installed skills")
+- Fixed file size limits line: `consts.ts:150-152` (was :143-145, shifted by new constants EJECT, BULLET, LABEL_BG)
+
+**Source file count updated in DOCUMENTATION_MAP.md:** 317 (was 327, -10 from removed commands and related files)
+
+**All verified correct (no changes needed):**
+
+- CLI_BIN_NAME at consts.ts:27, BaseCommand at base-command.ts:12
+- resolveSource at config.ts:84-132, validateSourceFormat at config.ts:291 with helpers through :447
+- sanitizeCompiledAgentData at compiler.ts:77-111, createLiquidEngine at compiler.ts:394-419
+- detectInstallation at :84, detectProjectInstallation at :35, writeScopedConfigs at :369
+- generateConfigSource at config-writer.ts:35, resolveRelationships at skill-resolution.ts:150
+- exec.ts validation at :7-87
+- Technology stack versions: ink v5, Zustand v5, Zod v4.3.6, Remeda v2.33.6
+- Zod schema count: 39 exported schemas (still correct)
+- Feature flags: SOURCE_SEARCH, SOURCE_CHOICE, INFO_PANEL (all confirmed)
+- Data flow, wizard steps, security measures, install modes -- all verified unchanged
+
+### 2026-04-02 Adversarial Audit (commands.md)
+
+7 errors fixed. Removed deleted `config` command (row from Commands Index + Operations Layer table). Fixed `list` command: file path `list.ts` -> `list.tsx`, type `ts` -> `tsx`, rewrote detailed section from old plain-TS description to Ink-based implementation (ListView component, SkillAgentSummary, detectInstallation, loadProjectConfig, TTY/non-TTY branching), updated Operations Layer description. Fixed `edit` summary: "Edit installed skills via wizard" -> "Edit skills in the plugin" (matches actual `static summary`), added styled output description (chalk-colored change summary, simplified completion message). Verified `config/`, `diff`, `outdated` commands all deleted from filesystem. Verified message counts unchanged (ERROR=10, SUCCESS=5, STATUS=12, INFO=6). Version 0.100.0 confirmed.
+
+### 2026-04-02 Adversarial Audit (skills-and-matrix.md)
+
+5 count errors fixed, 0 line number errors, 0 structural errors. All 18 matrix-resolver.ts line numbers verified correct. All 8 matrix-provider.ts line numbers verified correct. All 3 skill-resolution.ts line numbers verified correct. All 7 stacks-loader.ts line numbers verified correct. SourceLoadResult line range (62-69) verified correct. rawMetadataSchema line range (26-36) verified correct. Barrel exports from matrix/index.ts verified (14 from matrix-resolver, validateConflicts/Requirements/Exclusivity/Recommendations correctly documented as non-barrel). default-rules.ts verified against documented relationship types.
+
+**Count drift (5 errors):**
+
+- Fixed SKILL_MAP count: 161 (was 155, +6 skills added)
+- Fixed Categories count: 51 (was 50, +1 category added)
+- Fixed Domains count: 9 (was 8, "desktop" domain added)
+- Fixed Domains list: added "desktop" (was missing from enumeration)
+- Fixed AgentNames count: 23 (was 18, +5 agents added)
+
+**All verified correct (no changes needed):**
+
+- All 18 matrix-resolver.ts function line numbers
+- All 8 matrix-provider.ts exports and line numbers
+- All 3 skill-resolution.ts exports and line numbers
+- All 7 stacks-loader.ts function line numbers
+- SourceLoadResult type at source-loader.ts:62-69
+- rawMetadataSchema at matrix-loader.ts:26-36
+- Barrel export documentation (matrix/index.ts)
+- Relationship system table (6 types)
+- Data flow pipeline (7 steps)
+- All file structure tables (matrix, skills, loading, stacks)
+- Operations layer integration table
+
+### 2026-04-02 Adversarial Audit (wizard-flow.md, component-patterns.md)
+
+19 errors fixed across 2 files. 1 finding written.
+
+**wizard-flow.md (7 errors):** INFO_PANEL default false→true. BUILT_IN_DOMAIN_ORDER line 190→199. Default scratch domains line 202→211. Removed deleted view-title.tsx and stats-panel.tsx entries. Added SkillAgentSummary to StepConfirm component tree. Rewrote InfoPanel section (old groupSkillsByBucket/groupAgentsByScope helpers replaced with marketplace/stack header + SkillAgentSummary delegation).
+
+**component-patterns.md (12 errors):** Added missing skill-agent-summary.tsx and toast.tsx to directory listing. Removed deleted view-title.tsx and stats-panel.tsx. CLI_COLORS range 177-187→185-196, added LABEL_BG. UI_SYMBOLS range 99-112→99-115, added LOCK, EJECT, BULLET. CategoryOption type: added locked field. HOTKEY_ACCEPT_DEFAULTS context fixed. Rewrote InfoPanel section, replaced StatsPanel with SkillAgentSummary documentation. SCROLL_VIEWPORT range 149-160→157-168.
+
+**Finding:** `agent-findings/2026-04-02-documentation-references-deleted-files.md`
+
+### 2026-04-02 Verification Pass (post-edit validation of utilities.md, component-patterns.md, type-system.md, store-map.md)
+
+Second-pass verification of recently edited docs (sorted by edit count: utilities 18, component-patterns 12, type-system 10, store-map 8). Purpose: catch errors introduced by the editing process itself.
+
+**1 error fixed:**
+
+- component-patterns.md: Inline `CLI_COLORS` reference at line 103 still said `177-187` (stale from before the +8 shift), while the Color Constants section header already said `185-196`. Fixed inline reference to `185-196`.
+
+**All other edits verified correct:**
+
+- **utilities.md (18 edits):** All line numbers verified via `sed -n`: UI_LAYOUT :117, CLI_COLORS :185, SCROLL_VIEWPORT :157, DEFAULT_BRANDING :170, 5 Limits :150-155, GITHUB_SOURCE :129, DEFAULT_SKILLS_SUBDIR :135, KEBAB_CASE_PATTERN :138, BUILT_IN_DOMAIN_ORDER :199, DEFAULT_SCRATCH_DOMAINS :211. UI_SYMBOLS has exactly 15 members (counted). UI_MESSAGES at :124. SOURCE_DISPLAY_NAMES has "eject" not "local". yaml.ts confirmed deleted. All exec.ts line numbers verified: ExecResult :89, execCommand :95, claudePluginInstall :137, isClaudeCLIAvailable :154, MarketplaceInfo :163, claudePluginMarketplaceList :170, claudePluginMarketplaceExists :197, claudePluginMarketplaceAdd :202, claudePluginMarketplaceRemove :222, claudePluginMarketplaceUpdate :242, claudePluginUninstall :259. WarnOptions at :66. Message counts: ERROR=10, SUCCESS=5, STATUS=12, INFO=6.
+- **component-patterns.md (12 edits):** skill-agent-summary.tsx and toast.tsx exist in wizard/. view-title.tsx and stats-panel.tsx confirmed deleted. CLI_COLORS range 185-196, UI_SYMBOLS range 99-115, SCROLL_VIEWPORT range 157-168 all verified. LOCK/EJECT/BULLET in UI_SYMBOLS table. CategoryOption has `locked` field at category-grid.tsx:20. InfoPanel: no props, reads skillConfigs/agentConfigs/selectedStackId/enabledSources from store. SkillAgentSummary: exports SkillAgentSummaryProps, SkillAgentSummary, TableHeader, ScopeLabel, EjectIcon -- all confirmed.
+- **type-system.md (10 edits):** SKILL_MAP at source-types.ts:6. SkillSlug at :170. SkillId at :171. AgentName at :579 with 23 entries (counted). Domain at :563 with 9 entries (counted). Category at :505 with 51 entries (counted). "desktop" is in domain list. SKILL_MAP has 161 entries (counted).
+- **store-map.md (8 edits):** useWizardStore at :560. WizardState :190-497. installedSkillConfigs and installedAgentConfigs both in store. setAllSourcesEject exists, setAllSourcesLocal does not. createInitialState at :530-558. reset at :958. skill-agent-summary.tsx imports useWizardStore (confirmed). canGoToNextDomain/canGoToPreviousDomain are `() => boolean` getter functions.
+
+### 2026-04-02 Adversarial Audit (utilities.md, store-map.md, type-system.md)
+
+36 errors fixed across 3 files. 1 finding written.
+
+**utilities.md (18 errors):** yaml.ts updated to DELETED status. All line numbers shifted +8 due to new UI_SYMBOLS entries (EJECT, BULLET, SCROLL_UP, SCROLL_DOWN): UI_LAYOUT 114→117, CLI_COLORS 177→185, SCROLL_VIEWPORT 149→157, SOURCE_DISPLAY_NAMES 171→179, DEFAULT_BRANDING 162→170, DEFAULT_PUBLIC_SOURCE_NAME 168→176, HASH_PREFIX_LENGTH 132→140, CACHE_HASH_LENGTH 135→143, CACHE_READABLE_PREFIX_LENGTH 138→146, all 5 Limits 142-147→150-155, GITHUB_SOURCE 121→129, DEFAULT_SKILLS_SUBDIR 127→135, KEBAB_CASE_PATTERN 130→138, BUILT_IN_DOMAIN_ORDER 190→199, DEFAULT_SCRATCH_DOMAINS 202→211. Added missing UI_MESSAGES constant. Added EJECT, BULLET, SCROLL_UP, SCROLL_DOWN to UI_SYMBOLS (full 15 members). SOURCE_DISPLAY_NAMES value fixed: "local"→"eject".
+
+**store-map.md (8 errors):** useWizardStore line 552→560. WizardState shape range 190-493→190-497. Added missing installedSkillConfigs and installedAgentConfigs fields. setAllSourcesLocal→setAllSourcesEject rename. Source sort tier "local/installed"→"eject/global (installed on disk)". reset() line 524-550→createInitialState at 530-558, reset at 958. Added skill-agent-summary.tsx consumer. canGoToNextDomain/canGoToPreviousDomain return types boolean→() => boolean (getter functions).
+
+**type-system.md (10 errors):** SKILL_MAP line 165→6. SkillId/SkillSlug count 155→161. SkillSlug line 164→170. AgentName line 571→579, count 18→23 (added ai-developer, ai-reviewer, api-pm, api-tester, infra-reviewer). Domain line 546→563, count 8→9 (added desktop). Category line 540→505, count 50→51 (added desktop-framework). Domain list: added desktop.
+
+**Finding:** `agent-findings/2026-04-02-local-to-eject-rename.md`
+
+### 2026-04-02 Deep Second Pass (agent-system.md, compilation-pipeline.md)
+
+Exhaustive line-by-line verification of 2 docs that received only light coverage in the remaining-docs audit. Every line number, type definition, function signature, and pattern claim checked against actual source files.
+
+**agent-system.md (1 fix):**
+
+- Fixed re-export chain: clarified that `AGENT_NAMES` value is NOT barrel-exported through `types/index.ts` (which uses `export type *`). Consumers import from `agents.ts` or `source-types.ts` directly. Also fixed line reference `:3-6` -> `:5-6` (lines 3-4 are import, 5-6 are re-exports).
+
+**All verified correct in agent-system.md (0 additional errors):**
+
+- All 10 agent type definitions in agents.ts verified: AgentHookAction :9-14, AgentHookDefinition :17-20, BaseAgentFields :27-38, AgentDefinition :41-52, AgentConfig :55-59, AgentYamlConfig :62-68, AgentFrontmatter :71-86, CompiledAgentData :89-105, AgentSourcePaths :108-112
+- AgentName at source-types.ts:605 (23 entries at :579-603 verified)
+- agentYamlConfigSchema at schemas.ts:215-227 verified
+- ModelName at matrix.ts:11, PermissionMode at matrix.ts:14-20 verified
+- STANDARD_FILES at consts.ts:43-61 (agent constants at 50, 56-60) verified
+- All 10 Key Functions: loadAllAgents :38, readAgentFiles :118, buildAgentTemplateContext :151, sanitizeCompiledAgentData :77, compileAgent :190, compileAllAgents :216, createLiquidEngine :394, sanitizeLiquidSyntax :41, getAgentDefinitions :13, loadAgentDefs :21
+- DOMAIN_AGENTS at wizard-store.ts:93-104 verified (web:6, api:3, cli:3 agents)
+- 11 unmapped agents verified (4 meta, 2 pattern, 1 planning, 2 reviewer, 1 tester, 1 developer)
+- Agent inventory: 23 agents, 20 opus / 3 sonnet verified via metadata.yaml grep
+- skill-summoner tools (WebSearch, WebFetch, no Bash) verified
+- Template variables table verified against agent.liquid (snake_case property names match template)
+- Methodology partials: 5 rendered + 1 unrendered (improvement-protocol.liquid) verified
+- createLiquidEngine template roots (3 paths) verified
+- Engine config (extname, strictVariables, strictFilters) verified
+
+**compilation-pipeline.md (0 errors found, 0 fixes):**
+
+- All 11 compiler.ts function line numbers verified: sanitizeLiquidSyntax :41, sanitizeCompiledAgentData :77, readAgentFiles :118-149, buildAgentTemplateContext :151-172, compileAgent :190, compileAllAgents :216, compileAllSkills :263-321, copyClaudeMdToOutput :332-339, compileAllCommands :350-381, createLiquidEngine :394-419, removeCompiledOutputDirs :422-426
+- LIQUID_SYNTAX_PATTERN at :31 verified
+- Skill split logic at :156-158 verified
+- All 6 output-validator.ts line numbers verified: checkXmlTagBalance :5, checkTemplateArtifacts :37, checkRequiredPatterns :53, validateFrontmatter :76, validateCompiledAgent :108, printOutputValidationResult :140
+- All 9 compiler.ts function signatures verified against actual code
+- All 6 output-validator.ts function signatures verified
+- recompileAgents at agent-recompiler.ts:157 verified, all 9 flow steps match actual code
+- compileAgents at compile-agents.ts:32 verified
+- discoverInstalledSkills at discover-skills.ts:112 verified
+- resolveAgents at resolver.ts:153 verified
+- All 4 plugin-mode compilers verified: compileSkillPlugin :99, compileAgentPlugin :44, compileStackPlugin :191, compileAgentForPlugin :72
+- compileAgentForPlugin 3 differences from standard compileAgent verified (pluginRef format, preloaded IDs, direct file reading)
+- resolveClaudeMd at resolver.ts:22 verified
+- validateCompiledAgent 4 checks verified (frontmatter, XML, artifacts, patterns)
+- checkRequiredPatterns 4 checks verified (frontmatter start, role, principles, min length)
+- Template root resolution hierarchy (3 paths) verified against createLiquidEngine code
+
+### 2026-04-02 Round 4 Deep Pass (operations-layer.md, dependency-graph.md)
+
+Complete line-by-line verification of 2 docs that received only date-stamp updates in round 1. Every operation function, type definition, function signature, dependency table, command-to-operation mapping, data flow diagram, and consumer count verified against actual source files.
+
+**operations-layer.md (2 errors fixed):**
+
+- Fixed test file count: 10 co-located test files (was 9 -- missed detect-project.test.ts)
+- Fixed discover-skills.ts Lower-Level Lib Dependencies: added `utils/logger.js` (verbose, warn) and `utils/typed-object.js` (typedEntries, typedKeys) that were omitted while other entries in the same table included their utils imports
+
+**All verified correct in operations-layer.md (0 additional errors):**
+
+- All 20 file structure entries match filesystem (2 root + 3 barrels + 15 operations)
+- All 3 source types: LoadSourceOptions (4 fields), LoadedSource (2 fields), MarketplaceResult (2 fields)
+- All 11 skills types: DiscoveredSkills (6 fields), ScopedSkillDir (3 fields), ScopedSkillDirsResult (5 fields), SkillCopyResult (3 fields), SkillComparisonResults (3 fields), SkillMatchResult (2 fields), ResolveSkillInfoOptions (7 fields), ResolvedSkillInfo (3 fields), SkillInfoResult (2 fields), PluginInstallResult (2 fields), PluginUninstallResult (2 fields)
+- All 7 project types: DetectedProject (3 fields), BothInstallations (3 fields), CompileAgentsOptions (9 fields), CompilationResult (3 fields), ConfigWriteOptions (5 fields), ConfigWriteResult (6 fields), AgentDefs (3 fields)
+- All 16+ function signatures verified: loadSource, ensureMarketplace, discoverInstalledSkills, loadSkillsFromDir, discoverLocalProjectSkills, mergeSkills, collectScopedSkillDirs, copyLocalSkills, compareSkillsWithSource, buildSourceSkillsMap, findSkillMatch, resolveSkillInfo, installPluginSkills, uninstallPluginSkills, detectProject, detectBothInstallations, compileAgents, loadAgentDefs, writeProjectConfig
+- All 8 command consumer rows verified: init (8 ops), edit (10 ops), compile (4 ops), update (6 ops), info (2 ops), doctor (2 ops), search (1 op), eject (1 op)
+- All 3 data flow diagrams verified: init flow (6 steps), compile flow (dual-pass), edit flow (10 steps)
+- All 15 Lower-Level Lib Dependencies entries verified against actual imports
+
+**dependency-graph.md (3 errors fixed):**
+
+- Fixed Key Observations: utils/fs.ts consumer count 54 -> 52 (table body already said 52, summary was inconsistent)
+- Fixed utils/errors.ts: added base-command.ts to Commands layer, updated count 10 -> 11, total 32 -> 33
+- Fixed utils/typed-object.ts: Lib count 17 -> 16 (was counting test helper __tests__/helpers.ts), total 24 -> 23
+
+**All verified correct in dependency-graph.md (0 additional errors):**
+
+- All 18 Command -> Operations Map rows verified: 8 commands with operations match actual imports, 10 commands with "(none)" confirmed via grep
+- All Command -> Direct Lib Imports verified for: init (6 modules), edit (4 modules), compile (2 modules), doctor (4 modules), eject (3 modules), search (2 modules), list (3 modules)
+- Command -> Component Imports table verified: init, edit, list, update, uninstall, search, new/agent, build/stack
+- All Operations -> Lib Map entries verified (2 source, 5 project, 8 skills)
+- Store -> Lib Dependencies verified (4 lib modules: installation.ts, matrix/, matrix-provider.ts, wizard/)
+- All 13 Component -> Lib Dependencies verified via grep
+- Shared utility consumer counts verified: exec.ts=8, fs.ts=52, logger.ts=57, errors.ts=33, messages.ts=9, typed-object.ts=23, string.ts=3, type-guards.ts=2, frontmatter.ts=4
+- Layer diagram and allowed dependency directions table unchanged and correct
+
+### 2026-04-02 Round 5 Final Verification (state-transitions.md)
+
+Exhaustive verification of all line references, state transition diagrams, eject terminology, feature-flag gating, and consts.ts references. Every wizard-store.ts function/action/getter line number verified.
+
+**7 errors fixed:**
+
+- Fixed `step-agents.tsx:207` -> `:216` (setStep("confirm") is at line 216)
+- Fixed `wizard.tsx:148-149` -> `:147-148` (setStackAction at 147, setStep at 148)
+- Fixed `wizard.tsx:243-246` -> `:240-245` (onContinue callback spans 240-245)
+- Fixed `wizard.tsx:144-147` -> `:142-146` (accept-defaults condition check)
+- Added missing `installedSkillConfigs` and `installedAgentConfigs` to Initial State table (both `null`)
+- Fixed step sequence diagram: added missing `setStackAction("customize")` and `setApproach("stack")` for stack item path
+- Fixed Derived State table: escaped pipe characters in union types (`Domain | null`, `"eject" | "plugin" | "mixed"`) that were breaking markdown table columns
+
+**All verified correct (0 additional errors):**
+
+- WizardStep type at :172-178 (6 variants)
+- WIZARD_STEPS at wizard-tabs.tsx:41-48 (6 steps, labels match)
+- createInitialState at :530 (26 fields, order matches doc)
+- selectStack at :571 (9 fields reset)
+- goBack at :898-906 (pops history, falls back to "stack")
+- getStepProgress at :1001 (all 7 rows in logic table traced through code)
+- nextDomain at :780-789, prevDomain at :791-800
+- DOMAIN_AGENTS at :93-104 (web:6, api:3, cli:3 agents)
+- DEFAULT_SCRATCH_DOMAINS at consts.ts:211 (web, api, mobile)
+- BUILT_IN_DOMAIN_ORDER at consts.ts:199 (8 domains)
+- Feature flags: SOURCE_SEARCH=false, SOURCE_CHOICE=false, INFO_PANEL=true
+- stack-selection.tsx: scratch at :160, stack at :169 (both setStep("domains"))
+- domain-selection.tsx: onContinue at :53 (setStep("build"))
+- use-build-step-props.ts: nextDomain at :36, setStep("sources") at :37
+- All hotkey registrations verified against hotkeys.ts constants
+- Overlay blocking logic verified (showSettings blocks all except S, showInfo blocks all except ESC/I)
+- No remaining "local" references in install-mode contexts
+- All 3 cross-referenced docs exist (store-map.md, wizard-flow.md, component-patterns.md)
 
 ### 2026-03-28 Adversarial Audit (utilities.md)
 
@@ -171,6 +810,90 @@ Deep adversarial verification after 14 days stale, 204 file changes, version 0.7
 ### 2026-03-28 Adversarial Audit (configuration.md)
 
 9 line-number errors fixed, 1 phantom function removed, 1 section added. Prior 2026-03-14 audit marked several stale values as "verified correct" but those had already drifted. Fixed: `generateConfigSource` :29->:35, `buildStackProperty` :142->:146, `splitConfigByScope` :199->:169, removed phantom `compactStackForYaml`, `mergeWithExistingConfig` :83->:89, `mergeConfigs` :24->:25, `writeScopedConfigs` :422->:369, `DEFAULT_BRANDING` :163-166->:162-165, `SCHEMA_PATHS` :79-86->:78-85. Added Operations Layer section for `writeProjectConfig()` at operations/project/write-project-config.ts:43.
+
+### 2026-03-28 Adversarial Audit (store-map.md)
+
+Deep validation of every line number, state field, action, getter, and consumer against `src/cli/stores/wizard-store.ts` (1105 lines). 17 errors found and fixed:
+
+**Line number drift (4 errors):**
+
+- Fixed `useWizardStore` line: 552 (was 494)
+- Fixed `WizardState` shape range: 190-493 (was 149-439)
+- Fixed `createInitialState()` range: 524-550 (was 468-492)
+- Fixed `DOMAIN_AGENTS` range: 93-104 (was 54-65)
+
+**Missing "domains" step (2 errors):**
+
+- Added `"domains"` to WizardStep union (was missing entirely)
+- Fixed step progression: `stack -> domains -> build -> sources -> agents -> confirm` (was missing `domains`)
+
+**Phantom state field (1 error):**
+
+- Removed `showHelp` (does not exist in code -- was renamed to `showInfo`)
+
+**Missing state fields (3 errors):**
+
+- Added `filterIncompatible: boolean` (filter incompatible skills in build step)
+- Added `showInfo: boolean` (info overlay visible -- replaced `showHelp`)
+- Added `isEditingFromGlobalScope: boolean` (disables scope toggling when editing from ~/.claude/)
+
+**Phantom action (1 error):**
+
+- Removed `toggleHelp` (does not exist -- was renamed to `toggleInfo`)
+
+**Missing actions (3 errors):**
+
+- Added `toggleFilterIncompatible` (toggle filtering + removes incompatible web skills on enable)
+- Added `toggleInfo` (toggle info overlay)
+- Added `setCurrentDomainIndex` (set domain index directly, no-op if out of range)
+
+**Consumer list drift (2 errors):**
+
+- Removed `step-stack.tsx` (no longer imports useWizardStore directly)
+- Added `info-panel.tsx` (new consumer: info overlay showing selected skills/agents)
+
+**Initial state values (1 error):**
+
+- Updated initial state: replaced `showHelp: false` with `filterIncompatible: false`, `showInfo: false`, `isEditingFromGlobalScope: false`
+
+**All verified correct (no changes needed):**
+
+- Zustand v5 library, single store pattern
+- All 10 Selection State fields
+- All 2 Source State fields
+- All 3 Approach State fields
+- All 5 Scope/Source Per-Skill actions and signatures
+- All 5 Source Management actions and signatures
+- All 3 Population actions and signatures
+- All 8 Computed Getters and return types
+- `deriveInstallMode` signature and behavior
+- `selectStack()` reset behavior (9 fields reset)
+- DOMAIN_AGENTS content (web=6, api=3, cli=3 agents)
+- Source sort tiers (4 tiers)
+- Usage pattern code examples
+
+### 2026-03-28 Adversarial Audit (commands.md)
+
+Complete rewrite after 14 days stale. Every command file (23 total) read in full. Every flag verified against actual `static flags` definitions. Operations layer usage mapped per command.
+
+**commands.md -- FULL REWRITE. Major drift found:**
+
+- Prior doc had ZERO mention of operations layer -- 10 commands using operations now documented with specific operation calls
+- Prior `init` flow outdated: now uses 8 operations (loadSource, ensureMarketplace, installPluginSkills, copyLocalSkills, writeProjectConfig, compileAgents, discoverInstalledSkills, loadAgentDefs)
+- Prior `edit` flow missed: detectProject, uninstallPluginSkills, scope migration, agent scope changes, migration handling
+- Prior `compile` flow missed: detectBothInstallations, scopeFilter on passes, buildCompilePasses logic
+- Prior `list` summary wrong: was "List installed skills", actual: "Show installation information" (alias: ls)
+- Prior doc had NO flags/details for 17 of 23 commands
+- doctor defines source flag directly (not via BaseCommand.baseFlags) -- now documented
+- Added complete flags/args tables for all 23 commands
+- Added Operations Layer Usage by Command cross-reference table
+- Added exported utilities from init: formatDashboardText, showDashboard, getDashboardData
+
+### 2026-03-28 Adversarial Audit (utilities.md)
+
+10 errors/omissions fixed: Added `string.ts` module (truncateText, 3 importers), 2 missing exec.ts wrappers (Remove/Update, total now 8), ExecResult/MarketplaceInfo types, warn() WarnOptions param, MAX_CONFIG_FILE_SIZE line (:144 was :145), 9 missing STANDARD_FILES entries, DIRS/Branding/Schema/Source/Domain sections. Flagged yaml.ts as dead code.
+
+**Verified correct (unchanged):** Exit codes (5), message counts (ERROR=10, SUCCESS=5, STATUS=12, INFO=6), BaseCommand flag (--source), all 23 file paths, config subcommands (show, path only)
 
 ### 2026-03-14 Second-Pass Audit (architecture-overview.md, type-system.md)
 
@@ -532,97 +1255,10 @@ Full validation of all 12 documentation files against actual source code. Errors
 - Added line numbers for all matrix-resolver.ts functions
 - Added undocumented utility functions: getAvailableSkills, getSkillsByCategory
 
-### 2026-03-28 Adversarial Audit (store-map.md)
-
-Deep validation of every line number, state field, action, getter, and consumer against `src/cli/stores/wizard-store.ts` (1105 lines). 17 errors found and fixed:
-
-**Line number drift (4 errors):**
-
-- Fixed `useWizardStore` line: 552 (was 494)
-- Fixed `WizardState` shape range: 190-493 (was 149-439)
-- Fixed `createInitialState()` range: 524-550 (was 468-492)
-- Fixed `DOMAIN_AGENTS` range: 93-104 (was 54-65)
-
-**Missing "domains" step (2 errors):**
-
-- Added `"domains"` to WizardStep union (was missing entirely)
-- Fixed step progression: `stack -> domains -> build -> sources -> agents -> confirm` (was missing `domains`)
-
-**Phantom state field (1 error):**
-
-- Removed `showHelp` (does not exist in code -- was renamed to `showInfo`)
-
-**Missing state fields (3 errors):**
-
-- Added `filterIncompatible: boolean` (filter incompatible skills in build step)
-- Added `showInfo: boolean` (info overlay visible -- replaced `showHelp`)
-- Added `isEditingFromGlobalScope: boolean` (disables scope toggling when editing from ~/.claude/)
-
-**Phantom action (1 error):**
-
-- Removed `toggleHelp` (does not exist -- was renamed to `toggleInfo`)
-
-**Missing actions (3 errors):**
-
-- Added `toggleFilterIncompatible` (toggle filtering + removes incompatible web skills on enable)
-- Added `toggleInfo` (toggle info overlay)
-- Added `setCurrentDomainIndex` (set domain index directly, no-op if out of range)
-
-**Consumer list drift (2 errors):**
-
-- Removed `step-stack.tsx` (no longer imports useWizardStore directly)
-- Added `info-panel.tsx` (new consumer: info overlay showing selected skills/agents)
-
-**Initial state values (1 error):**
-
-- Updated initial state: replaced `showHelp: false` with `filterIncompatible: false`, `showInfo: false`, `isEditingFromGlobalScope: false`
-
-**All verified correct (no changes needed):**
-
-- Zustand v5 library, single store pattern
-- All 10 Selection State fields
-- All 2 Source State fields
-- All 3 Approach State fields
-- All 5 Scope/Source Per-Skill actions and signatures
-- All 5 Source Management actions and signatures
-- All 3 Population actions and signatures
-- All 8 Computed Getters and return types
-- `deriveInstallMode` signature and behavior
-- `selectStack()` reset behavior (9 fields reset)
-- DOMAIN_AGENTS content (web=6, api=3, cli=3 agents)
-- Source sort tiers (4 tiers)
-- Usage pattern code examples
-
-### 2026-03-28 Adversarial Audit (commands.md)
-
-Complete rewrite after 14 days stale. Every command file (23 total) read in full. Every flag verified against actual `static flags` definitions. Operations layer usage mapped per command.
-
-**commands.md -- FULL REWRITE. Major drift found:**
-
-- Prior doc had ZERO mention of operations layer -- 10 commands using operations now documented with specific operation calls
-- Prior `init` flow outdated: now uses 8 operations (loadSource, ensureMarketplace, installPluginSkills, copyLocalSkills, writeProjectConfig, compileAgents, discoverInstalledSkills, loadAgentDefs)
-- Prior `edit` flow missed: detectProject, uninstallPluginSkills, scope migration, agent scope changes, migration handling
-- Prior `compile` flow missed: detectBothInstallations, scopeFilter on passes, buildCompilePasses logic
-- Prior `list` summary wrong: was "List installed skills", actual: "Show installation information" (alias: ls)
-- Prior doc had NO flags/details for 17 of 23 commands
-- doctor defines source flag directly (not via BaseCommand.baseFlags) -- now documented
-- Added complete flags/args tables for all 23 commands
-- Added Operations Layer Usage by Command cross-reference table
-- Added exported utilities from init: formatDashboardText, showDashboard, getDashboardData
-
-### 2026-03-28 Adversarial Audit (utilities.md)
-
-10 errors/omissions fixed: Added `string.ts` module (truncateText, 3 importers), 2 missing exec.ts wrappers (Remove/Update, total now 8), ExecResult/MarketplaceInfo types, warn() WarnOptions param, MAX_CONFIG_FILE_SIZE line (:144 was :145), 9 missing STANDARD_FILES entries, DIRS/Branding/Schema/Source/Domain sections. Flagged yaml.ts as dead code.
-
-**Verified correct (unchanged):** Exit codes (5), message counts (ERROR=10, SUCCESS=5, STATUS=12, INFO=6), BaseCommand flag (--source), all 23 file paths, config subcommands (show, path only)
-
 ## Notes for Next Session
 
-- compilation-pipeline.md freshly validated 2026-03-28 -- next validation due 2026-04-11
-- DUE: test-infrastructure.md (14 days stale)
-- commands.md freshly validated 2026-03-28 -- next validation due 2026-04-11
-- utilities.md freshly validated 2026-03-28 -- next validation due 2026-04-11
-- store-map.md freshly validated 2026-03-28 -- next validation due 2026-04-04
-- DEAD CODE: `src/cli/utils/yaml.ts` has zero production importers -- candidate for removal
-- type-system.md freshly validated 2026-03-28 -- next validation due 2026-04-11
-- component-patterns.md freshly validated 2026-03-28 -- next validation due 2026-04-11
+- All 18 reference docs validated 2026-04-02 (cross-document audit + adversarial audits + deep second pass)
+- agent-system.md and compilation-pipeline.md received exhaustive line-by-line deep second pass 2026-04-02
+- store-map.md next validation due 2026-04-09 (7-day cadence)
+- All other docs next validation due 2026-04-16 (14-day cadence)
+- DEAD CODE: `src/cli/utils/yaml.ts` has zero production importers -- confirmed deleted per prior audit
