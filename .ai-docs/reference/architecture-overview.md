@@ -1,13 +1,13 @@
 # Architecture Overview
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Project Identity
 
 | Field       | Value                                                                    |
 | ----------- | ------------------------------------------------------------------------ |
 | Package     | `@agents-inc/cli`                                                        |
-| Version     | 0.94.0                                                                   |
+| Version     | 0.100.0                                                                  |
 | Binary      | `agentsinc` (also `CLI_BIN_NAME` in `src/cli/consts.ts:27`)              |
 | Type        | ESM (`"type": "module"` in package.json)                                 |
 | Entry Point | `src/cli/index.ts` (runs oclif with `run()`)                             |
@@ -40,16 +40,15 @@ src/cli/
   consts.ts                 # ALL global constants (paths, colors, symbols, limits)
   commands/                 # oclif command classes (one per CLI command)
     build/                  # Build subcommands (marketplace, plugins, stack)
-    config/                 # Config subcommands
     import/                 # Import subcommands (skill)
     new/                    # New subcommands (agent, marketplace, skill)
     compile.ts              # Compile agents from installed skills
     doctor.ts               # Health check
     edit.tsx                # Edit installed skills (wizard re-entry, per-agent scope)
-    eject.ts                # Eject to local mode
+    eject.ts                # Eject skills/templates to local filesystem
     info.ts                 # Show installation info
     init.tsx                # Initialize project (wizard)
-    list.ts                 # List installed skills
+    list.tsx                # Show installation information (Ink component)
     search.tsx              # Search for skills across sources
     uninstall.tsx           # Uninstall from project
     update.tsx              # Update skills
@@ -114,7 +113,6 @@ src/cli/
     string.ts               # truncateText() string utility
     type-guards.ts          # isCategory(), isDomain(), isAgentName(), isCategoryPath()
     typed-object.ts         # typedEntries(), typedKeys()
-    yaml.ts                 # safeLoadYamlFile() (Zod-validated YAML loading)
     __mocks__/              # Vitest mocks for fs and logger
 ```
 
@@ -187,10 +185,11 @@ Implemented in: `src/cli/lib/configuration/config.ts:84-132`
 
 ### 4. Install Modes
 
-| Mode   | Skills Location     | Agents Location   | Config Location         |
-| ------ | ------------------- | ----------------- | ----------------------- |
-| local  | `.claude/skills/`   | `.claude/agents/` | `.claude-src/config.ts` |
-| plugin | Claude plugin cache | `.claude/agents/` | `.claude-src/config.ts` |
+| Mode   | Skills Location                              | Agents Location   | Config Location         |
+| ------ | -------------------------------------------- | ----------------- | ----------------------- |
+| eject  | `.claude/skills/`                            | `.claude/agents/` | `.claude-src/config.ts` |
+| plugin | Claude plugin cache                          | `.claude/agents/` | `.claude-src/config.ts` |
+| mixed  | `.claude/skills/` (eject) + plugin cache (plugin) | `.claude/agents/` | `.claude-src/config.ts` |
 
 Detection: `src/cli/lib/installation/installation.ts` — `detectInstallation()` at line 84, `detectProjectInstallation()` at line 35
 
@@ -214,7 +213,7 @@ All YAML/JSON parse boundaries use Zod schemas from `src/cli/lib/schemas.ts` (39
 
 Pattern: Lenient "loader" schemas with `.passthrough()` at parse boundaries, strict schemas for validation. Bridge pattern: `z.ZodType<ExistingType>` ensures Zod output matches TypeScript interfaces.
 
-Helper: `safeLoadYamlFile()` from `src/cli/utils/yaml.ts` combines file read + parse + Zod validate.
+Production code calls `parseYaml()` + `schema.safeParse()` directly at individual call sites. (`safeLoadYamlFile()` from `utils/yaml.ts` was removed as dead code.)
 
 ### 7. Generated Types
 
@@ -240,7 +239,7 @@ The `src/cli/types/generated/matrix.ts` file contains the full `BUILT_IN_MATRIX`
   - Validates remote and local source formats
 - Liquid injection prevention: `sanitizeCompiledAgentData()` in `src/cli/lib/compiler.ts:77-111`
   - Strips `{{`, `}}`, `{%`, `%}` from all user-controlled fields
-- File size limits: `MAX_MARKETPLACE_FILE_SIZE`, `MAX_PLUGIN_FILE_SIZE`, `MAX_CONFIG_FILE_SIZE` in `src/cli/consts.ts:143-145`
+- File size limits: `MAX_MARKETPLACE_FILE_SIZE`, `MAX_PLUGIN_FILE_SIZE`, `MAX_CONFIG_FILE_SIZE` in `src/cli/consts.ts:150-152`
 - Command injection prevention: Input validation in `src/cli/utils/exec.ts:7-87`
 
 ### 10. Config Writer

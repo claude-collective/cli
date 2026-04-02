@@ -1,6 +1,6 @@
 # Dependency Graph
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 **Purpose:** Maps how the major layers of the codebase depend on each other, which commands use which operations, and which operations wrap which lib modules. Use this to understand import boundaries and find the right layer for new code.
 
 ---
@@ -76,10 +76,9 @@ Each command and which operations it imports from `lib/operations/`.
 | `info`              | `commands/info.ts`              | `loadSource`, `resolveSkillInfo`                                                                                                                                                                         |
 | `search`            | `commands/search.tsx`           | `loadSource`                                                                                                                                                                                             |
 | `eject`             | `commands/eject.ts`             | `loadSource`                                                                                                                                                                                             |
-| `list`              | `commands/list.ts`              | (none)                                                                                                                                                                                                   |
+| `list`              | `commands/list.tsx`             | (none)                                                                                                                                                                                                   |
 | `uninstall`         | `commands/uninstall.tsx`        | (none)                                                                                                                                                                                                   |
 | `validate`          | `commands/validate.ts`          | (none)                                                                                                                                                                                                   |
-| `config`            | `commands/config/index.ts`      | (none)                                                                                                                                                                                                   |
 | `import skill`      | `commands/import/skill.ts`      | (none)                                                                                                                                                                                                   |
 | `new skill`         | `commands/new/skill.ts`         | (none)                                                                                                                                                                                                   |
 | `new agent`         | `commands/new/agent.tsx`        | (none)                                                                                                                                                                                                   |
@@ -105,7 +104,7 @@ Commands that import directly from `lib/` modules in addition to (or instead of)
 | `update`            | `lib/skills/` (injectForkedFromMetadata, SkillComparisonResult type)                                                                                                                                                                                                                                                                                                                                                                          |
 | `uninstall`         | `lib/plugins/` (listPluginNames, getProjectPluginsDir), `lib/skills/` (readForkedFromMetadata), `lib/configuration/project-config` (loadProjectConfigFromDir)                                                                                                                                                                                                                                                                                 |
 | `info`              | `lib/matrix/matrix-provider` (matrix)                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `list`              | `lib/plugins/` (getInstallationInfo, formatInstallationDisplay)                                                                                                                                                                                                                                                                                                                                                                               |
+| `list`              | `lib/plugins/` (getInstallationInfo, formatInstallationDisplay), `lib/installation/` (detectInstallation), `lib/configuration/project-config` (loadProjectConfig)                                                                                                                                                                                                                                                                             |
 | `validate`          | `lib/schema-validator` (validateAllSchemas, printValidationResults), `lib/plugins/` (validatePlugin, validateAllPlugins, printPluginValidationResult), `lib/source-validator` (validateSource)                                                                                                                                                                                                                                                |
 | `import skill`      | `lib/loading/` (fetchFromSource), `lib/schemas` (importedSkillMetadataSchema), `lib/versioning` (getCurrentDate, computeFileHash), `lib/metadata-keys` (IMPORT_DEFAULTS)                                                                                                                                                                                                                                                                      |
 | `new skill`         | `lib/configuration/` (resolveAuthor), `lib/configuration/config-loader` (loadConfig), `lib/configuration/config-types-writer` (loadConfigTypesDataInBackground, regenerateConfigTypes), `lib/versioning` (computeSkillFolderHash), `lib/installation/` (detectInstallation), `lib/metadata-keys` (LOCAL_DEFAULTS), `lib/skills/generators` (toTitleCase, generateSkillCategoriesTs, generateSkillRulesTs, buildCategoryEntry, formatTsExport) |
@@ -125,6 +124,7 @@ Commands that render Ink components.
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `init`        | `components/wizard/wizard` (Wizard), `components/common/select-list` (SelectList), `components/wizard/hotkeys` (KEY*LABEL*\*) |
 | `edit`        | `components/wizard/wizard` (Wizard)                                                                                           |
+| `list`        | `components/wizard/skill-agent-summary` (SkillAgentSummary)                                                                   |
 | `update`      | `components/common/confirm` (Confirm)                                                                                         |
 | `uninstall`   | `components/common/confirm` (Confirm)                                                                                         |
 | `search`      | `components/skill-search/` (SkillSearch)                                                                                      |
@@ -207,12 +207,12 @@ Total: 57 production consumers (most-used utility overall)
 
 | Layer      | Consumer Count | Notable Consumers                                                                                                            |
 | ---------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Commands   | 10             | init, edit, uninstall, update, doctor, import/skill, new/\*, validate                                                        |
+| Commands   | 11             | base-command, init, edit, uninstall, update, doctor, import/skill, new/\*, validate                                          |
 | Operations | 2              | install-plugin-skills, uninstall-plugin-skills                                                                               |
 | Components | 2              | hooks/use-source-operations.ts, wizard/step-settings.tsx                                                                     |
 | Lib        | 18             | compiler, loading/_, configuration/_, installation/_, skills/_, plugins/_, stacks/_, agents/\*, versioning, schema-validator |
 
-Total: 32 production consumers
+Total: 33 production consumers
 
 ### `utils/messages.ts` (ERROR_MESSAGES, SUCCESS_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES)
 
@@ -230,9 +230,9 @@ Total: 9 consumers (commands only -- messages are a presentation concern)
 | Operations | 2              | discover-skills, compare-skills                                                                                               |
 | Components | 3              | wizard/domain-selection, wizard/utils, wizard/step-agents                                                                     |
 | Stores     | 1              | wizard-store.ts                                                                                                               |
-| Lib        | 17             | compiler, matrix/_, loading/_, configuration/_, installation/_, stacks/_, agents/_, plugins/\*, resolver, matrix-health-check |
+| Lib        | 16             | compiler, matrix/_, loading/_, configuration/_, installation/_, stacks/_, agents/_, plugins/\*, resolver, matrix-health-check |
 
-Total: 24 production consumers
+Total: 23 production consumers
 
 ### `utils/string.ts` (truncateText)
 
@@ -260,9 +260,9 @@ Total: 2 production consumers
 
 Total: 4 production consumers
 
-### `utils/yaml.ts` (safeLoadYamlFile)
+### ~~`utils/yaml.ts`~~ (DELETED)
 
-Currently unused -- defined but no production importers.
+Removed -- was dead code with zero production importers. Production YAML loading uses `parseYaml()` + `schema.safeParse()` directly.
 
 ---
 
@@ -316,9 +316,9 @@ The wizard store (`stores/wizard-store.ts`) imports from:
 
 4. **Components access lib through a narrow set of modules**: primarily `matrix-provider`, `wizard/`, `feature-flags`, and `configuration/source-manager`. They never import from `installation/`, `plugins/`, `skills/`, or `stacks/` directly.
 
-5. **`utils/fs.ts` and `utils/logger.ts` are the most-used utilities** at 54 and 57 production consumers respectively. They are consumed at every layer.
+5. **`utils/fs.ts` and `utils/logger.ts` are the most-used utilities** at 52 and 57 production consumers respectively. They are consumed at every layer.
 
-6. **`utils/yaml.ts` is dead code** -- defined but no production module imports it.
+6. **`utils/yaml.ts` has been removed** -- was dead code with zero production importers.
 
 7. **`utils/messages.ts` is a command-only concern** -- no lib, operations, or component file imports it.
 

@@ -1,6 +1,6 @@
 # Commands Reference
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Command Architecture
 
@@ -19,11 +19,11 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 | Command             | File                                    | Type | Summary                                            |
 | ------------------- | --------------------------------------- | ---- | -------------------------------------------------- |
 | `init`              | `src/cli/commands/init.tsx`             | tsx  | Initialize project (interactive wizard/dashboard)  |
-| `edit`              | `src/cli/commands/edit.tsx`             | tsx  | Edit installed skills via wizard                   |
+| `edit`              | `src/cli/commands/edit.tsx`             | tsx  | Edit skills in the plugin                          |
 | `compile`           | `src/cli/commands/compile.ts`           | ts   | Compile agents from skills (global + project pass) |
 | `validate`          | `src/cli/commands/validate.ts`          | ts   | Validate schemas, plugins, or skills source        |
 | `info`              | `src/cli/commands/info.ts`              | ts   | Show detailed info about a skill                   |
-| `list`              | `src/cli/commands/list.ts`              | ts   | Show installation information (alias: `ls`)        |
+| `list`              | `src/cli/commands/list.tsx`             | tsx  | Show installation information (alias: `ls`)        |
 | `doctor`            | `src/cli/commands/doctor.ts`            | ts   | Diagnose configuration issues                      |
 | `eject`             | `src/cli/commands/eject.ts`             | ts   | Eject skills, agent partials, or templates         |
 | `search`            | `src/cli/commands/search.tsx`           | tsx  | Search skills across sources                       |
@@ -36,7 +36,6 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 | `build marketplace` | `src/cli/commands/build/marketplace.ts` | ts   | Generate marketplace.json from built plugins       |
 | `build plugins`     | `src/cli/commands/build/plugins.ts`     | ts   | Build skill/agent plugins                          |
 | `build stack`       | `src/cli/commands/build/stack.tsx`      | tsx  | Build a stack into a standalone plugin             |
-| `config`            | `src/cli/commands/config/index.ts`      | ts   | Show config overview                               |
 
 ## Primary Commands (Detailed)
 
@@ -58,9 +57,9 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 3. If not initialized: `ensureBlankGlobalConfig()` creates global config if running from project dir (not home dir)
 4. **Operation: `loadSource()`** -- load skills matrix with optional startup message capture
 5. Render `<Wizard>` component, await `waitUntilExit()`
-6. On wizard result: `deriveInstallMode()` determines local/plugin/mixed install mode
-7. If local/mixed: **Operation: `copyLocalSkills()`** -- copy local-source skills split by scope
-8. If plugin/mixed: **Operation: `ensureMarketplace()`** -- register marketplace, then **Operation: `installPluginSkills()`** -- install each plugin by scope. Falls back to local if marketplace unavailable.
+6. On wizard result: `deriveInstallMode()` determines eject/plugin/mixed install mode
+7. If eject/mixed: **Operation: `copyLocalSkills()`** -- copy eject-source skills split by scope
+8. If plugin/mixed: **Operation: `ensureMarketplace()`** -- register marketplace, then **Operation: `installPluginSkills()`** -- install each plugin by scope. Falls back to eject if marketplace unavailable.
 9. **Operation: `writeProjectConfig()`** -- generate and write `.claude-src/config.ts`
 10. **Operation: `loadAgentDefs()`** -- load agent definitions
 11. **Operation: `discoverInstalledSkills()`** -- find all installed skills
@@ -84,7 +83,7 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 ### `edit` (src/cli/commands/edit.tsx)
 
-**Purpose:** Modify installed skills via wizard re-entry with diff-based change detection.
+**Purpose:** Modify installed skills via wizard re-entry with diff-based change detection. Outputs a styled change summary (chalk-colored `+`/`-`/`~` lines for added/removed/changed skills, agents, sources, scopes) and a simplified completion message (`"Done"`).
 
 **Flags:**
 
@@ -101,7 +100,7 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 3. Discover current installed skills: `discoverAllPluginSkills()` + merge with config skills
 4. Render `<Wizard>` with `initialStep="build"`, `installedSkillIds`, `installedSkillConfigs`, `lockedSkillIds`, `lockedAgentNames`, `isEditingFromGlobalScope`
 5. `detectConfigChanges()` -- compute added/removed skills, added/removed agents, source changes, scope changes, agent scope changes
-6. `detectMigrations()` + `executeMigration()` -- handle local-to-plugin and plugin-to-local mode migrations
+6. `detectMigrations()` + `executeMigration()` -- handle eject-to-plugin and plugin-to-eject mode migrations
 7. `applyScopeChanges()` -- `migrateLocalSkillScope()` for local skills, `migratePluginSkillScopes()` for plugin skills (uninstall old scope + install new scope)
 8. `applySourceChanges()` -- delete old local copies for non-migration source changes
 9. `applyPluginChanges()` -- **Operation: `ensureMarketplace()`**, **Operation: `installPluginSkills()`** for added plugins, **Operation: `uninstallPluginSkills()`** for removed
@@ -188,13 +187,27 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 **Key dependencies:** **Operation: `loadSource()`**, **Operation: `resolveSkillInfo()`**
 
-### `list` (src/cli/commands/list.ts)
+### `list` (src/cli/commands/list.tsx)
 
-**Purpose:** Show installation information (skills, agents, mode). Alias: `ls`.
+**Purpose:** Show installation information (skills, agents, mode, source). Alias: `ls`. Ink-based React component for TTY, plain text fallback for non-TTY.
 
 **Flags:** `--source` (inherited)
 
-**Key dependencies:** `getInstallationInfo()`, `formatInstallationDisplay()` from `src/cli/lib/plugins/index.ts`
+**Flow:**
+
+1. `detectInstallation()` from `installation/installation.ts` -- find installation
+2. If no installation: print "No installation found" message and return
+3. `loadProjectConfig(projectDir)` from `configuration/project-config.ts` -- load project config
+4. If no config or non-TTY: fallback to `getInstallationInfo()` + `formatInstallationDisplay()` (plain text) from `plugins/index.ts`
+5. If TTY with config: `render(<ListView>)` -- Ink component showing mode, source, and `<SkillAgentSummary>` component. Uses `useApp().exit()` via `setTimeout` to auto-exit after render.
+
+**Key dependencies:**
+
+- `src/cli/lib/installation/installation.ts` -- `detectInstallation()`
+- `src/cli/lib/configuration/project-config.ts` -- `loadProjectConfig()`
+- `src/cli/lib/plugins/index.ts` -- `getInstallationInfo()`, `formatInstallationDisplay()` (non-TTY fallback)
+- `src/cli/components/wizard/skill-agent-summary.tsx` -- `SkillAgentSummary` component (TTY mode)
+- `src/cli/types/config.ts` -- `SkillConfig`, `AgentScopeConfig` types
 
 ### `doctor` (src/cli/commands/doctor.ts)
 
@@ -249,6 +262,7 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 | --interactive | -i    | boolean | Launch interactive search with multi-select |
 | --category    | -c    | string  | Filter by category                          |
 | --refresh     |       | boolean | Force refresh from remote sources           |
+| --json        |       | boolean | Output results as JSON                      |
 | --source      | -s    | string  | Skills source path or URL                   |
 
 **Key dependencies:** **Operation: `loadSource()`**. Uses `resolveAllSources()` from configuration, `fetchFromSource()`, `parseFrontmatter()` from loading, `SkillSearch` component.
@@ -481,11 +495,10 @@ All message constants centralized in `src/cli/utils/messages.ts`:
 | `search`          | `loadSource`                                                                                                                                                                                             |
 | `update`          | `loadSource`, `compareSkillsWithSource`, `collectScopedSkillDirs`, `findSkillMatch`, `compileAgents`, `discoverInstalledSkills`                                                                          |
 | `validate`        | (none -- uses lib functions directly)                                                                                                                                                                    |
-| `list`            | (none -- uses plugin-info directly)                                                                                                                                                                      |
+| `list`            | (none -- uses installation, configuration, plugins directly)                                                                                                                                             |
 | `uninstall`       | (none -- uses lib functions directly)                                                                                                                                                                    |
 | `import skill`    | (none -- uses loading/fetching directly)                                                                                                                                                                 |
 | `new skill`       | (none -- uses configuration/installation directly)                                                                                                                                                       |
 | `new agent`       | (none -- uses agents/configuration directly)                                                                                                                                                             |
 | `new marketplace` | (none -- uses generators directly)                                                                                                                                                                       |
 | `build *`         | (none -- uses skill/agent compilers directly)                                                                                                                                                            |
-| `config`          | (none -- uses configuration directly)                                                                                                                                                                    |
