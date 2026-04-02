@@ -16,12 +16,6 @@ export class BuildStep extends BaseStep {
     this.gridCol = 0;
   }
 
-  /** Toggle a skill by scrolling until it is visible and pressing Space. */
-  async toggleSkill(skillLabel: string): Promise<void> {
-    await this.waitForItemVisible(skillLabel);
-    await this.pressSpace();
-  }
-
   /**
    * Navigate to a skill by label in the grid and press Space.
    *

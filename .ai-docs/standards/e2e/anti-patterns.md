@@ -20,7 +20,7 @@ Every "never do this" rule with rationale. Organized by category.
 
 **Why:** These are low-level terminal operations. Every keystroke needs a delay after it, and every text check needs a timeout. The framework handles this internally.
 
-**Instead:** Use step methods: `wizard.stack.selectFirstStack()`, `build.toggleSkill("react")`, `agents.toggleAgent("API Developer")`.
+**Instead:** Use step methods: `wizard.stack.selectFirstStack()`, `build.selectSkill("react")`, `agents.toggleAgent("API Developer")`.
 
 ---
 

@@ -120,7 +120,6 @@ Each step class models the user actions available on one wizard screen. Methods 
 | Method                                  | Returns       | Action                                                           |
 | --------------------------------------- | ------------- | ---------------------------------------------------------------- |
 | `advanceDomain()`                       | `void`        | Advance current domain (Enter)                                   |
-| `toggleSkill(label)`                    | `void`        | Scroll to skill, press Space                                     |
 | `selectSkill(label)`                    | `void`        | Navigate grid to skill by (row, col), press Space                |
 | `toggleFocusedSkill()`                  | `void`        | Press Space on current item                                      |
 | `toggleScopeOnFocusedSkill()`           | `void`        | Press "s" on current item                                        |

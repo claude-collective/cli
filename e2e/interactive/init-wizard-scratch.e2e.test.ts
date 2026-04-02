@@ -47,7 +47,7 @@ describe("init wizard — scratch flow", () => {
       const build = await domain.acceptDefaults();
 
       // Select required Framework skill before advancing
-      await build.toggleSkill("react");
+      await build.selectSkill("react");
 
       // Advance to next domain (API)
       await build.advanceDomain();

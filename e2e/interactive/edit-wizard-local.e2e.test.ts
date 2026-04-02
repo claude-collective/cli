@@ -107,7 +107,7 @@ describe("edit wizard — eject mode", () => {
 
         // Select an additional skill
         await wizard.build.navigateDown();
-        await wizard.build.toggleSkill("vitest");
+        await wizard.build.selectSkill("vitest");
 
         const result = await completeEditFromBuild(wizard);
 
@@ -140,7 +140,7 @@ describe("edit wizard — eject mode", () => {
 
         // Select an additional skill
         await wizard.build.navigateDown();
-        await wizard.build.toggleSkill("vitest");
+        await wizard.build.selectSkill("vitest");
 
         const result = await completeEditFromBuild(wizard);
 

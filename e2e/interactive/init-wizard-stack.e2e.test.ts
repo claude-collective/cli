@@ -163,7 +163,7 @@ describe("init wizard — stack flow", () => {
       const build = await domain.advance();
 
       // Select required skill in Web domain and advance
-      await build.toggleSkill("react");
+      await build.selectSkill("react");
       await build.advanceDomain();
 
       // In scratch flow, no stack snapshot exists — API domain should have 0 selected skills

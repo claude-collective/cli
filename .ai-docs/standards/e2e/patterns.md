@@ -88,7 +88,7 @@ it("should select specific stack and toggle skills", async () => {
   const build = await domain.acceptDefaults();
 
   // Build -> toggle a specific skill, advance through domains
-  await build.toggleSkill("react");
+  await build.selectSkill("react");
   await build.advanceDomain(); // Web
   await build.advanceDomain(); // API
   const sources = await build.advanceToSources(); // Shared
