@@ -44,119 +44,112 @@ describe("User Journey: Compile Flow", () => {
   });
 
   describe("agent file creation", () => {
+    beforeEach(() => {
+      vi.spyOn(console, "log").mockImplementation(() => {});
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
     it("should create agent markdown files in agents directory", async () => {
-      // Suppress console output during test
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      // Run compile command
+      const { error } = await runCliCommand(["compile"]);
 
-      try {
-        // Run compile command
-        const { error } = await runCliCommand(["compile"]);
-
-        // The compile command may error due to skill resolution issues
-        // (test skill IDs don't match what resolver expects)
-        // We accept errors about skills not found - the command processed correctly
-        if (error?.oclif?.exit && error.oclif.exit !== 0) {
-          const message = error.message || "";
-          // These are acceptable errors - the command logic ran correctly
-          const acceptableErrors = ["No skills found", "not found in scanned skills", "skill"];
-          const isAcceptable = acceptableErrors.some((e) =>
-            message.toLowerCase().includes(e.toLowerCase()),
-          );
-          // If not an acceptable error, fail the test
-          if (!isAcceptable) {
-            expect.fail(`Unexpected error: ${message}`);
-          }
+      // The compile command may error due to skill resolution issues
+      // (test skill IDs don't match what resolver expects)
+      // We accept errors about skills not found - the command processed correctly
+      if (error?.oclif?.exit && error.oclif.exit !== 0) {
+        const message = error.message || "";
+        // These are acceptable errors - the command logic ran correctly
+        const acceptableErrors = ["No skills found", "not found in scanned skills", "skill"];
+        const isAcceptable = acceptableErrors.some((e) =>
+          message.toLowerCase().includes(e.toLowerCase()),
+        );
+        // If not an acceptable error, fail the test
+        if (!isAcceptable) {
+          expect.fail(`Unexpected error: ${message}`);
         }
-
-        // Verify agent files if they exist
-        const webDevPath = path.join(agentsDir, "web-developer.md");
-        const apiDevPath = path.join(agentsDir, "api-developer.md");
-
-        const webDevExists = await fileExists(webDevPath);
-        const apiDevExists = await fileExists(apiDevPath);
-
-        // If files exist, verify they have content
-        if (webDevExists) {
-          const content = await readTestFile(webDevPath);
-          expect(content.length).toBeGreaterThan(0);
-          expect(content).toContain("---"); // Has frontmatter
-        }
-
-        if (apiDevExists) {
-          const content = await readTestFile(apiDevPath);
-          expect(content.length).toBeGreaterThan(0);
-          expect(content).toContain("---"); // Has frontmatter
-        }
-
-        // Test passes if command ran without crashing (even with skill resolution errors)
-        expect(true).toBe(true);
-      } finally {
-        consoleSpy.mockRestore();
-        warnSpy.mockRestore();
       }
+
+      // Verify agent files if they exist
+      const webDevPath = path.join(agentsDir, "web-developer.md");
+      const apiDevPath = path.join(agentsDir, "api-developer.md");
+
+      const webDevExists = await fileExists(webDevPath);
+      const apiDevExists = await fileExists(apiDevPath);
+
+      // If files exist, verify they have content
+      if (webDevExists) {
+        const content = await readTestFile(webDevPath);
+        expect(content.length).toBeGreaterThan(0);
+        expect(content).toContain("---"); // Has frontmatter
+      }
+
+      if (apiDevExists) {
+        const content = await readTestFile(apiDevPath);
+        expect(content.length).toBeGreaterThan(0);
+        expect(content).toContain("---"); // Has frontmatter
+      }
+
+      // Test passes if command ran without crashing (even with skill resolution errors)
+      expect(true).toBe(true);
     });
   });
 
   describe("frontmatter skill references", () => {
+    beforeEach(() => {
+      vi.spyOn(console, "log").mockImplementation(() => {});
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
     it("should include preloaded skills in agent frontmatter", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      await runCliCommand(["compile"]);
 
-      try {
-        await runCliCommand(["compile"]);
+      const webDevPath = path.join(agentsDir, "web-developer.md");
 
-        const webDevPath = path.join(agentsDir, "web-developer.md");
+      if (await fileExists(webDevPath)) {
+        const content = await readTestFile(webDevPath);
+        const frontmatter = parseTestFrontmatter(content);
 
-        if (await fileExists(webDevPath)) {
-          const content = await readTestFile(webDevPath);
-          const frontmatter = parseTestFrontmatter(content);
+        // If frontmatter has skills, they should be skill IDs
+        if (frontmatter?.skills) {
+          expect(Array.isArray(frontmatter.skills)).toBe(true);
+          const skills = frontmatter.skills as string[];
 
-          // If frontmatter has skills, they should be skill IDs
-          if (frontmatter?.skills) {
-            expect(Array.isArray(frontmatter.skills)).toBe(true);
-            const skills = frontmatter.skills as string[];
-
-            // Skills should be valid SkillId format (prefix-category-name)
-            for (const skill of skills) {
-              expect(skill).toMatch(/^(web|api|cli|mobile|infra|meta|security)-\w+-\w+/);
-            }
+          // Skills should be valid SkillId format (prefix-category-name)
+          for (const skill of skills) {
+            expect(skill).toMatch(/^(web|api|cli|mobile|infra|meta|security)-\w+-\w+/);
           }
         }
-      } finally {
-        consoleSpy.mockRestore();
-        warnSpy.mockRestore();
       }
     });
 
     it("should have valid YAML frontmatter structure", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      await runCliCommand(["compile"]);
 
-      try {
-        await runCliCommand(["compile"]);
+      const webDevPath = path.join(agentsDir, "web-developer.md");
 
-        const webDevPath = path.join(agentsDir, "web-developer.md");
+      if (await fileExists(webDevPath)) {
+        const content = await readTestFile(webDevPath);
+        const frontmatter = parseTestFrontmatter(content);
 
-        if (await fileExists(webDevPath)) {
-          const content = await readTestFile(webDevPath);
-          const frontmatter = parseTestFrontmatter(content);
+        // Frontmatter should be valid
+        expect(frontmatter).not.toBeNull();
 
-          // Frontmatter should be valid
-          expect(frontmatter).not.toBeNull();
-
-          if (frontmatter) {
-            // Should have required fields
-            expect(frontmatter).toHaveProperty("name");
-            expect(frontmatter).toHaveProperty("description");
-            expect(frontmatter).toHaveProperty("tools");
-            expect(frontmatter).toHaveProperty("model");
-            expect(frontmatter).toHaveProperty("permissionMode");
-          }
+        if (frontmatter) {
+          // Should have required fields
+          expect(frontmatter).toHaveProperty("name");
+          expect(frontmatter).toHaveProperty("description");
+          expect(frontmatter).toHaveProperty("tools");
+          expect(frontmatter).toHaveProperty("model");
+          expect(frontmatter).toHaveProperty("permissionMode");
         }
-      } finally {
-        consoleSpy.mockRestore();
-        warnSpy.mockRestore();
       }
     });
   });
@@ -180,6 +173,9 @@ describe("User Journey: Compile with Local Skills", () => {
   let originalCwd: string;
 
   beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
     originalCwd = process.cwd();
 
     dirs = await createTestSource({
@@ -200,62 +196,47 @@ describe("User Journey: Compile with Local Skills", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });
 
   it("should discover local skills from .claude/skills/", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    // Verify local skill exists
+    const localSkillPath = path.join(
+      dirs.projectDir,
+      CLAUDE_DIR,
+      STANDARD_DIRS.SKILLS,
+      "web-tooling-local-skill",
+      STANDARD_FILES.SKILL_MD,
+    );
+    expect(await fileExists(localSkillPath)).toBe(true);
 
-    try {
-      // Verify local skill exists
-      const localSkillPath = path.join(
-        dirs.projectDir,
-        CLAUDE_DIR,
-        STANDARD_DIRS.SKILLS,
-        "web-tooling-local-skill",
-        STANDARD_FILES.SKILL_MD,
-      );
-      expect(await fileExists(localSkillPath)).toBe(true);
+    // Run compile
+    const { stdout, error } = await runCliCommand(["compile", "--verbose"]);
 
-      // Run compile
-      const { stdout, error } = await runCliCommand(["compile", "--verbose"]);
+    const output = stdout + (error?.message || "");
 
-      const output = stdout + (error?.message || "");
-
-      // Check for skill discovery message
-      // Note: exact message depends on implementation
-      expect(output).toBeDefined();
-    } finally {
-      consoleSpy.mockRestore();
-      warnSpy.mockRestore();
-    }
+    // Check for skill discovery message
+    // Note: exact message depends on implementation
+    expect(output).toBeDefined();
   });
 
   it("should include local skills in agent compilation", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await runCliCommand(["compile"]);
 
-    try {
-      await runCliCommand(["compile"]);
+    const webDevPath = path.join(agentsDir, "web-developer.md");
 
-      const webDevPath = path.join(agentsDir, "web-developer.md");
+    if (await fileExists(webDevPath)) {
+      const content = await readTestFile(webDevPath);
+      const frontmatter = parseTestFrontmatter(content);
 
-      if (await fileExists(webDevPath)) {
-        const content = await readTestFile(webDevPath);
-        const frontmatter = parseTestFrontmatter(content);
-
-        // If skills are in frontmatter, check for local skill
-        if (frontmatter?.skills) {
-          const skills = frontmatter.skills as string[];
-          // Local skill should potentially be included
-          expect(Array.isArray(skills)).toBe(true);
-        }
+      // If skills are in frontmatter, check for local skill
+      if (frontmatter?.skills) {
+        const skills = frontmatter.skills as string[];
+        // Local skill should potentially be included
+        expect(Array.isArray(skills)).toBe(true);
       }
-    } finally {
-      consoleSpy.mockRestore();
-      warnSpy.mockRestore();
     }
   });
 });
@@ -269,6 +250,7 @@ describe("User Journey: Compile Error Handling", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     if (dirs) {
       await cleanupTestSource(dirs);
@@ -293,6 +275,9 @@ describe("User Journey: Compile Error Handling", () => {
   });
 
   it("should handle invalid source path gracefully", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
     dirs = await createTestSource({
       skills: DEFAULT_TEST_SKILLS,
       agents: DEFAULT_TEST_AGENTS,
@@ -301,19 +286,11 @@ describe("User Journey: Compile Error Handling", () => {
 
     process.chdir(dirs.projectDir);
 
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await runCliCommand(["compile", "--source", "/nonexistent/invalid/path/xyz"]);
 
-    try {
-      await runCliCommand(["compile", "--source", "/nonexistent/invalid/path/xyz"]);
-
-      // Command should complete without crashing
-      // It may succeed (source is just a hint) or error gracefully
-      // Either outcome is acceptable - we just verify no crash
-      expect(true).toBe(true);
-    } finally {
-      consoleSpy.mockRestore();
-      warnSpy.mockRestore();
-    }
+    // Command should complete without crashing
+    // It may succeed (source is just a hint) or error gracefully
+    // Either outcome is acceptable - we just verify no crash
+    expect(true).toBe(true);
   });
 });

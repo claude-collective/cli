@@ -712,9 +712,17 @@ describe("stack-plugin-compiler", () => {
   });
 
   describe("printStackCompilationSummary", () => {
-    it("should print stack name and path", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    let consoleSpy: ReturnType<typeof vi.spyOn>;
 
+    beforeEach(() => {
+      consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("should print stack name and path", () => {
       printStackCompilationSummary(
         createMockCompiledStackPlugin({
           pluginPath: "/output/test-stack",
@@ -723,13 +731,9 @@ describe("stack-plugin-compiler", () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Test Stack"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("/output/test-stack"));
-
-      consoleSpy.mockRestore();
     });
 
     it("should print agent count and list", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       printStackCompilationSummary(
         createMockCompiledStackPlugin({
           agents: ["web-developer", "api-developer", "web-tester"],
@@ -741,13 +745,9 @@ describe("stack-plugin-compiler", () => {
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-developer"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("api-developer"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-tester"));
-
-      consoleSpy.mockRestore();
     });
 
     it("should print skill plugins when present", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       printStackCompilationSummary(
         createMockCompiledStackPlugin({
           skillPlugins: [
@@ -762,13 +762,9 @@ describe("stack-plugin-compiler", () => {
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-framework-react"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-state-zustand"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-language-typescript"));
-
-      consoleSpy.mockRestore();
     });
 
     it("should not print skill plugins section when empty", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       printStackCompilationSummary(
         createMockCompiledStackPlugin({
           skillPlugins: [],
@@ -778,13 +774,9 @@ describe("stack-plugin-compiler", () => {
       // Check that "Skills included" was never called
       const calls = consoleSpy.mock.calls.flat().join("\n");
       expect(calls).not.toContain("Skills included");
-
-      consoleSpy.mockRestore();
     });
 
     it("should print hooks status when enabled", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       printStackCompilationSummary(
         createMockCompiledStackPlugin({
           skillPlugins: [],
@@ -793,13 +785,9 @@ describe("stack-plugin-compiler", () => {
       );
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Hooks: enabled"));
-
-      consoleSpy.mockRestore();
     });
 
     it("should not print hooks status when disabled", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       printStackCompilationSummary(
         createMockCompiledStackPlugin({
           skillPlugins: [],
@@ -808,8 +796,6 @@ describe("stack-plugin-compiler", () => {
 
       const calls = consoleSpy.mock.calls.flat().join("\n");
       expect(calls).not.toContain("Hooks:");
-
-      consoleSpy.mockRestore();
     });
   });
 

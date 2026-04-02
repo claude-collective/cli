@@ -203,16 +203,16 @@ describe("agent-plugin-compiler", () => {
       );
       await writeFile(path.join(agentsDir, "bad-agent.md"), "# No frontmatter here");
 
-      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const results = await compileAllAgentPlugins(agentsDir, outputDir);
 
       expect(results).toHaveLength(1);
       expect(results[0].agentName).toBe("good-agent");
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Warning:"));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Warning:"));
 
-      consoleSpy.mockRestore();
+      vi.restoreAllMocks();
     });
 
     it("should create plugin directories for each agent", async () => {
@@ -248,14 +248,22 @@ describe("agent-plugin-compiler", () => {
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[OK]"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("agent-web-developer"));
 
-      consoleSpy.mockRestore();
+      vi.restoreAllMocks();
     });
   });
 
   describe("printAgentCompilationSummary", () => {
-    it("should print count of compiled agent plugins", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    let consoleSpy: ReturnType<typeof vi.spyOn>;
 
+    beforeEach(() => {
+      consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("should print count of compiled agent plugins", () => {
       const results = [
         {
           pluginPath: "/out/agent-web-developer",
@@ -280,13 +288,9 @@ describe("agent-plugin-compiler", () => {
       printAgentCompilationSummary(results);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Compiled 2 agent plugins"));
-
-      consoleSpy.mockRestore();
     });
 
     it("should print each agent name with version", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       const results = [
         {
           pluginPath: "/out/agent-web-developer",
@@ -303,18 +307,12 @@ describe("agent-plugin-compiler", () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("agent-web-developer"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("v1.0.0"));
-
-      consoleSpy.mockRestore();
     });
 
     it("should handle empty results array", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       printAgentCompilationSummary([]);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Compiled 0 agent plugins"));
-
-      consoleSpy.mockRestore();
     });
   });
 });

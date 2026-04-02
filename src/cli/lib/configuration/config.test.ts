@@ -410,7 +410,7 @@ describe("config", () => {
       await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:mycompany/skills" }));
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config).toEqual({ source: "github:mycompany/skills" });
+      expect(config).toStrictEqual({ source: "github:mycompany/skills" });
     });
 
     it("when config.ts contains invalid syntax, should return null", async () => {
@@ -521,6 +521,16 @@ describe("config", () => {
     });
 
     describe("env var validation", () => {
+      let warnSpy: ReturnType<typeof vi.spyOn>;
+
+      beforeEach(() => {
+        warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        vi.restoreAllMocks();
+      });
+
       it("should accept valid env var source", async () => {
         process.env[SOURCE_ENV_VAR] = "github:org/repo";
 
@@ -531,7 +541,6 @@ describe("config", () => {
       });
 
       it("should warn and fall back to default for invalid env var (incomplete URL)", async () => {
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         process.env[SOURCE_ENV_VAR] = "github:";
 
         const result = await resolveSource(undefined, tempDir);
@@ -539,11 +548,9 @@ describe("config", () => {
         expect(result.sourceOrigin).toBe("default");
         expect(result.source).toBe(DEFAULT_SOURCE);
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("invalid value"));
-        warnSpy.mockRestore();
       });
 
       it("should warn and fall back to project config for invalid env var", async () => {
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         process.env[SOURCE_ENV_VAR] = "github:just-a-name";
 
         await writeTestTsConfig(tempDir, buildSourceConfig({ source: "github:project/repo" }));
@@ -553,11 +560,9 @@ describe("config", () => {
         expect(result.sourceOrigin).toBe("project");
         expect(result.source).toBe("github:project/repo");
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("invalid value"));
-        warnSpy.mockRestore();
       });
 
       it("should warn and fall back for whitespace-only env var", async () => {
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         process.env[SOURCE_ENV_VAR] = "   ";
 
         const result = await resolveSource(undefined, tempDir);
@@ -565,11 +570,9 @@ describe("config", () => {
         expect(result.sourceOrigin).toBe("default");
         expect(result.source).toBe(DEFAULT_SOURCE);
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("empty"));
-        warnSpy.mockRestore();
       });
 
       it("should warn and fall back for malformed URL in env var", async () => {
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         process.env[SOURCE_ENV_VAR] = "https://";
 
         const result = await resolveSource(undefined, tempDir);
@@ -577,11 +580,9 @@ describe("config", () => {
         expect(result.sourceOrigin).toBe("default");
         expect(result.source).toBe(DEFAULT_SOURCE);
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("invalid value"));
-        warnSpy.mockRestore();
       });
 
       it("should warn and fall back for UNC path in env var", async () => {
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         process.env[SOURCE_ENV_VAR] = "//attacker.com/payload";
 
         const result = await resolveSource(undefined, tempDir);
@@ -589,7 +590,6 @@ describe("config", () => {
         expect(result.sourceOrigin).toBe("default");
         expect(result.source).toBe(DEFAULT_SOURCE);
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("invalid value"));
-        warnSpy.mockRestore();
       });
 
       it("should trim valid env var values", async () => {

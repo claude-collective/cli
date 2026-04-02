@@ -332,7 +332,7 @@ describe("skill-plugin-compiler", () => {
       // Create another valid skill
       await writeTestSkill(skillsDir, "web-state-zustand");
 
-      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 
@@ -343,9 +343,9 @@ describe("skill-plugin-compiler", () => {
       expect(skillNames).toContain("web-state-zustand");
 
       // Should have warned about the failed skill
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Warning:"));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Warning:"));
 
-      consoleSpy.mockRestore();
+      vi.restoreAllMocks();
     });
 
     it("should log success messages for compiled skills", async () => {
@@ -358,7 +358,7 @@ describe("skill-plugin-compiler", () => {
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[OK]"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-framework-react"));
 
-      consoleSpy.mockRestore();
+      vi.restoreAllMocks();
     });
 
     it("should return correct manifest for each compiled skill", async () => {
@@ -376,9 +376,17 @@ describe("skill-plugin-compiler", () => {
   });
 
   describe("printCompilationSummary", () => {
-    it("should print count of compiled plugins", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    let consoleSpy: ReturnType<typeof vi.spyOn>;
 
+    beforeEach(() => {
+      consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("should print count of compiled plugins", () => {
       const results: CompiledSkillPlugin[] = [
         {
           pluginPath: "/out/react",
@@ -400,13 +408,9 @@ describe("skill-plugin-compiler", () => {
       printCompilationSummary(results);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Compiled 3 skill plugins"));
-
-      consoleSpy.mockRestore();
     });
 
     it("should print each skill name with version", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       const results: CompiledSkillPlugin[] = [
         {
           pluginPath: "/out/react",
@@ -426,23 +430,15 @@ describe("skill-plugin-compiler", () => {
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("v1.0.0"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("zustand"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("v5.0.0"));
-
-      consoleSpy.mockRestore();
     });
 
     it("should handle empty results array", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       printCompilationSummary([]);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Compiled 0 skill plugins"));
-
-      consoleSpy.mockRestore();
     });
 
     it("should handle single result", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       const results: CompiledSkillPlugin[] = [
         {
           pluginPath: "/out/react",
@@ -455,8 +451,6 @@ describe("skill-plugin-compiler", () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Compiled 1 skill plugins"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("react"));
-
-      consoleSpy.mockRestore();
     });
   });
 });

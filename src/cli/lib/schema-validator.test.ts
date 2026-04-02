@@ -401,9 +401,17 @@ describe("schema-validator", () => {
   });
 
   describe("printValidationResults", () => {
-    it("should print summary header", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    let consoleSpy: ReturnType<typeof vi.spyOn>;
 
+    beforeEach(() => {
+      consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("should print summary header", () => {
       const result: FullValidationResult = {
         valid: true,
         results: [],
@@ -423,13 +431,9 @@ describe("schema-validator", () => {
       expect(output).toContain("Total files: 10");
       expect(output).toContain("Valid: 10");
       expect(output).toContain("Invalid: 0");
-
-      consoleSpy.mockRestore();
     });
 
     it("should print success message when all valid", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
       const result: FullValidationResult = {
         valid: true,
         results: [],
@@ -445,13 +449,9 @@ describe("schema-validator", () => {
 
       const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
       expect(output).toContain("All schemas validated successfully");
-
-      consoleSpy.mockRestore();
     });
 
     it("should print failure message when invalid", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
       const result: FullValidationResult = {
         valid: false,
         results: [
@@ -480,13 +480,9 @@ describe("schema-validator", () => {
 
       const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
       expect(output).toContain("Validation failed");
-
-      consoleSpy.mockRestore();
     });
 
     it("should display per-schema results with check/cross marks", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
       const result: FullValidationResult = {
         valid: false,
         results: [
@@ -523,13 +519,9 @@ describe("schema-validator", () => {
       const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
       expect(output).toContain("Agent Definition: 3/3 valid");
       expect(output).toContain("Skill Metadata: 1/2 valid");
-
-      consoleSpy.mockRestore();
     });
 
     it("should display file-level errors for invalid files", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
       const result: FullValidationResult = {
         valid: false,
         results: [
@@ -560,13 +552,9 @@ describe("schema-validator", () => {
       expect(output).toContain("src/agents/broken/metadata.yaml");
       expect(output).toContain("Missing required field: tools");
       expect(output).toContain("Missing required field: description");
-
-      consoleSpy.mockRestore();
     });
 
     it("should skip schemas with zero files in per-schema output", () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
       const result: FullValidationResult = {
         valid: true,
         results: [
@@ -600,8 +588,6 @@ describe("schema-validator", () => {
       expect(output).not.toContain("Agent Definition");
       // "Skill Metadata" with 5 files should be shown
       expect(output).toContain("Skill Metadata: 5/5 valid");
-
-      consoleSpy.mockRestore();
     });
   });
 });

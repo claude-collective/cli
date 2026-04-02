@@ -66,6 +66,9 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
   let originalCwd: string;
 
   beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
     originalCwd = process.cwd();
     tempDir = await createTempDir("cc-import-integration-");
     projectDir = path.join(tempDir, "project");
@@ -74,14 +77,12 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTempDir(tempDir);
   });
 
   it("should import a skill and compile it as a plugin", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // Step 1: Create source with a skill
     await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
@@ -136,15 +137,9 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
     expect(compiledContent).toContain("React Patterns");
     expect(compiledContent).toContain("Component Composition");
     expect(compiledContent).toContain("Hooks Patterns");
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should import multiple skills and compile them all", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // Step 1: Create source with multiple skills
     await createLocalSource(projectDir, [
       IMPORT_REACT_PATTERNS_SKILL,
@@ -174,7 +169,7 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
     expect(results).toHaveLength(3);
 
     const compiledNames = results.map((r) => r.skillName).sort();
-    expect(compiledNames).toEqual(["api-security", "react-patterns", "testing-utils"]);
+    expect(compiledNames).toStrictEqual(["api-security", "react-patterns", "testing-utils"]);
 
     // Step 6: Each compiled plugin should be valid
     for (const result of results) {
@@ -183,15 +178,9 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
       const manifestPath = path.join(result.pluginPath, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
       expect(await fileExists(manifestPath)).toBe(true);
     }
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should validate compiled plugin from imported skill", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // Import a skill with metadata
     await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
@@ -217,9 +206,6 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
     const validation = await validatePlugin(result.pluginPath);
     expect(validation.valid).toBe(true);
     expect(validation.errors).toHaveLength(0);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 });
 
@@ -229,6 +215,9 @@ describe("Integration: Import with --force and Recompile", () => {
   let originalCwd: string;
 
   beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
     originalCwd = process.cwd();
     tempDir = await createTempDir("cc-import-force-");
     projectDir = path.join(tempDir, "project");
@@ -237,14 +226,12 @@ describe("Integration: Import with --force and Recompile", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTempDir(tempDir);
   });
 
   it("should overwrite and recompile with updated content", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // Step 1: Import original version
     await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
@@ -327,15 +314,9 @@ Leverage Suspense for data fetching and code splitting.
     const compiledContent = await readFile(compiledSkillMd, "utf-8");
     expect(compiledContent).toContain("React Patterns v2");
     expect(compiledContent).toContain("Server Components");
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should skip import without --force and preserve compiled output", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // Import original version
     await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
     await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--skill", "react-patterns"]);
@@ -372,9 +353,6 @@ Leverage Suspense for data fetching and code splitting.
       "utf-8",
     );
     expect(afterContent).toBe(originalContent);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 });
 
@@ -384,6 +362,9 @@ describe("Integration: Import with --subdir and Compile", () => {
   let originalCwd: string;
 
   beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
     originalCwd = process.cwd();
     tempDir = await createTempDir("cc-import-subdir-");
     projectDir = path.join(tempDir, "project");
@@ -392,14 +373,12 @@ describe("Integration: Import with --subdir and Compile", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTempDir(tempDir);
   });
 
   it("should import from custom subdirectory and compile successfully", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // Create source with custom subdirectory
     await createLocalSource(projectDir, [IMPORT_API_SECURITY_SKILL], {
       subdir: "custom-skills",
@@ -446,9 +425,6 @@ describe("Integration: Import with --subdir and Compile", () => {
     // Validate the plugin
     const validation = await validatePlugin(result.pluginPath);
     expect(validation.valid).toBe(true);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 });
 
@@ -458,6 +434,9 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
   let originalCwd: string;
 
   beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
     originalCwd = process.cwd();
     tempDir = await createTempDir("cc-import-metadata-");
     projectDir = path.join(tempDir, "project");
@@ -466,6 +445,7 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTempDir(tempDir);
   });
@@ -541,9 +521,6 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
   });
 
   it("should use forkedFrom metadata tags in compiled plugin README", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--skill", "react-patterns"]);
@@ -565,9 +542,6 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     const readmeContent = await readFile(readmePath, "utf-8");
     expect(readmeContent).toContain("react-patterns");
     expect(readmeContent).toContain("React design patterns and best practices");
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 });
 
@@ -577,6 +551,9 @@ describe("Integration: Import Error Recovery", () => {
   let originalCwd: string;
 
   beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
     originalCwd = process.cwd();
     tempDir = await createTempDir("cc-import-error-");
     projectDir = path.join(tempDir, "project");
@@ -585,6 +562,7 @@ describe("Integration: Import Error Recovery", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTempDir(tempDir);
   });
@@ -636,9 +614,6 @@ describe("Integration: Import Error Recovery", () => {
     expect(importError?.oclif?.exit).toBeUndefined();
 
     // Compile it
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     const importedDir = path.join(projectDir, LOCAL_SKILLS_DIR, "react-patterns");
     const outputDir = path.join(tempDir, "plugins");
     await mkdir(outputDir, { recursive: true });
@@ -652,15 +627,9 @@ describe("Integration: Import Error Recovery", () => {
 
     const validation = await validatePlugin(result.pluginPath);
     expect(validation.valid).toBe(true);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("should produce unique plugin names when importing skills with distinct names", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL, IMPORT_TESTING_UTILS_SKILL]);
 
     await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--all"]);
@@ -674,8 +643,5 @@ describe("Integration: Import Error Recovery", () => {
     const names = results.map((r) => r.manifest.name);
     const uniqueNames = new Set(names);
     expect(uniqueNames.size).toBe(names.length);
-
-    consoleSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 });
