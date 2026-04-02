@@ -1,7 +1,7 @@
 # Agent Findings Impact Report
 
 **Generated:** 2026-03-28
-**Total Findings Analyzed:** 70
+**Total Findings Analyzed:** 75
 **Date Range:** 2026-03-21 to 2026-03-28
 
 ## Summary Table
@@ -60,13 +60,13 @@
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | `2026-03-24-inlined-global-stack-not-merged.md`              | `generateProjectConfigWithInlinedGlobal` ignored global stack entirely                                       | Stale: config-writer merge behavior not accurately documented                  |
 | `2026-03-24-object-fromEntries-overwrites-duplicate-keys.md` | `Object.fromEntries()` silently dropped skills sharing same category                                         | Missing: config-generator duplicate-key pitfall not documented                 |
-| `2026-03-24-shallow-stack-merge-loses-categories.md`         | Shallow spread lost nested categories in stack merge; config-types imports wrong for self-contained config   | Missing: `deepMergeStacks()` and `writeStandaloneConfigTypes()` not documented |
+| `2026-03-24-shallow-stack-merge-loses-categories.md`         | Shallow spread lost nested categories in stack merge; config-types imports wrong for self-contained config   | Missing: `mergeConfigs()` deep-merge-at-category-level and `writeStandaloneConfigTypes()` not documented |
 | `2026-03-25-dead-code-and-type-cast-cleanup.md`              | Dead functions (`writeProjectConfigTypes`, `compactStackForYaml`), type inconsistency in blank global config | Stale: dead code removal not reflected in doc                                  |
 | `matrix-loading-performance.md`                              | Matrix loading performance characteristics and anti-patterns in source-loader.ts shallow spreads             | Missing: performance characteristics and loading strategy not documented       |
 
 **Actions needed:**
 
-- Update config-writer section to document `deepMergeStacks()` and the merge-at-category-level pattern
+- Update config-writer section to document `mergeConfigs()` (in `config-merger.ts`) and its deep-merge-at-category-level pattern for stacks
 - Update config-types-writer section to document `writeStandaloneConfigTypes()`
 - Remove references to dead functions (`writeProjectConfigTypes`, `compactStackForYaml`, `compactAssignment`)
 - Add note about `Object.fromEntries()` duplicate-key risk in config-generator
@@ -188,7 +188,7 @@ These findings affect `src/agents/` files -- a directory with no dedicated refer
 **What this doc should cover:**
 
 - Agent directory structure (`src/agents/{category}/{agent-name}/`)
-- Agent file roles: `intro.md`, `workflow.md`, `critical-requirements.md`, `critical-reminders.md`, `output-format.md`, `examples.md`
+- Agent file roles: `identity.md`, `playbook.md`, `critical-requirements.md`, `critical-reminders.md`, `output.md`, `metadata.yaml`
 - Template injection rules: what the `agent.liquid` template injects vs what source files provide
 - Agent compilation: config.ts entry, `agentsinc compile`, scope routing
 - Convention rules: arrow types, findings capture, no template duplication, no custom `<core_principles>`
@@ -302,7 +302,7 @@ Four findings uncovered bugs in the configuration generation pipeline, all invol
 
 **Root cause:** The configuration system underwent a YAML-to-TypeScript migration and a global/project scope split. Both transitions introduced merge edge cases that weren't covered by tests.
 
-**Recommendation:** Update configuration.md to document merge semantics, especially `deepMergeStacks()` and the global-inlined vs global-imported patterns.
+**Recommendation:** Update configuration.md to document merge semantics, especially `mergeConfigs()` (in `config-merger.ts`) and the global-inlined vs global-imported patterns.
 
 ---
 
@@ -312,7 +312,7 @@ Four findings uncovered bugs in the configuration generation pipeline, all invol
 
 1. **Create `agent-system.md`** -- 14 findings have no reference doc. Document agent directory structure, template injection rules, compilation, and conventions.
 2. **Update `test-infrastructure.md`** -- 9 findings. Add mocking guidelines, new E2E constants/helpers, `toStrictEqual` rule.
-3. **Update `configuration.md`** -- 5 findings. Document `deepMergeStacks()`, remove dead code references, add merge semantics.
+3. **Update `configuration.md`** -- 5 findings. Document `mergeConfigs()` (in `config-merger.ts`), remove dead code references, add merge semantics.
 4. **Decide on skills-content.md location** -- 38 findings affect skills repo. Determine if this doc belongs here or in the skills repo.
 
 ### MEDIUM Priority
