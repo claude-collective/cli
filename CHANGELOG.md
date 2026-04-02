@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.101.0] - 2026-04-02
+
+**Agent findings audit, test quality sweep, CLI fixes**
+
+- Audited 90 agent findings: 56 fixed/verified, 36 false positives
+- `toStrictEqual` across all test files (497 replacements), console spy centralization
+- `new:agent --force` flag, eject type-safety fix, agent definition updates
+
+See [changelogs/0.101.0.md](./changelogs/0.101.0.md) for full details.
+
 ## [0.100.0] - 2026-04-01
 
 **List command Ink UI, source grid restyle, styled edit output**
