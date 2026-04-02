@@ -1,7 +1,7 @@
 # Test Infrastructure
 
-**Last Updated:** 2026-03-28
-**Last Validated:** 2026-03-28
+**Last Updated:** 2026-04-02
+**Last Validated:** 2026-04-02
 
 ## Test Framework
 
@@ -59,6 +59,7 @@ src/cli/lib/__tests__/
     doctor.test.ts
     edit.test.ts
     eject.test.ts
+    help.test.ts
     import/skill.test.ts
     info.test.ts
     init.test.ts
@@ -87,7 +88,6 @@ src/cli/lib/__tests__/
     installation.test.ts
     source-switching.integration.test.ts
     wizard-flow.integration.test.tsx
-    wizard-init-compile-pipeline.test.ts
   user-journeys/
     compile-flow.test.ts
     config-precedence.test.ts
@@ -181,7 +181,6 @@ src/cli/utils/fs.test.ts
 src/cli/utils/logger.test.ts
 src/cli/utils/messages.test.ts
 src/cli/utils/typed-object.test.ts
-src/cli/utils/yaml.test.ts
 ```
 
 Component tests:
@@ -403,7 +402,7 @@ Imported per-test via `import "../matchers/setup.js"`. Provides:
 | File                    | Exports                                                                             |
 | ----------------------- | ----------------------------------------------------------------------------------- |
 | `cli.ts`                | `CLI` class with `static run(args, project, options?)` for non-interactive commands |
-| `dual-scope-helpers.ts` | `createTestEnvironment()`, `initGlobal()`, `initProject()`, `setupDualScope()`      |
+| `dual-scope-helpers.ts` | `DualScopeEnv` type, `createTestEnvironment()`, `initGlobal()`, `initProject()`, `setupDualScope()`, `initGlobalWithEject()`, `setupDualScopeWithEject()`, `createDualScopeEnv()`, `initProjectAllGlobal()`, `createGlobalOnlyEnv()` |
 | `interactive-prompt.ts` | `InteractivePrompt` class for PTY-based wizard tests                                |
 | `project-builder.ts`    | `ProjectBuilder` class with `minimal()`, `editable()`, plugin project factories     |
 
@@ -452,6 +451,7 @@ Imported per-test via `import "../matchers/setup.js"`. Provides:
 | `simulateSkillSelections()`              | Simulate user skill selections     | `(skillIds, matrix, selectedDomains) => void`          |
 | `testSkillToResolvedSkill()`             | Convert TestSkill to ResolvedSkill | `(skill, overrides?) => ResolvedSkill`                 |
 | `extractSkillIdsFromAssignment()`        | Extract IDs from stack assignment  | `(assignment) => string[]`                             |
+| `assertConfigIntegrity()`                | Assert config file integrity       | `(dir, expectations) => Promise<void>`                 |
 
 ### Skill File Creators
 
@@ -583,6 +583,9 @@ Pre-built test data constants extracted from individual test files. Use these in
 - `LOCAL_SKILL_MATRIX`, `MIXED_LOCAL_REMOTE_MATRIX` - Local skill matrix fixtures
 - `METHODOLOGY_MATRIX`, `VITEST_MATRIX` - Single-domain matrix fixtures
 - `CATEGORY_GRID_MATRIX`, `REACT_HONO_FRAMEWORK_API_MATRIX` - Specialized matrix fixtures
+- `BUILD_STEP_*_MATRIX` - Build step logic test matrices (17 constants)
+- `WEB_AND_API_COMPILE_CONFIG`, `WEB_ONLY_COMPILE_CONFIG` - CompileConfig fixtures
+- `TOOLING_AND_FRAMEWORK_CONFIG`, `CI_CD_CONFIG`, `FRAMEWORK_AND_STYLING_CONFIG`, `OBSERVABILITY_CONFIG`, `FRAMEWORK_AND_TESTING_CONFIG`, `EMPTY_MATRIX_CONFIG`, `UNRESOLVED_CONFLICT_MATRIX` - MatrixConfig fixtures
 
 ### mock-skills.ts
 
@@ -598,6 +601,9 @@ Pre-built test data constants extracted from individual test files. Use these in
 - `COMPILE_LOCAL_SKILL`, `DOCKER_TOOLING_SKILL`, `DATADOG_OBSERVABILITY_SKILL` - Individual TestSkill constants
 - `CI_CD_SKILLS`, `DISCOURAGES_RELATIONSHIP_SKILLS`, `REQUIRES_RELATIONSHIP_SKILLS`, `RESOLUTION_PIPELINE_SKILLS` - TestSkill arrays for relationship tests
 - `VALID_LOCAL_SKILL`, `SKILL_WITHOUT_METADATA`, `SKILL_WITHOUT_METADATA_CUSTOM` - Edge case test skills
+- `LOCAL_SKILL_BASIC`, `LOCAL_SKILL_FORKED`, `LOCAL_SKILL_FORKED_MINIMAL` - Local skill test variants
+- `REACT_CONFLICTS_VUE`, `VUE_CONFLICTS_REACT`, `ZUSTAND_CONFLICTS_PINIA`, `PINIA_CONFLICTS_ZUSTAND` - Conflict relationship skills
+- `REACT_REQUIRES_ZUSTAND`, `REACT_RECOMMENDED`, `VUE_DISCOURAGES_SCSS`, `ZUSTAND_UNIVERSAL`, `REACT_LOCAL` - Relationship and scope variant skills
 
 ### mock-sources.ts
 

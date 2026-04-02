@@ -1,13 +1,13 @@
 # Operations Layer
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Overview
 
 **Purpose:** Composable building blocks between CLI commands and lower-level lib functions. Each operation wraps one or more lib calls into a single typed function with explicit options/result types.
 **Entry Point:** `src/cli/lib/operations/index.ts` (barrel export)
 **Types Re-export:** `src/cli/lib/operations/types.ts`
-**Key Files:** 20 production (2 root + 3 subdomain barrels + 15 operation files), 9 co-located test files
+**Key Files:** 20 production (2 root + 3 subdomain barrels + 15 operation files), 10 co-located test files
 
 ## Architectural Position
 
@@ -199,7 +199,7 @@ edit.run()
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `source/load-source.ts`                | `lib/loading/index.js` (`loadSkillsMatrixFromSource`), `utils/logger.js` (buffering)                                                                                                                                        |
 | `source/ensure-marketplace.ts`         | `utils/exec.js` (Claude CLI marketplace commands), `lib/loading/index.js` (`fetchMarketplace`), `utils/logger.js`                                                                                                           |
-| `skills/discover-skills.ts`            | `lib/plugins/index.js` (`discoverAllPluginSkills`), `utils/fs.js`, `lib/loading/index.js` (`parseFrontmatter`), `consts.js`                                                                                                 |
+| `skills/discover-skills.ts`            | `lib/plugins/index.js` (`discoverAllPluginSkills`), `utils/fs.js`, `lib/loading/index.js` (`parseFrontmatter`), `utils/logger.js` (verbose, warn), `utils/typed-object.js` (typedEntries, typedKeys), `consts.js`            |
 | `skills/collect-scoped-skill-dirs.ts`  | `utils/fs.js` (`fileExists`, `listDirectories`), `consts.js`                                                                                                                                                                |
 | `skills/copy-local-skills.ts`          | `lib/installation/index.js` (`resolveInstallPaths`), `lib/skills/index.js` (`copySkillsToLocalFlattened`), `utils/fs.js`                                                                                                    |
 | `skills/compare-skills.ts`             | `lib/skills/index.js` (`compareLocalSkillsWithSource`), `utils/typed-object.js`, `skills/collect-scoped-skill-dirs.js` (internal)                                                                                           |

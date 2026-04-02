@@ -1,6 +1,6 @@
 # Boundary Map
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-02
 
 ## Overview
 
@@ -13,7 +13,6 @@
 | `src/cli/base-command.ts`                    | Base `--source` flag definition, error handling        |
 | `src/cli/hooks/init.ts`                      | Raw argv extraction of `--source` before oclif parsing |
 | `src/cli/utils/exec.ts`                      | Shell execution boundary, input validation             |
-| `src/cli/utils/yaml.ts`                      | YAML parse + Zod validation boundary                   |
 | `src/cli/utils/fs.ts`                        | `readFileSafe()` with size limits                      |
 | `src/cli/lib/schemas.ts`                     | All Zod schemas (30+) for parse boundaries             |
 | `src/cli/lib/configuration/config.ts`        | Source validation (`validateSourceFormat`)             |
@@ -46,7 +45,7 @@ All commands inherit `baseFlags` via `...BaseCommand.baseFlags`. The `--source` 
 
 | Property       | Value                                                                        |
 | -------------- | ---------------------------------------------------------------------------- |
-| **Location**   | `src/cli/hooks/init.ts:24-34`                                                |
+| **Location**   | `src/cli/hooks/init.ts:24-40`                                                |
 | **Direction**  | IN                                                                           |
 | **Data**       | `--source` and `-s` flags extracted from raw `options.argv`                  |
 | **Validation** | Manual string extraction (indexOf + split), then passed to `resolveSource()` |
@@ -60,24 +59,24 @@ Every command extends `BaseCommand` and defines `static flags`. oclif handles ty
 
 | Command             | File                                  | Flags (beyond `--source`)                                                                     |
 | ------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `init`              | `commands/init.tsx:170-176`           | `--refresh` (boolean)                                                                         |
-| `edit`              | `commands/edit.tsx:75-84`             | `--refresh` (boolean), `--agent-source` (string)                                              |
+| `init`              | `commands/init.tsx:162-168`           | `--refresh` (boolean)                                                                         |
+| `edit`              | `commands/edit.tsx:81-90`             | `--refresh` (boolean), `--agent-source` (string)                                              |
 | `compile`           | `commands/compile.ts:31-41`           | `--verbose` (boolean), `--agent-source` (string)                                              |
-| `list`              | `commands/list.ts:17-19`              | (base only)                                                                                   |
+| `list`              | `commands/list.tsx:64-66`             | (base only)                                                                                   |
 | `info`              | `commands/info.ts:85-92`              | `--preview` (boolean, allowNo)                                                                |
 | `eject`             | `commands/eject.ts:79-94`             | `--force` (boolean), `--output` (string), `--refresh` (boolean)                               |
-| `search`            | `commands/search.tsx:58-73`           | `--interactive` (boolean), `--category` (string), `--refresh` (boolean)                       |
+| `search`            | `commands/search.tsx:58-78`           | `--interactive` (boolean), `--category` (string), `--refresh` (boolean), `--json` (boolean)   |
 | `update`            | `commands/update.tsx:69-80`           | `--yes` (boolean), `--no-recompile` (boolean)                                                 |
 | `uninstall`         | `commands/uninstall.tsx:96-107`       | `--yes` (boolean), `--all` (boolean)                                                          |
 | `validate`          | `commands/validate.ts:60-77`          | `--verbose` (boolean), `--all` (boolean), `--plugins` (boolean)                               |
-| `doctor`            | `commands/doctor.ts:325-335`          | `--source` (string, own definition), `--verbose` (boolean)                                    |
-| `import skill`      | `commands/import/skill.ts:65-80`      | `--skill` (string), `--all` (boolean), `--list` (boolean)                                     |
-| `new skill`         | `commands/new/skill.ts:47-67`         | `--author` (string), `--category` (string), `--domain` (string), `--force` (boolean)          |
+| `doctor`            | `commands/doctor.ts:372-382`          | `--source` (string, own definition), `--verbose` (boolean)                                    |
+| `import skill`      | `commands/import/skill.ts:65-95`      | `--skill` (string), `--all` (boolean), `--list` (boolean), `--subdir` (string), `--force` (boolean), `--refresh` (boolean) |
+| `new skill`         | `commands/new/skill.ts:47-73`         | `--author` (string), `--category` (string), `--domain` (string), `--force` (boolean), `--output` (string) |
 | `new agent`         | `commands/new/agent.tsx:80-97`        | `--purpose` (string), `--non-interactive` (boolean), `--refresh` (boolean)                    |
 | `new marketplace`   | `commands/new/marketplace.ts:137-148` | `--force` (boolean), `--output` (string)                                                      |
-| `build plugins`     | `commands/build/plugins.ts:30-45`     | `--skills-dir` (string), `--agents-dir` (string), `--output-dir` (string)                     |
-| `build stack`       | `commands/build/stack.tsx:52-67`      | `--stack` (string), `--output-dir` (string), `--agent-source` (string), `--refresh` (boolean) |
-| `build marketplace` | `commands/build/marketplace.ts:39-54` | `--plugins-dir` (string), `--output` (string), `--name` (string)                              |
+| `build plugins`     | `commands/build/plugins.ts:30-53`     | `--skills-dir` (string), `--agents-dir` (string), `--output-dir` (string), `--skill` (string), `--verbose` (boolean) |
+| `build stack`       | `commands/build/stack.tsx:52-74`      | `--stack` (string), `--output-dir` (string), `--agent-source` (string), `--refresh` (boolean), `--verbose` (boolean) |
+| `build marketplace` | `commands/build/marketplace.ts:39-76` | `--plugins-dir` (string), `--output` (string), `--name` (string), `--version` (string), `--description` (string), `--owner-name` (string), `--owner-email` (string), `--verbose` (boolean) |
 
 **Validation pattern:** oclif validates flag types, required status, and enum `options` at parse time. String flags pass through without content validation -- downstream code validates semantics (e.g., `validateSourceFormat` for source strings).
 
@@ -85,22 +84,19 @@ Every command extends `BaseCommand` and defines `static flags`. oclif handles ty
 
 ## 2. File System Parse Boundaries (Data IN)
 
-### 2.1 YAML Parse via `safeLoadYamlFile`
+### 2.1 YAML Parse Pattern
 
-| Property               | Value                                                                  |
-| ---------------------- | ---------------------------------------------------------------------- |
-| **Location**           | `src/cli/utils/yaml.ts:13-31`                                          |
-| **Direction**          | IN                                                                     |
-| **Validation**         | `readFileSafe()` (size limit) -> `parseYaml()` -> `schema.safeParse()` |
-| **Default size limit** | `MAX_CONFIG_FILE_SIZE` (1 MB, `consts.ts:144`)                         |
+**Note:** `src/cli/utils/yaml.ts` (`safeLoadYamlFile`) was removed as dead code. Production code uses the same validation pattern inline at each call site:
 
-`safeLoadYamlFile` is the canonical safe YAML loader. It chains: size-limited read -> YAML parse -> Zod validation. Returns `null` on any failure. Currently only imported in tests and `yaml.ts` itself. Production code calls `parseYaml()` + `schema.safeParse()` directly at individual call sites (see Section 2.3).
+`readFileSafe()` (size limit) -> `parseYaml()` -> `schema.safeParse()`
+
+Default size limit: `MAX_CONFIG_FILE_SIZE` (1 MB, `consts.ts:152`).
 
 ### 2.2 TypeScript Config via `loadConfig` (jiti)
 
 | Property       | Value                                                                                              |
 | -------------- | -------------------------------------------------------------------------------------------------- |
-| **Location**   | `src/cli/lib/configuration/config-loader.ts:26-58`                                                 |
+| **Location**   | `src/cli/lib/configuration/config-loader.ts:26-65`                                                 |
 | **Direction**  | IN                                                                                                 |
 | **Data**       | `.claude-src/config.ts`, `config/stacks.ts`, `config/skill-categories.ts`, `config/skill-rules.ts` |
 | **Validation** | Optional Zod schema via `schema.safeParse()`                                                       |
@@ -121,11 +117,11 @@ Callers:
 
 | File                              | Line | What Is Parsed                           | Schema Used                                                 |
 | --------------------------------- | ---- | ---------------------------------------- | ----------------------------------------------------------- |
-| `matrix/matrix-loader.ts`         | :123 | `metadata.yaml` per skill                | `rawMetadataSchema` (alias for `skillMetadataLoaderSchema`) |
+| `matrix/matrix-loader.ts`         | :123 | `metadata.yaml` per skill                | `rawMetadataSchema` (local schema at :26, stricter than `skillMetadataLoaderSchema` — requires `author`, `category`) |
 | `skills/skill-plugin-compiler.ts` | :51  | `metadata.yaml` for skill compilation    | `skillMetadataLoaderSchema`                                 |
 | `skills/skill-metadata.ts`        | :110 | `metadata.yaml` for local skill metadata | `localSkillMetadataSchema`                                  |
 | `skills/skill-metadata.ts`        | :315 | `metadata.yaml` for fork injection       | `localSkillMetadataSchema`                                  |
-| `source-validator.ts`             | :184 | `metadata.yaml` for strict validation    | `metadataValidationSchema`                                  |
+| `source-validator.ts`             | :189 | `metadata.yaml` for strict validation    | `metadataValidationSchema` / `customMetadataValidationSchema` |
 | `agents/agent-plugin-compiler.ts` | :35  | Agent `.md` frontmatter                  | `agentFrontmatterValidationSchema`                          |
 
 ### 2.4 JSON Parse Boundaries (Production)
@@ -135,7 +131,7 @@ Callers:
 | `utils/exec.ts`               | :180           | Claude CLI JSON stdout (`marketplace list --json`) | `Array.isArray()` check, cast to `MarketplaceInfo[]`       |
 | `plugins/plugin-finder.ts`    | :59            | `plugin.json` manifest                             | `pluginManifestSchema.parse()` (throws on failure)         |
 | `plugins/plugin-validator.ts` | :129           | `plugin.json` for validation                       | `pluginManifestValidationSchema.safeParse()`               |
-| `plugins/plugin-validator.ts` | :335           | `plugin.json` as raw Record                        | Type assertion only (test helper)                          |
+| `plugins/plugin-validator.ts` | :335           | `plugin.json` as raw Record                        | Type assertion only (`loadManifestForValidation()`)        |
 | `plugins/plugin-settings.ts`  | :73            | `.claude/settings.json`                            | `pluginSettingsSchema.safeParse()`                         |
 | `plugins/plugin-settings.ts`  | :120           | `~/.claude/plugins/installed_plugins.json`         | `installedPluginsSchema.safeParse()`                       |
 | `marketplace-generator.ts`    | :28            | `plugin.json` for marketplace build                | `pluginManifestSchema.parse()`                             |
@@ -148,11 +144,11 @@ Callers:
 
 | Constant                    | Value  | File        | Line | Used By                                                                                |
 | --------------------------- | ------ | ----------- | ---- | -------------------------------------------------------------------------------------- |
-| `MAX_CONFIG_FILE_SIZE`      | 1 MB   | `consts.ts` | :144 | `safeLoadYamlFile`, `plugin-settings.ts`                                               |
-| `MAX_PLUGIN_FILE_SIZE`      | 1 MB   | `consts.ts` | :143 | `plugin-finder.ts`, `plugin-validator.ts`, `versioning.ts`, `marketplace-generator.ts` |
-| `MAX_MARKETPLACE_FILE_SIZE` | 10 MB  | `consts.ts` | :142 | `source-fetcher.ts`                                                                    |
-| `MAX_JSON_NESTING_DEPTH`    | 10     | `consts.ts` | :146 | `source-fetcher.ts` (marketplace.json)                                                 |
-| `MAX_MARKETPLACE_PLUGINS`   | 10,000 | `consts.ts` | :147 | (available for marketplace size validation)                                            |
+| `MAX_CONFIG_FILE_SIZE`      | 1 MB   | `consts.ts` | :152 | `permission-checker.tsx`, `plugin-settings.ts`                                         |
+| `MAX_PLUGIN_FILE_SIZE`      | 1 MB   | `consts.ts` | :151 | `plugin-finder.ts`, `plugin-validator.ts`, `versioning.ts`, `marketplace-generator.ts` |
+| `MAX_MARKETPLACE_FILE_SIZE` | 10 MB  | `consts.ts` | :150 | `source-fetcher.ts`                                                                    |
+| `MAX_JSON_NESTING_DEPTH`    | 10     | `consts.ts` | :154 | `source-fetcher.ts` (marketplace.json)                                                 |
+| `MAX_MARKETPLACE_PLUGINS`   | 10,000 | `consts.ts` | :155 | (available for marketplace size validation)                                            |
 
 All enforced via `readFileSafe()` at `utils/fs.ts:13-21` which checks `stats.size` before reading.
 
@@ -175,14 +171,14 @@ Config writer uses `JSON.parse(JSON.stringify(x))` at lines :40-41, :59 to strip
 
 | Function                       | File                                      | What It Writes                                  | Where                           |
 | ------------------------------ | ----------------------------------------- | ----------------------------------------------- | ------------------------------- |
-| `writeStandaloneConfigTypes()` | `configuration/config-types-writer.ts`    | Narrowed union types (SkillId, AgentName, etc.) | `.claude-src/config-types.ts`   |
+| `writeStandaloneConfigTypes()` | `installation/local-installer.ts:344`     | Narrowed union types (SkillId, AgentName, etc.) | `.claude-src/config-types.ts`   |
 | `getGlobalConfigTypesPath()`   | `configuration/config-types-writer.ts:22` | (reads, not writes)                             | `~/.claude-src/config-types.ts` |
 
 ### 3.3 Skill Copier
 
 | Function       | File                     | Line        | What It Writes                                    | Where                        |
 | -------------- | ------------------------ | ----------- | ------------------------------------------------- | ---------------------------- |
-| `copySkills()` | `skills/skill-copier.ts` | (after :57) | Skill directories (SKILL.md, metadata.yaml, etc.) | `.claude/skills/<skill-id>/` |
+| `copySkillsToPluginFromSource()` / `copySkillsToLocalFlattened()` | `skills/skill-copier.ts` | :131 / :199 | Skill directories (SKILL.md, metadata.yaml, etc.) | `.claude/skills/<skill-id>/` |
 
 Path traversal validation via `validateSkillPath()` at `skill-copier.ts:25-45` -- resolves paths and verifies they stay within the expected parent directory. Checks for null bytes at :30.
 
@@ -190,7 +186,7 @@ Path traversal validation via `validateSkillPath()` at `skill-copier.ts:25-45` -
 
 | Function                       | File                              | Line      | What It Writes                            | Where                                        |
 | ------------------------------ | --------------------------------- | --------- | ----------------------------------------- | -------------------------------------------- |
-| `writeScopedConfigs()`         | `installation/local-installer.ts` | :~395-425 | Scoped config.ts files (global + project) | `.claude-src/config.ts` per scope            |
+| `writeScopedConfigs()`         | `installation/local-installer.ts` | :369-425  | Scoped config.ts files (global + project) | `.claude-src/config.ts` per scope            |
 | `compileAndWriteAgents()`      | `installation/local-installer.ts` | :427-469  | Compiled agent markdown files             | `.claude/agents/<name>.md` (project or `~/`) |
 | `writeStandaloneConfigTypes()` | (called from local-installer)     |           | Config types                              | `.claude-src/config-types.ts`                |
 
@@ -207,7 +203,7 @@ Template root resolution at `compiler.ts:394-419`: checks local `.claude-src/age
 
 | Function                     | File                       | Line   | What It Writes                        | Where                   |
 | ---------------------------- | -------------------------- | ------ | ------------------------------------- | ----------------------- |
-| `injectForkedFromMetadata()` | `skills/skill-metadata.ts` | :~305+ | Updated metadata.yaml with forkedFrom | Skill's `metadata.yaml` |
+| `injectForkedFromMetadata()` | `skills/skill-metadata.ts` | :299 | Updated metadata.yaml with forkedFrom | Skill's `metadata.yaml` |
 
 ---
 
@@ -261,7 +257,7 @@ All three validate: non-empty, length limit, no control characters (`[\x00-\x08\
 | UNC path blocking             | `UNC_PATH_PATTERN` (`\\` or `//` prefix) at :418       | Prevent SMB auth credential leaks                                                    |
 | Control character blocking    | `CONTROL_CHAR_PATTERN` at :406                         | Prevent terminal injection                                                           |
 | HTTP URL hostname validation  | `validateHttpUrl()` at :357-387                        | Require valid hostname                                                               |
-| Private IP blocking (SSRF)    | `PRIVATE_IPV4_PATTERN`, `PRIVATE_IPV6_PATTERN` at :377 | Block `127.x.x.x`, `10.x.x.x`, `192.168.x.x`, `169.254.x.x`, `::1`, `fd*:`, `fe80:*` |
+| Private IP blocking (SSRF)    | `PRIVATE_IPV4_PATTERN`, `PRIVATE_IPV6_PATTERN` at :377 | Block `127.x.x.x`, `10.x.x.x`, `172.16-31.x.x`, `192.168.x.x`, `0.0.0.0`, `169.254.x.x`, `::1`, `fd*:`, `fe80:*` |
 | Git shorthand validation      | `validateGitShorthand()` at :389-399                   | Require `owner/repo` format                                                          |
 
 ### 5.2 Liquid Template Injection Prevention
@@ -313,7 +309,7 @@ See Section 2.5 above. All parse boundaries use `readFileSafe()` which enforces 
 | ------------- | ----------------------------------------------- |
 | **Location**  | `src/cli/lib/schemas.ts:784-796`                |
 | **Function**  | `validateNestingDepth()`                        |
-| **Max depth** | `MAX_JSON_NESTING_DEPTH` = 10 (`consts.ts:146`) |
+| **Max depth** | `MAX_JSON_NESTING_DEPTH` = 10 (`consts.ts:154`) |
 | **Used at**   | `source-fetcher.ts:269` for marketplace.json    |
 
 Recursively checks that parsed JSON/YAML does not exceed max nesting depth. Prevents stack overflow from deeply nested structures.
@@ -326,7 +322,7 @@ Recursively checks that parsed JSON/YAML does not exceed max nesting depth. Prev
 
 | Function                          | File                         | Line     | What It Reads                                              | Validation                                                                  |
 | --------------------------------- | ---------------------------- | -------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `readPluginManifest()`            | `plugins/plugin-finder.ts`   | :57-69   | `plugin.json`                                              | `readFileSafe(MAX_PLUGIN_FILE_SIZE)` + `pluginManifestSchema.parse()`       |
+| `readPluginManifest()`            | `plugins/plugin-finder.ts`   | :49-71   | `plugin.json`                                              | `readFileSafe(MAX_PLUGIN_FILE_SIZE)` + `pluginManifestSchema.parse()`       |
 | `getEnabledPluginKeys()`          | `plugins/plugin-settings.ts` | :63-98   | `.claude/settings.json`                                    | `readFileSafe(MAX_CONFIG_FILE_SIZE)` + `pluginSettingsSchema.safeParse()`   |
 | `resolvePluginInstallPaths()`     | `plugins/plugin-settings.ts` | :103-173 | `~/.claude/plugins/installed_plugins.json`                 | `readFileSafe(MAX_CONFIG_FILE_SIZE)` + `installedPluginsSchema.safeParse()` |
 | `getVerifiedPluginInstallPaths()` | `plugins/plugin-settings.ts` | :179-198 | Combines settings + registry, verifies paths exist on disk | `fileExists()` check for each plugin manifest                               |
@@ -335,9 +331,9 @@ Recursively checks that parsed JSON/YAML does not exceed max nesting depth. Prev
 
 | Function                     | File                                   | What It Validates       | Schema                                      |
 | ---------------------------- | -------------------------------------- | ----------------------- | ------------------------------------------- |
-| `validatePlugin()`           | `plugins/plugin-validator.ts:~115-149` | `plugin.json` structure | `pluginManifestValidationSchema` (strict)   |
-| `validateSkillFrontmatter()` | `plugins/plugin-validator.ts:~184-219` | `SKILL.md` frontmatter  | `skillFrontmatterValidationSchema` (strict) |
-| `validateAgentFrontmatter()` | `plugins/plugin-validator.ts:~221-254` | Agent `.md` frontmatter | `agentFrontmatterValidationSchema` (strict) |
+| `validatePluginManifest()`   | `plugins/plugin-validator.ts:114-183`  | `plugin.json` structure | `pluginManifestValidationSchema` (strict)   |
+| `validateSkillFrontmatter()` | `plugins/plugin-validator.ts:185-219`  | `SKILL.md` frontmatter  | `skillFrontmatterValidationSchema` (strict) |
+| `validateAgentFrontmatter()` | `plugins/plugin-validator.ts:221-264`  | Agent `.md` frontmatter | `agentFrontmatterValidationSchema` (strict) |
 
 ### 6.3 Marketplace Registration (Shell Boundary)
 
