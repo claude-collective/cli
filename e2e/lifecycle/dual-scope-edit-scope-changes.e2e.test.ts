@@ -1,5 +1,5 @@
 import path from "path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
@@ -34,6 +34,10 @@ import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-he
 describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
   let sourceDir: string;
   let sourceTempDir: string;
+  let testTempDir: string;
+  let fakeHome: string;
+  let projectDir: string;
+  let testWizard: EditWizard | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
@@ -46,147 +50,137 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
   });
 
+  beforeEach(async () => {
+    const { tempDir, fakeHome: fh, projectDir: pd } = await createTestEnvironment();
+    testTempDir = tempDir;
+    fakeHome = fh;
+    projectDir = pd;
+    await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+  });
+
+  afterEach(async () => {
+    await testWizard?.destroy();
+    testWizard = undefined;
+    await cleanupTempDir(testTempDir);
+  });
+
   it.fails(
-    "Test 2: toggle a project skill's scope to global (expected fail -- ENOENT in project-scoped skill copy)",
+    "Toggle a project skill's scope to global (expected fail -- ENOENT in project-scoped skill copy)",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
-      const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
+      // Phase C: Edit -- toggle api-framework-hono from project to global scope
+      const wizard = await EditWizard.launch({
+        projectDir,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
+      testWizard = wizard;
 
-      try {
-        await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+      // Build step -- Web domain (pass through)
+      await wizard.build.advanceDomain();
 
-        // Phase C: Edit -- toggle api-framework-hono from project to global scope
-        const wizard = await EditWizard.launch({
-          projectDir,
-          source: { sourceDir, tempDir: sourceTempDir },
-          env: { HOME: fakeHome },
-          rows: 60,
-          cols: 120,
-        });
+      // Build step -- API domain -- toggle api-framework-hono scope to global
+      await wizard.build.toggleScopeOnFocusedSkill();
+      await wizard.build.advanceDomain();
 
-        try {
-          // Build step -- Web domain (pass through)
-          await wizard.build.advanceDomain();
+      // Build step -- Shared domain (pass through)
+      const sources = await wizard.build.advanceToSources();
 
-          // Build step -- API domain -- toggle api-framework-hono scope to global
-          await wizard.build.toggleScopeOnFocusedSkill();
-          await wizard.build.advanceDomain();
+      // Sources step (pass through)
+      await sources.waitForReady();
+      const agents = await sources.advance();
 
-          // Build step -- Shared domain (pass through)
-          const sources = await wizard.build.advanceToSources();
+      // Agents step (pass through)
+      const confirm = await agents.acceptDefaults("edit");
 
-          // Sources step (pass through)
-          await sources.waitForReady();
-          const agents = await sources.advance();
+      // Confirm step
+      const result = await confirm.confirm();
+      const exitCode = await result.exitCode;
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // Agents step (pass through)
-          const confirm = await agents.acceptDefaults("edit");
+      // Phase D: Assertions
 
-          // Confirm step
-          const result = await confirm.confirm();
-          const exitCode = await result.exitCode;
-          expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // D-1: Global config now contains api-framework-hono (it was toggled to global)
+      const globalConfig = await readTestFile(
+        path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      expect(globalConfig).toContain("api-framework-hono");
 
-          // Phase D: Assertions
+      // D-2: Project config does NOT contain api-framework-hono (it moved to global)
+      const projectConfig = await readTestFile(
+        path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      expect(projectConfig).not.toContain("api-framework-hono");
 
-          // D-1: Global config now contains api-framework-hono (it was toggled to global)
-          const globalConfig = await readTestFile(
-            path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
-          );
-          expect(globalConfig).toContain("api-framework-hono");
-
-          // D-2: Project config does NOT contain api-framework-hono (it moved to global)
-          const projectConfig = await readTestFile(
-            path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
-          );
-          expect(projectConfig).not.toContain("api-framework-hono");
-
-          await result.destroy();
-        } catch (e) {
-          await wizard.destroy();
-          throw e;
-        }
-      } finally {
-        await cleanupTempDir(tempDir);
-      }
+      await result.destroy();
     },
   );
 
   it.fails(
-    "Test 3: toggle a project agent's scope to global (expected fail -- ENOENT in project-scoped skill copy)",
+    "Toggle a project agent's scope to global (expected fail -- ENOENT in project-scoped skill copy)",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
-      const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
+      // Phase C: Edit -- toggle api-developer from project to global scope
+      const wizard = await EditWizard.launch({
+        projectDir,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
+      testWizard = wizard;
 
-      try {
-        await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+      // Build step -- pass through all three domains
+      const sources = await wizard.build.passThroughAllDomains();
 
-        // Phase C: Edit -- toggle api-developer from project to global scope
-        const wizard = await EditWizard.launch({
-          projectDir,
-          source: { sourceDir, tempDir: sourceTempDir },
-          env: { HOME: fakeHome },
-          rows: 60,
-          cols: 120,
-        });
+      // Sources step (pass through)
+      await sources.waitForReady();
+      const agents = await sources.advance();
 
-        try {
-          // Build step -- pass through all three domains
-          const sources = await wizard.build.passThroughAllDomains();
-
-          // Sources step (pass through)
-          await sources.waitForReady();
-          const agents = await sources.advance();
-
-          // Agents step -- toggle api-developer to global scope
-          // Need 6 arrow-downs to reach api-developer
-          for (let i = 0; i < 6; i++) {
-            await agents.navigateDown();
-          }
-          await agents.toggleScopeOnFocusedAgent();
-          const confirm = await agents.advance("edit");
-
-          // Confirm step
-          const result = await confirm.confirm();
-          const exitCode = await result.exitCode;
-          expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-          // Phase D: Assertions
-
-          // D-1: api-developer.md exists at global scope (HOME)
-          const globalApiDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "api-developer.md");
-          expect(
-            await fileExists(globalApiDevPath),
-            "api-developer.md must exist in global agents dir after scope toggle",
-          ).toBe(true);
-
-          // D-2: api-developer.md does NOT exist at project scope
-          const projectApiDevPath = path.join(
-            projectDir,
-            DIRS.CLAUDE,
-            "agents",
-            "api-developer.md",
-          );
-          expect(
-            await fileExists(projectApiDevPath),
-            "api-developer.md must NOT exist in project agents dir after scope toggle to global",
-          ).toBe(false);
-
-          // D-3: web-developer.md still at global scope (unchanged)
-          const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
-          expect(
-            await fileExists(globalWebDevPath),
-            "web-developer.md must still exist in global agents dir",
-          ).toBe(true);
-
-          await result.destroy();
-        } catch (e) {
-          await wizard.destroy();
-          throw e;
-        }
-      } finally {
-        await cleanupTempDir(tempDir);
+      // Agents step -- toggle api-developer to global scope
+      // Need 6 arrow-downs to reach api-developer
+      for (let i = 0; i < 6; i++) {
+        await agents.navigateDown();
       }
+      await agents.toggleScopeOnFocusedAgent();
+      const confirm = await agents.advance("edit");
+
+      // Confirm step
+      const result = await confirm.confirm();
+      const exitCode = await result.exitCode;
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Phase D: Assertions
+
+      // D-1: api-developer.md exists at global scope (HOME)
+      const globalApiDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "api-developer.md");
+      expect(
+        await fileExists(globalApiDevPath),
+        "api-developer.md must exist in global agents dir after scope toggle",
+      ).toBe(true);
+
+      // D-2: api-developer.md does NOT exist at project scope
+      const projectApiDevPath = path.join(
+        projectDir,
+        DIRS.CLAUDE,
+        "agents",
+        "api-developer.md",
+      );
+      expect(
+        await fileExists(projectApiDevPath),
+        "api-developer.md must NOT exist in project agents dir after scope toggle to global",
+      ).toBe(false);
+
+      // D-3: web-developer.md still at global scope (unchanged)
+      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
+      expect(
+        await fileExists(globalWebDevPath),
+        "web-developer.md must still exist in global agents dir",
+      ).toBe(true);
+
+      await result.destroy();
     },
   );
 });

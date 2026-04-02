@@ -53,7 +53,7 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
   });
 
   it(
-    "Test 8: edit detects source migration for locally-initialized skills with marketplace source",
+    "Edit detects source migration for locally-initialized skills with marketplace source",
     { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
     async () => {
       const env = await createTestEnvironment();
@@ -123,7 +123,7 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
   );
 
   it.fails(
-    "Test 9: compiled agents reference both plugin and local skills correctly (expected fail -- plugin-mode compilation missing skill content)",
+    "Compiled agents reference both plugin and local skills correctly (expected fail -- plugin-mode compilation missing skill content)",
     { timeout: TIMEOUTS.EXTENDED_LIFECYCLE, retry: 0 },
     async () => {
       const env = await createTestEnvironment();

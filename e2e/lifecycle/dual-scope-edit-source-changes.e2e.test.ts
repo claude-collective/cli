@@ -55,7 +55,7 @@ describe.skipIf(!claudeAvailable)(
     });
 
     it(
-      "Test 4: change a project skill's source from local to plugin",
+      "Change a project skill's source from local to plugin",
       { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
       async () => {
         const env = await createTestEnvironment();
@@ -127,7 +127,7 @@ describe.skipIf(!claudeAvailable)(
     );
 
     it(
-      "Test 5: edit detects source migration from local to plugin for locally-initialized skills",
+      "Edit detects source migration from local to plugin for locally-initialized skills",
       { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
       async () => {
         const env = await createTestEnvironment();

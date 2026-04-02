@@ -1,6 +1,6 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach } from "vitest";
 import { EXIT_CODES, TIMEOUTS } from "../pages/constants.js";
 import {
   ensureBinaryExists,
@@ -156,30 +156,43 @@ describe("build agent plugins", () => {
   });
 
   describe("build plugins without --agents-dir does not compile agents", () => {
+    let noAgentTempDir: string;
+
+    beforeEach(async () => {
+      noAgentTempDir = await createTempDir();
+    });
+
+    afterEach(async () => {
+      await cleanupTempDir(noAgentTempDir);
+    });
+
     it("should not produce agent plugin directories when --agents-dir is omitted", async () => {
-      const noAgentTempDir = await createTempDir();
       const noAgentSourceDir = path.join(noAgentTempDir, "source");
       const skillsDir = path.join(noAgentSourceDir, "src", "skills");
       await mkdir(skillsDir, { recursive: true });
 
-      try {
-        const result = await CLI.run(["build", "plugins", "--skills-dir", skillsDir], {
-          dir: noAgentSourceDir,
-        });
-        expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        // Output should NOT mention agent compilation
-        expect(result.stdout).not.toContain("Compiling agent plugins");
-        expect(result.stdout).not.toContain("agent plugins");
-      } finally {
-        await cleanupTempDir(noAgentTempDir);
-      }
+      const result = await CLI.run(["build", "plugins", "--skills-dir", skillsDir], {
+        dir: noAgentSourceDir,
+      });
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(result.stdout).not.toContain("Compiling agent plugins");
+      expect(result.stdout).not.toContain("agent plugins");
     });
   });
 
   describe("agent plugin edge cases", () => {
+    let edgeCaseTempDir: string;
+
+    beforeEach(async () => {
+      edgeCaseTempDir = await createTempDir();
+    });
+
+    afterEach(async () => {
+      await cleanupTempDir(edgeCaseTempDir);
+    });
+
     it("should skip agents with missing frontmatter and compile valid ones", async () => {
-      const edgeTempDir = await createTempDir();
-      const edgeSourceDir = path.join(edgeTempDir, "source");
+      const edgeSourceDir = path.join(edgeCaseTempDir, "source");
       const edgeAgentsDir = path.join(edgeSourceDir, "edge-agents");
       const edgeSkillsDir = path.join(edgeSourceDir, "src", "skills");
       await mkdir(edgeAgentsDir, { recursive: true });
@@ -197,53 +210,37 @@ describe("build agent plugins", () => {
         "# No frontmatter here\n\nJust plain markdown.",
       );
 
-      try {
-        const result = await CLI.run(
-          ["build", "plugins", "--agents-dir", edgeAgentsDir, "--skills-dir", edgeSkillsDir],
-          { dir: edgeSourceDir },
-        );
+      const result = await CLI.run(
+        ["build", "plugins", "--agents-dir", edgeAgentsDir, "--skills-dir", edgeSkillsDir],
+        { dir: edgeSourceDir },
+      );
 
-        // Build should still succeed (bad agents are warned, not fatal)
-        expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(result.stdout).toContain("agent-good-agent");
+      expect(result.stdout).toContain("Compiled 1 agent plugins");
 
-        // Should compile the valid agent
-        expect(result.stdout).toContain("agent-good-agent");
-
-        // Should have compiled 1 agent plugin (the valid one)
-        expect(result.stdout).toContain("Compiled 1 agent plugins");
-
-        // The valid agent's plugin directory should exist
-        const pluginDir = path.join(edgeSourceDir, "dist", "plugins", "agent-good-agent");
-        expect(await fileExists(path.join(pluginDir, ".claude-plugin", "plugin.json"))).toBe(true);
-      } finally {
-        await cleanupTempDir(edgeTempDir);
-      }
+      const pluginDir = path.join(edgeSourceDir, "dist", "plugins", "agent-good-agent");
+      expect(await fileExists(path.join(pluginDir, ".claude-plugin", "plugin.json"))).toBe(true);
     });
 
     it("should handle empty agents directory gracefully", async () => {
-      const emptyTempDir = await createTempDir();
-      const emptySourceDir = path.join(emptyTempDir, "source");
+      const emptySourceDir = path.join(edgeCaseTempDir, "source");
       const emptyAgentsDir = path.join(emptySourceDir, "empty-agents");
       const emptySkillsDir = path.join(emptySourceDir, "src", "skills");
       await mkdir(emptyAgentsDir, { recursive: true });
       await mkdir(emptySkillsDir, { recursive: true });
 
-      try {
-        const result = await CLI.run(
-          ["build", "plugins", "--agents-dir", emptyAgentsDir, "--skills-dir", emptySkillsDir],
-          { dir: emptySourceDir },
-        );
+      const result = await CLI.run(
+        ["build", "plugins", "--agents-dir", emptyAgentsDir, "--skills-dir", emptySkillsDir],
+        { dir: emptySourceDir },
+      );
 
-        expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        expect(result.stdout).toContain("Compiled 0 agent plugins");
-      } finally {
-        await cleanupTempDir(emptyTempDir);
-      }
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(result.stdout).toContain("Compiled 0 agent plugins");
     });
 
     it("should use custom --output-dir for agent plugin output", async () => {
-      const customOutTempDir = await createTempDir();
-      const customOutSourceDir = path.join(customOutTempDir, "source");
+      const customOutSourceDir = path.join(edgeCaseTempDir, "source");
       const customAgentsDir = path.join(customOutSourceDir, "my-agents");
       const customSkillsDir = path.join(customOutSourceDir, "src", "skills");
       const customOutputDir = "custom-output/plugins";
@@ -255,37 +252,33 @@ describe("build agent plugins", () => {
         createAgentMd("test-agent", "Agent for output dir test"),
       );
 
-      try {
-        const result = await CLI.run(
-          [
-            "build",
-            "plugins",
-            "--agents-dir",
-            customAgentsDir,
-            "--skills-dir",
-            customSkillsDir,
-            "--output-dir",
-            customOutputDir,
-          ],
-          { dir: customOutSourceDir },
-        );
-
-        expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-        const manifestPath = path.join(
-          customOutSourceDir,
+      const result = await CLI.run(
+        [
+          "build",
+          "plugins",
+          "--agents-dir",
+          customAgentsDir,
+          "--skills-dir",
+          customSkillsDir,
+          "--output-dir",
           customOutputDir,
-          "agent-test-agent",
-          ".claude-plugin",
-          "plugin.json",
-        );
-        expect(
-          await fileExists(manifestPath),
-          "Agent plugin should be in custom output directory",
-        ).toBe(true);
-      } finally {
-        await cleanupTempDir(customOutTempDir);
-      }
+        ],
+        { dir: customOutSourceDir },
+      );
+
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      const manifestPath = path.join(
+        customOutSourceDir,
+        customOutputDir,
+        "agent-test-agent",
+        ".claude-plugin",
+        "plugin.json",
+      );
+      expect(
+        await fileExists(manifestPath),
+        "Agent plugin should be in custom output directory",
+      ).toBe(true);
     });
   });
 });

@@ -59,7 +59,7 @@ describe("dual-scope edit lifecycle -- display and locking", () => {
   });
 
   it(
-    "Test 1: edit shows global items as locked, project items as editable",
+    "Edit shows global items as locked, project items as editable",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
       const env = await createTestEnvironment();
