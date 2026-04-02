@@ -67,15 +67,15 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
         <Text> </Text>
         <Text>For autonomous operation, add to .claude/settings.json:</Text>
         <Text> </Text>
-        <Text color="dim">{"{"}</Text>
-        <Text color="dim">{'  "permissions": {'}</Text>
-        <Text color="dim">{'    "allow": ['}</Text>
-        <Text color="dim">{'      "Read(*)",'}</Text>
-        <Text color="dim">{'      "Bash(git *)",'}</Text>
-        <Text color="dim">{'      "Bash(bun *)"'}</Text>
-        <Text color="dim">{"    ]"}</Text>
-        <Text color="dim">{"  }"}</Text>
-        <Text color="dim">{"}"}</Text>
+        <Text color={CLI_COLORS.DIM}>{"{"}</Text>
+        <Text color={CLI_COLORS.DIM}>{'  "permissions": {'}</Text>
+        <Text color={CLI_COLORS.DIM}>{'    "allow": ['}</Text>
+        <Text color={CLI_COLORS.DIM}>{'      "Read(*)",'}</Text>
+        <Text color={CLI_COLORS.DIM}>{'      "Bash(git *)",'}</Text>
+        <Text color={CLI_COLORS.DIM}>{'      "Bash(bun *)"'}</Text>
+        <Text color={CLI_COLORS.DIM}>{"    ]"}</Text>
+        <Text color={CLI_COLORS.DIM}>{"  }"}</Text>
+        <Text color={CLI_COLORS.DIM}>{"}"}</Text>
       </Box>
     );
   }

@@ -182,17 +182,24 @@ export const SOURCE_DISPLAY_NAMES: Record<string, string> = {
   "agents-inc": "Agents Inc",
 };
 
+// TODO: update naming convention to GRAY_1,2, etc
 export const CLI_COLORS = {
-  PRIMARY: "cyan",
-  SUCCESS: "green",
-  ERROR: "red",
-  WARNING: "yellow",
-  INFO: "blue",
-  NEUTRAL: "gray",
-  FOCUS: "cyan",
-  UNFOCUSED: "white",
-  WHITE: "white",
+  PRIMARY: "#99FFFF",
+  SUCCESS: "#90EE90",
+  ERROR: "#DC343B",
+  WARNING: "#E6A817",
+  INFO: "#3B82F6",
+  NEUTRAL: "#888888",
+  FOCUS: "#87CEFA",
+  UNFOCUSED: "#FFFFFF",
+  WHITE: "#FFFFFF",
+  BLACK: "#000000",
+  DIM: "#666666",
+  GRAY_1: "#ddd",
   LABEL_BG: "#383838",
+  TOAST_BG: "#EEEEEE",
+  TOAST_FG: "#000000",
+  HOVER_BG: "#333333",
 } as const;
 
 /** Canonical display order for built-in domains. Custom domains appear before these, alphabetically. */
