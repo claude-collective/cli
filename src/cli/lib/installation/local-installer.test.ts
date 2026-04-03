@@ -502,7 +502,7 @@ describe("local-installer", () => {
         false, // no existing project installation
       );
 
-      // Global config should be written
+      // Global config should be written (blank existing global + has global-scoped items)
       const globalConfigPath = path.join(os.homedir(), CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const { fileExists } = await import("../../utils/fs");
       expect(await fileExists(globalConfigPath)).toBe(true);
@@ -536,10 +536,11 @@ describe("local-installer", () => {
         false, // no existing project installation, but project-scoped items exist
       );
 
-      // Both global and project configs should be written
+      // Global config should be written (blank existing global + has global-scoped items)
       const globalConfigPath = path.join(os.homedir(), CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const { fileExists } = await import("../../utils/fs");
       expect(await fileExists(globalConfigPath)).toBe(true);
+      // Project config should be written (has project-scoped items)
       expect(await fileExists(projectConfigPath)).toBe(true);
 
       // Project config should contain the project-scoped skill
@@ -966,6 +967,7 @@ describe("local-installer", () => {
         false,
       );
 
+      // Global config should be written (blank existing global + has global-scoped items)
       const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const { fileExists } = await import("../../utils/fs");
       expect(await fileExists(globalConfigPath)).toBe(true);
@@ -1002,9 +1004,11 @@ describe("local-installer", () => {
         false,
       );
 
+      // Global config should be written (blank existing global + has global-scoped items)
       const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const { fileExists } = await import("../../utils/fs");
       expect(await fileExists(globalConfigPath)).toBe(true);
+      // Project config should be written (has project-scoped items)
       expect(await fileExists(projectConfigPath)).toBe(true);
 
       // Project config should have the project-scoped skill

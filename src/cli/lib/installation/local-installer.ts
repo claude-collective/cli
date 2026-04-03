@@ -19,7 +19,7 @@ import { matrix } from "../matrix/matrix-provider";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
-import { type MergeResult, mergeWithExistingConfig } from "../configuration";
+import { type MergeResult, mergeWithExistingConfig, loadProjectConfigFromDir } from "../configuration";
 import { loadAllAgents, loadSkillsByIds, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
@@ -341,6 +341,61 @@ export function buildAgentScopeMap(config: ProjectConfig): Map<AgentName, "proje
   return map;
 }
 
+/**
+ * Merges new global-scoped items into an existing global config.
+ * Adds skills/agents that don't already exist. Never removes existing items.
+ */
+function mergeGlobalConfigs(
+  existing: ProjectConfig,
+  incoming: ProjectConfig,
+): { config: ProjectConfig; changed: boolean } {
+  const existingSkillIds = new Set(existing.skills.map((s) => s.id));
+  const existingAgentNames = new Set(existing.agents.map((a) => a.name));
+
+  const newSkills = incoming.skills.filter((s) => !existingSkillIds.has(s.id));
+  const newAgents = incoming.agents.filter((a) => !existingAgentNames.has(a.name));
+
+  const mergedSkills = [...existing.skills, ...newSkills];
+  const mergedAgents = [...existing.agents, ...newAgents];
+
+  // Merge stack: preserve existing agent entries, add new ones
+  const mergedStack = { ...existing.stack };
+  let newStackEntries = 0;
+  if (incoming.stack) {
+    for (const [agentName, agentConfig] of Object.entries(incoming.stack)) {
+      if (!mergedStack[agentName as AgentName]) {
+        mergedStack[agentName as AgentName] = agentConfig;
+        newStackEntries++;
+      }
+    }
+  }
+
+  // Merge domains and selectedAgents (union, no duplicates)
+  const mergedDomains = [...new Set([...(existing.domains ?? []), ...(incoming.domains ?? [])])];
+  const mergedSelectedAgents = [
+    ...new Set([...(existing.selectedAgents ?? []), ...(incoming.selectedAgents ?? [])]),
+  ];
+
+  const changed =
+    newSkills.length > 0 ||
+    newAgents.length > 0 ||
+    newStackEntries > 0 ||
+    mergedDomains.length > (existing.domains ?? []).length ||
+    mergedSelectedAgents.length > (existing.selectedAgents ?? []).length;
+
+  return {
+    config: {
+      ...existing,
+      skills: mergedSkills,
+      agents: mergedAgents,
+      stack: mergedStack,
+      domains: mergedDomains,
+      selectedAgents: mergedSelectedAgents,
+    },
+    changed,
+  };
+}
+
 async function writeStandaloneConfigTypes(
   configPath: string,
   matrix: MergedSkillsMatrix,
@@ -385,18 +440,38 @@ export async function writeScopedConfigs(
     return;
   }
 
-  // Installing from project — split by scope and write to both locations
+  // Installing from project — split by scope for project config generation.
   const { global: globalConfig, project: projectSplitConfig } = splitConfigByScope(finalConfig);
   const globalConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
-  // Write global config to ~/.claude-src/config.ts (standalone, no import preamble)
-  await ensureDir(path.dirname(globalConfigPath));
-  await writeConfigFile(globalConfig, globalConfigPath);
-  verbose(`Updated global config at ${globalConfigPath}`);
+  // Merge new global-scoped items into the existing global config.
+  // - Existing items are preserved (never removed from global during project init)
+  // - New global items are added
+  // - If no existing global config, write the full global split
+  const existingGlobal = await loadProjectConfigFromDir(homeDir);
+  const existingGlobalConfig = existingGlobal?.config;
+  const hasGlobalItems = globalConfig.skills.length > 0 || globalConfig.agents.length > 0;
 
-  // Write global config-types.ts narrowed to global-scoped items
-  await writeStandaloneConfigTypes(globalConfigPath, matrix, agents, globalConfig);
-  verbose("Updated global config-types.ts with actual types");
+  if (hasGlobalItems) {
+    if (existingGlobalConfig) {
+      const mergeResult = mergeGlobalConfigs(existingGlobalConfig, globalConfig);
+      if (mergeResult.changed) {
+        await ensureDir(path.dirname(globalConfigPath));
+        await writeConfigFile(mergeResult.config, globalConfigPath);
+        verbose(`Updated global config at ${globalConfigPath}`);
+        await writeStandaloneConfigTypes(globalConfigPath, matrix, agents, mergeResult.config);
+        verbose("Updated global config-types.ts");
+      } else {
+        verbose("Global config unchanged, skipping write");
+      }
+    } else {
+      await ensureDir(path.dirname(globalConfigPath));
+      await writeConfigFile(globalConfig, globalConfigPath);
+      verbose(`Updated global config at ${globalConfigPath}`);
+      await writeStandaloneConfigTypes(globalConfigPath, matrix, agents, globalConfig);
+      verbose("Updated global config-types.ts");
+    }
+  }
 
   // Write project config if the project installation already exists OR if there are project-scoped items.
   // Skip only when no existing project installation AND no project-scoped items — creating an empty
