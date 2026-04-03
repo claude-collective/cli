@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.104.0] - 2026-04-03
+
+**Global skill preselection during init, safe global config merging**
+
+- Pre-select globally installed skills/agents when initializing a new project
+- Merge into existing global config instead of overwriting it on each project init
+- Additive domain toggling in scratch mode, agent preselection restoration after stack choice
+
+See [changelogs/0.104.0.md](./changelogs/0.104.0.md) for full details.
+
 ## [0.103.0] - 2026-04-02
 
 **E2E test quality, loading spinner, selectSkill migration**
