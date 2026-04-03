@@ -1,14 +1,19 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { TIMEOUTS, DIRS, FILES } from "../pages/constants.js";
+import { TIMEOUTS, DIRS, FILES, EXIT_CODES } from "../pages/constants.js";
 import {
   cleanupTempDir,
   ensureBinaryExists,
   fileExists,
   readTestFile,
 } from "../helpers/test-utils.js";
-import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-helpers.js";
+import {
+  createTestEnvironment,
+  initGlobal,
+  initProject,
+  setupDualScope,
+} from "../fixtures/dual-scope-helpers.js";
 
 /**
  * Dual-scope edit lifecycle E2E test -- agent content and config integrity.
@@ -85,30 +90,66 @@ describe("dual-scope edit lifecycle -- agent content and config integrity", () =
     },
   );
 
+});
+
+// =====================================================================
+// Test Suite -- Config Source Preservation
+// =====================================================================
+
+describe("dual-scope edit lifecycle -- config preservation", () => {
+  let sourceDir: string;
+  let sourceTempDir: string;
+
+  beforeAll(async () => {
+    await ensureBinaryExists();
+    const source = await createE2ESource();
+    sourceDir = source.sourceDir;
+    sourceTempDir = source.tempDir;
+  }, TIMEOUTS.SETUP * 2);
+
+  afterAll(async () => {
+    if (sourceTempDir) await cleanupTempDir(sourceTempDir);
+  });
+
+  let testTempDir: string;
+  let fakeHome: string;
+  let projectDir: string;
+
+  beforeEach(async () => {
+    const { tempDir, fakeHome: fh, projectDir: pd } = await createTestEnvironment();
+    testTempDir = tempDir;
+    fakeHome = fh;
+    projectDir = pd;
+  });
+
+  afterEach(async () => {
+    await cleanupTempDir(testTempDir);
+  });
+
   it(
     "Config split preserves source fields after edit",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
-      // Phase D: Verify config source fields are preserved from Phase B
+      // Phase A: Init global (completeWithDefaults — marketplace source "agents-inc")
+      const phaseA = await initGlobal(sourceDir, sourceTempDir, fakeHome);
+      expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // D-1: Read global config
+      // Assert: global config has agents-inc after Phase A
       const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const globalConfig = await readTestFile(globalConfigPath);
+      const globalConfigAfterA = await readTestFile(globalConfigPath);
+      expect(globalConfigAfterA).toContain("agents-inc");
 
-      // D-2: Global config has skills with source values
-      expect(globalConfig).toContain("web-framework-react");
-      expect(globalConfig).toContain("source");
+      // Phase B: Init project with scope toggling (eject for project-scoped skills)
+      const phaseB = await initProject(sourceDir, sourceTempDir, fakeHome, projectDir);
+      expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // D-3: Read project config
+      // Assert: global config is identical to Phase A (project init must not mutate it)
+      const globalConfigAfterB = await readTestFile(globalConfigPath);
+      expect(globalConfigAfterB).toStrictEqual(globalConfigAfterA);
+
+      // Assert: project config has eject (the project-scoped skill was ejected)
       const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const projectConfig = await readTestFile(projectConfigPath);
-
-      // D-4: Project config has api-framework-hono with source field
-      expect(projectConfig).toContain("api-framework-hono");
-      expect(projectConfig).toContain("source");
-
-      // D-5: No source field lost during the split
-      expect(globalConfig).toContain("eject");
       expect(projectConfig).toContain("eject");
     },
   );
