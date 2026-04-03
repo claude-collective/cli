@@ -80,5 +80,20 @@ export function useWizardInitialization({
     if (isEditingFromGlobalScope) {
       useWizardStore.setState({ isEditingFromGlobalScope });
     }
+
+    // Store global preselections for stack-selection.tsx to merge after stack/scratch choice.
+    // In init flow (!initialStep), skills are not populated yet — the stack step runs first.
+    if (!initialStep && installedSkillConfigs?.length) {
+      useWizardStore.setState({ globalPreselections: installedSkillConfigs });
+    }
+    // Store global agent preselections so stack-selection.tsx can restore them after selectStack wipes agents.
+    if (!initialStep && (initialAgents?.length || installedAgentConfigs?.length)) {
+      useWizardStore.setState({
+        globalAgentPreselections: {
+          agents: initialAgents ?? [],
+          configs: installedAgentConfigs ?? [],
+        },
+      });
+    }
   }
 }

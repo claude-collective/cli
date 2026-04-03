@@ -154,9 +154,32 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ onCancel }) => {
       if (focusedId === "scratch") {
         selectStack(null);
         setApproach("scratch");
-        for (const domain of DEFAULT_SCRATCH_DOMAINS) {
-          toggleDomain(domain);
+
+        // Restore global agent preselections (selectStack wipes selectedAgents/agentConfigs)
+        const globalAgentPre = useWizardStore.getState().globalAgentPreselections;
+        if (globalAgentPre) {
+          useWizardStore.setState({
+            selectedAgents: globalAgentPre.agents,
+            agentConfigs: globalAgentPre.configs,
+          });
         }
+
+        // Pre-select global skills first (sets selectedDomains to global skill domains)
+        const globalPreselections = useWizardStore.getState().globalPreselections;
+        if (globalPreselections?.length) {
+          populateFromSkillIds(
+            globalPreselections.map((s) => s.id),
+            globalPreselections,
+          );
+        }
+
+        // Then toggle scratch domains (additive — adds any not already selected)
+        for (const domain of DEFAULT_SCRATCH_DOMAINS) {
+          if (!useWizardStore.getState().selectedDomains.includes(domain)) {
+            toggleDomain(domain);
+          }
+        }
+
         setStep("domains");
         return;
       }
@@ -164,7 +187,22 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ onCancel }) => {
       if (focusedStack) {
         selectStack(focusedStack.id);
         setStackAction("customize");
-        populateFromSkillIds(focusedStack.allSkillIds);
+
+        // Restore global agent preselections (selectStack wipes selectedAgents/agentConfigs)
+        const globalAgentPre = useWizardStore.getState().globalAgentPreselections;
+        if (globalAgentPre) {
+          useWizardStore.setState({
+            selectedAgents: globalAgentPre.agents,
+            agentConfigs: globalAgentPre.configs,
+          });
+        }
+
+        // Merge global preselections with stack skills
+        const globalPreselections = useWizardStore.getState().globalPreselections;
+        const globalIds = globalPreselections?.map((s) => s.id) ?? [];
+        const mergedIds = [...new Set([...focusedStack.allSkillIds, ...globalIds])];
+        populateFromSkillIds(mergedIds, globalPreselections ?? undefined);
+
         setApproach("stack");
         setStep("domains");
       }

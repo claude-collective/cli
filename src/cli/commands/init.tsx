@@ -1,3 +1,4 @@
+import os from "os";
 import React from "react";
 
 import { Flags } from "@oclif/core";
@@ -19,10 +20,11 @@ import {
   discoverInstalledSkills,
 } from "../lib/operations/index.js";
 import { getInstallationInfo } from "../lib/plugins/plugin-info.js";
-import { loadProjectConfig } from "../lib/configuration/project-config.js";
+import { loadProjectConfig, loadProjectConfigFromDir } from "../lib/configuration/project-config.js";
 import {
   type InstallMode,
   detectProjectInstallation,
+  detectGlobalInstallation,
   deriveInstallMode,
   resolveInstallPaths,
   buildAgentScopeMap,
@@ -40,6 +42,7 @@ import { Spinner } from "../components/common/spinner.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { getSkillById } from "../lib/matrix/matrix-provider";
+import type { ProjectConfig } from "../types/index.js";
 import { type StartupMessage } from "../utils/logger.js";
 import { SUCCESS_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
 import { ensureBlankGlobalConfig } from "../lib/configuration/config-writer.js";
@@ -171,11 +174,14 @@ export default class Init extends BaseCommand {
     await this.ensureGlobalConfig(projectDir);
 
     const { unmount, clear: clearSpinner } = render(<Spinner label="Loading skills..." />);
-    const { sourceResult, startupMessages } = await this.loadSourceOrFail(flags);
+    const [{ sourceResult, startupMessages }, globalConfig] = await Promise.all([
+      this.loadSourceOrFail(flags),
+      this.loadGlobalConfigIfExists(),
+    ]);
     clearSpinner();
     unmount();
 
-    const result = await this.runWizard(sourceResult, startupMessages, projectDir);
+    const result = await this.runWizard(sourceResult, startupMessages, projectDir, globalConfig);
     if (!result) this.exit(EXIT_CODES.CANCELLED);
 
     if (result.skills.length === 0) {
@@ -211,6 +217,13 @@ export default class Init extends BaseCommand {
     }
   }
 
+  private async loadGlobalConfigIfExists(): Promise<ProjectConfig | null> {
+    const globalInstall = await detectGlobalInstallation();
+    if (!globalInstall) return null;
+    const loaded = await loadProjectConfigFromDir(os.homedir());
+    return loaded?.config ?? null;
+  }
+
   private async loadSourceOrFail(flags: {
     source?: string;
     refresh: boolean;
@@ -234,6 +247,7 @@ export default class Init extends BaseCommand {
     sourceResult: SourceLoadResult,
     startupMessages: StartupMessage[],
     projectDir: string,
+    globalConfig: ProjectConfig | null,
   ): Promise<WizardResultV2 | null> {
     let wizardResult: WizardResultV2 | null = null;
 
@@ -243,6 +257,10 @@ export default class Init extends BaseCommand {
         logo={ASCII_LOGO}
         projectDir={projectDir}
         startupMessages={startupMessages}
+        installedSkillIds={globalConfig?.skills?.map((s) => s.id)}
+        installedSkillConfigs={globalConfig?.skills}
+        installedAgentConfigs={globalConfig?.agents}
+        initialAgents={globalConfig?.selectedAgents}
         onComplete={(result) => {
           wizardResult = result;
         }}

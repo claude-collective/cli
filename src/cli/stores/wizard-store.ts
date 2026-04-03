@@ -231,6 +231,12 @@ export type WizardState = {
   /** When true, scope toggling is disabled (editing from ~/.claude/ with no project to move items to) */
   isEditingFromGlobalScope: boolean;
 
+  /** Global skill configs to pre-select when a stack or scratch is chosen in init. Set by use-wizard-initialization. */
+  globalPreselections: SkillConfig[] | null;
+
+  /** Global agent preselections to restore after selectStack wipes selectedAgents/agentConfigs. Set by use-wizard-initialization. */
+  globalAgentPreselections: { agents: AgentName[]; configs: AgentScopeConfig[] } | null;
+
   history: WizardStep[];
 
   /**
@@ -524,6 +530,8 @@ type WizardStateData = Pick<
   | "lockedSkillIds"
   | "lockedAgentNames"
   | "isEditingFromGlobalScope"
+  | "globalPreselections"
+  | "globalAgentPreselections"
   | "history"
 >;
 
@@ -554,6 +562,8 @@ const createInitialState = (): WizardStateData => ({
   lockedSkillIds: [],
   lockedAgentNames: [],
   isEditingFromGlobalScope: false,
+  globalPreselections: null,
+  globalAgentPreselections: null,
   history: [],
 });
 
