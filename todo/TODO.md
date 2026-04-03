@@ -2,25 +2,21 @@
 
 | ID    | Task                                                                                               | Status        |
 | ----- | -------------------------------------------------------------------------------------------------- | ------------- |
+| D-182 | Bug: Confirm step diff wrong for global pre-selections — scope changes show as add/remove instead of scope change, deselected global skills show as removal from global | Ready for Dev |
+| D-181 | ~~Bug: New global skills added during project init not written to global config — need merge, not skip~~ | Done          |
+| D-180 | Bug: Project init overwrites global config-types.ts even when preserving global config.ts          | Investigate   |
+| D-179 | Bug: `init` in new project ignores global installation — should pre-select global skills in wizard  | Ready for Dev |
 | D-178 | Bug: Fix dual-scope edit E2E tests marked `it.fails` — ENOENT in project-scoped skill copy         | Ready for Dev |
 | D-177 | Style skill select: left border only, change category colour                                       | Ready for Dev |
-| D-176 | ~~Migrate CLI_COLORS to hex values only — remove named ANSI colors for consistent rendering~~      | Done          |
-| D-175 | ~~Bug: Double curlies stripped from agent-summoner, pattern-scout, infra-reviewer during compile~~ | Done          |
-| D-174 | ~~Bug: Terminal too-narrow message is static — should watch viewport width and adapt dynamically~~ | Done          |
 | D-173 | Bug: Agents may not auto-compile after `init` on Mac — test and verify                             | Investigate   |
-| D-171 | ~~Style edit command output — green added, red removed, white titles, gray body, proper spacing~~  | Done          |
 | D-170 | Add PostHog anonymous telemetry — skill installs, wizard funnel, command errors, platform          | Investigate   |
 | D-168 | Audit E2E tests — replace manual file construction with CLI commands throughout                    | Ready for Dev |
-| D-165 | ~~Fix 4 type-system critical issues from D-138 audit (double casts, non-null, invalid casts)~~     | Done          |
-| D-166 | ~~Fix E2E try/finally blocks in 6 lifecycle/interactive test files~~                               | Done          |
-| D-167 | ~~Remove task IDs from describe() blocks in init-wizard test files~~                               | Done          |
 | D-138 | Iterate on sub-agents — review and improve all agent definitions                                   | Ready for Dev |
 | D-111 | Create a GIF demo for the README                                                                   | Ready for Dev |
 | D-110 | Fix the logo in the README                                                                         | Ready for Dev |
 | D-109 | Fix the screenshots in the README                                                                  | Ready for Dev |
 | D-62  | Review default stacks: add reviewing/research skills                                               | Ready for Dev |
 | D-118 | Investigate renaming "project/global" scope to "project/user"                                      | Investigate   |
-| D-150 | ~~Migrate E2E tests from `toggleSkill` to `selectSkill` for correct grid targeting~~               | Done          |
 | D-131 | Track project installations in global config                                                       | Investigate   |
 | D-127 | UX for claiming global skills/agents into project scope                                            | Investigate   |
 | D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names                      | Ready for Dev |

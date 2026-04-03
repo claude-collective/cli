@@ -1,28 +1,28 @@
 # Agents Inc. CLI - Deferred Tasks
 
-| ID    | Task                                                                                             | Status                  |
-| ----- | ------------------------------------------------------------------------------------------------ | ----------------------- |
-| D-153 | Standardize operation result types — consistent list/single-action return patterns               | Deferred                |
-| D-25  | Auto-version check + source staleness (see [plan](./D-25-auto-version-check.md))                 | Ready for Dev           |
-| D-14  | Import skills from third-party marketplaces                                                      | Needs Assistance        |
-| UX-04 | Interactive skill search polish                                                                  | Needs Assistance        |
-| UX-05 | Refine step - skills.sh integration                                                              | Needs Assistance        |
-| #5    | Agents command for skill assignment                                                              | Needs Assistance        |
-| D-01  | Update skill documentation conventions                                                           | Needs Assistance        |
-| D-11  | Development hooks for type checking                                                              | Needs Assistance        |
-| D-13  | Eject skills by domain/category (see [plan](./D-13-eject-skills-filtered.md))                    | Refined                 |
-| UX-06 | Search with color highlighting                                                                   | Needs Assistance        |
-| #19   | Sub-agent learning capture system                                                                | Needs Assistance        |
-| D-26  | Marketplace-specific uninstall (see [plan](./D-26-marketplace-uninstall.md))                     | Ready for Dev           |
-| D-08  | User-defined stacks in consumer projects (see [plan](./D-08-user-defined-stacks.md))             | Deferred                |
-| D-47  | Eject standalone compile function (see [plan](./D-47-eject-compile-function.md))                 | Deferred — low priority |
-| P4-18 | Test: multiple skill/agent creation (depends on P4-17)                                           | Deferred                |
-| P4-17 | `agentsinc new` supports multiple items (see [plan](./P4-17-new-multiple-items.md))              | Refined                 |
-| UX-09 | Animations/transitions                                                                           | Needs Assistance        |
-| UX-07 | Incompatibility tooltips                                                                         | Needs Assistance        |
-| D-19  | Improve template error messages (see [plan](./D-19-template-error-messages.md))                  | Deferred — nice to have |
-| D-158 | ~~Add loading spinner to `--refresh` flag — source fetch is network-bound (~5s), needs UX feedback~~ | Done                |
-| R-06  | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity              | Deferred — low priority |
+| ID    | Task                                                                                                 | Status                  |
+| ----- | ---------------------------------------------------------------------------------------------------- | ----------------------- |
+| D-153 | Standardize operation result types — consistent list/single-action return patterns                   | Deferred                |
+| D-25  | Auto-version check + source staleness (see [plan](./D-25-auto-version-check.md))                     | Ready for Dev           |
+| D-14  | Import skills from third-party marketplaces                                                          | Needs Assistance        |
+| UX-04 | Interactive skill search polish                                                                      | Needs Assistance        |
+| UX-05 | Refine step - skills.sh integration                                                                  | Needs Assistance        |
+| #5    | Agents command for skill assignment                                                                  | Needs Assistance        |
+| D-01  | Update skill documentation conventions                                                               | Needs Assistance        |
+| D-11  | Development hooks for type checking                                                                  | Needs Assistance        |
+| D-13  | Eject skills by domain/category (see [plan](./D-13-eject-skills-filtered.md))                        | Refined                 |
+| UX-06 | Search with color highlighting                                                                       | Needs Assistance        |
+| #19   | Sub-agent learning capture system                                                                    | Needs Assistance        |
+| D-26  | Marketplace-specific uninstall (see [plan](./D-26-marketplace-uninstall.md))                         | Ready for Dev           |
+| D-08  | User-defined stacks in consumer projects (see [plan](./D-08-user-defined-stacks.md))                 | Deferred                |
+| D-47  | Eject standalone compile function (see [plan](./D-47-eject-compile-function.md))                     | Deferred — low priority |
+| P4-18 | Test: multiple skill/agent creation (depends on P4-17)                                               | Deferred                |
+| P4-17 | `agentsinc new` supports multiple items (see [plan](./P4-17-new-multiple-items.md))                  | Refined                 |
+| UX-09 | Animations/transitions                                                                               | Needs Assistance        |
+| UX-07 | Incompatibility tooltips                                                                             | Needs Assistance        |
+| D-19  | Improve template error messages (see [plan](./D-19-template-error-messages.md))                      | Deferred — nice to have |
+| D-158 | ~~Add loading spinner to `--refresh` flag — source fetch is network-bound (~5s), needs UX feedback~~ | Done                    |
+| R-06  | Slim down `ResolvedSkill` — separate resolved relationship data from skill identity                  | Deferred — low priority |
 
 ---
 
