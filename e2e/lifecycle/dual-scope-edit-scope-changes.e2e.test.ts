@@ -162,12 +162,7 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       ).toBe(true);
 
       // D-2: api-developer.md does NOT exist at project scope
-      const projectApiDevPath = path.join(
-        projectDir,
-        DIRS.CLAUDE,
-        "agents",
-        "api-developer.md",
-      );
+      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "api-developer.md");
       expect(
         await fileExists(projectApiDevPath),
         "api-developer.md must NOT exist in project agents dir after scope toggle to global",
