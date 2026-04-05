@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.106.0] - 2026-04-05
+
+**Project tracking and cross-project propagation (D-131, D-183)**
+
+- Track project installations in global config's `projects` array
+- Propagate global skill/agent changes to all registered project configs
+- Deregister projects on `uninstall --all`, filter stale paths automatically
+
+See [changelogs/0.106.0.md](./changelogs/0.106.0.md) for full details.
+
 ## [0.105.0] - 2026-04-05
 
 **Excluded skills/agents, scope-aware wizard and confirm step**
