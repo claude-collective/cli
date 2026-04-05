@@ -38,9 +38,11 @@ export function generateConfigSource(config: ProjectConfig, options?: ConfigSour
       // Inlined path: compact individual assignments (strip { id, preloaded: false } to bare strings)
       // while preserving SkillAssignment[] arrays.
       const cleanedProject: Record<string, unknown> = JSON.parse(JSON.stringify(config));
+      delete cleanedProject.projects;
       const cleanedGlobal: Record<string, unknown> = JSON.parse(
         JSON.stringify(options.globalConfig),
       );
+      delete cleanedGlobal.projects;
       if (cleanedProject.stack) {
         cleanedProject.stack = compactStackAssignments(
           cleanedProject.stack as Record<string, Record<string, unknown[]>>,
@@ -64,6 +66,7 @@ export function generateConfigSource(config: ProjectConfig, options?: ConfigSour
   }
 
   if (options?.isProjectConfig) {
+    delete cleaned.projects;
     return generateProjectConfigWithGlobalImport(cleaned, getGlobalConfigImportPath());
   }
 
@@ -293,29 +296,44 @@ function generateProjectConfigWithInlinedGlobal(
   const projectDomainsArr = (cleaned.domains as unknown[]) ?? [];
   const projectSelectedAgentsArr = (cleaned.selectedAgents as string[]) ?? [];
 
-  const globalSkillsArr = (cleanedGlobal.skills as unknown[]) ?? [];
-  const globalAgentsArr = (cleanedGlobal.agents as unknown[]) ?? [];
+  // Excluded globals are routed to the project partition by splitConfigByScope,
+  // but should render under "// global" in the output for readability
+  const excludedGlobalSkills = projectSkillsArr.filter(
+    (s) => (s as { excluded?: boolean }).excluded,
+  );
+  const excludedGlobalAgents = projectAgentsArr.filter(
+    (a) => (a as { excluded?: boolean }).excluded,
+  );
+  const actualProjectSkills = projectSkillsArr.filter(
+    (s) => !(s as { excluded?: boolean }).excluded,
+  );
+  const actualProjectAgents = projectAgentsArr.filter(
+    (a) => !(a as { excluded?: boolean }).excluded,
+  );
+
+  const globalSkillsArr = [...((cleanedGlobal.skills as unknown[]) ?? []), ...excludedGlobalSkills];
+  const globalAgentsArr = [...((cleanedGlobal.agents as unknown[]) ?? []), ...excludedGlobalAgents];
   const globalDomainsArr = (cleanedGlobal.domains as unknown[]) ?? [];
   const globalSelectedAgentsArr = (cleanedGlobal.selectedAgents as string[]) ?? [];
 
   const hasGlobalSkills = globalSkillsArr.length > 0;
-  const hasProjectSkills = projectSkillsArr.length > 0;
+  const hasProjectSkills = actualProjectSkills.length > 0;
   const hasSkills = hasGlobalSkills || hasProjectSkills;
 
   const hasGlobalAgents = globalAgentsArr.length > 0;
-  const hasProjectAgents = projectAgentsArr.length > 0;
+  const hasProjectAgents = actualProjectAgents.length > 0;
   const hasAgents = hasGlobalAgents || hasProjectAgents;
 
-  // Project config stack only includes project-scoped agents.
-  // Global agents' stack entries live in the global config only.
-  // splitConfigByScope may include global agents with project-skill assignments — filter them out.
-  const projectAgentNames = new Set(projectAgentsArr.map((a) => (a as { name: string }).name));
-  const filteredStack: Record<string, unknown> | undefined = projectStackObj
+  // Merge global and project stack entries — inlined config must be self-contained
+  const globalStackObj = cleanedGlobal.stack as Record<string, unknown> | undefined;
+  const projectAgentNames = new Set(actualProjectAgents.map((a) => (a as { name: string }).name));
+  const projectOnlyStack: Record<string, unknown> = projectStackObj
     ? Object.fromEntries(
         Object.entries(projectStackObj).filter(([agent]) => projectAgentNames.has(agent)),
       )
-    : undefined;
-  const hasStack = filteredStack != null && Object.keys(filteredStack).length > 0;
+    : {};
+  const mergedStack: Record<string, unknown> = { ...(globalStackObj ?? {}), ...projectOnlyStack };
+  const hasStack = Object.keys(mergedStack).length > 0;
 
   const hasGlobalDomains = globalDomainsArr.length > 0;
   const hasProjectDomains = projectDomainsArr.length > 0;
@@ -337,7 +355,7 @@ function generateProjectConfigWithInlinedGlobal(
     }
     if (hasProjectSkills) {
       lines.push(`  // project`);
-      for (const s of projectSkillsArr) {
+      for (const s of actualProjectSkills) {
         lines.push(`  ${JSON.stringify(s)},`);
       }
     }
@@ -356,7 +374,7 @@ function generateProjectConfigWithInlinedGlobal(
     }
     if (hasProjectAgents) {
       lines.push(`  // project`);
-      for (const a of projectAgentsArr) {
+      for (const a of actualProjectAgents) {
         lines.push(`  ${JSON.stringify(a)},`);
       }
     }
@@ -366,7 +384,7 @@ function generateProjectConfigWithInlinedGlobal(
   // Stack variable (merged global + project)
   if (hasStack) {
     lines.push(``);
-    const stackBody = JSON.stringify(filteredStack, null, 2);
+    const stackBody = JSON.stringify(mergedStack, null, 2);
     lines.push(`const stack: Partial<Record<AgentName, StackAgentConfig>> = ${stackBody};`);
   }
 

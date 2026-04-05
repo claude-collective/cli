@@ -1,6 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { unique } from "remeda";
 import type {
   AgentConfig,
   AgentDefinition,
@@ -19,7 +20,11 @@ import { matrix } from "../matrix/matrix-provider";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
-import { type MergeResult, mergeWithExistingConfig, loadProjectConfigFromDir } from "../configuration";
+import {
+  type MergeResult,
+  mergeWithExistingConfig,
+  loadProjectConfigFromDir,
+} from "../configuration";
 import { loadAllAgents, loadSkillsByIds, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
@@ -28,7 +33,7 @@ import { generateProjectConfigFromSkills, buildStackProperty } from "../configur
 import { splitConfigByScope } from "../configuration/config-generator";
 import { generateConfigSource, type ConfigSourceOptions } from "../configuration/config-writer";
 import { generateConfigTypesSource } from "../configuration/config-types-writer";
-import { ensureDir, writeFile } from "../../utils/fs";
+import { ensureDir, fileExists, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 import {
@@ -159,7 +164,7 @@ async function buildEjectConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
 ): Promise<{ config: ProjectConfig; loadedStack: Stack | null }> {
-  const skillIds = wizardResult.skills.map((s) => s.id);
+  const skillIds = unique(wizardResult.skills.map((s) => s.id));
   verbose(
     `buildEjectConfig: selectedStackId='${wizardResult.selectedStackId}', ` +
       `skills=[${skillIds.join(", ")}], ` +
@@ -310,20 +315,29 @@ export function buildCompileAgents(
   config: ProjectConfig,
   agents: Record<AgentName, AgentDefinition>,
 ): Record<string, CompileAgentConfig> {
+  const activeAgents = config.agents.filter((a) => !a.excluded);
+  const activeSkillIds = new Set(config.skills.filter((s) => !s.excluded).map((s) => s.id));
+  const excludedSkillIds = new Set(
+    config.skills.filter((s) => s.excluded && !activeSkillIds.has(s.id)).map((s) => s.id),
+  );
+
   // D7 cross-scope safety net: build set of global skill IDs so global agents only see global skills
   const globalSkillIds = new Set(
-    config.skills.filter((s) => s.scope === "global").map((s) => s.id),
+    config.skills.filter((s) => s.scope === "global" && !s.excluded).map((s) => s.id),
   );
 
   const compileAgents: Record<string, CompileAgentConfig> = {};
-  for (const agentConfig of config.agents) {
+  for (const agentConfig of activeAgents) {
     if (agents[agentConfig.name]) {
       const agentStack = config.stack?.[agentConfig.name];
       if (agentStack) {
         const refs = buildSkillRefsFromConfig(agentStack);
-        // Global agents only see global skills (cross-scope safety net)
-        const filteredRefs =
-          agentConfig.scope === "global" ? refs.filter((ref) => globalSkillIds.has(ref.id)) : refs;
+        // Filter out excluded skills; global agents only see global skills (cross-scope safety net)
+        const filteredRefs = refs.filter(
+          (ref) =>
+            !excludedSkillIds.has(ref.id) &&
+            (agentConfig.scope !== "global" || globalSkillIds.has(ref.id)),
+        );
         compileAgents[agentConfig.name] = { skills: filteredRefs };
       } else {
         compileAgents[agentConfig.name] = {};
@@ -335,7 +349,7 @@ export function buildCompileAgents(
 
 export function buildAgentScopeMap(config: ProjectConfig): Map<AgentName, "project" | "global"> {
   const map = new Map<AgentName, "project" | "global">();
-  for (const agent of config.agents) {
+  for (const agent of config.agents.filter((a) => !a.excluded)) {
     map.set(agent.name, agent.scope);
   }
   return map;
@@ -352,8 +366,10 @@ function mergeGlobalConfigs(
   const existingSkillIds = new Set(existing.skills.map((s) => s.id));
   const existingAgentNames = new Set(existing.agents.map((a) => a.name));
 
-  const newSkills = incoming.skills.filter((s) => !existingSkillIds.has(s.id));
-  const newAgents = incoming.agents.filter((a) => !existingAgentNames.has(a.name));
+  const incomingActiveSkills = incoming.skills.filter((s) => !s.excluded);
+  const incomingActiveAgents = incoming.agents.filter((a) => !a.excluded);
+  const newSkills = incomingActiveSkills.filter((s) => !existingSkillIds.has(s.id));
+  const newAgents = incomingActiveAgents.filter((a) => !existingAgentNames.has(a.name));
 
   const mergedSkills = [...existing.skills, ...newSkills];
   const mergedAgents = [...existing.agents, ...newAgents];
@@ -394,6 +410,134 @@ function mergeGlobalConfigs(
     },
     changed,
   };
+}
+
+/**
+ * Registers a project directory in the global config's `projects` array.
+ * Paths are normalized via `fs.realpathSync` to resolve symlinks.
+ * Filters stale entries (where .claude-src/config.ts no longer exists).
+ */
+async function registerProjectPath(
+  globalConfig: ProjectConfig,
+  projectDir: string,
+): Promise<{ config: ProjectConfig; changed: boolean }> {
+  const normalizedPath = fs.realpathSync(projectDir);
+  const existing = globalConfig.projects ?? [];
+
+  // Filter stale entries
+  const valid: string[] = [];
+  for (const p of existing) {
+    const configPath = path.join(p, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+    if (await fileExists(configPath)) {
+      valid.push(p);
+    }
+  }
+
+  if (valid.includes(normalizedPath)) {
+    const changed = valid.length !== existing.length;
+    return { config: changed ? { ...globalConfig, projects: valid } : globalConfig, changed };
+  }
+
+  return { config: { ...globalConfig, projects: [...valid, normalizedPath] }, changed: true };
+}
+
+/**
+ * Removes a project directory from the global config's `projects` array.
+ * Loads global config, removes the path, and writes back if changed.
+ */
+export async function deregisterProjectPath(projectDir: string): Promise<void> {
+  const homeDir = os.homedir();
+  const existingGlobal = await loadProjectConfigFromDir(homeDir);
+  if (!existingGlobal?.config?.projects?.length) return;
+
+  const normalizedPath = path.resolve(projectDir);
+  const filtered = existingGlobal.config.projects.filter((p) => p !== normalizedPath);
+
+  if (filtered.length === existingGlobal.config.projects.length) return;
+
+  const updatedConfig = { ...existingGlobal.config, projects: filtered };
+  const globalConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+  await writeConfigFile(updatedConfig, globalConfigPath);
+  verbose(`Deregistered project ${normalizedPath} from global config`);
+}
+
+function isProjectOwnedEntry(entry: { scope?: string; excluded?: boolean }): boolean {
+  return entry.scope === "project" || (entry.scope === "global" && !!entry.excluded);
+}
+
+/**
+ * Propagates global config changes to all registered project configs.
+ * Updates each project's config-types.ts (type unions) and config.ts (inlined global data).
+ * Skips stale project paths and the current project being installed.
+ */
+export async function propagateGlobalChangesToProjects(
+  globalConfig: ProjectConfig,
+  matrix: MergedSkillsMatrix,
+  agents: Record<AgentName, AgentDefinition>,
+  currentProjectDir?: string,
+): Promise<{ updated: string[]; skipped: string[] }> {
+  const projects = globalConfig.projects ?? [];
+  if (projects.length === 0) return { updated: [], skipped: [] };
+
+  const currentNormalized = currentProjectDir ? fs.realpathSync(currentProjectDir) : null;
+  const updated: string[] = [];
+  const skipped: string[] = [];
+
+  for (const projectPath of projects) {
+    // Skip the project currently being installed (it's already being written)
+    if (currentNormalized && projectPath === currentNormalized) continue;
+
+    const projectConfigPath = path.join(projectPath, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+    if (!(await fileExists(projectConfigPath))) {
+      skipped.push(projectPath);
+      verbose(`Skipped propagation to ${projectPath} (config not found)`);
+      continue;
+    }
+
+    try {
+      const existingProject = await loadProjectConfigFromDir(projectPath);
+      if (!existingProject?.config) {
+        skipped.push(projectPath);
+        continue;
+      }
+
+      const projectConfig = existingProject.config;
+
+      // Build combined config for config-types (project + global IDs)
+      const combinedConfig: ProjectConfig = {
+        ...projectConfig,
+        skills: [...globalConfig.skills, ...projectConfig.skills.filter(isProjectOwnedEntry)],
+        agents: [...globalConfig.agents, ...projectConfig.agents.filter(isProjectOwnedEntry)],
+        domains: [...new Set([...(globalConfig.domains ?? []), ...(projectConfig.domains ?? [])])],
+      };
+
+      // Update config-types.ts
+      await writeStandaloneConfigTypes(projectConfigPath, matrix, agents, combinedConfig);
+
+      // Derive project split (project-scoped + excluded globals only)
+      const projectSplit: ProjectConfig = {
+        ...projectConfig,
+        skills: projectConfig.skills.filter(isProjectOwnedEntry),
+        agents: projectConfig.agents.filter(isProjectOwnedEntry),
+      };
+
+      // Update config.ts with re-inlined global data
+      await writeConfigFile(projectSplit, projectConfigPath, {
+        isProjectConfig: true,
+        globalConfig,
+      });
+
+      updated.push(projectPath);
+      verbose(`Propagated global changes to ${projectPath}`);
+    } catch (error) {
+      skipped.push(projectPath);
+      verbose(
+        `Failed to propagate to ${projectPath}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  return { updated, skipped };
 }
 
 async function writeStandaloneConfigTypes(
@@ -437,6 +581,13 @@ export async function writeScopedConfigs(
     // Installing from ~/ — write directly to global config (no import preamble)
     await writeConfigFile(finalConfig, projectConfigPath);
     await writeStandaloneConfigTypes(projectConfigPath, matrix, agents, finalConfig);
+    // Propagate to all registered projects
+    if (finalConfig.projects?.length) {
+      const result = await propagateGlobalChangesToProjects(finalConfig, matrix, agents);
+      if (result.updated.length > 0) {
+        verbose(`Propagated global changes to ${result.updated.length} project(s)`);
+      }
+    }
     return;
   }
 
@@ -452,24 +603,48 @@ export async function writeScopedConfigs(
   const existingGlobalConfig = existingGlobal?.config;
   const hasGlobalItems = globalConfig.skills.length > 0 || globalConfig.agents.length > 0;
 
+  // Start with existing global config or the new global split
+  let effectiveGlobalConfig: ProjectConfig;
+  let globalDataChanged = false;
+
   if (hasGlobalItems) {
     if (existingGlobalConfig) {
       const mergeResult = mergeGlobalConfigs(existingGlobalConfig, globalConfig);
-      if (mergeResult.changed) {
-        await ensureDir(path.dirname(globalConfigPath));
-        await writeConfigFile(mergeResult.config, globalConfigPath);
-        verbose(`Updated global config at ${globalConfigPath}`);
-        await writeStandaloneConfigTypes(globalConfigPath, matrix, agents, mergeResult.config);
-        verbose("Updated global config-types.ts");
-      } else {
-        verbose("Global config unchanged, skipping write");
-      }
+      effectiveGlobalConfig = mergeResult.config;
+      globalDataChanged = mergeResult.changed;
     } else {
-      await ensureDir(path.dirname(globalConfigPath));
-      await writeConfigFile(globalConfig, globalConfigPath);
-      verbose(`Updated global config at ${globalConfigPath}`);
-      await writeStandaloneConfigTypes(globalConfigPath, matrix, agents, globalConfig);
-      verbose("Updated global config-types.ts");
+      effectiveGlobalConfig = globalConfig;
+      globalDataChanged = true;
+    }
+  } else {
+    effectiveGlobalConfig = existingGlobalConfig ?? { name: "global", skills: [], agents: [] };
+  }
+
+  // Register this project in global config's projects list
+  const regResult = await registerProjectPath(effectiveGlobalConfig, projectDir);
+  effectiveGlobalConfig = regResult.config;
+  const needsGlobalWrite = globalDataChanged || regResult.changed;
+
+  if (needsGlobalWrite) {
+    await ensureDir(path.dirname(globalConfigPath));
+    await writeConfigFile(effectiveGlobalConfig, globalConfigPath);
+    verbose(`Updated global config at ${globalConfigPath}`);
+    await writeStandaloneConfigTypes(globalConfigPath, matrix, agents, effectiveGlobalConfig);
+    verbose("Updated global config-types.ts");
+  } else {
+    verbose("Global config unchanged, skipping write");
+  }
+
+  // Propagate to other registered projects when global data (skills/agents/stack/domains) changed
+  if (globalDataChanged && effectiveGlobalConfig.projects?.length) {
+    const propagation = await propagateGlobalChangesToProjects(
+      effectiveGlobalConfig,
+      matrix,
+      agents,
+      projectDir,
+    );
+    if (propagation.updated.length > 0) {
+      verbose(`Propagated global changes to ${propagation.updated.length} project(s)`);
     }
   }
 
@@ -484,7 +659,7 @@ export async function writeScopedConfigs(
     await ensureDir(path.dirname(projectConfigPath));
     await writeConfigFile(projectSplitConfig, projectConfigPath, {
       isProjectConfig: true,
-      globalConfig,
+      globalConfig: effectiveGlobalConfig,
     });
     verbose(`Updated project config at ${projectConfigPath}`);
 

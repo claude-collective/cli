@@ -10,6 +10,9 @@ import {
   buildCompileAgents,
   buildAgentScopeMap,
   setConfigMetadata,
+  deregisterProjectPath,
+  propagateGlobalChangesToProjects,
+  writeConfigFile,
 } from "./local-installer";
 import type { AgentConfig, AgentDefinition, AgentName, ProjectConfig, SkillId } from "../../types";
 import { initializeMatrix } from "../matrix/matrix-provider";
@@ -772,6 +775,95 @@ describe("local-installer", () => {
       expect(skillIds).toContain("web-framework-react");
       expect(skillIds).toContain("web-testing-vitest");
     });
+
+    describe("excluded filtering", () => {
+      it("should exclude skills with excluded: true from compilation", async () => {
+        const mockBuildSkillRefs = vi.mocked(
+          (await import("../resolver")).buildSkillRefsFromConfig,
+        );
+        mockBuildSkillRefs.mockReturnValueOnce([
+          { id: "web-framework-react", usage: "when working with web-framework" },
+          { id: "web-testing-vitest", usage: "when working with web-testing" },
+        ]);
+
+        const config = buildProjectConfig({
+          agents: buildAgentConfigs(["web-developer"]),
+          skills: [
+            { id: "web-framework-react", scope: "project", source: "eject" },
+            { id: "web-testing-vitest", scope: "project", source: "eject", excluded: true },
+          ],
+          stack: {
+            "web-developer": {
+              "web-framework": [{ id: "web-framework-react", preloaded: false }],
+              "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+            },
+          },
+        });
+        const agents: Record<AgentName, AgentDefinition> = {
+          "web-developer": createMockAgent("web-developer"),
+        } as Record<AgentName, AgentDefinition>;
+
+        const result = buildCompileAgents(config, agents);
+
+        const skills = result["web-developer"].skills ?? [];
+        const skillIds = skills.map((s) => s.id);
+        expect(skillIds).toContain("web-framework-react");
+        expect(skillIds).not.toContain("web-testing-vitest");
+      });
+
+      it("should exclude agents with excluded: true from compilation", () => {
+        const config = buildProjectConfig({
+          agents: [
+            { name: "web-developer", scope: "project" },
+            { name: "api-developer", scope: "project", excluded: true },
+          ],
+          skills: buildSkillConfigs(["web-framework-react"]),
+        });
+        const agents: Record<AgentName, AgentDefinition> = {
+          "web-developer": createMockAgent("web-developer"),
+          "api-developer": createMockAgent("api-developer"),
+        } as Record<AgentName, AgentDefinition>;
+
+        const result = buildCompileAgents(config, agents);
+
+        expect(result["web-developer"]).toBeDefined();
+        expect(result["api-developer"]).toBeUndefined();
+      });
+
+      it("should handle mixed active and excluded entries for the same skill ID", async () => {
+        const mockBuildSkillRefs = vi.mocked(
+          (await import("../resolver")).buildSkillRefsFromConfig,
+        );
+        mockBuildSkillRefs.mockReturnValueOnce([
+          { id: "web-framework-react", usage: "when working with web-framework" },
+        ]);
+
+        const config = buildProjectConfig({
+          agents: buildAgentConfigs(["web-developer"]),
+          skills: [
+            { id: "web-framework-react", scope: "project", source: "eject" },
+            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+          ],
+          stack: {
+            "web-developer": {
+              "web-framework": [{ id: "web-framework-react", preloaded: false }],
+            },
+          },
+        });
+        const agents: Record<AgentName, AgentDefinition> = {
+          "web-developer": createMockAgent("web-developer"),
+        } as Record<AgentName, AgentDefinition>;
+
+        const result = buildCompileAgents(config, agents);
+
+        // The active (non-excluded) entry should still produce skills
+        const skills = result["web-developer"].skills ?? [];
+        expect(skills.map((s) => s.id)).toContain("web-framework-react");
+      });
+    });
+
+    // mergeGlobalConfigs is not exported (private function) — excluded filtering in that
+    // function is tested indirectly via writeScopedConfigs integration tests above.
   });
 
   describe("buildAgentScopeMap", () => {
@@ -1018,6 +1110,243 @@ describe("local-installer", () => {
       expect(projectContent).not.toContain("import globalConfig");
       expect(projectContent).toContain("// global");
       expect(projectContent).toContain("web-framework-react");
+    });
+  });
+
+  describe("deregisterProjectPath", () => {
+    let savedHome: string | undefined;
+    let globalHome: string;
+
+    beforeEach(async () => {
+      savedHome = process.env.HOME;
+      globalHome = path.join(tempDir, "fake-home");
+      await mkdir(globalHome, { recursive: true });
+      process.env.HOME = globalHome;
+    });
+
+    afterEach(() => {
+      if (savedHome !== undefined) {
+        process.env.HOME = savedHome;
+      } else {
+        delete process.env.HOME;
+      }
+    });
+
+    it("should remove project from global config's projects array", async () => {
+      const projectDir = path.join(tempDir, "my-project");
+      await mkdir(projectDir, { recursive: true });
+
+      // Write a global config that lists projectDir in projects
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: [],
+        agents: [],
+        projects: [projectDir],
+      });
+      const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      await mkdir(path.dirname(globalConfigPath), { recursive: true });
+      await writeConfigFile(globalConfig, globalConfigPath);
+
+      await deregisterProjectPath(projectDir);
+
+      const updatedConfig = await readTestTsConfig<ProjectConfig>(globalConfigPath);
+      expect(updatedConfig.projects ?? []).toStrictEqual([]);
+    });
+
+    it("should not modify config when project not in list", async () => {
+      const otherPath = path.join(tempDir, "other-project");
+      await mkdir(otherPath, { recursive: true });
+
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: [],
+        agents: [],
+        projects: [otherPath],
+      });
+      const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      await mkdir(path.dirname(globalConfigPath), { recursive: true });
+      await writeConfigFile(globalConfig, globalConfigPath);
+
+      // Deregister a path that isn't in the list
+      const nonexistentDir = path.join(tempDir, "nonexistent");
+      await mkdir(nonexistentDir, { recursive: true });
+      await deregisterProjectPath(nonexistentDir);
+
+      const updatedConfig = await readTestTsConfig<ProjectConfig>(globalConfigPath);
+      expect(updatedConfig.projects).toStrictEqual([otherPath]);
+    });
+
+    it("should do nothing when global config has no projects field", async () => {
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: [],
+        agents: [],
+      });
+      const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      await mkdir(path.dirname(globalConfigPath), { recursive: true });
+      await writeConfigFile(globalConfig, globalConfigPath);
+
+      const anyDir = path.join(tempDir, "any-dir");
+      await mkdir(anyDir, { recursive: true });
+
+      // Should not throw
+      await expect(deregisterProjectPath(anyDir)).resolves.toBeUndefined();
+    });
+
+    it("should do nothing when no global config exists", async () => {
+      const anyDir = path.join(tempDir, "any-dir");
+      await mkdir(anyDir, { recursive: true });
+
+      // No global config on disk — should not throw
+      await expect(deregisterProjectPath(anyDir)).resolves.toBeUndefined();
+    });
+  });
+
+  describe("propagateGlobalChangesToProjects", () => {
+    // Boundary cast: empty agents record for tests that don't need agent definitions
+    const emptyAgents = {} as Record<AgentName, AgentDefinition>;
+
+    it("should return empty arrays when no projects registered", async () => {
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: [],
+        agents: [],
+      });
+
+      const result = await propagateGlobalChangesToProjects(
+        globalConfig,
+        EMPTY_MATRIX,
+        emptyAgents,
+      );
+
+      expect(result).toStrictEqual({ updated: [], skipped: [] });
+    });
+
+    it("should skip stale project paths", async () => {
+      const stalePath = path.join(tempDir, "nonexistent-project");
+
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: [],
+        agents: [],
+        projects: [stalePath],
+      });
+
+      const result = await propagateGlobalChangesToProjects(
+        globalConfig,
+        EMPTY_MATRIX,
+        emptyAgents,
+      );
+
+      expect(result).toStrictEqual({ updated: [], skipped: [stalePath] });
+    });
+
+    it("should skip current project dir", async () => {
+      // Set up two project dirs with configs on disk
+      const projectA = path.join(tempDir, "project-a");
+      const projectB = path.join(tempDir, "project-b");
+
+      for (const dir of [projectA, projectB]) {
+        const configDir = path.join(dir, CLAUDE_SRC_DIR);
+        await mkdir(configDir, { recursive: true });
+        const projectConfig = buildProjectConfig({
+          name: path.basename(dir),
+          skills: [],
+          agents: [],
+        });
+        await writeConfigFile(projectConfig, path.join(configDir, STANDARD_FILES.CONFIG_TS));
+      }
+
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        agents: [{ name: "web-developer", scope: "global" }],
+        projects: [projectA, projectB],
+      });
+
+      // Pass projectA as currentProjectDir — only projectB should be updated
+      const result = await propagateGlobalChangesToProjects(
+        globalConfig,
+        EMPTY_MATRIX,
+        emptyAgents,
+        projectA,
+      );
+
+      expect(result.updated).toStrictEqual([projectB]);
+      expect(result.skipped).toStrictEqual([]);
+    });
+
+    it("should update config-types.ts in registered projects", async () => {
+      const projectDir = path.join(tempDir, "target-project");
+      const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
+      await mkdir(configDir, { recursive: true });
+
+      const projectConfig = buildProjectConfig({
+        name: "target",
+        skills: [],
+        agents: [],
+      });
+      await writeConfigFile(projectConfig, path.join(configDir, STANDARD_FILES.CONFIG_TS));
+
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        agents: [{ name: "web-developer", scope: "global" }],
+        projects: [projectDir],
+      });
+
+      await propagateGlobalChangesToProjects(globalConfig, SINGLE_REACT_MATRIX, emptyAgents);
+
+      const typesPath = path.join(configDir, STANDARD_FILES.CONFIG_TYPES_TS);
+      const { fileExists } = await import("../../utils/fs");
+      expect(await fileExists(typesPath)).toBe(true);
+
+      const typesContent = await readFile(typesPath, "utf-8");
+      expect(typesContent).toContain("web-framework-react");
+    });
+
+    it("should update config.ts in registered projects", async () => {
+      const projectDir = path.join(tempDir, "target-project");
+      const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
+      await mkdir(configDir, { recursive: true });
+
+      const projectConfig = buildProjectConfig({
+        name: "target",
+        skills: [{ id: "web-testing-vitest", scope: "project", source: "eject" }],
+        agents: [{ name: "web-reviewer", scope: "project" }],
+      });
+      await writeConfigFile(projectConfig, path.join(configDir, STANDARD_FILES.CONFIG_TS));
+
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        agents: [{ name: "web-developer", scope: "global" }],
+        projects: [projectDir],
+      });
+
+      await propagateGlobalChangesToProjects(globalConfig, SINGLE_REACT_MATRIX, emptyAgents);
+
+      const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
+      const configContent = await readFile(configPath, "utf-8");
+      // Project config should contain the global skill inlined as a comment marker
+      expect(configContent).toContain("web-framework-react");
+    });
+
+    it("should handle empty projects list", async () => {
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        agents: [],
+        projects: [],
+      });
+
+      const result = await propagateGlobalChangesToProjects(
+        globalConfig,
+        EMPTY_MATRIX,
+        emptyAgents,
+      );
+
+      expect(result).toStrictEqual({ updated: [], skipped: [] });
     });
   });
 });

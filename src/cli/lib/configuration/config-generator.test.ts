@@ -659,6 +659,81 @@ describe("config-generator", () => {
     });
   });
 
+  describe("splitConfigByScope — excluded routing", () => {
+    it("should route excluded global skills to project partition", () => {
+      const config = buildProjectConfig({
+        skills: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+        ],
+        agents: [{ name: "web-developer", scope: "global" }],
+      });
+
+      const result = splitConfigByScope(config);
+
+      // Excluded global skill routes to project partition
+      expect(result.project.skills.map((s) => s.id)).toStrictEqual(["web-framework-react"]);
+      expect(result.project.skills[0].excluded).toBe(true);
+      // Active global skill stays in global partition
+      expect(result.global.skills.map((s) => s.id)).toStrictEqual(["web-testing-vitest"]);
+    });
+
+    it("should route excluded global agents to project partition", () => {
+      const config = buildProjectConfig({
+        skills: [],
+        agents: [
+          { name: "web-developer", scope: "global", excluded: true },
+          { name: "web-reviewer", scope: "global" },
+        ],
+      });
+
+      const result = splitConfigByScope(config);
+
+      // Excluded global agent routes to project partition
+      expect(result.project.agents.map((a) => a.name)).toStrictEqual(["web-developer"]);
+      // Active global agent stays in global partition
+      expect(result.global.agents.map((a) => a.name)).toStrictEqual(["web-reviewer"]);
+    });
+
+    it("should keep active global skills in global partition", () => {
+      const config = buildProjectConfig({
+        skills: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+          { id: "web-testing-vitest", scope: "global", source: "agents-inc", excluded: true },
+          { id: "web-state-zustand", scope: "project", source: "eject" },
+        ],
+        agents: [{ name: "web-developer", scope: "global" }],
+      });
+
+      const result = splitConfigByScope(config);
+
+      // Active global skill in global partition
+      expect(result.global.skills.map((s) => s.id)).toStrictEqual(["web-framework-react"]);
+      // Excluded global + project skills in project partition
+      const projectIds = result.project.skills.map((s) => s.id);
+      expect(projectIds).toStrictEqual(["web-testing-vitest", "web-state-zustand"]);
+    });
+
+    it("should keep excluded project-scope skills in project partition", () => {
+      const config = buildProjectConfig({
+        skills: [
+          { id: "web-framework-react", scope: "project", source: "eject", excluded: true },
+          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+        ],
+        agents: [{ name: "web-developer", scope: "global" }],
+      });
+
+      const result = splitConfigByScope(config);
+
+      // Excluded project-scope skill stays in project partition with excluded preserved
+      expect(result.project.skills).toHaveLength(1);
+      expect(result.project.skills[0].id).toBe("web-framework-react");
+      expect(result.project.skills[0].excluded).toBe(true);
+      // Does NOT appear in global partition
+      expect(result.global.skills.map((s) => s.id)).toStrictEqual(["web-testing-vitest"]);
+    });
+  });
+
   describe("splitConfigByScope correctness (moved from E2E)", () => {
     // Moved from e2e/lifecycle/unified-config-view.e2e.test.ts — these are pure unit tests
     // that call splitConfigByScope directly, not E2E tests.

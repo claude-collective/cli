@@ -117,12 +117,15 @@ export function generateProjectConfigFromSkills(
     options?.skillConfigs ??
     selectedSkillIds.map((id) => ({ id, scope: "project" as const, source: "eject" }));
 
-  const agentConfigs: AgentScopeConfig[] = options?.agentConfigs
+  const activeAgentConfigs: AgentScopeConfig[] = options?.agentConfigs
     ? agentList.map((agentName) => {
-        const provided = options.agentConfigs!.find((ac) => ac.name === agentName);
+        const provided = options.agentConfigs!.find((ac) => ac.name === agentName && !ac.excluded);
         return provided ?? { name: agentName, scope: "project" as const };
       })
     : agentList.map((agentName) => ({ name: agentName, scope: "project" as const }));
+  // Excluded agents aren't in selectedAgents but must be preserved in config
+  const excludedAgentConfigs = options?.agentConfigs?.filter((ac) => ac.excluded) ?? [];
+  const agentConfigs: AgentScopeConfig[] = [...activeAgentConfigs, ...excludedAgentConfigs];
 
   return {
     name,
@@ -167,12 +170,17 @@ export function buildStackProperty(stack: Stack): Partial<Record<AgentName, Stac
  * Domains are preserved in both configs as-is (the project config extends global at runtime).
  */
 export function splitConfigByScope(config: ProjectConfig): SplitConfigResult {
-  const globalSkills = config.skills.filter((s) => s.scope === "global");
-  const projectSkills = config.skills.filter((s) => s.scope === "project");
+  const globalSkills = config.skills.filter((s) => s.scope === "global" && !s.excluded);
+  const projectSkills = config.skills.filter(
+    (s) => s.scope === "project" || (s.scope === "global" && s.excluded),
+  );
 
   // Split agents by their explicit scope (mirrors skill scope pattern)
-  const globalAgents = config.agents.filter((a) => a.scope === "global");
-  const projectAgents = config.agents.filter((a) => a.scope === "project");
+  // Excluded global agents route to project partition (they're project-level overrides)
+  const globalAgents = config.agents.filter((a) => a.scope === "global" && !a.excluded);
+  const projectAgents = config.agents.filter(
+    (a) => a.scope === "project" || (a.scope === "global" && a.excluded),
+  );
 
   // Split stack by agent partition, filtering global agents' stacks to only reference global skills.
   // Project agents keep ALL skill references (both project and global) since global skills are available everywhere.

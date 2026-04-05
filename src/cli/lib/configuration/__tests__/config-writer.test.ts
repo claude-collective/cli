@@ -608,7 +608,7 @@ describe("generateConfigSource", () => {
       expect(source).toContain("} satisfies ProjectConfig;");
     });
 
-    it("only includes project-scoped agents in stack", () => {
+    it("includes both global and project agents in stack for inlined config", () => {
       const globalWithStack = buildProjectConfig({
         name: "global",
         skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
@@ -634,14 +634,14 @@ describe("generateConfigSource", () => {
         globalConfig: globalWithStack,
       });
 
-      // Only project agent should appear in stack
+      // Both global and project agents should appear in stack (inlined config is self-contained)
       expect(source).toContain('"api-developer"');
       expect(source).toContain('"api-framework-hono"');
-      // Global agent's stack should NOT appear in project config
-      expect(source).not.toMatch(/"web-developer":\s*\{/);
+      expect(source).toMatch(/"web-developer":\s*\{/);
+      expect(source).toContain('"web-framework-react"');
     });
 
-    it("omits stack when project has no project-scoped agents with stack entries", () => {
+    it("includes global stack when project has no project-scoped agents with stack entries", () => {
       const globalWithStack = buildProjectConfig({
         name: "global",
         skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
@@ -662,8 +662,9 @@ describe("generateConfigSource", () => {
         globalConfig: globalWithStack,
       });
 
-      // No project agents with stacks — stack variable should not appear
-      expect(source).not.toContain("const stack:");
+      // Global agents' stack should be included (inlined config is self-contained)
+      expect(source).toContain("const stack:");
+      expect(source).toMatch(/"web-developer":\s*\{/);
     });
 
     it("deduplicates scalar fields when both global and project have the same key", () => {
