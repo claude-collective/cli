@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.108.0] - 2026-04-06
+
+**Scope toggle bug fix and tombstone pruning**
+
+- Fixed stale agent files remaining after scope toggle via compound merge keys and tombstone pruning
+- Excluded entries no longer leak into wizard display (agents step badges, confirm step summary)
+- Scope-change indicators (`~` prefix) in confirm step for edited skills/agents
+
+See [changelogs/0.108.0.md](./changelogs/0.108.0.md) for full details.
+
 ## [0.107.0] - 2026-04-06
 
 **Scope-grouped sources and global scope guard (D-184, D-187)**
