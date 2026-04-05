@@ -132,8 +132,16 @@ describe("SourceGrid component", () => {
   describe("scope-grouped rendering", () => {
     it("should render scope labels when rows have mixed scopes", () => {
       const rows: SourceRow[] = [
-        createSourceRow("web-framework-react", [createSourceOption("public", { selected: true })], "global"),
-        createSourceRow("web-state-zustand", [createSourceOption("public", { selected: true })], "project"),
+        createSourceRow(
+          "web-framework-react",
+          [createSourceOption("public", { selected: true })],
+          "global",
+        ),
+        createSourceRow(
+          "web-state-zustand",
+          [createSourceOption("public", { selected: true })],
+          "project",
+        ),
       ];
 
       const { lastFrame, unmount } = renderGrid({ rows });
@@ -146,8 +154,16 @@ describe("SourceGrid component", () => {
 
     it("should render flat (no scope labels) when all rows share the same scope", () => {
       const rows: SourceRow[] = [
-        createSourceRow("web-framework-react", [createSourceOption("public", { selected: true })], "global"),
-        createSourceRow("web-state-zustand", [createSourceOption("public", { selected: true })], "global"),
+        createSourceRow(
+          "web-framework-react",
+          [createSourceOption("public", { selected: true })],
+          "global",
+        ),
+        createSourceRow(
+          "web-state-zustand",
+          [createSourceOption("public", { selected: true })],
+          "global",
+        ),
       ];
 
       const { lastFrame, unmount } = renderGrid({ rows });
@@ -174,8 +190,16 @@ describe("SourceGrid component", () => {
 
     it("should show global rows before project rows", () => {
       const rows: SourceRow[] = [
-        createSourceRow("web-state-zustand", [createSourceOption("public", { selected: true })], "project"),
-        createSourceRow("web-framework-react", [createSourceOption("public", { selected: true })], "global"),
+        createSourceRow(
+          "web-state-zustand",
+          [createSourceOption("public", { selected: true })],
+          "project",
+        ),
+        createSourceRow(
+          "web-framework-react",
+          [createSourceOption("public", { selected: true })],
+          "global",
+        ),
       ];
 
       const { lastFrame, unmount } = renderGrid({ rows });

@@ -261,7 +261,11 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     <Box flexDirection="row" marginBottom={scopeGroups.length > 0 ? 0 : 1} {...noShrink}>
       {scopeGroups.length > 0 && <Box width={SCOPE_COL_WIDTH} />}
       <Box width={SKILL_NAME_WIDTH}>
-        {scopeGroups.length > 0 && <Text color={CLI_COLORS.WARNING} bold>Scope</Text>}
+        {scopeGroups.length > 0 && (
+          <Text color={CLI_COLORS.WARNING} bold>
+            Scope
+          </Text>
+        )}
       </Box>
       {headerSources.map((option) => (
         <Box key={option.id} width={SOURCE_COL_WIDTH}>
@@ -279,7 +283,12 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
       ? scopeGroups.map((group) => (
           <Box key={group.label} flexDirection="column" marginTop={1} {...noShrink}>
             {group.rows.map(({ row, originalIndex }, rowIndexInGroup) => (
-              <Box key={row.skillId} flexDirection="row" ref={(el) => setSectionRef(originalIndex, el)} {...noShrink}>
+              <Box
+                key={row.skillId}
+                flexDirection="row"
+                ref={(el) => setSectionRef(originalIndex, el)}
+                {...noShrink}
+              >
                 <Box width={SCOPE_COL_WIDTH}>
                   {rowIndexInGroup === 0 && (
                     <Text color={CLI_COLORS.WARNING} bold>

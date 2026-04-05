@@ -186,7 +186,13 @@ export default class Init extends BaseCommand {
     clearSpinner();
     unmount();
 
-    const result = await this.runWizard(sourceResult, startupMessages, projectDir, globalConfig, isGlobalRoot);
+    const result = await this.runWizard(
+      sourceResult,
+      startupMessages,
+      projectDir,
+      globalConfig,
+      isGlobalRoot,
+    );
     if (!result) this.exit(EXIT_CODES.CANCELLED);
 
     if (result.skills.length === 0) {
