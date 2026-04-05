@@ -9,6 +9,7 @@ import { loadSource, detectProject } from "../lib/operations";
 import { matrix } from "../lib/matrix/matrix-provider";
 import { discoverLocalSkills } from "../lib/skills";
 import { getStackSkillIds } from "../lib/stacks";
+import { filterExcludedEntries } from "../lib/agents";
 import type { MergedSkillsMatrix, ProjectConfig, SkillConfig } from "../types";
 import { fileExists, glob, directoryExists } from "../utils/fs";
 import {
@@ -83,7 +84,14 @@ async function checkSkillsResolved(
   matrix: MergedSkillsMatrix,
   projectDir: string,
 ): Promise<CheckResult> {
-  const uniqueSkills = config.stack ? getStackSkillIds(config.stack) : [];
+  // Filter excluded skill IDs from the stack check
+  const activeIds = new Set(config.skills.filter((s) => !s.excluded).map((s) => s.id));
+  const excludedIds = new Set(
+    config.skills.filter((s) => s.excluded && !activeIds.has(s.id)).map((s) => s.id),
+  );
+  const uniqueSkills = config.stack
+    ? getStackSkillIds(config.stack).filter((id) => !excludedIds.has(id))
+    : [];
 
   if (uniqueSkills.length === 0) {
     return {
@@ -414,18 +422,24 @@ export default class Doctor extends BaseCommand {
     // loadSource (called by checkSourceReachable) populates the matrix automatically
     const sourceResult = await checkSourceReachable(flags.source, projectDir);
 
+    const filteredConfig = config ? filterExcludedEntries(config) : null;
+
     const skillsResult = config
       ? await checkSkillsResolved(config, matrix, projectDir)
       : SKIP_RESULT;
     this.logCheck("Skills Resolved", skillsResult, flags.verbose);
 
-    const agentsResult = config ? await checkAgentsCompiled(config, projectDir) : SKIP_RESULT;
+    const agentsResult = filteredConfig
+      ? await checkAgentsCompiled(filteredConfig, projectDir)
+      : SKIP_RESULT;
     this.logCheck("Agents Compiled", agentsResult, flags.verbose);
 
     const orphansResult = config ? await checkNoOrphans(config, projectDir) : SKIP_RESULT;
     this.logCheck("No Orphans", orphansResult, flags.verbose);
 
-    const installedResult = config ? await checkSkillsInstalled(config, projectDir) : SKIP_RESULT;
+    const installedResult = filteredConfig
+      ? await checkSkillsInstalled(filteredConfig, projectDir)
+      : SKIP_RESULT;
     this.logCheck("Skills Installed", installedResult, flags.verbose);
 
     this.logCheck("Source Reachable", sourceResult, flags.verbose);

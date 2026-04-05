@@ -9,6 +9,7 @@ export {
   type RecompileAgentsOptions,
   type RecompileAgentsResult,
   recompileAgents,
+  filterExcludedEntries,
 } from "./agent-recompiler";
 
 export {
