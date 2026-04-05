@@ -5,8 +5,6 @@ type Direction = "up" | "down" | "left" | "right";
 type UseFocusedListItemOptions = {
   /** Wrap around when reaching boundaries (default: true) */
   wrap?: boolean;
-  /** Returns true if a row should be skipped during vertical navigation */
-  isRowLocked?: (row: number) => boolean;
   /** Custom column finder for skipping disabled items on horizontal nav.
    *  Receives the row, current column, and direction (+1 right, -1 left).
    *  Should return the next valid column index. */
@@ -31,7 +29,7 @@ type UseFocusedListItemResult = {
 
 /**
  * 2D grid focus management: tracks (row, col) position and handles
- * directional movement with wrapping, column clamping, row locking,
+ * directional movement with wrapping, column clamping,
  * and optional disabled-column skipping.
  */
 export function useFocusedListItem(
@@ -41,7 +39,6 @@ export function useFocusedListItem(
 ): UseFocusedListItemResult {
   const {
     wrap = true,
-    isRowLocked,
     findValidCol,
     adjustCol,
     onChange,
@@ -73,40 +70,16 @@ export function useFocusedListItem(
 
   const setFocused = applyFocus;
 
-  const findNextUnlockedRow = useCallback(
+  const findNextRow = useCallback(
     (fromRow: number, direction: 1 | -1): number => {
-      if (!isRowLocked || rowCount === 0) {
-        if (wrap) {
-          return (fromRow + direction + rowCount) % rowCount;
-        }
-        const next = fromRow + direction;
-        return Math.max(0, Math.min(rowCount - 1, next));
+      if (rowCount === 0) return fromRow;
+      if (wrap) {
+        return (fromRow + direction + rowCount) % rowCount;
       }
-
-      let index = fromRow;
-      let attempts = 0;
-
-      while (attempts < rowCount) {
-        index += direction;
-
-        if (wrap) {
-          if (index < 0) index = rowCount - 1;
-          if (index >= rowCount) index = 0;
-        } else {
-          if (index < 0) index = 0;
-          if (index >= rowCount) index = rowCount - 1;
-        }
-
-        if (!isRowLocked(index)) {
-          return index;
-        }
-
-        attempts++;
-      }
-
-      return fromRow;
+      const next = fromRow + direction;
+      return Math.max(0, Math.min(rowCount - 1, next));
     },
-    [rowCount, wrap, isRowLocked],
+    [rowCount, wrap],
   );
 
   const moveFocus = useCallback(
@@ -132,7 +105,7 @@ export function useFocusedListItem(
         }
       } else {
         const step = direction === "down" ? 1 : -1;
-        const newRow = findNextUnlockedRow(currentRow, step);
+        const newRow = findNextRow(currentRow, step);
         const newColCount = getColCount(newRow);
         let finalCol = Math.min(currentCol, Math.max(0, newColCount - 1));
 
@@ -143,7 +116,7 @@ export function useFocusedListItem(
         applyFocus(newRow, finalCol);
       }
     },
-    [getColCount, wrap, findValidCol, adjustCol, findNextUnlockedRow, applyFocus],
+    [getColCount, wrap, findValidCol, adjustCol, findNextRow, applyFocus],
   );
 
   return { focusedRow, focusedCol, setFocused, moveFocus };

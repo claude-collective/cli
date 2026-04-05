@@ -42,7 +42,7 @@ export async function compileAgents(options: CompileAgentsOptions): Promise<Comp
     }
 
     const filteredAgents = loadedConfig?.config?.agents
-      ?.filter((a) => a.scope === options.scopeFilter)
+      ?.filter((a) => !a.excluded && a.scope === options.scopeFilter)
       .map((a) => a.name);
 
     if (resolvedAgents && filteredAgents) {

@@ -91,13 +91,15 @@ export default class List extends BaseCommand {
     const { config } = loaded;
     const modeLabel =
       installation.mode === "plugin" ? "Plugin" : installation.mode === "mixed" ? "Mixed" : "Eject";
+    const activeSkills = config.skills.filter((s) => !s.excluded);
+    const activeAgents = config.agents.filter((a) => !a.excluded);
 
     const { waitUntilExit, clear } = render(
       <ListView
         mode={modeLabel}
         source={config.source}
-        skillConfigs={config.skills}
-        agentConfigs={config.agents}
+        skillConfigs={activeSkills}
+        agentConfigs={activeAgents}
       />,
     );
 

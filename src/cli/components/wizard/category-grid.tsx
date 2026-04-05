@@ -5,7 +5,7 @@ import { Box, Text } from "ink";
 import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
 import { getSkillById } from "../../lib/matrix/matrix-provider.js";
 import type { Category, OptionState, SkillId } from "../../types/index.js";
-import { isSectionLocked, useCategoryGridInput } from "../hooks/use-category-grid-input.js";
+import { useCategoryGridInput } from "../hooks/use-category-grid-input.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
 import { useSectionScroll } from "../hooks/use-section-scroll.js";
 
@@ -16,8 +16,6 @@ export type CategoryOption = {
   local?: boolean;
   installed?: boolean;
   scope?: "project" | "global";
-  /** True when this skill is globally installed and cannot be toggled in project context */
-  locked?: boolean;
   /** True when selected but has unmet dependency requirements (shown dimmed) */
   hasUnmetRequirements?: boolean;
   /** Explains unmet requirements (shown in label when D pressed) */
@@ -50,10 +48,6 @@ export type CategoryGridProps = {
   onFocusChange?: (row: number, col: number) => void;
   /** Optional callback fired with the resolved SkillId of the focused cell */
   onFocusedSkillChange?: (skillId: SkillId | null) => void;
-  /** Fired when a user attempts to toggle a locked (globally-installed) skill */
-  onLockedToggleAttempt?: (skillId: SkillId) => void;
-  /** Fired when a user attempts to select in an exclusive category that has a locked global skill */
-  onLockedCategoryAttempt?: () => void;
 };
 
 const SYMBOL_REQUIRED = "*";
@@ -83,7 +77,6 @@ const findNextValidOption = (
 type SkillTagProps = {
   option: CategoryOption;
   isFocused: boolean;
-  isLocked: boolean;
   showLabels: boolean;
 };
 
@@ -99,7 +92,7 @@ const getCompatibilityLabel = (option: CategoryOption): string | null => {
   return null;
 };
 
-const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLabels }) => {
+const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, showLabels }) => {
   const getTextColor = (): string => {
     if (option.selected) return CLI_COLORS.PRIMARY;
     if (option.state.status === "incompatible") return CLI_COLORS.ERROR;
@@ -174,7 +167,6 @@ type CategorySectionProps = {
   isFirst: boolean;
   category: CategoryRow;
   options: CategoryOption[];
-  isLocked: boolean;
   isFocused: boolean;
   focusedOptionIndex: number;
   showLabels: boolean;
@@ -184,7 +176,6 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   isFirst,
   category,
   options,
-  isLocked,
   isFocused,
   focusedOptionIndex,
   showLabels,
@@ -214,8 +205,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
           <SkillTag
             key={option.id}
             option={option}
-            isFocused={isFocused && index === focusedOptionIndex && !isLocked}
-            isLocked={isLocked}
+            isFocused={isFocused && index === focusedOptionIndex}
             showLabels={showLabels}
           />
         ))}
@@ -237,8 +227,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   defaultFocusedCol = 0,
   onFocusChange,
   onFocusedSkillChange,
-  onLockedToggleAttempt,
-  onLockedCategoryAttempt,
 }) => {
   const processedCategories = useMemo(
     () => categories.map((category) => ({ ...category, sortedOptions: category.options })),
@@ -250,22 +238,12 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     [processedCategories],
   );
 
-  const isRowLocked = useCallback(
-    (row: number): boolean => {
-      const cat = processedCategories[row];
-      return cat ? isSectionLocked(cat.id, categories) : false;
-    },
-    [processedCategories, categories],
-  );
-
   const findValidCol = useCallback(
     (row: number, currentCol: number, direction: 1 | -1): number => {
       const options = processedCategories[row]?.sortedOptions || [];
-      const catId = processedCategories[row]?.id;
-      if (catId && isSectionLocked(catId, categories)) return currentCol;
       return findNextValidOption(options, currentCol, direction, true);
     },
-    [processedCategories, categories],
+    [processedCategories],
   );
 
   const handleFocusChange = useCallback(
@@ -283,7 +261,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     getColCount,
     {
       wrap: true,
-      isRowLocked,
       findValidCol,
       onChange: handleFocusChange,
       initialRow: defaultFocusedRow,
@@ -302,7 +279,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
   useCategoryGridInput({
     processedCategories,
-    categories,
     focusedRow,
     focusedCol,
     setFocused,
@@ -310,8 +286,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     onToggle,
     onToggleLabels,
     onToggleFilterIncompatible,
-    onLockedToggleAttempt,
-    onLockedCategoryAttempt,
   });
 
   const { setSectionRef, scrollEnabled, scrollTopPx } = useSectionScroll({
@@ -330,23 +304,18 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
   const noShrink = scrollEnabled ? { flexShrink: 0 } : {};
 
-  const sectionElements = processedCategories.map((category, index) => {
-    const isLocked = isSectionLocked(category.id, categories);
-
-    return (
-      <Box key={category.id} ref={(el) => setSectionRef(index, el)} {...noShrink}>
-        <CategorySection
-          category={category}
-          options={category.sortedOptions}
-          isLocked={isLocked}
-          isFocused={index === focusedRow}
-          focusedOptionIndex={focusedCol}
-          showLabels={showLabels}
-          isFirst={index === 0}
-        />
-      </Box>
-    );
-  });
+  const sectionElements = processedCategories.map((category, index) => (
+    <Box key={category.id} ref={(el) => setSectionRef(index, el)} {...noShrink}>
+      <CategorySection
+        category={category}
+        options={category.sortedOptions}
+        isFocused={index === focusedRow}
+        focusedOptionIndex={focusedCol}
+        showLabels={showLabels}
+        isFirst={index === 0}
+      />
+    </Box>
+  ));
 
   return (
     <Box

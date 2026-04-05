@@ -12,6 +12,7 @@ export function getDomainDisplayName(domain: string): string {
     ai: "AI",
     cli: "CLI",
     mobile: "Mobile",
+    desktop: "Desktop",
     infra: "Infrastructure",
     meta: "Meta",
     shared: "Shared",

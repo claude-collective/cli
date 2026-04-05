@@ -96,12 +96,15 @@ function buildCompileConfig(params: BuildCompileConfigParams): BuildCompileConfi
   const { agentNames, allAgents, projectConfig, pluginDir } = params;
   const warnings: string[] = [];
 
-  // Store initialization: accumulator populated below for each agent in agentNames
   const compileAgents: Record<string, CompileAgentConfig> = {};
   for (const agentName of agentNames) {
     if (allAgents[agentName]) {
       const agentStack = projectConfig?.stack?.[agentName];
-      compileAgents[agentName] = agentStack ? { skills: buildSkillRefsFromConfig(agentStack) } : {};
+      if (agentStack) {
+        compileAgents[agentName] = { skills: buildSkillRefsFromConfig(agentStack) };
+      } else {
+        compileAgents[agentName] = {};
+      }
     } else {
       warnings.push(`Agent "${agentName}" not found in source definitions`);
     }
@@ -154,6 +157,32 @@ async function compileAndWriteAgents(
   }
 }
 
+export function filterExcludedEntries(config: ProjectConfig): ProjectConfig {
+  const activeIds = new Set(config.skills.filter((s) => !s.excluded).map((s) => s.id));
+  const excludedIds = new Set(
+    config.skills.filter((s) => s.excluded && !activeIds.has(s.id)).map((s) => s.id),
+  );
+  const activeSkills = config.skills.filter((s) => !s.excluded);
+  const activeAgents = config.agents.filter((a) => !a.excluded);
+
+  // Also remove excluded skill refs from stack assignments
+  const filteredStack = config.stack
+    ? Object.fromEntries(
+        typedEntries(config.stack).map(([agentName, agentStack]) => [
+          agentName,
+          Object.fromEntries(
+            typedEntries(agentStack).map(([category, assignments]) => [
+              category,
+              assignments.filter((a) => !excludedIds.has(a.id)),
+            ]),
+          ),
+        ]),
+      )
+    : undefined;
+
+  return { ...config, skills: activeSkills, agents: activeAgents, stack: filteredStack };
+}
+
 export async function recompileAgents(
   options: RecompileAgentsOptions,
 ): Promise<RecompileAgentsResult> {
@@ -169,6 +198,9 @@ export async function recompileAgents(
   const loadedConfig = await loadProjectConfig(configDir);
   const projectConfig = loadedConfig?.config ?? null;
 
+  // Filter excluded entries once at the entry point — callees receive clean data
+  const filteredConfig = projectConfig ? filterExcludedEntries(projectConfig) : null;
+
   const builtinAgents = await loadAllAgents(sourcePath);
   const projectAgents = projectDir ? await loadProjectAgents(projectDir) : {};
 
@@ -180,7 +212,7 @@ export async function recompileAgents(
 
   const agentNames = await resolveAgentNames({
     specifiedAgents: options.agents,
-    projectConfig,
+    projectConfig: filteredConfig,
     allAgents,
     outputDir,
     pluginDir,
@@ -204,7 +236,7 @@ export async function recompileAgents(
   const { compileConfig, warnings } = buildCompileConfig({
     agentNames,
     allAgents,
-    projectConfig,
+    projectConfig: filteredConfig,
     pluginDir,
   });
   result.warnings.push(...warnings);
@@ -221,7 +253,7 @@ export async function recompileAgents(
       agentsDir,
       sourcePath,
       engine,
-      installMode: options.installMode ?? deriveInstallMode(projectConfig?.skills ?? []),
+      installMode: options.installMode ?? deriveInstallMode(filteredConfig?.skills ?? []),
       agentScopeMap: options.agentScopeMap,
     },
     result,

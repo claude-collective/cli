@@ -729,5 +729,94 @@ describe("config-merger", () => {
       expect(newConfig.agents).toStrictEqual([{ name: "api-developer", scope: "project" }]);
       expect(newConfig.author).toBeUndefined();
     });
+
+    describe("excluded dual entries", () => {
+      it("should preserve both excluded and active entries for the same skill ID", () => {
+        const newConfig = buildProjectConfig({
+          name: "project",
+          skills: [
+            { id: "web-framework-react", scope: "project", source: "eject" },
+            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+          ],
+        });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          skills: [],
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        // Both entries should be preserved (compound key: id vs id:excluded)
+        const reactEntries = result.skills.filter((s) => s.id === "web-framework-react");
+        expect(reactEntries).toHaveLength(2);
+        const activeEntry = reactEntries.find((s) => !s.excluded);
+        const excludedEntry = reactEntries.find((s) => s.excluded);
+        expect(activeEntry).toBeDefined();
+        expect(activeEntry!.scope).toBe("project");
+        expect(excludedEntry).toBeDefined();
+        expect(excludedEntry!.scope).toBe("global");
+      });
+
+      it("should merge correctly when existing config has excluded entries", () => {
+        const newConfig = buildProjectConfig({
+          name: "project",
+          skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          skills: [
+            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+            { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+          ],
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        // Existing excluded entry preserved, new active entry preserved, existing active entry preserved
+        const reactEntries = result.skills.filter((s) => s.id === "web-framework-react");
+        expect(reactEntries).toHaveLength(2);
+        const excludedEntry = reactEntries.find((s) => s.excluded);
+        expect(excludedEntry).toStrictEqual({
+          id: "web-framework-react",
+          scope: "global",
+          source: "agents-inc",
+          excluded: true,
+        });
+        const activeEntry = reactEntries.find((s) => !s.excluded);
+        expect(activeEntry).toStrictEqual({
+          id: "web-framework-react",
+          scope: "project",
+          source: "eject",
+        });
+        // Existing vitest entry preserved
+        expect(result.skills.find((s) => s.id === "web-testing-vitest")).toStrictEqual({
+          id: "web-testing-vitest",
+          scope: "global",
+          source: "agents-inc",
+        });
+      });
+
+      it("should handle both configs having excluded entries for the same skill ID", () => {
+        const newConfig = buildProjectConfig({
+          name: "project",
+          skills: [
+            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+          ],
+        });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          skills: [
+            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+          ],
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        // Only one excluded entry — compound key deduplicates
+        const reactEntries = result.skills.filter((s) => s.id === "web-framework-react");
+        expect(reactEntries).toHaveLength(1);
+        expect(reactEntries[0].excluded).toBe(true);
+      });
+    });
   });
 });

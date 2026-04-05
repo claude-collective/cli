@@ -121,11 +121,6 @@ export const UI_LAYOUT = {
   FALLBACK_MESSAGE_TIMEOUT_MS: 3000,
 } as const;
 
-export const UI_MESSAGES = {
-  GLOBALLY_INSTALLED: "is globally installed, modify from home dir",
-  GLOBALLY_LOCKED_CATEGORY: "Category is locked from global install, modify from home dir",
-} as const;
-
 export const GITHUB_SOURCE = {
   HTTPS_PREFIX: "https://github.com/",
   GITHUB_PREFIX: "github:",
@@ -208,6 +203,7 @@ export const BUILT_IN_DOMAIN_ORDER: readonly Domain[] = [
   "api",
   "ai",
   "mobile",
+  "desktop",
   "cli",
   "infra",
   "meta",

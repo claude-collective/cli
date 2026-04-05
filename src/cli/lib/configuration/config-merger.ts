@@ -51,14 +51,15 @@ export function mergeConfigs(
     merged.agents = [...updatedExisting, ...addedAgents];
   }
 
-  // Merge skills by ID: new skills override existing, existing skills preserved otherwise
+  // Merge skills by compound key: excluded global + active project with same ID are distinct entries
   if (existingConfig.skills && existingConfig.skills.length > 0) {
-    const newSkillsById = indexBy(merged.skills, (s: SkillConfig) => s.id);
-    const existingIds = new Set(existingConfig.skills.map((s: SkillConfig) => s.id));
+    const skillKey = (s: SkillConfig) => (s.excluded ? `${s.id}:excluded` : s.id);
+    const newSkillsById = indexBy(merged.skills, skillKey);
+    const existingIds = new Set(existingConfig.skills.map((s: SkillConfig) => skillKey(s)));
     const updatedExisting = existingConfig.skills.map(
-      (existing: SkillConfig) => newSkillsById[existing.id] ?? existing,
+      (existing: SkillConfig) => newSkillsById[skillKey(existing)] ?? existing,
     );
-    const addedSkills = merged.skills.filter((s) => !existingIds.has(s.id));
+    const addedSkills = merged.skills.filter((s) => !existingIds.has(skillKey(s)));
     merged.skills = [...updatedExisting, ...addedSkills];
   }
 

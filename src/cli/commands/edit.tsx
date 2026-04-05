@@ -41,7 +41,7 @@ import { matrix, getSkillById } from "../lib/matrix/matrix-provider";
 import type { SourceLoadResult } from "../lib/loading/index.js";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
-import type { SkillId, AgentName, ProjectConfig } from "../types/index.js";
+import type { SkillId, SkillConfig, AgentName, ProjectConfig } from "../types/index.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { remove } from "../utils/fs.js";
@@ -105,19 +105,40 @@ export default class Edit extends BaseCommand {
 
     this.reportValidationErrors(result);
 
-    const changes = detectConfigChanges(context.projectConfig, result, context.currentSkillIds);
+    // Filter excluded entries ONCE — downstream methods receive only active entries
+    const activeNewSkills = result.skills.filter((s) => !s.excluded);
+    const activeNewAgents = result.agentConfigs.filter((a) => !a.excluded);
+    const activeOldSkills = (context.projectConfig?.skills ?? []).filter((s) => !s.excluded);
+    const activeOldAgents = (context.projectConfig?.agents ?? []).filter((a) => !a.excluded);
+
+    const filteredResult: WizardResultV2 = {
+      ...result,
+      skills: activeNewSkills,
+      agentConfigs: activeNewAgents,
+    };
+    const filteredOldConfig: ProjectConfig | null = context.projectConfig
+      ? { ...context.projectConfig, skills: activeOldSkills, agents: activeOldAgents }
+      : null;
+
+    const changes = detectConfigChanges(filteredOldConfig, filteredResult, context.currentSkillIds);
     if (!hasAnyChanges(changes)) {
       this.log(chalk.hex(CLI_COLORS.NEUTRAL)("No changes made."));
       return;
     }
 
     this.logChangeSummary(changes);
-    const migratedSkillIds = await this.applyMigrations(changes, result, context, cwd);
-    await this.applyScopeChanges(changes, result, context, cwd);
-    await this.applySourceChanges(changes, result, context, cwd, migratedSkillIds);
-    await this.applyPluginChanges(changes, result, context, cwd);
-    await this.copyNewLocalSkills(changes, result, context, cwd);
-    await this.writeConfigAndCompile(result, context, flags, cwd);
+    const migratedSkillIds = await this.applyMigrations(
+      changes,
+      filteredResult,
+      activeOldSkills,
+      context,
+      cwd,
+    );
+    await this.applyScopeChanges(changes, filteredResult, context, cwd);
+    await this.applySourceChanges(changes, activeOldSkills, context, cwd, migratedSkillIds);
+    await this.applyPluginChanges(changes, filteredResult, activeOldSkills, context, cwd);
+    await this.copyNewLocalSkills(changes, filteredResult, context, cwd);
+    await this.writeConfigAndCompile(result, activeNewSkills, context, flags, cwd);
     await this.cleanupStaleAgentFiles(changes, cwd);
     this.logCompletionSummary(changes);
   }
@@ -133,7 +154,7 @@ export default class Edit extends BaseCommand {
 
     // Use installation.projectDir for reads (loading config, discovering installed skills).
     // Use cwd for writes (config saves, plugin installs, scope migrations, recompilation output)
-    // and for the locked-items check (determining whether global items are read-only).
+    // and for the global-scope check (determining whether editing from global context).
     const projectDir = installation.projectDir;
 
     let sourceResult: SourceLoadResult;
@@ -192,17 +213,7 @@ export default class Edit extends BaseCommand {
 
     let wizardResult: WizardResultV2 | null = null;
 
-    // D9: In project context, existing global items are read-only (locked).
-    // When editing from ~/ (global context), nothing is locked.
-    // Uses cwd (not projectDir) so that global items are correctly locked
-    // even when detectInstallation() fell back to the global installation.
     const isGlobalDir = cwd === GLOBAL_INSTALL_ROOT;
-    const lockedSkillIds = isGlobalDir
-      ? undefined
-      : projectConfig?.skills?.filter((s) => s.scope === "global").map((s) => s.id);
-    const lockedAgentNames = isGlobalDir
-      ? undefined
-      : projectConfig?.agents?.filter((a) => a.scope === "global").map((a) => a.name);
 
     const { waitUntilExit, clear } = render(
       <Wizard
@@ -212,9 +223,7 @@ export default class Edit extends BaseCommand {
         initialAgents={projectConfig?.selectedAgents}
         installedSkillIds={currentSkillIds}
         installedSkillConfigs={projectConfig?.skills}
-        lockedSkillIds={lockedSkillIds}
         installedAgentConfigs={projectConfig?.agents}
-        lockedAgentNames={lockedAgentNames}
         isEditingFromGlobalScope={isGlobalDir}
         projectDir={projectDir}
         startupMessages={context.startupMessages}
@@ -305,12 +314,12 @@ export default class Edit extends BaseCommand {
 
   private async applyMigrations(
     _changes: ConfigChanges,
-    result: WizardResultV2,
+    filteredResult: WizardResultV2,
+    activeOldSkills: SkillConfig[],
     context: EditContext,
     cwd: string,
   ): Promise<Set<SkillId>> {
-    const oldSkills = context.projectConfig?.skills ?? [];
-    const migrationPlan = detectMigrations(oldSkills, result.skills);
+    const migrationPlan = detectMigrations(activeOldSkills, filteredResult.skills);
     const hasMigrations = migrationPlan.toEject.length > 0 || migrationPlan.toPlugin.length > 0;
 
     if (hasMigrations) {
@@ -344,7 +353,7 @@ export default class Edit extends BaseCommand {
 
   private async applyScopeChanges(
     changes: ConfigChanges,
-    result: WizardResultV2,
+    filteredResult: WizardResultV2,
     context: EditContext,
     cwd: string,
   ): Promise<void> {
@@ -352,7 +361,7 @@ export default class Edit extends BaseCommand {
 
     // Handle scope migrations (P->G or G->P) for eject-mode skills
     for (const [skillId, change] of scopeChanges) {
-      const skillConfig = result.skills.find((s) => s.id === skillId);
+      const skillConfig = filteredResult.skills.find((s) => s.id === skillId);
       if (skillConfig?.source === "eject") {
         await migrateLocalSkillScope(skillId, change.from, cwd);
       }
@@ -362,7 +371,7 @@ export default class Edit extends BaseCommand {
     if (context.sourceResult.marketplace && scopeChanges.size > 0) {
       const pluginScopeResult = await migratePluginSkillScopes(
         scopeChanges,
-        result.skills,
+        filteredResult.skills,
         context.sourceResult.marketplace,
         cwd,
       );
@@ -374,7 +383,7 @@ export default class Edit extends BaseCommand {
 
   private async applySourceChanges(
     changes: ConfigChanges,
-    _result: WizardResultV2,
+    activeOldSkills: SkillConfig[],
     context: EditContext,
     cwd: string,
     migratedSkillIds: Set<SkillId>,
@@ -388,7 +397,7 @@ export default class Edit extends BaseCommand {
         continue;
       }
       if (change.from === "eject") {
-        const oldSkill = context.projectConfig?.skills?.find((s) => s.id === skillId);
+        const oldSkill = activeOldSkills.find((s) => s.id === skillId);
         const deleteDir = oldSkill?.scope === "global" ? os.homedir() : cwd;
         await deleteLocalSkill(deleteDir, skillId);
       }
@@ -397,7 +406,8 @@ export default class Edit extends BaseCommand {
 
   private async applyPluginChanges(
     changes: ConfigChanges,
-    result: WizardResultV2,
+    filteredResult: WizardResultV2,
+    activeOldSkills: SkillConfig[],
     context: EditContext,
     cwd: string,
   ): Promise<void> {
@@ -406,7 +416,7 @@ export default class Edit extends BaseCommand {
     if (context.sourceResult.marketplace) {
       await ensureMarketplace(context.sourceResult);
 
-      const addedPluginSkills = result.skills.filter(
+      const addedPluginSkills = filteredResult.skills.filter(
         (s) => addedSkills.includes(s.id) && s.source !== "eject",
       );
       if (addedPluginSkills.length > 0) {
@@ -426,11 +436,7 @@ export default class Edit extends BaseCommand {
       }
 
       if (removedSkills.length > 0) {
-        const uninstallResult = await uninstallPluginSkills(
-          removedSkills,
-          context.projectConfig?.skills ?? [],
-          cwd,
-        );
+        const uninstallResult = await uninstallPluginSkills(removedSkills, activeOldSkills, cwd);
         if (uninstallResult.uninstalled.length > 0) {
           this.log(
             chalk.hex(CLI_COLORS.NEUTRAL)(
@@ -447,14 +453,14 @@ export default class Edit extends BaseCommand {
 
   private async copyNewLocalSkills(
     changes: ConfigChanges,
-    result: WizardResultV2,
+    filteredResult: WizardResultV2,
     context: EditContext,
     cwd: string,
   ): Promise<void> {
     const { addedSkills } = changes;
 
     // Copy newly added local-source skills to .claude/skills/ (split by scope)
-    const addedLocalSkills = result.skills.filter(
+    const addedLocalSkills = filteredResult.skills.filter(
       (s) => addedSkills.includes(s.id) && s.source === "eject",
     );
 
@@ -466,6 +472,7 @@ export default class Edit extends BaseCommand {
 
   private async writeConfigAndCompile(
     result: WizardResultV2,
+    activeNewSkills: SkillConfig[],
     context: EditContext,
     flags: { source?: string; refresh: boolean; "agent-source"?: string },
     cwd: string,
@@ -502,7 +509,7 @@ export default class Edit extends BaseCommand {
         skills: allSkills,
         pluginDir: cwd,
         outputDir: path.join(cwd, CLAUDE_DIR, "agents"),
-        installMode: deriveInstallMode(result.skills),
+        installMode: deriveInstallMode(activeNewSkills),
         agentScopeMap,
       });
 

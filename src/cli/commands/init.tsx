@@ -20,7 +20,10 @@ import {
   discoverInstalledSkills,
 } from "../lib/operations/index.js";
 import { getInstallationInfo } from "../lib/plugins/plugin-info.js";
-import { loadProjectConfig, loadProjectConfigFromDir } from "../lib/configuration/project-config.js";
+import {
+  loadProjectConfig,
+  loadProjectConfigFromDir,
+} from "../lib/configuration/project-config.js";
 import {
   type InstallMode,
   detectProjectInstallation,
@@ -286,11 +289,12 @@ export default class Init extends BaseCommand {
     flags: { source?: string; refresh: boolean },
   ): Promise<void> {
     const projectDir = process.cwd();
-    let installMode = deriveInstallMode(result.skills);
-    const ejectedSkills = result.skills.filter((s) => s.source === "eject");
-    const pluginSkills = result.skills.filter((s) => s.source !== "eject");
+    const activeSkills = result.skills.filter((s) => !s.excluded);
+    let installMode = deriveInstallMode(activeSkills);
+    const ejectedSkills = activeSkills.filter((s) => s.source === "eject");
+    const pluginSkills = activeSkills.filter((s) => s.source !== "eject");
 
-    this.logInstallPlan(result, installMode, ejectedSkills, pluginSkills);
+    this.logInstallPlan(installMode, ejectedSkills, pluginSkills);
 
     let copiedSkills = [...ejectedSkills];
     let pluginModeSucceeded = false;
@@ -306,7 +310,7 @@ export default class Init extends BaseCommand {
         projectDir,
         installMode,
         copiedSkills,
-        result.skills,
+        activeSkills,
       );
       copiedSkills = pluginStepResult.copiedSkills;
       installMode = pluginStepResult.installMode;
@@ -340,13 +344,12 @@ export default class Init extends BaseCommand {
   }
 
   private logInstallPlan(
-    result: WizardResultV2,
     installMode: InstallMode,
     ejectedSkills: WizardResultV2["skills"],
     pluginSkills: WizardResultV2["skills"],
   ): void {
     this.log("\n");
-    this.log(`Selected ${result.skills.length} skills`);
+    this.log(`Selected ${ejectedSkills.length + pluginSkills.length} skills`);
     this.log(
       `Install mode: ${
         installMode === "plugin"
@@ -518,10 +521,10 @@ export type DashboardData = {
 export async function getDashboardData(projectDir: string): Promise<DashboardData> {
   const [info, loaded] = await Promise.all([getInstallationInfo(), loadProjectConfig(projectDir)]);
 
-  const skillCount = loaded?.config?.skills?.length ?? 0;
+  const activeSkills = loaded?.config?.skills?.filter((s) => !s.excluded);
+  const skillCount = activeSkills?.length ?? 0;
   const agentCount = info?.agentCount ?? 0;
-  const mode =
-    info?.mode ?? (loaded?.config?.skills ? deriveInstallMode(loaded.config.skills) : "eject");
+  const mode = info?.mode ?? (activeSkills ? deriveInstallMode(activeSkills) : "eject");
   const source = loaded?.config?.source;
 
   return { skillCount, agentCount, mode, source };

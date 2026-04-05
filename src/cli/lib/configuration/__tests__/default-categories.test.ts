@@ -3,7 +3,7 @@ import { defaultCategories } from "../default-categories";
 import type { Category } from "../../../types";
 import { typedKeys } from "../../../utils/typed-object";
 
-const EXPECTED_CATEGORY_COUNT = 50;
+const EXPECTED_CATEGORY_COUNT = 51;
 
 describe("defaultCategories", () => {
   it("has the expected number of categories", () => {
@@ -17,6 +17,17 @@ describe("defaultCategories", () => {
     expect(cat!.id).toBe("web-framework");
     expect(cat!.displayName).toBe("Framework");
     expect(cat!.domain).toBe("web");
+    expect(cat!.exclusive).toBe(true);
+    expect(cat!.required).toBe(true);
+    expect(cat!.order).toBe(1);
+  });
+
+  it("includes desktop-framework with correct fields", () => {
+    const cat = defaultCategories["desktop-framework"];
+    expect(cat).toBeDefined();
+    expect(cat!.id).toBe("desktop-framework");
+    expect(cat!.displayName).toBe("Desktop Framework");
+    expect(cat!.domain).toBe("desktop");
     expect(cat!.exclusive).toBe(true);
     expect(cat!.required).toBe(true);
     expect(cat!.order).toBe(1);

@@ -1,4 +1,4 @@
-import { unique, flatMap } from "remeda";
+import { flatMap } from "remeda";
 import { create } from "zustand";
 import { BUILT_IN_DOMAIN_ORDER, DEFAULT_PUBLIC_SOURCE_NAME } from "../consts.js";
 import type { InstallMode } from "../lib/installation/index.js";
@@ -31,19 +31,6 @@ function createDefaultSkillConfig(id: SkillId): SkillConfig {
   return { id, scope: "global", source: primarySource ?? DEFAULT_PUBLIC_SOURCE_NAME };
 }
 
-/** Derive all unique domains from a categories map, preserving built-in order then appending custom. */
-function getAllDomainsFromCategories(categories: CategoryDomainMap): Domain[] {
-  const allDomains = unique(
-    Object.values(categories)
-      .map((cat) => cat?.domain)
-      .filter((d): d is Domain => d != null),
-  );
-  return [
-    ...BUILT_IN_DOMAIN_ORDER,
-    ...allDomains.filter((d) => !BUILT_IN_DOMAIN_ORDER.includes(d)),
-  ];
-}
-
 /** Sort domains into canonical order: custom domains first (alphabetically), then built-in domains per BUILT_IN_DOMAIN_ORDER. */
 function sortDomainsCanonically(domains: Domain[]): Domain[] {
   const builtInSet = new Set<Domain>(BUILT_IN_DOMAIN_ORDER);
@@ -53,14 +40,15 @@ function sortDomainsCanonically(domains: Domain[]): Domain[] {
   ];
 }
 
-/** Finds framework-incompatible skill IDs in web domain selections, respecting locked skills. */
+/** Finds framework-incompatible skill IDs in web domain selections, excluding already-excluded skills. */
 function findIncompatibleWebSkills(
   webSelections: CategorySelections,
-  lockedSkillIds: SkillId[],
+  skillConfigs: SkillConfig[],
 ): Set<SkillId> {
   const frameworkSelections = webSelections["web-framework"] ?? [];
   if (frameworkSelections.length === 0) return new Set();
 
+  const excludedIds = new Set(skillConfigs.filter((s) => s.excluded).map((s) => s.id));
   const selectedFrameworkIds = frameworkSelections.map((alias) => resolveAlias(alias));
 
   return new Set(
@@ -69,8 +57,7 @@ function findIncompatibleWebSkills(
         ? []
         : skills.filter(
             (id) =>
-              !lockedSkillIds.includes(id) &&
-              !isCompatibleWithSelectedFrameworks(id, selectedFrameworkIds),
+              !excludedIds.has(id) && !isCompatibleWithSelectedFrameworks(id, selectedFrameworkIds),
           ),
     ),
   );
@@ -87,6 +74,107 @@ function removeSkillsFromSelections(
       skills?.filter((id) => !toRemove.has(id)) ?? [],
     ]),
   ) as CategorySelections; // Object.fromEntries widens to Record<string, ...>
+}
+
+/** Remove project-scope skills; mark global-scope skills as excluded only if previously installed. */
+function applySkillRemoval(
+  configs: SkillConfig[],
+  removedIds: Iterable<SkillId>,
+  installedSkillConfigs: SkillConfig[] | null,
+): SkillConfig[] {
+  const removed = removedIds instanceof Set ? removedIds : new Set(removedIds);
+  const installedIds = installedSkillConfigs
+    ? new Set(installedSkillConfigs.map((s) => s.id))
+    : null;
+  return configs
+    .filter((sc) => !removed.has(sc.id) || (sc.scope === "global" && installedIds?.has(sc.id)))
+    .map((sc) =>
+      removed.has(sc.id) && sc.scope === "global" && installedIds?.has(sc.id)
+        ? { ...sc, excluded: true }
+        : sc,
+    );
+}
+
+/** Collects all skill IDs from a domain's category selections. */
+function collectSkillIdsFromSelections(selections: CategorySelections): Set<SkillId> {
+  return new Set(Object.values(selections).filter(Boolean).flat());
+}
+
+/** Reconciles skill configs after selection changes: removes project skills, marks global as excluded, restores excluded on re-select, adds new defaults. */
+function reconcileSkillConfigs(
+  configs: SkillConfig[],
+  added: SkillId[],
+  removed: SkillId[],
+  installedSkillConfigs: SkillConfig[] | null,
+): SkillConfig[] {
+  let result = applySkillRemoval(configs, removed, installedSkillConfigs);
+
+  for (const id of added) {
+    const existingExcluded = result.find((sc) => sc.id === id && sc.excluded);
+    if (existingExcluded) {
+      result = result.map((sc) =>
+        sc.id === id && sc.excluded ? { ...sc, excluded: undefined } : sc,
+      );
+    } else if (!result.some((sc) => sc.id === id)) {
+      result = [...result, createDefaultSkillConfig(id)];
+    }
+  }
+
+  return result;
+}
+
+/** Applies an agent toggle: deselect marks global as excluded (if previously installed) or removes; select restores excluded or adds new. */
+function applyAgentToggle(
+  configs: AgentScopeConfig[],
+  agent: AgentName,
+  isSelected: boolean,
+  installedAgentConfigs: AgentScopeConfig[] | null,
+): AgentScopeConfig[] {
+  if (isSelected) {
+    const config = configs.find((ac) => ac.name === agent);
+    const wasInstalled = installedAgentConfigs?.some((ac) => ac.name === agent) ?? false;
+    if (config?.scope === "global" && wasInstalled) {
+      return configs.map((ac) => (ac.name === agent ? { ...ac, excluded: true } : ac));
+    }
+    return configs.filter((ac) => ac.name !== agent);
+  }
+
+  const existingExcluded = configs.find((ac) => ac.name === agent && ac.excluded);
+  if (existingExcluded) {
+    return configs.map((ac) =>
+      ac.name === agent && ac.excluded ? { ...ac, excluded: undefined } : ac,
+    );
+  }
+  return [...configs, { name: agent, scope: "global" as const }];
+}
+
+/** Builds a SkillConfig for a resolved skill ID, preferring saved config values. */
+function buildSkillConfigForId(id: SkillId, savedConfigs?: SkillConfig[]): SkillConfig {
+  const saved = savedConfigs?.find((sc) => sc.id === id && !sc.excluded);
+  const skill = matrix.skills[id];
+  const primarySource = skill?.availableSources?.find((s) => s.primary)?.name;
+  return {
+    id,
+    scope: saved?.scope ?? "global",
+    source: saved?.source ?? primarySource ?? DEFAULT_PUBLIC_SOURCE_NAME,
+  };
+}
+
+/** Restores skill configs for a domain: clears excluded flags on restored skills, adds new defaults for unknown skills. */
+function restoreSkillConfigs(
+  existingConfigs: SkillConfig[],
+  restoredIds: SkillId[],
+): SkillConfig[] {
+  const restoredSet = new Set(restoredIds);
+  const existingIds = new Set(existingConfigs.map((sc) => sc.id));
+
+  const updated = existingConfigs.map((sc) =>
+    restoredSet.has(sc.id) && sc.excluded ? { ...sc, excluded: undefined } : sc,
+  );
+
+  const newConfigs = restoredIds.filter((id) => !existingIds.has(id)).map(createDefaultSkillConfig);
+
+  return [...updated, ...newConfigs];
 }
 
 /** Built-in agent names grouped by domain prefix. Custom domains return no preselected agents. */
@@ -121,8 +209,6 @@ function getSourceSortTier(source: SkillSource): number {
   if (source.type === "public") return SOURCE_SORT_TIER_PUBLIC;
   return SOURCE_SORT_TIER_THIRD_PARTY;
 }
-
-export type SkillLookupEntry = Pick<ResolvedSkill, "category" | "displayName">;
 
 function resolveSkillForPopulation(
   skillId: SkillId,
@@ -222,11 +308,6 @@ export type WizardState = {
   /** Snapshot of configs that were installed before the wizard opened, used for diff rendering */
   installedSkillConfigs: SkillConfig[] | null;
   installedAgentConfigs: AgentScopeConfig[] | null;
-
-  /** Skill IDs that cannot be toggled or removed (D9: existing global items in project context) */
-  lockedSkillIds: SkillId[];
-  /** Agent names that cannot be toggled or removed (D9: existing global agents in project context) */
-  lockedAgentNames: AgentName[];
 
   /** When true, scope toggling is disabled (editing from ~/.claude/ with no project to move items to) */
   isEditingFromGlobalScope: boolean;
@@ -527,8 +608,6 @@ type WizardStateData = Pick<
   | "boundSkills"
   | "installedSkillConfigs"
   | "installedAgentConfigs"
-  | "lockedSkillIds"
-  | "lockedAgentNames"
   | "isEditingFromGlobalScope"
   | "globalPreselections"
   | "globalAgentPreselections"
@@ -559,8 +638,6 @@ const createInitialState = (): WizardStateData => ({
   boundSkills: [],
   installedSkillConfigs: null,
   installedAgentConfigs: null,
-  lockedSkillIds: [],
-  lockedAgentNames: [],
   isEditingFromGlobalScope: false,
   globalPreselections: null,
   globalAgentPreselections: null,
@@ -670,22 +747,20 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       const selectedDomains = sortDomainsCanonically(typedKeys<Domain>(domainSelections));
 
-      const skillConfigs: SkillConfig[] = resolvedSkillIds.map((id) => {
-        const saved = savedConfigs?.find((sc) => sc.id === id);
-        const skill = matrix.skills[id];
-        const primarySource = skill?.availableSources?.find((s) => s.primary)?.name;
-        return {
-          id,
-          scope: saved?.scope ?? "global",
-          source: saved?.source ?? primarySource ?? DEFAULT_PUBLIC_SOURCE_NAME,
-        };
-      });
+      const skillConfigs: SkillConfig[] = resolvedSkillIds.map((id) =>
+        buildSkillConfigForId(id, savedConfigs),
+      );
+
+      // Preserve excluded entries so they flow through to wizard result
+      const resolvedSet = new Set(resolvedSkillIds);
+      const excludedConfigs =
+        savedConfigs?.filter((sc) => sc.excluded && !resolvedSet.has(sc.id)) ?? [];
 
       return {
         domainSelections,
         _stackDomainSelections: structuredClone(domainSelections),
         selectedDomains,
-        skillConfigs,
+        skillConfigs: [...skillConfigs, ...excludedConfigs],
       };
     }),
 
@@ -694,38 +769,25 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const isSelected = state.selectedDomains.includes(domain);
       if (isSelected) {
         const { [domain]: _removed, ...remainingSelections } = state.domainSelections;
-
-        // Collect all skill IDs being removed from this domain
-        const removedSkillIds = new Set<SkillId>();
-        if (_removed) {
-          for (const skills of Object.values(_removed)) {
-            if (skills) {
-              for (const id of skills) {
-                removedSkillIds.add(id);
-              }
-            }
-          }
-        }
+        const removedSkillIds = _removed
+          ? collectSkillIdsFromSelections(_removed)
+          : new Set<SkillId>();
 
         return {
           selectedDomains: state.selectedDomains.filter((d) => d !== domain),
           domainSelections: remainingSelections,
-          skillConfigs: state.skillConfigs.filter((sc) => !removedSkillIds.has(sc.id)),
+          skillConfigs: applySkillRemoval(
+            state.skillConfigs,
+            removedSkillIds,
+            state.installedSkillConfigs,
+          ),
         };
       }
 
       // Restore stack selections for this domain if a stack snapshot exists
       const stackSelections = state._stackDomainSelections?.[domain];
       if (stackSelections) {
-        // Also restore skillConfigs for the restored skills
-        const restoredSkillIds: SkillId[] = [];
-        for (const skills of Object.values(stackSelections)) {
-          if (skills) restoredSkillIds.push(...skills);
-        }
-        const existingIds = new Set(state.skillConfigs.map((sc) => sc.id));
-        const newConfigs = restoredSkillIds
-          .filter((id) => !existingIds.has(id))
-          .map(createDefaultSkillConfig);
+        const restoredSkillIds = [...collectSkillIdsFromSelections(stackSelections)];
 
         return {
           selectedDomains: sortDomainsCanonically([...state.selectedDomains, domain]),
@@ -733,7 +795,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
             ...state.domainSelections,
             [domain]: structuredClone(stackSelections),
           },
-          skillConfigs: [...state.skillConfigs, ...newConfigs],
+          skillConfigs: restoreSkillConfigs(state.skillConfigs, restoredSkillIds),
         };
       }
 
@@ -744,19 +806,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleTechnology: (domain, category, technology, exclusive) =>
     set((state) => {
-      // D9: locked skills cannot be toggled
-      if (state.lockedSkillIds.includes(technology)) return state;
-
       const currentSelections = state.domainSelections[domain]?.[category] || [];
       const isSelected = currentSelections.includes(technology);
 
       let newSelections: SkillId[];
       if (exclusive) {
-        // D-161: If selecting a new skill in an exclusive category would deselect
-        // a locked skill, reject the toggle — locked skills cannot be swapped out.
-        if (!isSelected && currentSelections.some((id) => state.lockedSkillIds.includes(id))) {
-          return state;
-        }
         newSelections = isSelected ? [] : [technology];
       } else {
         newSelections = isSelected
@@ -764,19 +818,16 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           : [...currentSelections, technology];
       }
 
-      // Sync skillConfigs: add entries for newly selected, remove entries for deselected
       const removed = currentSelections.filter((id) => !newSelections.includes(id));
       const added = newSelections.filter((id) => !currentSelections.includes(id));
 
-      let updatedConfigs = state.skillConfigs.filter((sc) => !removed.includes(sc.id));
-      for (const id of added) {
-        if (!updatedConfigs.some((sc) => sc.id === id)) {
-          updatedConfigs = [...updatedConfigs, createDefaultSkillConfig(id)];
-        }
-      }
-
       return {
-        skillConfigs: updatedConfigs,
+        skillConfigs: reconcileSkillConfigs(
+          state.skillConfigs,
+          added,
+          removed,
+          state.installedSkillConfigs,
+        ),
         domainSelections: {
           ...state.domainSelections,
           [domain]: {
@@ -824,7 +875,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const webSelections = state.domainSelections.web;
       if (!webSelections) return { filterIncompatible: true };
 
-      const removed = findIncompatibleWebSkills(webSelections, state.lockedSkillIds);
+      const removed = findIncompatibleWebSkills(webSelections, state.skillConfigs);
       if (removed.size === 0) return { filterIncompatible: true };
 
       return {
@@ -833,7 +884,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           ...state.domainSelections,
           web: removeSkillsFromSelections(webSelections, removed),
         },
-        skillConfigs: state.skillConfigs.filter((sc) => !removed.has(sc.id)),
+        skillConfigs: applySkillRemoval(state.skillConfigs, removed, state.installedSkillConfigs),
       };
     }),
 
@@ -845,13 +896,43 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   toggleSkillScope: (skillId) =>
     set((state) => {
       if (state.isEditingFromGlobalScope) return state;
-      // D9: locked skills cannot have their scope toggled
-      if (state.lockedSkillIds.includes(skillId)) return state;
-      return {
-        skillConfigs: state.skillConfigs.map((sc) =>
-          sc.id === skillId ? { ...sc, scope: sc.scope === "project" ? "global" : "project" } : sc,
-        ),
-      };
+
+      const config = state.skillConfigs.find((sc) => sc.id === skillId && !sc.excluded);
+      if (!config) return state;
+
+      // Guard: block project eject → global when global eject already exists
+      if (config.scope === "project") {
+        const globalConfig = state.globalPreselections?.find((sc) => sc.id === skillId);
+        if (globalConfig?.source === "eject" && config.source === "eject") {
+          return state;
+        }
+      }
+
+      const wasInstalledGlobally =
+        state.installedSkillConfigs?.some((sc) => sc.id === skillId && sc.scope === "global") ??
+        false;
+      const newScope = config.scope === "project" ? "global" : "project";
+
+      let updatedConfigs = state.skillConfigs.map((sc) =>
+        sc.id === skillId && !sc.excluded ? { ...sc, scope: newScope as "project" | "global" } : sc,
+      );
+
+      if (wasInstalledGlobally) {
+        if (newScope === "project") {
+          // Moving global → project: add excluded global entry if not already there
+          if (!updatedConfigs.some((sc) => sc.id === skillId && sc.excluded)) {
+            updatedConfigs = [
+              ...updatedConfigs,
+              { id: skillId, scope: "global" as const, excluded: true, source: config.source },
+            ];
+          }
+        } else {
+          // Moving project → global: remove the excluded global entry
+          updatedConfigs = updatedConfigs.filter((sc) => !(sc.id === skillId && sc.excluded));
+        }
+      }
+
+      return { skillConfigs: updatedConfigs };
     }),
 
   setSkillSource: (skillId, source) =>
@@ -917,51 +998,78 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleAgent: (agent) =>
     set((state) => {
-      // D9: locked agents cannot be toggled
-      if (state.lockedAgentNames.includes(agent)) return state;
-
       const isSelected = state.selectedAgents.includes(agent);
-      if (isSelected) {
-        return {
-          selectedAgents: state.selectedAgents.filter((a) => a !== agent),
-          agentConfigs: state.agentConfigs.filter((ac) => ac.name !== agent),
-        };
-      }
       return {
-        selectedAgents: [...state.selectedAgents, agent],
-        agentConfigs: [...state.agentConfigs, { name: agent, scope: "global" as const }],
+        selectedAgents: isSelected
+          ? state.selectedAgents.filter((a) => a !== agent)
+          : [...state.selectedAgents, agent],
+        agentConfigs: applyAgentToggle(
+          state.agentConfigs,
+          agent,
+          isSelected,
+          state.installedAgentConfigs,
+        ),
       };
     }),
 
   toggleAgentScope: (agentName) =>
     set((state) => {
       if (state.isEditingFromGlobalScope) return state;
-      // D9: locked agents cannot have their scope toggled
-      if (state.lockedAgentNames.includes(agentName)) return state;
-      return {
-        agentConfigs: state.agentConfigs.map((ac) =>
-          ac.name === agentName
-            ? { ...ac, scope: ac.scope === "project" ? ("global" as const) : ("project" as const) }
-            : ac,
-        ),
-      };
+
+      const config = state.agentConfigs.find((ac) => ac.name === agentName && !ac.excluded);
+      if (!config) return state;
+
+      const wasInstalledGlobally =
+        state.installedAgentConfigs?.some((ac) => ac.name === agentName && ac.scope === "global") ??
+        false;
+      const newScope = config.scope === "project" ? ("global" as const) : ("project" as const);
+
+      let updatedConfigs = state.agentConfigs.map((ac) =>
+        ac.name === agentName && !ac.excluded ? { ...ac, scope: newScope } : ac,
+      );
+
+      if (wasInstalledGlobally) {
+        if (newScope === "project") {
+          // Moving global → project: add excluded global entry if not already there
+          if (!updatedConfigs.some((ac) => ac.name === agentName && ac.excluded)) {
+            updatedConfigs = [
+              ...updatedConfigs,
+              { name: agentName, scope: "global" as const, excluded: true },
+            ];
+          }
+        } else {
+          // Moving project → global: remove the excluded global entry
+          updatedConfigs = updatedConfigs.filter((ac) => !(ac.name === agentName && ac.excluded));
+        }
+      }
+
+      return { agentConfigs: updatedConfigs };
     }),
 
   setFocusedAgentId: (id) => set({ focusedAgentId: id }),
 
   preselectAgentsFromDomains: () =>
-    set(() => {
+    set((state) => {
       const agents: AgentName[] = [];
-      for (const domain of get().selectedDomains) {
+      for (const domain of state.selectedDomains) {
         const domainAgents = DOMAIN_AGENTS[domain];
         if (domainAgents) {
           agents.push(...domainAgents);
         }
       }
       const sorted = agents.sort();
+      const existing = new Map(state.agentConfigs.map((ac) => [ac.name, ac]));
+      const merged = sorted.map((name) => {
+        const ex = existing.get(name);
+        return ex ? { ...ex, excluded: undefined } : { name, scope: "global" as const };
+      });
+      // Preserve excluded entries not in the sorted list
+      const excludedConfigs = state.agentConfigs.filter(
+        (ac) => ac.excluded && !sorted.includes(ac.name),
+      );
       return {
         selectedAgents: sorted,
-        agentConfigs: sorted.map((name) => ({ name, scope: "global" as const })),
+        agentConfigs: [...merged, ...excludedConfigs],
       };
     }),
 
@@ -1074,7 +1182,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     const selectedTechnologies = get().getAllSelectedTechnologies();
     const { skillConfigs, boundSkills } = state;
 
-    return selectedTechnologies.map((tech) => {
+    // Include inherited global skills (in skillConfigs but not in domainSelections)
+    const selectedSet = new Set(selectedTechnologies);
+    const inheritedSkillIds = skillConfigs
+      .filter((sc) => !sc.excluded && !selectedSet.has(sc.id))
+      .map((sc) => sc.id);
+    const allSkillIds = [...inheritedSkillIds, ...selectedTechnologies];
+
+    return allSkillIds.map((tech) => {
       const skillId = resolveAlias(tech);
       const skill = getSkillById(skillId);
       const configEntry = skillConfigs.find((sc) => sc.id === skillId);

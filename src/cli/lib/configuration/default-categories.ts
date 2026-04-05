@@ -456,4 +456,13 @@ export const defaultCategories = {
     required: true,
     order: 1,
   },
+  "desktop-framework": {
+    id: "desktop-framework",
+    displayName: "Desktop Framework",
+    description: "Desktop application framework (Tauri, Electron)",
+    domain: "desktop",
+    exclusive: true,
+    required: true,
+    order: 1,
+  },
 } as const satisfies Record<Category, CategoryDefinition>;

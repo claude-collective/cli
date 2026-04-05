@@ -5,49 +5,20 @@ import type { Category, SkillId } from "../../types/index.js";
 import type { CategoryOption, CategoryRow } from "../wizard/category-grid.js";
 import { HOTKEY_FILTER_INCOMPATIBLE, HOTKEY_TOGGLE_LABELS, isHotkey } from "../wizard/hotkeys.js";
 
-const FRAMEWORK_CATEGORY_ID = "web-framework";
-
-// No sections are locked — users can freely navigate and select any skill
-export const isSectionLocked = (_categoryId: Category, _categories: CategoryRow[]): boolean => {
-  return false;
-};
-
-export const findValidStartColumn = (_options: CategoryOption[]): number => {
-  return 0;
-};
-
-/** Find next unlocked section index (wrapping, direction: forward) */
-export const findNextUnlockedIndex = (
+/** Find next section index (wrapping forward) */
+export const findNextIndex = (
   processed: { id: Category; sortedOptions: CategoryOption[] }[],
   currentIndex: number,
-  allCategories: CategoryRow[],
 ): number => {
   const length = processed.length;
   if (length === 0) return currentIndex;
-
-  let index = currentIndex;
-  let attempts = 0;
-
-  while (attempts < length) {
-    index += 1;
-    if (index >= length) index = 0;
-
-    const category = processed[index];
-    if (category && !isSectionLocked(category.id, allCategories)) {
-      return index;
-    }
-
-    attempts++;
-  }
-
-  return currentIndex;
+  return (currentIndex + 1) % length;
 };
 
 type ProcessedCategory = CategoryRow & { sortedOptions: CategoryOption[] };
 
 type UseCategoryGridInputOptions = {
   processedCategories: ProcessedCategory[];
-  categories: CategoryRow[];
   focusedRow: number;
   focusedCol: number;
   setFocused: (row: number, col: number) => void;
@@ -55,13 +26,10 @@ type UseCategoryGridInputOptions = {
   onToggle: (categoryId: Category, technologyId: SkillId) => void;
   onToggleLabels: () => void;
   onToggleFilterIncompatible?: () => void;
-  onLockedToggleAttempt?: (skillId: SkillId) => void;
-  onLockedCategoryAttempt?: () => void;
 };
 
 export function useCategoryGridInput({
   processedCategories,
-  categories,
   focusedRow,
   focusedCol,
   setFocused,
@@ -69,12 +37,9 @@ export function useCategoryGridInput({
   onToggle,
   onToggleLabels,
   onToggleFilterIncompatible,
-  onLockedToggleAttempt,
-  onLockedCategoryAttempt,
 }: UseCategoryGridInputOptions): void {
   const currentRow = processedCategories[focusedRow];
   const currentOptions = currentRow?.sortedOptions || [];
-  const currentLocked = currentRow ? isSectionLocked(currentRow.id, categories) : false;
 
   // Adjust column when current row's options change externally (e.g. option becomes disabled)
   useEffect(() => {
@@ -86,18 +51,6 @@ export function useCategoryGridInput({
       setFocused(focusedRow, newCol);
     }
   }, [focusedRow, currentOptions, focusedCol, setFocused, currentRow]);
-
-  // Bounce off locked sections when a section becomes locked (e.g. framework deselected)
-  useEffect(() => {
-    if (currentRow && currentLocked) {
-      const nextUnlocked = findNextUnlockedIndex(processedCategories, focusedRow, categories);
-      if (nextUnlocked !== focusedRow) {
-        const newRowOptions = processedCategories[nextUnlocked]?.sortedOptions || [];
-        const newCol = findValidStartColumn(newRowOptions);
-        setFocused(nextUnlocked, newCol);
-      }
-    }
-  }, [currentRow, currentLocked, focusedRow, processedCategories, categories, setFocused]);
 
   // Store the latest handler in a ref so that the useInput effect never needs to
   // re-register on the event emitter. This avoids a stale-closure race condition
@@ -121,11 +74,9 @@ export function useCategoryGridInput({
     }
 
     if (key.tab && !key.shift) {
-      const nextSection = findNextUnlockedIndex(processedCategories, focusedRow, categories);
+      const nextSection = findNextIndex(processedCategories, focusedRow);
       if (nextSection !== focusedRow) {
-        const newRowOptions = processedCategories[nextSection]?.sortedOptions || [];
-        const newCol = findValidStartColumn(newRowOptions);
-        setFocused(nextSection, newCol);
+        setFocused(nextSection, 0);
       }
       return;
     }
@@ -141,20 +92,9 @@ export function useCategoryGridInput({
     }
 
     if (input === " ") {
-      if (currentLocked) return;
       const currentOption = currentOptions[focusedCol];
       if (currentOption) {
-        if (currentOption.locked) {
-          onLockedToggleAttempt?.(currentOption.id);
-        } else if (
-          currentRow.exclusive &&
-          !currentOption.selected &&
-          currentOptions.some((o) => o.locked && o.selected)
-        ) {
-          onLockedCategoryAttempt?.();
-        } else {
-          onToggle(currentRow.id, currentOption.id);
-        }
+        onToggle(currentRow.id, currentOption.id);
       }
       return;
     }
@@ -165,10 +105,8 @@ export function useCategoryGridInput({
     const isDown = key.downArrow || input === "j";
 
     if (isLeft) {
-      if (currentLocked) return;
       moveFocus("left");
     } else if (isRight) {
-      if (currentLocked) return;
       moveFocus("right");
     } else if (isUp) {
       moveFocus("up");

@@ -11,8 +11,6 @@ type UseWizardInitializationOptions = {
   installedSkillIds?: SkillId[];
   installedSkillConfigs?: SkillConfig[];
   installedAgentConfigs?: AgentScopeConfig[];
-  lockedSkillIds?: SkillId[];
-  lockedAgentNames?: AgentName[];
   isEditingFromGlobalScope?: boolean;
 };
 
@@ -27,8 +25,6 @@ export function useWizardInitialization({
   installedSkillIds,
   installedSkillConfigs,
   installedAgentConfigs,
-  lockedSkillIds,
-  lockedAgentNames,
   isEditingFromGlobalScope,
 }: UseWizardInitializationOptions): void {
   const initialized = useRef(false);
@@ -68,13 +64,6 @@ export function useWizardInitialization({
       useWizardStore.setState({
         installedSkillConfigs: installedSkillConfigs ?? null,
         installedAgentConfigs: installedAgentConfigs ?? null,
-      });
-    }
-    // Set locked IDs (D9: global items read-only in project context)
-    if (lockedSkillIds?.length || lockedAgentNames?.length) {
-      useWizardStore.setState({
-        ...(lockedSkillIds?.length && { lockedSkillIds }),
-        ...(lockedAgentNames?.length && { lockedAgentNames }),
       });
     }
     if (isEditingFromGlobalScope) {

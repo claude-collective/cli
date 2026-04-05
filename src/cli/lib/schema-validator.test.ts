@@ -425,7 +425,7 @@ describe("schema-validator", () => {
 
       printValidationResults(result);
 
-      const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
+      const output = consoleSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n");
       expect(output).toContain("Schema Validation Summary");
       expect(output).toContain("Total schemas checked: 3");
       expect(output).toContain("Total files: 10");
@@ -447,7 +447,7 @@ describe("schema-validator", () => {
 
       printValidationResults(result);
 
-      const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
+      const output = consoleSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n");
       expect(output).toContain("All schemas validated successfully");
     });
 
@@ -478,7 +478,7 @@ describe("schema-validator", () => {
 
       printValidationResults(result);
 
-      const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
+      const output = consoleSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n");
       expect(output).toContain("Validation failed");
     });
 
@@ -516,7 +516,7 @@ describe("schema-validator", () => {
 
       printValidationResults(result);
 
-      const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
+      const output = consoleSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n");
       expect(output).toContain("Agent Definition: 3/3 valid");
       expect(output).toContain("Skill Metadata: 1/2 valid");
     });
@@ -548,7 +548,7 @@ describe("schema-validator", () => {
 
       printValidationResults(result);
 
-      const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
+      const output = consoleSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n");
       expect(output).toContain("src/agents/broken/metadata.yaml");
       expect(output).toContain("Missing required field: tools");
       expect(output).toContain("Missing required field: description");
@@ -583,7 +583,7 @@ describe("schema-validator", () => {
 
       printValidationResults(result);
 
-      const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
+      const output = consoleSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n");
       // "Agent Definition" with 0 files should be skipped
       expect(output).not.toContain("Agent Definition");
       // "Skill Metadata" with 5 files should be shown

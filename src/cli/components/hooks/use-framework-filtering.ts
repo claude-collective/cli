@@ -11,7 +11,6 @@ type UseFrameworkFilteringOptions = {
   installedSkillIds?: SkillId[];
   skillConfigs?: SkillConfig[];
   filterIncompatible?: boolean;
-  lockedSkillIds?: SkillId[];
 };
 
 export function useFrameworkFiltering({
@@ -21,7 +20,6 @@ export function useFrameworkFiltering({
   installedSkillIds,
   skillConfigs,
   filterIncompatible,
-  lockedSkillIds,
 }: UseFrameworkFilteringOptions): CategoryRow[] {
   return useMemo(
     () =>
@@ -32,16 +30,7 @@ export function useFrameworkFiltering({
         installedSkillIds,
         skillConfigs,
         filterIncompatible,
-        lockedSkillIds,
       ),
-    [
-      domain,
-      allSelections,
-      selections,
-      installedSkillIds,
-      skillConfigs,
-      filterIncompatible,
-      lockedSkillIds,
-    ],
+    [domain, allSelections, selections, installedSkillIds, skillConfigs, filterIncompatible],
   );
 }

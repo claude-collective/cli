@@ -13,6 +13,7 @@ const BUILT_IN_DOMAIN_DESCRIPTIONS: Record<Domain, string> = {
   ai: "AI and LLM integrations",
   cli: "Command-line tools",
   mobile: "Mobile applications",
+  desktop: "Desktop applications",
   infra: "CI/CD, deployment, and infrastructure",
   meta: "Design patterns, code review, and research methodology",
   shared: "Shared utilities and methodology",

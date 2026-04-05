@@ -53,8 +53,6 @@ type WizardProps = {
   installedSkillIds?: SkillId[];
   installedSkillConfigs?: SkillConfig[];
   installedAgentConfigs?: AgentScopeConfig[];
-  lockedSkillIds?: SkillId[];
-  lockedAgentNames?: AgentName[];
   isEditingFromGlobalScope?: boolean;
   projectDir?: string;
   startupMessages?: StartupMessage[];
@@ -71,8 +69,6 @@ export const Wizard: React.FC<WizardProps> = ({
   installedSkillIds,
   installedSkillConfigs,
   installedAgentConfigs,
-  lockedSkillIds,
-  lockedAgentNames,
   isEditingFromGlobalScope,
   projectDir,
   startupMessages,
@@ -87,8 +83,6 @@ export const Wizard: React.FC<WizardProps> = ({
     installedSkillIds,
     installedSkillConfigs,
     installedAgentConfigs,
-    lockedSkillIds,
-    lockedAgentNames,
     isEditingFromGlobalScope,
   });
 
@@ -178,14 +172,18 @@ export const Wizard: React.FC<WizardProps> = ({
     }
 
     const skillConfigs: SkillConfig[] = allSkills.map((id) => {
-      const existing = store.skillConfigs.find((sc) => sc.id === id);
+      const existing = store.skillConfigs.find((sc) => sc.id === id && !sc.excluded);
       return existing ?? { id, scope: "global" as const, source: "eject" };
     });
+
+    // Append excluded entries so they flow through to config generation
+    const excludedConfigs = store.skillConfigs.filter((sc) => sc.excluded);
+    const allSkillConfigs = [...skillConfigs, ...excludedConfigs];
 
     const validation = validateSelection(allSkills);
 
     const result: WizardResultV2 = {
-      skills: skillConfigs,
+      skills: allSkillConfigs,
       selectedAgents: store.selectedAgents,
       agentConfigs: store.agentConfigs,
       selectedStackId: store.selectedStackId,

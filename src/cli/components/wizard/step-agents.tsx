@@ -1,6 +1,6 @@
 import { Box, Text, useInput } from "ink";
-import React, { useEffect, useMemo, useState } from "react";
-import { CLI_COLORS, UI_LAYOUT, UI_MESSAGES, UI_SYMBOLS } from "../../consts.js";
+import React, { useMemo, useState } from "react";
+import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
 import { matrix } from "../../lib/matrix/matrix-provider.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { AgentName, MergedSkillsMatrix } from "../../types/index.js";
@@ -9,7 +9,6 @@ import { typedKeys } from "../../utils/typed-object.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { useRowScroll } from "../hooks/use-row-scroll.js";
 import { getDomainDisplayName } from "./utils.js";
-import { Toast } from "./toast.js";
 
 type AgentItem = {
   id: AgentName;
@@ -166,14 +165,6 @@ function buildFocusableIds(groups: AgentGroup[]): FocusId[] {
 export const StepAgents: React.FC = () => {
   const selectedAgents = useWizardStore((s) => s.selectedAgents);
   const agentConfigs = useWizardStore((s) => s.agentConfigs);
-  const lockedAgentNames = useWizardStore((s) => s.lockedAgentNames);
-  const [lockedToast, setLockedToast] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!lockedToast) return;
-    const timer = setTimeout(() => setLockedToast(null), UI_LAYOUT.COPIED_MESSAGE_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [lockedToast]);
 
   const agentGroups = useMemo(() => buildAgentGroups(matrix), []);
   const flatRows = useMemo(() => buildFlatRows(agentGroups), [agentGroups]);
@@ -218,13 +209,7 @@ export const StepAgents: React.FC = () => {
     }
 
     if (input === " " && focusedId !== "continue") {
-      if (lockedAgentNames.includes(focusedId)) {
-        const agentItem = agentGroups.flatMap((g) => g.items).find((a) => a.id === focusedId);
-        const label = agentItem?.label ?? focusedId;
-        setLockedToast(`${label} ${UI_MESSAGES.GLOBALLY_INSTALLED}`);
-      } else {
-        useWizardStore.getState().toggleAgent(focusedId);
-      }
+      useWizardStore.getState().toggleAgent(focusedId);
     }
   });
 
@@ -272,7 +257,6 @@ export const StepAgents: React.FC = () => {
         const pointer = isFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER;
         const agentConfig = agentConfigs.find((ac) => ac.name === row.agent.id);
         const scope = agentConfig?.scope ?? "global";
-        const isLocked = lockedAgentNames.includes(row.agent.id);
         return (
           <Box key={row.agent.id} flexShrink={0}>
             <Text>
@@ -304,8 +288,6 @@ export const StepAgents: React.FC = () => {
 
   return (
     <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
-      {/* <Toast>Select agents</Toast> */}
-
       <Box ref={listRef} flexDirection="column" flexGrow={1} flexBasis={0}>
         <Box
           flexDirection="column"
@@ -326,7 +308,6 @@ export const StepAgents: React.FC = () => {
         {isContinueFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER} {"\u2192"}{" "}
         {continueLabel}
       </Text>
-      {lockedToast && <Toast>{lockedToast}</Toast>}
     </Box>
   );
 };
