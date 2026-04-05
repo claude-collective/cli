@@ -143,12 +143,13 @@ describe("project config does not accumulate global skills after edit", () => {
       expect(updatedProjectConfig).not.toContain("globalConfig.skills");
       expect(updatedProjectConfig).not.toContain("globalConfig.agents");
 
-      // Key invariant: the global skill must appear exactly once (no accumulation).
-      // Count occurrences of the skill ID in the config to detect duplication.
-      const reactSkillOccurrences = updatedProjectConfig.split("web-framework-react").length - 1;
+      // Key invariant: the global skill must appear exactly once in the skills array (no accumulation).
+      // The skill ID may also appear in the stack section — only check the skills array portion.
+      const skillsSection = updatedProjectConfig.match(/const skills:[\s\S]*?];/)?.[0] ?? "";
+      const reactSkillOccurrences = skillsSection.split("web-framework-react").length - 1;
       expect(
         reactSkillOccurrences,
-        "Global skill 'web-framework-react' should appear exactly once in project config (no accumulation)",
+        "Global skill 'web-framework-react' should appear exactly once in skills array (no accumulation)",
       ).toBe(1);
 
       // Also verify the global config still has its skill (it wasn't removed)

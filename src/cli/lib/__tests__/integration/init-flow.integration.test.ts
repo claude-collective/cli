@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { readFile, rm } from "fs/promises";
+import { readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { INIT_TEST_SKILLS } from "../mock-data/mock-skills";
@@ -27,6 +27,7 @@ import { initializeMatrix } from "../../matrix/matrix-provider";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_SKILLS_SUBDIR, STANDARD_FILES } from "../../../consts";
 
 const AGENTS_SUBDIR = "agents";
+let fakeHomeDir: string;
 
 // Matrix whose skill.path values match the file system layout from createTestSource.
 // createMockSkill sets path to "skills/{category}/{id}/" and the copier resolves to
@@ -47,10 +48,15 @@ const SELECTED_AGENTS_WITH_REVIEWER: AgentName[] = [
   "api-developer",
 ];
 
-// Clean global config files written by writeScopedConfigs to the mocked home dir
+// Isolate all suites from the real home directory
+beforeEach(async () => {
+  fakeHomeDir = await createTempDir("cc-home-");
+  vi.spyOn(os, "homedir").mockReturnValue(fakeHomeDir);
+});
+
 afterEach(async () => {
-  const globalClaudeSrc = path.join(os.homedir(), CLAUDE_SRC_DIR);
-  await rm(globalClaudeSrc, { recursive: true, force: true }).catch(() => {});
+  vi.restoreAllMocks();
+  await cleanupTempDir(fakeHomeDir);
 });
 
 // ── Test Suites ────────────────────────────────────────────────────────────────
@@ -709,27 +715,20 @@ describe("Init Flow Integration: Recompile Round-Trip", () => {
 
 describe("Init Flow Integration: Global Scope Skills", () => {
   let dirs: TestDirs;
-  let fakeHomeDir: string;
   let originalCwd: string;
   let sourceResult: SourceLoadResult;
 
   beforeEach(async () => {
     originalCwd = process.cwd();
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
-    fakeHomeDir = await createTempDir("cc-home-");
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
     initializeMatrix(INIT_TEST_MATRIX);
-
-    // Mock os.homedir() to a temp dir so global skills don't pollute the real home
-    vi.spyOn(os, "homedir").mockReturnValue(fakeHomeDir);
   });
 
   afterEach(async () => {
-    vi.restoreAllMocks();
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
-    await cleanupTempDir(fakeHomeDir);
   });
 
   it("should route global-scoped skills to home dir and project-scoped to project dir", async () => {

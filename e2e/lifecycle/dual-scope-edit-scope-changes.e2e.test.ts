@@ -119,7 +119,7 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
   );
 
   it.fails(
-    "Toggle a project agent's scope to global (expected fail -- ENOENT in project-scoped skill copy)",
+    "Toggle a project agent's scope to global (expected fail -- stale agent file not cleaned from old scope dir)",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
       // Phase C: Edit -- toggle api-developer from project to global scope

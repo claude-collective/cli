@@ -437,6 +437,18 @@ describe("config", () => {
   });
 
   describe("resolveSource", () => {
+    let savedHome: string;
+
+    beforeEach(() => {
+      savedHome = process.env.HOME ?? "";
+      // Point HOME to temp dir so resolveSource doesn't fall back to real ~/.claude-src/
+      process.env.HOME = tempDir;
+    });
+
+    afterEach(() => {
+      process.env.HOME = savedHome;
+    });
+
     it("should return flag value with highest priority", async () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
 
