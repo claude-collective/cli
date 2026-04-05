@@ -12,6 +12,7 @@ const SEARCH_PILL_LABEL = "\u2315 Search";
 
 const SKILL_NAME_WIDTH = 24;
 const SOURCE_COL_WIDTH = 18;
+const SCOPE_COL_WIDTH = 11;
 
 const SOURCE_HEADER_NAMES: Record<string, string> = {
   eject: "Local",
@@ -29,6 +30,7 @@ export type SourceOption = {
 export type SourceRow = {
   skillId: SkillId;
   options: SourceOption[];
+  scope?: "global" | "project";
 };
 
 export type SourceGridProps = {
@@ -132,6 +134,25 @@ const getNavigableCount = (row: SourceRow, showSearchPill: boolean): number => {
   return row.options.length + (showSearchPill ? 1 : 0);
 };
 
+type ScopeGroup = {
+  label: string;
+  rows: { row: SourceRow; originalIndex: number }[];
+};
+
+/** Groups rows by scope for rendering with section labels. Returns empty array when all rows share the same scope (renders flat). */
+function groupRowsByScope(rows: SourceRow[]): ScopeGroup[] {
+  const indexed = rows.map((row, i) => ({ row, originalIndex: i }));
+  const globalRows = indexed.filter(({ row }) => row.scope === "global");
+  const projectRows = indexed.filter(({ row }) => row.scope !== "global");
+
+  if (globalRows.length === 0 || projectRows.length === 0) return [];
+
+  return [
+    { label: "Global", rows: globalRows },
+    { label: "Project", rows: projectRows },
+  ];
+}
+
 export const SourceGrid: React.FC<SourceGridProps> = ({
   rows,
   availableHeight = 0,
@@ -233,10 +254,15 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
 
   const noShrink = scrollEnabled ? { flexShrink: 0 } : {};
 
+  const scopeGroups = groupRowsByScope(rows);
+
   const headerSources = rows[0]?.options ?? [];
   const headerElement = (
-    <Box flexDirection="row" marginBottom={1} {...noShrink}>
-      <Box width={SKILL_NAME_WIDTH} />
+    <Box flexDirection="row" marginBottom={scopeGroups.length > 0 ? 0 : 1} {...noShrink}>
+      {scopeGroups.length > 0 && <Box width={SCOPE_COL_WIDTH} />}
+      <Box width={SKILL_NAME_WIDTH}>
+        {scopeGroups.length > 0 && <Text color={CLI_COLORS.WARNING} bold>Scope</Text>}
+      </Box>
       {headerSources.map((option) => (
         <Box key={option.id} width={SOURCE_COL_WIDTH}>
           <Text
@@ -248,16 +274,39 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     </Box>
   );
 
-  const sectionElements = rows.map((row, rowIndex) => (
-    <Box key={row.skillId} ref={(el) => setSectionRef(rowIndex, el)} {...noShrink}>
-      <SourceSection
-        row={row}
-        isFocused={rowIndex === focusedRow}
-        focusedOptionIndex={focusedCol}
-        showSearchPill={showSearchPill}
-      />
-    </Box>
-  ));
+  const sectionElements =
+    scopeGroups.length > 0
+      ? scopeGroups.map((group) => (
+          <Box key={group.label} flexDirection="column" marginTop={1} {...noShrink}>
+            {group.rows.map(({ row, originalIndex }, rowIndexInGroup) => (
+              <Box key={row.skillId} flexDirection="row" ref={(el) => setSectionRef(originalIndex, el)} {...noShrink}>
+                <Box width={SCOPE_COL_WIDTH}>
+                  {rowIndexInGroup === 0 && (
+                    <Text color={CLI_COLORS.WARNING} bold>
+                      {group.label}
+                    </Text>
+                  )}
+                </Box>
+                <SourceSection
+                  row={row}
+                  isFocused={originalIndex === focusedRow}
+                  focusedOptionIndex={focusedCol}
+                  showSearchPill={showSearchPill}
+                />
+              </Box>
+            ))}
+          </Box>
+        ))
+      : rows.map((row, rowIndex) => (
+          <Box key={row.skillId} ref={(el) => setSectionRef(rowIndex, el)} {...noShrink}>
+            <SourceSection
+              row={row}
+              isFocused={rowIndex === focusedRow}
+              focusedOptionIndex={focusedCol}
+              showSearchPill={showSearchPill}
+            />
+          </Box>
+        ));
 
   const searchModalElement = searchModal.isOpen && (
     <SearchModal

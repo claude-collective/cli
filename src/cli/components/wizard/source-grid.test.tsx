@@ -26,9 +26,14 @@ const createSourceOption = (id: string, overrides: Partial<SourceOption> = {}): 
   ...overrides,
 });
 
-const createSourceRow = (skillId: SkillId, options: SourceOption[]): SourceRow => ({
+const createSourceRow = (
+  skillId: SkillId,
+  options: SourceOption[],
+  scope?: "global" | "project",
+): SourceRow => ({
   skillId,
   options,
+  scope,
 });
 
 const defaultRows: SourceRow[] = [
@@ -121,6 +126,67 @@ describe("SourceGrid component", () => {
       const output = lastFrame();
       expect(output).toContain("React");
       expect(output).toContain("Public");
+    });
+  });
+
+  describe("scope-grouped rendering", () => {
+    it("should render scope labels when rows have mixed scopes", () => {
+      const rows: SourceRow[] = [
+        createSourceRow("web-framework-react", [createSourceOption("public", { selected: true })], "global"),
+        createSourceRow("web-state-zustand", [createSourceOption("public", { selected: true })], "project"),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ rows });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Global");
+      expect(output).toContain("Project");
+    });
+
+    it("should render flat (no scope labels) when all rows share the same scope", () => {
+      const rows: SourceRow[] = [
+        createSourceRow("web-framework-react", [createSourceOption("public", { selected: true })], "global"),
+        createSourceRow("web-state-zustand", [createSourceOption("public", { selected: true })], "global"),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ rows });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).not.toContain("Global");
+      expect(output).not.toContain("Project");
+    });
+
+    it("should render flat when no rows have scope set", () => {
+      const rows: SourceRow[] = [
+        createSourceRow("web-framework-react", [createSourceOption("public", { selected: true })]),
+        createSourceRow("web-state-zustand", [createSourceOption("public", { selected: true })]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ rows });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).not.toContain("Global");
+      expect(output).not.toContain("Project");
+    });
+
+    it("should show global rows before project rows", () => {
+      const rows: SourceRow[] = [
+        createSourceRow("web-state-zustand", [createSourceOption("public", { selected: true })], "project"),
+        createSourceRow("web-framework-react", [createSourceOption("public", { selected: true })], "global"),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ rows });
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      const globalPos = output.indexOf("React");
+      const projectPos = output.indexOf("Zustand");
+      expect(globalPos).toBeGreaterThan(-1);
+      expect(projectPos).toBeGreaterThan(-1);
+      expect(globalPos).toBeLessThan(projectPos);
     });
   });
 
