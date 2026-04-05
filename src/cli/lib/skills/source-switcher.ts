@@ -1,6 +1,6 @@
 import path from "path";
 
-import { copy, ensureDir, remove } from "../../utils/fs";
+import { copy, directoryExists, ensureDir, remove } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH } from "../../consts";
 import type { SkillId } from "../../types";
@@ -90,14 +90,19 @@ export async function migrateLocalSkillScope(
     return;
   }
 
-  try {
-    await ensureDir(toSkillsDir);
-    await copy(fromPath, toPath);
-    await remove(fromPath);
-    verbose(
-      `Migrated skill '${skillId}' from ${fromScope} to ${fromScope === "global" ? "project" : "global"}`,
-    );
-  } catch {
-    warn(`Could not migrate skill '${skillId}' — source directory may not exist`);
+  const toScope = fromScope === "global" ? "project" : "global";
+
+  if (!(await directoryExists(fromPath))) {
+    if (await directoryExists(toPath)) {
+      verbose(`Skill '${skillId}' already at ${toScope} scope — no migration needed`);
+      return;
+    }
+    warn(`Could not migrate skill '${skillId}' — not found at either scope`);
+    return;
   }
+
+  await ensureDir(toSkillsDir);
+  await copy(fromPath, toPath);
+  await remove(fromPath);
+  verbose(`Migrated skill '${skillId}' from ${fromScope} to ${toScope}`);
 }
