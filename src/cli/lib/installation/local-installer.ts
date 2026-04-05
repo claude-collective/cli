@@ -620,6 +620,37 @@ export async function writeScopedConfigs(
     effectiveGlobalConfig = existingGlobalConfig ?? { name: "global", skills: [], agents: [] };
   }
 
+  // Prune agents from effective global that have been moved to project scope.
+  // The project split contains excluded tombstone entries (scope: "global", excluded: true)
+  // signaling these agents should be removed from the global config.
+  const excludedAgentNames = new Set(
+    projectSplitConfig.agents.filter((a) => a.excluded).map((a) => a.name),
+  );
+  if (excludedAgentNames.size > 0) {
+    const beforeCount = effectiveGlobalConfig.agents.length;
+    effectiveGlobalConfig = {
+      ...effectiveGlobalConfig,
+      agents: effectiveGlobalConfig.agents.filter((a) => !excludedAgentNames.has(a.name)),
+    };
+    if (effectiveGlobalConfig.agents.length < beforeCount) {
+      globalDataChanged = true;
+    }
+  }
+
+  const excludedSkillIds = new Set(
+    projectSplitConfig.skills.filter((s) => s.excluded).map((s) => s.id),
+  );
+  if (excludedSkillIds.size > 0) {
+    const beforeCount = effectiveGlobalConfig.skills.length;
+    effectiveGlobalConfig = {
+      ...effectiveGlobalConfig,
+      skills: effectiveGlobalConfig.skills.filter((s) => !excludedSkillIds.has(s.id)),
+    };
+    if (effectiveGlobalConfig.skills.length < beforeCount) {
+      globalDataChanged = true;
+    }
+  }
+
   // Register this project in global config's projects list
   const regResult = await registerProjectPath(effectiveGlobalConfig, projectDir);
   effectiveGlobalConfig = regResult.config;

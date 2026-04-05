@@ -1,7 +1,7 @@
 import { indexBy } from "remeda";
 
 import type { ProjectConfig } from "../../types";
-import type { SkillConfig } from "../../types/config";
+import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import { typedEntries } from "../../utils/typed-object";
 import { loadProjectConfig } from "./project-config";
 import { loadProjectSourceConfig } from "./config";
@@ -40,14 +40,15 @@ export function mergeConfigs(
     merged.source = existingConfig.source;
   }
 
-  // Merge agents by name: new agents override existing (preserves scope changes), existing agents preserved otherwise
+  // Merge agents by compound key: excluded global + active project with same name are distinct entries
   if (existingConfig.agents && existingConfig.agents.length > 0) {
-    const newAgentsByName = indexBy(merged.agents, (a) => a.name);
-    const existingNames = new Set(existingConfig.agents.map((a) => a.name));
+    const agentKey = (a: AgentScopeConfig) => (a.excluded ? `${a.name}:excluded` : a.name);
+    const newAgentsByKey = indexBy(merged.agents, agentKey);
+    const existingKeys = new Set(existingConfig.agents.map((a) => agentKey(a)));
     const updatedExisting = existingConfig.agents.map(
-      (existing) => newAgentsByName[existing.name] ?? existing,
+      (existing) => newAgentsByKey[agentKey(existing)] ?? existing,
     );
-    const addedAgents = merged.agents.filter((a) => !existingNames.has(a.name));
+    const addedAgents = merged.agents.filter((a) => !existingKeys.has(agentKey(a)));
     merged.agents = [...updatedExisting, ...addedAgents];
   }
 
