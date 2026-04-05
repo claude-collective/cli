@@ -174,7 +174,9 @@ export default class Init extends BaseCommand {
     const projectDir = process.cwd();
 
     if (await this.showDashboardIfInitialized(projectDir)) return;
-    await this.ensureGlobalConfig(projectDir);
+
+    const isGlobalRoot = fs.realpathSync(projectDir) === fs.realpathSync(GLOBAL_INSTALL_ROOT);
+    await this.ensureGlobalConfig(isGlobalRoot);
 
     const { unmount, clear: clearSpinner } = render(<Spinner label="Loading skills..." />);
     const [{ sourceResult, startupMessages }, globalConfig] = await Promise.all([
@@ -184,7 +186,7 @@ export default class Init extends BaseCommand {
     clearSpinner();
     unmount();
 
-    const result = await this.runWizard(sourceResult, startupMessages, projectDir, globalConfig);
+    const result = await this.runWizard(sourceResult, startupMessages, projectDir, globalConfig, isGlobalRoot);
     if (!result) this.exit(EXIT_CODES.CANCELLED);
 
     if (result.skills.length === 0) {
@@ -205,13 +207,9 @@ export default class Init extends BaseCommand {
     return true;
   }
 
-  private async ensureGlobalConfig(projectDir: string): Promise<void> {
+  private async ensureGlobalConfig(isGlobalRoot: boolean): Promise<void> {
     // Auto-create blank global config on first init from a project directory.
     // This ensures the project config can always import from global.
-    // Resolve both paths through realpathSync — on macOS /var is a symlink to
-    // /private/var, so os.homedir() and process.cwd() can return different
-    // prefixes for the same directory.
-    const isGlobalRoot = fs.realpathSync(projectDir) === fs.realpathSync(GLOBAL_INSTALL_ROOT);
     if (!isGlobalRoot) {
       const created = await ensureBlankGlobalConfig();
       if (created) {
@@ -251,6 +249,7 @@ export default class Init extends BaseCommand {
     startupMessages: StartupMessage[],
     projectDir: string,
     globalConfig: ProjectConfig | null,
+    isGlobalRoot: boolean,
   ): Promise<WizardResultV2 | null> {
     let wizardResult: WizardResultV2 | null = null;
 
@@ -259,6 +258,7 @@ export default class Init extends BaseCommand {
         version={this.config.version}
         logo={ASCII_LOGO}
         projectDir={projectDir}
+        isEditingFromGlobalScope={isGlobalRoot}
         startupMessages={startupMessages}
         installedSkillIds={globalConfig?.skills?.map((s) => s.id)}
         installedSkillConfigs={globalConfig?.skills}

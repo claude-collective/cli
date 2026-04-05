@@ -6,6 +6,7 @@ import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
 import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
 import { InfoPanel } from "./info-panel.js";
+import { Toast } from "./toast.js";
 import {
   HOTKEY_INFO,
   HOTKEY_SCOPE,
@@ -219,6 +220,11 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, logo, child
             />
           </Box>
           <WizardFooter />
+          {store.toastMessage && (
+            <Box position="absolute" marginTop={terminalHeight - 4}>
+              <Toast>{store.toastMessage}</Toast>
+            </Box>
+          )}
         </>
       )}
     </Box>

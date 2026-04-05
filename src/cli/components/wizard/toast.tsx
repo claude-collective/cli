@@ -13,7 +13,7 @@ export const Toast: React.FC<ToastProps> = ({ children }) => {
   const paddingHalf = " ".repeat(TITLE_HORIZONTAL_PADDING / 2);
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" position="absolute">
       <Text backgroundColor={CLI_COLORS.TOAST_BG}>{padding}</Text>
       <Text bold backgroundColor={CLI_COLORS.TOAST_BG} color={CLI_COLORS.TOAST_FG}>
         {paddingHalf}

@@ -1468,6 +1468,37 @@ describe("WizardStore", () => {
     });
   });
 
+  describe("buildSourceRows scope", () => {
+    it("should include scope from skillConfigs", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      // Default scope is "global" from createDefaultSkillConfig
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].scope).toBe("global");
+
+      // Toggle to project scope
+      store.toggleSkillScope("web-framework-react");
+      const updatedRows = store.buildSourceRows();
+      expect(updatedRows[0].scope).toBe("project");
+    });
+
+    it("should return undefined scope for skills not in skillConfigs", () => {
+      initializeMatrix(ALL_SKILLS_WEB_AND_API_MATRIX);
+      const store = useWizardStore.getState();
+
+      // Add a skill via domainSelections but remove its skillConfig entry
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({ skillConfigs: [] });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].skillId).toBe("web-framework-react");
+      expect(rows[0].scope).toBeUndefined();
+    });
+  });
+
   describe("agent selection", () => {
     it("should start with empty selectedAgents", () => {
       const { selectedAgents } = useWizardStore.getState();
@@ -2116,6 +2147,18 @@ describe("WizardStore", () => {
       const state = useWizardStore.getState();
       // SCSS has compatibleWith: [] so it should remain
       expect(state.domainSelections.web!["web-styling"]).toContain("web-styling-scss-modules");
+    });
+  });
+
+  describe("setToastMessage", () => {
+    it("should set and clear toast message", () => {
+      const store = useWizardStore.getState();
+
+      store.setToastMessage("hello");
+      expect(useWizardStore.getState().toastMessage).toBe("hello");
+
+      store.setToastMessage(null);
+      expect(useWizardStore.getState().toastMessage).toBeNull();
     });
   });
 });

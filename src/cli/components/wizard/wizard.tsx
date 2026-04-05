@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useApp, useInput } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
@@ -12,7 +12,7 @@ import { StepSettings } from "./step-settings.js";
 import { StepAgents } from "./step-agents.js";
 import { DomainSelection } from "./domain-selection.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
-import { matrix, findStack } from "../../lib/matrix/matrix-provider.js";
+import { findStack } from "../../lib/matrix/matrix-provider.js";
 import {
   HOTKEY_ACCEPT_DEFAULTS,
   HOTKEY_INFO,
@@ -26,6 +26,8 @@ import type { StartupMessage } from "../../utils/logger.js";
 import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
 import { useBuildStepProps } from "../hooks/use-build-step-props.js";
 import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
+
+const TOAST_DURATION_MS = 2000;
 
 export type WizardResultV2 = {
   skills: SkillConfig[];
@@ -86,6 +88,16 @@ export const Wizard: React.FC<WizardProps> = ({
     isEditingFromGlobalScope,
   });
 
+  const toastMessage = useWizardStore((s) => s.toastMessage);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => {
+      useWizardStore.getState().setToastMessage(null);
+    }, TOAST_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
   const buildStepProps = useBuildStepProps({ store, installedSkillIds });
 
   useInput((input, key) => {
@@ -134,7 +146,10 @@ export const Wizard: React.FC<WizardProps> = ({
     }
 
     if (isHotkey(input, HOTKEY_SCOPE) && store.step === "build") {
-      if (store.isEditingFromGlobalScope) return;
+      if (store.isEditingFromGlobalScope) {
+        store.setToastMessage("Scope toggle unavailable in global context");
+        return;
+      }
       const focused = store.focusedSkillId;
       if (focused) {
         store.toggleSkillScope(focused);
@@ -143,7 +158,10 @@ export const Wizard: React.FC<WizardProps> = ({
     }
 
     if (isHotkey(input, HOTKEY_SCOPE) && store.step === "agents") {
-      if (store.isEditingFromGlobalScope) return;
+      if (store.isEditingFromGlobalScope) {
+        store.setToastMessage("Scope toggle unavailable in global context");
+        return;
+      }
       const focused = store.focusedAgentId;
       if (focused) {
         store.toggleAgentScope(focused);

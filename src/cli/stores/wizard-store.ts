@@ -312,6 +312,9 @@ export type WizardState = {
   /** When true, scope toggling is disabled (editing from ~/.claude/ with no project to move items to) */
   isEditingFromGlobalScope: boolean;
 
+  /** Temporary toast message shown in the wizard (auto-cleared after timeout) */
+  toastMessage: string | null;
+
   /** Global skill configs to pre-select when a stack or scratch is chosen in init. Set by use-wizard-initialization. */
   globalPreselections: SkillConfig[] | null;
 
@@ -475,6 +478,8 @@ export type WizardState = {
   toggleSettings: () => void;
   /** Toggle the info overlay (selected skills and agents). */
   toggleInfo: () => void;
+  /** Set a temporary toast message, or null to clear it. */
+  setToastMessage: (message: string | null) => void;
   /**
    * Replace the full set of enabled/disabled sources.
    * @param sources - Record of source name to enabled boolean. Empty-string keys are filtered out.
@@ -580,6 +585,7 @@ export type WizardState = {
   buildSourceRows: () => {
     skillId: SkillId;
     options: SourceOption[];
+    scope?: "global" | "project";
   }[];
 };
 
@@ -609,6 +615,7 @@ type WizardStateData = Pick<
   | "installedSkillConfigs"
   | "installedAgentConfigs"
   | "isEditingFromGlobalScope"
+  | "toastMessage"
   | "globalPreselections"
   | "globalAgentPreselections"
   | "history"
@@ -639,6 +646,7 @@ const createInitialState = (): WizardStateData => ({
   installedSkillConfigs: null,
   installedAgentConfigs: null,
   isEditingFromGlobalScope: false,
+  toastMessage: null,
   globalPreselections: null,
   globalAgentPreselections: null,
   history: [],
@@ -965,6 +973,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleInfo: () => set((state) => ({ showInfo: !state.showInfo })),
 
+  setToastMessage: (message) => set({ toastMessage: message }),
+
   setEnabledSources: (sources) => {
     const invalidKeys = Object.keys(sources).filter((key) => !key.trim());
     if (invalidKeys.length > 0) {
@@ -1231,7 +1241,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       options.push(...buildBoundSkillOptions(boundSkills, slug, selectedSource));
 
-      return { skillId, options };
+      return { skillId, options, scope: configEntry?.scope };
     });
   },
 }));
