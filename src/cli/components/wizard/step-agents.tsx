@@ -255,7 +255,7 @@ export const StepAgents: React.FC = () => {
         const isSelected = selectedAgents.includes(row.agent.id);
         const checkbox = isSelected ? "[\u2713]" : "[ ]";
         const pointer = isFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER;
-        const agentConfig = agentConfigs.find((ac) => ac.name === row.agent.id);
+        const agentConfig = agentConfigs.find((ac) => ac.name === row.agent.id && !ac.excluded);
         const scope = agentConfig?.scope ?? "global";
         return (
           <Box key={row.agent.id} flexShrink={0}>

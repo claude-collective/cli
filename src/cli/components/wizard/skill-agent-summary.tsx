@@ -41,10 +41,40 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
   const currentSkills = skillConfigs ?? [];
   const currentAgents = agentConfigs ?? [];
 
-  const projectSkills = currentSkills.filter((s) => s.scope === "project");
-  const globalSkills = currentSkills.filter((s) => s.scope === "global");
-  const projectAgents = currentAgents.filter((a) => a.scope === "project");
-  const globalAgents = currentAgents.filter((a) => a.scope === "global");
+  const projectSkills = currentSkills.filter((s) => s.scope === "project" && !s.excluded);
+  const globalSkills = currentSkills.filter((s) => s.scope === "global" && !s.excluded);
+  const projectAgents = currentAgents.filter((a) => a.scope === "project" && !a.excluded);
+  const globalAgents = currentAgents.filter((a) => a.scope === "global" && !a.excluded);
+
+  const prevSkillKeySet = installedSkillConfigs
+    ? new Set(installedSkillConfigs.map((s) => `${s.id}:${s.scope}`))
+    : null;
+  const prevAgentKeySet = installedAgentConfigs
+    ? new Set(installedAgentConfigs.map((a) => `${a.name}:${a.scope}`))
+    : null;
+
+  // Skills/agents whose scope changed (exist in both installed and current, different scope)
+  const scopeChangedSkillIds = installedSkillConfigs
+    ? new Set(
+        installedSkillConfigs
+          .filter((installed) => {
+            const current = currentSkills.find((c) => c.id === installed.id);
+            return current && current.scope !== installed.scope;
+          })
+          .map((s) => s.id),
+      )
+    : new Set<SkillId>();
+
+  const scopeChangedAgentNames = installedAgentConfigs
+    ? new Set(
+        installedAgentConfigs
+          .filter((installed) => {
+            const current = currentAgents.find((c) => c.name === installed.name);
+            return current && current.scope !== installed.scope;
+          })
+          .map((a) => a.name),
+      )
+    : new Set<AgentName>();
 
   // Skills/agents that are still globally installed but overridden at project scope
   const inheritedGlobalSkills = installedSkillConfigs
@@ -52,6 +82,7 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
         (s) =>
           s.scope === "global" &&
           !globalSkills.some((g) => g.id === s.id) &&
+          !scopeChangedSkillIds.has(s.id) &&
           projectSkills.some((p) => p.id === s.id),
       )
     : [];
@@ -60,18 +91,12 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
         (a) =>
           a.scope === "global" &&
           !globalAgents.some((g) => g.name === a.name) &&
+          !scopeChangedAgentNames.has(a.name) &&
           projectAgents.some((p) => p.name === a.name),
       )
     : [];
   const allGlobalSkills = [...globalSkills, ...inheritedGlobalSkills];
   const allGlobalAgents = [...globalAgents, ...inheritedGlobalAgents];
-
-  const prevSkillKeySet = installedSkillConfigs
-    ? new Set(installedSkillConfigs.map((s) => `${s.id}:${s.scope}`))
-    : null;
-  const prevAgentKeySet = installedAgentConfigs
-    ? new Set(installedAgentConfigs.map((a) => `${a.name}:${a.scope}`))
-    : null;
 
   const removedSkills = installedSkillConfigs
     ? installedSkillConfigs.filter((s) => !currentSkills.some((c) => c.id === s.id))
@@ -115,12 +140,19 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Project</ScopeLabel>
             <Box flexWrap="wrap">
               {projectSkills.map((skill) => {
+                const isScopeChanged = scopeChangedSkillIds.has(skill.id);
                 const isNew =
-                  prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`);
-                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                  !isScopeChanged &&
+                  (prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`));
+                const prefix = isScopeChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = isScopeChanged
+                  ? CLI_COLORS.WARNING
+                  : isNew
+                    ? CLI_COLORS.SUCCESS
+                    : CLI_COLORS.NEUTRAL;
                 return (
                   <Box key={skill.id} width="50%" flexDirection="row">
-                    <Text color={isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL}>
+                    <Text color={color}>
                       {prefix}
                       {getSkillDisplayName(skill.id)}
                     </Text>
@@ -142,12 +174,19 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Global</ScopeLabel>
             <Box flexWrap="wrap">
               {allGlobalSkills.map((skill) => {
+                const isScopeChanged = scopeChangedSkillIds.has(skill.id);
                 const isNew =
-                  prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`);
-                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                  !isScopeChanged &&
+                  (prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`));
+                const prefix = isScopeChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = isScopeChanged
+                  ? CLI_COLORS.WARNING
+                  : isNew
+                    ? CLI_COLORS.SUCCESS
+                    : CLI_COLORS.NEUTRAL;
                 return (
                   <Box key={skill.id} width="50%" flexDirection="row">
-                    <Text color={isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL}>
+                    <Text color={color}>
                       {prefix}
                       {getSkillDisplayName(skill.id)}
                     </Text>
@@ -172,11 +211,19 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Project</ScopeLabel>
             <Box flexDirection="column">
               {projectAgents.map((agent) => {
+                const isScopeChanged = scopeChangedAgentNames.has(agent.name);
                 const isNew =
-                  prevAgentKeySet === null || !prevAgentKeySet.has(`${agent.name}:${agent.scope}`);
-                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                  !isScopeChanged &&
+                  (prevAgentKeySet === null ||
+                    !prevAgentKeySet.has(`${agent.name}:${agent.scope}`));
+                const prefix = isScopeChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = isScopeChanged
+                  ? CLI_COLORS.WARNING
+                  : isNew
+                    ? CLI_COLORS.SUCCESS
+                    : CLI_COLORS.NEUTRAL;
                 return (
-                  <Text key={agent.name} color={isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL}>
+                  <Text key={agent.name} color={color}>
                     {prefix}
                     {agent.name}
                   </Text>
@@ -195,11 +242,19 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Global</ScopeLabel>
             <Box flexDirection="column">
               {allGlobalAgents.map((agent) => {
+                const isScopeChanged = scopeChangedAgentNames.has(agent.name);
                 const isNew =
-                  prevAgentKeySet === null || !prevAgentKeySet.has(`${agent.name}:${agent.scope}`);
-                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                  !isScopeChanged &&
+                  (prevAgentKeySet === null ||
+                    !prevAgentKeySet.has(`${agent.name}:${agent.scope}`));
+                const prefix = isScopeChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = isScopeChanged
+                  ? CLI_COLORS.WARNING
+                  : isNew
+                    ? CLI_COLORS.SUCCESS
+                    : CLI_COLORS.NEUTRAL;
                 return (
-                  <Text key={agent.name} color={isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL}>
+                  <Text key={agent.name} color={color}>
                     {prefix}
                     {agent.name}
                   </Text>
