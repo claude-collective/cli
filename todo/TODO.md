@@ -1,36 +1,41 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                                               | Status        |
-| ----- | -------------------------------------------------------------------------------------------------- | ------------- |
+| ID    | Task                                                                                                                                                                    | Status        |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D-183 | Propagate global skill changes to all known project configs (config.ts + config-types.ts). Related: D-131                                                               | Investigate   |
 | D-182 | Bug: Confirm step diff wrong for global pre-selections — scope changes show as add/remove instead of scope change, deselected global skills show as removal from global | Ready for Dev |
-| D-181 | ~~Bug: New global skills added during project init not written to global config — need merge, not skip~~ | Done          |
-| D-180 | Bug: Project init overwrites global config-types.ts even when preserving global config.ts          | Investigate   |
-| D-179 | Bug: `init` in new project ignores global installation — should pre-select global skills in wizard  | Ready for Dev |
-| D-178 | Bug: Fix dual-scope edit E2E tests marked `it.fails` — ENOENT in project-scoped skill copy         | Ready for Dev |
-| D-177 | Style skill select: left border only, change category colour                                       | Ready for Dev |
-| D-173 | Bug: Agents may not auto-compile after `init` on Mac — test and verify                             | Investigate   |
-| D-170 | Add PostHog anonymous telemetry — skill installs, wizard funnel, command errors, platform          | Investigate   |
-| D-168 | Audit E2E tests — replace manual file construction with CLI commands throughout                    | Ready for Dev |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions                                   | Ready for Dev |
-| D-111 | Create a GIF demo for the README                                                                   | Ready for Dev |
-| D-110 | Fix the logo in the README                                                                         | Ready for Dev |
-| D-109 | Fix the screenshots in the README                                                                  | Ready for Dev |
-| D-62  | Review default stacks: add reviewing/research skills                                               | Ready for Dev |
-| D-118 | Investigate renaming "project/global" scope to "project/user"                                      | Investigate   |
-| D-131 | Track project installations in global config                                                       | Investigate   |
-| D-127 | UX for claiming global skills/agents into project scope                                            | Investigate   |
-| D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names                      | Ready for Dev |
-| D-122 | Auto-update marketplace before plugin install                                                      | Ready for Dev |
-| D-111 | Replace E2E text anchors with stable test identifiers                                              | Investigate   |
-| D-90  | Add Sentry tracking for unresolved matrix references                                               | Ready for Dev |
-| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)                        | Ready for Dev |
-| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                                     | Ready for Dev |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                    | Ready for Dev |
-| D-66  | AI-assisted PR review: categorize diffs by type                                                    | Investigate   |
-| D-69  | Config migration strategy for outdated config shapes                                               | Investigate   |
-| D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`                     | Ready for Dev |
-| D-164 | Improve confirm step UI — structured summary with scope/mode breakdown                             | Investigate   |
-| D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena          | Investigate   |
+| D-181 | ~~Bug: New global skills added during project init not written to global config — need merge, not skip~~                                                                | Done          |
+| D-180 | Bug: Project init overwrites global config-types.ts even when preserving global config.ts                                                                               | Investigate   |
+| D-179 | Bug: `init` in new project ignores global installation — should pre-select global skills in wizard                                                                      | Ready for Dev |
+| D-178 | Bug: Fix dual-scope edit E2E tests marked `it.fails` — ENOENT in project-scoped skill copy                                                                              | Ready for Dev |
+| D-177 | Style skill select: left border only, change category colour                                                                                                            | Ready for Dev |
+| D-173 | Bug: Agents may not auto-compile after `init` on Mac — test and verify                                                                                                  | Investigate   |
+| D-170 | Add PostHog anonymous telemetry — skill installs, wizard funnel, command errors, platform                                                                               | Investigate   |
+| D-168 | Audit E2E tests — replace manual file construction with CLI commands throughout                                                                                         | Ready for Dev |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions                                                                                                        | Ready for Dev |
+| D-111 | Create a GIF demo for the README                                                                                                                                        | Ready for Dev |
+| D-110 | Fix the logo in the README                                                                                                                                              | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                                                                                                                       | Ready for Dev |
+| D-62  | Review default stacks: add reviewing/research skills                                                                                                                    | Ready for Dev |
+| D-118 | Investigate renaming "project/global" scope to "project/user"                                                                                                           | Investigate   |
+| D-131 | Track project installations in global config                                                                                                                            | Investigate   |
+| D-127 | UX for claiming global skills/agents into project scope                                                                                                                 | Investigate   |
+| D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names                                                                                           | Ready for Dev |
+| D-122 | Auto-update marketplace before plugin install                                                                                                                           | Ready for Dev |
+| D-111 | Replace E2E text anchors with stable test identifiers                                                                                                                   | Investigate   |
+| D-90  | Add Sentry tracking for unresolved matrix references                                                                                                                    | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)                                                                                             | Ready for Dev |
+| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                                                                                                          | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                                                                                         | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type                                                                                                                         | Investigate   |
+| D-69  | Config migration strategy for outdated config shapes                                                                                                                    | Investigate   |
+| D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`                                                                                          | Ready for Dev |
+| D-164 | Improve confirm step UI — structured summary with scope/mode breakdown                                                                                                  | Investigate   |
+| D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena                                                                               | Investigate   |
+| D-184 | Sources step: separate global and project skills/agents into labelled sections                                                                                          | Ready for Dev |
+| D-187 | Block project scope toggle when running init/edit from HOME (global dir)                                                                                                | Ready for Dev |
+| D-185 | ~~Fix E2E: `dual-scope-edit-display`~~ — resolved: inlined config now includes global stack                                                                             | Done          |
+| D-186 | ~~Fix E2E: `global-scope-lifecycle` doctor test~~ — resolved: same root cause as D-185                                                                                  | Done          |
 
 ---
 
@@ -103,6 +108,25 @@ Identified during the comprehensive D-138 project audit. All four are straightfo
 **Priority:** Medium
 
 Stale Claude CLI marketplace clone causes "not found" errors for renamed/new skills. Add `claudePluginMarketplaceUpdate()` to `exec.ts`, call in `init.tsx` when marketplace already exists (retry-on-failure or always-update).
+
+---
+
+#### D-183: Propagate global skill changes to all known project configs
+
+**Priority:** Medium | **Depends on:** D-131
+
+When a user adds (or removes) a global skill from any project context, all other known project installations should be updated to reflect the change. Specifically:
+
+- **`config-types.ts`** in each project needs the updated `SkillId` union (so TypeScript knows about the new global skill ID)
+- **`config.ts`** in each project may need the new global skill entry added (so it appears as pre-selected / available)
+
+This requires D-131 (tracking project installation paths in global config) to know which projects exist. Once global config has a `projects: string[]` list, the propagation logic can iterate over each project and update its generated files.
+
+**Open questions:**
+
+- Should propagation happen automatically on `cc init`/`cc edit` when global skills change, or should it be a separate `cc sync` command?
+- Should projects that have explicitly excluded a global skill still get the type update (yes — excluded skills need valid `SkillId` types) but skip the config entry?
+- How to handle stale project paths (project moved/deleted)?
 
 ---
 
