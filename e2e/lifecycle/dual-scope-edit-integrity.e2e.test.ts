@@ -145,14 +145,15 @@ describe("dual-scope edit lifecycle -- config preservation", () => {
       // Assert: global config data is preserved (project init may add "projects" field and reorder properties)
       const globalConfigAfterB = await readTestFile(globalConfigPath);
       expect(globalConfigAfterB).toContain("agents-inc");
-      // Strip "projects" tracking line and sort to ignore property reordering from re-serialization
-      const normalize = (s: string) =>
-        s
-          .split("\n")
-          .filter((line) => !line.includes('"projects"'))
-          .sort()
-          .join("\n");
-      expect(normalize(globalConfigAfterB)).toStrictEqual(normalize(globalConfigAfterA));
+      // Extract skills array and agents array sections from config
+      const skillsSection = globalConfigAfterB.match(/const skills.*?\n\];/s)?.[0] ?? "";
+      const agentsSection = globalConfigAfterB.match(/const agents.*?\n\];/s)?.[0] ?? "";
+      // Items toggled to project scope during Phase B should be pruned from skills/agents arrays
+      expect(skillsSection).not.toContain("api-framework-hono");
+      expect(agentsSection).not.toContain("api-developer");
+      // Global-only items should still be present in skills/agents arrays
+      expect(skillsSection).toContain("web-framework-react");
+      expect(agentsSection).toContain("web-developer");
 
       // Assert: project config has eject (the project-scoped skill was ejected)
       const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);

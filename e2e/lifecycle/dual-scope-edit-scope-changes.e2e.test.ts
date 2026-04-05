@@ -118,8 +118,8 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
     },
   );
 
-  it.fails(
-    "Toggle a project agent's scope to global (expected fail -- stale agent file not cleaned from old scope dir)",
+  it(
+    "Toggle a project agent's scope to global",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
       // Phase C: Edit -- toggle api-developer from project to global scope
@@ -140,10 +140,7 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       const agents = await sources.advance();
 
       // Agents step -- toggle api-developer to global scope
-      // Need 6 arrow-downs to reach api-developer
-      for (let i = 0; i < 6; i++) {
-        await agents.navigateDown();
-      }
+      await agents.navigateCursorToAgent("API Developer");
       await agents.toggleScopeOnFocusedAgent();
       const confirm = await agents.advance("edit");
 
