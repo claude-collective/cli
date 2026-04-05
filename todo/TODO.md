@@ -32,8 +32,8 @@
 | D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`                                                                                          | Ready for Dev |
 | D-164 | Improve confirm step UI — structured summary with scope/mode breakdown                                                                                                  | Investigate   |
 | D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena                                                                               | Investigate   |
-| D-184 | Sources step: separate global and project skills/agents into labelled sections                                                                                          | Ready for Dev |
-| D-187 | Block project scope toggle when running init/edit from HOME (global dir)                                                                                                | Ready for Dev |
+| D-184 | ~~Sources step: separate global and project skills/agents into labelled sections~~                                                                                      | Done          |
+| D-187 | ~~Disable scope toggle (S key) when running init/edit from HOME — show toast explaining why~~                                                                              | Done          |
 | D-185 | ~~Fix E2E: `dual-scope-edit-display`~~ — resolved: inlined config now includes global stack                                                                             | Done          |
 | D-186 | ~~Fix E2E: `global-scope-lifecycle` doctor test~~ — resolved: same root cause as D-185                                                                                  | Done          |
 
