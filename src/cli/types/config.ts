@@ -24,12 +24,14 @@ export type SkillConfig = {
   id: SkillId;
   scope: "project" | "global";
   source: string; // "eject" | marketplace name (e.g., "agents-inc")
+  excluded?: boolean;
 };
 
 /** Per-agent configuration with scope (mirrors SkillConfig pattern) */
 export type AgentScopeConfig = {
   name: AgentName;
   scope: "project" | "global";
+  excluded?: boolean;
 };
 
 /** Agent configuration for compilation - contains skills for a specific agent */
@@ -143,4 +145,7 @@ export type ProjectConfig = {
 
   /** Custom rules file path override (default: "config/skill-rules.ts") */
   rulesFile?: string;
+
+  /** Tracked project installation paths (global config only) */
+  projects?: string[];
 };

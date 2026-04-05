@@ -56,11 +56,13 @@ export type SkillConfig = {
   id: SkillId;
   scope: "project" | "global";
   source: string;
+  excluded?: boolean;
 };
 
 export type AgentScopeConfig = {
   name: AgentName;
   scope: "project" | "global";
+  excluded?: boolean;
 };
 
 export type SkillAssignment<S extends SkillId = SkillId> = S | { id: S; preloaded: boolean };
@@ -105,6 +107,9 @@ export const PROJECT_CONFIG_INTERFACE_AFTER = `export interface ProjectConfig {
 
   /** Selected agents from the wizard */
   selectedAgents?: AgentName[];
+
+  /** Tracked project installation paths (global config only) */
+  projects?: string[];
 }
 `;
 

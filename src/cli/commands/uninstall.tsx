@@ -12,6 +12,7 @@ import { directoryExists, glob, listDirectories, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { listPluginNames, getProjectPluginsDir } from "../lib/plugins/index";
 import { readForkedFromMetadata } from "../lib/skills/index";
+import { deregisterProjectPath } from "../lib/installation/index";
 import { loadProjectConfigFromDir } from "../lib/configuration/project-config";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, CLI_COLORS, DEFAULT_BRANDING } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
@@ -222,6 +223,15 @@ export default class Uninstall extends BaseCommand {
         exit: EXIT_CODES.ERROR,
       });
     }
+
+    // Deregister this project from global config's tracked projects
+    if (removeAll) {
+      try {
+        await deregisterProjectPath(projectDir);
+      } catch {
+        // Non-fatal: global config may not exist or may not have projects
+      }
+    }
   }
 
   private reportSuccess(): void {
@@ -366,8 +376,15 @@ async function detectUninstallTarget(projectDir: string): Promise<UninstallTarge
     // Best-effort: plugin detection may fail
   }
 
-  const configuredAgents = collectConfiguredAgents(config);
-  const cliInstalledKeys = getCliInstalledPluginKeys(config);
+  const activeConfig = config
+    ? {
+        ...config,
+        skills: config.skills?.filter((s) => !s.excluded),
+        agents: config.agents?.filter((a) => !a.excluded),
+      }
+    : null;
+  const configuredAgents = collectConfiguredAgents(activeConfig);
+  const cliInstalledKeys = getCliInstalledPluginKeys(activeConfig);
   const cliPluginNames = pluginNames.filter((name) => cliInstalledKeys.has(name));
 
   return {

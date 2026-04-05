@@ -260,6 +260,7 @@ export const projectConfigLoaderSchema = z
         z.object({
           name: z.string(),
           scope: z.enum(["project", "global"]),
+          excluded: z.boolean().optional(),
         }),
       )
       .optional(),
@@ -270,6 +271,7 @@ export const projectConfigLoaderSchema = z
           id: z.string() as z.ZodType<SkillId>,
           scope: z.enum(["project", "global"]),
           source: z.string(),
+          excluded: z.boolean().optional(),
         }),
       )
       .optional(),
@@ -288,6 +290,8 @@ export const projectConfigLoaderSchema = z
     marketplace: z.string().optional(),
     /** Separate source for agents when different from skills source */
     agentsSource: z.string().optional(),
+    /** Tracked project installation paths (global config only) */
+    projects: z.array(z.string()).optional(),
   })
   .passthrough();
 

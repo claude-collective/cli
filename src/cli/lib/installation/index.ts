@@ -21,6 +21,8 @@ export {
   buildEjectSkillsMap,
   buildCompileAgents,
   buildAgentScopeMap,
+  deregisterProjectPath,
+  propagateGlobalChangesToProjects,
 } from "./local-installer";
 
 export {
