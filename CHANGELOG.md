@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.107.0] - 2026-04-06
+
+**Scope-grouped sources and global scope guard (D-184, D-187)**
+
+- Source grid separates skills into labelled Global/Project sections with inline scope column
+- Toast message system with auto-clear for transient wizard notifications
+- S hotkey (scope toggle) disabled with toast when running init/edit from HOME
+
+See [changelogs/0.107.0.md](./changelogs/0.107.0.md) for full details.
+
 ## [0.106.0] - 2026-04-05
 
 **Project tracking and cross-project propagation (D-131, D-183)**
