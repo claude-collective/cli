@@ -1,7 +1,14 @@
+import path from "path";
+import { mkdir } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
-import { ensureBinaryExists } from "../helpers/test-utils.js";
+import {
+  createTempDir,
+  cleanupTempDir,
+  ensureBinaryExists,
+  createPermissionsFile,
+} from "../helpers/test-utils.js";
 import "../matchers/setup.js";
 
 /**
@@ -79,11 +86,31 @@ describe("init wizard — interactions", () => {
   });
 
   describe("scope toggle via S hotkey", () => {
+    let tempDir: string | undefined;
+
+    afterEach(async () => {
+      if (tempDir) {
+        await cleanupTempDir(tempDir);
+        tempDir = undefined;
+      }
+    });
+
     it(
       "should toggle skill scope from global to project during build step",
       { timeout: TIMEOUTS.INTERACTIVE },
       async () => {
-        wizard = await InitWizard.launch();
+        tempDir = await createTempDir();
+        const fakeHome = path.join(tempDir, "fake-home");
+        const projectDir = path.join(fakeHome, "project");
+        await mkdir(fakeHome, { recursive: true });
+        await mkdir(projectDir, { recursive: true });
+        await createPermissionsFile(fakeHome);
+        await createPermissionsFile(projectDir);
+
+        wizard = await InitWizard.launch({
+          projectDir,
+          env: { HOME: fakeHome },
+        });
 
         const domain = await wizard.stack.selectFirstStack();
         const build = await domain.acceptDefaults();
