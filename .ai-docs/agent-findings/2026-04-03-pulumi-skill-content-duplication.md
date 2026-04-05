@@ -37,4 +37,5 @@ This is consistent with the primer's finding that ~30 skills had content duplica
 The skill-atomicity-bible.md "SKILL.md Content Standard" section already documents the ownership rules, but a more explicit callout could help:
 
 In `skill-atomicity-bible.md`, in the "SKILL.md Content Standard" section, add a note:
+
 > **Duplication checkpoint:** After writing SKILL.md snippets, grep for the same code/table in example files and reference.md. If the same content exists in two places, remove it from the lower-priority file (examples own full code, reference.md owns lookup tables, SKILL.md owns brief snippets and red flags).
