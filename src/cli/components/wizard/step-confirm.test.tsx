@@ -121,8 +121,8 @@ describe("StepConfirm component", () => {
     });
   });
 
-  describe("bullet markers - init mode", () => {
-    it("should show bullet prefix when installedSkillConfigs is absent", () => {
+  describe("new item markers - init mode (no prior installation)", () => {
+    it("should show + prefix when installedSkillConfigs is absent", () => {
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={vi.fn()}
@@ -134,12 +134,12 @@ describe("StepConfirm component", () => {
       const lines = lastFrame()?.split("\n") ?? [];
       const skillLines = lines.filter((line) => line.includes("React") || line.includes("Zustand"));
       for (const line of skillLines) {
-        expect(line).toContain("\u2022");
-        expect(line).not.toContain("+");
+        expect(line).toContain("+");
+        expect(line).not.toContain("\u2022");
       }
     });
 
-    it("should show bullet prefix for agents when installedAgentConfigs is absent", () => {
+    it("should show + prefix for agents when installedAgentConfigs is absent", () => {
       const { lastFrame, unmount } = render(
         <StepConfirm onComplete={vi.fn()} agentConfigs={buildAgentConfigs(["web-developer"])} />,
       );
@@ -148,8 +148,8 @@ describe("StepConfirm component", () => {
       const lines = lastFrame()?.split("\n") ?? [];
       const agentLine = lines.find((line) => line.includes("web-developer"));
       expect(agentLine).toBeDefined();
-      expect(agentLine).toContain("\u2022");
-      expect(agentLine).not.toContain("+");
+      expect(agentLine).toContain("+");
+      expect(agentLine).not.toContain("\u2022");
     });
   });
 
