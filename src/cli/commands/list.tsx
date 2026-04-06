@@ -8,6 +8,7 @@ import { getInstallationInfo, formatInstallationDisplay } from "../lib/plugins/i
 import { detectInstallation } from "../lib/installation/installation.js";
 import { loadProjectConfig } from "../lib/configuration/project-config.js";
 import { SkillAgentSummary } from "../components/wizard/skill-agent-summary.js";
+import { useWizardStore } from "../stores/wizard-store.js";
 import type { AgentScopeConfig, SkillConfig } from "../types/config.js";
 
 type ListViewProps = {
@@ -93,6 +94,11 @@ export default class List extends BaseCommand {
       installation.mode === "plugin" ? "Plugin" : installation.mode === "mixed" ? "Mixed" : "Eject";
     const activeSkills = config.skills.filter((s) => !s.excluded);
     const activeAgents = config.agents.filter((a) => !a.excluded);
+
+    useWizardStore.setState({
+      installedSkillConfigs: activeSkills,
+      installedAgentConfigs: activeAgents,
+    });
 
     const { waitUntilExit, clear } = render(
       <ListView

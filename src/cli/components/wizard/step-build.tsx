@@ -1,5 +1,5 @@
 import { Box, useInput } from "ink";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import type { Domain, SkillId, Category, CategorySelections } from "../../types/index.js";
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
@@ -53,6 +53,16 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     filterIncompatible,
   });
 
+  const { initialRow, initialCol } = useMemo(() => {
+    const skillId = useWizardStore.getState().focusedSkillId;
+    if (!skillId) return { initialRow: 0, initialCol: 0 };
+    for (let r = 0; r < categories.length; r++) {
+      const c = categories[r].options.findIndex((o) => o.id === skillId);
+      if (c >= 0) return { initialRow: r, initialCol: c };
+    }
+    return { initialRow: 0, initialCol: 0 };
+  }, [categories]);
+
   useInput((_input, key) => {
     if (key.return) {
       onContinue();
@@ -69,6 +79,8 @@ export const StepBuild: React.FC<StepBuildProps> = ({
           categories={categories}
           availableHeight={gridHeight}
           showLabels={showLabels}
+          defaultFocusedRow={initialRow}
+          defaultFocusedCol={initialCol}
           onToggle={onToggle}
           onToggleLabels={onToggleLabels}
           onToggleFilterIncompatible={onToggleFilterIncompatible}

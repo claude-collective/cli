@@ -170,7 +170,10 @@ export const StepAgents: React.FC = () => {
   const flatRows = useMemo(() => buildFlatRows(agentGroups), [agentGroups]);
   const focusableIds = useMemo(() => buildFocusableIds(agentGroups), [agentGroups]);
 
-  const [focusedId, setFocusedId] = useState<FocusId>(focusableIds[0]!);
+  const [focusedId, setFocusedId] = useState<FocusId>(() => {
+    const stored = useWizardStore.getState().focusedAgentId;
+    return stored && focusableIds.includes(stored) ? stored : focusableIds[0]!;
+  });
   const { ref: listRef, measuredHeight: listHeight } = useMeasuredHeight();
 
   const focusedRowIndex =

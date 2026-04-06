@@ -131,18 +131,12 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
       });
 
       // 9. No duplicate agent files in either scope directory
-      const projectAgentFiles = await listFiles(
-        path.join(projectDir, DIRS.CLAUDE, "agents"),
-      );
+      const projectAgentFiles = await listFiles(path.join(projectDir, DIRS.CLAUDE, "agents"));
       const globalAgentFiles = await listFiles(globalAgentsDir);
       const projectMdFiles = projectAgentFiles.filter((f) => f.endsWith(".md"));
       const globalMdFiles = globalAgentFiles.filter((f) => f.endsWith(".md"));
-      const projectDupes = projectMdFiles.filter(
-        (f, i) => projectMdFiles.indexOf(f) !== i,
-      );
-      const globalDupes = globalMdFiles.filter(
-        (f, i) => globalMdFiles.indexOf(f) !== i,
-      );
+      const projectDupes = projectMdFiles.filter((f, i) => projectMdFiles.indexOf(f) !== i);
+      const globalDupes = globalMdFiles.filter((f, i) => globalMdFiles.indexOf(f) !== i);
       expect(projectDupes, "Duplicate agent files in project dir").toStrictEqual([]);
       expect(globalDupes, "Duplicate agent files in global dir").toStrictEqual([]);
     },

@@ -3,7 +3,7 @@ import React from "react";
 import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
 import { matrix } from "../../lib/matrix/matrix-provider.js";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
-import type { AgentName, SkillId } from "../../types/index.js";
+import type { SkillId } from "../../types/index.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 
 export type SkillAgentSummaryProps = {
@@ -54,36 +54,12 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
     ? new Set(installedAgentConfigs.map((a) => `${a.name}:${a.scope}`))
     : null;
 
-  // Skills/agents whose scope changed (exist in both installed and current, different scope)
-  const scopeChangedSkillIds = installedSkillConfigs
-    ? new Set(
-        installedSkillConfigs
-          .filter((installed) => {
-            const current = currentSkills.find((c) => c.id === installed.id);
-            return current && current.scope !== installed.scope;
-          })
-          .map((s) => s.id),
-      )
-    : new Set<SkillId>();
-
-  const scopeChangedAgentNames = installedAgentConfigs
-    ? new Set(
-        installedAgentConfigs
-          .filter((installed) => {
-            const current = currentAgents.find((c) => c.name === installed.name);
-            return current && current.scope !== installed.scope;
-          })
-          .map((a) => a.name),
-      )
-    : new Set<AgentName>();
-
   // Skills/agents that are still globally installed but overridden at project scope
   const inheritedGlobalSkills = installedSkillConfigs
     ? installedSkillConfigs.filter(
         (s) =>
           s.scope === "global" &&
           !globalSkills.some((g) => g.id === s.id) &&
-          !scopeChangedSkillIds.has(s.id) &&
           projectSkills.some((p) => p.id === s.id),
       )
     : [];
@@ -92,7 +68,6 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
         (a) =>
           a.scope === "global" &&
           !globalAgents.some((g) => g.name === a.name) &&
-          !scopeChangedAgentNames.has(a.name) &&
           projectAgents.some((p) => p.name === a.name),
       )
     : [];
@@ -141,16 +116,10 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Project</ScopeLabel>
             <Box flexWrap="wrap">
               {projectSkills.map((skill) => {
-                const isScopeChanged = scopeChangedSkillIds.has(skill.id);
                 const isNew =
-                  !isScopeChanged &&
-                  (prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`));
-                const prefix = isScopeChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
-                const color = isScopeChanged
-                  ? CLI_COLORS.WARNING
-                  : isNew
-                    ? CLI_COLORS.SUCCESS
-                    : CLI_COLORS.NEUTRAL;
+                  prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`);
+                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL;
                 return (
                   <Box key={skill.id} width="50%" flexDirection="row">
                     <Text color={color}>
@@ -175,16 +144,10 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Global</ScopeLabel>
             <Box flexWrap="wrap">
               {allGlobalSkills.map((skill) => {
-                const isScopeChanged = scopeChangedSkillIds.has(skill.id);
                 const isNew =
-                  !isScopeChanged &&
-                  (prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`));
-                const prefix = isScopeChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
-                const color = isScopeChanged
-                  ? CLI_COLORS.WARNING
-                  : isNew
-                    ? CLI_COLORS.SUCCESS
-                    : CLI_COLORS.NEUTRAL;
+                  prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`);
+                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL;
                 return (
                   <Box key={skill.id} width="50%" flexDirection="row">
                     <Text color={color}>
@@ -212,17 +175,11 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Project</ScopeLabel>
             <Box flexDirection="column">
               {projectAgents.map((agent) => {
-                const isScopeChanged = scopeChangedAgentNames.has(agent.name);
                 const isNew =
-                  !isScopeChanged &&
-                  (prevAgentKeySet === null ||
-                    !prevAgentKeySet.has(`${agent.name}:${agent.scope}`));
-                const prefix = isScopeChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
-                const color = isScopeChanged
-                  ? CLI_COLORS.WARNING
-                  : isNew
-                    ? CLI_COLORS.SUCCESS
-                    : CLI_COLORS.NEUTRAL;
+                  prevAgentKeySet === null ||
+                  !prevAgentKeySet.has(`${agent.name}:${agent.scope}`);
+                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL;
                 return (
                   <Text key={agent.name} color={color}>
                     {prefix}
@@ -243,17 +200,11 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Global</ScopeLabel>
             <Box flexDirection="column">
               {allGlobalAgents.map((agent) => {
-                const isScopeChanged = scopeChangedAgentNames.has(agent.name);
                 const isNew =
-                  !isScopeChanged &&
-                  (prevAgentKeySet === null ||
-                    !prevAgentKeySet.has(`${agent.name}:${agent.scope}`));
-                const prefix = isScopeChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
-                const color = isScopeChanged
-                  ? CLI_COLORS.WARNING
-                  : isNew
-                    ? CLI_COLORS.SUCCESS
-                    : CLI_COLORS.NEUTRAL;
+                  prevAgentKeySet === null ||
+                  !prevAgentKeySet.has(`${agent.name}:${agent.scope}`);
+                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL;
                 return (
                   <Text key={agent.name} color={color}>
                     {prefix}
