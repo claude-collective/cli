@@ -562,7 +562,7 @@ describe("CategoryGrid component", () => {
       });
       cleanup = unmount;
 
-      await delay(RENDER_DELAY_MS);
+      await delay(RENDER_DELAY_MS * 2);
       await stdin.write(ARROW_LEFT);
       await delay(INPUT_DELAY_MS);
 

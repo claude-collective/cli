@@ -13,6 +13,7 @@ import {
   initGlobal,
   initProject,
   setupDualScope,
+  setupDualScopeWithEject,
 } from "../fixtures/dual-scope-helpers.js";
 
 /**
@@ -158,6 +159,75 @@ describe("dual-scope edit lifecycle -- config preservation", () => {
       const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const projectConfig = await readTestFile(projectConfigPath);
       expect(projectConfig).toContain("eject");
+    },
+  );
+});
+
+// =====================================================================
+// Test Suite -- Eject Scope Toggle Copies Skill Files
+// =====================================================================
+
+describe("dual-scope edit lifecycle -- eject scope toggle copies skill to project", () => {
+  let sourceDir: string;
+  let sourceTempDir: string;
+
+  beforeAll(async () => {
+    await ensureBinaryExists();
+    const source = await createE2ESource();
+    sourceDir = source.sourceDir;
+    sourceTempDir = source.tempDir;
+  }, TIMEOUTS.SETUP * 2);
+
+  afterAll(async () => {
+    if (sourceTempDir) await cleanupTempDir(sourceTempDir);
+  });
+
+  let testTempDir: string;
+  let fakeHome: string;
+  let projectDir: string;
+
+  beforeEach(async () => {
+    const { tempDir, fakeHome: fh, projectDir: pd } = await createTestEnvironment();
+    testTempDir = tempDir;
+    fakeHome = fh;
+    projectDir = pd;
+  });
+
+  afterEach(async () => {
+    await cleanupTempDir(testTempDir);
+  });
+
+  it(
+    "Globally-ejected skill toggled to project scope exists at both paths",
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
+    async () => {
+      await setupDualScopeWithEject(sourceDir, sourceTempDir, fakeHome, projectDir);
+
+      // Assert: api-framework-hono exists at project path (copied during scope toggle)
+      const projectSkillPath = path.join(
+        projectDir,
+        DIRS.CLAUDE,
+        "skills",
+        "api-framework-hono",
+        FILES.SKILL_MD,
+      );
+      expect(
+        await fileExists(projectSkillPath),
+        "api-framework-hono SKILL.md must exist in project skills",
+      ).toBe(true);
+
+      // Assert: api-framework-hono still exists at global path (init copies, does not move)
+      const globalSkillPath = path.join(
+        fakeHome,
+        DIRS.CLAUDE,
+        "skills",
+        "api-framework-hono",
+        FILES.SKILL_MD,
+      );
+      expect(
+        await fileExists(globalSkillPath),
+        "api-framework-hono SKILL.md must still exist in global skills",
+      ).toBe(true);
     },
   );
 });
