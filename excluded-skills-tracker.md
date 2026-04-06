@@ -34,32 +34,30 @@ All items complete. `excluded?: boolean` on `SkillConfig`, `AgentScopeConfig`, Z
 | `handleComplete` append excluded           | Done   | flows through store                                                      |
 | Scope toggle guard for eject conflicts     | Done   | 0.108.0 — P→G blocked with toast; G→P allowed (creates independent copy) |
 
-## Phase 4: Command + edit updates — DONE (1 FRAGILE)
+## Phase 4: Command + edit updates — DONE
 
-| Item                          | Status  | Notes                                                                                                            |
-| ----------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
-| Edit: filter excluded early   | Done    | `edit.tsx:108-112`                                                                                               |
-| Edit: dual entry handling     | Done    | pre-filtered inputs                                                                                              |
-| Init: filter excluded         | Done    | `init.tsx:298, 530`                                                                                              |
-| Doctor: `checkSkillsResolved` | Done    | `doctor.ts:87-93`                                                                                                |
-| Doctor: `checkAgentsCompiled` | Done    | receives `filteredConfig`                                                                                        |
-| Doctor: `checkNoOrphans`      | Fragile | receives raw `config` at line 437, not `filteredConfig` — works only because orphan check looks at files on disk |
-| List: filter excluded         | Done    | `list.tsx:94-95`                                                                                                 |
-| Uninstall: filter excluded    | Done    | `uninstall.tsx:382-383`                                                                                          |
+| Item                          | Status | Notes                                                                                         |
+| ----------------------------- | ------ | --------------------------------------------------------------------------------------------- |
+| Edit: filter excluded early   | Done   | `edit.tsx:108-112`                                                                            |
+| Edit: dual entry handling     | Done   | pre-filtered inputs                                                                           |
+| Init: filter excluded         | Done   | `init.tsx:298, 530`                                                                           |
+| Doctor: `checkSkillsResolved` | Done   | `doctor.ts:87-93`                                                                             |
+| Doctor: `checkAgentsCompiled` | Done   | receives `filteredConfig`                                                                     |
+| Doctor: `checkNoOrphans`      | Done   | scope-aware: project files vs active project agents, global files vs all global agents (0.109) |
+| List: filter excluded         | Done   | `list.tsx:94-95`                                                                              |
+| Uninstall: filter excluded    | Done   | `uninstall.tsx:382-383`                                                                       |
 
-## Phase 5: Tests — 2 REMAINING
+## Phase 5: Tests — DONE
 
-| Item                                           | Status       | Notes                                             |
-| ---------------------------------------------- | ------------ | ------------------------------------------------- |
-| E2E scope toggle tests                         | Done         | 0.108.0                                           |
-| **Unit tests for `mergeConfigs` compound key** | **NOT DONE** | No coverage for the agent compound key fix        |
-| Unit tests for excluded toggle in wizard       | Partial      |                                                   |
-| **E2E exclusion lifecycle**                    | **NOT DONE** | No test for init-with-exclusions → edit → re-edit |
+| Item                                  | Status | Notes                                                        |
+| ------------------------------------- | ------ | ------------------------------------------------------------ |
+| E2E scope toggle tests                | Done   | 0.108.0                                                      |
+| Unit tests for `mergeConfigs` compound key | Done   | 4 tests: dual entries, merge with existing, dedup, scope override |
+| Unit tests for excluded toggle in wizard | Done   | eject guard tests in wizard-store.test.ts                    |
+| E2E exclusion lifecycle               | Done   | tombstone persistence through edit passthrough               |
 
 ## Summary
 
-3 outstanding items:
+1 outstanding item:
 
 1. **`buildCompileConfig` consolidation** (Phase 2) — separate function in `agent-recompiler.ts` without D7 cross-scope safety
-2. **Unit tests for compound key merge** (Phase 5) — no test coverage for `mergeConfigs` agent fix
-3. **E2E exclusion lifecycle test** (Phase 5) — no end-to-end test for init-with-exclusions → edit → re-edit
