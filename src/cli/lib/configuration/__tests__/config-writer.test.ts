@@ -608,7 +608,7 @@ describe("generateConfigSource", () => {
       expect(source).toContain("} satisfies ProjectConfig;");
     });
 
-    it("includes both global and project agents in stack for inlined config", () => {
+    it("excludes global agent stack entries from inlined project config", () => {
       const globalWithStack = buildProjectConfig({
         name: "global",
         skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
@@ -634,14 +634,14 @@ describe("generateConfigSource", () => {
         globalConfig: globalWithStack,
       });
 
-      // Both global and project agents should appear in stack (inlined config is self-contained)
+      // Project agents should appear in stack
       expect(source).toContain('"api-developer"');
       expect(source).toContain('"api-framework-hono"');
-      expect(source).toMatch(/"web-developer":\s*\{/);
-      expect(source).toContain('"web-framework-react"');
+      // Global agents' stack entries should NOT appear (they live in global config only)
+      expect(source).not.toMatch(/"web-developer":\s*\{/);
     });
 
-    it("includes global stack when project has no project-scoped agents with stack entries", () => {
+    it("omits stack when only global agents have stack entries", () => {
       const globalWithStack = buildProjectConfig({
         name: "global",
         skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
@@ -662,9 +662,8 @@ describe("generateConfigSource", () => {
         globalConfig: globalWithStack,
       });
 
-      // Global agents' stack should be included (inlined config is self-contained)
-      expect(source).toContain("const stack:");
-      expect(source).toMatch(/"web-developer":\s*\{/);
+      // No project agents means no stack in project config
+      expect(source).not.toContain("const stack:");
     });
 
     it("deduplicates scalar fields when both global and project have the same key", () => {
@@ -799,6 +798,53 @@ describe("generateConfigSource", () => {
       expect(stackSection).toContain('"web-styling": [\n');
       expect(stackSection).toContain('"preloaded": true');
       expect(stackSection).toContain('"id": "web-styling-tailwind"');
+    });
+
+    it("never leaks global agent stack entries into project config", () => {
+      const globalWithStack = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react", "web-styling-tailwind"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer", "web-reviewer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+            "web-styling": [{ id: "web-styling-tailwind", preloaded: false }],
+          },
+          "web-reviewer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+      const projectConfig = buildProjectConfig({
+        name: "my-project",
+        skills: buildSkillConfigs(["api-framework-hono"]),
+        agents: buildAgentConfigs(["api-developer"]),
+        stack: {
+          "api-developer": {
+            "api-api": [{ id: "api-framework-hono", preloaded: false }],
+          },
+        },
+      });
+      const source = generateConfigSource(projectConfig, {
+        isProjectConfig: true,
+        globalConfig: globalWithStack,
+      });
+
+      // Project agent stack entries must be present
+      expect(source).toContain("const stack:");
+      expect(source).toContain('"api-developer"');
+      expect(source).toContain('"api-framework-hono"');
+
+      // Extract stack section to check it doesn't contain global agent entries
+      const stackSection = source.slice(
+        source.indexOf("const stack:"),
+        source.indexOf("};", source.indexOf("const stack:")) + 2,
+      );
+      // Global agent stack entries must NOT be present in stack
+      expect(stackSection).not.toMatch(/"web-developer":\s*\{/);
+      expect(stackSection).not.toMatch(/"web-reviewer":\s*\{/);
+      expect(stackSection).not.toContain('"web-framework-react"');
+      expect(stackSection).not.toContain('"web-styling-tailwind"');
     });
   });
 

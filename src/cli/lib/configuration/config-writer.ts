@@ -315,9 +315,7 @@ function generateProjectConfigWithInlinedGlobal(
   // The tombstone masks the global entry for this project; the active project entry (if any)
   // appears separately in the project section.
   const excludedSkillIds = new Set(excludedGlobalSkills.map((s) => (s as { id: string }).id));
-  const excludedAgentNames = new Set(
-    excludedGlobalAgents.map((a) => (a as { name: string }).name),
-  );
+  const excludedAgentNames = new Set(excludedGlobalAgents.map((a) => (a as { name: string }).name));
   const globalSkillsArr = [
     ...((cleanedGlobal.skills as unknown[]) ?? []).filter(
       (s) => !excludedSkillIds.has((s as { id: string }).id),
@@ -341,16 +339,15 @@ function generateProjectConfigWithInlinedGlobal(
   const hasProjectAgents = actualProjectAgents.length > 0;
   const hasAgents = hasGlobalAgents || hasProjectAgents;
 
-  // Merge global and project stack entries — inlined config must be self-contained
-  const globalStackObj = cleanedGlobal.stack as Record<string, unknown> | undefined;
+  // Project config stack only includes project-scoped agents.
+  // Global agents' stack entries live in the global config only.
   const projectAgentNames = new Set(actualProjectAgents.map((a) => (a as { name: string }).name));
-  const projectOnlyStack: Record<string, unknown> = projectStackObj
+  const filteredStack: Record<string, unknown> | undefined = projectStackObj
     ? Object.fromEntries(
         Object.entries(projectStackObj).filter(([agent]) => projectAgentNames.has(agent)),
       )
-    : {};
-  const mergedStack: Record<string, unknown> = { ...(globalStackObj ?? {}), ...projectOnlyStack };
-  const hasStack = Object.keys(mergedStack).length > 0;
+    : undefined;
+  const hasStack = filteredStack != null && Object.keys(filteredStack).length > 0;
 
   const hasGlobalDomains = globalDomainsArr.length > 0;
   const hasProjectDomains = projectDomainsArr.length > 0;
@@ -398,10 +395,10 @@ function generateProjectConfigWithInlinedGlobal(
     lines.push(`];`);
   }
 
-  // Stack variable (merged global + project)
+  // Stack variable (project agents only)
   if (hasStack) {
     lines.push(``);
-    const stackBody = JSON.stringify(mergedStack, null, 2);
+    const stackBody = JSON.stringify(filteredStack, null, 2);
     lines.push(`const stack: Partial<Record<AgentName, StackAgentConfig>> = ${stackBody};`);
   }
 
