@@ -818,5 +818,115 @@ describe("config-merger", () => {
         expect(reactEntries[0].excluded).toBe(true);
       });
     });
+
+    describe("excluded dual entries for agents", () => {
+      it("should preserve both excluded and active entries for the same agent name", () => {
+        const newConfig = buildProjectConfig({
+          name: "project",
+          agents: [
+            { name: "api-developer", scope: "project" },
+            { name: "api-developer", scope: "global", excluded: true },
+          ],
+          skills: [],
+        });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          agents: [],
+          skills: [],
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        // Both entries should be preserved (compound key: name vs name:excluded)
+        const apiDevEntries = result.agents.filter((a) => a.name === "api-developer");
+        expect(apiDevEntries).toHaveLength(2);
+        const activeEntry = apiDevEntries.find((a) => !a.excluded);
+        const excludedEntry = apiDevEntries.find((a) => a.excluded);
+        expect(activeEntry).toBeDefined();
+        expect(activeEntry!.scope).toBe("project");
+        expect(excludedEntry).toBeDefined();
+        expect(excludedEntry!.scope).toBe("global");
+      });
+
+      it("should merge correctly when existing config has excluded agent entries", () => {
+        const newConfig = buildProjectConfig({
+          name: "project",
+          agents: [{ name: "api-developer", scope: "project" }],
+          skills: [],
+        });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          agents: [
+            { name: "api-developer", scope: "global", excluded: true },
+            { name: "web-developer", scope: "global" },
+          ],
+          skills: [],
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        // Existing excluded entry preserved, new active entry preserved, existing active entry preserved
+        const apiDevEntries = result.agents.filter((a) => a.name === "api-developer");
+        expect(apiDevEntries).toHaveLength(2);
+        const excludedEntry = apiDevEntries.find((a) => a.excluded);
+        expect(excludedEntry).toStrictEqual({
+          name: "api-developer",
+          scope: "global",
+          excluded: true,
+        });
+        const activeEntry = apiDevEntries.find((a) => !a.excluded);
+        expect(activeEntry).toStrictEqual({
+          name: "api-developer",
+          scope: "project",
+        });
+        // Existing web-developer entry preserved
+        expect(result.agents.find((a) => a.name === "web-developer")).toStrictEqual({
+          name: "web-developer",
+          scope: "global",
+        });
+      });
+
+      it("should handle both configs having excluded entries for the same agent name", () => {
+        const newConfig = buildProjectConfig({
+          name: "project",
+          agents: [{ name: "api-developer", scope: "global", excluded: true }],
+          skills: [],
+        });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          agents: [{ name: "api-developer", scope: "global", excluded: true }],
+          skills: [],
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        // Only one excluded entry — compound key deduplicates
+        const apiDevEntries = result.agents.filter((a) => a.name === "api-developer");
+        expect(apiDevEntries).toHaveLength(1);
+        expect(apiDevEntries[0].excluded).toBe(true);
+      });
+
+      it("should update scope of existing agent when new config has different scope", () => {
+        const newConfig = buildProjectConfig({
+          name: "project",
+          agents: [{ name: "api-developer", scope: "global" }],
+          skills: [],
+        });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          agents: [{ name: "api-developer", scope: "project" }],
+          skills: [],
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        const apiDevEntries = result.agents.filter((a) => a.name === "api-developer");
+        expect(apiDevEntries).toHaveLength(1);
+        expect(apiDevEntries[0]).toStrictEqual({
+          name: "api-developer",
+          scope: "global",
+        });
+      });
+    });
   });
 });

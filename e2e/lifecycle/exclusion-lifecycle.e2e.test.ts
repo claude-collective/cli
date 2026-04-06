@@ -1,0 +1,150 @@
+import path from "path";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createE2ESource } from "../helpers/create-e2e-source.js";
+import "../matchers/setup.js";
+import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import {
+  cleanupTempDir,
+  ensureBinaryExists,
+  fileExists,
+  listFiles,
+} from "../helpers/test-utils.js";
+import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-helpers.js";
+
+/**
+ * Exclusion lifecycle E2E test.
+ *
+ * Verifies user-visible outcomes after scope toggling in a dual-scope environment:
+ * - Agent files land in the correct scope directory
+ * - Scope badges persist through edit passthroughs
+ * - Global installations are never modified by project-level operations
+ */
+
+describe("exclusion lifecycle: scope toggle persistence and file placement", () => {
+  let sourceDir: string;
+  let sourceTempDir: string;
+
+  beforeAll(async () => {
+    await ensureBinaryExists();
+    const source = await createE2ESource();
+    sourceDir = source.sourceDir;
+    sourceTempDir = source.tempDir;
+  }, TIMEOUTS.SETUP);
+
+  afterAll(async () => {
+    if (sourceTempDir) await cleanupTempDir(sourceTempDir);
+  });
+
+  let testTempDir: string | undefined;
+
+  afterEach(async () => {
+    if (testTempDir) {
+      await cleanupTempDir(testTempDir);
+      testTempDir = undefined;
+    }
+  });
+
+  it(
+    "should place agent files at correct scope and persist through edit passthrough",
+    { timeout: TIMEOUTS.EXTENDED_LIFECYCLE, retry: 0 },
+    async () => {
+      const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
+      testTempDir = tempDir;
+
+      // ================================================================
+      // Phase A+B: setupDualScope
+      // Phase A inits globally (all skills/agents at global scope).
+      // Phase B inits from project, toggling api-framework-hono to project
+      // scope and api-developer agent to project scope.
+      // ================================================================
+
+      await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+
+      // --- User-visible outcomes after setup ---
+
+      // 1. Agent files at correct scope directories
+      //    api-developer was toggled to project → its .md should be at project scope
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+      //    web-developer stayed global → its .md should be at global scope
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+
+      // 2. Global agent files from Phase A still exist (untouched)
+      const globalAgentsDir = path.join(fakeHome, DIRS.CLAUDE, "agents");
+      expect(
+        await fileExists(path.join(globalAgentsDir, "api-developer.md")),
+        "Global api-developer.md should still exist (global install untouched)",
+      ).toBe(true);
+      expect(
+        await fileExists(path.join(globalAgentsDir, "web-developer.md")),
+        "Global web-developer.md should still exist",
+      ).toBe(true);
+
+      // 3. Project config exists (project-level installation was created)
+      await expect({ dir: projectDir }).toHaveConfig();
+
+      // 4. Global config exists and is not corrupted
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "api-framework-hono"],
+      });
+
+      // ================================================================
+      // Phase C: Edit passthrough — navigate through without changes
+      // ================================================================
+
+      const editWizard = await EditWizard.launch({
+        projectDir,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
+
+      const editResult = await editWizard.passThrough();
+      const editExitCode = await editResult.exitCode;
+      expect(editExitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Edit passthrough shows scope badges in the output
+      const rawOutput = editResult.rawOutput;
+      expect(rawOutput).toContain("[G]");
+      expect(rawOutput).toContain("[P]");
+
+      await editResult.destroy();
+
+      // --- User-visible outcomes after edit passthrough ---
+
+      // 5. Agent files unchanged — same placement as before edit
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+
+      // 6. Global config still has all original skills (never modified by project ops)
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "api-framework-hono"],
+      });
+
+      // 7. Project config still exists
+      await expect({ dir: projectDir }).toHaveConfig();
+
+      // 8. api-developer agent at project scope contains the project-scoped skill
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["api-framework-hono"],
+      });
+
+      // 9. No duplicate agent files in either scope directory
+      const projectAgentFiles = await listFiles(
+        path.join(projectDir, DIRS.CLAUDE, "agents"),
+      );
+      const globalAgentFiles = await listFiles(globalAgentsDir);
+      const projectMdFiles = projectAgentFiles.filter((f) => f.endsWith(".md"));
+      const globalMdFiles = globalAgentFiles.filter((f) => f.endsWith(".md"));
+      const projectDupes = projectMdFiles.filter(
+        (f, i) => projectMdFiles.indexOf(f) !== i,
+      );
+      const globalDupes = globalMdFiles.filter(
+        (f, i) => globalMdFiles.indexOf(f) !== i,
+      );
+      expect(projectDupes, "Duplicate agent files in project dir").toStrictEqual([]);
+      expect(globalDupes, "Duplicate agent files in global dir").toStrictEqual([]);
+    },
+  );
+});
