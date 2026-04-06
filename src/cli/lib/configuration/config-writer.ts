@@ -311,8 +311,25 @@ function generateProjectConfigWithInlinedGlobal(
     (a) => !(a as { excluded?: boolean }).excluded,
   );
 
-  const globalSkillsArr = [...((cleanedGlobal.skills as unknown[]) ?? []), ...excludedGlobalSkills];
-  const globalAgentsArr = [...((cleanedGlobal.agents as unknown[]) ?? []), ...excludedGlobalAgents];
+  // When inlining, replace active global entries with their excluded tombstones.
+  // The tombstone masks the global entry for this project; the active project entry (if any)
+  // appears separately in the project section.
+  const excludedSkillIds = new Set(excludedGlobalSkills.map((s) => (s as { id: string }).id));
+  const excludedAgentNames = new Set(
+    excludedGlobalAgents.map((a) => (a as { name: string }).name),
+  );
+  const globalSkillsArr = [
+    ...((cleanedGlobal.skills as unknown[]) ?? []).filter(
+      (s) => !excludedSkillIds.has((s as { id: string }).id),
+    ),
+    ...excludedGlobalSkills,
+  ];
+  const globalAgentsArr = [
+    ...((cleanedGlobal.agents as unknown[]) ?? []).filter(
+      (a) => !excludedAgentNames.has((a as { name: string }).name),
+    ),
+    ...excludedGlobalAgents,
+  ];
   const globalDomainsArr = (cleanedGlobal.domains as unknown[]) ?? [];
   const globalSelectedAgentsArr = (cleanedGlobal.selectedAgents as string[]) ?? [];
 
