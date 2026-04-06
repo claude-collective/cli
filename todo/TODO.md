@@ -2,7 +2,10 @@
 
 | ID    | Task                                                                                                                               | Status        |
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-188 | Bug: `cc list` shows all skills and agents as "just added" — should show neutral status when run standalone outside wizard session | Ready for Dev |
+| D-178 | UX: Make stack the hero of project-level installs — without project agents the project config is useless, guide users toward project stacks with project agents | Investigate   |
+| D-177 | Bug: uninstall --all doesn't remove project-scoped plugins that were re-scoped from global during init (marketplace fallback + discovery mismatch) | Ready for Dev |
+| D-176 | Sources step should show ALL skills (including installed global) with global skills read-only from project scope                   | Ready for Dev |
+| D-175 | Scope-pure project config — remove global agents/skills from project config.ts and config-types. New `AvailableAgentName` vs `AgentName` type so `stack` only accepts agents available in current scope. Follows from stack-only fix in 74d6f6f revert | Ready for Dev |
 | D-173 | Bug: Agents may not auto-compile after `init` on Mac — test and verify                                                             | Investigate   |
 | D-170 | Add PostHog anonymous telemetry — skill installs, wizard funnel, command errors, platform                                          | Investigate   |
 | D-168 | Audit E2E tests — replace manual file construction with CLI commands throughout                                                    | Ready for Dev |
@@ -12,8 +15,6 @@
 | D-109 | Fix the screenshots in the README                                                                                                  | Ready for Dev |
 | D-62  | Review default stacks: add reviewing/research skills                                                                               | Ready for Dev |
 | D-118 | Investigate renaming "project/global" scope to "project/user"                                                                      | Investigate   |
-| D-127 | UX for claiming global skills/agents into project scope                                                                            | Investigate   |
-| D-125 | Fix weak E2E assertions — scope-blind `\|\|` checks and fragile display names                                                      | Ready for Dev |
 | D-122 | Auto-update marketplace before plugin install                                                                                      | Ready for Dev |
 | D-111 | Replace E2E text anchors with stable test identifiers                                                                              | Investigate   |
 | D-90  | Add Sentry tracking for unresolved matrix references                                                                               | Ready for Dev |
@@ -67,19 +68,6 @@ E2E tests must only use CLI commands to create state. Manual file system constru
 
 ---
 
-#### D-165: Fix 4 type-system critical issues from D-138 audit
-
-**Priority:** Medium
-
-Identified during the comprehensive D-138 project audit. All four are straightforward violations of CLAUDE.md rules.
-
-1. **`src/cli/commands/base-command.ts:23` + `src/cli/hooks/init.ts:45`** — `as unknown as ConfigWithSource` double casts. Violates "NEVER use `as unknown as T` double casts — fix the upstream type instead." Create a proper type helper or narrow the type at the oclif boundary.
-
-2. **`src/cli/commands/eject.ts:193,198`** — `sourceResult!` non-null assertions after conditional switch assignment. Restructure the switch so `sourceResult` is always assigned before use, eliminating the need for non-null assertions.
-
-3. **`src/cli/commands/new/marketplace.ts:248,255`** — `skillName as SkillId` and `LOCAL_DEFAULTS.CATEGORY as Category` casts on values that are not in the respective unions (dummy values for generated config). Either change these to use real valid members, or if intentionally invalid, document why at the boundary.
-
----
 
 ### Bugs
 
@@ -197,13 +185,6 @@ The current confirm step (`step-confirm.tsx`) shows a flat list of plain text li
 
 ---
 
-#### D-127: UX for claiming global skills/agents into project scope
-
-**Priority:** Low
-
-When running `cc edit` from a project dir, allow users to "claim" global skills/agents into the project. Needs design: how to present this, confirmation UX, what happens to the global config entry.
-
----
 
 #### D-62: Review default stacks: include meta/methodology/reviewing skills
 
@@ -338,13 +319,6 @@ E2E tests currently use `STEP_TEXT` display strings (e.g., `"Choose a stack"`, `
 
 ---
 
-#### D-125: Fix weak E2E test assertions
-
-**Priority:** Medium
-
-(1) `source-switching-modes.e2e.test.ts` and `init-then-edit-merge.e2e.test.ts` use `agentInProject || agentInHome` cop-out assertions instead of verifying the agent is in the CORRECT scope-specific location. (2) `edit-wizard-detection.e2e.test.ts` asserts fragile category display names ("Framework", "Testing") on a screen that may show domain selection instead of skill grid. All assertions should verify exact expected location/content based on the agent/skill scope.
-
----
 
 #### D-124: E2E tests for default source path
 

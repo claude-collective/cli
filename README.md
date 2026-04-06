@@ -4,14 +4,21 @@
 
 # Agents Inc
 
-An agent composition framework for Claude Code.
+An agent composition framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Compose specialized subagents from atomic skills:
+1. Select a stack or start from scratch
+2. Select your skills
+3. Select your subagents
+4. Customize per skill and subagent:
+   - **Mode** plugin (managed) or eject (full control)
+   - **Scope** global (all projects) or project (local)
+   - **Loading** preloaded (SKILL.md always loaded) or dynamic (loaded via agent content)
+5. Map skills to subagents in the strictly-typed `config.ts`
+6. Compile
 
-Compose specialized [Claude Code](https://docs.anthropic.com/en/docs/claude-code) subagents from atomic skills. Choose your stack, customize your skills, and compile from the CLI.
+<br />
 
-[![npm version](https://img.shields.io/npm/v/@agents-inc/cli)](https://www.npmjs.com/package/@agents-inc/cli)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Node: 18+](https://img.shields.io/badge/Node-18%2B-green.svg)](https://nodejs.org/)
 
 <p align="center">
   <img src="./screenshots/wizard-flow.gif" alt="Agents Inc init wizard" width="700">
@@ -60,12 +67,13 @@ Add or remove skills from the interactive grid. Skills are organized by domain w
 
 Choose which subagents to compile. Each agent is composed from the skills you selected.
 
-After init, use `agentsinc edit` to change selections and `agentsinc compile` to rebuild.
+After init, use `agentsinc edit` to change selections and `agentsinc compile` to rebuild agents.
 
 ## Guides
 
 | Guide                                                                       | Description                                                          |
 | --------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [Global-first setup](docs/guides/global-first-setup.md)                     | Why global scope is the right default and when to use project scope  |
 | [Install modes](docs/guides/install-modes.md)                               | Plugin vs local install, global vs project scope                     |
 | [Editing your config](docs/guides/editing-config.md)                        | Skill mappings, preloaded vs dynamic loading, and config structure   |
 | [Customizing subagents](docs/guides/customizing-subagents.md)               | Eject and modify partials, templates, and skills                     |
@@ -76,7 +84,7 @@ After init, use `agentsinc edit` to change selections and `agentsinc compile` to
 
 ## Skills
 
-154 skills across 8 domains:
+150+ skills across 8 domains:
 
 **Web:** React, Vue, Angular, Svelte, SolidJS, Next.js, Remix, Nuxt, SvelteKit, Astro, Qwik, Tailwind, SCSS Modules, Zustand, Redux, Pinia, Vitest, Playwright, Storybook, and more
 **API:** Hono, Express, Fastify, NestJS, Elysia, Drizzle, Prisma, PostgreSQL, MongoDB, Redis, Stripe, and more
@@ -139,7 +147,7 @@ Each subagent is composed from modular partials (role, workflow, output format) 
 | Command     | Description                         |
 | ----------- | ----------------------------------- |
 | `doctor`    | Diagnose setup issues               |
-| `list`      | List installed skills               |
+| `list`      | Show installed skills and agents    |
 | `validate`  | Validate config and skill structure |
 | `info`      | Show project configuration details  |
 | `uninstall` | Remove Agents Inc from your project |
