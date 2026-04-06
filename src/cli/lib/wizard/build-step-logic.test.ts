@@ -227,6 +227,41 @@ describe("buildCategoriesForDomain", () => {
     expect(vueOption?.scope).toBeUndefined();
   });
 
+  it("should set source from skillConfigs", () => {
+    initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+    const skillConfigs: SkillConfig[] = [
+      { id: "web-framework-react", scope: "global", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "agents-inc" },
+    ];
+
+    const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
+
+    const frameworkRow = result.find((r) => r.id === frameworkCategory);
+    const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+    expect(reactOption?.source).toBe("eject");
+
+    const stateRow = result.find((r) => r.id === stateCategory);
+    const zustandOption = stateRow?.options.find((o) => o.id === "web-state-zustand");
+    expect(zustandOption?.source).toBe("agents-inc");
+  });
+
+  it("should leave source undefined when skill not in skillConfigs", () => {
+    initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+    const skillConfigs: SkillConfig[] = [
+      { id: "web-framework-react", scope: "project", source: "eject" },
+    ];
+
+    const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
+
+    const frameworkRow = result.find((r) => r.id === frameworkCategory);
+    const vueOption = frameworkRow?.options.find(
+      (o) => o.id === "web-framework-vue-composition-api",
+    );
+    expect(vueOption?.source).toBeUndefined();
+  });
+
   it("should propagate category required and exclusive flags", () => {
     initializeMatrix(BUILD_STEP_FRAMEWORK_NON_EXCLUSIVE_MATRIX);
 

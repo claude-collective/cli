@@ -16,6 +16,7 @@ export type CategoryOption = {
   local?: boolean;
   installed?: boolean;
   scope?: "project" | "global";
+  source?: string;
   /** True when selected but has unmet dependency requirements (shown dimmed) */
   hasUnmetRequirements?: boolean;
   /** Explains unmet requirements (shown in label when D pressed) */
@@ -143,6 +144,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, showLabels }) =>
             <Text> </Text>
           </>
         )}
+        {option.source === "eject" && <Text>{UI_SYMBOLS.EJECT} </Text>}
         <Text
           color={textColor}
           bold

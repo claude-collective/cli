@@ -77,20 +77,24 @@ export function buildCategoriesForDomain(
 
     const isExclusive = cat.exclusive ?? true;
 
-    const options: CategoryOption[] = filteredOptions.map((skill) => ({
-      id: skill.id,
-      state:
-        isExclusive && skill.advisoryState.status === "incompatible"
-          ? { status: "normal" }
-          : skill.advisoryState,
-      selected: skill.selected,
-      local: getSkillById(skill.id).local,
-      installed: installedSkillIds?.includes(skill.id) || false,
-      scope: skillConfigs?.find((sc) => sc.id === skill.id)?.scope,
-      hasUnmetRequirements: skill.hasUnmetRequirements,
-      unmetRequirementsReason: skill.unmetRequirementsReason,
-      requiredBy: skill.selected ? undefined : getUnmetRequiredBy(skill.id, allSelections),
-    }));
+    const options: CategoryOption[] = filteredOptions.map((skill) => {
+      const skillConfig = skillConfigs?.find((sc) => sc.id === skill.id && !sc.excluded);
+      return {
+        id: skill.id,
+        state:
+          isExclusive && skill.advisoryState.status === "incompatible"
+            ? { status: "normal" }
+            : skill.advisoryState,
+        selected: skill.selected,
+        local: getSkillById(skill.id).local,
+        installed: installedSkillIds?.includes(skill.id) || false,
+        scope: skillConfig?.scope,
+        source: skillConfig?.source,
+        hasUnmetRequirements: skill.hasUnmetRequirements,
+        unmetRequirementsReason: skill.unmetRequirementsReason,
+        requiredBy: skill.selected ? undefined : getUnmetRequiredBy(skill.id, allSelections),
+      };
+    });
 
     return {
       id: cat.id,
