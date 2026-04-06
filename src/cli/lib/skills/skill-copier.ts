@@ -211,15 +211,23 @@ export async function copySkillsToLocalFlattened(
       const userSelectedRemote = selectedSource && selectedSource !== "eject";
 
       if (skill.local && skill.localPath && !userSelectedRemote) {
+        const destPath = getFlattenedSkillDestPath(skill, localSkillsDir);
+        const alreadyInPlace = path.resolve(skill.localPath) === path.resolve(destPath);
         const contentHash = await generateSkillHash(skill.localPath);
 
-        return {
-          skillId: skill.id,
-          sourcePath: skill.localPath,
-          destPath: skill.localPath,
-          contentHash,
-          local: true,
-        };
+        if (alreadyInPlace) {
+          return {
+            skillId: skill.id,
+            sourcePath: skill.localPath,
+            destPath: skill.localPath,
+            contentHash,
+            local: true,
+          };
+        }
+
+        await ensureDir(path.dirname(destPath));
+        await copy(skill.localPath, destPath);
+        return { skillId: skill.id, sourcePath: skill.localPath, destPath, contentHash };
       }
 
       return copySkillToLocalFlattened(skill, localSkillsDir, sourceResult);
