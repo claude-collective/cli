@@ -463,17 +463,50 @@ export default class Init extends BaseCommand {
     this.log(`Configuration saved (${configResult.config.agents.length} agents)\n`);
 
     this.log(STATUS_MESSAGES.COMPILING_AGENTS);
-    const projectPaths = resolveInstallPaths(process.cwd(), "project");
+    const cwd = process.cwd();
+    const projectPaths = resolveInstallPaths(cwd, "project");
     const agentDefs = await loadAgentDefs();
-    const { allSkills } = await discoverInstalledSkills(process.cwd());
-    const compileResult = await compileAgents({
-      projectDir: process.cwd(),
-      sourcePath: agentDefs.sourcePath,
-      skills: allSkills,
-      installMode,
-      agentScopeMap: buildAgentScopeMap(configResult.config),
-      outputDir: projectPaths.agentsDir,
-    });
+    const { allSkills } = await discoverInstalledSkills(cwd);
+    const agentScopeMap = buildAgentScopeMap(configResult.config);
+    const isProjectContext = fs.realpathSync(cwd) !== fs.realpathSync(os.homedir());
+
+    let compileResult: Awaited<ReturnType<typeof compileAgents>>;
+    if (isProjectContext) {
+      // Dual-pass: compile global agents from home dir, project agents from cwd
+      const globalPaths = resolveInstallPaths(os.homedir(), "global");
+      const globalResult = await compileAgents({
+        projectDir: os.homedir(),
+        sourcePath: agentDefs.sourcePath,
+        skills: allSkills,
+        installMode,
+        agentScopeMap,
+        outputDir: globalPaths.agentsDir,
+        scopeFilter: "global",
+      });
+      const projectResult = await compileAgents({
+        projectDir: cwd,
+        sourcePath: agentDefs.sourcePath,
+        skills: allSkills,
+        installMode,
+        agentScopeMap,
+        outputDir: projectPaths.agentsDir,
+        scopeFilter: "project",
+      });
+      compileResult = {
+        compiled: [...globalResult.compiled, ...projectResult.compiled],
+        failed: [...globalResult.failed, ...projectResult.failed],
+        warnings: [...globalResult.warnings, ...projectResult.warnings],
+      };
+    } else {
+      compileResult = await compileAgents({
+        projectDir: cwd,
+        sourcePath: agentDefs.sourcePath,
+        skills: allSkills,
+        installMode,
+        agentScopeMap,
+        outputDir: projectPaths.agentsDir,
+      });
+    }
     this.log(`Compiled ${compileResult.compiled.length} agents\n`);
 
     return { configResult, compileResult, projectPaths };

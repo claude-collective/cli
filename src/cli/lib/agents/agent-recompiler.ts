@@ -7,6 +7,7 @@ import type {
   AgentConfig,
   AgentDefinition,
   AgentName,
+  CompileAgentConfig,
   CompileConfig,
   ProjectConfig,
   SkillDefinitionMap,
@@ -194,14 +195,21 @@ export async function recompileAgents(
     pluginSkills = await discoverAllPluginSkills(projectDir ?? pluginDir);
   }
 
-  const configAgents = filteredConfig ? buildCompileAgents(filteredConfig, allAgents) : {};
+  const allConfigAgents = filteredConfig ? buildCompileAgents(filteredConfig, allAgents) : {};
 
-  // buildCompileAgents only includes agents from config.agents — also include
-  // any resolved agents (from options or existing files) that exist in allAgents
+  // Restrict to only the agents we're compiling (agentNames).
+  // buildCompileAgents returns entries for ALL agents in the config, but when
+  // scopeFilter is active, we only want the agents matching that scope.
+  // Without this filter, a project pass would compile global agents without
+  // their stack (since the project config omits global agent stack entries)
+  // and overwrite correctly compiled global agent files.
+  const configAgents: Record<string, CompileAgentConfig> = {};
   for (const name of agentNames) {
-    if (allAgents[name] && !configAgents[name]) {
+    if (allConfigAgents[name]) {
+      configAgents[name] = allConfigAgents[name];
+    } else if (allAgents[name]) {
       configAgents[name] = {};
-    } else if (!allAgents[name]) {
+    } else {
       result.warnings.push(`Agent "${name}" not found in source definitions`);
     }
   }

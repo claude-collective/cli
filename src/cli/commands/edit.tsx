@@ -1,3 +1,4 @@
+import fs from "fs";
 import os from "os";
 import path from "path";
 
@@ -503,15 +504,47 @@ export default class Edit extends BaseCommand {
     try {
       const agentScopeMap = new Map(result.agentConfigs.map((a) => [a.name, a.scope] as const));
       const { allSkills } = await discoverInstalledSkills(cwd);
-      const compilationResult = await compileAgents({
-        projectDir: cwd,
-        sourcePath: agentDefsResult.sourcePath,
-        skills: allSkills,
-        pluginDir: cwd,
-        outputDir: path.join(cwd, CLAUDE_DIR, "agents"),
-        installMode: deriveInstallMode(activeNewSkills),
-        agentScopeMap,
-      });
+      const installMode = deriveInstallMode(activeNewSkills);
+      const isProjectContext = fs.realpathSync(cwd) !== fs.realpathSync(os.homedir());
+
+      let compilationResult: Awaited<ReturnType<typeof compileAgents>>;
+      if (isProjectContext) {
+        const globalResult = await compileAgents({
+          projectDir: os.homedir(),
+          sourcePath: agentDefsResult.sourcePath,
+          skills: allSkills,
+          pluginDir: os.homedir(),
+          outputDir: path.join(os.homedir(), CLAUDE_DIR, "agents"),
+          installMode,
+          agentScopeMap,
+          scopeFilter: "global",
+        });
+        const projectResult = await compileAgents({
+          projectDir: cwd,
+          sourcePath: agentDefsResult.sourcePath,
+          skills: allSkills,
+          pluginDir: cwd,
+          outputDir: path.join(cwd, CLAUDE_DIR, "agents"),
+          installMode,
+          agentScopeMap,
+          scopeFilter: "project",
+        });
+        compilationResult = {
+          compiled: [...globalResult.compiled, ...projectResult.compiled],
+          failed: [...globalResult.failed, ...projectResult.failed],
+          warnings: [...globalResult.warnings, ...projectResult.warnings],
+        };
+      } else {
+        compilationResult = await compileAgents({
+          projectDir: cwd,
+          sourcePath: agentDefsResult.sourcePath,
+          skills: allSkills,
+          pluginDir: cwd,
+          outputDir: path.join(cwd, CLAUDE_DIR, "agents"),
+          installMode,
+          agentScopeMap,
+        });
+      }
 
       if (compilationResult.failed.length > 0) {
         this.log(
