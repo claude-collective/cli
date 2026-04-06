@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.111.0] - 2026-04-06
+
+**Scope-correct compilation, config, and eject copying**
+
+- Project config no longer leaks global agent stack entries
+- Init/edit use dual-pass scope-filtered compilation (global + project)
+- Eject skills copy across scopes when toggled during init
+
+See [changelogs/0.111.0.md](./changelogs/0.111.0.md) for full details.
+
 ## [0.110.3] - 2026-04-06
 
 **Init-mode confirm diff fix and cc info removal**
