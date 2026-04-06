@@ -32,6 +32,8 @@ export function useWizardInitialization({
   if (!initialized.current) {
     initialized.current = true;
 
+    useWizardStore.setState({ isInitMode: !initialStep });
+
     if (initialStep) {
       if (installedSkillIds?.length) {
         useWizardStore.getState().populateFromSkillIds(installedSkillIds, installedSkillConfigs);

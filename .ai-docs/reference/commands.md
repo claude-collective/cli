@@ -22,7 +22,6 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 | `edit`              | `src/cli/commands/edit.tsx`             | tsx  | Edit skills in the plugin                          |
 | `compile`           | `src/cli/commands/compile.ts`           | ts   | Compile agents from skills (global + project pass) |
 | `validate`          | `src/cli/commands/validate.ts`          | ts   | Validate schemas, plugins, or skills source        |
-| `info`              | `src/cli/commands/info.ts`              | ts   | Show detailed info about a skill                   |
 | `list`              | `src/cli/commands/list.tsx`             | tsx  | Show installation information (alias: `ls`)        |
 | `doctor`            | `src/cli/commands/doctor.ts`            | ts   | Diagnose configuration issues                      |
 | `eject`             | `src/cli/commands/eject.ts`             | ts   | Eject skills, agent partials, or templates         |
@@ -167,25 +166,6 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 - `--source <path>`: validate skills source via `validateSource()`
 - `args.path` or `--plugins`: validate plugin(s) via `validatePlugin()` / `validateAllPlugins()`
 - No args: validate YAML schemas via `validateAllSchemas()`
-
-### `info` (src/cli/commands/info.ts)
-
-**Purpose:** Show detailed information about a skill (metadata, relationships, content preview).
-
-**Args:**
-
-| Arg   | Required | Description                  |
-| ----- | -------- | ---------------------------- |
-| skill | yes      | Skill ID or alias to look up |
-
-**Flags:**
-
-| Flag      | Type    | Description                                                      |
-| --------- | ------- | ---------------------------------------------------------------- |
-| --preview | boolean | Show content preview (default true, use --no-preview to disable) |
-| --source  | string  | Skills source path or URL                                        |
-
-**Key dependencies:** **Operation: `loadSource()`**, **Operation: `resolveSkillInfo()`**
 
 ### `list` (src/cli/commands/list.tsx)
 
@@ -489,7 +469,6 @@ All message constants centralized in `src/cli/utils/messages.ts`:
 | `init`            | `loadSource`, `ensureMarketplace`, `installPluginSkills`, `copyLocalSkills`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills`, `loadAgentDefs`                                           |
 | `edit`            | `detectProject`, `loadSource`, `ensureMarketplace`, `installPluginSkills`, `uninstallPluginSkills`, `copyLocalSkills`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills`, `loadAgentDefs` |
 | `compile`         | `detectBothInstallations`, `loadAgentDefs`, `compileAgents`, `discoverInstalledSkills`                                                                                                                   |
-| `info`            | `loadSource`, `resolveSkillInfo`                                                                                                                                                                         |
 | `doctor`          | `detectProject`, `loadSource`                                                                                                                                                                            |
 | `eject`           | `loadSource`                                                                                                                                                                                             |
 | `search`          | `loadSource`                                                                                                                                                                                             |

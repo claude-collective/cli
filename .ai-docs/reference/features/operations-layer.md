@@ -7,7 +7,7 @@
 **Purpose:** Composable building blocks between CLI commands and lower-level lib functions. Each operation wraps one or more lib calls into a single typed function with explicit options/result types.
 **Entry Point:** `src/cli/lib/operations/index.ts` (barrel export)
 **Types Re-export:** `src/cli/lib/operations/types.ts`
-**Key Files:** 20 production (2 root + 3 subdomain barrels + 15 operation files), 10 co-located test files
+**Key Files:** 19 production (2 root + 3 subdomain barrels + 14 operation files), 9 co-located test files
 
 ## Architectural Position
 
@@ -38,7 +38,6 @@ Commands import from `operations/index.js`. Operations import from lower-level l
 | `src/cli/lib/operations/skills/copy-local-skills.ts`          | Copy local-source skills to scope-appropriate directories                                | skills    |
 | `src/cli/lib/operations/skills/compare-skills.ts`             | Compare local skills against source versions                                             | skills    |
 | `src/cli/lib/operations/skills/find-skill-match.ts`           | Find skill by exact ID, partial name, or directory name                                  | skills    |
-| `src/cli/lib/operations/skills/resolve-skill-info.ts`         | Resolve complete skill info for display (ID/slug lookup, install status, preview)        | skills    |
 | `src/cli/lib/operations/skills/install-plugin-skills.ts`      | Install skill plugins via Claude CLI by scope                                            | skills    |
 | `src/cli/lib/operations/skills/uninstall-plugin-skills.ts`    | Uninstall skill plugins via Claude CLI by scope                                          | skills    |
 | `src/cli/lib/operations/project/index.ts`                     | Barrel for project subdomain                                                             | project   |
@@ -60,19 +59,16 @@ Commands import from `operations/index.js`. Operations import from lower-level l
 
 ### Skills Types
 
-| Type                      | File                                  | Fields                                                                                                         |
-| ------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `DiscoveredSkills`        | `skills/discover-skills.ts`           | `allSkills, totalSkillCount, pluginSkillCount, localSkillCount, globalPluginSkillCount, globalLocalSkillCount` |
-| `ScopedSkillDir`          | `skills/collect-scoped-skill-dirs.ts` | `dirName, localSkillsPath, scope: "project" \| "global"`                                                       |
-| `ScopedSkillDirsResult`   | `skills/collect-scoped-skill-dirs.ts` | `dirs: ScopedSkillDir[], hasProject, hasGlobal, projectLocalPath, globalLocalPath`                             |
-| `SkillCopyResult`         | `skills/copy-local-skills.ts`         | `projectCopied: CopiedSkill[], globalCopied: CopiedSkill[], totalCopied`                                       |
-| `SkillComparisonResults`  | `skills/compare-skills.ts`            | `projectResults, globalResults, merged: SkillComparisonResult[]`                                               |
-| `SkillMatchResult`        | `skills/find-skill-match.ts`          | `match: SkillComparisonResult \| null, similar: string[]`                                                      |
-| `ResolveSkillInfoOptions` | `skills/resolve-skill-info.ts`        | `query, skills, slugToId, projectDir, sourcePath, isLocal, includePreview`                                     |
-| `ResolvedSkillInfo`       | `skills/resolve-skill-info.ts`        | `skill: ResolvedSkill, isInstalled, preview: string[]`                                                         |
-| `SkillInfoResult`         | `skills/resolve-skill-info.ts`        | `resolved: ResolvedSkillInfo \| null, suggestions: string[]`                                                   |
-| `PluginInstallResult`     | `skills/install-plugin-skills.ts`     | `installed: Array<{id, ref}>, failed: Array<{id, error}>`                                                      |
-| `PluginUninstallResult`   | `skills/uninstall-plugin-skills.ts`   | `uninstalled: SkillId[], failed: Array<{id, error}>`                                                           |
+| Type                     | File                                  | Fields                                                                                                         |
+| ------------------------ | ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `DiscoveredSkills`       | `skills/discover-skills.ts`           | `allSkills, totalSkillCount, pluginSkillCount, localSkillCount, globalPluginSkillCount, globalLocalSkillCount` |
+| `ScopedSkillDir`         | `skills/collect-scoped-skill-dirs.ts` | `dirName, localSkillsPath, scope: "project" \| "global"`                                                       |
+| `ScopedSkillDirsResult`  | `skills/collect-scoped-skill-dirs.ts` | `dirs: ScopedSkillDir[], hasProject, hasGlobal, projectLocalPath, globalLocalPath`                             |
+| `SkillCopyResult`        | `skills/copy-local-skills.ts`         | `projectCopied: CopiedSkill[], globalCopied: CopiedSkill[], totalCopied`                                       |
+| `SkillComparisonResults` | `skills/compare-skills.ts`            | `projectResults, globalResults, merged: SkillComparisonResult[]`                                               |
+| `SkillMatchResult`       | `skills/find-skill-match.ts`          | `match: SkillComparisonResult \| null, similar: string[]`                                                      |
+| `PluginInstallResult`    | `skills/install-plugin-skills.ts`     | `installed: Array<{id, ref}>, failed: Array<{id, error}>`                                                      |
+| `PluginUninstallResult`  | `skills/uninstall-plugin-skills.ts`   | `uninstalled: SkillId[], failed: Array<{id, error}>`                                                           |
 
 ### Project Types
 
@@ -108,7 +104,6 @@ Commands import from `operations/index.js`. Operations import from lower-level l
 | `compareSkillsWithSource`    | `(projectDir: string, sourcePath: string, matrix: MergedSkillsMatrix) => Promise<SkillComparisonResults>` | `compareLocalSkillsWithSource()` from `skills/index.js`, `collectScopedSkillDirs()`                                        | Compares local skills (both scopes) against source; project takes precedence |
 | `buildSourceSkillsMap`       | `(matrix: MergedSkillsMatrix) => Record<string, {path: string}>`                                          | None (pure transform)                                                                                                      | Builds ID-to-path map of non-local skills from matrix                        |
 | `findSkillMatch`             | `(skillName: string, results: SkillComparisonResult[]) => SkillMatchResult`                               | None (pure lookup)                                                                                                         | Exact ID -> partial name -> directory name -> fuzzy suggestions              |
-| `resolveSkillInfo`           | `(options: ResolveSkillInfoOptions) => Promise<SkillInfoResult>`                                          | `discoverLocalSkills()` from `skills/index.js`, file reading from `utils/fs.js`                                            | Resolves skill by ID or slug, checks install status, loads preview           |
 | `installPluginSkills`        | `(skills: SkillConfig[], marketplace: string, projectDir: string) => Promise<PluginInstallResult>`        | `claudePluginInstall()` from `utils/exec.js`                                                                               | Installs non-local skills via Claude CLI with correct scope                  |
 | `uninstallPluginSkills`      | `(skillIds: SkillId[], oldSkills: SkillConfig[], projectDir: string) => Promise<PluginUninstallResult>`   | `claudePluginUninstall()` from `utils/exec.js`                                                                             | Uninstalls skills via Claude CLI using scope from old config                 |
 
@@ -130,7 +125,6 @@ Commands import from `operations/index.js`. Operations import from lower-level l
 | `edit`    | `src/cli/commands/edit.tsx`   | `detectProject`, `loadSource`, `copyLocalSkills`, `ensureMarketplace`, `installPluginSkills`, `uninstallPluginSkills`, `loadAgentDefs`, `writeProjectConfig`, `compileAgents`, `discoverInstalledSkills` |
 | `compile` | `src/cli/commands/compile.ts` | `detectBothInstallations`, `loadAgentDefs`, `compileAgents`, `discoverInstalledSkills`                                                                                                                   |
 | `update`  | `src/cli/commands/update.tsx` | `loadSource`, `compareSkillsWithSource`, `compileAgents`, `collectScopedSkillDirs`, `findSkillMatch`, `discoverInstalledSkills`                                                                          |
-| `info`    | `src/cli/commands/info.ts`    | `loadSource`, `resolveSkillInfo`                                                                                                                                                                         |
 | `doctor`  | `src/cli/commands/doctor.ts`  | `loadSource`, `detectProject`                                                                                                                                                                            |
 | `search`  | `src/cli/commands/search.tsx` | `loadSource`                                                                                                                                                                                             |
 | `eject`   | `src/cli/commands/eject.ts`   | `loadSource`                                                                                                                                                                                             |
@@ -204,7 +198,6 @@ edit.run()
 | `skills/copy-local-skills.ts`          | `lib/installation/index.js` (`resolveInstallPaths`), `lib/skills/index.js` (`copySkillsToLocalFlattened`), `utils/fs.js`                                                                                                    |
 | `skills/compare-skills.ts`             | `lib/skills/index.js` (`compareLocalSkillsWithSource`), `utils/typed-object.js`, `skills/collect-scoped-skill-dirs.js` (internal)                                                                                           |
 | `skills/find-skill-match.ts`           | `lib/skills/index.js` (types only: `SkillComparisonResult`)                                                                                                                                                                 |
-| `skills/resolve-skill-info.ts`         | `utils/fs.js`, `lib/skills/index.js` (`discoverLocalSkills`), `consts.js`, `utils/string.js`                                                                                                                                |
 | `skills/install-plugin-skills.ts`      | `utils/exec.js` (`claudePluginInstall`), `utils/errors.js`                                                                                                                                                                  |
 | `skills/uninstall-plugin-skills.ts`    | `utils/exec.js` (`claudePluginUninstall`), `utils/errors.js`                                                                                                                                                                |
 | `project/detect-project.ts`            | `lib/installation/index.js` (`detectInstallation`), `lib/configuration/index.js` (`loadProjectConfig`)                                                                                                                      |

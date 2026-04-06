@@ -13,7 +13,11 @@ describe("StepConfirm component", () => {
 
   beforeEach(() => {
     initializeMatrix(WEB_PAIR_MATRIX);
-    useWizardStore.setState({ installedSkillConfigs: null, installedAgentConfigs: null });
+    useWizardStore.setState({
+      installedSkillConfigs: null,
+      installedAgentConfigs: null,
+      isInitMode: false,
+    });
   });
 
   afterEach(() => {
@@ -307,6 +311,66 @@ describe("StepConfirm component", () => {
       cleanup = unmount;
 
       expect(lastFrame()).toContain("Global");
+    });
+  });
+
+  describe("init mode — global pre-selections should not show as removed", () => {
+    it("should NOT show - for a deselected global skill during init", () => {
+      useWizardStore.setState({
+        isInitMode: true,
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+      });
+
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={vi.fn()} skillConfigs={[]} />);
+      cleanup = unmount;
+
+      const lines = lastFrame()?.split("\n") ?? [];
+      const reactLine = lines.find((line) => line.includes("React"));
+      expect(reactLine).toBeUndefined();
+    });
+
+    it("should NOT show - for a deselected global agent during init", () => {
+      useWizardStore.setState({
+        isInitMode: true,
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+      });
+
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={vi.fn()} agentConfigs={[]} />);
+      cleanup = unmount;
+
+      const lines = lastFrame()?.split("\n") ?? [];
+      const agentLine = lines.find((line) => line.includes("web-developer"));
+      expect(agentLine).toBeUndefined();
+    });
+
+    it("should still show - for removed project skills during init", () => {
+      useWizardStore.setState({
+        isInitMode: true,
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "project" }),
+      });
+
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={vi.fn()} skillConfigs={[]} />);
+      cleanup = unmount;
+
+      const lines = lastFrame()?.split("\n") ?? [];
+      const reactLine = lines.find((line) => line.includes("React"));
+      expect(reactLine).toBeDefined();
+      expect(reactLine).toMatch(/-/);
+    });
+
+    it("should show - for deselected global skill in edit mode (isInitMode=false)", () => {
+      useWizardStore.setState({
+        isInitMode: false,
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+      });
+
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={vi.fn()} skillConfigs={[]} />);
+      cleanup = unmount;
+
+      const lines = lastFrame()?.split("\n") ?? [];
+      const reactLine = lines.find((line) => line.includes("React"));
+      expect(reactLine).toBeDefined();
+      expect(reactLine).toMatch(/-/);
     });
   });
 

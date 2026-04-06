@@ -17,11 +17,5 @@ export {
   type SkillComparisonResults,
 } from "./compare-skills.js";
 export { findSkillMatch, type SkillMatchResult } from "./find-skill-match.js";
-export {
-  resolveSkillInfo,
-  type ResolveSkillInfoOptions,
-  type ResolvedSkillInfo,
-  type SkillInfoResult,
-} from "./resolve-skill-info.js";
 export { installPluginSkills, type PluginInstallResult } from "./install-plugin-skills.js";
 export { uninstallPluginSkills, type PluginUninstallResult } from "./uninstall-plugin-skills.js";

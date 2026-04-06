@@ -9,11 +9,6 @@ export type { ScopedSkillDir, ScopedSkillDirsResult } from "./skills/collect-sco
 export type { SkillCopyResult } from "./skills/copy-local-skills.js";
 export type { SkillComparisonResults } from "./skills/compare-skills.js";
 export type { SkillMatchResult } from "./skills/find-skill-match.js";
-export type {
-  ResolveSkillInfoOptions,
-  ResolvedSkillInfo,
-  SkillInfoResult,
-} from "./skills/resolve-skill-info.js";
 export type { PluginInstallResult } from "./skills/install-plugin-skills.js";
 export type { PluginUninstallResult } from "./skills/uninstall-plugin-skills.js";
 

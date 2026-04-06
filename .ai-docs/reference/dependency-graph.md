@@ -73,7 +73,6 @@ Each command and which operations it imports from `lib/operations/`.
 | `compile`           | `commands/compile.ts`           | `detectBothInstallations`, `loadAgentDefs`, `compileAgents`, `discoverInstalledSkills`                                                                                                                   |
 | `update`            | `commands/update.tsx`           | `loadSource`, `compareSkillsWithSource`, `compileAgents`, `collectScopedSkillDirs`, `findSkillMatch`, `discoverInstalledSkills`                                                                          |
 | `doctor`            | `commands/doctor.ts`            | `loadSource`, `detectProject`                                                                                                                                                                            |
-| `info`              | `commands/info.ts`              | `loadSource`, `resolveSkillInfo`                                                                                                                                                                         |
 | `search`            | `commands/search.tsx`           | `loadSource`                                                                                                                                                                                             |
 | `eject`             | `commands/eject.ts`             | `loadSource`                                                                                                                                                                                             |
 | `list`              | `commands/list.tsx`             | (none)                                                                                                                                                                                                   |
@@ -103,7 +102,6 @@ Commands that import directly from `lib/` modules in addition to (or instead of)
 | `search`            | `lib/configuration/` (resolveAllSources), `lib/loading/` (fetchFromSource, parseFrontmatter)                                                                                                                                                                                                                                                                                                                                                  |
 | `update`            | `lib/skills/` (injectForkedFromMetadata, SkillComparisonResult type)                                                                                                                                                                                                                                                                                                                                                                          |
 | `uninstall`         | `lib/plugins/` (listPluginNames, getProjectPluginsDir), `lib/skills/` (readForkedFromMetadata), `lib/configuration/project-config` (loadProjectConfigFromDir)                                                                                                                                                                                                                                                                                 |
-| `info`              | `lib/matrix/matrix-provider` (matrix)                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `list`              | `lib/plugins/` (getInstallationInfo, formatInstallationDisplay), `lib/installation/` (detectInstallation), `lib/configuration/project-config` (loadProjectConfig)                                                                                                                                                                                                                                                                             |
 | `validate`          | `lib/schema-validator` (validateAllSchemas, printValidationResults), `lib/plugins/` (validatePlugin, validateAllPlugins, printPluginValidationResult), `lib/source-validator` (validateSource)                                                                                                                                                                                                                                                |
 | `import skill`      | `lib/loading/` (fetchFromSource), `lib/schemas` (importedSkillMetadataSchema), `lib/versioning` (getCurrentDate, computeFileHash), `lib/metadata-keys` (IMPORT_DEFAULTS)                                                                                                                                                                                                                                                                      |
@@ -163,7 +161,6 @@ Each operation file and which lib modules it wraps.
 | `compareSkillsWithSource` | `skills/compare-skills.ts`            | `lib/skills/` (compareLocalSkillsWithSource)                                          |
 | `collectScopedSkillDirs`  | `skills/collect-scoped-skill-dirs.ts` | (none -- uses utils/fs directly)                                                      |
 | `findSkillMatch`          | `skills/find-skill-match.ts`          | `lib/skills/` (SkillComparisonResult type only)                                       |
-| `resolveSkillInfo`        | `skills/resolve-skill-info.ts`        | `lib/skills/` (discoverLocalSkills)                                                   |
 | `installPluginSkills`     | `skills/install-plugin-skills.ts`     | (none -- uses utils/exec directly)                                                    |
 | `uninstallPluginSkills`   | `skills/uninstall-plugin-skills.ts`   | (none -- uses utils/exec directly)                                                    |
 
@@ -186,10 +183,10 @@ Total: 8 production consumers
 | Layer      | Consumer Count | Notable Consumers                                                                                                                                                                                                           |
 | ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Commands   | 10             | edit, uninstall, update, search, eject, doctor, import/skill, new/marketplace, new/skill, new/agent                                                                                                                         |
-| Operations | 5              | discover-skills, resolve-skill-info, copy-local-skills, collect-scoped-skill-dirs, write-project-config                                                                                                                     |
+| Operations | 4              | discover-skills, copy-local-skills, collect-scoped-skill-dirs, write-project-config                                                                                                                                         |
 | Lib        | 37             | Nearly all lib subdirs: compiler, loading/_, configuration/_, installation/_, skills/_, plugins/_, stacks/_, agents/\*, resolver, versioning, schema-validator, source-validator, permission-checker, marketplace-generator |
 
-Total: 52 production consumers (most-used utility in the project)
+Total: 51 production consumers (most-used utility in the project)
 
 ### `utils/logger.ts` (warn, verbose, log, message buffering)
 
@@ -216,9 +213,9 @@ Total: 33 production consumers
 
 ### `utils/messages.ts` (ERROR_MESSAGES, SUCCESS_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES)
 
-| Layer    | Consumer Files                                                                                 |
-| -------- | ---------------------------------------------------------------------------------------------- |
-| Commands | `init`, `edit`, `compile`, `uninstall`, `update`, `search`, `info`, `import/skill`, `validate` |
+| Layer    | Consumer Files                                                                         |
+| -------- | -------------------------------------------------------------------------------------- |
+| Commands | `init`, `edit`, `compile`, `uninstall`, `update`, `search`, `import/skill`, `validate` |
 
 Total: 9 consumers (commands only -- messages are a presentation concern)
 
@@ -239,10 +236,9 @@ Total: 23 production consumers
 | Layer      | Consumer Files                  |
 | ---------- | ------------------------------- |
 | Commands   | `search`                        |
-| Operations | `skills/resolve-skill-info`     |
 | Components | `skill-search/skill-search.tsx` |
 
-Total: 3 production consumers
+Total: 2 production consumers
 
 ### `utils/type-guards.ts` (isCategory, isDomain, isAgentName, isCategoryPath)
 

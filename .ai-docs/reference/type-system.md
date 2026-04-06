@@ -277,19 +277,16 @@ The operations layer defines focused result types for each operation, re-exporte
 
 ### Skill Operations
 
-| Type                      | File                                                | Purpose                                         |
-| ------------------------- | --------------------------------------------------- | ----------------------------------------------- |
-| `DiscoveredSkills`        | `operations/skills/discover-skills.ts:12`           | Result of skill discovery (local + marketplace) |
-| `ScopedSkillDir`          | `operations/skills/collect-scoped-skill-dirs.ts:6`  | Single scoped skill directory entry             |
-| `ScopedSkillDirsResult`   | `operations/skills/collect-scoped-skill-dirs.ts:12` | Collected scoped dirs with counts               |
-| `SkillCopyResult`         | `operations/skills/copy-local-skills.ts:7`          | Result of copying local skills                  |
-| `SkillComparisonResults`  | `operations/skills/compare-skills.ts:7`             | Comparison results (added/removed/changed)      |
-| `SkillMatchResult`        | `operations/skills/find-skill-match.ts:3`           | Result of matching a skill to a source          |
-| `ResolveSkillInfoOptions` | `operations/skills/resolve-skill-info.ts:23`        | Options for resolving skill info                |
-| `ResolvedSkillInfo`       | `operations/skills/resolve-skill-info.ts:12`        | Resolved skill info with metadata               |
-| `SkillInfoResult`         | `operations/skills/resolve-skill-info.ts:18`        | Result wrapping resolved skill info             |
-| `PluginInstallResult`     | `operations/skills/install-plugin-skills.ts:6`      | Result of plugin skill installation             |
-| `PluginUninstallResult`   | `operations/skills/uninstall-plugin-skills.ts:6`    | Result of plugin skill uninstallation           |
+| Type                     | File                                                | Purpose                                         |
+| ------------------------ | --------------------------------------------------- | ----------------------------------------------- |
+| `DiscoveredSkills`       | `operations/skills/discover-skills.ts:12`           | Result of skill discovery (local + marketplace) |
+| `ScopedSkillDir`         | `operations/skills/collect-scoped-skill-dirs.ts:6`  | Single scoped skill directory entry             |
+| `ScopedSkillDirsResult`  | `operations/skills/collect-scoped-skill-dirs.ts:12` | Collected scoped dirs with counts               |
+| `SkillCopyResult`        | `operations/skills/copy-local-skills.ts:7`          | Result of copying local skills                  |
+| `SkillComparisonResults` | `operations/skills/compare-skills.ts:7`             | Comparison results (added/removed/changed)      |
+| `SkillMatchResult`       | `operations/skills/find-skill-match.ts:3`           | Result of matching a skill to a source          |
+| `PluginInstallResult`    | `operations/skills/install-plugin-skills.ts:6`      | Result of plugin skill installation             |
+| `PluginUninstallResult`  | `operations/skills/uninstall-plugin-skills.ts:6`    | Result of plugin skill uninstallation           |
 
 ### Project Operations
 

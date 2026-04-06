@@ -699,14 +699,14 @@ Complete line-by-line verification of 2 docs that received only date-stamp updat
 
 **All verified correct in operations-layer.md (0 additional errors):**
 
-- All 20 file structure entries match filesystem (2 root + 3 barrels + 15 operations)
+- All 19 file structure entries match filesystem (2 root + 3 barrels + 14 operations)
 - All 3 source types: LoadSourceOptions (4 fields), LoadedSource (2 fields), MarketplaceResult (2 fields)
-- All 11 skills types: DiscoveredSkills (6 fields), ScopedSkillDir (3 fields), ScopedSkillDirsResult (5 fields), SkillCopyResult (3 fields), SkillComparisonResults (3 fields), SkillMatchResult (2 fields), ResolveSkillInfoOptions (7 fields), ResolvedSkillInfo (3 fields), SkillInfoResult (2 fields), PluginInstallResult (2 fields), PluginUninstallResult (2 fields)
+- All 8 skills types: DiscoveredSkills (6 fields), ScopedSkillDir (3 fields), ScopedSkillDirsResult (5 fields), SkillCopyResult (3 fields), SkillComparisonResults (3 fields), SkillMatchResult (2 fields), PluginInstallResult (2 fields), PluginUninstallResult (2 fields)
 - All 7 project types: DetectedProject (3 fields), BothInstallations (3 fields), CompileAgentsOptions (9 fields), CompilationResult (3 fields), ConfigWriteOptions (5 fields), ConfigWriteResult (6 fields), AgentDefs (3 fields)
-- All 16+ function signatures verified: loadSource, ensureMarketplace, discoverInstalledSkills, loadSkillsFromDir, discoverLocalProjectSkills, mergeSkills, collectScopedSkillDirs, copyLocalSkills, compareSkillsWithSource, buildSourceSkillsMap, findSkillMatch, resolveSkillInfo, installPluginSkills, uninstallPluginSkills, detectProject, detectBothInstallations, compileAgents, loadAgentDefs, writeProjectConfig
-- All 8 command consumer rows verified: init (8 ops), edit (10 ops), compile (4 ops), update (6 ops), info (2 ops), doctor (2 ops), search (1 op), eject (1 op)
+- All 15+ function signatures verified: loadSource, ensureMarketplace, discoverInstalledSkills, loadSkillsFromDir, discoverLocalProjectSkills, mergeSkills, collectScopedSkillDirs, copyLocalSkills, compareSkillsWithSource, buildSourceSkillsMap, findSkillMatch, installPluginSkills, uninstallPluginSkills, detectProject, detectBothInstallations, compileAgents, loadAgentDefs, writeProjectConfig
+- All 7 command consumer rows verified: init (8 ops), edit (10 ops), compile (4 ops), update (6 ops), doctor (2 ops), search (1 op), eject (1 op)
 - All 3 data flow diagrams verified: init flow (6 steps), compile flow (dual-pass), edit flow (10 steps)
-- All 15 Lower-Level Lib Dependencies entries verified against actual imports
+- All 14 Lower-Level Lib Dependencies entries verified against actual imports
 
 **dependency-graph.md (3 errors fixed):**
 

@@ -37,6 +37,7 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
 }) => {
   const installedSkillConfigs = useWizardStore((s) => s.installedSkillConfigs);
   const installedAgentConfigs = useWizardStore((s) => s.installedAgentConfigs);
+  const isInitMode = useWizardStore((s) => s.isInitMode);
 
   const currentSkills = skillConfigs ?? [];
   const currentAgents = agentConfigs ?? [];
@@ -105,9 +106,9 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
     ? installedAgentConfigs.filter((a) => !currentAgents.some((c) => c.name === a.name))
     : [];
 
-  const removedGlobalSkills = removedSkills.filter((s) => s.scope === "global");
+  const removedGlobalSkills = isInitMode ? [] : removedSkills.filter((s) => s.scope === "global");
   const removedProjectSkills = removedSkills.filter((s) => s.scope === "project");
-  const removedGlobalAgents = removedAgents.filter((a) => a.scope === "global");
+  const removedGlobalAgents = isInitMode ? [] : removedAgents.filter((a) => a.scope === "global");
   const removedProjectAgents = removedAgents.filter((a) => a.scope === "project");
 
   const showProjectSkills = projectSkills.length > 0 || removedProjectSkills.length > 0;

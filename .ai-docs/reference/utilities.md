@@ -170,7 +170,6 @@ Truncates text to `maxLength` characters, appending an ellipsis character (U+202
 
 - `src/cli/commands/search.tsx` -- truncate skill descriptions in search results
 - `src/cli/components/skill-search/skill-search.tsx` -- truncate source names and display names
-- `src/cli/lib/operations/skills/resolve-skill-info.ts` -- truncate long lines in skill info output
 
 ## Type Guards
 

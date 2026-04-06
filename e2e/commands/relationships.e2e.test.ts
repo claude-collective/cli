@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import type { SkillSlug } from "../../src/cli/types/index.js";
-import { EXIT_CODES } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
 
 describe("slug-based relationship rules", () => {
@@ -39,32 +37,6 @@ describe("slug-based relationship rules", () => {
       expect(output).toContain("Unresolved slug");
       expect(output).toContain("angular-standalone");
     });
-
-    it("should resolve conflict slugs to canonical IDs shown in info output", async () => {
-      // Both "react" and "zustand" slugs exist in the E2E source
-      const { sourceDir, tempDir: sourceTempDir } = await createE2ESource({
-        relationships: {
-          conflicts: [
-            {
-              skills: ["react", "zustand"],
-              reason: "Test conflict between react and zustand",
-            },
-          ],
-        },
-      });
-      tempDir = sourceTempDir;
-
-      // Query react's info — should show zustand as a canonical ID conflict
-      const { exitCode, stdout } = await CLI.run(
-        ["info", "web-framework-react", "--source", sourceDir, "--no-preview"],
-        { dir: tempDir },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // The resolved conflict should use canonical SkillId, not the slug
-      expect(stdout).toContain("Conflicts with:");
-      expect(stdout).toContain("web-state-zustand");
-    });
   });
 
   describe("require rules", () => {
@@ -91,84 +63,6 @@ describe("slug-based relationship rules", () => {
 
       expect(output).toContain("Unresolved slug");
       expect(output).toContain("angular-standalone");
-    });
-
-    it("should resolve require slugs to canonical IDs shown in info output", async () => {
-      // Both slugs are valid in the E2E source
-      const { sourceDir, tempDir: sourceTempDir } = await createE2ESource({
-        relationships: {
-          requires: [
-            {
-              skill: "zustand",
-              needs: ["react"],
-              reason: "Zustand requires React as a framework",
-            },
-          ],
-        },
-      });
-      tempDir = sourceTempDir;
-
-      // Query zustand's info — should show react requirement as canonical ID
-      const { exitCode, stdout } = await CLI.run(
-        ["info", "web-state-zustand", "--source", sourceDir, "--no-preview"],
-        { dir: tempDir },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Requires:");
-      expect(stdout).toContain("web-framework-react");
-    });
-  });
-
-  describe("recommend rules", () => {
-    it("should mark a skill as recommended via slug-based recommend rule", async () => {
-      // "hono" is in the default recommends list — the source-specific rule
-      // should override the default reason when displayed via `info`.
-      const { sourceDir, tempDir: sourceTempDir } = await createE2ESource({
-        relationships: {
-          recommends: [
-            {
-              skill: "hono",
-              reason: "Hono is the recommended API framework for E2E testing",
-            },
-          ],
-        },
-      });
-      tempDir = sourceTempDir;
-
-      const { exitCode, stdout } = await CLI.run(
-        ["info", "api-framework-hono", "--source", sourceDir, "--no-preview"],
-        { dir: tempDir },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Recommended: Yes");
-      expect(stdout).toContain("Hono is the recommended API framework for E2E testing");
-    });
-
-    it("should not mark a non-recommended skill as recommended", async () => {
-      const { sourceDir, tempDir: sourceTempDir } = await createE2ESource({
-        relationships: {
-          recommends: [
-            {
-              skill: "hono",
-              reason: "Hono is the recommended API framework for E2E testing",
-            },
-          ],
-        },
-      });
-      tempDir = sourceTempDir;
-
-      // React IS in the default recommends list, so we need to check a skill
-      // that's truly not recommended. "reviewing" is a meta-reviewing skill
-      // that has no recommend entry in either default or source rules.
-      const { exitCode, stdout } = await CLI.run(
-        ["info", "meta-reviewing-reviewing", "--source", sourceDir, "--no-preview"],
-        { dir: tempDir },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Recommended: No");
     });
   });
 
@@ -256,64 +150,6 @@ describe("slug-based relationship rules", () => {
       // "angular-standalone" slug does not exist in the E2E source
       expect(output).toContain("Unresolved slug");
       expect(output).toContain("angular-standalone");
-    });
-  });
-
-  describe("multiple rule types output", () => {
-    it("should resolve all relationship types from slugs to canonical IDs", async () => {
-      // Source recommends for "hono" should override the default recommends
-      // reason. Verifies that source-provided rules take precedence.
-      const { sourceDir, tempDir: sourceTempDir } = await createE2ESource({
-        relationships: {
-          conflicts: [
-            {
-              skills: ["react", "hono"],
-              reason: "Framework conflict for testing",
-            },
-          ],
-          requires: [
-            {
-              skill: "vitest",
-              needs: ["react"],
-              reason: "Vitest needs React in this test",
-            },
-          ],
-          recommends: [
-            {
-              skill: "hono",
-              reason: "Hono is the best API framework",
-            },
-          ],
-        },
-      });
-      tempDir = sourceTempDir;
-
-      // Verify react shows hono as conflict (canonical ID)
-      const reactInfo = await CLI.run(
-        ["info", "web-framework-react", "--source", sourceDir, "--no-preview"],
-        { dir: tempDir },
-      );
-      expect(reactInfo.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(reactInfo.stdout).toContain("Conflicts with:");
-      expect(reactInfo.stdout).toContain("api-framework-hono");
-
-      // Verify vitest shows react as requirement (canonical ID)
-      const vitestInfo = await CLI.run(
-        ["info", "web-testing-vitest", "--source", sourceDir, "--no-preview"],
-        { dir: tempDir },
-      );
-      expect(vitestInfo.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(vitestInfo.stdout).toContain("Requires:");
-      expect(vitestInfo.stdout).toContain("web-framework-react");
-
-      // Verify hono shows as recommended
-      const honoInfo = await CLI.run(
-        ["info", "api-framework-hono", "--source", sourceDir, "--no-preview"],
-        { dir: tempDir },
-      );
-      expect(honoInfo.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(honoInfo.stdout).toContain("Recommended: Yes");
-      expect(honoInfo.stdout).toContain("Hono is the best API framework");
     });
   });
 });
