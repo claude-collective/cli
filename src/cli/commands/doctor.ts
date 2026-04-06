@@ -186,13 +186,26 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
 
   const projectMdFiles = projectExists ? await glob("*.md", projectAgentsDir) : [];
   const globalMdFiles = globalExists ? await glob("*.md", globalAgentsDir) : [];
-  const mdFiles = [...new Set([...projectMdFiles, ...globalMdFiles])];
-  const configAgentNames: Set<string> = new Set((config.agents ?? []).map((a) => a.name));
+
+  // Project files: only active project-scoped agents should have .md files here
+  const activeProjectAgents: Set<string> = new Set(
+    (config.agents ?? []).filter((a) => a.scope === "project" && !a.excluded).map((a) => a.name),
+  );
+  // Global files: all global-scoped agents (including excluded) still serve other projects
+  const knownGlobalAgents: Set<string> = new Set(
+    (config.agents ?? []).filter((a) => a.scope === "global").map((a) => a.name),
+  );
 
   const orphanedFiles: string[] = [];
-  for (const file of mdFiles) {
+  for (const file of projectMdFiles) {
     const agentName = file.replace(/\.md$/, "");
-    if (!configAgentNames.has(agentName)) {
+    if (!activeProjectAgents.has(agentName)) {
+      orphanedFiles.push(agentName);
+    }
+  }
+  for (const file of globalMdFiles) {
+    const agentName = file.replace(/\.md$/, "");
+    if (!knownGlobalAgents.has(agentName)) {
       orphanedFiles.push(agentName);
     }
   }

@@ -212,14 +212,14 @@ describe("doctor command", () => {
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
 
-    it("should not report excluded agents as orphans", async () => {
+    it("should flag excluded project agent .md file as orphan", async () => {
       const claudeSrcDir = path.join(projectDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
       const agentsDir = path.join(claudeDir, "agents");
       await mkdir(agentsDir, { recursive: true });
 
-      // Create config with an excluded agent
+      // Excluded project agent — its .md file is stale
       await writeFile(
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
         renderConfigTs({
@@ -228,7 +228,7 @@ describe("doctor command", () => {
         }),
       );
 
-      // Create the agent .md file on disk
+      // Stale .md file from before exclusion
       await writeFile(
         path.join(agentsDir, "web-developer.md"),
         "# Web Developer Agent\n\nExcluded agent content.",
@@ -237,9 +237,9 @@ describe("doctor command", () => {
       const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
       const output = stdout + (error?.message || "");
 
-      // Excluded agent should NOT be flagged as orphaned
-      expect(output).toContain("No orphaned agent files");
-      expect(output).not.toContain("web-developer.md (not in config)");
+      // Excluded project agent .md should be flagged as orphan
+      expect(output).toContain("orphaned agent file");
+      expect(output).toContain("web-developer.md (not in config)");
     });
   });
 
