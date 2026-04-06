@@ -674,18 +674,46 @@ describe("WizardStore", () => {
       expect(skillConfigs[0].scope).toBe("global");
     });
 
-    it("should block project eject to global when global eject already exists", () => {
+    it("should block project eject to global when global eject already exists and set toastMessage", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
-      // Set scope to project and source to eject
       useWizardStore.setState({
         skillConfigs: [{ id: "web-framework-react", scope: "project", source: "eject" }],
-        globalPreselections: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
       });
 
       store.toggleSkillScope("web-framework-react");
-      const { skillConfigs } = useWizardStore.getState();
+      const { skillConfigs, toastMessage } = useWizardStore.getState();
       expect(skillConfigs[0].scope).toBe("project");
+      expect(toastMessage).toBe("Already exists as ejected skill at global scope");
+    });
+
+    it("should allow global eject to project when global eject is installed", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        skillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+      });
+
+      store.toggleSkillScope("web-framework-react");
+      const { skillConfigs, toastMessage } = useWizardStore.getState();
+      expect(skillConfigs[0].scope).toBe("project");
+      expect(toastMessage).toBeNull();
+    });
+
+    it("should allow project eject to global when no global eject exists", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        skillConfigs: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        globalPreselections: [],
+      });
+
+      store.toggleSkillScope("web-framework-react");
+      const { skillConfigs, toastMessage } = useWizardStore.getState();
+      expect(skillConfigs[0].scope).toBe("global");
+      expect(toastMessage).toBeNull();
     });
 
     it("should not toggle skill scope when isEditingFromGlobalScope is true", () => {

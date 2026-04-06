@@ -908,11 +908,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const config = state.skillConfigs.find((sc) => sc.id === skillId && !sc.excluded);
       if (!config) return state;
 
-      // Guard: block project eject → global when global eject already exists
-      if (config.scope === "project") {
-        const globalConfig = state.globalPreselections?.find((sc) => sc.id === skillId);
-        if (globalConfig?.source === "eject" && config.source === "eject") {
-          return state;
+      // Guard: block project eject → global when global eject already exists (would overwrite)
+      if (config.scope === "project" && config.source === "eject") {
+        const globalEjectInstalled = state.installedSkillConfigs?.some(
+          (sc) => sc.id === skillId && sc.scope === "global" && sc.source === "eject",
+        );
+        if (globalEjectInstalled) {
+          return { toastMessage: "Already exists as ejected skill at global scope" };
         }
       }
 
