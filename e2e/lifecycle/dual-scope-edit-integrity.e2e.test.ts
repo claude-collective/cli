@@ -55,8 +55,8 @@ describe("dual-scope edit lifecycle -- agent content and config integrity", () =
     await cleanupTempDir(testTempDir);
   });
 
-  it.fails(
-    "Compiled agents contain only their assigned skills (expected fail -- ENOENT in project-scoped skill copy)",
+  it(
+    "Compiled agents contain only their assigned skills",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
       // Phase D: Assertions -- verify agent content from Phase B compilation

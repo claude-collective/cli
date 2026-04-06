@@ -309,6 +309,9 @@ export type WizardState = {
   installedSkillConfigs: SkillConfig[] | null;
   installedAgentConfigs: AgentScopeConfig[] | null;
 
+  /** True when running init (first-time setup), false when editing an existing installation */
+  isInitMode: boolean;
+
   /** When true, scope toggling is disabled (editing from ~/.claude/ with no project to move items to) */
   isEditingFromGlobalScope: boolean;
 
@@ -614,6 +617,7 @@ type WizardStateData = Pick<
   | "boundSkills"
   | "installedSkillConfigs"
   | "installedAgentConfigs"
+  | "isInitMode"
   | "isEditingFromGlobalScope"
   | "toastMessage"
   | "globalPreselections"
@@ -645,6 +649,7 @@ const createInitialState = (): WizardStateData => ({
   boundSkills: [],
   installedSkillConfigs: null,
   installedAgentConfigs: null,
+  isInitMode: false,
   isEditingFromGlobalScope: false,
   toastMessage: null,
   globalPreselections: null,
@@ -911,7 +916,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       // Guard: block project eject → global when global eject already exists (would overwrite)
       if (config.scope === "project" && config.source === "eject") {
         const globalEjectInstalled = state.installedSkillConfigs?.some(
-          (sc) => sc.id === skillId && sc.scope === "global" && sc.source === "eject",
+          (sc) =>
+            sc.id === skillId && sc.scope === "global" && sc.source === "eject" && !sc.excluded,
         );
         if (globalEjectInstalled) {
           return { toastMessage: "Already exists as ejected skill at global scope" };
@@ -919,8 +925,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       }
 
       const wasInstalledGlobally =
-        state.installedSkillConfigs?.some((sc) => sc.id === skillId && sc.scope === "global") ??
-        false;
+        state.installedSkillConfigs?.some(
+          (sc) => sc.id === skillId && sc.scope === "global" && !sc.excluded,
+        ) ?? false;
       const newScope = config.scope === "project" ? "global" : "project";
 
       let updatedConfigs = state.skillConfigs.map((sc) =>

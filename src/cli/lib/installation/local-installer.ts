@@ -6,13 +6,16 @@ import type {
   AgentConfig,
   AgentDefinition,
   AgentName,
+  Category,
   CompileAgentConfig,
   CompileConfig,
   MergedSkillsMatrix,
   ProjectConfig,
+  SkillAssignment,
   SkillDefinition,
   SkillId,
   Stack,
+  StackAgentConfig,
 } from "../../types";
 import type { InstallMode } from "./installation";
 import { deriveInstallMode } from "./installation";
@@ -198,28 +201,34 @@ async function buildEjectConfig(
 
   if (wizardResult.selectedStackId) {
     if (loadedStack) {
-      // Use actual selections (may differ from stack defaults after user customization)
       localConfig = generateProjectConfigFromSkills(DEFAULT_PLUGIN_NAME, skillIds, agentOptions);
 
-      // Overlay preloaded flags from the stack definition — generateProjectConfigFromSkills
-      // defaults all skills to preloaded: false; the stack YAML may define preloaded: true
-      if (localConfig.stack) {
-        const stackProperty = buildStackProperty(loadedStack);
-        for (const [agentId, agentConfig] of typedEntries(stackProperty)) {
-          if (!agentConfig) continue;
-          for (const [category, assignments] of typedEntries(agentConfig)) {
-            if (!assignments) continue;
-            const localAgentConfig = localConfig.stack[agentId];
-            if (!localAgentConfig?.[category]) continue;
-            for (const assignment of localAgentConfig[category]) {
-              const stackAssignment = assignments.find((a) => a.id === assignment.id);
-              if (stackAssignment?.preloaded) {
-                assignment.preloaded = true;
-              }
-            }
+      // Replace the generic "all skills → all agents" stack with per-agent assignments
+      // from the stack definition, filtered to only include user-selected skills and
+      // preserving preloaded flags from the stack YAML.
+      const stackProperty = buildStackProperty(loadedStack);
+      const selectedSkillSet = new Set(skillIds);
+      const filteredStack: Partial<Record<AgentName, StackAgentConfig>> = {};
+      for (const [agentId, agentConfig] of typedEntries(stackProperty)) {
+        if (!agentConfig) continue;
+        const filtered: StackAgentConfig = {};
+        for (const [category, assignments] of typedEntries<Category, SkillAssignment[]>(
+          agentConfig,
+        )) {
+          if (!assignments) continue;
+          const selectedAssignments = assignments.filter((a) => selectedSkillSet.has(a.id));
+          if (selectedAssignments.length > 0) {
+            filtered[category] = selectedAssignments;
           }
         }
+        if (typedKeys<Category>(filtered).length > 0) {
+          filteredStack[agentId] = filtered;
+        }
       }
+      localConfig.stack =
+        Object.keys(filteredStack).length > 0
+          ? (filteredStack as Record<AgentName, StackAgentConfig>)
+          : undefined;
 
       localConfig.description = loadedStack.description;
       // Only add stack agents that the user selected (or all if no explicit selection)
