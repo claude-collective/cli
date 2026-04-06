@@ -222,5 +222,58 @@ describe("agent-recompiler", () => {
       // Excluded skill should NOT appear in compiled agent
       expect(content).not.toContain("web-testing-vitest");
     });
+
+    it("should filter project-scoped skills from global-scoped agents (D7 cross-scope safety)", async () => {
+      const configDir = path.join(testDirs.projectDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs({
+          name: "test-plugin",
+          description: "Test plugin",
+          agents: [{ name: "web-developer", scope: "global" }],
+          skills: [
+            { id: "web-framework-react", scope: "project", source: "eject" },
+            { id: "web-testing-vitest", scope: "global", source: "eject" },
+          ],
+          stack: {
+            "web-developer": {
+              "web-framework": [{ id: "web-framework-react", preloaded: false }],
+              "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+            },
+          },
+        }),
+      );
+
+      const providedSkills = {
+        "web-framework-react": {
+          id: "web-framework-react",
+          description: "React framework skill",
+          path: "web-framework-react/",
+        },
+        "web-testing-vitest": {
+          id: "web-testing-vitest",
+          description: "Vitest testing skill",
+          path: "web-testing-vitest/",
+        },
+      } as Record<string, { id: string; description: string; path: string }>;
+
+      const result = await recompileAgents({
+        pluginDir: testDirs.pluginDir,
+        sourcePath: CLI_ROOT,
+        projectDir: testDirs.projectDir,
+        skills: providedSkills,
+      });
+
+      expect(result.compiled).toContain("web-developer");
+
+      const agentPath = path.join(testDirs.agentsDir, "web-developer.md");
+      const content = await readFile(agentPath, "utf-8");
+
+      // Global skill should appear in global-scoped agent
+      expect(content).toContain("web-testing-vitest");
+      // Project-scoped skill should NOT appear in global-scoped agent
+      expect(content).not.toContain("web-framework-react");
+    });
   });
 });

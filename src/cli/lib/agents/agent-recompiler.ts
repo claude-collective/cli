@@ -7,12 +7,12 @@ import type {
   AgentConfig,
   AgentDefinition,
   AgentName,
-  CompileAgentConfig,
   CompileConfig,
   ProjectConfig,
   SkillDefinitionMap,
 } from "../../types";
 import { type InstallMode, deriveInstallMode } from "../installation/installation";
+import { buildCompileAgents } from "../installation/local-installer";
 import { CLAUDE_DIR } from "../../consts";
 import { glob, writeFile, ensureDir } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
@@ -22,7 +22,7 @@ import { loadProjectConfig } from "../configuration";
 import { loadAllAgents, loadProjectAgents } from "../loading";
 import { getPluginAgentsDir } from "../plugins";
 import { discoverAllPluginSkills } from "../plugins/plugin-discovery";
-import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
+import { resolveAgents } from "../resolver";
 import { compileAgentForPlugin } from "../stacks";
 
 export type RecompileAgentsOptions = {
@@ -78,45 +78,6 @@ async function resolveAgentNames(params: ResolveAgentNamesParams): Promise<Agent
   }
 
   return getExistingAgentNames(pluginDir);
-}
-
-type BuildCompileConfigParams = {
-  agentNames: AgentName[];
-  allAgents: Record<AgentName, AgentDefinition>;
-  projectConfig: ProjectConfig | null;
-  pluginDir: string;
-};
-
-type BuildCompileConfigResult = {
-  compileConfig: CompileConfig;
-  warnings: string[];
-};
-
-function buildCompileConfig(params: BuildCompileConfigParams): BuildCompileConfigResult {
-  const { agentNames, allAgents, projectConfig, pluginDir } = params;
-  const warnings: string[] = [];
-
-  const compileAgents: Record<string, CompileAgentConfig> = {};
-  for (const agentName of agentNames) {
-    if (allAgents[agentName]) {
-      const agentStack = projectConfig?.stack?.[agentName];
-      if (agentStack) {
-        compileAgents[agentName] = { skills: buildSkillRefsFromConfig(agentStack) };
-      } else {
-        compileAgents[agentName] = {};
-      }
-    } else {
-      warnings.push(`Agent "${agentName}" not found in source definitions`);
-    }
-  }
-
-  const compileConfig: CompileConfig = {
-    name: projectConfig?.name || path.basename(pluginDir),
-    description: projectConfig?.description || "Recompiled plugin",
-    agents: compileAgents,
-  };
-
-  return { compileConfig, warnings };
 }
 
 type CompileAndWriteParams = {
@@ -233,13 +194,23 @@ export async function recompileAgents(
     pluginSkills = await discoverAllPluginSkills(projectDir ?? pluginDir);
   }
 
-  const { compileConfig, warnings } = buildCompileConfig({
-    agentNames,
-    allAgents,
-    projectConfig: filteredConfig,
-    pluginDir,
-  });
-  result.warnings.push(...warnings);
+  const configAgents = filteredConfig ? buildCompileAgents(filteredConfig, allAgents) : {};
+
+  // buildCompileAgents only includes agents from config.agents — also include
+  // any resolved agents (from options or existing files) that exist in allAgents
+  for (const name of agentNames) {
+    if (allAgents[name] && !configAgents[name]) {
+      configAgents[name] = {};
+    } else if (!allAgents[name]) {
+      result.warnings.push(`Agent "${name}" not found in source definitions`);
+    }
+  }
+
+  const compileConfig: CompileConfig = {
+    name: filteredConfig?.name || path.basename(pluginDir),
+    description: filteredConfig?.description || "Recompiled plugin",
+    agents: configAgents,
+  };
 
   const engine = await createLiquidEngine(projectDir);
   const resolvedAgents = await resolveAgents(allAgents, pluginSkills, compileConfig, sourcePath);

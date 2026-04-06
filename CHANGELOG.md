@@ -7,6 +7,14 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.110.1] - 2026-04-06
+
+**Consolidate buildCompileConfig with D7 cross-scope safety**
+
+- Single canonical compile-agent construction path — global agents can no longer receive project-scoped skills during recompilation
+
+See [changelogs/0.110.1.md](./changelogs/0.110.1.md) for full details.
+
 ## [0.110.0] - 2026-04-06
 
 **Global config immutability and scope-aware doctor**
