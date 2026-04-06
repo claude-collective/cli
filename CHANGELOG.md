@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.110.0] - 2026-04-06
+
+**Global config immutability and scope-aware doctor**
+
+- Project-level operations never modify the global config
+- Inlined config deduplication for excluded tombstones
+- Scope-aware orphan detection in `cc doctor`
+
+See [changelogs/0.110.0.md](./changelogs/0.110.0.md) for full details.
+
 ## [0.109.0] - 2026-04-06
 
 **Eject indicator pill and scope toggle guard**
