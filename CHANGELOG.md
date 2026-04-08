@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.112.0] - 2026-04-08
+
+**Scope-aware wizard, readOnly sources, confirm diff fixes**
+
+- Agent toggle-off preserves selectedAgents for global agents
+- Sources step marks globally-installed skills as readOnly
+- ProjectAgentName narrows to project-scoped agents only
+
+See [changelogs/0.112.0.md](./changelogs/0.112.0.md) for full details.
+
 ## [0.111.0] - 2026-04-06
 
 **Scope-correct compilation, config, and eject copying**
