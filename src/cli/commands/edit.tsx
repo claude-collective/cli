@@ -121,7 +121,7 @@ export default class Edit extends BaseCommand {
       ? { ...context.projectConfig, skills: activeOldSkills, agents: activeOldAgents }
       : null;
 
-    const changes = detectConfigChanges(filteredOldConfig, filteredResult, context.currentSkillIds);
+    const changes = detectConfigChanges(filteredOldConfig, filteredResult);
     if (!hasAnyChanges(changes)) {
       this.log(chalk.hex(CLI_COLORS.NEUTRAL)("No changes made."));
       return;
@@ -187,8 +187,15 @@ export default class Edit extends BaseCommand {
 
       // Merge plugin-discovered skills with config skills (catches local skills and
       // global-scoped plugins that discoverAllPluginSkills doesn't find).
-      const configSkillIds = projectConfig?.skills?.map((s) => s.id) ?? [];
-      const mergedIds = new Set<SkillId>([...pluginSkillIds, ...configSkillIds]);
+      // Exclude skills marked as excluded — they should not appear as selected in the build step.
+      // They are still preserved in skillConfigs via installedSkillConfigs for info panel/confirm step.
+      const excludedConfigIds = new Set(
+        projectConfig?.skills?.filter((s) => s.excluded).map((s) => s.id) ?? [],
+      );
+      const configSkillIds =
+        projectConfig?.skills?.filter((s) => !s.excluded).map((s) => s.id) ?? [];
+      const filteredPluginSkillIds = pluginSkillIds.filter((id) => !excludedConfigIds.has(id));
+      const mergedIds = new Set<SkillId>([...filteredPluginSkillIds, ...configSkillIds]);
       currentSkillIds = [...mergedIds];
 
       startupMessages.push({
@@ -502,7 +509,9 @@ export default class Edit extends BaseCommand {
     }
 
     try {
-      const agentScopeMap = new Map(result.agentConfigs.map((a) => [a.name, a.scope] as const));
+      const agentScopeMap = new Map(
+        result.agentConfigs.filter((a) => !a.excluded).map((a) => [a.name, a.scope] as const),
+      );
       const { allSkills } = await discoverInstalledSkills(cwd);
       const installMode = deriveInstallMode(activeNewSkills);
       const isProjectContext = fs.realpathSync(cwd) !== fs.realpathSync(os.homedir());
@@ -573,9 +582,12 @@ export default class Edit extends BaseCommand {
     // Clean up old agent .md files after scope changes.
     // Recompilation wrote the new file to the correct scope directory;
     // now delete the stale copy from the old scope directory.
+    // Only clean up for P→G direction. G→P is an override — the global
+    // installation stays untouched; the project copy overrides it.
     for (const [agentName, change] of agentScopeChanges) {
-      const oldBaseDir = change.from === "global" ? os.homedir() : cwd;
-      const oldAgentPath = path.join(oldBaseDir, CLAUDE_DIR, "agents", `${agentName}.md`);
+      if (change.from === "global") continue;
+
+      const oldAgentPath = path.join(cwd, CLAUDE_DIR, "agents", `${agentName}.md`);
       try {
         await remove(oldAgentPath);
       } catch (error) {
@@ -602,8 +614,8 @@ type ConfigChanges = {
 function detectConfigChanges(
   oldConfig: ProjectConfig | null,
   wizardResult: WizardResultV2,
-  currentSkillIds: SkillId[],
 ): ConfigChanges {
+  const oldSkillIds = oldConfig?.skills?.map((s) => s.id) ?? [];
   const newSkillIds = wizardResult.skills.map((s) => s.id);
   const oldAgentNames = oldConfig?.agents?.map((a) => a.name) ?? [];
   const newAgentNames = wizardResult.agentConfigs.map((a) => a.name);
@@ -612,8 +624,8 @@ function detectConfigChanges(
   const oldAgentsByName = indexBy(oldConfig?.agents ?? [], (a) => a.name);
 
   return {
-    addedSkills: difference(newSkillIds, currentSkillIds),
-    removedSkills: difference(currentSkillIds, newSkillIds),
+    addedSkills: difference(newSkillIds, oldSkillIds),
+    removedSkills: difference(oldSkillIds, newSkillIds),
     addedAgents: difference(newAgentNames, oldAgentNames),
     removedAgents: difference(oldAgentNames, newAgentNames),
     sourceChanges: detectPropertyChanges(

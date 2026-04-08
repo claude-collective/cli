@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.115.0] - 2026-04-09
+
+**Excluded skill fixes, scope toggle integrity, G→P override model**
+
+- Excluded skills no longer appear as selected in edit mode; dual-entry skills display correctly
+- Scope toggle deselect no longer corrupts global config; agent scope map filters tombstones
+- G→P scope toggle preserves global installation — override model for both skills and agents
+
+See [changelogs/0.115.0.md](./changelogs/0.115.0.md) for full details.
+
 ## [0.114.0] - 2026-04-09
 
 **Build step guards: unique skill + exclusive category bypass**

@@ -5,11 +5,12 @@ import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
   cleanupTempDir,
+  directoryExists,
   ensureBinaryExists,
   fileExists,
   readTestFile,
 } from "../helpers/test-utils.js";
-import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-helpers.js";
+import { createTestEnvironment, setupDualScopeWithEject } from "../fixtures/dual-scope-helpers.js";
 
 /**
  * Dual-scope edit lifecycle E2E test -- scope changes via S hotkey.
@@ -46,7 +47,7 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
     testTempDir = tempDir;
     fakeHome = fh;
     projectDir = pd;
-    await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+    await setupDualScopeWithEject(sourceDir, sourceTempDir, fakeHome, projectDir);
   });
 
   afterEach(async () => {
@@ -93,21 +94,50 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
 
       // Phase D: Assertions
 
-      // D-1: Global config now contains api-framework-hono (it was toggled to global)
+      // D-1: Skill directory EXISTS at global scope (P→G is a MOVE for skills)
+      const globalSkillDir = path.join(fakeHome, DIRS.CLAUDE, DIRS.SKILLS, "api-framework-hono");
+      expect(
+        await directoryExists(globalSkillDir),
+        "api-framework-hono directory must exist at global scope after P→G toggle",
+      ).toBe(true);
+
+      // D-2: Skill directory does NOT exist at project scope (moved away)
+      const projectSkillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "api-framework-hono");
+      expect(
+        await directoryExists(projectSkillDir),
+        "api-framework-hono directory must NOT exist at project scope after P→G toggle",
+      ).toBe(false);
+
+      // D-3: Global config has api-framework-hono with scope: "global"
       const globalConfig = await readTestFile(
         path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
       );
-      expect(globalConfig).toContain("api-framework-hono");
+      const honoGlobalLines = globalConfig
+        .split("\n")
+        .filter((l: string) => l.includes("api-framework-hono") && l.includes('"scope":"global"'));
+      expect(honoGlobalLines.length).toBeGreaterThan(0);
 
-      // D-2: Project config does NOT contain api-framework-hono at project scope (it moved to global)
+      // D-4: Project config does NOT contain api-framework-hono at project scope (it moved to global)
       const projectConfig = await readTestFile(
         path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
       );
-      // api-framework-hono should be at global scope only — verify no project-scoped entry exists
-      const honoLines = projectConfig
+      const honoProjectLines = projectConfig
         .split("\n")
         .filter((l: string) => l.includes("api-framework-hono") && l.includes('"scope":"project"'));
-      expect(honoLines).toStrictEqual([]);
+      expect(honoProjectLines).toStrictEqual([]);
+
+      // D-5: Agent files at both scopes still exist (unchanged — collateral damage check)
+      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
+      expect(
+        await fileExists(globalWebDevPath),
+        "web-developer.md must still exist in global agents dir",
+      ).toBe(true);
+
+      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
+      expect(
+        await fileExists(projectApiDevPath),
+        "api-developer.md must still exist in project agents dir",
+      ).toBe(true);
 
       await result.destroy();
     },
@@ -147,24 +177,238 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       // Phase D: Assertions
 
       // D-1: api-developer.md exists at global scope (HOME)
-      const globalApiDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "api-developer.md");
+      const globalApiDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
       expect(
         await fileExists(globalApiDevPath),
         "api-developer.md must exist in global agents dir after scope toggle",
       ).toBe(true);
 
-      // D-2: api-developer.md does NOT exist at project scope
-      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "api-developer.md");
+      // D-2: api-developer.md does NOT exist at project scope (P→G is a MOVE for agents)
+      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
       expect(
         await fileExists(projectApiDevPath),
         "api-developer.md must NOT exist in project agents dir after scope toggle to global",
       ).toBe(false);
 
-      // D-3: web-developer.md still at global scope (unchanged)
-      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
+      // D-3: Agent content at global scope is properly compiled
+      const apiDevContent = await readTestFile(globalApiDevPath);
+      expect(apiDevContent.length).toBeGreaterThan(100);
+      expect(apiDevContent).toContain("api-developer");
+
+      // D-4: Global config has api-developer with scope: "global"
+      const globalConfig = await readTestFile(
+        path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      const apiDevGlobalLines = globalConfig
+        .split("\n")
+        .filter((l: string) => l.includes("api-developer") && l.includes('"scope":"global"'));
+      expect(apiDevGlobalLines.length).toBeGreaterThan(0);
+
+      // D-5: Project config does NOT have api-developer at project scope
+      const projectConfig = await readTestFile(
+        path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      const apiDevProjectLines = projectConfig
+        .split("\n")
+        .filter((l: string) => l.includes("api-developer") && l.includes('"scope":"project"'));
+      expect(apiDevProjectLines).toStrictEqual([]);
+
+      // D-6: web-developer.md still at global scope (unchanged — collateral damage check)
+      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
       expect(
         await fileExists(globalWebDevPath),
         "web-developer.md must still exist in global agents dir",
+      ).toBe(true);
+
+      // D-7: Global skill files unchanged (web skills still at global)
+      const globalWebSkillDir = path.join(
+        fakeHome,
+        DIRS.CLAUDE,
+        DIRS.SKILLS,
+        "web-framework-react",
+      );
+      expect(
+        await directoryExists(globalWebSkillDir),
+        "web-framework-react directory must still exist at global scope",
+      ).toBe(true);
+
+      await result.destroy();
+    },
+  );
+
+  it(
+    "Toggle a global agent's scope to project",
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
+    async () => {
+      // Phase C: Edit -- toggle web-developer from global to project scope
+      const wizard = await EditWizard.launch({
+        projectDir,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
+      testWizard = wizard;
+
+      // Build step -- pass through all three domains
+      const sources = await wizard.build.passThroughAllDomains();
+
+      // Sources step (pass through)
+      await sources.waitForReady();
+      const agents = await sources.advance();
+
+      // Agents step -- toggle web-developer to project scope
+      await agents.navigateCursorToAgent("Web Developer");
+      await agents.toggleScopeOnFocusedAgent();
+      const confirm = await agents.advance("edit");
+
+      // Confirm step
+      const result = await confirm.confirm();
+      const exitCode = await result.exitCode;
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Phase D: Assertions
+
+      // D-1: web-developer.md exists at project scope
+      const projectWebDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "web-developer.md");
+      expect(
+        await fileExists(projectWebDevPath),
+        "web-developer.md must exist in project agents dir after scope toggle to project",
+      ).toBe(true);
+
+      // D-2: web-developer.md STILL exists at global scope (global untouched — override model)
+      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
+      expect(
+        await fileExists(globalWebDevPath),
+        "web-developer.md must still exist in global agents dir (G→P is additive, global untouched)",
+      ).toBe(true);
+
+      // D-3: web-developer.md at project was properly compiled
+      const webDevContent = await readTestFile(projectWebDevPath);
+      expect(webDevContent.length).toBeGreaterThan(100);
+      expect(webDevContent).toContain("web-developer");
+
+      // D-4: api-developer.md still exists at project scope (unchanged)
+      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "api-developer.md");
+      expect(
+        await fileExists(projectApiDevPath),
+        "api-developer.md must still exist in project agents dir",
+      ).toBe(true);
+
+      // D-5: Project config has web-developer with scope: "project"
+      const projectConfig = await readTestFile(
+        path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      const webDevProjectLines = projectConfig
+        .split("\n")
+        .filter((l: string) => l.includes("web-developer") && l.includes('"scope":"project"'));
+      expect(webDevProjectLines.length).toBeGreaterThan(0);
+
+      // D-6: Global config STILL has web-developer (global untouched)
+      const globalConfig = await readTestFile(
+        path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      expect(globalConfig).toContain("web-developer");
+
+      await result.destroy();
+    },
+  );
+
+  it(
+    "Toggle a global ejected skill's scope to project",
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
+    async () => {
+      // Phase C: Edit -- toggle web-framework-react from global to project scope
+      const wizard = await EditWizard.launch({
+        projectDir,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
+      testWizard = wizard;
+
+      // Build step -- Web domain: toggle first focused skill (web-framework-react) scope to project
+      await wizard.build.toggleScopeOnFocusedSkill();
+      await wizard.build.advanceDomain();
+
+      // Build step -- API domain (pass through)
+      await wizard.build.advanceDomain();
+
+      // Build step -- Shared domain (pass through)
+      const sources = await wizard.build.advanceToSources();
+
+      // Sources step (pass through)
+      await sources.waitForReady();
+      const agents = await sources.advance();
+
+      // Agents step (pass through)
+      const confirm = await agents.acceptDefaults("edit");
+
+      // Confirm step
+      const result = await confirm.confirm();
+      const exitCode = await result.exitCode;
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Phase D: Assertions
+
+      // D-1: Skill directory EXISTS at project scope (copied from global)
+      const projectSkillDir = path.join(
+        projectDir,
+        DIRS.CLAUDE,
+        DIRS.SKILLS,
+        "web-framework-react",
+      );
+      expect(
+        await directoryExists(projectSkillDir),
+        "web-framework-react directory must exist at project scope after G→P toggle",
+      ).toBe(true);
+
+      // D-2: Skill directory STILL EXISTS at global scope (global untouched — override model)
+      const globalSkillDir = path.join(fakeHome, DIRS.CLAUDE, DIRS.SKILLS, "web-framework-react");
+      expect(
+        await directoryExists(globalSkillDir),
+        "web-framework-react directory must still exist at global scope (G→P is additive)",
+      ).toBe(true);
+
+      // D-3: SKILL.md file exists and has content at project scope
+      const projectSkillMdPath = path.join(projectSkillDir, FILES.SKILL_MD);
+      expect(
+        await fileExists(projectSkillMdPath),
+        "SKILL.md must exist in project skills/web-framework-react/",
+      ).toBe(true);
+      const skillMdContent = await readTestFile(projectSkillMdPath);
+      expect(skillMdContent.length).toBeGreaterThan(100);
+      expect(skillMdContent).toContain("web-framework-react");
+
+      // D-4: Global config STILL contains web-framework-react
+      const globalConfig = await readTestFile(
+        path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      expect(globalConfig).toContain("web-framework-react");
+
+      // D-5: Project config has web-framework-react with scope: "project"
+      const projectConfig = await readTestFile(
+        path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      const reactProjectLines = projectConfig
+        .split("\n")
+        .filter(
+          (l: string) => l.includes("web-framework-react") && l.includes('"scope":"project"'),
+        );
+      expect(reactProjectLines.length).toBeGreaterThan(0);
+
+      // D-6: Agent files at both scopes still exist (unchanged)
+      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
+      expect(
+        await fileExists(globalWebDevPath),
+        "web-developer.md must still exist in global agents dir",
+      ).toBe(true);
+
+      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
+      expect(
+        await fileExists(projectApiDevPath),
+        "api-developer.md must still exist in project agents dir",
       ).toBe(true);
 
       await result.destroy();

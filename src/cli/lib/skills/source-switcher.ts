@@ -59,7 +59,8 @@ export async function deleteLocalSkill(projectDir: string, skillId: SkillId): Pr
  * Migrate a local skill's files between project and global directories.
  * Used when a skill's scope changes during edit (e.g., [P] → [G] or [G] → [P]).
  *
- * Copies the skill directory to the new location, then removes the old one.
+ * Copies the skill directory to the new location.
+ * For P→G, removes the old project copy. For G→P (override model), the global copy stays untouched.
  * No-op if the source directory doesn't exist (skill may be plugin-mode).
  */
 export async function migrateLocalSkillScope(
@@ -103,6 +104,12 @@ export async function migrateLocalSkillScope(
 
   await ensureDir(toSkillsDir);
   await copy(fromPath, toPath);
-  await remove(fromPath);
+
+  // G→P is an override — the global copy stays untouched; the project copy overrides it.
+  // Only P→G should delete the old directory.
+  if (fromScope === "project") {
+    await remove(fromPath);
+  }
+
   verbose(`Migrated skill '${skillId}' from ${fromScope} to ${toScope}`);
 }
