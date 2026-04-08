@@ -75,7 +75,7 @@ describe("generateConfigSource", () => {
     // Non-preloaded single skill should be a bare string inside an array
     expect(source).toContain('"web-framework": [\n      "web-framework-react"\n    ]');
     // Stack should be extracted as named variable
-    expect(source).toContain("const stack: Partial<Record<AgentName, StackAgentConfig>>");
+    expect(source).toContain("const stack: Partial<Record<ProjectAgentName, StackAgentConfig>>");
   });
 
   it("preserves preloaded flag as object in stack", () => {
@@ -118,7 +118,7 @@ describe("generateConfigSource", () => {
     expect(source).toContain("AgentScopeConfig");
   });
 
-  it("imports AgentName and StackAgentConfig when stack is present", () => {
+  it("imports ProjectAgentName, SelectedAgentName, and StackAgentConfig when stack is present", () => {
     const config = buildProjectConfig({
       stack: {
         "web-developer": {
@@ -127,7 +127,8 @@ describe("generateConfigSource", () => {
       },
     });
     const source = generateConfigSource(config);
-    expect(source).toContain("AgentName");
+    expect(source).toContain("ProjectAgentName");
+    expect(source).toContain("SelectedAgentName");
     expect(source).toContain("StackAgentConfig");
   });
 
@@ -358,7 +359,7 @@ describe("generateConfigSource", () => {
       expect(source).not.toContain("const domains:");
     });
 
-    it("spreads global selectedAgents when project has selectedAgents", () => {
+    it("extracts selectedAgents as named constant when project has selectedAgents", () => {
       const config = buildProjectConfig({
         name: "project-agents",
         skills: [],
@@ -366,8 +367,8 @@ describe("generateConfigSource", () => {
         selectedAgents: ["web-developer"],
       });
       const source = generateConfigSource(config, { isProjectConfig: true });
-      expect(source).toContain("...(globalConfig.selectedAgents ?? [])");
-      expect(source).toContain('"web-developer"');
+      expect(source).toContain("const selectedAgents: SelectedAgentName[] = [...(globalConfig.selectedAgents ?? []), \"web-developer\"]");
+      expect(source).toContain("  selectedAgents,");
     });
 
     it("uses default plugin name when config name is 'global'", () => {
@@ -511,7 +512,7 @@ describe("generateConfigSource", () => {
       expect(source).toContain('name: "agents-inc"');
     });
 
-    it("merges global and project selectedAgents", () => {
+    it("merges global and project selectedAgents as named constant", () => {
       const globalWithAgents = buildProjectConfig({
         name: "global",
         skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
@@ -528,8 +529,8 @@ describe("generateConfigSource", () => {
         isProjectConfig: true,
         globalConfig: globalWithAgents,
       });
-      expect(source).toContain('"web-reviewer"');
-      expect(source).toContain('"web-developer"');
+      expect(source).toContain('const selectedAgents: SelectedAgentName[] = ["web-reviewer", "web-developer"]');
+      expect(source).toContain("  selectedAgents,");
     });
 
     it("merges global and project domains", () => {
@@ -803,7 +804,9 @@ describe("generateConfigSource", () => {
     it("never leaks global agent stack entries into project config", () => {
       const globalWithStack = buildProjectConfig({
         name: "global",
-        skills: buildSkillConfigs(["web-framework-react", "web-styling-tailwind"], { scope: "global" }),
+        skills: buildSkillConfigs(["web-framework-react", "web-styling-tailwind"], {
+          scope: "global",
+        }),
         agents: buildAgentConfigs(["web-developer", "web-reviewer"], { scope: "global" }),
         stack: {
           "web-developer": {
@@ -872,7 +875,7 @@ describe("generateConfigSource", () => {
       });
       const source = generateConfigSource(config);
       // Stack should be extracted as named variable
-      expect(source).toContain("const stack: Partial<Record<AgentName, StackAgentConfig>>");
+      expect(source).toContain("const stack: Partial<Record<ProjectAgentName, StackAgentConfig>>");
       // Both agents should appear in stack
       expect(source).toContain('"web-developer"');
       expect(source).toContain('"api-developer"');
@@ -1110,6 +1113,16 @@ describe("generateBlankGlobalConfigTypesSource", () => {
     expect(source).toContain("export type AgentName = never;");
     expect(source).toContain("export type Domain = never;");
     expect(source).toContain("export type Category = never;");
+  });
+
+  it("includes SelectedAgentName = never for blank global config", () => {
+    const source = generateBlankGlobalConfigTypesSource();
+    expect(source).toContain("export type SelectedAgentName = never;");
+  });
+
+  it("includes ProjectAgentName = SelectedAgentName for blank global config", () => {
+    const source = generateBlankGlobalConfigTypesSource();
+    expect(source).toContain("export type ProjectAgentName = SelectedAgentName;");
   });
 
   it("contains auto-generated header", () => {

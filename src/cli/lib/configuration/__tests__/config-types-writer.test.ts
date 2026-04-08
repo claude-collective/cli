@@ -23,6 +23,8 @@ import {
   createMockCategory,
   createTempDir,
   cleanupTempDir,
+  buildProjectConfig,
+  buildAgentConfigs,
   SKILLS,
   TEST_CATEGORIES,
 } from "../../__tests__/helpers";
@@ -211,21 +213,53 @@ describe("generateConfigTypesSource", () => {
     expect(source).not.toContain('"web-styling"?:');
   });
 
-  it("generates ProjectConfig interface with AgentName stack keys", () => {
+  it("generates ProjectConfig interface with ProjectAgentName stack keys", () => {
     const matrix = EMPTY_MATRIX;
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain("export interface ProjectConfig {");
     expect(source).toContain("name: string;");
     expect(source).toContain("agents: AgentScopeConfig[];");
     expect(source).toContain("skills: SkillConfig[];");
-    expect(source).toContain("stack?: Partial<Record<AgentName, StackAgentConfig>>;");
+    expect(source).toContain("stack?: Partial<Record<ProjectAgentName, StackAgentConfig>>;");
     expect(source).toContain("domains?: Domain[];");
-    expect(source).toContain("selectedAgents?: AgentName[];");
+    expect(source).toContain("selectedAgents?: SelectedAgentName[];");
     expect(source).toContain("source?: string;");
     expect(source).toContain("marketplace?: string;");
     expect(source).toContain("agentsSource?: string;");
     expect(source).toContain("author?: string;");
     expect(source).toContain("description?: string;");
+  });
+
+  it("generates SelectedAgentName = AgentName for standalone config without config param", () => {
+    const matrix = EMPTY_MATRIX;
+    const source = generateConfigTypesSource(matrix, []);
+    expect(source).toContain("export type SelectedAgentName = AgentName;");
+  });
+
+  it("generates ProjectAgentName = SelectedAgentName for global config", () => {
+    const matrix = createMockMatrix(SKILLS.react);
+    const agentNames: AgentName[] = ["web-developer", "web-reviewer"];
+    const config = buildProjectConfig({
+      agents: buildAgentConfigs(["web-developer", "web-reviewer"], { scope: "global" }),
+      selectedAgents: ["web-developer", "web-reviewer"],
+    });
+    const source = generateConfigTypesSource(matrix, agentNames, [], undefined, config);
+    expect(source).toContain("export type ProjectAgentName = SelectedAgentName;");
+  });
+
+  it("generates ProjectAgentName narrowed to project-scoped agents", () => {
+    const matrix = createMockMatrix(SKILLS.react);
+    const agentNames: AgentName[] = ["web-developer", "web-reviewer", "api-developer"];
+    const config = buildProjectConfig({
+      agents: [
+        ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+        ...buildAgentConfigs(["web-reviewer", "api-developer"], { scope: "project" }),
+      ],
+      selectedAgents: ["web-developer", "web-reviewer", "api-developer"],
+    });
+    const source = generateConfigTypesSource(matrix, agentNames, [], undefined, config);
+    expect(source).toContain('export type ProjectAgentName = "web-reviewer" | "api-developer"');
+    expect(source).not.toContain("export type ProjectAgentName = SelectedAgentName");
   });
 
   it("falls back to string for empty skills", () => {
@@ -672,6 +706,29 @@ describe("generateProjectConfigTypesSource", () => {
     expect(source).toContain("export type Category = GlobalCategory;");
   });
 
+  it("generates SelectedAgentName for project config with selectedAgentNames", () => {
+    const source = generateProjectConfigTypesSource({
+      globalTypesImportPath: "../../.claude-src",
+      projectSkillIds: [],
+      projectAgentNames: ["custom-reviewer", "project-deployer"],
+      projectDomains: [],
+      selectedAgentNames: ["custom-reviewer", "project-deployer"],
+    });
+    expect(source).toContain(
+      'export type SelectedAgentName = "custom-reviewer" | "project-deployer";',
+    );
+  });
+
+  it("generates SelectedAgentName = AgentName for project config without selectedAgentNames", () => {
+    const source = generateProjectConfigTypesSource({
+      globalTypesImportPath: "../../.claude-src",
+      projectSkillIds: [],
+      projectAgentNames: [],
+      projectDomains: [],
+    });
+    expect(source).toContain("export type SelectedAgentName = AgentName;");
+  });
+
   it("re-exports GlobalCategory when no project categories exist", () => {
     const source = generateProjectConfigTypesSource({
       globalTypesImportPath: "../../.claude-src",
@@ -844,6 +901,139 @@ describe("regenerateConfigTypes with global install", () => {
       expect(content).toContain("SkillId as GlobalSkillId");
       expect(content).toContain('"acme-deploy-pipeline"');
       expect(content).toContain('"custom-reviewer"');
+    } finally {
+      Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
+        value: "/tmp/nonexistent-global-root",
+        writable: true,
+      });
+    }
+  });
+
+  it("narrows SelectedAgentName from project config selectedAgents", async () => {
+    const { CLAUDE_SRC_DIR: claudeSrc, STANDARD_FILES: files } = await import("../../../consts");
+    const consts = await import("../../../consts");
+    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", { value: globalDir, writable: true });
+
+    try {
+      // Create global config-types.ts
+      const globalClaudeSrc = path.join(globalDir, claudeSrc);
+      await mkdir(globalClaudeSrc, { recursive: true });
+      const { writeFile: fsWriteFile } = await import("fs/promises");
+      await fsWriteFile(path.join(globalClaudeSrc, files.CONFIG_TYPES_TS), "// global types");
+
+      // Create project .claude-src/ with a config that has selectedAgents
+      const projectClaudeSrc = path.join(tempDir, claudeSrc);
+      await mkdir(projectClaudeSrc, { recursive: true });
+
+      const { generateConfigSource } = await import("../config-writer");
+      const configContent = generateConfigSource(
+        buildProjectConfig({
+          selectedAgents: ["web-developer", "api-developer"],
+        }),
+      );
+      await fsWriteFile(path.join(projectClaudeSrc, files.CONFIG_TS), configContent);
+
+      const data = makeBackgroundData({});
+      await regenerateConfigTypes(tempDir, data);
+
+      const configTypesPath = path.join(projectClaudeSrc, files.CONFIG_TYPES_TS);
+      const content = await readFile(configTypesPath, "utf-8");
+
+      // SelectedAgentName should be narrowed to the config's selectedAgents
+      expect(content).toContain(
+        'export type SelectedAgentName = "web-developer" | "api-developer"',
+      );
+      // Should NOT fall back to AgentName
+      expect(content).not.toContain("export type SelectedAgentName = AgentName");
+    } finally {
+      Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
+        value: "/tmp/nonexistent-global-root",
+        writable: true,
+      });
+    }
+  });
+
+  it("narrows ProjectAgentName to project-scoped agents from loaded config", async () => {
+    const { CLAUDE_SRC_DIR: claudeSrc, STANDARD_FILES: files } = await import("../../../consts");
+    const consts = await import("../../../consts");
+    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", { value: globalDir, writable: true });
+
+    try {
+      const globalClaudeSrc = path.join(globalDir, claudeSrc);
+      await mkdir(globalClaudeSrc, { recursive: true });
+      const { writeFile: fsWriteFile } = await import("fs/promises");
+      await fsWriteFile(path.join(globalClaudeSrc, files.CONFIG_TYPES_TS), "// global types");
+
+      const projectClaudeSrc = path.join(tempDir, claudeSrc);
+      await mkdir(projectClaudeSrc, { recursive: true });
+
+      // Config with mixed scopes: web-developer global, api-developer project
+      const { generateConfigSource } = await import("../config-writer");
+      const configContent = generateConfigSource(
+        buildProjectConfig({
+          agents: [
+            ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+            ...buildAgentConfigs(["api-developer"], { scope: "project" }),
+          ],
+          selectedAgents: ["web-developer", "api-developer"],
+        }),
+      );
+      await fsWriteFile(path.join(projectClaudeSrc, files.CONFIG_TS), configContent);
+
+      const data = makeBackgroundData({});
+      await regenerateConfigTypes(tempDir, data);
+
+      const configTypesPath = path.join(projectClaudeSrc, files.CONFIG_TYPES_TS);
+      const content = await readFile(configTypesPath, "utf-8");
+
+      // ProjectAgentName should be narrowed to only project-scoped agent
+      expect(content).toContain('export type ProjectAgentName = "api-developer"');
+      // Should NOT fall back to SelectedAgentName
+      expect(content).not.toContain("export type ProjectAgentName = SelectedAgentName");
+      // SelectedAgentName should still include all selected agents
+      expect(content).toContain(
+        'export type SelectedAgentName = "web-developer" | "api-developer"',
+      );
+    } finally {
+      Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
+        value: "/tmp/nonexistent-global-root",
+        writable: true,
+      });
+    }
+  });
+
+  it("falls back ProjectAgentName to SelectedAgentName when all agents are global", async () => {
+    const { CLAUDE_SRC_DIR: claudeSrc, STANDARD_FILES: files } = await import("../../../consts");
+    const consts = await import("../../../consts");
+    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", { value: globalDir, writable: true });
+
+    try {
+      const globalClaudeSrc = path.join(globalDir, claudeSrc);
+      await mkdir(globalClaudeSrc, { recursive: true });
+      const { writeFile: fsWriteFile } = await import("fs/promises");
+      await fsWriteFile(path.join(globalClaudeSrc, files.CONFIG_TYPES_TS), "// global types");
+
+      const projectClaudeSrc = path.join(tempDir, claudeSrc);
+      await mkdir(projectClaudeSrc, { recursive: true });
+
+      // Config with all global-scoped agents (simulates global init)
+      const { generateConfigSource } = await import("../config-writer");
+      const configContent = generateConfigSource(
+        buildProjectConfig({
+          agents: buildAgentConfigs(["web-developer", "web-reviewer"], { scope: "global" }),
+          selectedAgents: ["web-developer", "web-reviewer"],
+        }),
+      );
+      await fsWriteFile(path.join(projectClaudeSrc, files.CONFIG_TS), configContent);
+
+      const data = makeBackgroundData({});
+      await regenerateConfigTypes(tempDir, data);
+
+      const configTypesPath = path.join(projectClaudeSrc, files.CONFIG_TYPES_TS);
+      const content = await readFile(configTypesPath, "utf-8");
+
+      // ProjectAgentName should fall back to SelectedAgentName (all agents are global)
+      expect(content).toContain("export type ProjectAgentName = SelectedAgentName");
     } finally {
       Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
         value: "/tmp/nonexistent-global-root",

@@ -2,6 +2,7 @@ import os from "os";
 import path from "path";
 import { unique } from "remeda";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId, Category } from "../../types";
+import { loadProjectConfigFromDir } from "./project-config";
 import {
   CLAUDE_SRC_DIR,
   CLI_BIN_NAME,
@@ -91,7 +92,7 @@ export const PROJECT_CONFIG_INTERFACE_AFTER = `export interface ProjectConfig {
   author?: string;
 
   /** Stack configuration: agent -> category -> skill assignment */
-  stack?: Partial<Record<AgentName, StackAgentConfig>>;
+  stack?: Partial<Record<ProjectAgentName, StackAgentConfig>>;
 
   /** Skills source path or URL */
   source?: string;
@@ -106,7 +107,7 @@ export const PROJECT_CONFIG_INTERFACE_AFTER = `export interface ProjectConfig {
   domains?: Domain[];
 
   /** Selected agents from the wizard */
-  selectedAgents?: AgentName[];
+  selectedAgents?: SelectedAgentName[];
 
   /** Tracked project installation paths (global config only) */
   projects?: string[];
@@ -243,12 +244,19 @@ export async function regenerateConfigTypes(
 
   let source: string;
   if (globalConfigTypes) {
+    const loadedConfig = await loadProjectConfigFromDir(projectDir);
+    const selectedAgentNames = loadedConfig?.config?.selectedAgents as string[] | undefined;
+    const projectScopedAgentNames = loadedConfig?.config?.agents
+      ?.filter((a) => a.scope === "project" && !a.excluded)
+      ?.map((a) => a.name) as string[] | undefined;
     source = generateProjectConfigTypesSource({
       globalTypesImportPath: computeGlobalTypesImportPath(projectDir),
       projectSkillIds: extras?.extraSkillIds ?? [],
       projectAgentNames: extras?.extraAgentNames ?? [],
       projectDomains: extras?.extraDomains ?? [],
       projectCategories: extras?.extraCategories ?? [],
+      ...(selectedAgentNames?.length ? { selectedAgentNames } : {}),
+      ...(projectScopedAgentNames?.length ? { projectScopedAgentNames } : {}),
     });
     verbose("Using project config-types.ts that imports from global");
   } else {
@@ -364,6 +372,17 @@ export function generateConfigTypesSource(
   const domainLine = formatMaybeSectionedUnion(domains, (d) => customDomainSet.has(d));
   const categoryLine = formatMaybeSectionedUnion(categories, (s) => customCategorySet.has(s));
 
+  const selectedAgentNameLine = config?.selectedAgents?.length
+    ? formatUnion(config.selectedAgents as string[])
+    : "AgentName";
+
+  const projectScopedAgents = config?.agents
+    ?.filter((a) => a.scope === "project" && !a.excluded)
+    ?.map((a) => a.name) ?? [];
+  const projectAgentNameLine = projectScopedAgents.length > 0
+    ? formatUnion(projectScopedAgents as string[])
+    : "SelectedAgentName";
+
   const skillsByCategory = buildSkillsByCategory(skillIds, categories, matrix);
   const stackAgentConfigType = generateStackAgentConfig(skillsByCategory);
 
@@ -372,6 +391,10 @@ export function generateConfigTypesSource(
 export type SkillId = ${skillIdLine};
 
 export type AgentName = ${agentNameLine};
+
+export type SelectedAgentName = ${selectedAgentNameLine};
+
+export type ProjectAgentName = ${projectAgentNameLine};
 
 export type Domain = ${domainLine};
 
@@ -507,6 +530,10 @@ export type ProjectConfigTypesOptions = {
   projectDomains: string[];
   /** Project-only categories (not including global) */
   projectCategories?: string[];
+  /** Selected agent names from config (narrows SelectedAgentName) */
+  selectedAgentNames?: string[];
+  /** Project-scoped agent names (narrows ProjectAgentName for stack keys) */
+  projectScopedAgentNames?: string[];
 };
 
 /**
@@ -526,6 +553,16 @@ export function generateProjectConfigTypesSource(options: ProjectConfigTypesOpti
     ? formatExtendedUnion("GlobalCategory", options.projectCategories!)
     : "GlobalCategory";
 
+  const selectedAgentNameUnion =
+    options.selectedAgentNames?.length
+      ? formatUnion(options.selectedAgentNames)
+      : "AgentName";
+
+  const projectAgentNameUnion =
+    options.projectScopedAgentNames?.length
+      ? formatUnion(options.projectScopedAgentNames)
+      : "SelectedAgentName";
+
   // Import Category as GlobalCategory when we have project categories or need to re-export it
   const categoryImport = `  Category as GlobalCategory,\n`;
 
@@ -540,6 +577,10 @@ ${categoryImport}} from "${importPath}";
 export type SkillId = ${skillIdUnion};
 
 export type AgentName = ${agentNameUnion};
+
+export type SelectedAgentName = ${selectedAgentNameUnion};
+
+export type ProjectAgentName = ${projectAgentNameUnion};
 
 export type Domain = ${domainUnion};
 

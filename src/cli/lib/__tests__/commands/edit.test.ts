@@ -21,7 +21,7 @@ import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { CategoryPath, SkillId } from "../../../types";
-import Edit from "../../../commands/edit.js";
+import Edit, { migratePluginSkillScopes } from "../../../commands/edit.js";
 
 // --- Module mocks (hoisted by vitest) ---
 
@@ -785,5 +785,194 @@ describe("edit command copies newly added local skills", () => {
       testSourceResult.matrix,
       testSourceResult,
     );
+  });
+});
+
+// Bug regression: migratePluginSkillScopes must NOT uninstall the global ("user")
+// plugin when re-scoping from global to project. The global registration is shared
+// across projects and must remain intact. Only project→global should uninstall.
+
+describe("migratePluginSkillScopes", () => {
+  it("should not uninstall global plugin when re-scoping from global to project", async () => {
+    const execModule = await import("../../../utils/exec.js");
+    const installSpy = vi.spyOn(execModule, "claudePluginInstall").mockResolvedValue();
+    const uninstallSpy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
+
+    const scopeChanges = new Map([
+      ["web-framework-react" as SkillId, { from: "global" as const, to: "project" as const }],
+    ]);
+    const skills = [{ id: "web-framework-react" as SkillId, source: "agents-inc" }];
+
+    await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
+
+    expect(uninstallSpy).not.toHaveBeenCalled();
+    expect(installSpy).toHaveBeenCalledWith("web-framework-react@agents-inc", "project", "/project");
+
+    installSpy.mockRestore();
+    uninstallSpy.mockRestore();
+  });
+
+  it("should uninstall project plugin when re-scoping from project to global", async () => {
+    const execModule = await import("../../../utils/exec.js");
+    const installSpy = vi.spyOn(execModule, "claudePluginInstall").mockResolvedValue();
+    const uninstallSpy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
+
+    const scopeChanges = new Map([
+      ["web-framework-react" as SkillId, { from: "project" as const, to: "global" as const }],
+    ]);
+    const skills = [{ id: "web-framework-react" as SkillId, source: "agents-inc" }];
+
+    await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
+
+    expect(uninstallSpy).toHaveBeenCalledWith("web-framework-react", "project", "/project");
+    expect(installSpy).toHaveBeenCalledWith("web-framework-react@agents-inc", "user", "/project");
+
+    installSpy.mockRestore();
+    uninstallSpy.mockRestore();
+  });
+
+  it("should skip eject-source skills during scope migration", async () => {
+    const execModule = await import("../../../utils/exec.js");
+    const installSpy = vi.spyOn(execModule, "claudePluginInstall").mockResolvedValue();
+    const uninstallSpy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
+
+    const scopeChanges = new Map([
+      ["web-framework-react" as SkillId, { from: "global" as const, to: "project" as const }],
+    ]);
+    const skills = [{ id: "web-framework-react" as SkillId, source: "eject" }];
+
+    await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
+
+    expect(uninstallSpy).not.toHaveBeenCalled();
+    expect(installSpy).not.toHaveBeenCalled();
+
+    installSpy.mockRestore();
+    uninstallSpy.mockRestore();
+  });
+
+  it("should handle mixed scope changes correctly", async () => {
+    const execModule = await import("../../../utils/exec.js");
+    const installSpy = vi.spyOn(execModule, "claudePluginInstall").mockResolvedValue();
+    const uninstallSpy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
+
+    const scopeChanges = new Map([
+      ["web-framework-react" as SkillId, { from: "global" as const, to: "project" as const }],
+      ["web-state-zustand" as SkillId, { from: "project" as const, to: "global" as const }],
+    ]);
+    const skills = [
+      { id: "web-framework-react" as SkillId, source: "agents-inc" },
+      { id: "web-state-zustand" as SkillId, source: "agents-inc" },
+    ];
+
+    const result = await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
+
+    expect(result.migrated).toHaveLength(2);
+
+    // React global→project: NO uninstall, install at project
+    expect(uninstallSpy).not.toHaveBeenCalledWith("web-framework-react", "user", "/project");
+    expect(installSpy).toHaveBeenCalledWith("web-framework-react@agents-inc", "project", "/project");
+
+    // Zustand project→global: uninstall project, install at user
+    expect(uninstallSpy).toHaveBeenCalledWith("web-state-zustand", "project", "/project");
+    expect(installSpy).toHaveBeenCalledWith("web-state-zustand@agents-inc", "user", "/project");
+
+    installSpy.mockRestore();
+    uninstallSpy.mockRestore();
+  });
+
+  it("should report install failure without affecting global registration", async () => {
+    const execModule = await import("../../../utils/exec.js");
+    const installSpy = vi.spyOn(execModule, "claudePluginInstall").mockRejectedValue(new Error("install failed"));
+    const uninstallSpy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
+
+    const scopeChanges = new Map([
+      ["web-framework-react" as SkillId, { from: "global" as const, to: "project" as const }],
+    ]);
+    const skills = [{ id: "web-framework-react" as SkillId, source: "agents-inc" }];
+
+    const result = await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
+
+    // Should NOT have uninstalled global
+    expect(uninstallSpy).not.toHaveBeenCalled();
+    // Should report failure
+    expect(result.migrated).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].id).toBe("web-framework-react");
+
+    installSpy.mockRestore();
+    uninstallSpy.mockRestore();
+  });
+
+  it("should not install at global scope when project uninstall fails", async () => {
+    const execModule = await import("../../../utils/exec.js");
+    const installSpy = vi.spyOn(execModule, "claudePluginInstall").mockResolvedValue();
+    const uninstallSpy = vi.spyOn(execModule, "claudePluginUninstall").mockRejectedValue(new Error("uninstall failed"));
+
+    const scopeChanges = new Map([
+      ["web-framework-react" as SkillId, { from: "project" as const, to: "global" as const }],
+    ]);
+    const skills = [{ id: "web-framework-react" as SkillId, source: "agents-inc" }];
+
+    const result = await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
+
+    // Should have tried to uninstall
+    expect(uninstallSpy).toHaveBeenCalledWith("web-framework-react", "project", "/project");
+    // Should NOT have installed at global (uninstall failed, catch fired)
+    expect(installSpy).not.toHaveBeenCalled();
+    // Should report failure
+    expect(result.migrated).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+
+    installSpy.mockRestore();
+    uninstallSpy.mockRestore();
+  });
+
+  it("should skip skills not found in the skills array", async () => {
+    const execModule = await import("../../../utils/exec.js");
+    const installSpy = vi.spyOn(execModule, "claudePluginInstall").mockResolvedValue();
+    const uninstallSpy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
+
+    const scopeChanges = new Map([
+      ["web-framework-react" as SkillId, { from: "global" as const, to: "project" as const }],
+    ]);
+    // Empty skills array — skill not found
+    const skills: Array<{ id: SkillId; source: string }> = [];
+
+    const result = await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
+
+    expect(uninstallSpy).not.toHaveBeenCalled();
+    expect(installSpy).not.toHaveBeenCalled();
+    expect(result.migrated).toHaveLength(0);
+    expect(result.failed).toHaveLength(0);
+
+    installSpy.mockRestore();
+    uninstallSpy.mockRestore();
+  });
+
+  it("should continue processing after individual skill failure", async () => {
+    const execModule = await import("../../../utils/exec.js");
+    const installSpy = vi.spyOn(execModule, "claudePluginInstall")
+      .mockRejectedValueOnce(new Error("first fails"))
+      .mockResolvedValueOnce();
+    const uninstallSpy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
+
+    const scopeChanges = new Map([
+      ["web-framework-react" as SkillId, { from: "global" as const, to: "project" as const }],
+      ["web-state-zustand" as SkillId, { from: "global" as const, to: "project" as const }],
+    ]);
+    const skills = [
+      { id: "web-framework-react" as SkillId, source: "agents-inc" },
+      { id: "web-state-zustand" as SkillId, source: "agents-inc" },
+    ];
+
+    const result = await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
+
+    // First skill failed, second succeeded
+    expect(result.migrated).toStrictEqual(["web-state-zustand"]);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].id).toBe("web-framework-react");
+
+    installSpy.mockRestore();
+    uninstallSpy.mockRestore();
   });
 });

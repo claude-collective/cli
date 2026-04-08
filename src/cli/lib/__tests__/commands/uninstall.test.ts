@@ -24,7 +24,8 @@ import {
   PLUGIN_MANIFEST_DIR,
   PLUGIN_MANIFEST_FILE,
 } from "../../../consts";
-import type { SkillId } from "../../../types";
+import type { ProjectConfig, SkillId } from "../../../types";
+import { getCliInstalledPluginKeys } from "../../../commands/uninstall";
 import { renderConfigTs } from "../content-generators";
 
 vi.mock("../../../utils/exec.js", async (importOriginal) => ({
@@ -32,6 +33,7 @@ vi.mock("../../../utils/exec.js", async (importOriginal) => ({
   claudePluginUninstall: vi.fn(),
   isClaudeCLIAvailable: vi.fn().mockResolvedValue(true),
 }));
+
 const TEST_PLUGIN_NAME = "test-plugin@marketplace";
 const PLUGIN_SUBPATH = path.join(CLAUDE_DIR, "plugins", TEST_PLUGIN_NAME);
 const TEST_SOURCE = "github:agents-inc/skills";
@@ -44,6 +46,7 @@ async function createProjectConfig(
   projectDir: string,
   options?: {
     source?: string;
+    marketplace?: string;
     extraSources?: Array<{ name: string; url: string }>;
     agents?: Array<{ name: string; scope: string }>;
     skills?: Array<{ id: string; scope: string; source: string }>;
@@ -55,6 +58,10 @@ async function createProjectConfig(
   const config: Record<string, unknown> = {
     source: options?.source ?? TEST_SOURCE,
   };
+
+  if (options?.marketplace) {
+    config.marketplace = options.marketplace;
+  }
 
   if (options?.extraSources) {
     config.sources = options.extraSources;
@@ -563,6 +570,149 @@ describe("uninstall command", () => {
 
       expect(stdout).toContain(`${DEFAULT_BRANDING.NAME} has been uninstalled`);
       expect(stdout).toContain("Uninstall complete");
+    });
+  });
+
+  describe("re-scoped plugin handling", () => {
+    it("should match plugin keys using marketplace fallback when skill source differs", async () => {
+      // Config has skill.source = "re-scoped-source" but config.marketplace = "marketplace"
+      // Plugin key in settings.json is "test-plugin@marketplace"
+      // Without the marketplace fallback, the key won't match
+      await createProjectConfig(projectDir, {
+        marketplace: "marketplace",
+        skills: [{ id: "test-plugin", scope: "project", source: "re-scoped-source" }],
+      });
+      const pluginDir = await createPluginDir(projectDir, fakeHome);
+
+      expect(await directoryExists(pluginDir)).toBe(true);
+
+      const { stdout } = await runCliCommand(["uninstall", "--yes"]);
+
+      expect(await directoryExists(pluginDir)).toBe(false);
+      expect(stdout).toContain("Uninstalled 1 plugin");
+    });
+
+    it("should include marketplace variant keys for non-eject skills", () => {
+      const config: Partial<ProjectConfig> = {
+        marketplace: "agents-inc",
+        skills: [
+          { id: "web-framework-react", scope: "project", source: "custom-source" },
+          { id: "web-state-zustand", scope: "global", source: "eject" },
+          { id: "api-framework-hono", scope: "project", source: "agents-inc" },
+        ],
+      };
+
+      const keys = getCliInstalledPluginKeys(config);
+
+      // Primary keys always present
+      expect(keys.has("web-framework-react@custom-source")).toBe(true);
+      expect(keys.has("web-state-zustand@eject")).toBe(true);
+      expect(keys.has("api-framework-hono@agents-inc")).toBe(true);
+
+      // Marketplace variant for non-eject skill whose source differs from marketplace
+      expect(keys.has("web-framework-react@agents-inc")).toBe(true);
+
+      // No marketplace variant for eject skills
+      expect(keys.has("web-state-zustand@agents-inc")).toBe(false);
+
+      // No marketplace variant when source already matches marketplace
+      // (only the primary key "api-framework-hono@agents-inc" exists, no duplicate)
+      expect(keys.size).toBe(4);
+    });
+
+    it("should uninstall re-scoped plugins by trying both scopes", async () => {
+      // Import exec module and spy on claudePluginUninstall
+      const execModule = await import("../../../utils/exec");
+      const spy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
+      const cliSpy = vi.spyOn(execModule, "isClaudeCLIAvailable").mockResolvedValue(true);
+
+      // Import the exported uninstallPlugins function
+      const { uninstallPlugins: uninstallPluginsFn } = await import(
+        "../../../commands/uninstall"
+      );
+
+      const pluginsDir = path.join(projectDir, CLAUDE_DIR, "plugins");
+      await mkdir(pluginsDir, { recursive: true });
+      const pluginPath = path.join(pluginsDir, "test-plugin@marketplace");
+      await mkdir(pluginPath, { recursive: true });
+
+      const target = {
+        hasPlugins: true,
+        cliPluginNames: ["test-plugin@marketplace"],
+        pluginsDir,
+        config: {
+          skills: [{ id: "test-plugin" as SkillId, scope: "project" as const, source: "marketplace" }],
+        },
+      };
+
+      const result = await uninstallPluginsFn(target, projectDir);
+
+      expect(result.totalUninstalled).toBe(1);
+
+      // Should call claudePluginUninstall with both "project" (primary) and "user" (fallback)
+      const scopeArgs = spy.mock.calls.map((call) => call[1]);
+      expect(scopeArgs).toContain("project");
+      expect(scopeArgs).toContain("user");
+
+      spy.mockRestore();
+      cliSpy.mockRestore();
+    });
+
+    it("should uninstall project-scoped plugin that was re-scoped from global during init", async () => {
+      // Scenario: skill was originally global, re-scoped to project during init
+      // Config says scope: "project" but plugin registry may have "user" scope entry
+      // The marketplace name in config differs from the skill source
+      await createProjectConfig(projectDir, {
+        marketplace: "marketplace",
+        skills: [{ id: "test-plugin", scope: "project", source: "custom-source" }],
+      });
+      const pluginDir = await createPluginDir(projectDir, fakeHome);
+
+      expect(await directoryExists(pluginDir)).toBe(true);
+
+      const { stdout } = await runCliCommand(["uninstall", "--yes"]);
+
+      // Plugin should be detected via marketplace fallback key and removed
+      expect(await directoryExists(pluginDir)).toBe(false);
+      expect(stdout).toContain("Uninstalled 1 plugin");
+    });
+
+    it("should uninstall global-scoped plugin that was re-scoped from project during edit", async () => {
+      // Scenario: skill was originally project, re-scoped to global during edit
+      // Config says scope: "global" but plugin registry may have "project" scope entry
+      const execModule = await import("../../../utils/exec");
+      const spy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
+      const cliSpy = vi.spyOn(execModule, "isClaudeCLIAvailable").mockResolvedValue(true);
+
+      const { uninstallPlugins: uninstallPluginsFn } = await import(
+        "../../../commands/uninstall"
+      );
+
+      const pluginsDir = path.join(projectDir, CLAUDE_DIR, "plugins");
+      await mkdir(pluginsDir, { recursive: true });
+      const pluginPath = path.join(pluginsDir, "test-plugin@marketplace");
+      await mkdir(pluginPath, { recursive: true });
+
+      const target = {
+        hasPlugins: true,
+        cliPluginNames: ["test-plugin@marketplace"],
+        pluginsDir,
+        config: {
+          skills: [{ id: "test-plugin" as SkillId, scope: "global" as const, source: "marketplace" }],
+        },
+      };
+
+      const result = await uninstallPluginsFn(target, projectDir);
+
+      expect(result.totalUninstalled).toBe(1);
+
+      // Should call claudePluginUninstall with both "user" (primary for global) and "project" (fallback)
+      const scopeArgs = spy.mock.calls.map((call) => call[1]);
+      expect(scopeArgs).toContain("user");
+      expect(scopeArgs).toContain("project");
+
+      spy.mockRestore();
+      cliSpy.mockRestore();
     });
   });
 

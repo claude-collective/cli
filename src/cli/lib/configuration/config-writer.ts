@@ -22,7 +22,7 @@ export type ConfigSourceOptions = {
 };
 
 /** Fields that are extracted into typed named variables below the export default */
-const EXTRACTED_FIELDS = new Set(["skills", "agents", "stack", "domains"]);
+const EXTRACTED_FIELDS = new Set(["skills", "agents", "stack", "domains", "selectedAgents"]);
 
 /**
  * Generates a TypeScript config file source from a ProjectConfig object.
@@ -83,14 +83,16 @@ function generateStandaloneConfig(cleaned: Record<string, unknown>): string {
   const agentsArr = (cleaned.agents as unknown[]) ?? [];
   const stackObj = cleaned.stack as Record<string, unknown> | undefined;
   const domainsArr = (cleaned.domains as unknown[]) ?? [];
+  const selectedAgentsArr = (cleaned.selectedAgents as string[]) ?? [];
 
   const hasSkills = skillsArr.length > 0;
   const hasAgents = agentsArr.length > 0;
   const hasStack = stackObj != null && Object.keys(stackObj).length > 0;
   const hasDomains = domainsArr.length > 0;
+  const hasSelectedAgents = selectedAgentsArr.length > 0;
 
   // Build type imports based on what's used
-  const typeImports = buildTypeImports({ hasSkills, hasAgents, hasStack, hasDomains });
+  const typeImports = buildTypeImports({ hasSkills, hasAgents, hasStack, hasDomains, hasSelectedAgents });
 
   const lines: string[] = [`import type { ${typeImports} } from "./config-types";`];
 
@@ -114,13 +116,19 @@ function generateStandaloneConfig(cleaned: Record<string, unknown>): string {
   if (hasStack) {
     lines.push(``);
     const stackBody = JSON.stringify(stackObj, null, 2);
-    lines.push(`const stack: Partial<Record<AgentName, StackAgentConfig>> = ${stackBody};`);
+    lines.push(`const stack: Partial<Record<ProjectAgentName, StackAgentConfig>> = ${stackBody};`);
   }
 
   if (hasDomains) {
     lines.push(``);
     const items = domainsArr.map((d) => JSON.stringify(d)).join(", ");
     lines.push(`const domains: Domain[] = [${items}];`);
+  }
+
+  if (hasSelectedAgents) {
+    lines.push(``);
+    const items = selectedAgentsArr.map((a) => JSON.stringify(a)).join(", ");
+    lines.push(`const selectedAgents: SelectedAgentName[] = [${items}];`);
   }
 
   // Build export default fields
@@ -135,6 +143,8 @@ function generateStandaloneConfig(cleaned: Record<string, unknown>): string {
         exportFields.push(`  stack,`);
       } else if (key === "domains") {
         exportFields.push(`  domains${hasDomains ? "" : ": []"},`);
+      } else if (key === "selectedAgents" && hasSelectedAgents) {
+        exportFields.push(`  selectedAgents,`);
       }
     } else {
       exportFields.push(`  ${JSON.stringify(key)}: ${JSON.stringify(value)},`);
@@ -159,12 +169,14 @@ function buildTypeImports(flags: {
   hasAgents: boolean;
   hasStack: boolean;
   hasDomains: boolean;
+  hasSelectedAgents?: boolean;
 }): string {
   const types: string[] = [];
-  if (flags.hasStack) types.push("AgentName");
-  if (flags.hasAgents) types.push("AgentScopeConfig");
   if (flags.hasDomains) types.push("Domain");
   types.push("ProjectConfig");
+  if (flags.hasStack) types.push("ProjectAgentName");
+  if (flags.hasStack || flags.hasSelectedAgents) types.push("SelectedAgentName");
+  if (flags.hasAgents) types.push("AgentScopeConfig");
   if (flags.hasSkills) types.push("SkillConfig");
   if (flags.hasStack) types.push("StackAgentConfig");
   return types.join(", ");
@@ -199,6 +211,7 @@ function generateProjectConfigWithGlobalImport(
     hasAgents: true, // Always present (spread from global)
     hasStack,
     hasDomains: hasProjectDomains,
+    hasSelectedAgents: hasProjectSelectedAgents,
   });
 
   const lines: string[] = [
@@ -226,7 +239,7 @@ function generateProjectConfigWithGlobalImport(
   if (hasStack) {
     lines.push(``);
     const stackBody = JSON.stringify(stackObj, null, 2);
-    lines.push(`const stack: Partial<Record<AgentName, StackAgentConfig>> = ${stackBody};`);
+    lines.push(`const stack: Partial<Record<ProjectAgentName, StackAgentConfig>> = ${stackBody};`);
   }
 
   // Domains variable (only if project has domains)
@@ -239,9 +252,16 @@ function generateProjectConfigWithGlobalImport(
     lines.push(`];`);
   }
 
-  // Build scalar fields (everything that isn't an extracted field, name, or selectedAgents)
+  // selectedAgents variable (only if project has selectedAgents)
+  if (hasProjectSelectedAgents) {
+    lines.push(``);
+    const items = selectedAgentsArr.map((a) => JSON.stringify(a)).join(", ");
+    lines.push(`const selectedAgents: SelectedAgentName[] = [...(globalConfig.selectedAgents ?? []), ${items}];`);
+  }
+
+  // Build scalar fields (everything that isn't an extracted field or name)
   const scalarFields = Object.entries(cleaned)
-    .filter(([key]) => !EXTRACTED_FIELDS.has(key) && key !== "name" && key !== "selectedAgents")
+    .filter(([key]) => !EXTRACTED_FIELDS.has(key) && key !== "name")
     .map(([key, value]) => `  ${JSON.stringify(key)}: ${JSON.stringify(value)},`)
     .join("\n");
 
@@ -259,12 +279,8 @@ function generateProjectConfigWithGlobalImport(
   if (hasProjectDomains) {
     exportFields.push(`  domains,`);
   }
-  // selectedAgents: spread global + project-scoped agents
   if (hasProjectSelectedAgents) {
-    const projectAgentItems = selectedAgentsArr.map((a) => `${JSON.stringify(a)}`).join(", ");
-    exportFields.push(
-      `  "selectedAgents": [...(globalConfig.selectedAgents ?? []), ${projectAgentItems}],`,
-    );
+    exportFields.push(`  selectedAgents,`);
   }
   if (scalarFields) {
     exportFields.push(scalarFields);
@@ -353,7 +369,11 @@ function generateProjectConfigWithInlinedGlobal(
   const hasProjectDomains = projectDomainsArr.length > 0;
   const hasDomains = hasGlobalDomains || hasProjectDomains;
 
-  const typeImports = buildTypeImports({ hasSkills, hasAgents, hasStack, hasDomains });
+  // Merge selectedAgents from global + project (deduplicated)
+  const allSelectedAgents = [...new Set([...globalSelectedAgentsArr, ...projectSelectedAgentsArr])];
+  const hasSelectedAgents = allSelectedAgents.length > 0;
+
+  const typeImports = buildTypeImports({ hasSkills, hasAgents, hasStack, hasDomains, hasSelectedAgents });
 
   const lines: string[] = [`import type { ${typeImports} } from "./config-types";`];
 
@@ -399,7 +419,7 @@ function generateProjectConfigWithInlinedGlobal(
   if (hasStack) {
     lines.push(``);
     const stackBody = JSON.stringify(filteredStack, null, 2);
-    lines.push(`const stack: Partial<Record<AgentName, StackAgentConfig>> = ${stackBody};`);
+    lines.push(`const stack: Partial<Record<ProjectAgentName, StackAgentConfig>> = ${stackBody};`);
   }
 
   // Domains variable
@@ -408,6 +428,13 @@ function generateProjectConfigWithInlinedGlobal(
     const allDomains = [...new Set([...globalDomainsArr, ...projectDomainsArr])];
     const items = allDomains.map((d) => JSON.stringify(d)).join(", ");
     lines.push(`const domains: Domain[] = [${items}];`);
+  }
+
+  // selectedAgents variable (merged global + project, deduplicated)
+  if (hasSelectedAgents) {
+    lines.push(``);
+    const items = allSelectedAgents.map((a) => JSON.stringify(a)).join(", ");
+    lines.push(`const selectedAgents: SelectedAgentName[] = [${items}];`);
   }
 
   // Build export default with inlined global scalar fields
@@ -419,7 +446,7 @@ function generateProjectConfigWithInlinedGlobal(
 
   // Project scalar fields (these take precedence over global)
   const projectScalarFields = Object.entries(cleaned).filter(
-    ([key]) => !EXTRACTED_FIELDS.has(key) && key !== "name" && key !== "selectedAgents",
+    ([key]) => !EXTRACTED_FIELDS.has(key) && key !== "name",
   );
   const projectScalarKeys = new Set(projectScalarFields.map(([key]) => key));
 
@@ -428,7 +455,6 @@ function generateProjectConfigWithInlinedGlobal(
     ([key]) =>
       !EXTRACTED_FIELDS.has(key) &&
       key !== "name" &&
-      key !== "selectedAgents" &&
       !projectScalarKeys.has(key),
   );
 
@@ -459,11 +485,8 @@ function generateProjectConfigWithInlinedGlobal(
     exportFields.push(`  domains,`);
   }
 
-  // Merge selectedAgents from global + project (deduplicated)
-  const allSelectedAgents = [...new Set([...globalSelectedAgentsArr, ...projectSelectedAgentsArr])];
-  if (allSelectedAgents.length > 0) {
-    const items = allSelectedAgents.map((a) => JSON.stringify(a)).join(", ");
-    exportFields.push(`  "selectedAgents": [${items}],`);
+  if (hasSelectedAgents) {
+    exportFields.push(`  selectedAgents,`);
   }
 
   lines.push(``);
@@ -538,6 +561,10 @@ export function generateBlankGlobalConfigTypesSource(): string {
 export type SkillId = never;
 
 export type AgentName = never;
+
+export type SelectedAgentName = never;
+
+export type ProjectAgentName = SelectedAgentName;
 
 export type Domain = never;
 

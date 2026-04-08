@@ -666,12 +666,14 @@ function hasAnyChanges(changes: ConfigChanges): boolean {
   );
 }
 
-type PluginScopeMigrationResult = {
+/** @internal Exported for testing */
+export type PluginScopeMigrationResult = {
   migrated: SkillId[];
   failed: Array<{ id: SkillId; error: string }>;
 };
 
-async function migratePluginSkillScopes(
+/** @internal Exported for testing */
+export async function migratePluginSkillScopes(
   scopeChanges: Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>,
   skills: Array<{ id: SkillId; source: string }>,
   marketplace: string,
@@ -686,12 +688,16 @@ async function migratePluginSkillScopes(
       continue;
     }
 
-    const oldPluginScope = change.from === "global" ? "user" : "project";
     const newPluginScope = change.to === "global" ? "user" : "project";
     const pluginRef = `${skillId}@${marketplace}`;
 
     try {
-      await claudePluginUninstall(skillId, oldPluginScope, projectDir);
+      // global→project: keep the global registration, just add project scope.
+      // The global plugin must remain for other projects.
+      // project→global: uninstall the project-scope registration, install global.
+      if (change.from === "project") {
+        await claudePluginUninstall(skillId, "project", projectDir);
+      }
       await claudePluginInstall(pluginRef, newPluginScope, projectDir);
       migrated.push(skillId);
     } catch (error) {

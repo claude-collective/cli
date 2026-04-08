@@ -279,7 +279,8 @@ export default class Uninstall extends BaseCommand {
   }
 }
 
-type UninstallTarget = {
+/** @internal Exported for testing */
+export type UninstallTarget = {
   hasPlugins: boolean;
   pluginNames: string[];
   /** Plugin names filtered to only those installed by this CLI (matched against config skills) */
@@ -341,9 +342,20 @@ function collectConfiguredAgents(config: Partial<ProjectConfig> | null): string[
   return config.agents.map((a) => a.name);
 }
 
-function getCliInstalledPluginKeys(config: Partial<ProjectConfig> | null): Set<string> {
+/** @internal Exported for testing */
+export function getCliInstalledPluginKeys(config: Partial<ProjectConfig> | null): Set<string> {
   if (!config?.skills) return new Set();
-  return new Set(config.skills.map((skill) => `${skill.id}@${skill.source}`));
+  const keys = new Set<string>();
+  for (const skill of config.skills) {
+    // Primary key: skill.id@skill.source
+    keys.add(`${skill.id}@${skill.source}`);
+    // Also add marketplace variant for plugins installed via marketplace
+    // where skill.source may differ (e.g., "eject" vs the marketplace name)
+    if (config.marketplace && skill.source !== config.marketplace && skill.source !== "eject") {
+      keys.add(`${skill.id}@${config.marketplace}`);
+    }
+  }
+  return keys;
 }
 
 /**
@@ -530,8 +542,9 @@ async function removeMatchingAgents(
  * Derives scope from per-skill config when available; falls back to project-level.
  *
  * @param onUninstalled - Called for each successfully uninstalled plugin name (for logging)
+ * @internal Exported for testing
  */
-async function uninstallPlugins(
+export async function uninstallPlugins(
   target: Pick<UninstallTarget, "hasPlugins" | "cliPluginNames" | "pluginsDir" | "config">,
   projectDir: string,
   onUninstalled?: (pluginName: string) => void,
@@ -545,14 +558,24 @@ async function uninstallPlugins(
 
   for (const pluginName of target.cliPluginNames) {
     if (cliAvailable) {
+      // Derive primary scope from per-skill config
+      const skillId = pluginName.split("@")[0];
+      const skillConfig = target.config?.skills?.find((s) => s.id === skillId);
+      const primaryScope = skillConfig?.scope === "global" ? "user" : "project";
+      const fallbackScope = primaryScope === "project" ? "user" : "project";
+
       try {
-        // Derive scope from per-skill config; fall back to project-level heuristic
-        const skillId = pluginName.split("@")[0];
-        const skillConfig = target.config?.skills?.find((s) => s.id === skillId);
-        const pluginScope = skillConfig?.scope === "global" ? "user" : "project";
-        await claudePluginUninstall(pluginName, pluginScope, projectDir);
+        await claudePluginUninstall(pluginName, primaryScope, projectDir);
       } catch {
-        // Best-effort: plugin may not be registered with Claude CLI
+        // Best-effort: plugin may not be registered with this scope
+      }
+
+      // Also try the other scope to handle re-scoped plugins
+      // where the registry entry may be under the original scope
+      try {
+        await claudePluginUninstall(pluginName, fallbackScope, projectDir);
+      } catch {
+        // Best-effort: plugin may not be registered with fallback scope either
       }
     }
 

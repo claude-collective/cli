@@ -218,6 +218,7 @@ export function buildSkillConfigs(
     id,
     scope: overrides?.scope ?? "project",
     source: overrides?.source ?? "eject",
+    ...(overrides?.excluded !== undefined && { excluded: overrides.excluded }),
   }));
 }
 
@@ -229,6 +230,7 @@ export function buildAgentConfigs(
     // Boundary cast: test factory accepts arbitrary agent names for test isolation
     name: name as AgentName,
     scope: overrides?.scope ?? "project",
+    ...(overrides?.excluded !== undefined && { excluded: overrides.excluded }),
   }));
 }
 
