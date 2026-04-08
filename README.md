@@ -5,6 +5,7 @@
 # Agents Inc
 
 An agent composition framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Compose specialized subagents from atomic skills:
+
 1. Select a stack or start from scratch
 2. Select your skills
 3. Select your subagents
