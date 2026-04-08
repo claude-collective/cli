@@ -1112,10 +1112,11 @@ describe("Excluded Skills — Global/Project Interaction", () => {
   });
 
   it("should route excluded global skill to project partition, not global partition", () => {
-    // Set up: react is selected globally, simulate edit flow with installed configs
+    // Set up: react is selected globally, simulate project init with existing global installation
     const store = useWizardStore.getState();
     useWizardStore.setState({
       installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+      isInitMode: true,
     });
     store.toggleDomain("web");
     store.toggleTechnology("web", "web-framework", "web-framework-react", true);
@@ -1235,12 +1236,13 @@ describe("Excluded Skills — Global/Project Interaction", () => {
   it("should complete full exclusion lifecycle: select globally, exclude, re-edit deselected, re-select clears exclusion", () => {
     const store = useWizardStore.getState();
 
-    // Step 1: Select react globally, simulate edit flow with installed configs
+    // Step 1: Select react globally, simulate project init with existing global installation
     store.toggleDomain("web");
     store.toggleTechnology("web", "web-framework", "web-framework-react", true);
-    // Set installed configs to simulate edit flow (react was previously installed)
+    // Set installed configs to simulate project init (react was previously installed globally)
     useWizardStore.setState({
       installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+      isInitMode: true,
     });
 
     const afterSelect = useWizardStore.getState();

@@ -74,11 +74,23 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
       )
     : [];
   const inheritedSkillIdSet = new Set(inheritedGlobalSkills.map((s) => s.id));
-  const uniqueExcludedGlobalSkills = excludedGlobalSkills.filter((s) => !inheritedSkillIdSet.has(s.id));
-  const allGlobalSkills = [...globalSkills, ...inheritedGlobalSkills, ...uniqueExcludedGlobalSkills];
+  const uniqueExcludedGlobalSkills = excludedGlobalSkills.filter(
+    (s) => !inheritedSkillIdSet.has(s.id),
+  );
+  const allGlobalSkills = [
+    ...globalSkills,
+    ...inheritedGlobalSkills,
+    ...uniqueExcludedGlobalSkills,
+  ];
   const inheritedAgentNameSet = new Set(inheritedGlobalAgents.map((a) => a.name));
-  const uniqueExcludedGlobalAgents = excludedGlobalAgents.filter((a) => !inheritedAgentNameSet.has(a.name));
-  const allGlobalAgents = [...globalAgents, ...inheritedGlobalAgents, ...uniqueExcludedGlobalAgents];
+  const uniqueExcludedGlobalAgents = excludedGlobalAgents.filter(
+    (a) => !inheritedAgentNameSet.has(a.name),
+  );
+  const allGlobalAgents = [
+    ...globalAgents,
+    ...inheritedGlobalAgents,
+    ...uniqueExcludedGlobalAgents,
+  ];
 
   const removedSkills = installedSkillConfigs
     ? installedSkillConfigs.filter((s) => !currentSkills.some((c) => c.id === s.id))

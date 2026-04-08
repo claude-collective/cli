@@ -578,8 +578,18 @@ describe("StepConfirm component", () => {
         <SkillAgentSummary
           skillConfigs={[
             { id: "web-framework-react" as SkillId, scope: "project", source: "agents-inc" },
-            { id: "web-framework-react" as SkillId, scope: "global", source: "agents-inc", excluded: true },
-            { id: "web-testing-vitest" as SkillId, scope: "global", source: "agents-inc", excluded: true },
+            {
+              id: "web-framework-react" as SkillId,
+              scope: "global",
+              source: "agents-inc",
+              excluded: true,
+            },
+            {
+              id: "web-testing-vitest" as SkillId,
+              scope: "global",
+              source: "agents-inc",
+              excluded: true,
+            },
           ]}
         />,
       );

@@ -393,6 +393,38 @@ describe("WizardStore", () => {
       const { domainSelections } = useWizardStore.getState();
       expect(domainSelections.web!["web-testing"]).toStrictEqual(["web-testing-playwright-e2e"]);
     });
+
+    it("should block toggling globally installed skills from project scope and set toastMessage", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        isEditingFromGlobalScope: false,
+        isInitMode: false,
+      });
+
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      const { domainSelections, toastMessage } = useWizardStore.getState();
+      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
+      expect(toastMessage).toBe("Global skills cannot be changed from project scope");
+    });
+
+    it("should allow toggling globally installed skills during init mode (preselections)", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        isEditingFromGlobalScope: false,
+        isInitMode: true,
+      });
+
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      const { domainSelections, toastMessage } = useWizardStore.getState();
+      expect(domainSelections.web!["web-framework"]).toStrictEqual([]);
+      expect(toastMessage).toBeNull();
+    });
   });
 
   describe("domain navigation", () => {
@@ -562,6 +594,7 @@ describe("WizardStore", () => {
         installedSkillConfigs: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
         ],
+        isEditingFromGlobalScope: true,
       });
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
@@ -597,6 +630,7 @@ describe("WizardStore", () => {
         installedSkillConfigs: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
         ],
+        isEditingFromGlobalScope: true,
       });
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("web", "web-framework", "web-framework-vue-composition-api", true);
@@ -627,6 +661,7 @@ describe("WizardStore", () => {
         installedSkillConfigs: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
         ],
+        isEditingFromGlobalScope: true,
       });
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       // Deselect: marks as excluded (edit flow with installed configs)
@@ -906,6 +941,7 @@ describe("WizardStore", () => {
         installedSkillConfigs: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
         ],
+        isEditingFromGlobalScope: true,
       });
       store.toggleDomain("web");
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
@@ -978,6 +1014,7 @@ describe("WizardStore", () => {
         installedSkillConfigs: [
           { id: "web-framework-react", scope: "global", source: "agents-inc" },
         ],
+        isEditingFromGlobalScope: true,
       });
       store.toggleDomain("web");
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
@@ -1578,7 +1615,9 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       // Simulate: was installed globally, now toggled to project
       useWizardStore.setState({
-        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        installedSkillConfigs: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+        ],
         skillConfigs: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
       });
 
@@ -1615,7 +1654,9 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        installedSkillConfigs: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+        ],
         skillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
       });
 
@@ -1629,8 +1670,12 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       // Don't toggle any technology — the excluded skill was deselected
       useWizardStore.setState({
-        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
-        skillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true }],
+        installedSkillConfigs: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+        ],
+        skillConfigs: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+        ],
       });
 
       const rows = store.buildSourceRows();
@@ -1644,7 +1689,9 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        installedSkillConfigs: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+        ],
         skillConfigs: [
           { id: "web-framework-react", scope: "project", source: "agents-inc" },
           { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
@@ -2350,6 +2397,7 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       useWizardStore.setState({
         installedSkillConfigs: [{ id: "web-state-pinia", scope: "global", source: "agents-inc" }],
+        isEditingFromGlobalScope: true,
       });
 
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);

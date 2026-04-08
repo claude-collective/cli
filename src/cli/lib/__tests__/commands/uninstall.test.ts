@@ -627,9 +627,7 @@ describe("uninstall command", () => {
       const cliSpy = vi.spyOn(execModule, "isClaudeCLIAvailable").mockResolvedValue(true);
 
       // Import the exported uninstallPlugins function
-      const { uninstallPlugins: uninstallPluginsFn } = await import(
-        "../../../commands/uninstall"
-      );
+      const { uninstallPlugins: uninstallPluginsFn } = await import("../../../commands/uninstall");
 
       const pluginsDir = path.join(projectDir, CLAUDE_DIR, "plugins");
       await mkdir(pluginsDir, { recursive: true });
@@ -641,7 +639,9 @@ describe("uninstall command", () => {
         cliPluginNames: ["test-plugin@marketplace"],
         pluginsDir,
         config: {
-          skills: [{ id: "test-plugin" as SkillId, scope: "project" as const, source: "marketplace" }],
+          skills: [
+            { id: "test-plugin" as SkillId, scope: "project" as const, source: "marketplace" },
+          ],
         },
       };
 
@@ -684,9 +684,7 @@ describe("uninstall command", () => {
       const spy = vi.spyOn(execModule, "claudePluginUninstall").mockResolvedValue();
       const cliSpy = vi.spyOn(execModule, "isClaudeCLIAvailable").mockResolvedValue(true);
 
-      const { uninstallPlugins: uninstallPluginsFn } = await import(
-        "../../../commands/uninstall"
-      );
+      const { uninstallPlugins: uninstallPluginsFn } = await import("../../../commands/uninstall");
 
       const pluginsDir = path.join(projectDir, CLAUDE_DIR, "plugins");
       await mkdir(pluginsDir, { recursive: true });
@@ -698,7 +696,9 @@ describe("uninstall command", () => {
         cliPluginNames: ["test-plugin@marketplace"],
         pluginsDir,
         config: {
-          skills: [{ id: "test-plugin" as SkillId, scope: "global" as const, source: "marketplace" }],
+          skills: [
+            { id: "test-plugin" as SkillId, scope: "global" as const, source: "marketplace" },
+          ],
         },
       };
 

@@ -367,7 +367,9 @@ describe("generateConfigSource", () => {
         selectedAgents: ["web-developer"],
       });
       const source = generateConfigSource(config, { isProjectConfig: true });
-      expect(source).toContain("const selectedAgents: SelectedAgentName[] = [...(globalConfig.selectedAgents ?? []), \"web-developer\"]");
+      expect(source).toContain(
+        'const selectedAgents: SelectedAgentName[] = [...(globalConfig.selectedAgents ?? []), "web-developer"]',
+      );
       expect(source).toContain("  selectedAgents,");
     });
 
@@ -529,7 +531,9 @@ describe("generateConfigSource", () => {
         isProjectConfig: true,
         globalConfig: globalWithAgents,
       });
-      expect(source).toContain('const selectedAgents: SelectedAgentName[] = ["web-reviewer", "web-developer"]');
+      expect(source).toContain(
+        'const selectedAgents: SelectedAgentName[] = ["web-reviewer", "web-developer"]',
+      );
       expect(source).toContain("  selectedAgents,");
     });
 

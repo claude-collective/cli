@@ -376,12 +376,12 @@ export function generateConfigTypesSource(
     ? formatUnion(config.selectedAgents as string[])
     : "AgentName";
 
-  const projectScopedAgents = config?.agents
-    ?.filter((a) => a.scope === "project" && !a.excluded)
-    ?.map((a) => a.name) ?? [];
-  const projectAgentNameLine = projectScopedAgents.length > 0
-    ? formatUnion(projectScopedAgents as string[])
-    : "SelectedAgentName";
+  const projectScopedAgents =
+    config?.agents?.filter((a) => a.scope === "project" && !a.excluded)?.map((a) => a.name) ?? [];
+  const projectAgentNameLine =
+    projectScopedAgents.length > 0
+      ? formatUnion(projectScopedAgents as string[])
+      : "SelectedAgentName";
 
   const skillsByCategory = buildSkillsByCategory(skillIds, categories, matrix);
   const stackAgentConfigType = generateStackAgentConfig(skillsByCategory);
@@ -553,15 +553,13 @@ export function generateProjectConfigTypesSource(options: ProjectConfigTypesOpti
     ? formatExtendedUnion("GlobalCategory", options.projectCategories!)
     : "GlobalCategory";
 
-  const selectedAgentNameUnion =
-    options.selectedAgentNames?.length
-      ? formatUnion(options.selectedAgentNames)
-      : "AgentName";
+  const selectedAgentNameUnion = options.selectedAgentNames?.length
+    ? formatUnion(options.selectedAgentNames)
+    : "AgentName";
 
-  const projectAgentNameUnion =
-    options.projectScopedAgentNames?.length
-      ? formatUnion(options.projectScopedAgentNames)
-      : "SelectedAgentName";
+  const projectAgentNameUnion = options.projectScopedAgentNames?.length
+    ? formatUnion(options.projectScopedAgentNames)
+    : "SelectedAgentName";
 
   // Import Category as GlobalCategory when we have project categories or need to re-export it
   const categoryImport = `  Category as GlobalCategory,\n`;

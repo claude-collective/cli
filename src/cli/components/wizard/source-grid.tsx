@@ -84,7 +84,10 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean; readOnly?:
     const prefix = option.selected ? `${UI_SYMBOLS.SELECTED} ` : `${UI_SYMBOLS.CHEVRON_SPACER} `;
     return (
       <Box width={SOURCE_COL_WIDTH}>
-        <Text dimColor>{prefix}{formatSourceLabel(option)}</Text>
+        <Text dimColor>
+          {prefix}
+          {formatSourceLabel(option)}
+        </Text>
       </Box>
     );
   }
@@ -123,7 +126,8 @@ const SourceSection: React.FC<SourceSectionProps> = ({
           >{` ${getSkillById(row.skillId).displayName} `}</Text>
         ) : (
           <Text color={CLI_COLORS.NEUTRAL} dimColor={row.readOnly}>
-            {getSkillById(row.skillId).displayName}{row.readOnly ? ` ${UI_SYMBOLS.LOCK}` : ""}
+            {getSkillById(row.skillId).displayName}
+            {row.readOnly ? ` ${UI_SYMBOLS.LOCK}` : ""}
           </Text>
         )}
       </Box>
@@ -199,10 +203,7 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     [rows, showSearchPill],
   );
 
-  const skipRow = useCallback(
-    (row: number): boolean => !!rows[row]?.readOnly,
-    [rows],
-  );
+  const skipRow = useCallback((row: number): boolean => !!rows[row]?.readOnly, [rows]);
 
   const effectiveDefaultRow = (() => {
     let row = defaultFocusedRow;
@@ -338,7 +339,11 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
           </Box>
         ))
       : rows.map((row, rowIndex) => (
-          <Box key={`${row.skillId}-${row.scope ?? "default"}`} ref={(el) => setSectionRef(rowIndex, el)} {...noShrink}>
+          <Box
+            key={`${row.skillId}-${row.scope ?? "default"}`}
+            ref={(el) => setSectionRef(rowIndex, el)}
+            {...noShrink}
+          >
             <SourceSection
               row={row}
               isFocused={rowIndex === focusedRow}

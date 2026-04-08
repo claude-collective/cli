@@ -92,7 +92,13 @@ function generateStandaloneConfig(cleaned: Record<string, unknown>): string {
   const hasSelectedAgents = selectedAgentsArr.length > 0;
 
   // Build type imports based on what's used
-  const typeImports = buildTypeImports({ hasSkills, hasAgents, hasStack, hasDomains, hasSelectedAgents });
+  const typeImports = buildTypeImports({
+    hasSkills,
+    hasAgents,
+    hasStack,
+    hasDomains,
+    hasSelectedAgents,
+  });
 
   const lines: string[] = [`import type { ${typeImports} } from "./config-types";`];
 
@@ -256,7 +262,9 @@ function generateProjectConfigWithGlobalImport(
   if (hasProjectSelectedAgents) {
     lines.push(``);
     const items = selectedAgentsArr.map((a) => JSON.stringify(a)).join(", ");
-    lines.push(`const selectedAgents: SelectedAgentName[] = [...(globalConfig.selectedAgents ?? []), ${items}];`);
+    lines.push(
+      `const selectedAgents: SelectedAgentName[] = [...(globalConfig.selectedAgents ?? []), ${items}];`,
+    );
   }
 
   // Build scalar fields (everything that isn't an extracted field or name)
@@ -373,7 +381,13 @@ function generateProjectConfigWithInlinedGlobal(
   const allSelectedAgents = [...new Set([...globalSelectedAgentsArr, ...projectSelectedAgentsArr])];
   const hasSelectedAgents = allSelectedAgents.length > 0;
 
-  const typeImports = buildTypeImports({ hasSkills, hasAgents, hasStack, hasDomains, hasSelectedAgents });
+  const typeImports = buildTypeImports({
+    hasSkills,
+    hasAgents,
+    hasStack,
+    hasDomains,
+    hasSelectedAgents,
+  });
 
   const lines: string[] = [`import type { ${typeImports} } from "./config-types";`];
 
@@ -452,10 +466,7 @@ function generateProjectConfigWithInlinedGlobal(
 
   // Global scalar fields (only emit if not overridden by project)
   const globalScalarFields = Object.entries(cleanedGlobal).filter(
-    ([key]) =>
-      !EXTRACTED_FIELDS.has(key) &&
-      key !== "name" &&
-      !projectScalarKeys.has(key),
+    ([key]) => !EXTRACTED_FIELDS.has(key) && key !== "name" && !projectScalarKeys.has(key),
   );
 
   for (const [key, value] of globalScalarFields) {
