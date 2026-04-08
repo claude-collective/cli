@@ -589,6 +589,7 @@ export type WizardState = {
     skillId: SkillId;
     options: SourceOption[];
     scope?: "global" | "project";
+    readOnly?: boolean;
   }[];
 };
 
@@ -1017,17 +1018,39 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleAgent: (agent) =>
     set((state) => {
-      const isSelected = state.selectedAgents.includes(agent);
+      const isInList = state.selectedAgents.includes(agent);
+      const hasExcludedTombstone = state.agentConfigs.some(
+        (ac) => ac.name === agent && ac.excluded,
+      );
+      // An agent is effectively selected only if it's in the list WITHOUT an excluded tombstone.
+      // When it has an excluded tombstone, it's visually "off" and toggling means "re-enable".
+      const isSelected = isInList && !hasExcludedTombstone;
+
+      const updatedAgentConfigs = applyAgentToggle(
+        state.agentConfigs,
+        agent,
+        isSelected,
+        state.installedAgentConfigs,
+      );
+
+      // When toggling off a globally-installed agent, keep it in selectedAgents.
+      // It gets an excluded tombstone in agentConfigs but must remain in selectedAgents
+      // so SelectedAgentName stays correct for other projects sharing the global config.
+      const wasInstalledGlobal =
+        state.installedAgentConfigs?.some(
+          (ac) => ac.name === agent && ac.scope === "global",
+        ) ?? false;
+      const isExcludedToggleOff = isSelected && wasInstalledGlobal;
+
       return {
-        selectedAgents: isSelected
-          ? state.selectedAgents.filter((a) => a !== agent)
-          : [...state.selectedAgents, agent],
-        agentConfigs: applyAgentToggle(
-          state.agentConfigs,
-          agent,
-          isSelected,
-          state.installedAgentConfigs,
-        ),
+        selectedAgents: isExcludedToggleOff
+          ? state.selectedAgents
+          : isSelected
+            ? state.selectedAgents.filter((a) => a !== agent)
+            : isInList
+              ? state.selectedAgents
+              : [...state.selectedAgents, agent],
+        agentConfigs: updatedAgentConfigs,
       };
     }),
 
@@ -1206,9 +1229,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     const inheritedSkillIds = skillConfigs
       .filter((sc) => !sc.excluded && !selectedSet.has(sc.id))
       .map((sc) => sc.id);
-    const allSkillIds = [...inheritedSkillIds, ...selectedTechnologies];
+    const allActiveIds = new Set([...inheritedSkillIds, ...selectedTechnologies]);
+    const excludedGlobalIds = skillConfigs
+      .filter((sc) => sc.excluded && sc.scope === "global" && !allActiveIds.has(sc.id))
+      .map((sc) => sc.id);
+    const allSkillIds = [...inheritedSkillIds, ...selectedTechnologies, ...excludedGlobalIds];
 
-    return allSkillIds.map((tech) => {
+    return allSkillIds.flatMap((tech) => {
       const skillId = resolveAlias(tech);
       const skill = getSkillById(skillId);
       const configEntry = skillConfigs.find((sc) => sc.id === skillId);
@@ -1250,7 +1277,40 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       options.push(...buildBoundSkillOptions(boundSkills, slug, selectedSource));
 
-      return { skillId, options, scope: configEntry?.scope };
+      const isExcludedGlobal = configEntry?.excluded && configEntry?.scope === "global";
+      if (isExcludedGlobal && !state.isEditingFromGlobalScope) {
+        const installedSource = state.installedSkillConfigs?.find(
+          (sc) => sc.id === skillId && sc.scope === "global" && !sc.excluded
+        )?.source ?? configEntry.source;
+        const excludedOptions = options.map((o) => ({
+          ...o,
+          selected: o.id === installedSource,
+        }));
+        return [{ skillId, options: excludedOptions, scope: "global" as const, readOnly: true }];
+      }
+
+      const isInstalledGlobal = state.installedSkillConfigs?.some(
+        (sc) => sc.id === skillId && sc.scope === "global" && !sc.excluded
+      );
+      const wasReScoped = !state.isEditingFromGlobalScope && !!isInstalledGlobal && configEntry?.scope === "project";
+
+      if (wasReScoped) {
+        // Skill toggled from global to project — emit locked global copy + editable project copy
+        const installedSource = state.installedSkillConfigs!.find(
+          (sc) => sc.id === skillId && sc.scope === "global" && !sc.excluded
+        )!.source;
+        const globalOptions = options.map((o) => ({
+          ...o,
+          selected: o.id === installedSource,
+        }));
+        return [
+          { skillId, options: globalOptions, scope: "global" as const, readOnly: true },
+          { skillId, options, scope: "project" as const },
+        ];
+      }
+
+      const readOnly = !state.isEditingFromGlobalScope && !!isInstalledGlobal;
+      return [{ skillId, options, scope: configEntry?.scope, ...(readOnly ? { readOnly } : {}) }];
     });
   },
 }));

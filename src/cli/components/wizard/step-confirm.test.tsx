@@ -1,12 +1,14 @@
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepConfirm } from "./step-confirm";
+import { SkillAgentSummary } from "./skill-agent-summary";
 import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 import { buildAgentConfigs, buildSkillConfigs } from "../../lib/__tests__/helpers";
 import { initializeMatrix } from "../../lib/matrix/matrix-provider";
-import { WEB_PAIR_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
+import { WEB_PAIR_MATRIX, WEB_TRIO_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
 import { useWizardStore } from "../../stores/wizard-store";
 import type { SkillConfig } from "../../types/config";
+import type { SkillId } from "../../types";
 
 describe("StepConfirm component", () => {
   let cleanup: (() => void) | undefined;
@@ -460,6 +462,142 @@ describe("StepConfirm component", () => {
       await delay(RENDER_DELAY_MS);
 
       expect(onComplete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("excluded global items", () => {
+    it("should show excluded global skill in Global section alongside active skills", () => {
+      const installed = buildSkillConfigs(["web-framework-react", "web-state-zustand"], {
+        scope: "global",
+      });
+      useWizardStore.setState({ installedSkillConfigs: installed });
+
+      const skillConfigs: SkillConfig[] = [
+        ...buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        ...buildSkillConfigs(["web-state-zustand"], { scope: "global", excluded: true }),
+      ];
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm onComplete={vi.fn()} skillConfigs={skillConfigs} />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame() ?? "";
+      expect(output).toContain("Global");
+      expect(output).toContain("React");
+      expect(output).toContain("Zustand");
+    });
+
+    it("should not hide excluded global skill from output", () => {
+      const installed = buildSkillConfigs(["web-framework-react"], { scope: "global" });
+      useWizardStore.setState({ installedSkillConfigs: installed });
+
+      const skillConfigs = buildSkillConfigs(["web-framework-react"], {
+        scope: "global",
+        excluded: true,
+      });
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm onComplete={vi.fn()} skillConfigs={skillConfigs} />,
+      );
+      cleanup = unmount;
+
+      const lines = (lastFrame() ?? "").split("\n");
+      const reactLine = lines.find((line) => line.includes("React"));
+      expect(reactLine).toBeDefined();
+    });
+
+    it("should show excluded global agent in Global section", () => {
+      const installed = buildAgentConfigs(["web-developer"], { scope: "global" });
+      useWizardStore.setState({ installedAgentConfigs: installed });
+
+      const agentConfigs = buildAgentConfigs(["web-developer"], {
+        scope: "global",
+        excluded: true,
+      });
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm onComplete={vi.fn()} agentConfigs={agentConfigs} />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame() ?? "";
+      expect(output).toContain("Global");
+      expect(output).toContain("web-developer");
+    });
+
+    it("should show Global section when only excluded global skills exist", () => {
+      useWizardStore.setState({ installedSkillConfigs: [] });
+
+      const skillConfigs = buildSkillConfigs(["web-framework-react"], {
+        scope: "global",
+        excluded: true,
+      });
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm onComplete={vi.fn()} skillConfigs={skillConfigs} />,
+      );
+      cleanup = unmount;
+
+      expect(lastFrame()).toContain("Global");
+    });
+
+    it("should not duplicate a re-scoped skill in the Global section", () => {
+      useWizardStore.setState({
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+      });
+
+      const skillConfigs: SkillConfig[] = [
+        ...buildSkillConfigs(["web-framework-react"], { scope: "project" }),
+        ...buildSkillConfigs(["web-framework-react"], { scope: "global", excluded: true }),
+      ];
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm onComplete={vi.fn()} skillConfigs={skillConfigs} />,
+      );
+      cleanup = unmount;
+
+      const lines = (lastFrame() ?? "").split("\n");
+      const reactLines = lines.filter((line) => line.includes("React"));
+      // Once in Global (inherited) + once in Project (re-scoped) = 2, not 3
+      expect(reactLines).toHaveLength(2);
+    });
+
+    it("should show correct entries for mixed re-scoped and excluded skills", () => {
+      initializeMatrix(WEB_TRIO_MATRIX);
+      useWizardStore.setState({
+        isInitMode: false,
+        installedSkillConfigs: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+        ],
+        installedAgentConfigs: null,
+      });
+
+      const { lastFrame, unmount } = render(
+        <SkillAgentSummary
+          skillConfigs={[
+            { id: "web-framework-react" as SkillId, scope: "project", source: "agents-inc" },
+            { id: "web-framework-react" as SkillId, scope: "global", source: "agents-inc", excluded: true },
+            { id: "web-testing-vitest" as SkillId, scope: "global", source: "agents-inc", excluded: true },
+          ]}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+
+      // React should appear twice: once in Global (inherited •), once in Project (+)
+      const reactMatches = output.split("React").length - 1;
+      expect(reactMatches).toBe(2);
+
+      // Vitest should appear once in Global (excluded)
+      const vitestMatches = output.split("Vitest").length - 1;
+      expect(vitestMatches).toBe(1);
+
+      // Should show both scope sections
+      expect(output).toContain("Project");
+      expect(output).toContain("Global");
     });
   });
 

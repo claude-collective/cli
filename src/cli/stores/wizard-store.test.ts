@@ -1525,6 +1525,190 @@ describe("WizardStore", () => {
       expect(rows[0].skillId).toBe("web-framework-react");
       expect(rows[0].scope).toBeUndefined();
     });
+
+    it("should mark global-scoped skills as readOnly when previously installed globally", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+      });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].readOnly).toBe(true);
+    });
+
+    it("should not mark global-scoped skills as readOnly when not previously installed", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      // installedSkillConfigs is null (default) — no prior installs
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].readOnly).toBeUndefined();
+    });
+
+    it("should not mark global-scoped skills as readOnly when editing from global scope", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        isEditingFromGlobalScope: true,
+        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+      });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].readOnly).toBeUndefined();
+    });
+
+    it("should not mark project-scoped skills as readOnly when previously installed as project", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        installedSkillConfigs: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+      });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].readOnly).toBeUndefined();
+    });
+
+    it("should emit both global locked and project editable rows for re-scoped skills", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      // Simulate: was installed globally, now toggled to project
+      useWizardStore.setState({
+        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        skillConfigs: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
+      });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(2);
+
+      // First row: locked global copy
+      expect(rows[0].skillId).toBe("web-framework-react");
+      expect(rows[0].scope).toBe("global");
+      expect(rows[0].readOnly).toBe(true);
+
+      // Second row: editable project copy
+      expect(rows[1].skillId).toBe("web-framework-react");
+      expect(rows[1].scope).toBe("project");
+      expect(rows[1].readOnly).toBeUndefined();
+    });
+
+    it("should not mark new global skills as readOnly when not previously installed", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      // No installedSkillConfigs entry for this skill — it's new
+      useWizardStore.setState({
+        installedSkillConfigs: [],
+        skillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+      });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].scope).toBe("global");
+      expect(rows[0].readOnly).toBeUndefined();
+    });
+
+    it("should emit single locked row for skill that remains global-scoped", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        skillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+      });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].scope).toBe("global");
+      expect(rows[0].readOnly).toBe(true);
+    });
+
+    it("should show excluded global skills as locked rows", () => {
+      const store = useWizardStore.getState();
+      // Don't toggle any technology — the excluded skill was deselected
+      useWizardStore.setState({
+        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        skillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true }],
+      });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].skillId).toBe("web-framework-react");
+      expect(rows[0].scope).toBe("global");
+      expect(rows[0].readOnly).toBe(true);
+    });
+
+    it("should not duplicate rows for re-scoped skills with excluded tombstone", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        skillConfigs: [
+          { id: "web-framework-react", scope: "project", source: "agents-inc" },
+          { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+        ],
+      });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(2);
+      expect(rows[0].scope).toBe("global");
+      expect(rows[0].readOnly).toBe(true);
+      expect(rows[1].scope).toBe("project");
+      expect(rows[1].readOnly).toBeUndefined();
+    });
+
+    it("should emit single editable row for new project-scoped skill", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        installedSkillConfigs: [],
+        skillConfigs: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
+      });
+
+      const rows = store.buildSourceRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].skillId).toBe("web-framework-react");
+      expect(rows[0].scope).toBe("project");
+      expect(rows[0].readOnly).toBeUndefined();
+    });
+
+    it("should produce correct rows for mixed re-scoped and excluded skills", () => {
+      const store = useWizardStore.getState();
+      // React is selected (re-scoped to project), Vitest is NOT selected (purely excluded)
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        installedSkillConfigs: [
+          { id: "web-framework-react", scope: "global", source: "agents-inc" },
+          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+        ],
+        skillConfigs: [
+          { id: "web-framework-react", scope: "project", source: "agents-inc" },
+          { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+          { id: "web-testing-vitest", scope: "global", source: "agents-inc", excluded: true },
+        ],
+      });
+
+      const rows = store.buildSourceRows();
+      // React: 2 rows (locked global + editable project)
+      // Vitest: 1 row (locked global, purely excluded)
+      // Total: 3
+      expect(rows).toHaveLength(3);
+
+      const reactRows = rows.filter((r) => r.skillId === "web-framework-react");
+      const vitestRows = rows.filter((r) => r.skillId === "web-testing-vitest");
+
+      expect(reactRows).toHaveLength(2);
+      expect(reactRows[0].scope).toBe("global");
+      expect(reactRows[0].readOnly).toBe(true);
+      expect(reactRows[1].scope).toBe("project");
+      expect(reactRows[1].readOnly).toBeUndefined();
+
+      expect(vitestRows).toHaveLength(1);
+      expect(vitestRows[0].scope).toBe("global");
+      expect(vitestRows[0].readOnly).toBe(true);
+    });
   });
 
   describe("agent selection", () => {
@@ -1655,7 +1839,7 @@ describe("WizardStore", () => {
       expect(agentConfigs).toStrictEqual([]);
     });
 
-    it("should mark global agent as excluded when deselected during edit", () => {
+    it("should mark global agent as excluded when deselected during edit and keep in selectedAgents", () => {
       const store = useWizardStore.getState();
       useWizardStore.setState({
         installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
@@ -1665,7 +1849,7 @@ describe("WizardStore", () => {
 
       store.toggleAgent("web-developer");
       const { selectedAgents, agentConfigs } = useWizardStore.getState();
-      expect(selectedAgents).toStrictEqual([]);
+      expect(selectedAgents).toStrictEqual(["web-developer"]);
       expect(agentConfigs).toStrictEqual([
         { name: "web-developer", scope: "global", excluded: true },
       ]);
@@ -1685,6 +1869,49 @@ describe("WizardStore", () => {
       expect(agentConfigs).toStrictEqual([
         { name: "web-developer", scope: "global", excluded: undefined },
       ]);
+    });
+
+    it("should keep excluded global agent in selectedAgents when toggled off", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      useWizardStore.setState({
+        installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+      });
+
+      store.toggleAgent("web-developer");
+
+      const { selectedAgents, agentConfigs } = useWizardStore.getState();
+      expect(selectedAgents).toContain("web-developer");
+      expect(agentConfigs).toContainEqual(
+        expect.objectContaining({ name: "web-developer", excluded: true }),
+      );
+    });
+
+    it("should remove non-installed agent from selectedAgents when toggled off", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+
+      store.toggleAgent("web-developer");
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).not.toContain("web-developer");
+    });
+
+    it("should restore excluded global agent when toggled back on", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      useWizardStore.setState({
+        installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+      });
+
+      store.toggleAgent("web-developer");
+      store.toggleAgent("web-developer");
+
+      const { selectedAgents, agentConfigs } = useWizardStore.getState();
+      expect(selectedAgents).toContain("web-developer");
+      expect(agentConfigs).not.toContainEqual(
+        expect.objectContaining({ name: "web-developer", excluded: true }),
+      );
     });
 
     it("should not toggle agent scope when isEditingFromGlobalScope is true", () => {

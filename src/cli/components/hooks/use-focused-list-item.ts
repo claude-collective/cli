@@ -18,6 +18,8 @@ type UseFocusedListItemOptions = {
   initialRow?: number;
   /** Initial col index (default: 0) */
   initialCol?: number;
+  /** Optional predicate: when it returns true for a row index, that row is skipped during vertical navigation. */
+  skipRow?: (row: number) => boolean;
 };
 
 type UseFocusedListItemResult = {
@@ -44,6 +46,7 @@ export function useFocusedListItem(
     onChange,
     initialRow = 0,
     initialCol = 0,
+    skipRow,
   } = options;
 
   const [focusedRow, setFocusedRow] = useState(initialRow);
@@ -73,13 +76,19 @@ export function useFocusedListItem(
   const findNextRow = useCallback(
     (fromRow: number, direction: 1 | -1): number => {
       if (rowCount === 0) return fromRow;
-      if (wrap) {
-        return (fromRow + direction + rowCount) % rowCount;
+      let next = fromRow;
+      for (let i = 0; i < rowCount; i++) {
+        if (wrap) {
+          next = (next + direction + rowCount) % rowCount;
+        } else {
+          next = next + direction;
+          if (next < 0 || next >= rowCount) return fromRow;
+        }
+        if (!skipRow || !skipRow(next)) return next;
       }
-      const next = fromRow + direction;
-      return Math.max(0, Math.min(rowCount - 1, next));
+      return fromRow; // All rows skipped — stay put
     },
-    [rowCount, wrap],
+    [rowCount, wrap, skipRow],
   );
 
   const moveFocus = useCallback(
@@ -116,7 +125,7 @@ export function useFocusedListItem(
         applyFocus(newRow, finalCol);
       }
     },
-    [getColCount, wrap, findValidCol, adjustCol, findNextRow, applyFocus],
+    [getColCount, wrap, findValidCol, adjustCol, findNextRow, applyFocus, skipRow],
   );
 
   return { focusedRow, focusedCol, setFocused, moveFocus };

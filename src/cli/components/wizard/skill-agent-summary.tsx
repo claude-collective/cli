@@ -46,6 +46,8 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
   const globalSkills = currentSkills.filter((s) => s.scope === "global" && !s.excluded);
   const projectAgents = currentAgents.filter((a) => a.scope === "project" && !a.excluded);
   const globalAgents = currentAgents.filter((a) => a.scope === "global" && !a.excluded);
+  const excludedGlobalSkills = currentSkills.filter((s) => s.scope === "global" && !!s.excluded);
+  const excludedGlobalAgents = currentAgents.filter((a) => a.scope === "global" && !!a.excluded);
 
   const prevSkillKeySet = installedSkillConfigs
     ? new Set(installedSkillConfigs.map((s) => `${s.id}:${s.scope}`))
@@ -71,8 +73,12 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
           projectAgents.some((p) => p.name === a.name),
       )
     : [];
-  const allGlobalSkills = [...globalSkills, ...inheritedGlobalSkills];
-  const allGlobalAgents = [...globalAgents, ...inheritedGlobalAgents];
+  const inheritedSkillIdSet = new Set(inheritedGlobalSkills.map((s) => s.id));
+  const uniqueExcludedGlobalSkills = excludedGlobalSkills.filter((s) => !inheritedSkillIdSet.has(s.id));
+  const allGlobalSkills = [...globalSkills, ...inheritedGlobalSkills, ...uniqueExcludedGlobalSkills];
+  const inheritedAgentNameSet = new Set(inheritedGlobalAgents.map((a) => a.name));
+  const uniqueExcludedGlobalAgents = excludedGlobalAgents.filter((a) => !inheritedAgentNameSet.has(a.name));
+  const allGlobalAgents = [...globalAgents, ...inheritedGlobalAgents, ...uniqueExcludedGlobalAgents];
 
   const removedSkills = installedSkillConfigs
     ? installedSkillConfigs.filter((s) => !currentSkills.some((c) => c.id === s.id))
@@ -176,8 +182,7 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <Box flexDirection="column">
               {projectAgents.map((agent) => {
                 const isNew =
-                  prevAgentKeySet === null ||
-                  !prevAgentKeySet.has(`${agent.name}:${agent.scope}`);
+                  prevAgentKeySet === null || !prevAgentKeySet.has(`${agent.name}:${agent.scope}`);
                 const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
                 const color = isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL;
                 return (
@@ -201,8 +206,7 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <Box flexDirection="column">
               {allGlobalAgents.map((agent) => {
                 const isNew =
-                  prevAgentKeySet === null ||
-                  !prevAgentKeySet.has(`${agent.name}:${agent.scope}`);
+                  prevAgentKeySet === null || !prevAgentKeySet.has(`${agent.name}:${agent.scope}`);
                 const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
                 const color = isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL;
                 return (

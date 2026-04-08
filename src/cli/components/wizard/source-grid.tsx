@@ -31,6 +31,7 @@ export type SourceRow = {
   skillId: SkillId;
   options: SourceOption[];
   scope?: "global" | "project";
+  readOnly?: boolean;
 };
 
 export type SourceGridProps = {
@@ -74,10 +75,20 @@ function formatSourceLabel(option: SourceOption): string {
   return option.displayName ?? SOURCE_DISPLAY_NAMES[option.id] ?? option.id;
 }
 
-const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
+const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean; readOnly?: boolean }> = ({
   option,
   isFocused,
+  readOnly,
 }) => {
+  if (readOnly) {
+    const prefix = option.selected ? `${UI_SYMBOLS.SELECTED} ` : `${UI_SYMBOLS.CHEVRON_SPACER} `;
+    return (
+      <Box width={SOURCE_COL_WIDTH}>
+        <Text dimColor>{prefix}{formatSourceLabel(option)}</Text>
+      </Box>
+    );
+  }
+
   const textColor = option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.WHITE;
   const isBold = isFocused || option.selected;
   const prefix = isFocused ? `${UI_SYMBOLS.CHEVRON} ` : `${UI_SYMBOLS.CHEVRON_SPACER} `;
@@ -99,17 +110,21 @@ const SourceSection: React.FC<SourceSectionProps> = ({
   showSearchPill,
 }) => {
   const searchPillIndex = row.options.length;
+  const effectiveFocused = row.readOnly ? false : isFocused;
+  const effectiveShowSearchPill = row.readOnly ? false : showSearchPill;
 
   return (
     <Box flexDirection="row">
       <Box width={SKILL_NAME_WIDTH}>
-        {isFocused ? (
+        {effectiveFocused ? (
           <Text
             color={CLI_COLORS.WHITE}
             backgroundColor={CLI_COLORS.LABEL_BG}
           >{` ${getSkillById(row.skillId).displayName} `}</Text>
         ) : (
-          <Text color={CLI_COLORS.NEUTRAL}>{getSkillById(row.skillId).displayName}</Text>
+          <Text color={CLI_COLORS.NEUTRAL} dimColor={row.readOnly}>
+            {getSkillById(row.skillId).displayName}{row.readOnly ? ` ${UI_SYMBOLS.LOCK}` : ""}
+          </Text>
         )}
       </Box>
 
@@ -118,11 +133,12 @@ const SourceSection: React.FC<SourceSectionProps> = ({
           <SourceTag
             key={option.id}
             option={option}
-            isFocused={isFocused && index === focusedOptionIndex}
+            isFocused={effectiveFocused && index === focusedOptionIndex}
+            readOnly={row.readOnly}
           />
         ))}
-        {showSearchPill && (
-          <SearchPill isFocused={isFocused && focusedOptionIndex === searchPillIndex} />
+        {effectiveShowSearchPill && (
+          <SearchPill isFocused={effectiveFocused && focusedOptionIndex === searchPillIndex} />
         )}
       </Box>
     </Box>
@@ -183,11 +199,26 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     [rows, showSearchPill],
   );
 
+  const skipRow = useCallback(
+    (row: number): boolean => !!rows[row]?.readOnly,
+    [rows],
+  );
+
+  const effectiveDefaultRow = (() => {
+    let row = defaultFocusedRow;
+    for (let i = 0; i < rows.length; i++) {
+      if (!rows[row]?.readOnly) return row;
+      row = (row + 1) % rows.length;
+    }
+    return defaultFocusedRow;
+  })();
+
   const { focusedRow, focusedCol, moveFocus } = useFocusedListItem(rows.length, getColCount, {
     wrap: true,
     onChange: onFocusChange,
-    initialRow: defaultFocusedRow,
+    initialRow: effectiveDefaultRow,
     initialCol: defaultFocusedCol,
+    skipRow,
   });
 
   const { setSectionRef, scrollEnabled, scrollTopPx } = useSectionScroll({
@@ -210,7 +241,7 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
       ) => {
         if (input === " ") {
           const currentRow = rows[focusedRow];
-          if (!currentRow) return;
+          if (!currentRow || currentRow.readOnly) return;
           if (showSearchPill && focusedCol === currentRow.options.length) {
             void handleSearchTrigger(focusedRow);
             return;
@@ -284,7 +315,7 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
           <Box key={group.label} flexDirection="column" marginTop={1} {...noShrink}>
             {group.rows.map(({ row, originalIndex }, rowIndexInGroup) => (
               <Box
-                key={row.skillId}
+                key={`${row.skillId}-${row.scope ?? "default"}`}
                 flexDirection="row"
                 ref={(el) => setSectionRef(originalIndex, el)}
                 {...noShrink}
@@ -307,7 +338,7 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
           </Box>
         ))
       : rows.map((row, rowIndex) => (
-          <Box key={row.skillId} ref={(el) => setSectionRef(rowIndex, el)} {...noShrink}>
+          <Box key={`${row.skillId}-${row.scope ?? "default"}`} ref={(el) => setSectionRef(rowIndex, el)} {...noShrink}>
             <SourceSection
               row={row}
               isFocused={rowIndex === focusedRow}

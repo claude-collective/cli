@@ -2,6 +2,7 @@ import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { SourceGrid, type SourceGridProps, type SourceRow, type SourceOption } from "./source-grid";
 import type { BoundSkillCandidate, SkillId } from "../../types";
+import { UI_SYMBOLS } from "../../consts";
 import { initializeMatrix } from "../../lib/matrix/matrix-provider";
 import { BUILT_IN_MATRIX } from "../../types/generated/matrix";
 import { createMockMatrix, createMockSkill } from "../../lib/__tests__/helpers";
@@ -30,10 +31,12 @@ const createSourceRow = (
   skillId: SkillId,
   options: SourceOption[],
   scope?: "global" | "project",
+  readOnly?: boolean,
 ): SourceRow => ({
   skillId,
   options,
   scope,
+  ...(readOnly ? { readOnly } : {}),
 });
 
 const defaultRows: SourceRow[] = [
@@ -671,6 +674,200 @@ describe("SourceGrid component", () => {
 
       expect(mockBind).toHaveBeenCalledWith(searchCandidates[0]);
       expect(mockSearchStateChange).toHaveBeenLastCalledWith(false);
+    });
+  });
+
+  describe("read-only rows", () => {
+    const readOnlyRows: SourceRow[] = [
+      createSourceRow(
+        "web-framework-react",
+        [createSourceOption("public", { selected: true }), createSourceOption("eject")],
+        "global",
+        true,
+      ),
+      createSourceRow(
+        "web-state-zustand",
+        [createSourceOption("public", { selected: true })],
+        "project",
+      ),
+    ];
+
+    it("should render read-only rows with lock indicator", () => {
+      const { lastFrame, unmount } = renderGrid({ rows: readOnlyRows });
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      expect(output).toContain(UI_SYMBOLS.LOCK);
+    });
+
+    it("should render read-only rows with dimmed styling", () => {
+      const { lastFrame, unmount } = renderGrid({ rows: readOnlyRows });
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      expect(output).toContain("React");
+      expect(output).toContain("Zustand");
+    });
+
+    it("should show selected source indicator on read-only rows", () => {
+      const { lastFrame, unmount } = renderGrid({ rows: readOnlyRows });
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      expect(output).toContain(UI_SYMBOLS.SELECTED);
+    });
+
+    it("should not fire onSelect for read-only rows (defense-in-depth guard)", async () => {
+      const onSelect = vi.fn();
+      const { stdin, unmount } = renderGrid({
+        rows: readOnlyRows,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
+        onSelect,
+      });
+      cleanup = unmount;
+
+      // defaultFocusedRow 0 is readOnly, so focus adjusts to row 1
+      // Pressing space on non-readOnly row 1 fires onSelect for that row
+      await delay(RENDER_DELAY_MS);
+      stdin.write(SPACE);
+      await delay(INPUT_DELAY_MS);
+
+      expect(onSelect).toHaveBeenCalledWith("web-state-zustand", "public");
+    });
+
+    it("should skip read-only rows during navigation", async () => {
+      const threeRows: SourceRow[] = [
+        createSourceRow(
+          "web-framework-react",
+          [createSourceOption("public", { selected: true })],
+          "global",
+          true,
+        ),
+        createSourceRow(
+          "web-state-zustand",
+          [createSourceOption("public", { selected: true })],
+          "project",
+        ),
+        createSourceRow(
+          "web-testing-vitest",
+          [createSourceOption("public", { selected: true })],
+          "global",
+          true,
+        ),
+      ];
+
+      const onFocusChange = vi.fn();
+      const { stdin, unmount } = renderGrid({
+        rows: threeRows,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
+        onFocusChange,
+      });
+      cleanup = unmount;
+
+      // Initial focus skips readOnly row 0, lands on row 1
+      await delay(RENDER_DELAY_MS);
+
+      // Pressing down from row 1 should skip readOnly row 2 and wrap back to row 1
+      stdin.write(ARROW_DOWN);
+      await delay(INPUT_DELAY_MS);
+
+      expect(onFocusChange).toHaveBeenLastCalledWith(1, 0);
+    });
+
+    it("should allow selection on non-read-only rows after navigating past read-only", async () => {
+      const onSelect = vi.fn();
+      const { stdin, unmount } = renderGrid({
+        rows: readOnlyRows,
+        defaultFocusedRow: 1,
+        defaultFocusedCol: 0,
+        onSelect,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(SPACE);
+      await delay(INPUT_DELAY_MS);
+
+      expect(onSelect).toHaveBeenCalledWith("web-state-zustand", "public");
+    });
+
+    it("should not show search pill on read-only rows", () => {
+      const mockSearch = vi.fn<(alias: string) => Promise<BoundSkillCandidate[]>>();
+      const { lastFrame, unmount } = renderGrid({
+        rows: [
+          createSourceRow(
+            "web-framework-react",
+            [createSourceOption("public", { selected: true })],
+            "global",
+            true,
+          ),
+        ],
+        onSearch: mockSearch,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      expect(output).toContain("React");
+      expect(output).not.toContain("Search");
+    });
+
+    it("should not show focus highlight on read-only rows", () => {
+      const allReadOnlyRows: SourceRow[] = [
+        createSourceRow(
+          "web-framework-react",
+          [createSourceOption("public", { selected: true })],
+          "global",
+          true,
+        ),
+        createSourceRow(
+          "web-state-zustand",
+          [createSourceOption("public", { selected: true })],
+          "global",
+          true,
+        ),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({
+        rows: allReadOnlyRows,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      // Read-only rows should not have the chevron focus indicator
+      expect(output).not.toContain(UI_SYMBOLS.CHEVRON);
+    });
+
+    it("should render re-scoped skill in both global and project groups", () => {
+      const reSccopedRows: SourceRow[] = [
+        createSourceRow(
+          "web-framework-react",
+          [createSourceOption("eject"), createSourceOption("public", { selected: true })],
+          "global",
+          true,
+        ),
+        createSourceRow(
+          "web-framework-react",
+          [createSourceOption("eject"), createSourceOption("public", { selected: true })],
+          "project",
+        ),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ rows: reSccopedRows });
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      // Should show both scope section headers
+      expect(output).toContain("Global");
+      expect(output).toContain("Project");
+      // React should appear twice (once per scope group)
+      const reactMatches = output.split("React").length - 1;
+      expect(reactMatches).toBe(2);
+      // Global copy should have lock indicator
+      expect(output).toContain(UI_SYMBOLS.LOCK);
     });
   });
 });
