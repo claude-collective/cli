@@ -1,6 +1,6 @@
 import { mkdir } from "fs/promises";
 import path from "path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
@@ -17,28 +17,25 @@ import { cleanupTempDir, createTempDir, ensureBinaryExists } from "../helpers/te
  *          Deselect React, navigate to confirm step, verify no removal marker.
  */
 describe("init global preselection confirm step", () => {
-  let tempDir: string;
+  let tempDir: string | undefined;
   let sourceDir: string;
   let sourceTempDir: string;
-  let fakeHome: string;
-  let projectDir: string;
 
   beforeAll(async () => {
     await ensureBinaryExists();
     const source = await createE2ESource();
     sourceDir = source.sourceDir;
     sourceTempDir = source.tempDir;
-
-    tempDir = await createTempDir();
-    fakeHome = path.join(tempDir, "fake-home");
-    projectDir = path.join(fakeHome, "project");
-
-    await mkdir(fakeHome, { recursive: true });
-    await mkdir(projectDir, { recursive: true });
   }, TIMEOUTS.SETUP);
 
+  afterEach(async () => {
+    if (tempDir) {
+      await cleanupTempDir(tempDir);
+      tempDir = undefined;
+    }
+  });
+
   afterAll(async () => {
-    if (tempDir) await cleanupTempDir(tempDir);
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
   });
 
@@ -46,6 +43,13 @@ describe("init global preselection confirm step", () => {
     "should not show deselected global skills as removed on confirm step during project init",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
+      tempDir = await createTempDir();
+      const fakeHome = path.join(tempDir, "fake-home");
+      const projectDir = path.join(fakeHome, "project");
+
+      await mkdir(fakeHome, { recursive: true });
+      await mkdir(projectDir, { recursive: true });
+
       // Phase 1: Init from HOME -- create global installation with React
       const globalWizard = await InitWizard.launch({
         source: { sourceDir, tempDir: sourceTempDir },
@@ -85,14 +89,14 @@ describe("init global preselection confirm step", () => {
       // Deselected global React should NOT appear with a removal marker.
       // In init mode, deselecting a global pre-selection means "don't add to project"
       // -- not "remove from global installation". No "- " prefix should appear for React.
+      // Note: React WILL still appear in the confirm output (dimmed, under Global)
+      // because it remains part of the global installation. The key assertion is
+      // that it does NOT have a removal marker ("- " prefix).
       const lines = output.split("\n");
       const removalLines = lines.filter(
         (l) => l.includes("- ") && (l.includes("react") || l.includes("React")),
       );
       expect(removalLines).toStrictEqual([]);
-
-      // React should not appear at all on the confirm step (neither as added nor removed)
-      expect(output).not.toContain("web-framework-react");
 
       await projectWizard.destroy();
     },
