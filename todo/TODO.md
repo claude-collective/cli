@@ -1,30 +1,46 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                                                                               | Status        |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-178 | UX: Make stack the hero of project-level installs — without project agents the project config is useless, guide users toward project stacks with project agents | Investigate   |
-| D-177 | Bug: uninstall --all doesn't remove project-scoped plugins that were re-scoped from global during init (marketplace fallback + discovery mismatch) | Ready for Dev |
-| D-176 | Sources step should show ALL skills (including installed global) with global skills read-only from project scope                   | Ready for Dev |
-| D-175 | Scope-pure project config — remove global agents/skills from project config.ts and config-types. New `AvailableAgentName` vs `AgentName` type so `stack` only accepts agents available in current scope. Follows from stack-only fix in 74d6f6f revert | Ready for Dev |
-| D-173 | Bug: Agents may not auto-compile after `init` on Mac — test and verify                                                             | Investigate   |
-| D-170 | Add PostHog anonymous telemetry — skill installs, wizard funnel, command errors, platform                                          | Investigate   |
-| D-168 | Audit E2E tests — replace manual file construction with CLI commands throughout                                                    | Ready for Dev |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions                                                                   | Ready for Dev |
-| D-111 | Create a GIF demo for the README                                                                                                   | Ready for Dev |
-| D-110 | Fix the logo in the README                                                                                                         | Ready for Dev |
-| D-109 | Fix the screenshots in the README                                                                                                  | Ready for Dev |
-| D-62  | Review default stacks: add reviewing/research skills                                                                               | Ready for Dev |
-| D-118 | Investigate renaming "project/global" scope to "project/user"                                                                      | Investigate   |
-| D-122 | Auto-update marketplace before plugin install                                                                                      | Ready for Dev |
-| D-111 | Replace E2E text anchors with stable test identifiers                                                                              | Investigate   |
-| D-90  | Add Sentry tracking for unresolved matrix references                                                                               | Ready for Dev |
-| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)                                                        | Ready for Dev |
-| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                                                                     | Ready for Dev |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                                                    | Ready for Dev |
-| D-66  | AI-assisted PR review: categorize diffs by type                                                                                    | Investigate   |
-| D-69  | Config migration strategy for outdated config shapes                                                                               | Investigate   |
-| D-151 | E2E session-level timeout — configurable `defaultTimeout` in `TerminalSession`                                                     | Ready for Dev |
-| D-162 | Skill Olympics — benchmark and optimize expressive-typescript skill via competitive arena                                          | Investigate   |
+| ID    | Task                                                                                                                                                                                                                                                       | Status        |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D-200 | Bug: Info panel and confirm step don't show source mode changes (plugin→eject or eject→plugin). Only scope changes are highlighted, not mode changes.                                                                                                      | Ready for Dev |
+| D-199 | Bug: Toggling ejected skill P→G doesn't remove excluded tombstone or show change in info/confirm panel. After G→P toggle adds skill to project + excluded list, toggling back to global should remove the excluded entry and show the removal in the diff. | Ready for Dev |
+| D-198 | Bug: Project-installed skill shows as global after same skill installed globally elsewhere. See D-183                                                                                                                                                      | Investigate   |
+| D-197 | Change summary: show scope labels, use display names, treat G→P as additions                                                                                                                                                                               | Ready for Dev |
+| D-196 | Bug: No toast when toggling pre-installed global agent from project scope                                                                                                                                                                                  | Ready for Dev |
+| D-195 | Auto-preselect agents from stack definition                                                                                                                                                                                                                | Investigate   |
+| D-194 | Stack grouping: use explicit `group` property instead of skill ID inference                                                                                                                                                                                | Investigate   |
+| D-193 | Bug: Excluded global skill shows as selected in edit mode                                                                                                                                                                                                  | Ready for Dev |
+| D-192 | Bug: Scope toggle G→P then deselect removes skill from global config                                                                                                                                                                                       | Ready for Dev |
+| D-191 | Build step dual-scope badges — show G + P when toggling scope                                                                                                                                                                                              | Investigate   |
+| D-190 | Bug: Build step allows deselecting global skills from project scope                                                                                                                                                                                        | Ready for Dev |
+| D-189 | Visually distinguish installed vs newly selected skills in build step                                                                                                                                                                                      | Investigate   |
+| D-183 | Agents step: global/project scope distinction + toast                                                                                                                                                                                                      | Ready for Dev |
+| D-182 | Sources step: global skills focusable but read-only with toast                                                                                                                                                                                             | Ready for Dev |
+| D-181 | Add YOLO mode toggle to build step                                                                                                                                                                                                                         | Investigate   |
+| D-180 | Write "Bring your own skills" guide                                                                                                                                                                                                                        | Investigate   |
+| D-179 | Extract shared post-wizard pipeline into ProjectLifecycle orchestrator                                                                                                                                                                                     | Investigate   |
+| D-178 | Make stack the hero of project-level installs                                                                                                                                                                                                              | Investigate   |
+| D-177 | Bug: `uninstall --all` misses re-scoped project plugins                                                                                                                                                                                                    | Ready for Dev |
+| D-176 | Sources step: show all skills, global read-only from project scope                                                                                                                                                                                         | Ready for Dev |
+| D-173 | Bug: Agents may not auto-compile after `init` on Mac                                                                                                                                                                                                       | Investigate   |
+| D-170 | Add PostHog anonymous telemetry                                                                                                                                                                                                                            | Investigate   |
+| D-168 | Audit E2E tests — replace manual file construction with CLI commands                                                                                                                                                                                       | Ready for Dev |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions                                                                                                                                                                                           | Ready for Dev |
+| D-111 | Create a GIF demo for the README                                                                                                                                                                                                                           | Ready for Dev |
+| D-110 | Fix the logo in the README                                                                                                                                                                                                                                 | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                                                                                                                                                                                                          | Ready for Dev |
+| D-62  | Review default stacks: add reviewing/research skills                                                                                                                                                                                                       | Ready for Dev |
+| D-118 | Investigate renaming "project/global" scope to "project/user"                                                                                                                                                                                              | Investigate   |
+| D-122 | Auto-update marketplace before plugin install                                                                                                                                                                                                              | Ready for Dev |
+| D-111 | Replace E2E text anchors with stable test identifiers                                                                                                                                                                                                      | Investigate   |
+| D-90  | Add Sentry tracking for unresolved matrix references                                                                                                                                                                                                       | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)                                                                                                                                                                                | Ready for Dev |
+| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                                                                                                                                                                                             | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`                                                                                                                                                                                            | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type                                                                                                                                                                                                            | Investigate   |
+| D-69  | Config migration strategy for outdated config shapes                                                                                                                                                                                                       | Investigate   |
+| D-151 | E2E session-level timeout — configurable `defaultTimeout`                                                                                                                                                                                                  | Ready for Dev |
+| D-162 | Skill Olympics — benchmark expressive-typescript skill                                                                                                                                                                                                     | Investigate   |
 
 ---
 
@@ -42,6 +58,118 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
+
+### Wizard UX
+
+#### D-195: Auto-preselect agents from stack definition
+
+Agents step should derive preselected agents from the stack's `agents` keys instead of requiring separate configuration. Every agent named in the stack definition should be checked by default.
+
+---
+
+#### D-194: Stack grouping — use explicit `group` property
+
+Current `groupStacks` checks for `web-framework-react` presence, which misclassifies CLI stacks that use Ink/React. Add an explicit `group` property on Stack instead of inferring from skill IDs.
+
+---
+
+#### D-191: Build step dual-scope badges
+
+Globally installed skills show `G`, toggling adds `P` next to `G` (both scopes), successive toggles show/hide the `P`. Replaces current block+toast for global skills in project scope.
+
+---
+
+#### D-189: Visually distinguish installed vs newly selected skills in build step
+
+E.g. different border style, lock icon, or dimmed treatment so users can tell at a glance what's already installed vs what they're adding.
+
+---
+
+#### D-183: Agents step — global/project scope distinction
+
+Show toast when toggling global agent in project scope, clarify that toggling G→P means agent exists in BOTH scopes (global copy remains), not a move.
+
+---
+
+#### D-182: Sources step — global skills focusable but read-only
+
+Highlight the name on focus, show a toast explaining why when user tries to toggle, instead of silently ignoring input.
+
+---
+
+#### D-181: Add YOLO mode toggle to build step
+
+Disables all skill relationship constraints (single-select categories, requires, conflicts, discourages) so users can select any combination freely. Surface in footer hotkeys.
+
+---
+
+#### D-178: Make stack the hero of project-level installs
+
+Without project agents the project config is useless. Guide users toward project stacks with project agents.
+
+---
+
+#### D-176: Sources step — show all skills, global read-only from project scope
+
+Show ALL skills (including installed global) with global skills read-only from project scope.
+
+---
+
+### Docs
+
+#### D-180: Write "Bring your own skills" guide
+
+Test custom source path E2E, document `metadata.yaml` schema, `--source` flag usage, multi-source setup, and add guide link to README.
+
+---
+
+### Refactor
+
+#### D-179: Extract shared post-wizard pipeline into ProjectLifecycle orchestrator
+
+Dual-pass compile, copy locals, install plugins, write config are duplicated verbatim across `init` and `edit` commands.
+
+---
+
+### Telemetry
+
+#### D-170: Add PostHog anonymous telemetry
+
+Skill installs, wizard funnel, command errors, platform.
+
+---
+
+### Bugs
+
+#### D-193: Excluded global skill shows as selected in edit mode
+
+`edit.tsx:190` includes excluded skill IDs in `currentSkillIds`, `populateFromSkillIds` adds them to `domainSelections`. Fix: filter `!s.excluded` when building `configSkillIds`.
+
+---
+
+#### D-192: Scope toggle G→P then deselect removes skill from global config
+
+`detectConfigChanges` diffs `currentSkillIds` (all discovered) vs `newSkillIds`, so globally-discovered skills appear as removals. Fix: diff against `oldConfig.skills` instead.
+
+---
+
+#### D-190: Build step allows deselecting global skills from project scope
+
+`toggleTechnology` has no guard, should block + show toast. Sources step has `readOnly` guard but build step doesn't. Causes actual global uninstall.
+
+---
+
+#### D-177: `uninstall --all` misses re-scoped project plugins
+
+Doesn't remove project-scoped plugins that were re-scoped from global during init (marketplace fallback + discovery mismatch).
+
+---
+
+#### D-173: Agents may not auto-compile after `init` on Mac
+
+Test and verify.
+
+---
 
 ### Code Quality
 
@@ -67,7 +195,6 @@ E2E tests must only use CLI commands to create state. Manual file system constru
 **Process:** Go file by file through `e2e/lifecycle/`, `e2e/interactive/`, and `e2e/commands/`. For each manual construction found, either replace with wizard-based setup or document why it cannot be replaced and what CLI gap it represents.
 
 ---
-
 
 ### Bugs
 
@@ -184,7 +311,6 @@ The current confirm step (`step-confirm.tsx`) shows a flat list of plain text li
 - `src/cli/components/wizard/info-panel.tsx` — visual reference
 
 ---
-
 
 #### D-62: Review default stacks: include meta/methodology/reviewing skills
 
@@ -318,7 +444,6 @@ E2E tests currently use `STEP_TEXT` display strings (e.g., `"Choose a stack"`, `
 `TerminalSession` and `BaseStep` should hold a `defaultTimeout` property overridable at construction time, replacing the current pattern of threading timeout values through every per-call method parameter.
 
 ---
-
 
 #### D-124: E2E tests for default source path
 

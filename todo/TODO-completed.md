@@ -94,6 +94,7 @@
 | D-178 | Bug: Scope toggle (S hotkey) blocked by excluded tombstones — `toggleSkillScope` guards didn't filter `excluded: true` entries. Fixed with `!sc.excluded` on both checks. ENOENT was separately fixed by D-152.                                                                                     |
 | D-177 | Style skill select: left border only, change category colour — prototyped row layout with vertical divider, decided against it                                                                                                                                                                      |
 | D-164 | Improve confirm step UI — current two-column scope-grouped layout with diff markers is the correct design, no changes needed                                                                                                                                                                        |
+| D-175 | Scope-pure project config — `ProjectAgentName` type narrows to project-scoped agents only, project config stack filtered to exclude global agents, config-types-writer generates scope-aware unions                                                                                                 |
 
 ---
 

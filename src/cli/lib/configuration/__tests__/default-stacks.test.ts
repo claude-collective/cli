@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { typedEntries } from "../../../utils/typed-object";
 import { defaultStacks } from "../default-stacks";
 
-const EXPECTED_STACK_COUNT = 16;
+const EXPECTED_STACK_COUNT = 17;
 
 /** Flat list of every (stack, agent, category) combination for parameterized tests */
 const agentCategoryCases = defaultStacks.flatMap((stack) =>

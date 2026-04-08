@@ -43,7 +43,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: true }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
@@ -65,7 +65,7 @@ export const defaultStacks: Stack[] = [
       },
       "cli-reviewer": {
         "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -90,7 +90,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-architecture": {
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -100,7 +100,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -120,7 +120,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -173,7 +173,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
@@ -192,7 +192,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "codex-keeper": {
@@ -211,7 +211,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
@@ -361,7 +361,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: true }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
@@ -384,7 +384,7 @@ export const defaultStacks: Stack[] = [
       },
       "cli-reviewer": {
         "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -410,7 +410,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-architecture": {
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -421,7 +421,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -442,7 +442,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -498,7 +498,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
@@ -518,7 +518,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "codex-keeper": {
@@ -538,7 +538,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
@@ -581,7 +581,7 @@ export const defaultStacks: Stack[] = [
         ],
       },
       "cli-developer": {
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: true }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
         "shared-tooling": SHARED_TOOLING,
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
@@ -615,7 +615,7 @@ export const defaultStacks: Stack[] = [
       },
       "cli-reviewer": {
         "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
@@ -648,7 +648,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
@@ -662,7 +662,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
@@ -690,7 +690,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
           { id: "shared-monorepo-pnpm-workspaces", preloaded: false },
@@ -755,7 +755,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
@@ -778,7 +778,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
@@ -801,7 +801,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
         "shared-monorepo": [
           { id: "shared-monorepo-turborepo", preloaded: false },
@@ -923,7 +923,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: true }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
@@ -944,7 +944,7 @@ export const defaultStacks: Stack[] = [
       },
       "cli-reviewer": {
         "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -968,7 +968,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-architecture": {
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -978,7 +978,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -997,7 +997,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -1047,7 +1047,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
@@ -1065,7 +1065,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "codex-keeper": {
@@ -1083,7 +1083,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
@@ -1924,7 +1924,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: true }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
@@ -1948,7 +1948,7 @@ export const defaultStacks: Stack[] = [
       },
       "cli-reviewer": {
         "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -1976,7 +1976,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-architecture": {
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -1989,7 +1989,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2012,7 +2012,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2074,7 +2074,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
@@ -2096,7 +2096,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "codex-keeper": {
@@ -2118,7 +2118,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
@@ -2157,7 +2157,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: true }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
@@ -2180,7 +2180,7 @@ export const defaultStacks: Stack[] = [
       },
       "cli-reviewer": {
         "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [
@@ -2206,7 +2206,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-architecture": {
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -2217,7 +2217,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2238,7 +2238,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2294,7 +2294,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
@@ -2314,7 +2314,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "codex-keeper": {
@@ -2334,7 +2334,7 @@ export const defaultStacks: Stack[] = [
         "api-analytics": [{ id: "api-analytics-posthog-analytics", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
@@ -2368,7 +2368,7 @@ export const defaultStacks: Stack[] = [
         "shared-tooling": SHARED_TOOLING,
       },
       "cli-developer": {
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: true }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
         "shared-tooling": SHARED_TOOLING,
       },
       "web-reviewer": {
@@ -2392,7 +2392,7 @@ export const defaultStacks: Stack[] = [
       },
       "cli-reviewer": {
         "meta-reviewing": [{ id: "meta-reviewing-cli-reviewing", preloaded: true }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-tester": {
         "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
@@ -2414,7 +2414,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-architecture": {
         "api-api": [{ id: "api-framework-hono", preloaded: false }],
@@ -2423,7 +2423,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "web-researcher": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2443,7 +2443,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
       },
       "pattern-scout": {
         "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -2496,7 +2496,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "skill-summoner": {
@@ -2515,7 +2515,7 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "codex-keeper": {
@@ -2534,10 +2534,98 @@ export const defaultStacks: Stack[] = [
         "api-observability": [{ id: "api-observability-axiom-pino-sentry", preloaded: false }],
         "api-email": [{ id: "api-email-resend-react-email", preloaded: false }],
         "infra-ci-cd": [{ id: "infra-ci-cd-github-actions", preloaded: false }],
-        "cli-framework": [{ id: "cli-framework-cli-commander", preloaded: false }],
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: false }],
         "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
       },
       "cli-tester": {},
+    },
+  },
+  {
+    id: "cli-ink-oclif",
+    name: "CLI Tool",
+    description: "oclif, Ink, Zustand, Vitest",
+    philosophy: "Terminal-native CLI with interactive React-based wizard UI",
+    agents: {
+      "cli-developer": {
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
+        "web-framework": [{ id: "web-framework-react", preloaded: true }],
+        "web-forms": [{ id: "web-forms-zod-validation", preloaded: true }],
+        "web-client-state": [{ id: "web-state-zustand", preloaded: true }],
+        "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        "meta-design": [{ id: "meta-design-expressive-typescript", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
+        "shared-tooling": SHARED_TOOLING,
+      },
+      "cli-reviewer": {
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
+        "web-framework": [{ id: "web-framework-react", preloaded: true }],
+        "web-forms": [{ id: "web-forms-zod-validation", preloaded: true }],
+        "web-client-state": [{ id: "web-state-zustand", preloaded: true }],
+        "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        "meta-design": [{ id: "meta-design-expressive-typescript", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: true }],
+        "shared-tooling": SHARED_TOOLING,
+      },
+      "cli-tester": {
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
+        "web-framework": [{ id: "web-framework-react", preloaded: true }],
+        "web-forms": [{ id: "web-forms-zod-validation", preloaded: true }],
+        "web-client-state": [{ id: "web-state-zustand", preloaded: true }],
+        "web-testing": [{ id: "web-testing-vitest", preloaded: true }],
+        "meta-design": [{ id: "meta-design-expressive-typescript", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
+        "shared-tooling": SHARED_TOOLING,
+      },
+      "web-pm": {
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
+        "web-framework": [{ id: "web-framework-react", preloaded: true }],
+        "web-forms": [{ id: "web-forms-zod-validation", preloaded: true }],
+        "web-client-state": [{ id: "web-state-zustand", preloaded: true }],
+        "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        "meta-design": [{ id: "meta-design-expressive-typescript", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
+        "shared-tooling": SHARED_TOOLING,
+      },
+      "web-researcher": {
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
+        "web-framework": [{ id: "web-framework-react", preloaded: true }],
+        "web-forms": [{ id: "web-forms-zod-validation", preloaded: true }],
+        "web-client-state": [{ id: "web-state-zustand", preloaded: true }],
+        "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        "meta-design": [{ id: "meta-design-expressive-typescript", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
+        "shared-tooling": SHARED_TOOLING,
+      },
+      "agent-summoner": {
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
+        "web-framework": [{ id: "web-framework-react", preloaded: true }],
+        "web-forms": [{ id: "web-forms-zod-validation", preloaded: true }],
+        "web-client-state": [{ id: "web-state-zustand", preloaded: true }],
+        "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        "meta-design": [{ id: "meta-design-expressive-typescript", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
+        "shared-tooling": SHARED_TOOLING,
+      },
+      "skill-summoner": {
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
+        "web-framework": [{ id: "web-framework-react", preloaded: true }],
+        "web-forms": [{ id: "web-forms-zod-validation", preloaded: true }],
+        "web-client-state": [{ id: "web-state-zustand", preloaded: true }],
+        "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        "meta-design": [{ id: "meta-design-expressive-typescript", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
+        "shared-tooling": SHARED_TOOLING,
+      },
+      "codex-keeper": {
+        "cli-framework": [{ id: "cli-framework-oclif-ink", preloaded: true }],
+        "web-framework": [{ id: "web-framework-react", preloaded: true }],
+        "web-forms": [{ id: "web-forms-zod-validation", preloaded: true }],
+        "web-client-state": [{ id: "web-state-zustand", preloaded: true }],
+        "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        "meta-design": [{ id: "meta-design-expressive-typescript", preloaded: true }],
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
+        "shared-tooling": SHARED_TOOLING,
+      },
     },
   },
 ];
