@@ -830,6 +830,28 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const currentSelections = state.domainSelections[domain]?.[category] || [];
       const isSelected = currentSelections.includes(technology);
 
+      if (isSelected) {
+        const categorySkillCount = Object.values(matrix.skills).filter(
+          (s) => s?.category === category,
+        ).length;
+        if (categorySkillCount <= 1) {
+          return { toastMessage: "Cannot deselect the only skill in this category" };
+        }
+      }
+
+      // In exclusive mode, selecting a new skill replaces the current one.
+      // Block if that would implicitly deselect a globally-installed skill.
+      if (exclusive && !isSelected) {
+        const hasGlobalSelection = currentSelections.some((selectedId) =>
+          state.installedSkillConfigs?.some(
+            (sc) => sc.id === selectedId && sc.scope === "global" && !sc.excluded,
+          ),
+        );
+        if (hasGlobalSelection && !state.isEditingFromGlobalScope && !state.isInitMode) {
+          return { toastMessage: "Global skills cannot be changed from project scope" };
+        }
+      }
+
       let newSelections: SkillId[];
       if (exclusive) {
         newSelections = isSelected ? [] : [technology];

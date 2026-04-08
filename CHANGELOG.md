@@ -7,6 +7,15 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.114.0] - 2026-04-09
+
+**Build step guards: unique skill + exclusive category bypass**
+
+- Prevent deselecting the only skill in a category (toast guard)
+- Block exclusive category replacement that would implicitly deselect a global skill
+
+See [changelogs/0.114.0.md](./changelogs/0.114.0.md) for full details.
+
 ## [0.113.0] - 2026-04-08
 
 **Block global skill deselection from project scope**

@@ -386,12 +386,12 @@ describe("WizardStore", () => {
 
     it("should toggle off technology in non-exclusive mode", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
-      store.toggleTechnology("web", "web-testing", "web-testing-playwright-e2e", false);
-      store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", false);
+      store.toggleTechnology("web", "web-styling", "web-styling-tailwind", false);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", false);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!["web-testing"]).toStrictEqual(["web-testing-playwright-e2e"]);
+      expect(domainSelections.web!["web-styling"]).toStrictEqual(["web-styling-tailwind"]);
     });
 
     it("should block toggling globally installed skills from project scope and set toastMessage", () => {
@@ -423,6 +423,81 @@ describe("WizardStore", () => {
 
       const { domainSelections, toastMessage } = useWizardStore.getState();
       expect(domainSelections.web!["web-framework"]).toStrictEqual([]);
+      expect(toastMessage).toBeNull();
+    });
+
+    it("should block selecting a different skill in an exclusive category when it would implicitly deselect a global skill", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-client-state", "web-state-zustand", true);
+      useWizardStore.setState({
+        installedSkillConfigs: buildSkillConfigs(["web-state-zustand"], { scope: "global" }),
+        isEditingFromGlobalScope: false,
+        isInitMode: false,
+      });
+
+      store.toggleTechnology("web", "web-client-state", "web-state-pinia", true);
+
+      const { domainSelections, toastMessage } = useWizardStore.getState();
+      expect(domainSelections.web!["web-client-state"]).toStrictEqual(["web-state-zustand"]);
+      expect(toastMessage).toBe("Global skills cannot be changed from project scope");
+    });
+
+    it("should allow selecting a different skill in an exclusive category when editing from global scope", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-client-state", "web-state-zustand", true);
+      useWizardStore.setState({
+        installedSkillConfigs: buildSkillConfigs(["web-state-zustand"], { scope: "global" }),
+        isEditingFromGlobalScope: true,
+        isInitMode: false,
+      });
+
+      store.toggleTechnology("web", "web-client-state", "web-state-pinia", true);
+
+      const { domainSelections, toastMessage } = useWizardStore.getState();
+      expect(domainSelections.web!["web-client-state"]).toStrictEqual(["web-state-pinia"]);
+      expect(toastMessage).toBeNull();
+    });
+
+    it("should block deselecting the only skill in an exclusive category", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
+
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
+
+      const { domainSelections, toastMessage } = useWizardStore.getState();
+      expect(domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
+      expect(toastMessage).toBe("Cannot deselect the only skill in this category");
+    });
+
+    it("should block deselecting the only skill in a non-exclusive category", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
+
+      store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
+
+      const { domainSelections, toastMessage } = useWizardStore.getState();
+      expect(domainSelections.web!["web-testing"]).toStrictEqual(["web-testing-vitest"]);
+      expect(toastMessage).toBe("Cannot deselect the only skill in this category");
+    });
+
+    it("should allow deselecting in a category with multiple skills", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      const { domainSelections, toastMessage } = useWizardStore.getState();
+      expect(domainSelections.web!["web-framework"]).toStrictEqual([]);
+      expect(toastMessage).toBeNull();
+    });
+
+    it("should allow selecting in a single-skill category", () => {
+      const store = useWizardStore.getState();
+
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
+
+      const { domainSelections, toastMessage } = useWizardStore.getState();
+      expect(domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
       expect(toastMessage).toBeNull();
     });
   });
