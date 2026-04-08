@@ -7,6 +7,15 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.113.0] - 2026-04-08
+
+**Block global skill deselection from project scope**
+
+- Globally installed skills can no longer be toggled off when editing from project scope
+- Toast message explains why; init mode remains exempt for preselection adjustments
+
+See [changelogs/0.113.0.md](./changelogs/0.113.0.md) for full details.
+
 ## [0.112.0] - 2026-04-08
 
 **Scope-aware wizard, readOnly sources, confirm diff fixes**
