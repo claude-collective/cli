@@ -128,7 +128,7 @@ Use `createTestEnvironment` + `setupDualScope` when you need fine-grained contro
 | Utility helpers              | `e2e/helpers/test-utils.ts`          | `createTempDir()`, `writeProjectConfig()`, `createLocalSkill()` |
 | UI text and paths            | `e2e/pages/constants.ts`             | `STEP_TEXT`, `DIRS`, `FILES`, `TIMEOUTS`                        |
 | Dual-scope lifecycle helpers | `e2e/fixtures/dual-scope-helpers.ts` | `setupDualScope()`, `initGlobal()`                              |
-| Expected value constants     | `e2e/fixtures/expected-values.ts`    | `E2E_AGENTS`, `E2E_SKILL_IDS`                                  |
+| Expected value constants     | `e2e/fixtures/expected-values.ts`    | `E2E_AGENTS`, `E2E_SKILL_IDS`                                   |
 | Assertion helpers            | `e2e/assertions/`                    | `expectPhaseSuccess()`, `expectCleanUninstall()`                |
 | Agent matchers               | `e2e/matchers/agent-matchers.ts`     | `toHaveAgentFrontmatter`, `toHaveAgentDynamicSkills`            |
 

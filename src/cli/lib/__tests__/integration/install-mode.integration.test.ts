@@ -9,7 +9,11 @@ import {
 } from "../../installation/local-installer";
 import { deriveInstallMode } from "../../installation/installation";
 import { initializeMatrix } from "../../matrix/matrix-provider";
-import { buildProjectConfig, buildWizardResult, buildSourceResult } from "../factories/config-factories.js";
+import {
+  buildProjectConfig,
+  buildWizardResult,
+  buildSourceResult,
+} from "../factories/config-factories.js";
 import { readTestTsConfig, writeTestTsConfig } from "../helpers/config-io.js";
 import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
 import { createTempDir, cleanupTempDir, fileExists } from "../test-fs-utils";

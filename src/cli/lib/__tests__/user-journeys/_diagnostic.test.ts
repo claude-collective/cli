@@ -14,7 +14,10 @@ import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types"
 import type { SourceLoadResult } from "../../loading/source-loader";
 import { createBasicMatrix, createComprehensiveMatrix } from "../factories/matrix-factories.js";
 import { buildSourceResult } from "../factories/config-factories.js";
-import { buildWizardResultFromStore, simulateSkillSelections } from "../helpers/wizard-simulation.js";
+import {
+  buildWizardResultFromStore,
+  simulateSkillSelections,
+} from "../helpers/wizard-simulation.js";
 import { readTestTsConfig } from "../helpers/config-io.js";
 import { EXPECTED_SKILLS } from "../expected-values";
 

@@ -5,7 +5,10 @@ import { generateConfigSource } from "../config-writer";
 import { loadConfig } from "../config-loader";
 import { createTempDir, cleanupTempDir } from "../../__tests__/test-fs-utils";
 import { buildSkillConfigs } from "../../__tests__/helpers/wizard-simulation.js";
-import { buildProjectConfig, buildAgentConfigs } from "../../__tests__/factories/config-factories.js";
+import {
+  buildProjectConfig,
+  buildAgentConfigs,
+} from "../../__tests__/factories/config-factories.js";
 import { expectAgentConfigs, expectSkillConfigs } from "../../__tests__/assertions/index.js";
 import type { ProjectConfig } from "../../../types";
 import { STANDARD_FILES } from "../../../consts";

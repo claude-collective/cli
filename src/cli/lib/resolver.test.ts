@@ -13,9 +13,15 @@ import {
   resolveAgents,
 } from "./resolver";
 import { DIRS, STANDARD_FILES } from "../consts";
-import { expectAgentCompilation, parseCompiledAgent } from "./__tests__/assertions/agent-assertions";
+import {
+  expectAgentCompilation,
+  parseCompiledAgent,
+} from "./__tests__/assertions/agent-assertions";
 import { createTempDir, cleanupTempDir } from "./__tests__/test-fs-utils";
-import { createMockSkillEntry, createMockSkillDefinition } from "./__tests__/factories/skill-factories";
+import {
+  createMockSkillEntry,
+  createMockSkillDefinition,
+} from "./__tests__/factories/skill-factories";
 import { createMockAgentConfig } from "./__tests__/factories/agent-factories";
 import { createMockCompileConfig } from "./__tests__/factories/plugin-factories";
 import { buildProjectConfig } from "./__tests__/factories/config-factories";
@@ -471,7 +477,6 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
 
     return engine.renderFile("agent", data);
   }
-
 
   describe("preloaded skills appear in agent frontmatter", () => {
     it("should include skills: field in YAML frontmatter when preloaded skills exist", async () => {

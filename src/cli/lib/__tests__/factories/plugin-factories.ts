@@ -1,8 +1,4 @@
-import {
-  CLAUDE_DIR,
-  DEFAULT_PLUGIN_NAME,
-  PLUGINS_SUBDIR,
-} from "../../../consts";
+import { CLAUDE_DIR, DEFAULT_PLUGIN_NAME, PLUGINS_SUBDIR } from "../../../consts";
 import type {
   CompileAgentConfig,
   CompileConfig,

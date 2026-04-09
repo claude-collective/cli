@@ -18,7 +18,10 @@ import {
   getUnmetRequirementsReason,
   resolveAlias,
 } from ".";
-import { createMockSkill, testSkillToResolvedSkill } from "../__tests__/factories/skill-factories.js";
+import {
+  createMockSkill,
+  testSkillToResolvedSkill,
+} from "../__tests__/factories/skill-factories.js";
 import { createMockMatrix } from "../__tests__/factories/matrix-factories.js";
 import { buildWizardResult, buildSourceResult } from "../__tests__/factories/config-factories.js";
 import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation.js";

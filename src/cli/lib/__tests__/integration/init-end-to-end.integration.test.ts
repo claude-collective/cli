@@ -11,10 +11,19 @@ import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types"
 import type { SourceLoadResult } from "../../loading/source-loader";
 import { createComprehensiveMatrix } from "../factories/matrix-factories.js";
 import { buildSourceResult } from "../factories/config-factories.js";
-import { buildWizardResultFromStore, simulateSkillSelections } from "../helpers/wizard-simulation.js";
+import {
+  buildWizardResultFromStore,
+  simulateSkillSelections,
+} from "../helpers/wizard-simulation.js";
 import { readTestTsConfig } from "../helpers/config-io.js";
 import { fileExists, directoryExists } from "../test-fs-utils";
-import { expectConfigSkills, expectSkillConfigs, expectAgentConfigs, expectCompiledAgents, assertConfigIntegrity } from "../assertions/index.js";
+import {
+  expectConfigSkills,
+  expectSkillConfigs,
+  expectAgentConfigs,
+  expectCompiledAgents,
+  assertConfigIntegrity,
+} from "../assertions/index.js";
 import { EXPECTED_AGENTS, EXPECTED_SKILLS } from "../expected-values.js";
 import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
 

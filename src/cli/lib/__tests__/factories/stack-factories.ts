@@ -1,9 +1,4 @@
-import type {
-  RawStacksConfig,
-  ResolvedStack,
-  Stack,
-  StackAgentConfig,
-} from "../../../types";
+import type { RawStacksConfig, ResolvedStack, Stack, StackAgentConfig } from "../../../types";
 
 export function createMockResolvedStack(
   id: string,

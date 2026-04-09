@@ -365,8 +365,14 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       // D-5: Project config has web-framework-react with scope: "project"
       // D-6: Agent files at both scopes still exist (unchanged)
       await expectDualScopeInstallation(fakeHome, projectDir, {
-        global: { skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"], agents: ["web-developer"] },
-        project: { skillIds: ["api-framework-hono", "web-framework-react"], agents: ["api-developer"] },
+        global: {
+          skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+          agents: ["web-developer"],
+        },
+        project: {
+          skillIds: ["api-framework-hono", "web-framework-react"],
+          agents: ["api-developer"],
+        },
       });
       const projectConfig = await readTestFile(
         path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),

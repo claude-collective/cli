@@ -7,7 +7,11 @@ import { createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
 import { createMockSkill } from "../factories/skill-factories.js";
 import { createMockMatrix } from "../factories/matrix-factories.js";
-import { buildSourceResult, buildWizardResult, buildAgentConfigs } from "../factories/config-factories.js";
+import {
+  buildSourceResult,
+  buildWizardResult,
+  buildAgentConfigs,
+} from "../factories/config-factories.js";
 import { SKILLS, TEST_CATEGORIES } from "../test-fixtures";
 import { FULLSTACK_PAIR_MATRIX } from "../mock-data/mock-matrices";
 import { EXPECTED_SKILLS } from "../expected-values";

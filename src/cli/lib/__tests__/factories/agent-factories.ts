@@ -1,9 +1,4 @@
-import type {
-  AgentConfig,
-  AgentDefinition,
-  CompiledAgentData,
-  Skill,
-} from "../../../types";
+import type { AgentConfig, AgentDefinition, CompiledAgentData, Skill } from "../../../types";
 
 export function createMockAgent(
   name: string,

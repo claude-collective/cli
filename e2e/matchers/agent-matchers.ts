@@ -12,7 +12,10 @@ function parseYamlFrontmatter(yaml: string): Record<string, unknown> {
 
   for (const line of lines) {
     if (/^\w+:$/.test(line.trim())) {
-      if (arrayKey) { result[arrayKey] = [...arrayItems]; arrayItems = []; }
+      if (arrayKey) {
+        result[arrayKey] = [...arrayItems];
+        arrayItems = [];
+      }
       arrayKey = line.trim().slice(0, -1);
       continue;
     }

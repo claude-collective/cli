@@ -5,7 +5,11 @@ import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 import { writeTestTsConfig } from "../__tests__/helpers/config-io.js";
 import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation.js";
-import { buildProjectConfig, buildAgentConfigs, buildSourceConfig } from "../__tests__/factories/config-factories.js";
+import {
+  buildProjectConfig,
+  buildAgentConfigs,
+  buildSourceConfig,
+} from "../__tests__/factories/config-factories.js";
 import { expectAgentConfigs } from "../__tests__/assertions/index.js";
 
 describe("config-merger", () => {

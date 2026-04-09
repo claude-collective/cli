@@ -15,5 +15,7 @@ export const E2E_SKILL_IDS = [
 export const E2E_AGENTS = {
   WEB: ["web-developer"],
   API: ["api-developer"],
-  get WEB_AND_API() { return [...this.API, ...this.WEB].sort(); },
+  get WEB_AND_API() {
+    return [...this.API, ...this.WEB].sort();
+  },
 } as const;

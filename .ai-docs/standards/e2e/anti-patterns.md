@@ -284,6 +284,7 @@ await prompt.arrowDown();
 **What:** Writing `expect(config.agents).toStrictEqual([{ name: "web-developer", scope: "project" }])` without checking what the code actually produces.
 
 **Why:** This was the #1 source of incorrect assertions (30+ instances). Common mistakes:
+
 - Agents default to `scope: "global"`, not `"project"`
 - Config preserves skills in domain iteration order, not alphabetical
 - `compactStackAssignments` compacts `{ id, preloaded: false }` to bare string IDs
@@ -298,6 +299,7 @@ await prompt.arrowDown();
 **Why:** The merged config contains entries from BOTH scopes. An excluded global entry legitimately retains `"source":"eject"` as a tombstone. A broad `not.toContain` catches entries from the wrong scope.
 
 **Instead:** Target the specific scope's entry with a regex or use `toHaveConfig` which checks config content at a higher level:
+
 ```typescript
 const projectHonoSource = config.match(/"api-framework-hono","scope":"project","source":"([^"]+)"/);
 expect(projectHonoSource![1]).not.toBe("eject");

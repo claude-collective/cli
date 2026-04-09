@@ -8,7 +8,11 @@ import {
   mergeLocalSkillsIntoMatrix,
 } from "./source-loader";
 import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
-import { createMockSkill, createMockSkillAssignment, createMockExtractedSkill } from "../__tests__/factories/skill-factories.js";
+import {
+  createMockSkill,
+  createMockSkillAssignment,
+  createMockExtractedSkill,
+} from "../__tests__/factories/skill-factories.js";
 import { createMockMatrix } from "../__tests__/factories/matrix-factories.js";
 import { createMockStack } from "../__tests__/factories/stack-factories.js";
 import { createMockCategory } from "../__tests__/factories/category-factories.js";

@@ -96,7 +96,10 @@ describe("dual-scope edit lifecycle -- display and locking", () => {
 
       // D-4: Config files unchanged with full expected content + agent files preserved
       await expectDualScopeInstallation(fakeHome, projectDir, {
-        global: { skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"], agents: ["web-developer"] },
+        global: {
+          skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+          agents: ["web-developer"],
+        },
         project: { skillIds: ["api-framework-hono"], agents: ["api-developer"] },
       });
 

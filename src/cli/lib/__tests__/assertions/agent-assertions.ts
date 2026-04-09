@@ -21,7 +21,10 @@ function parseYamlLines(yaml: string): Record<string, unknown> {
 
   for (const line of lines) {
     if (/^\w+:$/.test(line.trim())) {
-      if (arrayKey) { result[arrayKey] = [...arrayItems]; arrayItems = []; }
+      if (arrayKey) {
+        result[arrayKey] = [...arrayItems];
+        arrayItems = [];
+      }
       arrayKey = line.trim().slice(0, -1);
       continue;
     }
@@ -72,14 +75,10 @@ export function expectAgentCompilation(
     expect(parsed.frontmatter.name).toBe(expectations.name);
   }
   if (expectations.preloadedSkills) {
-    expect(parsed.preloadedSkillIds.sort()).toStrictEqual(
-      [...expectations.preloadedSkills].sort(),
-    );
+    expect(parsed.preloadedSkillIds.sort()).toStrictEqual([...expectations.preloadedSkills].sort());
   }
   if (expectations.dynamicSkills) {
-    expect(parsed.dynamicSkillIds.sort()).toStrictEqual(
-      [...expectations.dynamicSkills].sort(),
-    );
+    expect(parsed.dynamicSkillIds.sort()).toStrictEqual([...expectations.dynamicSkills].sort());
   }
   if (expectations.noPreloadedSkills) {
     for (const id of expectations.noPreloadedSkills) {

@@ -13,7 +13,13 @@ import { buildWizardResult, buildSourceResult } from "../factories/config-factor
 import { readTestYaml, readTestTsConfig } from "../helpers/config-io.js";
 import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
 import { fileExists, directoryExists, createTempDir, cleanupTempDir } from "../test-fs-utils";
-import { expectConfigSkills, expectConfigOnDisk, expectCompiledAgents, expectInstallResult, assertConfigIntegrity } from "../assertions/index.js";
+import {
+  expectConfigSkills,
+  expectConfigOnDisk,
+  expectCompiledAgents,
+  expectInstallResult,
+  assertConfigIntegrity,
+} from "../assertions/index.js";
 import { FULLSTACK_TRIO_MATRIX } from "../mock-data/mock-matrices";
 import { deriveInstallMode } from "../../installation/installation";
 import { initializeMatrix } from "../../matrix/matrix-provider";

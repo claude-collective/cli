@@ -23,9 +23,7 @@ export function expectInstallResult(
     );
   }
   if (expected.compiledAgents) {
-    expect([...result.compiledAgents].sort()).toStrictEqual(
-      [...expected.compiledAgents].sort(),
-    );
+    expect([...result.compiledAgents].sort()).toStrictEqual([...expected.compiledAgents].sort());
   }
   if (expected.wasMerged !== undefined) {
     expect(result.wasMerged).toBe(expected.wasMerged);

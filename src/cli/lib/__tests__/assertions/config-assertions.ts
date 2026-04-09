@@ -1,5 +1,11 @@
 import { expect } from "vitest";
-import type { ProjectConfig, SkillConfig, AgentScopeConfig, SkillId, AgentName } from "../../../types";
+import type {
+  ProjectConfig,
+  SkillConfig,
+  AgentScopeConfig,
+  SkillId,
+  AgentName,
+} from "../../../types";
 import { readTestTsConfig } from "../helpers/config-io.js";
 
 // --- Types ---
@@ -58,9 +64,7 @@ export function expectFullConfig(config: ProjectConfig, expected: ExpectedConfig
   }
   if (expected.stackCategories) {
     for (const [agent, categories] of Object.entries(expected.stackCategories)) {
-      expect(Object.keys(config.stack![agent] ?? {}).sort()).toStrictEqual(
-        [...categories].sort(),
-      );
+      expect(Object.keys(config.stack![agent] ?? {}).sort()).toStrictEqual([...categories].sort());
     }
   }
 }

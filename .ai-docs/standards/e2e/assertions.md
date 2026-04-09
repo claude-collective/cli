@@ -169,6 +169,7 @@ await expectPhaseSuccess(result, {
 ```
 
 Use when a test has `EXIT_CODES.SUCCESS` + `toHaveConfig` + `toHaveCompiledAgent` together. **Cannot be used when:**
+
 - Output assertions exist between exit code and config checks
 - The config check targets `{ dir: fakeHome }` instead of `result.project`
 - `CLI.run` results are used (already-resolved exitCode)
@@ -211,7 +212,7 @@ Checks parsed YAML frontmatter fields of a compiled agent.
 ```typescript
 await expect(project).toHaveAgentFrontmatter("web-developer", {
   name: "web-developer",
-  skills: ["web-framework-react"],  // preloaded skills in frontmatter
+  skills: ["web-framework-react"], // preloaded skills in frontmatter
 });
 ```
 
@@ -221,7 +222,7 @@ Checks the `<skill_activation_protocol>` body section for dynamic skills.
 
 ```typescript
 await expect(project).toHaveAgentDynamicSkills("web-developer", {
-  skillIds: ["web-testing-vitest"],  // dynamic skills in body
+  skillIds: ["web-testing-vitest"], // dynamic skills in body
   noSkillIds: ["api-framework-hono"], // must NOT be in body
 });
 ```
@@ -242,6 +243,7 @@ await expectPhaseSuccess(result, { agents: E2E_AGENTS.WEB_AND_API });
 ```
 
 Available constants:
+
 - `E2E_AGENTS.WEB` — web-scope agent names
 - `E2E_AGENTS.API` — api-scope agent names
 - `E2E_AGENTS.WEB_AND_API` — both scopes combined

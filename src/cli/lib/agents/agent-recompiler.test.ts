@@ -3,7 +3,11 @@ import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { recompileAgents } from "./agent-recompiler";
 import { CLI_ROOT } from "../__tests__/helpers/cli-runner";
-import { createTestDirs, cleanupTestDirs, type PluginTestDirs } from "../__tests__/helpers/test-dir-setup";
+import {
+  createTestDirs,
+  cleanupTestDirs,
+  type PluginTestDirs,
+} from "../__tests__/helpers/test-dir-setup";
 import { writeTestSkill } from "../__tests__/helpers/disk-writers";
 import { fileExists } from "../__tests__/test-fs-utils";
 import { initializeMatrix } from "../matrix/matrix-provider";

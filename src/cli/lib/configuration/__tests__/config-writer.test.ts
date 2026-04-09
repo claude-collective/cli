@@ -8,7 +8,10 @@ import {
   getGlobalConfigImportPath,
 } from "../config-writer";
 import { buildSkillConfigs } from "../../__tests__/helpers/wizard-simulation.js";
-import { buildProjectConfig, buildAgentConfigs } from "../../__tests__/factories/config-factories.js";
+import {
+  buildProjectConfig,
+  buildAgentConfigs,
+} from "../../__tests__/factories/config-factories.js";
 import { CLAUDE_SRC_DIR } from "../../../consts";
 import { EXPECTED_SKILLS } from "../../__tests__/expected-values";
 

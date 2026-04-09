@@ -51,8 +51,14 @@ declare module "vitest" {
     ): Promise<void>;
     toHaveEjectedTemplate(): Promise<void>;
     toHaveSettings(expectations?: SettingsExpectations): Promise<void>;
-    toHaveAgentFrontmatter(agentName: string, expectations: AgentFrontmatterExpectations): Promise<void>;
-    toHaveAgentDynamicSkills(agentName: string, expectations: AgentDynamicSkillsExpectations): Promise<void>;
+    toHaveAgentFrontmatter(
+      agentName: string,
+      expectations: AgentFrontmatterExpectations,
+    ): Promise<void>;
+    toHaveAgentDynamicSkills(
+      agentName: string,
+      expectations: AgentDynamicSkillsExpectations,
+    ): Promise<void>;
   }
   interface AsymmetricMatchersContaining {
     toHaveConfig(expectations?: import("./project-matchers.js").ConfigExpectations): void;
