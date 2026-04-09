@@ -8,7 +8,7 @@ import {
   renderSkillMd,
 } from "../helpers/test-utils.js";
 import { DIRS, FILES } from "../pages/constants.js";
-import type { ProjectConfig, SkillId, AgentName, Domain } from "../../src/cli/types/index.js";
+import type { ProjectConfig, SkillId, AgentName, Domain, StackAgentConfig } from "../../src/cli/types/index.js";
 import type { ProjectHandle } from "../pages/wizard-result.js";
 
 export type DualScopeHandle = {
@@ -20,6 +20,7 @@ export type EditableOptions = {
   skills?: SkillId[];
   agents?: AgentName[];
   domains?: Domain[];
+  stack?: Partial<Record<AgentName, StackAgentConfig>>;
 };
 
 export type PluginProjectOptions = {
@@ -116,6 +117,7 @@ export class ProjectBuilder {
       agents: agentConfigs,
       domains,
       selectedAgents: agents,
+      ...(options?.stack && { stack: options.stack }),
     };
 
     await writeProjectConfig(projectDir, config);

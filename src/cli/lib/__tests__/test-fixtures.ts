@@ -1,5 +1,6 @@
 import type { ResolvedSkill } from "../../types";
-import { createMockSkill, createMockCategory } from "./helpers";
+import { createMockSkill } from "./factories/skill-factories.js";
+import { createMockCategory } from "./factories/category-factories.js";
 
 // ---------------------------------------------------------------------------
 // Canonical SKILLS registry — single source of truth for all test ResolvedSkills.

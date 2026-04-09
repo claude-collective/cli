@@ -1,7 +1,8 @@
 import { expect } from "vitest";
+import { agentMatchers } from "./agent-matchers.js";
 import { projectMatchers } from "./project-matchers.js";
 
-expect.extend(projectMatchers);
+expect.extend({ ...projectMatchers, ...agentMatchers });
 
 type AgentContentExpectations = {
   contains?: string[];
@@ -11,6 +12,22 @@ type AgentContentExpectations = {
 type SettingsExpectations = {
   hasKey?: string;
   keyValue?: unknown;
+};
+
+type AgentFrontmatterExpectations = {
+  name?: string;
+  description?: string;
+  model?: string;
+  tools?: string[];
+  skills?: string[];
+  noSkills?: boolean;
+};
+
+type AgentDynamicSkillsExpectations = {
+  skillIds?: string[];
+  noSkillIds?: string[];
+  hasActivationProtocol?: boolean;
+  allPreloaded?: boolean;
 };
 
 // Augment Vitest's expect types
@@ -34,6 +51,8 @@ declare module "vitest" {
     ): Promise<void>;
     toHaveEjectedTemplate(): Promise<void>;
     toHaveSettings(expectations?: SettingsExpectations): Promise<void>;
+    toHaveAgentFrontmatter(agentName: string, expectations: AgentFrontmatterExpectations): Promise<void>;
+    toHaveAgentDynamicSkills(agentName: string, expectations: AgentDynamicSkillsExpectations): Promise<void>;
   }
   interface AsymmetricMatchersContaining {
     toHaveConfig(expectations?: import("./project-matchers.js").ConfigExpectations): void;
@@ -51,5 +70,7 @@ declare module "vitest" {
     ): void;
     toHaveEjectedTemplate(): void;
     toHaveSettings(expectations?: SettingsExpectations): void;
+    toHaveAgentFrontmatter(agentName: string, expectations: AgentFrontmatterExpectations): void;
+    toHaveAgentDynamicSkills(agentName: string, expectations: AgentDynamicSkillsExpectations): void;
   }
 }

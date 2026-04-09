@@ -1,0 +1,40 @@
+import { parse as parseYaml } from "yaml";
+
+// --- Re-exports from sub-files ---
+export { CLI_ROOT, runCliCommand } from "./cli-runner.js";
+export { readTestYaml, readTestTsConfig, writeTestTsConfig } from "./config-io.js";
+export { writeTestSkill, writeSourceSkill, writeTestAgent } from "./disk-writers.js";
+export {
+  buildSkillConfigs,
+  simulateSkillSelections,
+  buildWizardResultFromStore,
+  extractSkillIdsFromAssignment,
+} from "./wizard-simulation.js";
+export { createTestDirs, cleanupTestDirs } from "./test-dir-setup.js";
+export type { PluginTestDirs } from "./test-dir-setup.js";
+
+// --- Remaining utility function ---
+
+/**
+ * Lightweight frontmatter parser for test assertions.
+ * Returns raw key-value pairs (unlike the production parseFrontmatter which
+ * returns typed SkillFrontmatter with Zod validation).
+ */
+export function parseTestFrontmatter(content: string): Record<string, unknown> | null {
+  if (!content.startsWith("---")) {
+    return null;
+  }
+
+  const endIndex = content.indexOf("---", 3);
+  if (endIndex === -1) {
+    return null;
+  }
+
+  const yamlContent = content.slice(3, endIndex).trim();
+  try {
+    // Boundary cast: YAML parse returns `unknown`
+    return parseYaml(yamlContent) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}

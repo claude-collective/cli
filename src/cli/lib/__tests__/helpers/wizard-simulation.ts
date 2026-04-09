@@ -1,0 +1,118 @@
+import type {
+  Category,
+  Domain,
+  DomainSelections,
+  MergedSkillsMatrix,
+  SkillConfig,
+  SkillId,
+} from "../../../types";
+import type { WizardResultV2 } from "../../../components/wizard/wizard";
+import { useWizardStore } from "../../../stores/wizard-store";
+import { resolveAlias, validateSelection } from "../../matrix";
+
+/** Build a SkillConfig array from skill IDs with default scope and source */
+export function buildSkillConfigs(
+  skillIds: SkillId[],
+  overrides?: Partial<Omit<SkillConfig, "id">>,
+): SkillConfig[] {
+  return skillIds.map((id) => ({
+    id,
+    scope: overrides?.scope ?? "project",
+    source: overrides?.source ?? "eject",
+    ...(overrides?.excluded !== undefined && { excluded: overrides.excluded }),
+  }));
+}
+
+/**
+ * Simulates a user selecting specific skills via the wizard store.
+ *
+ * Sets up domainSelections as if the user toggled each skill in the build step,
+ * using the matrix to look up the correct domain and category per skill.
+ */
+export function simulateSkillSelections(
+  skillIds: SkillId[],
+  matrix: MergedSkillsMatrix,
+  selectedDomains: string[],
+): void {
+  const domainSelections = skillIds.reduce<DomainSelections>((acc, skillId) => {
+    const skill = matrix.skills[skillId];
+    if (!skill) return acc;
+    // Boundary cast: skill.category is a Category at runtime
+    const category = skill.category as Category;
+    const domain = matrix.categories[category]?.domain;
+    if (!domain) return acc;
+    const domainObj = acc[domain] ?? {};
+    const subcatList = domainObj[category] ?? [];
+    if (subcatList.includes(skillId)) return acc;
+    return {
+      ...acc,
+      [domain]: { ...domainObj, [category]: [...subcatList, skillId] },
+    };
+  }, {});
+
+  useWizardStore.setState({
+    domainSelections,
+    selectedDomains: selectedDomains as Domain[],
+    approach: "scratch",
+    step: "confirm",
+  });
+}
+
+/**
+ * Replicates `handleComplete` from wizard.tsx for the "customize" path.
+ *
+ * Given the wizard store state (after simulated user selections), this
+ * builds the same WizardResultV2 that the real wizard produces:
+ * 1. Collects all selected technologies from domainSelections
+ * 2. Resolves aliases to canonical skill IDs
+ * 3. Runs validation
+ */
+export function buildWizardResultFromStore(
+  matrix: MergedSkillsMatrix,
+  overrides?: Partial<WizardResultV2>,
+): WizardResultV2 {
+  const store = useWizardStore.getState();
+
+  let allSkills: SkillId[];
+
+  if (store.selectedStackId && store.stackAction === "defaults") {
+    const stack = matrix.suggestedStacks.find((s) => s.id === store.selectedStackId);
+    allSkills = [...(stack?.allSkillIds || [])];
+  } else {
+    const techNames = store.getAllSelectedTechnologies();
+    allSkills = techNames.map((tech) => resolveAlias(tech));
+  }
+
+  const validation = validateSelection(allSkills);
+
+  return {
+    skills: store.skillConfigs.length > 0 ? store.skillConfigs : buildSkillConfigs(allSkills),
+    selectedAgents: store.selectedAgents,
+    agentConfigs: store.agentConfigs,
+    selectedStackId: store.selectedStackId,
+    domainSelections: store.domainSelections,
+    selectedDomains: store.selectedDomains,
+    cancelled: false,
+    validation,
+    ...overrides,
+  };
+}
+
+/**
+ * Extracts skill IDs from a stack assignment value, which may be:
+ * - A bare string (e.g., "web-framework-react")
+ * - An object with .id (e.g., { id: "web-framework-react", preloaded: true })
+ * - An array of strings or objects
+ */
+export function extractSkillIdsFromAssignment(assignment: unknown): string[] {
+  if (typeof assignment === "string") {
+    return [assignment];
+  }
+  if (Array.isArray(assignment)) {
+    return assignment.flatMap((item) => extractSkillIdsFromAssignment(item));
+  }
+  if (typeof assignment === "object" && assignment !== null && "id" in assignment) {
+    return [String((assignment as { id: string }).id)];
+  }
+  return [];
+}

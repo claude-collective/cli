@@ -1,9 +1,8 @@
 // Shared agent configs and definitions for test files.
-// Uses createMockAgent/createMockAgentConfig from helpers.ts.
 
 import type { AgentConfig, AgentDefinition } from "../../../types";
 import type { TestAgent } from "../fixtures/create-test-source";
-import { createMockAgent, createMockAgentConfig } from "../helpers.js";
+import { createMockAgent, createMockAgentConfig } from "../factories/agent-factories.js";
 import { REACT_SKILL, REACT_SKILL_PRELOADED, VITEST_SINGLE_FILE_SKILL } from "./mock-skills.js";
 
 // ---------------------------------------------------------------------------

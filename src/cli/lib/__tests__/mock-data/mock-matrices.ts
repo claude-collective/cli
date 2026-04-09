@@ -1,17 +1,15 @@
 // Shared matrix configs and compile configs for test files.
-// Uses createMockMatrixConfig/createMockCompileConfig from helpers.ts.
 
 import { groupBy, mapValues } from "remeda";
 
 import {
-  createMockMatrixConfig,
-  createMockCompileConfig,
-  createMockCategory,
-  createMockMatrix,
   createMockMultiSourceSkill,
   createMockSkill,
   testSkillToResolvedSkill,
-} from "../helpers.js";
+} from "../factories/skill-factories.js";
+import { createMockCategory } from "../factories/category-factories.js";
+import { createMockMatrix, createMockMatrixConfig } from "../factories/matrix-factories.js";
+import { createMockCompileConfig } from "../factories/plugin-factories.js";
 import { SKILLS, TEST_CATEGORIES } from "../test-fixtures.js";
 import { FRAMEWORK_CATEGORY, MULTI_SOURCE_CATEGORIES } from "./mock-categories.js";
 import {

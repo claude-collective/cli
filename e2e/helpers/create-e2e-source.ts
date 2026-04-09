@@ -17,7 +17,7 @@ import type {
   Stack,
   StackAgentConfig,
 } from "../../src/cli/types/index.js";
-import { createMockSkillAssignment } from "../../src/cli/lib/__tests__/helpers.js";
+import { createMockSkillAssignment } from "../../src/cli/lib/__tests__/factories/skill-factories.js";
 import {
   renderConfigTs,
   renderRulesTs,

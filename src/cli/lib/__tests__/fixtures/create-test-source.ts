@@ -13,13 +13,8 @@ import {
 } from "../../../consts";
 import type { ExtractedSkillMetadata, SkillId, SkillSlug } from "../../../types";
 import { computeSkillFolderHash } from "../../versioning";
-import {
-  fileExists,
-  directoryExists,
-  readTestYaml,
-  createTempDir,
-  cleanupTempDir,
-} from "../helpers";
+import { fileExists, directoryExists, createTempDir, cleanupTempDir } from "../test-fs-utils";
+import { readTestYaml } from "../helpers/config-io.js";
 import { renderSkillMd, renderConfigTs } from "../content-generators";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { DEFAULT_TEST_AGENTS } from "../mock-data/mock-agents";

@@ -1,7 +1,6 @@
 // Shared SkillSource objects for test files.
-// Uses createMockSkillSource from helpers.ts.
 
-import { createMockSkillSource } from "../helpers.js";
+import { createMockSkillSource } from "../factories/skill-factories.js";
 
 // ---------------------------------------------------------------------------
 // Sources from skill-resolution.integration.test.ts

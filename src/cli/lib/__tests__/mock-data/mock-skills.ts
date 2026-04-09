@@ -1,5 +1,4 @@
 // Shared skill entries and TestSkill arrays for test files.
-// Uses createMockSkillEntry from helpers.ts.
 
 import type {
   Category,
@@ -15,8 +14,8 @@ import {
   createMockSkill,
   createMockSkillEntry,
   createTestSkill,
-  SKILLS,
-} from "../helpers.js";
+} from "../factories/skill-factories.js";
+import { SKILLS } from "../test-fixtures";
 import { renderSkillMd } from "../content-generators";
 
 // Skill entries from compiler.test.ts
