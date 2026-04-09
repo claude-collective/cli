@@ -3,11 +3,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS, DIRS, FILES, EXIT_CODES } from "../pages/constants.js";
-import {
-  cleanupTempDir,
-  ensureBinaryExists,
-  readTestFile,
-} from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
 import {
   createTestEnvironment,
   initGlobal,
@@ -133,7 +129,12 @@ describe("dual-scope edit lifecycle -- config preservation", () => {
 
       // Assert: global config has expected content after Phase A
       await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        skillIds: [
+          "web-framework-react",
+          "web-testing-vitest",
+          "web-state-zustand",
+          "api-framework-hono",
+        ],
         agents: ["web-developer", "api-developer"],
         source: "agents-inc",
       });

@@ -85,7 +85,13 @@ describe("eject command", () => {
 
     // Verify the template file was actually created with liquid content
     await expect({ dir: tempDir }).toHaveEjectedTemplate();
-    const templatePath = path.join(tempDir, DIRS.CLAUDE_SRC, "agents", "_templates", "agent.liquid");
+    const templatePath = path.join(
+      tempDir,
+      DIRS.CLAUDE_SRC,
+      "agents",
+      "_templates",
+      "agent.liquid",
+    );
     const templateContent = await readTestFile(templatePath);
     expect(templateContent).toContain("---");
 
@@ -249,9 +255,7 @@ describe("eject command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Config file should exist with a project name (derived from the temp dir basename)
-    const configContent = await readTestFile(
-      path.join(tempDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
-    );
+    const configContent = await readTestFile(path.join(tempDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS));
     expect(configContent).toContain("name");
     expect(configContent).toContain("export default");
   });

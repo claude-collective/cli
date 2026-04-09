@@ -99,7 +99,9 @@ describe("Init Flow Integration: Eject Mode", () => {
     const config = await readTestTsConfig<ProjectConfig>(configPath);
     expect(typeof config.name).toBe("string");
     expect(config.agents.map((a) => a.name)).toStrictEqual(["api-developer", "web-developer"]);
-    expect(config.skills.map((s) => s.id).sort()).toStrictEqual([...SELECTED_SKILLS_REACT_HONO].sort());
+    expect(config.skills.map((s) => s.id).sort()).toStrictEqual(
+      [...SELECTED_SKILLS_REACT_HONO].sort(),
+    );
     expect(deriveInstallMode(config.skills)).toBe("eject");
     expect(config.source).toBe(dirs.sourceDir);
   });
@@ -117,7 +119,9 @@ describe("Init Flow Integration: Eject Mode", () => {
     expect(await directoryExists(skillsDir)).toBe(true);
 
     // Copied skill IDs should match what was selected
-    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual([...SELECTED_SKILLS_REACT_HONO].sort());
+    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
+      [...SELECTED_SKILLS_REACT_HONO].sort(),
+    );
 
     // Each copied skill should have a SKILL.md
     for (const copiedSkill of result.copiedSkills) {
@@ -253,7 +257,9 @@ describe("Init Flow Integration: All Skills Selection", () => {
     });
 
     // All skills should be copied
-    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual([...SELECTED_SKILLS_ALL].sort());
+    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
+      [...SELECTED_SKILLS_ALL].sort(),
+    );
 
     // Config should include all skills
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
@@ -439,7 +445,9 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
 
     // Config should have exactly both skills
     const config = await readTestTsConfig<ProjectConfig>(secondResult.configPath);
-    expect(config.skills.map((s) => s.id).sort()).toStrictEqual([...SELECTED_SKILLS_REACT_HONO].sort());
+    expect(config.skills.map((s) => s.id).sort()).toStrictEqual(
+      [...SELECTED_SKILLS_REACT_HONO].sort(),
+    );
   });
 });
 
@@ -601,7 +609,9 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-    expect(Object.keys(config.stack!).sort()).toStrictEqual([...SELECTED_AGENTS_WITH_REVIEWER].sort());
+    expect(Object.keys(config.stack!).sort()).toStrictEqual(
+      [...SELECTED_AGENTS_WITH_REVIEWER].sort(),
+    );
 
     // Every agent should have exactly these skill category keys
     for (const agentId of SELECTED_AGENTS_WITH_REVIEWER) {

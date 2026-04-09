@@ -23,6 +23,7 @@ root_cause: rule-not-specific-enough
 **82 instances found across the codebase.** Of those, ~12 in unit tests could be replaced with exact assertions. The remaining ~70 are in integration tests against real source data where exact counts legitimately vary.
 
 Fixable patterns found:
+
 1. **Computed values treated as opaque** (use-virtual-scroll.test.ts): `hiddenBelow` and `hiddenAbove` are deterministic from input (10 items x height 3, viewport 12). Exact values are 7.
 2. **Known mock data counted loosely** (wizard-store.test.ts): `populateFromSkillIds(["react", "hono"])` produces exactly 2 domains -- "web" and "api".
 3. **Validator error/warning counts** (output-validator.test.ts): Missing `description` + `tools` produces exactly 2 warnings. Missing `name` produces exactly 1 error.
@@ -32,6 +33,7 @@ Fixable patterns found:
 ## Fix Applied
 
 Replaced 12 `toBeGreaterThan(0)` assertions with exact values:
+
 - `toBe(7)` for virtual scroll hidden counts
 - `toHaveLength(2)` for domain selection keys
 - `toHaveLength(2)` for output validator warnings

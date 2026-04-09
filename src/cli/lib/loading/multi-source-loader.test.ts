@@ -65,12 +65,24 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: false,
+          primary: true,
+        },
       ]);
 
       const vitest = matrix.skills["web-testing-vitest"]!;
       expect(vitest.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: false,
+          primary: true,
+        },
       ]);
     });
 
@@ -93,12 +105,24 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+        {
+          name: "Acme Corp",
+          displayName: undefined,
+          type: "private",
+          installed: false,
+          primary: true,
+        },
       ]);
 
       const vitest = matrix.skills["web-testing-vitest"]!;
       expect(vitest.availableSources).toStrictEqual([
-        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+        {
+          name: "Acme Corp",
+          displayName: undefined,
+          type: "private",
+          installed: false,
+          primary: true,
+        },
       ]);
     });
 
@@ -121,7 +145,13 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+        {
+          name: "Acme Corp",
+          displayName: undefined,
+          type: "private",
+          installed: false,
+          primary: true,
+        },
       ]);
     });
 
@@ -145,7 +175,13 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "SomeMarketplace", displayName: undefined, type: "public", installed: false, primary: true },
+        {
+          name: "SomeMarketplace",
+          displayName: undefined,
+          type: "public",
+          installed: false,
+          primary: true,
+        },
       ]);
     });
 
@@ -166,13 +202,22 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: false,
+          primary: true,
+        },
         { name: "eject", type: "local", installed: true, installMode: "eject" },
       ]);
 
       // activeSource should be the local source (installed)
       expect(react.activeSource).toStrictEqual({
-        name: "eject", type: "local", installed: true, installMode: "eject",
+        name: "eject",
+        type: "local",
+        installed: true,
+        installMode: "eject",
       });
     });
   });
@@ -195,7 +240,13 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: false,
+          primary: true,
+        },
         { name: "eject", type: "local", installed: true, installMode: "eject" },
       ]);
     });
@@ -219,7 +270,10 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.activeSource).toStrictEqual({
-        name: "eject", type: "local", installed: true, installMode: "eject",
+        name: "eject",
+        type: "local",
+        installed: true,
+        installMode: "eject",
       });
     });
 
@@ -236,7 +290,11 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.activeSource).toStrictEqual({
-        name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true,
+        name: "agents-inc",
+        displayName: undefined,
+        type: "public",
+        installed: false,
+        primary: true,
       });
     });
   });
@@ -267,7 +325,13 @@ describe("multi-source-loader", () => {
       // Original skill should still have public source
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: false,
+          primary: true,
+        },
       ]);
     });
   });
@@ -301,7 +365,13 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: false,
+          primary: true,
+        },
         { name: "acme-corp", type: "private", url: "github:acme-corp/skills", installed: false },
       ]);
     });
@@ -336,7 +406,14 @@ describe("multi-source-loader", () => {
       const react = matrix.skills["web-framework-react"]!;
       // Should have a single public source marked as plugin-installed
       expect(react.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: true, installMode: "plugin", primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: true,
+          installMode: "plugin",
+          primary: true,
+        },
       ]);
     });
 
@@ -371,12 +448,26 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: true, installMode: "plugin", primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: true,
+          installMode: "plugin",
+          primary: true,
+        },
       ]);
 
       const zustand = matrix.skills["web-state-zustand"]!;
       expect(zustand.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: true, installMode: "plugin", primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: true,
+          installMode: "plugin",
+          primary: true,
+        },
       ]);
     });
   });
@@ -433,14 +524,26 @@ describe("multi-source-loader", () => {
       // React should have both private (Acme Corp) and public (Agents Inc) sources
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+        {
+          name: "Acme Corp",
+          displayName: undefined,
+          type: "private",
+          installed: false,
+          primary: true,
+        },
         { name: "agents-inc", type: "public", installed: false },
       ]);
 
       // Vitest only exists in private source, not in public
       const vitest = matrix.skills["web-testing-vitest"]!;
       expect(vitest.availableSources).toStrictEqual([
-        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+        {
+          name: "Acme Corp",
+          displayName: undefined,
+          type: "private",
+          installed: false,
+          primary: true,
+        },
       ]);
     });
 
@@ -460,7 +563,13 @@ describe("multi-source-loader", () => {
       const react = matrix.skills["web-framework-react"]!;
       // Only the primary public source -- no duplicate public tagging
       expect(react.availableSources).toStrictEqual([
-        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        {
+          name: "agents-inc",
+          displayName: undefined,
+          type: "public",
+          installed: false,
+          primary: true,
+        },
       ]);
 
       // fetchFromSource should NOT have been called for public fallback
@@ -506,7 +615,13 @@ describe("multi-source-loader", () => {
       const react = matrix.skills["web-framework-react"]!;
       // Public source should use fallback name "agents-inc"
       expect(react.availableSources).toStrictEqual([
-        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+        {
+          name: "Acme Corp",
+          displayName: undefined,
+          type: "private",
+          installed: false,
+          primary: true,
+        },
         { name: "agents-inc", type: "public", installed: false },
       ]);
     });
@@ -542,7 +657,13 @@ describe("multi-source-loader", () => {
       // Skill should still have just the private source
       const react = matrix.skills["web-framework-react"]!;
       expect(react.availableSources).toStrictEqual([
-        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+        {
+          name: "Acme Corp",
+          displayName: undefined,
+          type: "private",
+          installed: false,
+          primary: true,
+        },
       ]);
     });
   });
@@ -581,13 +702,15 @@ describe("multi-source-loader", () => {
 
       const result = await searchExtraSources("react", sources);
 
-      expect(result).toStrictEqual([{
-        id: "web-framework-react-pro",
-        sourceName: "acme-corp",
-        sourceUrl: "github:acme-corp/skills",
-        alias: "react",
-        description: "Opinionated React with strict TS",
-      }]);
+      expect(result).toStrictEqual([
+        {
+          id: "web-framework-react-pro",
+          sourceName: "acme-corp",
+          sourceUrl: "github:acme-corp/skills",
+          alias: "react",
+          description: "Opinionated React with strict TS",
+        },
+      ]);
     });
 
     it("should find matching skills from multiple sources", async () => {
@@ -676,13 +799,15 @@ describe("multi-source-loader", () => {
       const result = await searchExtraSources("react", sources);
 
       // Should still return results from the working source
-      expect(result).toStrictEqual([{
-        id: "web-framework-react-strict",
-        sourceName: "team-xyz",
-        sourceUrl: "github:team-xyz/skills",
-        alias: "react",
-        description: "web-framework-react-strict skill",
-      }]);
+      expect(result).toStrictEqual([
+        {
+          id: "web-framework-react-strict",
+          sourceName: "team-xyz",
+          sourceUrl: "github:team-xyz/skills",
+          alias: "react",
+          description: "web-framework-react-strict skill",
+        },
+      ]);
 
       // Should have warned about the failed source
       expect(warn).toHaveBeenCalledWith(
@@ -735,13 +860,15 @@ describe("multi-source-loader", () => {
       const sources: SourceEntry[] = [{ name: "acme-corp", url: "github:acme-corp/skills" }];
 
       const result = await searchExtraSources("react", sources);
-      expect(result).toStrictEqual([{
-        id: "web-framework-react-pro",
-        sourceName: "acme-corp",
-        sourceUrl: "github:acme-corp/skills",
-        alias: "react",
-        description: "web-framework-react-pro skill",
-      }]);
+      expect(result).toStrictEqual([
+        {
+          id: "web-framework-react-pro",
+          sourceName: "acme-corp",
+          sourceUrl: "github:acme-corp/skills",
+          alias: "react",
+          description: "web-framework-react-pro skill",
+        },
+      ]);
     });
   });
 });

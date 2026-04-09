@@ -43,6 +43,7 @@ All 174 integration tests pass after changes.
 Add to `.ai-docs/standards/clean-code-standards.md` (testing section):
 
 **Integration test assertion rules:**
+
 - NEVER use `toBeDefined()` as a final assertion — always assert the specific expected value or shape
 - NEVER use `toBeTruthy()` — use `typeof` checks, `.toBe()`, or `.toContain()` for specific values
 - When a `toBeDefined()` guard precedes `!` property access, prefer `toStrictEqual(expect.objectContaining({...}))` which guards AND validates in one assertion

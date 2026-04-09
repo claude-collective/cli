@@ -27,9 +27,7 @@ describe("defaultRules", () => {
 
   it("has recommend rules as flat picks with skill and reason", () => {
     expect(defaultRules.relationships.recommends).toHaveLength(26);
-    expect(
-      defaultRules.relationships.recommends.find((r) => r.skill === "zustand"),
-    ).toStrictEqual({
+    expect(defaultRules.relationships.recommends.find((r) => r.skill === "zustand")).toStrictEqual({
       skill: "zustand",
       reason: "Best-in-class React state management",
     });
@@ -37,9 +35,7 @@ describe("defaultRules", () => {
 
   it("has require rules", () => {
     expect(defaultRules.relationships.requires).toHaveLength(50);
-    expect(
-      defaultRules.relationships.requires.find((r) => r.skill === "zustand"),
-    ).toStrictEqual({
+    expect(defaultRules.relationships.requires.find((r) => r.skill === "zustand")).toStrictEqual({
       skill: "zustand",
       needs: ["react", "nextjs", "remix", "react-native"],
       needsAny: true,

@@ -111,7 +111,12 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
 
       // D-3: Global config has api-framework-hono with scope: "global"
       await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        skillIds: [
+          "web-framework-react",
+          "web-testing-vitest",
+          "web-state-zustand",
+          "api-framework-hono",
+        ],
         agents: ["web-developer"],
       });
       const globalConfig = await readTestFile(
@@ -189,7 +194,12 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
 
       // D-4: Global config has api-developer with scope: "global"
       await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        skillIds: [
+          "web-framework-react",
+          "web-testing-vitest",
+          "web-state-zustand",
+          "api-framework-hono",
+        ],
         agents: ["web-developer", "api-developer"],
       });
       const globalConfig = await readTestFile(

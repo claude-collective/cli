@@ -344,9 +344,9 @@ describe("source-loader local skills integration", () => {
 
     // Local skill should also be present with normalized ID
     // Boundary cast: branded SkillId key widened to string for test indexing
-    expect(
-      (result.matrix.skills as Record<string, ResolvedSkill>)["preserve-skill"],
-    ).toStrictEqual(expect.objectContaining({ id: "preserve-skill", local: true }));
+    expect((result.matrix.skills as Record<string, ResolvedSkill>)["preserve-skill"]).toStrictEqual(
+      expect.objectContaining({ id: "preserve-skill", local: true }),
+    );
   });
 
   it("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
@@ -384,7 +384,10 @@ describe("source-loader local skills integration", () => {
     const existingSkillId = "web-testing-vitest";
     const existingSkill = initialResult.matrix.skills[existingSkillId]!;
     expect(existingSkill).toStrictEqual(
-      expect.objectContaining({ id: existingSkillId, description: "Marketplace vitest configuration" }),
+      expect.objectContaining({
+        id: existingSkillId,
+        description: "Marketplace vitest configuration",
+      }),
     );
     expect(existingSkill.local).toBeUndefined(); // Should be a marketplace skill
     expect(existingSkill.description).toBe("Marketplace vitest configuration");

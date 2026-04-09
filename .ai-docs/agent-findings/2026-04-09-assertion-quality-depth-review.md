@@ -40,6 +40,7 @@ Five assertion anti-patterns found in high-value test files after a previous swe
 Add to CLAUDE.md testing rules:
 
 **NEVER write assertions that can only pass** -- verify these patterns are absent:
+
 - `toHaveLength(N)` without follow-up content checks on the same array
 - `const sorted = [...result].sort(); expect(result).toStrictEqual(sorted)` (compare to explicit expected order instead)
 - `new Set(result).size === result.length` (verify the actual list content instead)

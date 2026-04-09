@@ -274,7 +274,11 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     });
 
     // All three agents should be compiled
-    expect([...result.agents].sort()).toStrictEqual(["api-developer", "web-developer", "web-tester"]);
+    expect([...result.agents].sort()).toStrictEqual([
+      "api-developer",
+      "web-developer",
+      "web-tester",
+    ]);
 
     // Each agent should have a compiled markdown file
     for (const agentName of result.agents) {

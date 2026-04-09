@@ -32,6 +32,7 @@ Both test files continue to pass after the fixes.
 ## Proposed Standard
 
 No new standard needed -- both violations are already documented:
+
 - Index-based navigation is covered in anti-patterns.md ("Never use counted arrow presses to reach items")
 - Hardcoded path segments are covered in anti-patterns.md ("Never use hardcoded path segments")
 

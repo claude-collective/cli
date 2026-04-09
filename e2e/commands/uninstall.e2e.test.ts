@@ -205,9 +205,9 @@ describe("uninstall command", () => {
 
     // User skill should still exist, CLI-managed skill should be removed
     await expect({ dir: projectDir }).toHaveLocalSkills(["my-custom-skill"]);
-    expect(await directoryExists(
-      path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-framework-react"),
-    )).toBe(false);
+    expect(
+      await directoryExists(path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-framework-react")),
+    ).toBe(false);
   });
 
   it("should skip all skills when only user-created skills exist", async () => {

@@ -74,7 +74,12 @@ describe.skipIf(!claudeAvailable)("plugin mode lifecycle: init -> uninstall", ()
       expect(initOutput).not.toContain("Skills copied to:");
 
       await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        skillIds: [
+          "web-framework-react",
+          "web-testing-vitest",
+          "web-state-zustand",
+          "api-framework-hono",
+        ],
         agents: ["web-developer", "api-developer"],
         source: fixture.marketplaceName,
       });

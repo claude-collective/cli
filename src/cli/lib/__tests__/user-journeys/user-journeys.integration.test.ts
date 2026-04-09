@@ -153,7 +153,11 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     expect(Object.keys(updatedConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
     for (const agentName of WEB_AND_API_AGENTS) {
       const agentStack = updatedConfig.stack![agentName];
-      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-client-state", "web-framework"]);
+      expect(Object.keys(agentStack!).sort()).toStrictEqual([
+        "api-api",
+        "web-client-state",
+        "web-framework",
+      ]);
     }
 
     // Agents are compiled (6 web + 3 api)
@@ -305,7 +309,11 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     expect(Object.keys(initialConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
     for (const agentName of WEB_AND_API_AGENTS) {
       const agentStack = initialConfig.stack![agentName];
-      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-client-state", "web-framework"]);
+      expect(Object.keys(agentStack!).sort()).toStrictEqual([
+        "api-api",
+        "web-client-state",
+        "web-framework",
+      ]);
     }
 
     // Step 2: Re-init with A, C (remove zustand)
@@ -341,7 +349,11 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     expect(Object.keys(updatedConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
     for (const agentName of WEB_AND_API_AGENTS) {
       const agentStack = updatedConfig.stack![agentName];
-      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-client-state", "web-framework"]);
+      expect(Object.keys(agentStack!).sort()).toStrictEqual([
+        "api-api",
+        "web-client-state",
+        "web-framework",
+      ]);
     }
 
     // Agents are compiled (6 web + 3 api from merged config)
@@ -487,7 +499,11 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
     expect(Object.keys(loadedStack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
     for (const agentName of WEB_AND_API_AGENTS) {
       const agentStack = loadedStack![agentName];
-      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-client-state", "web-framework"]);
+      expect(Object.keys(agentStack!).sort()).toStrictEqual([
+        "api-api",
+        "web-client-state",
+        "web-framework",
+      ]);
     }
 
     // Step 3: Recompile using recompileAgents (simulating `compile` command)
@@ -819,15 +835,15 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
       const agentStack = config.stack![agentName];
       expect(Object.keys(agentStack!).sort()).toStrictEqual(expectedCategories);
       // Verify exact skill assignments per category
-      expect(extractSkillIdsFromAssignment(agentStack!["web-framework" as keyof typeof agentStack])).toStrictEqual(
-        ["web-framework-react"],
-      );
-      expect(extractSkillIdsFromAssignment(agentStack!["api-api" as keyof typeof agentStack])).toStrictEqual(
-        ["api-framework-hono"],
-      );
-      expect(extractSkillIdsFromAssignment(agentStack!["api-database" as keyof typeof agentStack])).toStrictEqual(
-        ["api-database-drizzle"],
-      );
+      expect(
+        extractSkillIdsFromAssignment(agentStack!["web-framework" as keyof typeof agentStack]),
+      ).toStrictEqual(["web-framework-react"]);
+      expect(
+        extractSkillIdsFromAssignment(agentStack!["api-api" as keyof typeof agentStack]),
+      ).toStrictEqual(["api-framework-hono"]);
+      expect(
+        extractSkillIdsFromAssignment(agentStack!["api-database" as keyof typeof agentStack]),
+      ).toStrictEqual(["api-database-drizzle"]);
     }
 
     // Agent files should exist for all compiled agents
@@ -1508,4 +1524,3 @@ describe("Excluded Skills — Global/Project Interaction", () => {
     expect(reactCleared?.excluded).toBeUndefined();
   });
 });
-

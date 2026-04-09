@@ -845,8 +845,16 @@ describe("migratePluginSkillScopes", () => {
 
     await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
 
-    expect(uninstallSpy).not.toHaveBeenCalledWith("web-framework-react", expect.any(String), "/project");
-    expect(installSpy).not.toHaveBeenCalledWith("web-framework-react@eject", expect.any(String), "/project");
+    expect(uninstallSpy).not.toHaveBeenCalledWith(
+      "web-framework-react",
+      expect.any(String),
+      "/project",
+    );
+    expect(installSpy).not.toHaveBeenCalledWith(
+      "web-framework-react@eject",
+      expect.any(String),
+      "/project",
+    );
 
     installSpy.mockRestore();
     uninstallSpy.mockRestore();
@@ -928,7 +936,11 @@ describe("migratePluginSkillScopes", () => {
     // Should have tried to uninstall
     expect(uninstallSpy).toHaveBeenCalledWith("web-framework-react", "project", "/project");
     // Should NOT have installed at global (uninstall failed, catch fired)
-    expect(installSpy).not.toHaveBeenCalledWith("web-framework-react@agents-inc", "user", "/project");
+    expect(installSpy).not.toHaveBeenCalledWith(
+      "web-framework-react@agents-inc",
+      "user",
+      "/project",
+    );
     // Should report failure
     expect(result.migrated).toHaveLength(0);
     expect(result.failed).toHaveLength(1);
@@ -950,8 +962,16 @@ describe("migratePluginSkillScopes", () => {
 
     const result = await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
 
-    expect(uninstallSpy).not.toHaveBeenCalledWith("web-framework-react", expect.any(String), "/project");
-    expect(installSpy).not.toHaveBeenCalledWith(expect.stringContaining("web-framework-react"), expect.any(String), "/project");
+    expect(uninstallSpy).not.toHaveBeenCalledWith(
+      "web-framework-react",
+      expect.any(String),
+      "/project",
+    );
+    expect(installSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("web-framework-react"),
+      expect.any(String),
+      "/project",
+    );
     expect(result.migrated).toHaveLength(0);
     expect(result.failed).toHaveLength(0);
 

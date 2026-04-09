@@ -37,6 +37,7 @@ Additionally, `user-journeys.integration.test.ts` contained ~14 Zustand store un
 Add to test methodology standards (`.ai-docs/standards/` or CLAUDE.md test section):
 
 **NEVER use early-return-on-error patterns in tests.** If a command might fail in a test fixture, either:
+
 - Fix the fixture so the command succeeds, OR
 - Write the test to assert the error behavior explicitly
 

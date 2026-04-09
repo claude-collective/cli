@@ -406,7 +406,10 @@ describe("Integration: End-to-End Pipeline", () => {
       stack: COMPILATION_TEST_STACK,
     });
 
-    expect(stackResult.skillPlugins.sort()).toStrictEqual(["api-framework-hono", "web-framework-react"]);
+    expect(stackResult.skillPlugins.sort()).toStrictEqual([
+      "api-framework-hono",
+      "web-framework-react",
+    ]);
   });
 
   it("should compile skills and stacks that share common patterns", async () => {

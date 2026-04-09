@@ -143,9 +143,7 @@ describe("eject mode lifecycle: init -> compile -> uninstall", () => {
       expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
 
       // The specific skill that was installed in Phase 1 should no longer be present
-      expect(await directoryExists(
-        path.join(skillsDir, "web-framework-react"),
-      )).toBe(false);
+      expect(await directoryExists(path.join(skillsDir, "web-framework-react"))).toBe(false);
     },
   );
 });

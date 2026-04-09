@@ -34,6 +34,7 @@ Add a rule to `.ai-docs/standards/` or CLAUDE.md:
 > **Integration tests MUST chain multiple operations** (e.g., init -> compile -> check files, or load source -> resolve matrix -> verify skills). A test that calls a single function with mock data and checks the return value is a unit test -- put it in the module's co-located test file, not in the integration directory.
 
 Criteria for integration test placement:
+
 - Uses real file I/O (temp dirs, actual file writes/reads)
 - Chains 2+ operations from different modules
 - Assertions verify END STATE of the chain (files on disk, config shape), not just return values

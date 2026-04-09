@@ -10,11 +10,7 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import { BUILT_IN_MATRIX } from "../../../types/generated/matrix";
 import { loadProjectConfig } from "../../configuration";
-import type {
-  MergedSkillsMatrix,
-  ProjectConfig,
-  SkillId,
-} from "../../../types";
+import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
   createBasicMatrix,

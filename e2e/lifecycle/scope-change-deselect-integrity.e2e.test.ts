@@ -3,11 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import {
-  cleanupTempDir,
-  ensureBinaryExists,
-  readTestFile,
-} from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
 import {
   createGlobalOnlyEnv,
   createTestEnvironment,
@@ -138,7 +134,12 @@ describe("scope change deselect integrity", () => {
 
       // Assert: global config is unchanged -- all skills and agents still present
       await expect({ dir: env.fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        skillIds: [
+          "web-framework-react",
+          "web-testing-vitest",
+          "web-state-zustand",
+          "api-framework-hono",
+        ],
         agents: ["web-developer", "api-developer"],
       });
 

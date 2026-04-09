@@ -216,7 +216,10 @@ describe("build:plugins command", () => {
       // Create a valid skill with frontmatter
       const skillDir = path.join(skillsDir, "web-framework-react");
       await mkdir(skillDir, { recursive: true });
-      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd("web-framework-react", "React framework"));
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react", "React framework"),
+      );
 
       const { stdout, error } = await runCliCommand([
         "build:plugins",
@@ -247,18 +250,21 @@ describe("build:plugins command", () => {
     it("should copy SKILL.md into the plugin skills subdirectory", async () => {
       const skillDir = path.join(skillsDir, "web-framework-react");
       await mkdir(skillDir, { recursive: true });
-      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd("web-framework-react", "React framework"));
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react", "React framework"),
+      );
 
-      await runCliCommand([
-        "build:plugins",
-        "--skills-dir",
-        skillsDir,
-        "--output-dir",
-        outputDir,
-      ]);
+      await runCliCommand(["build:plugins", "--skills-dir", skillsDir, "--output-dir", outputDir]);
 
       // SKILL.md should be copied into skills/{skillName}/ inside plugin dir
-      const copiedSkillMd = path.join(outputDir, "web-framework-react", "skills", "web-framework-react", STANDARD_FILES.SKILL_MD);
+      const copiedSkillMd = path.join(
+        outputDir,
+        "web-framework-react",
+        "skills",
+        "web-framework-react",
+        STANDARD_FILES.SKILL_MD,
+      );
       expect(await fileExists(copiedSkillMd)).toBe(true);
 
       const content = await readFile(copiedSkillMd, "utf-8");
@@ -269,15 +275,12 @@ describe("build:plugins command", () => {
     it("should generate README.md in plugin directory", async () => {
       const skillDir = path.join(skillsDir, "web-framework-react");
       await mkdir(skillDir, { recursive: true });
-      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd("web-framework-react", "React framework"));
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react", "React framework"),
+      );
 
-      await runCliCommand([
-        "build:plugins",
-        "--skills-dir",
-        skillsDir,
-        "--output-dir",
-        outputDir,
-      ]);
+      await runCliCommand(["build:plugins", "--skills-dir", skillsDir, "--output-dir", outputDir]);
 
       const readmePath = path.join(outputDir, "web-framework-react", "README.md");
       expect(await fileExists(readmePath)).toBe(true);
@@ -340,7 +343,10 @@ describe("build:plugins command", () => {
     it("should report plugin compilation complete in stdout", async () => {
       const skillDir = path.join(skillsDir, "web-framework-react");
       await mkdir(skillDir, { recursive: true });
-      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd("web-framework-react"));
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react"),
+      );
 
       const { stdout, error } = await runCliCommand([
         "build:plugins",

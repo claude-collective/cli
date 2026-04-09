@@ -120,7 +120,10 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
       const projectHonoSource = projectConfig.match(
         /"api-framework-hono","scope":"project","source":"([^"]+)"/,
       );
-      expect(projectHonoSource, "project-scoped api-framework-hono must exist in config").not.toBeNull();
+      expect(
+        projectHonoSource,
+        "project-scoped api-framework-hono must exist in config",
+      ).not.toBeNull();
       expect(projectHonoSource![1]).not.toBe("eject");
 
       // D-5: Global config still has web skills and web-developer agent

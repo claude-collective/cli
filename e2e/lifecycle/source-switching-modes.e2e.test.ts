@@ -168,7 +168,12 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
         });
 
         // Agent may be compiled at project or global scope
-        const projectAgentPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
+        const projectAgentPath = path.join(
+          projectDir,
+          DIRS.CLAUDE,
+          DIRS.AGENTS,
+          "web-developer.md",
+        );
         const checkDir = (await fileExists(projectAgentPath)) ? projectDir : os.homedir();
         await expect({ dir: checkDir }).toHaveCompiledAgent("web-developer");
 

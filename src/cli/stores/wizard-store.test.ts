@@ -2153,11 +2153,7 @@ describe("WizardStore", () => {
       store.preselectAgentsFromDomains();
 
       const { selectedAgents, agentConfigs } = useWizardStore.getState();
-      expect(selectedAgents).toStrictEqual([
-        "api-developer",
-        "api-researcher",
-        "api-reviewer",
-      ]);
+      expect(selectedAgents).toStrictEqual(["api-developer", "api-researcher", "api-reviewer"]);
       expect(agentConfigs).toStrictEqual([
         { name: "api-developer", scope: "global" },
         { name: "api-researcher", scope: "global" },
@@ -2171,11 +2167,7 @@ describe("WizardStore", () => {
       store.preselectAgentsFromDomains();
 
       const { selectedAgents, agentConfigs } = useWizardStore.getState();
-      expect(selectedAgents).toStrictEqual([
-        "cli-developer",
-        "cli-reviewer",
-        "cli-tester",
-      ]);
+      expect(selectedAgents).toStrictEqual(["cli-developer", "cli-reviewer", "cli-tester"]);
       expect(agentConfigs).toStrictEqual([
         { name: "cli-developer", scope: "global" },
         { name: "cli-reviewer", scope: "global" },

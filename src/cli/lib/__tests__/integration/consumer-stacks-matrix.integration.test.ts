@@ -103,9 +103,10 @@ describe("Integration: Consumer-Defined Stacks", () => {
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.skills.map((s) => s.id).sort()).toStrictEqual(
-      ["api-framework-hono", "web-framework-react"],
-    );
+    expect(config.skills.map((s) => s.id).sort()).toStrictEqual([
+      "api-framework-hono",
+      "web-framework-react",
+    ]);
   });
 
   it("should find a specific stack by ID using loadStackById", async () => {
@@ -283,9 +284,11 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
       projectDir: dirs.projectDir,
     });
 
-    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
-      ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
-    );
+    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual([
+      "api-framework-hono",
+      "web-framework-react",
+      "web-testing-vitest",
+    ]);
     expect(result.compiledAgents.sort()).toStrictEqual(["api-developer", "web-developer"]);
     expect(await directoryExists(result.skillsDir)).toBe(true);
     expect(await directoryExists(result.agentsDir)).toBe(true);
@@ -524,16 +527,20 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       });
 
       // 5. Verify installation results
-      expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
-        ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
-      );
+      expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual([
+        "api-framework-hono",
+        "web-framework-react",
+        "web-testing-vitest",
+      ]);
       expect(result.compiledAgents.sort()).toStrictEqual(["api-developer", "web-developer"]);
 
       // 6. Verify config.ts contains exactly the selected skills
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-      expect(config.skills.map((s) => s.id).sort()).toStrictEqual(
-        ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
-      );
+      expect(config.skills.map((s) => s.id).sort()).toStrictEqual([
+        "api-framework-hono",
+        "web-framework-react",
+        "web-testing-vitest",
+      ]);
     } finally {
       await cleanupTestSource(dirs);
     }

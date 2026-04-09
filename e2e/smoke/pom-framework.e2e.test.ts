@@ -92,7 +92,11 @@ describe("POM Framework Smoke Tests", () => {
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
         await expect(result.project).toHaveConfig({
-          skillIds: ["web-framework-react", "api-framework-hono", "meta-methodology-research-methodology"],
+          skillIds: [
+            "web-framework-react",
+            "api-framework-hono",
+            "meta-methodology-research-methodology",
+          ],
           agents: ["web-developer", "api-developer"],
         });
       },

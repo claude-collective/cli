@@ -88,7 +88,7 @@ describe("compile command", () => {
     await mkdir(projectDir, { recursive: true });
     await writeProjectConfig(projectDir, { name: "empty", skills: [], agents: [] });
 
-    const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir } );
+    const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
     expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     expect(output).toContain("No skills found");

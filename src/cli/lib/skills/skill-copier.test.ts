@@ -349,7 +349,12 @@ describe("skill-copier", () => {
         // Verify local skill was NOT copied to plugin dir
         await expect(
           readFile(
-            path.join(pluginDir, STANDARD_DIRS.SKILLS, "web-styling-tailwind", STANDARD_FILES.SKILL_MD),
+            path.join(
+              pluginDir,
+              STANDARD_DIRS.SKILLS,
+              "web-styling-tailwind",
+              STANDARD_FILES.SKILL_MD,
+            ),
           ),
         ).rejects.toThrow();
       } finally {

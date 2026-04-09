@@ -4,7 +4,12 @@ import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { cleanupTempDir, ensureBinaryExists, fileExists, readTestFile } from "../helpers/test-utils.js";
+import {
+  cleanupTempDir,
+  ensureBinaryExists,
+  fileExists,
+  readTestFile,
+} from "../helpers/test-utils.js";
 import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
 
 /**

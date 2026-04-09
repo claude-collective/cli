@@ -731,7 +731,10 @@ describe("uninstall command", () => {
 
       expect(await fileExists(mcpPath)).toBe(true);
       const content = JSON.parse(await readFile(mcpPath, "utf-8"));
-      expect(content.mcpServers["user-server"]).toStrictEqual({ command: "node", args: ["server.js"] });
+      expect(content.mcpServers["user-server"]).toStrictEqual({
+        command: "node",
+        args: ["server.js"],
+      });
     });
 
     it("should preserve .claude/settings.json during uninstall", async () => {
