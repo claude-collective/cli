@@ -34,6 +34,7 @@ root_cause: rule-not-specific-enough
 3. Masks regressions: a function returning `{}` instead of `{ key: "value" }` still passes `toBeDefined()`
 
 Common weak patterns found:
+
 - `expect(config.stack).toBeDefined()` followed by `config.stack!["agent"]?.["category"]?.[0]?.id`
 - `expect(entry).toBeDefined()` followed by `entry!.scope`
 - `expect(content).toBeDefined()` before string content assertions
@@ -41,6 +42,7 @@ Common weak patterns found:
 ## Fix Applied
 
 Replaced all `toBeDefined()` and weak assertions with stronger alternatives:
+
 - `toStrictEqual({...exactShape})` for objects with known structure
 - `toStrictEqual(generated.stack)` for round-trip tests comparing against source data
 - `toContain()` for string content that was already validated by subsequent assertions

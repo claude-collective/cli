@@ -29,7 +29,7 @@ Command test files had two methodology issues:
    - Agent `.md` files are created in `.claude/agents/`
    - Agent files contain frontmatter with expected metadata
    - Output messages report discovery and compilation counts
-   
+
    Strengthened the "Discovered 1 local skill" assertion (was `toContain("1")`). Removed duplicate "verbose mode" section. Replaced vacuous "plugin mode" section with meaningful error message assertion.
 
 2. **init.test.ts**: Changed assertion from `isFile()` to `readFile` + content equality check.
