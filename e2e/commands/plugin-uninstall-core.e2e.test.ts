@@ -15,14 +15,12 @@ import {
   cleanupTempDir,
   ensureBinaryExists,
   directoryExists,
-  listFiles,
   renderSkillMd,
   writeProjectConfig,
   agentsPath,
-  skillsPath,
   FORKED_FROM_METADATA,
 } from "../helpers/test-utils.js";
-import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { EXIT_CODES, DIRS, FILES, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
 
 /**
@@ -94,7 +92,7 @@ describe.skipIf(!claudeAvailable)("uninstall with plugins calls Claude CLI", () 
     // Note: No createPermissionsFile() here. The claudePluginInstall() call
     // in Step 4 creates .claude/settings.json with enabledPlugins. We must
     // not overwrite it with a permissions-only file.
-  }, 120_000);
+  }, TIMEOUTS.INTERACTIVE);
 
   afterAll(async () => {
     if (fixture) await cleanupTempDir(fixture.tempDir);
@@ -121,14 +119,14 @@ describe.skipIf(!claudeAvailable)("uninstall with plugins calls Claude CLI", () 
           env: { HOME: realHome },
         },
       );
-    }, 60_000);
+    }, TIMEOUTS.PLUGIN_INSTALL);
 
     it("should exit with code 0", () => {
       expect(uninstallResult.exitCode).toBe(EXIT_CODES.SUCCESS);
     });
 
     it("should report uninstall complete in output", () => {
-      expect(uninstallResult.stdout).toContain("Uninstall complete!");
+      expect(uninstallResult.stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
     });
 
     it("should report per-plugin uninstall messages", () => {
@@ -141,12 +139,7 @@ describe.skipIf(!claudeAvailable)("uninstall with plugins calls Claude CLI", () 
     });
 
     it("should remove CLI-managed skill directories", async () => {
-      const skillsDir = skillsPath(projectDir);
-      // Skills directory should be removed or empty (all skills were CLI-managed)
-      if (await directoryExists(skillsDir)) {
-        const entries = await listFiles(skillsDir);
-        expect(entries.length).toBe(0);
-      }
+      await expect({ dir: projectDir }).toHaveNoLocalSkills();
     });
 
     it("should remove CLI-compiled agent files", async () => {

@@ -3,6 +3,7 @@ import { EXIT_CODES } from "../pages/constants.js";
 import { createTempDir, cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { CLI } from "../fixtures/cli.js";
+import "../matchers/setup.js";
 
 describe("import skill command", () => {
   let tempDir: string;
@@ -159,6 +160,10 @@ describe("import skill command", () => {
     expect(stdout).toContain("Imported:");
     expect(stdout).toContain("Import complete:");
     expect(stdout).toContain("compile");
+
+    // Verify the skill was actually copied to .claude/skills/
+    await expect({ dir: tempDir }).toHaveLocalSkills(["web-framework-react"]);
+    await expect({ dir: tempDir }).toHaveSkillCopied("web-framework-react");
   });
 
   // BUG: Same parseGitHubSource() issue. Cannot reach the duplicate-detection logic
@@ -266,6 +271,9 @@ describe("import skill command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Import complete:");
     expect(stdout).toContain("imported");
+
+    // Verify imported skills exist in .claude/skills/
+    await expect({ dir: tempDir }).toHaveLocalSkills();
   });
 
   it("should error with a completely invalid source path (no slash)", async () => {

@@ -13,7 +13,7 @@ import {
   addForkedFromMetadata,
 } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
-import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
 import type { AgentName } from "../../src/cli/types/index.js";
 
@@ -67,7 +67,7 @@ describe("uninstall preservation behavior", () => {
     const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     // .claude-src/ (including ejected templates) should be preserved
     expect(await fileExists(templatePath)).toBe(true);
@@ -99,7 +99,7 @@ describe("uninstall preservation behavior", () => {
     });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     // .claude-src/ should be removed entirely
     expect(await directoryExists(claudeSrcDir)).toBe(false);
@@ -149,7 +149,7 @@ describe("uninstall preservation behavior", () => {
     const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     // Custom agent SOURCE in .claude-src/ should be preserved (--yes does not touch .claude-src/)
     expect(await directoryExists(customAgentSrcDir)).toBe(true);
@@ -189,7 +189,7 @@ describe("uninstall preservation behavior", () => {
     const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     // Config-tracked agent should be removed
     expect(await fileExists(path.join(agentsDir, "web-developer.md"))).toBe(false);
@@ -207,7 +207,7 @@ describe("uninstall preservation behavior", () => {
     // Add a user-created file to .claude/ that the CLI does not manage
     const claudeDir = path.join(projectDir, DIRS.CLAUDE);
     await writeFile(
-      path.join(claudeDir, "settings.json"),
+      path.join(claudeDir, FILES.SETTINGS_JSON),
       JSON.stringify({ permissions: { allow: ["Read(*)"] }, userPreference: "keep-me" }),
     );
 
@@ -216,19 +216,19 @@ describe("uninstall preservation behavior", () => {
     const agentsDir = agentsPath(projectDir);
     expect(await directoryExists(skillsDir)).toBe(true);
     expect(await directoryExists(agentsDir)).toBe(true);
-    expect(await fileExists(path.join(claudeDir, "settings.json"))).toBe(true);
+    expect(await fileExists(path.join(claudeDir, FILES.SETTINGS_JSON))).toBe(true);
 
     const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     // .claude/ directory should still exist because it has user content
     expect(await directoryExists(claudeDir)).toBe(true);
 
     // User content should be preserved
-    expect(await fileExists(path.join(claudeDir, "settings.json"))).toBe(true);
-    const settingsContent = await readTestFile(path.join(claudeDir, "settings.json"));
+    expect(await fileExists(path.join(claudeDir, FILES.SETTINGS_JSON))).toBe(true);
+    const settingsContent = await readTestFile(path.join(claudeDir, FILES.SETTINGS_JSON));
     const settings = JSON.parse(settingsContent);
     expect(settings.userPreference).toBe("keep-me");
 

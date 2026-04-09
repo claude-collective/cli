@@ -2,6 +2,7 @@ import path from "path";
 import { writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
+  agentsPath,
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
@@ -12,12 +13,8 @@ import {
   readTestFile,
 } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
-import { DIRS, EXIT_CODES, FILES } from "../pages/constants.js";
+import { DIRS, EXIT_CODES, FILES, STEP_TEXT } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
-
-function agentsPath(projectDir: string): string {
-  return path.join(projectDir, DIRS.CLAUDE, "agents");
-}
 
 /**
  * Eject command integration tests.
@@ -48,15 +45,15 @@ describe("eject command integration", () => {
     const { exitCode, stdout } = await CLI.run(["eject", "templates"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Eject complete!");
+    expect(stdout).toContain(STEP_TEXT.EJECT_SUCCESS);
 
     // The exact path createLiquidEngine() checks at compiler.ts:414
     const templatePath = getEjectedTemplatePath(tempDir);
     expect(await fileExists(templatePath)).toBe(true);
 
-    // Verify the file is non-empty and contains Liquid syntax
+    // Verify the file contains valid Liquid template syntax
     const content = await readTestFile(templatePath);
-    expect(content.length).toBeGreaterThan(0);
+    expect(content).toContain("{{ agent.name }}");
     expect(content).toMatch(/\{\{|\{%/);
   });
 
@@ -77,7 +74,7 @@ describe("eject command integration", () => {
 
     // Filter out _templates — we want agent directories only
     const agentGroupDirs = topDirs.filter((d) => !d.startsWith("_"));
-    expect(agentGroupDirs.length).toBeGreaterThan(0);
+    expect(agentGroupDirs).toContain("developer");
 
     // Find a concrete agent directory (e.g., developer/web-developer)
     let foundAgent = false;
@@ -95,12 +92,12 @@ describe("eject command integration", () => {
         if (hasIdentity && hasPlaybook && hasMetadata) {
           foundAgent = true;
 
-          // Verify the files are non-empty (readAgentFiles expects content)
+          // Verify the files contain meaningful prose content (readAgentFiles expects content)
           const identity = await readTestFile(path.join(agentPath, FILES.IDENTITY_MD));
-          expect(identity.length).toBeGreaterThan(0);
+          expect(identity).toMatch(/\w+ \w+/);
 
           const playbook = await readTestFile(path.join(agentPath, FILES.PLAYBOOK_MD));
-          expect(playbook.length).toBeGreaterThan(0);
+          expect(playbook).toContain("##");
           break;
         }
       }
@@ -138,7 +135,7 @@ describe("eject command integration", () => {
     expect(await directoryExists(agentsDir)).toBe(true);
     const agentFiles = await listFiles(agentsDir);
     const mdFiles = agentFiles.filter((f) => f.endsWith(".md"));
-    expect(mdFiles.length).toBeGreaterThan(0);
+    expect(mdFiles).toContain("web-developer.md");
 
     for (const mdFile of mdFiles) {
       const agentContent = await readTestFile(path.join(agentsDir, mdFile));

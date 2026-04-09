@@ -7,6 +7,7 @@ import {
   cleanupTempDir,
   ensureBinaryExists,
   fileExists,
+  readTestFile,
 } from "../helpers/test-utils.js";
 
 describe("build commands", () => {
@@ -115,11 +116,16 @@ describe("build commands", () => {
       expect(stdout).toContain(customOutput);
       expect(stdout).toContain("Marketplace generated with 0 plugins!");
       expect(await fileExists(customOutput)).toBe(true);
+
+      const content = await readTestFile(customOutput);
+      const marketplace = JSON.parse(content);
+      expect(marketplace).toHaveProperty("plugins");
     });
 
     it("should use a custom marketplace name with --name", async () => {
       tempDir = await createTempDir();
       const customName = "my-custom-marketplace";
+      const defaultOutputPath = path.join(tempDir, ".claude-plugin", "marketplace.json");
 
       const { exitCode, stdout } = await CLI.run(["build", "marketplace", "--name", customName], {
         dir: tempDir,
@@ -127,6 +133,10 @@ describe("build commands", () => {
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Marketplace generated with 0 plugins!");
+
+      const content = await readTestFile(defaultOutputPath);
+      const marketplace = JSON.parse(content);
+      expect(marketplace.name).toBe(customName);
     });
   });
 });

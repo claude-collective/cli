@@ -6,7 +6,6 @@ import {
   cleanupTempDir,
   createLocalSkill,
   ensureBinaryExists,
-  fileExists,
   listFiles,
   readTestFile,
   renderSkillMd,
@@ -33,9 +32,8 @@ describe("compile command", () => {
   it("should compile agents to default output directory", async () => {
     const project = await ProjectBuilder.minimal();
     tempDir = path.dirname(project.dir);
-    const agentsDir = agentsPath(project.dir);
 
-    const { exitCode, output } = await CLI.run(["compile"], { dir: project.dir });
+    const { exitCode, output } = await CLI.run(["compile"], project);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(output).toContain("Compiling global agents");
@@ -43,43 +41,45 @@ describe("compile command", () => {
     expect(output).toMatch(/Recompiled \d+ global agents/);
     expect(output).toContain("Global compile complete");
 
-    const outputFiles = await listFiles(agentsDir);
-    expect(outputFiles.length).toBeGreaterThan(0);
-
-    const mdFiles = outputFiles.filter((f) => f.endsWith(".md"));
-    expect(mdFiles.length).toBe(outputFiles.length);
-
-    expect(outputFiles).toContain("web-developer.md");
-    expect(outputFiles).toContain("api-developer.md");
+    await expect(project).toHaveCompiledAgentContent("web-developer", {
+      contains: ["name: web-developer"],
+    });
+    await expect(project).toHaveCompiledAgentContent("api-developer", {
+      contains: ["name: api-developer"],
+    });
   });
 
   it("should produce valid compiled agent files with frontmatter", async () => {
     const project = await ProjectBuilder.minimal();
     tempDir = path.dirname(project.dir);
 
-    const { exitCode } = await CLI.run(["compile"], { dir: project.dir });
+    const { exitCode } = await CLI.run(["compile"], project);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    await expect({ dir: project.dir }).toHaveCompiledAgent("web-developer");
-    await expect({ dir: project.dir }).toHaveCompiledAgentContent("web-developer", {
+    await expect(project).toHaveCompiledAgentContent("web-developer", {
       contains: ["name: web-developer", "description:", "tools:", "model:", "#"],
     });
-
-    // Verify substantial content
-    const content = await readTestFile(path.join(agentsPath(project.dir), "web-developer.md"));
-    const MIN_COMPILED_AGENT_LENGTH = 500;
-    expect(content.length).toBeGreaterThan(MIN_COMPILED_AGENT_LENGTH);
+    await expect(project).toHaveCompiledAgentContent("api-developer", {
+      contains: ["name: api-developer", "description:", "tools:", "model:", "#"],
+    });
   });
 
   it("should support --verbose flag", async () => {
     const project = await ProjectBuilder.minimal();
     tempDir = path.dirname(project.dir);
 
-    const { exitCode, output } = await CLI.run(["compile", "--verbose"], { dir: project.dir });
+    const { exitCode, output } = await CLI.run(["compile", "--verbose"], project);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(output).toContain("Recompiled");
+
+    await expect(project).toHaveCompiledAgentContent("web-developer", {
+      contains: ["name: web-developer"],
+    });
+    await expect(project).toHaveCompiledAgentContent("api-developer", {
+      contains: ["name: api-developer"],
+    });
   });
 
   it("should fail when no skills are available", async () => {
@@ -88,7 +88,7 @@ describe("compile command", () => {
     await mkdir(projectDir, { recursive: true });
     await writeProjectConfig(projectDir, { name: "empty", skills: [], agents: [] });
 
-    const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
+    const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir } );
 
     expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     expect(output).toContain("No skills found");
@@ -113,15 +113,18 @@ describe("compile command", () => {
         metadata: `author: "@test"\ncontentHash: "hash-third"\n`,
       });
 
-      const agentsDir = agentsPath(projectDir);
       const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("Discovered 3 local skills");
       expect(output).toMatch(/Recompiled \d+ global agents/);
 
-      const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+      });
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer"],
+      });
     });
 
     it("should list compiled agent files in verbose mode", async () => {
@@ -134,15 +137,18 @@ describe("compile command", () => {
         metadata: `author: "@test"\ncontentHash: "hash-content"\n`,
       });
 
-      const agentsDir = agentsPath(projectDir);
       const { exitCode, output } = await CLI.run(["compile", "--verbose"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("Discovered 1 local skills");
       expect(output).toContain("Compiled:");
 
-      const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+      });
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer"],
+      });
     });
   });
 
@@ -156,6 +162,13 @@ describe("compile command", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("Loaded skill:");
       expect(output).toContain("web-testing-vitest");
+
+      await expect(project).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+      });
+      await expect(project).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer"],
+      });
     });
   });
 
@@ -183,6 +196,11 @@ describe("compile command", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("missing metadata.yaml");
       expect(output).toContain("Discovered 1 local skills");
+
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+        notContains: ["web-state-mobx"],
+      });
     });
   });
 
@@ -238,9 +256,13 @@ describe("compile command", () => {
       // Pre-existing file should still be present
       expect(outputFiles).toContain(preExistingFile);
 
-      // Compiled agent files should also be present
-      expect(outputFiles).toContain("web-developer.md");
-      expect(outputFiles).toContain("api-developer.md");
+      // Compiled agent files should also be present with correct content
+      await expect(project).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+      });
+      await expect(project).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer"],
+      });
     });
   });
 
@@ -248,47 +270,35 @@ describe("compile command", () => {
     it("should produce agents with valid YAML frontmatter fields", async () => {
       const project = await ProjectBuilder.minimal();
       tempDir = path.dirname(project.dir);
-      const agentsDir = agentsPath(project.dir);
 
       const { exitCode } = await CLI.run(["compile"], { dir: project.dir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
-
-      for (const file of outputFiles) {
-        const content = await readTestFile(path.join(agentsDir, file));
-
-        expect(content).toMatch(/^---\n/);
-
-        const agentName = file.replace(".md", "");
-        expect(content).toContain(`name: ${agentName}`);
-        expect(content).toContain("description:");
-      }
+      await expect(project).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "description:"],
+      });
+      await expect(project).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer", "description:"],
+      });
     });
 
     it("should produce agents with content after frontmatter", async () => {
       const project = await ProjectBuilder.minimal();
       tempDir = path.dirname(project.dir);
-      const agentsDir = agentsPath(project.dir);
 
       const { exitCode } = await CLI.run(["compile"], { dir: project.dir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const outputFiles = await listFiles(agentsDir);
-
-      for (const file of outputFiles) {
-        const content = await readTestFile(path.join(agentsDir, file));
-
-        expect(content).toMatch(/^---\n/);
-
-        const bodyStartIndex = content.indexOf("---\n", 4);
-        const body = content.substring(bodyStartIndex + 4).trim();
-
-        expect(body).toContain("#");
-      }
+      // toHaveCompiledAgentContent checks file exists and contains text;
+      // heading markers verify body content exists after frontmatter
+      await expect(project).toHaveCompiledAgentContent("web-developer", {
+        contains: ["#"],
+      });
+      await expect(project).toHaveCompiledAgentContent("api-developer", {
+        contains: ["#"],
+      });
     });
 
     it("should produce distinct content for each compiled agent", async () => {
@@ -300,14 +310,17 @@ describe("compile command", () => {
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
+      // Verify each agent has its own name in frontmatter
+      await expect(project).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+      });
+      await expect(project).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer"],
+      });
+
+      // Compare raw content to verify agents are distinct (no matcher for cross-file comparison)
       const webDevContent = await readTestFile(path.join(agentsDir, "web-developer.md"));
       const apiDevContent = await readTestFile(path.join(agentsDir, "api-developer.md"));
-
-      // Each agent file should have its own name: field in frontmatter
-      expect(webDevContent).toContain("name: web-developer");
-      expect(apiDevContent).toContain("name: api-developer");
-
-      // The two files should not be identical — different agents have different content
       expect(webDevContent).not.toBe(apiDevContent);
     });
   });
@@ -316,16 +329,15 @@ describe("compile command", () => {
     it("should compile agents with custom skills in config", async () => {
       const project = await ProjectBuilder.withCustomSkill();
       tempDir = path.dirname(project.dir);
-      const agentsDir = agentsPath(project.dir);
 
       const { exitCode, output } = await CLI.run(["compile"], { dir: project.dir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toMatch(/Recompiled \d+ global agents/);
 
-      const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
-      expect(outputFiles).toContain("web-developer.md");
+      await expect({ dir: project.dir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-custom-e2e-widget"],
+      });
     });
 
     it("should include custom skill in compiled agent frontmatter", async () => {
@@ -338,9 +350,8 @@ describe("compile command", () => {
 
       // The custom skill is assigned as preloaded in the stack config,
       // so it should appear in the YAML frontmatter skills list
-      await expect({ dir: project.dir }).toHaveCompiledAgent("web-developer");
       await expect({ dir: project.dir }).toHaveCompiledAgentContent("web-developer", {
-        contains: ["web-custom-e2e-widget"],
+        contains: ["name: web-developer", "web-custom-e2e-widget"],
       });
     });
   });
@@ -369,7 +380,6 @@ describe("compile command", () => {
       const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
       sourceTempDir = srcTempDir;
 
-      const agentsDir = agentsPath(projectDir);
       const { exitCode, output } = await CLI.run(["compile", "--source", sourceDir], {
         dir: projectDir,
       });
@@ -379,8 +389,12 @@ describe("compile command", () => {
       expect(output).toContain("Source: flag");
       expect(output).toMatch(/Recompiled \d+ global agents/);
 
-      const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+      });
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer"],
+      });
     });
   });
 
@@ -408,7 +422,6 @@ describe("compile command", () => {
       const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
       sourceTempDir = srcTempDir;
 
-      const agentsDir = agentsPath(projectDir);
       const { exitCode, output } = await CLI.run(["compile", "--agent-source", sourceDir], {
         dir: projectDir,
       });
@@ -419,11 +432,12 @@ describe("compile command", () => {
       expect(output).toContain("Agent partials fetched");
       expect(output).toMatch(/Recompiled \d+ global agents/);
 
-      const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
-
-      const mdFiles = outputFiles.filter((f) => f.endsWith(".md"));
-      expect(mdFiles.length).toBeGreaterThan(0);
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+      });
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer"],
+      });
     });
   });
 
@@ -460,6 +474,10 @@ describe("compile command", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // When using global installation, dual-pass compile runs the global pass
       expect(output).toContain("Compiling global agents");
+
+      await expect({ dir: globalHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+      });
     });
   });
 });

@@ -119,7 +119,7 @@ describe("doctor command", () => {
       // Doctor should not crash -- it should report a config error
       expect(exitCode).toBe(EXIT_CODES.ERROR);
       expect(stdout).toContain("Config Valid");
-      expect(stdout).toContain("config.ts");
+      expect(stdout).toContain(FILES.CONFIG_TS);
       expect(stdout).toContain("Summary:");
     });
   });

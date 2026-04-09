@@ -2,6 +2,7 @@ import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
+  agentsPath,
   cleanupTempDir,
   ensureBinaryExists,
   fileExists,
@@ -17,10 +18,6 @@ import type { SkillId, AgentName } from "../../src/cli/types/index.js";
 import { CLI } from "../fixtures/cli.js";
 
 const E2E_COMPILE_SKILL = "web-testing-e2e-compile" as SkillId;
-
-function agentsPath(projectDir: string): string {
-  return path.join(projectDir, DIRS.CLAUDE, "agents");
-}
 
 /**
  * Writes a custom agent structure under .claude-src/agents/<agentName>/

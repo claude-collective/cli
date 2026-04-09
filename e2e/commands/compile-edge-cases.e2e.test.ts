@@ -69,7 +69,7 @@ describe("compile command edge cases", () => {
 
       // The custom skill should appear in the compiled agent output
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
-        contains: ["web-custom-e2e-tool"],
+        contains: ["name: web-developer", "web-custom-e2e-tool", "web-framework-react"],
       });
     });
   });
@@ -115,15 +115,16 @@ This skill has invalid YAML frontmatter.
         `author: "@test"\ncontentHash: "hash-broken"\n`,
       );
 
-      const agentsDir = agentsPath(projectDir);
       const { exitCode, output } = await CLI.run(["compile"], { dir: projectDir });
 
       // Compile should succeed — the broken skill is skipped, the valid one compiles
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("Discovered 1 local skills");
 
-      const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+        notContains: ["web-testing-e2e-broken"],
+      });
     });
 
     it("should skip skill with completely malformed metadata.yaml", async () => {
@@ -168,6 +169,10 @@ This skill has invalid YAML frontmatter.
       // The valid skill should compile regardless.
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toMatch(/Discovered \d+ local skills/);
+
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+      });
     });
   });
 
@@ -208,8 +213,6 @@ This skill has invalid YAML frontmatter.
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("Discovered 1 local skills");
 
-      await expect({ dir: projectDir }).toHaveCompiledAgents();
-
       // The compiled agent should reference the existing skill but not the phantom
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
         contains: ["web-testing-e2e-exists"],
@@ -244,7 +247,10 @@ This skill has invalid YAML frontmatter.
       expect(output).toContain("Discovered 1 local skills");
 
       // The agent should compile but not reference the orphan skill
-      await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+        notContains: ["web-testing-e2e-orphan"],
+      });
     });
   });
 

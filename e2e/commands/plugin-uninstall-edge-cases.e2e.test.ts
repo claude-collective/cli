@@ -12,7 +12,7 @@ import {
   writeProjectConfig,
   FORKED_FROM_METADATA,
 } from "../helpers/test-utils.js";
-import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
 
 /**
@@ -71,7 +71,7 @@ async function createUninstallableProject(
 
   if (options.settingsJson) {
     const claudeDir = path.join(projectDir, DIRS.CLAUDE);
-    await writeFile(path.join(claudeDir, "settings.json"), options.settingsJson);
+    await writeFile(path.join(claudeDir, FILES.SETTINGS_JSON), options.settingsJson);
   }
 
   return { projectDir, skillDir, agentsDir };
@@ -90,7 +90,7 @@ describe("uninstall with plugin config but no installed plugins", () => {
 
   it("should complete gracefully when config references plugins that are not installed", async () => {
     tempDir = await createTempDir();
-    const { projectDir } = await createUninstallableProject(tempDir, {
+    const { projectDir, skillDir, agentsDir } = await createUninstallableProject(tempDir, {
       configName: "phantom-plugin-project",
       skillSource: "nonexistent-marketplace",
     });
@@ -98,7 +98,11 @@ describe("uninstall with plugin config but no installed plugins", () => {
     const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
+
+    // Skills and agents should still be cleaned up even without real plugins
+    expect(await directoryExists(skillDir)).toBe(false);
+    expect(await directoryExists(agentsDir)).toBe(false);
   });
 
   it("should remove local skills and agents even without plugin uninstall", async () => {
@@ -134,9 +138,17 @@ describe("uninstall with plugin config but no installed plugins", () => {
     const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     expect(await directoryExists(skillDir)).toBe(false);
+
+    // Manual plugin entry should be preserved in settings.json
+    const settingsPath = path.join(projectDir, DIRS.CLAUDE, FILES.SETTINGS_JSON);
+    if (await fileExists(settingsPath)) {
+      const settingsContent = await readTestFile(settingsPath);
+      const settings = JSON.parse(settingsContent);
+      expect(settings.enabledPlugins?.["manual-plugin@some-marketplace"]).toBe(true);
+    }
   });
 
   it("should also remove config with --all flag when no plugins exist", async () => {
@@ -154,7 +166,7 @@ describe("uninstall with plugin config but no installed plugins", () => {
     });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     expect(await directoryExists(configDir)).toBe(false);
   });
@@ -188,9 +200,9 @@ describe("uninstall preserves non-CLI plugins", () => {
     const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
-    const settingsPath = path.join(projectDir, DIRS.CLAUDE, "settings.json");
+    const settingsPath = path.join(projectDir, DIRS.CLAUDE, FILES.SETTINGS_JSON);
     const settingsExists = await fileExists(settingsPath);
 
     if (settingsExists) {
@@ -221,9 +233,9 @@ describe("uninstall preserves non-CLI plugins", () => {
     const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
-    const settingsPath = path.join(projectDir, DIRS.CLAUDE, "settings.json");
+    const settingsPath = path.join(projectDir, DIRS.CLAUDE, FILES.SETTINGS_JSON);
     const settingsExists = await fileExists(settingsPath);
 
     if (settingsExists) {
@@ -278,7 +290,7 @@ describe("uninstall without Claude CLI on PATH", () => {
     );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     expect(await directoryExists(skillDir)).toBe(false);
 

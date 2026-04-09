@@ -16,6 +16,7 @@ import {
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
+import "../matchers/setup.js";
 
 describe("uninstall command", () => {
   let tempDir: string;
@@ -77,11 +78,14 @@ describe("uninstall command", () => {
     expect(stdout).toContain("Uninstall complete!");
 
     // Skills and agents should be removed
-    expect(await directoryExists(skillsDir)).toBe(false);
+    await expect({ dir: projectDir }).toHaveNoLocalSkills();
     expect(await directoryExists(agentsDir)).toBe(false);
 
-    // Config directory should still exist (not using --all)
-    expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
+    // Config should be preserved intact (uninstall --yes does not remove .claude-src/)
+    await expect({ dir: projectDir }).toHaveConfig({
+      skillIds: ["web-framework-react"],
+      agents: ["web-developer"],
+    });
   });
 
   it("should also remove config directory with --all --yes", async () => {
@@ -103,6 +107,11 @@ describe("uninstall command", () => {
 
     // Config directory should be removed with --all
     expect(await directoryExists(configDir)).toBe(false);
+
+    // Skills and agents should also be removed
+    await expect({ dir: projectDir }).toHaveNoLocalSkills();
+    const agentsDir = agentsPath(projectDir);
+    expect(await directoryExists(agentsDir)).toBe(false);
   });
 
   it("should remove skills directory when all skills are CLI-managed", async () => {
@@ -120,7 +129,11 @@ describe("uninstall command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Skills directory should be fully removed when all skills matched
-    expect(await directoryExists(skillsDir)).toBe(false);
+    await expect({ dir: projectDir }).toHaveNoLocalSkills();
+
+    // Agents directory should also be removed
+    const agentsDir = agentsPath(projectDir);
+    expect(await directoryExists(agentsDir)).toBe(false);
   });
 
   it("should remove agents directory when config exists", async () => {
@@ -138,6 +151,9 @@ describe("uninstall command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("CLI-compiled");
     expect(await directoryExists(agentsDir)).toBe(false);
+
+    // Skills should also be removed
+    await expect({ dir: projectDir }).toHaveNoLocalSkills();
   });
 
   it("should preserve agents not listed in config", async () => {
@@ -155,6 +171,9 @@ describe("uninstall command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     // Custom agent should be preserved (not in config.agents)
     expect(await fileExists(path.join(agentsDir, "my-custom-agent.md"))).toBe(true);
+
+    // CLI-managed agent (web-developer) should be removed
+    expect(await fileExists(path.join(agentsDir, "web-developer.md"))).toBe(false);
   });
 
   it("should skip user-created skills without forkedFrom metadata", async () => {
@@ -184,12 +203,11 @@ describe("uninstall command", () => {
     expect(output).toContain("Skipping");
     expect(output).toContain("my-custom-skill");
 
-    // User skill should still exist
-    expect(await directoryExists(userSkillDir)).toBe(true);
-
-    // CLI-managed skill should be removed
-    const cliSkillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-framework-react");
-    expect(await directoryExists(cliSkillDir)).toBe(false);
+    // User skill should still exist, CLI-managed skill should be removed
+    await expect({ dir: projectDir }).toHaveLocalSkills(["my-custom-skill"]);
+    expect(await directoryExists(
+      path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-framework-react"),
+    )).toBe(false);
   });
 
   it("should skip all skills when only user-created skills exist", async () => {
@@ -269,12 +287,17 @@ describe("uninstall command", () => {
     const configDir = path.join(projectDir, DIRS.CLAUDE_SRC);
     expect(await directoryExists(configDir)).toBe(true);
 
-    const { exitCode, stdout } = await CLI.run(["uninstall", "--all", "--yes"], {
+    const { exitCode } = await CLI.run(["uninstall", "--all", "--yes"], {
       dir: projectDir,
     });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     // Config dir should be removed with --all
     expect(await directoryExists(configDir)).toBe(false);
+
+    // Skills and agents dirs should not exist either
+    await expect({ dir: projectDir }).toHaveNoLocalSkills();
+    const agentsDir = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS);
+    expect(await directoryExists(agentsDir)).toBe(false);
   });
 });

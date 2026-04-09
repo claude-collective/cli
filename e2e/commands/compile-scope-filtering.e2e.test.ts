@@ -5,19 +5,13 @@ import {
   cleanupTempDir,
   createLocalSkill,
   ensureBinaryExists,
-  fileExists,
   listFiles,
-  readTestFile,
   agentsPath,
   writeProjectConfig,
 } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
 import { EXIT_CODES, DIRS } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
-
-function agentFilePath(dir: string, agentName: string): string {
-  return path.join(agentsPath(dir), `${agentName}.md`);
-}
 
 /**
  * Regression tests for compile scope-filtering fixes.
@@ -96,18 +90,20 @@ describe("compile scope filtering", () => {
       expect(output).toContain("Compiling project agents");
 
       // Global agent should exist and contain its skill (not be clobbered)
-      const globalAgentPath = agentFilePath(globalHome, "web-developer");
-      expect(await fileExists(globalAgentPath)).toBe(true);
-      const globalAgentContent = await readTestFile(globalAgentPath);
-      expect(globalAgentContent).toContain("web-testing-cypress-e2e");
+      await expect({ dir: globalHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-testing-cypress-e2e"],
+      });
 
-      // web-developer should NOT appear in the project agents directory
-      // (it's a global agent, not a project agent)
-      const projectWebDevPath = agentFilePath(projectDir, "web-developer");
-      expect(await fileExists(projectWebDevPath)).toBe(false);
+      // Global dir should NOT have the project agent
+      await expect({ dir: globalHome }).not.toHaveCompiledAgent("api-developer");
 
       // Project agent should exist and contain its skill
-      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer", "web-testing-playwright-e2e"],
+      });
+
+      // Project dir should NOT have the global agent
+      await expect({ dir: projectDir }).not.toHaveCompiledAgent("web-developer");
     });
 
     it("should compile global agent with skills even when project config has no stack entry for it", async () => {
@@ -173,14 +169,25 @@ describe("compile scope filtering", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Both global agents should be compiled with their respective skills
-      const globalWebDev = await readTestFile(agentFilePath(globalHome, "web-developer"));
-      expect(globalWebDev).toContain("web-testing-cypress-e2e");
+      await expect({ dir: globalHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-testing-cypress-e2e"],
+      });
 
-      const globalApiDev = await readTestFile(agentFilePath(globalHome, "api-developer"));
-      expect(globalApiDev).toContain("web-framework-react");
+      await expect({ dir: globalHome }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer", "web-framework-react"],
+      });
 
-      // Project agent compiled separately
-      await expect({ dir: projectDir }).toHaveCompiledAgent("cli-developer");
+      // Global dir should NOT have the project agent
+      await expect({ dir: globalHome }).not.toHaveCompiledAgent("cli-developer");
+
+      // Project agent compiled separately with its skill
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("cli-developer", {
+        contains: ["name: cli-developer", "web-testing-playwright-e2e"],
+      });
+
+      // Project dir should NOT have any global agents
+      await expect({ dir: projectDir }).not.toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).not.toHaveCompiledAgent("api-developer");
     });
   });
 
@@ -243,11 +250,20 @@ describe("compile scope filtering", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Project agent should include both the project-local AND global-local skill
-      const projectAgentPath = agentFilePath(projectDir, "api-developer");
-      expect(await fileExists(projectAgentPath)).toBe(true);
-      const content = await readTestFile(projectAgentPath);
-      expect(content).toContain("web-testing-playwright-e2e");
-      expect(content).toContain("web-testing-cypress-e2e");
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer", "web-testing-playwright-e2e", "web-testing-cypress-e2e"],
+      });
+
+      // Project dir should NOT have the global agent
+      await expect({ dir: projectDir }).not.toHaveCompiledAgent("web-developer");
+
+      // Global agent should contain its own skill
+      await expect({ dir: globalHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-testing-cypress-e2e"],
+      });
+
+      // Global dir should NOT have the project agent
+      await expect({ dir: globalHome }).not.toHaveCompiledAgent("api-developer");
     });
 
     it("should discover global local skills even when project has no global-scoped skills in config", async () => {
@@ -302,10 +318,20 @@ describe("compile scope filtering", () => {
 
       // The project agent should include the global skill even though
       // the project config only has project-scoped skills
-      const projectAgentPath = agentFilePath(projectDir, "api-developer");
-      expect(await fileExists(projectAgentPath)).toBe(true);
-      const content = await readTestFile(projectAgentPath);
-      expect(content).toContain("web-testing-cypress-e2e");
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer", "web-testing-cypress-e2e"],
+      });
+
+      // Project dir should NOT have the global agent
+      await expect({ dir: projectDir }).not.toHaveCompiledAgent("web-developer");
+
+      // Global agent should contain its own skill
+      await expect({ dir: globalHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-testing-cypress-e2e"],
+      });
+
+      // Global dir should NOT have the project agent
+      await expect({ dir: globalHome }).not.toHaveCompiledAgent("api-developer");
     });
   });
 
@@ -363,15 +389,20 @@ describe("compile scope filtering", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Project agent should have its skill, not be empty/zero-skill
-      const projectAgentPath = agentFilePath(projectDir, "api-developer");
-      expect(await fileExists(projectAgentPath)).toBe(true);
-      const content = await readTestFile(projectAgentPath);
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer", "web-testing-playwright-e2e"],
+      });
 
-      // Verify the agent has real content (not a zero-skill compilation)
-      const MIN_AGENT_CONTENT_LENGTH = 200;
-      expect(content.length).toBeGreaterThan(MIN_AGENT_CONTENT_LENGTH);
-      expect(content).toContain("web-testing-playwright-e2e");
-      expect(content).toContain("name: api-developer");
+      // Project dir should NOT have the global agent
+      await expect({ dir: projectDir }).not.toHaveCompiledAgent("web-developer");
+
+      // Global agent should contain its own skill
+      await expect({ dir: globalHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-testing-cypress-e2e"],
+      });
+
+      // Global dir should NOT have the project agent
+      await expect({ dir: globalHome }).not.toHaveCompiledAgent("api-developer");
     });
 
     it("should not produce duplicate agent files across scopes", async () => {

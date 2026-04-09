@@ -8,7 +8,6 @@ import {
   directoryExists,
   ensureBinaryExists,
   listFiles,
-  readTestFile,
   agentsPath,
   writeProjectConfig,
 } from "../helpers/test-utils.js";
@@ -40,14 +39,8 @@ describe("dual-scope compile", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const globalAgents = await listFiles(agentsPath(globalHome.dir));
-    const projectAgents = await listFiles(agentsPath(project.dir));
-
-    const globalMdFiles = globalAgents.filter((f) => f.endsWith(".md"));
-    const projectMdFiles = projectAgents.filter((f) => f.endsWith(".md"));
-
-    expect(globalMdFiles.length).toBeGreaterThan(0);
-    expect(projectMdFiles.length).toBeGreaterThan(0);
+    await expect(globalHome).toHaveCompiledAgent("web-developer");
+    await expect(project).toHaveCompiledAgent("api-developer");
   });
 
   it("should compile global agents referencing only global skills", async () => {
@@ -118,9 +111,7 @@ describe("dual-scope compile", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const globalAgents = await listFiles(agentsPath(globalHome));
-    const globalMdFiles = globalAgents.filter((f) => f.endsWith(".md"));
-    expect(globalMdFiles.length).toBeGreaterThan(0);
+    await expect({ dir: globalHome }).toHaveCompiledAgent("web-developer");
 
     const projectAgentsExist = await directoryExists(agentsPath(projectDir));
     expect(projectAgentsExist).toBe(false);
@@ -159,9 +150,7 @@ describe("dual-scope compile", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const projectAgents = await listFiles(agentsPath(projectDir));
-    const projectMdFiles = projectAgents.filter((f) => f.endsWith(".md"));
-    expect(projectMdFiles.length).toBeGreaterThan(0);
+    await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
     // The global agents directory is now always created (ensureDir is unconditional),
     // but for a project-only install no agent .md files should be written there.

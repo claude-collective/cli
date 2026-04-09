@@ -9,10 +9,12 @@ import {
   directoryExists,
   fileExists,
   listFiles,
+  readTestFile,
   skillsPath,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { CLI } from "../fixtures/cli.js";
+import "../matchers/setup.js";
 
 describe("eject command", () => {
   let tempDir: string;
@@ -56,6 +58,21 @@ describe("eject command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Eject");
     expect(stdout).toContain("Eject complete!");
+
+    // Verify agent partials directory was created with content
+    const agentsDir = path.join(tempDir, DIRS.CLAUDE_SRC, "agents");
+    expect(await directoryExists(agentsDir)).toBe(true);
+    const entries = await listFiles(agentsDir);
+    expect(entries.length).toBeGreaterThan(0);
+
+    // Verify at least one agent partial has expected structure (identity.md or metadata.yaml)
+    const firstAgentDir = entries.find((e) => !e.startsWith("_"));
+    expect(firstAgentDir).toBeDefined();
+    const partialFiles = await listFiles(path.join(agentsDir, firstAgentDir!));
+    expect(partialFiles.length).toBeGreaterThan(0);
+
+    // Config should be created
+    await expect({ dir: tempDir }).toHaveConfig();
   });
 
   it("should eject templates to project directory", async () => {
@@ -65,6 +82,15 @@ describe("eject command", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Eject complete!");
+
+    // Verify the template file was actually created with liquid content
+    await expect({ dir: tempDir }).toHaveEjectedTemplate();
+    const templatePath = path.join(tempDir, DIRS.CLAUDE_SRC, "agents", "_templates", "agent.liquid");
+    const templateContent = await readTestFile(templatePath);
+    expect(templateContent).toContain("---");
+
+    // Config should be created
+    await expect({ dir: tempDir }).toHaveConfig();
   });
 
   it("should eject agent-partials to custom output directory", async () => {
@@ -78,6 +104,19 @@ describe("eject command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Eject complete!");
     expect(await directoryExists(outputDir)).toBe(true);
+
+    // Verify agent partial files were created in the custom directory
+    const entries = await listFiles(outputDir);
+    expect(entries.length).toBeGreaterThan(0);
+
+    // Verify content: at least one agent partial has files
+    const firstEntry = entries[0];
+    const partialFiles = await listFiles(path.join(outputDir, firstEntry));
+    expect(partialFiles.length).toBeGreaterThan(0);
+
+    // Default .claude-src/agents should NOT exist (output was redirected)
+    const defaultAgentsDir = path.join(tempDir, DIRS.CLAUDE_SRC, "agents");
+    expect(await directoryExists(defaultAgentsDir)).toBe(false);
   });
 
   it("should warn when ejecting agent-partials twice without --force", async () => {
@@ -125,7 +164,29 @@ describe("eject command", () => {
     const skillsDir = skillsPath(tempDir);
     expect(await directoryExists(skillsDir)).toBe(true);
     const files = await listFiles(skillsDir);
-    expect(files.length).toBeGreaterThan(0);
+    expect(files).toHaveLength(9);
+
+    // Verify specific ejected skills exist with expected content
+    await expect({ dir: tempDir }).toHaveLocalSkills([
+      "web-framework-react",
+      "web-testing-vitest",
+      "web-state-zustand",
+      "api-framework-hono",
+    ]);
+
+    // Verify each ejected skill has SKILL.md with content
+    await expect({ dir: tempDir }).toHaveSkillCopied("web-framework-react");
+    await expect({ dir: tempDir }).toHaveSkillCopied("web-testing-vitest");
+    await expect({ dir: tempDir }).toHaveSkillCopied("web-state-zustand");
+    await expect({ dir: tempDir }).toHaveSkillCopied("api-framework-hono");
+
+    // Verify SKILL.md content for a representative skill
+    const skillMdPath = path.join(skillsDir, "web-framework-react", FILES.SKILL_MD);
+    const skillContent = await readTestFile(skillMdPath);
+    expect(skillContent).toContain("web-framework-react");
+
+    // Verify config was saved with source
+    await expect({ dir: tempDir }).toHaveConfig({ source: sourceDir });
   });
 
   it("should eject all phases from a local source", async () => {
@@ -140,6 +201,28 @@ describe("eject command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("ejected");
     expect(stdout).toContain("Eject complete!");
+
+    // Verify agent partials were created with content
+    const agentsDir = path.join(tempDir, DIRS.CLAUDE_SRC, "agents");
+    expect(await directoryExists(agentsDir)).toBe(true);
+    const agentEntries = await listFiles(agentsDir);
+    expect(agentEntries.length).toBeGreaterThan(1); // At least _templates + agent partials
+
+    // Verify templates were created with liquid content
+    await expect({ dir: tempDir }).toHaveEjectedTemplate();
+    const templatePath = path.join(agentsDir, "_templates", "agent.liquid");
+    const templateContent = await readTestFile(templatePath);
+    expect(templateContent).toContain("---");
+
+    // Verify skills were created with SKILL.md files
+    const skillsDirPath = skillsPath(tempDir);
+    expect(await directoryExists(skillsDirPath)).toBe(true);
+    const skillEntries = await listFiles(skillsDirPath);
+    expect(skillEntries.length).toBeGreaterThan(0);
+    await expect({ dir: tempDir }).toHaveSkillCopied("web-framework-react");
+
+    // Verify config was created with source reference
+    await expect({ dir: tempDir }).toHaveConfig({ source: sourceDir });
   });
 
   it("should save source to config when --source flag is provided", async () => {
@@ -153,6 +236,9 @@ describe("eject command", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Source saved to .claude-src/config.ts");
+
+    // Verify the config file was actually created with source reference
+    await expect({ dir: tempDir }).toHaveConfig({ source: sourceDir });
   });
 
   it("should create config.ts in a fresh directory after eject", async () => {
@@ -162,8 +248,12 @@ describe("eject command", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const configPath = path.join(tempDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-    expect(await fileExists(configPath)).toBe(true);
+    // Config file should exist with a project name (derived from the temp dir basename)
+    const configContent = await readTestFile(
+      path.join(tempDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+    );
+    expect(configContent).toContain("name");
+    expect(configContent).toContain("export default");
   });
 
   it("should display help text with --help flag", async () => {
@@ -325,6 +415,16 @@ describe("eject command", () => {
     expect(stdout).toContain("Eject complete!");
     expect(stdout).toContain("Output directory:");
     expect(await directoryExists(outputDir)).toBe(true);
+
+    // Verify the template file was created in the custom directory with content
+    const entries = await listFiles(outputDir);
+    expect(entries).toContain("agent.liquid");
+    const templateContent = await readTestFile(path.join(outputDir, "agent.liquid"));
+    expect(templateContent).toContain("---");
+
+    // Default template location should NOT exist (output was redirected)
+    const defaultTemplatePath = path.join(tempDir, DIRS.CLAUDE_SRC, "agents", "_templates");
+    expect(await directoryExists(defaultTemplatePath)).toBe(false);
   });
 
   it("should eject skills to custom output directory", async () => {
@@ -343,7 +443,13 @@ describe("eject command", () => {
     expect(stdout).toContain("Eject complete!");
     expect(await directoryExists(outputDir)).toBe(true);
     const files = await listFiles(outputDir);
-    expect(files.length).toBeGreaterThan(0);
+    expect(files).toHaveLength(9);
+
+    // Verify skill content in custom output directory
+    const skillMdPath = path.join(outputDir, "web-framework-react", FILES.SKILL_MD);
+    expect(await fileExists(skillMdPath)).toBe(true);
+    const skillContent = await readTestFile(skillMdPath);
+    expect(skillContent).toContain("web-framework-react");
   });
 
   it("should error when --output points to an existing file", async () => {

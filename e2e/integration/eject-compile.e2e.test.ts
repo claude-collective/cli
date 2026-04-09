@@ -2,6 +2,7 @@ import path from "path";
 import { writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
+  agentsPath,
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
@@ -24,10 +25,6 @@ const E2E_SECOND_SKILL = "web-testing-e2e-second" as SkillId;
 
 const CUSTOM_TEMPLATE_MARKER = "<!-- E2E-CUSTOM-TEMPLATE-MARKER -->";
 const CUSTOM_INTRO_MARKER = "E2E-CUSTOM-INTRO-CONTENT";
-
-function agentsPath(projectDir: string): string {
-  return path.join(projectDir, DIRS.CLAUDE, "agents");
-}
 
 describe("template ejection + custom compilation", () => {
   let tempDir: string | undefined;
@@ -66,7 +63,7 @@ describe("template ejection + custom compilation", () => {
 
       // Step 5: Verify the marker appears in compiled agent output
       const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
+      expect(outputFiles).toContain("web-developer.md");
 
       // Verify the agent was compiled with valid frontmatter
       await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
@@ -172,7 +169,7 @@ describe("template ejection + custom compilation", () => {
 
       // Step 5: Check if any compiled agent contains the custom intro
       const outputFiles = await listFiles(agentsDir);
-      expect(outputFiles.length).toBeGreaterThan(0);
+      expect(outputFiles).toContain("web-developer.md");
 
       let foundMarker = false;
       for (const file of outputFiles) {
