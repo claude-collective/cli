@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.117.0] - 2026-04-09
+
+**Comprehensive test assertion quality sweep across 133 files**
+
+- Eliminated all weak assertion patterns (toBeDefined, toBeTruthy, toBeGreaterThan(0), bare toHaveBeenCalled)
+- Enforced strict config equality, agent content verification, and negative assertions across unit + E2E tests
+- Fixed 7 incorrect assertion bugs caught by stricter checks, added 11 new tests
+
+See [changelogs/0.117.0.md](./changelogs/0.117.0.md) for full details.
+
 ## [0.116.0] - 2026-04-09
 
 **New stack, updated matrix, task tracking**
