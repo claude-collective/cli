@@ -112,7 +112,7 @@ describe("matrix-health-check", () => {
     it("warns for each issue found", () => {
       const issues = checkMatrixHealth(HEALTH_ORPHAN_SKILL_WITH_MISSING_DOMAIN_MATRIX);
 
-      expect(issues.length).toBeGreaterThan(0);
+      expect(issues).toHaveLength(2);
       expect(warn).toHaveBeenCalledTimes(issues.length);
       for (const issue of issues) {
         expect(warn).toHaveBeenCalledWith(`[matrix] ${issue.details}`);

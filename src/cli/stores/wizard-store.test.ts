@@ -130,8 +130,14 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.selectStack("nextjs-fullstack");
 
-      const { selectedStackId } = useWizardStore.getState();
-      expect(selectedStackId).toBe("nextjs-fullstack");
+      const state = useWizardStore.getState();
+      expect(state.selectedStackId).toBe("nextjs-fullstack");
+      expect(state.domainSelections).toStrictEqual({});
+      expect(state.selectedDomains).toStrictEqual([]);
+      expect(state.skillConfigs).toStrictEqual([]);
+      expect(state.selectedAgents).toStrictEqual([]);
+      expect(state.boundSkills).toStrictEqual([]);
+      expect(state.stackAction).toBeNull();
     });
 
     it("when selectStack is called with null, should clear previously selected stack and selections", () => {
@@ -160,15 +166,19 @@ describe("WizardStore", () => {
       store.populateFromSkillIds(["web-framework-react", "api-framework-hono"]);
 
       const stateAfterFirst = useWizardStore.getState();
-      expect(Object.keys(stateAfterFirst.domainSelections).length).toBeGreaterThan(0);
+      expect(typedKeys(stateAfterFirst.domainSelections)).toStrictEqual(["web", "api"]);
 
       // Simulate going back and selecting "start from scratch"
       store.selectStack(null);
 
       const stateAfterClear = useWizardStore.getState();
+      expect(stateAfterClear.selectedStackId).toBeNull();
       expect(stateAfterClear.domainSelections).toStrictEqual({});
       expect(stateAfterClear.selectedDomains).toStrictEqual([]);
       expect(stateAfterClear.skillConfigs).toStrictEqual([]);
+      expect(stateAfterClear.selectedAgents).toStrictEqual([]);
+      expect(stateAfterClear.boundSkills).toStrictEqual([]);
+      expect(stateAfterClear.stackAction).toBeNull();
     });
   });
 
@@ -177,8 +187,9 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleDomain("web");
 
-      const { selectedDomains } = useWizardStore.getState();
-      expect(selectedDomains).toContain("web");
+      const { selectedDomains, domainSelections } = useWizardStore.getState();
+      expect(selectedDomains).toStrictEqual(["web"]);
+      expect(domainSelections).toStrictEqual({});
     });
 
     it("should toggle domain off", () => {
@@ -186,8 +197,10 @@ describe("WizardStore", () => {
       store.toggleDomain("web");
       store.toggleDomain("web");
 
-      const { selectedDomains } = useWizardStore.getState();
-      expect(selectedDomains).not.toContain("web");
+      const { selectedDomains, domainSelections, skillConfigs } = useWizardStore.getState();
+      expect(selectedDomains).toStrictEqual([]);
+      expect(domainSelections).toStrictEqual({});
+      expect(skillConfigs).toStrictEqual([]);
     });
 
     it("should allow multiple domain selection", () => {
@@ -208,8 +221,10 @@ describe("WizardStore", () => {
 
       store.toggleDomain("web");
 
-      const { domainSelections } = useWizardStore.getState();
+      const { domainSelections, selectedDomains, skillConfigs } = useWizardStore.getState();
       expect(domainSelections.web).toBeUndefined();
+      expect(selectedDomains).toStrictEqual([]);
+      expect(skillConfigs).toStrictEqual([]);
       expect(store.getAllSelectedTechnologies()).toStrictEqual([]);
       expect(store.getTechnologyCount()).toBe(0);
     });
@@ -223,9 +238,13 @@ describe("WizardStore", () => {
 
       store.toggleDomain("web");
 
-      const { domainSelections } = useWizardStore.getState();
+      const { domainSelections, selectedDomains, skillConfigs } = useWizardStore.getState();
+      expect(selectedDomains).toStrictEqual(["api"]);
       expect(domainSelections.web).toBeUndefined();
       expect(domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
+      expect(skillConfigs).toStrictEqual([
+        { id: "api-framework-hono", scope: "global", source: "agents-inc" },
+      ]);
       expect(store.getAllSelectedTechnologies()).toStrictEqual(["api-framework-hono"]);
     });
 
@@ -233,8 +252,9 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleDomain("web");
 
-      const { domainSelections } = useWizardStore.getState();
+      const { domainSelections, skillConfigs } = useWizardStore.getState();
       expect(domainSelections.web).toBeUndefined();
+      expect(skillConfigs).toStrictEqual([]);
       expect(store.getAllSelectedTechnologies()).toStrictEqual([]);
     });
 
@@ -348,8 +368,11 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      const { domainSelections } = useWizardStore.getState();
+      const { domainSelections, skillConfigs } = useWizardStore.getState();
       expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
+      expect(skillConfigs).toStrictEqual([
+        { id: "web-framework-react", scope: "global", source: "agents-inc" },
+      ]);
     });
 
     it("should replace technology in exclusive mode", () => {
@@ -357,9 +380,12 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("web", "web-framework", "web-framework-vue-composition-api", true);
 
-      const { domainSelections } = useWizardStore.getState();
+      const { domainSelections, skillConfigs } = useWizardStore.getState();
       expect(domainSelections.web!["web-framework"]).toStrictEqual([
         "web-framework-vue-composition-api",
+      ]);
+      expect(skillConfigs).toStrictEqual([
+        { id: "web-framework-vue-composition-api", scope: "global", source: "agents-inc" },
       ]);
     });
 
@@ -368,8 +394,9 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
-      const { domainSelections } = useWizardStore.getState();
+      const { domainSelections, skillConfigs } = useWizardStore.getState();
       expect(domainSelections.web!["web-framework"]).toStrictEqual([]);
+      expect(skillConfigs).toStrictEqual([]);
     });
 
     it("should allow multiple selections in non-exclusive mode", () => {
@@ -377,10 +404,14 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
       store.toggleTechnology("web", "web-testing", "web-testing-playwright-e2e", false);
 
-      const { domainSelections } = useWizardStore.getState();
+      const { domainSelections, skillConfigs } = useWizardStore.getState();
       expect(domainSelections.web!["web-testing"]).toStrictEqual([
         "web-testing-vitest",
         "web-testing-playwright-e2e",
+      ]);
+      expect(skillConfigs).toStrictEqual([
+        { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+        { id: "web-testing-playwright-e2e", scope: "global", source: "agents-inc" },
       ]);
     });
 
@@ -390,8 +421,11 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-styling", "web-styling-tailwind", false);
       store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", false);
 
-      const { domainSelections } = useWizardStore.getState();
+      const { domainSelections, skillConfigs } = useWizardStore.getState();
       expect(domainSelections.web!["web-styling"]).toStrictEqual(["web-styling-tailwind"]);
+      expect(skillConfigs).toStrictEqual([
+        { id: "web-styling-tailwind", scope: "global", source: "agents-inc" },
+      ]);
     });
 
     it("should block toggling globally installed skills from project scope and set toastMessage", () => {
@@ -1187,9 +1221,11 @@ describe("WizardStore", () => {
       store.toggleTechnology("api", "api-api", "api-framework-hono", true);
 
       const technologies = store.getAllSelectedTechnologies();
-      expect(technologies).toContain("web-framework-react");
-      expect(technologies).toContain("web-styling-scss-modules");
-      expect(technologies).toContain("api-framework-hono");
+      expect(technologies).toStrictEqual([
+        "web-framework-react",
+        "web-styling-scss-modules",
+        "api-framework-hono",
+      ]);
     });
 
     it("should get selected technologies per domain", () => {
@@ -1315,8 +1351,7 @@ describe("WizardStore", () => {
 
       expect(selectedDomains).toStrictEqual(["web"]);
 
-      expect(domainSelections.web).toBeDefined();
-      expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
+      expect(domainSelections.web?.["web-framework"]).toStrictEqual(["web-framework-react"]);
       expect(domainSelections.api).toBeUndefined();
     });
 
@@ -1843,8 +1878,9 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleAgent("web-developer");
 
-      const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toContain("web-developer");
+      const { selectedAgents, agentConfigs } = useWizardStore.getState();
+      expect(selectedAgents).toStrictEqual(["web-developer"]);
+      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "global" }]);
     });
 
     it("should toggle agent off", () => {
@@ -1852,8 +1888,9 @@ describe("WizardStore", () => {
       store.toggleAgent("web-developer");
       store.toggleAgent("web-developer");
 
-      const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).not.toContain("web-developer");
+      const { selectedAgents, agentConfigs } = useWizardStore.getState();
+      expect(selectedAgents).toStrictEqual([]);
+      expect(agentConfigs).toStrictEqual([]);
     });
 
     it("should allow multiple agents to be selected", () => {
@@ -2091,13 +2128,23 @@ describe("WizardStore", () => {
       store.toggleDomain("web");
       store.preselectAgentsFromDomains();
 
-      const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toContain("web-developer");
-      expect(selectedAgents).toContain("web-reviewer");
-      expect(selectedAgents).toContain("web-researcher");
-      expect(selectedAgents).toContain("web-tester");
-      expect(selectedAgents).toContain("web-pm");
-      expect(selectedAgents).toContain("web-architecture");
+      const { selectedAgents, agentConfigs } = useWizardStore.getState();
+      expect(selectedAgents).toStrictEqual([
+        "web-architecture",
+        "web-developer",
+        "web-pm",
+        "web-researcher",
+        "web-reviewer",
+        "web-tester",
+      ]);
+      expect(agentConfigs).toStrictEqual([
+        { name: "web-architecture", scope: "global" },
+        { name: "web-developer", scope: "global" },
+        { name: "web-pm", scope: "global" },
+        { name: "web-researcher", scope: "global" },
+        { name: "web-reviewer", scope: "global" },
+        { name: "web-tester", scope: "global" },
+      ]);
     });
 
     it("should preselect api-related agents when api domain is selected", () => {
@@ -2105,11 +2152,17 @@ describe("WizardStore", () => {
       store.toggleDomain("api");
       store.preselectAgentsFromDomains();
 
-      const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toContain("api-developer");
-      expect(selectedAgents).toContain("api-reviewer");
-      expect(selectedAgents).toContain("api-researcher");
-      expect(selectedAgents).not.toContain("web-developer");
+      const { selectedAgents, agentConfigs } = useWizardStore.getState();
+      expect(selectedAgents).toStrictEqual([
+        "api-developer",
+        "api-researcher",
+        "api-reviewer",
+      ]);
+      expect(agentConfigs).toStrictEqual([
+        { name: "api-developer", scope: "global" },
+        { name: "api-researcher", scope: "global" },
+        { name: "api-reviewer", scope: "global" },
+      ]);
     });
 
     it("should preselect cli agents when cli domain is selected", () => {
@@ -2117,10 +2170,17 @@ describe("WizardStore", () => {
       store.toggleDomain("cli");
       store.preselectAgentsFromDomains();
 
-      const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toContain("cli-developer");
-      expect(selectedAgents).toContain("cli-tester");
-      expect(selectedAgents).toContain("cli-reviewer");
+      const { selectedAgents, agentConfigs } = useWizardStore.getState();
+      expect(selectedAgents).toStrictEqual([
+        "cli-developer",
+        "cli-reviewer",
+        "cli-tester",
+      ]);
+      expect(agentConfigs).toStrictEqual([
+        { name: "cli-developer", scope: "global" },
+        { name: "cli-reviewer", scope: "global" },
+        { name: "cli-tester", scope: "global" },
+      ]);
     });
 
     it("should never include optional agents regardless of domains", () => {
@@ -2131,11 +2191,20 @@ describe("WizardStore", () => {
       store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).not.toContain("agent-summoner");
-      expect(selectedAgents).not.toContain("skill-summoner");
-      expect(selectedAgents).not.toContain("codex-keeper");
-      expect(selectedAgents).not.toContain("pattern-scout");
-      expect(selectedAgents).not.toContain("web-pattern-critique");
+      expect(selectedAgents).toStrictEqual([
+        "api-developer",
+        "api-researcher",
+        "api-reviewer",
+        "cli-developer",
+        "cli-reviewer",
+        "cli-tester",
+        "web-architecture",
+        "web-developer",
+        "web-pm",
+        "web-researcher",
+        "web-reviewer",
+        "web-tester",
+      ]);
     });
 
     it("should return empty agents when no domains are selected", () => {
@@ -2205,11 +2274,10 @@ describe("WizardStore", () => {
       const { agentConfigs } = useWizardStore.getState();
       // Excluded agent should still be present in agentConfigs
       const excludedConfig = agentConfigs.find((ac) => ac.name === "codex-keeper");
-      expect(excludedConfig).toBeDefined();
-      expect(excludedConfig!.excluded).toBe(true);
+      expect(excludedConfig?.excluded).toBe(true);
       // Domain agents should also be present
       const webDevConfig = agentConfigs.find((ac) => ac.name === "web-developer");
-      expect(webDevConfig).toBeDefined();
+      expect(webDevConfig?.name).toBe("web-developer");
     });
 
     it("should clear excluded flag when re-including previously excluded agent via domain preselection", () => {
@@ -2224,9 +2292,8 @@ describe("WizardStore", () => {
 
       const { agentConfigs } = useWizardStore.getState();
       const webDevConfig = agentConfigs.find((ac) => ac.name === "web-developer");
-      expect(webDevConfig).toBeDefined();
       // Excluded flag should be cleared since web-developer is in the domain's agents
-      expect(webDevConfig!.excluded).toBeUndefined();
+      expect(webDevConfig?.excluded).toBeUndefined();
     });
   });
 
@@ -2485,7 +2552,6 @@ describe("WizardStore", () => {
       // Edit flow: pinia removed from domainSelections but kept as excluded in skillConfigs
       expect(state.domainSelections.web!["web-client-state"]).not.toContain("web-state-pinia");
       const piniaConfig = state.skillConfigs.find((sc) => sc.id === "web-state-pinia");
-      expect(piniaConfig).toBeDefined();
       expect(piniaConfig).toStrictEqual({
         id: "web-state-pinia",
         scope: "global",

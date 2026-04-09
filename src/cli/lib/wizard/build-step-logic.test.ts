@@ -161,8 +161,7 @@ describe("buildCategoriesForDomain", () => {
     const result = buildCategoriesForDomain("web", [], selections);
 
     const stateRow = result.find((r) => r.id === stateCategory);
-    expect(stateRow).toBeDefined();
-    expect(stateRow!.options).toHaveLength(2);
+    expect(stateRow?.options).toHaveLength(2);
   });
 
   it("should mark installed skills", () => {
@@ -308,7 +307,6 @@ describe("buildCategoriesForDomain", () => {
       const result = buildCategoriesForDomain("web", [], selections, [], [], true);
 
       const stateRow = result.find((r) => r.id === stateCategory);
-      expect(stateRow).toBeDefined();
 
       // Zustand is compatibleWith react, pinia is compatibleWith vue
       const skillIds = stateRow!.options.map((o) => o.id);
@@ -323,9 +321,8 @@ describe("buildCategoriesForDomain", () => {
       const result = buildCategoriesForDomain("web", [], selections, [], [], true);
 
       const frameworkRow = result.find((r) => r.id === frameworkCategory);
-      expect(frameworkRow).toBeDefined();
       // Framework category should show all frameworks regardless of filtering
-      expect(frameworkRow!.options).toHaveLength(2);
+      expect(frameworkRow?.options).toHaveLength(2);
     });
 
     it("should NOT filter on non-web domains even when filterIncompatible is true", () => {
@@ -337,8 +334,7 @@ describe("buildCategoriesForDomain", () => {
       const result = buildCategoriesForDomain("api", [], selections, [], [], true);
 
       const dbRow = result.find((r) => r.id === apiDbCategory);
-      expect(dbRow).toBeDefined();
-      expect(dbRow!.options).toHaveLength(1);
+      expect(dbRow?.options).toHaveLength(1);
     });
 
     it("should NOT filter when no frameworks are selected even with filterIncompatible true", () => {
@@ -347,9 +343,8 @@ describe("buildCategoriesForDomain", () => {
       const result = buildCategoriesForDomain("web", [], {}, [], [], true);
 
       const stateRow = result.find((r) => r.id === stateCategory);
-      expect(stateRow).toBeDefined();
       // Both zustand and pinia should be visible since no framework is selected
-      expect(stateRow!.options).toHaveLength(2);
+      expect(stateRow?.options).toHaveLength(2);
     });
 
     it("should show skills with empty compatibleWith regardless of framework selection", () => {

@@ -347,7 +347,7 @@ describe("output-validator", () => {
 
       // Warnings present, but no errors
       expect(result.valid).toBe(true);
-      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(result.warnings).toHaveLength(2);
       expect(result.errors).toHaveLength(0);
     });
 
@@ -368,7 +368,7 @@ describe("output-validator", () => {
       const result = validateCompiledAgent(content);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors).toHaveLength(1);
     });
 
     it("should collect multiple errors and warnings together", () => {

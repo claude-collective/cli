@@ -157,8 +157,8 @@ describe("buildSkillRefsFromConfig", () => {
     const result = buildSkillRefsFromConfig(agentStack);
 
     expect(result).toHaveLength(2);
-    expect(result.find((r) => r.id === "web-framework-react")).toBeDefined();
-    expect(result.find((r) => r.id === "web-styling-scss-modules")).toBeDefined();
+    expect(result.map((r) => r.id)).toContain("web-framework-react");
+    expect(result.map((r) => r.id)).toContain("web-styling-scss-modules");
   });
 
   it("should preserve preloaded flag from assignments", () => {
@@ -279,7 +279,7 @@ describe("resolveSkillReference", () => {
 // ---------------------------------------------------------------------------
 
 describe("resolveSkillReferences", () => {
-  it("should resolve multiple skill references", () => {
+  it("should resolve multiple skill references with full skill shape", () => {
     const refs: SkillReference[] = [
       { id: "web-framework-react", usage: "for components" },
       { id: "web-state-zustand", usage: "for state", preloaded: true },
@@ -287,10 +287,34 @@ describe("resolveSkillReferences", () => {
 
     const results = resolveSkillReferences(refs, RESOLVE_SKILLS_MAP);
 
-    expect(results).toHaveLength(2);
+    expect(results).toStrictEqual([
+      {
+        id: "web-framework-react",
+        path: "skills/web/framework/react/",
+        description: "React component patterns",
+        usage: "for components",
+        preloaded: false,
+      },
+      {
+        id: "web-state-zustand",
+        path: "skills/web/client-state-management/zustand/",
+        description: "Lightweight state management",
+        usage: "for state",
+        preloaded: true,
+      },
+    ]);
+  });
+
+  it("should filter out unresolvable skill references", () => {
+    const refs: SkillReference[] = [
+      { id: "web-framework-react", usage: "for components" },
+      { id: "web-nonexistent-skill" as SkillId, usage: "never" },
+    ];
+
+    const results = resolveSkillReferences(refs, RESOLVE_SKILLS_MAP);
+
+    expect(results).toHaveLength(1);
     expect(results[0].id).toBe("web-framework-react");
-    expect(results[1].id).toBe("web-state-zustand");
-    expect(results[1].preloaded).toBe(true);
   });
 
   it("should return empty array for empty input", () => {
@@ -508,7 +532,6 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       const output = await compileAgentWithSkills(skills);
       const frontmatter = extractFrontmatter(output);
 
-      expect(frontmatter.skills).toBeDefined();
       expect(Array.isArray(frontmatter.skills)).toBe(true);
     });
 
@@ -695,8 +718,8 @@ describe("resolveAgentSkillsFromStack", () => {
     const result = resolveAgentSkillsFromStack("web-developer", WEB_REACT_AND_SCSS_STACK);
 
     expect(result).toHaveLength(2);
-    expect(result.find((s) => s.id === "web-framework-react")).toBeDefined();
-    expect(result.find((s) => s.id === "web-styling-scss-modules")).toBeDefined();
+    expect(result.map((s) => s.id)).toContain("web-framework-react");
+    expect(result.map((s) => s.id)).toContain("web-styling-scss-modules");
   });
 
   it("should read preloaded from assignment directly", () => {
@@ -780,7 +803,6 @@ describe("resolveAgents with stack", () => {
         FULLSTACK_STACK,
       );
 
-      expect(result["web-developer"]).toBeDefined();
       expect(result["web-developer"].skills).toHaveLength(2);
 
       const webSkillIds = result["web-developer"].skills.map((s) => s.id);
@@ -815,7 +837,6 @@ describe("resolveAgents with stack", () => {
         FULLSTACK_STACK,
       );
 
-      expect(result["api-developer"]).toBeDefined();
       expect(result["api-developer"].skills).toHaveLength(2);
 
       const apiSkillIds = result["api-developer"].skills.map((s) => s.id);
@@ -850,7 +871,6 @@ describe("resolveAgents with stack", () => {
       "/test/path",
     );
 
-    expect(result["web-developer"]).toBeDefined();
     expect(result["web-developer"].skills).toStrictEqual([]);
   });
 

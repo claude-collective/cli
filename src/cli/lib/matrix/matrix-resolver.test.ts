@@ -602,16 +602,14 @@ describe("Conflicting skills", () => {
       const options = getAvailableSkills("web-framework", [VUE_ID]);
 
       const skillAOption = options.find((o: { id: string }) => o.id === REACT_ID);
-      expect(skillAOption).toBeDefined();
-      expect(skillAOption!.advisoryState.status).toBe("incompatible");
+      expect(skillAOption?.advisoryState.status).toBe("incompatible");
     });
 
     it("when conflicting skill is selected, should set reason with conflict reason", () => {
       const options = getAvailableSkills("web-framework", [VUE_ID]);
 
       const skillAOption = options.find((o: { id: string }) => o.id === REACT_ID);
-      expect(skillAOption).toBeDefined();
-      expect(skillAOption!.advisoryState).toStrictEqual(
+      expect(skillAOption?.advisoryState).toStrictEqual(
         expect.objectContaining({
           status: "incompatible",
           reason: expect.stringContaining("conflicts with"),
@@ -1258,8 +1256,7 @@ describe("getAvailableSkills edge cases", () => {
 
     const result = getAvailableSkills("web-framework", []);
     const optionA = result.find((o) => o.id === REACT_ID);
-    expect(optionA).toBeDefined();
-    expect(optionA!.alternatives).toStrictEqual([VUE_ID, ZUSTAND_ID]);
+    expect(optionA?.alternatives).toStrictEqual([VUE_ID, ZUSTAND_ID]);
   });
 
   it("should correctly mark selected skills", () => {

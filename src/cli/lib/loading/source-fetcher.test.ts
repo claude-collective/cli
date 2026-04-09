@@ -276,33 +276,33 @@ describe("getGigetCacheDir", () => {
     delete process.env.XDG_CACHE_HOME;
     const result = getGigetCacheDir("github:agents-inc/skills");
 
-    expect(result).toBeDefined();
+    const expectedBase = path.resolve(os.homedir(), ".cache", "giget");
     // giget sanitizes "agents-inc/skills" -> "agents-inc-skills"
-    expect(result).toContain(path.join("giget", "github", "agents-inc-skills"));
+    expect(result).toBe(path.join(expectedBase, "github", "agents-inc-skills"));
   });
 
   it("should return cache path for gh: protocol", () => {
     delete process.env.XDG_CACHE_HOME;
     const result = getGigetCacheDir("gh:acme/repo");
 
-    expect(result).toBeDefined();
-    expect(result).toContain(path.join("giget", "gh", "acme-repo"));
+    const expectedBase = path.resolve(os.homedir(), ".cache", "giget");
+    expect(result).toBe(path.join(expectedBase, "gh", "acme-repo"));
   });
 
   it("should return cache path for gitlab: protocol", () => {
     delete process.env.XDG_CACHE_HOME;
     const result = getGigetCacheDir("gitlab:org/project");
 
-    expect(result).toBeDefined();
-    expect(result).toContain(path.join("giget", "gitlab", "org-project"));
+    const expectedBase = path.resolve(os.homedir(), ".cache", "giget");
+    expect(result).toBe(path.join(expectedBase, "gitlab", "org-project"));
   });
 
   it("should default to github provider when no protocol prefix", () => {
     delete process.env.XDG_CACHE_HOME;
     const result = getGigetCacheDir("myorg/myrepo");
 
-    expect(result).toBeDefined();
-    expect(result).toContain(path.join("giget", "github", "myorg-myrepo"));
+    const expectedBase = path.resolve(os.homedir(), ".cache", "giget");
+    expect(result).toBe(path.join(expectedBase, "github", "myorg-myrepo"));
   });
 
   it("should return undefined for http: protocol", () => {
@@ -327,7 +327,6 @@ describe("getGigetCacheDir", () => {
     process.env.XDG_CACHE_HOME = "/custom/cache";
     const result = getGigetCacheDir("github:org/repo");
 
-    expect(result).toBeDefined();
     expect(result).toBe(path.resolve("/custom/cache", "giget", "github", "org-repo"));
   });
 
@@ -335,7 +334,6 @@ describe("getGigetCacheDir", () => {
     delete process.env.XDG_CACHE_HOME;
     const result = getGigetCacheDir("github:org/repo");
 
-    expect(result).toBeDefined();
     const expectedBase = path.resolve(os.homedir(), ".cache", "giget");
     expect(result).toBe(path.join(expectedBase, "github", "org-repo"));
   });
@@ -344,26 +342,26 @@ describe("getGigetCacheDir", () => {
     delete process.env.XDG_CACHE_HOME;
     const result = getGigetCacheDir("github:org/repo#main");
 
-    expect(result).toBeDefined();
+    const expectedBase = path.resolve(os.homedir(), ".cache", "giget");
     // The ref (#main) is not included in the template name
-    expect(result).toContain(path.join("giget", "github", "org-repo"));
+    expect(result).toBe(path.join(expectedBase, "github", "org-repo"));
   });
 
   it("should handle subdir in source URI", () => {
     delete process.env.XDG_CACHE_HOME;
     const result = getGigetCacheDir("github:org/repo/subdir/path");
 
-    expect(result).toBeDefined();
+    const expectedBase = path.resolve(os.homedir(), ".cache", "giget");
     // Only the repo part (org/repo) is used for the template name
-    expect(result).toContain(path.join("giget", "github", "org-repo"));
+    expect(result).toBe(path.join(expectedBase, "github", "org-repo"));
   });
 
   it("should sanitize dots and special chars in repo name", () => {
     delete process.env.XDG_CACHE_HOME;
     const result = getGigetCacheDir("github:org/my.repo.name");
 
-    expect(result).toBeDefined();
+    const expectedBase = path.resolve(os.homedir(), ".cache", "giget");
     // giget replaces non-alphanumeric chars (except dash) with dash
-    expect(result).toContain(path.join("giget", "github", "org-my-repo-name"));
+    expect(result).toBe(path.join(expectedBase, "github", "org-my-repo-name"));
   });
 });

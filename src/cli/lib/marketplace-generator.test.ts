@@ -425,10 +425,13 @@ describe("marketplace-generator", () => {
 
       const stats = getMarketplaceStats(marketplace);
 
-      expect(stats).toHaveProperty("total");
-      expect(stats).toHaveProperty("byCategory");
-      expect(typeof stats.total).toBe("number");
-      expect(typeof stats.byCategory).toBe("object");
+      expect(stats).toStrictEqual({
+        total: 2,
+        byCategory: {
+          "web-framework": 1,
+          "api-database": 1,
+        },
+      });
     });
   });
 });

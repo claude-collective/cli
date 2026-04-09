@@ -31,7 +31,7 @@ describe("source-switcher", () => {
 
       await deleteLocalSkill("/project", "web-framework-react");
 
-      expect(warn).not.toHaveBeenCalled();
+      expect(warn).not.toHaveBeenCalledWith(expect.any(String));
     });
 
     it("blocks path traversal in skill ID", async () => {
@@ -39,7 +39,7 @@ describe("source-switcher", () => {
       await deleteLocalSkill("/project", "web-traversal-../../dangerous" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
-      expect(remove).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalledWith(expect.any(String));
     });
 
     it("blocks skill ID with forward slashes", async () => {
@@ -47,7 +47,7 @@ describe("source-switcher", () => {
       await deleteLocalSkill("/project", "web-framework-react/../../etc" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
-      expect(remove).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalledWith(expect.any(String));
     });
 
     it("blocks skill ID with backslashes", async () => {
@@ -55,7 +55,7 @@ describe("source-switcher", () => {
       await deleteLocalSkill("/project", "web-framework-react\\..\\..\\etc" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
-      expect(remove).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalledWith(expect.any(String));
     });
 
     it("blocks null byte injection", async () => {
@@ -63,7 +63,7 @@ describe("source-switcher", () => {
       await deleteLocalSkill("/project", "web-skill-name\0../../passwd" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
-      expect(remove).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalledWith(expect.any(String));
     });
 
     it("allows skill IDs that pass security checks regardless of format", async () => {
@@ -71,7 +71,7 @@ describe("source-switcher", () => {
       // Format validation (domain prefix, casing) is handled by Zod schemas at parse boundaries
       await deleteLocalSkill("/project", "acme-pipeline-deploy" as SkillId);
 
-      expect(remove).toHaveBeenCalled();
+      expect(remove).toHaveBeenCalledWith("/project/.claude/skills/acme-pipeline-deploy");
     });
   });
 });

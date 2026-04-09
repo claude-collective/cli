@@ -131,10 +131,12 @@ describe("plugin-finder", () => {
 
       const result = await readPluginManifest("/path/to/plugin");
 
-      expect(result).not.toBeNull();
-      expect(result!.name).toBe("my-plugin");
-      expect(result!.version).toBe("1.0.0");
-      expect(result!.description).toBe("A test plugin");
+      expect(result).toStrictEqual({
+        name: "my-plugin",
+        version: "1.0.0",
+        description: "A test plugin",
+        skills: "./skills/",
+      });
     });
 
     it("should return null for invalid JSON", async () => {

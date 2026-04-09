@@ -44,8 +44,11 @@ const DEFAULT_SOURCE_CONFIG: ResolvedConfig = {
 };
 
 describe("multi-source-loader", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Reset discoverAllPluginSkills to default empty result (clearAllMocks does not reset implementations)
+    const { discoverAllPluginSkills } = await import("../plugins");
+    vi.mocked(discoverAllPluginSkills).mockResolvedValue({});
   });
 
   describe("primary source tagging", () => {
@@ -61,18 +64,14 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-      expect(react.availableSources).toHaveLength(1);
-      expect(react.availableSources![0].type).toBe("public");
-      expect(react.availableSources![0].name).toBe("agents-inc");
-      expect(react.availableSources![0].installed).toBe(false);
-      expect(react.availableSources![0].primary).toBe(true);
+      expect(react.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+      ]);
 
       const vitest = matrix.skills["web-testing-vitest"]!;
-      expect(vitest.availableSources).toBeDefined();
-      expect(vitest.availableSources).toHaveLength(1);
-      expect(vitest.availableSources![0].type).toBe("public");
-      expect(vitest.availableSources![0].primary).toBe(true);
+      expect(vitest.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+      ]);
     });
 
     it("should tag skills with private marketplace source when source is not default", async () => {
@@ -93,19 +92,14 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-      expect(react.availableSources).toHaveLength(1);
-      expect(react.availableSources![0].type).toBe("private");
-      expect(react.availableSources![0].name).toBe("Acme Corp");
-      expect(react.availableSources![0].installed).toBe(false);
-      expect(react.availableSources![0].primary).toBe(true);
+      expect(react.availableSources).toStrictEqual([
+        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+      ]);
 
       const vitest = matrix.skills["web-testing-vitest"]!;
-      expect(vitest.availableSources).toBeDefined();
-      expect(vitest.availableSources).toHaveLength(1);
-      expect(vitest.availableSources![0].type).toBe("private");
-      expect(vitest.availableSources![0].name).toBe("Acme Corp");
-      expect(vitest.availableSources![0].primary).toBe(true);
+      expect(vitest.availableSources).toStrictEqual([
+        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+      ]);
     });
 
     it("should use marketplace from marketplace parameter over sourceConfig", async () => {
@@ -126,11 +120,9 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test", false, "Acme Corp");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-      expect(react.availableSources).toHaveLength(1);
-      expect(react.availableSources![0].type).toBe("private");
-      expect(react.availableSources![0].name).toBe("Acme Corp");
-      expect(react.availableSources![0].primary).toBe(true);
+      expect(react.availableSources).toStrictEqual([
+        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+      ]);
     });
 
     it("should tag as public when default source has marketplace set", async () => {
@@ -152,11 +144,9 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, configWithMarketplace, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-      expect(react.availableSources).toHaveLength(1);
-      expect(react.availableSources![0].type).toBe("public");
-      expect(react.availableSources![0].name).toBe("SomeMarketplace");
-      expect(react.availableSources![0].primary).toBe(true);
+      expect(react.availableSources).toStrictEqual([
+        { name: "SomeMarketplace", displayName: undefined, type: "public", installed: false, primary: true },
+      ]);
     });
 
     it("should tag local skills with both public and local sources", async () => {
@@ -175,22 +165,15 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-      expect(react.availableSources).toHaveLength(2);
-
-      const publicSource = react.availableSources!.find((s) => s.type === "public");
-      expect(publicSource).toBeDefined();
-      expect(publicSource!.installed).toBe(false);
-      expect(publicSource!.primary).toBe(true);
-
-      const localSource = react.availableSources!.find((s) => s.type === "local");
-      expect(localSource).toBeDefined();
-      expect(localSource!.installed).toBe(true);
-      expect(localSource!.installMode).toBe("eject");
+      expect(react.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        { name: "eject", type: "local", installed: true, installMode: "eject" },
+      ]);
 
       // activeSource should be the local source (installed)
-      expect(react.activeSource).toBeDefined();
-      expect(react.activeSource!.type).toBe("local");
+      expect(react.activeSource).toStrictEqual({
+        name: "eject", type: "local", installed: true, installMode: "eject",
+      });
     });
   });
 
@@ -211,12 +194,10 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-      const localSource = react.availableSources!.find((s) => s.type === "local");
-      expect(localSource).toBeDefined();
-      expect(localSource!.name).toBe("eject");
-      expect(localSource!.installed).toBe(true);
-      expect(localSource!.installMode).toBe("eject");
+      expect(react.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        { name: "eject", type: "local", installed: true, installMode: "eject" },
+      ]);
     });
   });
 
@@ -237,9 +218,9 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.activeSource).toBeDefined();
-      expect(react.activeSource!.type).toBe("local");
-      expect(react.activeSource!.installed).toBe(true);
+      expect(react.activeSource).toStrictEqual({
+        name: "eject", type: "local", installed: true, installMode: "eject",
+      });
     });
 
     it("should set activeSource to public when no installed variant", async () => {
@@ -254,9 +235,9 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.activeSource).toBeDefined();
-      expect(react.activeSource!.type).toBe("public");
-      expect(react.activeSource!.name).toBe("agents-inc");
+      expect(react.activeSource).toStrictEqual({
+        name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true,
+      });
     });
   });
 
@@ -285,9 +266,9 @@ describe("multi-source-loader", () => {
 
       // Original skill should still have public source
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-      expect(react.availableSources).toHaveLength(1);
-      expect(react.availableSources![0].type).toBe("public");
+      expect(react.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+      ]);
     });
   });
 
@@ -319,18 +300,10 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-      expect(react.availableSources!.length).toBe(2);
-
-      const types = react.availableSources!.map((s) => s.type);
-      expect(types).toContain("public");
-      expect(types).toContain("private");
-
-      const privateSource = react.availableSources!.find((s) => s.type === "private")!;
-      expect(privateSource.name).toBe("acme-corp");
-      expect(privateSource.url).toBe("github:acme-corp/skills");
-      expect(privateSource.installed).toBe(false);
-      expect(privateSource.primary).toBeUndefined();
+      expect(react.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+        { name: "acme-corp", type: "private", url: "github:acme-corp/skills", installed: false },
+      ]);
     });
   });
 
@@ -361,15 +334,10 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-
       // Should have a single public source marked as plugin-installed
-      expect(react.availableSources).toHaveLength(1);
-      const publicSource = react.availableSources![0];
-      expect(publicSource.type).toBe("public");
-      expect(publicSource.installed).toBe(true);
-      expect(publicSource.installMode).toBe("plugin");
-      expect(publicSource.primary).toBe(true);
+      expect(react.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: true, installMode: "plugin", primary: true },
+      ]);
     });
 
     it("should tag skills from multiple plugins discovered via settings.json", async () => {
@@ -402,12 +370,14 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources![0].installed).toBe(true);
-      expect(react.availableSources![0].installMode).toBe("plugin");
+      expect(react.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: true, installMode: "plugin", primary: true },
+      ]);
 
       const zustand = matrix.skills["web-state-zustand"]!;
-      expect(zustand.availableSources![0].installed).toBe(true);
-      expect(zustand.availableSources![0].installMode).toBe("plugin");
+      expect(zustand.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: true, installMode: "plugin", primary: true },
+      ]);
     });
   });
 
@@ -462,26 +432,16 @@ describe("multi-source-loader", () => {
 
       // React should have both private (Acme Corp) and public (Agents Inc) sources
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toBeDefined();
-      expect(react.availableSources).toHaveLength(2);
-
-      const privateSource = react.availableSources!.find((s) => s.type === "private");
-      expect(privateSource).toBeDefined();
-      expect(privateSource!.name).toBe("Acme Corp");
-      expect(privateSource!.primary).toBe(true);
-
-      const publicSource = react.availableSources!.find((s) => s.type === "public");
-      expect(publicSource).toBeDefined();
-      expect(publicSource!.name).toBe("agents-inc");
-      expect(publicSource!.installed).toBe(false);
-      expect(publicSource!.primary).toBeUndefined();
+      expect(react.availableSources).toStrictEqual([
+        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+        { name: "agents-inc", type: "public", installed: false },
+      ]);
 
       // Vitest only exists in private source, not in public
       const vitest = matrix.skills["web-testing-vitest"]!;
-      expect(vitest.availableSources).toHaveLength(1);
-      expect(vitest.availableSources![0].type).toBe("private");
-      expect(vitest.availableSources![0].name).toBe("Acme Corp");
-      expect(vitest.availableSources![0].primary).toBe(true);
+      expect(vitest.availableSources).toStrictEqual([
+        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+      ]);
     });
 
     it("should not duplicate public source when primary IS the default source", async () => {
@@ -499,9 +459,9 @@ describe("multi-source-loader", () => {
 
       const react = matrix.skills["web-framework-react"]!;
       // Only the primary public source -- no duplicate public tagging
-      expect(react.availableSources).toHaveLength(1);
-      expect(react.availableSources![0].type).toBe("public");
-      expect(react.availableSources![0].name).toBe("agents-inc");
+      expect(react.availableSources).toStrictEqual([
+        { name: "agents-inc", displayName: undefined, type: "public", installed: false, primary: true },
+      ]);
 
       // fetchFromSource should NOT have been called for public fallback
       expect(fetchFromSource).not.toHaveBeenCalled();
@@ -544,12 +504,11 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
 
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toHaveLength(2);
-
       // Public source should use fallback name "agents-inc"
-      const publicSource = react.availableSources!.find((s) => s.type === "public");
-      expect(publicSource).toBeDefined();
-      expect(publicSource!.name).toBe("agents-inc");
+      expect(react.availableSources).toStrictEqual([
+        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+        { name: "agents-inc", type: "public", installed: false },
+      ]);
     });
 
     it("should handle public source fetch failure gracefully", async () => {
@@ -582,9 +541,9 @@ describe("multi-source-loader", () => {
 
       // Skill should still have just the private source
       const react = matrix.skills["web-framework-react"]!;
-      expect(react.availableSources).toHaveLength(1);
-      expect(react.availableSources![0].type).toBe("private");
-      expect(react.availableSources![0].name).toBe("Acme Corp");
+      expect(react.availableSources).toStrictEqual([
+        { name: "Acme Corp", displayName: undefined, type: "private", installed: false, primary: true },
+      ]);
     });
   });
 
@@ -622,12 +581,13 @@ describe("multi-source-loader", () => {
 
       const result = await searchExtraSources("react", sources);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("web-framework-react-pro");
-      expect(result[0].sourceName).toBe("acme-corp");
-      expect(result[0].sourceUrl).toBe("github:acme-corp/skills");
-      expect(result[0].alias).toBe("react");
-      expect(result[0].description).toBe("Opinionated React with strict TS");
+      expect(result).toStrictEqual([{
+        id: "web-framework-react-pro",
+        sourceName: "acme-corp",
+        sourceUrl: "github:acme-corp/skills",
+        alias: "react",
+        description: "Opinionated React with strict TS",
+      }]);
     });
 
     it("should find matching skills from multiple sources", async () => {
@@ -669,11 +629,22 @@ describe("multi-source-loader", () => {
 
       const result = await searchExtraSources("react", sources);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].sourceName).toBe("acme-corp");
-      expect(result[0].id).toBe("web-framework-react-pro");
-      expect(result[1].sourceName).toBe("team-xyz");
-      expect(result[1].id).toBe("web-framework-react-strict");
+      expect(result).toStrictEqual([
+        {
+          id: "web-framework-react-pro",
+          sourceName: "acme-corp",
+          sourceUrl: "github:acme-corp/skills",
+          alias: "react",
+          description: "web-framework-react-pro skill",
+        },
+        {
+          id: "web-framework-react-strict",
+          sourceName: "team-xyz",
+          sourceUrl: "github:team-xyz/skills",
+          alias: "react",
+          description: "web-framework-react-strict skill",
+        },
+      ]);
     });
 
     it("should handle failed sources gracefully without throwing", async () => {
@@ -705,8 +676,13 @@ describe("multi-source-loader", () => {
       const result = await searchExtraSources("react", sources);
 
       // Should still return results from the working source
-      expect(result).toHaveLength(1);
-      expect(result[0].sourceName).toBe("team-xyz");
+      expect(result).toStrictEqual([{
+        id: "web-framework-react-strict",
+        sourceName: "team-xyz",
+        sourceUrl: "github:team-xyz/skills",
+        alias: "react",
+        description: "web-framework-react-strict skill",
+      }]);
 
       // Should have warned about the failed source
       expect(warn).toHaveBeenCalledWith(
@@ -735,7 +711,7 @@ describe("multi-source-loader", () => {
       const sources: SourceEntry[] = [{ name: "acme-corp", url: "github:acme-corp/skills" }];
 
       const result = await searchExtraSources("react", sources);
-      expect(result).toHaveLength(0);
+      expect(result).toStrictEqual([]);
     });
 
     it("should match alias case-insensitively", async () => {
@@ -759,8 +735,13 @@ describe("multi-source-loader", () => {
       const sources: SourceEntry[] = [{ name: "acme-corp", url: "github:acme-corp/skills" }];
 
       const result = await searchExtraSources("react", sources);
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("web-framework-react-pro");
+      expect(result).toStrictEqual([{
+        id: "web-framework-react-pro",
+        sourceName: "acme-corp",
+        sourceUrl: "github:acme-corp/skills",
+        alias: "react",
+        description: "web-framework-react-pro skill",
+      }]);
     });
   });
 });

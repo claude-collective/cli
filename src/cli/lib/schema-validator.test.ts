@@ -63,11 +63,9 @@ describe("schema-validator", () => {
 
       // Find the Agent Definition result
       const agentResult = result.results.find((r) => r.schemaName === "Agent Definition");
-      expect(agentResult).toBeDefined();
-      expect(agentResult!.totalFiles).toBe(1);
-      expect(agentResult!.validFiles).toBe(1);
-      expect(agentResult!.valid).toBe(true);
-      expect(agentResult!.invalidFiles).toHaveLength(0);
+      expect(agentResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 1, validFiles: 1, valid: true, invalidFiles: [] }),
+      );
     });
 
     it("should detect invalid metadata.yaml file", async () => {
@@ -82,12 +80,11 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const agentResult = result.results.find((r) => r.schemaName === "Agent Definition");
-      expect(agentResult).toBeDefined();
-      expect(agentResult!.valid).toBe(false);
-      expect(agentResult!.totalFiles).toBe(1);
-      expect(agentResult!.validFiles).toBe(0);
+      expect(agentResult).toStrictEqual(
+        expect.objectContaining({ valid: false, totalFiles: 1, validFiles: 0 }),
+      );
       expect(agentResult!.invalidFiles).toHaveLength(1);
-      expect(agentResult!.invalidFiles[0].errors.length).toBeGreaterThan(0);
+      expect(agentResult!.invalidFiles[0].errors).toHaveLength(2);
     });
 
     it("should validate stack config files", async () => {
@@ -113,10 +110,9 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const stackResult = result.results.find((r) => r.schemaName === "Stack Config");
-      expect(stackResult).toBeDefined();
-      expect(stackResult!.totalFiles).toBe(1);
-      expect(stackResult!.validFiles).toBe(1);
-      expect(stackResult!.valid).toBe(true);
+      expect(stackResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 1, validFiles: 1, valid: true }),
+      );
     });
 
     it("should validate multiple files and aggregate results", async () => {
@@ -140,11 +136,10 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const agentResult = result.results.find((r) => r.schemaName === "Agent Definition");
-      expect(agentResult).toBeDefined();
-      expect(agentResult!.totalFiles).toBe(3);
-      expect(agentResult!.validFiles).toBe(2);
+      expect(agentResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 3, validFiles: 2, valid: false }),
+      );
       expect(agentResult!.invalidFiles).toHaveLength(1);
-      expect(agentResult!.valid).toBe(false);
 
       // Overall result should be invalid due to the bad agent
       expect(result.valid).toBe(false);
@@ -190,10 +185,9 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const agentResult = result.results.find((r) => r.schemaName === "Agent Definition");
-      expect(agentResult).toBeDefined();
       // YAML parsing may either succeed with weird data or fail
       // Either way, the function should not throw
-      expect(agentResult!.totalFiles).toBe(1);
+      expect(agentResult).toStrictEqual(expect.objectContaining({ totalFiles: 1 }));
     });
 
     it("should validate skill frontmatter from SKILL.md files", async () => {
@@ -220,10 +214,9 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const frontmatterResult = result.results.find((r) => r.schemaName === "Skill Frontmatter");
-      expect(frontmatterResult).toBeDefined();
-      expect(frontmatterResult!.totalFiles).toBe(1);
-      expect(frontmatterResult!.validFiles).toBe(1);
-      expect(frontmatterResult!.valid).toBe(true);
+      expect(frontmatterResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 1, validFiles: 1, valid: true }),
+      );
     });
 
     it("should detect invalid skill frontmatter", async () => {
@@ -238,10 +231,9 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const frontmatterResult = result.results.find((r) => r.schemaName === "Skill Frontmatter");
-      expect(frontmatterResult).toBeDefined();
-      expect(frontmatterResult!.totalFiles).toBe(1);
-      expect(frontmatterResult!.validFiles).toBe(0);
-      expect(frontmatterResult!.valid).toBe(false);
+      expect(frontmatterResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 1, validFiles: 0, valid: false }),
+      );
       expect(frontmatterResult!.invalidFiles).toHaveLength(1);
     });
 
@@ -256,9 +248,9 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const frontmatterResult = result.results.find((r) => r.schemaName === "Skill Frontmatter");
-      expect(frontmatterResult).toBeDefined();
-      expect(frontmatterResult!.totalFiles).toBe(1);
-      expect(frontmatterResult!.validFiles).toBe(0);
+      expect(frontmatterResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 1, validFiles: 0 }),
+      );
       expect(frontmatterResult!.invalidFiles[0].errors[0]).toContain("frontmatter");
     });
 
@@ -287,10 +279,9 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const metadataResult = result.results.find((r) => r.schemaName === "Skill Metadata");
-      expect(metadataResult).toBeDefined();
-      expect(metadataResult!.totalFiles).toBe(1);
-      expect(metadataResult!.validFiles).toBe(1);
-      expect(metadataResult!.valid).toBe(true);
+      expect(metadataResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 1, validFiles: 1, valid: true }),
+      );
     });
 
     it("should detect invalid skill metadata.yaml", async () => {
@@ -302,8 +293,7 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const metadataResult = result.results.find((r) => r.schemaName === "Skill Metadata");
-      expect(metadataResult).toBeDefined();
-      expect(metadataResult!.valid).toBe(false);
+      expect(metadataResult).toStrictEqual(expect.objectContaining({ valid: false }));
       expect(metadataResult!.invalidFiles).toHaveLength(1);
     });
 
@@ -322,10 +312,9 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const pluginResult = result.results.find((r) => r.schemaName === "Plugin Manifest");
-      expect(pluginResult).toBeDefined();
-      expect(pluginResult!.totalFiles).toBe(1);
-      expect(pluginResult!.validFiles).toBe(1);
-      expect(pluginResult!.valid).toBe(true);
+      expect(pluginResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 1, validFiles: 1, valid: true }),
+      );
     });
 
     it("should detect invalid plugin manifest (invalid JSON)", async () => {
@@ -336,8 +325,7 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const pluginResult = result.results.find((r) => r.schemaName === "Plugin Manifest");
-      expect(pluginResult).toBeDefined();
-      expect(pluginResult!.valid).toBe(false);
+      expect(pluginResult).toStrictEqual(expect.objectContaining({ valid: false }));
       expect(pluginResult!.invalidFiles).toHaveLength(1);
       expect(pluginResult!.invalidFiles[0].errors[0]).toContain("Failed to parse");
     });
@@ -360,10 +348,9 @@ describe("schema-validator", () => {
       const result = await validateAllSchemas(tempDir);
 
       const configResult = result.results.find((r) => r.schemaName === "Project Source Config");
-      expect(configResult).toBeDefined();
-      expect(configResult!.totalFiles).toBe(1);
-      expect(configResult!.validFiles).toBe(1);
-      expect(configResult!.valid).toBe(true);
+      expect(configResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 1, validFiles: 1, valid: true }),
+      );
     });
 
     it("should validate stack skill frontmatter in src/stacks", async () => {
@@ -393,10 +380,9 @@ describe("schema-validator", () => {
       const stackFrontmatterResult = result.results.find(
         (r) => r.schemaName === "Stack Skill Frontmatter",
       );
-      expect(stackFrontmatterResult).toBeDefined();
-      expect(stackFrontmatterResult!.totalFiles).toBe(1);
-      expect(stackFrontmatterResult!.validFiles).toBe(1);
-      expect(stackFrontmatterResult!.valid).toBe(true);
+      expect(stackFrontmatterResult).toStrictEqual(
+        expect.objectContaining({ totalFiles: 1, validFiles: 1, valid: true }),
+      );
     });
   });
 

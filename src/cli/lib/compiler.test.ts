@@ -287,7 +287,7 @@ describe("compiler", () => {
 
         await compileAllAgents(WEB_DEV_NO_SKILLS, contextForProject(projectDir), engine as never);
 
-        expect(validateCompiledAgent).toHaveBeenCalled();
+        expect(validateCompiledAgent).toHaveBeenCalledWith(STUB_OUTPUT);
       });
 
       it("when validation has warnings, should print validation result", async () => {
@@ -432,14 +432,13 @@ describe("compiler", () => {
     it("creates engine with default template root", async () => {
       const engine = await createLiquidEngine();
 
-      expect(engine).toBeDefined();
       expect(typeof engine.renderFile).toBe("function");
     });
 
     it("checks for local template overrides when projectDir provided", async () => {
       const engine = await createLiquidEngine(projectDir);
 
-      expect(engine).toBeDefined();
+      expect(typeof engine.renderFile).toBe("function");
     });
   });
 

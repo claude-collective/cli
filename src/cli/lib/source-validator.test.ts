@@ -269,7 +269,7 @@ describe("source-validator", () => {
 
       const result = await validateSource(sourceDir);
 
-      expect(result.errorCount).toBeGreaterThan(0);
+      expect(result.errorCount).toBe(1);
       const yamlErrors = result.issues.filter((i) => i.message.includes("Failed to parse YAML"));
       expect(yamlErrors).toHaveLength(1);
       expect(yamlErrors[0]?.severity).toBe("error");
@@ -284,10 +284,14 @@ describe("source-validator", () => {
       const result = await validateSource(sourceDir);
 
       // Should complete without throwing
-      expect(result).toHaveProperty("issues");
-      expect(result).toHaveProperty("skillCount");
-      expect(result).toHaveProperty("errorCount");
-      expect(result).toHaveProperty("warningCount");
+      expect(result).toStrictEqual(
+        expect.objectContaining({
+          issues: expect.any(Array),
+          skillCount: expect.any(Number),
+          errorCount: expect.any(Number),
+          warningCount: expect.any(Number),
+        }),
+      );
     });
   });
 });

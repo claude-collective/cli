@@ -111,10 +111,11 @@ describe("agent-recompiler", () => {
         agents: ["web-developer", "api-developer", "web-pm"],
       });
 
-      expect(result.compiled.length).toBeGreaterThanOrEqual(3);
       expect(result.compiled).toContain("web-developer");
       expect(result.compiled).toContain("api-developer");
       expect(result.compiled).toContain("web-pm");
+      expect(result.compiled).toHaveLength(3);
+      expect(result.failed).toStrictEqual([]);
     });
 
     it("uses provided skills instead of loading from plugin", async () => {

@@ -81,7 +81,7 @@ vi.mock("../configuration/config-generator", async (importOriginal) => {
     generateProjectConfigFromSkills: vi.fn().mockReturnValue({
       // Uses literal values because vi.mock factories are hoisted above imports
       name: "agents-inc",
-      agents: ["web-developer"],
+      agents: [],
       skills: [{ id: "test-skill", scope: "project", source: "eject" }],
     }),
     buildStackProperty: vi.fn().mockReturnValue({}),
@@ -143,11 +143,16 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      // Verify config was written
+      // Verify config was written — full round-trip through disk
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<ProjectConfig>(configPath);
 
-      expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
+      expect(config).toStrictEqual({
+        name: DEFAULT_PLUGIN_NAME,
+        agents: [],
+        skills: [{ id: "test-skill", scope: "project", source: "eject" }],
+        source: tempDir,
+      });
       expect(result.configPath).toBe(configPath);
     });
 
@@ -166,7 +171,12 @@ describe("local-installer", () => {
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<ProjectConfig>(configPath);
 
-      expect(config.source).toBe("github:my-org/skills");
+      expect(config).toStrictEqual({
+        name: DEFAULT_PLUGIN_NAME,
+        agents: [],
+        skills: [{ id: "test-skill", scope: "project", source: "eject" }],
+        source: "github:my-org/skills",
+      });
     });
 
     it("should include source from sourceResult when no sourceFlag", async () => {
@@ -188,7 +198,12 @@ describe("local-installer", () => {
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<ProjectConfig>(configPath);
 
-      expect(config.source).toBe("github:default/source");
+      expect(config).toStrictEqual({
+        name: DEFAULT_PLUGIN_NAME,
+        agents: [],
+        skills: [{ id: "test-skill", scope: "project", source: "eject" }],
+        source: "github:default/source",
+      });
     });
 
     it("should include marketplace in config when available", async () => {
@@ -207,7 +222,13 @@ describe("local-installer", () => {
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<ProjectConfig>(configPath);
 
-      expect(config.marketplace).toBe("my-marketplace");
+      expect(config).toStrictEqual({
+        name: DEFAULT_PLUGIN_NAME,
+        agents: [],
+        skills: [{ id: "test-skill", scope: "project", source: "eject" }],
+        source: tempDir,
+        marketplace: "my-marketplace",
+      });
     });
 
     it("should return correct result structure", async () => {
@@ -221,13 +242,21 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      expect(result.copiedSkills).toBeDefined();
-      expect(result.config).toBeDefined();
-      expect(result.configPath).toContain(path.join(CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS));
-      expect(result.compiledAgents).toBeDefined();
-      expect(typeof result.wasMerged).toBe("boolean");
-      expect(result.skillsDir).toContain(path.join(CLAUDE_DIR, "skills"));
-      expect(result.agentsDir).toContain(path.join(CLAUDE_DIR, "agents"));
+      expect(result).toStrictEqual({
+        copiedSkills: [],
+        config: {
+          name: DEFAULT_PLUGIN_NAME,
+          agents: [],
+          skills: [{ id: "test-skill", scope: "project", source: "eject" }],
+          source: tempDir,
+        },
+        configPath: path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+        compiledAgents: [],
+        wasMerged: false,
+        mergedConfigPath: undefined,
+        skillsDir: path.join(tempDir, LOCAL_SKILLS_PATH),
+        agentsDir: path.join(tempDir, CLAUDE_DIR, "agents"),
+      });
     });
 
     it("should merge with existing config when present", async () => {
@@ -255,8 +284,12 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
+      expect(result.copiedSkills).toStrictEqual([]);
+      expect(result.compiledAgents).toStrictEqual([]);
       expect(result.wasMerged).toBe(true);
-      expect(result.mergedConfigPath).toBeDefined();
+      expect(result.mergedConfigPath).toBe(
+        path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+      );
       // Existing name should take precedence
       expect(result.config.name).toBe("existing-project");
       // Existing author should be preserved
@@ -277,7 +310,12 @@ describe("local-installer", () => {
       });
 
       // installMode is derived from skills at runtime, not stored on config
-      expect(result.config.skills.every((s) => s.source === "eject")).toBe(true);
+      expect(result.config).toStrictEqual({
+        name: DEFAULT_PLUGIN_NAME,
+        agents: [],
+        skills: [{ id: "test-skill", scope: "project", source: "eject" }],
+        source: tempDir,
+      });
     });
 
     it("should not set wasMerged when no existing config", async () => {
@@ -291,6 +329,8 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
+      expect(result.copiedSkills).toStrictEqual([]);
+      expect(result.compiledAgents).toStrictEqual([]);
       expect(result.wasMerged).toBe(false);
       expect(result.mergedConfigPath).toBeUndefined();
     });
@@ -400,9 +440,14 @@ describe("local-installer", () => {
       expect(configContent).toContain("export default {");
       expect(configContent).toContain("satisfies ProjectConfig");
 
-      // Should parse back to a valid config
+      // Should parse back to the exact expected config
       const config = await readTestTsConfig<ProjectConfig>(configPath);
-      expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
+      expect(config).toStrictEqual({
+        name: DEFAULT_PLUGIN_NAME,
+        agents: [],
+        skills: [{ id: "test-skill", scope: "project", source: "eject" }],
+        source: tempDir,
+      });
     });
 
     it("should preserve preloaded flags from stack skill assignments", async () => {
@@ -459,13 +504,9 @@ describe("local-installer", () => {
       });
 
       // Verify preloaded: true survived into the final config
-      const webDevStack = result.config.stack?.["web-developer"];
-      expect(webDevStack).toBeDefined();
-      const frameworkAssignments = webDevStack?.["web-framework"];
-      expect(frameworkAssignments).toBeDefined();
-      expect(frameworkAssignments).toHaveLength(1);
-      expect(frameworkAssignments![0].id).toBe("web-framework-react");
-      expect(frameworkAssignments![0].preloaded).toBe(true);
+      expect(result.config.stack?.["web-developer"]?.["web-framework"]).toStrictEqual([
+        { id: "web-framework-react", preloaded: true },
+      ]);
 
       // Also verify it's written correctly to the config file
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
@@ -546,9 +587,13 @@ describe("local-installer", () => {
       // Project config should be written (has project-scoped items)
       expect(await fileExists(projectConfigPath)).toBe(true);
 
-      // Project config should contain the project-scoped skill
-      const projectContent = await readFile(projectConfigPath, "utf-8");
-      expect(projectContent).toContain("web-testing-vitest");
+      // Verify project config contains the project-scoped skill
+      const projectParsed = await readTestTsConfig<ProjectConfig>(projectConfigPath);
+      expect(projectParsed.skills.some((s) => s.id === "web-testing-vitest")).toBe(true);
+
+      // Verify global config contains the global-scoped skill
+      const globalParsed = await readTestTsConfig<ProjectConfig>(globalConfigPath);
+      expect(globalParsed.skills.some((s) => s.id === "web-framework-react")).toBe(true);
     });
   });
 
@@ -594,15 +639,12 @@ describe("local-installer", () => {
 
       const result = buildEjectSkillsMap(copiedSkills);
 
-      expect(result["web-framework-react"]).toBeDefined();
-      expect(result["web-framework-react"]!.id).toBe("web-framework-react");
-      expect(result["web-framework-react"]!.description).toBe(
-        SINGLE_REACT_MATRIX.skills["web-framework-react"]!.description,
-      );
-      expect(result["web-framework-react"]!.path).toBe(
-        "/project/.claude/skills/web-framework-react",
-      );
-      expect(result["web-framework-react"]!.content).toBe("");
+      expect(result["web-framework-react"]).toStrictEqual({
+        id: "web-framework-react",
+        description: SINGLE_REACT_MATRIX.skills["web-framework-react"]!.description,
+        path: "/project/.claude/skills/web-framework-react",
+        content: "",
+      });
     });
 
     it("should filter out copied skills not in the matrix", () => {
@@ -619,7 +661,7 @@ describe("local-installer", () => {
 
       const result = buildEjectSkillsMap(copiedSkills);
 
-      expect(Object.keys(result)).toHaveLength(0);
+      expect(result).toStrictEqual({});
     });
 
     it("should return empty map when no skills are copied", () => {
@@ -627,7 +669,7 @@ describe("local-installer", () => {
 
       const result = buildEjectSkillsMap([]);
 
-      expect(Object.keys(result)).toHaveLength(0);
+      expect(result).toStrictEqual({});
     });
 
     it("should handle mixed copied skills — some in matrix, some not", () => {
@@ -650,9 +692,14 @@ describe("local-installer", () => {
 
       const result = buildEjectSkillsMap(copiedSkills);
 
-      expect(Object.keys(result)).toHaveLength(1);
-      expect(result["web-framework-react"]).toBeDefined();
-      expect(result["web-nonexistent-skill" as SkillId]).toBeUndefined();
+      expect(result).toStrictEqual({
+        "web-framework-react": {
+          id: "web-framework-react",
+          description: SINGLE_REACT_MATRIX.skills["web-framework-react"]!.description,
+          path: "/project/.claude/skills/web-framework-react",
+          content: "",
+        },
+      });
     });
   });
 
@@ -673,8 +720,9 @@ describe("local-installer", () => {
 
       const result = buildCompileAgents(config, agents);
 
-      expect(result["web-developer"]).toBeDefined();
-      expect(result["web-developer"].skills).toBeDefined();
+      expect(result).toStrictEqual({
+        "web-developer": { skills: [] },
+      });
     });
 
     it("should skip agents not in the definition record", () => {
@@ -689,7 +737,7 @@ describe("local-installer", () => {
 
       const result = buildCompileAgents(config, agents);
 
-      expect(result["web-developer"]).toBeDefined();
+      expect(result["web-developer"]).toStrictEqual({});
       expect(result["api-developer"]).toBeUndefined();
     });
 
@@ -826,7 +874,7 @@ describe("local-installer", () => {
 
         const result = buildCompileAgents(config, agents);
 
-        expect(result["web-developer"]).toBeDefined();
+        expect(result["web-developer"]).toStrictEqual({});
         expect(result["api-developer"]).toBeUndefined();
       });
 
@@ -1064,6 +1112,10 @@ describe("local-installer", () => {
       const { fileExists } = await import("../../utils/fs");
       expect(await fileExists(globalConfigPath)).toBe(true);
 
+      // Verify global config contains the global-scoped skill
+      const globalParsed = await readTestTsConfig<ProjectConfig>(globalConfigPath);
+      expect(globalParsed.skills.some((s) => s.id === "web-framework-react")).toBe(true);
+
       // Project config should NOT be written (no existing project installation and no project-scoped items)
       expect(await fileExists(projectConfigPath)).toBe(false);
     });
@@ -1103,13 +1155,19 @@ describe("local-installer", () => {
       // Project config should be written (has project-scoped items)
       expect(await fileExists(projectConfigPath)).toBe(true);
 
-      // Project config should have the project-scoped skill
-      const projectContent = await readFile(projectConfigPath, "utf-8");
-      expect(projectContent).toContain("web-testing-vitest");
+      // Verify project config contains the project-scoped skill (parsed, not just string check)
+      const projectParsed = await readTestTsConfig<ProjectConfig>(projectConfigPath);
+      expect(projectParsed.skills.some((s) => s.id === "web-testing-vitest")).toBe(true);
+
       // Project config should inline global data (no import globalConfig)
+      const projectContent = await readFile(projectConfigPath, "utf-8");
       expect(projectContent).not.toContain("import globalConfig");
       expect(projectContent).toContain("// global");
       expect(projectContent).toContain("web-framework-react");
+
+      // Verify global config contains the global-scoped skill
+      const globalParsed = await readTestTsConfig<ProjectConfig>(globalConfigPath);
+      expect(globalParsed.skills.some((s) => s.id === "web-framework-react")).toBe(true);
     });
   });
 
@@ -1327,9 +1385,13 @@ describe("local-installer", () => {
       await propagateGlobalChangesToProjects(globalConfig, SINGLE_REACT_MATRIX, emptyAgents);
 
       const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
+      // Verify the config file was updated with global data
       const configContent = await readFile(configPath, "utf-8");
-      // Project config should contain the global skill inlined as a comment marker
       expect(configContent).toContain("web-framework-react");
+
+      // Parse config and verify project-scoped skill is preserved
+      const parsedConfig = await readTestTsConfig<ProjectConfig>(configPath);
+      expect(parsedConfig.skills.some((s) => s.id === "web-testing-vitest")).toBe(true);
     });
 
     it("should handle empty projects list", async () => {

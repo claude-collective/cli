@@ -92,6 +92,7 @@ describe("installation", () => {
       expect(result!.configPath).toBe(path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS));
       expect(result!.agentsDir).toBe(path.join(tempDir, CLAUDE_DIR, "agents"));
       expect(result!.skillsDir).toBe(path.join(tempDir, CLAUDE_DIR, PLUGINS_SUBDIR));
+      expect(result!.projectDir).toBe(tempDir);
     });
 
     it("returns null for project-level detection when no installation found", async () => {

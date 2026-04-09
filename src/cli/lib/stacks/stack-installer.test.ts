@@ -143,7 +143,7 @@ describe("stack-installer", () => {
         // Expected to throw
       }
 
-      expect(isClaudeCLIAvailable).toHaveBeenCalled();
+      expect(isClaudeCLIAvailable).toHaveBeenCalledWith();
       // compileStackPlugin should NOT have been called
       expect(compileStackPlugin).not.toHaveBeenCalled();
     });

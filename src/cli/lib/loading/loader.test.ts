@@ -29,9 +29,10 @@ Content here...`;
 
     const result = parseFrontmatter(content);
 
-    expect(result).not.toBeNull();
-    expect(result?.name).toBe("web-framework-react");
-    expect(result?.description).toBe("React component patterns and hooks");
+    expect(result).toStrictEqual({
+      name: "web-framework-react",
+      description: "React component patterns and hooks",
+    });
   });
 
   it("should return null for content without frontmatter", () => {
@@ -68,7 +69,7 @@ Content`;
     expect(result).toBeNull();
   });
 
-  it("when frontmatter contains extra fields like version/author/tags, should parse name and description", () => {
+  it("when frontmatter contains extra fields like version/author/tags, should parse name and description only", () => {
     const content = `---
 name: ${"api-framework-hono"}
 description: API patterns
@@ -83,9 +84,11 @@ Content`;
 
     const result = parseFrontmatter(content);
 
-    expect(result).not.toBeNull();
-    expect(result?.name).toBe("api-framework-hono");
-    expect(result?.description).toBe("API patterns");
+    // Extra fields are stripped by the schema (no .passthrough())
+    expect(result).toStrictEqual({
+      name: "api-framework-hono",
+      description: "API patterns",
+    });
   });
 
   it("should handle multiline description", () => {
@@ -220,9 +223,11 @@ Content`;
 
     const result = parseFrontmatter(content);
 
-    expect(result).not.toBeNull();
-    expect(result?.name).toBe("web-framework-react");
-    expect(result?.model).toBe("opus");
+    expect(result).toStrictEqual({
+      name: "web-framework-react",
+      description: "React patterns",
+      model: "opus",
+    });
   });
 
   it("should handle frontmatter with special characters in description", () => {
@@ -561,9 +566,15 @@ Content`);
       "/project",
     );
 
-    expect(result["good-skill" as SkillId]).toBeDefined();
-    expect(result["good-skill" as SkillId]?.id).toBe("good-skill");
+    // Verify loaded skill has correct shape
+    expect(result["good-skill" as SkillId]).toStrictEqual({
+      id: "good-skill",
+      description: "Good skill",
+      path: "src/skills/good-skill/",
+    });
+    // Failed skill should not be present
     expect(result["bad-skill" as SkillId]).toBeUndefined();
+    expect(Object.keys(result)).toStrictEqual(["good-skill"]);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Could not load skill 'bad-skill'"));
   });
 });
@@ -584,10 +595,11 @@ describe("loadPluginSkills", () => {
 
     const result = await loadPluginSkills("/path/to/plugin");
 
-    expect(result["web-framework-react"]).toBeDefined();
-    expect(result["web-framework-react"].id).toBe("web-framework-react");
-    expect(result["web-framework-react"].description).toBe("React patterns");
-    expect(result["web-framework-react"].path).toBe("skills/web-framework-react/");
+    expect(result["web-framework-react"]).toStrictEqual({
+      id: "web-framework-react",
+      description: "React patterns",
+      path: "skills/web-framework-react/",
+    });
   });
 
   it("should warn and skip skills with invalid frontmatter", async () => {
@@ -613,9 +625,7 @@ describe("loadPluginSkills", () => {
 
     const result = await loadPluginSkills("/path/to/plugin");
 
-    expect(Object.keys(result)).toHaveLength(2);
-    expect(result["web-framework-react"]).toBeDefined();
-    expect(result["web-state-zustand"]).toBeDefined();
+    expect(Object.keys(result)).toStrictEqual(["web-framework-react", "web-state-zustand"]);
   });
 
   it("should return empty object when no SKILL.md files found", async () => {

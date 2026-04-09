@@ -62,8 +62,16 @@ describe("plugin-discovery", () => {
       const result = await discoverAllPluginSkills("/project");
 
       expect(Object.keys(result)).toHaveLength(2);
-      expect(result[reactId]).toBeDefined();
-      expect(result[zustandId]).toBeDefined();
+      expect(result[reactId]).toStrictEqual({
+        id: reactId,
+        path: "skills/web-framework-react/",
+        description: "React skill",
+      });
+      expect(result[zustandId]).toStrictEqual({
+        id: zustandId,
+        path: "skills/web-state-zustand/",
+        description: "Zustand skill",
+      });
       expect(mockLoadPluginSkills).toHaveBeenCalledWith("/cache/react");
       expect(mockLoadPluginSkills).toHaveBeenCalledWith("/cache/zustand");
     });
@@ -94,7 +102,12 @@ describe("plugin-discovery", () => {
 
       const result = await discoverAllPluginSkills("/project");
 
-      expect(result[skillId]!.description).toBe("New description");
+      expect(Object.keys(result)).toHaveLength(1);
+      expect(result[skillId]).toStrictEqual({
+        id: skillId,
+        path: "skills/web-framework-react/",
+        description: "New description",
+      });
     });
 
     it("should handle loadPluginSkills errors gracefully with verbose logging", async () => {
@@ -117,7 +130,11 @@ describe("plugin-discovery", () => {
 
       // Should still have the good plugin's skills
       expect(Object.keys(result)).toHaveLength(1);
-      expect(result[skillId]).toBeDefined();
+      expect(result[skillId]).toStrictEqual({
+        id: skillId,
+        path: "skills/web-framework-react/",
+        description: "React",
+      });
     });
 
     it("should handle getVerifiedPluginInstallPaths errors gracefully", async () => {

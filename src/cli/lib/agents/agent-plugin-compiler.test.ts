@@ -185,15 +185,13 @@ describe("agent-plugin-compiler", () => {
       const results = await compileAllAgentPlugins(agentsDir, outputDir);
 
       expect(results).toHaveLength(3);
-      const agentNames = results.map((r) => r.agentName);
-      expect(agentNames).toContain("web-developer");
-      expect(agentNames).toContain("api-developer");
-      expect(agentNames).toContain("cli-developer");
+      const agentNames = results.map((r) => r.agentName).sort();
+      expect(agentNames).toStrictEqual(["api-developer", "cli-developer", "web-developer"]);
     });
 
     it("should handle empty agents directory", async () => {
       const results = await compileAllAgentPlugins(agentsDir, outputDir);
-      expect(results).toHaveLength(0);
+      expect(results).toStrictEqual([]);
     });
 
     it("should warn and skip agents with missing frontmatter", async () => {

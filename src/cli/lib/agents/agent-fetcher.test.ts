@@ -366,7 +366,10 @@ describe("agent-fetcher", () => {
 
       const result = await getAgentDefinitions(REMOTE_SOURCE);
 
-      expect(mockFetchFromSource).toHaveBeenCalled();
+      expect(mockFetchFromSource).toHaveBeenCalledWith(REMOTE_SOURCE, {
+        forceRefresh: undefined,
+        subdir: "",
+      });
       expect(result.sourcePath).toBe(fetchedDir);
     });
 

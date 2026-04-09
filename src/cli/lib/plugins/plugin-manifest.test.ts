@@ -407,14 +407,15 @@ describe("plugin-manifest", () => {
         hasHooks: true,
       });
 
-      expect(manifest.name).toBe("nextjs-fullstack");
-      expect(manifest.version).toBe("2.0.0");
-      expect(manifest.description).toBe("Full-stack Next.js");
-      expect(manifest.author).toStrictEqual({ name: "@claude", email: "claude@example.com" });
-      expect(manifest.keywords).toStrictEqual(["web", "react"]);
-      expect(manifest.skills).toBe("./skills/");
-      expect(manifest.agents).toBeUndefined();
-      expect(manifest.hooks).toBe("./hooks/hooks.json");
+      expect(manifest).toStrictEqual({
+        name: "nextjs-fullstack",
+        version: "2.0.0",
+        description: "Full-stack Next.js",
+        author: { name: "@claude", email: "claude@example.com" },
+        keywords: ["web", "react"],
+        skills: "./skills/",
+        hooks: "./hooks/hooks.json",
+      });
     });
   });
 

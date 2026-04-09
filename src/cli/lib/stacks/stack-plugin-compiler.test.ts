@@ -306,9 +306,7 @@ describe("stack-plugin-compiler", () => {
         stack,
       });
 
-      expect(result.agents).toContain("web-developer");
-      expect(result.agents).toContain("web-tester");
-      expect(result.agents).toHaveLength(2);
+      expect(result.agents).toStrictEqual(["web-developer", "web-tester"]);
     });
 
     it("should return skill plugin references", async () => {
@@ -355,8 +353,10 @@ describe("stack-plugin-compiler", () => {
       });
 
       // Skill plugins use canonical frontmatter names
-      expect(result.skillPlugins).toContain("web-framework-react");
-      expect(result.skillPlugins).toContain("shared-tooling-typescript-config");
+      expect(result.skillPlugins).toStrictEqual([
+        "web-framework-react",
+        "shared-tooling-typescript-config",
+      ]);
     });
 
     it("should return correct manifest structure", async () => {
@@ -539,7 +539,7 @@ describe("stack-plugin-compiler", () => {
       });
 
       // Plugin should still be created successfully
-      expect(result.pluginPath).toBeDefined();
+      expect(result.pluginPath).toContain(stackId);
 
       // CLAUDE.md should not exist in output
       let claudeExists = false;
@@ -707,7 +707,7 @@ describe("stack-plugin-compiler", () => {
       });
 
       expect(result.stackName).toBe("Remote Source Stack");
-      expect(result.pluginPath).toBeDefined();
+      expect(result.pluginPath).toContain(stackId);
     });
   });
 

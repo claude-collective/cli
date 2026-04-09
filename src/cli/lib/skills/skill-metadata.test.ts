@@ -113,7 +113,7 @@ describe("skill-metadata", () => {
       const result = await readForkedFromMetadata("/project/.claude/skills/react");
 
       expect(result).toBeNull();
-      expect(warn).toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid metadata.yaml"));
     });
   });
 

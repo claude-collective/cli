@@ -50,10 +50,14 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if plugin directory does not exist", async () => {
-      const result = await validatePluginStructure(path.join(tempDir, "nonexistent"));
+      const nonexistentPath = path.join(tempDir, "nonexistent");
+
+      const result = await validatePluginStructure(nonexistentPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors[0]).toContain("does not exist");
+      expect(result.errors).toStrictEqual([
+        `Plugin directory does not exist: ${nonexistentPath}`,
+      ]);
     });
 
     it("should fail if .claude-plugin/plugin.json missing", async () => {
@@ -101,10 +105,12 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if file does not exist", async () => {
-      const result = await validatePluginManifest(path.join(tempDir, "nonexistent.json"));
+      const nonexistentPath = path.join(tempDir, "nonexistent.json");
+
+      const result = await validatePluginManifest(nonexistentPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors[0]).toContain("not found");
+      expect(result.errors).toStrictEqual([`Manifest file not found: ${nonexistentPath}`]);
     });
 
     it("should fail if JSON is invalid", async () => {
@@ -114,6 +120,7 @@ describe("plugin-validator", () => {
       const result = await validatePluginManifest(manifestPath);
 
       expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
       expect(result.errors[0]).toContain("Invalid JSON");
     });
 
@@ -129,7 +136,8 @@ describe("plugin-validator", () => {
       const result = await validatePluginManifest(manifestPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("name"))).toBe(true);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toContain("name");
     });
 
     it("should fail if name not kebab-case", async () => {
@@ -144,7 +152,7 @@ describe("plugin-validator", () => {
       const result = await validatePluginManifest(manifestPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("kebab-case"))).toBe(true);
+      expect(result.errors).toContain('name must be kebab-case: "TestPlugin"');
     });
 
     it("should fail if version is not valid semver", async () => {
@@ -160,7 +168,8 @@ describe("plugin-validator", () => {
       const result = await validatePluginManifest(manifestPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("version"))).toBe(true);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toContain("version");
     });
 
     it("should pass with valid semver version", async () => {
@@ -192,7 +201,8 @@ describe("plugin-validator", () => {
       const result = await validatePluginManifest(manifestPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("version"))).toBe(true);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors).toContain('version "v1.0" is not valid semver (expected: major.minor.patch)');
     });
 
     it("should warn if description missing", async () => {
@@ -207,7 +217,9 @@ describe("plugin-validator", () => {
       const result = await validatePluginManifest(manifestPath);
 
       expect(result.valid).toBe(true);
-      expect(result.warnings.some((w) => w.includes("description"))).toBe(true);
+      expect(result.warnings).toStrictEqual([
+        "Missing description field (recommended for discoverability)",
+      ]);
     });
 
     it("should fail if skills path does not exist", async () => {
@@ -217,7 +229,7 @@ describe("plugin-validator", () => {
       const result = await validatePluginManifest(manifestPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("Skills path"))).toBe(true);
+      expect(result.errors).toContain("Skills path does not exist: ./skills/");
     });
 
     it("should pass if skills path exists", async () => {
@@ -289,7 +301,8 @@ name: test-skill
       const result = await validateSkillFrontmatter(skillPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("description"))).toBe(true);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toContain("description");
     });
 
     it("should fail if using unrecognized fields", async () => {
@@ -311,7 +324,9 @@ version: "1.0.0"
       const result = await validateSkillFrontmatter(skillPath);
 
       expect(result.valid).toBe(false);
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
       expect(result.errors.some((e) => e.includes("Unrecognized key"))).toBe(true);
+      expect(result.errors.some((e) => e.includes("author"))).toBe(true);
     });
 
     it("should pass with optional runtime fields", async () => {
@@ -379,7 +394,7 @@ description: Expert frontend developer
       const result = await validateAgentFrontmatter(agentPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("kebab-case"))).toBe(true);
+      expect(result.errors).toContain('name must be kebab-case: "FrontendDeveloper"');
     });
 
     it("should fail if description missing", async () => {
@@ -397,7 +412,8 @@ name: web-developer
       const result = await validateAgentFrontmatter(agentPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("description"))).toBe(true);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toContain("description");
     });
 
     it("should pass with skills array", async () => {
@@ -500,7 +516,9 @@ name: bad-skill
       const result = await validatePlugin(tempDir);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThanOrEqual(2);
+      expect(result.errors).toHaveLength(2);
+      expect(result.errors.some((e) => e.includes("kebab-case"))).toBe(true);
+      expect(result.errors.some((e) => e.includes("description"))).toBe(true);
     });
 
     it("should warn if skills directory empty", async () => {
@@ -530,16 +548,31 @@ name: bad-skill
       const result = await validateAllPlugins(tempDir);
 
       expect(result.valid).toBe(true);
-      expect(result.summary.total).toBe(2);
-      expect(result.summary.valid).toBe(2);
-      expect(result.summary.invalid).toBe(0);
+      expect(result.results).toHaveLength(2);
+      expect(result.summary).toStrictEqual({
+        total: 2,
+        valid: 2,
+        invalid: 0,
+        withWarnings: 0,
+      });
     });
 
     it("should fail if directory does not exist", async () => {
-      const result = await validateAllPlugins(path.join(tempDir, "nonexistent"));
+      const nonexistentDir = path.join(tempDir, "nonexistent");
+
+      const result = await validateAllPlugins(nonexistentDir);
 
       expect(result.valid).toBe(false);
-      expect(result.results[0].result.errors[0]).toContain("does not exist");
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0].result.errors).toStrictEqual([
+        `Directory does not exist: ${nonexistentDir}`,
+      ]);
+      expect(result.summary).toStrictEqual({
+        total: 0,
+        valid: 0,
+        invalid: 1,
+        withWarnings: 0,
+      });
     });
 
     it("should report mix of valid and invalid plugins", async () => {
@@ -553,9 +586,16 @@ name: bad-skill
       const result = await validateAllPlugins(tempDir);
 
       expect(result.valid).toBe(false);
-      expect(result.summary.total).toBe(2);
-      expect(result.summary.valid).toBe(1);
-      expect(result.summary.invalid).toBe(1);
+      expect(result.results).toHaveLength(2);
+      expect(result.summary).toStrictEqual({
+        total: 2,
+        valid: 1,
+        invalid: 1,
+        withWarnings: 1,
+      });
+      const invalidResult = result.results.find((r) => !r.result.valid);
+      expect(invalidResult).toBeDefined();
+      expect(invalidResult!.result.errors.some((e) => e.includes("name"))).toBe(true);
     });
 
     it("should count plugins with warnings", async () => {
@@ -566,7 +606,12 @@ name: bad-skill
       const result = await validateAllPlugins(tempDir);
 
       expect(result.valid).toBe(true);
-      expect(result.summary.withWarnings).toBe(1);
+      expect(result.summary).toStrictEqual({
+        total: 1,
+        valid: 1,
+        invalid: 0,
+        withWarnings: 1,
+      });
     });
   });
 });

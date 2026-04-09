@@ -205,20 +205,24 @@ describe("skill-copier", () => {
         expect(result[0].sourcePath).toBe(localSkillPath);
         expect(result[0].destPath).toBe(localSkillPath);
 
-        // Verify skill was NOT copied to plugin dir
-        const copiedSkillDir = path.join(
-          pluginDir,
-          STANDARD_DIRS.SKILLS,
-          "web-framework-vue-composition-api",
+        // Verify SKILL.md still exists at original local path with correct content
+        const localContent = await readFile(
+          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
         );
-        let exists = false;
-        try {
-          await readFile(path.join(copiedSkillDir, STANDARD_FILES.SKILL_MD));
-          exists = true;
-        } catch {
-          exists = false;
-        }
-        expect(exists).toBe(false);
+        expect(localContent).toContain("web-framework-vue-composition-api (@local)");
+
+        // Verify skill was NOT copied to plugin dir
+        await expect(
+          readFile(
+            path.join(
+              pluginDir,
+              STANDARD_DIRS.SKILLS,
+              "web-framework-vue-composition-api",
+              STANDARD_FILES.SKILL_MD,
+            ),
+          ),
+        ).rejects.toThrow();
       } finally {
         process.chdir(originalCwd);
       }
@@ -258,8 +262,14 @@ describe("skill-copier", () => {
           local: true,
         });
         // Content hash should be computed from the SKILL.md
-        expect(result[0].contentHash).toBeDefined();
         expect(result[0].contentHash).toMatch(/^[a-f0-9]{7}$/);
+
+        // Verify the SKILL.md exists and has expected content at the local path
+        const localContent = await readFile(
+          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(localContent).toContain("web-styling-scss-modules (@local)");
       } finally {
         process.chdir(originalCwd);
       }
@@ -317,10 +327,31 @@ describe("skill-copier", () => {
         expect(localResult?.sourcePath).toBe(localSkillPath);
         expect(localResult?.destPath).toBe(localSkillPath);
 
+        // Verify local SKILL.md still exists at original path
+        const localContent = await readFile(
+          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(localContent).toContain("web-styling-tailwind (@local)");
+
         // Remote skill should be copied
         expect(remoteResult?.skillId).toBe("web-framework-react");
         expect(remoteResult?.local).toBeUndefined();
         expect(remoteResult?.destPath).toContain(pluginDir);
+
+        // Verify remote skill was actually copied to the plugin directory
+        const copiedSkillMd = await readFile(
+          path.join(remoteResult!.destPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(copiedSkillMd).toContain("web-framework-react");
+
+        // Verify local skill was NOT copied to plugin dir
+        await expect(
+          readFile(
+            path.join(pluginDir, STANDARD_DIRS.SKILLS, "web-styling-tailwind", STANDARD_FILES.SKILL_MD),
+          ),
+        ).rejects.toThrow();
       } finally {
         process.chdir(originalCwd);
       }
@@ -394,6 +425,14 @@ describe("skill-copier", () => {
         expect(result).toHaveLength(1);
         expect(result[0].local).toBeUndefined();
         expect(result[0].destPath).toContain(pluginDir);
+
+        // Verify remote skill was actually copied to the plugin directory
+        const copiedSkillMd = await readFile(
+          path.join(result[0].destPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(copiedSkillMd).toContain("web-framework-react");
+        expect(copiedSkillMd).not.toContain("(@local)");
       } finally {
         process.chdir(originalCwd);
       }
@@ -430,6 +469,13 @@ describe("skill-copier", () => {
         expect(result).toHaveLength(1);
         expect(result[0].local).toBe(true);
         expect(result[0].sourcePath).toBe(localSkillPath);
+
+        // Verify SKILL.md exists at the local path with local content
+        const localContent = await readFile(
+          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(localContent).toContain("web-framework-react (@local)");
       } finally {
         process.chdir(originalCwd);
       }
@@ -509,6 +555,13 @@ describe("skill-copier", () => {
       expect(result).toHaveLength(1);
       // With normalized IDs, the full ID is used as the folder name when no alias
       expect(result[0].destPath).toBe(path.join(localSkillsDir, "api-framework-hono"));
+
+      // Verify skill was actually copied to disk
+      const copiedSkillMd = await readFile(
+        path.join(localSkillsDir, "api-framework-hono", STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(copiedSkillMd).toContain("api-framework-hono");
     });
 
     it("skips local skills and does not copy them", async () => {
@@ -550,6 +603,13 @@ describe("skill-copier", () => {
         expect(result[0].local).toBe(true);
         expect(result[0].sourcePath).toBe(localSkillPath);
         expect(result[0].destPath).toBe(localSkillPath);
+
+        // Verify SKILL.md still exists at the local path with correct content
+        const localContent = await readFile(
+          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(localContent).toContain("web-framework-vue-composition-api (@local)");
       } finally {
         process.chdir(originalCwd);
       }
@@ -608,9 +668,23 @@ describe("skill-copier", () => {
         expect(localResult?.skillId).toBe("web-styling-tailwind");
         expect(localResult?.local).toBe(true);
 
+        // Verify local SKILL.md still exists at original path
+        const localContent = await readFile(
+          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(localContent).toContain("web-styling-tailwind (@local)");
+
         // Remote skill should be copied to flattened location using normalized ID
         expect(remoteResult?.skillId).toBe("web-framework-react");
         expect(remoteResult?.destPath).toBe(path.join(localSkillsDir, "web-framework-react"));
+
+        // Verify remote skill was actually copied to disk with correct content
+        const copiedSkillMd = await readFile(
+          path.join(localSkillsDir, "web-framework-react", STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(copiedSkillMd).toContain("web-framework-react");
       } finally {
         process.chdir(originalCwd);
       }
@@ -804,6 +878,13 @@ describe("skill-copier", () => {
       expect(result).toHaveLength(1);
       // With normalized IDs, the full ID is used as the folder name when no alias
       expect(result[0].destPath).toBe(path.join(localSkillsDir, "api-database-drizzle"));
+
+      // Verify skill was actually copied to disk
+      const copiedSkillMd = await readFile(
+        path.join(localSkillsDir, "api-database-drizzle", STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(copiedSkillMd).toContain("api-database-drizzle");
     });
 
     it("overrides local-skip when sourceSelections selects remote source", async () => {
@@ -892,6 +973,13 @@ describe("skill-copier", () => {
         expect(result).toHaveLength(1);
         expect(result[0].local).toBe(true);
         expect(result[0].sourcePath).toBe(localSkillPath);
+
+        // Verify SKILL.md exists at the local path with local content
+        const localContent = await readFile(
+          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(localContent).toContain("web-framework-react (@local)");
       } finally {
         process.chdir(originalCwd);
       }
@@ -928,6 +1016,13 @@ describe("skill-copier", () => {
 
         expect(result).toHaveLength(1);
         expect(result[0].local).toBe(true);
+
+        // Verify SKILL.md still exists at local path
+        const localContent = await readFile(
+          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+          "utf-8",
+        );
+        expect(localContent).toContain("web-framework-react (@local)");
       } finally {
         process.chdir(originalCwd);
       }

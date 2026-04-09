@@ -77,12 +77,13 @@ describe("plugin-info", () => {
 
       const result = await getPluginInfo();
 
-      expect(result).not.toBeNull();
-      expect(result!.name).toBe(DEFAULT_PLUGIN_NAME);
-      expect(result!.version).toBe("0.0.0");
-      expect(result!.skillCount).toBe(2);
-      expect(result!.agentCount).toBe(0);
-      expect(result!.path).toBe(pluginsDir);
+      expect(result).toStrictEqual({
+        name: DEFAULT_PLUGIN_NAME,
+        version: "0.0.0",
+        skillCount: 2,
+        agentCount: 0,
+        path: pluginsDir,
+      });
     });
 
     it("should return null when listPluginNames throws", async () => {
@@ -189,15 +190,16 @@ describe("plugin-info", () => {
 
       const result = await getInstallationInfo();
 
-      expect(result).not.toBeNull();
-      expect(result!.mode).toBe("eject");
-      expect(result!.name).toBe("my-local-project");
-      expect(result!.version).toBe("eject");
-      expect(result!.skillCount).toBe(2);
-      expect(result!.agentCount).toBe(1);
-      expect(result!.configPath).toBe(configPath);
-      expect(result!.agentsDir).toBe(agentsDir);
-      expect(result!.skillsDir).toBe(skillsDir);
+      expect(result).toStrictEqual({
+        mode: "eject",
+        name: "my-local-project",
+        version: "eject",
+        skillCount: 2,
+        agentCount: 1,
+        configPath,
+        agentsDir,
+        skillsDir,
+      });
     });
 
     it("should return plugin installation info", async () => {
@@ -243,12 +245,16 @@ describe("plugin-info", () => {
 
       const result = await getInstallationInfo();
 
-      expect(result).not.toBeNull();
-      expect(result!.mode).toBe("plugin");
-      expect(result!.name).toBe("my-plugin");
-      expect(result!.version).toBe("plugin");
-      expect(result!.skillCount).toBe(1);
-      expect(result!.agentCount).toBe(2);
+      expect(result).toStrictEqual({
+        mode: "plugin",
+        name: "my-plugin",
+        version: "plugin",
+        skillCount: 1,
+        agentCount: 2,
+        configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+        agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
+        skillsDir: path.join("/project", CLAUDE_DIR, PLUGINS_SUBDIR),
+      });
     });
 
     it("should use default name when local config has no name", async () => {

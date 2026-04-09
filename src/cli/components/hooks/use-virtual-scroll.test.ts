@@ -84,7 +84,7 @@ describe("computeVirtualScroll", () => {
 
       expect(result.startIndex).toBe(0);
       expect(result.hiddenAbove).toBe(0);
-      expect(result.hiddenBelow).toBeGreaterThan(0);
+      expect(result.hiddenBelow).toBe(7);
     });
 
     it("should keep focused item visible when at end", () => {
@@ -93,7 +93,7 @@ describe("computeVirtualScroll", () => {
 
       expect(result.endIndex).toBe(10);
       expect(result.hiddenBelow).toBe(0);
-      expect(result.hiddenAbove).toBeGreaterThan(0);
+      expect(result.hiddenAbove).toBe(7);
     });
 
     it("should keep focused item visible when at boundary", () => {

@@ -33,6 +33,7 @@ import type {
   SkillSlug,
 } from "../../types";
 import { renderConfigTs, renderSkillMd } from "../__tests__/content-generators";
+import { defaultCategories } from "../configuration/default-categories";
 import { initializeMatrix } from "../matrix/matrix-provider";
 import { LOCAL_DEFAULTS } from "../metadata-keys";
 import type { LocalSkillDiscoveryResult } from "../skills";
@@ -42,6 +43,8 @@ import type { LocalSkillDiscoveryResult } from "../skills";
 const FIXTURE_SKILLS = [...DEFAULT_TEST_SKILLS, ...EXTRA_DOMAIN_TEST_SKILLS];
 
 const FIXTURE_SKILL_COUNT = FIXTURE_SKILLS.length;
+
+const BUILT_IN_CATEGORY_COUNT = Object.keys(defaultCategories).length;
 
 const FIXTURE_STACKS: TestStack[] = [
   {
@@ -96,8 +99,13 @@ describe("source-loader", () => {
 
         // Should load from local source in dev mode
         expect(result.isLocal).toBe(true);
-        expect(result.matrix).toBeDefined();
-        expect(result.matrix.skills).toBeDefined();
+        expect(typeof result.matrix.version).toBe("string");
+        const loadedSkillIds = Object.keys(result.matrix.skills);
+        expect(loadedSkillIds).toHaveLength(FIXTURE_SKILL_COUNT);
+        // Verify all fixture skills are present by ID
+        for (const skill of FIXTURE_SKILLS) {
+          expect(loadedSkillIds).toContain(skill.id);
+        }
       });
 
       it("should use source flag when provided", async () => {
@@ -119,11 +127,14 @@ describe("source-loader", () => {
           projectDir: tempDir,
         });
 
-        expect(result.matrix).toBeDefined();
-        expect(result.matrix.version).toBeDefined();
-        expect(result.matrix.categories).toBeDefined();
-        expect(result.matrix.skills).toBeDefined();
-        expect(Object.keys(result.matrix.skills).length).toBeGreaterThan(0);
+        expect(typeof result.matrix.version).toBe("string");
+        expect(Object.keys(result.matrix.categories)).toHaveLength(BUILT_IN_CATEGORY_COUNT);
+        const loadedSkillIds = Object.keys(result.matrix.skills);
+        expect(loadedSkillIds).toHaveLength(FIXTURE_SKILL_COUNT);
+        // Verify specific fixture skills are present
+        for (const skill of FIXTURE_SKILLS) {
+          expect(loadedSkillIds).toContain(skill.id);
+        }
       });
 
       it("should set sourcePath to the root path", async () => {
@@ -155,10 +166,10 @@ describe("source-loader", () => {
         });
 
         // Matrix loads from CLI, but no skills from non-existent path
-        expect(result.matrix).toBeDefined();
-        expect(result.matrix.categories).toBeDefined();
-        // Skills from the source path should be empty
-        // (matrix defines skills but they won't have content from source)
+        expect(typeof result.matrix.version).toBe("string");
+        expect(Object.keys(result.matrix.categories)).toHaveLength(BUILT_IN_CATEGORY_COUNT);
+        // No skills should be extracted from non-existent source
+        expect(Object.keys(result.matrix.skills)).toHaveLength(0);
       });
 
       it("should return empty skills if skills directory is missing", async () => {
@@ -173,8 +184,10 @@ describe("source-loader", () => {
           projectDir: tempDir,
         });
 
-        expect(result.matrix).toBeDefined();
-        expect(result.matrix.categories).toBeDefined();
+        expect(typeof result.matrix.version).toBe("string");
+        expect(Object.keys(result.matrix.categories)).toHaveLength(BUILT_IN_CATEGORY_COUNT);
+        // No skills should be extracted when src/skills/ directory is missing
+        expect(Object.keys(result.matrix.skills)).toHaveLength(0);
       });
     });
   });
@@ -213,15 +226,16 @@ describe("source-loader local skills integration", () => {
     // Local skill should be in the matrix with normalized ID
     // Boundary cast: skills keys are branded SkillId, widened to string for test indexing
     const skills = result.matrix.skills as Record<string, ResolvedSkill>;
-    expect(skills["my-local-skill"]).toBeDefined();
     const localSkill = skills["my-local-skill"];
 
-    expect(localSkill.id).toBe("my-local-skill");
-    expect(localSkill.category).toBe("dummy-category");
-    expect(localSkill.author).toBe("@dummy-author");
-    expect(localSkill.local).toBe(true);
-    expect(localSkill.localPath).toBe(
-      path.join(tempDir, ".claude/skills", "test-my-skill") + path.sep,
+    expect(localSkill).toStrictEqual(
+      expect.objectContaining({
+        id: "my-local-skill",
+        category: "dummy-category",
+        author: "@dummy-author",
+        local: true,
+        localPath: path.join(tempDir, ".claude/skills", "test-my-skill") + path.sep,
+      }),
     );
   });
 
@@ -296,11 +310,14 @@ describe("source-loader local skills integration", () => {
 
     // Boundary cast: branded SkillId key widened to string for test indexing
     const overriddenSkill = (result.matrix.skills as Record<string, ResolvedSkill>)[targetSkillId];
-    expect(overriddenSkill).toBeDefined();
-    expect(overriddenSkill.local).toBe(true);
 
-    // The category should be preserved from the remote skill
-    expect(overriddenSkill.category).toBe(expectedCategory);
+    expect(overriddenSkill).toStrictEqual(
+      expect.objectContaining({
+        local: true,
+        // The category should be preserved from the remote skill
+        category: expectedCategory,
+      }),
+    );
   });
 
   it("should preserve existing skills when merging local skills", async () => {
@@ -327,7 +344,9 @@ describe("source-loader local skills integration", () => {
 
     // Local skill should also be present with normalized ID
     // Boundary cast: branded SkillId key widened to string for test indexing
-    expect((result.matrix.skills as Record<string, ResolvedSkill>)["preserve-skill"]).toBeDefined();
+    expect(
+      (result.matrix.skills as Record<string, ResolvedSkill>)["preserve-skill"],
+    ).toStrictEqual(expect.objectContaining({ id: "preserve-skill", local: true }));
   });
 
   it("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
@@ -364,7 +383,9 @@ describe("source-loader local skills integration", () => {
 
     const existingSkillId = "web-testing-vitest";
     const existingSkill = initialResult.matrix.skills[existingSkillId]!;
-    expect(existingSkill).toBeDefined();
+    expect(existingSkill).toStrictEqual(
+      expect.objectContaining({ id: existingSkillId, description: "Marketplace vitest configuration" }),
+    );
     expect(existingSkill.local).toBeUndefined(); // Should be a marketplace skill
     expect(existingSkill.description).toBe("Marketplace vitest configuration");
 
@@ -393,17 +414,18 @@ describe("source-loader local skills integration", () => {
 
     // The skill should now be the LOCAL version, not the marketplace version
     const overriddenSkill = result.matrix.skills[existingSkillId]!;
-    expect(overriddenSkill).toBeDefined();
-    expect(overriddenSkill.local).toBe(true);
-    expect(overriddenSkill.description).toBe("My custom vitest configuration");
+    expect(overriddenSkill).toStrictEqual(
+      expect.objectContaining({
+        local: true,
+        description: "My custom vitest configuration",
+        author: "@dummy-author",
+        // When overwriting a remote skill, the remote skill's category is inherited
+        category: existingSkill.category,
+        localPath: path.join(tempDir, ".claude/skills", "local-vitest") + path.sep,
+      }),
+    );
     // Verify the original description was different (proves we actually overwrote something)
     expect(overriddenSkill.description).not.toBe(existingSkill.description);
-    expect(overriddenSkill.author).toBe("@dummy-author");
-    // When overwriting a remote skill, the remote skill's category is inherited
-    expect(overriddenSkill.category).toBe(existingSkill.category);
-    expect(overriddenSkill.localPath).toBe(
-      path.join(tempDir, ".claude/skills", "local-vitest") + path.sep,
-    );
   });
 });
 
@@ -454,7 +476,9 @@ describe("source-loader config-driven paths", () => {
     });
 
     // Skill should be loaded from custom path
-    expect(result.matrix.skills["web-framework-react"]).toBeDefined();
+    expect(result.matrix.skills["web-framework-react"]).toStrictEqual(
+      expect.objectContaining({ id: "web-framework-react" }),
+    );
   });
 
   it("should use custom categoriesFile path from source config", async () => {
@@ -477,9 +501,8 @@ describe("source-loader config-driven paths", () => {
     });
 
     // Falls back to CLI categories since custom path doesn't exist
-    expect(result.matrix).toBeDefined();
-    expect(result.matrix.categories).toBeDefined();
-    expect(Object.keys(result.matrix.categories).length).toBeGreaterThan(0);
+    expect(typeof result.matrix.version).toBe("string");
+    expect(Object.keys(result.matrix.categories)).toHaveLength(BUILT_IN_CATEGORY_COUNT);
   });
 
   it("should use custom rulesFile path from source config", async () => {
@@ -501,7 +524,7 @@ describe("source-loader config-driven paths", () => {
     });
 
     // Falls back to CLI rules since custom path doesn't exist
-    expect(result.matrix).toBeDefined();
+    expect(typeof result.matrix.version).toBe("string");
   });
 
   it("should use custom stacksFile from source config", async () => {
@@ -540,8 +563,7 @@ describe("source-loader config-driven paths", () => {
       projectDir: tempDir,
     });
 
-    expect(result.matrix.suggestedStacks).toBeDefined();
-    expect(result.matrix.suggestedStacks.length).toBe(1);
+    expect(result.matrix.suggestedStacks).toHaveLength(1);
     expect(result.matrix.suggestedStacks[0].id).toBe("custom-path-stack");
   });
 
@@ -557,8 +579,8 @@ describe("source-loader config-driven paths", () => {
     });
 
     // Should still work using convention defaults
-    expect(result.matrix).toBeDefined();
-    expect(result.matrix.categories).toBeDefined();
+    expect(typeof result.matrix.version).toBe("string");
+    expect(Object.keys(result.matrix.categories)).toHaveLength(BUILT_IN_CATEGORY_COUNT);
   });
 
   it("should fall back to convention defaults when config has no path overrides", async () => {
@@ -580,8 +602,8 @@ describe("source-loader config-driven paths", () => {
     });
 
     // Should still work using convention defaults
-    expect(result.matrix).toBeDefined();
-    expect(result.matrix.categories).toBeDefined();
+    expect(typeof result.matrix.version).toBe("string");
+    expect(Object.keys(result.matrix.categories)).toHaveLength(BUILT_IN_CATEGORY_COUNT);
   });
 });
 
@@ -608,11 +630,15 @@ describe("source-loader integration", () => {
       expect(loadedSkillIds).toContain(skill.id);
     }
 
-    // Verify skills have required properties
-    const firstSkill = Object.values(result.matrix.skills)[0]!;
-    expect(firstSkill.id).toBeDefined();
-    expect(firstSkill.category).toBeDefined();
-    expect(firstSkill.path).toBeDefined();
+    // Verify a known skill has meaningful properties from the fixture data
+    const reactSkill = result.matrix.skills["web-framework-react"]!;
+    expect(reactSkill).toStrictEqual(
+      expect.objectContaining({
+        id: "web-framework-react",
+        category: "web-framework",
+      }),
+    );
+    expect(reactSkill.path).toContain("web-framework/web-framework-react");
   });
 
   it("should load suggested stacks", async () => {
@@ -620,15 +646,15 @@ describe("source-loader integration", () => {
       sourceFlag: fixtureDirs.sourceDir,
     });
 
-    // Stacks loaded from source
-    expect(result.matrix.suggestedStacks).toBeDefined();
-    expect(result.matrix.suggestedStacks.length).toBeGreaterThan(0);
-
-    // Verify stack structure
-    const firstStack = result.matrix.suggestedStacks[0];
-    expect(firstStack.id).toBeDefined();
-    expect(firstStack.name).toBeDefined();
-    expect(firstStack.allSkillIds).toBeDefined();
+    // Should contain the fixture stack
+    const fixtureStack = result.matrix.suggestedStacks.find((s) => s.id === "fixture-test-stack");
+    expect(fixtureStack).toStrictEqual(
+      expect.objectContaining({
+        id: "fixture-test-stack",
+        name: "Fixture Test Stack",
+      }),
+    );
+    expect(fixtureStack!.allSkillIds).toContain("web-framework-react");
   });
 
   it("should load stacks from source when source has config/stacks.ts", async () => {
@@ -661,8 +687,7 @@ describe("source-loader integration", () => {
     });
 
     // Should load the custom stack from source, not CLI stacks
-    expect(result.matrix.suggestedStacks).toBeDefined();
-    expect(result.matrix.suggestedStacks.length).toBe(1);
+    expect(result.matrix.suggestedStacks).toHaveLength(1);
     expect(result.matrix.suggestedStacks[0].id).toBe("custom-test-stack");
     expect(result.matrix.suggestedStacks[0].name).toBe("Custom Test Stack");
   });
@@ -678,7 +703,6 @@ describe("source-loader integration", () => {
     });
 
     // Should fall back to CLI's stacks (which has multiple stacks)
-    expect(result.matrix.suggestedStacks).toBeDefined();
     expect(result.matrix.suggestedStacks.length).toBeGreaterThan(1);
   });
 
@@ -687,10 +711,12 @@ describe("source-loader integration", () => {
       sourceFlag: fixtureDirs.sourceDir,
     });
 
-    expect(result.matrix.categories).toBeDefined();
-    const categoryCount = Object.keys(result.matrix.categories).length;
-    // Categories come from the CLI's built-in matrix (all defined categories)
-    expect(categoryCount).toBeGreaterThan(10);
+    const categoryIds = Object.keys(result.matrix.categories);
+    // Categories come from the CLI's built-in matrix — verify known categories exist
+    expect(categoryIds).toContain("web-framework");
+    expect(categoryIds).toContain("web-testing");
+    expect(categoryIds).toContain("api-api");
+    expect(categoryIds.length).toBeGreaterThan(10);
   });
 });
 
@@ -788,10 +814,9 @@ describe("convertStackToResolvedStack", () => {
     expect(resolved.id).toBe("single");
     expect(resolved.name).toBe("Single Agent");
     expect(resolved.allSkillIds).toContain("web-framework-react");
-    expect(resolved.skills["web-developer"]).toBeDefined();
     // Boundary cast: branded Category key widened to string for test indexing
     const agentSkills = resolved.skills["web-developer"] as Record<string, SkillId[]>;
-    expect(agentSkills["web-framework"]).toStrictEqual(["web-framework-react"]);
+    expect(agentSkills).toStrictEqual({ "web-framework": ["web-framework-react"] });
   });
 
   it("should convert a multi-agent stack with shared skills", () => {
@@ -815,8 +840,13 @@ describe("convertStackToResolvedStack", () => {
     expect(resolved.allSkillIds).toContain("web-state-zustand");
     expect(resolved.allSkillIds).toContain("api-framework-hono");
 
-    expect(resolved.skills["web-developer"]).toBeDefined();
-    expect(resolved.skills["api-developer"]).toBeDefined();
+    expect(resolved.skills["web-developer"]).toStrictEqual({
+      "web-framework": ["web-framework-react"],
+      "web-client-state": ["web-state-zustand"],
+    });
+    expect(resolved.skills["api-developer"]).toStrictEqual({
+      "api-api": ["api-framework-hono"],
+    });
   });
 
   it("should deduplicate skill IDs across agents", () => {
@@ -909,9 +939,13 @@ describe("mergeLocalSkillsIntoMatrix", () => {
 
     // Boundary cast: branded SkillId key widened to string for test indexing
     const skills = result.skills as Record<string, ResolvedSkill>;
-    expect(skills["web-tooling-custom"]).toBeDefined();
-    expect(skills["web-tooling-custom"].local).toBe(true);
-    expect(skills["web-tooling-custom"].author).toBe(LOCAL_DEFAULTS.AUTHOR);
+    expect(skills["web-tooling-custom"]).toStrictEqual(
+      expect.objectContaining({
+        id: "web-tooling-custom",
+        local: true,
+        author: LOCAL_DEFAULTS.AUTHOR,
+      }),
+    );
   });
 
   it("should inherit category from existing remote skill when overwriting", () => {
@@ -1006,8 +1040,12 @@ describe("mergeLocalSkillsIntoMatrix", () => {
 
     const skills = result.skills as Record<string, ResolvedSkill>;
     // Both existing and new skill should be present
-    expect(skills["web-framework-react"]).toBeDefined();
-    expect(skills["web-tooling-custom"]).toBeDefined();
+    expect(skills["web-framework-react"]).toStrictEqual(
+      expect.objectContaining({ id: "web-framework-react" }),
+    );
+    expect(skills["web-tooling-custom"]).toStrictEqual(
+      expect.objectContaining({ id: "web-tooling-custom", local: true }),
+    );
     // Existing skill should not be marked as local
     expect(skills["web-framework-react"].local).toBeUndefined();
   });
@@ -1032,8 +1070,15 @@ describe("mergeLocalSkillsIntoMatrix", () => {
     // Should have created a category definition for web-tooling
     // Boundary cast: branded Category key widened to string for test indexing
     const categories = result.categories as Record<string, CategoryDefinition>;
-    expect(categories["web-tooling"]).toBeDefined();
-    expect(categories["web-tooling"].domain).toBe("web");
+    expect(categories["web-tooling"]).toStrictEqual(
+      expect.objectContaining({
+        id: "web-tooling",
+        domain: "web",
+        exclusive: false,
+        required: false,
+        order: 0,
+      }),
+    );
   });
 
   it("should NOT add category definition when category is 'local'", () => {
@@ -1077,8 +1122,6 @@ describe("mergeLocalSkillsIntoMatrix", () => {
     const result = mergeLocalSkillsIntoMatrix(matrix, localResult);
 
     const skills = result.skills as Record<string, ResolvedSkill>;
-    expect(skills["web-tooling-custom"]).toBeDefined();
-    expect(skills["api-database-drizzle"]).toBeDefined();
     expect(skills["web-tooling-custom"].local).toBe(true);
     expect(skills["api-database-drizzle"].local).toBe(true);
   });

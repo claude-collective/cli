@@ -70,6 +70,16 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       const skillKeys = Object.keys(matrix.skills);
       expect(skillKeys).toHaveLength(EXPECTED_UNIQUE_COUNT);
+
+      // Verify every expected skill ID is present
+      for (const expectedId of uniqueSkillIds) {
+        expect(skillKeys).toContain(expectedId);
+      }
+
+      // Verify no unexpected skill IDs are present
+      for (const actualId of skillKeys) {
+        expect(uniqueSkillIds.has(actualId)).toBe(true);
+      }
     });
 
     it("should annotate skills with all available sources", () => {
@@ -78,8 +88,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       // web-framework-react exists in all 3 sources
       const reactSkill = matrix.skills["web-framework-react"];
-      expect(reactSkill).toBeDefined();
-      expect(reactSkill!.availableSources).toHaveLength(TOTAL_SOURCE_COUNT);
+      expect(reactSkill?.availableSources).toHaveLength(TOTAL_SOURCE_COUNT);
 
       const sourceTypes = reactSkill!.availableSources!.map((s) => s.type);
       expect(sourceTypes).toContain("public");
@@ -97,9 +106,8 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       // web-state-zustand is only in public source
       const zustandSkill = matrix.skills["web-state-zustand"];
-      expect(zustandSkill).toBeDefined();
-      expect(zustandSkill!.availableSources).toHaveLength(1);
-      expect(zustandSkill!.availableSources![0].name).toBe("public");
+      expect(zustandSkill?.availableSources).toHaveLength(1);
+      expect(zustandSkill?.availableSources?.[0].name).toBe("public");
     });
 
     it("should have correct activeSource defaulting to first available", () => {
@@ -108,8 +116,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       // Skills without any installed source should have first source as active
       const reactSkill = matrix.skills["web-framework-react"];
-      expect(reactSkill!.activeSource).toBeDefined();
-      expect(reactSkill!.activeSource!.name).toBe("public");
+      expect(reactSkill?.activeSource?.name).toBe("public");
     });
   });
 
@@ -146,9 +153,8 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       // Verify the source selections reference valid sources
       for (const [skillId, sourceName] of Object.entries(sourceSelections)) {
         const skill = matrix.skills[skillId as SkillId];
-        expect(skill).toBeDefined();
-        const matchingSource = skill!.availableSources!.find((s) => s.name === sourceName);
-        expect(matchingSource).toBeDefined();
+        const matchingSource = skill?.availableSources?.find((s) => s.name === sourceName);
+        expect(matchingSource?.name).toBe(sourceName);
       }
     });
 
@@ -178,7 +184,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       // All selected skills should exist in the matrix
       for (const skillId of selectedSkills) {
-        expect(matrix.skills[skillId]).toBeDefined();
+        expect(matrix.skills[skillId]?.id).toBe(skillId);
       }
     });
   });
@@ -336,10 +342,14 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       // Select react (from public), sentry should be valid
       const validation = validateSelection([MONITORING_SENTRY, "web-framework-react"]);
       expect(validation.valid).toBe(true);
+      expect(validation.errors).toHaveLength(0);
 
-      // Without any framework, sentry should fail
+      // Without any framework, sentry should fail with missing requirement
       const failValidation = validateSelection([MONITORING_SENTRY]);
       expect(failValidation.valid).toBe(true);
+      expect(failValidation.errors).toHaveLength(1);
+      expect(failValidation.errors[0].type).toBe("missingRequirement");
+      expect(failValidation.errors[0].message).toContain("one of");
     });
   });
 
@@ -436,10 +446,15 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       // Get available framework skills
       const available = getAvailableSkills("web-framework", []);
 
-      // Should have react and vue
+      // Should have exactly react and vue (only framework skills)
       const ids = available.map((o) => o.id);
+      expect(ids).toHaveLength(2);
       expect(ids).toContain("web-framework-react");
       expect(ids).toContain(VUE_ID);
+
+      // Non-framework skills should NOT appear
+      expect(ids).not.toContain("web-state-zustand");
+      expect(ids).not.toContain("api-framework-hono");
 
       // None should be discouraged or selected initially
       expect(available.every((o) => o.advisoryState.status === "normal")).toBe(true);
@@ -510,7 +525,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     }
 
     // Verify agents were compiled
-    expect(installResult.compiledAgents.length).toBeGreaterThan(0);
+    expect(installResult.compiledAgents).toHaveLength(2);
   });
 
   it("should preserve source selections through the config write", async () => {
@@ -551,8 +566,7 @@ describe("Integration: Skill ID Resolution in Multi-Source Context", () => {
 
     // Resolved skill should have multi-source metadata
     const skill = matrix.skills[resolved];
-    expect(skill).toBeDefined();
-    expect(skill!.availableSources!.length).toBeGreaterThanOrEqual(1);
+    expect(skill?.availableSources?.length).toBeGreaterThanOrEqual(1);
   });
 
   it("should validate selection using skill IDs with multi-source skills", () => {

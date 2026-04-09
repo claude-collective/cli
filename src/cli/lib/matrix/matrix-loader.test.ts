@@ -68,12 +68,30 @@ describe("matrix-loader", () => {
 
       const categories = await loadSkillCategories("/project/config/skill-categories.ts");
 
-      expect(categories["web-framework"]).toBeDefined();
-      expect(categories["web-framework"]!.displayName).toBe("Framework");
-      expect(categories["web-framework"]!.exclusive).toBe(true);
-      expect(categories["web-framework"]!.required).toBe(true);
-      expect(categories["web-styling"]).toBeDefined();
-      expect(categories["api-api"]).toBeDefined();
+      expect(categories["web-framework"]).toStrictEqual({
+        id: "web-framework",
+        displayName: "Framework",
+        description: "Core UI framework",
+        exclusive: true,
+        required: true,
+        order: 1,
+      });
+      expect(categories["web-styling"]).toStrictEqual({
+        id: "web-styling",
+        displayName: "Styling",
+        description: "CSS approach",
+        exclusive: true,
+        required: true,
+        order: 3,
+      });
+      expect(categories["api-api"]).toStrictEqual({
+        id: "api-api",
+        displayName: "API",
+        description: "Backend framework",
+        exclusive: true,
+        required: true,
+        order: 1,
+      });
     });
 
     it("throws when loadConfig returns null", async () => {
@@ -136,12 +154,34 @@ describe("matrix-loader", () => {
       const result = await loadSkillRules("/project/config/skill-rules.ts");
 
       expect(result.version).toBe("1.0.0");
-      expect(result.relationships).toBeDefined();
-      expect(result.relationships.conflicts).toHaveLength(1);
-      expect(result.relationships.recommends).toHaveLength(1);
-      expect(result.relationships.requires).toHaveLength(1);
-      expect(result.relationships.alternatives).toHaveLength(1);
-      expect(result.relationships.discourages).toHaveLength(1);
+      expect(result.relationships).toStrictEqual({
+        conflicts: [
+          {
+            skills: ["react", "vue"],
+            reason: "Frameworks are mutually exclusive",
+          },
+        ],
+        discourages: [
+          {
+            skills: ["zustand", "react"],
+            reason: "Test discourage rule",
+          },
+        ],
+        recommends: [{ skill: "zustand", reason: "Best React state management" }],
+        requires: [
+          {
+            skill: "zustand",
+            needs: ["react"],
+            reason: "Zustand requires React",
+          },
+        ],
+        alternatives: [
+          {
+            purpose: "Frontend Framework",
+            skills: ["react", "vue"],
+          },
+        ],
+      });
     });
 
     it("throws when loadConfig returns null", async () => {

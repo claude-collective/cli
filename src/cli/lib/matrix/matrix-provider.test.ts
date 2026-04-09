@@ -31,8 +31,8 @@ describe("matrix-provider", () => {
     it("should make updated matrix visible to other imports via live binding", () => {
       const custom = createMockMatrix(SKILLS.react, SKILLS.hono);
       initializeMatrix(custom);
-      expect(matrix.skills["web-framework-react"]).toBeDefined();
-      expect(matrix.skills["api-framework-hono"]).toBeDefined();
+      expect(matrix.skills["web-framework-react"]).toBe(custom.skills["web-framework-react"]);
+      expect(matrix.skills["api-framework-hono"]).toBe(custom.skills["api-framework-hono"]);
     });
   });
 

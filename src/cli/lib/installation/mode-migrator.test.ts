@@ -94,6 +94,35 @@ describe("mode-migrator", () => {
       expect(result.toPlugin).toStrictEqual([]);
     });
 
+    it("should detect scope changes when source stays the same", () => {
+      const result = detectMigrations(
+        [skill("web-framework-react", "eject", "project")],
+        [skill("web-framework-react", "eject", "global")],
+      );
+
+      expect(result.toEject).toStrictEqual([]);
+      expect(result.toPlugin).toStrictEqual([]);
+      expect(result.scopeChanges).toHaveLength(1);
+      expect(result.scopeChanges[0]).toStrictEqual({
+        id: "web-framework-react",
+        oldSource: "eject",
+        newSource: "eject",
+        oldScope: "project",
+        newScope: "global",
+      });
+    });
+
+    it("should NOT detect scope change when source also changes", () => {
+      const result = detectMigrations(
+        [skill("web-framework-react", "eject", "project")],
+        [skill("web-framework-react", "agents-inc", "global")],
+      );
+
+      // Source changed (eject -> agents-inc), so this is a toPlugin, not a scopeChange
+      expect(result.toPlugin).toHaveLength(1);
+      expect(result.scopeChanges).toStrictEqual([]);
+    });
+
     it("should only detect migrations for skills present in both old and new", () => {
       const result = detectMigrations(
         [skill("web-framework-react", "agents-inc"), skill("web-state-zustand", "eject")],

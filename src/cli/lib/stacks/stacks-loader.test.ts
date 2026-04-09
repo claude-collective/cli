@@ -244,9 +244,10 @@ describe("stacks-loader", () => {
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      expect(skills).toHaveLength(2);
-      expect(skills.find((s) => s.id === "web-framework-react")).toBeDefined();
-      expect(skills.find((s) => s.id === "web-styling-scss-modules")).toBeDefined();
+      expect(skills).toStrictEqual([
+        { id: "web-framework-react", usage: "when working with web-framework", preloaded: true },
+        { id: "web-styling-scss-modules", usage: "when working with web-styling", preloaded: false },
+      ]);
     });
 
     it("reads preloaded from assignment directly", () => {
@@ -258,12 +259,18 @@ describe("stacks-loader", () => {
       const skills = resolveAgentConfigToSkills(agentConfig);
 
       // preloaded: true set explicitly on framework assignment
-      const frameworkSkill = skills.find((s) => s.id === "web-framework-react");
-      expect(frameworkSkill!.preloaded).toBe(true);
+      expect(skills[0]).toStrictEqual({
+        id: "web-framework-react",
+        usage: "when working with web-framework",
+        preloaded: true,
+      });
 
       // preloaded defaults to false when not set
-      const stylingSkill = skills.find((s) => s.id === "web-styling-scss-modules");
-      expect(stylingSkill!.preloaded).toBe(false);
+      expect(skills[1]).toStrictEqual({
+        id: "web-styling-scss-modules",
+        usage: "when working with web-styling",
+        preloaded: false,
+      });
     });
 
     it("includes usage description with category context", () => {
@@ -305,9 +312,10 @@ describe("stacks-loader", () => {
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      expect(skills).toHaveLength(2);
-      expect(skills.find((s) => s.id === "web-framework-react")).toBeDefined();
-      expect(skills.find((s) => s.id === "api-database-drizzle")).toBeDefined();
+      expect(skills).toStrictEqual([
+        { id: "web-framework-react", usage: "when working with web-framework", preloaded: true },
+        { id: "api-database-drizzle", usage: "when working with api-database", preloaded: true },
+      ]);
     });
 
     it("resolves array of skill assignments for multi-select categories", () => {
@@ -321,10 +329,11 @@ describe("stacks-loader", () => {
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      expect(skills).toHaveLength(3);
-      expect(skills.find((s) => s.id === "meta-methodology-research-methodology")).toBeDefined();
-      expect(skills.find((s) => s.id === "meta-reviewing-reviewing")).toBeDefined();
-      expect(skills.find((s) => s.id === "meta-reviewing-cli-reviewing")).toBeDefined();
+      expect(skills).toStrictEqual([
+        { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
+        { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: true },
+        { id: "meta-reviewing-cli-reviewing", usage: "when working with meta-reviewing", preloaded: true },
+      ]);
     });
 
     it("handles single-element arrays", () => {
@@ -339,11 +348,12 @@ describe("stacks-loader", () => {
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      expect(skills).toHaveLength(4);
-      expect(skills.find((s) => s.id === "web-framework-react")).toBeDefined();
-      expect(skills.find((s) => s.id === "meta-methodology-research-methodology")).toBeDefined();
-      expect(skills.find((s) => s.id === "meta-reviewing-reviewing")).toBeDefined();
-      expect(skills.find((s) => s.id === "web-styling-scss-modules")).toBeDefined();
+      expect(skills).toStrictEqual([
+        { id: "web-framework-react", usage: "when working with web-framework", preloaded: true },
+        { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
+        { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: true },
+        { id: "web-styling-scss-modules", usage: "when working with web-styling", preloaded: false },
+      ]);
     });
 
     it("handles empty array", () => {
@@ -369,11 +379,11 @@ describe("stacks-loader", () => {
       const skills = resolveAgentConfigToSkills(agentConfig);
 
       // All IDs passed through for downstream validation
-      expect(skills).toHaveLength(3);
-      expect(skills.find((s) => s.id === "meta-methodology-research-methodology")).toBeDefined();
-      // Boundary cast: SkillId union doesn't include invalid IDs, cast to string for assertion
-      expect(skills.find((s) => (s.id as string) === "Not-A-Valid-Id")).toBeDefined();
-      expect(skills.find((s) => s.id === "meta-reviewing-reviewing")).toBeDefined();
+      expect(skills).toStrictEqual([
+        { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
+        { id: "Not-A-Valid-Id", usage: "when working with meta-reviewing", preloaded: false },
+        { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: true },
+      ]);
       // Only warns for the unknown ID, not the valid ones
       expect(warn).toHaveBeenCalledTimes(1);
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"), {
@@ -391,11 +401,10 @@ describe("stacks-loader", () => {
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      const preloadedSkill = skills.find((s) => s.id === "meta-methodology-research-methodology");
-      expect(preloadedSkill!.preloaded).toBe(true);
-
-      const dynamicSkill = skills.find((s) => s.id === "meta-reviewing-reviewing");
-      expect(dynamicSkill!.preloaded).toBe(false);
+      expect(skills).toStrictEqual([
+        { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
+        { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: false },
+      ]);
     });
 
     it("passes through skill IDs not found in the matrix for downstream handling and warns", () => {
@@ -433,10 +442,15 @@ describe("stacks-loader", () => {
 
       const result = resolveStackSkills(stack);
 
-      expect(Object.keys(result)).toHaveLength(2);
-      expect(result["web-developer"]).toHaveLength(1);
-      expect(result["web-developer"][0].id).toBe("web-framework-react");
-      expect(result["api-developer"]).toHaveLength(2);
+      expect(result).toStrictEqual({
+        "web-developer": [
+          { id: "web-framework-react", usage: "when working with web-framework", preloaded: true },
+        ],
+        "api-developer": [
+          { id: "api-framework-hono", usage: "when working with api-api", preloaded: true },
+          { id: "api-database-drizzle", usage: "when working with api-database", preloaded: true },
+        ],
+      });
     });
 
     it("handles stack with no agents", () => {
@@ -468,18 +482,13 @@ describe("stacks-loader", () => {
 
       const result = resolveStackSkills(stack);
 
-      expect(Object.keys(result)).toHaveLength(1);
-      // 3 meta-reviewing skills
-      expect(result["pattern-scout"]).toHaveLength(3);
-      expect(
-        result["pattern-scout"].find((s) => s.id === "meta-methodology-research-methodology"),
-      ).toBeDefined();
-      expect(
-        result["pattern-scout"].find((s) => s.id === "meta-reviewing-reviewing"),
-      ).toBeDefined();
-      expect(
-        result["pattern-scout"].find((s) => s.id === "meta-reviewing-cli-reviewing"),
-      ).toBeDefined();
+      expect(result).toStrictEqual({
+        "pattern-scout": [
+          { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
+          { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: true },
+          { id: "meta-reviewing-cli-reviewing", usage: "when working with meta-reviewing", preloaded: true },
+        ],
+      });
     });
   });
 });

@@ -19,8 +19,8 @@ describe("ERROR_MESSAGES", () => {
 
   it("should have non-empty string values for every key", () => {
     for (const [key, value] of Object.entries(ERROR_MESSAGES)) {
-      expect(value, `${key} should be a non-empty string`).toBeTruthy();
-      expect(typeof value).toBe("string");
+      expect(value, `${key} should be a non-empty string`).toBeTypeOf("string");
+      expect(value, `${key} should not be empty`).not.toBe("");
     }
   });
 });
@@ -38,8 +38,8 @@ describe("SUCCESS_MESSAGES", () => {
 
   it("should have non-empty string values for every key", () => {
     for (const [key, value] of Object.entries(SUCCESS_MESSAGES)) {
-      expect(value, `${key} should be a non-empty string`).toBeTruthy();
-      expect(typeof value).toBe("string");
+      expect(value, `${key} should be a non-empty string`).toBeTypeOf("string");
+      expect(value, `${key} should not be empty`).not.toBe("");
     }
   });
 });
@@ -64,8 +64,8 @@ describe("STATUS_MESSAGES", () => {
 
   it("should have non-empty string values for every key", () => {
     for (const [key, value] of Object.entries(STATUS_MESSAGES)) {
-      expect(value, `${key} should be a non-empty string`).toBeTruthy();
-      expect(typeof value).toBe("string");
+      expect(value, `${key} should be a non-empty string`).toBeTypeOf("string");
+      expect(value, `${key} should not be empty`).not.toBe("");
     }
   });
 
@@ -90,8 +90,8 @@ describe("INFO_MESSAGES", () => {
 
   it("should have non-empty string values for every key", () => {
     for (const [key, value] of Object.entries(INFO_MESSAGES)) {
-      expect(value, `${key} should be a non-empty string`).toBeTruthy();
-      expect(typeof value).toBe("string");
+      expect(value, `${key} should be a non-empty string`).toBeTypeOf("string");
+      expect(value, `${key} should not be empty`).not.toBe("");
     }
   });
 });

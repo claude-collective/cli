@@ -33,8 +33,25 @@ describe("skill-resolution", () => {
       );
 
       expect(merged.version).toBe("1.0.0");
-      expect(merged.skills["web-framework-react"]).toBeDefined();
-      expect(merged.skills["web-framework-react"]!.id).toBe("web-framework-react");
+      expect(Object.keys(merged.skills)).toHaveLength(1);
+
+      const react = merged.skills["web-framework-react"];
+      expect(react).toStrictEqual(
+        expect.objectContaining({
+          id: "web-framework-react",
+          slug: "react",
+          displayName: "react",
+          description: "React framework",
+          author: "@vince",
+          category: "web-framework",
+          conflictsWith: [],
+          requires: [],
+          alternatives: [],
+          discourages: [],
+          compatibleWith: [],
+          isRecommended: false,
+        }),
+      );
     });
 
     it("resolves conflict references between skills", () => {
@@ -45,12 +62,16 @@ describe("skill-resolution", () => {
       );
 
       const reactSkill = merged.skills["web-framework-react"];
-      expect(reactSkill).toBeDefined();
-      expect(reactSkill!.conflictsWith).toStrictEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ skillId: "web-framework-vue-composition-api" }),
-        ]),
-      );
+      expect(reactSkill?.conflictsWith).toHaveLength(1);
+      expect(reactSkill?.conflictsWith).toStrictEqual([
+        { skillId: "web-framework-vue-composition-api", reason: "Pick one framework" },
+      ]);
+
+      const vueSkill = merged.skills["web-framework-vue-composition-api"];
+      expect(vueSkill?.conflictsWith).toHaveLength(1);
+      expect(vueSkill?.conflictsWith).toStrictEqual([
+        { skillId: "web-framework-react", reason: "Pick one framework" },
+      ]);
     });
 
     it("handles empty skills array", () => {
@@ -87,9 +108,8 @@ describe("skill-resolution", () => {
       );
 
       const reactSkill = merged.skills["web-framework-react"];
-      expect(reactSkill).toBeDefined();
       // Unresolved "nonexistent" slug should be dropped, not passed through as-is
-      expect(reactSkill!.conflictsWith).toStrictEqual([]);
+      expect(reactSkill?.conflictsWith).toStrictEqual([]);
     });
 
     it("resolves alternative groups correctly between skills", () => {
@@ -101,16 +121,14 @@ describe("skill-resolution", () => {
 
       const zustand = merged.skills["web-state-zustand"];
       const jotai = merged.skills["web-state-jotai"];
-      expect(zustand!.alternatives).toStrictEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ skillId: "web-state-jotai", purpose: "State management" }),
-        ]),
-      );
-      expect(jotai!.alternatives).toStrictEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ skillId: "web-state-zustand", purpose: "State management" }),
-        ]),
-      );
+      expect(zustand!.alternatives).toHaveLength(1);
+      expect(zustand!.alternatives).toStrictEqual([
+        { skillId: "web-state-jotai", purpose: "State management" },
+      ]);
+      expect(jotai!.alternatives).toHaveLength(1);
+      expect(jotai!.alternatives).toStrictEqual([
+        { skillId: "web-state-zustand", purpose: "State management" },
+      ]);
     });
 
     it("resolves require rules correctly", () => {
@@ -121,14 +139,18 @@ describe("skill-resolution", () => {
       );
 
       const zustand = merged.skills["web-state-zustand"];
-      expect(zustand!.requires).toStrictEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            skillIds: expect.arrayContaining(["web-framework-react"]),
-            reason: "Zustand needs React",
-          }),
-        ]),
-      );
+      expect(zustand!.requires).toHaveLength(1);
+      expect(zustand!.requires).toStrictEqual([
+        {
+          skillIds: ["web-framework-react"],
+          needsAny: false,
+          reason: "Zustand needs React",
+        },
+      ]);
+
+      // React should NOT have any requirements from this rule
+      const react = merged.skills["web-framework-react"];
+      expect(react!.requires).toStrictEqual([]);
     });
 
     it("resolves recommendations from flat recommends list", () => {
@@ -147,13 +169,11 @@ describe("skill-resolution", () => {
       ]);
 
       const zustand = merged.skills["web-state-zustand"];
-      expect(zustand).toBeDefined();
-      expect(zustand!.isRecommended).toBe(true);
-      expect(zustand!.recommendedReason).toBe("Best state management");
+      expect(zustand?.isRecommended).toBe(true);
+      expect(zustand?.recommendedReason).toBe("Best state management");
 
       const react = merged.skills["web-framework-react"];
-      expect(react).toBeDefined();
-      expect(react!.isRecommended).toBe(false);
+      expect(react?.isRecommended).toBe(false);
     });
 
     it("returns empty relationship fields when no relationships reference a skill", () => {
@@ -164,9 +184,13 @@ describe("skill-resolution", () => {
       );
 
       const react = merged.skills["web-framework-react"];
-      expect(react).toBeDefined();
-      expect(react!.compatibleWith).toStrictEqual([]);
-      expect(react!.isRecommended).toBe(false);
+      expect(react?.conflictsWith).toStrictEqual([]);
+      expect(react?.requires).toStrictEqual([]);
+      expect(react?.alternatives).toStrictEqual([]);
+      expect(react?.discourages).toStrictEqual([]);
+      expect(react?.compatibleWith).toStrictEqual([]);
+      expect(react?.isRecommended).toBe(false);
+      expect(react?.recommendedReason).toBeUndefined();
     });
   });
 
@@ -182,11 +206,15 @@ describe("skill-resolution", () => {
 
       // Boundary cast: accessing synthesized custom category key
       const synthesized = merged.categories["devops-iac" as Category];
-      expect(synthesized).toBeDefined();
-      expect(synthesized!.displayName).toBe("Devops Iac");
-      expect(synthesized!.exclusive).toBe(false);
-      expect(synthesized!.required).toBe(false);
-      expect(synthesized!.order).toBe(999);
+      expect(synthesized).toStrictEqual(
+        expect.objectContaining({
+          displayName: "Devops Iac",
+          exclusive: false,
+          required: false,
+          order: 999,
+          domain: "web",
+        }),
+      );
     });
 
     it("uses skill domain field for synthesized category domain", () => {
