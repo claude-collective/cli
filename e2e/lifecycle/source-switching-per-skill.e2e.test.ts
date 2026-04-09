@@ -1,5 +1,6 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
@@ -86,14 +87,12 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- per-skill s
         const initConfirm = await initAgents.acceptDefaults("init");
         const initResult = await initConfirm.confirm();
 
-        expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await initResult.destroy();
-
-        await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
-        await expect({ dir: projectDir }).toHaveConfig({
+        await expectPhaseSuccess(initResult, {
           skillIds: ["web-framework-react"],
           source: "eject",
+          copiedSkills: ["web-framework-react"],
         });
+        await initResult.destroy();
 
         // Inject marketplace into config (fixture setup for Phase 2)
         await injectMarketplaceIntoConfig(projectDir, fixture.marketplaceName);

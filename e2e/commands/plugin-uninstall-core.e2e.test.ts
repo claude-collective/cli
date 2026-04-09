@@ -7,6 +7,7 @@ import {
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
 import "../matchers/setup.js";
+import { expectCleanUninstall } from "../assertions/uninstall-assertions.js";
 import {
   isClaudeCLIAvailable,
   claudePluginMarketplaceAdd,
@@ -138,14 +139,8 @@ describe.skipIf(!claudeAvailable)("uninstall with plugins calls Claude CLI", () 
       await expect({ dir: projectDir }).toHaveNoPlugins();
     });
 
-    it("should remove CLI-managed skill directories", async () => {
-      await expect({ dir: projectDir }).toHaveNoLocalSkills();
-    });
-
-    it("should remove CLI-compiled agent files", async () => {
-      const agentsDir = agentsPath(projectDir);
-      // Agents directory should be removed (all agents were CLI-compiled)
-      expect(await directoryExists(agentsDir)).toBe(false);
+    it("should clean up skills and agents", async () => {
+      await expectCleanUninstall(projectDir);
     });
 
     it("should preserve config directory (without --all)", async () => {

@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
+import { E2E_AGENTS } from "../fixtures/expected-values.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { ensureBinaryExists, cleanupTempDir } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
@@ -54,16 +56,17 @@ describe("init wizard — stack flow", () => {
       wizard = await InitWizard.launch();
       const result = await wizard.completeWithDefaults();
 
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      await expect(result.project).toHaveConfig({
-        skillIds: ["web-framework-react"],
-        agents: ["web-developer", "api-developer"],
-        source: "agents-inc",
-      });
-      await expect(result.project).toHaveCompiledAgent("web-developer");
-      await expect(result.project).toHaveCompiledAgent("api-developer");
-      await expect(result.project).toHaveCompiledAgentContent("web-developer", {
-        contains: ["web-framework-react"],
+      await expectPhaseSuccess(
+        { project: result.project, exitCode: result.exitCode },
+        {
+          skillIds: ["web-framework-react"],
+          agents: E2E_AGENTS.WEB_AND_API,
+          source: "agents-inc",
+          compiledAgents: E2E_AGENTS.WEB_AND_API,
+        },
+      );
+      await expect(result.project).toHaveAgentFrontmatter("web-developer", {
+        skills: ["web-framework-react"],
       });
     });
 
@@ -83,8 +86,10 @@ describe("init wizard — stack flow", () => {
         wizard = await InitWizard.launch();
         const result = await wizard.completeWithDefaults();
 
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await expect(result.project).toHaveSkillCopied("web-framework-react");
+        await expectPhaseSuccess(
+          { project: result.project, exitCode: result.exitCode },
+          { copiedSkills: ["web-framework-react"] },
+        );
       });
 
       it("should not produce archive warnings during first install", async () => {

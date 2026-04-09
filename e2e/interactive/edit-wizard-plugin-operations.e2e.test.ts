@@ -7,6 +7,7 @@ import { cleanupTempDir, ensureBinaryExists, isClaudeCLIAvailable } from "../hel
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import "../matchers/setup.js";
 
 /**
@@ -102,11 +103,10 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
 
         const result = await completeEditFromBuild(wizard);
 
-        await result.exitCode;
-
-        await expect(result.project).toHaveConfig({
+        await expectPhaseSuccess(result, {
           skillIds: ["web-framework-react"],
           source: fixture.marketplaceName,
+          compiledAgents: [],
         });
       },
     );
@@ -129,9 +129,9 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
 
         const result = await completeEditFromBuild(wizard);
 
-        await result.exitCode;
-
-        await expect(result.project).toHaveCompiledAgent("web-developer");
+        await expectPhaseSuccess(result, {
+          compiledAgents: ["web-developer"],
+        });
       },
     );
   });

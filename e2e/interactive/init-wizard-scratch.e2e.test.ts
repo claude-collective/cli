@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
+import { E2E_AGENTS } from "../fixtures/expected-values.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import { ensureBinaryExists } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
 
@@ -86,19 +88,19 @@ describe("init wizard — scratch flow", () => {
       const confirm = await agents.acceptDefaults("init");
       const result = await confirm.confirm();
 
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      await expect(result.project).toHaveConfig({
-        skillIds: ["web-framework-react", "api-framework-hono"],
-        agents: ["web-developer", "api-developer"],
-        source: "agents-inc",
+      await expectPhaseSuccess(
+        { project: result.project, exitCode: result.exitCode },
+        {
+          skillIds: ["web-framework-react", "api-framework-hono"],
+          agents: E2E_AGENTS.WEB_AND_API,
+          source: "agents-inc",
+          compiledAgents: E2E_AGENTS.WEB_AND_API,
+          copiedSkills: ["web-framework-react", "api-framework-hono"],
+        },
+      );
+      await expect(result.project).toHaveAgentFrontmatter("web-developer", {
+        noSkills: true,
       });
-      await expect(result.project).toHaveCompiledAgent("web-developer");
-      await expect(result.project).toHaveCompiledAgent("api-developer");
-      await expect(result.project).toHaveCompiledAgentContent("web-developer", {
-        contains: ["web-framework-react"],
-      });
-      await expect(result.project).toHaveSkillCopied("web-framework-react");
-      await expect(result.project).toHaveSkillCopied("api-framework-hono");
     });
   });
 

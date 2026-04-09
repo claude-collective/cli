@@ -4,6 +4,7 @@ import { ensureBinaryExists } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import "../matchers/setup.js";
 
 /**
@@ -72,11 +73,10 @@ describe("edit wizard — confirm step and completion", () => {
         const confirm = await agents.acceptDefaults("edit");
         const result = await confirm.confirm();
 
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await expect(result.project).toHaveCompiledAgent("web-developer");
-        await expect(result.project).toHaveConfig({
+        await expectPhaseSuccess(result, {
           skillIds: ["web-framework-react", "web-styling-tailwind"],
           agents: ["web-developer"],
+          compiledAgents: ["web-developer"],
         });
         await expect(result.project).toHaveCompiledAgentContent("web-developer", {
           contains: ["name: web-developer", "web-framework-react"],

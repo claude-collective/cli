@@ -1,6 +1,7 @@
 import path from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { expectCleanUninstall } from "../assertions/uninstall-assertions.js";
 import {
   createTempDir,
   cleanupTempDir,
@@ -78,8 +79,7 @@ describe("uninstall command", () => {
     expect(stdout).toContain("Uninstall complete!");
 
     // Skills and agents should be removed
-    await expect({ dir: projectDir }).toHaveNoLocalSkills();
-    expect(await directoryExists(agentsDir)).toBe(false);
+    await expectCleanUninstall(projectDir);
 
     // Config should be preserved intact (uninstall --yes does not remove .claude-src/)
     await expect({ dir: projectDir }).toHaveConfig({
@@ -105,13 +105,8 @@ describe("uninstall command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Uninstall complete!");
 
-    // Config directory should be removed with --all
-    expect(await directoryExists(configDir)).toBe(false);
-
-    // Skills and agents should also be removed
-    await expect({ dir: projectDir }).toHaveNoLocalSkills();
-    const agentsDir = agentsPath(projectDir);
-    expect(await directoryExists(agentsDir)).toBe(false);
+    // Config directory, skills, and agents should all be removed with --all
+    await expectCleanUninstall(projectDir, { removeConfig: true });
   });
 
   it("should remove skills directory when all skills are CLI-managed", async () => {
@@ -128,12 +123,8 @@ describe("uninstall command", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    // Skills directory should be fully removed when all skills matched
-    await expect({ dir: projectDir }).toHaveNoLocalSkills();
-
-    // Agents directory should also be removed
-    const agentsDir = agentsPath(projectDir);
-    expect(await directoryExists(agentsDir)).toBe(false);
+    // Skills and agents should be fully removed when all skills matched
+    await expectCleanUninstall(projectDir);
   });
 
   it("should remove agents directory when config exists", async () => {
@@ -150,10 +141,9 @@ describe("uninstall command", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("CLI-compiled");
-    expect(await directoryExists(agentsDir)).toBe(false);
 
-    // Skills should also be removed
-    await expect({ dir: projectDir }).toHaveNoLocalSkills();
+    // Skills and agents should be removed
+    await expectCleanUninstall(projectDir);
   });
 
   it("should preserve agents not listed in config", async () => {
@@ -169,6 +159,7 @@ describe("uninstall command", () => {
     const { exitCode } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
     // Custom agent should be preserved (not in config.agents)
     expect(await fileExists(path.join(agentsDir, "my-custom-agent.md"))).toBe(true);
 
@@ -204,10 +195,9 @@ describe("uninstall command", () => {
     expect(output).toContain("my-custom-skill");
 
     // User skill should still exist, CLI-managed skill should be removed
-    await expect({ dir: projectDir }).toHaveLocalSkills(["my-custom-skill"]);
-    expect(await directoryExists(
-      path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-framework-react"),
-    )).toBe(false);
+    await expectCleanUninstall(projectDir, {
+      preservedSkills: ["my-custom-skill"],
+    });
   });
 
   it("should skip all skills when only user-created skills exist", async () => {
@@ -292,12 +282,8 @@ describe("uninstall command", () => {
     });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    // Config dir should be removed with --all
-    expect(await directoryExists(configDir)).toBe(false);
 
-    // Skills and agents dirs should not exist either
-    await expect({ dir: projectDir }).toHaveNoLocalSkills();
-    const agentsDir = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS);
-    expect(await directoryExists(agentsDir)).toBe(false);
+    // Config dir, skills, and agents should all be removed with --all
+    await expectCleanUninstall(projectDir, { removeConfig: true });
   });
 });

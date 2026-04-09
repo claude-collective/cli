@@ -1,6 +1,7 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { expectCleanUninstall } from "../assertions/uninstall-assertions.js";
 import {
   createTempDir,
   cleanupTempDir,

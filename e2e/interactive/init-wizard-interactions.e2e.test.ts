@@ -2,7 +2,8 @@ import path from "path";
 import { mkdir } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import {
   createTempDir,
   cleanupTempDir,
@@ -48,10 +49,8 @@ describe("init wizard — interactions", () => {
         const confirm = await agents.acceptDefaults("init");
         const result = await confirm.confirm();
 
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-
         // API skills should NOT be in config
-        await expect(result.project).toHaveConfig({
+        await expectPhaseSuccess(result, {
           skillIds: ["web-framework-react"],
         });
 
@@ -78,15 +77,11 @@ describe("init wizard — interactions", () => {
       const confirm = await agents.advance("init");
       const result = await confirm.confirm();
 
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      // web-developer SHOULD be compiled
-      await expect(result.project).toHaveCompiledAgent("web-developer");
-
       // api-developer should NOT be compiled (it was deselected)
-      await expect(result.project).toHaveConfig({
+      await expectPhaseSuccess(result, {
         skillIds: ["web-framework-react"],
         agents: ["web-developer"],
+        compiledAgents: ["web-developer"],
       });
     });
   });
@@ -134,10 +129,8 @@ describe("init wizard — interactions", () => {
         const confirm = await agents.acceptDefaults("init");
         const result = await confirm.confirm();
 
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-
         // Config should contain the skill with project scope
-        await expect(result.project).toHaveConfig({
+        await expectPhaseSuccess(result, {
           skillIds: ["web-framework-react"],
         });
 

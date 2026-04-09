@@ -1,12 +1,14 @@
 import os from "os";
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
+import { E2E_AGENTS } from "../fixtures/expected-values.js";
+import { TIMEOUTS, DIRS } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
@@ -76,15 +78,12 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
         const confirm = await agents.acceptDefaults("init");
         const initResult = await confirm.confirm();
 
-        expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await initResult.destroy();
-
-        // Verify Phase 1: all skills are eject
-        await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
-        await expect({ dir: projectDir }).toHaveConfig({
+        await expectPhaseSuccess(initResult, {
           skillIds: ["web-framework-react"],
           source: "eject",
+          copiedSkills: ["web-framework-react"],
         });
+        await initResult.destroy();
 
         // Inject marketplace into config (fixture setup for Phase 2)
         await injectMarketplaceIntoConfig(projectDir, fixture.marketplaceName);
@@ -101,18 +100,16 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
         const editConfirm = await editAgents.acceptDefaults("edit");
         const editResult = await editConfirm.confirm();
 
-        expect(await editResult.exitCode).toBe(EXIT_CODES.SUCCESS);
+        await expectPhaseSuccess(editResult, {
+          skillIds: ["web-framework-react"],
+          source: fixture.marketplaceName,
+          compiledAgents: E2E_AGENTS.WEB_AND_API,
+        });
 
         const rawOutput = editResult.rawOutput;
         expect(rawOutput).toContain("Switching");
         expect(rawOutput).toContain("to plugin");
 
-        await expect({ dir: projectDir }).toHaveConfig({
-          skillIds: ["web-framework-react"],
-          source: fixture.marketplaceName,
-        });
-
-        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
         await editResult.destroy();
       },
     );
@@ -133,14 +130,12 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
         });
         const initResult = await initWizard.completeWithDefaults();
 
-        expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await initResult.destroy();
-
-        await expect({ dir: projectDir }).toHaveConfig({
+        await expectPhaseSuccess(initResult, {
           skillIds: ["web-framework-react"],
           source: fixture.marketplaceName,
+          compiledAgents: E2E_AGENTS.WEB_AND_API,
         });
-        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+        await initResult.destroy();
 
         // Phase 2: Edit -- switch ALL to eject via "l" hotkey
         const editWizard = await EditWizard.launch({
@@ -154,21 +149,23 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- bulk mode s
         const editConfirm = await editAgents.acceptDefaults("edit");
         const editResult = await editConfirm.confirm();
 
-        expect(await editResult.exitCode).toBe(EXIT_CODES.SUCCESS);
+        await expectPhaseSuccess(editResult, {
+          skillIds: ["web-framework-react"],
+          source: "eject",
+          copiedSkills: ["web-framework-react"],
+        });
 
         const rawOutput = editResult.rawOutput;
         expect(rawOutput).toContain("Switching");
         expect(rawOutput).toContain("to eject");
 
-        await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
-
-        await expect({ dir: projectDir }).toHaveConfig({
-          skillIds: ["web-framework-react"],
-          source: "eject",
-        });
-
         // Agent may be compiled at project or global scope
-        const projectAgentPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
+        const projectAgentPath = path.join(
+          projectDir,
+          DIRS.CLAUDE,
+          DIRS.AGENTS,
+          "web-developer.md",
+        );
         const checkDir = (await fileExists(projectAgentPath)) ? projectDir : os.homedir();
         await expect({ dir: checkDir }).toHaveCompiledAgent("web-developer");
 

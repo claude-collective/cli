@@ -1,8 +1,9 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { TIMEOUTS, DIRS, FILES } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
@@ -83,23 +84,28 @@ describe("init -> edit merge: config preserved across lifecycle", () => {
           projectDir,
         });
         const initResult = await initWizard.completeWithDefaults();
-        expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
         await initResult.destroy();
 
         // --- Phase 1 verification ---
-        await expect({ dir: projectDir }).toHaveConfig({
-          skillIds: ["web-framework-react"],
-          agents: ["web-developer"],
-          source: "agents-inc",
-        });
+        await expectPhaseSuccess(
+          { project: { dir: projectDir }, exitCode: initResult.exitCode },
+          {
+            skillIds: ["web-framework-react"],
+            agents: ["web-developer"],
+            source: "agents-inc",
+          },
+        );
 
         const configAfterInit = await readTestFile(configPath);
         const initSkillIds = extractSkillIds(configAfterInit);
         expectNoDuplicates(initSkillIds, "skills after init");
 
-        // Verify agent compiled with correct content
-        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
-          contains: ["name: web-developer", "web-framework-react"],
+        // Verify agent frontmatter and skill content
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          name: "web-developer",
+        });
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          skills: ["web-framework-react"],
         });
 
         const originalSkillSet = new Set(initSkillIds);
@@ -125,16 +131,17 @@ describe("init -> edit merge: config preserved across lifecycle", () => {
         const confirm = await agents.acceptDefaults("edit");
         const editResult = await confirm.confirm();
 
-        expect(await editResult.exitCode).toBe(EXIT_CODES.SUCCESS);
         await editResult.destroy();
 
         // --- Phase 2 verification ---
-        // Config should still have the original skill and agents
-        await expect({ dir: projectDir }).toHaveConfig({
-          skillIds: ["web-framework-react"],
-          agents: ["web-developer"],
-          source: "agents-inc",
-        });
+        await expectPhaseSuccess(
+          { project: { dir: projectDir }, exitCode: editResult.exitCode },
+          {
+            skillIds: ["web-framework-react"],
+            agents: ["web-developer"],
+            source: "agents-inc",
+          },
+        );
 
         const configAfterEdit = await readTestFile(configPath);
         const editSkillIds = extractSkillIds(configAfterEdit);
@@ -151,9 +158,11 @@ describe("init -> edit merge: config preserved across lifecycle", () => {
         expect(editSkillIds.length).toBeGreaterThanOrEqual(initSkillIds.length);
 
         // Agent should still be compiled with correct content
-        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
-        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
-          contains: ["name: web-developer", "web-framework-react"],
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          name: "web-developer",
+        });
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          skills: ["web-framework-react"],
         });
       },
     );

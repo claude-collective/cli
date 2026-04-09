@@ -7,6 +7,7 @@ import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { CLI } from "../fixtures/cli.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { ensureBinaryExists, cleanupTempDir } from "../helpers/test-utils.js";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { EXIT_CODES, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import type { WizardResult, ProjectHandle } from "../pages/wizard-result.js";
 
@@ -39,14 +40,12 @@ describe("POM Framework Smoke Tests", () => {
         const wizard = await InitWizard.launch();
         result = await wizard.completeWithDefaults();
 
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await expect(result.project).toHaveConfig({
+        await expectPhaseSuccess(result, {
           skillIds: ["web-framework-react"],
           agents: ["web-developer", "api-developer"],
           source: "agents-inc",
+          compiledAgents: ["web-developer", "api-developer"],
         });
-        await expect(result.project).toHaveCompiledAgent("web-developer");
-        await expect(result.project).toHaveCompiledAgent("api-developer");
       },
       TIMEOUTS.INTERACTIVE,
     );
@@ -90,10 +89,14 @@ describe("POM Framework Smoke Tests", () => {
         });
         result = await wizard.passThrough();
 
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await expect(result.project).toHaveConfig({
-          skillIds: ["web-framework-react", "api-framework-hono", "meta-methodology-research-methodology"],
+        await expectPhaseSuccess(result, {
+          skillIds: [
+            "web-framework-react",
+            "api-framework-hono",
+            "meta-methodology-research-methodology",
+          ],
           agents: ["web-developer", "api-developer"],
+          compiledAgents: [],
         });
       },
       TIMEOUTS.INTERACTIVE,

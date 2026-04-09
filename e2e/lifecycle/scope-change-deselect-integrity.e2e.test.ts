@@ -3,11 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import {
-  cleanupTempDir,
-  ensureBinaryExists,
-  readTestFile,
-} from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
 import {
   createGlobalOnlyEnv,
   createTestEnvironment,
@@ -15,6 +11,7 @@ import {
   type DualScopeEnv,
 } from "../fixtures/dual-scope-helpers.js";
 import "../matchers/setup.js";
+import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
 
 /**
  * D-192: Scope toggle then deselect preserves global config.
@@ -94,18 +91,16 @@ describe("scope change deselect integrity", () => {
       const exitCode = await result.exitCode;
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Assert: global config still contains all web skills and web-developer agent (unchanged)
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
-        agents: ["web-developer"],
-      });
-
-      // Assert: global agent file still exists on disk
-      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
-
-      // Assert: project config retains web skills from global scope
-      await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+      // Assert: global config + agent unchanged, project config retains web skills
+      await expectDualScopeInstallation(fakeHome, projectDir, {
+        global: {
+          skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+          agents: ["web-developer"],
+        },
+        project: {
+          skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+          agents: [],
+        },
       });
 
       await result.destroy();
@@ -138,7 +133,12 @@ describe("scope change deselect integrity", () => {
 
       // Assert: global config is unchanged -- all skills and agents still present
       await expect({ dir: env.fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        skillIds: [
+          "web-framework-react",
+          "web-testing-vitest",
+          "web-state-zustand",
+          "api-framework-hono",
+        ],
         agents: ["web-developer", "api-developer"],
       });
 

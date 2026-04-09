@@ -1,13 +1,12 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
+import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
+import { E2E_AGENTS } from "../fixtures/expected-values.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, DIRS, FILES, EXIT_CODES } from "../pages/constants.js";
-import {
-  cleanupTempDir,
-  ensureBinaryExists,
-  readTestFile,
-} from "../helpers/test-utils.js";
+import { TIMEOUTS, DIRS, FILES } from "../pages/constants.js";
+import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
 import {
   createTestEnvironment,
   initGlobal,
@@ -60,29 +59,31 @@ describe("dual-scope edit lifecycle -- agent content and config integrity", () =
     "Compiled agents contain only their assigned skills",
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
-      // Global config has web skills and web-developer agent
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
-        agents: ["web-developer"],
+      // Verify both scopes have correct config and compiled agents
+      await expectDualScopeInstallation(fakeHome, projectDir, {
+        global: {
+          skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+          agents: [...E2E_AGENTS.WEB],
+        },
+        project: {
+          skillIds: ["api-framework-hono"],
+          agents: [...E2E_AGENTS.API],
+        },
       });
 
-      // Project config has api skill and api-developer agent
-      await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["api-framework-hono"],
-        agents: ["api-developer"],
+      // web-developer (global) contains its preloaded skills, not API skills
+      await expect({ dir: fakeHome }).toHaveAgentFrontmatter("web-developer", {
+        skills: ["web-framework-react"],
       });
-
-      // web-developer (global) contains its assigned skills, not API skills
-      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
       await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
-        contains: ["web-framework-react", "web-testing-vitest"],
         notContains: ["api-framework-hono"],
       });
 
       // api-developer (project) contains its assigned skill, not web skills
-      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+      await expect({ dir: projectDir }).toHaveAgentFrontmatter("api-developer", {
+        skills: ["api-framework-hono"],
+      });
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
-        contains: ["api-framework-hono"],
         notContains: ["web-framework-react"],
       });
     },
@@ -129,20 +130,32 @@ describe("dual-scope edit lifecycle -- config preservation", () => {
     async () => {
       // Phase A: Init global (completeWithDefaults — marketplace source "agents-inc")
       const phaseA = await initGlobal(sourceDir, sourceTempDir, fakeHome);
-      expect(phaseA.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      // Assert: global config has expected content after Phase A
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
-        agents: ["web-developer", "api-developer"],
-        source: "agents-inc",
-      });
+      await expectPhaseSuccess(
+        { project: { dir: fakeHome }, exitCode: phaseA.exitCode },
+        {
+          skillIds: [
+            "web-framework-react",
+            "web-testing-vitest",
+            "web-state-zustand",
+            "api-framework-hono",
+          ],
+          agents: E2E_AGENTS.WEB_AND_API,
+          source: "agents-inc",
+        },
+      );
       const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const globalConfigAfterA = await readTestFile(globalConfigPath);
 
       // Phase B: Init project with scope toggling (eject for project-scoped skills)
       const phaseB = await initProject(sourceDir, sourceTempDir, fakeHome, projectDir);
-      expect(phaseB.exitCode).toBe(EXIT_CODES.SUCCESS);
+      await expectPhaseSuccess(
+        { project: { dir: projectDir }, exitCode: phaseB.exitCode },
+        {
+          skillIds: ["api-framework-hono"],
+          agents: [...E2E_AGENTS.API],
+          source: "eject",
+        },
+      );
 
       // Assert: global config data is preserved (project init must never modify global config)
       // Strip "projects" tracking line and sort to ignore property reordering from re-serialization
@@ -155,13 +168,6 @@ describe("dual-scope edit lifecycle -- config preservation", () => {
           .sort()
           .join("\n");
       expect(normalize(globalConfigAfterB)).toStrictEqual(normalize(globalConfigAfterA));
-
-      // Assert: project config has api-framework-hono with eject source and api-developer agent
-      await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["api-framework-hono"],
-        agents: ["api-developer"],
-        source: "eject",
-      });
     },
   );
 });
@@ -206,29 +212,21 @@ describe("dual-scope edit lifecycle -- eject scope toggle copies skill to projec
     async () => {
       await setupDualScopeWithEject(sourceDir, sourceTempDir, fakeHome, projectDir);
 
-      // Assert: api-framework-hono exists at project path (copied during scope toggle)
+      // Assert: api-framework-hono exists at both project and global paths
       await expect({ dir: projectDir }).toHaveSkillCopied("api-framework-hono");
-
-      // Assert: api-framework-hono still exists at global path (init copies, does not move)
       await expect({ dir: fakeHome }).toHaveSkillCopied("api-framework-hono");
 
-      // Assert: global config has web skills, web-developer agent, and eject source
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
-        agents: ["web-developer"],
-        source: "eject",
+      // Assert: dual-scope config and compiled agents are correct
+      await expectDualScopeInstallation(fakeHome, projectDir, {
+        global: {
+          skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+          agents: [...E2E_AGENTS.WEB],
+        },
+        project: {
+          skillIds: ["api-framework-hono"],
+          agents: [...E2E_AGENTS.API],
+        },
       });
-
-      // Assert: project config has api skill and api-developer agent
-      await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["api-framework-hono"],
-        agents: ["api-developer"],
-        source: "eject",
-      });
-
-      // Assert: compiled agents exist at correct scopes
-      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
-      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
     },
   );
 });

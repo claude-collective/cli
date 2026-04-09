@@ -1,9 +1,10 @@
 import { mkdir } from "fs/promises";
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { TIMEOUTS } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { cleanupTempDir, createTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 
@@ -57,10 +58,7 @@ describe("init global preselection confirm step", () => {
         env: { HOME: fakeHome },
       });
       const globalResult = await globalWizard.completeWithDefaults();
-      expect(await globalResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react"],
-      });
+      await expectPhaseSuccess(globalResult, { skillIds: ["web-framework-react"] });
       await globalResult.destroy();
 
       // Phase 2: Init from project dir -- global React pre-selected

@@ -2,6 +2,7 @@ import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
+import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
 import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
@@ -63,9 +64,17 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
 
       // --- User-visible outcomes after setup ---
 
-      // 1. Agent files at correct scope directories
-      //    api-developer was toggled to project → its .md should be at project scope
-      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+      // 1. Both scopes have correct config and compiled agents
+      await expectDualScopeInstallation(fakeHome, projectDir, {
+        global: {
+          skillIds: ["web-framework-react", "api-framework-hono"],
+          agents: [],
+        },
+        project: {
+          skillIds: ["api-framework-hono"],
+          agents: ["api-developer"],
+        },
+      });
       //    web-developer stayed global → its .md should be at global scope
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
@@ -79,17 +88,6 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
         await fileExists(path.join(globalAgentsDir, "web-developer.md")),
         "Global web-developer.md should still exist",
       ).toBe(true);
-
-      // 3. Project config exists with project-scoped skill and agent
-      await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["api-framework-hono"],
-        agents: ["api-developer"],
-      });
-
-      // 4. Global config exists and is not corrupted
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "api-framework-hono"],
-      });
 
       // ================================================================
       // Phase C: Edit passthrough — navigate through without changes
@@ -116,20 +114,18 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
 
       // --- User-visible outcomes after edit passthrough ---
 
-      // 5. Agent files unchanged — same placement as before edit
-      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+      // 5. Both scopes have correct config and compiled agents after edit passthrough
+      await expectDualScopeInstallation(fakeHome, projectDir, {
+        global: {
+          skillIds: ["web-framework-react", "api-framework-hono"],
+          agents: [],
+        },
+        project: {
+          skillIds: ["api-framework-hono"],
+          agents: ["api-developer"],
+        },
+      });
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
-
-      // 6. Global config still has all original skills (never modified by project ops)
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "api-framework-hono"],
-      });
-
-      // 7. Project config still exists with project-scoped skill and agent
-      await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["api-framework-hono"],
-        agents: ["api-developer"],
-      });
 
       // 8. api-developer agent at project scope contains the project-scoped skill
       //    and does NOT contain the global-only skill

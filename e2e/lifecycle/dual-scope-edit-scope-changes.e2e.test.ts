@@ -12,6 +12,7 @@ import {
   readTestFile,
 } from "../helpers/test-utils.js";
 import { createTestEnvironment, setupDualScopeWithEject } from "../fixtures/dual-scope-helpers.js";
+import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
 
 /**
  * Dual-scope edit lifecycle E2E test -- scope changes via S hotkey.
@@ -111,7 +112,12 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
 
       // D-3: Global config has api-framework-hono with scope: "global"
       await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        skillIds: [
+          "web-framework-react",
+          "web-testing-vitest",
+          "web-state-zustand",
+          "api-framework-hono",
+        ],
         agents: ["web-developer"],
       });
       const globalConfig = await readTestFile(
@@ -189,7 +195,12 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
 
       // D-4: Global config has api-developer with scope: "global"
       await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        skillIds: [
+          "web-framework-react",
+          "web-testing-vitest",
+          "web-state-zustand",
+          "api-framework-hono",
+        ],
         agents: ["web-developer", "api-developer"],
       });
       const globalConfig = await readTestFile(
@@ -351,24 +362,16 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       expect(skillMdContent).toContain("web-framework-react");
 
       // D-4: Global config STILL contains web-framework-react
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
-        agents: ["web-developer"],
-      });
-
       // D-5: Project config has web-framework-react with scope: "project"
-      await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["api-framework-hono", "web-framework-react"],
-        agents: ["api-developer"],
+      // D-6: Agent files at both scopes still exist (unchanged)
+      await expectDualScopeInstallation(fakeHome, projectDir, {
+        global: { skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"], agents: ["web-developer"] },
+        project: { skillIds: ["api-framework-hono", "web-framework-react"], agents: ["api-developer"] },
       });
       const projectConfig = await readTestFile(
         path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
       );
       expect(projectConfig).toContain('"scope":"project"');
-
-      // D-6: Agent files at both scopes still exist (unchanged)
-      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
-      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
       await result.destroy();
     },

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import type { SourcesStep } from "../pages/steps/sources-step.js";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import { ensureBinaryExists } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
@@ -126,13 +127,12 @@ describe("init wizard — source management", () => {
         const confirm = await agents.acceptDefaults("init");
         const result = await confirm.confirm();
 
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await expect(result.project).toHaveConfig({
+        await expectPhaseSuccess(result, {
           skillIds: ["web-framework-react"],
           agents: ["web-developer"],
           source: "agents-inc",
+          compiledAgents: ["web-developer"],
         });
-        await expect(result.project).toHaveCompiledAgent("web-developer");
       },
     );
   });

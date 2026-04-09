@@ -5,6 +5,7 @@ import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-helpers.js";
+import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
 
 /**
  * Dual-scope edit lifecycle E2E test -- display and locking.
@@ -93,19 +94,11 @@ describe("dual-scope edit lifecycle -- display and locking", () => {
       expect(rawOutput).toContain("[G]");
       expect(rawOutput).toContain("[P]");
 
-      // D-4: Config files unchanged with full expected content
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
-        agents: ["web-developer"],
+      // D-4: Config files unchanged with full expected content + agent files preserved
+      await expectDualScopeInstallation(fakeHome, projectDir, {
+        global: { skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"], agents: ["web-developer"] },
+        project: { skillIds: ["api-framework-hono"], agents: ["api-developer"] },
       });
-      await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["api-framework-hono"],
-        agents: ["api-developer"],
-      });
-
-      // D-5: Agent files preserved
-      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
-      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
       await result.destroy();
     },

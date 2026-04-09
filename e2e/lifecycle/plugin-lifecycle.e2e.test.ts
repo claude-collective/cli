@@ -1,5 +1,6 @@
 import path from "path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
@@ -62,25 +63,25 @@ describe.skipIf(!claudeAvailable)("plugin mode lifecycle: init -> uninstall", ()
         projectDir,
       });
       const initResult = await wizard.completeWithDefaults();
-      const initExitCode = await initResult.exitCode;
-      expect(initExitCode).toBe(EXIT_CODES.SUCCESS);
 
       // --- Phase 1 Verification ---
+
+      await expectPhaseSuccess(initResult, {
+        skillIds: [
+          "web-framework-react",
+          "web-testing-vitest",
+          "web-state-zustand",
+          "api-framework-hono",
+        ],
+        agents: ["web-developer", "api-developer"],
+        source: fixture.marketplaceName,
+      });
 
       const initOutput = initResult.output;
       expect(initOutput).toContain("Installing skill plugins...");
       expect(initOutput).toContain("Plugin (native install)");
       expect(initOutput).toContain(`Installed web-framework-react@${fixture.marketplaceName}`);
       expect(initOutput).not.toContain("Skills copied to:");
-
-      await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
-        agents: ["web-developer", "api-developer"],
-        source: fixture.marketplaceName,
-      });
-
-      await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
-      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
       // Settings file exists with permissions
       const settingsPath = path.join(projectDir, DIRS.CLAUDE, FILES.SETTINGS_JSON);

@@ -6,6 +6,7 @@ import {
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { cleanupTempDir, ensureBinaryExists, isClaudeCLIAvailable } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
 
@@ -57,11 +58,11 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
         source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
       });
       const result = await wizard.completeWithDefaults();
-      await result.exitCode;
 
-      await expect(result.project).toHaveConfig({
+      await expectPhaseSuccess(result, {
         skillIds: ["web-framework-react"],
         source: fixture.marketplaceName,
+        compiledAgents: [],
       });
     });
 
@@ -70,9 +71,10 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
         source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
       });
       const result = await wizard.completeWithDefaults();
-      await result.exitCode;
 
-      await expect(result.project).toHaveCompiledAgent("web-developer");
+      await expectPhaseSuccess(result, {
+        compiledAgents: ["web-developer"],
+      });
     });
 
     it("should display completion details after install", async () => {

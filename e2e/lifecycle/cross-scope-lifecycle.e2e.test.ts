@@ -1,9 +1,12 @@
 import { mkdir } from "fs/promises";
 import path from "path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
+import { expectCleanUninstall } from "../assertions/uninstall-assertions.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { E2E_AGENTS } from "../fixtures/expected-values.js";
+import { TIMEOUTS, DIRS, FILES } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
@@ -70,22 +73,24 @@ describe("cross-scope lifecycle: init global -> edit global from project", () =>
         env: { HOME: fakeHome },
       });
       const initResult = await initWizard.completeWithDefaults();
-      const initExitCode = await initResult.exitCode;
-      expect(initExitCode).toBe(EXIT_CODES.SUCCESS);
 
       // --- Phase 1 Verification ---
 
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react"],
-        agents: ["web-developer"],
-        source: "agents-inc",
-      });
-
-      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+      await expectPhaseSuccess(
+        { project: { dir: fakeHome }, exitCode: initResult.exitCode },
+        {
+          skillIds: ["web-framework-react"],
+          agents: E2E_AGENTS.WEB_AND_API,
+          source: "agents-inc",
+          copiedSkills: ["web-framework-react"],
+        },
+      );
       await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
         contains: ["name: web-developer", "web-framework-react"],
       });
-      await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
+      await expect({ dir: fakeHome }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer"],
+      });
 
       const initOutput = initResult.output;
       expect(initOutput).not.toContain("Failed to");
@@ -106,39 +111,35 @@ describe("cross-scope lifecycle: init global -> edit global from project", () =>
       });
       const editResult = await editWizard.passThrough();
 
-      const editExitCode = await editResult.exitCode;
       const phase2Raw = editResult.rawOutput;
 
       // ================================================================
       // Phase 3: Verification -- global preserved, no project leakage
       // ================================================================
 
-      expect(editExitCode).toBe(EXIT_CODES.SUCCESS);
-
-      // Global config still exists with correct content
-      await expect({ dir: fakeHome }).toHaveConfig({
-        skillIds: ["web-framework-react"],
-        agents: ["web-developer"],
-        source: "agents-inc",
-      });
-
-      // Global agents still compiled with correct content
-      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+      // Global state preserved: config, agents, and skills
+      await expectPhaseSuccess(
+        { project: { dir: fakeHome }, exitCode: editResult.exitCode },
+        {
+          skillIds: ["web-framework-react"],
+          agents: E2E_AGENTS.WEB_AND_API,
+          source: "agents-inc",
+          copiedSkills: ["web-framework-react"],
+        },
+      );
       await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
         contains: ["name: web-developer", "web-framework-react"],
+      });
+      await expect({ dir: fakeHome }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["name: api-developer"],
       });
 
       // No project config created
       const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       expect(await fileExists(projectConfigPath)).toBe(false);
 
-      // No project-scope skills or agents directories created
-      await expect({ dir: projectDir }).toHaveNoLocalSkills();
-      const projectAgentsDir = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS);
-      expect(await fileExists(path.join(projectAgentsDir, "web-developer.md"))).toBe(false);
-
-      // Global skills still exist
-      await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
+      // No project-scope skills or agents leaked
+      await expectCleanUninstall(projectDir);
 
       // No errors in Phase 2 output
       expect(phase2Raw).not.toContain("ENOENT");

@@ -4,6 +4,7 @@ import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import "../matchers/setup.js";
 
 /**
@@ -84,6 +85,7 @@ describe("edit wizard — eject mode", () => {
         // Config should now include both skills
         await expect(result.project).toHaveConfig({
           skillIds: ["web-framework-react", "web-testing-vitest"],
+          agents: ["web-developer"],
         });
       },
     );
@@ -145,10 +147,9 @@ describe("edit wizard — eject mode", () => {
 
         const result = await completeEditFromBuild(wizard);
 
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-        // Verify agent was compiled after adding a skill
-        await expect(result.project).toHaveCompiledAgent("web-developer");
+        await expectPhaseSuccess(result, {
+          compiledAgents: ["web-developer"],
+        });
       },
     );
   });
@@ -236,10 +237,9 @@ describe("edit wizard — eject mode", () => {
 
         const result = await completeEditFromBuild(wizard);
 
-        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-        // Verify agent was compiled after removing a skill
-        await expect(result.project).toHaveCompiledAgent("web-developer");
+        await expectPhaseSuccess(result, {
+          compiledAgents: ["web-developer"],
+        });
       },
     );
 
@@ -263,12 +263,13 @@ describe("edit wizard — eject mode", () => {
 
         const result = await completeEditFromBuild(wizard);
 
-        await result.exitCode;
-
         // The wizard preserves the saved source ("eject") from the existing config
         // when the user doesn't explicitly change it. No source migration is triggered,
         // so eject skill files remain intact.
-        await expect(result.project).toHaveSkillCopied("web-framework-react");
+        await expectPhaseSuccess(result, {
+          copiedSkills: ["web-framework-react"],
+          compiledAgents: [],
+        });
       },
     );
   });

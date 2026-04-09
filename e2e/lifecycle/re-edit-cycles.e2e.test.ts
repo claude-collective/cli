@@ -1,8 +1,9 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { TIMEOUTS, DIRS, FILES } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
@@ -157,18 +158,22 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           projectDir,
         });
         const initResult = await initWizard.completeWithDefaults();
-        expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
         await initResult.destroy();
 
         // --- Phase 1 verification ---
-        await expect({ dir: projectDir }).toHaveConfig({
-          skillIds: ["web-framework-react"],
-          agents: ["web-developer"],
-          source: "agents-inc",
+        await expectPhaseSuccess(
+          { project: { dir: projectDir }, exitCode: initResult.exitCode },
+          {
+            skillIds: ["web-framework-react"],
+            agents: ["web-developer"],
+            source: "agents-inc",
+          },
+        );
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          name: "web-developer",
         });
-        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
-        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
-          contains: ["name: web-developer", "web-framework-react"],
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          skills: ["web-framework-react"],
         });
 
         const configAfterInit = await readTestFile(configPath);
@@ -186,17 +191,22 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           source: { sourceDir, tempDir: sourceTempDir },
         });
         const edit1Result = await edit1Wizard.passThrough();
-        expect(await edit1Result.exitCode).toBe(EXIT_CODES.SUCCESS);
         await edit1Result.destroy();
 
         // --- Phase 2 verification ---
-        await expect({ dir: projectDir }).toHaveConfig({
-          skillIds: ["web-framework-react"],
-          agents: ["web-developer"],
-          source: "agents-inc",
+        await expectPhaseSuccess(
+          { project: { dir: projectDir }, exitCode: edit1Result.exitCode },
+          {
+            skillIds: ["web-framework-react"],
+            agents: ["web-developer"],
+            source: "agents-inc",
+          },
+        );
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          name: "web-developer",
         });
-        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
-          contains: ["name: web-developer", "web-framework-react"],
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          skills: ["web-framework-react"],
         });
 
         const configAfterEdit1 = await readTestFile(configPath);
@@ -217,17 +227,22 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           source: { sourceDir, tempDir: sourceTempDir },
         });
         const edit2Result = await edit2Wizard.passThrough();
-        expect(await edit2Result.exitCode).toBe(EXIT_CODES.SUCCESS);
         await edit2Result.destroy();
 
         // --- Phase 3 verification ---
-        await expect({ dir: projectDir }).toHaveConfig({
-          skillIds: ["web-framework-react"],
-          agents: ["web-developer"],
-          source: "agents-inc",
+        await expectPhaseSuccess(
+          { project: { dir: projectDir }, exitCode: edit2Result.exitCode },
+          {
+            skillIds: ["web-framework-react"],
+            agents: ["web-developer"],
+            source: "agents-inc",
+          },
+        );
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          name: "web-developer",
         });
-        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
-          contains: ["name: web-developer", "web-framework-react"],
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          skills: ["web-framework-react"],
         });
 
         const configAfterEdit2 = await readTestFile(configPath);
@@ -271,6 +286,11 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           skills: ["web-framework-react"],
           agents: ["web-developer"],
           domains: ["web"],
+          stack: {
+            "web-developer": {
+              "web-framework": [{ id: "web-framework-react", preloaded: true }],
+            },
+          },
         });
         tempDir = path.dirname(project.dir);
         const projectDir = project.dir;
@@ -308,18 +328,22 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         const confirm1 = await agents1.acceptDefaults("edit");
         const edit1Result = await confirm1.confirm();
 
-        expect(await edit1Result.exitCode).toBe(EXIT_CODES.SUCCESS);
         await edit1Result.destroy();
 
         // --- Phase 2 verification ---
-        await expect({ dir: projectDir }).toHaveConfig({
-          skillIds: ["web-framework-react"],
-          agents: ["web-developer"],
-          source: "eject",
+        await expectPhaseSuccess(
+          { project: { dir: projectDir }, exitCode: edit1Result.exitCode },
+          {
+            skillIds: ["web-framework-react"],
+            agents: ["web-developer"],
+            source: "eject",
+          },
+        );
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          name: "web-developer",
         });
-        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
-        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
-          contains: ["name: web-developer", "web-framework-react"],
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          skills: ["web-framework-react"],
         });
 
         const configAfterAdd = await readTestFile(configPath);
@@ -351,18 +375,22 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         const confirm2 = await agents2.acceptDefaults("edit");
         const edit2Result = await confirm2.confirm();
 
-        expect(await edit2Result.exitCode).toBe(EXIT_CODES.SUCCESS);
         await edit2Result.destroy();
 
         // --- Phase 3 verification ---
-        await expect({ dir: projectDir }).toHaveConfig({
-          skillIds: ["web-framework-react"],
-          agents: ["web-developer"],
-          source: "eject",
+        await expectPhaseSuccess(
+          { project: { dir: projectDir }, exitCode: edit2Result.exitCode },
+          {
+            skillIds: ["web-framework-react"],
+            agents: ["web-developer"],
+            source: "eject",
+          },
+        );
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          name: "web-developer",
         });
-        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
-        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
-          contains: ["name: web-developer", "web-framework-react"],
+        await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+          skills: ["web-framework-react"],
         });
 
         const configAfterNoChange = await readTestFile(configPath);
