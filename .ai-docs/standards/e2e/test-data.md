@@ -13,7 +13,7 @@ Never inline `mkdir` + `writeFile` to build a project directory in a test file. 
 | Method                                                | Returns                  | Use When                                                                                                  |
 | ----------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------- |
 | `ProjectBuilder.minimal()`                            | `ProjectHandle`          | Compile tests. Creates config + 1 skill (`web-testing-vitest`).                                           |
-| `ProjectBuilder.editable(options?)`                   | `ProjectHandle`          | Edit wizard tests. Creates config + skills + agents dir. Options: `skills`, `agents`, `domains`.          |
+| `ProjectBuilder.editable(options?)`                   | `ProjectHandle`          | Edit wizard tests. Creates config + skills + agents dir. Options: `skills`, `agents`, `domains`, `stack`. |
 | `ProjectBuilder.dualScope()`                          | `DualScopeHandle`        | Dual-scope non-interactive tests. Creates `globalHome` + `project` with separate configs.                 |
 | `ProjectBuilder.withCustomSkill()`                    | `ProjectHandle`          | Custom skill validation. Creates config + config-types.ts + custom skill with `custom: true`.             |
 | `ProjectBuilder.pluginProject(options)`               | `ProjectHandle`          | Plugin mode tests. Creates config with marketplace source, skills, agent stubs.                           |
@@ -128,6 +128,9 @@ Use `createTestEnvironment` + `setupDualScope` when you need fine-grained contro
 | Utility helpers              | `e2e/helpers/test-utils.ts`          | `createTempDir()`, `writeProjectConfig()`, `createLocalSkill()` |
 | UI text and paths            | `e2e/pages/constants.ts`             | `STEP_TEXT`, `DIRS`, `FILES`, `TIMEOUTS`                        |
 | Dual-scope lifecycle helpers | `e2e/fixtures/dual-scope-helpers.ts` | `setupDualScope()`, `initGlobal()`                              |
+| Expected value constants     | `e2e/fixtures/expected-values.ts`    | `E2E_AGENTS`, `E2E_SKILL_IDS`                                  |
+| Assertion helpers            | `e2e/assertions/`                    | `expectPhaseSuccess()`, `expectCleanUninstall()`                |
+| Agent matchers               | `e2e/matchers/agent-matchers.ts`     | `toHaveAgentFrontmatter`, `toHaveAgentDynamicSkills`            |
 
 **Never create test data in** `e2e/commands/`, `e2e/interactive/`, `e2e/lifecycle/`, or `e2e/integration/`. Those directories contain only test files.
 

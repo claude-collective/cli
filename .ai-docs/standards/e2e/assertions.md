@@ -33,10 +33,10 @@ All matchers accept a `ProjectHandle` (`{ dir: string }`) as the first argument 
 Checks that `.claude-src/config.ts` exists. Optionally validates content.
 
 ```typescript
-// Config exists (any content)
-await expect(project).toHaveConfig();
+// DISCOURAGED: bare call only checks file exists, not content
+// await expect(project).toHaveConfig();
 
-// Config contains specific skill IDs, source, and agents
+// PREFERRED: always specify expected content
 await expect(project).toHaveConfig({
   skillIds: ["web-framework-react"],
   source: "agents-inc",
@@ -149,6 +149,106 @@ await expect(project).toHaveSettings({
 
 ---
 
+## Assertion Utilities
+
+Composite assertion helpers that combine multiple matchers. These are regular functions (not matchers) — call them directly, not through `expect()`.
+
+### `expectPhaseSuccess(result, expectations)`
+
+Verifies a wizard phase completed successfully: exit code, config content, compiled agents, copied skills.
+
+```typescript
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
+
+await expectPhaseSuccess(result, {
+  skillIds: ["web-framework-react"],
+  agents: ["web-developer"],
+  source: "agents-inc",
+  copiedSkills: ["web-framework-react"],
+});
+```
+
+Use when a test has `EXIT_CODES.SUCCESS` + `toHaveConfig` + `toHaveCompiledAgent` together. **Cannot be used when:**
+- Output assertions exist between exit code and config checks
+- The config check targets `{ dir: fakeHome }` instead of `result.project`
+- `CLI.run` results are used (already-resolved exitCode)
+
+### `expectCleanUninstall(dir, options?)`
+
+Verifies complete cleanup after uninstall.
+
+```typescript
+import { expectCleanUninstall } from "../assertions/uninstall-assertions.js";
+
+await expectCleanUninstall(projectDir);
+await expectCleanUninstall(projectDir, { removeConfig: true }); // --all flag
+await expectCleanUninstall(projectDir, { preservedSkills: ["my-custom-skill"] });
+```
+
+### `expectDualScopeInstallation(globalHome, projectDir, expected)`
+
+Verifies both scopes have correct config and compiled agents.
+
+```typescript
+import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
+
+await expectDualScopeInstallation(fakeHome, projectDir, {
+  global: { skillIds: ["web-framework-react"], agents: ["web-developer"] },
+  project: { skillIds: ["api-framework-hono"], agents: ["api-developer"] },
+});
+```
+
+---
+
+## Agent Matchers
+
+Specialized matchers for compiled agent content. These distinguish between **preloaded** skills (YAML frontmatter) and **dynamic** skills (body activation protocol).
+
+### `toHaveAgentFrontmatter(name, expectations?)`
+
+Checks parsed YAML frontmatter fields of a compiled agent.
+
+```typescript
+await expect(project).toHaveAgentFrontmatter("web-developer", {
+  name: "web-developer",
+  skills: ["web-framework-react"],  // preloaded skills in frontmatter
+});
+```
+
+### `toHaveAgentDynamicSkills(name, expectations?)`
+
+Checks the `<skill_activation_protocol>` body section for dynamic skills.
+
+```typescript
+await expect(project).toHaveAgentDynamicSkills("web-developer", {
+  skillIds: ["web-testing-vitest"],  // dynamic skills in body
+  noSkillIds: ["api-framework-hono"], // must NOT be in body
+});
+```
+
+**Preloaded vs dynamic:** The E2E stack defines which skills are preloaded. Check `create-e2e-source.ts` — `createMockSkillAssignment(id, true)` means preloaded (frontmatter), `createMockSkillAssignment(id)` means dynamic (body). Use the correct matcher for each.
+
+---
+
+## Expected Value Constants
+
+Canonical expected values for E2E assertions. Import from `e2e/fixtures/expected-values.ts`.
+
+```typescript
+import { E2E_AGENTS } from "../fixtures/expected-values.js";
+
+// Use in assertions:
+await expectPhaseSuccess(result, { agents: E2E_AGENTS.WEB_AND_API });
+```
+
+Available constants:
+- `E2E_AGENTS.WEB` — web-scope agent names
+- `E2E_AGENTS.API` — api-scope agent names
+- `E2E_AGENTS.WEB_AND_API` — both scopes combined
+- `E2E_SKILL_IDS` — all 9 skill IDs from the E2E source
+
+---
+
 ## Exit Code Assertions
 
 Always use named constants from `EXIT_CODES`. Never use bare numbers.
@@ -180,6 +280,22 @@ expect(result).toEqual({ valid: true });
 ```
 
 `toBe` is fine for primitives (strings, numbers, booleans) where strict equality is the same.
+
+---
+
+## Writing Correct Assertion Values
+
+When adding `toStrictEqual` assertions for config objects, verify these common pitfalls:
+
+1. **Agent scope:** `preselectAgentsFromDomains` creates agents with `scope: "global"`, not `"project"`. Only scope-toggled agents get `"project"`.
+
+2. **Skill ordering:** Skills are stored in domain iteration order (web → api → meta), NOT alphabetical. Use sorted comparisons or `expectConfigSkills`.
+
+3. **Stack compaction:** When reading a config from disk, `{ id: "web-framework-react", preloaded: false }` is compacted to `"web-framework-react"` (bare string). Only `preloaded: true` entries keep the object form.
+
+4. **undefined vs missing:** `toStrictEqual` distinguishes `{ excluded: undefined }` from `{}`. Production code omits `excluded` entirely for non-excluded entries — never include `excluded: undefined` in expected values.
+
+5. **Preloaded vs dynamic skills:** In compiled agents, preloaded skills appear in YAML frontmatter `skills:` array. Dynamic skills appear in `<skill_activation_protocol>` body section. Check `createMockSkillAssignment(id, true)` to determine which is which.
 
 ---
 

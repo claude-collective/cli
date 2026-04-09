@@ -182,6 +182,8 @@ await prompt.arrowDown();
 1. Grep `e2e/helpers/test-utils.ts` for the function name or a similar name
 2. Grep `e2e/fixtures/` for related helpers
 3. Grep `e2e/pages/constants.ts` for the constant value
+4. Grep `e2e/assertions/` for assertion utilities
+5. Grep `e2e/fixtures/expected-values.ts` for expected value constants
 
 **Where new helpers belong:**
 
@@ -189,6 +191,9 @@ await prompt.arrowDown();
 - Dual-scope lifecycle helpers -> `dual-scope-helpers.ts`
 - Constants (paths, timeouts, text) -> `constants.ts`
 - Project creation patterns -> new `ProjectBuilder` method
+- Assertion utilities -> `e2e/assertions/` (phase-assertions, scope-assertions, uninstall-assertions)
+- Agent matchers -> `e2e/matchers/agent-matchers.ts`
+- Expected value constants -> `e2e/fixtures/expected-values.ts`
 
 ---
 
@@ -221,6 +226,90 @@ await prompt.arrowDown();
 **Why:** The literal string `"web-framework-react"` is already a valid `SkillId`. The cast adds noise.
 
 **Instead:** Use the literal string directly. Only cast at parse boundaries (YAML/JSON) or for deliberately invalid test-only IDs.
+
+---
+
+## Assertion Quality
+
+### Never use existence-only assertions
+
+**What:** `expect(result).toBeDefined()` or `expect(await fileExists(path)).toBe(true)` without checking content.
+
+**Why:** An empty file, wrong config, or partially-constructed object all pass.
+
+**Instead:** Use content-aware matchers: `await expect(project).toHaveConfig({ skillIds: [...] })` or read and verify content.
+
+### Never use count-only assertions
+
+**What:** `expect(array).toHaveLength(3)` without verifying WHICH items.
+
+**Why:** 3 wrong items pass the same as 3 right items.
+
+**Instead:** `expect(array.sort()).toStrictEqual([...exactItems])` or use assertion utilities like `expectConfigSkills`.
+
+### Never use bare matcher calls
+
+**What:** `await expect(project).toHaveConfig()` or `await expect(project).toHaveCompiledAgents()` without parameters.
+
+**Why:** Only checks the file exists, not its content. A corrupted or wrong config passes.
+
+**Instead:** Always pass parameters: `toHaveConfig({ skillIds: [...], agents: [...], source: "..." })`.
+
+### Never omit negative assertions after removals
+
+**What:** After uninstall/deselection, only checking what remains — not checking that removed items are gone.
+
+**Why:** If the removal failed silently, the test still passes because the remaining items are present.
+
+**Instead:** Use `expectCleanUninstall(dir)` or add explicit `notContains` / `toHaveNoLocalSkills()` checks.
+
+### Never check the wrong scope directory
+
+**What:** `await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer")` when agents compile to `fakeHome`.
+
+**Why:** In dual-scope setups, agents default to global scope. Compiled agents go to `$HOME/.claude/agents/`, not `<project>/.claude/agents/`.
+
+**Instead:** Check the correct directory for each scope. Use `expectDualScopeInstallation` for structured dual-scope checks.
+
+### Never use toHaveAgentDynamicSkills for preloaded skills (or vice versa)
+
+**What:** Checking for a preloaded skill in the body, or a dynamic skill in frontmatter.
+
+**Why:** Preloaded skills appear in YAML frontmatter `skills:` array. Dynamic skills appear in `<skill_activation_protocol>` body section. They're mutually exclusive.
+
+**Instead:** Check `create-e2e-source.ts` — `createMockSkillAssignment(id, true)` = preloaded (use `toHaveAgentFrontmatter`), default = dynamic (use `toHaveAgentDynamicSkills`).
+
+### Never write assertion values without verifying them against production code
+
+**What:** Writing `expect(config.agents).toStrictEqual([{ name: "web-developer", scope: "project" }])` without checking what the code actually produces.
+
+**Why:** This was the #1 source of incorrect assertions (30+ instances). Common mistakes:
+- Agents default to `scope: "global"`, not `"project"`
+- Config preserves skills in domain iteration order, not alphabetical
+- `compactStackAssignments` compacts `{ id, preloaded: false }` to bare string IDs
+- `toStrictEqual` treats `excluded: undefined` as different from a missing `excluded` property
+
+**Instead:** Read the production source to understand exact return types. Run the test once to see actual values. Only then write the expected values.
+
+### Never use broad negative assertions on merged configs
+
+**What:** `expect(projectConfig).not.toContain('"source":"eject"')` on a config that contains both project-scoped and global-scoped entries.
+
+**Why:** The merged config contains entries from BOTH scopes. An excluded global entry legitimately retains `"source":"eject"` as a tombstone. A broad `not.toContain` catches entries from the wrong scope.
+
+**Instead:** Target the specific scope's entry with a regex or use `toHaveConfig` which checks config content at a higher level:
+```typescript
+const projectHonoSource = config.match(/"api-framework-hono","scope":"project","source":"([^"]+)"/);
+expect(projectHonoSource![1]).not.toBe("eject");
+```
+
+### Never assume skill ordering is alphabetical
+
+**What:** `expect(config.skills.map(s => s.id)).toStrictEqual(["api-framework-hono", "web-framework-react", "web-state-zustand"])` (alphabetical).
+
+**Why:** Config preserves skills in domain iteration order (web skills first, then api, then meta). The actual order is `["web-framework-react", "web-state-zustand", "api-framework-hono"]`.
+
+**Instead:** Sort both sides: `expect(config.skills.map(s => s.id).sort()).toStrictEqual([...expected].sort())`, or use `expectConfigSkills` which normalizes ordering automatically.
 
 ---
 

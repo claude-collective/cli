@@ -56,16 +56,18 @@ Complete a wizard with defaults and verify the outcome. The simplest interactive
 
 ```typescript
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { EXIT_CODES } from "../pages/constants.js";
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import "../matchers/setup.js";
 
 it("should complete init with defaults", async () => {
   const wizard = await InitWizard.launch();
   const result = await wizard.completeWithDefaults();
 
-  expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-  await expect(result.project).toHaveConfig();
-  await expect(result.project).toHaveCompiledAgents();
+  await expectPhaseSuccess(result, {
+    skillIds: ["web-framework-react"],
+    agents: ["web-developer", "api-developer"],
+    source: "agents-inc",
+  });
 });
 ```
 
@@ -120,6 +122,9 @@ Key points:
 Multi-phase tests where phases share project state. Use a single `it()` block with clearly separated phases.
 
 ```typescript
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
+import { expectCleanUninstall } from "../assertions/uninstall-assertions.js";
+
 it("full lifecycle: init -> compile -> uninstall", { timeout: TIMEOUTS.LIFECYCLE }, async () => {
   // Phase 1: Init
   const wizard = await InitWizard.launch({
@@ -127,8 +132,11 @@ it("full lifecycle: init -> compile -> uninstall", { timeout: TIMEOUTS.LIFECYCLE
     projectDir,
   });
   const initResult = await wizard.completeWithDefaults();
-  expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-  await expect({ dir: projectDir }).toHaveConfig();
+  await expectPhaseSuccess(initResult, {
+    skillIds: ["web-framework-react"],
+    agents: ["web-developer"],
+    source: "agents-inc",
+  });
   await initResult.destroy(); // Clean up session before next phase
 
   // Phase 2: Compile
@@ -140,7 +148,7 @@ it("full lifecycle: init -> compile -> uninstall", { timeout: TIMEOUTS.LIFECYCLE
   expect(uninstallResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
   // Phase 4: Verify clean state
-  await expect({ dir: projectDir }).toHaveNoLocalSkills();
+  await expectCleanUninstall(projectDir);
 });
 ```
 
@@ -161,6 +169,8 @@ Dual-scope tests verify that global and project installations coexist correctly.
 **Non-interactive (file assertions):**
 
 ```typescript
+import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
+
 const { project, globalHome } = await ProjectBuilder.dualScope();
 
 const { exitCode } = await CLI.run(["compile"], project, {
@@ -168,20 +178,26 @@ const { exitCode } = await CLI.run(["compile"], project, {
 });
 
 expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-await expect(globalHome).toHaveConfig();
-await expect(project).toHaveConfig();
+await expectDualScopeInstallation(globalHome.dir, project.dir, {
+  global: { skillIds: ["web-framework-react"], agents: ["web-developer"] },
+  project: { skillIds: ["api-framework-hono"], agents: ["api-developer"] },
+});
 ```
 
 **Interactive (wizard-based, builds scope through interactions):**
 
 ```typescript
+import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
+
 const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
 
 await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
 
-// Both scopes now have installations
-await expect({ dir: fakeHome }).toHaveConfig();
-await expect({ dir: projectDir }).toHaveConfig();
+// Both scopes have correct config and compiled agents
+await expectDualScopeInstallation(fakeHome, projectDir, {
+  global: { skillIds: ["web-framework-react"], agents: ["web-developer"] },
+  project: { skillIds: ["api-framework-hono"], agents: ["api-developer"] },
+});
 ```
 
 Key points:
@@ -320,6 +336,8 @@ When the bug is fixed, remove `it.fails()` and the test passes -- no assertion c
 The edit wizard opens directly to the build step (no stack or domain selection).
 
 ```typescript
+import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
+
 it("should edit and preserve agents", async () => {
   const project = await ProjectBuilder.editable({
     skills: ["web-framework-react"],
@@ -333,8 +351,11 @@ it("should edit and preserve agents", async () => {
   });
   const result = await wizard.passThrough();
 
-  expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-  await expect(result.project).toHaveConfig();
+  await expectPhaseSuccess(result, {
+    skillIds: ["web-framework-react"],
+    agents: ["web-developer"],
+    source: "agents-inc",
+  });
 });
 ```
 
