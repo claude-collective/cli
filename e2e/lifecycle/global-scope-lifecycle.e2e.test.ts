@@ -4,7 +4,7 @@ import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, STEP_TEXT } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import {
@@ -144,7 +144,7 @@ describe("global scope lifecycle -- uninstall with dual scope", () => {
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(output).toContain("Uninstall complete!");
+      expect(output).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
       await expect({ dir: projectDir }).not.toHaveSkillCopied("api-framework-hono");
       await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
@@ -217,6 +217,21 @@ describe("global scope lifecycle -- init wizard with scope toggling", () => {
       // Confirm
       const result = await confirm.confirm();
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // --- Config content assertions ---
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react"],
+        agents: ["web-developer"],
+      });
+
+      // --- Agent compilation assertions ---
+      // Agents default to global scope (no scope toggle in agents step),
+      // so compiled agent lives at fakeHome, not projectDir.
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer"],
+        notContains: ["web-framework-react"],
+      });
 
       // --- Scope-aware copy assertions ---
       await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");

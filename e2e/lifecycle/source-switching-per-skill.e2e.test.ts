@@ -5,7 +5,7 @@ import {
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS, STEP_TEXT } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
 import { InteractivePrompt } from "../fixtures/interactive-prompt.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import {
@@ -142,7 +142,7 @@ describe.skipIf(!claudeAvailable)("source switching mid-lifecycle -- per-skill s
         const rawOutput = prompt.getRawOutput();
         expect(rawOutput).toMatch(/[Ss]witch|[Ii]nstall/);
 
-        const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, "config.ts");
+        const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
         expect(await fileExists(configPath)).toBe(true);
         const configContent = await readTestFile(configPath);
         expect(configContent).toContain(fixture.marketplaceName);

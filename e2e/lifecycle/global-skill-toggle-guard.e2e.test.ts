@@ -84,7 +84,7 @@ describe("global skill toggle guard from project scope", () => {
       // Verify the global config still contains all original skills (unchanged)
       const globalConfigPath = path.join(env.fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const globalConfig = await readTestFile(globalConfigPath);
-      expect(globalConfig).toContain("react");
+      expect(globalConfig).toContain("web-framework-react");
 
       // Verify global skill directories still exist on disk
       const globalSkillsDir = path.join(env.fakeHome, DIRS.CLAUDE, DIRS.SKILLS);

@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { DIRS } from "../pages/constants.js";
+import { DIRS, EXIT_CODES, SOURCE_PATHS } from "../pages/constants.js";
 import {
   isClaudeCLIAvailable,
   execCommand,
@@ -9,8 +9,6 @@ import {
   createTempDir,
   cleanupTempDir,
 } from "../helpers/test-utils.js";
-
-const PLUGIN_MANIFEST_DIR = ".claude-plugin";
 
 /**
  * Blocker 7.6: HOME Isolation + Claude CLI Auth
@@ -46,8 +44,8 @@ describe.skipIf(!claudeAvailable)(
       const result = await execCommand("claude", ["--version"], {
         env: { ...process.env, HOME: tempDir },
       });
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBeTruthy();
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(result.stdout.trim()).toMatch(/\d+\.\d+/);
     });
 
     it("should list marketplaces with HOME=<tempDir>", async () => {
@@ -63,7 +61,7 @@ describe.skipIf(!claudeAvailable)(
       // Create a minimal marketplace structure
       tempDir = await createTempDir();
       const marketplaceDir = path.join(tempDir, "marketplace");
-      const pluginDir = path.join(marketplaceDir, PLUGIN_MANIFEST_DIR);
+      const pluginDir = path.join(marketplaceDir, SOURCE_PATHS.PLUGIN_MANIFEST_DIR);
       await mkdir(pluginDir, { recursive: true });
       await writeFile(
         path.join(pluginDir, "marketplace.json"),

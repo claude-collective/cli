@@ -137,18 +137,11 @@ describe("config-scope integrity -- source priority preservation", () => {
       expect(skillsMatch, "Config must have a skills variable").not.toBeNull();
       const skillsBlock = skillsMatch![1];
 
-      // Every skill should still have source: "eject" (not overridden by marketplace)
-      const localSourceMatches = skillsBlock.match(/"source":"eject"/g);
-      expect(
-        localSourceMatches,
-        "All skills should retain source: eject after edit",
-      ).not.toBeNull();
-      expect(localSourceMatches!.length).toBeGreaterThan(0);
-
-      // No skill should have a non-eject source (which would indicate override)
+      // Every skill must have source: "eject" — no marketplace override
       const allSourceMatches = skillsBlock.match(/"source":"([^"]+)"/g) ?? [];
+      expect(allSourceMatches.length).toBeGreaterThanOrEqual(3);
       for (const match of allSourceMatches) {
-        expect(match).toContain('"eject"');
+        expect(match).toBe('"source":"eject"');
       }
     },
   );

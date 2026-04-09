@@ -5,7 +5,7 @@ import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
-import { TIMEOUTS, DIRS, FILES } from "../pages/constants.js";
+import { TIMEOUTS, DIRS, FILES, SOURCE_PATHS } from "../pages/constants.js";
 import {
   isClaudeCLIAvailable,
   claudePluginMarketplaceAdd,
@@ -17,7 +17,6 @@ import {
   readTestFile,
 } from "../helpers/test-utils.js";
 
-const PLUGIN_MANIFEST_DIR = ".claude-plugin";
 import "../matchers/setup.js";
 
 /**
@@ -73,14 +72,14 @@ describe.skipIf(!claudeAvailable)(
       const firstDir = pluginDirs[0];
       if (!firstDir) throw new Error("Expected at least one plugin directory");
       const firstPlugin = path.join(fixture.pluginsDir, firstDir);
-      expect(await fileExists(path.join(firstPlugin, PLUGIN_MANIFEST_DIR, FILES.PLUGIN_JSON))).toBe(
+      expect(await fileExists(path.join(firstPlugin, SOURCE_PATHS.PLUGIN_MANIFEST_DIR, FILES.PLUGIN_JSON))).toBe(
         true,
       );
     });
 
     // Step 2: Verify marketplace.json was built
     it("should have a valid marketplace.json", async () => {
-      const marketplacePath = path.join(fixture.sourceDir, PLUGIN_MANIFEST_DIR, "marketplace.json");
+      const marketplacePath = path.join(fixture.sourceDir, SOURCE_PATHS.PLUGIN_MANIFEST_DIR, "marketplace.json");
       expect(await fileExists(marketplacePath)).toBe(true);
 
       const content = await readTestFile(marketplacePath);

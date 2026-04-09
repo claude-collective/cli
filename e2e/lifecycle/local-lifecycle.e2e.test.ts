@@ -2,7 +2,7 @@ import path from "path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, STEP_TEXT } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { CLI } from "../fixtures/cli.js";
 import {
@@ -10,7 +10,6 @@ import {
   cleanupTempDir,
   ensureBinaryExists,
   directoryExists,
-  readTestFile,
 } from "../helpers/test-utils.js";
 
 /**
@@ -61,19 +60,18 @@ describe("eject mode lifecycle: init -> compile -> uninstall", () => {
 
       // --- Phase 1 Verification ---
 
-      // P1-A/B: Config exists with expected skill
+      // P1-A/B: Config exists with expected skill, agents, and source
       await expect({ dir: projectDir }).toHaveConfig({
         skillIds: ["web-framework-react"],
+        agents: ["web-developer"],
+        source: "agents-inc",
       });
 
-      // P1-B2: Config has source and scope fields
-      const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, "config.ts");
-      const configContent = await readTestFile(configPath);
-      expect(configContent).toMatch(/"source":\s*"[^"]+"/);
-      expect(configContent).toMatch(/"scope":\s*"(project|global)"/);
-
-      // P1-C/D: Agents compiled
+      // P1-C/D: Agents compiled with correct content
       await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-framework-react"],
+      });
 
       // P1-F: Skills copied locally
       await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
@@ -101,14 +99,18 @@ describe("eject mode lifecycle: init -> compile -> uninstall", () => {
       expect(compileResult.exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(compileResult.output).toMatch(/Recompiled [1-9]\d* global agents/);
 
-      // P2-A: web-developer agent still compiled
-      await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+      // P2-A: Config preserved after compile
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react"],
+        agents: ["web-developer"],
+        source: "agents-inc",
+      });
 
-      // P2-B: Agent file has meaningful content
-      const webDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "web-developer.md");
-      const webDevContent = await readTestFile(webDevPath);
-      expect(webDevContent).toMatch(/^---/);
-      expect(webDevContent).toContain("name: web-developer");
+      // P2-B/C: web-developer agent still compiled with correct content
+      await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-framework-react"],
+      });
 
       // ================================================================
       // Phase 3: Uninstall --yes -- remove skills and agents
@@ -123,18 +125,27 @@ describe("eject mode lifecycle: init -> compile -> uninstall", () => {
       );
 
       expect(uninstallResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(uninstallResult.stdout).toContain("Uninstall complete!");
+      expect(uninstallResult.stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
       // ================================================================
       // Phase 4: Verify clean state
       // ================================================================
 
-      const skillsDir = path.join(projectDir, DIRS.CLAUDE, "skills");
-      const agentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
+      const skillsDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS);
+      const agentsDir = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS);
 
+      // Skills and agents directories should be fully removed
+      await expect({ dir: projectDir }).toHaveNoLocalSkills();
       expect(await directoryExists(skillsDir)).toBe(false);
       expect(await directoryExists(agentsDir)).toBe(false);
+
+      // Config directory should still exist (uninstall without --all preserves it)
       expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
+
+      // The specific skill that was installed in Phase 1 should no longer be present
+      expect(await directoryExists(
+        path.join(skillsDir, "web-framework-react"),
+      )).toBe(false);
     },
   );
 });

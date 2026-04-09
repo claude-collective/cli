@@ -80,8 +80,11 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
         "Global web-developer.md should still exist",
       ).toBe(true);
 
-      // 3. Project config exists (project-level installation was created)
-      await expect({ dir: projectDir }).toHaveConfig();
+      // 3. Project config exists with project-scoped skill and agent
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["api-framework-hono"],
+        agents: ["api-developer"],
+      });
 
       // 4. Global config exists and is not corrupted
       await expect({ dir: fakeHome }).toHaveConfig({
@@ -122,12 +125,23 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
         skillIds: ["web-framework-react", "api-framework-hono"],
       });
 
-      // 7. Project config still exists
-      await expect({ dir: projectDir }).toHaveConfig();
+      // 7. Project config still exists with project-scoped skill and agent
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["api-framework-hono"],
+        agents: ["api-developer"],
+      });
 
       // 8. api-developer agent at project scope contains the project-scoped skill
+      //    and does NOT contain the global-only skill
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
         contains: ["api-framework-hono"],
+        notContains: ["web-framework-react"],
+      });
+
+      // 8b. web-developer agent at global scope does NOT contain the project-scoped skill
+      await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["web-framework-react"],
+        notContains: ["api-framework-hono"],
       });
 
       // 9. No duplicate agent files in either scope directory

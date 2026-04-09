@@ -4,6 +4,7 @@ import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
+import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
@@ -115,11 +116,24 @@ describe.skipIf(!claudeAvailable)(
         );
         expect(await fileExists(localSkillPath)).toBe(false);
 
-        // D-3: Config updated with non-local source
+        // D-3: Project config has api-framework-hono and api-developer agent
+        await expect({ dir: projectDir }).toHaveConfig({
+          skillIds: ["api-framework-hono"],
+          agents: ["api-developer"],
+        });
         const projectConfig = await readTestFile(
           path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
         );
-        expect(projectConfig).toContain("api-framework-hono");
+        // Project-scoped api-framework-hono source must have been updated from eject to plugin
+        // (excluded global entries may legitimately retain source:"eject")
+        const projectHonoSource = projectConfig.match(
+          /"api-framework-hono","scope":"project","source":"([^"]+)"/,
+        );
+        expect(projectHonoSource, "project-scoped api-framework-hono must exist in config").not.toBeNull();
+        expect(projectHonoSource![1]).not.toBe("eject");
+
+        // D-4: Compiled agents exist at correct scopes
+        await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
         await result.destroy();
         wizard = undefined;
@@ -184,11 +198,24 @@ describe.skipIf(!claudeAvailable)(
         );
         expect(await fileExists(localSkillPath)).toBe(false);
 
-        // D-3: Config updated with marketplace source (not local)
+        // D-3: Project config has api-framework-hono and api-developer agent
+        await expect({ dir: projectDir }).toHaveConfig({
+          skillIds: ["api-framework-hono"],
+          agents: ["api-developer"],
+        });
         const projectConfig = await readTestFile(
           path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
         );
-        expect(projectConfig).toContain("api-framework-hono");
+        // Project-scoped api-framework-hono source must have been updated from eject to plugin
+        // (excluded global entries may legitimately retain source:"eject")
+        const projectHonoSource = projectConfig.match(
+          /"api-framework-hono","scope":"project","source":"([^"]+)"/,
+        );
+        expect(projectHonoSource, "project-scoped api-framework-hono must exist in config").not.toBeNull();
+        expect(projectHonoSource![1]).not.toBe("eject");
+
+        // D-4: Compiled agents exist at correct scopes
+        await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
         await result.destroy();
         wizard = undefined;

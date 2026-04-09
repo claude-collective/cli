@@ -1,7 +1,8 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
+import "../matchers/setup.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
@@ -9,7 +10,6 @@ import {
   createPermissionsFile,
   createTempDir,
   ensureBinaryExists,
-  fileExists,
   readTestFile,
 } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
@@ -146,7 +146,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
       async () => {
         tempDir = await createTempDir();
         const projectDir = tempDir;
-        const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, "config.ts");
+        const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
 
         // ================================================================
         // Phase 1: Init via wizard
@@ -161,10 +161,18 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         await initResult.destroy();
 
         // --- Phase 1 verification ---
-        expect(await fileExists(configPath)).toBe(true);
+        await expect({ dir: projectDir }).toHaveConfig({
+          skillIds: ["web-framework-react"],
+          agents: ["web-developer"],
+          source: "agents-inc",
+        });
+        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+          contains: ["name: web-developer", "web-framework-react"],
+        });
+
         const configAfterInit = await readTestFile(configPath);
         const initArrays = parseConfigArrays(configAfterInit);
-        expect(initArrays.skillIds.length).toBeGreaterThan(0);
         expectNoDuplicates(initArrays.skillIds, "skills after init");
         expectNoDuplicates(initArrays.agentNames, "agents after init");
         expectNoDuplicates(initArrays.domains, "domains after init");
@@ -182,6 +190,15 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         await edit1Result.destroy();
 
         // --- Phase 2 verification ---
+        await expect({ dir: projectDir }).toHaveConfig({
+          skillIds: ["web-framework-react"],
+          agents: ["web-developer"],
+          source: "agents-inc",
+        });
+        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+          contains: ["name: web-developer", "web-framework-react"],
+        });
+
         const configAfterEdit1 = await readTestFile(configPath);
         const edit1Arrays = parseConfigArrays(configAfterEdit1);
 
@@ -204,6 +221,15 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         await edit2Result.destroy();
 
         // --- Phase 3 verification ---
+        await expect({ dir: projectDir }).toHaveConfig({
+          skillIds: ["web-framework-react"],
+          agents: ["web-developer"],
+          source: "agents-inc",
+        });
+        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+          contains: ["name: web-developer", "web-framework-react"],
+        });
+
         const configAfterEdit2 = await readTestFile(configPath);
         const edit2Arrays = parseConfigArrays(configAfterEdit2);
 
@@ -250,12 +276,16 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         const projectDir = project.dir;
 
         await createPermissionsFile(projectDir);
-        const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, "config.ts");
+        const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
 
-        // Verify initial state
+        // Verify initial state via matcher and detailed parsing
+        await expect({ dir: projectDir }).toHaveConfig({
+          skillIds: ["web-framework-react"],
+          agents: ["web-developer"],
+          source: "eject",
+        });
         const configBefore = await readTestFile(configPath);
         const beforeArrays = parseConfigArrays(configBefore);
-        expect(beforeArrays.skillIds).toContain("web-framework-react");
 
         // ================================================================
         // Phase 2: First edit -- add a skill
@@ -282,6 +312,16 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         await edit1Result.destroy();
 
         // --- Phase 2 verification ---
+        await expect({ dir: projectDir }).toHaveConfig({
+          skillIds: ["web-framework-react"],
+          agents: ["web-developer"],
+          source: "eject",
+        });
+        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+          contains: ["name: web-developer", "web-framework-react"],
+        });
+
         const configAfterAdd = await readTestFile(configPath);
         const addArrays = parseConfigArrays(configAfterAdd);
 
@@ -315,6 +355,16 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         await edit2Result.destroy();
 
         // --- Phase 3 verification ---
+        await expect({ dir: projectDir }).toHaveConfig({
+          skillIds: ["web-framework-react"],
+          agents: ["web-developer"],
+          source: "eject",
+        });
+        await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+        await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+          contains: ["name: web-developer", "web-framework-react"],
+        });
+
         const configAfterNoChange = await readTestFile(configPath);
         const noChangeArrays = parseConfigArrays(configAfterNoChange);
 

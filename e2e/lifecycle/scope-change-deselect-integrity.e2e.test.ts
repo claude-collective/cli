@@ -6,7 +6,6 @@ import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
   cleanupTempDir,
   ensureBinaryExists,
-  fileExists,
   readTestFile,
 } from "../helpers/test-utils.js";
 import {
@@ -64,8 +63,6 @@ describe("scope change deselect integrity", () => {
       testTempDir = tempDir;
       await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
 
-      const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-
       // Launch edit wizard from project scope
       wizard = await EditWizard.launch({
         projectDir,
@@ -97,25 +94,19 @@ describe("scope change deselect integrity", () => {
       const exitCode = await result.exitCode;
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Assert: global config still contains all web skills (unchanged)
-      const globalConfigAfter = await readTestFile(globalConfigPath);
-      expect(globalConfigAfter).toContain("web-framework-react");
-      expect(globalConfigAfter).toContain("web-testing-vitest");
-      expect(globalConfigAfter).toContain("web-state-zustand");
+      // Assert: global config still contains all web skills and web-developer agent (unchanged)
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+        agents: ["web-developer"],
+      });
 
-      // Assert: global agent files still exist on disk
-      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
-      expect(
-        await fileExists(globalWebDevPath),
-        "web-developer.md must still exist in global agents dir",
-      ).toBe(true);
+      // Assert: global agent file still exists on disk
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
-      // Assert: project config still exists and retains web skills from global scope
-      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const projectConfigAfter = await readTestFile(projectConfigPath);
-      expect(projectConfigAfter).toContain("web-framework-react");
-      expect(projectConfigAfter).toContain("web-testing-vitest");
-      expect(projectConfigAfter).toContain("web-state-zustand");
+      // Assert: project config retains web skills from global scope
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+      });
 
       await result.destroy();
     },
@@ -145,14 +136,14 @@ describe("scope change deselect integrity", () => {
       const exitCode = await result.exitCode;
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Assert: global config is unchanged -- all skills still present
-      const globalConfigAfter = await readTestFile(globalConfigPath);
-      expect(globalConfigAfter).toContain("web-framework-react");
-      expect(globalConfigAfter).toContain("web-testing-vitest");
-      expect(globalConfigAfter).toContain("web-state-zustand");
-      expect(globalConfigAfter).toContain("api-framework-hono");
+      // Assert: global config is unchanged -- all skills and agents still present
+      await expect({ dir: env.fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        agents: ["web-developer", "api-developer"],
+      });
 
       // Normalize both configs (strip projects tracking line) and compare
+      const globalConfigAfter = await readTestFile(globalConfigPath);
       const normalize = (s: string) =>
         s
           .split("\n")
@@ -162,17 +153,8 @@ describe("scope change deselect integrity", () => {
       expect(normalize(globalConfigAfter)).toStrictEqual(normalize(globalConfigBefore));
 
       // Assert: global agent files still exist on disk
-      const globalWebDevPath = path.join(env.fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
-      expect(
-        await fileExists(globalWebDevPath),
-        "web-developer.md must still exist in global agents dir after no-op edit",
-      ).toBe(true);
-
-      const globalApiDevPath = path.join(env.fakeHome, DIRS.CLAUDE, "agents", "api-developer.md");
-      expect(
-        await fileExists(globalApiDevPath),
-        "api-developer.md must still exist in global agents dir after no-op edit",
-      ).toBe(true);
+      await expect({ dir: env.fakeHome }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: env.fakeHome }).toHaveCompiledAgent("api-developer");
 
       await result.destroy();
     },
@@ -241,18 +223,12 @@ describe("scope change deselect integrity", () => {
       expect(globalSkillsAfter).toStrictEqual(globalSkillsBefore);
 
       // Assert: global agent files still exist on disk
-      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
-      expect(
-        await fileExists(globalWebDevPath),
-        "web-developer.md must still exist in global agents dir after project deselection",
-      ).toBe(true);
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
       // Assert: project config still exists and retains web skills from global scope
-      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const projectConfigAfter = await readTestFile(projectConfigPath);
-      expect(projectConfigAfter).toContain("web-framework-react");
-      expect(projectConfigAfter).toContain("web-testing-vitest");
-      expect(projectConfigAfter).toContain("web-state-zustand");
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+      });
 
       await result.destroy();
     },

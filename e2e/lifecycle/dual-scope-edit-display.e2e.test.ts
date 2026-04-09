@@ -1,10 +1,9 @@
-import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import { cleanupTempDir, ensureBinaryExists, fileExists } from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-helpers.js";
 
 /**
@@ -94,11 +93,15 @@ describe("dual-scope edit lifecycle -- display and locking", () => {
       expect(rawOutput).toContain("[G]");
       expect(rawOutput).toContain("[P]");
 
-      // D-4: Config files unchanged -- both still exist
-      const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      expect(await fileExists(globalConfigPath)).toBe(true);
-      expect(await fileExists(projectConfigPath)).toBe(true);
+      // D-4: Config files unchanged with full expected content
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+        agents: ["web-developer"],
+      });
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["api-framework-hono"],
+        agents: ["api-developer"],
+      });
 
       // D-5: Agent files preserved
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");

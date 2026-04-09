@@ -40,8 +40,13 @@ describe("POM Framework Smoke Tests", () => {
         result = await wizard.completeWithDefaults();
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await expect(result.project).toHaveConfig();
-        await expect(result.project).toHaveCompiledAgents();
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react"],
+          agents: ["web-developer", "api-developer"],
+          source: "agents-inc",
+        });
+        await expect(result.project).toHaveCompiledAgent("web-developer");
+        await expect(result.project).toHaveCompiledAgent("api-developer");
       },
       TIMEOUTS.INTERACTIVE,
     );
@@ -86,7 +91,10 @@ describe("POM Framework Smoke Tests", () => {
         result = await wizard.passThrough();
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await expect(result.project).toHaveConfig();
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react", "api-framework-hono", "meta-methodology-research-methodology"],
+          agents: ["web-developer", "api-developer"],
+        });
       },
       TIMEOUTS.INTERACTIVE,
     );
@@ -111,7 +119,8 @@ describe("POM Framework Smoke Tests", () => {
 
         expect(cliResult.exitCode).toBe(EXIT_CODES.SUCCESS);
         expect(cliResult.output).toContain(STEP_TEXT.COMPILE_SUCCESS);
-        await expect(project).toHaveCompiledAgents();
+        await expect(project).toHaveCompiledAgent("web-developer");
+        await expect(project).toHaveCompiledAgent("api-developer");
       },
       TIMEOUTS.INTERACTIVE,
     );

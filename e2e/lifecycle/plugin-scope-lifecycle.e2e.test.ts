@@ -6,6 +6,7 @@ import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
+import "../matchers/setup.js";
 import { TIMEOUTS, DIRS, EXIT_CODES, FILES } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import {

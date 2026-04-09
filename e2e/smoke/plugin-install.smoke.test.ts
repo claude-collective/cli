@@ -1,7 +1,7 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { DIRS } from "../pages/constants.js";
+import { DIRS, EXIT_CODES, FILES } from "../pages/constants.js";
 import {
   isClaudeCLIAvailable,
   claudePluginMarketplaceList,
@@ -45,8 +45,8 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
     it("should report the Claude CLI version", async () => {
       const result = await execCommand("claude", ["--version"], {});
 
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBeTruthy();
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(result.stdout.trim()).toMatch(/\d+\.\d+/);
     });
   });
 
@@ -91,7 +91,7 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       // match what the Claude CLI expects. Instead, we verify the command
       // doesn't hang (which was the original concern).
       expect(typeof result.exitCode).toBe("number");
-      expect(combined).toBeTruthy();
+      expect(combined).toMatch(/.+/);
     });
   });
 
@@ -127,7 +127,6 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       expect(didComplete).toBe(true);
 
       // It should have failed with an error about the nonexistent plugin
-      expect(errorMessage).toBeTruthy();
       expect(errorMessage).toContain("Plugin installation failed");
     });
 
@@ -162,10 +161,10 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       // The command should complete (not hang) and return a non-zero exit code
       // since the plugin doesn't exist
       expect(typeof result.exitCode).toBe("number");
-      expect(result.exitCode).not.toBe(0);
+      expect(result.exitCode).not.toBe(EXIT_CODES.SUCCESS);
 
       const combined = result.stdout + result.stderr;
-      expect(combined).toBeTruthy();
+      expect(combined).toMatch(/.+/);
     });
 
     it("should run claude plugin uninstall via raw execCommand and complete", async () => {
@@ -193,7 +192,7 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       const claudeDir = path.join(projectDir, DIRS.CLAUDE);
       await mkdir(claudeDir, { recursive: true });
 
-      const settingsPath = path.join(claudeDir, "settings.json");
+      const settingsPath = path.join(claudeDir, FILES.SETTINGS_JSON);
 
       // Attempt an install that will fail
       try {

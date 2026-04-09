@@ -4,6 +4,7 @@ import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
+import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
@@ -106,17 +107,31 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
       );
       expect(await fileExists(localSkillPath)).toBe(false);
 
-      // D-4: Config has api-framework-hono (source migrated to marketplace)
+      // D-4: Project config has api-framework-hono and api-developer agent
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["api-framework-hono"],
+        agents: ["api-developer"],
+      });
       const projectConfig = await readTestFile(
         path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
       );
-      expect(projectConfig).toContain("api-framework-hono");
-
-      // D-5: Global config still has web skills
-      const globalConfig = await readTestFile(
-        path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      // Project-scoped api-framework-hono source must have been updated from eject to plugin
+      // (excluded global entries may legitimately retain source:"eject")
+      const projectHonoSource = projectConfig.match(
+        /"api-framework-hono","scope":"project","source":"([^"]+)"/,
       );
-      expect(globalConfig).toContain("web-framework-react");
+      expect(projectHonoSource, "project-scoped api-framework-hono must exist in config").not.toBeNull();
+      expect(projectHonoSource![1]).not.toBe("eject");
+
+      // D-5: Global config still has web skills and web-developer agent
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+        agents: ["web-developer"],
+      });
+
+      // D-6: Compiled agents exist at correct scopes
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
       await result.destroy();
     },

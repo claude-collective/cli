@@ -5,7 +5,7 @@ import {
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { CLI } from "../fixtures/cli.js";
 import {
@@ -74,14 +74,16 @@ describe.skipIf(!claudeAvailable)("plugin mode lifecycle: init -> uninstall", ()
       expect(initOutput).not.toContain("Skills copied to:");
 
       await expect({ dir: projectDir }).toHaveConfig({
-        skillIds: ["web-framework-react"],
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        agents: ["web-developer", "api-developer"],
         source: fixture.marketplaceName,
       });
 
       await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
       // Settings file exists with permissions
-      const settingsPath = path.join(projectDir, DIRS.CLAUDE, "settings.json");
+      const settingsPath = path.join(projectDir, DIRS.CLAUDE, FILES.SETTINGS_JSON);
       expect(await fileExists(settingsPath)).toBe(true);
       const settingsContent = await readTestFile(settingsPath);
       const settings = JSON.parse(settingsContent) as Record<string, unknown>;
@@ -104,9 +106,9 @@ describe.skipIf(!claudeAvailable)("plugin mode lifecycle: init -> uninstall", ()
       );
 
       expect(uninstallResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(uninstallResult.stdout).toContain("Uninstall complete!");
+      expect(uninstallResult.stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
-      const agentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
+      const agentsDir = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS);
       expect(await directoryExists(agentsDir)).toBe(false);
       expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
     },

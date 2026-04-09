@@ -1,11 +1,10 @@
-import { readFile } from "fs/promises";
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { cleanupTempDir, ensureBinaryExists, fileExists } from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists, fileExists, readTestFile } from "../helpers/test-utils.js";
 import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
 
 /**
@@ -83,7 +82,7 @@ describe("SelectedAgentName includes excluded global agents", () => {
       const configTypesPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TYPES_TS);
       expect(await fileExists(configTypesPath)).toBe(true);
 
-      const content = await readFile(configTypesPath, "utf-8");
+      const content = await readTestFile(configTypesPath);
 
       // SelectedAgentName should include ALL agents (including the excluded one)
       // The E2E source has 2 agents: web-developer and api-developer
@@ -92,11 +91,10 @@ describe("SelectedAgentName includes excluded global agents", () => {
       expect(content).toContain("api-developer");
 
       // Verify the config.ts has the excluded agent marked
-      const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      if (await fileExists(configPath)) {
-        const configContent = await readFile(configPath, "utf-8");
-        expect(configContent).toContain("excluded");
-      }
+      const configContent = await readTestFile(
+        path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      expect(configContent).toContain("excluded");
     },
   );
 });

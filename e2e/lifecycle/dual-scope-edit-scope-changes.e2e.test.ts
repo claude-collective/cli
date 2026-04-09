@@ -1,6 +1,7 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
@@ -109,15 +110,19 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       ).toBe(false);
 
       // D-3: Global config has api-framework-hono with scope: "global"
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        agents: ["web-developer"],
+      });
       const globalConfig = await readTestFile(
         path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
       );
-      const honoGlobalLines = globalConfig
-        .split("\n")
-        .filter((l: string) => l.includes("api-framework-hono") && l.includes('"scope":"global"'));
-      expect(honoGlobalLines.length).toBeGreaterThan(0);
+      expect(globalConfig).toContain('"scope":"global"');
 
       // D-4: Project config does NOT contain api-framework-hono at project scope (it moved to global)
+      await expect({ dir: projectDir }).toHaveConfig({
+        agents: ["api-developer"],
+      });
       const projectConfig = await readTestFile(
         path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
       );
@@ -127,17 +132,8 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       expect(honoProjectLines).toStrictEqual([]);
 
       // D-5: Agent files at both scopes still exist (unchanged — collateral damage check)
-      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
-      expect(
-        await fileExists(globalWebDevPath),
-        "web-developer.md must still exist in global agents dir",
-      ).toBe(true);
-
-      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
-      expect(
-        await fileExists(projectApiDevPath),
-        "api-developer.md must still exist in project agents dir",
-      ).toBe(true);
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
       await result.destroy();
     },
@@ -177,11 +173,7 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       // Phase D: Assertions
 
       // D-1: api-developer.md exists at global scope (HOME)
-      const globalApiDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
-      expect(
-        await fileExists(globalApiDevPath),
-        "api-developer.md must exist in global agents dir after scope toggle",
-      ).toBe(true);
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("api-developer");
 
       // D-2: api-developer.md does NOT exist at project scope (P→G is a MOVE for agents)
       const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
@@ -191,18 +183,19 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       ).toBe(false);
 
       // D-3: Agent content at global scope is properly compiled
-      const apiDevContent = await readTestFile(globalApiDevPath);
-      expect(apiDevContent.length).toBeGreaterThan(100);
-      expect(apiDevContent).toContain("api-developer");
+      await expect({ dir: fakeHome }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["api-developer"],
+      });
 
       // D-4: Global config has api-developer with scope: "global"
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand", "api-framework-hono"],
+        agents: ["web-developer", "api-developer"],
+      });
       const globalConfig = await readTestFile(
         path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
       );
-      const apiDevGlobalLines = globalConfig
-        .split("\n")
-        .filter((l: string) => l.includes("api-developer") && l.includes('"scope":"global"'));
-      expect(apiDevGlobalLines.length).toBeGreaterThan(0);
+      expect(globalConfig).toContain('"scope":"global"');
 
       // D-5: Project config does NOT have api-developer at project scope
       const projectConfig = await readTestFile(
@@ -214,23 +207,10 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       expect(apiDevProjectLines).toStrictEqual([]);
 
       // D-6: web-developer.md still at global scope (unchanged — collateral damage check)
-      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
-      expect(
-        await fileExists(globalWebDevPath),
-        "web-developer.md must still exist in global agents dir",
-      ).toBe(true);
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
       // D-7: Global skill files unchanged (web skills still at global)
-      const globalWebSkillDir = path.join(
-        fakeHome,
-        DIRS.CLAUDE,
-        DIRS.SKILLS,
-        "web-framework-react",
-      );
-      expect(
-        await directoryExists(globalWebSkillDir),
-        "web-framework-react directory must still exist at global scope",
-      ).toBe(true);
+      await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
 
       await result.destroy();
     },
@@ -270,45 +250,34 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       // Phase D: Assertions
 
       // D-1: web-developer.md exists at project scope
-      const projectWebDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "web-developer.md");
-      expect(
-        await fileExists(projectWebDevPath),
-        "web-developer.md must exist in project agents dir after scope toggle to project",
-      ).toBe(true);
+      await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
 
       // D-2: web-developer.md STILL exists at global scope (global untouched — override model)
-      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
-      expect(
-        await fileExists(globalWebDevPath),
-        "web-developer.md must still exist in global agents dir (G→P is additive, global untouched)",
-      ).toBe(true);
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
       // D-3: web-developer.md at project was properly compiled
-      const webDevContent = await readTestFile(projectWebDevPath);
-      expect(webDevContent.length).toBeGreaterThan(100);
-      expect(webDevContent).toContain("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["web-developer"],
+      });
 
       // D-4: api-developer.md still exists at project scope (unchanged)
-      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "api-developer.md");
-      expect(
-        await fileExists(projectApiDevPath),
-        "api-developer.md must still exist in project agents dir",
-      ).toBe(true);
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
       // D-5: Project config has web-developer with scope: "project"
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["api-framework-hono"],
+        agents: ["api-developer", "web-developer"],
+      });
       const projectConfig = await readTestFile(
         path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
       );
-      const webDevProjectLines = projectConfig
-        .split("\n")
-        .filter((l: string) => l.includes("web-developer") && l.includes('"scope":"project"'));
-      expect(webDevProjectLines.length).toBeGreaterThan(0);
+      expect(projectConfig).toContain('"scope":"project"');
 
       // D-6: Global config STILL has web-developer (global untouched)
-      const globalConfig = await readTestFile(
-        path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
-      );
-      expect(globalConfig).toContain("web-developer");
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+        agents: ["web-developer"],
+      });
 
       await result.destroy();
     },
@@ -382,34 +351,24 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
       expect(skillMdContent).toContain("web-framework-react");
 
       // D-4: Global config STILL contains web-framework-react
-      const globalConfig = await readTestFile(
-        path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
-      );
-      expect(globalConfig).toContain("web-framework-react");
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+        agents: ["web-developer"],
+      });
 
       // D-5: Project config has web-framework-react with scope: "project"
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["api-framework-hono", "web-framework-react"],
+        agents: ["api-developer"],
+      });
       const projectConfig = await readTestFile(
         path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
       );
-      const reactProjectLines = projectConfig
-        .split("\n")
-        .filter(
-          (l: string) => l.includes("web-framework-react") && l.includes('"scope":"project"'),
-        );
-      expect(reactProjectLines.length).toBeGreaterThan(0);
+      expect(projectConfig).toContain('"scope":"project"');
 
       // D-6: Agent files at both scopes still exist (unchanged)
-      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
-      expect(
-        await fileExists(globalWebDevPath),
-        "web-developer.md must still exist in global agents dir",
-      ).toBe(true);
-
-      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
-      expect(
-        await fileExists(projectApiDevPath),
-        "api-developer.md must still exist in project agents dir",
-      ).toBe(true);
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
 
       await result.destroy();
     },

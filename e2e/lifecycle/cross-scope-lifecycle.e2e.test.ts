@@ -3,17 +3,15 @@ import path from "path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import {
   cleanupTempDir,
   createPermissionsFile,
   createTempDir,
-  directoryExists,
   ensureBinaryExists,
   fileExists,
-  readTestFile,
 } from "../helpers/test-utils.js";
 
 /**
@@ -79,9 +77,14 @@ describe("cross-scope lifecycle: init global -> edit global from project", () =>
 
       await expect({ dir: fakeHome }).toHaveConfig({
         skillIds: ["web-framework-react"],
+        agents: ["web-developer"],
+        source: "agents-inc",
       });
 
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-framework-react"],
+      });
       await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
 
       const initOutput = initResult.output;
@@ -112,20 +115,27 @@ describe("cross-scope lifecycle: init global -> edit global from project", () =>
 
       expect(editExitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Global config still exists and is valid
-      const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, "config.ts");
-      expect(await fileExists(globalConfigPath)).toBe(true);
-      const globalConfigContent = await readTestFile(globalConfigPath);
-      expect(globalConfigContent).toContain("web-framework-react");
+      // Global config still exists with correct content
+      await expect({ dir: fakeHome }).toHaveConfig({
+        skillIds: ["web-framework-react"],
+        agents: ["web-developer"],
+        source: "agents-inc",
+      });
 
-      // Global agents still exist
-      const globalAgentsDir = path.join(fakeHome, DIRS.CLAUDE, "agents");
-      expect(await directoryExists(globalAgentsDir)).toBe(true);
+      // Global agents still compiled with correct content
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["name: web-developer", "web-framework-react"],
+      });
 
       // No project config created
-      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, "config.ts");
+      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       expect(await fileExists(projectConfigPath)).toBe(false);
+
+      // No project-scope skills or agents directories created
+      await expect({ dir: projectDir }).toHaveNoLocalSkills();
+      const projectAgentsDir = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS);
+      expect(await fileExists(path.join(projectAgentsDir, "web-developer.md"))).toBe(false);
 
       // Global skills still exist
       await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
