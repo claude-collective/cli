@@ -473,15 +473,16 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     const metadataContent = await readFile(metadataPath, "utf-8");
     const metadata = parseYaml(metadataContent) as Record<string, unknown>;
 
-    // Verify forkedFrom was injected
-    expect(metadata.forkedFrom).toBeDefined();
+    // Verify forkedFrom was injected with expected shape
     const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
-    expect(forkedFrom.source).toBe(LOCAL_SOURCE_NAME);
-    expect(forkedFrom.skillName).toBe("react-patterns");
-    expect(forkedFrom.contentHash).toBeDefined();
-    expect(typeof forkedFrom.contentHash).toBe("string");
-    expect((forkedFrom.contentHash as string).length).toBeGreaterThan(0);
-    expect(forkedFrom.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(forkedFrom).toStrictEqual(
+      expect.objectContaining({
+        source: LOCAL_SOURCE_NAME,
+        skillName: "react-patterns",
+        contentHash: expect.stringMatching(/^.+$/),
+        date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      }),
+    );
 
     // Original metadata fields should be preserved
     expect(metadata.author).toBe("@external-author");
@@ -514,10 +515,9 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     // Minimal metadata should be created
     expect(metadata.displayName).toBe("Api Security");
     expect(metadata.cliDescription).toBe("Imported from third-party repository");
-    expect(metadata.forkedFrom).toBeDefined();
-
-    const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
-    expect(forkedFrom.skillName).toBe("api-security");
+    expect(metadata.forkedFrom).toStrictEqual(
+      expect.objectContaining({ skillName: "api-security" }),
+    );
   });
 
   it("should use forkedFrom metadata tags in compiled plugin README", async () => {

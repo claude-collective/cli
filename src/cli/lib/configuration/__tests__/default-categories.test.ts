@@ -12,58 +12,71 @@ describe("defaultCategories", () => {
   });
 
   it("includes web-framework with correct fields", () => {
-    const cat = defaultCategories["web-framework"];
-    expect(cat).toBeDefined();
-    expect(cat!.id).toBe("web-framework");
-    expect(cat!.displayName).toBe("Framework");
-    expect(cat!.domain).toBe("web");
-    expect(cat!.exclusive).toBe(true);
-    expect(cat!.required).toBe(true);
-    expect(cat!.order).toBe(1);
+    expect(defaultCategories["web-framework"]).toStrictEqual({
+      id: "web-framework",
+      displayName: "Framework",
+      description: "UI framework (React, Vue, Angular, SolidJS)",
+      domain: "web",
+      exclusive: true,
+      required: true,
+      order: 1,
+    });
   });
 
   it("includes desktop-framework with correct fields", () => {
-    const cat = defaultCategories["desktop-framework"];
-    expect(cat).toBeDefined();
-    expect(cat!.id).toBe("desktop-framework");
-    expect(cat!.displayName).toBe("Desktop Framework");
-    expect(cat!.domain).toBe("desktop");
-    expect(cat!.exclusive).toBe(true);
-    expect(cat!.required).toBe(true);
-    expect(cat!.order).toBe(1);
+    expect(defaultCategories["desktop-framework"]).toStrictEqual({
+      id: "desktop-framework",
+      displayName: "Desktop Framework",
+      description: "Desktop application framework (Tauri, Electron)",
+      domain: "desktop",
+      exclusive: true,
+      required: true,
+      order: 1,
+    });
   });
 
   it("includes api-api with correct fields", () => {
-    const cat = defaultCategories["api-api"];
-    expect(cat).toBeDefined();
-    expect(cat!.id).toBe("api-api");
-    expect(cat!.displayName).toBe("API Framework");
-    expect(cat!.domain).toBe("api");
-    expect(cat!.exclusive).toBe(true);
-    expect(cat!.required).toBe(true);
+    expect(defaultCategories["api-api"]).toStrictEqual({
+      id: "api-api",
+      displayName: "API Framework",
+      description: "Backend framework (Hono, Express, Fastify)",
+      domain: "api",
+      exclusive: true,
+      required: true,
+      order: 1,
+    });
   });
 
   it("includes cli-framework with correct fields", () => {
-    const cat = defaultCategories["cli-framework"];
-    expect(cat).toBeDefined();
-    expect(cat!.id).toBe("cli-framework");
-    expect(cat!.displayName).toBe("CLI Framework");
-    expect(cat!.domain).toBe("cli");
+    expect(defaultCategories["cli-framework"]).toStrictEqual({
+      id: "cli-framework",
+      displayName: "CLI Framework",
+      description: "CLI application framework (Commander, oclif)",
+      domain: "cli",
+      exclusive: true,
+      required: true,
+      order: 1,
+    });
   });
 
   it("includes meta-reviewing", () => {
-    const cat = defaultCategories["meta-reviewing"];
-    expect(cat).toBeDefined();
-    expect(cat!.domain).toBe("meta");
-    expect(cat!.exclusive).toBe(false);
+    expect(defaultCategories["meta-reviewing"]).toStrictEqual({
+      id: "meta-reviewing",
+      displayName: "Code Review",
+      description: "Code review patterns and methodology",
+      domain: "meta",
+      exclusive: false,
+      required: false,
+      order: 1,
+    });
   });
 
   it("all categories have required fields", () => {
     for (const [key, cat] of Object.entries(defaultCategories)) {
       expect(cat!.id, `${key} missing id`).toBe(key as Category);
-      expect(cat!.displayName, `${key} missing displayName`).toBeTruthy();
-      expect(cat!.description, `${key} missing description`).toBeTruthy();
-      expect(cat!.domain, `${key} missing domain`).toBeTruthy();
+      expect(cat!.displayName, `${key} missing displayName`).not.toBe("");
+      expect(cat!.description, `${key} missing description`).not.toBe("");
+      expect(cat!.domain, `${key} missing domain`).not.toBe("");
       expect(typeof cat!.exclusive, `${key} exclusive not boolean`).toBe("boolean");
       expect(typeof cat!.required, `${key} required not boolean`).toBe("boolean");
       expect(typeof cat!.order, `${key} order not number`).toBe("number");

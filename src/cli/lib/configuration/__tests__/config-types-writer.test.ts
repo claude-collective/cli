@@ -88,7 +88,7 @@ describe("generateConfigTypesSource", () => {
 
     // Verify skill IDs are sorted (api before web)
     const skillIdLine = source.split("\n").find((l) => l.startsWith("export type SkillId"));
-    expect(skillIdLine).toBeDefined();
+    expect(skillIdLine).toContain("export type SkillId");
     const apiIdx = source.indexOf('"api-framework-hono"');
     const webFrameworkIdx = source.indexOf('"web-framework-react"');
     const webStylingIdx = source.indexOf('"web-styling-scss-modules"');
@@ -597,7 +597,7 @@ describe("regenerateConfigTypes", () => {
     const content = await readFile(configTypesPath, "utf-8");
     const matches = content.match(/"web-framework-react"/g);
     // Should appear in SkillId union only once (plus possibly in other type references)
-    expect(matches).toBeDefined();
+    expect(matches).not.toBeNull();
     expect(matches!.length).toBeGreaterThanOrEqual(1);
   });
 

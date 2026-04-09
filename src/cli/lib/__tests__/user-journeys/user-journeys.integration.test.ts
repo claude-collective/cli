@@ -10,7 +10,7 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import { BUILT_IN_MATRIX } from "../../../types/generated/matrix";
 import { loadProjectConfig } from "../../configuration";
-import { STANDARD_FILES } from "../../../consts";
+import { DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../../consts";
 import type {
   AgentScopeConfig,
   MergedSkillsMatrix,
@@ -39,6 +39,19 @@ import {
 // ── Constants ───────────────────────────────────────────────────────────────────
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
+
+const WEB_AGENTS: string[] = [
+  "web-architecture",
+  "web-developer",
+  "web-pm",
+  "web-researcher",
+  "web-reviewer",
+  "web-tester",
+];
+
+const API_AGENTS: string[] = ["api-developer", "api-researcher", "api-reviewer"];
+
+const WEB_AND_API_AGENTS: string[] = [...API_AGENTS, ...WEB_AGENTS].sort();
 
 // ── Journey 1: Init -> Edit -> Recompile (Add Skills) ────────────────────────
 
@@ -83,11 +96,24 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
       projectDir: dirs.projectDir,
     });
 
-    // Verify initial state: config has react + zustand + methodology
+    // Verify initial state: full config structure
     const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
-    expect(initialConfig.skills.map((s) => s.id)).toContain("web-framework-react");
-    expect(initialConfig.skills.map((s) => s.id)).toContain("web-state-zustand");
-    expect(initialResult.compiledAgents.length).toBeGreaterThan(0);
+    expect(initialConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
+    ]);
+    expect(initialConfig.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+    expect([...initialResult.compiledAgents].sort()).toStrictEqual(WEB_AGENTS);
+
+    // Initial stack: web agents have web categories
+    expect(initialConfig.stack).toBeDefined();
+    expect(Object.keys(initialConfig.stack!).sort()).toStrictEqual(WEB_AGENTS);
+    for (const agentName of WEB_AGENTS) {
+      const agentStack = initialConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["web-client-state", "web-framework"]);
+    }
 
     // Step 2: Re-init with skills A, B, C (add hono)
     useWizardStore.getState().reset();
@@ -110,20 +136,35 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     // Step 3: Assert
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
-    // Config now includes all three skills
-    expect(updatedConfig.skills.map((s) => s.id)).toContain("web-framework-react");
-    expect(updatedConfig.skills.map((s) => s.id)).toContain("web-state-zustand");
-    expect(updatedConfig.skills.map((s) => s.id)).toContain("api-framework-hono");
+    // Config now includes all three skills with full structure (merge preserves existing order, appends new)
+    expect(updatedConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+    ]);
 
-    // Agents are compiled
-    expect(editResult.compiledAgents.length).toBeGreaterThan(0);
+    // Agents include both web and api (merged), all global scope
+    expect(updatedConfig.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+
+    // Stack: every agent gets every skill's category
+    expect(updatedConfig.stack).toBeDefined();
+    expect(Object.keys(updatedConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = updatedConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-client-state", "web-framework"]);
+    }
+
+    // Agents are compiled (6 web + 3 api)
+    expect([...editResult.compiledAgents].sort()).toStrictEqual(WEB_AND_API_AGENTS);
 
     // Agent files exist on disk
     for (const agentName of editResult.compiledAgents) {
       const agentPath = path.join(editResult.agentsDir, `${agentName}.md`);
       expect(await fileExists(agentPath)).toBe(true);
       const content = await readFile(agentPath, "utf-8");
-      expect(content.length).toBeGreaterThan(0);
+      expect(content).toContain("---");
     }
 
     // The new skill (hono) has a skill directory in .claude/skills/
@@ -148,7 +189,22 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     });
 
     const initialAgents = [...initialResult.compiledAgents].sort();
-    expect(initialAgents.length).toBeGreaterThan(0);
+    expect(initialAgents).toStrictEqual(WEB_AGENTS);
+
+    // Verify initial config fully
+    const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
+    expect(initialConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+    ]);
+    expect(initialConfig.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+    expect(initialConfig.stack).toBeDefined();
+    expect(Object.keys(initialConfig.stack!).sort()).toStrictEqual(WEB_AGENTS);
+    for (const agentName of WEB_AGENTS) {
+      const agentStack = initialConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["web-framework"]);
+    }
 
     // Edit: add API skills
     useWizardStore.getState().reset();
@@ -165,15 +221,27 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
 
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
-    // All initial agents should still be present (merge unions agents)
-    const updatedAgentNames = updatedConfig.agents.map((a) => a.name);
-    for (const agentName of initialAgents) {
-      expect(updatedAgentNames).toContain(agentName);
+    // All initial web agents + new API agents should be present (merge unions agents), all global
+    expect(updatedConfig.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+
+    // Skills include both web + api
+    expect(updatedConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+    ]);
+
+    // Stack: every agent gets every skill's category (react + hono)
+    expect(updatedConfig.stack).toBeDefined();
+    expect(Object.keys(updatedConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = updatedConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-framework"]);
     }
 
-    // API agents should also be present
-    const editAgents = editResult.compiledAgents;
-    expect(editAgents.length).toBeGreaterThanOrEqual(initialAgents.length);
+    // Compiled agents should match
+    expect([...editResult.compiledAgents].sort()).toStrictEqual(WEB_AND_API_AGENTS);
   });
 });
 
@@ -217,11 +285,28 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const initialWizardResult = buildWizardResultFromStore(matrix);
-    await installEject({
+    const initialResult = await installEject({
       wizardResult: initialWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
     });
+
+    // Verify initial config: 3 skills, web+api agents, stack with 3 categories
+    const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
+    expect(initialConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+    ]);
+    expect(initialConfig.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+    expect(initialConfig.stack).toBeDefined();
+    expect(Object.keys(initialConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = initialConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-client-state", "web-framework"]);
+    }
 
     // Step 2: Re-init with A, C (remove zustand)
     useWizardStore.getState().reset();
@@ -239,15 +324,28 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     // Step 3: Assert
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
-    // Config should have react and hono
-    expect(updatedConfig.skills.map((s) => s.id)).toContain("web-framework-react");
-    expect(updatedConfig.skills.map((s) => s.id)).toContain("api-framework-hono");
+    // Merge UNIONS skills: zustand persists from first install, react + hono updated
+    expect(updatedConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+    ]);
 
-    // Note: config merge UNIONS skills, so zustand may still be in config.skills.
-    // However, the STACK entries control what goes into agents. The stack is
-    // rebuilt from the new wizard result's selected skills.
-    // Verify agents were compiled
-    expect(editResult.compiledAgents.length).toBeGreaterThan(0);
+    // All agents preserved via merge (web + api), all global scope
+    expect(updatedConfig.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+
+    // Stack: merged union — all agents have all skill categories from both installs
+    expect(updatedConfig.stack).toBeDefined();
+    expect(Object.keys(updatedConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = updatedConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-client-state", "web-framework"]);
+    }
+
+    // Agents are compiled (6 web + 3 api from merged config)
+    expect([...editResult.compiledAgents].sort()).toStrictEqual(WEB_AND_API_AGENTS);
 
     // Each compiled agent should still be a valid markdown file
     for (const agentName of editResult.compiledAgents) {
@@ -263,11 +361,24 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const initialWizardResult = buildWizardResultFromStore(matrix);
-    await installEject({
+    const initialResult = await installEject({
       wizardResult: initialWizardResult,
       sourceResult,
       projectDir: dirs.projectDir,
     });
+
+    // Verify initial config: web+api skills, web+api agents, stack with 2 categories
+    const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
+    expect(initialConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+    ]);
+    expect(initialConfig.stack).toBeDefined();
+    expect(Object.keys(initialConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = initialConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-framework"]);
+    }
 
     // Remove API skills, keep only web
     useWizardStore.getState().reset();
@@ -284,11 +395,27 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
 
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
-    // Web skill should remain
-    expect(updatedConfig.skills.map((s) => s.id)).toContain("web-framework-react");
+    // Merge UNIONS: both react and hono persist (hono from first install, react updated)
+    expect(updatedConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+    ]);
 
-    // Agents should be recompiled successfully
-    expect(editResult.compiledAgents.length).toBeGreaterThan(0);
+    // Merge UNIONS agents: both web + api agents preserved, all global
+    expect(updatedConfig.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+
+    // Stack: merged union — all agents have both categories from both installs
+    expect(updatedConfig.stack).toBeDefined();
+    expect(Object.keys(updatedConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = updatedConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-framework"]);
+    }
+
+    // Agents should be recompiled (merged config preserves all agents)
+    expect([...editResult.compiledAgents].sort()).toStrictEqual(WEB_AND_API_AGENTS);
   });
 });
 
@@ -338,14 +465,30 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
       projectDir: dirs.projectDir,
     });
 
-    // Verify installation produced agents and config
-    expect(installResult.compiledAgents.length).toBeGreaterThan(0);
+    // Verify installation produced exact agents and config
+    expect([...installResult.compiledAgents].sort()).toStrictEqual(WEB_AND_API_AGENTS);
     expect(await fileExists(installResult.configPath)).toBe(true);
 
-    // Step 2: Load config back from disk
+    // Step 2: Load config back from disk — verify full structure
     const loadedConfig = await loadProjectConfig(dirs.projectDir);
     expect(loadedConfig).not.toBeNull();
-    expect(loadedConfig!.config.agents.length).toBeGreaterThan(0);
+    expect(loadedConfig!.config.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+    expect(loadedConfig!.config.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+    ]);
+
+    // Loaded stack: every agent has all skill categories
+    const loadedStack = loadedConfig!.config.stack;
+    expect(loadedStack).toBeDefined();
+    expect(Object.keys(loadedStack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = loadedStack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-client-state", "web-framework"]);
+    }
 
     // Step 3: Recompile using recompileAgents (simulating `compile` command)
     const agentsDir = installResult.agentsDir;
@@ -357,8 +500,8 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
     });
 
     // Step 4: Assert
-    // Recompile should produce agents matching the config
-    expect(recompileResult.compiled.length).toBeGreaterThan(0);
+    // Recompile should produce exact agents matching the config
+    expect([...recompileResult.compiled].sort()).toStrictEqual(WEB_AND_API_AGENTS);
 
     // Every compiled agent should have a .md file
     for (const agentName of recompileResult.compiled) {
@@ -366,7 +509,6 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
       expect(await fileExists(agentPath)).toBe(true);
 
       const content = await readFile(agentPath, "utf-8");
-      expect(content.length).toBeGreaterThan(0);
       expect(content).toContain("---"); // Has frontmatter
     }
   });
@@ -384,9 +526,24 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
       projectDir: dirs.projectDir,
     });
 
-    // Load config from disk
+    // Load config from disk — verify full agent and skill structure
     const loadedConfig = await loadProjectConfig(dirs.projectDir);
-    const configAgents = loadedConfig!.config.agents;
+    expect(loadedConfig!.config.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+    expect(loadedConfig!.config.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+    ]);
+
+    // Loaded stack: every agent has both categories
+    const loadedStack = loadedConfig!.config.stack;
+    expect(loadedStack).toBeDefined();
+    expect(Object.keys(loadedStack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = loadedStack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "web-framework"]);
+    }
 
     // Recompile
     const recompileResult = await recompileAgents({
@@ -396,11 +553,15 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
       outputDir: installResult.agentsDir,
     });
 
-    // The compiled agents should match what config.agents lists
-    // (some may fail if agent definitions don't exist in source, but none should be extra)
-    const configAgentNames = configAgents.map((a) => a.name);
-    for (const compiledAgent of recompileResult.compiled) {
-      expect(configAgentNames).toContain(compiledAgent);
+    // Compiled agents should exactly match config.agents
+    expect([...recompileResult.compiled].sort()).toStrictEqual(WEB_AND_API_AGENTS);
+
+    // Agent files exist and contain frontmatter
+    for (const agentName of recompileResult.compiled) {
+      const agentPath = path.join(installResult.agentsDir, `${agentName}.md`);
+      expect(await fileExists(agentPath)).toBe(true);
+      const content = await readFile(agentPath, "utf-8");
+      expect(content).toContain("---");
     }
   });
 });
@@ -448,7 +609,6 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     });
 
     const firstConfig = await readTestTsConfig<ProjectConfig>(firstResult.configPath);
-    const firstAgents = [...firstConfig.agents];
 
     // Second init: hono + drizzle, api agents
     useWizardStore.getState().reset();
@@ -465,17 +625,33 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
 
     const mergedConfig = await readTestTsConfig<ProjectConfig>(secondResult.configPath);
 
-    // Merged config should contain agents from BOTH inits (union)
-    const mergedAgentNames = mergedConfig.agents.map((a) => a.name);
-    for (const agent of firstAgents) {
-      expect(mergedAgentNames).toContain(agent.name);
-    }
+    // Merged agents: web agents from first init + api agents from second init, all global
+    expect(mergedConfig.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+
+    // Merged skills: react + zustand from first, hono + drizzle from second (union, no overlap)
+    expect(mergedConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+      { id: "api-database-drizzle", scope: "project", source: "eject" },
+    ]);
 
     // Config was merged
     expect(secondResult.wasMerged).toBe(true);
 
-    // Stack should have entries from both inits
+    // Stack: web agents have web categories, api agents have api categories (merged from both inits)
     expect(mergedConfig.stack).toBeDefined();
+    expect(Object.keys(mergedConfig.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AGENTS) {
+      const agentStack = mergedConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["web-client-state", "web-framework"]);
+    }
+    for (const agentName of API_AGENTS) {
+      const agentStack = mergedConfig.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(["api-api", "api-database"]);
+    }
 
     // Name from first init should be preserved (existing takes precedence)
     expect(mergedConfig.name).toBe(firstConfig.name);
@@ -513,9 +689,21 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
 
     const mergedConfig = await readTestTsConfig<ProjectConfig>(secondResult.configPath);
 
-    // No duplicate agents
-    const uniqueAgents = [...new Set(mergedConfig.agents)];
-    expect(mergedConfig.agents).toStrictEqual(uniqueAgents);
+    // No duplicate agents — exact agent list with scopes
+    expect(mergedConfig.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+
+    // No duplicate agent names
+    const agentNames = mergedConfig.agents.map((a) => a.name);
+    expect(agentNames).toStrictEqual([...new Set(agentNames)]);
+
+    // Skills: react + hono from both inits (deduplicated), drizzle new
+    expect(mergedConfig.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+      { id: "api-database-drizzle", scope: "project", source: "eject" },
+    ]);
   });
 
   it("should preserve description from first init when re-initializing", async () => {
@@ -603,51 +791,43 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-    // Config should contain all selected skills
-    for (const skillId of selectedSkills) {
-      expect(config.skills.map((s) => s.id)).toContain(skillId);
-    }
+    // Full skills with scope and source
+    expect(config.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
+      { id: "web-styling-scss-modules", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+      { id: "api-database-drizzle", scope: "project", source: "eject" },
+    ]);
 
-    // Agents should include both web and api domain agents
-    const hasWebAgent = config.agents.some((a) => a.name.startsWith("web-"));
-    const hasApiAgent = config.agents.some((a) => a.name.startsWith("api-"));
-    expect(hasWebAgent).toBe(true);
-    expect(hasApiAgent).toBe(true);
+    // Full agents with scope
+    expect(config.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
 
-    // Stack should have domain-appropriate assignments
+    // Stack: every agent gets every skill's category (no stack filtering without selectedStackId)
+    const expectedCategories = [
+      "api-api",
+      "api-database",
+      "web-client-state",
+      "web-framework",
+      "web-styling",
+    ];
     expect(config.stack).toBeDefined();
-    if (config.stack) {
-      // Verify stack structure: each agent has category-keyed entries
-      // with skill assignments that are valid skill IDs from config.skills
-      const stackAgentNames = config.agents.map((a) => a.name);
-      for (const [agentId, agentConfig] of Object.entries(config.stack)) {
-        expect(stackAgentNames).toContain(agentId);
-        const agentSkillIds = extractSkillIdsFromStack(agentConfig);
-        for (const skillId of agentSkillIds) {
-          // Every skill in the stack must be in config.skills
-          expect(config.skills.map((s) => s.id)).toContain(skillId);
-        }
-      }
-
-      // At least some web agent should have web skills
-      const webAgentStacks = Object.entries(config.stack).filter(([agentId]) =>
-        agentId.startsWith("web-"),
+    expect(Object.keys(config.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = config.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(expectedCategories);
+      // Verify exact skill assignments per category
+      expect(extractSkillIdsFromAssignment(agentStack!["web-framework" as keyof typeof agentStack])).toStrictEqual(
+        ["web-framework-react"],
       );
-      const allWebStackSkills = webAgentStacks.flatMap(([, agentConfig]) =>
-        extractSkillIdsFromStack(agentConfig),
+      expect(extractSkillIdsFromAssignment(agentStack!["api-api" as keyof typeof agentStack])).toStrictEqual(
+        ["api-framework-hono"],
       );
-      const hasWebSkillInWebAgent = allWebStackSkills.some((s) => s.startsWith("web-"));
-      expect(hasWebSkillInWebAgent).toBe(true);
-
-      // At least some api agent should have api skills
-      const apiAgentStacks = Object.entries(config.stack).filter(([agentId]) =>
-        agentId.startsWith("api-"),
+      expect(extractSkillIdsFromAssignment(agentStack!["api-database" as keyof typeof agentStack])).toStrictEqual(
+        ["api-database-drizzle"],
       );
-      const allApiStackSkills = apiAgentStacks.flatMap(([, agentConfig]) =>
-        extractSkillIdsFromStack(agentConfig),
-      );
-      const hasApiSkillInApiAgent = allApiStackSkills.some((s) => s.startsWith("api-"));
-      expect(hasApiSkillInApiAgent).toBe(true);
     }
 
     // Agent files should exist for all compiled agents
@@ -707,20 +887,44 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-    expect(config.stack).toBeDefined();
+    // Full skills verification
+    expect(config.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
+      { id: "web-styling-scss-modules", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+      { id: "api-database-drizzle", scope: "project", source: "eject" },
+      { id: "web-testing-vitest", scope: "project", source: "eject" },
+    ]);
 
-    // Every agent in stack must be in config.agents
-    const agentNames = config.agents.map((a) => a.name);
-    for (const agentId of Object.keys(config.stack!)) {
-      expect(agentNames).toContain(agentId);
+    // Full agents verification (shared domain has no domain agents)
+    expect(config.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+
+    // Stack: exact agent keys and category keys
+    const expectedCategories = [
+      "api-api",
+      "api-database",
+      "web-client-state",
+      "web-framework",
+      "web-styling",
+      "web-testing",
+    ];
+    expect(config.stack).toBeDefined();
+    expect(Object.keys(config.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = config.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(expectedCategories);
     }
 
-    // Every skill in stack must be in config.skills
+    // Every skill in stack must be in config.skills (invariant)
+    const configSkillIds = config.skills.map((s) => s.id);
     for (const [, agentConfig] of Object.entries(config.stack!)) {
       for (const [, assignments] of Object.entries(agentConfig as Record<string, unknown>)) {
         const skillIds = extractSkillIdsFromAssignment(assignments);
         for (const skillId of skillIds) {
-          expect(config.skills.map((s) => s.id)).toContain(skillId);
+          expect(configSkillIds).toContain(skillId);
         }
       }
     }
@@ -862,20 +1066,27 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
 
     const config = loadedConfig!.config;
 
-    // Core fields should match what was installed
-    expect(config.name).toBeDefined();
-    expect(config.agents.length).toBeGreaterThan(0);
-    expect(config.skills.length).toBeGreaterThan(0);
+    // Core fields should match what was installed — full strict equality
+    expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
+    expect(config.agents.sort((a, b) => a.name.localeCompare(b.name))).toStrictEqual(
+      WEB_AND_API_AGENTS.map((name) => ({ name, scope: "global" })),
+    );
+    expect(config.skills).toStrictEqual([
+      { id: "web-framework-react", scope: "project", source: "eject" },
+      { id: "web-state-zustand", scope: "project", source: "eject" },
+      { id: "api-framework-hono", scope: "project", source: "eject" },
+    ]);
 
     // Source should be preserved
     expect(config.source).toBe("github:test/source");
 
-    // Stack should be loadable
-    if (config.stack) {
-      const roundTripAgentNames = config.agents.map((a) => a.name);
-      for (const [agentId] of Object.entries(config.stack)) {
-        expect(roundTripAgentNames).toContain(agentId);
-      }
+    // Stack roundtrip: exact agent keys and category-to-skill mappings
+    const expectedCategories = ["api-api", "web-client-state", "web-framework"];
+    expect(config.stack).toBeDefined();
+    expect(Object.keys(config.stack!).sort()).toStrictEqual(WEB_AND_API_AGENTS);
+    for (const agentName of WEB_AND_API_AGENTS) {
+      const agentStack = config.stack![agentName];
+      expect(Object.keys(agentStack!).sort()).toStrictEqual(expectedCategories);
     }
   });
 
@@ -917,7 +1128,7 @@ describe("per-agent scope", () => {
     useWizardStore.getState().preselectAgentsFromDomains();
 
     const { agentConfigs } = useWizardStore.getState();
-    expect(agentConfigs.length).toBeGreaterThan(0);
+    expect(agentConfigs.map((ac) => ac.name).sort()).toStrictEqual(WEB_AGENTS);
     for (const config of agentConfigs) {
       expect(config.scope).toBe("global");
     }
@@ -1014,7 +1225,6 @@ describe("per-agent scope", () => {
     useWizardStore.getState().toggleAgent("web-developer");
 
     const config = useWizardStore.getState().agentConfigs.find((ac) => ac.name === "web-developer");
-    expect(config).toBeDefined();
     expect(config).toStrictEqual({
       name: "web-developer",
       scope: "global",
@@ -1206,14 +1416,22 @@ describe("Excluded Skills — Global/Project Interaction", () => {
 
     // Excluded skill IS preserved in skillConfigs
     const zustandConfig = state.skillConfigs.find((sc) => sc.id === "web-state-zustand");
-    expect(zustandConfig).toBeDefined();
-    expect(zustandConfig?.excluded).toBe(true);
+    expect(zustandConfig).toStrictEqual({
+      id: "web-state-zustand",
+      scope: "global",
+      source: "agents-inc",
+      excluded: true,
+    });
 
     // Build wizard result — excluded entries flow through
     const wizardResult = buildWizardResultFromStore(matrix);
     const excludedInResult = wizardResult.skills.find((sc) => sc.id === "web-state-zustand");
-    expect(excludedInResult).toBeDefined();
-    expect(excludedInResult?.excluded).toBe(true);
+    expect(excludedInResult).toStrictEqual({
+      id: "web-state-zustand",
+      scope: "global",
+      source: "agents-inc",
+      excluded: true,
+    });
   });
 
   it("should allow project eject to global when no global eject exists", () => {
@@ -1273,8 +1491,12 @@ describe("Excluded Skills — Global/Project Interaction", () => {
     expect(afterPopulate.getAllSelectedTechnologies()).not.toContain("web-framework-react");
     // React IS in skillConfigs as excluded
     const reactInConfigs = afterPopulate.skillConfigs.find((sc) => sc.id === "web-framework-react");
-    expect(reactInConfigs).toBeDefined();
-    expect(reactInConfigs?.excluded).toBe(true);
+    expect(reactInConfigs).toStrictEqual({
+      id: "web-framework-react",
+      scope: "global",
+      source: "agents-inc",
+      excluded: true,
+    });
 
     // Step 4: Re-select react via toggleTechnology — clears exclusion
     store.toggleDomain("web");
@@ -1287,14 +1509,3 @@ describe("Excluded Skills — Global/Project Interaction", () => {
   });
 });
 
-// ── Utility ─────────────────────────────────────────────────────────────────────
-
-/**
- * Extracts all skill IDs from a stack agent config, handling nested structures.
- */
-function extractSkillIdsFromStack(agentConfig: unknown): string[] {
-  if (!agentConfig || typeof agentConfig !== "object") return [];
-  return Object.values(agentConfig as Record<string, unknown>).flatMap(
-    extractSkillIdsFromAssignment,
-  );
-}

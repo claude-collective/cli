@@ -134,4 +134,18 @@ describe("loadSource", () => {
 
     expect(mockEnableBuffering).not.toHaveBeenCalled();
   });
+
+  it("should pass sourceFlag and forceRefresh through to loadSkillsMatrixFromSource", async () => {
+    await loadSource({
+      projectDir: "/tmp/project",
+      sourceFlag: "github:custom/source",
+      forceRefresh: true,
+    });
+
+    expect(mockLoadSkillsMatrixFromSource).toHaveBeenCalledWith({
+      sourceFlag: "github:custom/source",
+      projectDir: "/tmp/project",
+      forceRefresh: true,
+    });
+  });
 });

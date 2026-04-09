@@ -41,9 +41,7 @@ describe("config-merger", () => {
       });
 
       expect(result.merged).toBe(false);
-      expect(result.config.name).toBe("new-project");
-      expect(result.config.agents).toStrictEqual([{ name: "web-developer", scope: "project" }]);
-      expect(result.config.description).toBe("A new project");
+      expect(result.config).toStrictEqual(newConfig);
       expect(result.existingConfigPath).toBeUndefined();
     });
 
@@ -377,7 +375,6 @@ describe("config-merger", () => {
       });
 
       expect(result.merged).toBe(true);
-      expect(result.existingConfigPath).toBeDefined();
       expect(result.existingConfigPath).toContain(`${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS}`);
     });
   });
@@ -395,7 +392,11 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.name).toBe("existing-name");
+        expect(result).toStrictEqual({
+          name: "existing-name",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+        });
       });
 
       it("should use existing description when present", () => {
@@ -412,7 +413,12 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.description).toBe("Existing description");
+        expect(result).toStrictEqual({
+          name: "project",
+          description: "Existing description",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+        });
       });
 
       it("should use new source when both configs have source (sourceFlag takes precedence)", () => {
@@ -429,7 +435,12 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.source).toBe("github:new/source");
+        expect(result).toStrictEqual({
+          name: "project",
+          source: "github:new/source",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+        });
       });
 
       it("should use existing source when new config has no source", () => {
@@ -445,7 +456,12 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.source).toBe("github:existing/source");
+        expect(result).toStrictEqual({
+          name: "project",
+          source: "github:existing/source",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+        });
       });
 
       it("should use existing author when present", () => {
@@ -462,7 +478,12 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.author).toBe("@existing-author");
+        expect(result).toStrictEqual({
+          name: "project",
+          author: "@existing-author",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+        });
       });
 
       it("should use existing marketplace when present", () => {
@@ -479,7 +500,12 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.marketplace).toBe("existing-marketplace");
+        expect(result).toStrictEqual({
+          name: "project",
+          marketplace: "existing-marketplace",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+        });
       });
 
       it("should use existing agentsSource when present", () => {
@@ -496,7 +522,12 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.agentsSource).toBe("github:existing/agents");
+        expect(result).toStrictEqual({
+          name: "project",
+          agentsSource: "github:existing/agents",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+        });
       });
 
       it("should keep new values when existing fields are absent", () => {
@@ -511,9 +542,13 @@ describe("config-merger", () => {
         const result = mergeConfigs(newConfig, existingConfig);
 
         // Empty string is falsy, so new values are kept
-        expect(result.name).toBe("new-name");
-        expect(result.description).toBe("New desc");
-        expect(result.author).toBe("@new");
+        expect(result).toStrictEqual({
+          name: "new-name",
+          description: "New desc",
+          author: "@new",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+        });
       });
     });
 
@@ -538,11 +573,15 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.agents).toStrictEqual([
-          { name: "web-developer", scope: "project" },
-          { name: "api-developer", scope: "project" },
-          { name: "cli-developer", scope: "project" },
-        ]);
+        expect(result).toStrictEqual({
+          name: "project",
+          agents: [
+            { name: "web-developer", scope: "project" },
+            { name: "api-developer", scope: "project" },
+            { name: "cli-developer", scope: "project" },
+          ],
+          skills: [],
+        });
       });
 
       it("should keep new agents when existing has empty agents array", () => {
@@ -559,7 +598,11 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.agents).toStrictEqual([{ name: "web-developer", scope: "project" }]);
+        expect(result).toStrictEqual({
+          name: "project",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+        });
       });
     });
 
@@ -576,8 +619,11 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.skills).toHaveLength(1);
-        expect(result.skills[0]?.source).toBe("new-source");
+        expect(result).toStrictEqual({
+          name: "project",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: buildSkillConfigs(["web-framework-react"], { source: "new-source" }),
+        });
       });
 
       it("should preserve existing skills not in new config", () => {
@@ -592,10 +638,14 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.skills).toHaveLength(2);
-        const ids = result.skills.map((s) => s.id);
-        expect(ids).toContain("web-state-zustand");
-        expect(ids).toContain("web-framework-react");
+        expect(result).toStrictEqual({
+          name: "project",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [
+            ...buildSkillConfigs(["web-state-zustand"]),
+            ...buildSkillConfigs(["web-framework-react"]),
+          ],
+        });
       });
 
       it("should add new skills that are not in existing config", () => {
@@ -610,9 +660,11 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        const ids = result.skills.map((s) => s.id);
-        expect(ids).toContain("web-framework-react");
-        expect(ids).toContain("api-framework-hono");
+        expect(result).toStrictEqual({
+          name: "project",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+        });
       });
 
       it("should keep new skills when existing has empty skills array", () => {
@@ -627,8 +679,11 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.skills).toHaveLength(1);
-        expect(result.skills[0]?.id).toBe("web-framework-react");
+        expect(result).toStrictEqual({
+          name: "project",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: buildSkillConfigs(["web-framework-react"]),
+        });
       });
     });
 
@@ -657,11 +712,16 @@ describe("config-merger", () => {
 
         const result = mergeConfigs(newConfig, existingConfig);
 
-        expect(result.stack).toStrictEqual({
-          "web-developer": {
-            "web-framework": sa("web-framework-react-existing"),
-            "web-styling": sa("web-styling-scss-existing"),
-            "web-client-state": sa("web-state-zustand-new"),
+        expect(result).toStrictEqual({
+          name: "project",
+          agents: [{ name: "web-developer", scope: "project" }],
+          skills: [],
+          stack: {
+            "web-developer": {
+              "web-framework": sa("web-framework-react-existing"),
+              "web-styling": sa("web-styling-scss-existing"),
+              "web-client-state": sa("web-state-zustand-new"),
+            },
           },
         });
       });
@@ -749,12 +809,17 @@ describe("config-merger", () => {
         // Both entries should be preserved (compound key: id vs id:excluded)
         const reactEntries = result.skills.filter((s) => s.id === "web-framework-react");
         expect(reactEntries).toHaveLength(2);
-        const activeEntry = reactEntries.find((s) => !s.excluded);
-        const excludedEntry = reactEntries.find((s) => s.excluded);
-        expect(activeEntry).toBeDefined();
-        expect(activeEntry!.scope).toBe("project");
-        expect(excludedEntry).toBeDefined();
-        expect(excludedEntry!.scope).toBe("global");
+        expect(reactEntries.find((s) => !s.excluded)).toStrictEqual({
+          id: "web-framework-react",
+          scope: "project",
+          source: "eject",
+        });
+        expect(reactEntries.find((s) => s.excluded)).toStrictEqual({
+          id: "web-framework-react",
+          scope: "global",
+          source: "agents-inc",
+          excluded: true,
+        });
       });
 
       it("should merge correctly when existing config has excluded entries", () => {
@@ -840,12 +905,15 @@ describe("config-merger", () => {
         // Both entries should be preserved (compound key: name vs name:excluded)
         const apiDevEntries = result.agents.filter((a) => a.name === "api-developer");
         expect(apiDevEntries).toHaveLength(2);
-        const activeEntry = apiDevEntries.find((a) => !a.excluded);
-        const excludedEntry = apiDevEntries.find((a) => a.excluded);
-        expect(activeEntry).toBeDefined();
-        expect(activeEntry!.scope).toBe("project");
-        expect(excludedEntry).toBeDefined();
-        expect(excludedEntry!.scope).toBe("global");
+        expect(apiDevEntries.find((a) => !a.excluded)).toStrictEqual({
+          name: "api-developer",
+          scope: "project",
+        });
+        expect(apiDevEntries.find((a) => a.excluded)).toStrictEqual({
+          name: "api-developer",
+          scope: "global",
+          excluded: true,
+        });
       });
 
       it("should merge correctly when existing config has excluded agent entries", () => {

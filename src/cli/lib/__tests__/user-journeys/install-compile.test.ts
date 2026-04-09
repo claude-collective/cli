@@ -274,10 +274,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     });
 
     // All three agents should be compiled
-    expect(result.agents).toHaveLength(3);
-    expect(result.agents).toContain("web-developer");
-    expect(result.agents).toContain("api-developer");
-    expect(result.agents).toContain("web-tester");
+    expect([...result.agents].sort()).toStrictEqual(["api-developer", "web-developer", "web-tester"]);
 
     // Each agent should have a compiled markdown file
     for (const agentName of result.agents) {
@@ -285,9 +282,8 @@ describe("User Journey: Install -> Compile -> Verify", () => {
       expect(await fileExists(agentMdPath)).toBe(true);
 
       const content = await readFile(agentMdPath, "utf-8");
-      expect(content.length).toBeGreaterThan(0);
-      // Each file should have frontmatter
       expect(content).toContain("---");
+      expect(content).toContain(`name: ${agentName}`);
     }
 
     // README should list all agents

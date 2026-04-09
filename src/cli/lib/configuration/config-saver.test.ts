@@ -24,8 +24,12 @@ describe("config-saver", () => {
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
-      expect(config.source).toBe("github:my-org/skills");
-      expect(config.name).toBe("my-project");
+      expect(config).toStrictEqual({
+        name: "my-project",
+        skills: [],
+        agents: [],
+        source: "github:my-org/skills",
+      });
     });
 
     it("creates .claude-src directory if it does not exist", async () => {
@@ -34,8 +38,6 @@ describe("config-saver", () => {
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const content = await readFile(configPath, "utf-8");
 
-      expect(content).toBeDefined();
-      expect(content.length).toBeGreaterThan(0);
       expect(content).toContain("export default");
       expect(content).toContain('import type { ProjectConfig } from "./config-types"');
       expect(content).toContain("satisfies ProjectConfig");
@@ -58,10 +60,13 @@ describe("config-saver", () => {
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
-      expect(config.source).toBe("github:new/source");
-      expect(config.name).toBe("my-project");
-      expect(config.agents).toStrictEqual(["web-developer"]);
-      expect(config.author).toBe("@vince");
+      expect(config).toStrictEqual({
+        name: "my-project",
+        agents: ["web-developer"],
+        author: "@vince",
+        skills: [],
+        source: "github:new/source",
+      });
     });
 
     it("overwrites existing source value", async () => {
@@ -80,8 +85,12 @@ describe("config-saver", () => {
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
-      expect(config.source).toBe("github:new/source");
-      expect(config.name).toBe("project");
+      expect(config).toStrictEqual({
+        name: "project",
+        skills: [],
+        agents: [],
+        source: "github:new/source",
+      });
     });
 
     it("uses provided name when config file is invalid", async () => {
@@ -97,8 +106,12 @@ describe("config-saver", () => {
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
-      expect(config.source).toBe("github:my-org/skills");
-      expect(config.name).toBe("recovered-project");
+      expect(config).toStrictEqual({
+        name: "recovered-project",
+        skills: [],
+        agents: [],
+        source: "github:my-org/skills",
+      });
     });
 
     it("uses provided name when config file is empty", async () => {
@@ -111,8 +124,12 @@ describe("config-saver", () => {
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
-      expect(config.source).toBe("github:my-org/skills");
-      expect(config.name).toBe("empty-project");
+      expect(config).toStrictEqual({
+        name: "empty-project",
+        skills: [],
+        agents: [],
+        source: "github:my-org/skills",
+      });
     });
 
     it("writes valid config output with type annotation and satisfies clause", async () => {

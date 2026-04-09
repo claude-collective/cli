@@ -20,9 +20,11 @@ vi.mock("../../installation/index.js", () => ({
 import { compileAgents } from "./compile-agents";
 import { recompileAgents } from "../../agents/index.js";
 import { loadProjectConfigFromDir } from "../../configuration/index.js";
+import { buildAgentScopeMap } from "../../installation/index.js";
 
 const mockRecompileAgents = vi.mocked(recompileAgents);
 const mockLoadProjectConfigFromDir = vi.mocked(loadProjectConfigFromDir);
+const mockBuildAgentScopeMap = vi.mocked(buildAgentScopeMap);
 
 describe("compile-agents", () => {
   const projectDir = "/test/project";
@@ -66,25 +68,37 @@ describe("compile-agents", () => {
       sourcePath,
     });
 
-    expect(mockRecompileAgents).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pluginDir: projectDir,
-      }),
-    );
+    expect(mockRecompileAgents).toHaveBeenCalledWith({
+      pluginDir: projectDir,
+      sourcePath,
+      agents: undefined,
+      skills: undefined,
+      projectDir,
+      outputDir: undefined,
+      installMode: undefined,
+      agentScopeMap: undefined,
+    });
   });
 
   it("should filter agents by scopeFilter when set", async () => {
+    const config = {
+      name: "test",
+      agents: [
+        { name: "web-developer" as AgentName, scope: "project" as const },
+        { name: "api-developer" as AgentName, scope: "global" as const },
+      ],
+      skills: [],
+    };
+    const scopeMap = new Map<AgentName, "project" | "global">([
+      ["web-developer" as AgentName, "project"],
+      ["api-developer" as AgentName, "global"],
+    ]);
+
     mockLoadProjectConfigFromDir.mockResolvedValue({
-      config: {
-        name: "test",
-        agents: [
-          { name: "web-developer" as AgentName, scope: "project" },
-          { name: "api-developer" as AgentName, scope: "global" },
-        ],
-        skills: [],
-      },
+      config,
       configPath: "/test/project/.claude-src/config.ts",
     });
+    mockBuildAgentScopeMap.mockReturnValue(scopeMap);
 
     mockRecompileAgents.mockResolvedValue({
       compiled: ["web-developer" as AgentName],
@@ -99,27 +113,41 @@ describe("compile-agents", () => {
     });
 
     expect(mockLoadProjectConfigFromDir).toHaveBeenCalledWith(projectDir);
-    expect(mockRecompileAgents).toHaveBeenCalledWith(
-      expect.objectContaining({
-        agents: ["web-developer"],
-      }),
-    );
+    expect(mockBuildAgentScopeMap).toHaveBeenCalledWith(config);
+    expect(mockRecompileAgents).toHaveBeenCalledWith({
+      pluginDir: projectDir,
+      sourcePath,
+      agents: ["web-developer"],
+      skills: undefined,
+      projectDir,
+      outputDir: undefined,
+      installMode: undefined,
+      agentScopeMap: scopeMap,
+    });
     expect(result.compiled).toStrictEqual(["web-developer"]);
   });
 
   it("should intersect scopeFilter with explicit agents list", async () => {
+    const config = {
+      name: "test",
+      agents: [
+        { name: "web-developer" as AgentName, scope: "project" as const },
+        { name: "api-developer" as AgentName, scope: "project" as const },
+        { name: "web-pm" as AgentName, scope: "global" as const },
+      ],
+      skills: [],
+    };
+    const scopeMap = new Map<AgentName, "project" | "global">([
+      ["web-developer" as AgentName, "project"],
+      ["api-developer" as AgentName, "project"],
+      ["web-pm" as AgentName, "global"],
+    ]);
+
     mockLoadProjectConfigFromDir.mockResolvedValue({
-      config: {
-        name: "test",
-        agents: [
-          { name: "web-developer" as AgentName, scope: "project" },
-          { name: "api-developer" as AgentName, scope: "project" },
-          { name: "web-pm" as AgentName, scope: "global" },
-        ],
-        skills: [],
-      },
+      config,
       configPath: "/test/project/.claude-src/config.ts",
     });
+    mockBuildAgentScopeMap.mockReturnValue(scopeMap);
 
     await compileAgents({
       projectDir,
@@ -129,11 +157,55 @@ describe("compile-agents", () => {
     });
 
     // Only web-developer matches both the explicit list AND the project scope filter
-    expect(mockRecompileAgents).toHaveBeenCalledWith(
-      expect.objectContaining({
-        agents: ["web-developer"],
-      }),
-    );
+    expect(mockBuildAgentScopeMap).toHaveBeenCalledWith(config);
+    expect(mockRecompileAgents).toHaveBeenCalledWith({
+      pluginDir: projectDir,
+      sourcePath,
+      agents: ["web-developer"],
+      skills: undefined,
+      projectDir,
+      outputDir: undefined,
+      installMode: undefined,
+      agentScopeMap: scopeMap,
+    });
+  });
+
+  it("should exclude agents with excluded flag when using scopeFilter", async () => {
+    const config = {
+      name: "test",
+      agents: [
+        { name: "web-developer" as AgentName, scope: "project" as const },
+        { name: "api-developer" as AgentName, scope: "project" as const, excluded: true },
+      ],
+      skills: [],
+    };
+    const scopeMap = new Map<AgentName, "project" | "global">([
+      ["web-developer" as AgentName, "project"],
+    ]);
+
+    mockLoadProjectConfigFromDir.mockResolvedValue({
+      config,
+      configPath: "/test/project/.claude-src/config.ts",
+    });
+    mockBuildAgentScopeMap.mockReturnValue(scopeMap);
+
+    await compileAgents({
+      projectDir,
+      sourcePath,
+      scopeFilter: "project",
+    });
+
+    // api-developer is excluded, only web-developer should be compiled
+    expect(mockRecompileAgents).toHaveBeenCalledWith({
+      pluginDir: projectDir,
+      sourcePath,
+      agents: ["web-developer"],
+      skills: undefined,
+      projectDir,
+      outputDir: undefined,
+      installMode: undefined,
+      agentScopeMap: scopeMap,
+    });
   });
 
   it("should return compilation result from recompileAgents", async () => {

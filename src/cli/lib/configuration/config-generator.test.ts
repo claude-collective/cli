@@ -9,6 +9,7 @@ import { initializeMatrix } from "../matrix/matrix-provider";
 import {
   createMockSkillAssignment,
   buildAgentConfigs,
+  buildSkillConfigs,
   buildProjectConfig,
 } from "../__tests__/helpers";
 import {
@@ -51,11 +52,14 @@ describe("config-generator", () => {
 
       expect(config.name).toBe("my-project");
       expect(config.agents).toStrictEqual(buildAgentConfigs(["web-developer", "web-reviewer"]));
-      expect(config.stack).toBeDefined();
-      expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
-        "web-framework-react",
-      );
-      expect(config.stack!["web-reviewer"]?.["web-framework"]?.[0]?.id).toBe("web-framework-react");
+      expect(config.stack).toStrictEqual({
+        "web-developer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
+        "web-reviewer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
+      });
       // Should NOT have these fields by default
       expect(config.version).toBeUndefined();
       expect(config.author).toBeUndefined();
@@ -72,11 +76,16 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      expect(config.stack).toBeDefined();
-      const webDev = config.stack!["web-developer"];
-      expect(webDev).toBeDefined();
-      expect(webDev["web-framework"]?.[0]?.id).toBe("web-framework-react");
-      expect(webDev["web-styling"]?.[0]?.id).toBe("web-styling-scss-modules");
+      expect(config.stack).toStrictEqual({
+        "web-developer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
+        },
+        "web-reviewer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
+        },
+      });
     });
 
     it("preserves all skills in the same category (multi-select categories)", () => {
@@ -89,19 +98,25 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      expect(config.stack).toBeDefined();
-      const webDev = config.stack!["web-developer"];
-      expect(webDev).toBeDefined();
-
       // Both styling skills must survive — regression: Object.fromEntries overwrote duplicates
-      expect(webDev["web-styling"]).toStrictEqual([
-        { id: "web-styling-scss-modules", preloaded: false },
-        { id: "web-styling-tailwind", preloaded: false },
-      ]);
-      // Framework skill in its own category is unaffected
-      expect(webDev["web-framework"]).toStrictEqual([
-        { id: "web-framework-react", preloaded: false },
-      ]);
+      expect(config).toStrictEqual({
+        name: "my-project",
+        agents: buildAgentConfigs(["web-developer"]),
+        skills: buildSkillConfigs([
+          "web-framework-react",
+          "web-styling-scss-modules",
+          "web-styling-tailwind",
+        ]),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+            "web-styling": [
+              { id: "web-styling-scss-modules", preloaded: false },
+              { id: "web-styling-tailwind", preloaded: false },
+            ],
+          },
+        },
+      });
     });
 
     it("uses selectedAgents when provided", () => {
@@ -113,10 +128,14 @@ describe("config-generator", () => {
       });
 
       expect(config.agents).toStrictEqual(buildAgentConfigs(["web-developer", "web-reviewer"]));
-      expect(config.stack).toBeDefined();
-      expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
-        "web-framework-react",
-      );
+      expect(config.stack).toStrictEqual({
+        "web-developer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
+        "web-reviewer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
+      });
     });
 
     it("handles empty skill selection", () => {
@@ -136,15 +155,12 @@ describe("config-generator", () => {
         selectedAgents,
       });
 
-      // Local skills have category "local" which has no category
-      // Agents are still set from selectedAgents
-      expect(config.agents).toStrictEqual(buildAgentConfigs(["web-developer"]));
-      // Stack entries should not contain any "local" category
-      if (config.stack) {
-        for (const agentConfig of Object.values(config.stack)) {
-          expect(agentConfig).not.toHaveProperty("local");
-        }
-      }
+      // Local skills have category "local" which is excluded from stack
+      expect(config).toStrictEqual({
+        name: "my-project",
+        agents: buildAgentConfigs(["web-developer"]),
+        skills: buildSkillConfigs(["web-local-skill" as SkillId]),
+      });
     });
 
     it("handles both remote and local skills", () => {
@@ -157,11 +173,15 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      // Stack should have framework mapping from remote skill
-      expect(config.stack).toBeDefined();
-      expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
-        "web-framework-react",
-      );
+      // Stack should have framework mapping from remote skill (local skills have no category)
+      expect(config.stack).toStrictEqual({
+        "web-developer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
+        "web-reviewer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
+      });
     });
 
     it("includes optional fields when provided", () => {
@@ -172,8 +192,18 @@ describe("config-generator", () => {
         selectedAgents: ["web-developer"],
       });
 
-      expect(config.description).toBe("My awesome project");
-      expect(config.author).toBe("@vince");
+      expect(config).toStrictEqual({
+        name: "my-project",
+        description: "My awesome project",
+        author: "@vince",
+        agents: buildAgentConfigs(["web-developer"]),
+        skills: buildSkillConfigs(["web-framework-react"]),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
     });
 
     it("skips unknown skills gracefully", () => {
@@ -187,10 +217,11 @@ describe("config-generator", () => {
       );
 
       // Stack should only contain known skills
-      expect(config.stack).toBeDefined();
-      expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
-        "web-framework-react",
-      );
+      expect(config.stack).toStrictEqual({
+        "web-developer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
+      });
       expect(config.agents).toStrictEqual(buildAgentConfigs(["web-developer"]));
     });
 
@@ -204,20 +235,23 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      const uniqueAgents = new Set(config.agents);
-      expect(config.agents.length).toBe(uniqueAgents.size);
+      // Both skills share the same domain agents — each agent should appear exactly once
+      expect(config.agents).toStrictEqual(buildAgentConfigs(["web-developer", "web-reviewer"]));
     });
 
     it("sorts agents alphabetically", () => {
       initializeMatrix(SINGLE_REACT_MATRIX);
+      // Input order is deliberately unsorted to verify the function sorts
       const selectedAgents: AgentName[] = ["web-reviewer", "api-developer", "web-developer"];
 
       const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], {
         selectedAgents,
       });
 
-      const sortedAgents = [...config.agents].sort();
-      expect(config.agents).toStrictEqual(sortedAgents);
+      // Output should be alphabetically sorted regardless of input order
+      expect(config.agents).toStrictEqual(
+        buildAgentConfigs(["api-developer", "web-developer", "web-reviewer"]),
+      );
     });
 
     it("assigns all skills to all selectedAgents across domains", () => {
@@ -235,13 +269,20 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      const agentNames = config.agents.map((a) => a.name);
-      expect(agentNames).toContain("web-developer");
-      expect(agentNames).toContain("web-reviewer");
-      expect(agentNames).toContain("api-developer");
-      expect(agentNames).toContain("api-reviewer");
-      const sortedAgents = [...config.agents].sort((a, b) => a.name.localeCompare(b.name));
-      expect(config.agents).toStrictEqual(sortedAgents);
+      expect(config.agents).toStrictEqual(
+        buildAgentConfigs(["api-developer", "api-reviewer", "web-developer", "web-reviewer"]),
+      );
+      // Every agent gets every skill category
+      const expectedAgentStack = {
+        "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        "api-api": [{ id: "api-framework-hono", preloaded: false }],
+      };
+      expect(config.stack).toStrictEqual({
+        "api-developer": expectedAgentStack,
+        "api-reviewer": expectedAgentStack,
+        "web-developer": expectedAgentStack,
+        "web-reviewer": expectedAgentStack,
+      });
     });
 
     it("builds stack entries for every agent with every skill category", () => {
@@ -254,16 +295,14 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      expect(config.stack).toBeDefined();
-      // Every agent gets every skill's category
-      expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
-        "web-framework-react",
-      );
-      expect(config.stack!["web-developer"]?.["api-api"]?.[0]?.id).toBe("api-framework-hono");
-      expect(config.stack!["api-developer"]?.["web-framework"]?.[0]?.id).toBe(
-        "web-framework-react",
-      );
-      expect(config.stack!["api-developer"]?.["api-api"]?.[0]?.id).toBe("api-framework-hono");
+      const expectedAgentStack = {
+        "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        "api-api": [{ id: "api-framework-hono", preloaded: false }],
+      };
+      expect(config.stack).toStrictEqual({
+        "web-developer": expectedAgentStack,
+        "api-developer": expectedAgentStack,
+      });
     });
 
     it("handles bare category paths", () => {
@@ -274,8 +313,11 @@ describe("config-generator", () => {
         selectedAgents,
       });
 
-      expect(config.stack).toBeDefined();
-      expect(config.stack!["web-tester"]?.["web-testing"]?.[0]?.id).toBe("web-testing-vitest");
+      expect(config.stack).toStrictEqual({
+        "web-tester": {
+          "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        },
+      });
     });
 
     it("preserves all selected skill IDs in skills array", () => {
@@ -290,7 +332,7 @@ describe("config-generator", () => {
         selectedAgents: ["web-developer"],
       });
 
-      expect(config.skills.map((s) => s.id)).toStrictEqual(selectedSkills);
+      expect(config.skills).toStrictEqual(buildSkillConfigs(selectedSkills));
     });
 
     it("includes unknown skill IDs in skills array even when skipped for agents", () => {
@@ -301,10 +343,9 @@ describe("config-generator", () => {
         { selectedAgents: ["web-developer"] },
       );
 
-      expect(config.skills.map((s) => s.id)).toStrictEqual([
-        "web-framework-react",
-        "web-unknown-skill",
-      ]);
+      expect(config.skills).toStrictEqual(
+        buildSkillConfigs(["web-framework-react", "web-unknown-skill" as SkillId]),
+      );
     });
 
     it("produces no stack when all skills are unknown", () => {
@@ -314,12 +355,14 @@ describe("config-generator", () => {
         "api-nonexistent-thing" as SkillId,
       ]);
 
-      expect(config.agents).toStrictEqual([]);
-      expect(config.stack).toBeUndefined();
-      expect(config.skills.map((s) => s.id)).toStrictEqual([
-        "web-nonexistent-skill",
-        "api-nonexistent-thing",
-      ]);
+      expect(config).toStrictEqual({
+        name: "my-project",
+        agents: [],
+        skills: buildSkillConfigs([
+          "web-nonexistent-skill" as SkillId,
+          "api-nonexistent-thing" as SkillId,
+        ]),
+      });
     });
 
     it("does not add description when options.description is empty string", () => {
@@ -329,8 +372,12 @@ describe("config-generator", () => {
         author: "@vince",
       });
 
-      expect(config.description).toBeUndefined();
-      expect(config.author).toBe("@vince");
+      expect(config).toStrictEqual({
+        name: "my-project",
+        author: "@vince",
+        agents: [],
+        skills: buildSkillConfigs(["web-framework-react"]),
+      });
     });
 
     it("does not add author when options.author is empty string", () => {
@@ -340,8 +387,12 @@ describe("config-generator", () => {
         author: "",
       });
 
-      expect(config.description).toBe("A project");
-      expect(config.author).toBeUndefined();
+      expect(config).toStrictEqual({
+        name: "my-project",
+        description: "A project",
+        agents: [],
+        skills: buildSkillConfigs(["web-framework-react"]),
+      });
     });
 
     it("does not add optional fields when options is undefined", () => {
@@ -352,8 +403,11 @@ describe("config-generator", () => {
         undefined,
       );
 
-      expect(config.description).toBeUndefined();
-      expect(config.author).toBeUndefined();
+      expect(config).toStrictEqual({
+        name: "my-project",
+        agents: [],
+        skills: buildSkillConfigs(["web-framework-react"]),
+      });
     });
 
     it("assigns every skill to every selected agent", () => {
@@ -364,11 +418,19 @@ describe("config-generator", () => {
         selectedAgents,
       });
 
-      // Both agents should have the skill
-      expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
-        "web-framework-react",
-      );
-      expect(config.stack!["web-reviewer"]?.["web-framework"]?.[0]?.id).toBe("web-framework-react");
+      expect(config).toStrictEqual({
+        name: "my-project",
+        agents: buildAgentConfigs(["web-developer", "web-reviewer"]),
+        skills: buildSkillConfigs(["web-framework-react"]),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+          "web-reviewer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
     });
 
     it("stack only contains selectedAgents", () => {
@@ -379,23 +441,30 @@ describe("config-generator", () => {
         selectedAgents,
       });
 
-      const stackAgentIds = Object.keys(config.stack || {});
-      for (const agentId of stackAgentIds) {
-        expect(selectedAgents).toContain(agentId);
-      }
-
-      expect(config.stack?.["agent-summoner"]).toBeUndefined();
-      expect(config.stack?.["skill-summoner"]).toBeUndefined();
-      expect(config.stack?.["codex-keeper"]).toBeUndefined();
+      expect(config).toStrictEqual({
+        name: "my-project",
+        agents: buildAgentConfigs(["web-developer", "web-reviewer"]),
+        skills: buildSkillConfigs(["web-framework-react"]),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+          "web-reviewer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
     });
 
     it("returns empty agents when selectedAgents is not provided", () => {
       initializeMatrix(SINGLE_REACT_MATRIX);
       const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"]);
 
-      expect(config.agents).toStrictEqual([]);
-      // No agents means no stack entries
-      expect(config.stack).toBeUndefined();
+      expect(config).toStrictEqual({
+        name: "my-project",
+        agents: [],
+        skills: buildSkillConfigs(["web-framework-react"]),
+      });
     });
 
     it("assigns methodology skills to all selectedAgents", () => {
@@ -407,13 +476,13 @@ describe("config-generator", () => {
       });
 
       expect(config.agents).toStrictEqual(buildAgentConfigs(["api-developer", "web-developer"]));
-      expect(config.stack).toBeDefined();
-      expect(config.stack!["web-developer"]?.["meta-reviewing"]?.[0]?.id).toBe(
-        "meta-reviewing-reviewing",
-      );
-      expect(config.stack!["api-developer"]?.["meta-reviewing"]?.[0]?.id).toBe(
-        "meta-reviewing-reviewing",
-      );
+      const expectedMethodologyStack = {
+        "meta-reviewing": [{ id: "meta-reviewing-reviewing", preloaded: false }],
+      };
+      expect(config.stack).toStrictEqual({
+        "api-developer": expectedMethodologyStack,
+        "web-developer": expectedMethodologyStack,
+      });
     });
   });
 
@@ -519,8 +588,18 @@ describe("config-generator", () => {
     it("handles local skill assignments in stack", () => {
       const result = buildStackProperty(LOCAL_SKILL_STACK);
 
-      expect(result["web-developer"]?.["web-framework"]?.[0]?.id).toBe("web-framework-react");
-      expect(result["web-developer"]?.["web-framework"]?.[0]?.local).toBe(true);
+      expect(result).toStrictEqual({
+        "web-developer": {
+          "web-framework": [
+            {
+              id: "web-framework-react",
+              preloaded: true,
+              local: true,
+              path: ".claude/skills/react/",
+            },
+          ],
+        },
+      });
     });
   });
 
@@ -539,10 +618,16 @@ describe("config-generator", () => {
 
       const result = splitConfigByScope(config);
 
-      expect(result.global.skills).toHaveLength(2);
-      expect(result.global.agents).toHaveLength(2);
-      expect(result.project.skills).toHaveLength(0);
-      expect(result.project.agents).toHaveLength(0);
+      expect(result.global.skills).toStrictEqual([
+        { id: "web-framework-react", scope: "global", source: "agents-inc" },
+        { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+      ]);
+      expect(result.global.agents).toStrictEqual([
+        { name: "web-developer", scope: "global" },
+        { name: "web-reviewer", scope: "global" },
+      ]);
+      expect(result.project.skills).toStrictEqual([]);
+      expect(result.project.agents).toStrictEqual([]);
     });
 
     it("puts project-scoped skills and agents into the project partition", () => {
@@ -552,12 +637,12 @@ describe("config-generator", () => {
 
       const result = splitConfigByScope(config);
 
-      expect(result.global.skills).toHaveLength(0);
-      expect(result.global.agents).toHaveLength(0);
-      expect(result.project.skills).toHaveLength(1);
-      expect(result.project.skills[0].id).toBe("web-framework-react");
-      expect(result.project.agents).toHaveLength(1);
-      expect(result.project.agents[0].name).toBe("web-developer");
+      expect(result.global.skills).toStrictEqual([]);
+      expect(result.global.agents).toStrictEqual([]);
+      expect(result.project.skills).toStrictEqual([
+        { id: "web-framework-react", scope: "project", source: "eject" },
+      ]);
+      expect(result.project.agents).toStrictEqual([{ name: "web-developer", scope: "project" }]);
     });
 
     it("correctly separates mixed-scope items", () => {
@@ -585,14 +670,20 @@ describe("config-generator", () => {
       // Global partition
       expect(result.global.skills.map((s) => s.id)).toStrictEqual(["web-framework-react"]);
       expect(result.global.agents.map((a) => a.name)).toStrictEqual(["web-developer"]);
-      expect(result.global.stack?.["web-developer"]).toBeDefined();
-      expect(result.global.stack?.["web-reviewer"]).toBeUndefined();
+      expect(result.global.stack).toStrictEqual({
+        "web-developer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
+      });
 
       // Project partition
       expect(result.project.skills.map((s) => s.id)).toStrictEqual(["web-testing-vitest"]);
       expect(result.project.agents.map((a) => a.name)).toStrictEqual(["web-reviewer"]);
-      expect(result.project.stack?.["web-reviewer"]).toBeDefined();
-      expect(result.project.stack?.["web-developer"]).toBeUndefined();
+      expect(result.project.stack).toStrictEqual({
+        "web-reviewer": {
+          "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        },
+      });
     });
 
     it("preserves metadata fields in project partition", () => {
@@ -646,15 +737,18 @@ describe("config-generator", () => {
       const result = splitConfigByScope(config);
 
       // Global partition should contain only the global skill's stack mapping
-      expect(result.global.stack?.["web-developer"]).toStrictEqual({
-        "web-framework": [{ id: "web-framework-react", preloaded: false }],
+      expect(result.global.stack).toStrictEqual({
+        "web-developer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
       });
 
       // Project partition should contain the project skill's stack mapping
       // under the same global agent name
-      expect(result.project.stack).toBeDefined();
-      expect(result.project.stack?.["web-developer"]).toStrictEqual({
-        "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+      expect(result.project.stack).toStrictEqual({
+        "web-developer": {
+          "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+        },
       });
     });
   });
@@ -672,10 +766,13 @@ describe("config-generator", () => {
       const result = splitConfigByScope(config);
 
       // Excluded global skill routes to project partition
-      expect(result.project.skills.map((s) => s.id)).toStrictEqual(["web-framework-react"]);
-      expect(result.project.skills[0].excluded).toBe(true);
+      expect(result.project.skills).toStrictEqual([
+        { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+      ]);
       // Active global skill stays in global partition
-      expect(result.global.skills.map((s) => s.id)).toStrictEqual(["web-testing-vitest"]);
+      expect(result.global.skills).toStrictEqual([
+        { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+      ]);
     });
 
     it("should route excluded global agents to project partition", () => {
@@ -690,9 +787,11 @@ describe("config-generator", () => {
       const result = splitConfigByScope(config);
 
       // Excluded global agent routes to project partition
-      expect(result.project.agents.map((a) => a.name)).toStrictEqual(["web-developer"]);
+      expect(result.project.agents).toStrictEqual([
+        { name: "web-developer", scope: "global", excluded: true },
+      ]);
       // Active global agent stays in global partition
-      expect(result.global.agents.map((a) => a.name)).toStrictEqual(["web-reviewer"]);
+      expect(result.global.agents).toStrictEqual([{ name: "web-reviewer", scope: "global" }]);
     });
 
     it("should keep active global skills in global partition", () => {
@@ -708,10 +807,14 @@ describe("config-generator", () => {
       const result = splitConfigByScope(config);
 
       // Active global skill in global partition
-      expect(result.global.skills.map((s) => s.id)).toStrictEqual(["web-framework-react"]);
+      expect(result.global.skills).toStrictEqual([
+        { id: "web-framework-react", scope: "global", source: "agents-inc" },
+      ]);
       // Excluded global + project skills in project partition
-      const projectIds = result.project.skills.map((s) => s.id);
-      expect(projectIds).toStrictEqual(["web-testing-vitest", "web-state-zustand"]);
+      expect(result.project.skills).toStrictEqual([
+        { id: "web-testing-vitest", scope: "global", source: "agents-inc", excluded: true },
+        { id: "web-state-zustand", scope: "project", source: "eject" },
+      ]);
     });
 
     it("should keep excluded project-scope skills in project partition", () => {
@@ -726,11 +829,13 @@ describe("config-generator", () => {
       const result = splitConfigByScope(config);
 
       // Excluded project-scope skill stays in project partition with excluded preserved
-      expect(result.project.skills).toHaveLength(1);
-      expect(result.project.skills[0].id).toBe("web-framework-react");
-      expect(result.project.skills[0].excluded).toBe(true);
+      expect(result.project.skills).toStrictEqual([
+        { id: "web-framework-react", scope: "project", source: "eject", excluded: true },
+      ]);
       // Does NOT appear in global partition
-      expect(result.global.skills.map((s) => s.id)).toStrictEqual(["web-testing-vitest"]);
+      expect(result.global.skills).toStrictEqual([
+        { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+      ]);
     });
   });
 
@@ -749,8 +854,8 @@ describe("config-generator", () => {
 
       const { project } = splitConfigByScope(config);
 
-      expect(project.skills).toHaveLength(0);
-      expect(project.agents).toHaveLength(0);
+      expect(project.skills).toStrictEqual([]);
+      expect(project.agents).toStrictEqual([]);
     });
 
     it("should correctly split mixed-scope configs", () => {

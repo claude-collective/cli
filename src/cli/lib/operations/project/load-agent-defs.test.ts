@@ -74,10 +74,19 @@ describe("loadAgentDefs", () => {
 
     const result = await loadAgentDefs();
 
+    expect(mockLoadAllAgents).toHaveBeenCalledTimes(2);
+    expect(mockLoadAllAgents).toHaveBeenNthCalledWith(1, "/mock/cli/root");
+    expect(mockLoadAllAgents).toHaveBeenNthCalledWith(2, "/tmp/source");
+
     // Source overrides CLI for "web-developer"
     expect(result.agents["web-developer"]).toStrictEqual(SOURCE_AGENT);
     // CLI-only agent preserved
     expect(result.agents["api-reviewer"]).toStrictEqual(CLI_ONLY_AGENT);
+    // Full merged result
+    expect(result.agents).toStrictEqual({
+      "web-developer": SOURCE_AGENT,
+      "api-reviewer": CLI_ONLY_AGENT,
+    });
   });
 
   it("should return sourcePath from agentSourcePaths", async () => {

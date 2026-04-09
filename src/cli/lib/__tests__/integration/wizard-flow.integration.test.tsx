@@ -555,7 +555,7 @@ describe("Wizard integration", () => {
       await stdin.write(ESCAPE);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      expect(onCancel).toHaveBeenCalled();
+      expect(onCancel).toHaveBeenCalledTimes(1);
       expect(onComplete).not.toHaveBeenCalled();
     });
 

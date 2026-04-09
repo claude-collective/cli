@@ -103,8 +103,9 @@ describe("Integration: Consumer-Defined Stacks", () => {
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.skills.map((s) => s.id)).toContain("web-framework-react");
-    expect(config.skills.map((s) => s.id)).toContain("api-framework-hono");
+    expect(config.skills.map((s) => s.id).sort()).toStrictEqual(
+      ["api-framework-hono", "web-framework-react"],
+    );
   });
 
   it("should find a specific stack by ID using loadStackById", async () => {
@@ -129,8 +130,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
     // Bare YAML strings like `framework: web-framework-react` are normalized
     // to SkillAssignment[] with preloaded: false
     const webDevConfig = fullstackStack.agents["web-developer"];
-    expect(webDevConfig).toBeDefined();
-    expect(webDevConfig!["web-framework"]).toStrictEqual([
+    expect(webDevConfig?.["web-framework"]).toStrictEqual([
       { id: "web-framework-react", preloaded: false },
     ]);
   });
@@ -155,13 +155,7 @@ describe("Integration: Stacks Precedence", () => {
 
     try {
       const sourceStacks = await loadStacks(dirs.sourceDir);
-      expect(sourceStacks).toHaveLength(2);
-      expect(sourceStacks.map((s) => s.id)).toContain("custom-fullstack");
-      expect(sourceStacks.map((s) => s.id)).toContain("custom-testing");
-
-      // Source stacks should NOT contain CLI built-in stacks (they're separate dirs)
-      const hasCliBuiltins = sourceStacks.some((s) => s.id === "nextjs-fullstack");
-      expect(hasCliBuiltins).toBe(false);
+      expect(sourceStacks.map((s) => s.id)).toStrictEqual(["custom-fullstack", "custom-testing"]);
     } finally {
       await cleanupTestSource(dirs);
     }
@@ -174,15 +168,12 @@ describe("Integration: Stacks Precedence", () => {
 
     try {
       const sourceStacks = await loadStacks(dirs.sourceDir);
-      expect(sourceStacks.length).toBeGreaterThan(0);
+      expect(sourceStacks).toHaveLength(2);
 
-      // Each stack should have the expected structure
-      for (const stack of sourceStacks) {
-        expect(stack.id).toBeDefined();
-        expect(stack.name).toBeDefined();
-        expect(stack.description).toBeDefined();
-        expect(stack.agents).toBeDefined();
-      }
+      // custom-fullstack has 2 agents: web-developer, api-developer
+      expect(Object.keys(sourceStacks[0].agents)).toStrictEqual(["web-developer", "api-developer"]);
+      // custom-testing has 1 agent: web-developer
+      expect(Object.keys(sourceStacks[1].agents)).toStrictEqual(["web-developer"]);
     } finally {
       await cleanupTestSource(dirs);
     }
@@ -218,9 +209,8 @@ describe("Integration: Marketplace Source Stacks", () => {
       expect(stacks[0].id).toBe("marketplace-stack");
       expect(stacks[0].name).toBe("Marketplace Stack");
 
-      // Verify the stack has the expected agent structure
-      expect(Object.keys(stacks[0].agents)).toContain("web-developer");
-      expect(Object.keys(stacks[0].agents)).toContain("api-developer");
+      // Verify the stack has exactly these agents
+      expect(Object.keys(stacks[0].agents)).toStrictEqual(["web-developer", "api-developer"]);
     } finally {
       await cleanupTestSource(dirs);
     }
@@ -293,8 +283,10 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
       projectDir: dirs.projectDir,
     });
 
-    expect(result.copiedSkills).toHaveLength(3);
-    expect(result.compiledAgents.length).toBeGreaterThan(0);
+    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
+      ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
+    );
+    expect(result.compiledAgents.sort()).toStrictEqual(["api-developer", "web-developer"]);
     expect(await directoryExists(result.skillsDir)).toBe(true);
     expect(await directoryExists(result.agentsDir)).toBe(true);
   });
@@ -323,17 +315,23 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       );
 
       // Assert the custom "tooling" category is present
-      expect(merged.categories).toBeDefined();
-      expect(merged.categories["shared-tooling"]).toBeDefined();
-      expect(merged.categories["shared-tooling"]!.displayName).toBe("Tooling");
-      expect(merged.categories["shared-tooling"]!.exclusive).toBe(false);
+      expect(Object.keys(merged.categories)).toHaveLength(2);
+      expect(merged.categories["shared-tooling"]).toStrictEqual(
+        expect.objectContaining({
+          displayName: "Tooling",
+          exclusive: false,
+        }),
+      );
 
       // Assert the custom skill is present
       // Boundary cast: test-only skill ID not in generated SkillId union
       const dockerId = "infra-tooling-docker" as SkillId;
-      expect(merged.skills[dockerId]).toBeDefined();
-      expect(merged.skills[dockerId]!.description).toBe("Docker containerization patterns");
-      expect(merged.skills[dockerId]!.category).toBe("shared-tooling");
+      expect(merged.skills[dockerId]).toStrictEqual(
+        expect.objectContaining({
+          description: "Docker containerization patterns",
+          category: "shared-tooling",
+        }),
+      );
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -359,13 +357,18 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       );
 
       // Verify category exclusive flag
-      expect(merged.categories["infra-ci-cd"]).toBeDefined();
-      expect(merged.categories["infra-ci-cd"]!.exclusive).toBe(true);
+      expect(merged.categories["infra-ci-cd"]).toStrictEqual(
+        expect.objectContaining({ exclusive: true }),
+      );
 
       // Verify both skills are loaded
       // Boundary cast: test-only skill IDs not in generated SkillId union
-      expect(merged.skills["infra-ci-cd-github-actions" as SkillId]).toBeDefined();
-      expect(merged.skills["infra-ci-cd-gitlab-ci" as SkillId]).toBeDefined();
+      expect(merged.skills["infra-ci-cd-github-actions" as SkillId]).toStrictEqual(
+        expect.objectContaining({ category: "infra-ci-cd" }),
+      );
+      expect(merged.skills["infra-ci-cd-gitlab-ci" as SkillId]).toStrictEqual(
+        expect.objectContaining({ category: "infra-ci-cd" }),
+      );
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -393,23 +396,32 @@ describe("Integration: Custom Skills Matrix Loading", () => {
 
       // Verify discourages relationship is applied to both skills
       const skillA = merged.skills["web-framework-react"];
-      expect(skillA).toBeDefined();
-      expect(skillA!.discourages).toHaveLength(1);
-      expect(skillA!.discourages[0].skillId).toBe("web-styling-scss-modules");
-      expect(skillA!.discourages[0].reason).toBe(
-        "These tools have conflicting design philosophies",
+      expect(skillA).toStrictEqual(
+        expect.objectContaining({
+          discourages: [
+            expect.objectContaining({
+              skillId: "web-styling-scss-modules",
+              reason: "These tools have conflicting design philosophies",
+            }),
+          ],
+        }),
       );
 
       const skillB = merged.skills["web-styling-scss-modules"];
-      expect(skillB).toBeDefined();
-      expect(skillB!.discourages).toHaveLength(1);
-      expect(skillB!.discourages[0].skillId).toBe("web-framework-react");
+      expect(skillB).toStrictEqual(
+        expect.objectContaining({
+          discourages: [expect.objectContaining({ skillId: "web-framework-react" })],
+        }),
+      );
 
       // Verify recommended skill is marked as isRecommended
       const skillC = merged.skills["web-framework-vue-composition-api"];
-      expect(skillC).toBeDefined();
-      expect(skillC!.isRecommended).toBe(true);
-      expect(skillC!.recommendedReason).toBe("These work great together");
+      expect(skillC).toStrictEqual(
+        expect.objectContaining({
+          isRecommended: true,
+          recommendedReason: "These work great together",
+        }),
+      );
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -512,14 +524,16 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       });
 
       // 5. Verify installation results
-      expect(result.copiedSkills).toHaveLength(3);
-      expect(result.compiledAgents.length).toBeGreaterThan(0);
+      expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
+        ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
+      );
+      expect(result.compiledAgents.sort()).toStrictEqual(["api-developer", "web-developer"]);
 
-      // 6. Verify config.ts contains all selected skills
+      // 6. Verify config.ts contains exactly the selected skills
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-      expect(config.skills.map((s) => s.id)).toContain("web-framework-react");
-      expect(config.skills.map((s) => s.id)).toContain("web-testing-vitest");
-      expect(config.skills.map((s) => s.id)).toContain("api-framework-hono");
+      expect(config.skills.map((s) => s.id).sort()).toStrictEqual(
+        ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
+      );
     } finally {
       await cleanupTestSource(dirs);
     }
@@ -562,10 +576,12 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       const stackAReactAssignment = stacks[0].agents["web-developer"]?.["web-framework"];
       const stackBReactAssignment = stacks[1].agents["web-developer"]?.["web-framework"];
 
-      expect(stackAReactAssignment).toBeDefined();
-      expect(stackBReactAssignment).toBeDefined();
-      expect(stackAReactAssignment![0].id).toBe("web-framework-react");
-      expect(stackBReactAssignment![0].id).toBe("web-framework-react");
+      expect(stackAReactAssignment).toStrictEqual([
+        expect.objectContaining({ id: "web-framework-react" }),
+      ]);
+      expect(stackBReactAssignment).toStrictEqual([
+        expect.objectContaining({ id: "web-framework-react" }),
+      ]);
     } finally {
       await cleanupTestSource(dirs);
     }
@@ -594,8 +610,9 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
 
       // Boundary cast: test-only skill ID not in generated SkillId union
       const datadogSkill = merged.skills["api-observability-datadog" as SkillId];
-      expect(datadogSkill).toBeDefined();
-      expect(datadogSkill).toBeDefined();
+      expect(datadogSkill).toStrictEqual(
+        expect.objectContaining({ description: "Datadog APM integration" }),
+      );
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -623,10 +640,16 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
 
       // Verify requires relationship is applied
       const rtlSkill = merged.skills["web-testing-vitest"];
-      expect(rtlSkill).toBeDefined();
-      expect(rtlSkill!.requires).toHaveLength(1);
-      expect(rtlSkill!.requires[0].skillIds).toContain("web-framework-react");
-      expect(rtlSkill!.requires[0].reason).toBe("RTL requires React to function");
+      expect(rtlSkill).toStrictEqual(
+        expect.objectContaining({
+          requires: [
+            expect.objectContaining({
+              skillIds: expect.arrayContaining(["web-framework-react"]),
+              reason: "RTL requires React to function",
+            }),
+          ],
+        }),
+      );
     } finally {
       await cleanupTempDir(tempDir);
     }

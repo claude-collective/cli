@@ -102,6 +102,10 @@ describe("write-project-config", () => {
   });
 
   it("should build, merge, and write config in project context", async () => {
+    const cliAgents = {} as Record<AgentName, AgentDefinition>;
+    const sourceAgents = {} as Record<AgentName, AgentDefinition>;
+    mockLoadAllAgents.mockResolvedValueOnce(cliAgents).mockResolvedValueOnce(sourceAgents);
+
     const result = await writeProjectConfig({
       wizardResult,
       sourceResult,
@@ -109,29 +113,36 @@ describe("write-project-config", () => {
     });
 
     expect(mockResolveInstallPaths).toHaveBeenCalledWith(projectDir, "project");
-    expect(mockEnsureDir).toHaveBeenCalled();
+    expect(mockEnsureDir).toHaveBeenCalledWith("/test/project/.claude-src");
     expect(mockBuildAndMergeConfig).toHaveBeenCalledWith(
       wizardResult,
       sourceResult,
       projectDir,
       undefined,
     );
-    expect(mockEnsureBlankGlobalConfig).toHaveBeenCalled();
+    expect(mockEnsureBlankGlobalConfig).toHaveBeenCalledWith();
     expect(mockWriteScopedConfigs).toHaveBeenCalledWith(
       finalConfig,
       sourceResult.matrix,
-      expect.any(Object),
+      { ...cliAgents, ...sourceAgents },
       projectDir,
       configPath,
       true,
     );
-    expect(result.config).toStrictEqual(finalConfig);
-    expect(result.configPath).toBe(configPath);
-    expect(result.filesWritten).toBe(4);
+    expect(result).toStrictEqual({
+      config: finalConfig,
+      configPath,
+      wasMerged: false,
+      existingConfigPath: undefined,
+      filesWritten: 4,
+    });
   });
 
   it("should skip ensureBlankGlobalConfig when installing from homedir", async () => {
     const homeDir = "/home/user";
+    const cliAgents = {} as Record<AgentName, AgentDefinition>;
+    const sourceAgents = {} as Record<AgentName, AgentDefinition>;
+    mockLoadAllAgents.mockResolvedValueOnce(cliAgents).mockResolvedValueOnce(sourceAgents);
 
     // Both resolve to the same path -> not a project context
     mockRealpathSync.mockReturnValue(homeDir);
@@ -146,12 +157,18 @@ describe("write-project-config", () => {
     expect(mockWriteScopedConfigs).toHaveBeenCalledWith(
       finalConfig,
       sourceResult.matrix,
-      expect.any(Object),
+      { ...cliAgents, ...sourceAgents },
       homeDir,
       configPath,
       false,
     );
-    expect(result.filesWritten).toBe(2);
+    expect(result).toStrictEqual({
+      config: finalConfig,
+      configPath,
+      wasMerged: false,
+      existingConfigPath: undefined,
+      filesWritten: 2,
+    });
   });
 
   it("should use pre-loaded agents when provided", async () => {

@@ -145,17 +145,18 @@ describe("Integration: Source Switching with Delete", () => {
         projectDir: dirs.projectDir,
       });
 
-      // Verify all skills copied
-      expect(installResult.copiedSkills.length).toBe(SWITCHABLE_SKILLS.length);
+      // Verify exactly the expected skills were copied
+      expect(installResult.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
+        [...ALL_SKILL_NAMES].sort(),
+      );
 
-      // Verify config generated
+      // Verify config generated with exact skill list
       expect(await fileExists(installResult.configPath)).toBe(true);
       const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
-      expect(config.skills).toBeDefined();
-      expect(config.skills?.length).toBe(SWITCHABLE_SKILLS.length);
+      expect(config.skills.map((s) => s.id).sort()).toStrictEqual([...ALL_SKILL_NAMES].sort());
 
-      // Verify agents compiled
-      expect(installResult.compiledAgents.length).toBeGreaterThan(0);
+      // Verify exactly the expected agents compiled
+      expect(installResult.compiledAgents).toStrictEqual(["web-developer"]);
 
       // Verify NO _archived directory exists
       const archivedDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH, "_archived");

@@ -23,31 +23,28 @@ describe("defaultStacks", () => {
   });
 
   it("includes nextjs-fullstack with correct fields", () => {
-    const stack = defaultStacks.find((s) => s.id === "nextjs-fullstack");
-    expect(stack).toBeDefined();
-    expect(stack!.name).toBe("Next.js Full-Stack");
-    expect(stack!.description).toBe("Hono, Drizzle, Better Auth, Zustand");
-    expect(stack!.philosophy).toBe("Ship fast, iterate faster");
+    const stack = defaultStacks.find((s) => s.id === "nextjs-fullstack")!;
+    expect(stack.name).toBe("Next.js Full-Stack");
+    expect(stack.description).toBe("Hono, Drizzle, Better Auth, Zustand");
+    expect(stack.philosophy).toBe("Ship fast, iterate faster");
   });
 
   it("includes angular-modern-fullstack with correct fields", () => {
-    const stack = defaultStacks.find((s) => s.id === "angular-modern-fullstack");
-    expect(stack).toBeDefined();
-    expect(stack!.name).toBe("Angular Modern Full-Stack");
-    expect(stack!.philosophy).toBe("Enterprise-grade and type-safe");
+    const stack = defaultStacks.find((s) => s.id === "angular-modern-fullstack")!;
+    expect(stack.name).toBe("Angular Modern Full-Stack");
+    expect(stack.philosophy).toBe("Enterprise-grade and type-safe");
   });
 
   it("includes solidjs-fullstack", () => {
-    const stack = defaultStacks.find((s) => s.id === "solidjs-fullstack");
-    expect(stack).toBeDefined();
-    expect(stack!.name).toBe("SolidJS Full-Stack");
+    const stack = defaultStacks.find((s) => s.id === "solidjs-fullstack")!;
+    expect(stack.name).toBe("SolidJS Full-Stack");
   });
 
   it.each(defaultStacks)("stack $id has required fields", (stack) => {
-    expect(stack.id).toBeTruthy();
-    expect(stack.name).toBeTruthy();
-    expect(stack.description).toBeTruthy();
-    expect(stack.agents).toBeDefined();
+    expect(stack.id).not.toBe("");
+    expect(stack.name).not.toBe("");
+    expect(stack.description).not.toBe("");
+    expect(typeof stack.agents).toBe("object");
   });
 
   it.each(agentCategoryCases)(
@@ -66,11 +63,8 @@ describe("defaultStacks", () => {
   );
 
   it("nextjs-fullstack has web-developer with preloaded react framework", () => {
-    const stack = defaultStacks.find((s) => s.id === "nextjs-fullstack");
-    const webDev = stack!.agents["web-developer"];
-    expect(webDev).toBeDefined();
-    const framework = webDev!["web-framework"];
-    expect(framework).toBeDefined();
-    expect(framework).toContainEqual({ id: "web-framework-react", preloaded: true });
+    const stack = defaultStacks.find((s) => s.id === "nextjs-fullstack")!;
+    const webDev = stack.agents["web-developer"]!;
+    expect(webDev["web-framework"]).toStrictEqual([{ id: "web-framework-react", preloaded: true }]);
   });
 });

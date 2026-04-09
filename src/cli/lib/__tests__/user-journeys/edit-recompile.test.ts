@@ -132,7 +132,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // Step 4: Verify the agent was recompiled (file was overwritten)
     const recompiledContent = await readTestFile(agentPath);
-    expect(recompiledContent.length).toBeGreaterThan(0);
+    expect(recompiledContent).not.toHaveLength(0);
     expect(recompiledContent).toMatch(/^---\n/);
   });
 
@@ -189,7 +189,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // The agent file should still be valid after recompile
     const recompiledContent = await readTestFile(agentPath);
-    expect(recompiledContent.length).toBeGreaterThan(0);
+    expect(recompiledContent).not.toHaveLength(0);
     expect(recompiledContent).toMatch(/^---\n/);
   });
 
@@ -231,7 +231,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     // Verify the agent file is still valid
     const agentPath = path.join(outputDir, "web-pm.md");
     const content = await readTestFile(agentPath);
-    expect(content.length).toBeGreaterThan(0);
+    expect(content).not.toHaveLength(0);
     expect(content).toMatch(/^---\n/);
   });
 

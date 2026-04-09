@@ -63,12 +63,12 @@ describe("Integration: Full Skill Pipeline", () => {
   it("should compile all skills to plugins without errors", async () => {
     const results = await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
-    expect(results).toHaveLength(DEFAULT_TEST_SKILLS.length);
+    const expectedSkillNames = DEFAULT_TEST_SKILLS.map((s) => s.id).sort();
+    expect(results.map((r) => r.skillName).sort()).toStrictEqual(expectedSkillNames);
 
     for (const result of results) {
-      expect(result.pluginPath).toBeTruthy();
+      expect(result.pluginPath).toContain(outputDir);
       expect(result.manifest.name).toBe(result.skillName);
-      expect(result.skillName).toBeTruthy();
     }
   });
 
@@ -90,16 +90,16 @@ describe("Integration: Full Skill Pipeline", () => {
       pluginRoot: "./plugins",
     });
 
-    expect(marketplace.plugins.length).toBe(compileResults.length);
+    const expectedSkillNames = DEFAULT_TEST_SKILLS.map((s) => s.id).sort();
+    expect(marketplace.plugins.map((p) => p.name).sort()).toStrictEqual(expectedSkillNames);
 
     for (const plugin of marketplace.plugins) {
-      expect(plugin.name).toBeTruthy();
-      expect(plugin.source).toBeTruthy();
+      expect(plugin.source).toBeTypeOf("string");
     }
 
     const stats = getMarketplaceStats(marketplace);
-    expect(stats.total).toBe(compileResults.length);
-    expect(Object.keys(stats.byCategory).length).toBeGreaterThan(0);
+    expect(stats.total).toBe(expectedSkillNames.length);
+    expect(Object.keys(stats.byCategory)).toHaveLength(1);
   });
 
   it("should produce plugins with unique names", async () => {
@@ -148,8 +148,8 @@ describe("Integration: Full Stack Pipeline", () => {
 
     const stacks = await loadStacks(stackDirs.sourceDir);
 
-    expect(stacks.length).toBeGreaterThan(0);
-    expect(stacks.map((s) => s.id)).toContain("test-stack");
+    expect(stacks).toHaveLength(1);
+    expect(stacks.map((s) => s.id)).toStrictEqual(["test-stack"]);
 
     await cleanupTestSource(stackDirs);
   });
@@ -164,8 +164,8 @@ describe("Integration: Full Stack Pipeline", () => {
     });
 
     expect(result.pluginPath).toBe(path.join(outputDir, COMPILATION_TEST_STACK.id));
-    expect(result.stackName).toBeTruthy();
-    expect(result.agents.length).toBeGreaterThan(0);
+    expect(result.stackName).toBe("Test Stack");
+    expect(result.agents.sort()).toStrictEqual(["api-developer", "web-developer"]);
 
     expect(await pathExists(result.pluginPath)).toBe(true);
     expect(await pathExists(path.join(result.pluginPath, "agents"))).toBe(true);
@@ -211,11 +211,7 @@ describe("Integration: Full Stack Pipeline", () => {
       stack: COMPILATION_TEST_STACK,
     });
 
-    expect(result.skillPlugins.length).toBeGreaterThan(0);
-
-    for (const skillPlugin of result.skillPlugins) {
-      expect(skillPlugin).toMatch(/^[a-z0-9-]+$/);
-    }
+    expect(result.skillPlugins.sort()).toStrictEqual(["api-framework-hono", "web-framework-react"]);
   });
 
   it("should validate compiled stack plugins", async () => {
@@ -375,7 +371,8 @@ describe("Integration: End-to-End Pipeline", () => {
 
   it("should compile skills then stacks in sequence", async () => {
     const skillResults = await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
-    expect(skillResults.length).toBe(DEFAULT_TEST_SKILLS.length);
+    const expectedSkillNames = DEFAULT_TEST_SKILLS.map((s) => s.id).sort();
+    expect(skillResults.map((r) => r.skillName).sort()).toStrictEqual(expectedSkillNames);
 
     const skillValidation = await validateAllPlugins(pluginsDir);
     expect(skillValidation.summary.invalid).toBe(0);
@@ -387,7 +384,7 @@ describe("Integration: End-to-End Pipeline", () => {
       agentSourcePath: dirs.sourceDir,
       stack: COMPILATION_TEST_STACK,
     });
-    expect(stackResult.agents.length).toBeGreaterThan(0);
+    expect(stackResult.agents.sort()).toStrictEqual(["api-developer", "web-developer"]);
 
     const stackValidation = await validatePlugin(stackResult.pluginPath);
     expect(stackValidation.valid).toBe(true);
@@ -397,7 +394,7 @@ describe("Integration: End-to-End Pipeline", () => {
       ownerName: "Test Owner",
       pluginRoot: "./plugins",
     });
-    expect(marketplace.plugins.length).toBe(skillResults.length);
+    expect(marketplace.plugins.map((p) => p.name).sort()).toStrictEqual(expectedSkillNames);
   });
 
   it("should have valid skill plugin reference format", async () => {
@@ -409,11 +406,7 @@ describe("Integration: End-to-End Pipeline", () => {
       stack: COMPILATION_TEST_STACK,
     });
 
-    expect(stackResult.skillPlugins.length).toBeGreaterThan(0);
-
-    for (const skillPlugin of stackResult.skillPlugins) {
-      expect(skillPlugin).toMatch(/^[a-z0-9-]+$/);
-    }
+    expect(stackResult.skillPlugins.sort()).toStrictEqual(["api-framework-hono", "web-framework-react"]);
   });
 
   it("should compile skills and stacks that share common patterns", async () => {
@@ -427,12 +420,10 @@ describe("Integration: End-to-End Pipeline", () => {
       stack: COMPILATION_TEST_STACK,
     });
 
-    const extractBaseName = (id: string) => id;
+    const stackSkillNames = new Set(stackResult.skillPlugins);
+    const compiledSkillNames = new Set(skillResults.map((r) => r.manifest.name));
 
-    const stackBaseNames = new Set(stackResult.skillPlugins.map(extractBaseName));
-    const compiledBaseNames = new Set(skillResults.map((r) => extractBaseName(r.manifest.name)));
-
-    const commonSkills = [...stackBaseNames].filter((name) => compiledBaseNames.has(name));
-    expect(commonSkills.length).toBeGreaterThan(0);
+    const commonSkills = [...stackSkillNames].filter((name) => compiledSkillNames.has(name)).sort();
+    expect(commonSkills).toStrictEqual(["api-framework-hono", "web-framework-react"]);
   });
 });

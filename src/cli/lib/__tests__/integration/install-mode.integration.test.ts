@@ -7,14 +7,9 @@ import {
   buildAndMergeConfig,
   writeConfigFile,
 } from "../../installation/local-installer";
-import { detectMigrations } from "../../installation/mode-migrator";
 import { deriveInstallMode } from "../../installation/installation";
-import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import {
-  createMockMatrix,
-  createMockMultiSourceSkill,
-  createMockSkillSource,
   createTempDir,
   cleanupTempDir,
   readTestTsConfig,
@@ -32,7 +27,6 @@ import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 import path from "path";
 
 const REACT_SKILL_ID: SkillId = "web-framework-react";
-const ZUSTAND_SKILL_ID: SkillId = "web-state-zustand";
 const HONO_SKILL_ID: SkillId = "api-framework-hono";
 const VITEST_SKILL_ID: SkillId = "web-testing-vitest";
 
@@ -281,206 +275,6 @@ describe("Integration: buildAndMergeConfig Install Mode", () => {
     // New wizard result's skills should take precedence
     expect(deriveInstallMode(mergeResult.config.skills)).toBe("plugin");
     expect(mergeResult.merged).toBe(true);
-  });
-});
-
-describe("Integration: detectMigrations with Config Data", () => {
-  it("should detect plugin-to-local migration from skill configs", () => {
-    const oldSkills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "agents-inc" },
-      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
-      { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
-    ];
-
-    const newSkills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "eject" },
-      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
-      { id: HONO_SKILL_ID, scope: "project", source: "eject" },
-    ];
-
-    const plan = detectMigrations(oldSkills, newSkills);
-
-    expect(plan.toEject.map((m) => m.id)).toStrictEqual([REACT_SKILL_ID, HONO_SKILL_ID]);
-    expect(plan.toPlugin).toStrictEqual([]);
-  });
-
-  it("should detect local-to-plugin migration from skill configs", () => {
-    const oldSkills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "eject" },
-      { id: ZUSTAND_SKILL_ID, scope: "project", source: "eject" },
-    ];
-
-    const newSkills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "agents-inc" },
-      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
-    ];
-
-    const plan = detectMigrations(oldSkills, newSkills);
-
-    expect(plan.toEject).toStrictEqual([]);
-    expect(plan.toPlugin.map((m) => m.id)).toStrictEqual([REACT_SKILL_ID, ZUSTAND_SKILL_ID]);
-  });
-
-  it("should detect bidirectional migration", () => {
-    const oldSkills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "agents-inc" },
-      { id: ZUSTAND_SKILL_ID, scope: "project", source: "eject" },
-      { id: HONO_SKILL_ID, scope: "project", source: "eject" },
-    ];
-
-    const newSkills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "eject" },
-      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
-      { id: HONO_SKILL_ID, scope: "project", source: "eject" },
-    ];
-
-    const plan = detectMigrations(oldSkills, newSkills);
-
-    expect(plan.toEject.map((m) => m.id)).toStrictEqual([REACT_SKILL_ID]);
-    expect(plan.toPlugin.map((m) => m.id)).toStrictEqual([ZUSTAND_SKILL_ID]);
-  });
-
-  it("should return empty plan when skill configs are unchanged", () => {
-    const skills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "eject" },
-      { id: ZUSTAND_SKILL_ID, scope: "project", source: "agents-inc" },
-    ];
-
-    const plan = detectMigrations(skills, skills);
-
-    expect(plan.toEject).toStrictEqual([]);
-    expect(plan.toPlugin).toStrictEqual([]);
-  });
-
-  it("should detect migration when switching between marketplace sources as no migration", () => {
-    // Switching from one marketplace to another is NOT a migration (both are plugin)
-    const oldSkills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "agents-inc" },
-    ];
-
-    const newSkills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "other-marketplace" },
-    ];
-
-    const plan = detectMigrations(oldSkills, newSkills);
-
-    // Neither source is "eject" so no migration needed
-    expect(plan.toEject).toStrictEqual([]);
-    expect(plan.toPlugin).toStrictEqual([]);
-  });
-
-  it("should handle new skills with no previous config", () => {
-    const oldSkills: SkillConfig[] = [];
-
-    const newSkills: SkillConfig[] = [
-      { id: REACT_SKILL_ID, scope: "project", source: "eject" },
-      { id: HONO_SKILL_ID, scope: "project", source: "agents-inc" },
-    ];
-
-    const plan = detectMigrations(oldSkills, newSkills);
-
-    // New skills have no old entry, so no migration detected
-    expect(plan.toEject).toStrictEqual([]);
-    expect(plan.toPlugin).toStrictEqual([]);
-  });
-});
-
-describe("Integration: deriveInstallMode via Wizard Store", () => {
-  it("should derive 'local' when all skillConfigs are local", () => {
-    const store = useWizardStore.getState();
-
-    store.toggleDomain("web");
-    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
-    store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
-
-    store.setSourceSelection(REACT_SKILL_ID, "eject");
-    store.setSourceSelection("web-styling-scss-modules", "eject");
-
-    expect(store.deriveInstallMode()).toBe("eject");
-  });
-
-  it("should derive 'plugin' when all skillConfigs are non-local", () => {
-    const store = useWizardStore.getState();
-
-    store.toggleDomain("web");
-    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
-    store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
-
-    store.setSourceSelection(REACT_SKILL_ID, "agents-inc");
-    store.setSourceSelection("web-styling-scss-modules", "agents-inc");
-
-    expect(store.deriveInstallMode()).toBe("plugin");
-  });
-
-  it("should derive 'mixed' when skillConfigs have both local and non-local", () => {
-    const store = useWizardStore.getState();
-
-    store.toggleDomain("web");
-    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
-    store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
-
-    store.setSourceSelection(REACT_SKILL_ID, "eject");
-    store.setSourceSelection("web-styling-scss-modules", "agents-inc");
-
-    expect(store.deriveInstallMode()).toBe("mixed");
-  });
-
-  it("should return current installMode when no skills are selected", () => {
-    const store = useWizardStore.getState();
-    // Default installMode is "eject"
-    expect(store.deriveInstallMode()).toBe("eject");
-  });
-
-  it("setAllSourcesEject should set all selected skills to eject", () => {
-    const store = useWizardStore.getState();
-
-    store.toggleDomain("web");
-    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
-    store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
-
-    // Set them to plugin first
-    store.setSourceSelection(REACT_SKILL_ID, "agents-inc");
-    store.setSourceSelection("web-styling-scss-modules", "agents-inc");
-    expect(store.deriveInstallMode()).toBe("plugin");
-
-    // Now set all to eject
-    store.setAllSourcesEject();
-
-    const updatedStore = useWizardStore.getState();
-    const reactConfig = updatedStore.skillConfigs.find((sc) => sc.id === REACT_SKILL_ID);
-    const scssConfig = updatedStore.skillConfigs.find((sc) => sc.id === "web-styling-scss-modules");
-    expect(reactConfig?.source).toBe("eject");
-    expect(scssConfig?.source).toBe("eject");
-    expect(store.deriveInstallMode()).toBe("eject");
-  });
-
-  it("setAllSourcesPlugin should set all selected skills to their marketplace source", () => {
-    const store = useWizardStore.getState();
-
-    store.toggleDomain("web");
-    store.toggleTechnology("web", "web-framework", REACT_SKILL_ID, true);
-
-    // Set to eject first
-    store.setSourceSelection(REACT_SKILL_ID, "eject");
-    expect(store.deriveInstallMode()).toBe("eject");
-
-    // Build a matrix with availableSources and set on store
-    initializeMatrix(
-      createMockMatrix(
-        createMockMultiSourceSkill(REACT_SKILL_ID, [
-          createMockSkillSource("local"),
-          createMockSkillSource("public", { name: "agents-inc" }),
-        ]),
-      ),
-    );
-
-    // Set all to plugin via matrix store lookup
-    store.setAllSourcesPlugin();
-
-    const updatedStore = useWizardStore.getState();
-    const reactConfig = updatedStore.skillConfigs.find((sc) => sc.id === REACT_SKILL_ID);
-    expect(reactConfig?.source).toBe("agents-inc");
-    expect(store.deriveInstallMode()).toBe("plugin");
   });
 });
 

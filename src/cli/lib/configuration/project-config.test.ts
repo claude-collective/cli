@@ -34,23 +34,16 @@ describe("project-config", () => {
     });
 
     it("should load minimal config (just name and agents)", async () => {
-      await writeTestTsConfig(
-        tempDir,
-        buildProjectConfig({
-          name: "my-project",
-          agents: buildAgentConfigs(["web-developer", "api-developer"]),
-        }) as Record<string, unknown>,
-      );
+      const inputConfig = buildProjectConfig({
+        name: "my-project",
+        agents: buildAgentConfigs(["web-developer", "api-developer"]),
+      });
+      await writeTestTsConfig(tempDir, inputConfig as Record<string, unknown>);
 
       const result = await loadProjectConfig(tempDir);
 
       expect(result).not.toBeNull();
-
-      expect(result!.config.name).toBe("my-project");
-      expect(result!.config.agents).toStrictEqual([
-        { name: "web-developer", scope: "project" },
-        { name: "api-developer", scope: "project" },
-      ]);
+      expect(result!.config).toStrictEqual(inputConfig);
     });
 
     it("should load config with stack (bare strings normalized to SkillAssignment[])", async () => {
@@ -109,18 +102,17 @@ describe("project-config", () => {
     });
 
     it("should load config with extra fields (passthrough)", async () => {
-      await writeTestTsConfig(tempDir, {
+      const inputConfig = {
         ...buildProjectConfig({ name: "my-stack" }),
         author: "@vince",
         description: "A config with extra fields",
-      } as Record<string, unknown>);
+      };
+      await writeTestTsConfig(tempDir, inputConfig as Record<string, unknown>);
 
       const result = await loadProjectConfig(tempDir);
 
       expect(result).not.toBeNull();
-
-      expect(result!.config.name).toBe("my-stack");
-      expect(result!.config.author).toBe("@vince");
+      expect(result!.config).toStrictEqual(inputConfig);
     });
 
     it("should return null for invalid config", async () => {
@@ -246,11 +238,9 @@ describe("round-trip tests", () => {
     // Load it back
     const loaded = await loadProjectConfig(tempDir);
 
-    // Verify
+    // Verify full config shape
     expect(loaded).not.toBeNull();
-    expect(loaded!.config.name).toBe(generated.name);
-    expect(loaded!.config.agents).toStrictEqual(generated.agents);
-    expect(loaded!.config.stack).toBeDefined();
+    expect(loaded!.config).toStrictEqual(generated);
   });
 
   it("should round-trip config with options (description/author)", async () => {
@@ -279,11 +269,8 @@ describe("round-trip tests", () => {
     // Load it back
     const loaded = await loadProjectConfig(tempDir);
 
-    // Verify
+    // Verify full config shape
     expect(loaded).not.toBeNull();
-    expect(loaded!.config.name).toBe("my-awesome-project");
-    expect(loaded!.config.description).toBe("An awesome project for testing");
-    expect(loaded!.config.author).toBe("@testuser");
-    expect(loaded!.config.stack).toBeDefined();
+    expect(loaded!.config).toStrictEqual(generated);
   });
 });

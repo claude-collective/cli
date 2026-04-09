@@ -97,11 +97,9 @@ describe("Init Flow Integration: Eject Mode", () => {
 
     // Parse and verify structure
     const config = await readTestTsConfig<ProjectConfig>(configPath);
-    expect(config.name).toBeDefined();
-    expect(config.agents).toBeDefined();
-    expect(Array.isArray(config.agents)).toBe(true);
+    expect(typeof config.name).toBe("string");
     expect(config.agents.map((a) => a.name)).toStrictEqual(["api-developer", "web-developer"]);
-    expect(config.skills).toBeDefined();
+    expect(config.skills.map((s) => s.id).sort()).toStrictEqual([...SELECTED_SKILLS_REACT_HONO].sort());
     expect(deriveInstallMode(config.skills)).toBe("eject");
     expect(config.source).toBe(dirs.sourceDir);
   });
@@ -118,18 +116,13 @@ describe("Init Flow Integration: Eject Mode", () => {
     expect(result.skillsDir).toBe(skillsDir);
     expect(await directoryExists(skillsDir)).toBe(true);
 
-    // Exactly 2 skills should be copied
-    expect(result.copiedSkills).toHaveLength(2);
+    // Copied skill IDs should match what was selected
+    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual([...SELECTED_SKILLS_REACT_HONO].sort());
 
     // Each copied skill should have a SKILL.md
     for (const copiedSkill of result.copiedSkills) {
       expect(await fileExists(path.join(copiedSkill.destPath, STANDARD_FILES.SKILL_MD))).toBe(true);
     }
-
-    // Skill IDs should match what was selected
-    const copiedIds = result.copiedSkills.map((s) => s.skillId);
-    expect(copiedIds).toContain("web-framework-react");
-    expect(copiedIds).toContain("api-framework-hono");
   });
 
   it("should compile agents to .claude/agents/", async () => {
@@ -146,8 +139,8 @@ describe("Init Flow Integration: Eject Mode", () => {
     expect(result.agentsDir).toBe(agentsDir);
     expect(await directoryExists(agentsDir)).toBe(true);
 
-    // At least one agent should be compiled
-    expect(result.compiledAgents.length).toBeGreaterThan(0);
+    // Selected agents should be compiled
+    expect(result.compiledAgents.sort()).toStrictEqual([...SELECTED_AGENTS_WEB_API].sort());
 
     // Each compiled agent should have a .md file
     for (const agentName of result.compiledAgents) {
@@ -156,7 +149,7 @@ describe("Init Flow Integration: Eject Mode", () => {
 
       // Agent file should have content (frontmatter + body)
       const content = await readFile(agentPath, "utf-8");
-      expect(content.length).toBeGreaterThan(0);
+      expect(content).not.toBe("");
       expect(content).toContain("---");
     }
   });
@@ -170,11 +163,8 @@ describe("Init Flow Integration: Eject Mode", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-    // All selected skill IDs should appear in config.skills
-    const configSkillIds = config.skills.map((s) => s.id);
-    for (const skillId of SELECTED_SKILLS_ALL) {
-      expect(configSkillIds).toContain(skillId);
-    }
+    // Config skills should exactly match selected skills
+    expect(config.skills.map((s) => s.id).sort()).toStrictEqual([...SELECTED_SKILLS_ALL].sort());
   });
 
   it("should assign all skills to all selected agents", async () => {
@@ -189,14 +179,12 @@ describe("Init Flow Integration: Eject Mode", () => {
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     // Stack property should exist and map agents to skills
-    expect(config.stack).toBeDefined();
+    expect(Object.keys(config.stack!).sort()).toStrictEqual([...SELECTED_AGENTS_WEB_API].sort());
 
-    // Every selected agent should have every skill's category
+    // Every selected agent should have exactly these skill category keys
     for (const agentId of SELECTED_AGENTS_WEB_API) {
-      const agentStack = config.stack![agentId] as Record<string, unknown> | undefined;
-      expect(agentStack).toBeDefined();
-      expect(agentStack!["web-framework"]).toBeDefined();
-      expect(agentStack!["api-api"]).toBeDefined();
+      const agentStack = config.stack![agentId] as Record<string, unknown>;
+      expect(Object.keys(agentStack).sort()).toStrictEqual(["api-api", "web-framework"]);
     }
   });
 });
@@ -228,14 +216,12 @@ describe("Init Flow Integration: Single Skill Selection", () => {
       projectDir: dirs.projectDir,
     });
 
-    // Only one skill should be copied
-    expect(result.copiedSkills).toHaveLength(1);
-    expect(result.copiedSkills[0].skillId).toBe("web-testing-vitest");
+    // Only the selected skill should be copied
+    expect(result.copiedSkills.map((s) => s.skillId)).toStrictEqual(["web-testing-vitest"]);
 
     // Config should reflect single skill
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.skills).toHaveLength(1);
-    expect(config.skills.map((s) => s.id)).toContain("web-testing-vitest");
+    expect(config.skills.map((s) => s.id)).toStrictEqual(["web-testing-vitest"]);
   });
 });
 
@@ -267,11 +253,11 @@ describe("Init Flow Integration: All Skills Selection", () => {
     });
 
     // All skills should be copied
-    expect(result.copiedSkills).toHaveLength(3);
+    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual([...SELECTED_SKILLS_ALL].sort());
 
     // Config should include all skills
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.skills).toHaveLength(3);
+    expect(config.skills.map((s) => s.id).sort()).toStrictEqual([...SELECTED_SKILLS_ALL].sort());
 
     // Agents should be exactly the selected agents
     expect(config.agents.map((a) => a.name)).toStrictEqual(["api-developer", "web-developer"]);
@@ -451,11 +437,9 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
 
     expect(secondResult.wasMerged).toBe(true);
 
-    // Config should have both skills
+    // Config should have exactly both skills
     const config = await readTestTsConfig<ProjectConfig>(secondResult.configPath);
-    const configSkillIds = config.skills.map((s) => s.id);
-    expect(configSkillIds).toContain("web-framework-react");
-    expect(configSkillIds).toContain("api-framework-hono");
+    expect(config.skills.map((s) => s.id).sort()).toStrictEqual([...SELECTED_SKILLS_REACT_HONO].sort());
   });
 });
 
@@ -531,7 +515,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
 
     // Find the React skill
     const reactSkill = result.copiedSkills.find((s) => s.skillId === "web-framework-react");
-    expect(reactSkill).toBeDefined();
+    expect(reactSkill?.skillId).toBe("web-framework-react");
 
     const reactContent = await readFile(
       path.join(reactSkill!.destPath, STANDARD_FILES.SKILL_MD),
@@ -542,7 +526,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
 
     // Find the Hono skill
     const honoSkill = result.copiedSkills.find((s) => s.skillId === "api-framework-hono");
-    expect(honoSkill).toBeDefined();
+    expect(honoSkill?.skillId).toBe("api-framework-hono");
 
     const honoContent = await readFile(
       path.join(honoSkill!.destPath, STANDARD_FILES.SKILL_MD),
@@ -569,7 +553,8 @@ describe("Init Flow Integration: Skill Content Verification", () => {
 
     const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
     expect(forkedFrom.skillId).toBe("web-framework-react");
-    expect(forkedFrom.contentHash).toBeDefined();
+    expect(typeof forkedFrom.contentHash).toBe("string");
+    expect(forkedFrom.contentHash).toHaveLength(7);
   });
 });
 
@@ -616,14 +601,12 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-    expect(config.stack).toBeDefined();
+    expect(Object.keys(config.stack!).sort()).toStrictEqual([...SELECTED_AGENTS_WITH_REVIEWER].sort());
 
-    // Every agent should have every skill's category
+    // Every agent should have exactly these skill category keys
     for (const agentId of SELECTED_AGENTS_WITH_REVIEWER) {
-      const agentStack = config.stack![agentId] as Record<string, unknown> | undefined;
-      expect(agentStack).toBeDefined();
-      expect(agentStack!["web-framework"]).toBeDefined();
-      expect(agentStack!["api-api"]).toBeDefined();
+      const agentStack = config.stack![agentId] as Record<string, unknown>;
+      expect(Object.keys(agentStack).sort()).toStrictEqual(["api-api", "web-framework"]);
     }
   });
 });
@@ -657,7 +640,7 @@ describe("Init Flow Integration: Recompile Round-Trip", () => {
       projectDir: dirs.projectDir,
     });
 
-    expect(installResult.compiledAgents.length).toBeGreaterThan(0);
+    expect(installResult.compiledAgents.sort()).toStrictEqual([...SELECTED_AGENTS_WEB_API].sort());
 
     // In eject mode, pluginDir is the project dir itself
     const recompileResult = await recompileAgents({
@@ -668,7 +651,7 @@ describe("Init Flow Integration: Recompile Round-Trip", () => {
     });
 
     expect(recompileResult.failed).toHaveLength(0);
-    expect(recompileResult.compiled.length).toBeGreaterThan(0);
+    expect(recompileResult.compiled.sort()).toStrictEqual([...SELECTED_AGENTS_WEB_API].sort());
 
     for (const agentName of recompileResult.compiled) {
       const agentPath = path.join(dirs.projectDir, CLAUDE_DIR, AGENTS_SUBDIR, `${agentName}.md`);
@@ -764,9 +747,9 @@ describe("Init Flow Integration: Global Scope Skills", () => {
     const wrongPath = path.join(projectSkillDir, globalSkill);
     expect(await directoryExists(wrongPath)).toBe(false);
 
-    // Both skills should appear in copiedSkills
-    const copiedIds = result.copiedSkills.map((s) => s.skillId);
-    expect(copiedIds).toContain(projectSkill);
-    expect(copiedIds).toContain(globalSkill);
+    // Copied skills should be exactly the two selected skills
+    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
+      [projectSkill, globalSkill].sort(),
+    );
   });
 });

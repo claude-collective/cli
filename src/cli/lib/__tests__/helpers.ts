@@ -1309,11 +1309,9 @@ export function assertConfigIntegrity(
   const sortedAgentNames = [...agentNames].sort();
   expect(agentNames).toStrictEqual(sortedAgentNames);
 
-  // All expected skills are present
-  const configSkillIds = config.skills.map((s) => s.id);
-  for (const skillId of expectedSkillIds) {
-    expect(configSkillIds).toContain(skillId);
-  }
+  // All expected skills are present (exact match, sorted)
+  const configSkillIds = config.skills.map((s) => s.id).sort();
+  expect(configSkillIds).toStrictEqual([...expectedSkillIds].sort());
 
   // If expectedAgents provided, verify they match
   if (expectedAgents) {
