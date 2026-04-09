@@ -21,6 +21,7 @@ import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installEject, installPluginConfig } from "../../installation/local-installer";
 import { copySkillsToLocalFlattened } from "../../skills/skill-copier";
 import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
+import { EXIT_CODES } from "../../exit-codes";
 import { typedKeys } from "../../../utils/typed-object";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
@@ -49,13 +50,13 @@ describe("eject command", () => {
     it("should require type argument", async () => {
       const { error } = await runCliCommand(["eject"]);
 
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should error on invalid type", async () => {
       const { error } = await runCliCommand(["eject", "invalid-type"]);
 
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should accept 'agent-partials' as type", async () => {
@@ -89,13 +90,13 @@ describe("eject command", () => {
     it("should reject old type 'config'", async () => {
       const { error } = await runCliCommand(["eject", "config"]);
 
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should reject old type 'agents'", async () => {
       const { error } = await runCliCommand(["eject", "agents"]);
 
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
   });
 
@@ -268,7 +269,7 @@ describe("eject command", () => {
       expect(await directoryExists(templatesDir)).toBe(true);
 
       const entries = await readdir(templatesDir);
-      expect(entries.length).toBeGreaterThan(0);
+      expect(entries).toHaveLength(2);
       expect(entries).toContain("agent.liquid");
     });
 
@@ -416,7 +417,7 @@ describe("eject command", () => {
       const entries = await readdir(agentsDir);
       // Should have templates AND other agent dirs
       expect(entries).toContain(path.basename(DIRS.templates));
-      expect(entries.length).toBeGreaterThan(1);
+      expect(entries).toHaveLength(8);
     });
   });
 
@@ -428,7 +429,7 @@ describe("eject command", () => {
 
       const { error } = await runCliCommand(["eject", "agent-partials", "--output", outputPath]);
 
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should expand tilde in output path", async () => {
@@ -561,13 +562,13 @@ describe("eject skills from initialized project", () => {
     expect(await fileExists(metadataPath)).toBe(true);
 
     const metadata = await readTestYaml<Record<string, unknown>>(metadataPath);
-    // copySkillsToLocalFlattened injects forkedFrom with skillId and contentHash
-    expect(metadata.forkedFrom).toBeDefined();
-
-    const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
-    expect(forkedFrom.skillId).toBe(targetSkill.id);
-    expect(forkedFrom.contentHash).toBeDefined();
-    expect(typeof forkedFrom.contentHash).toBe("string");
+    // copySkillsToLocalFlattened injects forkedFrom with skillId, contentHash, date, source
+    expect(metadata.forkedFrom).toStrictEqual({
+      skillId: targetSkill.id,
+      contentHash: expect.any(String),
+      date: expect.any(String),
+      source: expect.any(String),
+    });
   });
 
   it("should report the correct number of non-local skills ejected", async () => {
@@ -607,7 +608,7 @@ describe("eject skills from initialized project", () => {
 
     const partialsDir = path.join(dirs.projectDir, CLAUDE_SRC_DIR, "agents");
     const entries = await readdir(partialsDir);
-    expect(entries.length).toBeGreaterThan(0);
+    expect(entries).toHaveLength(8);
   });
 });
 
@@ -691,11 +692,12 @@ describe("eject in plugin mode", () => {
     expect(await fileExists(metadataPath)).toBe(true);
 
     const metadata = await readTestYaml<Record<string, unknown>>(metadataPath);
-    expect(metadata.forkedFrom).toBeDefined();
-
-    const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
-    expect(forkedFrom.skillId).toBe(targetSkill.id);
-    expect(forkedFrom.contentHash).toBeDefined();
+    expect(metadata.forkedFrom).toStrictEqual({
+      skillId: targetSkill.id,
+      contentHash: expect.any(String),
+      date: expect.any(String),
+      source: expect.any(String),
+    });
   });
 
   it("should eject all skills to default .claude/skills/ in plugin mode", async () => {
@@ -731,6 +733,6 @@ describe("eject in plugin mode", () => {
     expect(await directoryExists(partialsDir)).toBe(true);
 
     const entries = await readdir(partialsDir);
-    expect(entries.length).toBeGreaterThan(0);
+    expect(entries).toHaveLength(8);
   });
 });

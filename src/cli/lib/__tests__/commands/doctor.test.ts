@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import { EXIT_CODES } from "../../exit-codes";
 import { renderConfigTs, renderSkillMd } from "../content-generators";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 
@@ -38,7 +39,7 @@ describe("doctor command", () => {
       const { error } = await runCliCommand(["doctor"]);
 
       // Should exit with error because Config Valid check fails
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
 
     it("should pass when valid config exists", async () => {
@@ -108,7 +109,7 @@ describe("doctor command", () => {
       const { error } = await runCliCommand(["doctor"]);
 
       // Should exit with error due to invalid config
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
 
     it("should pass with minimal valid config", async () => {

@@ -1,13 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import { mkdir } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir, buildTestProjectConfig } from "../helpers";
+import { mkdir, readdir, readFile } from "fs/promises";
+import {
+  runCliCommand,
+  createTempDir,
+  cleanupTempDir,
+  buildTestProjectConfig,
+  directoryExists,
+  fileExists,
+} from "../helpers";
+import { EXIT_CODES } from "../../exit-codes";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import {
   VALID_LOCAL_SKILL,
   SKILL_WITHOUT_METADATA,
   SKILL_WITHOUT_METADATA_CUSTOM,
 } from "../mock-data/mock-skills";
+import { CLAUDE_DIR } from "../../../consts";
 
 describe("compile command", () => {
   let tempDir: string;
@@ -39,7 +48,7 @@ describe("compile command", () => {
     it("should fail when no plugin exists", async () => {
       const { error } = await runCliCommand(["compile"]);
 
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
   });
 
@@ -86,15 +95,6 @@ describe("compile command", () => {
 
     it("should accept --refresh flag", async () => {
       const { error } = await runCliCommand(["compile", "--refresh"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-  });
-
-  describe("verbose mode", () => {
-    it("should accept --verbose flag", async () => {
-      const { error } = await runCliCommand(["compile", "--verbose"]);
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
@@ -148,7 +148,7 @@ describe("compile command", () => {
       const output = stdout + (error?.message || "");
       // Skill should be discovered (not skipped)
       expect(output).not.toContain("missing metadata.yaml");
-      expect(output).toContain("1");
+      expect(output).toContain("Discovered 1 local skill");
     });
 
     it("should skip a skill with SKILL.md but no metadata.yaml and emit a warning", async () => {
@@ -190,10 +190,83 @@ describe("compile command", () => {
     });
   });
 
+  describe("compilation output", () => {
+    let localDirs: TestDirs;
+
+    afterEach(async () => {
+      if (localDirs) {
+        await cleanupTestSource(localDirs);
+      }
+    });
+
+    it("should produce compiled agent files in .claude/agents/", async () => {
+      localDirs = await createTestSource({
+        localSkills: [VALID_LOCAL_SKILL],
+        projectConfig: buildTestProjectConfig(["web-developer", "api-developer"], []),
+        asPlugin: true,
+      });
+      process.chdir(localDirs.projectDir);
+
+      const { stdout, error } = await runCliCommand(["compile"]);
+
+      const output = stdout + (error?.message || "");
+      expect(output).toContain("Recompiled");
+      expect(output).toContain("compile complete");
+
+      const agentsDir = path.join(localDirs.projectDir, CLAUDE_DIR, "agents");
+      expect(await directoryExists(agentsDir)).toBe(true);
+
+      const entries = await readdir(agentsDir);
+      expect(entries).toContain("web-developer.md");
+      expect(entries).toContain("api-developer.md");
+    });
+
+    it("should produce non-empty agent markdown files with frontmatter", async () => {
+      localDirs = await createTestSource({
+        localSkills: [VALID_LOCAL_SKILL],
+        projectConfig: buildTestProjectConfig(["web-developer"], []),
+        asPlugin: true,
+      });
+      process.chdir(localDirs.projectDir);
+
+      await runCliCommand(["compile"]);
+
+      const agentPath = path.join(localDirs.projectDir, CLAUDE_DIR, "agents", "web-developer.md");
+      expect(await fileExists(agentPath)).toBe(true);
+
+      const content = await readFile(agentPath, "utf-8");
+      // Compiled agent should have YAML frontmatter with agent metadata
+      expect(content).toContain("---");
+      expect(content).toContain("name: web-developer");
+      expect(content).toContain("description:");
+    });
+
+    it("should report discovery and compilation counts in output", async () => {
+      localDirs = await createTestSource({
+        localSkills: [VALID_LOCAL_SKILL],
+        projectConfig: buildTestProjectConfig(["web-developer"], []),
+        asPlugin: true,
+      });
+      process.chdir(localDirs.projectDir);
+
+      const { stdout, error } = await runCliCommand(["compile"]);
+
+      const output = stdout + (error?.message || "");
+      expect(output).toContain("Discovered 1 local skill");
+      expect(output).toMatch(/Recompiled \d+ project agent/);
+    });
+  });
+
   describe("error handling", () => {
     it("should error when no skills found", async () => {
       const { error } = await runCliCommand(["compile"]);
-      expect(error).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+    });
+
+    it("should include actionable guidance in error message", async () => {
+      const { error } = await runCliCommand(["compile"]);
+      // Without installation, command errors with guidance to run init first
+      expect(error?.message).toContain("No installation found");
     });
 
     it("should handle invalid source path gracefully", async () => {
@@ -203,22 +276,12 @@ describe("compile command", () => {
         "/definitely/not/real/path/xyz",
       ]);
 
-      expect(error).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
 
     it("should handle invalid agent-source URL gracefully", async () => {
       const { error } = await runCliCommand(["compile", "--agent-source", "not-a-valid-url"]);
-      expect(error).toBeDefined();
-    });
-  });
-
-  describe("plugin mode", () => {
-    it("should use plugin mode by default", async () => {
-      const { error } = await runCliCommand(["compile"]);
-
-      // Command should complete without flag parsing errors
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
   });
 });

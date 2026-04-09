@@ -13,6 +13,7 @@ import {
 } from "../../../consts";
 import type { TestSkill } from "../fixtures/create-test-source";
 import { renderConfigTs, renderSkillMd } from "../content-generators";
+import { EXIT_CODES } from "../../exit-codes";
 
 describe("validate command", () => {
   let tempDir: string;
@@ -192,7 +193,7 @@ describe("validate command", () => {
       const { error } = await runCliCommand(["validate", nonExistentPath]);
 
       // Should exit with error code when path doesn't exist
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
 
     it("should exit with error for invalid plugin structure", async () => {
@@ -203,7 +204,7 @@ describe("validate command", () => {
       const { error } = await runCliCommand(["validate", invalidPluginDir]);
 
       // Should exit with error when plugin.json is missing
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
 
     it("should fail validation when .claude-plugin directory is missing", async () => {
@@ -211,7 +212,7 @@ describe("validate command", () => {
       const { error } = await runCliCommand(["validate", "--plugins"]);
 
       // Should fail because plugin structure is invalid
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
 
     it("should report specific error for malformed plugin.json (invalid JSON)", async () => {
@@ -233,7 +234,7 @@ describe("validate command", () => {
       const { error } = await runCliCommand(["validate", "--plugins"]);
 
       // Should exit with a validation error, not an unhandled crash
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
   });
 });
@@ -319,7 +320,7 @@ describe("source validation (validateSource)", () => {
   it("should report error for non-existent source directory", async () => {
     const result = await validateSource(path.join(tempDir, "nonexistent"));
 
-    expect(result.errorCount).toBeGreaterThan(0);
+    expect(result.errorCount).toBe(1);
     expect(result.issues[0].message).toContain("does not exist");
   });
 
@@ -329,7 +330,7 @@ describe("source validation (validateSource)", () => {
 
     const result = await validateSource(sourceDir);
 
-    expect(result.errorCount).toBeGreaterThan(0);
+    expect(result.errorCount).toBe(1);
     expect(result.issues[0].message).toContain("Skills directory does not exist");
   });
 
@@ -382,7 +383,7 @@ describe("source validation (validateSource)", () => {
 
     const result = await validateSource(sourceDir);
 
-    expect(result.errorCount).toBeGreaterThan(0);
+    expect(result.errorCount).toBe(1);
     expect(result.issues.some((i) => i.message.includes("Missing SKILL.md"))).toBe(true);
   });
 
@@ -400,7 +401,7 @@ describe("source validation (validateSource)", () => {
 
     const result = await validateSource(sourceDir);
 
-    expect(result.errorCount).toBeGreaterThan(0);
+    expect(result.errorCount).toBe(1);
     expect(result.issues.some((i) => i.message.includes("Missing metadata.yaml"))).toBe(true);
   });
 
@@ -426,7 +427,7 @@ describe("source validation (validateSource)", () => {
 
     const result = await validateSource(sourceDir);
 
-    expect(result.errorCount).toBeGreaterThan(0);
+    expect(result.errorCount).toBe(4);
   });
 
   it("should report error for snake_case keys in metadata", async () => {
@@ -455,7 +456,7 @@ describe("source validation (validateSource)", () => {
     const result = await validateSource(sourceDir);
 
     const snakeCaseIssues = result.issues.filter((i) => i.message.includes("snake_case"));
-    expect(snakeCaseIssues.length).toBeGreaterThan(0);
+    expect(snakeCaseIssues).toHaveLength(3);
   });
 
   it("should report warning when displayName does not match directory name", async () => {
@@ -770,7 +771,7 @@ describe("validate --source integration", () => {
 
     const { error } = await runCliCommand(["validate", "--source", sourceDir]);
 
-    expect(error?.oclif?.exit).toBeDefined();
+    expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
   });
 
   it("should exit with error for missing skills directory", async () => {
@@ -779,7 +780,7 @@ describe("validate --source integration", () => {
 
     const { error } = await runCliCommand(["validate", "--source", sourceDir]);
 
-    expect(error?.oclif?.exit).toBeDefined();
+    expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
   });
 
   it("should accept -s shorthand for source flag", async () => {

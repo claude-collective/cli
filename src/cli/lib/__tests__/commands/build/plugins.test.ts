@@ -1,7 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import { mkdir } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir } from "../../helpers";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import {
+  runCliCommand,
+  fileExists,
+  directoryExists,
+  createTempDir,
+  cleanupTempDir,
+} from "../../helpers";
+import { renderSkillMd } from "../../content-generators";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_FILES } from "../../../../consts";
+import type { PluginManifest } from "../../../../types";
 
 describe("build:plugins command", () => {
   let tempDir: string;
@@ -189,7 +198,160 @@ describe("build:plugins command", () => {
       const { error } = await runCliCommand(["build:plugins", "--skill", "nonexistent-skill-xyz"]);
 
       // Should exit with error when skill not found
-      expect(error).toBeDefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error!.message).toContain("missing required SKILL.md file");
+    });
+  });
+
+  describe("plugin output verification", () => {
+    let skillsDir: string;
+    let outputDir: string;
+
+    beforeEach(async () => {
+      skillsDir = path.join(projectDir, "src", "skills");
+      outputDir = path.join(projectDir, "dist", "plugins");
+    });
+
+    it("should produce plugin directory with plugin.json for a single skill", async () => {
+      // Create a valid skill with frontmatter
+      const skillDir = path.join(skillsDir, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd("web-framework-react", "React framework"));
+
+      const { stdout, error } = await runCliCommand([
+        "build:plugins",
+        "--skills-dir",
+        skillsDir,
+        "--output-dir",
+        outputDir,
+      ]);
+
+      expect(error).toBeUndefined();
+
+      // Plugin directory should exist
+      const pluginDir = path.join(outputDir, "web-framework-react");
+      expect(await directoryExists(pluginDir)).toBe(true);
+
+      // plugin.json should exist inside .claude-plugin/
+      const manifestPath = path.join(pluginDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
+      expect(await fileExists(manifestPath)).toBe(true);
+
+      // Parse and verify manifest content
+      const manifestContent = await readFile(manifestPath, "utf-8");
+      const manifest: PluginManifest = JSON.parse(manifestContent);
+      expect(manifest.name).toBe("web-framework-react");
+      expect(manifest.description).toBe("React framework");
+      expect(manifest.version).toBe("1.0.0");
+    });
+
+    it("should copy SKILL.md into the plugin skills subdirectory", async () => {
+      const skillDir = path.join(skillsDir, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd("web-framework-react", "React framework"));
+
+      await runCliCommand([
+        "build:plugins",
+        "--skills-dir",
+        skillsDir,
+        "--output-dir",
+        outputDir,
+      ]);
+
+      // SKILL.md should be copied into skills/{skillName}/ inside plugin dir
+      const copiedSkillMd = path.join(outputDir, "web-framework-react", "skills", "web-framework-react", STANDARD_FILES.SKILL_MD);
+      expect(await fileExists(copiedSkillMd)).toBe(true);
+
+      const content = await readFile(copiedSkillMd, "utf-8");
+      expect(content).toContain("name: web-framework-react");
+      expect(content).toContain("React framework");
+    });
+
+    it("should generate README.md in plugin directory", async () => {
+      const skillDir = path.join(skillsDir, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd("web-framework-react", "React framework"));
+
+      await runCliCommand([
+        "build:plugins",
+        "--skills-dir",
+        skillsDir,
+        "--output-dir",
+        outputDir,
+      ]);
+
+      const readmePath = path.join(outputDir, "web-framework-react", "README.md");
+      expect(await fileExists(readmePath)).toBe(true);
+
+      const content = await readFile(readmePath, "utf-8");
+      expect(content).toContain("# web-framework-react");
+      expect(content).toContain("React framework");
+    });
+
+    it("should compile multiple skills and report count in stdout", async () => {
+      // Create two skills
+      for (const name of ["web-framework-react", "api-framework-hono"]) {
+        const skillDir = path.join(skillsDir, name);
+        await mkdir(skillDir, { recursive: true });
+        await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd(name));
+      }
+
+      const { stdout, error } = await runCliCommand([
+        "build:plugins",
+        "--skills-dir",
+        skillsDir,
+        "--output-dir",
+        outputDir,
+      ]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Compiled 2 skill plugins");
+
+      // Both plugin directories should exist
+      expect(await directoryExists(path.join(outputDir, "web-framework-react"))).toBe(true);
+      expect(await directoryExists(path.join(outputDir, "api-framework-hono"))).toBe(true);
+    });
+
+    it("should compile a specific skill with --skill flag", async () => {
+      // Create two skills but only compile one
+      for (const name of ["web-framework-react", "api-framework-hono"]) {
+        const skillDir = path.join(skillsDir, name);
+        await mkdir(skillDir, { recursive: true });
+        await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd(name));
+      }
+
+      const { stdout, error } = await runCliCommand([
+        "build:plugins",
+        "--skills-dir",
+        skillsDir,
+        "--output-dir",
+        outputDir,
+        "--skill",
+        "web-framework-react",
+      ]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Compiled web-framework-react");
+
+      // Only the targeted skill should be compiled
+      expect(await directoryExists(path.join(outputDir, "web-framework-react"))).toBe(true);
+      expect(await directoryExists(path.join(outputDir, "api-framework-hono"))).toBe(false);
+    });
+
+    it("should report plugin compilation complete in stdout", async () => {
+      const skillDir = path.join(skillsDir, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd("web-framework-react"));
+
+      const { stdout, error } = await runCliCommand([
+        "build:plugins",
+        "--skills-dir",
+        skillsDir,
+        "--output-dir",
+        outputDir,
+      ]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Plugin compilation complete!");
     });
   });
 });

@@ -98,13 +98,14 @@ describe("init command", () => {
       const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
-      await writeFile(configPath, 'export default { name: "test-project" };');
+      const originalContent = 'export default { name: "test-project" };';
+      await writeFile(configPath, originalContent);
 
       await runCliCommand(["init"]);
 
-      const { stat } = await import("fs/promises");
-      const configStat = await stat(configPath);
-      expect(configStat.isFile()).toBe(true);
+      const { readFile } = await import("fs/promises");
+      const content = await readFile(configPath, "utf-8");
+      expect(content).toBe(originalContent);
     });
 
     it("should exit with SUCCESS when already initialized", async () => {

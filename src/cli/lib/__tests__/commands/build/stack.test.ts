@@ -27,7 +27,8 @@ describe("build:stack command", () => {
       const { error } = await runCliCommand(["build:stack", "--stack", "test"]);
 
       // Should error because stacks directory doesn't exist or stack not found
-      expect(error).toBeDefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error!.message).toContain("not found");
     });
   });
 
@@ -177,7 +178,8 @@ describe("build:stack command", () => {
       const { error } = await runCliCommand(["build:stack", "--stack", "nonexistent-stack-xyz"]);
 
       // Should exit with error when stack not found
-      expect(error).toBeDefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error!.message).toContain("not found");
     });
 
     it("should handle invalid agent-source path gracefully", async () => {
@@ -190,7 +192,8 @@ describe("build:stack command", () => {
       ]);
 
       // Should error but not crash
-      expect(error).toBeDefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error!.message).toContain("Local source not found");
     });
   });
 });

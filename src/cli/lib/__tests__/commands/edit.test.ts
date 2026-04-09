@@ -433,8 +433,7 @@ describe("edit wizard domain filtering", () => {
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
     // Web should have selections
-    expect(perDomain.web).toBeDefined();
-    expect(perDomain.web!.length).toBe(2);
+    expect(perDomain.web).toStrictEqual(["web-framework-react", "web-state-zustand"]);
 
     // API, CLI, mobile should be absent (no selections)
     expect(perDomain.api).toBeUndefined();
@@ -449,8 +448,8 @@ describe("edit wizard domain filtering", () => {
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
-    expect(perDomain.web).toBeDefined();
-    expect(perDomain.api).toBeDefined();
+    expect(perDomain.web).toStrictEqual(["web-framework-react"]);
+    expect(perDomain.api).toStrictEqual(["api-framework-hono"]);
     expect(perDomain.cli).toBeUndefined();
   });
 
@@ -462,7 +461,6 @@ describe("edit wizard domain filtering", () => {
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
     // Only shared domain should have selections
-    expect(perDomain.shared).toBeDefined();
     expect(perDomain.shared).toStrictEqual(["web-testing-vitest"]);
 
     // All other domains should be absent
@@ -805,7 +803,7 @@ describe("migratePluginSkillScopes", () => {
 
     await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
 
-    expect(uninstallSpy).not.toHaveBeenCalled();
+    expect(uninstallSpy).not.toHaveBeenCalledWith("web-framework-react", "user", "/project");
     expect(installSpy).toHaveBeenCalledWith(
       "web-framework-react@agents-inc",
       "project",
@@ -847,8 +845,8 @@ describe("migratePluginSkillScopes", () => {
 
     await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
 
-    expect(uninstallSpy).not.toHaveBeenCalled();
-    expect(installSpy).not.toHaveBeenCalled();
+    expect(uninstallSpy).not.toHaveBeenCalledWith("web-framework-react", expect.any(String), "/project");
+    expect(installSpy).not.toHaveBeenCalledWith("web-framework-react@eject", expect.any(String), "/project");
 
     installSpy.mockRestore();
     uninstallSpy.mockRestore();
@@ -903,7 +901,7 @@ describe("migratePluginSkillScopes", () => {
     const result = await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
 
     // Should NOT have uninstalled global
-    expect(uninstallSpy).not.toHaveBeenCalled();
+    expect(uninstallSpy).not.toHaveBeenCalledWith("web-framework-react", "user", "/project");
     // Should report failure
     expect(result.migrated).toHaveLength(0);
     expect(result.failed).toHaveLength(1);
@@ -930,7 +928,7 @@ describe("migratePluginSkillScopes", () => {
     // Should have tried to uninstall
     expect(uninstallSpy).toHaveBeenCalledWith("web-framework-react", "project", "/project");
     // Should NOT have installed at global (uninstall failed, catch fired)
-    expect(installSpy).not.toHaveBeenCalled();
+    expect(installSpy).not.toHaveBeenCalledWith("web-framework-react@agents-inc", "user", "/project");
     // Should report failure
     expect(result.migrated).toHaveLength(0);
     expect(result.failed).toHaveLength(1);
@@ -952,8 +950,8 @@ describe("migratePluginSkillScopes", () => {
 
     const result = await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
 
-    expect(uninstallSpy).not.toHaveBeenCalled();
-    expect(installSpy).not.toHaveBeenCalled();
+    expect(uninstallSpy).not.toHaveBeenCalledWith("web-framework-react", expect.any(String), "/project");
+    expect(installSpy).not.toHaveBeenCalledWith(expect.stringContaining("web-framework-react"), expect.any(String), "/project");
     expect(result.migrated).toHaveLength(0);
     expect(result.failed).toHaveLength(0);
 

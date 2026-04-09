@@ -38,20 +38,15 @@ describe("list command", () => {
     it("should run without error when no installation exists", async () => {
       const { error } = await runCliCommand(["list"]);
 
-      // Should not throw an unhandled error
-      // The command should handle "no installation" gracefully
-      if (error?.message) {
-        expect(error.message).not.toContain("EEXIT");
-      }
+      // Command handles "no installation" gracefully (logs message, returns without error)
+      expect(error).toBeUndefined();
     });
 
     it("should work with ls alias", async () => {
       const { error } = await runCliCommand(["ls"]);
 
       // Alias should work the same as the full command
-      if (error?.message) {
-        expect(error.message).not.toContain("EEXIT");
-      }
+      expect(error).toBeUndefined();
     });
 
     it("should show installation info when local installation exists", async () => {
@@ -92,10 +87,10 @@ describe("list command", () => {
 
   describe("flags", () => {
     it("should accept --help flag", async () => {
-      const { error } = await runCliCommand(["list", "--help"]);
+      const { stdout } = await runCliCommand(["list", "--help"]);
 
-      // Help should always work
-      expect(error).toBeUndefined();
+      // Help should display command summary
+      expect(stdout).toContain("Show installation information");
     });
   });
 });

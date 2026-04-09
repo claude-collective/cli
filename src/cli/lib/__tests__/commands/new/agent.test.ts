@@ -75,7 +75,7 @@ describe("new:agent command", () => {
       const { error } = await runCliCommand(["new:agent"]);
 
       // oclif should report missing required arg
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should accept name argument without parsing error", async () => {
@@ -151,7 +151,6 @@ describe("new:agent command", () => {
       // the agent-summoner meta-agent cannot be found at the expected locations.
       const { error } = await runCliCommand(["new:agent", "my-agent", "--purpose", "test purpose"]);
 
-      expect(error).toBeDefined();
       expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
       expect(error?.message).toContain("agent-summoner");
     });
@@ -175,26 +174,16 @@ describe("new:agent command", () => {
       ]);
 
       // Both should fail — the agent-summoner is not present in either case
-      expect(noConfigError).toBeDefined();
       expect(noConfigError?.oclif?.exit).toBe(EXIT_CODES.ERROR);
-      expect(withConfigError).toBeDefined();
       expect(withConfigError?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
 
-    it("should reject unknown --force flag", async () => {
-      // The new:agent command currently has no --force flag and no duplicate checking.
-      // This test documents the current behavior. When duplicate protection is added,
-      // this test should be updated to verify the --force flag works.
-      const { error } = await runCliCommand([
-        "new:agent",
-        "my-agent",
-        "--force",
-        "--purpose",
-        "test",
-      ]);
+    it("should accept --force flag without parsing error", async () => {
+      await expectFlagAccepted(["new:agent", "my-agent", "--force", "--purpose", "test"]);
+    });
 
-      // oclif rejects unknown flags
-      expect(error).toBeDefined();
+    it("should accept -f shorthand for force flag", async () => {
+      await expectFlagAccepted(["new:agent", "my-agent", "-f", "--purpose", "test"]);
     });
   });
 });

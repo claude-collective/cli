@@ -182,7 +182,7 @@ describe("search command", () => {
           expect(parsed).toHaveProperty("results");
           expect(parsed).toHaveProperty("total");
           expect(Array.isArray(parsed.results)).toBe(true);
-          expect(parsed.total).toBeGreaterThan(0);
+          expect(parsed.total).toBe(1);
 
           // Each result should have expected fields
           const result = parsed.results[0];
@@ -232,7 +232,7 @@ describe("search command", () => {
 
           const parsed = JSON.parse(stdout.trim());
           expect(parsed.category).toBe("web");
-          expect(parsed.total).toBeGreaterThan(0);
+          expect(parsed.total).toBe(1);
         },
       );
 

@@ -30,10 +30,8 @@ describe("help command", () => {
     it("should exit with code 0", async () => {
       const { error } = await runCliCommand(["help"]);
 
-      // oclif help exits with code 0 (thrown as an error with oclif.exit = 0)
-      if (error?.oclif?.exit !== undefined) {
-        expect(error.oclif.exit).toBe(0);
-      }
+      // Help completes without error
+      expect(error).toBeUndefined();
     });
   });
 

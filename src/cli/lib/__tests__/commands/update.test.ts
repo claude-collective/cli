@@ -243,7 +243,8 @@ describe("update command", () => {
       const { error } = await runCliCommand(["update", "--nonexistent-flag"]);
 
       // Should error on unknown flag
-      expect(error).toBeDefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error!.message).toContain("Nonexistent flag: --nonexistent-flag");
     });
   });
 

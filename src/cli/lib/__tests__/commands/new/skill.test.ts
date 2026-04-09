@@ -237,7 +237,7 @@ describe("new:skill command", () => {
       const { error } = await runCliCommand(["new:skill"]);
 
       // oclif should report missing required arg
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should reject non-kebab-case name with uppercase", async () => {
@@ -250,7 +250,7 @@ describe("new:skill command", () => {
       const { error } = await runCliCommand(["new:skill", "my skill"]);
 
       // oclif may treat the second word as an extra arg or validation fails
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
   });
 

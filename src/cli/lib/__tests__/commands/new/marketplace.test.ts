@@ -164,7 +164,7 @@ describe("new:marketplace command", () => {
     it("should reject missing name argument", async () => {
       const { error } = await runCliCommand(["new:marketplace"]);
 
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should reject non-kebab-case name with uppercase", async () => {

@@ -61,7 +61,7 @@ describe("import:skill command", () => {
     it("should reject missing source argument", async () => {
       const { error } = await runCliCommand(["import:skill"]);
 
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should require at least one of --skill, --all, or --list", async () => {
@@ -260,11 +260,12 @@ describe("import:skill command", () => {
       const content = await readFile(metadataPath, "utf-8");
       const metadata = parseYaml(content);
 
-      expect(metadata.forkedFrom).toBeDefined();
-      expect(metadata.forkedFrom.skillName).toBe("my-skill");
-      expect(metadata.forkedFrom.source).toBe(LOCAL_SOURCE_NAME);
-      expect(metadata.forkedFrom.contentHash).toBeDefined();
-      expect(metadata.forkedFrom.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(metadata.forkedFrom).toStrictEqual({
+        skillName: "my-skill",
+        source: LOCAL_SOURCE_NAME,
+        contentHash: expect.any(String),
+        date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      });
     });
 
     it("should preserve existing metadata.yaml and add forkedFrom", async () => {
@@ -291,7 +292,6 @@ describe("import:skill command", () => {
       // Original metadata fields should be preserved
       expect(metadata.author).toBe("@external");
       // forkedFrom should be injected
-      expect(metadata.forkedFrom).toBeDefined();
       expect(metadata.forkedFrom.skillName).toBe("my-skill");
     });
   });
@@ -574,7 +574,7 @@ describe("import:skill command", () => {
       const { error } = await runCliCommand(["import:skill", "nonexistent-source", "--list"]);
 
       // fetchFromSource will throw for non-existent local paths
-      expect(error?.oclif?.exit).toBeDefined();
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.NETWORK_ERROR);
     });
 
     it("should error when skills subdirectory is missing", async () => {
