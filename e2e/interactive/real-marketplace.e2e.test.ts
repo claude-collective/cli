@@ -93,12 +93,15 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
       expect(initOutput).toContain("agents-inc");
     });
 
-    it("should have created config.ts", async () => {
-      await expect({ dir: projectDir }).toHaveConfig();
+    it("should have created config.ts with agents-inc source", async () => {
+      await expect({ dir: projectDir }).toHaveConfig({
+        source: "agents-inc",
+        agents: ["web-developer"],
+      });
     });
 
     it("should have compiled agents with real content", async () => {
-      await expect({ dir: projectDir }).toHaveCompiledAgents();
+      await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
     });
 
     it("should have displayed completion details", () => {
@@ -118,7 +121,7 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      await expect({ dir: projectDir }).toHaveCompiledAgents();
+      await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
     });
   });
 

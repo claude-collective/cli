@@ -100,7 +100,12 @@ describe("init wizard — source management", () => {
         expect(output).toContain("Skills copied to:");
         expect(output).not.toContain("Installing skill plugins");
 
-        await expect(result.project).toHaveConfig({ source: "eject" });
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react"],
+          agents: ["web-developer"],
+          source: "eject",
+        });
+        await expect(result.project).toHaveCompiledAgent("web-developer");
         await expect(result.project).toHaveSkillCopied("web-framework-react");
       },
     );
@@ -124,7 +129,10 @@ describe("init wizard — source management", () => {
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
         await expect(result.project).toHaveConfig({
           skillIds: ["web-framework-react"],
+          agents: ["web-developer"],
+          source: "agents-inc",
         });
+        await expect(result.project).toHaveCompiledAgent("web-developer");
       },
     );
   });

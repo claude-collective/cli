@@ -1,10 +1,9 @@
-import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import "../matchers/setup.js";
 
 /**
@@ -68,12 +67,14 @@ describe("unique skill in category guard", () => {
       const result = await confirm.confirm();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      await result.destroy();
 
       // Verify the skill is still in the config after save (guard preserved it)
-      const configPath = path.join(project.dir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const configContent = await readTestFile(configPath);
-      expect(configContent).toContain("web-testing-vitest");
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest"],
+        agents: ["web-developer"],
+      });
+
+      await result.destroy();
     },
   );
 
@@ -108,6 +109,13 @@ describe("unique skill in category guard", () => {
       const result = await confirm.confirm();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Config should reflect the deselection (react removed from multi-skill category)
+      await expect(result.project).toHaveConfig({
+        agents: ["web-developer"],
+      });
+      await expect(result.project).toHaveCompiledAgent("web-developer");
+
       await result.destroy();
     },
   );

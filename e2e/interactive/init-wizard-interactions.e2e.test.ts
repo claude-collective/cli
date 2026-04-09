@@ -82,6 +82,12 @@ describe("init wizard — interactions", () => {
 
       // web-developer SHOULD be compiled
       await expect(result.project).toHaveCompiledAgent("web-developer");
+
+      // api-developer should NOT be compiled (it was deselected)
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react"],
+        agents: ["web-developer"],
+      });
     });
   });
 
@@ -134,6 +140,10 @@ describe("init wizard — interactions", () => {
         await expect(result.project).toHaveConfig({
           skillIds: ["web-framework-react"],
         });
+
+        // Agents should be compiled after wizard completion (to global home since agents default to global)
+        await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+        await expect({ dir: fakeHome }).toHaveCompiledAgent("api-developer");
       },
     );
   });

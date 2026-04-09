@@ -68,9 +68,8 @@ describe("edit wizard — eject mode", () => {
           env: { HOME: project.dir },
         });
 
-        // Arrow down to reach the next skill (Testing/vitest), then space to select it
-        await wizard.build.navigateDown();
-        await wizard.build.toggleFocusedSkill();
+        // Select the vitest skill by name
+        await wizard.build.selectSkill("vitest");
 
         // Navigate through remaining steps: build -> sources -> agents -> confirm -> complete
         const result = await completeEditFromBuild(wizard);
@@ -83,7 +82,9 @@ describe("edit wizard — eject mode", () => {
         expect(rawOutput).toContain("Changes:");
 
         // Config should now include both skills
-        await expect(result.project).toHaveConfig({ skillIds: ["web-framework-react"] });
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react", "web-testing-vitest"],
+        });
       },
     );
 

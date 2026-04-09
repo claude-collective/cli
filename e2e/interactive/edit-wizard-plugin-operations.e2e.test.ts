@@ -76,6 +76,12 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
       const rawOutput = result.rawOutput;
       expect(rawOutput).toContain("Removed");
       expect(rawOutput).toContain("plugin");
+
+      // Config should only contain the surviving skill
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react"],
+        source: fixture.marketplaceName,
+      });
     });
 
     it(
@@ -160,6 +166,15 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
         const rawOutput = result.rawOutput;
         expect(rawOutput).toContain("Installed");
         expect(rawOutput).toContain("plugin");
+
+        // Config should include both the original and newly added skill
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react"],
+          source: fixture.marketplaceName,
+        });
+
+        // Agents should be recompiled after adding a skill
+        await expect(result.project).toHaveCompiledAgent("web-developer");
       },
     );
   });

@@ -4,7 +4,7 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { DashboardSession } from "../pages/dashboard-session.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import { STEP_TEXT, TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
+import { STEP_TEXT, TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import {
@@ -50,7 +50,7 @@ describe("init wizard — existing projects", () => {
       const claudeDir = path.join(tempDir, DIRS.CLAUDE);
       await mkdir(claudeDir, { recursive: true });
       await writeFile(
-        path.join(claudeDir, "settings.json"),
+        path.join(claudeDir, FILES.SETTINGS_JSON),
         JSON.stringify({ permissions: { allow: [] } }),
       );
 

@@ -66,6 +66,11 @@ describe.skipIf(!claudeAvailable)("init wizard — stale marketplace update", ()
     const output = result.output;
     expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
     expect(output).toContain("Registering marketplace");
+
+    await expect(result.project).toHaveConfig({
+      skillIds: ["web-framework-react"],
+      agents: ["web-developer"],
+    });
   });
 
   it(
@@ -94,6 +99,11 @@ describe.skipIf(!claudeAvailable)("init wizard — stale marketplace update", ()
       expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
       expect(output).not.toContain("Registering marketplace");
       expect(output).not.toContain("Failed to");
+
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react"],
+        agents: ["web-developer"],
+      });
     },
   );
 });
@@ -128,8 +138,11 @@ describe("init wizard — default source eject mode ENOENT", () => {
       const output = result.output;
       expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
       expect(output).not.toContain("ENOENT");
-      await expect(result.project).toHaveConfig();
-      await expect(result.project).toHaveCompiledAgents();
+      await expect(result.project).toHaveConfig({
+        source: "agents-inc",
+        agents: ["web-developer"],
+      });
+      await expect(result.project).toHaveCompiledAgent("web-developer");
     },
   );
 

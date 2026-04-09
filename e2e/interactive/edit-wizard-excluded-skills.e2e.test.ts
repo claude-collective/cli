@@ -316,7 +316,7 @@ describe("edit wizard — excluded skills", () => {
       expect(updatedConfig).toContain('"scope":"project"');
 
       // The zustand local skill directory must still exist after save
-      const zustandSkillDir = path.join(projectDir, ".claude", "skills", "web-state-zustand");
+      const zustandSkillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-state-zustand");
       expect(await directoryExists(zustandSkillDir)).toBe(true);
     },
   );

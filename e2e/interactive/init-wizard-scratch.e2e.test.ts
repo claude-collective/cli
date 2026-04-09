@@ -87,9 +87,18 @@ describe("init wizard — scratch flow", () => {
       const result = await confirm.confirm();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      await expect(result.project).toHaveConfig();
-      await expect(result.project).toHaveCompiledAgents();
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react", "api-framework-hono"],
+        agents: ["web-developer", "api-developer"],
+        source: "agents-inc",
+      });
+      await expect(result.project).toHaveCompiledAgent("web-developer");
+      await expect(result.project).toHaveCompiledAgent("api-developer");
+      await expect(result.project).toHaveCompiledAgentContent("web-developer", {
+        contains: ["web-framework-react"],
+      });
       await expect(result.project).toHaveSkillCopied("web-framework-react");
+      await expect(result.project).toHaveSkillCopied("api-framework-hono");
     });
   });
 

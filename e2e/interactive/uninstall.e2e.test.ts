@@ -1,7 +1,7 @@
 import path from "path";
 import { writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { TIMEOUTS, EXIT_CODES, DIRS, STEP_TEXT } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
 import { cleanupTempDir, ensureBinaryExists, directoryExists } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { InteractivePrompt } from "../fixtures/interactive-prompt.js";
@@ -51,7 +51,7 @@ describe("uninstall interactive", () => {
       DIRS.CLAUDE,
       "skills",
       "web-framework-react",
-      "metadata.yaml",
+      FILES.METADATA_YAML,
     );
     await writeFile(
       skillMetadataPath,

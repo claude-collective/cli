@@ -119,6 +119,11 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
       expect(output).toContain("Skills copied to:");
 
       await expect(result.project).toHaveSkillCopied("web-framework-react");
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react"],
+      });
+      await expect(result.project).toHaveCompiledAgent("web-developer");
+      await expect(result.project).toHaveCompiledAgent("api-developer");
     });
   });
 
@@ -137,6 +142,12 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
       expect(output).toContain(`Installed web-testing-vitest@${fixture.marketplaceName}`);
       expect(output).toContain("skill plugins");
       expect(output).not.toContain("Failed to install plugin");
+
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest"],
+      });
+      await expect(result.project).toHaveCompiledAgent("web-developer");
+      await expect(result.project).toHaveCompiledAgent("api-developer");
     });
 
     it("should install project-scoped plugins correctly in mixed scope mode", async () => {
@@ -161,6 +172,11 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
       expect(output).toContain("Installing skill plugins...");
       expect(output).toContain(`Installed web-framework-react@${fixture.marketplaceName}`);
       expect(output).not.toContain("Failed to install plugin");
+
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react"],
+      });
+      await expect(result.project).toHaveCompiledAgent("web-developer");
     });
   });
 
@@ -188,6 +204,11 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
 
       // The local-sourced skill should be copied locally
       await expect(result.project).toHaveSkillCopied("web-framework-react");
+
+      // Config should reflect the selected skills
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react"],
+      });
 
       // Agents should still be compiled
       await expect(result.project).toHaveCompiledAgent("web-developer");

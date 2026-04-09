@@ -73,7 +73,14 @@ describe("edit wizard — confirm step and completion", () => {
         const result = await confirm.confirm();
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await expect(result.project).toHaveCompiledAgents();
+        await expect(result.project).toHaveCompiledAgent("web-developer");
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react", "web-styling-tailwind"],
+          agents: ["web-developer"],
+        });
+        await expect(result.project).toHaveCompiledAgentContent("web-developer", {
+          contains: ["name: web-developer", "web-framework-react"],
+        });
       },
     );
 

@@ -389,7 +389,7 @@ describe("update command", () => {
 
       const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       // Ctrl+C during network fetch may exit 0 (clean cancellation) or 1 (interrupted)
-      expect(exitCode).toBeDefined();
+      expect([EXIT_CODES.SUCCESS, EXIT_CODES.ERROR]).toContain(exitCode);
     });
   });
 });

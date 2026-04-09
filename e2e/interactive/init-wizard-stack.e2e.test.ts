@@ -55,8 +55,16 @@ describe("init wizard — stack flow", () => {
       const result = await wizard.completeWithDefaults();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      await expect(result.project).toHaveConfig();
-      await expect(result.project).toHaveCompiledAgents();
+      await expect(result.project).toHaveConfig({
+        skillIds: ["web-framework-react"],
+        agents: ["web-developer", "api-developer"],
+        source: "agents-inc",
+      });
+      await expect(result.project).toHaveCompiledAgent("web-developer");
+      await expect(result.project).toHaveCompiledAgent("api-developer");
+      await expect(result.project).toHaveCompiledAgentContent("web-developer", {
+        contains: ["web-framework-react"],
+      });
     });
 
     it("should display completion details after install", async () => {
@@ -98,6 +106,7 @@ describe("init wizard — stack flow", () => {
 
         await expect(result.project).toHaveConfig({
           skillIds: ["web-framework-react"],
+          agents: ["web-developer"],
           source: "agents-inc",
         });
       });
