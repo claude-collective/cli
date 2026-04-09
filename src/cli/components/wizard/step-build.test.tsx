@@ -20,7 +20,9 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-import { createMockSkill, createMockMatrix, SKILLS } from "../../lib/__tests__/helpers";
+import { SKILLS } from "../../lib/__tests__/test-fixtures";
+import { createMockSkill } from "../../lib/__tests__/factories/skill-factories";
+import { createMockMatrix } from "../../lib/__tests__/factories/matrix-factories";
 import { initializeMatrix } from "../../lib/matrix/matrix-provider";
 import {
   WEB_FRAMEWORK_CATEGORY,

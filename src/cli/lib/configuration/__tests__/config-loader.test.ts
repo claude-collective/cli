@@ -3,7 +3,7 @@ import path from "path";
 import { writeFile } from "fs/promises";
 import { z } from "zod";
 import { loadConfig } from "../config-loader";
-import { createTempDir, cleanupTempDir } from "../../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../../__tests__/test-fs-utils";
 import { STANDARD_FILES } from "../../../consts";
 
 let tempDir: string;

@@ -6,15 +6,12 @@ import { generateProjectConfigFromSkills } from "./config-generator";
 import { generateConfigSource } from "./config-writer";
 import type { AgentName } from "../../types";
 import { initializeMatrix } from "../matrix/matrix-provider";
-import {
-  createTempDir,
-  cleanupTempDir,
-  writeTestTsConfig,
-  buildProjectConfig,
-  buildAgentConfigs,
-} from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { writeTestTsConfig } from "../__tests__/helpers/config-io.js";
+import { buildProjectConfig, buildAgentConfigs } from "../__tests__/factories/config-factories.js";
 import { SINGLE_REACT_MATRIX, WEB_PAIR_MATRIX } from "../__tests__/mock-data/mock-matrices";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
+import { EXPECTED_SKILLS } from "../__tests__/expected-values";
 
 describe("project-config", () => {
   let tempDir: string;
@@ -223,7 +220,7 @@ describe("round-trip tests", () => {
     // Generate config
     const generated = generateProjectConfigFromSkills(
       "test-project",
-      ["web-framework-react", "web-state-zustand"],
+      [...EXPECTED_SKILLS.WEB_DEFAULT],
       { selectedAgents },
     );
 

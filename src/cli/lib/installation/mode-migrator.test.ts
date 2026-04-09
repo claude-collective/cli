@@ -3,7 +3,8 @@ import type { SkillId } from "../../types";
 import type { SkillConfig } from "../../types/config";
 import type { SourceLoadResult } from "../loading/source-loader";
 import type { MigrationPlan } from "./mode-migrator";
-import { buildSourceResult, createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { buildSourceResult } from "../__tests__/factories/config-factories";
 import { WEB_PAIR_MATRIX } from "../__tests__/mock-data/mock-matrices";
 
 // Mock dependencies before imports

@@ -5,7 +5,8 @@ import type { BoundSkillCandidate, SkillId } from "../../types";
 import { UI_SYMBOLS } from "../../consts";
 import { initializeMatrix } from "../../lib/matrix/matrix-provider";
 import { BUILT_IN_MATRIX } from "../../types/generated/matrix";
-import { createMockMatrix, createMockSkill } from "../../lib/__tests__/helpers";
+import { createMockSkill } from "../../lib/__tests__/factories/skill-factories";
+import { createMockMatrix } from "../../lib/__tests__/factories/matrix-factories";
 import { WEB_TRIO_MATRIX } from "../../lib/__tests__/mock-data/mock-matrices";
 import {
   ARROW_UP,

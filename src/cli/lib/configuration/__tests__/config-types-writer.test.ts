@@ -17,17 +17,12 @@ import {
   regenerateConfigTypes,
   type ConfigTypesBackgroundData,
 } from "../config-types-writer";
-import {
-  createMockSkill,
-  createMockMatrix,
-  createMockCategory,
-  createTempDir,
-  cleanupTempDir,
-  buildProjectConfig,
-  buildAgentConfigs,
-  SKILLS,
-  TEST_CATEGORIES,
-} from "../../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../../__tests__/test-fs-utils";
+import { createMockSkill } from "../../__tests__/factories/skill-factories.js";
+import { createMockMatrix } from "../../__tests__/factories/matrix-factories.js";
+import { createMockCategory } from "../../__tests__/factories/category-factories.js";
+import { buildProjectConfig, buildAgentConfigs } from "../../__tests__/factories/config-factories.js";
+import { SKILLS, TEST_CATEGORIES } from "../../__tests__/test-fixtures";
 import {
   EMPTY_MATRIX,
   FULLSTACK_PAIR_MATRIX,

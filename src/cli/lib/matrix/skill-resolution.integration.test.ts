@@ -18,15 +18,12 @@ import {
   getUnmetRequirementsReason,
   resolveAlias,
 } from ".";
-import {
-  createMockSkill,
-  createMockMatrix,
-  testSkillToResolvedSkill,
-  buildWizardResult,
-  buildSkillConfigs,
-  buildSourceResult,
-  readTestTsConfig,
-} from "../__tests__/helpers";
+import { createMockSkill, testSkillToResolvedSkill } from "../__tests__/factories/skill-factories.js";
+import { createMockMatrix } from "../__tests__/factories/matrix-factories.js";
+import { buildWizardResult, buildSourceResult } from "../__tests__/factories/config-factories.js";
+import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation.js";
+import { readTestTsConfig } from "../__tests__/helpers/config-io.js";
+import { expectConfigSkills } from "../__tests__/assertions/index.js";
 import {
   MULTI_SOURCE_PUBLIC_SKILLS,
   MULTI_SOURCE_ACME_SKILLS,
@@ -519,10 +516,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     // Boundary cast: config parse returns `unknown`
     const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
 
-    const configSkillIds = config.skills.map((s) => s.id);
-    for (const skillId of selectedSkills) {
-      expect(configSkillIds).toContain(skillId);
-    }
+    expectConfigSkills(config, selectedSkills);
 
     // Verify agents were compiled
     expect(installResult.compiledAgents).toHaveLength(2);

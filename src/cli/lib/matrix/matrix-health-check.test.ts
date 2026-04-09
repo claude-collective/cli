@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { checkMatrixHealth } from "./matrix-health-check";
-import { createMockSkill, createMockCategory, createMockMatrix } from "../__tests__/helpers";
+import { createMockSkill } from "../__tests__/factories/skill-factories.js";
+import { createMockMatrix } from "../__tests__/factories/matrix-factories.js";
+import { createMockCategory } from "../__tests__/factories/category-factories.js";
 import {
   EMPTY_MATRIX,
   HEALTH_HEALTHY_MATRIX,

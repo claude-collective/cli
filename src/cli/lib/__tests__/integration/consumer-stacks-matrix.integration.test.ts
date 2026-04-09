@@ -1,24 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import path from "path";
 import { mkdir, readFile, writeFile } from "fs/promises";
-import { writeSourceSkill, SKILLS } from "../helpers";
+import { writeSourceSkill } from "../helpers/disk-writers.js";
+import { SKILLS } from "../test-fixtures";
 import { STANDARD_FILES } from "../../../consts";
 
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installEject } from "../../installation/local-installer";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { ProjectConfig, ResolvedSkill, SkillId } from "../../../types";
-import {
-  fileExists,
-  directoryExists,
-  readTestTsConfig,
-  buildWizardResult,
-  buildSkillConfigs,
-  buildSourceResult,
-  createMockMatrix,
-  createTempDir,
-  cleanupTempDir,
-} from "../helpers";
+import { buildWizardResult, buildSourceResult } from "../factories/config-factories.js";
+import { createMockMatrix } from "../factories/matrix-factories.js";
+import { readTestTsConfig } from "../helpers/config-io.js";
+import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
+import { fileExists, directoryExists, createTempDir, cleanupTempDir } from "../test-fs-utils";
+import { expectInstallResult, expectConfigSkills } from "../assertions/index.js";
 import { loadStacks, loadStackById } from "../../stacks/stacks-loader";
 import { extractAllSkills, mergeMatrixWithSkills } from "../../matrix";
 import {
@@ -103,9 +99,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
     });
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-    expect(config.skills.map((s) => s.id).sort()).toStrictEqual(
-      ["api-framework-hono", "web-framework-react"],
-    );
+    expectConfigSkills(config, ["api-framework-hono", "web-framework-react"]);
   });
 
   it("should find a specific stack by ID using loadStackById", async () => {
@@ -283,10 +277,10 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
       projectDir: dirs.projectDir,
     });
 
-    expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
-      ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
-    );
-    expect(result.compiledAgents.sort()).toStrictEqual(["api-developer", "web-developer"]);
+    expectInstallResult(result, {
+      copiedSkillIds: ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
+      compiledAgents: ["api-developer", "web-developer"],
+    });
     expect(await directoryExists(result.skillsDir)).toBe(true);
     expect(await directoryExists(result.agentsDir)).toBe(true);
   });
@@ -524,16 +518,18 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       });
 
       // 5. Verify installation results
-      expect(result.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
-        ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
-      );
-      expect(result.compiledAgents.sort()).toStrictEqual(["api-developer", "web-developer"]);
+      expectInstallResult(result, {
+        copiedSkillIds: ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
+        compiledAgents: ["api-developer", "web-developer"],
+      });
 
       // 6. Verify config.ts contains exactly the selected skills
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-      expect(config.skills.map((s) => s.id).sort()).toStrictEqual(
-        ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
-      );
+      expectConfigSkills(config, [
+        "api-framework-hono",
+        "web-framework-react",
+        "web-testing-vitest",
+      ]);
     } finally {
       await cleanupTestSource(dirs);
     }

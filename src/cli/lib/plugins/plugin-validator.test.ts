@@ -9,7 +9,7 @@ import {
   validatePlugin,
   validateAllPlugins,
 } from "./plugin-validator";
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 import {
   PLUGIN_MANIFEST_DIR,
   PLUGIN_MANIFEST_FILE,
@@ -55,9 +55,7 @@ describe("plugin-validator", () => {
       const result = await validatePluginStructure(nonexistentPath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toStrictEqual([
-        `Plugin directory does not exist: ${nonexistentPath}`,
-      ]);
+      expect(result.errors).toStrictEqual([`Plugin directory does not exist: ${nonexistentPath}`]);
     });
 
     it("should fail if .claude-plugin/plugin.json missing", async () => {
@@ -202,7 +200,9 @@ describe("plugin-validator", () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors).toContain('version "v1.0" is not valid semver (expected: major.minor.patch)');
+      expect(result.errors).toContain(
+        'version "v1.0" is not valid semver (expected: major.minor.patch)',
+      );
     });
 
     it("should warn if description missing", async () => {

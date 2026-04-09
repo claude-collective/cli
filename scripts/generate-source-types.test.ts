@@ -3,11 +3,8 @@ import { mkdirSync, writeFileSync, readFileSync } from "fs";
 import path from "path";
 import { stringify as stringifyYaml } from "yaml";
 
-import {
-  createTempDir,
-  cleanupTempDir,
-  createMockExtractedSkill,
-} from "../src/cli/lib/__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../src/cli/lib/__tests__/test-fs-utils";
+import { createMockExtractedSkill } from "../src/cli/lib/__tests__/factories/skill-factories.js";
 import { renderSkillMd } from "../src/cli/lib/__tests__/content-generators";
 
 import {

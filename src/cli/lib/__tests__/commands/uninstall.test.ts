@@ -2,18 +2,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import fs from "fs";
 import { mkdir, writeFile, readFile } from "fs/promises";
-import {
-  runCliCommand,
-  directoryExists,
-  fileExists,
-  createTempDir,
-  cleanupTempDir,
-  writeTestSkill,
-  createMockMatrix,
-  createMockSkill,
-  buildAgentConfigs,
-  SKILLS,
-} from "../helpers";
+import { runCliCommand } from "../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir, fileExists, directoryExists } from "../test-fs-utils";
+import { writeTestSkill } from "../helpers/disk-writers.js";
+import { createMockSkill } from "../factories/skill-factories.js";
+import { createMockMatrix } from "../factories/matrix-factories.js";
+import { buildAgentConfigs } from "../factories/config-factories.js";
+import { SKILLS } from "../test-fixtures";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import {
   DEFAULT_BRANDING,
@@ -731,7 +726,10 @@ describe("uninstall command", () => {
 
       expect(await fileExists(mcpPath)).toBe(true);
       const content = JSON.parse(await readFile(mcpPath, "utf-8"));
-      expect(content.mcpServers["user-server"]).toStrictEqual({ command: "node", args: ["server.js"] });
+      expect(content.mcpServers["user-server"]).toStrictEqual({
+        command: "node",
+        args: ["server.js"],
+      });
     });
 
     it("should preserve .claude/settings.json during uninstall", async () => {

@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { initializeMatrix } from "../lib/matrix/matrix-provider";
-import { buildSkillConfigs, createMockMatrix, SKILLS } from "../lib/__tests__/helpers";
+import { SKILLS } from "../lib/__tests__/test-fixtures";
+import { createMockMatrix } from "../lib/__tests__/factories/matrix-factories";
+import { buildSkillConfigs } from "../lib/__tests__/helpers/wizard-simulation";
 import { typedKeys } from "../utils/typed-object";
 import {
   ALL_SKILLS_TEST_CATEGORIES_MATRIX,
@@ -15,7 +17,8 @@ import {
   REACT_HONO_FRAMEWORK_API_MATRIX,
 } from "../lib/__tests__/mock-data/mock-matrices";
 import type { SkillAssignment, SkillConfig, SkillId, SkillSource } from "../types";
-import { createMockSkillAssignment as sa } from "../lib/__tests__/helpers";
+import { createMockSkillAssignment as sa } from "../lib/__tests__/factories/skill-factories";
+import { EXPECTED_AGENTS } from "../lib/__tests__/expected-values";
 
 describe("WizardStore", () => {
   beforeEach(() => {
@@ -2129,22 +2132,10 @@ describe("WizardStore", () => {
       store.preselectAgentsFromDomains();
 
       const { selectedAgents, agentConfigs } = useWizardStore.getState();
-      expect(selectedAgents).toStrictEqual([
-        "web-architecture",
-        "web-developer",
-        "web-pm",
-        "web-researcher",
-        "web-reviewer",
-        "web-tester",
-      ]);
-      expect(agentConfigs).toStrictEqual([
-        { name: "web-architecture", scope: "global" },
-        { name: "web-developer", scope: "global" },
-        { name: "web-pm", scope: "global" },
-        { name: "web-researcher", scope: "global" },
-        { name: "web-reviewer", scope: "global" },
-        { name: "web-tester", scope: "global" },
-      ]);
+      expect(selectedAgents).toStrictEqual([...EXPECTED_AGENTS.WEB]);
+      expect(agentConfigs).toStrictEqual(
+        EXPECTED_AGENTS.WEB.map((name) => ({ name, scope: "global" })),
+      );
     });
 
     it("should preselect api-related agents when api domain is selected", () => {
@@ -2153,16 +2144,10 @@ describe("WizardStore", () => {
       store.preselectAgentsFromDomains();
 
       const { selectedAgents, agentConfigs } = useWizardStore.getState();
-      expect(selectedAgents).toStrictEqual([
-        "api-developer",
-        "api-researcher",
-        "api-reviewer",
-      ]);
-      expect(agentConfigs).toStrictEqual([
-        { name: "api-developer", scope: "global" },
-        { name: "api-researcher", scope: "global" },
-        { name: "api-reviewer", scope: "global" },
-      ]);
+      expect(selectedAgents).toStrictEqual([...EXPECTED_AGENTS.API]);
+      expect(agentConfigs).toStrictEqual(
+        EXPECTED_AGENTS.API.map((name) => ({ name, scope: "global" })),
+      );
     });
 
     it("should preselect cli agents when cli domain is selected", () => {
@@ -2171,16 +2156,10 @@ describe("WizardStore", () => {
       store.preselectAgentsFromDomains();
 
       const { selectedAgents, agentConfigs } = useWizardStore.getState();
-      expect(selectedAgents).toStrictEqual([
-        "cli-developer",
-        "cli-reviewer",
-        "cli-tester",
-      ]);
-      expect(agentConfigs).toStrictEqual([
-        { name: "cli-developer", scope: "global" },
-        { name: "cli-reviewer", scope: "global" },
-        { name: "cli-tester", scope: "global" },
-      ]);
+      expect(selectedAgents).toStrictEqual([...EXPECTED_AGENTS.CLI]);
+      expect(agentConfigs).toStrictEqual(
+        EXPECTED_AGENTS.CLI.map((name) => ({ name, scope: "global" })),
+      );
     });
 
     it("should never include optional agents regardless of domains", () => {
@@ -2191,20 +2170,7 @@ describe("WizardStore", () => {
       store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toStrictEqual([
-        "api-developer",
-        "api-researcher",
-        "api-reviewer",
-        "cli-developer",
-        "cli-reviewer",
-        "cli-tester",
-        "web-architecture",
-        "web-developer",
-        "web-pm",
-        "web-researcher",
-        "web-reviewer",
-        "web-tester",
-      ]);
+      expect(selectedAgents).toStrictEqual([...EXPECTED_AGENTS.ALL]);
     });
 
     it("should return empty agents when no domains are selected", () => {

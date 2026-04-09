@@ -23,6 +23,7 @@ import type { CategoryRow } from "../../components/wizard/category-grid";
 import type { SkillId, Category, CategorySelections } from "../../types";
 import type { SkillConfig } from "../../types/config";
 import { initializeMatrix } from "../matrix/matrix-provider";
+import { EXPECTED_SKILLS } from "../__tests__/expected-values";
 
 describe("validateBuildStep", () => {
   const requiredCategory: CategoryRow = {
@@ -394,7 +395,7 @@ describe("buildCategoriesForDomain", () => {
       initializeMatrix(BUILD_STEP_REQUIRES_MATRIX);
 
       // Both selected
-      const allSelections: SkillId[] = ["web-framework-react", "web-state-zustand"];
+      const allSelections: SkillId[] = [...EXPECTED_SKILLS.WEB_DEFAULT];
       const result = buildCategoriesForDomain("web", allSelections, {});
 
       const stateRow = result.find((r) => r.id === stateCategory);

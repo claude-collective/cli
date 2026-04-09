@@ -7,13 +7,10 @@ import {
   printCompilationSummary,
   type CompiledSkillPlugin,
 } from "./skill-plugin-compiler";
-import {
-  createTempDir,
-  cleanupTempDir,
-  writeTestSkill,
-  createMockMatrix,
-  SKILLS,
-} from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { SKILLS } from "../__tests__/test-fixtures";
+import { createMockMatrix } from "../__tests__/factories/matrix-factories.js";
+import { writeTestSkill } from "../__tests__/helpers/disk-writers.js";
 import { renderSkillMd } from "../__tests__/content-generators";
 import { initializeMatrix } from "../matrix/matrix-provider";
 import { computeSkillFolderHash } from "../versioning";

@@ -1,16 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import {
-  createMockSkill,
-  createMockMatrix,
-  createMockAgent,
-  createTestDirs,
-  cleanupTestDirs,
-  fileExists,
-  directoryExists,
-  writeTestSkill,
-  writeTestAgent,
-} from "./helpers";
-import type { PluginTestDirs } from "./helpers";
+import { createMockSkill } from "./factories/skill-factories.js";
+import { createMockMatrix } from "./factories/matrix-factories.js";
+import { createMockAgent } from "./factories/agent-factories.js";
+import { createTestDirs, cleanupTestDirs } from "./helpers/test-dir-setup.js";
+import type { PluginTestDirs } from "./helpers/test-dir-setup.js";
+import { writeTestSkill, writeTestAgent } from "./helpers/disk-writers.js";
+import { fileExists, directoryExists } from "./test-fs-utils";
 import type { SkillId } from "../../types";
 import { initializeMatrix } from "../matrix/matrix-provider";
 import { VITEST_MATRIX } from "./mock-data/mock-matrices";

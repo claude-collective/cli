@@ -4,14 +4,10 @@ import { fileURLToPath } from "url";
 import { readFile as fsReadFile, stat } from "fs/promises";
 import type { AgentConfig, Skill, SkillId } from "../types";
 import { DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../consts";
-import {
-  createCompileContext,
-  createMockAgentConfig,
-  createMockCompiledAgentData,
-  createMockSkillEntry,
-  createTempDir,
-  cleanupTempDir,
-} from "./__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "./__tests__/test-fs-utils";
+import { createMockSkillEntry } from "./__tests__/factories/skill-factories";
+import { createMockAgentConfig, createMockCompiledAgentData } from "./__tests__/factories/agent-factories";
+import { createCompileContext } from "./__tests__/factories/plugin-factories";
 import {
   WEB_DEV_NO_SKILLS,
   API_DEV_NO_SKILLS,

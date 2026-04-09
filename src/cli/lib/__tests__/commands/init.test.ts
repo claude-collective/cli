@@ -1,10 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir, buildSkillConfigs } from "../helpers";
+import { runCliCommand } from "../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir } from "../test-fs-utils";
+import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
 import { getDashboardData, formatDashboardText } from "../../../commands/init";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 import { renderConfigTs } from "../content-generators";
+import { EXPECTED_SKILLS } from "../expected-values";
 
 describe("init command", () => {
   let tempDir: string;
@@ -55,7 +58,7 @@ describe("init command", () => {
         path.join(configDir, STANDARD_FILES.CONFIG_TS),
         renderConfigTs({
           name: "test-project",
-          skills: buildSkillConfigs(["web-framework-react", "web-state-zustand"]),
+          skills: buildSkillConfigs([...EXPECTED_SKILLS.WEB_DEFAULT]),
         }),
       );
 

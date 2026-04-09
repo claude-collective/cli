@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepStack } from "./step-stack";
 import { useWizardStore } from "../../stores/wizard-store";
 import { initializeMatrix } from "../../lib/matrix/matrix-provider";
-import { createMockMatrix, createMockResolvedStack, SKILLS } from "../../lib/__tests__/helpers";
+import { SKILLS } from "../../lib/__tests__/test-fixtures";
+import { createMockMatrix } from "../../lib/__tests__/factories/matrix-factories";
+import { createMockResolvedStack } from "../../lib/__tests__/factories/stack-factories";
 import { TEST_CATEGORIES } from "../../lib/__tests__/test-fixtures";
 
 import type { MergedSkillsMatrix } from "../../types";

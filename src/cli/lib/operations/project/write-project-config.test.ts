@@ -2,13 +2,13 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { AgentDefinition, AgentName, ProjectConfig } from "../../../types";
 import type { WizardResultV2 } from "../../../components/wizard/wizard";
 import type { SourceLoadResult } from "../../loading/source-loader";
+import { createMockAgent } from "../../__tests__/factories/agent-factories";
 import {
   buildWizardResult,
-  buildSkillConfigs,
   buildProjectConfig,
   buildSourceResult,
-  createMockAgent,
-} from "../../__tests__/helpers";
+} from "../../__tests__/factories/config-factories";
+import { buildSkillConfigs } from "../../__tests__/helpers/wizard-simulation";
 import { EMPTY_MATRIX } from "../../__tests__/mock-data/mock-matrices";
 
 // --- Module-level mocks ---

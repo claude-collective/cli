@@ -2,7 +2,8 @@ import { mkdir, writeFile, readFile } from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { saveSourceToProjectConfig } from "./config-saver";
-import { createTempDir, cleanupTempDir, readTestTsConfig } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { readTestTsConfig } from "../__tests__/helpers/config-io.js";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 import { renderConfigTs } from "../__tests__/content-generators";
 

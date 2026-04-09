@@ -16,19 +16,19 @@ import {
 } from "./local-installer";
 import type { AgentConfig, AgentDefinition, AgentName, ProjectConfig, SkillId } from "../../types";
 import { initializeMatrix } from "../matrix/matrix-provider";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { createMockSkill } from "../__tests__/factories/skill-factories";
+import { createMockAgent } from "../__tests__/factories/agent-factories";
+import { createMockMatrix } from "../__tests__/factories/matrix-factories";
 import {
   buildWizardResult,
-  buildSkillConfigs,
   buildProjectConfig,
   buildSourceResult,
-  createMockSkill,
-  createMockAgent,
-  createTempDir,
-  cleanupTempDir,
-  readTestTsConfig,
   buildAgentConfigs,
-  createMockMatrix,
-} from "../__tests__/helpers";
+} from "../__tests__/factories/config-factories";
+import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation";
+import { readTestTsConfig } from "../__tests__/helpers/config-io";
+import { expectInstallResult } from "../__tests__/assertions/index.js";
 import { SKILLS } from "../__tests__/test-fixtures";
 import { EMPTY_MATRIX, SINGLE_REACT_MATRIX } from "../__tests__/mock-data/mock-matrices";
 import {
@@ -284,9 +284,11 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      expect(result.copiedSkills).toStrictEqual([]);
-      expect(result.compiledAgents).toStrictEqual([]);
-      expect(result.wasMerged).toBe(true);
+      expectInstallResult(result, {
+        copiedSkillIds: [],
+        compiledAgents: [],
+        wasMerged: true,
+      });
       expect(result.mergedConfigPath).toBe(
         path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
       );
@@ -329,9 +331,11 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      expect(result.copiedSkills).toStrictEqual([]);
-      expect(result.compiledAgents).toStrictEqual([]);
-      expect(result.wasMerged).toBe(false);
+      expectInstallResult(result, {
+        copiedSkillIds: [],
+        compiledAgents: [],
+        wasMerged: false,
+      });
       expect(result.mergedConfigPath).toBeUndefined();
     });
 

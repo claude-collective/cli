@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import { mkdir } from "fs/promises";
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 
 // Mock logger (suppress verbose output during tests)
 vi.mock("../../utils/logger");

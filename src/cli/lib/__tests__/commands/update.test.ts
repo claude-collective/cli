@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import { runCliCommand } from "../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import {
   LOCAL_SKILL_FORKED,

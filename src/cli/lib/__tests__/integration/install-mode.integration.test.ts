@@ -9,17 +9,10 @@ import {
 } from "../../installation/local-installer";
 import { deriveInstallMode } from "../../installation/installation";
 import { initializeMatrix } from "../../matrix/matrix-provider";
-import {
-  createTempDir,
-  cleanupTempDir,
-  readTestTsConfig,
-  buildProjectConfig,
-  buildWizardResult,
-  buildSkillConfigs,
-  buildSourceResult,
-  fileExists,
-  writeTestTsConfig,
-} from "../helpers";
+import { buildProjectConfig, buildWizardResult, buildSourceResult } from "../factories/config-factories.js";
+import { readTestTsConfig, writeTestTsConfig } from "../helpers/config-io.js";
+import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
+import { createTempDir, cleanupTempDir, fileExists } from "../test-fs-utils";
 import { FULLSTACK_TRIO_MATRIX } from "../mock-data/mock-matrices";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { INIT_SKILL_IDS, INIT_TEST_SKILLS } from "../mock-data/mock-skills";

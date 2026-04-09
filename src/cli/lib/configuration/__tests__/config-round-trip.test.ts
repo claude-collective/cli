@@ -3,15 +3,13 @@ import path from "path";
 import { writeFile } from "fs/promises";
 import { generateConfigSource } from "../config-writer";
 import { loadConfig } from "../config-loader";
-import {
-  createTempDir,
-  cleanupTempDir,
-  buildProjectConfig,
-  buildSkillConfigs,
-  buildAgentConfigs,
-} from "../../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../../__tests__/test-fs-utils";
+import { buildSkillConfigs } from "../../__tests__/helpers/wizard-simulation.js";
+import { buildProjectConfig, buildAgentConfigs } from "../../__tests__/factories/config-factories.js";
+import { expectAgentConfigs, expectSkillConfigs } from "../../__tests__/assertions/index.js";
 import type { ProjectConfig } from "../../../types";
 import { STANDARD_FILES } from "../../../consts";
+import { EXPECTED_SKILLS } from "../../__tests__/expected-values";
 
 let tempDir: string;
 
@@ -78,10 +76,8 @@ describe("config round-trip", () => {
     const loaded = (await writeAndLoad(config)) as ProjectConfig;
     // Stack gets compacted: non-preloaded single skills become bare strings
     expect(loaded.name).toBe("stack-project");
-    expect(loaded.agents).toStrictEqual(buildAgentConfigs(["web-developer", "api-developer"]));
-    expect(loaded.skills).toStrictEqual(
-      buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
-    );
+    expectAgentConfigs(loaded, buildAgentConfigs(["web-developer", "api-developer"]));
+    expectSkillConfigs(loaded, buildSkillConfigs(["web-framework-react", "api-framework-hono"]));
 
     // After compaction, bare strings inside arrays
     const webDev = loaded.stack?.["web-developer"] as Record<string, unknown>;
@@ -92,7 +88,7 @@ describe("config round-trip", () => {
     const config = buildProjectConfig({
       name: "preloaded-project",
       agents: buildAgentConfigs(["api-developer"]),
-      skills: buildSkillConfigs(["api-framework-hono"]),
+      skills: buildSkillConfigs([...EXPECTED_SKILLS.API_DEFAULT]),
       stack: {
         "api-developer": {
           "api-api": [{ id: "api-framework-hono", preloaded: true }],
@@ -112,7 +108,7 @@ describe("config round-trip", () => {
       description: "A complete project configuration",
       version: "1",
       agents: buildAgentConfigs(["web-developer", "api-developer"]),
-      skills: buildSkillConfigs(["web-framework-react", "api-framework-hono", "web-state-zustand"]),
+      skills: buildSkillConfigs([...EXPECTED_SKILLS.WEB_AND_API]),
       author: "@vince",
       domains: ["web", "api"],
       selectedAgents: ["web-developer", "api-developer"],

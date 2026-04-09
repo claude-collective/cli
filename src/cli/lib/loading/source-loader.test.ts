@@ -7,16 +7,11 @@ import {
   extractSourceName,
   mergeLocalSkillsIntoMatrix,
 } from "./source-loader";
-import {
-  createTempDir,
-  cleanupTempDir,
-  createMockSkill,
-  createMockMatrix,
-  createMockStack,
-  createMockSkillAssignment,
-  createMockExtractedSkill,
-  createMockCategory,
-} from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { createMockSkill, createMockSkillAssignment, createMockExtractedSkill } from "../__tests__/factories/skill-factories.js";
+import { createMockMatrix } from "../__tests__/factories/matrix-factories.js";
+import { createMockStack } from "../__tests__/factories/stack-factories.js";
+import { createMockCategory } from "../__tests__/factories/category-factories.js";
 import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
 import {
   createTestSource,
@@ -344,9 +339,9 @@ describe("source-loader local skills integration", () => {
 
     // Local skill should also be present with normalized ID
     // Boundary cast: branded SkillId key widened to string for test indexing
-    expect(
-      (result.matrix.skills as Record<string, ResolvedSkill>)["preserve-skill"],
-    ).toStrictEqual(expect.objectContaining({ id: "preserve-skill", local: true }));
+    expect((result.matrix.skills as Record<string, ResolvedSkill>)["preserve-skill"]).toStrictEqual(
+      expect.objectContaining({ id: "preserve-skill", local: true }),
+    );
   });
 
   it("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
@@ -384,7 +379,10 @@ describe("source-loader local skills integration", () => {
     const existingSkillId = "web-testing-vitest";
     const existingSkill = initialResult.matrix.skills[existingSkillId]!;
     expect(existingSkill).toStrictEqual(
-      expect.objectContaining({ id: existingSkillId, description: "Marketplace vitest configuration" }),
+      expect.objectContaining({
+        id: existingSkillId,
+        description: "Marketplace vitest configuration",
+      }),
     );
     expect(existingSkill.local).toBeUndefined(); // Should be a marketplace skill
     expect(existingSkill.description).toBe("Marketplace vitest configuration");

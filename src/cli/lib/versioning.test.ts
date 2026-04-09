@@ -9,7 +9,7 @@ import {
   parseMajorVersion,
   bumpMajorVersion,
 } from "./versioning";
-import { createTempDir, cleanupTempDir } from "./__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "./__tests__/test-fs-utils";
 import { STANDARD_FILES } from "../consts";
 
 describe("getCurrentDate", () => {

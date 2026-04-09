@@ -2,13 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import { mkdir, writeFile, readFile, rm } from "fs/promises";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
-import {
-  runCliCommand,
-  fileExists,
-  directoryExists,
-  createTempDir,
-  cleanupTempDir,
-} from "../helpers";
+import { runCliCommand } from "../helpers/cli-runner.js";
+import { fileExists, directoryExists, createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { compileSkillPlugin, compileAllSkillPlugins } from "../../skills";
 import { validatePlugin } from "../../plugins";
 import { EXIT_CODES } from "../../exit-codes";

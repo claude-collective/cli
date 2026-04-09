@@ -2,21 +2,15 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { ReactElement } from "react";
 import path from "path";
 import { mkdir } from "fs/promises";
-import {
-  runCliCommand,
-  createTempDir,
-  cleanupTempDir,
-  createMockMatrix,
-  createMockSkill,
-  buildSourceResult,
-  buildWizardResult,
-  buildSkillConfigs,
-  buildAgentConfigs,
-  CLI_ROOT,
-  SKILLS,
-  TEST_CATEGORIES,
-} from "../helpers";
+import { runCliCommand, CLI_ROOT } from "../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir } from "../test-fs-utils";
+import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
+import { createMockSkill } from "../factories/skill-factories.js";
+import { createMockMatrix } from "../factories/matrix-factories.js";
+import { buildSourceResult, buildWizardResult, buildAgentConfigs } from "../factories/config-factories.js";
+import { SKILLS, TEST_CATEGORIES } from "../test-fixtures";
 import { FULLSTACK_PAIR_MATRIX } from "../mock-data/mock-matrices";
+import { EXPECTED_SKILLS } from "../expected-values";
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
@@ -426,14 +420,14 @@ describe("edit wizard domain filtering", () => {
   });
 
   it("should report only web domain when only web skills are installed", () => {
-    const installedSkills: SkillId[] = ["web-framework-react", "web-state-zustand"];
+    const installedSkills: SkillId[] = [...EXPECTED_SKILLS.WEB_DEFAULT];
 
     useWizardStore.getState().populateFromSkillIds(installedSkills);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
     // Web should have selections
-    expect(perDomain.web).toStrictEqual(["web-framework-react", "web-state-zustand"]);
+    expect(perDomain.web).toStrictEqual(EXPECTED_SKILLS.WEB_DEFAULT);
 
     // API, CLI, mobile should be absent (no selections)
     expect(perDomain.api).toBeUndefined();
@@ -845,8 +839,16 @@ describe("migratePluginSkillScopes", () => {
 
     await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
 
-    expect(uninstallSpy).not.toHaveBeenCalledWith("web-framework-react", expect.any(String), "/project");
-    expect(installSpy).not.toHaveBeenCalledWith("web-framework-react@eject", expect.any(String), "/project");
+    expect(uninstallSpy).not.toHaveBeenCalledWith(
+      "web-framework-react",
+      expect.any(String),
+      "/project",
+    );
+    expect(installSpy).not.toHaveBeenCalledWith(
+      "web-framework-react@eject",
+      expect.any(String),
+      "/project",
+    );
 
     installSpy.mockRestore();
     uninstallSpy.mockRestore();
@@ -928,7 +930,11 @@ describe("migratePluginSkillScopes", () => {
     // Should have tried to uninstall
     expect(uninstallSpy).toHaveBeenCalledWith("web-framework-react", "project", "/project");
     // Should NOT have installed at global (uninstall failed, catch fired)
-    expect(installSpy).not.toHaveBeenCalledWith("web-framework-react@agents-inc", "user", "/project");
+    expect(installSpy).not.toHaveBeenCalledWith(
+      "web-framework-react@agents-inc",
+      "user",
+      "/project",
+    );
     // Should report failure
     expect(result.migrated).toHaveLength(0);
     expect(result.failed).toHaveLength(1);
@@ -950,8 +956,16 @@ describe("migratePluginSkillScopes", () => {
 
     const result = await migratePluginSkillScopes(scopeChanges, skills, "agents-inc", "/project");
 
-    expect(uninstallSpy).not.toHaveBeenCalledWith("web-framework-react", expect.any(String), "/project");
-    expect(installSpy).not.toHaveBeenCalledWith(expect.stringContaining("web-framework-react"), expect.any(String), "/project");
+    expect(uninstallSpy).not.toHaveBeenCalledWith(
+      "web-framework-react",
+      expect.any(String),
+      "/project",
+    );
+    expect(installSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("web-framework-react"),
+      expect.any(String),
+      "/project",
+    );
     expect(result.migrated).toHaveLength(0);
     expect(result.failed).toHaveLength(0);
 

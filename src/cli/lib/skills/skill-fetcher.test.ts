@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import path from "path";
 import type { MarketplacePlugin, SkillId } from "../../types";
-import { createMockMarketplace, createMockMarketplacePlugin } from "../__tests__/helpers";
+import { createMockMarketplace, createMockMarketplacePlugin } from "../__tests__/factories/plugin-factories.js";
 
 // Mock dependencies before importing the module under test (manual mocks from __mocks__ directories)
 vi.mock("../../utils/fs");

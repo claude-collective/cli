@@ -1,15 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, readFile, writeFile } from "fs/promises";
-import {
-  runCliCommand,
-  fileExists,
-  directoryExists,
-  createTempDir,
-  cleanupTempDir,
-  writeTestTsConfig,
-  buildSourceConfig,
-} from "../../helpers";
+import { runCliCommand } from "../../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir, fileExists, directoryExists } from "../../test-fs-utils";
+import { writeTestTsConfig } from "../../helpers/config-io.js";
+import { buildSourceConfig } from "../../factories/config-factories.js";
 import { EXIT_CODES } from "../../../exit-codes";
 import {
   validateMarketplaceName,

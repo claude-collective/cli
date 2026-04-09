@@ -18,7 +18,7 @@ import {
 import type { Marketplace, PluginManifest } from "../../../types";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
-import { createTempDir, cleanupTempDir } from "../helpers";
+import { createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { COMPILATION_TEST_STACK } from "../mock-data/mock-stacks.js";
 
 async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
@@ -406,7 +406,10 @@ describe("Integration: End-to-End Pipeline", () => {
       stack: COMPILATION_TEST_STACK,
     });
 
-    expect(stackResult.skillPlugins.sort()).toStrictEqual(["api-framework-hono", "web-framework-react"]);
+    expect(stackResult.skillPlugins.sort()).toStrictEqual([
+      "api-framework-hono",
+      "web-framework-react",
+    ]);
   });
 
   it("should compile skills and stacks that share common patterns", async () => {

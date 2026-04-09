@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
-import { createMockExtractedSkill, createMockMatrixConfig } from "../__tests__/helpers";
+import { createMockExtractedSkill } from "../__tests__/factories/skill-factories.js";
+import { createMockMatrixConfig } from "../__tests__/factories/matrix-factories.js";
 import { FRAMEWORK_CATEGORY } from "../__tests__/mock-data/mock-categories.js";
 import {
   MERGE_BASIC_MATRIX,

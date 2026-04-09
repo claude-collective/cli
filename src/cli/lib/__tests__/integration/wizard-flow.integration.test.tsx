@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Wizard } from "../../../components/wizard/wizard";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
-import { createComprehensiveMatrix, createBasicMatrix } from "../helpers";
+import { createComprehensiveMatrix, createBasicMatrix } from "../factories/matrix-factories.js";
 import {
   ARROW_DOWN,
   ENTER,

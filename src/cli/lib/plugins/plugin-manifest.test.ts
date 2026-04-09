@@ -10,7 +10,7 @@ import {
   getPluginManifestPath,
 } from "./plugin-manifest";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts";
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 
 describe("plugin-manifest", () => {
   let tempDir: string;

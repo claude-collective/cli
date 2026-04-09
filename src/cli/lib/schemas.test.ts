@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { z } from "zod";
-import { buildAgentConfigs } from "./__tests__/helpers";
+import { buildAgentConfigs } from "./__tests__/factories/config-factories.js";
 import {
   agentYamlConfigSchema,
   categoryPathSchema,

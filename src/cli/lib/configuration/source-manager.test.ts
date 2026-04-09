@@ -1,12 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addSource, removeSource, getSourceSummary } from "./source-manager";
 import { loadProjectSourceConfig } from "./config";
-import {
-  writeTestTsConfig,
-  createTempDir,
-  cleanupTempDir,
-  buildSourceConfig,
-} from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { writeTestTsConfig } from "../__tests__/helpers/config-io.js";
+import { buildSourceConfig } from "../__tests__/factories/config-factories.js";
 
 // Mock the source-fetcher module
 vi.mock("../loading/source-fetcher", async (importOriginal) => ({

@@ -1,14 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import {
-  runCliCommand,
-  createTempDir,
-  cleanupTempDir,
-  writeTestTsConfig,
-  buildSourceConfig,
-  buildAgentConfigs,
-} from "../../helpers";
+import { runCliCommand } from "../../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir } from "../../test-fs-utils";
+import { writeTestTsConfig } from "../../helpers/config-io.js";
+import { buildSourceConfig, buildAgentConfigs } from "../../factories/config-factories.js";
 import { buildAgentPrompt } from "../../../../commands/new/agent";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../../consts";
 import { renderConfigTs } from "../../content-generators";

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
-import { runCliCommand, fileExists, createTempDir, cleanupTempDir } from "../../helpers";
+import { runCliCommand } from "../../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir, fileExists } from "../../test-fs-utils";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../../../consts";
 import type { Category, Marketplace, PluginManifest } from "../../../../types";
 

@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { defineConfig } from "../define-config";
 import type { ProjectConfig } from "../../../types";
-import { buildProjectConfig, buildSkillConfigs, buildAgentConfigs } from "../../__tests__/helpers";
+import { buildSkillConfigs } from "../../__tests__/helpers/wizard-simulation.js";
+import { buildProjectConfig, buildAgentConfigs } from "../../__tests__/factories/config-factories.js";
 
 describe("defineConfig", () => {
   it("returns its input unchanged for a minimal config", () => {

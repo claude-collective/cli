@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import os from "os";
-import { createMockCompiledStackPlugin } from "../__tests__/helpers";
+import { createMockCompiledStackPlugin } from "../__tests__/factories/plugin-factories";
+import { EXPECTED_SKILLS } from "../__tests__/expected-values";
 
 // Mock dependencies before imports
 vi.mock("./stack-plugin-compiler", async (importOriginal) => ({
@@ -188,7 +189,7 @@ describe("stack-installer", () => {
         pluginPath: "/tmp/cc-stack-999/test-stack",
         stackName: "Test Stack",
         agents: ["web-developer", "api-developer"],
-        skillPlugins: ["web-framework-react", "web-state-zustand"],
+        skillPlugins: [...EXPECTED_SKILLS.WEB_DEFAULT],
       });
       vi.mocked(compileStackPlugin).mockResolvedValue(mockResult);
 
@@ -220,7 +221,7 @@ describe("stack-installer", () => {
       expect(result.pluginName).toBe("stack-test-stack");
       expect(result.stackName).toBe("Test Stack");
       expect(result.agents).toStrictEqual(["web-developer", "api-developer"]);
-      expect(result.skills).toStrictEqual(["web-framework-react", "web-state-zustand"]);
+      expect(result.skills).toStrictEqual(EXPECTED_SKILLS.WEB_DEFAULT);
       expect(result.pluginPath).toBe("/tmp/cc-stack-999/test-stack");
     });
 

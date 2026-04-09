@@ -7,7 +7,9 @@ import {
   findStack,
 } from "./matrix-provider";
 import { BUILT_IN_MATRIX } from "../../types/generated/matrix";
-import { createMockMatrix, createMockResolvedStack, SKILLS } from "../__tests__/helpers";
+import { SKILLS } from "../__tests__/test-fixtures";
+import { createMockMatrix } from "../__tests__/factories/matrix-factories.js";
+import { createMockResolvedStack } from "../__tests__/factories/stack-factories.js";
 import type { SkillId, SkillSlug } from "../../types";
 
 describe("matrix-provider", () => {

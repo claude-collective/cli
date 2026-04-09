@@ -9,14 +9,11 @@ import {
 import type { SkillId } from "../../types";
 import { CLAUDE_DIR, PROJECT_ROOT, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
 import { initializeMatrix, matrix } from "../matrix/matrix-provider";
-import {
-  buildSourceResult,
-  createMockMatrix,
-  createTempDir,
-  cleanupTempDir,
-  writeTestSkill,
-  SKILLS,
-} from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { SKILLS } from "../__tests__/test-fixtures";
+import { createMockMatrix } from "../__tests__/factories/matrix-factories.js";
+import { buildSourceResult } from "../__tests__/factories/config-factories.js";
+import { writeTestSkill } from "../__tests__/helpers/disk-writers.js";
 import { EMPTY_MATRIX } from "../__tests__/mock-data/mock-matrices";
 import { renderSkillMd } from "../__tests__/content-generators";
 
@@ -349,7 +346,12 @@ describe("skill-copier", () => {
         // Verify local skill was NOT copied to plugin dir
         await expect(
           readFile(
-            path.join(pluginDir, STANDARD_DIRS.SKILLS, "web-styling-tailwind", STANDARD_FILES.SKILL_MD),
+            path.join(
+              pluginDir,
+              STANDARD_DIRS.SKILLS,
+              "web-styling-tailwind",
+              STANDARD_FILES.SKILL_MD,
+            ),
           ),
         ).rejects.toThrow();
       } finally {

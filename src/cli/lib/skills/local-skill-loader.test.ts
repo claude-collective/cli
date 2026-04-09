@@ -3,7 +3,7 @@ import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { discoverLocalSkills } from "./local-skill-loader";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 import { renderSkillMd } from "../__tests__/content-generators";
 
 describe("local-skill-loader", () => {

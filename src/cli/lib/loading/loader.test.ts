@@ -15,6 +15,7 @@ import { readFile, glob, directoryExists } from "../../utils/fs";
 import { warn } from "../../utils/logger";
 import { renderSkillMd, renderAgentYaml } from "../__tests__/content-generators";
 import type { SkillId } from "../../types";
+import { EXPECTED_SKILLS } from "../__tests__/expected-values";
 
 describe("parseFrontmatter", () => {
   it("should parse valid frontmatter with name and description", () => {
@@ -625,7 +626,7 @@ describe("loadPluginSkills", () => {
 
     const result = await loadPluginSkills("/path/to/plugin");
 
-    expect(Object.keys(result)).toStrictEqual(["web-framework-react", "web-state-zustand"]);
+    expect(Object.keys(result)).toStrictEqual(EXPECTED_SKILLS.WEB_DEFAULT);
   });
 
   it("should return empty object when no SKILL.md files found", async () => {

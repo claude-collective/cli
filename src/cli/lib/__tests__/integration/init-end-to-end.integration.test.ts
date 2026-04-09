@@ -7,44 +7,16 @@ import { installEject, installPluginConfig } from "../../installation/local-inst
 import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import { STANDARD_FILES } from "../../../consts";
-import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
+import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
-import {
-  createComprehensiveMatrix,
-  buildSourceResult,
-  buildWizardResultFromStore,
-  simulateSkillSelections,
-  extractSkillIdsFromAssignment,
-  assertConfigIntegrity,
-  fileExists,
-  directoryExists,
-  readTestTsConfig,
-} from "../helpers";
+import { createComprehensiveMatrix } from "../factories/matrix-factories.js";
+import { buildSourceResult } from "../factories/config-factories.js";
+import { buildWizardResultFromStore, simulateSkillSelections } from "../helpers/wizard-simulation.js";
+import { readTestTsConfig } from "../helpers/config-io.js";
+import { fileExists, directoryExists } from "../test-fs-utils";
+import { expectConfigSkills, expectSkillConfigs, expectAgentConfigs, expectCompiledAgents, assertConfigIntegrity } from "../assertions/index.js";
+import { EXPECTED_AGENTS, EXPECTED_SKILLS } from "../expected-values.js";
 import { ALL_TEST_SKILLS } from "../mock-data/mock-skills";
-// ── Setup ───────────────────────────────────────────────────────────────────────
-
-// ── Constants ───────────────────────────────────────────────────────────────────
-
-// DOMAIN_AGENTS: web (6), sorted alphabetically
-const WEB_AGENTS: AgentName[] = [
-  "web-architecture",
-  "web-developer",
-  "web-pm",
-  "web-researcher",
-  "web-reviewer",
-  "web-tester",
-];
-
-// DOMAIN_AGENTS: api (3), sorted alphabetically
-const API_AGENTS: AgentName[] = ["api-developer", "api-researcher", "api-reviewer"];
-
-// DOMAIN_AGENTS: cli (3), sorted alphabetically
-const CLI_AGENTS: AgentName[] = ["cli-developer", "cli-reviewer", "cli-tester"];
-
-// DOMAIN_AGENTS: web (6) + api (3) = 9, sorted alphabetically
-const WEB_API_AGENTS: AgentName[] = [...WEB_AGENTS, ...API_AGENTS].sort() as AgentName[];
-
-// ── Test Suites ─────────────────────────────────────────────────────────────────
 
 describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
   let dirs: TestDirs;
@@ -91,7 +63,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const wizardResult = buildWizardResultFromStore(matrix);
 
       // Verify agents were preselected from domains (sorted)
-      expect(wizardResult.selectedAgents).toStrictEqual(WEB_API_AGENTS);
+      expect(wizardResult.selectedAgents).toStrictEqual(EXPECTED_AGENTS.WEB_AND_API);
 
       // Install
       const result = await installEject({
@@ -105,14 +77,14 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // Full agents shape check (sorted alphabetically)
-      expect(config.agents).toStrictEqual(
-        [...WEB_API_AGENTS].sort().map((name) => ({ name, scope: "global" })),
-      );
+      expectAgentConfigs(config, [
+        ...EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      ]);
 
       // Full skills shape check
-      expect(config.skills).toStrictEqual(
-        selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      );
+      expectSkillConfigs(config, [
+        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
+      ]);
 
       // Full stack shape: every agent gets every category with all skill assignments
       // compactStackAssignments strips { id, preloaded: false } to bare strings
@@ -123,7 +95,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
         "web-styling": ["web-styling-scss-modules"],
       };
       const expectedStack = Object.fromEntries(
-        [...WEB_API_AGENTS].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
     });
@@ -146,14 +118,14 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       assertConfigIntegrity(config, selectedSkillIds);
 
       // Full skills shape check
-      expect(config.skills).toStrictEqual(
-        selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      );
+      expectSkillConfigs(config, [
+        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
+      ]);
 
       // Full agents shape check
-      expect(config.agents).toStrictEqual(
-        [...WEB_API_AGENTS].sort().map((name) => ({ name, scope: "global" })),
-      );
+      expectAgentConfigs(config, [
+        ...EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      ]);
 
       // Full stack shape: every agent gets both categories
       // compactStackAssignments strips { id, preloaded: false } to bare strings
@@ -162,7 +134,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
         "web-framework": ["web-framework-react"],
       };
       const expectedStack = Object.fromEntries(
-        [...WEB_API_AGENTS].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
     });
@@ -184,7 +156,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
         projectDir: dirs.projectDir,
       });
 
-      expect(result.compiledAgents.sort()).toStrictEqual(WEB_API_AGENTS);
+      expectCompiledAgents(result, EXPECTED_AGENTS.WEB_AND_API);
 
       for (const agentName of result.compiledAgents) {
         const agentPath = path.join(result.agentsDir, `${agentName}.md`);
@@ -220,12 +192,12 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // When selectedAgents is empty, no agents are assigned
-      expect(config.agents).toStrictEqual([]);
+      expectAgentConfigs(config, []);
 
       // Full skills shape check
-      expect(config.skills).toStrictEqual(
-        selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      );
+      expectSkillConfigs(config, [
+        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
+      ]);
 
       // No stack when no agents
       expect(config.stack).toBeUndefined();
@@ -247,8 +219,8 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // When no agents are selected, agents list is empty and no stack is built
-      expect(config.agents).toStrictEqual([]);
-      expect(config.skills).toStrictEqual([
+      expectAgentConfigs(config, []);
+      expectSkillConfigs(config, [
         { id: "web-framework-react", scope: "project", source: "eject" },
       ]);
       expect(config.stack).toBeUndefined();
@@ -281,14 +253,14 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // Full agents shape check
-      expect(config.agents).toStrictEqual(
-        [...WEB_API_AGENTS].sort().map((name) => ({ name, scope: "global" })),
-      );
+      expectAgentConfigs(config, [
+        ...EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      ]);
 
       // Full skills shape check
-      expect(config.skills).toStrictEqual(
-        selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      );
+      expectSkillConfigs(config, [
+        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
+      ]);
 
       // Full stack shape
       // compactStackAssignments strips { id, preloaded: false } to bare strings
@@ -298,12 +270,12 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
         "web-framework": ["web-framework-react"],
       };
       const expectedStack = Object.fromEntries(
-        [...WEB_API_AGENTS].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
 
       // Compiled agents should exist as .md files
-      expect(result.compiledAgents.sort()).toStrictEqual(WEB_API_AGENTS);
+      expectCompiledAgents(result, EXPECTED_AGENTS.WEB_AND_API);
       for (const agentName of result.compiledAgents) {
         const agentPath = path.join(result.agentsDir, `${agentName}.md`);
         expect(await fileExists(agentPath)).toBe(true);
@@ -366,14 +338,14 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       assertConfigIntegrity(config, selectedSkillIds);
 
       // Full skills shape check
-      expect(config.skills).toStrictEqual(
-        selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      );
+      expectSkillConfigs(config, [
+        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
+      ]);
 
       // Full agents shape check
-      expect(config.agents).toStrictEqual(
-        [...WEB_API_AGENTS].sort().map((name) => ({ name, scope: "global" })),
-      );
+      expectAgentConfigs(config, [
+        ...EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      ]);
 
       // Full stack shape: every agent gets every category
       // compactStackAssignments strips { id, preloaded: false } to bare strings
@@ -386,7 +358,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
         "web-testing": ["web-testing-vitest"],
       };
       const expectedStack = Object.fromEntries(
-        [...WEB_API_AGENTS].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
     });
@@ -412,14 +384,14 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // Full skills shape check
-      expect(config.skills).toStrictEqual(
-        selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      );
+      expectSkillConfigs(config, [
+        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
+      ]);
 
       // Full agents shape check
-      expect(config.agents).toStrictEqual(
-        [...WEB_API_AGENTS].sort().map((name) => ({ name, scope: "global" })),
-      );
+      expectAgentConfigs(config, [
+        ...EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      ]);
 
       // Full stack shape: every agent gets every category
       // compactStackAssignments strips { id, preloaded: false } to bare strings
@@ -430,7 +402,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
         "web-framework": ["web-framework-react"],
       };
       const expectedStack = Object.fromEntries(
-        [...WEB_API_AGENTS].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
     });
@@ -469,7 +441,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       useWizardStore.getState().preselectAgentsFromDomains();
       const store = useWizardStore.getState();
 
-      expect(store.selectedAgents).toStrictEqual(WEB_AGENTS);
+      expect(store.selectedAgents).toStrictEqual(EXPECTED_AGENTS.WEB);
     });
 
     it("should select combined agents for web + api domains", () => {
@@ -480,7 +452,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       useWizardStore.getState().preselectAgentsFromDomains();
       const store = useWizardStore.getState();
 
-      expect(store.selectedAgents).toStrictEqual(WEB_API_AGENTS);
+      expect(store.selectedAgents).toStrictEqual(EXPECTED_AGENTS.WEB_AND_API);
     });
 
     it("should select cli agents when cli domain is selected", () => {
@@ -491,13 +463,13 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       useWizardStore.getState().preselectAgentsFromDomains();
       const store = useWizardStore.getState();
 
-      expect(store.selectedAgents).toStrictEqual(CLI_AGENTS);
+      expect(store.selectedAgents).toStrictEqual(EXPECTED_AGENTS.CLI);
     });
   });
 
   describe("validation runs correctly", () => {
     it("should produce valid validation for non-conflicting skills", () => {
-      const selectedSkillIds: SkillId[] = ["web-framework-react", "web-state-zustand"];
+      const selectedSkillIds: SkillId[] = [...EXPECTED_SKILLS.WEB_DEFAULT];
 
       simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
       const wizardResult = buildWizardResultFromStore(matrix);
@@ -554,7 +526,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // Config should include exactly the stack skills
-      expect(config.skills.map((s) => s.id).sort()).toStrictEqual(sortedStackSkillIds);
+      expectConfigSkills(config, sortedStackSkillIds);
     });
   });
 
@@ -612,7 +584,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
       expect(typeof config.name).toBe("string");
       expect(Array.isArray(config.agents)).toBe(true);
-      expect(config.skills.map((s) => s.id)).toStrictEqual(["web-framework-react"]);
+      expectConfigSkills(config, ["web-framework-react"]);
     });
 
     it("should set source flag in config when provided", async () => {

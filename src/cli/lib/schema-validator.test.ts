@@ -3,7 +3,7 @@ import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { validateAllSchemas, printValidationResults } from "./schema-validator";
 import type { FullValidationResult } from "./schema-validator";
-import { createTempDir, cleanupTempDir } from "./__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "./__tests__/test-fs-utils";
 import { renderAgentYaml } from "./__tests__/content-generators";
 import { CLAUDE_DIR, PLUGIN_MANIFEST_FILE, STANDARD_DIRS, STANDARD_FILES } from "../consts";
 

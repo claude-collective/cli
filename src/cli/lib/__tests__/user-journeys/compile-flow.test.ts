@@ -10,9 +10,12 @@ import {
 } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS, COMPILE_LOCAL_SKILL } from "../mock-data/mock-skills";
 import { DEFAULT_TEST_AGENTS } from "../mock-data/mock-agents";
-import { runCliCommand, parseTestFrontmatter, buildTestProjectConfig } from "../helpers";
+import { buildTestProjectConfig } from "../factories/config-factories.js";
+import { runCliCommand } from "../helpers/cli-runner.js";
+import { parseTestFrontmatter } from "../helpers/index.js";
 import { recompileAgents } from "../../agents";
 import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
+import { expectValidAgentMarkdown } from "../assertions";
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
 
@@ -61,8 +64,7 @@ describe("User Journey: Compile Flow", () => {
       expect(await fileExists(agentPath)).toBe(true);
 
       const content = await readTestFile(agentPath);
-      expect(content).toContain("---");
-      expect(content).toContain("name: web-pm");
+      expectValidAgentMarkdown(content, "web-pm");
     });
   });
 

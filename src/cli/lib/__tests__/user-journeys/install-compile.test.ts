@@ -2,7 +2,9 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile, mkdir } from "fs/promises";
 import { compileStackPlugin } from "../../stacks";
-import { fileExists, directoryExists, parseTestFrontmatter, createMockStack } from "../helpers";
+import { createMockStack } from "../factories/stack-factories.js";
+import { parseTestFrontmatter } from "../helpers/index.js";
+import { fileExists, directoryExists } from "../test-fs-utils";
 import {
   STANDARD_DIRS,
   STANDARD_FILES,
@@ -16,6 +18,7 @@ import {
   type TestDirs,
 } from "../fixtures/create-test-source";
 import { renderAgentYaml, renderSkillMd } from "../content-generators";
+import { expectValidAgentMarkdown } from "../assertions";
 
 let testCounter = 0;
 
@@ -183,9 +186,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
 
     // Agent content should include frontmatter and body
     const agentContent = await readFile(agentMdPath, "utf-8");
-
-    // Frontmatter should contain agent name
-    expect(agentContent).toContain("name: web-developer");
+    expectValidAgentMarkdown(agentContent, "web-developer");
     expect(agentContent).toContain("Full-stack web development specialist");
 
     // Body should contain intro and workflow content
@@ -274,7 +275,11 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     });
 
     // All three agents should be compiled
-    expect([...result.agents].sort()).toStrictEqual(["api-developer", "web-developer", "web-tester"]);
+    expect([...result.agents].sort()).toStrictEqual([
+      "api-developer",
+      "web-developer",
+      "web-tester",
+    ]);
 
     // Each agent should have a compiled markdown file
     for (const agentName of result.agents) {

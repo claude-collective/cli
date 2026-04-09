@@ -1,10 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { initializeMatrix } from "../../lib/matrix/matrix-provider";
-import {
-  createMockMatrix,
-  createMockResolvedStack,
-  createMockCategory,
-} from "../../lib/__tests__/helpers";
+import { createMockMatrix } from "../../lib/__tests__/factories/matrix-factories";
+import { createMockResolvedStack } from "../../lib/__tests__/factories/stack-factories";
+import { createMockCategory } from "../../lib/__tests__/factories/category-factories";
 import { SKILLS } from "../../lib/__tests__/test-fixtures";
 import type { Category, CategoryDefinition, Domain, ResolvedStack } from "../../types";
 import { getDomainDisplayName, orderDomains, getDomainsFromStack, getStackName } from "./utils";

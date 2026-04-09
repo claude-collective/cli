@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import { mkdir, writeFile, readdir } from "fs/promises";
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 import { sanitizeSourceForCache } from "./source-fetcher";
 
 let mockCacheDir: string;

@@ -50,7 +50,7 @@ import { discoverAllPluginSkills, listPluginNames } from "./plugin-discovery";
 import { directoryExists } from "../../utils/fs";
 import { detectInstallation } from "../installation";
 import { loadProjectConfig } from "../configuration";
-import { buildProjectConfig } from "../__tests__/helpers";
+import { buildProjectConfig } from "../__tests__/factories/config-factories";
 
 const mockedReaddir = vi.mocked(readdir);
 const mockedGetProjectPluginsDir = vi.mocked(getProjectPluginsDir);

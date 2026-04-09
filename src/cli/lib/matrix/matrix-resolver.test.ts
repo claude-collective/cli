@@ -18,14 +18,11 @@ import {
   getAvailableSkills,
 } from "./matrix-resolver";
 import type { CategoryDefinition, CategoryPath, SkillId, Category } from "../../types";
-import {
-  createMockSkill,
-  createMockCategory,
-  createMockMatrix,
-  SKILLS,
-} from "../__tests__/helpers";
+import { SKILLS, TEST_CATEGORIES } from "../__tests__/test-fixtures";
+import { createMockSkill } from "../__tests__/factories/skill-factories.js";
+import { createMockMatrix } from "../__tests__/factories/matrix-factories.js";
+import { createMockCategory } from "../__tests__/factories/category-factories.js";
 import { EMPTY_MATRIX } from "../__tests__/mock-data/mock-matrices";
-import { TEST_CATEGORIES } from "../__tests__/test-fixtures";
 import { initializeMatrix } from "./matrix-provider";
 
 const REACT_ID: SkillId = "web-framework-react";

@@ -13,16 +13,13 @@ import {
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { ProjectConfig, SkillId } from "../../../types";
 import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
-import {
-  createMockMatrix,
-  testSkillToResolvedSkill,
-  fileExists,
-  directoryExists,
-  readTestTsConfig,
-  buildWizardResult,
-  buildSkillConfigs,
-  buildSourceResult,
-} from "../helpers";
+import { createMockMatrix } from "../factories/matrix-factories.js";
+import { testSkillToResolvedSkill } from "../factories/skill-factories.js";
+import { buildWizardResult, buildSourceResult } from "../factories/config-factories.js";
+import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
+import { readTestTsConfig } from "../helpers/config-io.js";
+import { fileExists, directoryExists } from "../test-fs-utils";
+import { expectConfigSkills, expectInstallResult } from "../assertions/index.js";
 import { SWITCHABLE_SKILLS, LOCAL_SKILL_VARIANTS } from "../mock-data/mock-skills.js";
 import type { SkillConfig } from "../../../types/config";
 
@@ -145,18 +142,16 @@ describe("Integration: Source Switching with Delete", () => {
         projectDir: dirs.projectDir,
       });
 
-      // Verify exactly the expected skills were copied
-      expect(installResult.copiedSkills.map((s) => s.skillId).sort()).toStrictEqual(
-        [...ALL_SKILL_NAMES].sort(),
-      );
+      // Verify install result shape
+      expectInstallResult(installResult, {
+        copiedSkillIds: [...ALL_SKILL_NAMES],
+        compiledAgents: ["web-developer"],
+      });
 
       // Verify config generated with exact skill list
       expect(await fileExists(installResult.configPath)).toBe(true);
       const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
-      expect(config.skills.map((s) => s.id).sort()).toStrictEqual([...ALL_SKILL_NAMES].sort());
-
-      // Verify exactly the expected agents compiled
-      expect(installResult.compiledAgents).toStrictEqual(["web-developer"]);
+      expectConfigSkills(config, [...ALL_SKILL_NAMES]);
 
       // Verify NO _archived directory exists
       const archivedDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH, "_archived");

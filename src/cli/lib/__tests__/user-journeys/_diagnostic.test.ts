@@ -10,20 +10,13 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import { BUILT_IN_MATRIX } from "../../../types/generated/matrix";
 import { loadProjectConfig } from "../../configuration";
-import type {
-  MergedSkillsMatrix,
-  ProjectConfig,
-  SkillId,
-} from "../../../types";
+import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
-import {
-  createBasicMatrix,
-  createComprehensiveMatrix,
-  buildSourceResult,
-  buildWizardResultFromStore,
-  simulateSkillSelections,
-  readTestTsConfig,
-} from "../helpers";
+import { createBasicMatrix, createComprehensiveMatrix } from "../factories/matrix-factories.js";
+import { buildSourceResult } from "../factories/config-factories.js";
+import { buildWizardResultFromStore, simulateSkillSelections } from "../helpers/wizard-simulation.js";
+import { readTestTsConfig } from "../helpers/config-io.js";
+import { EXPECTED_SKILLS } from "../expected-values";
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
 
@@ -50,7 +43,7 @@ describe("DIAGNOSTIC: exact counts", () => {
   });
 
   it("Journey 1 test 1: initial install (web domain, react+zustand)", async () => {
-    const initialSkills: SkillId[] = ["web-framework-react", "web-state-zustand"];
+    const initialSkills: SkillId[] = [...EXPECTED_SKILLS.WEB_DEFAULT];
     simulateSkillSelections(initialSkills, matrix, ["web"]);
     useWizardStore.getState().preselectAgentsFromDomains();
 
@@ -74,11 +67,7 @@ describe("DIAGNOSTIC: exact counts", () => {
 
     // Now do the edit
     useWizardStore.getState().reset();
-    const expandedSkills: SkillId[] = [
-      "web-framework-react",
-      "web-state-zustand",
-      "api-framework-hono",
-    ];
+    const expandedSkills: SkillId[] = [...EXPECTED_SKILLS.WEB_AND_API];
     simulateSkillSelections(expandedSkills, matrix, ["web", "api"]);
     useWizardStore.getState().preselectAgentsFromDomains();
 
@@ -119,11 +108,7 @@ describe("DIAGNOSTIC: exact counts", () => {
   });
 
   it("Journey 2 test 1: remove skill, recompile (web+api)", async () => {
-    const initialSkills: SkillId[] = [
-      "web-framework-react",
-      "web-state-zustand",
-      "api-framework-hono",
-    ];
+    const initialSkills: SkillId[] = [...EXPECTED_SKILLS.WEB_AND_API];
     simulateSkillSelections(initialSkills, matrix, ["web", "api"]);
     useWizardStore.getState().preselectAgentsFromDomains();
     await installEject({
@@ -171,11 +156,7 @@ describe("DIAGNOSTIC: exact counts", () => {
   });
 
   it("Journey 3 test 1: recompile from existing config", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "web-state-zustand",
-      "api-framework-hono",
-    ];
+    const selectedSkills: SkillId[] = [...EXPECTED_SKILLS.WEB_AND_API];
     simulateSkillSelections(selectedSkills, matrix, ["web", "api"]);
     useWizardStore.getState().preselectAgentsFromDomains();
     const installResult = await installEject({
@@ -208,11 +189,7 @@ describe("DIAGNOSTIC: exact counts", () => {
   });
 
   it("Config Roundtrip: agents and skills counts", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "web-state-zustand",
-      "api-framework-hono",
-    ];
+    const selectedSkills: SkillId[] = [...EXPECTED_SKILLS.WEB_AND_API];
     simulateSkillSelections(selectedSkills, matrix, ["web", "api"]);
     useWizardStore.getState().preselectAgentsFromDomains();
     await installEject({

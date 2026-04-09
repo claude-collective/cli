@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { runCliCommand } from "../helpers";
+import { runCliCommand } from "../helpers/cli-runner.js";
 
 describe("help command", () => {
   describe("top-level help", () => {

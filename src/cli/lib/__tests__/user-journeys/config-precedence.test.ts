@@ -17,7 +17,8 @@ import {
   fileExists,
   type TestDirs,
 } from "../fixtures/create-test-source";
-import { createTempDir, cleanupTempDir, readTestTsConfig } from "../helpers";
+import { readTestTsConfig } from "../helpers/config-io.js";
+import { createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { renderConfigTs } from "../content-generators";
 import { STANDARD_FILES } from "../../../consts";
 

@@ -2,19 +2,16 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { recompileAgents } from "./agent-recompiler";
-import {
-  CLI_ROOT,
-  createTestDirs,
-  cleanupTestDirs,
-  writeTestSkill,
-  fileExists,
-} from "../__tests__/helpers";
+import { CLI_ROOT } from "../__tests__/helpers/cli-runner";
+import { createTestDirs, cleanupTestDirs, type PluginTestDirs } from "../__tests__/helpers/test-dir-setup";
+import { writeTestSkill } from "../__tests__/helpers/disk-writers";
+import { fileExists } from "../__tests__/test-fs-utils";
 import { initializeMatrix } from "../matrix/matrix-provider";
-import type { PluginTestDirs } from "../__tests__/helpers";
 import type { AgentName, SkillId } from "../../types";
 import { renderConfigTs } from "../__tests__/content-generators";
 import { CLAUDE_DIR, STANDARD_FILES } from "../../consts";
 import { VITEST_REACT_HONO_MATRIX } from "../__tests__/mock-data/mock-matrices";
+import { expectValidAgentMarkdown } from "../__tests__/assertions/agent-assertions";
 
 describe("agent-recompiler", () => {
   let testDirs: PluginTestDirs;
@@ -54,6 +51,9 @@ describe("agent-recompiler", () => {
 
       const agentPath = path.join(testDirs.agentsDir, "web-pm.md");
       expect(await fileExists(agentPath)).toBe(true);
+
+      const content = await readFile(agentPath, "utf-8");
+      expectValidAgentMarkdown(content, "web-pm");
     });
 
     it("handles missing agent definitions gracefully", async () => {
@@ -116,6 +116,12 @@ describe("agent-recompiler", () => {
       expect(result.compiled).toContain("web-pm");
       expect(result.compiled).toHaveLength(3);
       expect(result.failed).toStrictEqual([]);
+
+      // Verify all 3 agent files exist
+      for (const agentName of result.compiled) {
+        const agentPath = path.join(testDirs.agentsDir, `${agentName}.md`);
+        expect(await fileExists(agentPath)).toBe(true);
+      }
     });
 
     it("uses provided skills instead of loading from plugin", async () => {
@@ -150,11 +156,7 @@ describe("agent-recompiler", () => {
       const agentPath = path.join(testDirs.agentsDir, "web-developer.md");
       const content = await readFile(agentPath, "utf-8");
 
-      expect(content).toMatch(/^---\n/);
-      expect(content).toContain("name: web-developer");
-      expect(content).toContain("description:");
-      expect(content).toContain("<core_principles>");
-      expect(content).toContain("<methodologies>");
+      expectValidAgentMarkdown(content, "web-developer");
     });
 
     it("respects projectDir for local template resolution", async () => {

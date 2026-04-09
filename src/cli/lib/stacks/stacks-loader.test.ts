@@ -1,14 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { StackAgentConfig } from "../../types";
+import { createMockSkill, createMockSkillAssignment } from "../__tests__/factories/skill-factories";
+import { createMockMatrix } from "../__tests__/factories/matrix-factories";
 import {
-  createMockMatrix,
   createMockRawStacksConfig,
   createMockRawStacksConfigWithArrays,
   createMockRawStacksConfigWithObjects,
-  createMockSkill,
-  createMockSkillAssignment,
   createMockStack,
-} from "../__tests__/helpers";
+} from "../__tests__/factories/stack-factories";
 import { SKILLS } from "../__tests__/test-fixtures";
 
 vi.mock("../configuration/config-loader", async (importOriginal) => ({
@@ -246,7 +245,11 @@ describe("stacks-loader", () => {
 
       expect(skills).toStrictEqual([
         { id: "web-framework-react", usage: "when working with web-framework", preloaded: true },
-        { id: "web-styling-scss-modules", usage: "when working with web-styling", preloaded: false },
+        {
+          id: "web-styling-scss-modules",
+          usage: "when working with web-styling",
+          preloaded: false,
+        },
       ]);
     });
 
@@ -330,9 +333,21 @@ describe("stacks-loader", () => {
       const skills = resolveAgentConfigToSkills(agentConfig);
 
       expect(skills).toStrictEqual([
-        { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
-        { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: true },
-        { id: "meta-reviewing-cli-reviewing", usage: "when working with meta-reviewing", preloaded: true },
+        {
+          id: "meta-methodology-research-methodology",
+          usage: "when working with meta-reviewing",
+          preloaded: true,
+        },
+        {
+          id: "meta-reviewing-reviewing",
+          usage: "when working with meta-reviewing",
+          preloaded: true,
+        },
+        {
+          id: "meta-reviewing-cli-reviewing",
+          usage: "when working with meta-reviewing",
+          preloaded: true,
+        },
       ]);
     });
 
@@ -350,9 +365,21 @@ describe("stacks-loader", () => {
 
       expect(skills).toStrictEqual([
         { id: "web-framework-react", usage: "when working with web-framework", preloaded: true },
-        { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
-        { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: true },
-        { id: "web-styling-scss-modules", usage: "when working with web-styling", preloaded: false },
+        {
+          id: "meta-methodology-research-methodology",
+          usage: "when working with meta-reviewing",
+          preloaded: true,
+        },
+        {
+          id: "meta-reviewing-reviewing",
+          usage: "when working with meta-reviewing",
+          preloaded: true,
+        },
+        {
+          id: "web-styling-scss-modules",
+          usage: "when working with web-styling",
+          preloaded: false,
+        },
       ]);
     });
 
@@ -380,9 +407,17 @@ describe("stacks-loader", () => {
 
       // All IDs passed through for downstream validation
       expect(skills).toStrictEqual([
-        { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
+        {
+          id: "meta-methodology-research-methodology",
+          usage: "when working with meta-reviewing",
+          preloaded: true,
+        },
         { id: "Not-A-Valid-Id", usage: "when working with meta-reviewing", preloaded: false },
-        { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: true },
+        {
+          id: "meta-reviewing-reviewing",
+          usage: "when working with meta-reviewing",
+          preloaded: true,
+        },
       ]);
       // Only warns for the unknown ID, not the valid ones
       expect(warn).toHaveBeenCalledTimes(1);
@@ -402,8 +437,16 @@ describe("stacks-loader", () => {
       const skills = resolveAgentConfigToSkills(agentConfig);
 
       expect(skills).toStrictEqual([
-        { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
-        { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: false },
+        {
+          id: "meta-methodology-research-methodology",
+          usage: "when working with meta-reviewing",
+          preloaded: true,
+        },
+        {
+          id: "meta-reviewing-reviewing",
+          usage: "when working with meta-reviewing",
+          preloaded: false,
+        },
       ]);
     });
 
@@ -484,9 +527,21 @@ describe("stacks-loader", () => {
 
       expect(result).toStrictEqual({
         "pattern-scout": [
-          { id: "meta-methodology-research-methodology", usage: "when working with meta-reviewing", preloaded: true },
-          { id: "meta-reviewing-reviewing", usage: "when working with meta-reviewing", preloaded: true },
-          { id: "meta-reviewing-cli-reviewing", usage: "when working with meta-reviewing", preloaded: true },
+          {
+            id: "meta-methodology-research-methodology",
+            usage: "when working with meta-reviewing",
+            preloaded: true,
+          },
+          {
+            id: "meta-reviewing-reviewing",
+            usage: "when working with meta-reviewing",
+            preloaded: true,
+          },
+          {
+            id: "meta-reviewing-cli-reviewing",
+            usage: "when working with meta-reviewing",
+            preloaded: true,
+          },
         ],
       });
     });

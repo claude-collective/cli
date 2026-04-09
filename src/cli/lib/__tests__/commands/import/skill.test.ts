@@ -2,13 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
-import {
-  runCliCommand,
-  fileExists,
-  directoryExists,
-  createTempDir,
-  cleanupTempDir,
-} from "../../helpers";
+import { runCliCommand } from "../../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir, fileExists, directoryExists } from "../../test-fs-utils";
 import { EXIT_CODES } from "../../../exit-codes";
 import { STANDARD_FILES } from "../../../../consts";
 const LOCAL_SKILLS_DIR = ".claude/skills";

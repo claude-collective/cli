@@ -12,11 +12,13 @@ import {
   writeTestFile,
   type TestDirs,
 } from "../__tests__/fixtures/create-test-source";
-import { createMockAgentConfig, createMockCompiledStackPlugin } from "../__tests__/helpers";
+import { createMockAgentConfig } from "../__tests__/factories/agent-factories";
+import { createMockCompiledStackPlugin } from "../__tests__/factories/plugin-factories";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_FILES } from "../../consts";
 
 import type { SkillAssignment, SkillId, Stack, StackAgentConfig, Category } from "../../types";
 import { renderAgentYaml, renderConfigTs, renderSkillMd } from "../__tests__/content-generators";
+import { expectValidAgentMarkdown } from "../__tests__/assertions";
 import { REACT_SKILL_PRELOADED, VITEST_SKILL } from "../__tests__/mock-data/mock-skills";
 import { AGENT_DEFS } from "../__tests__/mock-data/mock-agents";
 
@@ -218,7 +220,7 @@ describe("stack-plugin-compiler", () => {
       const agentMdPath = path.join(result.pluginPath, "agents", "web-developer.md");
       const agentContent = await readFile(agentMdPath, "utf-8");
 
-      expect(agentContent).toContain("name: web-developer");
+      expectValidAgentMarkdown(agentContent, "web-developer");
       expect(agentContent).toContain("Frontend Developer");
       expect(agentContent).toContain("Build components");
     });

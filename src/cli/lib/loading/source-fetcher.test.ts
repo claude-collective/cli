@@ -11,7 +11,7 @@ import {
 import { isLocalSource } from "../configuration";
 import { CACHE_HASH_LENGTH, CACHE_READABLE_PREFIX_LENGTH, PLUGIN_MANIFEST_DIR } from "../../consts";
 import type { Marketplace } from "../../types";
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 
 describe("source-fetcher", () => {
   let tempDir: string;

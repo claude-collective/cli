@@ -12,9 +12,12 @@ import {
 } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_AGENTS } from "../mock-data/mock-agents";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
-import { writeTestSkill, buildTestProjectConfig, createMockSkillDefinition } from "../helpers";
+import { buildTestProjectConfig } from "../factories/config-factories.js";
+import { createMockSkillDefinition } from "../factories/skill-factories.js";
+import { writeTestSkill } from "../helpers/disk-writers.js";
 import { STANDARD_DIRS, STANDARD_FILES } from "../../../consts";
 import type { AgentName, SkillDefinitionMap } from "../../../types";
+import { expectValidAgentMarkdown } from "../assertions";
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
 const EDIT_MARKER = "EDITED-SKILL-CONTENT-MARKER";
@@ -82,10 +85,8 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     const agentPath = path.join(outputDir, "web-pm.md");
     expect(await fileExists(agentPath)).toBe(true);
 
-    // Verify content has frontmatter
     const content = await readTestFile(agentPath);
-    expect(content).toMatch(/^---\n/);
-    expect(content).toContain("web-pm");
+    expectValidAgentMarkdown(content, "web-pm");
   });
 
   it("should detect and incorporate skill edits on recompile", async () => {
@@ -132,8 +133,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // Step 4: Verify the agent was recompiled (file was overwritten)
     const recompiledContent = await readTestFile(agentPath);
-    expect(recompiledContent).not.toHaveLength(0);
-    expect(recompiledContent).toMatch(/^---\n/);
+    expectValidAgentMarkdown(recompiledContent, "web-pm");
   });
 
   it("should preserve unchanged agents during recompile", async () => {
@@ -189,8 +189,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // The agent file should still be valid after recompile
     const recompiledContent = await readTestFile(agentPath);
-    expect(recompiledContent).not.toHaveLength(0);
-    expect(recompiledContent).toMatch(/^---\n/);
+    expectValidAgentMarkdown(recompiledContent, "web-pm");
   });
 
   it("should handle removing skills from agents", async () => {
@@ -231,8 +230,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     // Verify the agent file is still valid
     const agentPath = path.join(outputDir, "web-pm.md");
     const content = await readTestFile(agentPath);
-    expect(content).not.toHaveLength(0);
-    expect(content).toMatch(/^---\n/);
+    expectValidAgentMarkdown(content, "web-pm");
   });
 
   it("should report correct compiled and failed agent lists", async () => {
@@ -266,8 +264,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     expect(await fileExists(agentPath)).toBe(true);
 
     const content = await readTestFile(agentPath);
-    expect(content).toMatch(/^---\n/);
-    expect(content).toContain("web-pm");
+    expectValidAgentMarkdown(content, "web-pm");
   });
 
   it("should produce identical output on consecutive recompiles without changes", async () => {

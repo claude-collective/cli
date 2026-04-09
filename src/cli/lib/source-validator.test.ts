@@ -7,7 +7,7 @@ import {
   validateSkillFilePairs,
   validateSource,
 } from "./source-validator";
-import { createTempDir, cleanupTempDir } from "./__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "./__tests__/test-fs-utils";
 import { STANDARD_DIRS, STANDARD_FILES } from "../consts";
 import { renderSkillMd } from "./__tests__/content-generators";
 

@@ -2,15 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mergeConfigs, mergeWithExistingConfig } from "./config-merger";
 import type { ProjectConfig, SkillAssignment, SkillId } from "../../types";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
-import {
-  buildProjectConfig,
-  buildAgentConfigs,
-  buildSkillConfigs,
-  buildSourceConfig,
-  createTempDir,
-  cleanupTempDir,
-  writeTestTsConfig,
-} from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { writeTestTsConfig } from "../__tests__/helpers/config-io.js";
+import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation.js";
+import { buildProjectConfig, buildAgentConfigs, buildSourceConfig } from "../__tests__/factories/config-factories.js";
+import { expectAgentConfigs } from "../__tests__/assertions/index.js";
 
 describe("config-merger", () => {
   let tempDir: string;
@@ -194,7 +190,7 @@ describe("config-merger", () => {
         });
 
         expect(result.merged).toBe(true);
-        expect(result.config.agents).toStrictEqual([
+        expectAgentConfigs(result.config, [
           { name: "web-developer", scope: "project" },
           { name: "api-developer", scope: "project" },
           { name: "cli-developer", scope: "project" },
@@ -212,7 +208,7 @@ describe("config-merger", () => {
 
         expect(result.merged).toBe(true);
         // Empty existing agents, so new agents are used
-        expect(result.config.agents).toStrictEqual([{ name: "web-developer", scope: "project" }]);
+        expectAgentConfigs(result.config, [{ name: "web-developer", scope: "project" }]);
       });
     });
 
@@ -355,7 +351,7 @@ describe("config-merger", () => {
 
       // Original input should be unchanged
       expect(newConfig.name).toBe("new-project");
-      expect(newConfig.agents).toStrictEqual([{ name: "api-developer", scope: "project" }]);
+      expectAgentConfigs(newConfig, [{ name: "api-developer", scope: "project" }]);
       expect(newConfig.author).toBeUndefined();
     });
 
@@ -786,7 +782,7 @@ describe("config-merger", () => {
 
       // Original inputs should be unchanged
       expect(newConfig.name).toBe("new-project");
-      expect(newConfig.agents).toStrictEqual([{ name: "api-developer", scope: "project" }]);
+      expectAgentConfigs(newConfig, [{ name: "api-developer", scope: "project" }]);
       expect(newConfig.author).toBeUndefined();
     });
 

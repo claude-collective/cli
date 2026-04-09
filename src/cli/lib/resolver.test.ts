@@ -13,15 +13,12 @@ import {
   resolveAgents,
 } from "./resolver";
 import { DIRS, STANDARD_FILES } from "../consts";
-import {
-  createMockSkillEntry,
-  createMockSkillDefinition,
-  createMockAgentConfig,
-  createMockCompileConfig,
-  createTempDir,
-  cleanupTempDir,
-  buildProjectConfig,
-} from "./__tests__/helpers";
+import { expectAgentCompilation, parseCompiledAgent } from "./__tests__/assertions/agent-assertions";
+import { createTempDir, cleanupTempDir } from "./__tests__/test-fs-utils";
+import { createMockSkillEntry, createMockSkillDefinition } from "./__tests__/factories/skill-factories";
+import { createMockAgentConfig } from "./__tests__/factories/agent-factories";
+import { createMockCompileConfig } from "./__tests__/factories/plugin-factories";
+import { buildProjectConfig } from "./__tests__/factories/config-factories";
 import { RESOLVE_AGENTS_DEFINITIONS } from "./__tests__/mock-data/mock-agents.js";
 import {
   FULLSTACK_STACK,
@@ -35,6 +32,7 @@ import {
   WEB_AND_API_COMPILE_CONFIG,
   WEB_ONLY_COMPILE_CONFIG,
 } from "./__tests__/mock-data/mock-matrices.js";
+import { EXPECTED_SKILLS } from "./__tests__/expected-values.js";
 import type {
   AgentName,
   CompiledAgentData,
@@ -474,53 +472,6 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
     return engine.renderFile("agent", data);
   }
 
-  // Lightweight frontmatter extractor for test assertions only.
-  // Parses the YAML between --- delimiters, handling top-level keys and one array.
-  function extractFrontmatter(content: string): Record<string, unknown> {
-    const match = content.match(/^---\n([\s\S]*?)\n---/);
-    if (!match) return {};
-
-    const yaml = match[1];
-    const result: Record<string, unknown> = {};
-    const lines = yaml.split("\n");
-    let arrayKey = "";
-    let arrayItems: string[] = [];
-
-    for (const line of lines) {
-      if (line.startsWith("skills:")) {
-        arrayKey = "skills";
-        arrayItems = [];
-        continue;
-      }
-
-      if (arrayKey && line.trim().startsWith("- ")) {
-        arrayItems.push(line.trim().slice(2));
-        continue;
-      }
-
-      if (arrayKey) {
-        result[arrayKey] = [...arrayItems];
-        arrayKey = "";
-        arrayItems = [];
-      }
-
-      const keyMatch = line.match(/^(\w+):\s*(.*)$/);
-      if (keyMatch) {
-        result[keyMatch[1]] = keyMatch[2];
-      }
-    }
-
-    if (arrayKey && arrayItems.length > 0) {
-      result[arrayKey] = [...arrayItems];
-    }
-
-    return result;
-  }
-
-  function extractBody(content: string): string {
-    const parts = content.split(/^---\n[\s\S]*?\n---\n/m);
-    return parts.length > 1 ? parts[1] : content;
-  }
 
   describe("preloaded skills appear in agent frontmatter", () => {
     it("should include skills: field in YAML frontmatter when preloaded skills exist", async () => {
@@ -530,29 +481,31 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       ];
 
       const output = await compileAgentWithSkills(skills);
-      const frontmatter = extractFrontmatter(output);
+      const { preloadedSkillIds } = parseCompiledAgent(output);
 
-      expect(Array.isArray(frontmatter.skills)).toBe(true);
+      expect(preloadedSkillIds.length).toBeGreaterThan(0);
     });
 
     it("should list preloaded skill IDs in the skills array", async () => {
       const skills = [makeSkill("web-framework-react", true), makeSkill("web-state-zustand", true)];
 
       const output = await compileAgentWithSkills(skills);
-      const frontmatter = extractFrontmatter(output);
 
-      expect(frontmatter.skills).toContain("web-framework-react");
-      expect(frontmatter.skills).toContain("web-state-zustand");
+      expectAgentCompilation(output, {
+        preloadedSkills: [...EXPECTED_SKILLS.WEB_DEFAULT],
+      });
     });
 
     it("should NOT include preloaded skills in the dynamic skill section", async () => {
       const skills = [makeSkill("web-framework-react", true, "when building React components")];
 
       const output = await compileAgentWithSkills(skills);
-      const body = extractBody(output);
 
-      expect(body).not.toContain("<skill_activation_protocol>");
-      expect(body).not.toContain('Invoke: `skill: "web-framework-react"`');
+      expectAgentCompilation(output, {
+        preloadedSkills: ["web-framework-react"],
+        noDynamicSkills: ["web-framework-react"],
+      });
+      const { body } = parseCompiledAgent(output);
       expect(body).toContain("<skills_note>");
       expect(body).toContain("All skills for this agent are preloaded via frontmatter");
     });
@@ -565,21 +518,19 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       ];
 
       const output = await compileAgentWithSkills(skills);
-      const frontmatter = extractFrontmatter(output);
 
-      expect(frontmatter.skills).toHaveLength(3);
-      expect(frontmatter.skills).toContain("web-framework-react");
-      expect(frontmatter.skills).toContain("web-state-zustand");
-      expect(frontmatter.skills).toContain("web-testing-vitest");
+      expectAgentCompilation(output, {
+        preloadedSkills: ["web-framework-react", "web-state-zustand", "web-testing-vitest"],
+      });
     });
 
     it("should not include skills: field when no preloaded skills exist", async () => {
       const skills = [makeSkill("web-testing-vitest", false)];
 
       const output = await compileAgentWithSkills(skills);
-      const frontmatter = extractFrontmatter(output);
+      const { preloadedSkillIds } = parseCompiledAgent(output);
 
-      expect(frontmatter.skills).toBeUndefined();
+      expect(preloadedSkillIds).toStrictEqual([]);
     });
   });
 
@@ -588,16 +539,17 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       const skills = [makeSkill("web-testing-vitest", false, "when working with vitest")];
 
       const output = await compileAgentWithSkills(skills);
-      const body = extractBody(output);
 
-      expect(body).toContain('skill: "web-testing-vitest"');
+      expectAgentCompilation(output, {
+        dynamicSkills: ["web-testing-vitest"],
+      });
     });
 
     it("should include Invoke: instruction for dynamic skills", async () => {
       const skills = [makeSkill("web-testing-vitest", false)];
 
       const output = await compileAgentWithSkills(skills);
-      const body = extractBody(output);
+      const { body } = parseCompiledAgent(output);
 
       expect(body).toContain('Invoke: `skill: "web-testing-vitest"`');
     });
@@ -609,10 +561,11 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       ];
 
       const output = await compileAgentWithSkills(skills);
-      const frontmatter = extractFrontmatter(output);
 
-      expect(frontmatter.skills).toContain("web-framework-react");
-      expect(frontmatter.skills).not.toContain("web-testing-vitest");
+      expectAgentCompilation(output, {
+        preloadedSkills: ["web-framework-react"],
+        noPreloadedSkills: ["web-testing-vitest"],
+      });
     });
 
     it("should include Use when: guidance for each dynamic skill", async () => {
@@ -622,7 +575,7 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       ];
 
       const output = await compileAgentWithSkills(skills);
-      const body = extractBody(output);
+      const { body } = parseCompiledAgent(output);
 
       expect(body).toContain("Use when: when working with vitest");
       expect(body).toContain("Use when: when working with turborepo");
@@ -632,7 +585,7 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       const skills = [makeSkill("web-testing-vitest", false)];
 
       const output = await compileAgentWithSkills(skills);
-      const body = extractBody(output);
+      const { body } = parseCompiledAgent(output);
 
       expect(body).toContain("<skill_activation_protocol>");
       expect(body).toContain("## Available Skills (Require Loading)");
@@ -642,7 +595,7 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       const skills = [makeSkill("web-testing-vitest", false)];
 
       const output = await compileAgentWithSkills(skills);
-      const body = extractBody(output);
+      const { body } = parseCompiledAgent(output);
 
       expect(body).toContain("Description: web-testing-vitest skill description");
     });
@@ -658,50 +611,50 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
 
     it("when mixed skills exist, should include only preloaded skills in frontmatter", async () => {
       const output = await compileAgentWithSkills(mixedSkills);
-      const frontmatter = extractFrontmatter(output);
 
-      expect(frontmatter.skills).toHaveLength(2);
-      expect(frontmatter.skills).toContain("web-framework-react");
-      expect(frontmatter.skills).toContain("web-state-zustand");
+      expectAgentCompilation(output, {
+        preloadedSkills: [...EXPECTED_SKILLS.WEB_DEFAULT],
+      });
     });
 
     it("when mixed skills exist, should exclude dynamic skills from frontmatter", async () => {
       const output = await compileAgentWithSkills(mixedSkills);
-      const frontmatter = extractFrontmatter(output);
 
-      expect(frontmatter.skills).not.toContain("web-testing-vitest");
-      expect(frontmatter.skills).not.toContain("web-build-turborepo");
+      expectAgentCompilation(output, {
+        noPreloadedSkills: ["web-testing-vitest", "web-build-turborepo"],
+      });
     });
 
     it("when mixed skills exist, should include dynamic skills in body activation protocol", async () => {
       const output = await compileAgentWithSkills(mixedSkills);
-      const body = extractBody(output);
 
+      expectAgentCompilation(output, {
+        dynamicSkills: ["web-testing-vitest", "web-build-turborepo"],
+      });
+      const { body } = parseCompiledAgent(output);
       expect(body).toContain("<skill_activation_protocol>");
-      expect(body).toContain('Invoke: `skill: "web-testing-vitest"`');
-      expect(body).toContain('Invoke: `skill: "web-build-turborepo"`');
     });
 
     it("when mixed skills exist, should exclude preloaded skills from body invocations", async () => {
       const output = await compileAgentWithSkills(mixedSkills);
-      const body = extractBody(output);
 
-      expect(body).not.toContain('Invoke: `skill: "web-framework-react"`');
-      expect(body).not.toContain('Invoke: `skill: "web-state-zustand"`');
+      expectAgentCompilation(output, {
+        noDynamicSkills: [...EXPECTED_SKILLS.WEB_DEFAULT],
+      });
     });
   });
 
   describe("empty skills handling", () => {
     it("when no skills exist, should not include skills field in frontmatter", async () => {
       const output = await compileAgentWithSkills([]);
-      const frontmatter = extractFrontmatter(output);
+      const { preloadedSkillIds } = parseCompiledAgent(output);
 
-      expect(frontmatter.skills).toBeUndefined();
+      expect(preloadedSkillIds).toStrictEqual([]);
     });
 
     it("when no skills exist, should show skills_note instead of activation protocol", async () => {
       const output = await compileAgentWithSkills([]);
-      const body = extractBody(output);
+      const { body } = parseCompiledAgent(output);
 
       expect(body).toContain("<skills_note>");
       expect(body).not.toContain("<skill_activation_protocol>");

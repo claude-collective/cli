@@ -1,14 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, readdir, readFile } from "fs/promises";
-import {
-  runCliCommand,
-  createTempDir,
-  cleanupTempDir,
-  buildTestProjectConfig,
-  directoryExists,
-  fileExists,
-} from "../helpers";
+import { runCliCommand } from "../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir, directoryExists, fileExists } from "../test-fs-utils";
+import { buildTestProjectConfig } from "../factories/config-factories.js";
 import { EXIT_CODES } from "../../exit-codes";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import {
@@ -17,6 +12,7 @@ import {
   SKILL_WITHOUT_METADATA_CUSTOM,
 } from "../mock-data/mock-skills";
 import { CLAUDE_DIR } from "../../../consts";
+import { expectValidAgentMarkdown } from "../assertions";
 
 describe("compile command", () => {
   let tempDir: string;
@@ -235,10 +231,7 @@ describe("compile command", () => {
       expect(await fileExists(agentPath)).toBe(true);
 
       const content = await readFile(agentPath, "utf-8");
-      // Compiled agent should have YAML frontmatter with agent metadata
-      expect(content).toContain("---");
-      expect(content).toContain("name: web-developer");
-      expect(content).toContain("description:");
+      expectValidAgentMarkdown(content, "web-developer");
     });
 
     it("should report discovery and compilation counts in output", async () => {

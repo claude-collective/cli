@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import { runCliCommand } from "../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { EXIT_CODES } from "../../exit-codes";
 import { renderConfigTs, renderSkillMd } from "../content-generators";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";

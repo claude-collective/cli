@@ -7,8 +7,10 @@ import {
   generateBlankGlobalConfigTypesSource,
   getGlobalConfigImportPath,
 } from "../config-writer";
-import { buildProjectConfig, buildSkillConfigs, buildAgentConfigs } from "../../__tests__/helpers";
+import { buildSkillConfigs } from "../../__tests__/helpers/wizard-simulation.js";
+import { buildProjectConfig, buildAgentConfigs } from "../../__tests__/factories/config-factories.js";
 import { CLAUDE_SRC_DIR } from "../../../consts";
+import { EXPECTED_SKILLS } from "../../__tests__/expected-values";
 
 describe("generateConfigSource", () => {
   it("produces valid TypeScript with import type, export default, and named variables", () => {
@@ -82,7 +84,7 @@ describe("generateConfigSource", () => {
     const config = buildProjectConfig({
       name: "preloaded-project",
       agents: [{ name: "api-developer", scope: "project" }],
-      skills: buildSkillConfigs(["api-framework-hono"]),
+      skills: buildSkillConfigs([...EXPECTED_SKILLS.API_DEFAULT]),
       stack: {
         "api-developer": {
           "api-api": [{ id: "api-framework-hono", preloaded: true }],
@@ -626,7 +628,7 @@ describe("generateConfigSource", () => {
       });
       const projectConfig = buildProjectConfig({
         name: "my-project",
-        skills: buildSkillConfigs(["api-framework-hono"]),
+        skills: buildSkillConfigs([...EXPECTED_SKILLS.API_DEFAULT]),
         agents: buildAgentConfigs(["api-developer"]),
         stack: {
           "api-developer": {
@@ -824,7 +826,7 @@ describe("generateConfigSource", () => {
       });
       const projectConfig = buildProjectConfig({
         name: "my-project",
-        skills: buildSkillConfigs(["api-framework-hono"]),
+        skills: buildSkillConfigs([...EXPECTED_SKILLS.API_DEFAULT]),
         agents: buildAgentConfigs(["api-developer"]),
         stack: {
           "api-developer": {

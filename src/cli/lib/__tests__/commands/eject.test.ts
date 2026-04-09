@@ -1,21 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, readFile, readdir, writeFile } from "fs/promises";
-import {
-  runCliCommand,
-  fileExists,
-  directoryExists,
-  readTestYaml,
-  readTestTsConfig,
-  buildWizardResult,
-  buildSkillConfigs,
-  buildSourceResult,
-  createMockMatrix,
-  parseTestFrontmatter,
-  createTempDir,
-  cleanupTempDir,
-  SKILLS,
-} from "../helpers";
+import { runCliCommand } from "../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir, fileExists, directoryExists } from "../test-fs-utils";
+import { readTestYaml, readTestTsConfig } from "../helpers/config-io.js";
+import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
+import { createMockMatrix } from "../factories/matrix-factories.js";
+import { buildWizardResult, buildSourceResult } from "../factories/config-factories.js";
+import { parseTestFrontmatter } from "../helpers/index.js";
+import { SKILLS } from "../test-fixtures";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { DEFAULT_TEST_SKILLS } from "../mock-data/mock-skills";
 import { installEject, installPluginConfig } from "../../installation/local-installer";

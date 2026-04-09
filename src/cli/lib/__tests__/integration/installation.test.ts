@@ -9,7 +9,9 @@ import {
   DEFAULT_PLUGIN_NAME,
   STANDARD_FILES,
 } from "../../../consts";
-import { createTempDir, cleanupTempDir, buildProjectConfig, buildSkillConfigs } from "../helpers";
+import { buildProjectConfig } from "../factories/config-factories.js";
+import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
+import { createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { detectInstallation, getInstallationOrThrow } from "../../installation";
 import { renderConfigTs } from "../content-generators";
 

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir } from "../../helpers";
+import { runCliCommand } from "../../helpers/cli-runner.js";
+import { createTempDir, cleanupTempDir } from "../../test-fs-utils";
 
 describe("build:stack command", () => {
   let tempDir: string;

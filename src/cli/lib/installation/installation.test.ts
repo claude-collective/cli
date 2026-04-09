@@ -2,12 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import os from "os";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import {
-  createTempDir,
-  cleanupTempDir,
-  buildProjectConfig,
-  buildSkillConfigs,
-} from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
+import { buildProjectConfig } from "../__tests__/factories/config-factories";
+import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, PLUGINS_SUBDIR, STANDARD_FILES } from "../../consts";
 
 // Mock logger (suppress verbose/warn output during tests)
