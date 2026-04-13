@@ -60,7 +60,7 @@ Every "never do this" rule with rationale. Organized by category.
 
 **Why:** This couples the test to the config file format. When the format changes, the test breaks even though the CLI behavior didn't change.
 
-**Instead:** Use `ProjectBuilder` methods in `beforeEach` or as inline fixture calls. See [test-data.md](./test-data.md).
+**Instead:** Use `ProjectBuilder` methods in `beforeEach` or as inline fixture calls. If `ProjectBuilder` doesn't support your scenario, extend it with a new static method rather than inlining. See `ProjectBuilder.dualScopeWithImport()` as an example of encapsulating complex setup. See [test-data.md](./test-data.md).
 
 ### Never use `readFile`/`readdir` in `it()` blocks for assertions
 
@@ -69,6 +69,31 @@ Every "never do this" rule with rationale. Organized by category.
 **Why:** This couples the test to the file's path and format. The assertion should describe what the user sees, not how the CLI stores it.
 
 **Instead:** Use matchers: `await expect(project).toHaveConfig({ skillIds: [...] })`. See [assertions.md](./assertions.md).
+
+### Never inline mkdir + createPermissionsFile for dual-scope setup
+
+**What:** `await mkdir(fakeHome, { recursive: true }); await createPermissionsFile(fakeHome);` inside an `it()` block.
+
+**Why:** `createTestEnvironment()` from `dual-scope-helpers.ts` does this correctly and includes the permissions file. Inlining risks forgetting `createPermissionsFile`, which causes flaky PTY hangs.
+
+**Instead:** Use `const env = await createTestEnvironment()` which returns `{ fakeHome, projectDir, tempDir }`.
+
+### Always capture and clean up ProjectBuilder temp dirs
+
+**What:** `const project = await ProjectBuilder.editable({ ... });` without storing the parent temp dir.
+
+**Why:** `ProjectBuilder.editable()` internally calls `createTempDir()` and creates a subdirectory. If only `project.dir` is stored, the parent temp dir leaks. Over many test runs, `/tmp` accumulates orphaned directories.
+
+**Instead:** `tempDir = path.dirname(project.dir);` then clean up in `afterEach`:
+
+```typescript
+afterEach(async () => {
+  if (tempDir) {
+    await cleanupTempDir(tempDir);
+    tempDir = undefined!;
+  }
+});
+```
 
 **Exception:** Lifecycle tests sometimes read specific file content for detailed assertions that no matcher covers (e.g., checking YAML frontmatter fields). This is acceptable in lifecycle tests where the assertion is about compilation output, not implementation details. If you find yourself doing this in 3+ places, add a matcher.
 
@@ -151,20 +176,31 @@ await prompt.arrowDown();
 
 **Instead:** Use `ProjectBuilder` methods or `writeProjectConfig()` from test-utils. See [test-data.md](./test-data.md).
 
+### Never inline mkdir + writeFile for agent stubs
+
+**What:** `await mkdir(agentsDir); await writeFile(path.join(agentsDir, "web-developer.md"), "---\nname: ...\n---\ncontent")` inside an `it()` block.
+
+**Why:** Duplicates across files and couples tests to the agent file format.
+
+**Instead:** Use a file-local `writeAgentStub()` or `writeAgentFile()` helper. If the pattern appears in 3+ files, extract to `test-utils.ts`.
+
+**Exception:** When creating intentionally corrupt/invalid files for error-path tests, inline construction with an explanatory comment is acceptable.
+
 ---
 
 ## Duplicated Helpers
 
-### Extract shared patterns when 3+ files share them
+### Extract shared assertion helpers at 2+ files
 
-**What:** Three test files each implement the same navigation sequence, setup pattern, or assertion logic.
+**What:** The same assertion function or wizard navigation flow defined identically in two or more test files.
 
-**Why:** Duplication drifts. When one copy is updated, the others silently become incorrect.
+**Why:** Duplicated helpers drift. When one copy is updated, the other silently becomes incorrect.
 
 **Instead:**
 
-- Navigation flows -> step methods on page objects
-- Setup patterns -> new `ProjectBuilder` method or fixture helper
+- Assertion functions used in 2+ files -> extract to `e2e/assertions/` (e.g., `config-assertions.ts`, `scope-assertions.ts`)
+- Common wizard navigation patterns (e.g., "complete edit from build step") -> methods on the wizard page object (e.g., `EditWizard.completeFromBuild()`)
+- Setup patterns used in 3+ files -> new `ProjectBuilder` static method
 - Assertion patterns -> new custom matcher in `project-matchers.ts`
 
 ---
@@ -198,6 +234,22 @@ await prompt.arrowDown();
 ---
 
 ## Weak Assertions
+
+### Never wrap assertions in fileExists conditionals
+
+**What:** `if (await fileExists(settingsPath)) { expect(settings).toHaveProperty("permissions"); }`
+
+**Why:** If the file is missing (e.g., because the command failed to create it), the entire assertion block is silently skipped. The test appears to pass with zero assertions executed.
+
+**Instead:** Assert the file exists unconditionally first, then check content:
+
+```typescript
+expect(await fileExists(settingsPath)).toBe(true);
+const settings = JSON.parse(await readTestFile(settingsPath));
+expect(settings).toHaveProperty("permissions");
+```
+
+Or better, use a matcher: `await expect(project).toHaveSettings({ hasKey: "permissions" })`.
 
 ### Never assert generic absence
 
