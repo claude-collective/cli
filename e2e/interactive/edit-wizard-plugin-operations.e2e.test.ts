@@ -46,16 +46,6 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
     wizard = undefined;
   });
 
-  /**
-   * Navigate from a single-domain build step through to completion.
-   */
-  async function completeEditFromBuild(w: EditWizard) {
-    const sources = await w.build.advanceToSources();
-    const agents = await sources.acceptDefaults();
-    const confirm = await agents.acceptDefaults("edit");
-    return confirm.confirm();
-  }
-
   describe("remove skill triggers plugin uninstall", () => {
     it("should uninstall removed plugin skills", { timeout: PLUGIN_TEST_TIMEOUT_MS }, async () => {
       const project = await ProjectBuilder.pluginProject({
@@ -70,7 +60,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
         source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
       });
 
-      const result = await completeEditFromBuild(wizard);
+      const result = await wizard.completeFromBuild();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -82,6 +72,11 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
       await expect(result.project).toHaveConfig({
         skillIds: ["web-framework-react"],
         source: fixture.marketplaceName,
+      });
+
+      // The removed skill must NOT appear in compiled agent content
+      await expect(result.project).toHaveCompiledAgentContent("web-developer", {
+        notContains: ["web-styling-tailwind"],
       });
     });
 
@@ -101,7 +96,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
         });
 
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         await expectPhaseSuccess(result, {
           skillIds: ["web-framework-react"],
@@ -127,7 +122,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
         });
 
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         await expectPhaseSuccess(result, {
           compiledAgents: ["web-developer"],
@@ -159,7 +154,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
         await wizard.build.navigateDown();
         await wizard.build.toggleFocusedSkill();
 
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -167,9 +162,9 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
         expect(rawOutput).toContain("Installed");
         expect(rawOutput).toContain("plugin");
 
-        // Config should include both the original and newly added skill
+        // Config should include both the original and the newly added skill
         await expect(result.project).toHaveConfig({
-          skillIds: ["web-framework-react"],
+          skillIds: ["web-framework-react", "web-state-pinia"],
           source: fixture.marketplaceName,
         });
 
@@ -196,7 +191,7 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
         });
 
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 

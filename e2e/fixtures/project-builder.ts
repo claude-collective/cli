@@ -217,6 +217,117 @@ export class ProjectBuilder {
   }
 
   /**
+   * Creates a dual-scope project where the project config imports from the global config.
+   * Used for compile verification of cross-scope config resolution.
+   *
+   * Structure:
+   *   <tempDir>/
+   *     fake-home/                             <- fake HOME (globalHome)
+   *       .claude-src/
+   *         config.ts                          <- global config
+   *         config-types.ts                    <- shared types
+   *       .claude/skills/web-framework-react/
+   *     project/                               <- project dir (cwd)
+   *       .claude-src/
+   *         config.ts                          <- imports globalHome config
+   *         config-types.ts                    <- shared types
+   *       .claude/skills/web-testing-vitest/
+   */
+  static async dualScopeWithImport(): Promise<DualScopeHandle> {
+    const tempDir = await createTempDir();
+    const globalHome = path.join(tempDir, "fake-home");
+    const projectDir = path.join(tempDir, "project");
+
+    // --- Global installation ---
+    await writeProjectConfig(globalHome, {
+      name: "global",
+      skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+      agents: [{ name: "web-developer", scope: "global" }],
+      domains: ["web"],
+      stack: {
+        "web-developer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: true }],
+        },
+      },
+    });
+
+    await createLocalSkill(globalHome, "web-framework-react", {
+      description: "React framework skill for global scope testing",
+      metadata: `author: "@test"\ncategory: web-framework\nslug: react\ncontentHash: "hash-react"\n`,
+    });
+
+    // --- Shared config-types.ts ---
+    const configTypesContent = `// AUTO-GENERATED
+export type SkillId = "web-framework-react" | "web-testing-vitest";
+export type AgentName = "web-developer" | "api-developer";
+export type Domain = "web";
+export type Category = "web-framework" | "web-testing";
+export type SkillConfig = { id: SkillId; scope: "project" | "global"; source: string };
+export type SkillAssignment = SkillId | { id: SkillId; preloaded: boolean };
+export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;
+export type AgentScopeConfig = { name: AgentName; scope: "project" | "global" };
+export interface ProjectConfig {
+  version?: "1";
+  name: string;
+  description?: string;
+  agents: AgentScopeConfig[];
+  skills: SkillConfig[];
+  author?: string;
+  stack?: Partial<Record<AgentName, StackAgentConfig>>;
+  source?: string;
+  marketplace?: string;
+  agentsSource?: string;
+  domains?: Domain[];
+  selectedAgents?: AgentName[];
+}
+`;
+    const globalConfigDir = path.join(globalHome, DIRS.CLAUDE_SRC);
+    const projectConfigDir = path.join(projectDir, DIRS.CLAUDE_SRC);
+    await mkdir(projectConfigDir, { recursive: true });
+
+    await writeFile(path.join(globalConfigDir, FILES.CONFIG_TYPES_TS), configTypesContent);
+    await writeFile(path.join(projectConfigDir, FILES.CONFIG_TYPES_TS), configTypesContent);
+
+    // --- Project config that imports from global ---
+    const globalImportPath = path
+      .relative(projectConfigDir, globalConfigDir)
+      .split(path.sep)
+      .join("/");
+
+    const projectConfigContent = `import globalConfig from "${globalImportPath}/config";
+import type { ProjectConfig } from "./config-types";
+
+const skills = [
+  ...globalConfig.skills,
+  {"id":"web-testing-vitest","scope":"project","source":"eject"},
+];
+
+const agents = [
+  ...globalConfig.agents,
+  {"name":"api-developer","scope":"project"},
+];
+
+export default {
+  ...globalConfig,
+  name: "test-project",
+  skills,
+  agents } satisfies ProjectConfig;
+`;
+    await writeFile(path.join(projectConfigDir, FILES.CONFIG_TS), projectConfigContent);
+
+    // --- Project skill ---
+    await createLocalSkill(projectDir, "web-testing-vitest", {
+      description: "Vitest testing skill for project scope testing",
+      metadata: `author: "@test"\ncategory: web-testing\nslug: vitest\ncontentHash: "hash-vitest"\n`,
+    });
+
+    return {
+      project: { dir: projectDir },
+      globalHome: { dir: globalHome },
+    };
+  }
+
+  /**
    * Creates a project with a custom (non-marketplace) skill and config-types.ts.
    * Exercises Zod schema validation for custom skill IDs and category keys.
    *

@@ -1,5 +1,6 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { expectNoDuplicates } from "../assertions/config-assertions.js";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
@@ -29,17 +30,6 @@ function extractSkillIds(configContent: string): string[] {
     ids.push(m[1]);
   }
   return ids;
-}
-
-/** Asserts that an array has no duplicate entries. */
-function expectNoDuplicates(arr: string[], label: string): void {
-  const seen = new Set<string>();
-  const duplicates: string[] = [];
-  for (const item of arr) {
-    if (seen.has(item)) duplicates.push(item);
-    seen.add(item);
-  }
-  expect(duplicates, `Duplicate ${label} found: ${duplicates.join(", ")}`).toStrictEqual([]);
 }
 
 describe("init -> edit merge: config preserved across lifecycle", () => {
@@ -132,6 +122,11 @@ describe("init -> edit merge: config preserved across lifecycle", () => {
         const editResult = await confirm.confirm();
 
         await editResult.destroy();
+
+        // Edit phase must not contain error indicators
+        const editOutput = editResult.rawOutput;
+        expect(editOutput).not.toContain("Failed to");
+        expect(editOutput).not.toContain("ENOENT");
 
         // --- Phase 2 verification ---
         await expectPhaseSuccess(

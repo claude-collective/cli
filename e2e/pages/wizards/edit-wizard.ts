@@ -80,6 +80,17 @@ export class EditWizard {
     return confirm.confirm();
   }
 
+  /**
+   * Navigate from a single-domain build step through to completion.
+   * Single domain: Enter once on build -> sources -> agents -> confirm -> complete.
+   */
+  async completeFromBuild(): Promise<WizardResult> {
+    const sources = await this.build.advanceToSources();
+    const agents = await sources.acceptDefaults();
+    const confirm = await agents.acceptDefaults("edit");
+    return confirm.confirm();
+  }
+
   /** Get the full output of the session. */
   getOutput(): string {
     return this.session.getFullOutput();

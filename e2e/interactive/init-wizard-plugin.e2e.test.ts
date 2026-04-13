@@ -37,36 +37,44 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
   });
 
   describe("plugin installation happy path", () => {
-    it("should complete plugin-mode init and install plugins", async () => {
-      wizard = await InitWizard.launch({
-        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
-      });
-      const result = await wizard.completeWithDefaults();
+    it(
+      "should complete plugin-mode init and install plugins",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
+        const result = await wizard.completeWithDefaults();
 
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const output = result.output;
-      expect(output).toContain("Installing skill plugins...");
-      expect(output).toContain("skill plugins");
-      expect(output).toContain("Plugin (native install)");
-      expect(output).toContain(`Installed web-framework-react@${fixture.marketplaceName}`);
-      expect(output).not.toContain("Skills copied to:");
-    });
+        const output = result.output;
+        expect(output).toContain("Installing skill plugins...");
+        expect(output).toContain("skill plugins");
+        expect(output).toContain("Plugin (native install)");
+        expect(output).toContain(`Installed web-framework-react@${fixture.marketplaceName}`);
+        expect(output).not.toContain("Skills copied to:");
+      },
+    );
 
-    it("should generate config.ts with marketplace source", async () => {
-      wizard = await InitWizard.launch({
-        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
-      });
-      const result = await wizard.completeWithDefaults();
+    it(
+      "should generate config.ts with marketplace source",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
+        const result = await wizard.completeWithDefaults();
 
-      await expectPhaseSuccess(result, {
-        skillIds: ["web-framework-react"],
-        source: fixture.marketplaceName,
-        compiledAgents: [],
-      });
-    });
+        await expectPhaseSuccess(result, {
+          skillIds: ["web-framework-react"],
+          source: fixture.marketplaceName,
+          compiledAgents: [],
+        });
+      },
+    );
 
-    it("should compile agents", async () => {
+    it("should compile agents", { timeout: TIMEOUTS.PLUGIN_TEST }, async () => {
       wizard = await InitWizard.launch({
         source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
       });
@@ -77,143 +85,167 @@ describe.skipIf(!claudeAvailable)("init wizard — plugin mode", () => {
       });
     });
 
-    it("should display completion details after install", async () => {
-      wizard = await InitWizard.launch({
-        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
-      });
-      const result = await wizard.completeWithDefaults();
-      await result.exitCode;
+    it(
+      "should display completion details after install",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
+        const result = await wizard.completeWithDefaults();
+        await result.exitCode;
 
-      const output = result.output;
-      expect(output).toContain("Agents compiled to:");
-      expect(output).toContain("Configuration:");
-    });
+        const output = result.output;
+        expect(output).toContain("Agents compiled to:");
+        expect(output).toContain("Configuration:");
+      },
+    );
   });
 
   describe("marketplace registration", () => {
-    it("should register or skip marketplace without error", async () => {
-      wizard = await InitWizard.launch({
-        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
-      });
-      const result = await wizard.completeWithDefaults();
+    it(
+      "should register or skip marketplace without error",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
+        const result = await wizard.completeWithDefaults();
 
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const output = result.output;
-      expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
-      expect(output).not.toContain("Failed to");
-    });
+        const output = result.output;
+        expect(output).toContain(STEP_TEXT.INIT_SUCCESS);
+        expect(output).not.toContain("Failed to");
+      },
+    );
   });
 
   describe("eject mode fallback", () => {
-    it("should install locally when source has no marketplace", async () => {
-      const localSource = await createE2ESource();
+    it(
+      "should install locally when source has no marketplace",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        const localSource = await createE2ESource();
 
-      wizard = await InitWizard.launch({
-        source: { sourceDir: localSource.sourceDir, tempDir: localSource.tempDir },
-      });
-      const result = await wizard.completeWithDefaults();
+        wizard = await InitWizard.launch({
+          source: { sourceDir: localSource.sourceDir, tempDir: localSource.tempDir },
+        });
+        const result = await wizard.completeWithDefaults();
 
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const output = result.output;
-      expect(output).not.toContain("Installing skill plugins");
-      expect(output).toContain("Skills copied to:");
+        const output = result.output;
+        expect(output).not.toContain("Installing skill plugins");
+        expect(output).toContain("Skills copied to:");
 
-      await expect(result.project).toHaveSkillCopied("web-framework-react");
-      await expect(result.project).toHaveConfig({
-        skillIds: ["web-framework-react"],
-      });
-      await expect(result.project).toHaveCompiledAgent("web-developer");
-      await expect(result.project).toHaveCompiledAgent("api-developer");
-    });
+        await expect(result.project).toHaveSkillCopied("web-framework-react");
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react"],
+        });
+        await expect(result.project).toHaveCompiledAgent("web-developer");
+        await expect(result.project).toHaveCompiledAgent("api-developer");
+      },
+    );
   });
 
   /** Gap 3: Plugin scope routing */
   describe("plugin scope routing", () => {
-    it("should install plugin skills with correct scope routing", async () => {
-      wizard = await InitWizard.launch({
-        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
-      });
-      const result = await wizard.completeWithDefaults();
+    it(
+      "should install plugin skills with correct scope routing",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
+        const result = await wizard.completeWithDefaults();
 
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const output = result.output;
-      expect(output).toContain(`Installed web-framework-react@${fixture.marketplaceName}`);
-      expect(output).toContain(`Installed web-testing-vitest@${fixture.marketplaceName}`);
-      expect(output).toContain("skill plugins");
-      expect(output).not.toContain("Failed to install plugin");
+        const output = result.output;
+        expect(output).toContain(`Installed web-framework-react@${fixture.marketplaceName}`);
+        expect(output).toContain(`Installed web-testing-vitest@${fixture.marketplaceName}`);
+        expect(output).toContain("skill plugins");
+        expect(output).not.toContain("Failed to install plugin");
 
-      await expect(result.project).toHaveConfig({
-        skillIds: ["web-framework-react", "web-testing-vitest"],
-      });
-      await expect(result.project).toHaveCompiledAgent("web-developer");
-      await expect(result.project).toHaveCompiledAgent("api-developer");
-    });
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react", "web-testing-vitest"],
+        });
+        await expect(result.project).toHaveCompiledAgent("web-developer");
+        await expect(result.project).toHaveCompiledAgent("api-developer");
+      },
+    );
 
-    it("should install project-scoped plugins correctly in mixed scope mode", async () => {
-      wizard = await InitWizard.launch({
-        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
-      });
+    it(
+      "should install project-scoped plugins correctly in mixed scope mode",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
 
-      // Navigate through wizard, toggling first skill to project scope
-      const domain = await wizard.stack.selectFirstStack();
-      const build = await domain.acceptDefaults();
+        // Navigate through wizard, toggling first skill to project scope
+        const domain = await wizard.stack.selectFirstStack();
+        const build = await domain.acceptDefaults();
 
-      // Toggle first skill (web-framework-react) to project scope
-      await build.toggleScopeOnFocusedSkill();
-      const sources = await build.passThroughAllDomains();
-      const agents = await sources.acceptDefaults();
-      const confirm = await agents.acceptDefaults("init");
-      const result = await confirm.confirm();
+        // Toggle first skill (web-framework-react) to project scope
+        await build.toggleScopeOnFocusedSkill();
+        const sources = await build.passThroughAllDomains();
+        const agents = await sources.acceptDefaults();
+        const confirm = await agents.acceptDefaults("init");
+        const result = await confirm.confirm();
 
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const output = result.output;
-      expect(output).toContain("Installing skill plugins...");
-      expect(output).toContain(`Installed web-framework-react@${fixture.marketplaceName}`);
-      expect(output).not.toContain("Failed to install plugin");
+        const output = result.output;
+        expect(output).toContain("Installing skill plugins...");
+        expect(output).toContain(`Installed web-framework-react@${fixture.marketplaceName}`);
+        expect(output).not.toContain("Failed to install plugin");
 
-      await expect(result.project).toHaveConfig({
-        skillIds: ["web-framework-react"],
-      });
-      await expect(result.project).toHaveCompiledAgent("web-developer");
-    });
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react"],
+        });
+        await expect(result.project).toHaveCompiledAgent("web-developer");
+      },
+    );
   });
 
   describe("mixed install mode", () => {
-    it("should install plugin skills as plugins and local skills locally in mixed mode", async () => {
-      wizard = await InitWizard.launch({
-        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
-      });
+    it(
+      "should install plugin skills as plugins and local skills locally in mixed mode",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
 
-      // Navigate through wizard, set one skill to local in sources step
-      const domain = await wizard.stack.selectFirstStack();
-      const build = await domain.acceptDefaults();
-      const sources = await build.passThroughAllDomains();
+        // Navigate through wizard, set one skill to local in sources step
+        const domain = await wizard.stack.selectFirstStack();
+        const build = await domain.acceptDefaults();
+        const sources = await build.passThroughAllDomains();
 
-      // Toggle one skill to local source
-      await sources.toggleFocusedSource();
-      const agents = await sources.advance();
-      const confirm = await agents.acceptDefaults("init");
-      const result = await confirm.confirm();
+        // Toggle one skill to local source
+        await sources.toggleFocusedSource();
+        const agents = await sources.advance();
+        const confirm = await agents.acceptDefaults("init");
+        const result = await confirm.confirm();
 
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      const output = result.output;
-      expect(output).toContain("Installing skill plugins...");
+        const output = result.output;
+        expect(output).toContain("Installing skill plugins...");
 
-      // The local-sourced skill should be copied locally
-      await expect(result.project).toHaveSkillCopied("web-framework-react");
+        // The local-sourced skill should be copied locally
+        await expect(result.project).toHaveSkillCopied("web-framework-react");
 
-      // Config should reflect the selected skills
-      await expect(result.project).toHaveConfig({
-        skillIds: ["web-framework-react"],
-      });
+        // Config should reflect the selected skills
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react"],
+        });
 
-      // Agents should still be compiled
-      await expect(result.project).toHaveCompiledAgent("web-developer");
-    });
+        // Agents should still be compiled
+        await expect(result.project).toHaveCompiledAgent("web-developer");
+      },
+    );
   });
 });

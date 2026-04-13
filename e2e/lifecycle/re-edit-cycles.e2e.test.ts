@@ -1,5 +1,6 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { expectNoDuplicates } from "../assertions/config-assertions.js";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
@@ -81,19 +82,6 @@ function parseConfigArrays(configContent: string): {
   }
 
   return { skillIds, agentNames, domains };
-}
-
-/** Asserts that an array has no duplicate entries. */
-function expectNoDuplicates(arr: string[], label: string): void {
-  const seen = new Set<string>();
-  const duplicates: string[] = [];
-  for (const item of arr) {
-    if (seen.has(item)) {
-      duplicates.push(item);
-    }
-    seen.add(item);
-  }
-  expect(duplicates, `Duplicate ${label} found: ${duplicates.join(", ")}`).toStrictEqual([]);
 }
 
 describe("re-edit cycles: config stability across multiple edits", () => {
