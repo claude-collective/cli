@@ -1,7 +1,19 @@
 ---
 scope: reference
 area: wizard
-keywords: [wizard-steps, navigation, guards, scope-toggle, dual-scope, lock-icon, stack-grouping, agent-preselection, init-mode, edit-mode]
+keywords:
+  [
+    wizard-steps,
+    navigation,
+    guards,
+    scope-toggle,
+    dual-scope,
+    lock-icon,
+    stack-grouping,
+    agent-preselection,
+    init-mode,
+    edit-mode,
+  ]
 related:
   - reference/store-map.md
   - reference/state-transitions.md

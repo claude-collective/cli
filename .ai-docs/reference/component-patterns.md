@@ -1,7 +1,19 @@
 ---
 scope: reference
 area: wizard
-keywords: [ink, components, hooks, category-grid, skill-tag, scope-badge, dual-scope, lock-icon, stack-selection, hotkeys]
+keywords:
+  [
+    ink,
+    components,
+    hooks,
+    category-grid,
+    skill-tag,
+    scope-badge,
+    dual-scope,
+    lock-icon,
+    stack-selection,
+    hotkeys,
+  ]
 related:
   - reference/store-map.md
   - reference/state-transitions.md
@@ -301,6 +313,7 @@ Two-column (skills | agents) summary component with scope labels (Project/Global
 **Source change detection:** Builds a `prevSourceMap` from `installedSkillConfigs` (keyed by `"${id}:${scope}"`). When a skill's source differs from the previous source, renders a `~` prefix with `CLI_COLORS.WARNING` color and a transition label (e.g., "Public -> Eject") using `SOURCE_DISPLAY_NAMES` from `consts.ts`.
 
 **Diff markers:**
+
 - `+ ` (green) -- newly added skill/agent
 - `- ` (red) -- removed skill/agent
 - `~ ` (yellow) -- source mode changed (with "from -> to" label)

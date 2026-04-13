@@ -1,7 +1,17 @@
 ---
 scope: reference
 area: config
-keywords: [config-resolution, config-writer, scope-splitting, config-merger, global-config, project-config, tombstone, excluded]
+keywords:
+  [
+    config-resolution,
+    config-writer,
+    scope-splitting,
+    config-merger,
+    global-config,
+    project-config,
+    tombstone,
+    excluded,
+  ]
 related:
   - reference/architecture-overview.md
   - reference/type-system.md
@@ -189,21 +199,21 @@ When `edit` command modifies skills:
 
 ## Config I/O
 
-| Function                      | Purpose                                 | File                 |
-| ----------------------------- | --------------------------------------- | -------------------- |
-| `loadProjectSourceConfig()`   | Load .claude-src/config.ts (partial)    | `config.ts`          |
-| `loadGlobalSourceConfig()`    | Load ~/.claude-src/config.ts (partial)  | `config.ts`          |
-| `loadProjectConfig()`         | Load + validate with global fallback    | `project-config.ts`  |
-| `loadProjectConfigFromDir()`  | Load + validate from specific dir only  | `project-config.ts`  |
-| `validateProjectConfig()`     | Validate project config structure       | `project-config.ts`  |
-| `generateConfigSource()`      | Generate TypeScript source string       | `config-writer.ts`   |
-| `saveSourceToProjectConfig()` | Save source field to config file        | `config-saver.ts`    |
-| `loadConfig()`                | Generic TypeScript config loader (jiti) | `config-loader.ts`   |
-| `defineConfig()`              | Type-safe config helper (identity fn)   | `define-config.ts`   |
-| `getProjectConfigPath()`      | Build absolute path to project config   | `config.ts`          |
-| `resolveAllSources()`         | Resolve primary + extra sources         | `config.ts`          |
-| `resolveAuthor()`             | Resolve author from effective config    | `config.ts`          |
-| `formatOrigin()`              | Human-readable label for source origin  | `config.ts`          |
+| Function                      | Purpose                                 | File                |
+| ----------------------------- | --------------------------------------- | ------------------- |
+| `loadProjectSourceConfig()`   | Load .claude-src/config.ts (partial)    | `config.ts`         |
+| `loadGlobalSourceConfig()`    | Load ~/.claude-src/config.ts (partial)  | `config.ts`         |
+| `loadProjectConfig()`         | Load + validate with global fallback    | `project-config.ts` |
+| `loadProjectConfigFromDir()`  | Load + validate from specific dir only  | `project-config.ts` |
+| `validateProjectConfig()`     | Validate project config structure       | `project-config.ts` |
+| `generateConfigSource()`      | Generate TypeScript source string       | `config-writer.ts`  |
+| `saveSourceToProjectConfig()` | Save source field to config file        | `config-saver.ts`   |
+| `loadConfig()`                | Generic TypeScript config loader (jiti) | `config-loader.ts`  |
+| `defineConfig()`              | Type-safe config helper (identity fn)   | `define-config.ts`  |
+| `getProjectConfigPath()`      | Build absolute path to project config   | `config.ts`         |
+| `resolveAllSources()`         | Resolve primary + extra sources         | `config.ts`         |
+| `resolveAuthor()`             | Resolve author from effective config    | `config.ts`         |
+| `formatOrigin()`              | Human-readable label for source origin  | `config.ts`         |
 
 ## Config Writer
 

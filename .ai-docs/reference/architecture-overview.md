@@ -1,7 +1,8 @@
 ---
 scope: reference
 area: architecture
-keywords: [scope, directory-structure, data-flow, entry-points, tombstone, stack-grouping, config-writer]
+keywords:
+  [scope, directory-structure, data-flow, entry-points, tombstone, stack-grouping, config-writer]
 related:
   - reference/dependency-graph.md
   - reference/boundary-map.md
@@ -267,10 +268,10 @@ Key function: `generateConfigSource(config, options?)`. When `options.isProjectC
 
 Skills and agents can exist at two scopes:
 
-| Scope     | Skills Path                  | Agents Path                  | Config Path                  |
-| --------- | ---------------------------- | ---------------------------- | ---------------------------- |
+| Scope     | Skills Path                    | Agents Path                    | Config Path                          |
+| --------- | ------------------------------ | ------------------------------ | ------------------------------------ |
 | `project` | `{projectDir}/.claude/skills/` | `{projectDir}/.claude/agents/` | `{projectDir}/.claude-src/config.ts` |
-| `global`  | `~/.claude/skills/`          | `~/.claude/agents/`          | `~/.claude-src/config.ts`    |
+| `global`  | `~/.claude/skills/`            | `~/.claude/agents/`            | `~/.claude-src/config.ts`            |
 
 **Path resolution:** `resolveInstallPaths(projectDir, scope)` in `src/cli/lib/installation/local-installer.ts` returns the correct base directory (`os.homedir()` for global, `projectDir` for project).
 

@@ -21,8 +21,8 @@ last_validated: 2026-04-13
 
 ## Store
 
-| Store          | File                                 | Purpose                  |
-| -------------- | ------------------------------------ | ------------------------ |
+| Store          | File                             | Purpose                  |
+| -------------- | -------------------------------- | ------------------------ |
 | useWizardStore | `src/cli/stores/wizard-store.ts` | Entire wizard flow state |
 
 There is exactly **one** Zustand store in the codebase.
@@ -65,19 +65,19 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 
 ### UI State
 
-| Field                      | Type                | Purpose                                                         |
-| -------------------------- | ------------------- | --------------------------------------------------------------- |
-| `showLabels`               | `boolean`           | Show compatibility labels on skill tags                         |
-| `filterIncompatible`       | `boolean`           | Filter incompatible skills in build step grid                   |
-| `showSettings`             | `boolean`           | Settings overlay visible                                        |
-| `showInfo`                 | `boolean`           | Info overlay visible (selected skills and agents)               |
-| `focusedSkillId`           | `SkillId \| null`   | Currently focused skill (for S hotkey)                          |
-| `focusedAgentId`           | `AgentName \| null` | Currently focused agent (for S hotkey)                          |
-| `isInitMode`               | `boolean`           | True when running init (first-time setup); false when editing existing installation |
-| `isEditingFromGlobalScope` | `boolean`           | When true, scope toggling is disabled (editing from ~/.claude/)                     |
-| `toastMessage`             | `string \| null`    | Temporary toast message shown in the wizard (auto-cleared after timeout)            |
-| `globalPreselections`      | `SkillConfig[] \| null` | Global skill configs to pre-select when a stack or scratch is chosen in init    |
-| `globalAgentPreselections` | `{ agents: AgentName[]; configs: AgentScopeConfig[] } \| null` | Global agent preselections to restore after selectStack wipes state |
+| Field                      | Type                                                           | Purpose                                                                             |
+| -------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `showLabels`               | `boolean`                                                      | Show compatibility labels on skill tags                                             |
+| `filterIncompatible`       | `boolean`                                                      | Filter incompatible skills in build step grid                                       |
+| `showSettings`             | `boolean`                                                      | Settings overlay visible                                                            |
+| `showInfo`                 | `boolean`                                                      | Info overlay visible (selected skills and agents)                                   |
+| `focusedSkillId`           | `SkillId \| null`                                              | Currently focused skill (for S hotkey)                                              |
+| `focusedAgentId`           | `AgentName \| null`                                            | Currently focused agent (for S hotkey)                                              |
+| `isInitMode`               | `boolean`                                                      | True when running init (first-time setup); false when editing existing installation |
+| `isEditingFromGlobalScope` | `boolean`                                                      | When true, scope toggling is disabled (editing from ~/.claude/)                     |
+| `toastMessage`             | `string \| null`                                               | Temporary toast message shown in the wizard (auto-cleared after timeout)            |
+| `globalPreselections`      | `SkillConfig[] \| null`                                        | Global skill configs to pre-select when a stack or scratch is chosen in init        |
+| `globalAgentPreselections` | `{ agents: AgentName[]; configs: AgentScopeConfig[] } \| null` | Global agent preselections to restore after selectStack wipes state                 |
 
 ### Source State
 
@@ -105,35 +105,35 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 
 ### Selection
 
-| Action                  | Signature                                           | Effect                                            |
-| ----------------------- | --------------------------------------------------- | ------------------------------------------------- |
-| `toggleDomain`          | `(domain: Domain) => void`                          | Add/remove domain, manages selections             |
-| `toggleTechnology`      | `(domain, category, technology, exclusive) => void` | Radio (exclusive) or checkbox toggle              |
+| Action                  | Signature                                           | Effect                                                                                                                             |
+| ----------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `toggleDomain`          | `(domain: Domain) => void`                          | Add/remove domain, manages selections                                                                                              |
+| `toggleTechnology`      | `(domain, category, technology, exclusive) => void` | Radio (exclusive) or checkbox toggle                                                                                               |
 | `toggleAgent`           | `(agent: AgentName) => void`                        | Add/remove agent; guards against toggling globally-installed agents from project scope (shows toast); tombstone-aware toggle logic |
-| `bindSkill`             | `(skill: BoundSkill) => void`                       | Add foreign skill from search                     |
-| `nextDomain`            | `() => boolean`                                     | Advance to next domain, returns success           |
-| `prevDomain`            | `() => boolean`                                     | Go to previous domain, returns success            |
-| `setCurrentDomainIndex` | `(index: number) => void`                           | Set domain index directly (no-op if out of range) |
+| `bindSkill`             | `(skill: BoundSkill) => void`                       | Add foreign skill from search                                                                                                      |
+| `nextDomain`            | `() => boolean`                                     | Advance to next domain, returns success                                                                                            |
+| `prevDomain`            | `() => boolean`                                     | Go to previous domain, returns success                                                                                             |
+| `setCurrentDomainIndex` | `(index: number) => void`                           | Set domain index directly (no-op if out of range)                                                                                  |
 
 ### Scope / Source Per-Skill
 
-| Action              | Signature                                    | Effect                            |
-| ------------------- | -------------------------------------------- | --------------------------------- |
+| Action              | Signature                                    | Effect                                                                                                                                     |
+| ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `toggleSkillScope`  | `(skillId: SkillId) => void`                 | Toggle skill scope project/global; eject guard blocks project->global when global eject exists (allows undo if excluded tombstone present) |
-| `setSkillSource`    | `(skillId: SkillId, source: string) => void` | Set source for a skill in configs |
-| `setFocusedSkillId` | `(id: SkillId \| null) => void`              | Set focused skill for S hotkey    |
-| `toggleAgentScope`  | `(agentName: AgentName) => void`             | Toggle agent scope project/global |
-| `setFocusedAgentId` | `(id: AgentName \| null) => void`            | Set focused agent for S hotkey    |
+| `setSkillSource`    | `(skillId: SkillId, source: string) => void` | Set source for a skill in configs                                                                                                          |
+| `setFocusedSkillId` | `(id: SkillId \| null) => void`              | Set focused skill for S hotkey                                                                                                             |
+| `toggleAgentScope`  | `(agentName: AgentName) => void`             | Toggle agent scope project/global                                                                                                          |
+| `setFocusedAgentId` | `(id: AgentName \| null) => void`            | Set focused agent for S hotkey                                                                                                             |
 
 ### UI Toggles
 
-| Action                     | Signature    | Effect                                                                             |
-| -------------------------- | ------------ | ---------------------------------------------------------------------------------- |
-| `toggleShowLabels`         | `() => void` | Toggle compatibility labels visibility                                             |
-| `toggleFilterIncompatible` | `() => void` | Toggle filtering of incompatible skills; removes incompatible web skills on enable |
-| `toggleSettings`           | `() => void` | Toggle settings overlay                                                            |
-| `toggleInfo`               | `() => void` | Toggle info overlay (selected skills and agents)                                   |
-| `setToastMessage`          | `(message: string \| null) => void` | Set a temporary toast message, or null to clear it                    |
+| Action                     | Signature                           | Effect                                                                             |
+| -------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------- |
+| `toggleShowLabels`         | `() => void`                        | Toggle compatibility labels visibility                                             |
+| `toggleFilterIncompatible` | `() => void`                        | Toggle filtering of incompatible skills; removes incompatible web skills on enable |
+| `toggleSettings`           | `() => void`                        | Toggle settings overlay                                                            |
+| `toggleInfo`               | `() => void`                        | Toggle info overlay (selected skills and agents)                                   |
+| `setToastMessage`          | `(message: string \| null) => void` | Set a temporary toast message, or null to clear it                                 |
 
 ### Source Management
 
@@ -153,11 +153,11 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 
 ### Population (Hydrating from Config/Stack)
 
-| Action                       | Signature                           | When Used                              |
-| ---------------------------- | ----------------------------------- | -------------------------------------- |
+| Action                       | Signature                           | When Used                                                                                                                |
+| ---------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `populateFromStack`          | `(stack) => void`                   | Stack selection in init wizard; now returns `selectedAgents` and `agentConfigs` derived from `Object.keys(stack.agents)` |
-| `populateFromSkillIds`       | `(skillIds, savedConfigs?) => void` | Edit mode: restore from project config |
-| `preselectAgentsFromDomains` | `() => void`                        | After domain selection                 |
+| `populateFromSkillIds`       | `(skillIds, savedConfigs?) => void` | Edit mode: restore from project config                                                                                   |
+| `preselectAgentsFromDomains` | `() => void`                        | After domain selection                                                                                                   |
 
 ### Reset
 
@@ -167,16 +167,16 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 
 ### Computed Getters
 
-| Getter                             | Returns                              | Purpose                          |
-| ---------------------------------- | ------------------------------------ | -------------------------------- |
-| `getAllSelectedTechnologies`       | `SkillId[]`                          | Flat list of all selected skills |
-| `getSelectedTechnologiesPerDomain` | `Partial<Record<Domain, SkillId[]>>` | Skills grouped by domain         |
-| `getCurrentDomain`                 | `Domain \| null`                     | Domain at currentDomainIndex     |
-| `getTechnologyCount`               | `number`                             | Total selected count             |
-| `getStepProgress`                  | `{ completedSteps, skippedSteps }`   | For wizard tab indicators        |
-| `canGoToNextDomain`                | `() => boolean`                      | Has next domain                  |
-| `canGoToPreviousDomain`            | `() => boolean`                      | Has previous domain              |
-| `buildSourceRows`                  | `{ skillId, options, scope?, readOnly? }[]` | Sources step UI data      |
+| Getter                             | Returns                                     | Purpose                          |
+| ---------------------------------- | ------------------------------------------- | -------------------------------- |
+| `getAllSelectedTechnologies`       | `SkillId[]`                                 | Flat list of all selected skills |
+| `getSelectedTechnologiesPerDomain` | `Partial<Record<Domain, SkillId[]>>`        | Skills grouped by domain         |
+| `getCurrentDomain`                 | `Domain \| null`                            | Domain at currentDomainIndex     |
+| `getTechnologyCount`               | `number`                                    | Total selected count             |
+| `getStepProgress`                  | `{ completedSteps, skippedSteps }`          | For wizard tab indicators        |
+| `canGoToNextDomain`                | `() => boolean`                             | Has next domain                  |
+| `canGoToPreviousDomain`            | `() => boolean`                             | Has previous domain              |
+| `buildSourceRows`                  | `{ skillId, options, scope?, readOnly? }[]` | Sources step UI data             |
 
 ## Usage Pattern
 

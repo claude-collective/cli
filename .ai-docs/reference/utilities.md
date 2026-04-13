@@ -365,10 +365,10 @@ Helper: `yamlSchemaComment(schemaPath: string): string` generates a `# yaml-lang
 
 ### Domain Configuration
 
-| Constant                  | Value                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------ |
+| Constant                  | Value                                                                         |
+| ------------------------- | ----------------------------------------------------------------------------- |
 | `BUILT_IN_DOMAIN_ORDER`   | `["web", "api", "ai", "mobile", "desktop", "cli", "infra", "meta", "shared"]` |
-| `DEFAULT_SCRATCH_DOMAINS` | `["web", "api", "mobile"]`                                                     |
+| `DEFAULT_SCRATCH_DOMAINS` | `["web", "api", "mobile"]`                                                    |
 
 ## Remeda Utilities (External)
 

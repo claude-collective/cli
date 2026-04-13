@@ -1,7 +1,8 @@
 ---
 scope: reference
 area: wizard
-keywords: [state-machine, steps, transitions, actions, resets, hotkeys, guards, toggle, scope, tombstone]
+keywords:
+  [state-machine, steps, transitions, actions, resets, hotkeys, guards, toggle, scope, tombstone]
 related:
   - reference/store-map.md
   - reference/component-patterns.md
@@ -107,16 +108,16 @@ type WizardStep = "stack" | "domains" | "build" | "sources" | "agents" | "confir
 
 ## Forward Navigation Transitions
 
-| From      | To        | Trigger                                                  | Component/File                                   |
-| --------- | --------- | -------------------------------------------------------- | ------------------------------------------------ |
-| `stack`   | `domains` | ENTER on "Start from scratch"                            | `stack-selection.tsx`                             |
-| `stack`   | `domains` | ENTER on a stack item                                    | `stack-selection.tsx`                             |
-| `domains` | `build`   | ENTER (continue, requires >= 1 domain selected)          | `domain-selection.tsx`                            |
-| `build`   | `build`   | ENTER when `nextDomain()` returns true (more domains)    | `use-build-step-props.ts`                        |
-| `build`   | `sources` | ENTER when `nextDomain()` returns false (last domain)    | `use-build-step-props.ts`                        |
-| `build`   | `confirm` | `A` hotkey (accept defaults, requires `selectedStackId`) | `wizard.tsx`                                     |
-| `sources` | `agents`  | ENTER on "Use recommended" or ENTER in customize view    | `wizard.tsx` (via `onContinue` callback)         |
-| `agents`  | `confirm` | ENTER (continue)                                         | `step-agents.tsx`                                |
+| From      | To        | Trigger                                                  | Component/File                           |
+| --------- | --------- | -------------------------------------------------------- | ---------------------------------------- |
+| `stack`   | `domains` | ENTER on "Start from scratch"                            | `stack-selection.tsx`                    |
+| `stack`   | `domains` | ENTER on a stack item                                    | `stack-selection.tsx`                    |
+| `domains` | `build`   | ENTER (continue, requires >= 1 domain selected)          | `domain-selection.tsx`                   |
+| `build`   | `build`   | ENTER when `nextDomain()` returns true (more domains)    | `use-build-step-props.ts`                |
+| `build`   | `sources` | ENTER when `nextDomain()` returns false (last domain)    | `use-build-step-props.ts`                |
+| `build`   | `confirm` | `A` hotkey (accept defaults, requires `selectedStackId`) | `wizard.tsx`                             |
+| `sources` | `agents`  | ENTER on "Use recommended" or ENTER in customize view    | `wizard.tsx` (via `onContinue` callback) |
+| `agents`  | `confirm` | ENTER (continue)                                         | `step-agents.tsx`                        |
 
 ## Backward Navigation Transitions
 
@@ -180,30 +181,30 @@ When the wizard opens in init mode (no `initialStep`):
 
 ### Approach/Stack Actions
 
-| Action                   | State Modified                                                                                                                                                                           | Side Effects                       |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `setApproach(approach)`  | `approach`                                                                                                                                                                               | None                               |
+| Action                   | State Modified                                                                                                                                                                           | Side Effects                                                                                                                                                                            |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `setApproach(approach)`  | `approach`                                                                                                                                                                               | None                                                                                                                                                                                    |
 | `selectStack(stackId)`   | `selectedStackId`, `domainSelections`, `_stackDomainSelections`, `selectedDomains`, `skillConfigs`, `selectedAgents`, `agentConfigs`, `boundSkills`, `currentDomainIndex`, `stackAction` | **Full reset** -- see Reset Matrix. Note: `selectedAgents` and `agentConfigs` are cleared here but repopulated by `populateFromStack()` which derives them from the stack's agent keys. |
-| `setStackAction(action)` | `stackAction`                                                                                                                                                                            | None                               |
+| `setStackAction(action)` | `stackAction`                                                                                                                                                                            | None                                                                                                                                                                                    |
 
 ### Selection Actions
 
-| Action                                           | State Modified                                        | Side Effects                                                                                                                                                                                                                            |
-| ------------------------------------------------ | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `toggleDomain(domain)`                           | `selectedDomains`, `domainSelections`, `skillConfigs` | **Remove:** drops domain selections + their skill configs. **Add:** restores from `_stackDomainSelections` snapshot if available, creates default skill configs for restored skills.                                                    |
-| `toggleTechnology(domain, cat, tech, exclusive)` | `domainSelections`, `skillConfigs`, `toastMessage`    | **Guard:** if skill is installed globally and not in global-scope edit or init mode, returns toast. Single-skill categories block deselection with toast. Exclusive mode: blocks swap if current selection is globally installed. Uses `reconcileSkillConfigs()` for add/remove (marks global as excluded tombstone, restores tombstoned on re-add). |
+| Action                                           | State Modified                                        | Side Effects                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------ | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `toggleDomain(domain)`                           | `selectedDomains`, `domainSelections`, `skillConfigs` | **Remove:** drops domain selections + their skill configs. **Add:** restores from `_stackDomainSelections` snapshot if available, creates default skill configs for restored skills.                                                                                                                                                                                |
+| `toggleTechnology(domain, cat, tech, exclusive)` | `domainSelections`, `skillConfigs`, `toastMessage`    | **Guard:** if skill is installed globally and not in global-scope edit or init mode, returns toast. Single-skill categories block deselection with toast. Exclusive mode: blocks swap if current selection is globally installed. Uses `reconcileSkillConfigs()` for add/remove (marks global as excluded tombstone, restores tombstoned on re-add).                |
 | `toggleAgent(agent)`                             | `selectedAgents`, `agentConfigs`, `toastMessage`      | **Guard:** if agent is installed globally and not in global-scope edit or init mode, returns toast instead of toggling. **Tombstone logic:** uses `applyAgentToggle()` -- toggling off a globally-installed agent sets `excluded: true` (keeps agent in `selectedAgents`); toggling on a tombstoned agent clears `excluded`. Fresh agents are simply added/removed. |
-| `preselectAgentsFromDomains()`                   | `selectedAgents`, `agentConfigs`                      | Collects agents from `DOMAIN_AGENTS` for selected domains, merges with existing `agentConfigs` (preserves scope, clears `excluded` on matched), preserves excluded entries not in the new list. All new agents scoped as `"global"`.                                                                                                                          |
+| `preselectAgentsFromDomains()`                   | `selectedAgents`, `agentConfigs`                      | Collects agents from `DOMAIN_AGENTS` for selected domains, merges with existing `agentConfigs` (preserves scope, clears `excluded` on matched), preserves excluded entries not in the new list. All new agents scoped as `"global"`.                                                                                                                                |
 
 ### Skill/Agent Config Actions
 
-| Action                         | State Modified   | Side Effects                                                                                       |
-| ------------------------------ | ---------------- | -------------------------------------------------------------------------------------------------- |
+| Action                         | State Modified                 | Side Effects                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------ | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `toggleSkillScope(skillId)`    | `skillConfigs`, `toastMessage` | Toggles `scope` between `"project"` and `"global"`. No-op if `isEditingFromGlobalScope`. **Guard:** project eject to global blocked when global eject already installed -- returns toast unless an excluded tombstone entry exists (allows undo). **Tombstone management:** moving global-installed to project adds excluded global entry; moving back to global removes it. |
-| `setSkillSource(skillId, src)` | `skillConfigs`   | Updates `source` field for matching skill config entry.                                            |
-| `toggleAgentScope(agentName)`  | `agentConfigs`   | Toggles `scope` between `"project"` and `"global"`. No-op if `isEditingFromGlobalScope`. **Tombstone management:** moving global-installed to project adds excluded global entry; moving back to global removes it. |
-| `setFocusedSkillId(id)`        | `focusedSkillId` | Sets or clears the focused skill (for `S` hotkey scope toggle in build step).                      |
-| `setFocusedAgentId(id)`        | `focusedAgentId` | Sets or clears the focused agent (for `S` hotkey scope toggle in agents step).                     |
+| `setSkillSource(skillId, src)` | `skillConfigs`                 | Updates `source` field for matching skill config entry.                                                                                                                                                                                                                                                                                                                      |
+| `toggleAgentScope(agentName)`  | `agentConfigs`                 | Toggles `scope` between `"project"` and `"global"`. No-op if `isEditingFromGlobalScope`. **Tombstone management:** moving global-installed to project adds excluded global entry; moving back to global removes it.                                                                                                                                                          |
+| `setFocusedSkillId(id)`        | `focusedSkillId`               | Sets or clears the focused skill (for `S` hotkey scope toggle in build step).                                                                                                                                                                                                                                                                                                |
+| `setFocusedAgentId(id)`        | `focusedAgentId`               | Sets or clears the focused agent (for `S` hotkey scope toggle in agents step).                                                                                                                                                                                                                                                                                               |
 
 ### Source Management Actions
 
@@ -227,10 +228,10 @@ When the wizard opens in init mode (no `initialStep`):
 
 ### Population Actions
 
-| Action                                          | State Modified                                                                  | Side Effects                                                                                                                                                                                              |
-| ----------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Action                                          | State Modified                                                                                                    | Side Effects                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `populateFromStack(stack)`                      | `domainSelections`, `_stackDomainSelections`, `selectedDomains`, `skillConfigs`, `selectedAgents`, `agentConfigs` | Iterates stack agents' skill assignments, builds domain selections, snapshots to `_stackDomainSelections`, creates default skill configs. Derives `selectedAgents` and `agentConfigs` from stack agent keys (`Object.keys(stack.agents).filter(isAgentName)`). Sorts domains canonically. |
-| `populateFromSkillIds(skillIds, savedConfigs?)` | `domainSelections`, `_stackDomainSelections`, `selectedDomains`, `skillConfigs` | Resolves each skill's category/domain via `resolveSkillForPopulation()`. Warns for unresolvable skills. Restores `scope`/`source` from `savedConfigs` if provided. Snapshots to `_stackDomainSelections`. |
+| `populateFromSkillIds(skillIds, savedConfigs?)` | `domainSelections`, `_stackDomainSelections`, `selectedDomains`, `skillConfigs`                                   | Resolves each skill's category/domain via `resolveSkillForPopulation()`. Warns for unresolvable skills. Restores `scope`/`source` from `savedConfigs` if provided. Snapshots to `_stackDomainSelections`.                                                                                 |
 
 ### Reset Action
 
@@ -373,36 +374,36 @@ When `showSettings === true`, all input is blocked except `S` (to close settings
 
 **File:** `wizard-store.ts` (`createInitialState()`)
 
-| Field                        | Initial Value |
-| ---------------------------- | ------------- |
-| `step`                       | `"stack"`     |
-| `approach`                   | `null`        |
-| `selectedStackId`            | `null`        |
-| `stackAction`                | `null`        |
-| `selectedDomains`            | `[]`          |
-| `currentDomainIndex`         | `0`           |
-| `domainSelections`           | `{}`          |
-| `_stackDomainSelections`     | `null`        |
-| `showLabels`                 | `false`       |
-| `filterIncompatible`         | `false`       |
-| `skillConfigs`               | `[]`          |
-| `focusedSkillId`             | `null`        |
-| `customizeSources`           | `false`       |
-| `showSettings`               | `false`       |
-| `showInfo`                   | `false`       |
-| `enabledSources`             | `{}`          |
-| `selectedAgents`             | `[]`          |
-| `agentConfigs`               | `[]`          |
-| `focusedAgentId`             | `null`        |
-| `boundSkills`                | `[]`          |
-| `installedSkillConfigs`      | `null`        |
-| `installedAgentConfigs`      | `null`        |
-| `isInitMode`                 | `false`       |
-| `isEditingFromGlobalScope`   | `false`       |
-| `toastMessage`               | `null`        |
-| `globalPreselections`        | `null`        |
-| `globalAgentPreselections`   | `null`        |
-| `history`                    | `[]`          |
+| Field                      | Initial Value |
+| -------------------------- | ------------- |
+| `step`                     | `"stack"`     |
+| `approach`                 | `null`        |
+| `selectedStackId`          | `null`        |
+| `stackAction`              | `null`        |
+| `selectedDomains`          | `[]`          |
+| `currentDomainIndex`       | `0`           |
+| `domainSelections`         | `{}`          |
+| `_stackDomainSelections`   | `null`        |
+| `showLabels`               | `false`       |
+| `filterIncompatible`       | `false`       |
+| `skillConfigs`             | `[]`          |
+| `focusedSkillId`           | `null`        |
+| `customizeSources`         | `false`       |
+| `showSettings`             | `false`       |
+| `showInfo`                 | `false`       |
+| `enabledSources`           | `{}`          |
+| `selectedAgents`           | `[]`          |
+| `agentConfigs`             | `[]`          |
+| `focusedAgentId`           | `null`        |
+| `boundSkills`              | `[]`          |
+| `installedSkillConfigs`    | `null`        |
+| `installedAgentConfigs`    | `null`        |
+| `isInitMode`               | `false`       |
+| `isEditingFromGlobalScope` | `false`       |
+| `toastMessage`             | `null`        |
+| `globalPreselections`      | `null`        |
+| `globalAgentPreselections` | `null`        |
+| `history`                  | `[]`          |
 
 ---
 
@@ -438,8 +439,8 @@ Guards prevent project-scope edits from modifying globally-installed skills/agen
 
 **Actions with global-installed guards:**
 
-| Action                       | Guard Behavior                                                                                                          |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Action                       | Guard Behavior                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `toggleTechnology()`         | Toast if skill is installed globally. Also toasts if exclusive swap would deselect a globally-installed skill.           |
 | `toggleSkillScope()`         | No-op if `isEditingFromGlobalScope`. Toast if project eject to global and global eject already installed (no tombstone). |
 | `toggleAgent()`              | Toast if agent is installed globally (not in global edit or init mode).                                                  |

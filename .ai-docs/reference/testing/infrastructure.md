@@ -1,7 +1,8 @@
 ---
 scope: reference
 area: testing
-keywords: [vitest, test-projects, unit, integration, commands, directory-structure, config, error-handling]
+keywords:
+  [vitest, test-projects, unit, integration, commands, directory-structure, config, error-handling]
 related:
   - reference/testing/factories.md
   - reference/testing/mock-data.md

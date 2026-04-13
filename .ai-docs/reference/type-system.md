@@ -1,7 +1,16 @@
 ---
 scope: reference
 area: types
-keywords: [union-types, generated-types, zod-schemas, type-guards, branded-types, config-changes, operations-types]
+keywords:
+  [
+    union-types,
+    generated-types,
+    zod-schemas,
+    type-guards,
+    branded-types,
+    config-changes,
+    operations-types,
+  ]
 related:
   - reference/boundary-map.md
   - reference/features/operations-layer.md
@@ -157,18 +166,18 @@ type PermissionMode =
 
 ## Named Aliases (Composite Types)
 
-| Alias                    | Definition                                                                                         | File              |
-| ------------------------ | -------------------------------------------------------------------------------------------------- | ----------------- |
-| `CategorySelections`     | `Partial<Record<Category, SkillId[]>>`                                                             | `skills.ts`       |
-| `ResolvedCategorySkills` | `Partial<Record<Category, SkillId>>`                                                               | `skills.ts`       |
-| `DomainSelections`       | `Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>`                                    | `matrix.ts`       |
-| `CategoryMap`            | `Partial<Record<Category, CategoryDefinition>>`                                                    | `matrix.ts`       |
-| `CategoryDomainMap`      | `Partial<Record<Category, { domain?: Domain }>>`                                                   | `matrix.ts`       |
-| `SkillSlugMap`           | `{ slugToId: Partial<Record<SkillSlug, SkillId>>; idToSlug: Partial<Record<SkillId, SkillSlug>> }` | `matrix.ts`       |
-| `StackAgentConfig`       | `Partial<Record<Category, SkillAssignment[]>>`                                                     | `stacks.ts`       |
-| `PluginSkillRef`         | `` `${SkillId}:${SkillId}` ``                                                                      | `skills.ts`       |
-| `SkillDefinitionMap`     | `Partial<Record<SkillId, SkillDefinition>>`                                                        | `skills.ts`       |
-| `SkillAlias`             | `string`                                                                                           | `matrix.ts`       |
+| Alias                    | Definition                                                                                         | File        |
+| ------------------------ | -------------------------------------------------------------------------------------------------- | ----------- |
+| `CategorySelections`     | `Partial<Record<Category, SkillId[]>>`                                                             | `skills.ts` |
+| `ResolvedCategorySkills` | `Partial<Record<Category, SkillId>>`                                                               | `skills.ts` |
+| `DomainSelections`       | `Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>`                                    | `matrix.ts` |
+| `CategoryMap`            | `Partial<Record<Category, CategoryDefinition>>`                                                    | `matrix.ts` |
+| `CategoryDomainMap`      | `Partial<Record<Category, { domain?: Domain }>>`                                                   | `matrix.ts` |
+| `SkillSlugMap`           | `{ slugToId: Partial<Record<SkillSlug, SkillId>>; idToSlug: Partial<Record<SkillId, SkillSlug>> }` | `matrix.ts` |
+| `StackAgentConfig`       | `Partial<Record<Category, SkillAssignment[]>>`                                                     | `stacks.ts` |
+| `PluginSkillRef`         | `` `${SkillId}:${SkillId}` ``                                                                      | `skills.ts` |
+| `SkillDefinitionMap`     | `Partial<Record<SkillId, SkillDefinition>>`                                                        | `skills.ts` |
+| `SkillAlias`             | `string`                                                                                           | `matrix.ts` |
 
 Note: There is no `SkillRef` type alias. The type `SkillReference` in `skills.ts` is an object type, not an alias.
 
@@ -302,15 +311,15 @@ The operations layer defines focused result types for each operation, re-exporte
 
 ### Project Operations
 
-| Type                   | File                                             | Purpose                                    |
-| ---------------------- | ------------------------------------------------ | ------------------------------------------ |
-| `DetectedProject`      | `operations/project/detect-project.ts`           | Detected project installation state        |
-| `BothInstallations`    | `operations/project/detect-both-installations.ts` | Combined project + global installation    |
-| `ConfigWriteOptions`   | `operations/project/write-project-config.ts`     | Options for writing project config         |
-| `ConfigWriteResult`    | `operations/project/write-project-config.ts`     | Result of config write operation           |
-| `CompileAgentsOptions` | `operations/project/compile-agents.ts`           | Options for agent compilation              |
-| `CompilationResult`    | `operations/project/compile-agents.ts`           | Result of agent compilation                |
-| `AgentDefs`            | `operations/project/load-agent-defs.ts`          | Loaded agent definitions with source paths |
+| Type                   | File                                              | Purpose                                    |
+| ---------------------- | ------------------------------------------------- | ------------------------------------------ |
+| `DetectedProject`      | `operations/project/detect-project.ts`            | Detected project installation state        |
+| `BothInstallations`    | `operations/project/detect-both-installations.ts` | Combined project + global installation     |
+| `ConfigWriteOptions`   | `operations/project/write-project-config.ts`      | Options for writing project config         |
+| `ConfigWriteResult`    | `operations/project/write-project-config.ts`      | Result of config write operation           |
+| `CompileAgentsOptions` | `operations/project/compile-agents.ts`            | Options for agent compilation              |
+| `CompilationResult`    | `operations/project/compile-agents.ts`            | Result of agent compilation                |
+| `AgentDefs`            | `operations/project/load-agent-defs.ts`           | Loaded agent definitions with source paths |
 
 ## Edit Command Types (`src/cli/commands/edit.tsx`)
 

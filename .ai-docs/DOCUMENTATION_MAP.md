@@ -44,20 +44,20 @@ Machine-readable staleness tracker. Thresholds from `standards/documentation-bib
 
 ### New Files (from Phases 2+3 restructure)
 
-| Doc                              | Days Stale | Threshold | Status |
-| -------------------------------- | ---------- | --------- | ------ |
-| testing/infrastructure.md        | 0          | 14        | OK     |
-| testing/factories.md             | 0          | 14        | OK     |
-| testing/mock-data.md             | 0          | 14        | OK     |
-| testing/e2e-infrastructure.md    | 0          | 14        | OK     |
-| types/core-types.md              | 0          | 14        | OK     |
-| types/operations-types.md        | 0          | 14        | OK     |
-| types/zod-schemas.md             | 0          | 14        | OK     |
-| concepts/scope-system.md         | 0          | 14        | OK     |
-| concepts/tombstone-pattern.md    | 0          | 14        | OK     |
-| concepts/guard-pattern.md        | 0          | 14        | OK     |
-| commands/edit.md                 | 0          | 14        | OK     |
-| config/config-writer.md          | 0          | 14        | OK     |
+| Doc                           | Days Stale | Threshold | Status |
+| ----------------------------- | ---------- | --------- | ------ |
+| testing/infrastructure.md     | 0          | 14        | OK     |
+| testing/factories.md          | 0          | 14        | OK     |
+| testing/mock-data.md          | 0          | 14        | OK     |
+| testing/e2e-infrastructure.md | 0          | 14        | OK     |
+| types/core-types.md           | 0          | 14        | OK     |
+| types/operations-types.md     | 0          | 14        | OK     |
+| types/zod-schemas.md          | 0          | 14        | OK     |
+| concepts/scope-system.md      | 0          | 14        | OK     |
+| concepts/tombstone-pattern.md | 0          | 14        | OK     |
+| concepts/guard-pattern.md     | 0          | 14        | OK     |
+| commands/edit.md              | 0          | 14        | OK     |
+| config/config-writer.md       | 0          | 14        | OK     |
 
 **Status values:** `OK` = within threshold, `DUE` = at or past threshold, `OVERDUE` = at or past 2x threshold.
 **Date basis:** 2026-04-13. All new files created 2026-04-13. Original files: architecture-overview.md, commands.md, configuration.md, type-system.md, component-patterns.md, store-map.md, wizard-flow.md, state-transitions.md, and test-infrastructure.md updated 2026-04-13; all others last validated 2026-04-02.
@@ -239,6 +239,7 @@ Complete cross-reference and consistency audit across all 39 reference documenta
 Verified 8 documentation files against source code with 200+ individual claim checks:
 
 **Files validated:**
+
 - `state-transitions.md` (434 lines) -- every line reference, action table, reset matrix, initial state table, hotkey mapping
 - `store-map.md` (255 lines) -- WizardState shape, all action signatures, computed getters, usage patterns
 - `features/wizard-flow.md` (326 lines) -- WizardProps, WizardResultV2, hooks table, feature flags, domain descriptions, stack grouping
@@ -247,10 +248,12 @@ Verified 8 documentation files against source code with 200+ individual claim ch
 - `wizard/flow.md`, `wizard/state-transitions.md`, `wizard/store-map.md`, `wizard/component-patterns.md` -- pointer file targets verified
 
 **Inaccuracies found and fixed (2):**
+
 1. `state-transitions.md:196` -- `preselectAgentsFromDomains()` described as "Replaces (not merges)" but actual implementation merges with existing agentConfigs and preserves excluded entries. Fixed to accurate description.
 2. `features/wizard-flow.md:239-248` -- Domain descriptions table missing `desktop` domain. Added `desktop: "Desktop applications"` matching `domain-selection.tsx:16`.
 
 **Verified correct (sample of critical claims):**
+
 - WizardStep union at wizard-store.ts:262-268
 - WIZARD_STEPS at wizard-tabs.tsx:41-48
 - createInitialState() at wizard-store.ts:633 (all 27 initial values match)
@@ -329,6 +332,7 @@ Added YAML frontmatter to all 18 reference docs (11 root + 7 features/). Each fr
 **Area distribution:** architecture (5), wizard (4), features (4), commands (1), types (1), config (1), testing (1), features (1)
 
 **Files updated (18):**
+
 - `reference/architecture-overview.md`, `reference/boundary-map.md`, `reference/commands.md`
 - `reference/component-patterns.md`, `reference/dependency-graph.md`, `reference/findings-impact-report.md`
 - `reference/state-transitions.md`, `reference/store-map.md`, `reference/test-infrastructure.md`

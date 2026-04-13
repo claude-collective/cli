@@ -1,7 +1,22 @@
 ---
 scope: reference
 area: commands
-keywords: [init, edit, compile, config, new-agent, build, eject, import, list, search, validate, uninstall, info]
+keywords:
+  [
+    init,
+    edit,
+    compile,
+    config,
+    new-agent,
+    build,
+    eject,
+    import,
+    list,
+    search,
+    validate,
+    uninstall,
+    info,
+  ]
 related:
   - reference/architecture/overview.md
   - reference/wizard/flow.md

@@ -1,7 +1,17 @@
 ---
 scope: reference
 area: config
-keywords: [config, source-resolution, ProjectConfig, SkillConfig, config-writer, config-generator, scope-splitting, branding]
+keywords:
+  [
+    config,
+    source-resolution,
+    ProjectConfig,
+    SkillConfig,
+    config-writer,
+    config-generator,
+    scope-splitting,
+    branding,
+  ]
 related:
   - reference/config/config-writer.md
   - reference/concepts/scope-system.md

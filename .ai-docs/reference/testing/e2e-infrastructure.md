@@ -1,7 +1,18 @@
 ---
 scope: reference
 area: testing
-keywords: [e2e, page-object-model, POM, terminal-session, custom-matchers, fixtures, project-builder, dual-scope, timeout]
+keywords:
+  [
+    e2e,
+    page-object-model,
+    POM,
+    terminal-session,
+    custom-matchers,
+    fixtures,
+    project-builder,
+    dual-scope,
+    timeout,
+  ]
 related:
   - reference/testing/infrastructure.md
   - reference/testing/factories.md
@@ -172,15 +183,15 @@ The E2E tests use a Page Object Model pattern in `e2e/pages/`. Constants are sel
 
 **Constants (`e2e/pages/constants.ts`):**
 
-| Export            | Purpose                                                                                                                                                                          |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DIRS`            | Directory names (`.claude`, `.claude-src`, `skills`, etc.)                                                                                                                       |
-| `FILES`           | File names (`config.ts`, `metadata.yaml`, `SKILL.md`, etc.)                                                                                                                      |
-| `STEP_TEXT`       | Text used to identify wizard steps and completion states                                                                                                                         |
+| Export            | Purpose                                                                                                                                                                                                                       |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DIRS`            | Directory names (`.claude`, `.claude-src`, `skills`, etc.)                                                                                                                                                                    |
+| `FILES`           | File names (`config.ts`, `metadata.yaml`, `SKILL.md`, etc.)                                                                                                                                                                   |
+| `STEP_TEXT`       | Text used to identify wizard steps and completion states                                                                                                                                                                      |
 | `TIMEOUTS`        | Test timeouts (WIZARD_LOAD=15s, INSTALL=30s, PLUGIN_INSTALL=60s, EXIT=10s, SESSION_DEFAULT=10s, SESSION_DEFAULT_CI=20s, EXIT_WAIT=30s, SETUP=60s, LIFECYCLE=180s, EXTENDED_LIFECYCLE=300s, INTERACTIVE=120s, PLUGIN_TEST=90s) |
-| `INTERNAL_DELAYS` | Framework-internal delays (STEP_TRANSITION=500ms, KEYSTROKE=150ms)                                                                                                               |
-| `EXIT_CODES`      | Process exit codes (SUCCESS=0, ERROR=1, CANCELLED=4, etc.)                                                                                                                       |
-| `SOURCE_PATHS`    | Paths within source directories (skills, config, stacks)                                                                                                                         |
+| `INTERNAL_DELAYS` | Framework-internal delays (STEP_TRANSITION=500ms, KEYSTROKE=150ms)                                                                                                                                                            |
+| `EXIT_CODES`      | Process exit codes (SUCCESS=0, ERROR=1, CANCELLED=4, etc.)                                                                                                                                                                    |
+| `SOURCE_PATHS`    | Paths within source directories (skills, config, stacks)                                                                                                                                                                      |
 
 **Page Objects:**
 
@@ -235,6 +246,6 @@ Imported per-test via `import "../matchers/setup.js"`. The setup extends `expect
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `cli.ts`                | `CLI` class with `static run(args, project, options?)` for non-interactive commands                                                                                                                                                  |
 | `dual-scope-helpers.ts` | `DualScopeEnv` type, `createTestEnvironment()`, `initGlobal()`, `initProject()`, `setupDualScope()`, `initGlobalWithEject()`, `setupDualScopeWithEject()`, `createDualScopeEnv()`, `initProjectAllGlobal()`, `createGlobalOnlyEnv()` |
-| `expected-values.ts`    | `E2E_SKILL_IDS` (skill ID array), `E2E_AGENTS` (agent name constants) -- canonical expected values for E2E assertions                                                                                                               |
+| `expected-values.ts`    | `E2E_SKILL_IDS` (skill ID array), `E2E_AGENTS` (agent name constants) -- canonical expected values for E2E assertions                                                                                                                |
 | `interactive-prompt.ts` | `InteractivePrompt` class for PTY-based wizard tests                                                                                                                                                                                 |
 | `project-builder.ts`    | `ProjectBuilder` class with `minimal()`, `editable()`, plugin project factories                                                                                                                                                      |

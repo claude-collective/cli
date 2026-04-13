@@ -1,7 +1,8 @@
 ---
 scope: reference
 area: concepts
-keywords: [guard, toast, isInstalledGlobal, toggleTechnology, toggleAgent, toggleSkillScope, eject-guard]
+keywords:
+  [guard, toast, isInstalledGlobal, toggleTechnology, toggleAgent, toggleSkillScope, eject-guard]
 related:
   - reference/concepts/scope-system.md
   - reference/concepts/tombstone-pattern.md
@@ -27,8 +28,8 @@ All global-item guards share these preconditions:
 
 | Field                      | Required Value | Purpose                                        |
 | -------------------------- | -------------- | ---------------------------------------------- |
-| `isEditingFromGlobalScope` | `false`        | Global-scope edit bypasses all guards           |
-| `isInitMode`               | `false`        | Init wizard (first-time setup) bypasses guards  |
+| `isEditingFromGlobalScope` | `false`        | Global-scope edit bypasses all guards          |
+| `isInitMode`               | `false`        | Init wizard (first-time setup) bypasses guards |
 
 When either field is `true`, the guards are not active.
 
@@ -63,12 +64,14 @@ When either field is `true`, the guards are not active.
 **Trigger:** Pressing `S` on a focused skill in the build step
 
 **Guard conditions:**
+
 - No-op if `isEditingFromGlobalScope` is true (S key disabled entirely)
 - Blocks project-eject to global-eject when a non-excluded global eject entry already exists in `installedSkillConfigs`
 
 **Undo path:** If the current `skillConfigs` already contains an excluded tombstone for that skill ID, the guard allows the toggle. This permits undoing a previous scope change.
 
 **Tombstone management:**
+
 - Global-to-project: adds excluded tombstone for global entry
 - Project-to-global: removes excluded tombstone
 
@@ -113,10 +116,10 @@ Toast messages are stored in `toastMessage: string | null` state field. The `toa
 
 ## Summary Table
 
-| Guard                  | Action                       | When Blocked                                                    | Toast Text                                            |
-| ---------------------- | ---------------------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
-| Global skill toggle    | `toggleTechnology()`         | Global skill, project-scope edit, not init mode                 | "Global skills cannot be changed from project scope"  |
-| Global agent toggle    | `toggleAgent()`              | Global agent, project-scope edit, not init mode                 | "Global agents cannot be changed from project scope"  |
-| Skill scope eject      | `toggleSkillScope()`         | Project eject -> global when global eject exists (no tombstone) | "Already exists as ejected skill at global scope"     |
-| Agent scope            | `toggleAgentScope()`         | `isEditingFromGlobalScope` is true                              | No-op (silent)                                        |
-| Filter incompatible    | `toggleFilterIncompatible()` | N/A (skips excluded items silently)                             | N/A (no toast, just protects tombstones)              |
+| Guard               | Action                       | When Blocked                                                    | Toast Text                                           |
+| ------------------- | ---------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| Global skill toggle | `toggleTechnology()`         | Global skill, project-scope edit, not init mode                 | "Global skills cannot be changed from project scope" |
+| Global agent toggle | `toggleAgent()`              | Global agent, project-scope edit, not init mode                 | "Global agents cannot be changed from project scope" |
+| Skill scope eject   | `toggleSkillScope()`         | Project eject -> global when global eject exists (no tombstone) | "Already exists as ejected skill at global scope"    |
+| Agent scope         | `toggleAgentScope()`         | `isEditingFromGlobalScope` is true                              | No-op (silent)                                       |
+| Filter incompatible | `toggleFilterIncompatible()` | N/A (skips excluded items silently)                             | N/A (no toast, just protects tombstones)             |

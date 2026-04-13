@@ -1,7 +1,17 @@
 ---
 scope: reference
 area: testing
-keywords: [SKILLS, AGENT_DEFS, mock-matrices, mock-skills, mock-agents, mock-stacks, test-fixtures, TEST_CATEGORIES]
+keywords:
+  [
+    SKILLS,
+    AGENT_DEFS,
+    mock-matrices,
+    mock-skills,
+    mock-agents,
+    mock-stacks,
+    test-fixtures,
+    TEST_CATEGORIES,
+  ]
 related:
   - reference/testing/factories.md
   - reference/testing/infrastructure.md

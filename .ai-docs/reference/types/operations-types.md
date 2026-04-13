@@ -1,7 +1,15 @@
 ---
 scope: reference
 area: types
-keywords: [operations, LoadedSource, ConfigChanges, detectConfigChanges, migratePluginSkillScopes, edit-command]
+keywords:
+  [
+    operations,
+    LoadedSource,
+    ConfigChanges,
+    detectConfigChanges,
+    migratePluginSkillScopes,
+    edit-command,
+  ]
 related:
   - reference/types/core-types.md
   - reference/features/operations-layer.md
@@ -22,24 +30,24 @@ The operations layer defines focused result types for each operation, re-exporte
 
 ### Source Operations
 
-| Type                | File                                       | Purpose                                     |
-| ------------------- | ------------------------------------------ | ------------------------------------------- |
-| `LoadSourceOptions` | `operations/source/load-source.ts`         | Options for loading a skills source         |
-| `LoadedSource`      | `operations/source/load-source.ts`         | Result of loading a source (matrix + paths) |
-| `MarketplaceResult` | `operations/source/ensure-marketplace.ts`  | Result of marketplace registration          |
+| Type                | File                                      | Purpose                                     |
+| ------------------- | ----------------------------------------- | ------------------------------------------- |
+| `LoadSourceOptions` | `operations/source/load-source.ts`        | Options for loading a skills source         |
+| `LoadedSource`      | `operations/source/load-source.ts`        | Result of loading a source (matrix + paths) |
+| `MarketplaceResult` | `operations/source/ensure-marketplace.ts` | Result of marketplace registration          |
 
 ### Skill Operations
 
-| Type                     | File                                              | Purpose                                         |
-| ------------------------ | ------------------------------------------------- | ----------------------------------------------- |
-| `DiscoveredSkills`       | `operations/skills/discover-skills.ts`            | Result of skill discovery (local + marketplace) |
-| `ScopedSkillDir`         | `operations/skills/collect-scoped-skill-dirs.ts`  | Single scoped skill directory entry             |
-| `ScopedSkillDirsResult`  | `operations/skills/collect-scoped-skill-dirs.ts`  | Collected scoped dirs with counts               |
-| `SkillCopyResult`        | `operations/skills/copy-local-skills.ts`          | Result of copying local skills                  |
-| `SkillComparisonResults` | `operations/skills/compare-skills.ts`             | Comparison results (added/removed/changed)      |
-| `SkillMatchResult`       | `operations/skills/find-skill-match.ts`           | Result of matching a skill to a source          |
-| `PluginInstallResult`    | `operations/skills/install-plugin-skills.ts`      | Result of plugin skill installation             |
-| `PluginUninstallResult`  | `operations/skills/uninstall-plugin-skills.ts`    | Result of plugin skill uninstallation           |
+| Type                     | File                                             | Purpose                                         |
+| ------------------------ | ------------------------------------------------ | ----------------------------------------------- |
+| `DiscoveredSkills`       | `operations/skills/discover-skills.ts`           | Result of skill discovery (local + marketplace) |
+| `ScopedSkillDir`         | `operations/skills/collect-scoped-skill-dirs.ts` | Single scoped skill directory entry             |
+| `ScopedSkillDirsResult`  | `operations/skills/collect-scoped-skill-dirs.ts` | Collected scoped dirs with counts               |
+| `SkillCopyResult`        | `operations/skills/copy-local-skills.ts`         | Result of copying local skills                  |
+| `SkillComparisonResults` | `operations/skills/compare-skills.ts`            | Comparison results (added/removed/changed)      |
+| `SkillMatchResult`       | `operations/skills/find-skill-match.ts`          | Result of matching a skill to a source          |
+| `PluginInstallResult`    | `operations/skills/install-plugin-skills.ts`     | Result of plugin skill installation             |
+| `PluginUninstallResult`  | `operations/skills/uninstall-plugin-skills.ts`   | Result of plugin skill uninstallation           |
 
 ### Project Operations
 

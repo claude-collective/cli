@@ -1,7 +1,19 @@
 ---
 scope: reference
 area: concepts
-keywords: [scope, project, global, resolveInstallPaths, writeScopedConfigs, splitConfigByScope, dual-scope, lock-icon, isEditingFromGlobalScope, isInitMode]
+keywords:
+  [
+    scope,
+    project,
+    global,
+    resolveInstallPaths,
+    writeScopedConfigs,
+    splitConfigByScope,
+    dual-scope,
+    lock-icon,
+    isEditingFromGlobalScope,
+    isInitMode,
+  ]
 related:
   - reference/architecture/overview.md
   - reference/wizard/flow.md
@@ -25,10 +37,10 @@ Skills and agents can exist at two scopes: `"project"` and `"global"`. This affe
 
 ## File Paths by Scope
 
-| Scope     | Skills Path                      | Agents Path                      | Config Path                          |
-| --------- | -------------------------------- | -------------------------------- | ------------------------------------ |
-| `project` | `{projectDir}/.claude/skills/`   | `{projectDir}/.claude/agents/`   | `{projectDir}/.claude-src/config.ts` |
-| `global`  | `~/.claude/skills/`              | `~/.claude/agents/`              | `~/.claude-src/config.ts`            |
+| Scope     | Skills Path                    | Agents Path                    | Config Path                          |
+| --------- | ------------------------------ | ------------------------------ | ------------------------------------ |
+| `project` | `{projectDir}/.claude/skills/` | `{projectDir}/.claude/agents/` | `{projectDir}/.claude-src/config.ts` |
+| `global`  | `~/.claude/skills/`            | `~/.claude/agents/`            | `~/.claude-src/config.ts`            |
 
 ## Path Resolution
 
@@ -68,6 +80,7 @@ Splits a `ProjectConfig` into global and project partitions by skill/agent scope
 **Writer:** `writeScopedConfigs()` in `src/cli/lib/installation/local-installer.ts`
 
 Writes:
+
 1. Global config to `~/.claude-src/config.ts` (standalone)
 2. Project config to `{projectDir}/.claude-src/config.ts` (self-contained snapshot via `generateProjectConfigWithInlinedGlobal()` -- both global and project entries inlined, no import/spread)
 3. Config-types files: both global and project get standalone types (self-contained)
@@ -90,13 +103,14 @@ Guards prevent project-scope edits from modifying globally-installed skills/agen
 **Guard check:** If a skill/agent is found in `installedSkillConfigs`/`installedAgentConfigs` with `scope === "global"` and `!excluded`, and the wizard is NOT in global-scope edit mode (`isEditingFromGlobalScope === false`) and NOT in init mode (`isInitMode === false`), the action returns a toast message instead of modifying state.
 
 **Key state fields:**
+
 - `isEditingFromGlobalScope` (boolean) -- When true, scope toggling (S key) is disabled entirely
 - `isInitMode` (boolean, default `false`) -- Distinguishes init wizard (first-time setup, no restrictions) from edit wizard (existing installation, global items locked)
 
 **Actions with guards:**
 
-| Action                       | Guard Behavior                                                                                                          |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Action                       | Guard Behavior                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `toggleTechnology()`         | Toast if skill is installed globally. Also toasts if exclusive swap would deselect a globally-installed skill.           |
 | `toggleSkillScope()`         | No-op if `isEditingFromGlobalScope`. Toast if project eject to global and global eject already installed (no tombstone). |
 | `toggleAgent()`              | Toast if agent is installed globally (not in global edit or init mode).                                                  |
@@ -113,12 +127,13 @@ Guards prevent project-scope edits from modifying globally-installed skills/agen
 
 ## Scope Store Actions
 
-| Action                | Signature                                    | Effect                                                                                                |
-| --------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `toggleSkillScope()`  | `(skillId: SkillId) => void`                 | Toggles `scope` between `"project"` and `"global"`. Tombstone management on scope transitions.        |
-| `toggleAgentScope()`  | `(agentName: AgentName) => void`             | Toggles `scope` between `"project"` and `"global"`. Tombstone management on scope transitions.        |
+| Action               | Signature                        | Effect                                                                                         |
+| -------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `toggleSkillScope()` | `(skillId: SkillId) => void`     | Toggles `scope` between `"project"` and `"global"`. Tombstone management on scope transitions. |
+| `toggleAgentScope()` | `(agentName: AgentName) => void` | Toggles `scope` between `"project"` and `"global"`. Tombstone management on scope transitions. |
 
 **Tombstone management on scope toggle:**
+
 - Moving global-installed skill/agent to project: adds excluded global entry (tombstone)
 - Moving back to global: removes the excluded entry
 

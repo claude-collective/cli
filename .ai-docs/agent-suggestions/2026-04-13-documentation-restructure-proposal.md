@@ -81,6 +81,7 @@ last_validated: 2026-04-13
 ```
 
 Benefits:
+
 - AI agents can grep for `keywords: [.*scope.*]` to find relevant docs
 - `related:` field creates explicit cross-references
 - `area:` enables filtering by subsystem
@@ -131,12 +132,14 @@ reference/
 ```
 
 Benefits:
+
 - Related docs grouped physically (wizard/ has flow + store + transitions)
 - Cross-cutting concepts have a single authoritative source
 - Large monolithic files split into focused documents
 - Directory names provide semantic context
 
 Risks:
+
 - DOCUMENTATION_MAP.md needs full rewrite
 - All cross-references between docs need updating
 - Other agents' cached file paths become stale

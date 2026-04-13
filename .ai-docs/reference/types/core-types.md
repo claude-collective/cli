@@ -1,7 +1,19 @@
 ---
 scope: reference
 area: types
-keywords: [SkillId, SkillSlug, Domain, Category, AgentName, ResolvedSkill, MergedSkillsMatrix, ProjectConfig, type-guards, typedEntries]
+keywords:
+  [
+    SkillId,
+    SkillSlug,
+    Domain,
+    Category,
+    AgentName,
+    ResolvedSkill,
+    MergedSkillsMatrix,
+    ProjectConfig,
+    type-guards,
+    typedEntries,
+  ]
 related:
   - reference/types/operations-types.md
   - reference/types/zod-schemas.md
@@ -159,18 +171,18 @@ type PermissionMode =
 
 ## Named Aliases (Composite Types)
 
-| Alias                    | Definition                                                                                         | File               |
-| ------------------------ | -------------------------------------------------------------------------------------------------- | ------------------ |
-| `CategorySelections`     | `Partial<Record<Category, SkillId[]>>`                                                             | `skills.ts`        |
-| `ResolvedCategorySkills` | `Partial<Record<Category, SkillId>>`                                                               | `skills.ts`        |
-| `DomainSelections`       | `Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>`                                    | `matrix.ts`        |
-| `CategoryMap`            | `Partial<Record<Category, CategoryDefinition>>`                                                    | `matrix.ts`        |
-| `CategoryDomainMap`      | `Partial<Record<Category, { domain?: Domain }>>`                                                   | `matrix.ts`        |
-| `SkillSlugMap`           | `{ slugToId: Partial<Record<SkillSlug, SkillId>>; idToSlug: Partial<Record<SkillId, SkillSlug>> }` | `matrix.ts`        |
-| `StackAgentConfig`       | `Partial<Record<Category, SkillAssignment[]>>`                                                     | `stacks.ts`        |
-| `PluginSkillRef`         | `` `${SkillId}:${SkillId}` ``                                                                      | `skills.ts`        |
-| `SkillDefinitionMap`     | `Partial<Record<SkillId, SkillDefinition>>`                                                        | `skills.ts`        |
-| `SkillAlias`             | `string`                                                                                           | `matrix.ts`        |
+| Alias                    | Definition                                                                                         | File        |
+| ------------------------ | -------------------------------------------------------------------------------------------------- | ----------- |
+| `CategorySelections`     | `Partial<Record<Category, SkillId[]>>`                                                             | `skills.ts` |
+| `ResolvedCategorySkills` | `Partial<Record<Category, SkillId>>`                                                               | `skills.ts` |
+| `DomainSelections`       | `Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>`                                    | `matrix.ts` |
+| `CategoryMap`            | `Partial<Record<Category, CategoryDefinition>>`                                                    | `matrix.ts` |
+| `CategoryDomainMap`      | `Partial<Record<Category, { domain?: Domain }>>`                                                   | `matrix.ts` |
+| `SkillSlugMap`           | `{ slugToId: Partial<Record<SkillSlug, SkillId>>; idToSlug: Partial<Record<SkillId, SkillSlug>> }` | `matrix.ts` |
+| `StackAgentConfig`       | `Partial<Record<Category, SkillAssignment[]>>`                                                     | `stacks.ts` |
+| `PluginSkillRef`         | `` `${SkillId}:${SkillId}` ``                                                                      | `skills.ts` |
+| `SkillDefinitionMap`     | `Partial<Record<SkillId, SkillDefinition>>`                                                        | `skills.ts` |
+| `SkillAlias`             | `string`                                                                                           | `matrix.ts` |
 
 Note: There is no `SkillRef` type alias. The type in `skills.ts` is `SkillReference` (an object type, not an alias).
 

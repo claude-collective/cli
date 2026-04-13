@@ -19,11 +19,11 @@ last_validated: 2026-04-02
 
 **Entry Points:**
 
-| Entry Point          | File                                                  | When Called                                                                    |
-| -------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `recompileAgents()`  | `src/cli/lib/agents/agent-recompiler.ts`          | `compile` command, `edit` flow                                                 |
-| `compileAllAgents()` | `src/cli/lib/compiler.ts`                         | Called by standalone compilation flow                                          |
-| `compileAllSkills()` | `src/cli/lib/compiler.ts`                         | Called by standalone compilation flow                                          |
+| Entry Point          | File                                               | When Called                                                                    |
+| -------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `recompileAgents()`  | `src/cli/lib/agents/agent-recompiler.ts`           | `compile` command, `edit` flow                                                 |
+| `compileAllAgents()` | `src/cli/lib/compiler.ts`                          | Called by standalone compilation flow                                          |
+| `compileAllSkills()` | `src/cli/lib/compiler.ts`                          | Called by standalone compilation flow                                          |
 | `compileAgents()`    | `src/cli/lib/operations/project/compile-agents.ts` | Operations layer wrapper (scope-filtering + delegation to `recompileAgents()`) |
 
 ## Pipeline Flow
@@ -258,12 +258,12 @@ This prevents user-controlled data (from YAML/TS config files) from executing as
 
 For native Claude Code plugin distribution:
 
-| Compiler                  | File                                              | Output                                           |
-| ------------------------- | ------------------------------------------------- | ------------------------------------------------ |
-| `compileSkillPlugin()`    | `src/cli/lib/skills/skill-plugin-compiler.ts`  | Individual skill plugin dirs                     |
-| `compileAgentPlugin()`    | `src/cli/lib/agents/agent-plugin-compiler.ts`  | Individual agent plugin dirs                     |
-| `compileStackPlugin()`    | `src/cli/lib/stacks/stack-plugin-compiler.ts`  | Bundled stack plugin dir                         |
-| `compileAgentForPlugin()` | `src/cli/lib/stacks/stack-plugin-compiler.ts`  | Single agent for plugin mode (handles pluginRef) |
+| Compiler                  | File                                          | Output                                           |
+| ------------------------- | --------------------------------------------- | ------------------------------------------------ |
+| `compileSkillPlugin()`    | `src/cli/lib/skills/skill-plugin-compiler.ts` | Individual skill plugin dirs                     |
+| `compileAgentPlugin()`    | `src/cli/lib/agents/agent-plugin-compiler.ts` | Individual agent plugin dirs                     |
+| `compileStackPlugin()`    | `src/cli/lib/stacks/stack-plugin-compiler.ts` | Bundled stack plugin dir                         |
+| `compileAgentForPlugin()` | `src/cli/lib/stacks/stack-plugin-compiler.ts` | Single agent for plugin mode (handles pluginRef) |
 
 **Plugin-mode difference:** `compileAgentForPlugin()` in `stack-plugin-compiler.ts` differs from the standard `compileAgent()` in `compiler.ts` by:
 
@@ -277,9 +277,9 @@ The compilation pipeline is wrapped by the operations layer for use by commands:
 
 | Operation                   | File                                                          | Purpose                                                        |
 | --------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------- |
-| `compileAgents()`           | `src/cli/lib/operations/project/compile-agents.ts`         | Scope-filtering orchestrator delegating to `recompileAgents()` |
-| `loadAgentDefs()`           | `src/cli/lib/operations/project/load-agent-defs.ts`        | Load + merge CLI/source agent definitions                      |
-| `discoverInstalledSkills()` | `src/cli/lib/operations/skills/discover-skills.ts`         | 4-way skill discovery and merge                                |
+| `compileAgents()`           | `src/cli/lib/operations/project/compile-agents.ts`            | Scope-filtering orchestrator delegating to `recompileAgents()` |
+| `loadAgentDefs()`           | `src/cli/lib/operations/project/load-agent-defs.ts`           | Load + merge CLI/source agent definitions                      |
+| `discoverInstalledSkills()` | `src/cli/lib/operations/skills/discover-skills.ts`            | 4-way skill discovery and merge                                |
 | `detectBothInstallations()` | `src/cli/lib/operations/project/detect-both-installations.ts` | Find global + project installations                            |
 
 The `compile` command (`src/cli/commands/compile.ts`) uses these operations to:

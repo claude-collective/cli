@@ -1,7 +1,15 @@
 ---
 scope: reference
 area: commands
-keywords: [edit, ConfigChanges, detectConfigChanges, migratePluginSkillScopes, change-summary, scope-migration]
+keywords:
+  [
+    edit,
+    ConfigChanges,
+    detectConfigChanges,
+    migratePluginSkillScopes,
+    change-summary,
+    scope-migration,
+  ]
 related:
   - reference/commands/index.md
   - reference/types/operations-types.md

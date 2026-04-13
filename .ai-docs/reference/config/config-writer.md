@@ -1,7 +1,15 @@
 ---
 scope: reference
 area: config
-keywords: [config-writer, generateConfigSource, generateProjectConfigWithInlinedGlobal, config-types-writer, scope-split, global-config]
+keywords:
+  [
+    config-writer,
+    generateConfigSource,
+    generateProjectConfigWithInlinedGlobal,
+    config-types-writer,
+    scope-split,
+    global-config,
+  ]
 related:
   - reference/config/configuration.md
   - reference/concepts/scope-system.md
