@@ -1,3 +1,4 @@
+import path from "path";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
@@ -16,12 +17,10 @@ import "../matchers/setup.js";
  * - Removal in eject mode updates config but does NOT delete skill files
  */
 
-/** Timeout for individual edit test cases including wizard navigation + edit completion */
-const EDIT_TEST_TIMEOUT_MS = TIMEOUTS.PLUGIN_INSTALL;
-
 describe("edit wizard — eject mode", () => {
   let sourceFixture: { sourceDir: string; tempDir: string };
   let wizard: EditWizard | undefined;
+  let tempDir: string | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
@@ -35,23 +34,16 @@ describe("edit wizard — eject mode", () => {
   afterEach(async () => {
     await wizard?.destroy();
     wizard = undefined;
+    if (tempDir) {
+      await cleanupTempDir(tempDir);
+      tempDir = undefined;
+    }
   });
-
-  /**
-   * Navigate from a single-domain build step through to completion.
-   * Single domain: Enter once on build -> sources -> agents -> confirm -> complete.
-   */
-  async function completeEditFromBuild(w: EditWizard) {
-    const sources = await w.build.advanceToSources();
-    const agents = await sources.acceptDefaults();
-    const confirm = await agents.acceptDefaults("edit");
-    return confirm.confirm();
-  }
 
   describe("add a skill during local edit", () => {
     it(
       "should update config with newly selected skill",
-      { timeout: EDIT_TEST_TIMEOUT_MS },
+      { timeout: TIMEOUTS.PLUGIN_INSTALL },
       async () => {
         // Create project with only web-framework-react. The E2E source also has
         // web-testing-vitest and web-state-zustand in the Web domain.
@@ -60,6 +52,7 @@ describe("edit wizard — eject mode", () => {
           agents: ["web-developer"],
           domains: ["web"],
         });
+        tempDir = path.dirname(project.dir);
 
         wizard = await EditWizard.launch({
           projectDir: project.dir,
@@ -73,7 +66,7 @@ describe("edit wizard — eject mode", () => {
         await wizard.build.selectSkill("vitest");
 
         // Navigate through remaining steps: build -> sources -> agents -> confirm -> complete
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -92,13 +85,14 @@ describe("edit wizard — eject mode", () => {
 
     it(
       "should show changes summary with added count",
-      { timeout: EDIT_TEST_TIMEOUT_MS },
+      { timeout: TIMEOUTS.PLUGIN_INSTALL },
       async () => {
         const project = await ProjectBuilder.editable({
           skills: ["web-framework-react"],
           agents: ["web-developer"],
           domains: ["web"],
         });
+        tempDir = path.dirname(project.dir);
 
         wizard = await EditWizard.launch({
           projectDir: project.dir,
@@ -112,7 +106,7 @@ describe("edit wizard — eject mode", () => {
         await wizard.build.navigateDown();
         await wizard.build.selectSkill("vitest");
 
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -125,13 +119,14 @@ describe("edit wizard — eject mode", () => {
 
     it(
       "should recompile agents after adding a skill",
-      { timeout: EDIT_TEST_TIMEOUT_MS },
+      { timeout: TIMEOUTS.PLUGIN_INSTALL },
       async () => {
         const project = await ProjectBuilder.editable({
           skills: ["web-framework-react"],
           agents: ["web-developer"],
           domains: ["web"],
         });
+        tempDir = path.dirname(project.dir);
 
         wizard = await EditWizard.launch({
           projectDir: project.dir,
@@ -145,7 +140,7 @@ describe("edit wizard — eject mode", () => {
         await wizard.build.navigateDown();
         await wizard.build.selectSkill("vitest");
 
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         await expectPhaseSuccess(result, {
           compiledAgents: ["web-developer"],
@@ -157,7 +152,7 @@ describe("edit wizard — eject mode", () => {
   describe("remove a skill during local edit", () => {
     it(
       "should detect unresolvable skill as removed and complete edit",
-      { timeout: EDIT_TEST_TIMEOUT_MS },
+      { timeout: TIMEOUTS.PLUGIN_INSTALL },
       async () => {
         // Create project with 2 skills: web-framework-react (in E2E source)
         // and web-styling-tailwind (NOT in E2E source). The wizard cannot
@@ -167,6 +162,7 @@ describe("edit wizard — eject mode", () => {
           agents: ["web-developer"],
           domains: ["web"],
         });
+        tempDir = path.dirname(project.dir);
 
         wizard = await EditWizard.launch({
           projectDir: project.dir,
@@ -177,7 +173,7 @@ describe("edit wizard — eject mode", () => {
         });
 
         // Navigate straight through without changing skills
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -189,15 +185,21 @@ describe("edit wizard — eject mode", () => {
 
         // Config should still reference the surviving skill.
         await expect(result.project).toHaveConfig({ skillIds: ["web-framework-react"] });
+
+        // The removed skill must NOT appear in compiled agent content
+        await expect(result.project).toHaveCompiledAgentContent("web-developer", {
+          notContains: ["web-styling-tailwind"],
+        });
       },
     );
 
-    it("should show removal in changes summary", { timeout: EDIT_TEST_TIMEOUT_MS }, async () => {
+    it("should show removal in changes summary", { timeout: TIMEOUTS.PLUGIN_INSTALL }, async () => {
       const project = await ProjectBuilder.editable({
         skills: ["web-framework-react", "web-styling-tailwind"],
         agents: ["web-developer"],
         domains: ["web"],
       });
+      tempDir = path.dirname(project.dir);
 
       wizard = await EditWizard.launch({
         projectDir: project.dir,
@@ -207,7 +209,7 @@ describe("edit wizard — eject mode", () => {
         env: { HOME: project.dir },
       });
 
-      const result = await completeEditFromBuild(wizard);
+      const result = await wizard.completeFromBuild();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -219,13 +221,14 @@ describe("edit wizard — eject mode", () => {
 
     it(
       "should recompile agents after removing a skill",
-      { timeout: EDIT_TEST_TIMEOUT_MS },
+      { timeout: TIMEOUTS.PLUGIN_INSTALL },
       async () => {
         const project = await ProjectBuilder.editable({
           skills: ["web-framework-react", "web-styling-tailwind"],
           agents: ["web-developer"],
           domains: ["web"],
         });
+        tempDir = path.dirname(project.dir);
 
         wizard = await EditWizard.launch({
           projectDir: project.dir,
@@ -235,7 +238,7 @@ describe("edit wizard — eject mode", () => {
           env: { HOME: project.dir },
         });
 
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         await expectPhaseSuccess(result, {
           compiledAgents: ["web-developer"],
@@ -245,13 +248,14 @@ describe("edit wizard — eject mode", () => {
 
     it(
       "should preserve local skill files when source is unchanged during edit",
-      { timeout: EDIT_TEST_TIMEOUT_MS },
+      { timeout: TIMEOUTS.PLUGIN_INSTALL },
       async () => {
         const project = await ProjectBuilder.editable({
           skills: ["web-framework-react", "web-styling-tailwind"],
           agents: ["web-developer"],
           domains: ["web"],
         });
+        tempDir = path.dirname(project.dir);
 
         wizard = await EditWizard.launch({
           projectDir: project.dir,
@@ -261,7 +265,7 @@ describe("edit wizard — eject mode", () => {
           env: { HOME: project.dir },
         });
 
-        const result = await completeEditFromBuild(wizard);
+        const result = await wizard.completeFromBuild();
 
         // The wizard preserves the saved source ("eject") from the existing config
         // when the user doesn't explicitly change it. No source migration is triggered,

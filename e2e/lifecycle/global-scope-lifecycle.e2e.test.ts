@@ -1,19 +1,16 @@
 import { CLI } from "../fixtures/cli.js";
-import { mkdir } from "fs/promises";
-import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, STEP_TEXT } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
+import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import {
-  cleanupTempDir,
-  createPermissionsFile,
-  createTempDir,
-  ensureBinaryExists,
-} from "../helpers/test-utils.js";
-import { createDualScopeEnv, type DualScopeEnv } from "../fixtures/dual-scope-helpers.js";
+  createDualScopeEnv,
+  createTestEnvironment,
+  type DualScopeEnv,
+} from "../fixtures/dual-scope-helpers.js";
 
 /**
  * Global scope lifecycle E2E tests -- regression coverage for scope-blind bugs.
@@ -174,14 +171,9 @@ describe("global scope lifecycle -- init wizard with scope toggling", () => {
     "should place global-scoped local skills at HOME and project-scoped at project dir",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-      tempDir = await createTempDir();
-      const fakeHome = path.join(tempDir, "fake-home");
-      const projectDir = path.join(fakeHome, "project");
-
-      await mkdir(fakeHome, { recursive: true });
-      await mkdir(projectDir, { recursive: true });
-      await createPermissionsFile(fakeHome);
-      await createPermissionsFile(projectDir);
+      const env = await createTestEnvironment();
+      tempDir = env.tempDir;
+      const { fakeHome, projectDir } = env;
 
       // Run init wizard from project dir with HOME pointing to fakeHome
       wizard = await InitWizard.launch({

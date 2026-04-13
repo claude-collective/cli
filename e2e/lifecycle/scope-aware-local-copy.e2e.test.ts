@@ -1,6 +1,6 @@
-import { mkdir } from "fs/promises";
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
@@ -12,8 +12,6 @@ import { InitWizard } from "../pages/wizards/init-wizard.js";
 import {
   isClaudeCLIAvailable,
   cleanupTempDir,
-  createPermissionsFile,
-  createTempDir,
   ensureBinaryExists,
   fileExists,
   injectMarketplaceIntoConfig,
@@ -63,14 +61,9 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
       "should copy project-scoped local skills to project dir and global-scoped local skills to HOME dir",
       { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
       async () => {
-        tempDir = await createTempDir();
-        const fakeHome = path.join(tempDir, "fake-home");
-        const projectDir = path.join(fakeHome, "project");
-
-        await mkdir(fakeHome, { recursive: true });
-        await mkdir(projectDir, { recursive: true });
-        await createPermissionsFile(fakeHome);
-        await createPermissionsFile(projectDir);
+        const env = await createTestEnvironment();
+        tempDir = env.tempDir;
+        const { fakeHome, projectDir } = env;
 
         initWizard = await InitWizard.launch({
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
@@ -131,14 +124,9 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
       "should copy to HOME when switching global-scope skill from plugin to local",
       { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
       async () => {
-        tempDir = await createTempDir();
-        const fakeHome = path.join(tempDir, "fake-home");
-        const projectDir = path.join(fakeHome, "project");
-
-        await mkdir(fakeHome, { recursive: true });
-        await mkdir(projectDir, { recursive: true });
-        await createPermissionsFile(fakeHome);
-        await createPermissionsFile(projectDir);
+        const env = await createTestEnvironment();
+        tempDir = env.tempDir;
+        const { fakeHome, projectDir } = env;
 
         // Phase 1: Init in plugin mode -- all skills global scope, plugin source
         initWizard = await InitWizard.launch({
@@ -185,14 +173,9 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
       "should delete from HOME when switching global-scope skill from local to plugin",
       { timeout: TIMEOUTS.EXTENDED_LIFECYCLE },
       async () => {
-        tempDir = await createTempDir();
-        const fakeHome = path.join(tempDir, "fake-home");
-        const projectDir = path.join(fakeHome, "project");
-
-        await mkdir(fakeHome, { recursive: true });
-        await mkdir(projectDir, { recursive: true });
-        await createPermissionsFile(fakeHome);
-        await createPermissionsFile(projectDir);
+        const env = await createTestEnvironment();
+        tempDir = env.tempDir;
+        const { fakeHome, projectDir } = env;
 
         // Phase 1: Init in eject mode -- all skills global scope
         initWizard = await InitWizard.launch({

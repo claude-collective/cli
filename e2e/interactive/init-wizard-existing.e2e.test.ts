@@ -1,15 +1,16 @@
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir } from "fs/promises";
 import path from "path";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { DashboardSession } from "../pages/dashboard-session.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import { STEP_TEXT, TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import {
   createTempDir,
   cleanupTempDir,
+  createPermissionsFile,
   ensureBinaryExists,
   writeProjectConfig,
 } from "../helpers/test-utils.js";
@@ -47,12 +48,7 @@ describe("init wizard — existing projects", () => {
       source = await createE2ESource();
 
       // Create .claude/ directory with settings but no .claude-src/config.ts
-      const claudeDir = path.join(tempDir, DIRS.CLAUDE);
-      await mkdir(claudeDir, { recursive: true });
-      await writeFile(
-        path.join(claudeDir, FILES.SETTINGS_JSON),
-        JSON.stringify({ permissions: { allow: [] } }),
-      );
+      await createPermissionsFile(tempDir);
 
       wizard = await InitWizard.launch({
         projectDir: tempDir,
@@ -93,6 +89,7 @@ describe("init wizard — existing projects", () => {
     ): Promise<string> {
       source = await createE2ESource();
       const project = await ProjectBuilder.editable(options);
+      tempDir = path.dirname(project.dir);
       return project.dir;
     }
 

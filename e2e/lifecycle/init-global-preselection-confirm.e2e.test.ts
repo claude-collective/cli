@@ -1,12 +1,11 @@
-import { mkdir } from "fs/promises";
-import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
+import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { cleanupTempDir, createTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 
 /**
  * D-182: Deselected global skills should NOT show as removed on the confirm
@@ -44,12 +43,9 @@ describe("init global preselection confirm step", () => {
     "should not show deselected global skills as removed on confirm step during project init",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-      tempDir = await createTempDir();
-      const fakeHome = path.join(tempDir, "fake-home");
-      const projectDir = path.join(fakeHome, "project");
-
-      await mkdir(fakeHome, { recursive: true });
-      await mkdir(projectDir, { recursive: true });
+      const env = await createTestEnvironment();
+      tempDir = env.tempDir;
+      const { fakeHome, projectDir } = env;
 
       // Phase 1: Init from HOME -- create global installation with React
       const globalWizard = await InitWizard.launch({

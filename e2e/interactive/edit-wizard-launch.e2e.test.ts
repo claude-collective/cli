@@ -52,6 +52,7 @@ describe("edit wizard — launch and display", () => {
   describe("wizard launch", () => {
     it("should display startup messages for an existing installation", async () => {
       const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
 
       wizard = await EditWizard.launch({ projectDir: project.dir });
 
@@ -61,6 +62,7 @@ describe("edit wizard — launch and display", () => {
 
     it("should show skills loaded status", async () => {
       const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
 
       wizard = await EditWizard.launch({ projectDir: project.dir });
 
@@ -74,6 +76,7 @@ describe("edit wizard — launch and display", () => {
         agents: ["web-developer"],
         domains: ["web"],
       });
+      tempDir = path.dirname(project.dir);
 
       wizard = await EditWizard.launch({ projectDir: project.dir, rows: 40, cols: 120 });
 
@@ -86,6 +89,7 @@ describe("edit wizard — launch and display", () => {
 
     it("should reach the build step wizard view", async () => {
       const project = await ProjectBuilder.editable();
+      tempDir = path.dirname(project.dir);
 
       wizard = await EditWizard.launch({ projectDir: project.dir, rows: 40, cols: 120 });
 
@@ -109,6 +113,7 @@ describe("edit wizard — launch and display", () => {
         agents: ["web-developer"],
         domains: ["web"],
       });
+      tempDir = path.dirname(project.dir);
 
       wizard = await EditWizard.launch({ projectDir: project.dir, rows: 60, cols: 120 });
 
@@ -130,6 +135,7 @@ describe("edit wizard — launch and display", () => {
         agents: ["web-developer"],
         domains: ["web"],
       });
+      tempDir = path.dirname(project.dir);
 
       const source = await createE2ESource();
 
@@ -156,6 +162,7 @@ describe("edit wizard — launch and display", () => {
         agents: ["web-developer"],
         domains: ["web"],
       });
+      tempDir = path.dirname(project.dir);
 
       // Create an additional local skill that was NOT in the original config.
       await createLocalSkill(project.dir, "web-testing-vitest", {

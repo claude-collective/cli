@@ -13,6 +13,11 @@ import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
 
+/** Write a minimal agent .md file to the agents directory (no frontmatter needed for list). */
+async function writeAgentFile(baseDir: string, agentName: string): Promise<void> {
+  await writeFile(path.join(agentsPath(baseDir), `${agentName}.md`), `# ${agentName}\n`);
+}
+
 describe("list command", () => {
   let tempDir: string;
 
@@ -131,9 +136,8 @@ describe("list command", () => {
       const projectDir = project.dir;
 
       // Create agent markdown files in the agents directory
-      const agentsDir = agentsPath(projectDir);
-      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer\n");
-      await writeFile(path.join(agentsDir, "api-developer.md"), "# API Developer\n");
+      await writeAgentFile(projectDir, "web-developer");
+      await writeAgentFile(projectDir, "api-developer");
 
       const { exitCode, stdout } = await CLI.run(["list"], { dir: projectDir });
 

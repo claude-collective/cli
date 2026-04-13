@@ -9,12 +9,23 @@ import {
   writeProjectConfig,
   createPermissionsFile,
   createLocalSkill,
+  agentsPath,
   fileExists,
   readTestFile,
 } from "../helpers/test-utils.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { DIRS, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import "../matchers/setup.js";
+
+/** Write a minimal agent .md stub to the agents directory. */
+async function writeAgentStub(baseDir: string, agentName: string, content: string): Promise<void> {
+  const agentsDir = agentsPath(baseDir);
+  await mkdir(agentsDir, { recursive: true });
+  await writeFile(
+    path.join(agentsDir, `${agentName}.md`),
+    `---\nname: ${agentName}\n---\n${content}\n`,
+  );
+}
 
 /**
  * Bug A regression test: edit command must route agent compilation output
@@ -76,12 +87,7 @@ describe("edit recompile routes agents to correct scope directory", () => {
       });
 
       // Create global agent file (stub — will be overwritten by recompilation)
-      const globalAgentsDir = path.join(tempHOME, DIRS.CLAUDE, "agents");
-      await mkdir(globalAgentsDir, { recursive: true });
-      await writeFile(
-        path.join(globalAgentsDir, "web-developer.md"),
-        "---\nname: web-developer\n---\nSTUB: global web developer agent.\n",
-      );
+      await writeAgentStub(tempHOME, "web-developer", "STUB: global web developer agent.");
 
       // --- Setup project config at <tempHOME>/project/.claude-src/config.ts ---
       // web-developer is global-scoped, api-developer is project-scoped.
@@ -116,12 +122,7 @@ describe("edit recompile routes agents to correct scope directory", () => {
       }
 
       // Create project agent file for api-developer (stub)
-      const projectAgentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
-      await mkdir(projectAgentsDir, { recursive: true });
-      await writeFile(
-        path.join(projectAgentsDir, "api-developer.md"),
-        "---\nname: api-developer\n---\nSTUB: project api developer agent.\n",
-      );
+      await writeAgentStub(projectDir, "api-developer", "STUB: project api developer agent.");
 
       // Create permissions file to prevent blocking prompt
       await createPermissionsFile(projectDir);

@@ -3,6 +3,7 @@ import { mkdir, rm } from "fs/promises";
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { CLI } from "../fixtures/cli.js";
+import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
@@ -10,7 +11,6 @@ import { InitWizard } from "../pages/wizards/init-wizard.js";
 import {
   cleanupTempDir,
   createPermissionsFile,
-  createTempDir,
   ensureBinaryExists,
   fileExists,
   readTestFile,
@@ -52,16 +52,14 @@ describe("project tracking -- registration", () => {
     "should register project paths in global config after init",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-      tempDir = await createTempDir();
-      const fakeHome = path.join(tempDir, "fake-home");
+      const env = await createTestEnvironment();
+      tempDir = env.tempDir;
+      const { fakeHome } = env;
       const project1Dir = path.join(fakeHome, "project-1");
       const project2Dir = path.join(fakeHome, "project-2");
 
-      await mkdir(fakeHome, { recursive: true });
       await mkdir(project1Dir, { recursive: true });
       await mkdir(project2Dir, { recursive: true });
-
-      await createPermissionsFile(fakeHome);
       await createPermissionsFile(project1Dir);
       await createPermissionsFile(project2Dir);
 
@@ -126,15 +124,9 @@ describe("project tracking -- config-types propagation", () => {
     "should propagate config-types.ts to registered projects containing global skill IDs",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-      tempDir = await createTempDir();
-      const fakeHome = path.join(tempDir, "fake-home");
-      const projectDir = path.join(fakeHome, "project");
-
-      await mkdir(fakeHome, { recursive: true });
-      await mkdir(projectDir, { recursive: true });
-
-      await createPermissionsFile(fakeHome);
-      await createPermissionsFile(projectDir);
+      const env = await createTestEnvironment();
+      tempDir = env.tempDir;
+      const { fakeHome, projectDir } = env;
 
       // Phase A: Init from HOME (global)
       const globalWizard = await InitWizard.launch({
@@ -189,16 +181,14 @@ describe("project tracking -- deregistration on uninstall", () => {
   });
 
   it("should deregister project on uninstall --all", { timeout: TIMEOUTS.LIFECYCLE }, async () => {
-    tempDir = await createTempDir();
-    const fakeHome = path.join(tempDir, "fake-home");
+    const env = await createTestEnvironment();
+    tempDir = env.tempDir;
+    const { fakeHome } = env;
     const project1Dir = path.join(fakeHome, "project-1");
     const project2Dir = path.join(fakeHome, "project-2");
 
-    await mkdir(fakeHome, { recursive: true });
     await mkdir(project1Dir, { recursive: true });
     await mkdir(project2Dir, { recursive: true });
-
-    await createPermissionsFile(fakeHome);
     await createPermissionsFile(project1Dir);
     await createPermissionsFile(project2Dir);
 
@@ -275,16 +265,14 @@ describe("project tracking -- stale path filtering", () => {
     "should filter stale project paths during registration",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {
-      tempDir = await createTempDir();
-      const fakeHome = path.join(tempDir, "fake-home");
+      const env = await createTestEnvironment();
+      tempDir = env.tempDir;
+      const { fakeHome } = env;
       const project1Dir = path.join(fakeHome, "project-1");
       const project2Dir = path.join(fakeHome, "project-2");
 
-      await mkdir(fakeHome, { recursive: true });
       await mkdir(project1Dir, { recursive: true });
       await mkdir(project2Dir, { recursive: true });
-
-      await createPermissionsFile(fakeHome);
       await createPermissionsFile(project1Dir);
       await createPermissionsFile(project2Dir);
 

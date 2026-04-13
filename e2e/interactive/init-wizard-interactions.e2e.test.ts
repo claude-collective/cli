@@ -1,15 +1,9 @@
-import path from "path";
-import { mkdir } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
-import {
-  createTempDir,
-  cleanupTempDir,
-  ensureBinaryExists,
-  createPermissionsFile,
-} from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
 
 /**
@@ -100,13 +94,9 @@ describe("init wizard — interactions", () => {
       "should toggle skill scope from global to project during build step",
       { timeout: TIMEOUTS.INTERACTIVE },
       async () => {
-        tempDir = await createTempDir();
-        const fakeHome = path.join(tempDir, "fake-home");
-        const projectDir = path.join(fakeHome, "project");
-        await mkdir(fakeHome, { recursive: true });
-        await mkdir(projectDir, { recursive: true });
-        await createPermissionsFile(fakeHome);
-        await createPermissionsFile(projectDir);
+        const env = await createTestEnvironment();
+        tempDir = env.tempDir;
+        const { fakeHome, projectDir } = env;
 
         wizard = await InitWizard.launch({
           projectDir,

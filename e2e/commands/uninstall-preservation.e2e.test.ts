@@ -17,6 +17,14 @@ import { EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
 import type { AgentName } from "../../src/cli/types/index.js";
 
+/** Write a compiled agent .md file with frontmatter to the agents directory. */
+async function writeAgentStub(baseDir: string, agentName: string, content: string): Promise<void> {
+  await writeFile(
+    path.join(agentsPath(baseDir), `${agentName}.md`),
+    `---\nname: ${agentName}\n---\n${content}`,
+  );
+}
+
 /**
  * Uninstall preservation E2E tests.
  *
@@ -128,11 +136,7 @@ describe("uninstall preservation behavior", () => {
     );
 
     // Create compiled output for the custom agent in .claude/agents/
-    const agentsDir = agentsPath(projectDir);
-    await writeFile(
-      path.join(agentsDir, "my-custom-agent.md"),
-      "---\nname: my-custom-agent\n---\n# Custom Agent compiled",
-    );
+    await writeAgentStub(projectDir, "my-custom-agent", "# Custom Agent compiled");
 
     // Add the custom agent to config so uninstall will track it
     await writeProjectConfig(projectDir, {
@@ -157,7 +161,7 @@ describe("uninstall preservation behavior", () => {
     expect(await fileExists(path.join(customAgentSrcDir, FILES.IDENTITY_MD))).toBe(true);
 
     // Compiled agent artifact in .claude/agents/ should be removed (it was in config)
-    expect(await fileExists(path.join(agentsDir, "my-custom-agent.md"))).toBe(false);
+    expect(await fileExists(path.join(agentsPath(projectDir), "my-custom-agent.md"))).toBe(false);
   });
 
   it("should remove only config-tracked agents and preserve others", async () => {
@@ -172,17 +176,11 @@ describe("uninstall preservation behavior", () => {
 
     // Config tracks only web-developer. Create compiled agent files for both
     // a tracked agent AND an extra non-tracked agent.
-    const agentsDir = agentsPath(projectDir);
-    await writeFile(
-      path.join(agentsDir, "web-developer.md"),
-      "---\nname: web-developer\n---\n# Web Developer Agent",
-    );
-    await writeFile(
-      path.join(agentsDir, "extra-agent.md"),
-      "---\nname: extra-agent\n---\n# Extra Agent (not in config)",
-    );
+    await writeAgentStub(projectDir, "web-developer", "# Web Developer Agent");
+    await writeAgentStub(projectDir, "extra-agent", "# Extra Agent (not in config)");
 
     // Verify both exist before uninstall
+    const agentsDir = agentsPath(projectDir);
     expect(await fileExists(path.join(agentsDir, "web-developer.md"))).toBe(true);
     expect(await fileExists(path.join(agentsDir, "extra-agent.md"))).toBe(true);
 
