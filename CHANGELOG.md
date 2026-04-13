@@ -7,6 +7,15 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.124.0] - 2026-04-13
+
+**Bug fixes: exclusive category deselect guard, SkillTag lock icon layout**
+
+- Skills in non-required single-skill categories can now be deselected
+- Lock icon no longer wraps to a new line when scope badges are present
+
+See [changelogs/0.124.0.md](./changelogs/0.124.0.md) for full details.
+
 ## [0.123.0] - 2026-04-13
 
 **Stack grouping, agent preselection from stacks, E2E timeout infrastructure**
