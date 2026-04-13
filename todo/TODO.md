@@ -2,7 +2,6 @@
 
 | ID    | Task                                                                        | Status        |
 | ----- | --------------------------------------------------------------------------- | ------------- |
-| D-201 | Remove lock icon from globally-installed skills in build step               | Ready for Dev |
 | D-182 | Sources step: global skills focusable but read-only with toast              | Ready for Dev |
 | D-181 | Add YOLO mode toggle to build step                                          | Investigate   |
 | D-180 | Write "Bring your own skills" guide                                         | Investigate   |
