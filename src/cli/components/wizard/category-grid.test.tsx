@@ -7,7 +7,6 @@ import {
   type CategoryOption,
 } from "./category-grid";
 import type { SkillId, Category } from "../../types";
-import { UI_SYMBOLS } from "../../consts";
 import {
   ARROW_UP,
   ARROW_DOWN,
@@ -1326,63 +1325,6 @@ describe("CategoryGrid component", () => {
       const output = lastFrame();
       expect(output).not.toContain("✓");
       expect(output).toContain("React Hook Form");
-    });
-  });
-
-  describe("eject indicator pill", () => {
-    it("should show eject symbol for ejected skill with scope", () => {
-      const categories: CategoryRow[] = [
-        createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", {
-            selected: true,
-            scope: "global",
-            source: "eject",
-          }),
-        ]),
-      ];
-
-      const { lastFrame, unmount } = renderGrid({ categories });
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain(UI_SYMBOLS.EJECT);
-    });
-
-    it("should not show eject symbol for plugin source", () => {
-      const categories: CategoryRow[] = [
-        createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", {
-            selected: true,
-            scope: "global",
-            source: "agents-inc",
-          }),
-        ]),
-      ];
-
-      const { lastFrame, unmount } = renderGrid({ categories });
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).not.toContain(UI_SYMBOLS.EJECT);
-    });
-
-    it("should show eject symbol without scope badge", () => {
-      const categories: CategoryRow[] = [
-        createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", {
-            selected: true,
-            source: "eject",
-          }),
-        ]),
-      ];
-
-      const { lastFrame, unmount } = renderGrid({ categories });
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain(UI_SYMBOLS.EJECT);
-      expect(output).not.toContain(" G ");
-      expect(output).not.toContain(" P ");
     });
   });
 

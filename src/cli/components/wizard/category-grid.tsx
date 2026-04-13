@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { Box, Text } from "ink";
 
-import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import { CLI_COLORS } from "../../consts.js";
 import { getSkillById } from "../../lib/matrix/matrix-provider.js";
 import type { Category, OptionState, SkillId } from "../../types/index.js";
 import { useCategoryGridInput } from "../hooks/use-category-grid-input.js";
@@ -137,26 +137,17 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, showLabels }) =>
       <>
         {option.scope && (
           <>
-            <Text
-              color={option.scope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.TOAST_BG}
-              backgroundColor={CLI_COLORS.LABEL_BG}
-            >
+            <Text color={CLI_COLORS.WARNING} backgroundColor={CLI_COLORS.LABEL_BG}>
               {option.scope === "global" ? " G " : " P "}
             </Text>
             {option.secondaryScope && (
-              <Text
-                color={
-                  option.secondaryScope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.TOAST_BG
-                }
-                backgroundColor={CLI_COLORS.LABEL_BG}
-              >
+              <Text color={CLI_COLORS.WARNING} backgroundColor={CLI_COLORS.LABEL_BG}>
                 {option.secondaryScope === "global" ? " G " : " P "}
               </Text>
             )}
             <Text> </Text>
           </>
         )}
-        {option.source === "eject" && <Text>{UI_SYMBOLS.EJECT} </Text>}
         <Text
           color={textColor}
           bold
@@ -167,7 +158,6 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, showLabels }) =>
         >
           {getSkillById(option.id).displayName}{" "}
         </Text>
-        {option.installed && option.scope === "global" && <Text>{UI_SYMBOLS.LOCK} </Text>}
         {compatibilityLabel && (
           <Text color={textColor} dimColor>
             {compatibilityLabel}{" "}

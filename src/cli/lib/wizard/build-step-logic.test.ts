@@ -591,7 +591,6 @@ describe("buildCategoriesForDomain", () => {
 
       const frameworkRow = result.find((r) => r.id === frameworkCategory);
       const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
-      // Component renders UI_SYMBOLS.LOCK when both installed and scope === "global"
       expect(reactOption?.installed).toBe(true);
       expect(reactOption?.scope).toBe("global");
     });
