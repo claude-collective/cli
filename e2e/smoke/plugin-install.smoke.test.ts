@@ -108,26 +108,9 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       // Attempt to install a nonexistent plugin to verify the command doesn't hang.
       // We expect this to fail (plugin doesn't exist) but the key assertion is
       // that the command completes within a reasonable time.
-      let didComplete = false;
-      let errorMessage = "";
-
-      try {
-        await claudePluginInstall(
-          "nonexistent-plugin@nonexistent-marketplace",
-          "project",
-          projectDir,
-        );
-        didComplete = true;
-      } catch (error) {
-        didComplete = true;
-        errorMessage = error instanceof Error ? error.message : String(error);
-      }
-
-      // The critical assertion: the command completed (didn't hang)
-      expect(didComplete).toBe(true);
-
-      // It should have failed with an error about the nonexistent plugin
-      expect(errorMessage).toContain("Plugin installation failed");
+      await expect(
+        claudePluginInstall("nonexistent-plugin@nonexistent-marketplace", "project", projectDir),
+      ).rejects.toThrow("Plugin installation failed");
     });
 
     it("should attempt plugin uninstall and return a result without hanging", async () => {
@@ -195,15 +178,11 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       const settingsPath = path.join(claudeDir, FILES.SETTINGS_JSON);
 
       // Attempt an install that will fail
-      try {
-        await claudePluginInstall(
-          "nonexistent-plugin@nonexistent-marketplace",
-          "project",
-          projectDir,
-        );
-      } catch {
-        // Expected to fail
-      }
+      await claudePluginInstall(
+        "nonexistent-plugin@nonexistent-marketplace",
+        "project",
+        projectDir,
+      ).catch(() => {});
 
       // A failed install should not create or modify settings.json
       expect(await fileExists(settingsPath)).toBe(false);

@@ -1,7 +1,7 @@
 import { CLI } from "../fixtures/cli.js";
 import { mkdir } from "fs/promises";
 import path from "path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
@@ -34,6 +34,7 @@ describe.skipIf(!claudeAvailable)(
     let tempDir: string;
     let fakeHome: string;
     let projectDir: string;
+    let wizard: InitWizard | undefined;
 
     beforeAll(async () => {
       await ensureBinaryExists();
@@ -46,6 +47,11 @@ describe.skipIf(!claudeAvailable)(
       await mkdir(fakeHome, { recursive: true });
       await mkdir(projectDir, { recursive: true });
     }, TIMEOUTS.SETUP * 2);
+
+    afterEach(async () => {
+      await wizard?.destroy();
+      wizard = undefined;
+    });
 
     afterAll(async () => {
       if (tempDir) await cleanupTempDir(tempDir);
@@ -63,7 +69,7 @@ describe.skipIf(!claudeAvailable)(
         await createPermissionsFile(fakeHome);
         await createPermissionsFile(projectDir);
 
-        const wizard = await InitWizard.launch({
+        wizard = await InitWizard.launch({
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           projectDir,
           env: { HOME: fakeHome },
@@ -71,48 +77,43 @@ describe.skipIf(!claudeAvailable)(
           cols: 120,
         });
 
-        try {
-          // Stack -> Domain -> Build
-          const domain = await wizard.stack.selectFirstStack();
-          const build = await domain.acceptDefaults();
+        // Stack -> Domain -> Build
+        const domain = await wizard.stack.selectFirstStack();
+        const build = await domain.acceptDefaults();
 
-          // Web domain -- toggle web-framework-react to global scope
-          await build.toggleScopeOnFocusedSkill();
-          await build.advanceDomain();
+        // Web domain -- toggle web-framework-react to global scope
+        await build.toggleScopeOnFocusedSkill();
+        await build.advanceDomain();
 
-          // API domain (pass through)
-          await build.advanceDomain();
+        // API domain (pass through)
+        await build.advanceDomain();
 
-          // Shared domain (pass through)
-          const sources = await build.advanceToSources();
+        // Shared domain (pass through)
+        const sources = await build.advanceToSources();
 
-          // Sources -- accept recommended
-          await sources.waitForReady();
-          const agents = await sources.advance();
+        // Sources -- accept recommended
+        await sources.waitForReady();
+        const agents = await sources.advance();
 
-          // Agents step -- toggle web-developer to global scope
-          await agents.toggleScopeOnFocusedAgent();
-          const confirm = await agents.advance("init");
+        // Agents step -- toggle web-developer to global scope
+        await agents.toggleScopeOnFocusedAgent();
+        const confirm = await agents.advance("init");
 
-          // Confirm
-          const initResultObj = await confirm.confirm();
-          const initExitCode = await initResultObj.exitCode;
+        // Confirm
+        const initResultObj = await confirm.confirm();
+        const initExitCode = await initResultObj.exitCode;
 
-          const initOutput = initResultObj.output;
-          const initRaw = initResultObj.rawOutput;
+        const initOutput = initResultObj.output;
+        const initRaw = initResultObj.rawOutput;
 
-          // P1-A: Init exited successfully
-          expect(initExitCode).toBe(EXIT_CODES.SUCCESS);
+        // P1-A: Init exited successfully
+        expect(initExitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // P1-B: No errors in output
-          expect(initRaw).not.toContain("ENOENT");
-          expect(initOutput).not.toContain("Failed to");
+        // P1-B: No errors in output
+        expect(initRaw).not.toContain("ENOENT");
+        expect(initOutput).not.toContain("Failed to");
 
-          await initResultObj.destroy();
-        } catch (e) {
-          await wizard.destroy();
-          throw e;
-        }
+        await initResultObj.destroy();
 
         // ================================================================
         // Phase 2: Verify initial state

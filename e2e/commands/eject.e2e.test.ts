@@ -19,10 +19,15 @@ import "../matchers/setup.js";
 describe("eject command", () => {
   let tempDir: string;
   let e2eSourceTempDir: string | undefined;
+  let readOnlyDir: string | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
+    if (readOnlyDir) {
+      await chmod(readOnlyDir, 0o755);
+      readOnlyDir = undefined;
+    }
     if (tempDir) {
       await cleanupTempDir(tempDir);
     }
@@ -290,19 +295,15 @@ describe("eject command", () => {
 
   it("should error when ejecting to a read-only directory", async () => {
     tempDir = await createTempDir();
-    const readOnlyDir = path.join(tempDir, "read-only");
+    readOnlyDir = path.join(tempDir, "read-only");
     await mkdir(readOnlyDir, { recursive: true });
     await chmod(readOnlyDir, 0o444);
 
-    try {
-      const { exitCode } = await CLI.run(["eject", "agent-partials", "-o", readOnlyDir], {
-        dir: tempDir,
-      });
+    const { exitCode } = await CLI.run(["eject", "agent-partials", "-o", readOnlyDir], {
+      dir: tempDir,
+    });
 
-      expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
-    } finally {
-      await chmod(readOnlyDir, 0o755);
-    }
+    expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
   });
 
   it("should eject templates and produce only the template file, not agent partials", async () => {

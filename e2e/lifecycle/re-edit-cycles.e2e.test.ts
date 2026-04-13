@@ -67,36 +67,16 @@ function parseConfigArrays(configContent: string): {
     }
   }
 
-  // Strategy 2: JSON fallback (test helper format)
+  // Strategy 2: Last resort regex (covers both JSON and non-standard formats)
   if (skillIds.length === 0 && agentNames.length === 0) {
-    const jsonMatch = configContent.match(/export default\s+({[\s\S]*?})\s*;/);
-    if (jsonMatch) {
-      try {
-        const config = JSON.parse(jsonMatch[1]) as {
-          skills?: Array<{ id: string }>;
-          agents?: Array<{ name: string }>;
-          domains?: string[];
-        };
-        skillIds.push(...(config.skills ?? []).map((s) => s.id));
-        agentNames.push(...(config.agents ?? []).map((a) => a.name));
-        domains.push(...(config.domains ?? []));
-      } catch {
-        // JSON parse failed -- fall through to regex-based extraction
-      }
+    const idMatches = configContent.matchAll(/"id"\s*:\s*"([^"]+)"/g);
+    for (const m of idMatches) {
+      skillIds.push(m[1]);
     }
 
-    // Strategy 3: Last resort regex
-    if (skillIds.length === 0) {
-      const idMatches = configContent.matchAll(/"id"\s*:\s*"([^"]+)"/g);
-      for (const m of idMatches) {
-        skillIds.push(m[1]);
-      }
-    }
-    if (agentNames.length === 0) {
-      const nameMatches = configContent.matchAll(/"name"\s*:\s*"([^"]+)"/g);
-      for (const m of nameMatches) {
-        agentNames.push(m[1]);
-      }
+    const nameMatches = configContent.matchAll(/"name"\s*:\s*"([^"]+)"/g);
+    for (const m of nameMatches) {
+      agentNames.push(m[1]);
     }
   }
 

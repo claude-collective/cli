@@ -38,6 +38,7 @@ const claudeAvailable = await isClaudeCLIAvailable();
 describe.skipIf(!claudeAvailable)("edit: add new local-source skills", () => {
   let fixture: E2EPluginSource;
   let tempDir: string | undefined;
+  let activeWizard: { destroy(): Promise<void> } | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
@@ -49,6 +50,10 @@ describe.skipIf(!claudeAvailable)("edit: add new local-source skills", () => {
   });
 
   afterEach(async () => {
+    if (activeWizard) {
+      await activeWizard.destroy();
+      activeWizard = undefined;
+    }
     if (tempDir) {
       await cleanupTempDir(tempDir);
       tempDir = undefined;
@@ -73,25 +78,22 @@ describe.skipIf(!claudeAvailable)("edit: add new local-source skills", () => {
         rows: 60,
         cols: 120,
       });
+      activeWizard = initWizard;
 
-      try {
-        const domain = await initWizard.stack.selectFirstStack();
-        const build = await domain.acceptDefaults();
-        const sources = await build.passThroughAllDomains();
+      const domain = await initWizard.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughAllDomains();
 
-        // Sources: accept defaults (all plugin)
-        const agents = await sources.acceptDefaults();
+      // Sources: accept defaults (all plugin)
+      const agents = await sources.acceptDefaults();
 
-        // Agents: accept defaults
-        const confirm = await agents.acceptDefaults("init");
+      // Agents: accept defaults
+      const confirm = await agents.acceptDefaults("init");
 
-        const initResult = await confirm.confirm();
-        expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await initResult.destroy();
-      } catch (e) {
-        await initWizard.destroy();
-        throw e;
-      }
+      const initResult = await confirm.confirm();
+      expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
+      await initResult.destroy();
+      activeWizard = undefined;
 
       // Phase 1 verification
       const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
@@ -114,26 +116,23 @@ describe.skipIf(!claudeAvailable)("edit: add new local-source skills", () => {
         rows: 60,
         cols: 120,
       });
+      activeWizard = editWizard;
 
-      try {
-        // Build step: pass through all domains without changes
-        const sources = await editWizard.build.passThroughAllDomains();
+      // Build step: pass through all domains without changes
+      const editSources = await editWizard.build.passThroughAllDomains();
 
-        // Sources step: toggle first skill to eject (cursor is already on it)
-        await sources.waitForReady();
-        await sources.toggleFocusedSource();
-        const agents = await sources.advance();
+      // Sources step: toggle first skill to eject (cursor is already on it)
+      await editSources.waitForReady();
+      await editSources.toggleFocusedSource();
+      const editAgents = await editSources.advance();
 
-        // Agents: accept defaults
-        const confirm = await agents.acceptDefaults("edit");
+      // Agents: accept defaults
+      const editConfirm = await editAgents.acceptDefaults("edit");
 
-        const editResult = await confirm.confirm();
-        expect(await editResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-        await editResult.destroy();
-      } catch (e) {
-        await editWizard.destroy();
-        throw e;
-      }
+      const editResult = await editConfirm.confirm();
+      expect(await editResult.exitCode).toBe(EXIT_CODES.SUCCESS);
+      await editResult.destroy();
+      activeWizard = undefined;
 
       // ================================================================
       // Phase 3: Assertions

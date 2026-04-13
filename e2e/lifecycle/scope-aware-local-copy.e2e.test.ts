@@ -35,6 +35,8 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
   let fixture: E2EPluginSource;
 
   let tempDir: string | undefined;
+  let initWizard: InitWizard | undefined;
+  let editWizard: EditWizard | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
@@ -46,6 +48,10 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
   });
 
   afterEach(async () => {
+    await editWizard?.destroy();
+    editWizard = undefined;
+    await initWizard?.destroy();
+    initWizard = undefined;
     if (tempDir) {
       await cleanupTempDir(tempDir);
       tempDir = undefined;
@@ -66,7 +72,7 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
         await createPermissionsFile(fakeHome);
         await createPermissionsFile(projectDir);
 
-        const wizard = await InitWizard.launch({
+        initWizard = await InitWizard.launch({
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           projectDir,
           env: { HOME: fakeHome },
@@ -74,53 +80,48 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
           cols: 120,
         });
 
-        try {
-          // Stack -> Domain -> Build
-          const domain = await wizard.stack.selectFirstStack();
-          const build = await domain.acceptDefaults();
+        // Stack -> Domain -> Build
+        const domain = await initWizard.stack.selectFirstStack();
+        const build = await domain.acceptDefaults();
 
-          // Web domain -- toggle first skill to project scope, leave second at global
-          await build.toggleScopeOnFocusedSkill();
-          await build.advanceDomain();
+        // Web domain -- toggle first skill to project scope, leave second at global
+        await build.toggleScopeOnFocusedSkill();
+        await build.advanceDomain();
 
-          // API domain (pass through)
-          await build.advanceDomain();
+        // API domain (pass through)
+        await build.advanceDomain();
 
-          // Shared domain (pass through)
-          const sources = await build.advanceToSources();
+        // Shared domain (pass through)
+        const sources = await build.advanceToSources();
 
-          // Sources -- set first TWO skills to local (mixed mode)
-          await sources.waitForReady();
-          await sources.toggleFocusedSource(); // Set web-framework-react to local
-          await sources.navigateDown();
-          await sources.toggleFocusedSource(); // Set web-testing-vitest to local
-          const agents = await sources.advance();
+        // Sources -- set first TWO skills to local (mixed mode)
+        await sources.waitForReady();
+        await sources.toggleFocusedSource(); // Set web-framework-react to local
+        await sources.navigateDown();
+        await sources.toggleFocusedSource(); // Set web-testing-vitest to local
+        const agents = await sources.advance();
 
-          // Agents -- accept defaults
-          const confirm = await agents.acceptDefaults("init");
+        // Agents -- accept defaults
+        const confirm = await agents.acceptDefaults("init");
 
-          // Confirm
-          const result = await confirm.confirm();
-          const exitCode = await result.exitCode;
-          expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+        // Confirm
+        const result = await confirm.confirm();
+        const exitCode = await result.exitCode;
+        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-          const rawOutput = result.rawOutput;
+        const rawOutput = result.rawOutput;
 
-          // Should be mixed mode (some local, some plugin)
-          expect(rawOutput).toContain("Mixed");
+        // Should be mixed mode (some local, some plugin)
+        expect(rawOutput).toContain("Mixed");
 
-          // --- Scope-aware copy assertions ---
-          await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
-          await expect({ dir: fakeHome }).toHaveSkillCopied("web-testing-vitest");
-          await expect({ dir: fakeHome }).not.toHaveSkillCopied("web-framework-react");
-          await expect({ dir: projectDir }).not.toHaveSkillCopied("web-testing-vitest");
-          await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+        // --- Scope-aware copy assertions ---
+        await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
+        await expect({ dir: fakeHome }).toHaveSkillCopied("web-testing-vitest");
+        await expect({ dir: fakeHome }).not.toHaveSkillCopied("web-framework-react");
+        await expect({ dir: projectDir }).not.toHaveSkillCopied("web-testing-vitest");
+        await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
-          await result.destroy();
-        } catch (e) {
-          await wizard.destroy();
-          throw e;
-        }
+        await result.destroy();
       },
     );
   });
@@ -140,23 +141,18 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
         await createPermissionsFile(projectDir);
 
         // Phase 1: Init in plugin mode -- all skills global scope, plugin source
-        const initWizard = await InitWizard.launch({
+        initWizard = await InitWizard.launch({
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           projectDir,
           env: { HOME: fakeHome },
         });
 
-        try {
-          const initResult = await initWizard.completeWithDefaults();
-          expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-          await initResult.destroy();
-        } catch (e) {
-          await initWizard.destroy();
-          throw e;
-        }
+        const initResult = await initWizard.completeWithDefaults();
+        expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
+        await initResult.destroy();
 
         // Phase 2: Edit -- switch ALL to local via "l" hotkey
-        const editWizard = await EditWizard.launch({
+        editWizard = await EditWizard.launch({
           projectDir,
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           env: { HOME: fakeHome },
@@ -164,29 +160,24 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
           cols: 120,
         });
 
-        try {
-          const sources = await editWizard.build.passThroughAllDomains();
+        const sources = await editWizard.build.passThroughAllDomains();
 
-          await sources.waitForReady();
-          await sources.setAllLocal();
-          const agents = await sources.advance();
+        await sources.waitForReady();
+        await sources.setAllLocal();
+        const agents = await sources.advance();
 
-          const confirm = await agents.acceptDefaults("edit");
-          const result = await confirm.confirm();
+        const confirm = await agents.acceptDefaults("edit");
+        const result = await confirm.confirm();
 
-          const editExitCode = await result.exitCode;
-          expect(editExitCode).toBe(EXIT_CODES.SUCCESS);
+        const editExitCode = await result.exitCode;
+        expect(editExitCode).toBe(EXIT_CODES.SUCCESS);
 
-          // --- Assertions ---
-          await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
-          await expect({ dir: projectDir }).not.toHaveSkillCopied("web-framework-react");
-          await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+        // --- Assertions ---
+        await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
+        await expect({ dir: projectDir }).not.toHaveSkillCopied("web-framework-react");
+        await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
-          await result.destroy();
-        } catch (e) {
-          await editWizard.destroy();
-          throw e;
-        }
+        await result.destroy();
       },
     );
 
@@ -204,7 +195,7 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
         await createPermissionsFile(projectDir);
 
         // Phase 1: Init in eject mode -- all skills global scope
-        const initWizard = await InitWizard.launch({
+        initWizard = await InitWizard.launch({
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           projectDir,
           env: { HOME: fakeHome },
@@ -212,24 +203,19 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
           cols: 120,
         });
 
-        try {
-          const domain = await initWizard.stack.selectFirstStack();
-          const build = await domain.acceptDefaults();
-          const sources = await build.passThroughAllDomains();
+        const domain = await initWizard.stack.selectFirstStack();
+        const build = await domain.acceptDefaults();
+        const initSources = await build.passThroughAllDomains();
 
-          // Sources -- set ALL to local
-          await sources.waitForReady();
-          await sources.setAllLocal();
-          const agents = await sources.advance();
+        // Sources -- set ALL to local
+        await initSources.waitForReady();
+        await initSources.setAllLocal();
+        const initAgents = await initSources.advance();
 
-          const confirm = await agents.acceptDefaults("init");
-          const initResult = await confirm.confirm();
-          expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
-          await initResult.destroy();
-        } catch (e) {
-          await initWizard.destroy();
-          throw e;
-        }
+        const initConfirm = await initAgents.acceptDefaults("init");
+        const initResult = await initConfirm.confirm();
+        expect(await initResult.exitCode).toBe(EXIT_CODES.SUCCESS);
+        await initResult.destroy();
 
         // Verify Phase 1: Skills were copied to HOME
         await expect({ dir: fakeHome }).toHaveSkillCopied("web-framework-react");
@@ -248,7 +234,7 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
         }
 
         // Phase 2: Edit -- switch ALL to plugin via "p" hotkey
-        const editWizard = await EditWizard.launch({
+        editWizard = await EditWizard.launch({
           projectDir,
           source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           env: { HOME: fakeHome },
@@ -256,33 +242,28 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
           cols: 120,
         });
 
-        try {
-          const sources = await editWizard.build.passThroughAllDomains();
+        const editSources = await editWizard.build.passThroughAllDomains();
 
-          await sources.waitForReady();
-          await sources.setAllPlugin();
-          const agents = await sources.advance();
+        await editSources.waitForReady();
+        await editSources.setAllPlugin();
+        const editAgents = await editSources.advance();
 
-          const confirm = await agents.acceptDefaults("edit");
-          const result = await confirm.confirm();
+        const editConfirm = await editAgents.acceptDefaults("edit");
+        const editResult = await editConfirm.confirm();
 
-          const editExitCode = await result.exitCode;
-          expect(editExitCode).toBe(EXIT_CODES.SUCCESS);
+        const editExitCode = await editResult.exitCode;
+        expect(editExitCode).toBe(EXIT_CODES.SUCCESS);
 
-          const rawOutput = result.rawOutput;
-          expect(rawOutput).toContain("Switching");
-          expect(rawOutput).toContain("to plugin");
+        const rawOutput = editResult.rawOutput;
+        expect(rawOutput).toContain("Switching");
+        expect(rawOutput).toContain("to plugin");
 
-          // --- Assertions ---
-          await expect({ dir: fakeHome }).not.toHaveSkillCopied("web-framework-react");
-          await expect({ dir: projectDir }).not.toHaveSkillCopied("web-framework-react");
-          await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+        // --- Assertions ---
+        await expect({ dir: fakeHome }).not.toHaveSkillCopied("web-framework-react");
+        await expect({ dir: projectDir }).not.toHaveSkillCopied("web-framework-react");
+        await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
-          await result.destroy();
-        } catch (e) {
-          await editWizard.destroy();
-          throw e;
-        }
+        await editResult.destroy();
       },
     );
   });

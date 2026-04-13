@@ -34,12 +34,9 @@ const SKILLS_SOURCE = process.env.SKILLS_SOURCE ?? path.resolve(CLI_ROOT, "../sk
 const REAL_INSTALL_TIMEOUT = TIMEOUTS.PLUGIN_INSTALL;
 
 async function skillsSourceExists(): Promise<boolean> {
-  try {
-    const s = await stat(path.join(SKILLS_SOURCE, "src", "skills"));
-    return s.isDirectory();
-  } catch {
-    return false;
-  }
+  return stat(path.join(SKILLS_SOURCE, "src", "skills"))
+    .then((s) => s.isDirectory())
+    .catch(() => false);
 }
 
 const hasSkillsSource = await skillsSourceExists();

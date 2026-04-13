@@ -31,42 +31,30 @@ import { createTestEnvironment, initGlobal, initProject } from "../fixtures/dual
 
 /**
  * Runs init wizard from HOME, accepting defaults with all sources set to local.
+ * Caller must launch the wizard and handle cleanup (e.g. via afterEach).
  */
 async function initGlobalWithLocalSource(
-  sourceDir: string,
-  sourceTempDir: string,
-  homeDir: string,
+  wizard: InitWizard,
 ): Promise<{ exitCode: number; output: string }> {
-  const wizard = await InitWizard.launch({
-    source: { sourceDir, tempDir: sourceTempDir },
-    projectDir: homeDir,
-    env: { HOME: homeDir },
-  });
+  // Stack -> Domain -> Build (all domains) -> Sources -> Agents -> Confirm
+  const domain = await wizard.stack.selectFirstStack();
+  const build = await domain.acceptDefaults();
+  const sources = await build.passThroughAllDomains();
 
-  try {
-    // Stack -> Domain -> Build (all domains) -> Sources -> Agents -> Confirm
-    const domain = await wizard.stack.selectFirstStack();
-    const build = await domain.acceptDefaults();
-    const sources = await build.passThroughAllDomains();
+  // Sources -- press "l" to set ALL sources to local
+  await sources.waitForReady();
+  await sources.setAllLocal();
+  const agents = await sources.advance();
 
-    // Sources -- press "l" to set ALL sources to local
-    await sources.waitForReady();
-    await sources.setAllLocal();
-    const agents = await sources.advance();
+  // Agents -- accept defaults
+  const confirm = await agents.acceptDefaults("init");
 
-    // Agents -- accept defaults
-    const confirm = await agents.acceptDefaults("init");
-
-    // Confirm
-    const result = await confirm.confirm();
-    const exitCode = await result.exitCode;
-    const output = result.rawOutput;
-    await result.destroy();
-    return { exitCode, output };
-  } catch (e) {
-    await wizard.destroy();
-    throw e;
-  }
+  // Confirm
+  const result = await confirm.confirm();
+  const exitCode = await result.exitCode;
+  const output = result.rawOutput;
+  await result.destroy();
+  return { exitCode, output };
 }
 
 // =====================================================================
@@ -77,6 +65,7 @@ describe("config-scope integrity -- source priority preservation", () => {
   let sourceDir: string;
   let sourceTempDir: string;
   let tempDir: string;
+  let initWizard: InitWizard | undefined;
   let wizard: Awaited<ReturnType<typeof EditWizard.launch>> | undefined;
 
   beforeAll(async () => {
@@ -87,6 +76,8 @@ describe("config-scope integrity -- source priority preservation", () => {
   }, TIMEOUTS.SETUP * 2);
 
   afterEach(async () => {
+    await initWizard?.destroy();
+    initWizard = undefined;
     await wizard?.destroy();
     wizard = undefined;
     if (tempDir) {
@@ -107,7 +98,12 @@ describe("config-scope integrity -- source priority preservation", () => {
       const { fakeHome } = env;
 
       // Phase A: Init from HOME with all sources set to local
-      const initResult = await initGlobalWithLocalSource(sourceDir, sourceTempDir, fakeHome);
+      initWizard = await InitWizard.launch({
+        source: { sourceDir, tempDir: sourceTempDir },
+        projectDir: fakeHome,
+        env: { HOME: fakeHome },
+      });
+      const initResult = await initGlobalWithLocalSource(initWizard);
       expect(initResult.exitCode, `Init failed: ${initResult.output}`).toBe(EXIT_CODES.SUCCESS);
 
       // Verify Phase A: config has source: "eject"
