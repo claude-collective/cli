@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.120.0] - 2026-04-13
+
+**Scope-aware wizard improvements: dual-scope badges, agent toggle guard, scope preference fix**
+
+- Dual-scope badges show both G+P when a skill exists at both scopes (D-191)
+- Global agent toggle guard prevents accidental modifications from project scope (D-196)
+- Project skill scope preference fix prevents misreporting after external installs (D-198)
+
+See [changelogs/0.120.0.md](./changelogs/0.120.0.md) for full details.
+
 ## [0.119.0] - 2026-04-13
 
 **Test infrastructure: factory adoption + E2E structure cleanup**
