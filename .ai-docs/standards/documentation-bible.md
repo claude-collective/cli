@@ -38,6 +38,34 @@
     test-infrastructure.md      # Test helpers, factories, fixtures, E2E infrastructure
     type-system.md              # Union types, branded types, Zod schemas, typed helpers
     utilities.md                # Shared utilities, constants, logger, fs helpers
+    architecture/               # Pointer files to root-level originals
+      overview.md               # -> architecture-overview.md
+      dependency-graph.md       # -> dependency-graph.md
+      boundary-map.md           # -> boundary-map.md
+    commands/                   # Command details
+      index.md                  # -> commands.md (pointer)
+      edit.md                   # Detailed edit command flow, types, utilities
+    concepts/                   # Cross-cutting concerns
+      scope-system.md           # Project vs global scope, path resolution, config splitting
+      tombstone-pattern.md      # Excluded/tombstone lifecycle, SkillConfig.excluded
+      guard-pattern.md          # Unified view of all wizard store guards
+    config/                     # Configuration details
+      configuration.md          # -> features/configuration.md (pointer)
+      config-writer.md          # Config writer and config types writer detail
+    testing/                    # Test infrastructure splits
+      infrastructure.md         # Vitest config, test projects, directory structure
+      factories.md              # Factory/helper/assertion tables (34 factories)
+      mock-data.md              # SKILLS registry, TEST_CATEGORIES, mock-data constants
+      e2e-infrastructure.md     # E2E config, POM, matchers, fixtures, timeouts
+    types/                      # Type system splits
+      core-types.md             # Generated unions, core data structures, type guards
+      operations-types.md       # Operations layer types, edit command types
+      zod-schemas.md            # All 39 Zod schemas (bridge, loader, structural, strict)
+    wizard/                     # Wizard pointer files
+      flow.md                   # -> features/wizard-flow.md
+      state-transitions.md      # -> state-transitions.md
+      store-map.md              # -> store-map.md
+      component-patterns.md     # -> component-patterns.md
     features/
       agent-system.md           # Agent templates, partials, Liquid compilation, metadata
       compilation-pipeline.md   # Liquid templates, agent assembly, output validation

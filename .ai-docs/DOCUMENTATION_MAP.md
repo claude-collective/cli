@@ -1,11 +1,11 @@
 # Documentation Map
 
-**Last Updated:** 2026-04-02
-**Total Areas:** 18
-**Documented:** 18 (100%)
+**Last Updated:** 2026-04-13
+**Total Areas:** 30 (18 original + 12 new from restructure)
+**Documented:** 30 (100%)
 **In Progress:** 0
 **Needs Validation:** 0
-**Last Validated:** 2026-04-02 (pass 14 -- verified pass 13 fixes (3/3 confirmed), final blind spot sweep: 10 never-checked areas all passed (info, new agent, build plugins, import skill commands; agent template variables; plugin finder; matrix provider 8 functions; skills operations 12 functions; content generators 5 functions; SkillAgentSummary component))
+**Last Validated:** 2026-04-13 (pass 24 -- Final sweep: cross-reference verification + DOCUMENTATION_MAP consistency + documentation-bible.md structure diagram update. Verified all `related:` frontmatter paths (50 files, all valid), all markdown links in reference docs (all valid), all pointer file redirect targets (9 pointers, all valid), all staleness dashboard entries (30 files, all exist on disk). Fixed 2 issues: added missing `features/configuration.md` and `features/wizard-flow.md` to DOCUMENTATION_MAP directory structure diagram; updated documentation-bible.md directory structure to include Phase 2+3 subdirectories. Previous: pass 23 -- Concepts + Types + Config validation)
 
 ## Status Legend
 
@@ -19,54 +19,137 @@
 
 Machine-readable staleness tracker. Thresholds from `standards/documentation-bible.md`.
 
+### Original Files (preserved, authoritative until cleanup)
+
 | Doc                       | Days Stale | Threshold | Status |
 | ------------------------- | ---------- | --------- | ------ |
 | architecture-overview.md  | 0          | 30        | OK     |
 | commands.md               | 0          | 14        | OK     |
 | type-system.md            | 0          | 14        | OK     |
 | store-map.md              | 0          | 7         | OK     |
-| compilation-pipeline.md   | 0          | 14        | OK     |
+| compilation-pipeline.md   | 11         | 14        | OK     |
 | configuration.md          | 0          | 14        | OK     |
 | wizard-flow.md            | 0          | 14        | OK     |
-| skills-and-matrix.md      | 0          | 14        | OK     |
-| plugin-system.md          | 0          | 14        | OK     |
+| skills-and-matrix.md      | 11         | 14        | OK     |
+| plugin-system.md          | 11         | 14        | OK     |
 | component-patterns.md     | 0          | 14        | OK     |
-| utilities.md              | 0          | 14        | OK     |
+| utilities.md              | 11         | 14        | OK     |
 | test-infrastructure.md    | 0          | 14        | OK     |
-| operations-layer.md       | 0          | 14        | OK     |
-| agent-system.md           | 0          | 14        | OK     |
-| dependency-graph.md       | 0          | 14        | OK     |
-| boundary-map.md           | 0          | 14        | OK     |
+| operations-layer.md       | 11         | 14        | OK     |
+| agent-system.md           | 11         | 14        | OK     |
+| dependency-graph.md       | 11         | 14        | OK     |
+| boundary-map.md           | 11         | 14        | OK     |
 | state-transitions.md      | 0          | 14        | OK     |
-| findings-impact-report.md | 0          | 30        | OK     |
+| findings-impact-report.md | 11         | 30        | OK     |
+
+### New Files (from Phases 2+3 restructure)
+
+| Doc                              | Days Stale | Threshold | Status |
+| -------------------------------- | ---------- | --------- | ------ |
+| testing/infrastructure.md        | 0          | 14        | OK     |
+| testing/factories.md             | 0          | 14        | OK     |
+| testing/mock-data.md             | 0          | 14        | OK     |
+| testing/e2e-infrastructure.md    | 0          | 14        | OK     |
+| types/core-types.md              | 0          | 14        | OK     |
+| types/operations-types.md        | 0          | 14        | OK     |
+| types/zod-schemas.md             | 0          | 14        | OK     |
+| concepts/scope-system.md         | 0          | 14        | OK     |
+| concepts/tombstone-pattern.md    | 0          | 14        | OK     |
+| concepts/guard-pattern.md        | 0          | 14        | OK     |
+| commands/edit.md                 | 0          | 14        | OK     |
+| config/config-writer.md          | 0          | 14        | OK     |
 
 **Status values:** `OK` = within threshold, `DUE` = at or past threshold, `OVERDUE` = at or past 2x threshold.
-**Date basis:** 2026-04-02. All 18 reference docs validated 2026-04-02.
+**Date basis:** 2026-04-13. All new files created 2026-04-13. Original files: architecture-overview.md, commands.md, configuration.md, type-system.md, component-patterns.md, store-map.md, wizard-flow.md, state-transitions.md, and test-infrastructure.md updated 2026-04-13; all others last validated 2026-04-02.
 
 ## Reference Documentation
 
 Descriptive docs -- "how things work". Validated aggressively (7-30 day cadence).
 
+### New Directory Structure (Phase 2+3)
+
+```
+reference/
+  architecture/
+    overview.md              # -> architecture-overview.md (pointer)
+    dependency-graph.md      # -> dependency-graph.md (pointer)
+    boundary-map.md          # -> boundary-map.md (pointer)
+  concepts/                  # NEW: Cross-cutting concerns
+    scope-system.md          # Consolidates scope docs from 5 files
+    tombstone-pattern.md     # Consolidates excluded/tombstone lifecycle
+    guard-pattern.md         # Unified view of all store guards
+  commands/
+    index.md                 # -> commands.md (pointer)
+    edit.md                  # Detailed edit command (new content)
+  wizard/
+    flow.md                  # -> features/wizard-flow.md (pointer)
+    state-transitions.md     # -> state-transitions.md (pointer)
+    store-map.md             # -> store-map.md (pointer)
+    component-patterns.md    # -> component-patterns.md (pointer)
+  types/
+    core-types.md            # Split from type-system.md (full content)
+    operations-types.md      # Split from type-system.md (full content)
+    zod-schemas.md           # Split from type-system.md (full content)
+  config/
+    configuration.md         # -> features/configuration.md (pointer)
+    config-writer.md         # Split from configuration.md (full content)
+  testing/
+    infrastructure.md        # Split from test-infrastructure.md (full content)
+    factories.md             # Split from test-infrastructure.md (full content)
+    mock-data.md             # Split from test-infrastructure.md (full content)
+    e2e-infrastructure.md    # Split from test-infrastructure.md (full content)
+  features/
+    compilation-pipeline.md  # Stays (unchanged)
+    configuration.md         # Stays (unchanged, pointed to by config/configuration.md)
+    skills-and-matrix.md     # Stays (unchanged)
+    plugin-system.md         # Stays (unchanged)
+    agent-system.md          # Stays (unchanged)
+    operations-layer.md      # Stays (unchanged)
+    wizard-flow.md           # Stays (unchanged, pointed to by wizard/flow.md)
+  findings-impact-report.md  # Stays (unchanged)
+```
+
+**Note:** Original files are preserved alongside new structure. "Pointer" files redirect to originals. "Full content" files contain the actual split content. Once user confirms cleanup, originals can be removed.
+
+### Original Files (preserved, authoritative)
+
 | Area                  | Status | File                                         | Last Updated | Last Validated | Next Action          |
 | --------------------- | ------ | -------------------------------------------- | ------------ | -------------- | -------------------- |
-| Architecture Overview | [DONE] | `reference/architecture-overview.md`         | 2026-04-02   | 2026-04-02     | Validate in 30 days  |
-| Commands Reference    | [DONE] | `reference/commands.md`                      | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
-| Type System           | [DONE] | `reference/type-system.md`                   | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
-| State Management      | [DONE] | `reference/store-map.md`                     | 2026-04-02   | 2026-04-02     | Validate in 7 days   |
+| Architecture Overview | [DONE] | `reference/architecture-overview.md`         | 2026-04-13   | 2026-04-13     | Validate in 30 days  |
+| Commands Reference    | [DONE] | `reference/commands.md`                      | 2026-04-13   | 2026-04-13     | Validate in 14 days  |
+| Type System           | [DONE] | `reference/type-system.md`                   | 2026-04-13   | 2026-04-13     | Validate in 14 days  |
+| State Management      | [DONE] | `reference/store-map.md`                     | 2026-04-13   | 2026-04-13     | Validate in 7 days   |
 | Compilation Pipeline  | [DONE] | `reference/features/compilation-pipeline.md` | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
-| Configuration System  | [DONE] | `reference/features/configuration.md`        | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
-| Wizard Flow           | [DONE] | `reference/features/wizard-flow.md`          | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Configuration System  | [DONE] | `reference/features/configuration.md`        | 2026-04-13   | 2026-04-13     | Validate in 14 days  |
+| Wizard Flow           | [DONE] | `reference/features/wizard-flow.md`          | 2026-04-13   | 2026-04-13     | Validate in 14 days  |
 | Skills & Matrix       | [DONE] | `reference/features/skills-and-matrix.md`    | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
 | Plugin System         | [DONE] | `reference/features/plugin-system.md`        | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
-| Component Patterns    | [DONE] | `reference/component-patterns.md`            | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Component Patterns    | [DONE] | `reference/component-patterns.md`            | 2026-04-13   | 2026-04-13     | Validate in 14 days  |
 | Utilities Reference   | [DONE] | `reference/utilities.md`                     | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
-| Test Infrastructure   | [DONE] | `reference/test-infrastructure.md`           | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| Test Infrastructure   | [DONE] | `reference/test-infrastructure.md`           | 2026-04-13   | 2026-04-13     | Validate in 14 days  |
 | Operations Layer      | [DONE] | `reference/features/operations-layer.md`     | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
 | Agent System          | [DONE] | `reference/features/agent-system.md`         | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
 | Dependency Graph      | [DONE] | `reference/dependency-graph.md`              | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
 | Boundary Map          | [DONE] | `reference/boundary-map.md`                  | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
-| State Transitions     | [DONE] | `reference/state-transitions.md`             | 2026-04-02   | 2026-04-02     | Validate in 14 days  |
+| State Transitions     | [DONE] | `reference/state-transitions.md`             | 2026-04-13   | 2026-04-13     | Validate in 14 days  |
 | Findings Impact       | [DONE] | `reference/findings-impact-report.md`        | 2026-04-02   | 2026-04-02     | Regenerate as needed |
+
+### New Files (Phase 2+3 restructure, 2026-04-13)
+
+| Area                    | Status | File                                      | Last Updated | Last Validated | Next Action         |
+| ----------------------- | ------ | ----------------------------------------- | ------------ | -------------- | ------------------- |
+| Test Infrastructure     | [DONE] | `reference/testing/infrastructure.md`     | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Test Factories          | [DONE] | `reference/testing/factories.md`          | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Test Mock Data          | [DONE] | `reference/testing/mock-data.md`          | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| E2E Infrastructure      | [DONE] | `reference/testing/e2e-infrastructure.md` | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Core Types              | [DONE] | `reference/types/core-types.md`           | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Operations Types        | [DONE] | `reference/types/operations-types.md`     | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Zod Schemas             | [DONE] | `reference/types/zod-schemas.md`          | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Scope System            | [DONE] | `reference/concepts/scope-system.md`      | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Tombstone Pattern       | [DONE] | `reference/concepts/tombstone-pattern.md` | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Guard Pattern           | [DONE] | `reference/concepts/guard-pattern.md`     | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Edit Command (Detailed) | [DONE] | `reference/commands/edit.md`              | 2026-04-13   | 2026-04-13     | Validate in 14 days |
+| Config Writer (Detail)  | [DONE] | `reference/config/config-writer.md`       | 2026-04-13   | 2026-04-13     | Validate in 14 days |
 
 ## Standards Documentation
 
@@ -96,26 +179,173 @@ Sub-agent feedback loop for standards improvement. See [`agent-findings/README.m
 
 **Technical Areas:**
 
-- Architecture: [DONE]
-- Commands: [DONE]
-- Type System: [DONE]
-- State Management: [DONE]
+- Architecture: [DONE] (`architecture/overview.md` + `architecture-overview.md`)
+- Commands: [DONE] (`commands/index.md` + `commands/edit.md` + `commands.md`)
+- Type System: [DONE] (`types/core-types.md` + `types/operations-types.md` + `types/zod-schemas.md` + `type-system.md`)
+- State Management: [DONE] (`wizard/store-map.md` + `store-map.md`)
 - Compilation Pipeline: [DONE]
-- Configuration: [DONE]
-- Wizard Flow: [DONE]
+- Configuration: [DONE] (`config/configuration.md` + `config/config-writer.md` + `features/configuration.md`)
+- Wizard Flow: [DONE] (`wizard/flow.md` + `features/wizard-flow.md`)
 - Skills & Matrix: [DONE]
 - Plugin System: [DONE]
-- Component Patterns: [DONE]
+- Component Patterns: [DONE] (`wizard/component-patterns.md` + `component-patterns.md`)
 - Utilities: [DONE]
-- Test Infrastructure: [DONE]
+- Test Infrastructure: [DONE] (`testing/infrastructure.md` + `testing/factories.md` + `testing/mock-data.md` + `testing/e2e-infrastructure.md` + `test-infrastructure.md`)
 - Operations Layer: [DONE]
 - Agent System: [DONE]
-- Dependency Graph: [DONE]
-- Boundary Map: [DONE]
-- State Transitions: [DONE]
+- Dependency Graph: [DONE] (`architecture/dependency-graph.md` + `dependency-graph.md`)
+- Boundary Map: [DONE] (`architecture/boundary-map.md` + `boundary-map.md`)
+- State Transitions: [DONE] (`wizard/state-transitions.md` + `state-transitions.md`)
 - Findings Impact Report: [DONE]
 
+**Cross-Cutting Concepts (NEW):**
+
+- Scope System: [DONE] (`concepts/scope-system.md`)
+- Tombstone Pattern: [DONE] (`concepts/tombstone-pattern.md`)
+- Guard Pattern: [DONE] (`concepts/guard-pattern.md`)
+
 ## Validation History
+
+### 2026-04-13 Pass 24 -- Final Sweep: Cross-Reference Verification + DOCUMENTATION_MAP Consistency
+
+Complete cross-reference and consistency audit across all 39 reference documentation files.
+
+**Part 1: Cross-reference verification (0 broken references):**
+
+- Verified all `related:` YAML frontmatter paths across 50 files (all 39 reference files have frontmatter). Every path resolves to an existing file under `.ai-docs/`.
+- Verified all markdown `[text](path)` links in reference doc bodies. All resolve to existing files.
+- Verified all `> **See also:**` and `> **Detailed documentation:**` inline links (16 occurrences). All resolve correctly.
+- Verified all 9 pointer file redirect targets (architecture/overview.md, architecture/dependency-graph.md, architecture/boundary-map.md, commands/index.md, wizard/flow.md, wizard/state-transitions.md, wizard/store-map.md, wizard/component-patterns.md, config/configuration.md). All point to existing files.
+
+**Part 2: DOCUMENTATION_MAP consistency (1 issue found, fixed):**
+
+- All 30 staleness dashboard entries (18 original + 12 new) verified to exist on disk.
+- 9 pointer files exist on disk and are documented in the directory structure diagram (not tracked in staleness dashboard, which is correct since they just redirect).
+- Directory structure diagram was missing `features/configuration.md` and `features/wizard-flow.md` from the `features/` listing. **Fixed:** added both with "(pointed to by ...)" annotations.
+- File counts verified: 39 total reference files = 11 root + 7 features + 21 in subdirectories (3 architecture + 3 concepts + 2 commands + 4 wizard + 3 types + 2 config + 4 testing).
+
+**Part 3: documentation-bible.md structure diagram update:**
+
+- The directory structure diagram in `standards/documentation-bible.md` only showed the original flat structure. **Fixed:** updated to include all Phase 2+3 subdirectories (architecture/, concepts/, commands/, wizard/, types/, config/, testing/) with their files and annotations.
+
+**Fixes applied (3 edits in 2 files):**
+
+1. `DOCUMENTATION_MAP.md`: Added `features/configuration.md` and `features/wizard-flow.md` to directory structure diagram
+2. `DOCUMENTATION_MAP.md`: Updated "Last Validated" header to pass 24, added pass 24 validation history entry
+3. `standards/documentation-bible.md`: Updated directory structure diagram to reflect Phase 2+3 restructure
+
+### 2026-04-13 Pass 21 -- Deep Validation of Wizard + Architecture + Component Patterns
+
+Verified 8 documentation files against source code with 200+ individual claim checks:
+
+**Files validated:**
+- `state-transitions.md` (434 lines) -- every line reference, action table, reset matrix, initial state table, hotkey mapping
+- `store-map.md` (255 lines) -- WizardState shape, all action signatures, computed getters, usage patterns
+- `features/wizard-flow.md` (326 lines) -- WizardProps, WizardResultV2, hooks table, feature flags, domain descriptions, stack grouping
+- `architecture-overview.md` (sections 11-13) -- scope system paths, tombstone types, stack grouping line references
+- `component-patterns.md` (388 lines) -- CategoryOption type, SkillTag, StepAgents dual-scope, StackSelection grouping, hotkey registry
+- `wizard/flow.md`, `wizard/state-transitions.md`, `wizard/store-map.md`, `wizard/component-patterns.md` -- pointer file targets verified
+
+**Inaccuracies found and fixed (2):**
+1. `state-transitions.md:196` -- `preselectAgentsFromDomains()` described as "Replaces (not merges)" but actual implementation merges with existing agentConfigs and preserves excluded entries. Fixed to accurate description.
+2. `features/wizard-flow.md:239-248` -- Domain descriptions table missing `desktop` domain. Added `desktop: "Desktop applications"` matching `domain-selection.tsx:16`.
+
+**Verified correct (sample of critical claims):**
+- WizardStep union at wizard-store.ts:262-268
+- WIZARD_STEPS at wizard-tabs.tsx:41-48
+- createInitialState() at wizard-store.ts:633 (all 27 initial values match)
+- selectStack() reset at wizard-store.ts:676
+- goBack() at wizard-store.ts:1056-1064
+- getStepProgress() at wizard-store.ts:1222 (all 7 step cases verified)
+- DOMAIN_AGENTS at wizard-store.ts:185-196
+- WizardProps at wizard.tsx:47-61, WizardResultV2 at wizard.tsx:32-45
+- Forward navigation: stack-selection.tsx:178-207, :210-243; domain-selection.tsx:54; use-build-step-props.ts:36-37; wizard.tsx:143-144, :246-251; step-agents.tsx:211
+- CategoryOption/CategoryRow at category-grid.tsx:12-36
+- SkillTag at category-grid.tsx:80-179, lock icon at :169, scope badges at :146-155
+- StepAgents at step-agents.tsx:165-329, secondaryScope at :264-268
+- StackSection at stack-selection.tsx:69-103, GROUP_ORDER at :17, groupStacks at :21-62
+- CLI_COLORS at consts.ts:181-198, UI_SYMBOLS at :99-115
+- Feature flags: SOURCE_SEARCH=false, SOURCE_CHOICE=false, INFO_PANEL=true
+- toggleTechnology guard at wizard-store.ts:836-841, exclusive guard at :857-866
+- toggleAgent guard at wizard-store.ts:1068-1074
+- toggleSkillScope at wizard-store.ts:952-1001
+- resolveInstallPaths at local-installer.ts:104-116, writeScopedConfigs at :577
+- Stack.group at matrix.ts:137, ResolvedStack.group at matrix.ts:251
+- SkillConfig.excluded at config.ts:27, AgentScopeConfig.excluded at :34
+- 24 source files / 15 test files in wizard/, 16 hooks / 3 test files in hooks/
+
+### 2026-04-13 Pass 20 -- Phases 2+3 Directory Restructure and File Splits
+
+Created new directory structure under `reference/` with 7 subdirectories and 19 new files:
+
+**Phase 2 -- Directory Reorganization (7 new directories, 7 pointer files):**
+
+- `architecture/overview.md`, `architecture/dependency-graph.md`, `architecture/boundary-map.md` -- pointer files to originals
+- `commands/index.md` -- pointer to `commands.md`
+- `wizard/flow.md`, `wizard/state-transitions.md`, `wizard/store-map.md`, `wizard/component-patterns.md` -- pointers to originals
+- `config/configuration.md` -- pointer to `features/configuration.md`
+
+**Phase 3 -- File Splits (12 new content files):**
+
+1. `test-infrastructure.md` (774 lines) split into 4 files:
+   - `testing/infrastructure.md` -- Vitest config, test projects, directory structure, error handling patterns
+   - `testing/factories.md` -- All factory/helper/assertion tables (34 factories, 15 helpers, 12 assertions)
+   - `testing/mock-data.md` -- SKILLS registry, TEST_CATEGORIES, mock-data module constants
+   - `testing/e2e-infrastructure.md` -- E2E config, directory structure, POM, matchers, fixtures, timeout infrastructure
+
+2. `type-system.md` (449 lines) split into 3 files:
+   - `types/core-types.md` -- Type module structure, generated unions, core data structures, named aliases, type narrowing, type guards, typed helpers
+   - `types/operations-types.md` -- Operations layer types, edit command types (ConfigChanges, detectConfigChanges, etc.)
+   - `types/zod-schemas.md` -- All 39 schemas (bridge, loader, structural, strict)
+
+3. New cross-cutting concept docs (3 files):
+   - `concepts/scope-system.md` -- Consolidated from 5 source files
+   - `concepts/tombstone-pattern.md` -- Consolidated from 4 source files
+   - `concepts/guard-pattern.md` -- Consolidated from 2 source files
+
+4. New detail docs (2 files):
+   - `commands/edit.md` -- Detailed edit command (flow, types, exported utilities)
+   - `config/config-writer.md` -- Config writer and config types writer detail
+
+**Cross-references added to 4 original files:**
+
+- `architecture-overview.md`: Notes on sections 11 (scope) and 12 (tombstone) pointing to concepts/
+- `state-transitions.md`: Note on Global-Installed Guard Behavior pointing to concepts/
+- `features/wizard-flow.md`: Note on Global-Item Guards pointing to concepts/
+- `features/configuration.md`: Note on Scope-Aware Config Splitting pointing to concepts/
+
+**Original files preserved:** All 18 original files remain untouched (except added cross-reference notes). User will handle cleanup.
+
+### 2026-04-13 Pass 19 -- Phase 1 Frontmatter Addition
+
+Added YAML frontmatter to all 18 reference docs (11 root + 7 features/). Each frontmatter block contains:
+
+- `scope: reference` (all files)
+- `area:` one of architecture, commands, wizard, types, config, testing, features
+- `keywords:` searchable terms for AI agent discovery
+- `related:` cross-references to related docs (relative paths from `.ai-docs/` root)
+- `last_validated:` date matching the file's "Last Updated" header
+
+**Area distribution:** architecture (5), wizard (4), features (4), commands (1), types (1), config (1), testing (1), features (1)
+
+**Files updated (18):**
+- `reference/architecture-overview.md`, `reference/boundary-map.md`, `reference/commands.md`
+- `reference/component-patterns.md`, `reference/dependency-graph.md`, `reference/findings-impact-report.md`
+- `reference/state-transitions.md`, `reference/store-map.md`, `reference/test-infrastructure.md`
+- `reference/type-system.md`, `reference/utilities.md`
+- `reference/features/agent-system.md`, `reference/features/compilation-pipeline.md`
+- `reference/features/configuration.md`, `reference/features/operations-layer.md`
+- `reference/features/plugin-system.md`, `reference/features/skills-and-matrix.md`
+- `reference/features/wizard-flow.md`
+
+**No content changes** -- only frontmatter blocks prepended before `# Title` headings.
+
+### 2026-04-13 Pass 15 -- Update Pass 3 (0.122.0/0.123.0 changes)
+
+Updated 2 reference docs to reflect changes shipped in releases 0.122.0 and 0.123.0:
+
+1. **configuration.md**: Documented `generateProjectConfigWithInlinedGlobal()` no-dedup snapshot behavior (global + project entries preserved with `// global` / `// project` comments, excluded-entry tombstone mechanism). Added `buildSkillConfigForId()` project-over-global preference from `wizard-store.ts:153`.
+2. **commands.md**: Updated `edit` command: `logChangeSummary()` now takes `newSkills`/`oldSkills` params, uses display names and scope labels `[G]`/`[P]`, G-to-P renders as green `+`. Documented exported-for-testing utilities: `ConfigChanges` type, `detectConfigChanges()`, `migratePluginSkillScopes()`, `PluginScopeMigrationResult` type.
 
 ### 2026-04-02 Pass 14 -- Behavioral Claims Verification (10 claims vs source code)
 
