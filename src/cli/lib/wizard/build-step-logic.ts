@@ -78,7 +78,12 @@ export function buildCategoriesForDomain(
     const isExclusive = cat.exclusive ?? true;
 
     const options: CategoryOption[] = filteredOptions.map((skill) => {
-      const skillConfig = skillConfigs?.find((sc) => sc.id === skill.id && !sc.excluded);
+      const activeConfig = skillConfigs?.find((sc) => sc.id === skill.id && !sc.excluded);
+      const excludedConfig = skillConfigs?.find((sc) => sc.id === skill.id && sc.excluded);
+      const secondaryScope =
+        excludedConfig && activeConfig && excludedConfig.scope !== activeConfig.scope
+          ? excludedConfig.scope
+          : undefined;
       return {
         id: skill.id,
         state:
@@ -88,8 +93,9 @@ export function buildCategoriesForDomain(
         selected: skill.selected,
         local: getSkillById(skill.id).local,
         installed: installedSkillIds?.includes(skill.id) || false,
-        scope: skillConfig?.scope,
-        source: skillConfig?.source,
+        scope: activeConfig?.scope,
+        secondaryScope,
+        source: activeConfig?.source,
         hasUnmetRequirements: skill.hasUnmetRequirements,
         unmetRequirementsReason: skill.unmetRequirementsReason,
         requiredBy: skill.selected ? undefined : getUnmetRequiredBy(skill.id, allSelections),

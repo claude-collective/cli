@@ -16,6 +16,8 @@ export type CategoryOption = {
   local?: boolean;
   installed?: boolean;
   scope?: "project" | "global";
+  /** Secondary scope badge shown alongside primary (e.g. after G->P toggle, excluded tombstone) */
+  secondaryScope?: "project" | "global";
   source?: string;
   /** True when selected but has unmet dependency requirements (shown dimmed) */
   hasUnmetRequirements?: boolean;
@@ -141,6 +143,16 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, showLabels }) =>
             >
               {option.scope === "global" ? " G " : " P "}
             </Text>
+            {option.secondaryScope && (
+              <Text
+                color={
+                  option.secondaryScope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.TOAST_BG
+                }
+                backgroundColor={CLI_COLORS.LABEL_BG}
+              >
+                {option.secondaryScope === "global" ? " G " : " P "}
+              </Text>
+            )}
             <Text> </Text>
           </>
         )}

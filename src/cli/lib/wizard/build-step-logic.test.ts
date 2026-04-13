@@ -21,9 +21,9 @@ import {
 } from "../__tests__/mock-data/mock-matrices";
 import type { CategoryRow } from "../../components/wizard/category-grid";
 import type { SkillId, Category, CategorySelections } from "../../types";
-import type { SkillConfig } from "../../types/config";
 import { initializeMatrix } from "../matrix/matrix-provider";
 import { EXPECTED_SKILLS } from "../__tests__/expected-values";
+import { buildSkillConfigs } from "../__tests__/helpers";
 
 describe("validateBuildStep", () => {
   const requiredCategory: CategoryRow = {
@@ -195,9 +195,9 @@ describe("buildCategoriesForDomain", () => {
   it("should set scope from skillConfigs", () => {
     initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
-    const skillConfigs: SkillConfig[] = [
-      { id: "web-framework-react", scope: "global", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
+    const skillConfigs = [
+      ...buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+      ...buildSkillConfigs(["web-state-zustand"]),
     ];
 
     const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
@@ -214,9 +214,7 @@ describe("buildCategoriesForDomain", () => {
   it("should leave scope undefined when skill not in skillConfigs", () => {
     initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
-    const skillConfigs: SkillConfig[] = [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-    ];
+    const skillConfigs = buildSkillConfigs(["web-framework-react"]);
 
     const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
 
@@ -230,9 +228,9 @@ describe("buildCategoriesForDomain", () => {
   it("should set source from skillConfigs", () => {
     initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
-    const skillConfigs: SkillConfig[] = [
-      { id: "web-framework-react", scope: "global", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "agents-inc" },
+    const skillConfigs = [
+      ...buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+      ...buildSkillConfigs(["web-state-zustand"], { source: "agents-inc" }),
     ];
 
     const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
@@ -249,9 +247,7 @@ describe("buildCategoriesForDomain", () => {
   it("should leave source undefined when skill not in skillConfigs", () => {
     initializeMatrix(BUILD_STEP_WEB_MATRIX);
 
-    const skillConfigs: SkillConfig[] = [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-    ];
+    const skillConfigs = buildSkillConfigs(["web-framework-react"]);
 
     const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
 
@@ -260,6 +256,82 @@ describe("buildCategoriesForDomain", () => {
       (o) => o.id === "web-framework-vue-composition-api",
     );
     expect(vueOption?.source).toBeUndefined();
+  });
+
+  describe("dual-scope badges", () => {
+    it("should set secondaryScope when active entry and excluded tombstone exist in different scopes", () => {
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+      const skillConfigs = [
+        ...buildSkillConfigs(["web-framework-react"]),
+        ...buildSkillConfigs(["web-framework-react"], { scope: "global", excluded: true }),
+      ];
+
+      const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
+
+      const frameworkRow = result.find((r) => r.id === frameworkCategory);
+      const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+      expect(reactOption?.scope).toBe("project");
+      expect(reactOption?.secondaryScope).toBe("global");
+    });
+
+    it("should leave secondaryScope undefined when only one scope entry exists", () => {
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+      const skillConfigs = buildSkillConfigs(["web-framework-react"]);
+
+      const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
+
+      const frameworkRow = result.find((r) => r.id === frameworkCategory);
+      const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+      expect(reactOption?.scope).toBe("project");
+      expect(reactOption?.secondaryScope).toBeUndefined();
+    });
+
+    it("should leave both scope and secondaryScope undefined when skill has no config entries", () => {
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+      const skillConfigs = buildSkillConfigs(["web-state-zustand"]);
+
+      const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
+
+      const frameworkRow = result.find((r) => r.id === frameworkCategory);
+      const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+      expect(reactOption?.scope).toBeUndefined();
+      expect(reactOption?.secondaryScope).toBeUndefined();
+    });
+
+    it("should leave secondaryScope undefined when active and excluded entries have the same scope", () => {
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+      const skillConfigs = [
+        ...buildSkillConfigs(["web-framework-react"]),
+        ...buildSkillConfigs(["web-framework-react"], { excluded: true }),
+      ];
+
+      const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
+
+      const frameworkRow = result.find((r) => r.id === frameworkCategory);
+      const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+      expect(reactOption?.scope).toBe("project");
+      expect(reactOption?.secondaryScope).toBeUndefined();
+    });
+
+    it("should leave secondaryScope undefined when only an excluded tombstone exists (no active entry)", () => {
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+      const skillConfigs = buildSkillConfigs(["web-framework-react"], {
+        scope: "global",
+        excluded: true,
+      });
+
+      const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
+
+      const frameworkRow = result.find((r) => r.id === frameworkCategory);
+      const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+      expect(reactOption?.scope).toBeUndefined();
+      expect(reactOption?.secondaryScope).toBeUndefined();
+    });
   });
 
   it("should propagate category required and exclusive flags", () => {
