@@ -67,6 +67,21 @@ export const STEP_TEXT = {
   TOGGLE_SELECTION: "Toggle selection",
   NO_INSTALLATION: "No installation found",
 
+  // Installation output
+  INSTALLING_PLUGINS: "Installing skill plugins",
+  PLUGIN_NATIVE: "Plugin (native install)",
+  SKILLS_COPIED_TO: "Skills copied to:",
+  AGENTS_COMPILED_TO: "Agents compiled to:",
+  CONFIGURATION_LABEL: "Configuration:",
+  READY_TO_INSTALL: "Ready to install",
+  NO_SKILLS_FOUND: "No skills found",
+  SELECT_STACK_COMPILE: "Select a stack to compile",
+  UNINSTALL_CANCELLED: "Uninstall cancelled",
+
+  // Scope warnings
+  GLOBAL_SKILLS_BLOCKED: "Global skills cannot be changed from project scope",
+  GLOBAL_AGENTS_BLOCKED: "Global agents cannot be changed from project scope",
+
   // Terminal size warnings
   TOO_NARROW: "too narrow",
   TOO_SHORT: "too short",
