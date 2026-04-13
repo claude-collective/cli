@@ -10,7 +10,6 @@ import {
   ensureBinaryExists,
   createPermissionsFile,
   readTestFile,
-  fileExists,
 } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
 
@@ -108,13 +107,13 @@ describe("init wizard — mixed scope config split", () => {
       // --- Assertions ---
 
       // Both config files should exist
+      await expect({ dir: fakeHome }).toHaveConfig();
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react"],
+      });
+
+      // Global config should NOT contain the project-scoped skill (scope-specific check)
       const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-
-      expect(await fileExists(globalConfigPath), "Global config must exist").toBe(true);
-      expect(await fileExists(projectConfigPath), "Project config must exist").toBe(true);
-
-      // Global config should NOT contain the project-scoped skill
       const globalContent = await readTestFile(globalConfigPath);
       const globalSkillsMatch = globalContent.match(
         /const skills:\s*SkillConfig\[\]\s*=\s*\[([\s\S]*?)\];/,
@@ -124,10 +123,6 @@ describe("init wizard — mixed scope config split", () => {
 
       expect(globalSkillsBlock).not.toContain("web-framework-react");
       expect(globalSkillsBlock).toContain("web-testing-vitest");
-
-      // Project config should contain the project-scoped skill
-      const projectContent = await readTestFile(projectConfigPath);
-      expect(projectContent).toContain("web-framework-react");
 
       // web-developer should be compiled (global agent)
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
@@ -172,11 +167,15 @@ describe("init wizard — mixed scope config split", () => {
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // --- Assertions ---
-      const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
 
+      // Project config: should contain both project-scoped skills
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react", "api-framework-hono"],
+      });
+
+      // Global config: scope-specific checks require raw file reading
+      const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const globalContent = await readTestFile(globalConfigPath);
-      const projectContent = await readTestFile(projectConfigPath);
 
       // Extract global skills array
       const globalSkillsMatch = globalContent.match(
@@ -189,11 +188,9 @@ describe("init wizard — mixed scope config split", () => {
       expect(globalSkillsBlock).not.toContain("web-framework-react");
       expect(globalSkillsBlock).not.toContain("api-framework-hono");
 
-      // Project config: should contain both project-scoped skills
-      expect(projectContent).toContain("web-framework-react");
-      expect(projectContent).toContain("api-framework-hono");
-
-      // Verify scope field values in the project config
+      // Verify scope field values in the project config (scope-specific check)
+      const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const projectContent = await readTestFile(projectConfigPath);
       const projectSkillMatch = projectContent.match(
         /"id":\s*"web-framework-react"[^}]*"scope":\s*"(\w+)"/,
       );

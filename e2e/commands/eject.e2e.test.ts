@@ -226,10 +226,7 @@ describe("eject command", () => {
     expect(templateContent).toContain("---");
 
     // Verify skills were created with SKILL.md files
-    const skillsDirPath = skillsPath(tempDir);
-    expect(await directoryExists(skillsDirPath)).toBe(true);
-    const skillEntries = await listFiles(skillsDirPath);
-    expect(skillEntries.length).toBeGreaterThan(0);
+    await expect({ dir: tempDir }).toHaveLocalSkills(["web-framework-react"]);
     await expect({ dir: tempDir }).toHaveSkillCopied("web-framework-react");
 
     // Verify config was created with source reference
@@ -316,14 +313,7 @@ describe("eject command", () => {
     expect(stdout).toContain("Eject complete!");
 
     // The agent.liquid template should exist
-    const templatePath = path.join(
-      tempDir,
-      DIRS.CLAUDE_SRC,
-      "agents",
-      "_templates",
-      "agent.liquid",
-    );
-    expect(await fileExists(templatePath)).toBe(true);
+    await expect({ dir: tempDir }).toHaveEjectedTemplate();
 
     // Agent partial directories (e.g., developer, reviewer) should NOT exist
     const agentsDir = path.join(tempDir, DIRS.CLAUDE_SRC, "agents");
@@ -347,8 +337,7 @@ describe("eject command", () => {
     expect(stdout).toContain("skills ejected");
 
     // Skills directory should exist with content
-    const skillsDir = skillsPath(tempDir);
-    expect(await directoryExists(skillsDir)).toBe(true);
+    await expect({ dir: tempDir }).toHaveLocalSkills();
 
     // The .claude-src/agents/ directory should NOT exist (no agent partials or templates ejected)
     const agentPartialsDir = path.join(tempDir, DIRS.CLAUDE_SRC, "agents");

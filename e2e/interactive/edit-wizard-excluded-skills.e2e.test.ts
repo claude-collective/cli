@@ -8,7 +8,6 @@ import {
   writeProjectConfig,
   createLocalSkill,
   readTestFile,
-  directoryExists,
 } from "../helpers/test-utils.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { DIRS, FILES, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
@@ -98,25 +97,23 @@ describe("edit wizard — excluded skills", () => {
       // The Testing category should be visible (vitest is in the source).
       expect(buildOutput).toContain("Testing");
 
+      // The excluded vitest skill must NOT be pre-selected.
+      // Testing category counter should show (0 of 1), not (1 of 1).
+      expect(buildOutput).toContain("(0 of 1)");
+
       // Navigate through wizard without changes: Build → Sources → Agents → Confirm
-      const sources = await wizard.build.advanceToSources();
-      const agents = await sources.acceptDefaults();
-      const confirm = await agents.acceptDefaults("edit");
-      const result = await confirm.confirm();
+      const result = await wizard.completeFromBuild();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Read the config file and verify both skills are present with correct flags
-      const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const updatedConfig = await readTestFile(configPath);
-
-      // The non-excluded skill must be present
-      expect(updatedConfig).toContain("web-framework-react");
-
-      // The excluded skill must still be present in config (not dropped)
-      expect(updatedConfig).toContain("web-testing-vitest");
+      // Both skills must be present in config
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest"],
+      });
 
       // The excluded flag must be preserved on the vitest entry
+      const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const updatedConfig = await readTestFile(configPath);
       expect(updatedConfig).toContain('"excluded":true');
     },
   );
@@ -152,25 +149,19 @@ describe("edit wizard — excluded skills", () => {
       });
 
       // Navigate through wizard without changes: Build → Sources → Agents → Confirm
-      const sources = await wizard.build.advanceToSources();
-      const agents = await sources.acceptDefaults();
-      const confirm = await agents.acceptDefaults("edit");
-      const result = await confirm.confirm();
+      const result = await wizard.completeFromBuild();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Read the config file and verify both skills are present
-      const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const updatedConfig = await readTestFile(configPath);
-
-      // The non-excluded skill must be present
-      expect(updatedConfig).toContain("web-framework-react");
-
-      // The excluded skill must still be present in config (not dropped)
-      expect(updatedConfig).toContain("web-testing-vitest");
+      // Both skills must be present in config
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest"],
+      });
 
       // The excluded flag must be preserved on the vitest entry.
       // Production config-writer uses JSON.stringify without indent, so no space before "true".
+      const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const updatedConfig = await readTestFile(configPath);
       expect(updatedConfig).toContain('"excluded":true');
     },
   );
@@ -224,21 +215,18 @@ describe("edit wizard — excluded skills", () => {
       expect(buildOutput).toContain("Testing");
 
       // Navigate through wizard to verify it completes successfully
-      const sources = await wizard.build.advanceToSources();
-      const agents = await sources.acceptDefaults();
-      const confirm = await agents.acceptDefaults("edit");
-      const result = await confirm.confirm();
+      const result = await wizard.completeFromBuild();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Verify config after save: excluded flag preserved on zustand
+      // Verify config after save: all skills present, excluded flag preserved on zustand
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+      });
+
+      // Production config-writer uses JSON.stringify without indent, so no space before "true".
       const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const updatedConfig = await readTestFile(configPath);
-
-      expect(updatedConfig).toContain("web-framework-react");
-      expect(updatedConfig).toContain("web-testing-vitest");
-      expect(updatedConfig).toContain("web-state-zustand");
-      // Production config-writer uses JSON.stringify without indent, so no space before "true".
       expect(updatedConfig).toContain('"excluded":true');
     },
   );
@@ -291,22 +279,18 @@ describe("edit wizard — excluded skills", () => {
       expect(buildOutput).toContain("web-state-zustand");
 
       // Navigate through wizard without changes: Build → Sources → Agents → Confirm
-      const sources = await wizard.build.advanceToSources();
-      const agents = await sources.acceptDefaults();
-      const confirm = await agents.acceptDefaults("edit");
-      const result = await confirm.confirm();
+      const result = await wizard.completeFromBuild();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Read the config file and verify dual entries are preserved
+      // Both skills must be present in config
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-state-zustand"],
+      });
+
+      // The excluded flag and scope entries require raw config reading
       const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const updatedConfig = await readTestFile(configPath);
-
-      // The non-excluded skill must be present
-      expect(updatedConfig).toContain("web-framework-react");
-
-      // Both zustand entries must be present (tombstone + active)
-      expect(updatedConfig).toContain("web-state-zustand");
 
       // The excluded flag must be preserved on the tombstone entry
       expect(updatedConfig).toContain('"excluded":true');
@@ -316,8 +300,7 @@ describe("edit wizard — excluded skills", () => {
       expect(updatedConfig).toContain('"scope":"project"');
 
       // The zustand local skill directory must still exist after save
-      const zustandSkillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "web-state-zustand");
-      expect(await directoryExists(zustandSkillDir)).toBe(true);
+      await expect({ dir: projectDir }).toHaveLocalSkills(["web-state-zustand"]);
     },
   );
 
@@ -358,22 +341,18 @@ describe("edit wizard — excluded skills", () => {
       });
 
       // Navigate through wizard without changes: Build → Sources → Agents → Confirm
-      const sources = await wizard.build.advanceToSources();
-      const agents = await sources.acceptDefaults();
-      const confirm = await agents.acceptDefaults("edit");
-      const result = await confirm.confirm();
+      const result = await wizard.completeFromBuild();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-      // Read the config file and verify both entries are present
+      // Both skills must be present in config
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-framework-react", "web-state-zustand"],
+      });
+
+      // The excluded flag and scope entries require raw config reading
       const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const updatedConfig = await readTestFile(configPath);
-
-      // The non-excluded skill must be present
-      expect(updatedConfig).toContain("web-framework-react");
-
-      // Both zustand entries must be present (tombstone + active)
-      expect(updatedConfig).toContain("web-state-zustand");
 
       // The excluded flag must be preserved on the tombstone entry
       expect(updatedConfig).toContain('"excluded":true');

@@ -9,11 +9,22 @@ import {
   writeProjectConfig,
   createPermissionsFile,
   createLocalSkill,
+  agentsPath,
   readTestFile,
 } from "../helpers/test-utils.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { DIRS, FILES, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import "../matchers/setup.js";
+
+/** Write a minimal agent .md stub to the agents directory. */
+async function writeAgentStub(baseDir: string, agentName: string, content: string): Promise<void> {
+  const agentsDir = agentsPath(baseDir);
+  await mkdir(agentsDir, { recursive: true });
+  await writeFile(
+    path.join(agentsDir, `${agentName}.md`),
+    `---\nname: ${agentName}\n---\n${content}\n`,
+  );
+}
 
 /**
  * Bug B regression test: project config must not accumulate global-scoped skills
@@ -78,12 +89,7 @@ describe("project config does not accumulate global skills after edit", () => {
       });
 
       // Create global agent file
-      const globalAgentsDir = path.join(tempHOME, DIRS.CLAUDE, "agents");
-      await mkdir(globalAgentsDir, { recursive: true });
-      await writeFile(
-        path.join(globalAgentsDir, "web-developer.md"),
-        "---\nname: web-developer\n---\nGlobal web developer agent.\n",
-      );
+      await writeAgentStub(tempHOME, "web-developer", "Global web developer agent.");
 
       // --- Setup project config at <tempHOME>/project/.claude-src/config.ts ---
       await writeProjectConfig(projectDir, {
@@ -103,12 +109,7 @@ describe("project config does not accumulate global skills after edit", () => {
       });
 
       // Create project agent file
-      const projectAgentsDir = path.join(projectDir, DIRS.CLAUDE, "agents");
-      await mkdir(projectAgentsDir, { recursive: true });
-      await writeFile(
-        path.join(projectAgentsDir, "web-developer.md"),
-        "---\nname: web-developer\n---\nProject web developer agent.\n",
-      );
+      await writeAgentStub(projectDir, "web-developer", "Project web developer agent.");
 
       // Create permissions file to prevent blocking prompt
       await createPermissionsFile(projectDir);
@@ -131,13 +132,12 @@ describe("project config does not accumulate global skills after edit", () => {
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // --- Assert: project config inlines global skills with scope: "global" (no spread) ---
+      await expect({ dir: projectDir }).toHaveConfig({
+        skillIds: ["web-testing-vitest", "web-framework-react"],
+      });
+
+      // Structural checks require raw file reading
       const updatedProjectConfig = await readTestFile(projectConfigPath);
-
-      // The project config MUST contain the project-scoped skill
-      expect(updatedProjectConfig).toContain("web-testing-vitest");
-
-      // The project config MUST inline the global skill (new behavior: no spread import)
-      expect(updatedProjectConfig).toContain("web-framework-react");
 
       // The project config must NOT use the old `...globalConfig.skills` spread pattern
       expect(updatedProjectConfig).not.toContain("globalConfig.skills");
@@ -153,9 +153,9 @@ describe("project config does not accumulate global skills after edit", () => {
       ).toBe(1);
 
       // Also verify the global config still has its skill (it wasn't removed)
-      const globalConfigPath = path.join(tempHOME, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const updatedGlobalConfig = await readTestFile(globalConfigPath);
-      expect(updatedGlobalConfig).toContain("web-framework-react");
+      await expect({ dir: tempHOME }).toHaveConfig({
+        skillIds: ["web-framework-react"],
+      });
     },
   );
 });

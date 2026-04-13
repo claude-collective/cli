@@ -13,6 +13,7 @@ import {
   readTestFile,
 } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
+import "../matchers/setup.js";
 import { DIRS, EXIT_CODES, FILES, STEP_TEXT } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
 
@@ -48,10 +49,10 @@ describe("eject command integration", () => {
     expect(stdout).toContain(STEP_TEXT.EJECT_SUCCESS);
 
     // The exact path createLiquidEngine() checks at compiler.ts:414
-    const templatePath = getEjectedTemplatePath(tempDir);
-    expect(await fileExists(templatePath)).toBe(true);
+    await expect({ dir: tempDir }).toHaveEjectedTemplate();
 
     // Verify the file contains valid Liquid template syntax
+    const templatePath = getEjectedTemplatePath(tempDir);
     const content = await readTestFile(templatePath);
     expect(content).toContain("{{ agent.name }}");
     expect(content).toMatch(/\{\{|\{%/);
@@ -119,8 +120,8 @@ describe("eject command integration", () => {
     expect(ejectResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Step 2: Modify agent.liquid with a unique marker
+    await expect({ dir: projectDir }).toHaveEjectedTemplate();
     const templatePath = getEjectedTemplatePath(projectDir);
-    expect(await fileExists(templatePath)).toBe(true);
 
     const originalTemplate = await readTestFile(templatePath);
     const marker = "<!-- E2E-EJECT-INTEGRATION-MARKER -->";

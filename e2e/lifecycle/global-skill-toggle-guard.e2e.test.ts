@@ -2,12 +2,7 @@ import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { TIMEOUTS, DIRS, FILES, EXIT_CODES } from "../pages/constants.js";
-import {
-  cleanupTempDir,
-  directoryExists,
-  ensureBinaryExists,
-  readTestFile,
-} from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
 import { createGlobalOnlyEnv, type DualScopeEnv } from "../fixtures/dual-scope-helpers.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import "../matchers/setup.js";
@@ -87,9 +82,7 @@ describe("global skill toggle guard from project scope", () => {
       expect(globalConfig).toContain("web-framework-react");
 
       // Verify global skill directories still exist on disk
-      const globalSkillsDir = path.join(env.fakeHome, DIRS.CLAUDE, DIRS.SKILLS);
-      expect(await directoryExists(globalSkillsDir)).toBe(true);
-      expect(await directoryExists(path.join(globalSkillsDir, "web-framework-react"))).toBe(true);
+      await expect({ dir: env.fakeHome }).toHaveLocalSkills(["web-framework-react"]);
 
       // Verify the project config still references the skill as global (unchanged)
       const projectConfigPath = path.join(env.projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
@@ -139,8 +132,7 @@ describe("global skill toggle guard from project scope", () => {
       expect(globalConfig).not.toContain("pinia");
 
       // Verify global skill directories still exist on disk (eject mode)
-      const globalSkillsDir = path.join(env.fakeHome, DIRS.CLAUDE, DIRS.SKILLS);
-      expect(await directoryExists(path.join(globalSkillsDir, "web-state-zustand"))).toBe(true);
+      await expect({ dir: env.fakeHome }).toHaveLocalSkills(["web-state-zustand"]);
 
       // Verify the project config doesn't incorrectly add pinia or remove zustand
       const projectConfigPath = path.join(env.projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);

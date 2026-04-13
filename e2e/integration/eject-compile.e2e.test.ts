@@ -50,8 +50,8 @@ describe("template ejection + custom compilation", () => {
       expect(ejectResult.exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Step 2: Verify ejected template exists at the expected path
+      await expect({ dir: projectDir }).toHaveEjectedTemplate();
       const ejectedTemplatePath = getEjectedTemplatePath(projectDir);
-      expect(await fileExists(ejectedTemplatePath)).toBe(true);
 
       // Step 3: Modify the ejected template by appending a unique marker
       const originalTemplate = await readTestFile(ejectedTemplatePath);
@@ -299,10 +299,10 @@ describe("template ejection + custom compilation", () => {
 
       // Verify the file exists at the exact path createLiquidEngine() checks:
       // .claude-src/agents/_templates/agent.liquid
-      const expectedPath = getEjectedTemplatePath(projectDir);
-      expect(await fileExists(expectedPath)).toBe(true);
+      await expect({ dir: projectDir }).toHaveEjectedTemplate();
 
       // Read the template to verify it's valid Liquid content
+      const expectedPath = getEjectedTemplatePath(projectDir);
       const content = await readTestFile(expectedPath);
       expect(content).toContain("{{ agent.name }}");
       expect(content).toContain("{{ agent.description }}");

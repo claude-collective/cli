@@ -5,12 +5,7 @@ import "../matchers/setup.js";
 import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
 import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import {
-  cleanupTempDir,
-  ensureBinaryExists,
-  fileExists,
-  listFiles,
-} from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists, listFiles } from "../helpers/test-utils.js";
 import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-helpers.js";
 
 /**
@@ -79,15 +74,8 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
       // 2. Global agent files from Phase A still exist (untouched)
-      const globalAgentsDir = path.join(fakeHome, DIRS.CLAUDE, "agents");
-      expect(
-        await fileExists(path.join(globalAgentsDir, "api-developer.md")),
-        "Global api-developer.md should still exist (global install untouched)",
-      ).toBe(true);
-      expect(
-        await fileExists(path.join(globalAgentsDir, "web-developer.md")),
-        "Global web-developer.md should still exist",
-      ).toBe(true);
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("api-developer");
+      await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
       // ================================================================
       // Phase C: Edit passthrough — navigate through without changes
@@ -141,8 +129,8 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
       });
 
       // 9. No duplicate agent files in either scope directory
-      const projectAgentFiles = await listFiles(path.join(projectDir, DIRS.CLAUDE, "agents"));
-      const globalAgentFiles = await listFiles(globalAgentsDir);
+      const projectAgentFiles = await listFiles(path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS));
+      const globalAgentFiles = await listFiles(path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS));
       const projectMdFiles = projectAgentFiles.filter((f) => f.endsWith(".md"));
       const globalMdFiles = globalAgentFiles.filter((f) => f.endsWith(".md"));
       const projectDupes = projectMdFiles.filter((f, i) => projectMdFiles.indexOf(f) !== i);

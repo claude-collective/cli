@@ -145,11 +145,10 @@ describe("uninstall with plugin config but no installed plugins", () => {
 
     // Manual plugin entry should be preserved in settings.json
     const settingsPath = path.join(projectDir, DIRS.CLAUDE, FILES.SETTINGS_JSON);
-    if (await fileExists(settingsPath)) {
-      const settingsContent = await readTestFile(settingsPath);
-      const settings = JSON.parse(settingsContent);
-      expect(settings.enabledPlugins?.["manual-plugin@some-marketplace"]).toBe(true);
-    }
+    expect(await fileExists(settingsPath), "settings.json must exist after uninstall").toBe(true);
+    const settingsContent = await readTestFile(settingsPath);
+    const settings = JSON.parse(settingsContent);
+    expect(settings.enabledPlugins?.["manual-plugin@some-marketplace"]).toBe(true);
   });
 
   it("should also remove config with --all flag when no plugins exist", async () => {
@@ -204,14 +203,10 @@ describe("uninstall preserves non-CLI plugins", () => {
     expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     const settingsPath = path.join(projectDir, DIRS.CLAUDE, FILES.SETTINGS_JSON);
-    const settingsExists = await fileExists(settingsPath);
-
-    if (settingsExists) {
-      const settingsContent = await readTestFile(settingsPath);
-      const settings = JSON.parse(settingsContent);
-
-      expect(settings.enabledPlugins?.["manual-plugin@other-marketplace"]).toBe(true);
-    }
+    expect(await fileExists(settingsPath), "settings.json must exist after uninstall").toBe(true);
+    const settingsContent = await readTestFile(settingsPath);
+    const settings = JSON.parse(settingsContent);
+    expect(settings.enabledPlugins?.["manual-plugin@other-marketplace"]).toBe(true);
 
     expect(await directoryExists(skillDir)).toBe(false);
   });
@@ -237,15 +232,11 @@ describe("uninstall preserves non-CLI plugins", () => {
     expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     const settingsPath = path.join(projectDir, DIRS.CLAUDE, FILES.SETTINGS_JSON);
-    const settingsExists = await fileExists(settingsPath);
-
-    if (settingsExists) {
-      const settingsContent = await readTestFile(settingsPath);
-      const settings = JSON.parse(settingsContent);
-
-      expect(settings.enabledPlugins?.["some-other-skill@marketplace-b"]).toBe(true);
-      expect(settings.enabledPlugins?.["third-party-tool@external-source"]).toBe(true);
-    }
+    expect(await fileExists(settingsPath), "settings.json must exist after uninstall").toBe(true);
+    const settingsContent = await readTestFile(settingsPath);
+    const settings = JSON.parse(settingsContent);
+    expect(settings.enabledPlugins?.["some-other-skill@marketplace-b"]).toBe(true);
+    expect(settings.enabledPlugins?.["third-party-tool@external-source"]).toBe(true);
   });
 });
 

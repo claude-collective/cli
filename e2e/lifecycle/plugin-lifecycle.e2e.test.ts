@@ -1,12 +1,13 @@
 import path from "path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
+import { expectCleanUninstall } from "../assertions/uninstall-assertions.js";
 import {
   createE2EPluginSource,
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, STEP_TEXT } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { CLI } from "../fixtures/cli.js";
 import {
@@ -14,9 +15,7 @@ import {
   createTempDir,
   cleanupTempDir,
   ensureBinaryExists,
-  fileExists,
   directoryExists,
-  readTestFile,
 } from "../helpers/test-utils.js";
 
 /**
@@ -84,11 +83,7 @@ describe.skipIf(!claudeAvailable)("plugin mode lifecycle: init -> uninstall", ()
       expect(initOutput).not.toContain("Skills copied to:");
 
       // Settings file exists with permissions
-      const settingsPath = path.join(projectDir, DIRS.CLAUDE, FILES.SETTINGS_JSON);
-      expect(await fileExists(settingsPath)).toBe(true);
-      const settingsContent = await readTestFile(settingsPath);
-      const settings = JSON.parse(settingsContent) as Record<string, unknown>;
-      expect(settings).toHaveProperty("permissions");
+      await expect({ dir: projectDir }).toHaveSettings({ hasKey: "permissions" });
 
       expect(initOutput).not.toContain("Failed to");
 
@@ -109,8 +104,7 @@ describe.skipIf(!claudeAvailable)("plugin mode lifecycle: init -> uninstall", ()
       expect(uninstallResult.exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(uninstallResult.stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
-      const agentsDir = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS);
-      expect(await directoryExists(agentsDir)).toBe(false);
+      await expectCleanUninstall(projectDir);
       expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
     },
   );
