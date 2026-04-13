@@ -1,0 +1,64 @@
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
+import { EXIT_CODES, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
+import { InitWizard } from "../pages/wizards/init-wizard.js";
+import "../matchers/setup.js";
+
+describe("init wizard — stack agent preselection", () => {
+  let wizard: InitWizard | undefined;
+  let source: { sourceDir: string; tempDir: string } | undefined;
+
+  beforeAll(async () => {
+    await ensureBinaryExists();
+    source = await createE2ESource();
+  }, TIMEOUTS.SETUP);
+
+  afterAll(async () => {
+    if (source) await cleanupTempDir(source.tempDir);
+  });
+
+  afterEach(async () => {
+    await wizard?.destroy();
+    wizard = undefined;
+  });
+
+  it(
+    "should preselect agents from the selected stack",
+    { timeout: TIMEOUTS.INTERACTIVE },
+    async () => {
+      wizard = await InitWizard.launch({ source });
+
+      // Select the first stack (E2E Test Stack)
+      const domain = await wizard.stack.selectFirstStack();
+
+      // Accept domain defaults
+      const build = await domain.acceptDefaults();
+
+      // Pass through all domains (Web, API, Methodology)
+      const sources = await build.passThroughAllDomains();
+
+      // Accept source defaults
+      const agents = await sources.acceptDefaults();
+
+      // Verify we reached the agents step
+      const output = agents.getOutput();
+      expect(output).toContain(STEP_TEXT.AGENTS);
+
+      // Verify that agents from the E2E stack are pre-selected with checkmarks.
+      // The E2E stack defines "web-developer" and "api-developer" agents.
+      // The UI renders selected agents as: [✓] Web Developer
+      expect(output).toContain("Web Developer");
+      expect(output).toMatch(/\[✓\].*Web Developer/);
+
+      expect(output).toContain("API Developer");
+      expect(output).toMatch(/\[✓\].*API Developer/);
+
+      // Complete the wizard
+      const confirm = await agents.acceptDefaults("init");
+      const result = await confirm.confirm();
+
+      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+    },
+  );
+});

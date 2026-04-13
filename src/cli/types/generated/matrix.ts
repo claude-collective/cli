@@ -7636,6 +7636,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "nextjs-fullstack",
       name: "Next.js Full-Stack",
       description: "Hono, Drizzle, Better Auth, Zustand",
+      group: "React",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -7873,6 +7874,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "nextjs-t3-stack",
       name: "Next.js T3 Stack",
       description: "tRPC, Prisma, NextAuth, Tailwind",
+      group: "React",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -8007,6 +8009,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "nextjs-supabase-fullstack",
       name: "Next.js Supabase Full-Stack",
       description: "Supabase, Drizzle, Better Auth",
+      group: "React",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -8255,6 +8258,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "nextjs-turborepo-fullstack",
       name: "Next.js Turborepo Full-Stack",
       description: "Turborepo, pnpm Workspaces, Hono, Drizzle",
+      group: "React",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -8510,6 +8514,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "react-old-school",
       name: "React Old School",
       description: "Redux Toolkit, SCSS Modules, Vite, Vitest",
+      group: "React",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -8608,6 +8613,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "react-hono-fullstack",
       name: "React Hono Full-Stack",
       description: "Vite, Hono, Drizzle, Better Auth",
+      group: "React",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -9777,6 +9783,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "nextjs-ai-saas",
       name: "Next.js AI SaaS",
       description: "Vercel AI, Anthropic, Drizzle, Pinecone",
+      group: "React",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -10046,6 +10053,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "nextjs-saas-starter",
       name: "Next.js SaaS Starter",
       description: "Better Auth, Stripe, Drizzle, Resend, PostHog",
+      group: "React",
       skills: {
         "web-developer": {
           "web-framework": ["web-framework-react"],
@@ -10501,6 +10509,7 @@ export const BUILT_IN_MATRIX: MergedSkillsMatrix = {
       id: "cli-ink-oclif",
       name: "CLI Tool",
       description: "oclif, Ink, Zustand, Vitest",
+      group: "CLI",
       skills: {
         "cli-developer": {
           "cli-framework": ["cli-framework-oclif-ink"],

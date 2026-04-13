@@ -5,12 +5,14 @@ import { TerminalScreen } from "./terminal-screen.js";
 
 export abstract class BaseStep {
   protected readonly screen: TerminalScreen;
+  protected readonly defaultTimeout: number;
 
   constructor(
     protected readonly session: TerminalSession,
     protected readonly projectDir: string,
   ) {
     this.screen = new TerminalScreen(session);
+    this.defaultTimeout = TIMEOUTS.WIZARD_LOAD;
   }
 
   protected async pressEnter(): Promise<void> {
@@ -97,12 +99,12 @@ export abstract class BaseStep {
 
   /** Wait for a specific step to be visible. */
   protected async waitForStep(stepText: string, timeout?: number): Promise<void> {
-    await this.screen.waitForText(stepText, timeout ?? TIMEOUTS.WIZARD_LOAD);
+    await this.screen.waitForText(stepText, timeout ?? this.defaultTimeout);
   }
 
   /** Wait for stable render (footer visible). */
   protected async waitForStableRender(timeout?: number): Promise<void> {
-    await this.screen.waitForStableRender(timeout ?? TIMEOUTS.WIZARD_LOAD);
+    await this.screen.waitForStableRender(timeout ?? this.defaultTimeout);
   }
 
   /** Get the full output including scrollback (for test assertions). */

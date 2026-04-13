@@ -133,6 +133,8 @@ export type SuggestedStack = {
   /** Structure: { agentName: { category: skillId } } */
   skills: Record<string, Partial<Record<Category, SkillId>>>;
   philosophy: string;
+  /** UI grouping label for the stack selection screen (e.g., "React", "CLI") */
+  group?: string;
 };
 
 /** Bidirectional slug <-> skill ID mapping. Partial because only extracted skills are present. */
@@ -245,6 +247,8 @@ export type ResolvedStack = {
   /** Flat list of all skill IDs in this stack */
   allSkillIds: SkillId[];
   philosophy: string;
+  /** UI grouping label for the stack selection screen (e.g., "React", "CLI") */
+  group?: string;
 };
 
 /** Short alias used for category-level search (e.g., "react", "zustand") */

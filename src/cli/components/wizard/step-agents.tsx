@@ -261,9 +261,7 @@ export const StepAgents: React.FC = () => {
         const pointer = isFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER;
         const agentConfig = agentConfigs.find((ac) => ac.name === row.agent.id && !ac.excluded);
         const scope = agentConfig?.scope ?? "global";
-        const excludedConfig = agentConfigs.find(
-          (ac) => ac.name === row.agent.id && ac.excluded,
-        );
+        const excludedConfig = agentConfigs.find((ac) => ac.name === row.agent.id && ac.excluded);
         const secondaryScope =
           excludedConfig && agentConfig && excludedConfig.scope !== agentConfig.scope
             ? excludedConfig.scope

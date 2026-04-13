@@ -23,6 +23,8 @@ export type InitWizardOptions = {
   skipPermissions?: boolean;
   /** Override the default wizard load timeout (default: TIMEOUTS.WIZARD_LOAD). */
   loadTimeout?: number;
+  /** Override the default timeout for the underlying TerminalSession. */
+  defaultTimeout?: number;
 };
 
 /**
@@ -99,6 +101,7 @@ export class InitWizard {
       cols: options?.cols,
       rows: options?.rows,
       env,
+      defaultTimeout: options?.defaultTimeout,
     });
 
     return { session, projectDir, cleanupDirs };

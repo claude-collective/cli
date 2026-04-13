@@ -36,6 +36,7 @@ describe("search command -- interactive mode", () => {
     }
     if (sourceTempDir) {
       await cleanupTempDir(sourceTempDir);
+      sourceTempDir = undefined!;
     }
   });
 

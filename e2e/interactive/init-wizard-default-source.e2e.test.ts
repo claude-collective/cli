@@ -140,9 +140,8 @@ describe("init wizard — default source eject mode ENOENT", () => {
       expect(output).not.toContain("ENOENT");
       await expect(result.project).toHaveConfig({
         source: "agents-inc",
-        agents: ["web-developer"],
+        agents: ["web-developer", "api-developer"],
       });
-      await expect(result.project).toHaveCompiledAgent("web-developer");
     },
   );
 

@@ -3,21 +3,22 @@ import pty from "@lydell/node-pty";
 import { Terminal } from "@xterm/headless";
 import treeKill from "tree-kill";
 import { BIN_RUN } from "./test-utils.js";
+import { TIMEOUTS } from "../pages/constants.js";
 
 const DEFAULT_COLS = 120;
 const DEFAULT_ROWS = 40;
 const POLL_INTERVAL_MS = 50;
-const DEFAULT_TIMEOUT_MS = 10_000;
-const CI_TIMEOUT_MS = 20_000;
 
 function getDefaultTimeout(): number {
-  return process.env.CI ? CI_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+  return process.env.CI ? TIMEOUTS.SESSION_DEFAULT_CI : TIMEOUTS.SESSION_DEFAULT;
 }
 
 export type TerminalSessionOptions = {
   cols?: number;
   rows?: number;
   env?: Record<string, string | undefined>;
+  /** Override the default timeout for waitForText, waitForExit, etc. */
+  defaultTimeout?: number;
 };
 
 /**
@@ -38,10 +39,12 @@ export class TerminalSession {
   private rawChunks: string[] = [];
   private destroyed = false;
   private exitPromise: Promise<{ exitCode: number; signal?: number }>;
+  readonly defaultTimeout: number;
 
   constructor(args: string[], cwd: string, options?: TerminalSessionOptions) {
     const cols = options?.cols ?? DEFAULT_COLS;
     const rows = options?.rows ?? DEFAULT_ROWS;
+    this.defaultTimeout = options?.defaultTimeout ?? getDefaultTimeout();
 
     this.xterm = new Terminal({ allowProposedApi: true, cols, rows });
 
@@ -117,7 +120,7 @@ export class TerminalSession {
    * Timeout is CI-aware: 20s in CI, 10s locally (overridable).
    */
   async waitForText(text: string, timeoutMs?: number): Promise<void> {
-    const timeout = timeoutMs ?? getDefaultTimeout();
+    const timeout = timeoutMs ?? this.defaultTimeout;
     const start = Date.now();
 
     while (!this.getFullOutput().includes(text)) {
@@ -147,7 +150,7 @@ export class TerminalSession {
 
   /** Waits for the PTY process to exit. Returns the exit code. */
   async waitForExit(timeoutMs?: number): Promise<number> {
-    const timeout = timeoutMs ?? getDefaultTimeout();
+    const timeout = timeoutMs ?? this.defaultTimeout;
     const timeoutError = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error(`Process did not exit within ${timeout}ms`)), timeout),
     );

@@ -17,6 +17,8 @@ export type EditWizardOptions = {
   env?: Record<string, string | undefined>;
   /** Extra CLI flags to pass (e.g., ["--agent-source", "/path"]). */
   extraArgs?: string[];
+  /** Override the default timeout for the underlying TerminalSession. */
+  defaultTimeout?: number;
 };
 
 export class EditWizard {
@@ -52,6 +54,7 @@ export class EditWizard {
       cols: options.cols,
       rows: options.rows,
       env,
+      defaultTimeout: options.defaultTimeout,
     });
 
     // Edit wizard opens directly to the build step.

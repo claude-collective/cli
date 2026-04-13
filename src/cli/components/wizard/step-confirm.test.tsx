@@ -648,9 +648,7 @@ describe("SkillAgentSummary component", () => {
       });
 
       const { lastFrame, unmount } = render(
-        <SkillAgentSummary
-          skillConfigs={buildSkillConfigs(["web-framework-react"])}
-        />,
+        <SkillAgentSummary skillConfigs={buildSkillConfigs(["web-framework-react"])} />,
       );
       cleanup = unmount;
 
@@ -705,7 +703,10 @@ describe("SkillAgentSummary component", () => {
     it("should show ~ for global-scoped skill source change", () => {
       useWizardStore.setState({
         isInitMode: false,
-        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         installedAgentConfigs: null,
       });
 

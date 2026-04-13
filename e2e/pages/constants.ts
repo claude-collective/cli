@@ -79,6 +79,9 @@ export const TIMEOUTS = {
   /** Combined timeout for tests that include plugin operations + exit wait */
   PLUGIN_TEST: 60_000 + 30_000, // PLUGIN_INSTALL + EXIT_WAIT
   EXIT: 10_000,
+  /** Default session timeout, doubled in CI for slower environments */
+  SESSION_DEFAULT: 10_000,
+  SESSION_DEFAULT_CI: 20_000,
   EXIT_WAIT: 30_000,
   SETUP: 60_000,
   LIFECYCLE: 180_000,
