@@ -133,16 +133,12 @@ describe("stack-installer", () => {
     it("should check Claude CLI availability before anything else", async () => {
       vi.mocked(isClaudeCLIAvailable).mockResolvedValue(false);
 
-      try {
-        await installStackAsPlugin({
-          stackId: "test-stack",
-          projectDir: "/project",
-          sourcePath: "/source",
-          agentSourcePath: "/agents",
-        });
-      } catch {
-        // Expected to throw
-      }
+      await installStackAsPlugin({
+        stackId: "test-stack",
+        projectDir: "/project",
+        sourcePath: "/source",
+        agentSourcePath: "/agents",
+      }).catch(() => {});
 
       expect(isClaudeCLIAvailable).toHaveBeenCalledWith();
       // compileStackPlugin should NOT have been called

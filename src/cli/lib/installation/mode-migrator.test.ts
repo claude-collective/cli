@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SkillId } from "../../types";
-import type { SkillConfig } from "../../types/config";
 import type { SourceLoadResult } from "../loading/source-loader";
 import type { MigrationPlan } from "./mode-migrator";
 import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 import { buildSourceResult } from "../__tests__/factories/config-factories";
+import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation";
 import { WEB_PAIR_MATRIX } from "../__tests__/mock-data/mock-matrices";
 
 // Mock dependencies before imports
@@ -27,18 +26,10 @@ import { claudePluginInstall, claudePluginUninstall } from "../../utils/exec";
 
 describe("mode-migrator", () => {
   describe("detectMigrations", () => {
-    function skill(
-      id: string,
-      source: string,
-      scope: "project" | "global" = "project",
-    ): SkillConfig {
-      return { id: id as SkillId, source, scope };
-    }
-
     it("should detect skills moving from plugin to eject", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "agents-inc")],
-        [skill("web-framework-react", "eject")],
+        buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+        buildSkillConfigs(["web-framework-react"]),
       );
 
       expect(result.toEject).toHaveLength(1);
@@ -48,8 +39,8 @@ describe("mode-migrator", () => {
 
     it("should detect skills moving from eject to plugin", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "eject")],
-        [skill("web-framework-react", "agents-inc")],
+        buildSkillConfigs(["web-framework-react"]),
+        buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
       );
 
       expect(result.toEject).toStrictEqual([]);
@@ -59,8 +50,14 @@ describe("mode-migrator", () => {
 
     it("should detect mixed migrations", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "agents-inc"), skill("web-state-zustand", "eject")],
-        [skill("web-framework-react", "eject"), skill("web-state-zustand", "agents-inc")],
+        [
+          ...buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+          ...buildSkillConfigs(["web-state-zustand"]),
+        ],
+        [
+          ...buildSkillConfigs(["web-framework-react"]),
+          ...buildSkillConfigs(["web-state-zustand"], { source: "agents-inc" }),
+        ],
       );
 
       expect(result.toEject).toHaveLength(1);
@@ -71,8 +68,8 @@ describe("mode-migrator", () => {
 
     it("should return empty plan when no migrations needed", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "agents-inc")],
-        [skill("web-framework-react", "agents-inc")],
+        buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+        buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
       );
 
       expect(result.toEject).toStrictEqual([]);
@@ -80,7 +77,7 @@ describe("mode-migrator", () => {
     });
 
     it("should handle skills with no previous selection (new skill, no migration)", () => {
-      const result = detectMigrations([], [skill("web-framework-react", "eject")]);
+      const result = detectMigrations([], buildSkillConfigs(["web-framework-react"]));
 
       // New skills are not migrations (no old entry to compare)
       expect(result.toEject).toStrictEqual([]);
@@ -88,7 +85,7 @@ describe("mode-migrator", () => {
     });
 
     it("should handle skills removed in new selection (no migration)", () => {
-      const result = detectMigrations([skill("web-framework-react", "eject")], []);
+      const result = detectMigrations(buildSkillConfigs(["web-framework-react"]), []);
 
       // Removed skills are not migrations (no new entry to compare)
       expect(result.toEject).toStrictEqual([]);
@@ -97,8 +94,8 @@ describe("mode-migrator", () => {
 
     it("should detect scope changes when source stays the same", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "eject", "project")],
-        [skill("web-framework-react", "eject", "global")],
+        buildSkillConfigs(["web-framework-react"]),
+        buildSkillConfigs(["web-framework-react"], { scope: "global" }),
       );
 
       expect(result.toEject).toStrictEqual([]);
@@ -115,8 +112,8 @@ describe("mode-migrator", () => {
 
     it("should NOT detect scope change when source also changes", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "eject", "project")],
-        [skill("web-framework-react", "agents-inc", "global")],
+        buildSkillConfigs(["web-framework-react"]),
+        buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
       );
 
       // Source changed (eject -> agents-inc), so this is a toPlugin, not a scopeChange
@@ -126,8 +123,11 @@ describe("mode-migrator", () => {
 
     it("should only detect migrations for skills present in both old and new", () => {
       const result = detectMigrations(
-        [skill("web-framework-react", "agents-inc"), skill("web-state-zustand", "eject")],
-        [skill("web-framework-react", "eject")],
+        [
+          ...buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+          ...buildSkillConfigs(["web-state-zustand"]),
+        ],
+        buildSkillConfigs(["web-framework-react"]),
       );
 
       // Only react is in both old and new with a source change

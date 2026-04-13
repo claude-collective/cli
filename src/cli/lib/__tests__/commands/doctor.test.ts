@@ -5,6 +5,8 @@ import { runCliCommand } from "../helpers/cli-runner.js";
 import { createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { EXIT_CODES } from "../../exit-codes";
 import { renderConfigTs, renderSkillMd } from "../content-generators";
+import { buildAgentConfigs } from "../factories/config-factories.js";
+import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 
 describe("doctor command", () => {
@@ -226,7 +228,7 @@ describe("doctor command", () => {
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
         renderConfigTs({
           name: "test-project",
-          agents: [{ name: "web-developer", scope: "project", excluded: true }],
+          agents: buildAgentConfigs(["web-developer"], { excluded: true }),
         }),
       );
 
@@ -256,7 +258,7 @@ describe("doctor command", () => {
         renderConfigTs({
           name: "test-project",
           agents: [],
-          skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+          skills: buildSkillConfigs(["web-framework-react"]),
         }),
       );
 
@@ -278,7 +280,7 @@ describe("doctor command", () => {
         renderConfigTs({
           name: "test-project",
           agents: [],
-          skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+          skills: buildSkillConfigs(["web-framework-react"]),
         }),
       );
 
@@ -308,7 +310,7 @@ describe("doctor command", () => {
         renderConfigTs({
           name: "test-project",
           agents: [],
-          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
+          skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
         }),
       );
 
@@ -332,7 +334,7 @@ describe("doctor command", () => {
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
         renderConfigTs({
           name: "test-project",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
           stack: {
             "web-developer": {
@@ -359,8 +361,8 @@ describe("doctor command", () => {
         path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
         renderConfigTs({
           name: "test-project",
-          agents: [{ name: "web-developer", scope: "project" }],
-          skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+          agents: buildAgentConfigs(["web-developer"]),
+          skills: buildSkillConfigs(["web-framework-react"]),
           stack: {
             "web-developer": {
               "web-framework": [{ id: "web-framework-react" }],

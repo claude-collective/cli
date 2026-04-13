@@ -172,20 +172,14 @@ describe("config-merger", () => {
         await writeFullConfig(
           buildProjectConfig({
             name: "project",
-            agents: [
-              { name: "web-developer", scope: "project" },
-              { name: "api-developer", scope: "project" },
-            ],
+            agents: buildAgentConfigs(["web-developer", "api-developer"]),
             skills: [],
           }),
         );
 
         const newConfig = buildProjectConfig({
           name: "project",
-          agents: [
-            { name: "web-developer", scope: "project" },
-            { name: "cli-developer", scope: "project" },
-          ], // web-developer is duplicate
+          agents: buildAgentConfigs(["web-developer", "cli-developer"]), // web-developer is duplicate
           skills: [],
         });
 
@@ -194,11 +188,10 @@ describe("config-merger", () => {
         });
 
         expect(result.merged).toBe(true);
-        expectAgentConfigs(result.config, [
-          { name: "web-developer", scope: "project" },
-          { name: "api-developer", scope: "project" },
-          { name: "cli-developer", scope: "project" },
-        ]);
+        expectAgentConfigs(
+          result.config,
+          buildAgentConfigs(["web-developer", "api-developer", "cli-developer"]),
+        );
       });
 
       it("should use new config agents if existing has empty agents", async () => {
@@ -212,7 +205,7 @@ describe("config-merger", () => {
 
         expect(result.merged).toBe(true);
         // Empty existing agents, so new agents are used
-        expectAgentConfigs(result.config, [{ name: "web-developer", scope: "project" }]);
+        expectAgentConfigs(result.config, buildAgentConfigs(["web-developer"]));
       });
     });
 
@@ -278,10 +271,7 @@ describe("config-merger", () => {
 
         const newConfig = buildProjectConfig({
           name: "project",
-          agents: [
-            { name: "web-developer", scope: "project" },
-            { name: "api-developer", scope: "project" },
-          ],
+          agents: buildAgentConfigs(["web-developer", "api-developer"]),
           skills: [],
           stack: {
             "web-developer": {
@@ -347,7 +337,7 @@ describe("config-merger", () => {
 
       const newConfig = buildProjectConfig({
         name: "new-project",
-        agents: [{ name: "api-developer", scope: "project" }],
+        agents: buildAgentConfigs(["api-developer"]),
         skills: [],
       });
 
@@ -355,7 +345,7 @@ describe("config-merger", () => {
 
       // Original input should be unchanged
       expect(newConfig.name).toBe("new-project");
-      expectAgentConfigs(newConfig, [{ name: "api-developer", scope: "project" }]);
+      expectAgentConfigs(newConfig, buildAgentConfigs(["api-developer"]));
       expect(newConfig.author).toBeUndefined();
     });
 
@@ -394,7 +384,7 @@ describe("config-merger", () => {
 
         expect(result).toStrictEqual({
           name: "existing-name",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
       });
@@ -416,7 +406,7 @@ describe("config-merger", () => {
         expect(result).toStrictEqual({
           name: "project",
           description: "Existing description",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
       });
@@ -438,7 +428,7 @@ describe("config-merger", () => {
         expect(result).toStrictEqual({
           name: "project",
           source: "github:new/source",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
       });
@@ -459,7 +449,7 @@ describe("config-merger", () => {
         expect(result).toStrictEqual({
           name: "project",
           source: "github:existing/source",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
       });
@@ -481,7 +471,7 @@ describe("config-merger", () => {
         expect(result).toStrictEqual({
           name: "project",
           author: "@existing-author",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
       });
@@ -503,7 +493,7 @@ describe("config-merger", () => {
         expect(result).toStrictEqual({
           name: "project",
           marketplace: "existing-marketplace",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
       });
@@ -525,7 +515,7 @@ describe("config-merger", () => {
         expect(result).toStrictEqual({
           name: "project",
           agentsSource: "github:existing/agents",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
       });
@@ -546,7 +536,7 @@ describe("config-merger", () => {
           name: "new-name",
           description: "New desc",
           author: "@new",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
       });
@@ -556,18 +546,12 @@ describe("config-merger", () => {
       it("should union agents from existing and new configs", () => {
         const newConfig = buildProjectConfig({
           name: "project",
-          agents: [
-            { name: "web-developer", scope: "project" },
-            { name: "cli-developer", scope: "project" },
-          ],
+          agents: buildAgentConfigs(["web-developer", "cli-developer"]),
           skills: [],
         });
         const existingConfig = buildProjectConfig({
           name: "project",
-          agents: [
-            { name: "web-developer", scope: "project" },
-            { name: "api-developer", scope: "project" },
-          ],
+          agents: buildAgentConfigs(["web-developer", "api-developer"]),
           skills: [],
         });
 
@@ -575,11 +559,7 @@ describe("config-merger", () => {
 
         expect(result).toStrictEqual({
           name: "project",
-          agents: [
-            { name: "web-developer", scope: "project" },
-            { name: "api-developer", scope: "project" },
-            { name: "cli-developer", scope: "project" },
-          ],
+          agents: buildAgentConfigs(["web-developer", "api-developer", "cli-developer"]),
           skills: [],
         });
       });
@@ -587,7 +567,7 @@ describe("config-merger", () => {
       it("should keep new agents when existing has empty agents array", () => {
         const newConfig = buildProjectConfig({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
         const existingConfig = buildProjectConfig({
@@ -600,7 +580,7 @@ describe("config-merger", () => {
 
         expect(result).toStrictEqual({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
         });
       });
@@ -621,7 +601,7 @@ describe("config-merger", () => {
 
         expect(result).toStrictEqual({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: buildSkillConfigs(["web-framework-react"], { source: "new-source" }),
         });
       });
@@ -640,7 +620,7 @@ describe("config-merger", () => {
 
         expect(result).toStrictEqual({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [
             ...buildSkillConfigs(["web-state-zustand"]),
             ...buildSkillConfigs(["web-framework-react"]),
@@ -662,7 +642,7 @@ describe("config-merger", () => {
 
         expect(result).toStrictEqual({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
         });
       });
@@ -681,7 +661,7 @@ describe("config-merger", () => {
 
         expect(result).toStrictEqual({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: buildSkillConfigs(["web-framework-react"]),
         });
       });
@@ -714,7 +694,7 @@ describe("config-merger", () => {
 
         expect(result).toStrictEqual({
           name: "project",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [],
           stack: {
             "web-developer": {
@@ -772,7 +752,7 @@ describe("config-merger", () => {
     it("should not mutate the input configs", () => {
       const newConfig = buildProjectConfig({
         name: "new-project",
-        agents: [{ name: "api-developer", scope: "project" }],
+        agents: buildAgentConfigs(["api-developer"]),
         skills: [],
       });
       const existingConfig = buildProjectConfig({
@@ -786,7 +766,7 @@ describe("config-merger", () => {
 
       // Original inputs should be unchanged
       expect(newConfig.name).toBe("new-project");
-      expectAgentConfigs(newConfig, [{ name: "api-developer", scope: "project" }]);
+      expectAgentConfigs(newConfig, buildAgentConfigs(["api-developer"]));
       expect(newConfig.author).toBeUndefined();
     });
 
@@ -795,8 +775,12 @@ describe("config-merger", () => {
         const newConfig = buildProjectConfig({
           name: "project",
           skills: [
-            { id: "web-framework-react", scope: "project", source: "eject" },
-            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+            ...buildSkillConfigs(["web-framework-react"], { scope: "project", source: "eject" }),
+            ...buildSkillConfigs(["web-framework-react"], {
+              scope: "global",
+              source: "agents-inc",
+              excluded: true,
+            }),
           ],
         });
         const existingConfig = buildProjectConfig({
@@ -825,13 +809,17 @@ describe("config-merger", () => {
       it("should merge correctly when existing config has excluded entries", () => {
         const newConfig = buildProjectConfig({
           name: "project",
-          skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+          skills: buildSkillConfigs(["web-framework-react"], { scope: "project", source: "eject" }),
         });
         const existingConfig = buildProjectConfig({
           name: "project",
           skills: [
-            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
-            { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+            ...buildSkillConfigs(["web-framework-react"], {
+              scope: "global",
+              source: "agents-inc",
+              excluded: true,
+            }),
+            ...buildSkillConfigs(["web-testing-vitest"], { scope: "global", source: "agents-inc" }),
           ],
         });
 
@@ -864,15 +852,19 @@ describe("config-merger", () => {
       it("should handle both configs having excluded entries for the same skill ID", () => {
         const newConfig = buildProjectConfig({
           name: "project",
-          skills: [
-            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
-          ],
+          skills: buildSkillConfigs(["web-framework-react"], {
+            scope: "global",
+            source: "agents-inc",
+            excluded: true,
+          }),
         });
         const existingConfig = buildProjectConfig({
           name: "project",
-          skills: [
-            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
-          ],
+          skills: buildSkillConfigs(["web-framework-react"], {
+            scope: "global",
+            source: "agents-inc",
+            excluded: true,
+          }),
         });
 
         const result = mergeConfigs(newConfig, existingConfig);
@@ -889,8 +881,8 @@ describe("config-merger", () => {
         const newConfig = buildProjectConfig({
           name: "project",
           agents: [
-            { name: "api-developer", scope: "project" },
-            { name: "api-developer", scope: "global", excluded: true },
+            buildAgentConfigs(["api-developer"])[0],
+            buildAgentConfigs(["api-developer"], { scope: "global", excluded: true })[0],
           ],
           skills: [],
         });
@@ -919,14 +911,14 @@ describe("config-merger", () => {
       it("should merge correctly when existing config has excluded agent entries", () => {
         const newConfig = buildProjectConfig({
           name: "project",
-          agents: [{ name: "api-developer", scope: "project" }],
+          agents: buildAgentConfigs(["api-developer"]),
           skills: [],
         });
         const existingConfig = buildProjectConfig({
           name: "project",
           agents: [
-            { name: "api-developer", scope: "global", excluded: true },
-            { name: "web-developer", scope: "global" },
+            ...buildAgentConfigs(["api-developer"], { scope: "global", excluded: true }),
+            ...buildAgentConfigs(["web-developer"], { scope: "global" }),
           ],
           skills: [],
         });
@@ -957,12 +949,12 @@ describe("config-merger", () => {
       it("should handle both configs having excluded entries for the same agent name", () => {
         const newConfig = buildProjectConfig({
           name: "project",
-          agents: [{ name: "api-developer", scope: "global", excluded: true }],
+          agents: buildAgentConfigs(["api-developer"], { scope: "global", excluded: true }),
           skills: [],
         });
         const existingConfig = buildProjectConfig({
           name: "project",
-          agents: [{ name: "api-developer", scope: "global", excluded: true }],
+          agents: buildAgentConfigs(["api-developer"], { scope: "global", excluded: true }),
           skills: [],
         });
 
@@ -977,12 +969,12 @@ describe("config-merger", () => {
       it("should update scope of existing agent when new config has different scope", () => {
         const newConfig = buildProjectConfig({
           name: "project",
-          agents: [{ name: "api-developer", scope: "global" }],
+          agents: buildAgentConfigs(["api-developer"], { scope: "global" }),
           skills: [],
         });
         const existingConfig = buildProjectConfig({
           name: "project",
-          agents: [{ name: "api-developer", scope: "project" }],
+          agents: buildAgentConfigs(["api-developer"]),
           skills: [],
         });
 

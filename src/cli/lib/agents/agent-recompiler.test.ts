@@ -13,6 +13,8 @@ import { fileExists } from "../__tests__/test-fs-utils";
 import { initializeMatrix } from "../matrix/matrix-provider";
 import type { AgentName, SkillId } from "../../types";
 import { renderConfigTs } from "../__tests__/content-generators";
+import { buildAgentConfigs } from "../__tests__/factories/config-factories";
+import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation";
 import { CLAUDE_DIR, STANDARD_FILES } from "../../consts";
 import { VITEST_REACT_HONO_MATRIX } from "../__tests__/mock-data/mock-matrices";
 import { expectValidAgentMarkdown } from "../__tests__/assertions/agent-assertions";
@@ -81,7 +83,7 @@ describe("agent-recompiler", () => {
         renderConfigTs({
           name: "test-plugin",
           description: "Test plugin",
-          agents: [{ name: "web-pm", scope: "project" }],
+          agents: buildAgentConfigs(["web-pm"]),
         }),
       );
 
@@ -185,10 +187,10 @@ describe("agent-recompiler", () => {
         renderConfigTs({
           name: "test-plugin",
           description: "Test plugin",
-          agents: [{ name: "web-developer", scope: "project" }],
+          agents: buildAgentConfigs(["web-developer"]),
           skills: [
-            { id: "web-framework-react", scope: "project", source: "eject" },
-            { id: "web-testing-vitest", scope: "project", source: "eject", excluded: true },
+            ...buildSkillConfigs(["web-framework-react"]),
+            ...buildSkillConfigs(["web-testing-vitest"], { excluded: true }),
           ],
           stack: {
             "web-developer": {
@@ -238,10 +240,10 @@ describe("agent-recompiler", () => {
         renderConfigTs({
           name: "test-plugin",
           description: "Test plugin",
-          agents: [{ name: "web-developer", scope: "global" }],
+          agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
           skills: [
-            { id: "web-framework-react", scope: "project", source: "eject" },
-            { id: "web-testing-vitest", scope: "global", source: "eject" },
+            ...buildSkillConfigs(["web-framework-react"]),
+            ...buildSkillConfigs(["web-testing-vitest"], { scope: "global" }),
           ],
           stack: {
             "web-developer": {

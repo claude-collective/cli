@@ -12,6 +12,7 @@ import type { SourceLoadResult } from "../../loading/source-loader";
 import { createComprehensiveMatrix } from "../factories/matrix-factories.js";
 import { buildSourceResult } from "../factories/config-factories.js";
 import {
+  buildSkillConfigs,
   buildWizardResultFromStore,
   simulateSkillSelections,
 } from "../helpers/wizard-simulation.js";
@@ -91,9 +92,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       ]);
 
       // Full skills shape check
-      expectSkillConfigs(config, [
-        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      ]);
+      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
 
       // Full stack shape: every agent gets every category with all skill assignments
       // compactStackAssignments strips { id, preloaded: false } to bare strings
@@ -127,9 +126,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       assertConfigIntegrity(config, selectedSkillIds);
 
       // Full skills shape check
-      expectSkillConfigs(config, [
-        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      ]);
+      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
 
       // Full agents shape check
       expectAgentConfigs(config, [
@@ -204,9 +201,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       expectAgentConfigs(config, []);
 
       // Full skills shape check
-      expectSkillConfigs(config, [
-        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      ]);
+      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
 
       // No stack when no agents
       expect(config.stack).toBeUndefined();
@@ -229,9 +224,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       // When no agents are selected, agents list is empty and no stack is built
       expectAgentConfigs(config, []);
-      expectSkillConfigs(config, [
-        { id: "web-framework-react", scope: "project", source: "eject" },
-      ]);
+      expectSkillConfigs(config, buildSkillConfigs(["web-framework-react"]));
       expect(config.stack).toBeUndefined();
     });
   });
@@ -267,9 +260,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       ]);
 
       // Full skills shape check
-      expectSkillConfigs(config, [
-        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      ]);
+      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
 
       // Full stack shape
       // compactStackAssignments strips { id, preloaded: false } to bare strings
@@ -347,9 +338,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       assertConfigIntegrity(config, selectedSkillIds);
 
       // Full skills shape check
-      expectSkillConfigs(config, [
-        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      ]);
+      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
 
       // Full agents shape check
       expectAgentConfigs(config, [
@@ -393,9 +382,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // Full skills shape check
-      expectSkillConfigs(config, [
-        ...selectedSkillIds.map((id) => ({ id, scope: "project", source: "eject" })),
-      ]);
+      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
 
       // Full agents shape check
       expectAgentConfigs(config, [

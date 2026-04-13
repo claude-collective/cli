@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { AgentName } from "../../../types";
+import { buildAgentConfigs } from "../../__tests__/factories/config-factories.js";
 
 // --- Module-level mocks ---
 
@@ -34,7 +35,7 @@ describe("compile-agents", () => {
     vi.clearAllMocks();
 
     mockRecompileAgents.mockResolvedValue({
-      compiled: ["web-developer" as AgentName],
+      compiled: ["web-developer"],
       failed: [],
       warnings: [],
     });
@@ -84,14 +85,14 @@ describe("compile-agents", () => {
     const config = {
       name: "test",
       agents: [
-        { name: "web-developer" as AgentName, scope: "project" as const },
-        { name: "api-developer" as AgentName, scope: "global" as const },
+        ...buildAgentConfigs(["web-developer"]),
+        ...buildAgentConfigs(["api-developer"], { scope: "global" }),
       ],
       skills: [],
     };
     const scopeMap = new Map<AgentName, "project" | "global">([
-      ["web-developer" as AgentName, "project"],
-      ["api-developer" as AgentName, "global"],
+      ["web-developer", "project"],
+      ["api-developer", "global"],
     ]);
 
     mockLoadProjectConfigFromDir.mockResolvedValue({
@@ -101,7 +102,7 @@ describe("compile-agents", () => {
     mockBuildAgentScopeMap.mockReturnValue(scopeMap);
 
     mockRecompileAgents.mockResolvedValue({
-      compiled: ["web-developer" as AgentName],
+      compiled: ["web-developer"],
       failed: [],
       warnings: [],
     });
@@ -131,16 +132,15 @@ describe("compile-agents", () => {
     const config = {
       name: "test",
       agents: [
-        { name: "web-developer" as AgentName, scope: "project" as const },
-        { name: "api-developer" as AgentName, scope: "project" as const },
-        { name: "web-pm" as AgentName, scope: "global" as const },
+        ...buildAgentConfigs(["web-developer", "api-developer"]),
+        ...buildAgentConfigs(["web-pm"], { scope: "global" }),
       ],
       skills: [],
     };
     const scopeMap = new Map<AgentName, "project" | "global">([
-      ["web-developer" as AgentName, "project"],
-      ["api-developer" as AgentName, "project"],
-      ["web-pm" as AgentName, "global"],
+      ["web-developer", "project"],
+      ["api-developer", "project"],
+      ["web-pm", "global"],
     ]);
 
     mockLoadProjectConfigFromDir.mockResolvedValue({
@@ -174,14 +174,12 @@ describe("compile-agents", () => {
     const config = {
       name: "test",
       agents: [
-        { name: "web-developer" as AgentName, scope: "project" as const },
-        { name: "api-developer" as AgentName, scope: "project" as const, excluded: true },
+        ...buildAgentConfigs(["web-developer"]),
+        ...buildAgentConfigs(["api-developer"], { excluded: true }),
       ],
       skills: [],
     };
-    const scopeMap = new Map<AgentName, "project" | "global">([
-      ["web-developer" as AgentName, "project"],
-    ]);
+    const scopeMap = new Map<AgentName, "project" | "global">([["web-developer", "project"]]);
 
     mockLoadProjectConfigFromDir.mockResolvedValue({
       config,
@@ -210,8 +208,8 @@ describe("compile-agents", () => {
 
   it("should return compilation result from recompileAgents", async () => {
     mockRecompileAgents.mockResolvedValue({
-      compiled: ["web-developer" as AgentName, "api-developer" as AgentName],
-      failed: ["web-pm" as AgentName],
+      compiled: ["web-developer", "api-developer"],
+      failed: ["web-pm"],
       warnings: ["Agent web-pm had issues"],
     });
 

@@ -531,8 +531,11 @@ describe("local-installer", () => {
       // Setup: all items are global-scoped, so project split will be empty.
       // No project installation exists, so project config should be skipped.
       const config = buildProjectConfig({
-        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
-        agents: [{ name: "web-developer", scope: "global" }],
+        skills: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
       });
 
       const projectDir = path.join(tempDir, "project-dir");
@@ -562,12 +565,12 @@ describe("local-installer", () => {
     it("should write project config when project split has skills", async () => {
       const config = buildProjectConfig({
         skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-testing-vitest"]),
         ],
         agents: [
-          { name: "web-developer", scope: "global" },
-          { name: "web-reviewer", scope: "project" },
+          ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+          ...buildAgentConfigs(["web-reviewer"]),
         ],
       });
 
@@ -769,10 +772,10 @@ describe("local-installer", () => {
       ]);
 
       const config = buildProjectConfig({
-        agents: [{ name: "web-developer" as AgentName, scope: "global" }],
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
         skills: [
-          { id: "web-framework-react", scope: "project", source: "eject" },
-          { id: "web-testing-vitest", scope: "global", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"]),
+          ...buildSkillConfigs(["web-testing-vitest"], { scope: "global" }),
         ],
         stack: {
           "web-developer": {
@@ -803,10 +806,10 @@ describe("local-installer", () => {
       ]);
 
       const config = buildProjectConfig({
-        agents: [{ name: "web-developer" as AgentName, scope: "project" }],
+        agents: buildAgentConfigs(["web-developer"]),
         skills: [
-          { id: "web-framework-react", scope: "project", source: "eject" },
-          { id: "web-testing-vitest", scope: "global", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"]),
+          ...buildSkillConfigs(["web-testing-vitest"], { scope: "global" }),
         ],
         stack: {
           "web-developer": {
@@ -841,8 +844,8 @@ describe("local-installer", () => {
         const config = buildProjectConfig({
           agents: buildAgentConfigs(["web-developer"]),
           skills: [
-            { id: "web-framework-react", scope: "project", source: "eject" },
-            { id: "web-testing-vitest", scope: "project", source: "eject", excluded: true },
+            ...buildSkillConfigs(["web-framework-react"]),
+            ...buildSkillConfigs(["web-testing-vitest"], { excluded: true }),
           ],
           stack: {
             "web-developer": {
@@ -866,8 +869,8 @@ describe("local-installer", () => {
       it("should exclude agents with excluded: true from compilation", () => {
         const config = buildProjectConfig({
           agents: [
-            { name: "web-developer", scope: "project" },
-            { name: "api-developer", scope: "project", excluded: true },
+            ...buildAgentConfigs(["web-developer"]),
+            ...buildAgentConfigs(["api-developer"], { excluded: true }),
           ],
           skills: buildSkillConfigs(["web-framework-react"]),
         });
@@ -893,8 +896,12 @@ describe("local-installer", () => {
         const config = buildProjectConfig({
           agents: buildAgentConfigs(["web-developer"]),
           skills: [
-            { id: "web-framework-react", scope: "project", source: "eject" },
-            { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+            ...buildSkillConfigs(["web-framework-react"]),
+            ...buildSkillConfigs(["web-framework-react"], {
+              scope: "global",
+              source: "agents-inc",
+              excluded: true,
+            }),
           ],
           stack: {
             "web-developer": {
@@ -922,15 +929,15 @@ describe("local-installer", () => {
     it("should build a map from agent names to their scopes", () => {
       const config = buildProjectConfig({
         agents: [
-          { name: "web-developer" as AgentName, scope: "project" },
-          { name: "api-developer" as AgentName, scope: "global" },
+          ...buildAgentConfigs(["web-developer"]),
+          ...buildAgentConfigs(["api-developer"], { scope: "global" }),
         ],
       });
 
       const result = buildAgentScopeMap(config);
 
-      expect(result.get("web-developer" as AgentName)).toBe("project");
-      expect(result.get("api-developer" as AgentName)).toBe("global");
+      expect(result.get("web-developer")).toBe("project");
+      expect(result.get("api-developer")).toBe("global");
     });
 
     it("should return empty map for config with no agents", () => {
@@ -949,7 +956,7 @@ describe("local-installer", () => {
       const result = buildAgentScopeMap(config);
 
       expect(result.size).toBe(1);
-      expect(result.get("web-developer" as AgentName)).toBe("project");
+      expect(result.get("web-developer")).toBe("project");
     });
   });
 
@@ -981,7 +988,7 @@ describe("local-installer", () => {
     it("should set selectedAgents when non-empty", () => {
       const config = buildProjectConfig();
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]), {
-        selectedAgents: ["web-developer" as AgentName, "api-developer" as AgentName],
+        selectedAgents: ["web-developer", "api-developer"],
       });
       const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir);
 
@@ -1043,7 +1050,7 @@ describe("local-installer", () => {
       const originalName = config.name;
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]), {
         selectedDomains: ["web"],
-        selectedAgents: ["web-developer" as AgentName],
+        selectedAgents: ["web-developer"],
       });
       const sourceResult = buildSourceResult(EMPTY_MATRIX, tempDir, {
         marketplace: "my-marketplace",
@@ -1095,8 +1102,11 @@ describe("local-installer", () => {
       process.env.HOME = globalHome;
 
       const config = buildProjectConfig({
-        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
-        agents: [{ name: "web-developer", scope: "global" }],
+        skills: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
       });
 
       const projectConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
@@ -1131,12 +1141,12 @@ describe("local-installer", () => {
 
       const config = buildProjectConfig({
         skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-testing-vitest"]),
         ],
         agents: [
-          { name: "web-developer", scope: "global" },
-          { name: "web-reviewer", scope: "project" },
+          ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+          ...buildAgentConfigs(["web-reviewer"]),
         ],
       });
 
@@ -1321,8 +1331,11 @@ describe("local-installer", () => {
 
       const globalConfig = buildProjectConfig({
         name: "global",
-        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
-        agents: [{ name: "web-developer", scope: "global" }],
+        skills: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
         projects: [projectA, projectB],
       });
 
@@ -1352,8 +1365,11 @@ describe("local-installer", () => {
 
       const globalConfig = buildProjectConfig({
         name: "global",
-        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
-        agents: [{ name: "web-developer", scope: "global" }],
+        skills: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
         projects: [projectDir],
       });
 
@@ -1374,15 +1390,18 @@ describe("local-installer", () => {
 
       const projectConfig = buildProjectConfig({
         name: "target",
-        skills: [{ id: "web-testing-vitest", scope: "project", source: "eject" }],
-        agents: [{ name: "web-reviewer", scope: "project" }],
+        skills: buildSkillConfigs(["web-testing-vitest"]),
+        agents: buildAgentConfigs(["web-reviewer"]),
       });
       await writeConfigFile(projectConfig, path.join(configDir, STANDARD_FILES.CONFIG_TS));
 
       const globalConfig = buildProjectConfig({
         name: "global",
-        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
-        agents: [{ name: "web-developer", scope: "global" }],
+        skills: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
         projects: [projectDir],
       });
 
@@ -1401,7 +1420,10 @@ describe("local-installer", () => {
     it("should handle empty projects list", async () => {
       const globalConfig = buildProjectConfig({
         name: "global",
-        skills: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        skills: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         agents: [],
         projects: [],
       });

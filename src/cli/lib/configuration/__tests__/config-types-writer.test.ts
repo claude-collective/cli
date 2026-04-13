@@ -817,226 +817,180 @@ describe("generateProjectConfigTypesSource", () => {
 describe("regenerateConfigTypes with global install", () => {
   let tempDir: string;
   let globalDir: string;
+  let consts: typeof import("../../../consts");
 
   beforeEach(async () => {
     tempDir = await createTempDir("cc-regen-project-types-test-");
     // Create a fake global install root that simulates ~/.claude-src/config-types.ts
     globalDir = await createTempDir("cc-regen-global-root-test-");
+    consts = await import("../../../consts");
+    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", { value: globalDir, writable: true });
   });
 
   afterEach(async () => {
+    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
+      value: "/tmp/nonexistent-global-root",
+      writable: true,
+    });
     await cleanupTempDir(tempDir);
     await cleanupTempDir(globalDir);
   });
 
   it("generates project-import config-types when global exists", async () => {
-    // Set up the mock to use our fake global root
-    const { CLAUDE_SRC_DIR: claudeSrc, STANDARD_FILES: files } = await import("../../../consts");
-    const consts = await import("../../../consts");
-    // Dynamically override GLOBAL_INSTALL_ROOT for this test
-    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", { value: globalDir, writable: true });
+    // Create the global config-types.ts so detection succeeds
+    const globalClaudeSrc = path.join(globalDir, CLAUDE_SRC_DIR);
+    await mkdir(globalClaudeSrc, { recursive: true });
+    const globalTypesPath = path.join(globalClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS);
+    const { writeFile } = await import("fs/promises");
+    await writeFile(globalTypesPath, "// global types");
 
-    try {
-      // Create the global config-types.ts so detection succeeds
-      const globalClaudeSrc = path.join(globalDir, claudeSrc);
-      await mkdir(globalClaudeSrc, { recursive: true });
-      const globalTypesPath = path.join(globalClaudeSrc, files.CONFIG_TYPES_TS);
-      const { writeFile } = await import("fs/promises");
-      await writeFile(globalTypesPath, "// global types");
+    // Create project .claude-src/
+    const projectClaudeSrc = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(projectClaudeSrc, { recursive: true });
 
-      // Create project .claude-src/
-      const projectClaudeSrc = path.join(tempDir, claudeSrc);
-      await mkdir(projectClaudeSrc, { recursive: true });
+    const data = makeBackgroundData({
+      "web-framework-react": SKILLS.react,
+    });
 
-      const data = makeBackgroundData({
-        "web-framework-react": SKILLS.react,
-      });
+    await regenerateConfigTypes(tempDir, data);
 
-      await regenerateConfigTypes(tempDir, data);
+    const configTypesPath = path.join(projectClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
 
-      const configTypesPath = path.join(projectClaudeSrc, files.CONFIG_TYPES_TS);
-      const content = await readFile(configTypesPath, "utf-8");
-
-      // Should have import from global, not standalone unions
-      expect(content).toContain("import type {");
-      expect(content).toContain("SkillId as GlobalSkillId");
-      expect(content).toContain("export type SkillId = GlobalSkillId;");
-      // Should NOT contain inline skill IDs from the matrix
-      expect(content).not.toContain('"web-framework-react"');
-    } finally {
-      // Restore to non-existent path
-      Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
-        value: "/tmp/nonexistent-global-root",
-        writable: true,
-      });
-    }
+    // Should have import from global, not standalone unions
+    expect(content).toContain("import type {");
+    expect(content).toContain("SkillId as GlobalSkillId");
+    expect(content).toContain("export type SkillId = GlobalSkillId;");
+    // Should NOT contain inline skill IDs from the matrix
+    expect(content).not.toContain('"web-framework-react"');
   });
 
   it("includes project-only extras when global exists", async () => {
-    const { CLAUDE_SRC_DIR: claudeSrc, STANDARD_FILES: files } = await import("../../../consts");
-    const consts = await import("../../../consts");
-    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", { value: globalDir, writable: true });
+    const globalClaudeSrc = path.join(globalDir, CLAUDE_SRC_DIR);
+    await mkdir(globalClaudeSrc, { recursive: true });
+    const { writeFile } = await import("fs/promises");
+    await writeFile(path.join(globalClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS), "// global types");
 
-    try {
-      const globalClaudeSrc = path.join(globalDir, claudeSrc);
-      await mkdir(globalClaudeSrc, { recursive: true });
-      const { writeFile } = await import("fs/promises");
-      await writeFile(path.join(globalClaudeSrc, files.CONFIG_TYPES_TS), "// global types");
+    const projectClaudeSrc = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(projectClaudeSrc, { recursive: true });
 
-      const projectClaudeSrc = path.join(tempDir, claudeSrc);
-      await mkdir(projectClaudeSrc, { recursive: true });
+    const data = makeBackgroundData({});
 
-      const data = makeBackgroundData({});
+    await regenerateConfigTypes(tempDir, data, {
+      extraSkillIds: ["acme-deploy-pipeline"],
+      extraAgentNames: ["custom-reviewer"],
+    });
 
-      await regenerateConfigTypes(tempDir, data, {
-        extraSkillIds: ["acme-deploy-pipeline"],
-        extraAgentNames: ["custom-reviewer"],
-      });
+    const configTypesPath = path.join(projectClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
 
-      const configTypesPath = path.join(projectClaudeSrc, files.CONFIG_TYPES_TS);
-      const content = await readFile(configTypesPath, "utf-8");
-
-      expect(content).toContain("SkillId as GlobalSkillId");
-      expect(content).toContain('"acme-deploy-pipeline"');
-      expect(content).toContain('"custom-reviewer"');
-    } finally {
-      Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
-        value: "/tmp/nonexistent-global-root",
-        writable: true,
-      });
-    }
+    expect(content).toContain("SkillId as GlobalSkillId");
+    expect(content).toContain('"acme-deploy-pipeline"');
+    expect(content).toContain('"custom-reviewer"');
   });
 
   it("narrows SelectedAgentName from project config selectedAgents", async () => {
-    const { CLAUDE_SRC_DIR: claudeSrc, STANDARD_FILES: files } = await import("../../../consts");
-    const consts = await import("../../../consts");
-    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", { value: globalDir, writable: true });
+    // Create global config-types.ts
+    const globalClaudeSrc = path.join(globalDir, CLAUDE_SRC_DIR);
+    await mkdir(globalClaudeSrc, { recursive: true });
+    const { writeFile: fsWriteFile } = await import("fs/promises");
+    await fsWriteFile(
+      path.join(globalClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS),
+      "// global types",
+    );
 
-    try {
-      // Create global config-types.ts
-      const globalClaudeSrc = path.join(globalDir, claudeSrc);
-      await mkdir(globalClaudeSrc, { recursive: true });
-      const { writeFile: fsWriteFile } = await import("fs/promises");
-      await fsWriteFile(path.join(globalClaudeSrc, files.CONFIG_TYPES_TS), "// global types");
+    // Create project .claude-src/ with a config that has selectedAgents
+    const projectClaudeSrc = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(projectClaudeSrc, { recursive: true });
 
-      // Create project .claude-src/ with a config that has selectedAgents
-      const projectClaudeSrc = path.join(tempDir, claudeSrc);
-      await mkdir(projectClaudeSrc, { recursive: true });
+    const { generateConfigSource } = await import("../config-writer");
+    const configContent = generateConfigSource(
+      buildProjectConfig({
+        selectedAgents: ["web-developer", "api-developer"],
+      }),
+    );
+    await fsWriteFile(path.join(projectClaudeSrc, STANDARD_FILES.CONFIG_TS), configContent);
 
-      const { generateConfigSource } = await import("../config-writer");
-      const configContent = generateConfigSource(
-        buildProjectConfig({
-          selectedAgents: ["web-developer", "api-developer"],
-        }),
-      );
-      await fsWriteFile(path.join(projectClaudeSrc, files.CONFIG_TS), configContent);
+    const data = makeBackgroundData({});
+    await regenerateConfigTypes(tempDir, data);
 
-      const data = makeBackgroundData({});
-      await regenerateConfigTypes(tempDir, data);
+    const configTypesPath = path.join(projectClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
 
-      const configTypesPath = path.join(projectClaudeSrc, files.CONFIG_TYPES_TS);
-      const content = await readFile(configTypesPath, "utf-8");
-
-      // SelectedAgentName should be narrowed to the config's selectedAgents
-      expect(content).toContain(
-        'export type SelectedAgentName = "web-developer" | "api-developer"',
-      );
-      // Should NOT fall back to AgentName
-      expect(content).not.toContain("export type SelectedAgentName = AgentName");
-    } finally {
-      Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
-        value: "/tmp/nonexistent-global-root",
-        writable: true,
-      });
-    }
+    // SelectedAgentName should be narrowed to the config's selectedAgents
+    expect(content).toContain('export type SelectedAgentName = "web-developer" | "api-developer"');
+    // Should NOT fall back to AgentName
+    expect(content).not.toContain("export type SelectedAgentName = AgentName");
   });
 
   it("narrows ProjectAgentName to project-scoped agents from loaded config", async () => {
-    const { CLAUDE_SRC_DIR: claudeSrc, STANDARD_FILES: files } = await import("../../../consts");
-    const consts = await import("../../../consts");
-    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", { value: globalDir, writable: true });
+    const globalClaudeSrc = path.join(globalDir, CLAUDE_SRC_DIR);
+    await mkdir(globalClaudeSrc, { recursive: true });
+    const { writeFile: fsWriteFile } = await import("fs/promises");
+    await fsWriteFile(
+      path.join(globalClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS),
+      "// global types",
+    );
 
-    try {
-      const globalClaudeSrc = path.join(globalDir, claudeSrc);
-      await mkdir(globalClaudeSrc, { recursive: true });
-      const { writeFile: fsWriteFile } = await import("fs/promises");
-      await fsWriteFile(path.join(globalClaudeSrc, files.CONFIG_TYPES_TS), "// global types");
+    const projectClaudeSrc = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(projectClaudeSrc, { recursive: true });
 
-      const projectClaudeSrc = path.join(tempDir, claudeSrc);
-      await mkdir(projectClaudeSrc, { recursive: true });
+    // Config with mixed scopes: web-developer global, api-developer project
+    const { generateConfigSource } = await import("../config-writer");
+    const configContent = generateConfigSource(
+      buildProjectConfig({
+        agents: [
+          ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+          ...buildAgentConfigs(["api-developer"], { scope: "project" }),
+        ],
+        selectedAgents: ["web-developer", "api-developer"],
+      }),
+    );
+    await fsWriteFile(path.join(projectClaudeSrc, STANDARD_FILES.CONFIG_TS), configContent);
 
-      // Config with mixed scopes: web-developer global, api-developer project
-      const { generateConfigSource } = await import("../config-writer");
-      const configContent = generateConfigSource(
-        buildProjectConfig({
-          agents: [
-            ...buildAgentConfigs(["web-developer"], { scope: "global" }),
-            ...buildAgentConfigs(["api-developer"], { scope: "project" }),
-          ],
-          selectedAgents: ["web-developer", "api-developer"],
-        }),
-      );
-      await fsWriteFile(path.join(projectClaudeSrc, files.CONFIG_TS), configContent);
+    const data = makeBackgroundData({});
+    await regenerateConfigTypes(tempDir, data);
 
-      const data = makeBackgroundData({});
-      await regenerateConfigTypes(tempDir, data);
+    const configTypesPath = path.join(projectClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
 
-      const configTypesPath = path.join(projectClaudeSrc, files.CONFIG_TYPES_TS);
-      const content = await readFile(configTypesPath, "utf-8");
-
-      // ProjectAgentName should be narrowed to only project-scoped agent
-      expect(content).toContain('export type ProjectAgentName = "api-developer"');
-      // Should NOT fall back to SelectedAgentName
-      expect(content).not.toContain("export type ProjectAgentName = SelectedAgentName");
-      // SelectedAgentName should still include all selected agents
-      expect(content).toContain(
-        'export type SelectedAgentName = "web-developer" | "api-developer"',
-      );
-    } finally {
-      Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
-        value: "/tmp/nonexistent-global-root",
-        writable: true,
-      });
-    }
+    // ProjectAgentName should be narrowed to only project-scoped agent
+    expect(content).toContain('export type ProjectAgentName = "api-developer"');
+    // Should NOT fall back to SelectedAgentName
+    expect(content).not.toContain("export type ProjectAgentName = SelectedAgentName");
+    // SelectedAgentName should still include all selected agents
+    expect(content).toContain('export type SelectedAgentName = "web-developer" | "api-developer"');
   });
 
   it("falls back ProjectAgentName to SelectedAgentName when all agents are global", async () => {
-    const { CLAUDE_SRC_DIR: claudeSrc, STANDARD_FILES: files } = await import("../../../consts");
-    const consts = await import("../../../consts");
-    Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", { value: globalDir, writable: true });
+    const globalClaudeSrc = path.join(globalDir, CLAUDE_SRC_DIR);
+    await mkdir(globalClaudeSrc, { recursive: true });
+    const { writeFile: fsWriteFile } = await import("fs/promises");
+    await fsWriteFile(
+      path.join(globalClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS),
+      "// global types",
+    );
 
-    try {
-      const globalClaudeSrc = path.join(globalDir, claudeSrc);
-      await mkdir(globalClaudeSrc, { recursive: true });
-      const { writeFile: fsWriteFile } = await import("fs/promises");
-      await fsWriteFile(path.join(globalClaudeSrc, files.CONFIG_TYPES_TS), "// global types");
+    const projectClaudeSrc = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(projectClaudeSrc, { recursive: true });
 
-      const projectClaudeSrc = path.join(tempDir, claudeSrc);
-      await mkdir(projectClaudeSrc, { recursive: true });
+    // Config with all global-scoped agents (simulates global init)
+    const { generateConfigSource } = await import("../config-writer");
+    const configContent = generateConfigSource(
+      buildProjectConfig({
+        agents: buildAgentConfigs(["web-developer", "web-reviewer"], { scope: "global" }),
+        selectedAgents: ["web-developer", "web-reviewer"],
+      }),
+    );
+    await fsWriteFile(path.join(projectClaudeSrc, STANDARD_FILES.CONFIG_TS), configContent);
 
-      // Config with all global-scoped agents (simulates global init)
-      const { generateConfigSource } = await import("../config-writer");
-      const configContent = generateConfigSource(
-        buildProjectConfig({
-          agents: buildAgentConfigs(["web-developer", "web-reviewer"], { scope: "global" }),
-          selectedAgents: ["web-developer", "web-reviewer"],
-        }),
-      );
-      await fsWriteFile(path.join(projectClaudeSrc, files.CONFIG_TS), configContent);
+    const data = makeBackgroundData({});
+    await regenerateConfigTypes(tempDir, data);
 
-      const data = makeBackgroundData({});
-      await regenerateConfigTypes(tempDir, data);
+    const configTypesPath = path.join(projectClaudeSrc, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
 
-      const configTypesPath = path.join(projectClaudeSrc, files.CONFIG_TYPES_TS);
-      const content = await readFile(configTypesPath, "utf-8");
-
-      // ProjectAgentName should fall back to SelectedAgentName (all agents are global)
-      expect(content).toContain("export type ProjectAgentName = SelectedAgentName");
-    } finally {
-      Object.defineProperty(consts, "GLOBAL_INSTALL_ROOT", {
-        value: "/tmp/nonexistent-global-root",
-        writable: true,
-      });
-    }
+    // ProjectAgentName should fall back to SelectedAgentName (all agents are global)
+    expect(content).toContain("export type ProjectAgentName = SelectedAgentName");
   });
 });

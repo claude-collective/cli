@@ -37,23 +37,6 @@ import { buildMultiSourceMatrix } from "../__tests__/mock-data/mock-matrices.js"
 import type { MergedSkillsMatrix, ProjectConfig, SkillId, Category } from "../../types";
 import { initializeMatrix } from "./matrix-provider";
 
-// ── Constants ──────────────────────────────────────────────────────────────────
-
-// Boundary cast: test-only fake skill IDs for test isolation
-const AUTH_PATTERNS = "api-security-auth-patterns" as SkillId;
-const ANIMATION_FRAMER = "web-animation-framer" as SkillId;
-const A11Y = "web-accessibility-a11y" as SkillId;
-const MONITORING_SENTRY = "api-monitoring-sentry" as SkillId;
-const NONEXISTENT_SKILL = "web-nonexistent-skill" as SkillId;
-const FEATURE_ADVANCED = "web-feature-advanced" as SkillId;
-const NONEXISTENT_DEP = "web-nonexistent-dep" as SkillId;
-const VUE_ID: SkillId = "web-framework-vue-composition-api";
-
-const TOTAL_SOURCE_COUNT = 3;
-const SELECTED_SKILL_COUNT = 10;
-
-// ── Tests ──────────────────────────────────────────────────────────────────────
-
 describe("Integration: Multi-Source Skill Resolution", () => {
   describe("Scenario 1: Skills from 3 sources resolve into unified matrix", () => {
     it("should create a matrix with unique skills from all sources", () => {
@@ -88,7 +71,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
 
       // web-framework-react exists in all 3 sources
       const reactSkill = matrix.skills["web-framework-react"];
-      expect(reactSkill?.availableSources).toHaveLength(TOTAL_SOURCE_COUNT);
+      expect(reactSkill?.availableSources).toHaveLength(3);
 
       const sourceTypes = reactSkill!.availableSources!.map((s) => s.type);
       expect(sourceTypes).toContain("public");
@@ -170,13 +153,13 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         "web-testing-vitest", // from 2 sources
         "api-framework-hono", // acme only
         "api-database-drizzle", // acme only
-        AUTH_PATTERNS, // acme only
-        ANIMATION_FRAMER, // internal only
-        A11Y, // internal only
-        MONITORING_SENTRY, // internal only
+        "api-security-auth-patterns" as SkillId, // acme only
+        "web-animation-framer" as SkillId, // internal only
+        "web-accessibility-a11y" as SkillId, // internal only
+        "api-monitoring-sentry" as SkillId, // internal only
       ];
 
-      expect(selectedSkills).toHaveLength(SELECTED_SKILL_COUNT);
+      expect(selectedSkills).toHaveLength(10);
 
       const validation = validateSelection(selectedSkills);
       expect(validation.valid).toBe(true);
@@ -195,7 +178,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       initializeMatrix(matrix);
 
       // Select a skill that doesn't exist in any source
-      const selections: SkillId[] = ["web-framework-react", NONEXISTENT_SKILL];
+      const selections: SkillId[] = ["web-framework-react", "web-nonexistent-skill" as SkillId];
 
       // resolveAlias throws for unknown skill IDs — invalid input is a bug
       expect(() => validateSelection(selections)).toThrow("Unknown skill ID");
@@ -205,7 +188,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const matrix = buildMultiSourceMatrix();
       initializeMatrix(matrix);
 
-      expect(() => resolveAlias(NONEXISTENT_SKILL)).toThrow("Unknown skill ID");
+      expect(() => resolveAlias("web-nonexistent-skill" as SkillId)).toThrow("Unknown skill ID");
     });
 
     it("should not include missing skill in getAvailableSkills for any category", () => {
@@ -217,7 +200,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       for (const category of allCategories) {
         const available = getAvailableSkills(category, []);
         const ids = available.map((o) => o.id);
-        expect(ids).not.toContain(NONEXISTENT_SKILL);
+        expect(ids).not.toContain("web-nonexistent-skill" as SkillId);
       }
     });
 
@@ -226,18 +209,21 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       initializeMatrix(matrix);
 
       // Add a skill that requires a non-existent skill
-      matrix.skills[FEATURE_ADVANCED] = createMockSkill(FEATURE_ADVANCED, {
-        category: "web-framework",
-        requires: [
-          {
-            skillIds: [NONEXISTENT_DEP],
-            needsAny: false,
-            reason: "Needs nonexistent dependency",
-          },
-        ],
-      });
+      matrix.skills["web-feature-advanced" as SkillId] = createMockSkill(
+        "web-feature-advanced" as SkillId,
+        {
+          category: "web-framework",
+          requires: [
+            {
+              skillIds: ["web-nonexistent-dep" as SkillId],
+              needsAny: false,
+              reason: "Needs nonexistent dependency",
+            },
+          ],
+        },
+      );
 
-      expect(() => validateSelection([FEATURE_ADVANCED])).toThrow();
+      expect(() => validateSelection(["web-feature-advanced" as SkillId])).toThrow();
     });
   });
 
@@ -288,7 +274,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       initializeMatrix(matrix);
 
       // auth-patterns requires hono
-      const authSkill = matrix.skills[AUTH_PATTERNS]!;
+      const authSkill = matrix.skills["api-security-auth-patterns" as SkillId]!;
       authSkill.requires = [
         {
           skillIds: ["api-framework-hono"],
@@ -298,10 +284,10 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // Nothing selected, auth should have unmet requirements
-      const unmet = hasUnmetRequirements(AUTH_PATTERNS, []);
+      const unmet = hasUnmetRequirements("api-security-auth-patterns" as SkillId, []);
       expect(unmet).toBe(true);
 
-      const reason = getUnmetRequirementsReason(AUTH_PATTERNS, []);
+      const reason = getUnmetRequirementsReason("api-security-auth-patterns" as SkillId, []);
       expect(reason).toContain("requires");
       expect(reason).toContain("Hono");
     });
@@ -311,7 +297,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       initializeMatrix(matrix);
 
       // auth-patterns requires hono
-      const authSkill = matrix.skills[AUTH_PATTERNS]!;
+      const authSkill = matrix.skills["api-security-auth-patterns" as SkillId]!;
       authSkill.requires = [
         {
           skillIds: ["api-framework-hono"],
@@ -321,7 +307,9 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // hono selected, auth should not have unmet requirements
-      const unmet = hasUnmetRequirements(AUTH_PATTERNS, ["api-framework-hono"]);
+      const unmet = hasUnmetRequirements("api-security-auth-patterns" as SkillId, [
+        "api-framework-hono",
+      ]);
       expect(unmet).toBe(false);
     });
 
@@ -330,7 +318,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       initializeMatrix(matrix);
 
       // sentry can work with either hono (acme) OR react (public/acme/internal)
-      const sentrySkill = matrix.skills[MONITORING_SENTRY]!;
+      const sentrySkill = matrix.skills["api-monitoring-sentry" as SkillId]!;
       sentrySkill.requires = [
         {
           skillIds: ["api-framework-hono", "web-framework-react"],
@@ -340,12 +328,15 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       ];
 
       // Select react (from public), sentry should be valid
-      const validation = validateSelection([MONITORING_SENTRY, "web-framework-react"]);
+      const validation = validateSelection([
+        "api-monitoring-sentry" as SkillId,
+        "web-framework-react",
+      ]);
       expect(validation.valid).toBe(true);
       expect(validation.errors).toHaveLength(0);
 
       // Without any framework, sentry should fail with missing requirement
-      const failValidation = validateSelection([MONITORING_SENTRY]);
+      const failValidation = validateSelection(["api-monitoring-sentry" as SkillId]);
       expect(failValidation.valid).toBe(true);
       expect(failValidation.errors).toHaveLength(1);
       expect(failValidation.errors[0].type).toBe("missingRequirement");
@@ -362,12 +353,15 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const reactSkill = matrix.skills["web-framework-react"]!;
       reactSkill.conflictsWith = [
         {
-          skillId: VUE_ID,
+          skillId: "web-framework-vue-composition-api",
           reason: "Choose one frontend framework",
         },
       ];
 
-      const validation = validateSelection(["web-framework-react", VUE_ID]);
+      const validation = validateSelection([
+        "web-framework-react",
+        "web-framework-vue-composition-api",
+      ]);
       expect(validation.valid).toBe(true);
       expect(validation.errors[0].type).toBe("conflict");
       expect(validation.errors[0].message).toContain("Choose one frontend framework");
@@ -380,13 +374,15 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const reactSkill = matrix.skills["web-framework-react"]!;
       reactSkill.conflictsWith = [
         {
-          skillId: VUE_ID,
+          skillId: "web-framework-vue-composition-api",
           reason: "Choose one frontend framework",
         },
       ];
 
       // React selected, vue should be incompatible
-      const incompatible = isIncompatible(VUE_ID, ["web-framework-react"]);
+      const incompatible = isIncompatible("web-framework-vue-composition-api", [
+        "web-framework-react",
+      ]);
       expect(incompatible).toBe(true);
     });
 
@@ -395,7 +391,10 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       initializeMatrix(matrix);
 
       // framework category is exclusive -- selecting both react and vue violates it
-      const validation = validateSelection(["web-framework-react", VUE_ID]);
+      const validation = validateSelection([
+        "web-framework-react",
+        "web-framework-vue-composition-api",
+      ]);
       expect(validation.valid).toBe(true);
       expect(validation.errors.some((e) => e.type === "categoryExclusive")).toBe(true);
     });
@@ -450,7 +449,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const ids = available.map((o) => o.id);
       expect(ids).toHaveLength(2);
       expect(ids).toContain("web-framework-react");
-      expect(ids).toContain(VUE_ID);
+      expect(ids).toContain("web-framework-vue-composition-api");
 
       // Non-framework skills should NOT appear
       expect(ids).not.toContain("web-state-zustand");
@@ -494,11 +493,11 @@ describe("Integration: Multi-Source Install Pipeline", () => {
 
     const wizardResult = buildWizardResult(
       [
-        { id: "web-framework-react", scope: "project", source: "public" },
-        { id: "api-framework-hono", scope: "project", source: "acme-corp" },
-        { id: ANIMATION_FRAMER, scope: "project", source: "internal" },
-        { id: "api-database-drizzle", scope: "project", source: "acme-corp" },
-        { id: "web-testing-vitest", scope: "project", source: "public" },
+        ...buildSkillConfigs(["web-framework-react", "web-testing-vitest"], { source: "public" }),
+        ...buildSkillConfigs(["api-framework-hono", "api-database-drizzle"], {
+          source: "acme-corp",
+        }),
+        ...buildSkillConfigs(["web-animation-framer" as SkillId], { source: "internal" }),
       ],
       {
         selectedAgents: ["web-developer", "api-developer"],

@@ -247,25 +247,22 @@ describe("installation", () => {
 
     it("should use process.cwd() as default when projectDir is not provided", async () => {
       const originalCwd = process.cwd();
+      process.chdir(tempDir);
 
-      try {
-        process.chdir(tempDir);
+      const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
+      await mkdir(claudeSrcDir, { recursive: true });
+      await writeFile(
+        path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
+        renderConfigTs(buildProjectConfig()),
+      );
 
-        const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
-        await mkdir(claudeSrcDir, { recursive: true });
-        await writeFile(
-          path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TS),
-          renderConfigTs(buildProjectConfig()),
-        );
+      const result = await detectInstallation();
 
-        const result = await detectInstallation();
+      expect(result).not.toBeNull();
+      expect(result?.mode).toBe("eject");
+      expect(result?.projectDir).toBe(fs.realpathSync(tempDir));
 
-        expect(result).not.toBeNull();
-        expect(result?.mode).toBe("eject");
-        expect(result?.projectDir).toBe(fs.realpathSync(tempDir));
-      } finally {
-        process.chdir(originalCwd);
-      }
+      process.chdir(originalCwd);
     });
   });
 });

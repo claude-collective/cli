@@ -51,6 +51,7 @@ import { directoryExists } from "../../utils/fs";
 import { detectInstallation } from "../installation";
 import { loadProjectConfig } from "../configuration";
 import { buildProjectConfig } from "../__tests__/factories/config-factories";
+import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation";
 
 const mockedReaddir = vi.mocked(readdir);
 const mockedGetProjectPluginsDir = vi.mocked(getProjectPluginsDir);
@@ -217,7 +218,7 @@ describe("plugin-info", () => {
       mockedLoadProjectConfig.mockResolvedValue({
         config: buildProjectConfig({
           name: "my-plugin",
-          skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
+          skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
         }),
         configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
       });

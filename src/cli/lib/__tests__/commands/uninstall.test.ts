@@ -8,6 +8,7 @@ import { writeTestSkill } from "../helpers/disk-writers.js";
 import { createMockSkill } from "../factories/skill-factories.js";
 import { createMockMatrix } from "../factories/matrix-factories.js";
 import { buildAgentConfigs } from "../factories/config-factories.js";
+import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
 import { SKILLS } from "../test-fixtures";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import {
@@ -591,9 +592,9 @@ describe("uninstall command", () => {
       const config: Partial<ProjectConfig> = {
         marketplace: "agents-inc",
         skills: [
-          { id: "web-framework-react", scope: "project", source: "custom-source" },
-          { id: "web-state-zustand", scope: "global", source: "eject" },
-          { id: "api-framework-hono", scope: "project", source: "agents-inc" },
+          buildSkillConfigs(["web-framework-react"], { source: "custom-source" })[0],
+          buildSkillConfigs(["web-state-zustand"], { scope: "global" })[0],
+          buildSkillConfigs(["api-framework-hono"], { source: "agents-inc" })[0],
         ],
       };
 
@@ -837,7 +838,7 @@ describe("uninstall command", () => {
     it("should not remove global-scoped skills when only global skills exist", async () => {
       // Config has global-scoped skills, but uninstall only looks at projectDir/.claude/skills/
       await createProjectConfig(projectDir, {
-        skills: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
       });
 
       // Place the skill at the global location (~/.claude/skills/)
@@ -860,8 +861,8 @@ describe("uninstall command", () => {
     it("should remove project-scoped skills without touching global-scoped skills", async () => {
       await createProjectConfig(projectDir, {
         skills: [
-          { id: "web-framework-react", scope: "project", source: "eject" },
-          { id: "web-state-zustand", scope: "global", source: "eject" },
+          buildSkillConfigs(["web-framework-react"])[0],
+          buildSkillConfigs(["web-state-zustand"], { scope: "global" })[0],
         ],
       });
 
@@ -897,7 +898,7 @@ describe("uninstall command", () => {
       await createCLISkill(globalSkillsDir, "web-framework-react");
 
       await createProjectConfig(fakeHome, {
-        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        skills: buildSkillConfigs(["web-framework-react"]),
       });
 
       process.chdir(fakeHome);

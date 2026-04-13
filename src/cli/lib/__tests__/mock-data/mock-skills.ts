@@ -10,7 +10,6 @@ import type {
 } from "../../../types";
 import type { TestSkill } from "../fixtures/create-test-source";
 import {
-  createMockExtractedSkill,
   createMockSkill,
   createMockSkillEntry,
   createTestSkill,
@@ -211,31 +210,6 @@ export const INIT_SKILL_IDS: SkillId[] = [
 export const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) =>
   INIT_SKILL_IDS.includes(s.id as SkillId),
 );
-
-// ExtractedSkillMetadata constants for skill-resolution tests
-
-export const REACT_EXTRACTED = createMockExtractedSkill("web-framework-react", {
-  description: "React framework",
-  author: "@vince",
-});
-
-export const REACT_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-react", {
-  description: "React",
-});
-
-export const VUE_EXTRACTED_BASIC = createMockExtractedSkill("web-framework-vue-composition-api", {
-  description: "Vue",
-});
-
-export const ZUSTAND_EXTRACTED = createMockExtractedSkill("web-state-zustand", {
-  description: "Zustand",
-  category: "web-client-state",
-});
-
-export const JOTAI_EXTRACTED = createMockExtractedSkill("web-state-jotai", {
-  description: "Jotai",
-  category: "web-client-state",
-});
 
 // ---------------------------------------------------------------------------
 // Health-check skill variants (matrix-health-check.test.ts)

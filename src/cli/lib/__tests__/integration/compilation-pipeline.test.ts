@@ -23,21 +23,15 @@ import { COMPILATION_TEST_STACK } from "../mock-data/mock-stacks.js";
 
 async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
   const manifestPath = path.join(pluginDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
-  try {
-    const content = await readFile(manifestPath, "utf-8");
-    return JSON.parse(content) as PluginManifest;
-  } catch {
-    return null;
-  }
+  return readFile(manifestPath, "utf-8")
+    .then((content) => JSON.parse(content) as PluginManifest)
+    .catch(() => null);
 }
 
 async function pathExists(p: string): Promise<boolean> {
-  try {
-    await stat(p);
-    return true;
-  } catch {
-    return false;
-  }
+  return stat(p)
+    .then(() => true)
+    .catch(() => false);
 }
 
 describe("Integration: Full Skill Pipeline", () => {

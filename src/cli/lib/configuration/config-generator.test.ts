@@ -612,54 +612,52 @@ describe("config-generator", () => {
   describe("splitConfigByScope", () => {
     it("puts global-scoped skills and agents into the global partition", () => {
       const config = buildProjectConfig({
-        skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
-        ],
-        agents: [
-          { name: "web-developer", scope: "global" },
-          { name: "web-reviewer", scope: "global" },
-        ],
+        skills: buildSkillConfigs(["web-framework-react", "web-testing-vitest"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        agents: buildAgentConfigs(["web-developer", "web-reviewer"], { scope: "global" }),
       });
 
       const result = splitConfigByScope(config);
 
-      expectSkillConfigs(result.global, [
-        { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
-      ]);
-      expectAgentConfigs(result.global, [
-        { name: "web-developer", scope: "global" },
-        { name: "web-reviewer", scope: "global" },
-      ]);
+      expectSkillConfigs(
+        result.global,
+        buildSkillConfigs(["web-framework-react", "web-testing-vitest"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+      );
+      expectAgentConfigs(
+        result.global,
+        buildAgentConfigs(["web-developer", "web-reviewer"], { scope: "global" }),
+      );
       expectSkillConfigs(result.project, []);
       expectAgentConfigs(result.project, []);
     });
 
     it("puts project-scoped skills and agents into the project partition", () => {
       const config = buildProjectConfig({
-        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        skills: buildSkillConfigs(["web-framework-react"]),
       });
 
       const result = splitConfigByScope(config);
 
       expectSkillConfigs(result.global, []);
       expectAgentConfigs(result.global, []);
-      expectSkillConfigs(result.project, [
-        { id: "web-framework-react", scope: "project", source: "eject" },
-      ]);
-      expectAgentConfigs(result.project, [{ name: "web-developer", scope: "project" }]);
+      expectSkillConfigs(result.project, buildSkillConfigs(["web-framework-react"]));
+      expectAgentConfigs(result.project, buildAgentConfigs(["web-developer"]));
     });
 
     it("correctly separates mixed-scope items", () => {
       const config = buildProjectConfig({
         skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-testing-vitest"]),
         ],
         agents: [
-          { name: "web-developer", scope: "global" },
-          { name: "web-reviewer", scope: "project" },
+          ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+          ...buildAgentConfigs(["web-reviewer"]),
         ],
         stack: {
           "web-developer": {
@@ -698,7 +696,7 @@ describe("config-generator", () => {
         description: "A test project",
         author: "@vince",
         source: "github:org/repo",
-        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        skills: buildSkillConfigs(["web-framework-react"]),
       });
 
       const result = splitConfigByScope(config);
@@ -728,10 +726,10 @@ describe("config-generator", () => {
       // project skills were silently dropped from the stack.
       const config = buildProjectConfig({
         skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-testing-vitest"]),
         ],
-        agents: [{ name: "web-developer", scope: "global" }],
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
         stack: {
           "web-developer": {
             "web-framework": [{ id: "web-framework-react", preloaded: false }],
@@ -763,85 +761,107 @@ describe("config-generator", () => {
     it("should route excluded global skills to project partition", () => {
       const config = buildProjectConfig({
         skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
-          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+          ...buildSkillConfigs(["web-framework-react"], {
+            scope: "global",
+            source: "agents-inc",
+            excluded: true,
+          }),
+          ...buildSkillConfigs(["web-testing-vitest"], { scope: "global", source: "agents-inc" }),
         ],
-        agents: [{ name: "web-developer", scope: "global" }],
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
       });
 
       const result = splitConfigByScope(config);
 
       // Excluded global skill routes to project partition
-      expectSkillConfigs(result.project, [
-        { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
-      ]);
+      expectSkillConfigs(
+        result.project,
+        buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+          excluded: true,
+        }),
+      );
       // Active global skill stays in global partition
-      expectSkillConfigs(result.global, [
-        { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
-      ]);
+      expectSkillConfigs(
+        result.global,
+        buildSkillConfigs(["web-testing-vitest"], { scope: "global", source: "agents-inc" }),
+      );
     });
 
     it("should route excluded global agents to project partition", () => {
       const config = buildProjectConfig({
         skills: [],
         agents: [
-          { name: "web-developer", scope: "global", excluded: true },
-          { name: "web-reviewer", scope: "global" },
+          ...buildAgentConfigs(["web-developer"], { scope: "global", excluded: true }),
+          ...buildAgentConfigs(["web-reviewer"], { scope: "global" }),
         ],
       });
 
       const result = splitConfigByScope(config);
 
       // Excluded global agent routes to project partition
-      expectAgentConfigs(result.project, [
-        { name: "web-developer", scope: "global", excluded: true },
-      ]);
+      expectAgentConfigs(
+        result.project,
+        buildAgentConfigs(["web-developer"], { scope: "global", excluded: true }),
+      );
       // Active global agent stays in global partition
-      expectAgentConfigs(result.global, [{ name: "web-reviewer", scope: "global" }]);
+      expectAgentConfigs(result.global, buildAgentConfigs(["web-reviewer"], { scope: "global" }));
     });
 
     it("should keep active global skills in global partition", () => {
       const config = buildProjectConfig({
         skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "global", source: "agents-inc", excluded: true },
-          { id: "web-state-zustand", scope: "project", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-testing-vitest"], {
+            scope: "global",
+            source: "agents-inc",
+            excluded: true,
+          }),
+          ...buildSkillConfigs(["web-state-zustand"]),
         ],
-        agents: [{ name: "web-developer", scope: "global" }],
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
       });
 
       const result = splitConfigByScope(config);
 
       // Active global skill in global partition
-      expectSkillConfigs(result.global, [
-        { id: "web-framework-react", scope: "global", source: "agents-inc" },
-      ]);
+      expectSkillConfigs(
+        result.global,
+        buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+      );
       // Excluded global + project skills in project partition
       expectSkillConfigs(result.project, [
-        { id: "web-testing-vitest", scope: "global", source: "agents-inc", excluded: true },
-        { id: "web-state-zustand", scope: "project", source: "eject" },
+        ...buildSkillConfigs(["web-testing-vitest"], {
+          scope: "global",
+          source: "agents-inc",
+          excluded: true,
+        }),
+        ...buildSkillConfigs(["web-state-zustand"]),
       ]);
     });
 
     it("should keep excluded project-scope skills in project partition", () => {
       const config = buildProjectConfig({
         skills: [
-          { id: "web-framework-react", scope: "project", source: "eject", excluded: true },
-          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
+          ...buildSkillConfigs(["web-framework-react"], { excluded: true }),
+          ...buildSkillConfigs(["web-testing-vitest"], { scope: "global", source: "agents-inc" }),
         ],
-        agents: [{ name: "web-developer", scope: "global" }],
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
       });
 
       const result = splitConfigByScope(config);
 
       // Excluded project-scope skill stays in project partition with excluded preserved
-      expectSkillConfigs(result.project, [
-        { id: "web-framework-react", scope: "project", source: "eject", excluded: true },
-      ]);
+      expectSkillConfigs(
+        result.project,
+        buildSkillConfigs(["web-framework-react"], { excluded: true }),
+      );
       // Does NOT appear in global partition
-      expectSkillConfigs(result.global, [
-        { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
-      ]);
+      expectSkillConfigs(
+        result.global,
+        buildSkillConfigs(["web-testing-vitest"], { scope: "global", source: "agents-inc" }),
+      );
     });
   });
 
@@ -851,11 +871,11 @@ describe("config-generator", () => {
 
     it("should produce empty project split when all items are global", () => {
       const config = buildProjectConfig({
-        skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
-        ],
-        agents: [{ name: "web-developer", scope: "global" }],
+        skills: buildSkillConfigs(["web-framework-react", "web-testing-vitest"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
       });
 
       const { project } = splitConfigByScope(config);
@@ -867,12 +887,12 @@ describe("config-generator", () => {
     it("should correctly split mixed-scope configs", () => {
       const config = buildProjectConfig({
         skills: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "project", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-testing-vitest"]),
         ],
         agents: [
-          { name: "web-developer", scope: "global" },
-          { name: "api-developer", scope: "project" },
+          ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+          ...buildAgentConfigs(["api-developer"]),
         ],
       });
 

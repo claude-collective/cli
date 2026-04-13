@@ -54,6 +54,7 @@ function buildConsumerMatrix() {
 
 describe("Integration: Consumer-Defined Stacks", () => {
   let dirs: TestDirs;
+  let extraDirs: TestDirs | undefined;
 
   beforeEach(async () => {
     dirs = await createTestSource({
@@ -63,6 +64,10 @@ describe("Integration: Consumer-Defined Stacks", () => {
 
   afterEach(async () => {
     await cleanupTestSource(dirs);
+    if (extraDirs) {
+      await cleanupTestSource(extraDirs);
+      extraDirs = undefined;
+    }
   });
 
   it("should load custom stacks from source config/stacks.ts", async () => {
@@ -75,14 +80,10 @@ describe("Integration: Consumer-Defined Stacks", () => {
   });
 
   it("should return empty array when source has no stacks.ts", async () => {
-    const noDirs = await createTestSource();
+    extraDirs = await createTestSource();
 
-    try {
-      const stacks = await loadStacks(noDirs.sourceDir);
-      expect(stacks).toStrictEqual([]);
-    } finally {
-      await cleanupTestSource(noDirs);
-    }
+    const stacks = await loadStacks(extraDirs.sourceDir);
+    expect(stacks).toStrictEqual([]);
   });
 
   it("should install with custom stack skills reflected in config.ts", async () => {
@@ -130,109 +131,97 @@ describe("Integration: Consumer-Defined Stacks", () => {
   });
 
   it("should load stacks with philosophy field when provided", async () => {
-    const philoDirs = await createTestSource({ stacks: PHILOSOPHY_TEST_STACKS });
+    extraDirs = await createTestSource({ stacks: PHILOSOPHY_TEST_STACKS });
 
-    try {
-      const stacks = await loadStacks(philoDirs.sourceDir);
-      expect(stacks).toHaveLength(1);
-      expect(stacks[0].philosophy).toBe("Modern fullstack with type safety");
-    } finally {
-      await cleanupTestSource(philoDirs);
-    }
+    const stacks = await loadStacks(extraDirs.sourceDir);
+    expect(stacks).toHaveLength(1);
+    expect(stacks[0].philosophy).toBe("Modern fullstack with type safety");
   });
 });
 
 describe("Integration: Stacks Precedence", () => {
+  let dirs: TestDirs;
+
+  afterEach(async () => {
+    await cleanupTestSource(dirs);
+  });
+
   it("should load source stacks independently from CLI stacks", async () => {
     // Source with custom stacks
-    const dirs = await createTestSource({ stacks: CUSTOM_TEST_STACKS });
+    dirs = await createTestSource({ stacks: CUSTOM_TEST_STACKS });
 
-    try {
-      const sourceStacks = await loadStacks(dirs.sourceDir);
-      expect(sourceStacks.map((s) => s.id)).toStrictEqual(["custom-fullstack", "custom-testing"]);
-    } finally {
-      await cleanupTestSource(dirs);
-    }
+    const sourceStacks = await loadStacks(dirs.sourceDir);
+    expect(sourceStacks.map((s) => s.id)).toStrictEqual(["custom-fullstack", "custom-testing"]);
   });
 
   it("should use source stacks when source has stacks.ts (source overrides CLI)", async () => {
     // In loadAndMergeFromBasePath, if sourceStacks.length > 0, CLI stacks are NOT loaded.
     // This test verifies source stacks are self-contained.
-    const dirs = await createTestSource({ stacks: CUSTOM_TEST_STACKS });
+    dirs = await createTestSource({ stacks: CUSTOM_TEST_STACKS });
 
-    try {
-      const sourceStacks = await loadStacks(dirs.sourceDir);
-      expect(sourceStacks).toHaveLength(2);
+    const sourceStacks = await loadStacks(dirs.sourceDir);
+    expect(sourceStacks).toHaveLength(2);
 
-      // custom-fullstack has 2 agents: web-developer, api-developer
-      expect(Object.keys(sourceStacks[0].agents)).toStrictEqual(["web-developer", "api-developer"]);
-      // custom-testing has 1 agent: web-developer
-      expect(Object.keys(sourceStacks[1].agents)).toStrictEqual(["web-developer"]);
-    } finally {
-      await cleanupTestSource(dirs);
-    }
+    // custom-fullstack has 2 agents: web-developer, api-developer
+    expect(Object.keys(sourceStacks[0].agents)).toStrictEqual(["web-developer", "api-developer"]);
+    // custom-testing has 1 agent: web-developer
+    expect(Object.keys(sourceStacks[1].agents)).toStrictEqual(["web-developer"]);
   });
 
   it("should allow a source to define a stack with an ID matching a CLI built-in", async () => {
     // A source can define a stack with the same ID as a CLI built-in.
     // Since loadAndMergeFromBasePath uses source stacks when available,
     // the source's version effectively takes precedence.
-    const dirs = await createTestSource({ stacks: OVERRIDING_TEST_STACKS });
+    dirs = await createTestSource({ stacks: OVERRIDING_TEST_STACKS });
 
-    try {
-      const stacks = await loadStacks(dirs.sourceDir);
-      expect(stacks).toHaveLength(1);
-      expect(stacks[0].id).toBe("nextjs-fullstack");
-      // The consumer's custom description, not the CLI built-in
-      expect(stacks[0].name).toBe("Custom Next.js");
-      expect(stacks[0].description).toBe("Consumer override of Next.js stack");
-    } finally {
-      await cleanupTestSource(dirs);
-    }
+    const stacks = await loadStacks(dirs.sourceDir);
+    expect(stacks).toHaveLength(1);
+    expect(stacks[0].id).toBe("nextjs-fullstack");
+    // The consumer's custom description, not the CLI built-in
+    expect(stacks[0].name).toBe("Custom Next.js");
+    expect(stacks[0].description).toBe("Consumer override of Next.js stack");
   });
 });
 
 describe("Integration: Marketplace Source Stacks", () => {
+  let dirs: TestDirs;
+
+  afterEach(async () => {
+    await cleanupTestSource(dirs);
+  });
+
   it("should load stacks from a marketplace-like source directory", async () => {
     // A marketplace source has its own config/stacks.ts alongside skills
-    const dirs = await createTestSource({ stacks: MARKETPLACE_TEST_STACKS });
+    dirs = await createTestSource({ stacks: MARKETPLACE_TEST_STACKS });
 
-    try {
-      const stacks = await loadStacks(dirs.sourceDir);
-      expect(stacks).toHaveLength(1);
-      expect(stacks[0].id).toBe("marketplace-stack");
-      expect(stacks[0].name).toBe("Marketplace Stack");
+    const stacks = await loadStacks(dirs.sourceDir);
+    expect(stacks).toHaveLength(1);
+    expect(stacks[0].id).toBe("marketplace-stack");
+    expect(stacks[0].name).toBe("Marketplace Stack");
 
-      // Verify the stack has exactly these agents
-      expect(Object.keys(stacks[0].agents)).toStrictEqual(["web-developer", "api-developer"]);
-    } finally {
-      await cleanupTestSource(dirs);
-    }
+    // Verify the stack has exactly these agents
+    expect(Object.keys(stacks[0].agents)).toStrictEqual(["web-developer", "api-developer"]);
   });
 
   it("should load stacks alongside skills in the same source", async () => {
-    const dirs = await createTestSource({ stacks: MARKETPLACE_FULLSTACK_TEST_STACKS });
+    dirs = await createTestSource({ stacks: MARKETPLACE_FULLSTACK_TEST_STACKS });
 
-    try {
-      // Stacks load from source config/stacks.ts
-      const stacks = await loadStacks(dirs.sourceDir);
-      expect(stacks).toHaveLength(1);
+    // Stacks load from source config/stacks.ts
+    const stacks = await loadStacks(dirs.sourceDir);
+    expect(stacks).toHaveLength(1);
 
-      // Skills are also available at the source skills dir (verify via file existence)
-      const reactSkillPath = path.join(
-        dirs.skillsDir,
-        "web-framework",
-        "web-framework-react",
-        STANDARD_FILES.SKILL_MD,
-      );
-      expect(await fileExists(reactSkillPath)).toBe(true);
+    // Skills are also available at the source skills dir (verify via file existence)
+    const reactSkillPath = path.join(
+      dirs.skillsDir,
+      "web-framework",
+      "web-framework-react",
+      STANDARD_FILES.SKILL_MD,
+    );
+    expect(await fileExists(reactSkillPath)).toBe(true);
 
-      // Categories and rules files also exist alongside stacks
-      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
-      expect(await fileExists(categoriesPath)).toBe(true);
-    } finally {
-      await cleanupTestSource(dirs);
-    }
+    // Categories and rules files also exist alongside stacks
+    const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
+    expect(await fileExists(categoriesPath)).toBe(true);
   });
 });
 
@@ -287,367 +276,339 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
 });
 
 describe("Integration: Custom Skills Matrix Loading", () => {
+  let tempDir: string;
+
+  afterEach(async () => {
+    await cleanupTempDir(tempDir);
+  });
+
   it("should load custom categories and skills from a matrix config", async () => {
-    const tempDir = await createTempDir("matrix-test-");
+    tempDir = await createTempDir("matrix-test-");
+    const skillsDir = path.join(tempDir, "src", "skills");
 
-    try {
-      const skillsDir = path.join(tempDir, "src", "skills");
+    // Create a skill in the tooling category (use "infra" prefix — valid categoryPath prefix)
+    await writeSourceSkill(
+      skillsDir,
+      path.join("infra", "tooling", "docker"),
+      DOCKER_TOOLING_SKILL,
+    );
 
-      // Create a skill in the tooling category (use "infra" prefix — valid categoryPath prefix)
-      await writeSourceSkill(
-        skillsDir,
-        path.join("infra", "tooling", "docker"),
-        DOCKER_TOOLING_SKILL,
-      );
+    // Extract skills from filesystem and merge with matrix config
+    const skills = await extractAllSkills(skillsDir);
+    const merged = mergeMatrixWithSkills(
+      TOOLING_AND_FRAMEWORK_CONFIG.categories,
+      TOOLING_AND_FRAMEWORK_CONFIG.relationships,
+      skills,
+    );
 
-      // Extract skills from filesystem and merge with matrix config
-      const skills = await extractAllSkills(skillsDir);
-      const merged = mergeMatrixWithSkills(
-        TOOLING_AND_FRAMEWORK_CONFIG.categories,
-        TOOLING_AND_FRAMEWORK_CONFIG.relationships,
-        skills,
-      );
+    // Assert the custom "tooling" category is present
+    expect(Object.keys(merged.categories)).toHaveLength(2);
+    expect(merged.categories["shared-tooling"]).toStrictEqual(
+      expect.objectContaining({
+        displayName: "Tooling",
+        exclusive: false,
+      }),
+    );
 
-      // Assert the custom "tooling" category is present
-      expect(Object.keys(merged.categories)).toHaveLength(2);
-      expect(merged.categories["shared-tooling"]).toStrictEqual(
-        expect.objectContaining({
-          displayName: "Tooling",
-          exclusive: false,
-        }),
-      );
-
-      // Assert the custom skill is present
-      // Boundary cast: test-only skill ID not in generated SkillId union
-      const dockerId = "infra-tooling-docker" as SkillId;
-      expect(merged.skills[dockerId]).toStrictEqual(
-        expect.objectContaining({
-          description: "Docker containerization patterns",
-          category: "shared-tooling",
-        }),
-      );
-    } finally {
-      await cleanupTempDir(tempDir);
-    }
+    // Assert the custom skill is present
+    // Boundary cast: test-only skill ID not in generated SkillId union
+    const dockerId = "infra-tooling-docker" as SkillId;
+    expect(merged.skills[dockerId]).toStrictEqual(
+      expect.objectContaining({
+        description: "Docker containerization patterns",
+        category: "shared-tooling",
+      }),
+    );
   });
 
   it("should respect exclusive flag from custom matrix categories", async () => {
-    const tempDir = await createTempDir("exclusive-test-");
+    tempDir = await createTempDir("exclusive-test-");
+    const skillsDir = path.join(tempDir, "src", "skills");
 
-    try {
-      const skillsDir = path.join(tempDir, "src", "skills");
-
-      // Create skills in the exclusive category (use "infra" prefix — valid categoryPath prefix)
-      for (const skill of CI_CD_SKILLS) {
-        const dir = skill.id.replace(`${skill.category}-`, "");
-        await writeSourceSkill(skillsDir, path.join("infra", "ci-cd", dir), skill);
-      }
-
-      const skills = await extractAllSkills(skillsDir);
-      const merged = mergeMatrixWithSkills(
-        CI_CD_CONFIG.categories,
-        CI_CD_CONFIG.relationships,
-        skills,
-      );
-
-      // Verify category exclusive flag
-      expect(merged.categories["infra-ci-cd"]).toStrictEqual(
-        expect.objectContaining({ exclusive: true }),
-      );
-
-      // Verify both skills are loaded
-      // Boundary cast: test-only skill IDs not in generated SkillId union
-      expect(merged.skills["infra-ci-cd-github-actions" as SkillId]).toStrictEqual(
-        expect.objectContaining({ category: "infra-ci-cd" }),
-      );
-      expect(merged.skills["infra-ci-cd-gitlab-ci" as SkillId]).toStrictEqual(
-        expect.objectContaining({ category: "infra-ci-cd" }),
-      );
-    } finally {
-      await cleanupTempDir(tempDir);
+    // Create skills in the exclusive category (use "infra" prefix — valid categoryPath prefix)
+    for (const skill of CI_CD_SKILLS) {
+      const dir = skill.id.replace(`${skill.category}-`, "");
+      await writeSourceSkill(skillsDir, path.join("infra", "ci-cd", dir), skill);
     }
+
+    const skills = await extractAllSkills(skillsDir);
+    const merged = mergeMatrixWithSkills(
+      CI_CD_CONFIG.categories,
+      CI_CD_CONFIG.relationships,
+      skills,
+    );
+
+    // Verify category exclusive flag
+    expect(merged.categories["infra-ci-cd"]).toStrictEqual(
+      expect.objectContaining({ exclusive: true }),
+    );
+
+    // Verify both skills are loaded
+    // Boundary cast: test-only skill IDs not in generated SkillId union
+    expect(merged.skills["infra-ci-cd-github-actions" as SkillId]).toStrictEqual(
+      expect.objectContaining({ category: "infra-ci-cd" }),
+    );
+    expect(merged.skills["infra-ci-cd-gitlab-ci" as SkillId]).toStrictEqual(
+      expect.objectContaining({ category: "infra-ci-cd" }),
+    );
   });
 
   it("should respect discourages relationships from custom matrix", async () => {
-    const tempDir = await createTempDir("discourages-test-");
+    tempDir = await createTempDir("discourages-test-");
+    const skillsDir = path.join(tempDir, "src", "skills");
 
-    try {
-      const skillsDir = path.join(tempDir, "src", "skills");
-
-      // Create the skills referenced in relationships
-      for (const skill of DISCOURAGES_RELATIONSHIP_SKILLS) {
-        const dir = skill.id.replace(`${skill.category}-`, "");
-        const categoryPath = skill.category.replace(/\//g, path.sep);
-        await writeSourceSkill(skillsDir, path.join(categoryPath, dir), skill);
-      }
-
-      const skills = await extractAllSkills(skillsDir);
-      const merged = mergeMatrixWithSkills(
-        FRAMEWORK_AND_STYLING_CONFIG.categories,
-        FRAMEWORK_AND_STYLING_CONFIG.relationships,
-        skills,
-      );
-
-      // Verify discourages relationship is applied to both skills
-      const skillA = merged.skills["web-framework-react"];
-      expect(skillA).toStrictEqual(
-        expect.objectContaining({
-          discourages: [
-            expect.objectContaining({
-              skillId: "web-styling-scss-modules",
-              reason: "These tools have conflicting design philosophies",
-            }),
-          ],
-        }),
-      );
-
-      const skillB = merged.skills["web-styling-scss-modules"];
-      expect(skillB).toStrictEqual(
-        expect.objectContaining({
-          discourages: [expect.objectContaining({ skillId: "web-framework-react" })],
-        }),
-      );
-
-      // Verify recommended skill is marked as isRecommended
-      const skillC = merged.skills["web-framework-vue-composition-api"];
-      expect(skillC).toStrictEqual(
-        expect.objectContaining({
-          isRecommended: true,
-          recommendedReason: "These work great together",
-        }),
-      );
-    } finally {
-      await cleanupTempDir(tempDir);
+    // Create the skills referenced in relationships
+    for (const skill of DISCOURAGES_RELATIONSHIP_SKILLS) {
+      const dir = skill.id.replace(`${skill.category}-`, "");
+      const categoryPath = skill.category.replace(/\//g, path.sep);
+      await writeSourceSkill(skillsDir, path.join(categoryPath, dir), skill);
     }
+
+    const skills = await extractAllSkills(skillsDir);
+    const merged = mergeMatrixWithSkills(
+      FRAMEWORK_AND_STYLING_CONFIG.categories,
+      FRAMEWORK_AND_STYLING_CONFIG.relationships,
+      skills,
+    );
+
+    // Verify discourages relationship is applied to both skills
+    const skillA = merged.skills["web-framework-react"];
+    expect(skillA).toStrictEqual(
+      expect.objectContaining({
+        discourages: [
+          expect.objectContaining({
+            skillId: "web-styling-scss-modules",
+            reason: "These tools have conflicting design philosophies",
+          }),
+        ],
+      }),
+    );
+
+    const skillB = merged.skills["web-styling-scss-modules"];
+    expect(skillB).toStrictEqual(
+      expect.objectContaining({
+        discourages: [expect.objectContaining({ skillId: "web-framework-react" })],
+      }),
+    );
+
+    // Verify recommended skill is marked as isRecommended
+    const skillC = merged.skills["web-framework-vue-composition-api"];
+    expect(skillC).toStrictEqual(
+      expect.objectContaining({
+        isRecommended: true,
+        recommendedReason: "These work great together",
+      }),
+    );
   });
 
   it("should preserve preloaded flag through stack loading", async () => {
-    const tempDir = await createTempDir("preloaded-test-");
+    tempDir = await createTempDir("preloaded-test-");
+    const configDir = path.join(tempDir, "config");
+    await mkdir(configDir, { recursive: true });
 
-    try {
-      const configDir = path.join(tempDir, "config");
-      await mkdir(configDir, { recursive: true });
-
-      // Create a stacks.ts with preloaded: true on some skills
-      const stacksContent = {
-        stacks: [
-          {
-            id: "preloaded-test",
-            name: "Preloaded Test Stack",
-            description: "Stack with preloaded skills",
-            agents: {
-              "web-developer": {
-                "web-framework": [{ id: "web-framework-react", preloaded: true }],
-                "web-testing": "web-testing-vitest",
-                "meta-reviewing": [
-                  { id: "meta-methodology-research-methodology", preloaded: true },
-                  "meta-reviewing-reviewing",
-                ],
-              },
+    // Create a stacks.ts with preloaded: true on some skills
+    const stacksContent = {
+      stacks: [
+        {
+          id: "preloaded-test",
+          name: "Preloaded Test Stack",
+          description: "Stack with preloaded skills",
+          agents: {
+            "web-developer": {
+              "web-framework": [{ id: "web-framework-react", preloaded: true }],
+              "web-testing": "web-testing-vitest",
+              "meta-reviewing": [
+                { id: "meta-methodology-research-methodology", preloaded: true },
+                "meta-reviewing-reviewing",
+              ],
             },
           },
-        ],
-      };
+        },
+      ],
+    };
 
-      await writeFile(path.join(configDir, "stacks.ts"), renderConfigTs(stacksContent));
+    await writeFile(path.join(configDir, "stacks.ts"), renderConfigTs(stacksContent));
 
-      const stacks = await loadStacks(tempDir);
+    const stacks = await loadStacks(tempDir);
 
-      expect(stacks).toHaveLength(1);
-      const stack = stacks[0];
+    expect(stacks).toHaveLength(1);
+    const stack = stacks[0];
 
-      // Framework: preloaded: true (object form)
-      const frameworkAssignments = stack.agents["web-developer"]!["web-framework"];
-      expect(frameworkAssignments).toHaveLength(1);
-      expect(frameworkAssignments![0].id).toBe("web-framework-react");
-      expect(frameworkAssignments![0].preloaded).toBe(true);
+    // Framework: preloaded: true (object form)
+    const frameworkAssignments = stack.agents["web-developer"]!["web-framework"];
+    expect(frameworkAssignments).toHaveLength(1);
+    expect(frameworkAssignments![0].id).toBe("web-framework-react");
+    expect(frameworkAssignments![0].preloaded).toBe(true);
 
-      // Testing: bare string -> preloaded defaults to false
-      const testingAssignments = stack.agents["web-developer"]!["web-testing"];
-      expect(testingAssignments).toHaveLength(1);
-      expect(testingAssignments![0].id).toBe("web-testing-vitest");
-      expect(testingAssignments![0].preloaded).toBe(false);
+    // Testing: bare string -> preloaded defaults to false
+    const testingAssignments = stack.agents["web-developer"]!["web-testing"];
+    expect(testingAssignments).toHaveLength(1);
+    expect(testingAssignments![0].id).toBe("web-testing-vitest");
+    expect(testingAssignments![0].preloaded).toBe(false);
 
-      // Methodology: mixed array — first preloaded: true, second defaults to false
-      const methodologyAssignments = stack.agents["web-developer"]!["meta-reviewing"];
-      expect(methodologyAssignments).toHaveLength(2);
-      expect(methodologyAssignments![0].id).toBe("meta-methodology-research-methodology");
-      expect(methodologyAssignments![0].preloaded).toBe(true);
-      expect(methodologyAssignments![1].id).toBe("meta-reviewing-reviewing");
-      expect(methodologyAssignments![1].preloaded).toBe(false);
-    } finally {
-      await cleanupTempDir(tempDir);
-    }
+    // Methodology: mixed array — first preloaded: true, second defaults to false
+    const methodologyAssignments = stack.agents["web-developer"]!["meta-reviewing"];
+    expect(methodologyAssignments).toHaveLength(2);
+    expect(methodologyAssignments![0].id).toBe("meta-methodology-research-methodology");
+    expect(methodologyAssignments![0].preloaded).toBe(true);
+    expect(methodologyAssignments![1].id).toBe("meta-reviewing-reviewing");
+    expect(methodologyAssignments![1].preloaded).toBe(false);
   });
 });
 
 describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
+  let dirs: TestDirs;
+
+  afterEach(async () => {
+    await cleanupTestSource(dirs);
+  });
+
   it("should install skills from a source with both custom matrix and stacks", async () => {
-    const dirs = await createTestSource({ stacks: PIPELINE_TEST_STACKS });
+    dirs = await createTestSource({ stacks: PIPELINE_TEST_STACKS });
 
-    try {
-      // 1. Verify stacks loaded from source
-      const stacks = await loadStacks(dirs.sourceDir);
-      expect(stacks).toHaveLength(1);
-      expect(stacks[0].id).toBe("custom-pipeline");
+    // 1. Verify stacks loaded from source
+    const stacks = await loadStacks(dirs.sourceDir);
+    expect(stacks).toHaveLength(1);
+    expect(stacks[0].id).toBe("custom-pipeline");
 
-      // 2. Verify skills exist at the source skills dir
-      const reactSkillPath = path.join(
-        dirs.skillsDir,
-        "web-framework",
-        "web-framework-react",
-        STANDARD_FILES.SKILL_MD,
-      );
-      expect(await fileExists(reactSkillPath)).toBe(true);
+    // 2. Verify skills exist at the source skills dir
+    const reactSkillPath = path.join(
+      dirs.skillsDir,
+      "web-framework",
+      "web-framework-react",
+      STANDARD_FILES.SKILL_MD,
+    );
+    expect(await fileExists(reactSkillPath)).toBe(true);
 
-      // 3. Verify categories/rules are loadable
-      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
-      expect(await fileExists(categoriesPath)).toBe(true);
+    // 3. Verify categories/rules are loadable
+    const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
+    expect(await fileExists(categoriesPath)).toBe(true);
 
-      // 4. Install with the custom stack skills
-      const consumerMatrix = buildConsumerMatrix();
-      initializeMatrix(consumerMatrix);
-      const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
-      const result = await installEject({
-        wizardResult: buildWizardResult(
-          buildSkillConfigs(["web-framework-react", "web-testing-vitest", "api-framework-hono"]),
-          { selectedAgents: ["web-developer", "api-developer"] },
-        ),
-        sourceResult,
-        projectDir: dirs.projectDir,
-      });
+    // 4. Install with the custom stack skills
+    const consumerMatrix = buildConsumerMatrix();
+    initializeMatrix(consumerMatrix);
+    const sourceResult = buildSourceResult(consumerMatrix, dirs.sourceDir);
+    const result = await installEject({
+      wizardResult: buildWizardResult(
+        buildSkillConfigs(["web-framework-react", "web-testing-vitest", "api-framework-hono"]),
+        { selectedAgents: ["web-developer", "api-developer"] },
+      ),
+      sourceResult,
+      projectDir: dirs.projectDir,
+    });
 
-      // 5. Verify installation results
-      expectInstallResult(result, {
-        copiedSkillIds: ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
-        compiledAgents: ["api-developer", "web-developer"],
-      });
+    // 5. Verify installation results
+    expectInstallResult(result, {
+      copiedSkillIds: ["api-framework-hono", "web-framework-react", "web-testing-vitest"],
+      compiledAgents: ["api-developer", "web-developer"],
+    });
 
-      // 6. Verify config.ts contains exactly the selected skills
-      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
-      expectConfigSkills(config, [
-        "api-framework-hono",
-        "web-framework-react",
-        "web-testing-vitest",
-      ]);
-    } finally {
-      await cleanupTestSource(dirs);
-    }
+    // 6. Verify config.ts contains exactly the selected skills
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
+    expectConfigSkills(config, ["api-framework-hono", "web-framework-react", "web-testing-vitest"]);
   });
 
   it("should load categories and rules from a custom source directory", async () => {
-    const dirs = await createTestSource();
+    dirs = await createTestSource();
 
-    try {
-      // Verify the source's skill-categories.ts can be loaded and parsed
-      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
-      expect(await fileExists(categoriesPath)).toBe(true);
+    // Verify the source's skill-categories.ts can be loaded and parsed
+    const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
+    expect(await fileExists(categoriesPath)).toBe(true);
 
-      const categoriesContent = await readFile(categoriesPath, "utf-8");
+    const categoriesContent = await readFile(categoriesPath, "utf-8");
 
-      // Verify the disk categories file contains category definitions and structure.
-      // Skill IDs are not in the categories file — they come from metadata scanning
-      // in the skills directory (src/skills/).
-      expect(categoriesContent).toContain("framework");
-      expect(categoriesContent).toContain("testing");
-      expect(categoriesContent).toContain('"version"');
-      expect(categoriesContent).toContain('"categories"');
+    // Verify the disk categories file contains category definitions and structure.
+    // Skill IDs are not in the categories file — they come from metadata scanning
+    // in the skills directory (src/skills/).
+    expect(categoriesContent).toContain("framework");
+    expect(categoriesContent).toContain("testing");
+    expect(categoriesContent).toContain('"version"');
+    expect(categoriesContent).toContain('"categories"');
 
-      // Verify source also has skill directories
-      const reactDir = path.join(dirs.skillsDir, "web-framework", "web-framework-react");
-      expect(await directoryExists(reactDir)).toBe(true);
-    } finally {
-      await cleanupTestSource(dirs);
-    }
+    // Verify source also has skill directories
+    const reactDir = path.join(dirs.skillsDir, "web-framework", "web-framework-react");
+    expect(await directoryExists(reactDir)).toBe(true);
   });
 
   it("should handle a source with multiple stacks referencing the same skills", async () => {
-    const dirs = await createTestSource({ stacks: MULTI_TEST_STACKS });
+    dirs = await createTestSource({ stacks: MULTI_TEST_STACKS });
 
-    try {
-      const stacks = await loadStacks(dirs.sourceDir);
-      expect(stacks).toHaveLength(2);
+    const stacks = await loadStacks(dirs.sourceDir);
+    expect(stacks).toHaveLength(2);
 
-      // Both stacks reference web-framework-react
-      const stackAReactAssignment = stacks[0].agents["web-developer"]?.["web-framework"];
-      const stackBReactAssignment = stacks[1].agents["web-developer"]?.["web-framework"];
+    // Both stacks reference web-framework-react
+    const stackAReactAssignment = stacks[0].agents["web-developer"]?.["web-framework"];
+    const stackBReactAssignment = stacks[1].agents["web-developer"]?.["web-framework"];
 
-      expect(stackAReactAssignment).toStrictEqual([
-        expect.objectContaining({ id: "web-framework-react" }),
-      ]);
-      expect(stackBReactAssignment).toStrictEqual([
-        expect.objectContaining({ id: "web-framework-react" }),
-      ]);
-    } finally {
-      await cleanupTestSource(dirs);
-    }
+    expect(stackAReactAssignment).toStrictEqual([
+      expect.objectContaining({ id: "web-framework-react" }),
+    ]);
+    expect(stackBReactAssignment).toStrictEqual([
+      expect.objectContaining({ id: "web-framework-react" }),
+    ]);
   });
 });
 
 describe("Integration: Custom Matrix Skill Metadata Survival", () => {
+  let tempDir: string;
+
+  afterEach(async () => {
+    await cleanupTempDir(tempDir);
+  });
+
   it("should load skills with tags from custom source metadata", async () => {
-    const tempDir = await createTempDir("tags-test-");
+    tempDir = await createTempDir("tags-test-");
+    const skillsDir = path.join(tempDir, "src", "skills");
 
-    try {
-      const skillsDir = path.join(tempDir, "src", "skills");
+    await writeSourceSkill(
+      skillsDir,
+      path.join("api", "observability", "datadog"),
+      DATADOG_OBSERVABILITY_SKILL,
+    );
 
-      await writeSourceSkill(
-        skillsDir,
-        path.join("api", "observability", "datadog"),
-        DATADOG_OBSERVABILITY_SKILL,
-      );
+    const skills = await extractAllSkills(skillsDir);
+    const merged = mergeMatrixWithSkills(
+      OBSERVABILITY_CONFIG.categories,
+      OBSERVABILITY_CONFIG.relationships,
+      skills,
+    );
 
-      const skills = await extractAllSkills(skillsDir);
-      const merged = mergeMatrixWithSkills(
-        OBSERVABILITY_CONFIG.categories,
-        OBSERVABILITY_CONFIG.relationships,
-        skills,
-      );
-
-      // Boundary cast: test-only skill ID not in generated SkillId union
-      const datadogSkill = merged.skills["api-observability-datadog" as SkillId];
-      expect(datadogSkill).toStrictEqual(
-        expect.objectContaining({ description: "Datadog APM integration" }),
-      );
-    } finally {
-      await cleanupTempDir(tempDir);
-    }
+    // Boundary cast: test-only skill ID not in generated SkillId union
+    const datadogSkill = merged.skills["api-observability-datadog" as SkillId];
+    expect(datadogSkill).toStrictEqual(
+      expect.objectContaining({ description: "Datadog APM integration" }),
+    );
   });
 
   it("should handle requires relationship from custom matrix", async () => {
-    const tempDir = await createTempDir("requires-test-");
+    tempDir = await createTempDir("requires-test-");
+    const skillsDir = path.join(tempDir, "src", "skills");
 
-    try {
-      const skillsDir = path.join(tempDir, "src", "skills");
-
-      // Create the skills (use valid categoryPath prefixes — "shared" is not valid)
-      for (const skill of REQUIRES_RELATIONSHIP_SKILLS) {
-        const dir = skill.id.replace(`${skill.category}-`, "");
-        const catPath = skill.category.replace(/\//g, path.sep);
-        await writeSourceSkill(skillsDir, path.join(catPath, dir), skill);
-      }
-
-      const skills = await extractAllSkills(skillsDir);
-      const merged = mergeMatrixWithSkills(
-        FRAMEWORK_AND_TESTING_CONFIG.categories,
-        FRAMEWORK_AND_TESTING_CONFIG.relationships,
-        skills,
-      );
-
-      // Verify requires relationship is applied
-      const rtlSkill = merged.skills["web-testing-vitest"];
-      expect(rtlSkill).toStrictEqual(
-        expect.objectContaining({
-          requires: [
-            expect.objectContaining({
-              skillIds: expect.arrayContaining(["web-framework-react"]),
-              reason: "RTL requires React to function",
-            }),
-          ],
-        }),
-      );
-    } finally {
-      await cleanupTempDir(tempDir);
+    // Create the skills (use valid categoryPath prefixes — "shared" is not valid)
+    for (const skill of REQUIRES_RELATIONSHIP_SKILLS) {
+      const dir = skill.id.replace(`${skill.category}-`, "");
+      const catPath = skill.category.replace(/\//g, path.sep);
+      await writeSourceSkill(skillsDir, path.join(catPath, dir), skill);
     }
+
+    const skills = await extractAllSkills(skillsDir);
+    const merged = mergeMatrixWithSkills(
+      FRAMEWORK_AND_TESTING_CONFIG.categories,
+      FRAMEWORK_AND_TESTING_CONFIG.relationships,
+      skills,
+    );
+
+    // Verify requires relationship is applied
+    const rtlSkill = merged.skills["web-testing-vitest"];
+    expect(rtlSkill).toStrictEqual(
+      expect.objectContaining({
+        requires: [
+          expect.objectContaining({
+            skillIds: expect.arrayContaining(["web-framework-react"]),
+            reason: "RTL requires React to function",
+          }),
+        ],
+      }),
+    );
   });
 });

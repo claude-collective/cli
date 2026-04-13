@@ -11,13 +11,6 @@ import {
   EMPTY_MATRIX_CONFIG,
   UNRESOLVED_CONFLICT_MATRIX,
 } from "../__tests__/mock-data/mock-matrices.js";
-import {
-  REACT_EXTRACTED,
-  REACT_EXTRACTED_BASIC,
-  VUE_EXTRACTED_BASIC,
-  ZUSTAND_EXTRACTED,
-  JOTAI_EXTRACTED,
-} from "../__tests__/mock-data/mock-skills.js";
 
 vi.mock("../../utils/logger");
 
@@ -30,7 +23,12 @@ describe("skill-resolution", () => {
       const merged = mergeMatrixWithSkills(
         MERGE_BASIC_MATRIX.categories,
         MERGE_BASIC_MATRIX.relationships,
-        [REACT_EXTRACTED],
+        [
+          createMockExtractedSkill("web-framework-react", {
+            description: "React framework",
+            author: "@vince",
+          }),
+        ],
       );
 
       expect(merged.version).toBe("1.0.0");
@@ -59,7 +57,10 @@ describe("skill-resolution", () => {
       const merged = mergeMatrixWithSkills(
         CONFLICT_MATRIX.categories,
         CONFLICT_MATRIX.relationships,
-        [REACT_EXTRACTED_BASIC, VUE_EXTRACTED_BASIC],
+        [
+          createMockExtractedSkill("web-framework-react", { description: "React" }),
+          createMockExtractedSkill("web-framework-vue-composition-api", { description: "Vue" }),
+        ],
       );
 
       const reactSkill = merged.skills["web-framework-react"];
@@ -105,7 +106,7 @@ describe("skill-resolution", () => {
       const merged = mergeMatrixWithSkills(
         UNRESOLVED_CONFLICT_MATRIX.categories,
         UNRESOLVED_CONFLICT_MATRIX.relationships,
-        [REACT_EXTRACTED_BASIC],
+        [createMockExtractedSkill("web-framework-react", { description: "React" })],
       );
 
       const reactSkill = merged.skills["web-framework-react"];
@@ -117,7 +118,16 @@ describe("skill-resolution", () => {
       const merged = mergeMatrixWithSkills(
         ALTERNATIVES_MATRIX.categories,
         ALTERNATIVES_MATRIX.relationships,
-        [ZUSTAND_EXTRACTED, JOTAI_EXTRACTED],
+        [
+          createMockExtractedSkill("web-state-zustand", {
+            description: "Zustand",
+            category: "web-client-state",
+          }),
+          createMockExtractedSkill("web-state-jotai", {
+            description: "Jotai",
+            category: "web-client-state",
+          }),
+        ],
       );
 
       const zustand = merged.skills["web-state-zustand"];
@@ -136,7 +146,13 @@ describe("skill-resolution", () => {
       const merged = mergeMatrixWithSkills(
         REQUIRES_MATRIX.categories,
         REQUIRES_MATRIX.relationships,
-        [ZUSTAND_EXTRACTED, REACT_EXTRACTED_BASIC],
+        [
+          createMockExtractedSkill("web-state-zustand", {
+            description: "Zustand",
+            category: "web-client-state",
+          }),
+          createMockExtractedSkill("web-framework-react", { description: "React" }),
+        ],
       );
 
       const zustand = merged.skills["web-state-zustand"];
@@ -165,8 +181,11 @@ describe("skill-resolution", () => {
       );
 
       const merged = mergeMatrixWithSkills(matrixConfig.categories, matrixConfig.relationships, [
-        REACT_EXTRACTED_BASIC,
-        ZUSTAND_EXTRACTED,
+        createMockExtractedSkill("web-framework-react", { description: "React" }),
+        createMockExtractedSkill("web-state-zustand", {
+          description: "Zustand",
+          category: "web-client-state",
+        }),
       ]);
 
       const zustand = merged.skills["web-state-zustand"];
@@ -181,7 +200,7 @@ describe("skill-resolution", () => {
       const merged = mergeMatrixWithSkills(
         MERGE_BASIC_MATRIX.categories,
         MERGE_BASIC_MATRIX.relationships,
-        [REACT_EXTRACTED_BASIC],
+        [createMockExtractedSkill("web-framework-react", { description: "React" })],
       );
 
       const react = merged.skills["web-framework-react"];
@@ -260,7 +279,7 @@ describe("skill-resolution", () => {
       };
 
       const merged = mergeMatrixWithSkills(existingCategories, EMPTY_MATRIX_CONFIG.relationships, [
-        REACT_EXTRACTED_BASIC,
+        createMockExtractedSkill("web-framework-react", { description: "React" }),
       ]);
 
       expect(merged.categories["web-framework"]).toBe(FRAMEWORK_CATEGORY);

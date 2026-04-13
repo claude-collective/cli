@@ -24,7 +24,7 @@ import {
 } from "./__tests__/factories/skill-factories";
 import { createMockAgentConfig } from "./__tests__/factories/agent-factories";
 import { createMockCompileConfig } from "./__tests__/factories/plugin-factories";
-import { buildProjectConfig } from "./__tests__/factories/config-factories";
+import { buildProjectConfig, buildAgentConfigs } from "./__tests__/factories/config-factories";
 import { RESOLVE_AGENTS_DEFINITIONS } from "./__tests__/mock-data/mock-agents.js";
 import {
   FULLSTACK_STACK,
@@ -336,10 +336,7 @@ describe("convertStackToCompileConfig", () => {
     const config = buildProjectConfig({
       name: "Test Stack",
       description: "A test stack",
-      agents: [
-        { name: "web-developer", scope: "project" },
-        { name: "api-developer", scope: "project" },
-      ],
+      agents: buildAgentConfigs(["web-developer", "api-developer"]),
       skills: [],
     });
 

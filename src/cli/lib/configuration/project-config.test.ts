@@ -147,7 +147,7 @@ describe("project-config", () => {
 
     it("should fail for missing name", () => {
       const result = validateProjectConfig({
-        agents: [{ name: "web-developer", scope: "project" }],
+        agents: buildAgentConfigs(["web-developer"]),
       });
 
       expect(result.valid).toBe(false);
@@ -178,7 +178,7 @@ describe("project-config", () => {
     it("should fail for invalid version", () => {
       const result = validateProjectConfig({
         name: "my-project",
-        agents: [{ name: "web-developer", scope: "project" }],
+        agents: buildAgentConfigs(["web-developer"]),
         version: "2",
       });
 

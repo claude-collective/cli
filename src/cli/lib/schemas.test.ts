@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { z } from "zod";
 import { buildAgentConfigs } from "./__tests__/factories/config-factories.js";
+import { buildSkillConfigs } from "./__tests__/helpers/wizard-simulation.js";
 import {
   agentYamlConfigSchema,
   categoryPathSchema,
@@ -268,7 +269,7 @@ describe("projectConfigLoaderSchema", () => {
       const config = {
         name: "test-project",
         agents: buildAgentConfigs(["web-developer"]),
-        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        skills: buildSkillConfigs(["web-framework-react"]),
       };
 
       const result = projectConfigLoaderSchema.safeParse(config);
@@ -668,7 +669,7 @@ describe("lenient schemas accept custom values without pre-registration", () => 
       name: "test-project",
       agents: buildAgentConfigs(["web-developer"]),
       skills: [
-        { id: "web-framework-react", scope: "project", source: "eject" },
+        ...buildSkillConfigs(["web-framework-react"]),
         { id: "acme-pipeline-deploy", scope: "project", source: "eject" },
       ],
     });

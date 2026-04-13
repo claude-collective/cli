@@ -137,8 +137,10 @@ describe("skill-copier", () => {
   let tempDir: string;
   let pluginDir: string;
   let projectDir: string;
+  let originalCwd: string;
 
   beforeEach(async () => {
+    originalCwd = process.cwd();
     tempDir = await createTempDir("cc-skill-copier-test-");
     pluginDir = path.join(tempDir, "plugin");
     projectDir = path.join(tempDir, "project");
@@ -159,6 +161,7 @@ describe("skill-copier", () => {
   });
 
   afterEach(async () => {
+    process.chdir(originalCwd);
     await cleanupTempDir(tempDir);
   });
 
@@ -184,45 +187,40 @@ describe("skill-copier", () => {
       });
 
       // Change cwd to project dir for local skill resolution
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        const result = await copySkillsToPluginFromSource(
-          ["web-framework-vue-composition-api"],
-          pluginDir,
-          matrix,
-          sourceResult,
-        );
+      const result = await copySkillsToPluginFromSource(
+        ["web-framework-vue-composition-api"],
+        pluginDir,
+        matrix,
+        sourceResult,
+      );
 
-        // Local skill should be returned but marked as local
-        expect(result).toHaveLength(1);
-        expect(result[0].skillId).toBe("web-framework-vue-composition-api");
-        expect(result[0].local).toBe(true);
-        expect(result[0].sourcePath).toBe(localSkillPath);
-        expect(result[0].destPath).toBe(localSkillPath);
+      // Local skill should be returned but marked as local
+      expect(result).toHaveLength(1);
+      expect(result[0].skillId).toBe("web-framework-vue-composition-api");
+      expect(result[0].local).toBe(true);
+      expect(result[0].sourcePath).toBe(localSkillPath);
+      expect(result[0].destPath).toBe(localSkillPath);
 
-        // Verify SKILL.md still exists at original local path with correct content
-        const localContent = await readFile(
-          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(localContent).toContain("web-framework-vue-composition-api (@local)");
+      // Verify SKILL.md still exists at original local path with correct content
+      const localContent = await readFile(
+        path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(localContent).toContain("web-framework-vue-composition-api (@local)");
 
-        // Verify skill was NOT copied to plugin dir
-        await expect(
-          readFile(
-            path.join(
-              pluginDir,
-              STANDARD_DIRS.SKILLS,
-              "web-framework-vue-composition-api",
-              STANDARD_FILES.SKILL_MD,
-            ),
+      // Verify skill was NOT copied to plugin dir
+      await expect(
+        readFile(
+          path.join(
+            pluginDir,
+            STANDARD_DIRS.SKILLS,
+            "web-framework-vue-composition-api",
+            STANDARD_FILES.SKILL_MD,
           ),
-        ).rejects.toThrow();
-      } finally {
-        process.chdir(originalCwd);
-      }
+        ),
+      ).rejects.toThrow();
     });
 
     it("returns correct metadata for local skills", async () => {
@@ -241,35 +239,30 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        const result = await copySkillsToPluginFromSource(
-          ["web-styling-scss-modules"],
-          pluginDir,
-          matrix,
-          sourceResult,
-        );
+      const result = await copySkillsToPluginFromSource(
+        ["web-styling-scss-modules"],
+        pluginDir,
+        matrix,
+        sourceResult,
+      );
 
-        expect(result[0]).toMatchObject({
-          skillId: "web-styling-scss-modules",
-          sourcePath: localSkillPath,
-          destPath: localSkillPath,
-          local: true,
-        });
-        // Content hash should be computed from the SKILL.md
-        expect(result[0].contentHash).toMatch(/^[a-f0-9]{7}$/);
+      expect(result[0]).toMatchObject({
+        skillId: "web-styling-scss-modules",
+        sourcePath: localSkillPath,
+        destPath: localSkillPath,
+        local: true,
+      });
+      // Content hash should be computed from the SKILL.md
+      expect(result[0].contentHash).toMatch(/^[a-f0-9]{7}$/);
 
-        // Verify the SKILL.md exists and has expected content at the local path
-        const localContent = await readFile(
-          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(localContent).toContain("web-styling-scss-modules (@local)");
-      } finally {
-        process.chdir(originalCwd);
-      }
+      // Verify the SKILL.md exists and has expected content at the local path
+      const localContent = await readFile(
+        path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(localContent).toContain("web-styling-scss-modules (@local)");
     });
 
     it("handles mix of local and remote skills", async () => {
@@ -301,62 +294,57 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        const result = await copySkillsToPluginFromSource(
-          ["web-styling-tailwind", "web-framework-react"],
-          pluginDir,
-          matrix,
-          sourceResult,
-        );
+      const result = await copySkillsToPluginFromSource(
+        ["web-styling-tailwind", "web-framework-react"],
+        pluginDir,
+        matrix,
+        sourceResult,
+      );
 
-        expect(result).toHaveLength(2);
+      expect(result).toHaveLength(2);
 
-        // Find local and remote results
-        const localResult = result.find((r) => r.local === true);
-        const remoteResult = result.find((r) => r.local !== true);
+      // Find local and remote results
+      const localResult = result.find((r) => r.local === true);
+      const remoteResult = result.find((r) => r.local !== true);
 
-        // Local skill should not be copied
-        expect(localResult?.skillId).toBe("web-styling-tailwind");
-        expect(localResult?.local).toBe(true);
-        expect(localResult?.sourcePath).toBe(localSkillPath);
-        expect(localResult?.destPath).toBe(localSkillPath);
+      // Local skill should not be copied
+      expect(localResult?.skillId).toBe("web-styling-tailwind");
+      expect(localResult?.local).toBe(true);
+      expect(localResult?.sourcePath).toBe(localSkillPath);
+      expect(localResult?.destPath).toBe(localSkillPath);
 
-        // Verify local SKILL.md still exists at original path
-        const localContent = await readFile(
-          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(localContent).toContain("web-styling-tailwind (@local)");
+      // Verify local SKILL.md still exists at original path
+      const localContent = await readFile(
+        path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(localContent).toContain("web-styling-tailwind (@local)");
 
-        // Remote skill should be copied
-        expect(remoteResult?.skillId).toBe("web-framework-react");
-        expect(remoteResult?.local).toBeUndefined();
-        expect(remoteResult?.destPath).toContain(pluginDir);
+      // Remote skill should be copied
+      expect(remoteResult?.skillId).toBe("web-framework-react");
+      expect(remoteResult?.local).toBeUndefined();
+      expect(remoteResult?.destPath).toContain(pluginDir);
 
-        // Verify remote skill was actually copied to the plugin directory
-        const copiedSkillMd = await readFile(
-          path.join(remoteResult!.destPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(copiedSkillMd).toContain("web-framework-react");
+      // Verify remote skill was actually copied to the plugin directory
+      const copiedSkillMd = await readFile(
+        path.join(remoteResult!.destPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(copiedSkillMd).toContain("web-framework-react");
 
-        // Verify local skill was NOT copied to plugin dir
-        await expect(
-          readFile(
-            path.join(
-              pluginDir,
-              STANDARD_DIRS.SKILLS,
-              "web-styling-tailwind",
-              STANDARD_FILES.SKILL_MD,
-            ),
+      // Verify local skill was NOT copied to plugin dir
+      await expect(
+        readFile(
+          path.join(
+            pluginDir,
+            STANDARD_DIRS.SKILLS,
+            "web-styling-tailwind",
+            STANDARD_FILES.SKILL_MD,
           ),
-        ).rejects.toThrow();
-      } finally {
-        process.chdir(originalCwd);
-      }
+        ),
+      ).rejects.toThrow();
     });
 
     it("throws for unknown skills", async () => {
@@ -411,33 +399,28 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        const result = await copySkillsToPluginFromSource(
-          ["web-framework-react"],
-          pluginDir,
-          matrix,
-          sourceResult,
-          { "web-framework-react": "public" },
-        );
+      const result = await copySkillsToPluginFromSource(
+        ["web-framework-react"],
+        pluginDir,
+        matrix,
+        sourceResult,
+        { "web-framework-react": "public" },
+      );
 
-        // Should copy from remote, NOT preserve local
-        expect(result).toHaveLength(1);
-        expect(result[0].local).toBeUndefined();
-        expect(result[0].destPath).toContain(pluginDir);
+      // Should copy from remote, NOT preserve local
+      expect(result).toHaveLength(1);
+      expect(result[0].local).toBeUndefined();
+      expect(result[0].destPath).toContain(pluginDir);
 
-        // Verify remote skill was actually copied to the plugin directory
-        const copiedSkillMd = await readFile(
-          path.join(result[0].destPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(copiedSkillMd).toContain("web-framework-react");
-        expect(copiedSkillMd).not.toContain("(@local)");
-      } finally {
-        process.chdir(originalCwd);
-      }
+      // Verify remote skill was actually copied to the plugin directory
+      const copiedSkillMd = await readFile(
+        path.join(result[0].destPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(copiedSkillMd).toContain("web-framework-react");
+      expect(copiedSkillMd).not.toContain("(@local)");
     });
 
     it("preserves local skill when sourceSelections selects local", async () => {
@@ -455,32 +438,27 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        const result = await copySkillsToPluginFromSource(
-          ["web-framework-react"],
-          pluginDir,
-          matrix,
-          sourceResult,
-          { "web-framework-react": "eject" },
-        );
+      const result = await copySkillsToPluginFromSource(
+        ["web-framework-react"],
+        pluginDir,
+        matrix,
+        sourceResult,
+        { "web-framework-react": "eject" },
+      );
 
-        // Should preserve local
-        expect(result).toHaveLength(1);
-        expect(result[0].local).toBe(true);
-        expect(result[0].sourcePath).toBe(localSkillPath);
+      // Should preserve local
+      expect(result).toHaveLength(1);
+      expect(result[0].local).toBe(true);
+      expect(result[0].sourcePath).toBe(localSkillPath);
 
-        // Verify SKILL.md exists at the local path with local content
-        const localContent = await readFile(
-          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(localContent).toContain("web-framework-react (@local)");
-      } finally {
-        process.chdir(originalCwd);
-      }
+      // Verify SKILL.md exists at the local path with local content
+      const localContent = await readFile(
+        path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(localContent).toContain("web-framework-react (@local)");
     });
   });
 
@@ -588,33 +566,28 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        const result = await copySkillsToLocalFlattened(
-          ["web-framework-vue-composition-api"],
-          localSkillsDir,
-          matrix,
-          sourceResult,
-        );
+      const result = await copySkillsToLocalFlattened(
+        ["web-framework-vue-composition-api"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+      );
 
-        // Local skill should be returned but marked as local
-        expect(result).toHaveLength(1);
-        expect(result[0].skillId).toBe("web-framework-vue-composition-api");
-        expect(result[0].local).toBe(true);
-        expect(result[0].sourcePath).toBe(localSkillPath);
-        expect(result[0].destPath).toBe(localSkillPath);
+      // Local skill should be returned but marked as local
+      expect(result).toHaveLength(1);
+      expect(result[0].skillId).toBe("web-framework-vue-composition-api");
+      expect(result[0].local).toBe(true);
+      expect(result[0].sourcePath).toBe(localSkillPath);
+      expect(result[0].destPath).toBe(localSkillPath);
 
-        // Verify SKILL.md still exists at the local path with correct content
-        const localContent = await readFile(
-          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(localContent).toContain("web-framework-vue-composition-api (@local)");
-      } finally {
-        process.chdir(originalCwd);
-      }
+      // Verify SKILL.md still exists at the local path with correct content
+      const localContent = await readFile(
+        path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(localContent).toContain("web-framework-vue-composition-api (@local)");
     });
 
     it("handles mix of local and remote skills", async () => {
@@ -649,47 +622,42 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        const result = await copySkillsToLocalFlattened(
-          ["web-styling-tailwind", "web-framework-react"],
-          localSkillsDir,
-          matrix,
-          sourceResult,
-        );
+      const result = await copySkillsToLocalFlattened(
+        ["web-styling-tailwind", "web-framework-react"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+      );
 
-        expect(result).toHaveLength(2);
+      expect(result).toHaveLength(2);
 
-        // Find local and remote results
-        const localResult = result.find((r) => r.local === true);
-        const remoteResult = result.find((r) => r.local !== true);
+      // Find local and remote results
+      const localResult = result.find((r) => r.local === true);
+      const remoteResult = result.find((r) => r.local !== true);
 
-        // Local skill should not be copied
-        expect(localResult?.skillId).toBe("web-styling-tailwind");
-        expect(localResult?.local).toBe(true);
+      // Local skill should not be copied
+      expect(localResult?.skillId).toBe("web-styling-tailwind");
+      expect(localResult?.local).toBe(true);
 
-        // Verify local SKILL.md still exists at original path
-        const localContent = await readFile(
-          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(localContent).toContain("web-styling-tailwind (@local)");
+      // Verify local SKILL.md still exists at original path
+      const localContent = await readFile(
+        path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(localContent).toContain("web-styling-tailwind (@local)");
 
-        // Remote skill should be copied to flattened location using normalized ID
-        expect(remoteResult?.skillId).toBe("web-framework-react");
-        expect(remoteResult?.destPath).toBe(path.join(localSkillsDir, "web-framework-react"));
+      // Remote skill should be copied to flattened location using normalized ID
+      expect(remoteResult?.skillId).toBe("web-framework-react");
+      expect(remoteResult?.destPath).toBe(path.join(localSkillsDir, "web-framework-react"));
 
-        // Verify remote skill was actually copied to disk with correct content
-        const copiedSkillMd = await readFile(
-          path.join(localSkillsDir, "web-framework-react", STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(copiedSkillMd).toContain("web-framework-react");
-      } finally {
-        process.chdir(originalCwd);
-      }
+      // Verify remote skill was actually copied to disk with correct content
+      const copiedSkillMd = await readFile(
+        path.join(localSkillsDir, "web-framework-react", STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(copiedSkillMd).toContain("web-framework-react");
     });
 
     it("handles empty skill selection", async () => {
@@ -762,14 +730,7 @@ describe("skill-copier", () => {
         "client-rendering",
         "web-framework-react",
       );
-      let nestedExists = false;
-      try {
-        await readFile(path.join(nestedPath, STANDARD_FILES.SKILL_MD));
-        nestedExists = true;
-      } catch {
-        nestedExists = false;
-      }
-      expect(nestedExists).toBe(false);
+      await expect(readFile(path.join(nestedPath, STANDARD_FILES.SKILL_MD))).rejects.toThrow();
     });
 
     it("flattens multiple skills from different nested directories", async () => {
@@ -914,32 +875,27 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        const result = await copySkillsToLocalFlattened(
-          ["web-framework-react"],
-          localSkillsDir,
-          matrix,
-          sourceResult,
-          { "web-framework-react": "public" },
-        );
+      const result = await copySkillsToLocalFlattened(
+        ["web-framework-react"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+        { "web-framework-react": "public" },
+      );
 
-        // Should copy from remote, NOT preserve local
-        expect(result).toHaveLength(1);
-        expect(result[0].local).toBeUndefined();
-        expect(result[0].destPath).toBe(path.join(localSkillsDir, "web-framework-react"));
+      // Should copy from remote, NOT preserve local
+      expect(result).toHaveLength(1);
+      expect(result[0].local).toBeUndefined();
+      expect(result[0].destPath).toBe(path.join(localSkillsDir, "web-framework-react"));
 
-        // Verify the remote content was copied (not the local version with (@local) in name)
-        const copiedContent = await readFile(
-          path.join(localSkillsDir, "web-framework-react", STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(copiedContent).not.toContain("(@local)");
-      } finally {
-        process.chdir(originalCwd);
-      }
+      // Verify the remote content was copied (not the local version with (@local) in name)
+      const copiedContent = await readFile(
+        path.join(localSkillsDir, "web-framework-react", STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(copiedContent).not.toContain("(@local)");
     });
 
     it("preserves local skill when sourceSelections selects local", async () => {
@@ -959,32 +915,27 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        const result = await copySkillsToLocalFlattened(
-          ["web-framework-react"],
-          localSkillsDir,
-          matrix,
-          sourceResult,
-          { "web-framework-react": "eject" },
-        );
+      const result = await copySkillsToLocalFlattened(
+        ["web-framework-react"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+        { "web-framework-react": "eject" },
+      );
 
-        // Should preserve local
-        expect(result).toHaveLength(1);
-        expect(result[0].local).toBe(true);
-        expect(result[0].sourcePath).toBe(localSkillPath);
+      // Should preserve local
+      expect(result).toHaveLength(1);
+      expect(result[0].local).toBe(true);
+      expect(result[0].sourcePath).toBe(localSkillPath);
 
-        // Verify SKILL.md exists at the local path with local content
-        const localContent = await readFile(
-          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(localContent).toContain("web-framework-react (@local)");
-      } finally {
-        process.chdir(originalCwd);
-      }
+      // Verify SKILL.md exists at the local path with local content
+      const localContent = await readFile(
+        path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(localContent).toContain("web-framework-react (@local)");
     });
 
     it("works without sourceSelections (backward compatible)", async () => {
@@ -1004,30 +955,25 @@ describe("skill-copier", () => {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
       });
 
-      const originalCwd = process.cwd();
       process.chdir(projectDir);
 
-      try {
-        // No sourceSelections passed -- should behave as before (preserve local)
-        const result = await copySkillsToLocalFlattened(
-          ["web-framework-react"],
-          localSkillsDir,
-          matrix,
-          sourceResult,
-        );
+      // No sourceSelections passed -- should behave as before (preserve local)
+      const result = await copySkillsToLocalFlattened(
+        ["web-framework-react"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+      );
 
-        expect(result).toHaveLength(1);
-        expect(result[0].local).toBe(true);
+      expect(result).toHaveLength(1);
+      expect(result[0].local).toBe(true);
 
-        // Verify SKILL.md still exists at local path
-        const localContent = await readFile(
-          path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
-          "utf-8",
-        );
-        expect(localContent).toContain("web-framework-react (@local)");
-      } finally {
-        process.chdir(originalCwd);
-      }
+      // Verify SKILL.md still exists at local path
+      const localContent = await readFile(
+        path.join(localSkillPath, STANDARD_FILES.SKILL_MD),
+        "utf-8",
+      );
+      expect(localContent).toContain("web-framework-react (@local)");
     });
   });
 });

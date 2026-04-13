@@ -544,14 +544,7 @@ describe("stack-plugin-compiler", () => {
       expect(result.pluginPath).toContain(stackId);
 
       // CLAUDE.md should not exist in output
-      let claudeExists = false;
-      try {
-        await stat(path.join(result.pluginPath, "CLAUDE.md"));
-        claudeExists = true;
-      } catch {
-        claudeExists = false;
-      }
-      expect(claudeExists).toBe(false);
+      await expect(stat(path.join(result.pluginPath, "CLAUDE.md"))).rejects.toThrow();
     });
 
     it("should handle multiple agents in a single stack", async () => {
