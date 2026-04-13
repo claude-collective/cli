@@ -285,5 +285,153 @@ describe("mode-migrator", () => {
       expect(claudePluginInstall).not.toHaveBeenCalled();
       expect(result.warnings).toStrictEqual([expect.stringContaining("No marketplace configured")]);
     });
+
+    describe("global→project scope migration", () => {
+      it("should NOT uninstall global plugin when ejecting to project scope", async () => {
+        vi.mocked(copySkillsToLocalFlattened).mockResolvedValue([
+          {
+            skillId: "web-framework-react",
+            contentHash: "abc123",
+            sourcePath: "/source/skills/web/framework/react",
+            destPath: `${tempDir}/.claude/skills/web-framework-react`,
+          },
+        ]);
+
+        const plan: MigrationPlan = {
+          toEject: [
+            {
+              id: "web-framework-react",
+              oldSource: "agents-inc",
+              newSource: "eject",
+              oldScope: "global",
+              newScope: "project",
+            },
+          ],
+          toPlugin: [],
+          scopeChanges: [],
+        };
+
+        const result = await executeMigration(plan, tempDir, sourceResult);
+
+        expect(copySkillsToLocalFlattened).toHaveBeenCalled();
+        expect(claudePluginUninstall).not.toHaveBeenCalled();
+        expect(result.ejectedSkills).toStrictEqual(["web-framework-react"]);
+        expect(result.warnings).toStrictEqual([]);
+      });
+
+      it("should NOT delete global local skill when switching to project plugin", async () => {
+        vi.mocked(claudePluginInstall).mockResolvedValue(undefined);
+
+        const plan: MigrationPlan = {
+          toEject: [],
+          toPlugin: [
+            {
+              id: "web-state-zustand",
+              oldSource: "eject",
+              newSource: "agents-inc",
+              oldScope: "global",
+              newScope: "project",
+            },
+          ],
+          scopeChanges: [],
+        };
+
+        const result = await executeMigration(plan, tempDir, sourceResult);
+
+        expect(deleteLocalSkill).not.toHaveBeenCalled();
+        expect(claudePluginInstall).toHaveBeenCalledWith(
+          "web-state-zustand@https://marketplace.example.com",
+          "project",
+          tempDir,
+        );
+        expect(result.pluginizedSkills).toStrictEqual(["web-state-zustand"]);
+        expect(result.warnings).toStrictEqual([]);
+      });
+    });
+
+    describe("same-scope migrations", () => {
+      it("should uninstall project plugin when ejecting to project scope", async () => {
+        vi.mocked(copySkillsToLocalFlattened).mockResolvedValue([
+          {
+            skillId: "web-framework-react",
+            contentHash: "abc123",
+            sourcePath: "/source/skills/web/framework/react",
+            destPath: `${tempDir}/.claude/skills/web-framework-react`,
+          },
+        ]);
+
+        const plan: MigrationPlan = {
+          toEject: [
+            {
+              id: "web-framework-react",
+              oldSource: "agents-inc",
+              newSource: "eject",
+              oldScope: "project",
+              newScope: "project",
+            },
+          ],
+          toPlugin: [],
+          scopeChanges: [],
+        };
+
+        const result = await executeMigration(plan, tempDir, sourceResult);
+
+        expect(claudePluginUninstall).toHaveBeenCalledWith("web-framework-react", "project", tempDir);
+        expect(result.ejectedSkills).toStrictEqual(["web-framework-react"]);
+      });
+
+      it("should uninstall global plugin when ejecting to global scope", async () => {
+        vi.mocked(copySkillsToLocalFlattened).mockResolvedValue([
+          {
+            skillId: "web-framework-react",
+            contentHash: "abc123",
+            sourcePath: "/source/skills/web/framework/react",
+            destPath: `${tempDir}/.claude/skills/web-framework-react`,
+          },
+        ]);
+
+        const plan: MigrationPlan = {
+          toEject: [
+            {
+              id: "web-framework-react",
+              oldSource: "agents-inc",
+              newSource: "eject",
+              oldScope: "global",
+              newScope: "global",
+            },
+          ],
+          toPlugin: [],
+          scopeChanges: [],
+        };
+
+        const result = await executeMigration(plan, tempDir, sourceResult);
+
+        expect(claudePluginUninstall).toHaveBeenCalledWith("web-framework-react", "user", tempDir);
+        expect(result.ejectedSkills).toStrictEqual(["web-framework-react"]);
+      });
+
+      it("should delete project local skill when switching to project plugin", async () => {
+        vi.mocked(claudePluginInstall).mockResolvedValue(undefined);
+
+        const plan: MigrationPlan = {
+          toEject: [],
+          toPlugin: [
+            {
+              id: "web-state-zustand",
+              oldSource: "eject",
+              newSource: "agents-inc",
+              oldScope: "project",
+              newScope: "project",
+            },
+          ],
+          scopeChanges: [],
+        };
+
+        const result = await executeMigration(plan, tempDir, sourceResult);
+
+        expect(deleteLocalSkill).toHaveBeenCalledWith(tempDir, "web-state-zustand");
+        expect(result.pluginizedSkills).toStrictEqual(["web-state-zustand"]);
+      });
+    });
   });
 });

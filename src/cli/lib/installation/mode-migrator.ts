@@ -121,6 +121,13 @@ export async function executeMigration(
 
       // Uninstall plugin references using per-skill scope
       for (const migration of plan.toEject) {
+        // Don't uninstall global plugins when migrating to project scope —
+        // the global plugin must remain for other projects. The project config
+        // tombstone (excluded: true) already prevents this project from using it.
+        if (migration.oldScope === "global" && migration.newScope === "project") {
+          verbose(`Keeping global plugin for ${migration.id} (migrated to project-eject)`);
+          continue;
+        }
         try {
           const pluginScope = migration.oldScope === "global" ? "user" : "project";
           await claudePluginUninstall(migration.id, pluginScope, projectDir);
@@ -140,6 +147,12 @@ export async function executeMigration(
   if (plan.toPlugin.length > 0) {
     // Delete local copies from the scope-appropriate directory
     for (const migration of plan.toPlugin) {
+      // Don't delete global local skills when migrating to project scope —
+      // the global local copy must remain for other projects.
+      if (migration.oldScope === "global" && migration.newScope === "project") {
+        verbose(`Keeping global local skill for ${migration.id} (migrated to project-plugin)`);
+        continue;
+      }
       const baseDir = migration.oldScope === "global" ? os.homedir() : projectDir;
       await deleteLocalSkill(baseDir, migration.id);
     }
