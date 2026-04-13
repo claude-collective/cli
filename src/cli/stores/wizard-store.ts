@@ -12,13 +12,11 @@ import type {
   BoundSkill,
   Domain,
   DomainSelections,
-  ResolvedSkill,
   SkillAlias,
   SkillAssignment,
   SkillId,
   SkillSource,
   Category,
-  CategoryDomainMap,
   CategorySelections,
 } from "../types/index.js";
 import type { SourceOption } from "../components/wizard/source-grid.js";
@@ -1299,7 +1297,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       .map((sc) => sc.id);
     const allSkillIds = [...inheritedSkillIds, ...selectedTechnologies, ...excludedGlobalIds];
 
-    return allSkillIds.flatMap((tech) => {
+    type SourceRow = {
+      skillId: SkillId;
+      options: SourceOption[];
+      scope?: "project" | "global";
+      readOnly?: boolean;
+    };
+    const rows: SourceRow[] = allSkillIds.flatMap((tech) => {
       const skillId = resolveAlias(tech);
       const skill = getSkillById(skillId);
       const configEntry = skillConfigs.find((sc) => sc.id === skillId);
@@ -1376,7 +1380,27 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       }
 
       const readOnly = !state.isEditingFromGlobalScope && !!isInstalledGlobal;
-      return [{ skillId, options, scope: configEntry?.scope, ...(readOnly ? { readOnly } : {}) }];
+      return [
+        {
+          skillId,
+          options,
+          scope: configEntry?.scope as "project" | "global" | undefined,
+          ...(readOnly ? { readOnly: true as const } : {}),
+        },
+      ];
     });
+
+    // Stable sort: global readOnly first, global editable second, project last.
+    // Matches visual grouping in source-grid so navigation indices align with render order.
+    rows.sort((a, b) => {
+      const tier = (r: (typeof rows)[number]) => {
+        if (r.scope === "global" && r.readOnly) return 0;
+        if (r.scope === "global") return 1;
+        return 2;
+      };
+      return tier(a) - tier(b);
+    });
+
+    return rows;
   },
 }));

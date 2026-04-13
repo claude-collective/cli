@@ -87,11 +87,13 @@ describe.skipIf(!claudeAvailable)("scope-aware local skill copying", () => {
         // Shared domain (pass through)
         const sources = await build.advanceToSources();
 
-        // Sources -- set first TWO skills to local (mixed mode)
+        // Sources -- set two skills to local (mixed mode)
+        // Sort order: global skills first, project-scoped skills last.
+        // Position 0 = web-testing-vitest (global), last = web-framework-react (project)
         await sources.waitForReady();
+        await sources.toggleFocusedSource(); // Set web-testing-vitest to local (first global skill)
+        await sources.navigateUp(); // Wrap to last position (project-scoped react)
         await sources.toggleFocusedSource(); // Set web-framework-react to local
-        await sources.navigateDown();
-        await sources.toggleFocusedSource(); // Set web-testing-vitest to local
         const agents = await sources.advance();
 
         // Agents -- accept defaults
