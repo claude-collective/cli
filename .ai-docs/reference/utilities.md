@@ -1,3 +1,14 @@
+---
+scope: reference
+area: architecture
+keywords: [consts, messages, logger, fs, exec, typed-object]
+related:
+  - reference/architecture-overview.md
+  - reference/dependency-graph.md
+  - reference/test-infrastructure.md
+last_validated: 2026-04-02
+---
+
 # Utilities Reference
 
 **Last Updated:** 2026-04-02
@@ -21,7 +32,7 @@ All utilities in `src/cli/utils/`.
 
 ## Error Handling
 
-### `getErrorMessage()` (`src/cli/utils/errors.ts:2`)
+### `getErrorMessage()` (`src/cli/utils/errors.ts`)
 
 ```typescript
 function getErrorMessage(error: unknown): string;
@@ -33,7 +44,7 @@ Extracts human-readable message from unknown error value. Returns `error.message
 
 ## Shell Execution
 
-### `execCommand()` (`src/cli/utils/exec.ts:95`)
+### `execCommand()` (`src/cli/utils/exec.ts`)
 
 ```typescript
 function execCommand(
@@ -47,40 +58,40 @@ Spawns a child process with stdio piped. Returns `{ stdout, stderr, exitCode }`.
 
 ### Exported Types
 
-| Type              | Location | Fields                             |
-| ----------------- | -------- | ---------------------------------- |
-| `ExecResult`      | `:89`    | `stdout`, `stderr`, `exitCode`     |
-| `MarketplaceInfo` | `:163`   | `name`, `source`, `repo?`, `path?` |
+| Type              | Fields                             |
+| ----------------- | ---------------------------------- |
+| `ExecResult`      | `stdout`, `stderr`, `exitCode`     |
+| `MarketplaceInfo` | `name`, `source`, `repo?`, `path?` |
 
 ### Claude CLI Wrappers
 
-All validate inputs before execution (injection prevention at lines 20-87):
+All validate inputs before execution (injection prevention via `validatePluginPath`, `validateMarketplaceSource`, `validatePluginName`):
 
-| Function                          | Line   | Purpose                                                       |
-| --------------------------------- | ------ | ------------------------------------------------------------- |
-| `claudePluginInstall()`           | `:137` | Install a plugin via `claude plugin install`                  |
-| `claudePluginUninstall()`         | `:259` | Uninstall via `claude plugin uninstall`                       |
-| `claudePluginMarketplaceList()`   | `:170` | List marketplaces via `claude plugin marketplace list --json` |
-| `claudePluginMarketplaceExists()` | `:197` | Check if marketplace is registered                            |
-| `claudePluginMarketplaceAdd()`    | `:202` | Register marketplace via `claude plugin marketplace add`      |
-| `claudePluginMarketplaceRemove()` | `:222` | Remove marketplace via `claude plugin marketplace remove`     |
-| `claudePluginMarketplaceUpdate()` | `:242` | Update marketplace via `claude plugin marketplace update`     |
-| `isClaudeCLIAvailable()`          | `:154` | Check if `claude` CLI is available                            |
+| Function                          | Purpose                                                       |
+| --------------------------------- | ------------------------------------------------------------- |
+| `claudePluginInstall()`           | Install a plugin via `claude plugin install`                  |
+| `claudePluginUninstall()`         | Uninstall via `claude plugin uninstall`                       |
+| `claudePluginMarketplaceList()`   | List marketplaces via `claude plugin marketplace list --json` |
+| `claudePluginMarketplaceExists()` | Check if marketplace is registered                            |
+| `claudePluginMarketplaceAdd()`    | Register marketplace via `claude plugin marketplace add`      |
+| `claudePluginMarketplaceRemove()` | Remove marketplace via `claude plugin marketplace remove`     |
+| `claudePluginMarketplaceUpdate()` | Update marketplace via `claude plugin marketplace update`     |
+| `isClaudeCLIAvailable()`          | Check if `claude` CLI is available                            |
 
 **Total: 8 functions** (6 documented in prior version, 2 were missing: `Remove` and `Update`)
 
 ### Internal Helpers (not exported)
 
-| Function                      | Line   | Purpose                                                         |
-| ----------------------------- | ------ | --------------------------------------------------------------- |
-| `validatePluginPath()`        | `:20`  | Validates plugin path string (length, chars, control)           |
-| `validateMarketplaceSource()` | `:43`  | Validates marketplace source string                             |
-| `validatePluginName()`        | `:66`  | Validates plugin name string                                    |
-| `resolvePluginCwd()`          | `:133` | Returns home dir for `"user"` scope, projectDir for `"project"` |
+| Function                      | Purpose                                                         |
+| ----------------------------- | --------------------------------------------------------------- |
+| `validatePluginPath()`        | Validates plugin path string (length, chars, control)           |
+| `validateMarketplaceSource()` | Validates marketplace source string                             |
+| `validatePluginName()`        | Validates plugin name string                                    |
+| `resolvePluginCwd()`          | Returns home dir for `"user"` scope, projectDir for `"project"` |
 
 ## Frontmatter
 
-### `extractFrontmatter()` (`src/cli/utils/frontmatter.ts:3`)
+### `extractFrontmatter()` (`src/cli/utils/frontmatter.ts`)
 
 ```typescript
 function extractFrontmatter(content: string): unknown | null;
@@ -121,7 +132,7 @@ Wraps `fs-extra` and `fast-glob`:
 | `verbose(msg)` | `(msg: string) => void`                        | Only if enabled | Diagnostic/debug info         |
 | `setVerbose()` | `(enabled: boolean) => void`                   | N/A             | Enable/disable verbose mode   |
 
-### `WarnOptions` type (`src/cli/utils/logger.ts:66`)
+### `WarnOptions` type (`src/cli/utils/logger.ts`)
 
 ```typescript
 export type WarnOptions = {
@@ -158,7 +169,7 @@ Before Ink takes over the terminal, `warn()` messages would be overwritten. Buff
 
 ## String Utilities
 
-### `truncateText()` (`src/cli/utils/string.ts:1`)
+### `truncateText()` (`src/cli/utils/string.ts`)
 
 ```typescript
 function truncateText(text: string, maxLength: number): string;
@@ -218,26 +229,26 @@ All user-facing strings centralized in constant objects:
 
 ### Paths
 
-| Constant                | Value                        | Line  | Purpose                       |
-| ----------------------- | ---------------------------- | ----- | ----------------------------- |
-| `PROJECT_ROOT`          | CLI package root             | `:13` | Base for template resolution  |
-| `GLOBAL_INSTALL_ROOT`   | `os.homedir()`               | `:23` | Root for global installations |
-| `CLAUDE_DIR`            | `.claude`                    | `:15` | Claude config directory       |
-| `CLAUDE_SRC_DIR`        | `.claude-src`                | `:16` | Source config directory       |
-| `PLUGINS_SUBDIR`        | `plugins`                    | `:17` | Plugins subdirectory          |
-| `PLUGIN_MANIFEST_DIR`   | `.claude-plugin`             | `:18` | Plugin manifest directory     |
-| `PLUGIN_MANIFEST_FILE`  | `plugin.json`                | `:19` | Plugin manifest filename      |
-| `DEFAULT_PLUGIN_NAME`   | `agents-inc`                 | `:20` | Default plugin name           |
-| `CACHE_DIR`             | `~/.cache/agents-inc`        | `:25` | Source cache directory        |
-| `SKILL_CATEGORIES_PATH` | `config/skill-categories.ts` | `:29` | Skill categories config file  |
-| `SKILL_RULES_PATH`      | `config/skill-rules.ts`      | `:30` | Skill rules config file       |
-| `STACKS_FILE_PATH`      | `config/stacks.ts`           | `:31` | Stacks config file            |
-| `SKILLS_DIR_PATH`       | `src/skills`                 | `:32` | Skills source directory       |
-| `LOCAL_SKILLS_PATH`     | `.claude/skills`             | `:33` | Local skills directory        |
+| Constant                | Value                        | Purpose                       |
+| ----------------------- | ---------------------------- | ----------------------------- |
+| `PROJECT_ROOT`          | CLI package root             | Base for template resolution  |
+| `GLOBAL_INSTALL_ROOT`   | `os.homedir()`               | Root for global installations |
+| `CLAUDE_DIR`            | `.claude`                    | Claude config directory       |
+| `CLAUDE_SRC_DIR`        | `.claude-src`                | Source config directory       |
+| `PLUGINS_SUBDIR`        | `plugins`                    | Plugins subdirectory          |
+| `PLUGIN_MANIFEST_DIR`   | `.claude-plugin`             | Plugin manifest directory     |
+| `PLUGIN_MANIFEST_FILE`  | `plugin.json`                | Plugin manifest filename      |
+| `DEFAULT_PLUGIN_NAME`   | `agents-inc`                 | Default plugin name           |
+| `CACHE_DIR`             | `~/.cache/agents-inc`        | Source cache directory        |
+| `SKILL_CATEGORIES_PATH` | `config/skill-categories.ts` | Skill categories config file  |
+| `SKILL_RULES_PATH`      | `config/skill-rules.ts`      | Skill rules config file       |
+| `STACKS_FILE_PATH`      | `config/stacks.ts`           | Stacks config file            |
+| `SKILLS_DIR_PATH`       | `src/skills`                 | Skills source directory       |
+| `LOCAL_SKILLS_PATH`     | `.claude/skills`             | Local skills directory        |
 
 ### Directory Constants
 
-`DIRS` object at line 35:
+`DIRS` object:
 
 | Key         | Value                   | Purpose                   |
 | ----------- | ----------------------- | ------------------------- |
@@ -249,7 +260,7 @@ All user-facing strings centralized in constant objects:
 
 ### Standard Files and Dirs
 
-`STANDARD_FILES` constant at line 43. All well-known filenames:
+`STANDARD_FILES` constant. All well-known filenames:
 
 | Constant                                  | Value                      |
 | ----------------------------------------- | -------------------------- |
@@ -271,7 +282,7 @@ All user-facing strings centralized in constant objects:
 | `STANDARD_FILES.CRITICAL_REQUIREMENTS_MD` | `critical-requirements.md` |
 | `STANDARD_FILES.CRITICAL_REMINDERS_MD`    | `critical-reminders.md`    |
 
-`STANDARD_DIRS` constant at line 63:
+`STANDARD_DIRS` constant:
 
 | Constant                 | Value      |
 | ------------------------ | ---------- |
@@ -281,33 +292,33 @@ All user-facing strings centralized in constant objects:
 
 ### Branding and Naming
 
-| Constant                     | Value                           | Line   | Purpose                             |
-| ---------------------------- | ------------------------------- | ------ | ----------------------------------- |
-| `CLI_BIN_NAME`               | `agentsinc`                     | `:27`  | CLI binary name                     |
-| `DEFAULT_BRANDING.NAME`      | `Agents Inc.`                   | `:170` | Default product name                |
-| `DEFAULT_BRANDING.TAGLINE`   | `AI-powered development tools`  | `:170` | Default tagline                     |
-| `DEFAULT_PUBLIC_SOURCE_NAME` | `agents-inc`                    | `:176` | Fallback marketplace name           |
-| `SOURCE_DISPLAY_NAMES`       | `{ public, eject, agents-inc }` | `:179` | Human-readable source type labels   |
-| `DEFAULT_VERSION`            | `1.0.0`                         | `:69`  | Default skill version               |
-| `DEFAULT_DISPLAY_VERSION`    | `0.0.0`                         | `:72`  | Indicates no version explicitly set |
+| Constant                     | Value                           | Purpose                             |
+| ---------------------------- | ------------------------------- | ----------------------------------- |
+| `CLI_BIN_NAME`               | `agentsinc`                     | CLI binary name                     |
+| `DEFAULT_BRANDING.NAME`      | `Agents Inc.`                   | Default product name                |
+| `DEFAULT_BRANDING.TAGLINE`   | `AI-powered development tools`  | Default tagline                     |
+| `DEFAULT_PUBLIC_SOURCE_NAME` | `agents-inc`                    | Fallback marketplace name           |
+| `SOURCE_DISPLAY_NAMES`       | `{ public, eject, agents-inc }` | Human-readable source type labels   |
+| `DEFAULT_VERSION`            | `1.0.0`                         | Default skill version               |
+| `DEFAULT_DISPLAY_VERSION`    | `0.0.0`                         | Indicates no version explicitly set |
 
 ### Versioning and Hashing
 
-| Constant                       | Value | Line   | Purpose                     |
-| ------------------------------ | ----- | ------ | --------------------------- |
-| `HASH_PREFIX_LENGTH`           | 7     | `:140` | Hash prefix for display     |
-| `CACHE_HASH_LENGTH`            | 16    | `:143` | Cache directory hash length |
-| `CACHE_READABLE_PREFIX_LENGTH` | 32    | `:146` | Cache dir readable prefix   |
+| Constant                       | Value | Purpose                     |
+| ------------------------------ | ----- | --------------------------- |
+| `HASH_PREFIX_LENGTH`           | 7     | Hash prefix for display     |
+| `CACHE_HASH_LENGTH`            | 16    | Cache directory hash length |
+| `CACHE_READABLE_PREFIX_LENGTH` | 32    | Cache dir readable prefix   |
 
 ### Limits
 
-| Constant                    | Value  | Line   | Purpose                     |
-| --------------------------- | ------ | ------ | --------------------------- |
-| `MAX_MARKETPLACE_FILE_SIZE` | 10 MB  | `:150` | marketplace.json size limit |
-| `MAX_PLUGIN_FILE_SIZE`      | 1 MB   | `:151` | Plugin file size limit      |
-| `MAX_CONFIG_FILE_SIZE`      | 1 MB   | `:152` | Config file size limit      |
-| `MAX_JSON_NESTING_DEPTH`    | 10     | `:154` | JSON nesting limit          |
-| `MAX_MARKETPLACE_PLUGINS`   | 10,000 | `:155` | Max plugins in marketplace  |
+| Constant                    | Value  | Purpose                     |
+| --------------------------- | ------ | --------------------------- |
+| `MAX_MARKETPLACE_FILE_SIZE` | 10 MB  | marketplace.json size limit |
+| `MAX_PLUGIN_FILE_SIZE`      | 1 MB   | Plugin file size limit      |
+| `MAX_CONFIG_FILE_SIZE`      | 1 MB   | Config file size limit      |
+| `MAX_JSON_NESTING_DEPTH`    | 10     | JSON nesting limit          |
+| `MAX_MARKETPLACE_PLUGINS`   | 10,000 | Max plugins in marketplace  |
 
 ### YAML Formatting
 
@@ -319,17 +330,17 @@ All user-facing strings centralized in constant objects:
 
 ### UI Constants
 
-`UI_SYMBOLS` at line 99, `UI_LAYOUT` at line 117, `UI_MESSAGES` at line 124, `CLI_COLORS` at line 185, `SCROLL_VIEWPORT` at line 157.
+`UI_SYMBOLS`, `UI_LAYOUT`, `UI_MESSAGES`, `CLI_COLORS`, and `SCROLL_VIEWPORT` are all defined in `src/cli/consts.ts`.
 
 `UI_SYMBOLS` includes: `CHECKBOX_CHECKED`, `CHECKBOX_UNCHECKED`, `CHEVRON`, `CHEVRON_SPACER`, `SELECTED`, `UNSELECTED`, `CURRENT`, `SKIPPED`, `DISCOURAGED`, `DISABLED`, `LOCK`, `EJECT`, `BULLET`, `SCROLL_UP`, `SCROLL_DOWN`.
 
-`UI_MESSAGES` (line 124): `GLOBALLY_INSTALLED`, `GLOBALLY_LOCKED_CATEGORY`.
+`UI_MESSAGES`: `GLOBALLY_INSTALLED`, `GLOBALLY_LOCKED_CATEGORY`.
 
 These are documented in detail in `reference/component-patterns.md`.
 
 ### Schema Paths
 
-`SCHEMA_PATHS` object at line 78. JSON Schema URLs for yaml-language-server `$schema` comments:
+`SCHEMA_PATHS` object. JSON Schema URLs for yaml-language-server `$schema` comments:
 
 | Key                   | Schema URL suffix                   |
 | --------------------- | ----------------------------------- |
@@ -340,24 +351,24 @@ These are documented in detail in `reference/component-patterns.md`.
 | `projectSourceConfig` | `project-source-config.schema.json` |
 | `stacks`              | `stacks.schema.json`                |
 
-Helper: `yamlSchemaComment(schemaPath: string): string` at line 88 generates a `# yaml-language-server: $schema=...` comment.
+Helper: `yamlSchemaComment(schemaPath: string): string` generates a `# yaml-language-server: $schema=...` comment.
 
 ### Source Resolution
 
-| Constant                      | Value                             | Line   | Purpose                            |
-| ----------------------------- | --------------------------------- | ------ | ---------------------------------- |
-| `GITHUB_SOURCE.HTTPS_PREFIX`  | `https://github.com/`             | `:129` | GitHub HTTPS URL prefix            |
-| `GITHUB_SOURCE.GITHUB_PREFIX` | `github:`                         | `:129` | GitHub shorthand prefix            |
-| `GITHUB_SOURCE.GH_PREFIX`     | `gh:`                             | `:129` | GitHub short prefix                |
-| `DEFAULT_SKILLS_SUBDIR`       | `skills`                          | `:135` | Default skills subdirectory name   |
-| `KEBAB_CASE_PATTERN`          | `/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/` | `:138` | Strict kebab-case validation regex |
+| Constant                      | Value                             | Purpose                            |
+| ----------------------------- | --------------------------------- | ---------------------------------- |
+| `GITHUB_SOURCE.HTTPS_PREFIX`  | `https://github.com/`             | GitHub HTTPS URL prefix            |
+| `GITHUB_SOURCE.GITHUB_PREFIX` | `github:`                         | GitHub shorthand prefix            |
+| `GITHUB_SOURCE.GH_PREFIX`     | `gh:`                             | GitHub short prefix                |
+| `DEFAULT_SKILLS_SUBDIR`       | `skills`                          | Default skills subdirectory name   |
+| `KEBAB_CASE_PATTERN`          | `/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/` | Strict kebab-case validation regex |
 
 ### Domain Configuration
 
-| Constant                  | Value                                                              | Line   |
-| ------------------------- | ------------------------------------------------------------------ | ------ |
-| `BUILT_IN_DOMAIN_ORDER`   | `["web", "api", "ai", "mobile", "cli", "infra", "meta", "shared"]` | `:199` |
-| `DEFAULT_SCRATCH_DOMAINS` | `["web", "api", "mobile"]`                                         | `:211` |
+| Constant                  | Value                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `BUILT_IN_DOMAIN_ORDER`   | `["web", "api", "ai", "mobile", "desktop", "cli", "infra", "meta", "shared"]` |
+| `DEFAULT_SCRATCH_DOMAINS` | `["web", "api", "mobile"]`                                                     |
 
 ## Remeda Utilities (External)
 

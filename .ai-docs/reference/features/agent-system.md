@@ -1,3 +1,14 @@
+---
+scope: reference
+area: features
+keywords: [agents, templates, partials, liquid, metadata, compilation]
+related:
+  - reference/features/compilation-pipeline.md
+  - reference/features/skills-and-matrix.md
+  - reference/commands.md
+last_validated: 2026-04-02
+---
+
 # Agent System
 
 **Last Updated:** 2026-04-02
@@ -64,7 +75,7 @@ Each agent directory contains:
 | `critical-requirements.md` | No       | `STANDARD_FILES.CRITICAL_REQUIREMENTS_MD` | Top-of-prompt critical rules                         |
 | `critical-reminders.md`    | No       | `STANDARD_FILES.CRITICAL_REMINDERS_MD`    | Bottom-of-prompt reminders                           |
 
-Constants defined at `src/cli/consts.ts:50-60`.
+Constants defined in `src/cli/consts.ts` (`STANDARD_FILES`).
 
 ## Agent Inventory
 
@@ -137,8 +148,8 @@ Constants defined at `src/cli/consts.ts:50-60`.
 ## metadata.yaml Schema
 
 **JSON Schema:** `src/schemas/agent.schema.json`
-**Zod Schema:** `agentYamlConfigSchema` at `src/cli/lib/schemas.ts:215-227`
-**TypeScript Type:** `AgentYamlConfig` at `src/cli/types/agents.ts:62-68`
+**Zod Schema:** `agentYamlConfigSchema` in `src/cli/lib/schemas.ts`
+**TypeScript Type:** `AgentYamlConfig` in `src/cli/types/agents.ts`
 
 | Field             | Type                  | Required | Description                                                                                   |
 | ----------------- | --------------------- | -------- | --------------------------------------------------------------------------------------------- |
@@ -156,9 +167,9 @@ Constants defined at `src/cli/consts.ts:50-60`.
 
 \*`model` is required in the JSON schema enum but typed as optional in TypeScript (defaults to `"inherit"` in the template).
 
-**`ModelName`** defined at `src/cli/types/matrix.ts:11`: `"sonnet" | "opus" | "haiku" | "inherit"`
+**`ModelName`** defined in `src/cli/types/matrix.ts`: `"sonnet" | "opus" | "haiku" | "inherit"`
 
-**`PermissionMode`** defined at `src/cli/types/matrix.ts:14-20`: `"default" | "acceptEdits" | "dontAsk" | "bypassPermissions" | "plan" | "delegate"`
+**`PermissionMode`** defined in `src/cli/types/matrix.ts`: `"default" | "acceptEdits" | "dontAsk" | "bypassPermissions" | "plan" | "delegate"`
 
 **Note:** Currently, no agent metadata.yaml uses `disallowedTools`, `permissionMode`, `hooks`, `outputFormat`, `domain`, or `custom` fields -- these are supported by the schema but unused in built-in agents.
 
@@ -166,7 +177,7 @@ Constants defined at `src/cli/consts.ts:50-60`.
 
 ### Partial Files Per Agent
 
-Each agent directory contains markdown partials read by `readAgentFiles()` at `src/cli/lib/compiler.ts:118-149`:
+Each agent directory contains markdown partials read by `readAgentFiles()` in `src/cli/lib/compiler.ts`:
 
 | Partial                    | Read Function        | Fallback                   | Template Variable               |
 | -------------------------- | -------------------- | -------------------------- | ------------------------------- |
@@ -192,7 +203,7 @@ Each agent directory contains markdown partials read by `readAgentFiles()` at `s
 
 ### Engine Setup
 
-**Function:** `createLiquidEngine()` at `src/cli/lib/compiler.ts:394-419`
+**Function:** `createLiquidEngine()` in `src/cli/lib/compiler.ts`
 
 Template root resolution order (first match wins):
 
@@ -274,18 +285,18 @@ The template assembles a compiled agent prompt in this order:
 
 ### Compilation Flow
 
-**Per-agent compilation:** `compileAgent()` at `src/cli/lib/compiler.ts:190-202`
+**Per-agent compilation:** `compileAgent()` in `src/cli/lib/compiler.ts`
 
 ```
 1. readAgentFiles(name, agent, projectRoot)
    - Reads identity.md, playbook.md, output.md, critical-requirements.md, critical-reminders.md
    - output.md falls back to category directory if missing from agent directory
 
-2. buildAgentTemplateContext(name, agent, files)  [compiler.ts:151-172]
+2. buildAgentTemplateContext(name, agent, files)
    - Splits agent.skills into preloaded (s.preloaded === true) and dynamic
    - Builds preloadedSkillIds from preloaded skills
 
-3. sanitizeCompiledAgentData(data)  [compiler.ts:77-111]
+3. sanitizeCompiledAgentData(data)
    - Strips Liquid template syntax ({{ }}, {% %}) from all user-controlled fields
    - Prevents template injection when user data is passed to Liquid engine
 
@@ -293,7 +304,7 @@ The template assembles a compiled agent prompt in this order:
    - Renders agent.liquid with the sanitized CompiledAgentData
 ```
 
-**Batch compilation:** `compileAllAgents()` at `src/cli/lib/compiler.ts:216-249`
+**Batch compilation:** `compileAllAgents()` in `src/cli/lib/compiler.ts`
 
 ```
 for each (name, agent) in resolvedAgents:
@@ -305,8 +316,8 @@ for each (name, agent) in resolvedAgents:
 
 ### Sanitization
 
-**Function:** `sanitizeCompiledAgentData()` at `src/cli/lib/compiler.ts:77-111`
-**Pattern:** `LIQUID_SYNTAX_PATTERN = /\{\{|\}\}|\{%|%\}/g` at `:31`
+**Function:** `sanitizeCompiledAgentData()` in `src/cli/lib/compiler.ts`
+**Pattern:** `LIQUID_SYNTAX_PATTERN = /\{\{|\}\}|\{%|%\}/g`
 
 Strips Liquid delimiters from:
 
@@ -338,7 +349,7 @@ All methodology partials are rendered via `{% render %}` tags in `agent.liquid` 
 
 ### Generated Union Type
 
-**File:** `src/cli/types/generated/source-types.ts:579-605`
+**File:** `src/cli/types/generated/source-types.ts`
 
 ```typescript
 export const AGENT_NAMES = [
@@ -376,7 +387,7 @@ export type AgentName = (typeof AGENT_NAMES)[number];
 
 ```
 src/cli/types/generated/source-types.ts  -- defines AGENT_NAMES and AgentName
-  -> src/cli/types/agents.ts:5-6         -- re-exports AgentName (type) and AGENT_NAMES (value)
+  -> src/cli/types/agents.ts             -- re-exports AgentName (type) and AGENT_NAMES (value)
      -> src/cli/types/index.ts            -- barrel re-exports AgentName type (export type *)
                                              AGENT_NAMES value is NOT barrel-exported;
                                              consumers import from agents.ts or source-types.ts directly
@@ -384,7 +395,7 @@ src/cli/types/generated/source-types.ts  -- defines AGENT_NAMES and AgentName
 
 ### Wizard Domain Mapping
 
-**File:** `src/cli/stores/wizard-store.ts:93-104`
+**File:** `src/cli/stores/wizard-store.ts`
 
 ```typescript
 const DOMAIN_AGENTS: Partial<Record<string, AgentName[]>> = {
@@ -416,47 +427,47 @@ These unmapped agents are available for manual selection in the wizard but are n
 
 ## Key Types
 
-| Type                  | File                              | Line     | Purpose                                                |
-| --------------------- | --------------------------------- | -------- | ------------------------------------------------------ |
-| `AgentName`           | `types/generated/source-types.ts` | :605     | Union type of known agent IDs                          |
-| `AgentYamlConfig`     | `types/agents.ts`                 | :62-68   | Parsed metadata.yaml structure                         |
-| `AgentDefinition`     | `types/agents.ts`                 | :41-52   | Agent definition with path/source metadata             |
-| `AgentConfig`         | `types/agents.ts`                 | :55-59   | Fully resolved config with skills list                 |
-| `BaseAgentFields`     | `types/agents.ts`                 | :27-38   | Shared fields across AgentDefinition/Config/YamlConfig |
-| `AgentFrontmatter`    | `types/agents.ts`                 | :71-86   | Compiled .md frontmatter format                        |
-| `CompiledAgentData`   | `types/agents.ts`                 | :89-105  | All data needed for template rendering                 |
-| `AgentSourcePaths`    | `types/agents.ts`                 | :108-112 | Directory paths for agent loading                      |
-| `AgentHookAction`     | `types/agents.ts`                 | :9-14    | Hook action (command/script/prompt)                    |
-| `AgentHookDefinition` | `types/agents.ts`                 | :17-20   | Hook with optional file matcher                        |
+| Type                  | File                              | Purpose                                                |
+| --------------------- | --------------------------------- | ------------------------------------------------------ |
+| `AgentName`           | `types/generated/source-types.ts` | Union type of known agent IDs                          |
+| `AgentYamlConfig`     | `types/agents.ts`                 | Parsed metadata.yaml structure                         |
+| `AgentDefinition`     | `types/agents.ts`                 | Agent definition with path/source metadata             |
+| `AgentConfig`         | `types/agents.ts`                 | Fully resolved config with skills list                 |
+| `BaseAgentFields`     | `types/agents.ts`                 | Shared fields across AgentDefinition/Config/YamlConfig |
+| `AgentFrontmatter`    | `types/agents.ts`                 | Compiled .md frontmatter format                        |
+| `CompiledAgentData`   | `types/agents.ts`                 | All data needed for template rendering                 |
+| `AgentSourcePaths`    | `types/agents.ts`                 | Directory paths for agent loading                      |
+| `AgentHookAction`     | `types/agents.ts`                 | Hook action (command/script/prompt)                    |
+| `AgentHookDefinition` | `types/agents.ts`                 | Hook with optional file matcher                        |
 
 ## Key Functions
 
-| Function                      | File                                        | Line | Signature                                                              |
-| ----------------------------- | ------------------------------------------- | ---- | ---------------------------------------------------------------------- |
-| `loadAllAgents()`             | `lib/loading/loader.ts`                     | :38  | `(projectRoot: string) => Promise<Record<AgentName, AgentDefinition>>` |
-| `readAgentFiles()`            | `lib/compiler.ts`                           | :118 | `(name, agent, projectRoot) => Promise<AgentFiles>`                    |
-| `buildAgentTemplateContext()` | `lib/compiler.ts`                           | :151 | `(name, agent, files) => CompiledAgentData`                            |
-| `sanitizeCompiledAgentData()` | `lib/compiler.ts`                           | :77  | `(data: CompiledAgentData) => CompiledAgentData`                       |
-| `compileAgent()`              | `lib/compiler.ts`                           | :190 | `(name, agent, projectRoot, engine) => Promise<string>`                |
-| `compileAllAgents()`          | `lib/compiler.ts`                           | :216 | `(resolvedAgents, ctx, engine) => Promise<void>`                       |
-| `createLiquidEngine()`        | `lib/compiler.ts`                           | :394 | `(projectDir?) => Promise<Liquid>`                                     |
-| `sanitizeLiquidSyntax()`      | `lib/compiler.ts`                           | :41  | `(value, fieldName) => sanitized string`                               |
-| `getAgentDefinitions()`       | `lib/agents/agent-fetcher.ts`               | :13  | `(remoteSource?, options?) => Promise<AgentSourcePaths>`               |
-| `loadAgentDefs()`             | `lib/operations/project/load-agent-defs.ts` | :21  | `(agentSource?, options?) => Promise<AgentDefs>`                       |
+| Function                      | File                                        | Signature                                                              |
+| ----------------------------- | ------------------------------------------- | ---------------------------------------------------------------------- |
+| `loadAllAgents()`             | `lib/loading/loader.ts`                     | `(projectRoot: string) => Promise<Record<AgentName, AgentDefinition>>` |
+| `readAgentFiles()`            | `lib/compiler.ts`                           | `(name, agent, projectRoot) => Promise<AgentFiles>`                    |
+| `buildAgentTemplateContext()` | `lib/compiler.ts`                           | `(name, agent, files) => CompiledAgentData`                            |
+| `sanitizeCompiledAgentData()` | `lib/compiler.ts`                           | `(data: CompiledAgentData) => CompiledAgentData`                       |
+| `compileAgent()`              | `lib/compiler.ts`                           | `(name, agent, projectRoot, engine) => Promise<string>`                |
+| `compileAllAgents()`          | `lib/compiler.ts`                           | `(resolvedAgents, ctx, engine) => Promise<void>`                       |
+| `createLiquidEngine()`        | `lib/compiler.ts`                           | `(projectDir?) => Promise<Liquid>`                                     |
+| `sanitizeLiquidSyntax()`      | `lib/compiler.ts`                           | `(value, fieldName) => sanitized string`                               |
+| `getAgentDefinitions()`       | `lib/agents/agent-fetcher.ts`               | `(remoteSource?, options?) => Promise<AgentSourcePaths>`               |
+| `loadAgentDefs()`             | `lib/operations/project/load-agent-defs.ts` | `(agentSource?, options?) => Promise<AgentDefs>`                       |
 
 ## Agent Loading Flow
 
 ```
-1. loadAgentDefs()  [operations/project/load-agent-defs.ts:21]
+1. loadAgentDefs()  (operations/project/load-agent-defs.ts)
    |
-   +-> getAgentDefinitions(agentSource)  [agents/agent-fetcher.ts:13]
+   +-> getAgentDefinitions(agentSource)  (agents/agent-fetcher.ts)
    |   Returns AgentSourcePaths { agentsDir, templatesDir, sourcePath }
    |
-   +-> loadAllAgents(PROJECT_ROOT)  [loading/loader.ts:38]
+   +-> loadAllAgents(PROJECT_ROOT)  (loading/loader.ts)
    |   Globs for **/metadata.yaml, parses each with agentYamlConfigSchema
    |   Returns Record<AgentName, AgentDefinition> (built-in agents)
    |
-   +-> loadAllAgents(sourcePath)  [loading/loader.ts:38]
+   +-> loadAllAgents(sourcePath)  (loading/loader.ts)
    |   Same logic for remote source agents
    |
    +-> Merge: { ...cliAgents, ...sourceAgents }

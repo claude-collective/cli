@@ -1,3 +1,14 @@
+---
+scope: reference
+area: features
+keywords: [plugins, manifest, marketplace, installation, discovery]
+related:
+  - reference/features/compilation-pipeline.md
+  - reference/features/skills-and-matrix.md
+  - reference/commands.md
+last_validated: 2026-04-02
+---
+
 # Plugin System
 
 **Last Updated:** 2026-04-02
@@ -38,7 +49,7 @@ agents/
 
 ### Plugin Manifest (`plugin.json`)
 
-Type: `PluginManifest` (`src/cli/types/plugins.ts:10-21`)
+Type: `PluginManifest` (`src/cli/types/plugins.ts`)
 
 ```typescript
 type PluginManifest = {
@@ -71,7 +82,7 @@ All location functions are in `src/cli/lib/plugins/plugin-finder.ts`:
 
 Note: `getPluginManifestPath()` also exists in `plugin-manifest.ts` (for output manifest path during compilation).
 
-Plugin manifest directory: `.claude-plugin/` (`PLUGIN_MANIFEST_DIR` from `src/cli/consts.ts:18`)
+Plugin manifest directory: `.claude-plugin/` (`PLUGIN_MANIFEST_DIR` from `src/cli/consts.ts`)
 
 ## Plugin Manifest Finder
 
@@ -112,23 +123,23 @@ Types:
 
 ## Plugin Validation
 
-**Function:** `validatePlugin()` at `src/cli/lib/plugins/plugin-validator.ts:351`
+**Function:** `validatePlugin()` in `src/cli/lib/plugins/plugin-validator.ts`
 
 Validates:
 
-- Plugin structure via `validatePluginStructure()` (manifest dir exists, line `:64`)
-- Plugin manifest via `validatePluginManifest()` (valid JSON, required fields, line `:114`)
+- Plugin structure via `validatePluginStructure()` (manifest dir exists)
+- Plugin manifest via `validatePluginManifest()` (valid JSON, required fields)
 - Skill files via `validatePluginSkillFiles()` (SKILL.md has valid frontmatter)
 - Agent files via `validatePluginAgentFiles()` (agent .md files have valid frontmatter)
 
 Individual frontmatter validators (exported):
 
-- `validateSkillFrontmatter()` at `:185` - Validate a single SKILL.md file
-- `validateAgentFrontmatter()` at `:221` - Validate a single agent .md file
+- `validateSkillFrontmatter()` - Validate a single SKILL.md file
+- `validateAgentFrontmatter()` - Validate a single agent .md file
 
-**Function:** `validateAllPlugins()` at `:381` - Validate all plugins in a directory.
+**Function:** `validateAllPlugins()` - Validate all plugins in a directory.
 
-**Function:** `printPluginValidationResult()` at `:459` - Format validation results for display.
+**Function:** `printPluginValidationResult()` - Format validation results for display.
 
 ## Manifest Generation
 
@@ -163,7 +174,7 @@ Types:
 
 ## Marketplace
 
-### Marketplace Type (`src/cli/types/plugins.ts:59-67`)
+### Marketplace Type (`src/cli/types/plugins.ts`)
 
 ```typescript
 type Marketplace = {
@@ -206,7 +217,7 @@ Executed through `src/cli/utils/exec.ts`:
 
 Skills installed as Claude Code plugins, agents compiled to `.claude/agents/`.
 
-**Function:** `installPluginConfig()` at `src/cli/lib/installation/local-installer.ts:492`
+**Function:** `installPluginConfig()` in `src/cli/lib/installation/local-installer.ts`
 (Re-exported from `src/cli/lib/installation/index.ts`)
 
 ### Eject Mode
@@ -217,43 +228,43 @@ Skills copied locally via eject workflow.
 
 ### Scope-Aware Installation
 
-`installPluginConfig()` uses `writeScopedConfigs()` (line `:369`) to split config by scope:
+`installPluginConfig()` uses `writeScopedConfigs()` to split config by scope:
 
 - Global-scoped skills/agents go to `~/.claude-src/config.ts` and `~/.claude/agents/`
 - Project-scoped skills/agents go to `{projectDir}/.claude-src/config.ts` and `{projectDir}/.claude/agents/`
 
 Key helper functions in `local-installer.ts`:
 
-| Function                | Line   | Purpose                                          |
-| ----------------------- | ------ | ------------------------------------------------ |
-| `resolveInstallPaths()` | `:96`  | Resolve skill/agent/config paths for a scope     |
-| `setConfigMetadata()`   | `:251` | Set source/marketplace/domains on config         |
-| `buildAndMergeConfig()` | `:282` | Build config from wizard and merge with existing |
-| `writeConfigFile()`     | `:300` | Write config.ts using `generateConfigSource()`   |
-| `buildCompileAgents()`  | `:309` | Build agent compile config from ProjectConfig    |
-| `buildAgentScopeMap()`  | `:336` | Map agent names to their scope                   |
-| `writeScopedConfigs()`  | `:369` | Split and write configs by scope                 |
+| Function                | Purpose                                          |
+| ----------------------- | ------------------------------------------------ |
+| `resolveInstallPaths()` | Resolve skill/agent/config paths for a scope     |
+| `setConfigMetadata()`   | Set source/marketplace/domains on config         |
+| `buildAndMergeConfig()` | Build config from wizard and merge with existing |
+| `writeConfigFile()`     | Write config.ts using `generateConfigSource()`   |
+| `buildCompileAgents()`  | Build agent compile config from ProjectConfig    |
+| `buildAgentScopeMap()`  | Map agent names to their scope                   |
+| `writeScopedConfigs()`  | Split and write configs by scope                 |
 
 ### Detection
 
-**Function:** `detectInstallation()` at `src/cli/lib/installation/installation.ts:84`
+**Function:** `detectInstallation()` in `src/cli/lib/installation/installation.ts`
 
 Returns `Installation` type with `mode`, `configPath`, `agentsDir`, `skillsDir`, `projectDir`.
 
 Detection logic:
 
-1. Check for project-level installation via `detectProjectInstallation()` (line `:35`)
-2. If not found, fall back to global installation via `detectGlobalInstallation()` (line `:59`)
+1. Check for project-level installation via `detectProjectInstallation()`
+2. If not found, fall back to global installation via `detectGlobalInstallation()`
 3. Each checks for `.claude-src/config.ts` and loads config to determine mode
 
-Install mode is derived at runtime from the skills array via `deriveInstallMode()` (line `:26`):
+Install mode is derived at runtime from the skills array via `deriveInstallMode()`:
 
 - Empty skills array = `"eject"` mode (default)
 - All `source: "eject"` = `"eject"` mode
 - All non-eject sources = `"plugin"` mode
 - Mixed = `"mixed"` mode
 
-**Function:** `getInstallationOrThrow()` at `src/cli/lib/installation/installation.ts:95` - Same as `detectInstallation()` but throws if no installation found.
+**Function:** `getInstallationOrThrow()` in `src/cli/lib/installation/installation.ts` - Same as `detectInstallation()` but throws if no installation found.
 
 ## Mode Migration
 

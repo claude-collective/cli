@@ -1,3 +1,14 @@
+---
+scope: reference
+area: architecture
+keywords: [imports, dependencies, commands, operations, lib, utils]
+related:
+  - reference/architecture-overview.md
+  - reference/boundary-map.md
+  - reference/features/operations-layer.md
+last_validated: 2026-04-02
+---
+
 # Dependency Graph
 
 **Last Updated:** 2026-04-02

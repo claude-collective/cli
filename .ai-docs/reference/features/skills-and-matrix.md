@@ -1,3 +1,15 @@
+---
+scope: reference
+area: features
+keywords: [skills-matrix, categories, resolution, source-loading, multi-source]
+related:
+  - reference/features/agent-system.md
+  - reference/features/plugin-system.md
+  - reference/type-system.md
+  - reference/features/wizard-flow.md
+last_validated: 2026-04-02
+---
+
 # Skills & Matrix System
 
 **Last Updated:** 2026-04-02
@@ -115,14 +127,14 @@ Singleton module holding the current `MergedSkillsMatrix` instance. Starts as `B
 
 **Exported functions:**
 
-- `matrix` (let) - The current matrix instance (line 14)
-- `initializeMatrix(merged)` - Replace the singleton (line 17)
-- `getSkillById(id: SkillId): ResolvedSkill` - Asserting lookup, throws if not found (line 22)
-- `getSkillBySlug(slug: SkillSlug): ResolvedSkill` - Resolves slug to ID via `slugMap`, throws if not found (line 29)
-- `getCustomSkillIds(): Set<SkillId>` - Returns IDs of all custom skills (line 36)
-- `getCategoryDomain(category: string): Domain | undefined` - Look up category's domain (line 45)
-- `hasSkill(id: string): boolean` - Check if a skill ID exists in the matrix (line 51)
-- `findStack(stackId: string): ResolvedStack | undefined` - Optional stack lookup by ID (line 56)
+- `matrix` (let) - The current matrix instance
+- `initializeMatrix(merged)` - Replace the singleton
+- `getSkillById(id: SkillId): ResolvedSkill` - Asserting lookup, throws if not found
+- `getSkillBySlug(slug: SkillSlug): ResolvedSkill` - Resolves slug to ID via `slugMap`, throws if not found
+- `getCustomSkillIds(): Set<SkillId>` - Returns IDs of all custom skills
+- `getCategoryDomain(category: string): Domain | undefined` - Look up category's domain
+- `hasSkill(id: string): boolean` - Check if a skill ID exists in the matrix
+- `findStack(stackId: string): ResolvedStack | undefined` - Optional stack lookup by ID
 
 **Barrel re-exports** (from `matrix/index.ts`): `matrix`, `initializeMatrix`, `getSkillById`, `getSkillBySlug`, `findStack`. Note: `getCustomSkillIds`, `getCategoryDomain`, `hasSkill` are exported from `matrix-provider.ts` but NOT re-exported from the barrel. Import them directly from `matrix-provider.ts`.
 
@@ -132,14 +144,14 @@ Contains the core merge logic that combines categories, relationship rules, and 
 
 **Exported functions:**
 
-- `mergeMatrixWithSkills(categories, relationships, skills)` - Main merge function (line 100)
-- `synthesizeCategory(category, domain)` - Create a basic CategoryDefinition for undefined categories (line 29)
+- `mergeMatrixWithSkills(categories, relationships, skills)` - Main merge function
+- `synthesizeCategory(category, domain)` - Create a basic CategoryDefinition for undefined categories
 
 **Internal function:**
 
-- `resolveRelationships(skillId, relationships, resolve)` - Unified resolver (R-08) that resolves all five relationship types (conflicts, discourages, compatibleWith, requires, alternatives) in a single pass for each skill (line 150)
+- `resolveRelationships(skillId, relationships, resolve)` - Unified resolver (R-08) that resolves all five relationship types (conflicts, discourages, compatibleWith, requires, alternatives) in a single pass for each skill
 
-## SourceLoadResult (`src/cli/lib/loading/source-loader.ts:62-69`)
+## SourceLoadResult (`src/cli/lib/loading/source-loader.ts`)
 
 ```typescript
 type SourceLoadResult = {
@@ -178,7 +190,7 @@ domain: web
 displayName: React
 ```
 
-Validated with `rawMetadataSchema` in `src/cli/lib/matrix/matrix-loader.ts:26-36`.
+Validated with `rawMetadataSchema` in `src/cli/lib/matrix/matrix-loader.ts`.
 
 **Schema fields:** `category` (required), `author` (required), `slug` (required), `domain` (required), `displayName` (optional), `cliDescription` (optional), `usageGuidance` (optional), `custom` (optional boolean).
 
@@ -188,7 +200,7 @@ Validated with `rawMetadataSchema` in `src/cli/lib/matrix/matrix-loader.ts:26-36
 
 ## Alias Resolution
 
-**Function:** `resolveAlias()` at `src/cli/lib/matrix/matrix-resolver.ts:33`
+**Function:** `resolveAlias()` in `src/cli/lib/matrix/matrix-resolver.ts`
 
 Validates that a skill ID exists in the matrix:
 
@@ -215,36 +227,36 @@ All relationship rules use `SkillSlug` references (e.g., `"react"`, `"zustand"`)
 
 Checked per-skill by exported functions:
 
-| Function                       | Line | Purpose                                                    |
-| ------------------------------ | ---- | ---------------------------------------------------------- |
-| `resolveAlias()`               | 33   | Validate skill ID exists in matrix                         |
-| `getDependentSkills()`         | 61   | Find skills that depend on a given skill                   |
-| `getUnmetRequiredBy()`         | 97   | Find first selected skill with unmet need for this skill   |
-| `isDiscouraged()`              | 139  | Check if skill is discouraged by discourages relationships |
-| `isIncompatible()`             | 170  | Check if skill conflicts or has unsatisfiable requires     |
-| `hasUnmetRequirements()`       | 226  | Check if selected skill has unmet dependencies             |
-| `getDiscourageReason()`        | 253  | Get human-readable discouragement reason                   |
-| `getIncompatibleReason()`      | 291  | Get human-readable incompatibility reason                  |
-| `getUnmetRequirementsReason()` | 359  | Get human-readable unmet requirements reason               |
-| `isRecommended()`              | 403  | Check if skill is recommended by selected skills           |
-| `getRecommendReason()`         | 435  | Get human-readable recommendation reason                   |
-| `getAvailableSkills()`         | 645  | Get skills for a category with state annotations           |
-| `getSkillsByCategory()`        | 673  | Get all resolved skills belonging to a category            |
+| Function                       | Purpose                                                    |
+| ------------------------------ | ---------------------------------------------------------- |
+| `resolveAlias()`               | Validate skill ID exists in matrix                         |
+| `getDependentSkills()`         | Find skills that depend on a given skill                   |
+| `getUnmetRequiredBy()`         | Find first selected skill with unmet need for this skill   |
+| `isDiscouraged()`              | Check if skill is discouraged by discourages relationships |
+| `isIncompatible()`             | Check if skill conflicts or has unsatisfiable requires     |
+| `hasUnmetRequirements()`       | Check if selected skill has unmet dependencies             |
+| `getDiscourageReason()`        | Get human-readable discouragement reason                   |
+| `getIncompatibleReason()`      | Get human-readable incompatibility reason                  |
+| `getUnmetRequirementsReason()` | Get human-readable unmet requirements reason               |
+| `isRecommended()`              | Check if skill is recommended by selected skills           |
+| `getRecommendReason()`         | Get human-readable recommendation reason                   |
+| `getAvailableSkills()`         | Get skills for a category with state annotations           |
+| `getSkillsByCategory()`        | Get all resolved skills belonging to a category            |
 
 **Barrel re-exports** (from `matrix/index.ts`): All 13 functions above. Additionally exports `validateConflicts`, `validateRequirements`, `validateExclusivity`, `validateRecommendations` only from `matrix-resolver.ts` directly (not from barrel).
 
 ## Validation
 
-**Function:** `validateSelection()` at `src/cli/lib/matrix/matrix-resolver.ts:593`
+**Function:** `validateSelection()` in `src/cli/lib/matrix/matrix-resolver.ts`
 
 Runs four validation passes via helper functions:
 
-| Function                    | Line | What it validates                              |
-| --------------------------- | ---- | ---------------------------------------------- |
-| `validateConflicts()`       | 451  | Mutually exclusive skill pairs                 |
-| `validateRequirements()`    | 474  | Required dependencies                          |
-| `validateExclusivity()`     | 510  | Category exclusive violations                  |
-| `validateRecommendations()` | 541  | Missing recommended companions (warnings only) |
+| Function                    | What it validates                              |
+| --------------------------- | ---------------------------------------------- |
+| `validateConflicts()`       | Mutually exclusive skill pairs                 |
+| `validateRequirements()`    | Required dependencies                          |
+| `validateExclusivity()`     | Category exclusive violations                  |
+| `validateRecommendations()` | Missing recommended companions (warnings only) |
 
 Returns `SelectionValidation` with `valid` flag, error list, and warning list.
 
@@ -291,13 +303,13 @@ Stacks are pre-configured bundles of skills mapped to agents. Defined in `config
 
 **Key functions (`stacks-loader.ts`):**
 
-- `loadStacks()` - Load all stacks from TS config (line 56)
-- `loadStackById()` - Load specific stack (line 93)
-- `resolveAgentConfigToSkills()` - Resolve stack agent config to skill assignments (line 114)
-- `getStackSkillIds()` - Extract flat skill ID list from stack (line 133)
-- `normalizeStackRecord()` - Normalize stack values to `SkillAssignment[]` arrays (line 50)
-- `normalizeAgentConfig()` - Normalize agent config entries (line 32)
-- `resolveStackSkills()` - Resolve all stack skills by agent (line 142)
+- `loadStacks()` - Load all stacks from TS config
+- `loadStackById()` - Load specific stack
+- `resolveAgentConfigToSkills()` - Resolve stack agent config to skill assignments
+- `getStackSkillIds()` - Extract flat skill ID list from stack
+- `normalizeStackRecord()` - Normalize stack values to `SkillAssignment[]` arrays
+- `normalizeAgentConfig()` - Normalize agent config entries
+- `resolveStackSkills()` - Resolve all stack skills by agent
 
 ## Operations Layer Integration
 

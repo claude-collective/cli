@@ -1,3 +1,15 @@
+---
+scope: reference
+area: features
+keywords: [operations, composable, source, skills, project]
+related:
+  - reference/architecture-overview.md
+  - reference/dependency-graph.md
+  - reference/commands.md
+  - reference/type-system.md
+last_validated: 2026-04-02
+---
+
 # Operations Layer
 
 **Last Updated:** 2026-04-02

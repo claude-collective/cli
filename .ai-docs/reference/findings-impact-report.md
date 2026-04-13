@@ -1,3 +1,13 @@
+---
+scope: reference
+area: architecture
+keywords: [findings, agent-findings, impact, cross-reference]
+related:
+  - reference/architecture-overview.md
+  - reference/test-infrastructure.md
+last_validated: 2026-04-02
+---
+
 # Agent Findings Impact Report
 
 **Generated:** 2026-03-28
