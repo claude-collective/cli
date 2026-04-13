@@ -1,0 +1,151 @@
+---
+scope: reference
+area: testing
+keywords: [factories, createMockSkill, buildProjectConfig, createMockMatrix, helpers, assertions, content-generators, expected-values]
+related:
+  - reference/testing/infrastructure.md
+  - reference/testing/mock-data.md
+last_validated: 2026-04-13
+---
+
+# Test Factories & Helpers
+
+**Last Updated:** 2026-04-13
+**Last Validated:** 2026-04-13
+
+> **Split from:** `reference/test-infrastructure.md`. See also: [infrastructure.md](./infrastructure.md), [mock-data.md](./mock-data.md), [e2e-infrastructure.md](./e2e-infrastructure.md).
+
+## Test Utilities (Domain-Scoped Directories)
+
+The former monolithic `helpers.ts` has been split into three domain-scoped directories under `src/cli/lib/__tests__/`. Each has a barrel `index.ts` for imports. Tests import from `factories/`, `helpers/`, or `assertions/` as needed.
+
+## Factory Functions (`src/cli/lib/__tests__/factories/`)
+
+**MANDATORY: All test data must use these factories. Never construct inline.**
+
+Barrel import: `import { createMockSkill, buildProjectConfig } from "../__tests__/factories/index.js"`
+
+| Factory                                  | File                   | Purpose                            | Signature                                              |
+| ---------------------------------------- | ---------------------- | ---------------------------------- | ------------------------------------------------------ |
+| `createMockSkill()`                      | `skill-factories.ts`   | Create a ResolvedSkill mock        | `(id, overrides?) => ResolvedSkill`                    |
+| `createMockExtractedSkill()`             | `skill-factories.ts`   | Create ExtractedSkillMetadata      | `(id, overrides?) => ExtractedSkillMetadata`           |
+| `createMockSkillEntry()`                 | `skill-factories.ts`   | Create a Skill entry               | `(id, preloaded?, overrides?) => Skill`                |
+| `createMockSkillDefinition()`            | `skill-factories.ts`   | Create a SkillDefinition mock      | `(id, overrides?) => SkillDefinition`                  |
+| `createMockSkillAssignment()`            | `skill-factories.ts`   | Create a SkillAssignment mock      | `(id, preloaded?) => SkillAssignment`                  |
+| `createMockMultiSourceSkill()`           | `skill-factories.ts`   | Create multi-source ResolvedSkill  | `(id, sources, overrides?) => ResolvedSkill`           |
+| `createMockSkillSource()`               | `skill-factories.ts`   | Create a SkillSource mock          | `(type, overrides?) => SkillSource`                    |
+| `createTestSkill()`                      | `skill-factories.ts`   | Create a TestSkill for disk tests  | `(id, description, overrides?) => TestSkill`           |
+| `testSkillToResolvedSkill()`             | `skill-factories.ts`   | Convert TestSkill to ResolvedSkill | `(skill, overrides?) => ResolvedSkill`                 |
+| `createMockAgent()`                      | `agent-factories.ts`   | Create an AgentDefinition mock     | `(name, overrides?) => AgentDefinition`                |
+| `createMockAgentConfig()`                | `agent-factories.ts`   | Create an AgentConfig mock         | `(name, skills?, overrides?) => AgentConfig`           |
+| `createMockCompiledAgentData()`          | `agent-factories.ts`   | Create CompiledAgentData mock      | `(overrides?) => CompiledAgentData`                    |
+| `createMockMatrix()`                     | `matrix-factories.ts`  | Create a MergedSkillsMatrix mock   | `(...skills) => MergedSkillsMatrix`                    |
+| `createComprehensiveMatrix()`            | `matrix-factories.ts`  | Full matrix with 8 skills + stacks | `(overrides?) => MergedSkillsMatrix`                   |
+| `createBasicMatrix()`                    | `matrix-factories.ts`  | Minimal matrix with 5 skills       | `(overrides?) => MergedSkillsMatrix`                   |
+| `createMockMatrixConfig()`               | `matrix-factories.ts`  | Create decomposed matrix config    | `(categories, overrides?) => MockMatrixConfig`         |
+| `createMockCategory()`                   | `category-factories.ts`| Create a CategoryDefinition mock   | `(id, displayName, overrides?) => CategoryDefinition`  |
+| `buildSourceConfig()`                    | `config-factories.ts`  | Create source config object        | `(overrides?) => Record<string, unknown>`              |
+| `buildProjectConfig()`                   | `config-factories.ts`  | Create a ProjectConfig mock        | `(overrides?) => ProjectConfig`                        |
+| `buildWizardResult()`                    | `config-factories.ts`  | Create a WizardResultV2 mock       | `(skills, overrides?) => WizardResultV2`               |
+| `buildAgentConfigs()`                    | `config-factories.ts`  | Create AgentScopeConfig array      | `(agentNames, overrides?) => AgentScopeConfig[]`       |
+| `buildSourceResult()`                    | `config-factories.ts`  | Create a SourceLoadResult mock     | `(matrix, sourcePath, overrides?) => SourceLoadResult` |
+| `buildTestProjectConfig()`               | `config-factories.ts`  | Create TestProjectConfig           | `(agents, skills, overrides?) => TestProjectConfig`    |
+| `createMockResolvedStack()`              | `stack-factories.ts`   | Create a ResolvedStack mock        | `(id, name, overrides?) => ResolvedStack`              |
+| `createMockStack()`                      | `stack-factories.ts`   | Create a Stack mock                | `(id, config) => Stack`                                |
+| `createMockRawStacksConfig()`            | `stack-factories.ts`   | Create raw stacks config (2-stack) | `() => RawStacksConfig`                                |
+| `createMockRawStacksConfigWithArrays()`  | `stack-factories.ts`   | Raw stacks with array categories   | `() => RawStacksConfig`                                |
+| `createMockRawStacksConfigWithObjects()` | `stack-factories.ts`   | Raw stacks with object assignments | `() => RawStacksConfig`                                |
+| `createCompileContext()`                 | `plugin-factories.ts`  | Create a CompileContext mock       | `(overrides?) => CompileContext`                       |
+| `createMockCompileConfig()`              | `plugin-factories.ts`  | Create a CompileConfig mock        | `(agents, overrides?) => CompileConfig`                |
+| `createMockCompiledStackPlugin()`        | `plugin-factories.ts`  | Create a CompiledStackPlugin mock  | `(overrides?) => CompiledStackPlugin`                  |
+| `createMockMarketplace()`                | `plugin-factories.ts`  | Create a Marketplace mock          | `(plugins?) => Marketplace`                            |
+| `createMockMarketplacePlugin()`          | `plugin-factories.ts`  | Create a MarketplacePlugin mock    | `(name, source?) => MarketplacePlugin`                 |
+
+## Helper Functions (`src/cli/lib/__tests__/helpers/`)
+
+Barrel import: `import { runCliCommand, writeTestSkill } from "../__tests__/helpers/index.js"`
+
+| Helper                          | File                    | Purpose                                                  |
+| ------------------------------- | ----------------------- | -------------------------------------------------------- |
+| `CLI_ROOT`                      | `cli-runner.ts`         | Root path constant for CLI commands                      |
+| `runCliCommand()`               | `cli-runner.ts`         | Run CLI command, capture stdout/stderr/error             |
+| `readTestYaml<T>()`             | `config-io.ts`          | Read and parse YAML test file                            |
+| `readTestTsConfig<T>()`         | `config-io.ts`          | Load TS config file via jiti                             |
+| `writeTestTsConfig()`           | `config-io.ts`          | Write a config.ts file to a project directory            |
+| `writeTestSkill()`              | `disk-writers.ts`       | Write SKILL.md + metadata.yaml to dir                    |
+| `writeSourceSkill()`            | `disk-writers.ts`       | Write skill to source directory structure                |
+| `writeTestAgent()`              | `disk-writers.ts`       | Write agent metadata.yaml to dir                         |
+| `createTestDirs()`              | `test-dir-setup.ts`     | Create plugin test directory structure                   |
+| `cleanupTestDirs()`             | `test-dir-setup.ts`     | Clean up plugin test directory structure                 |
+| `buildSkillConfigs()`           | `wizard-simulation.ts`  | Create SkillConfig array                                 |
+| `simulateSkillSelections()`     | `wizard-simulation.ts`  | Simulate user skill selections                           |
+| `buildWizardResultFromStore()`  | `wizard-simulation.ts`  | Build WizardResultV2 from store                          |
+| `extractSkillIdsFromAssignment()`| `wizard-simulation.ts` | Extract IDs from stack assignment                        |
+| `parseTestFrontmatter()`        | `index.ts`             | Lightweight frontmatter parser for assertions            |
+
+## Assertion Helpers (`src/cli/lib/__tests__/assertions/`)
+
+Barrel import: `import { assertConfigIntegrity, expectCompiledAgents } from "../__tests__/assertions/index.js"`
+
+| Helper                      | File                      | Purpose                                          |
+| --------------------------- | ------------------------- | ------------------------------------------------ |
+| `expectConfigSkills()`      | `config-assertions.ts`    | Assert expected skills in config                 |
+| `expectConfigAgents()`      | `config-assertions.ts`    | Assert expected agents in config                 |
+| `expectFullConfig()`        | `config-assertions.ts`    | Assert full config structure                     |
+| `expectSkillConfigs()`      | `config-assertions.ts`    | Assert skill config entries                      |
+| `expectAgentConfigs()`      | `config-assertions.ts`    | Assert agent config entries                      |
+| `expectConfigOnDisk()`      | `config-assertions.ts`    | Assert config file on disk                       |
+| `assertConfigIntegrity()`   | `config-assertions.ts`    | Assert config file integrity                     |
+| `parseCompiledAgent()`      | `agent-assertions.ts`     | Parse compiled agent output                      |
+| `expectAgentCompilation()`  | `agent-assertions.ts`     | Assert agent was compiled                        |
+| `expectValidAgentMarkdown()`| `agent-assertions.ts`     | Assert valid agent markdown                      |
+| `expectCompiledAgents()`    | `agent-assertions.ts`     | Assert multiple agents compiled                  |
+| `expectInstallResult()`     | `install-assertions.ts`   | Assert installation result                       |
+
+## FS Utilities (`src/cli/lib/__tests__/test-fs-utils.ts`)
+
+| Helper             | Purpose                                              |
+| ------------------ | ---------------------------------------------------- |
+| `createTempDir()`  | Create temp directory                                |
+| `cleanupTempDir()` | Remove temp directory                                |
+| `fileExists()`     | Check if file exists                                 |
+| `directoryExists()`| Check if directory exists                            |
+
+## Expected Values (`src/cli/lib/__tests__/expected-values.ts`)
+
+Canonical expected value constants for test assertions:
+
+| Export             | Purpose                                                                    |
+| ------------------ | -------------------------------------------------------------------------- |
+| `EXPECTED_AGENTS`  | Agent name lists per domain (WEB, API, CLI, WEB_AND_API, ALL)             |
+| `EXPECTED_SKILLS`  | Skill ID lists per fixture (WEB_DEFAULT, API_DEFAULT, WEB_AND_API, ALL_TEST) |
+
+## Content Generators (`src/cli/lib/__tests__/content-generators.ts`)
+
+Pure content renderers for test file generation:
+
+| Function               | Purpose                            |
+| ---------------------- | ---------------------------------- |
+| `renderSkillMd()`      | Generate SKILL.md with frontmatter |
+| `renderAgentYaml()`    | Generate agent metadata.yaml       |
+| `renderConfigTs()`     | Generate config.ts with export     |
+| `renderCategoriesTs()` | Generate categories config         |
+| `renderRulesTs()`      | Generate rules config              |
+
+## Test Source Factory (`src/cli/lib/__tests__/fixtures/create-test-source.ts`)
+
+Creates complete project directory structures for integration tests:
+
+```typescript
+import { createTestSource } from "../fixtures/create-test-source.js";
+
+const dirs = await createTestSource({
+  skills: [...],       // TestSkill[]
+  agents: [...],       // TestAgent[]
+  stacks: [...],       // TestStack[]
+  matrix: {...},       // TestMatrix
+  config: {...},       // TestProjectConfig
+  pluginManifest: {...},
+});
+// dirs.root, dirs.skills, dirs.agents, dirs.config, etc.
+```
