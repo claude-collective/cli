@@ -1,7 +1,7 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach } from "vitest";
-import { EXIT_CODES, TIMEOUTS } from "../pages/constants.js";
+import { EXIT_CODES, TIMEOUTS, SOURCE_PATHS } from "../pages/constants.js";
 import {
   ensureBinaryExists,
   cleanupTempDir,
@@ -104,7 +104,9 @@ describe("build agent plugins", () => {
 
       for (const agentName of AGENT_NAMES) {
         const agentPluginDir = path.join(pluginsDir, `agent-${agentName}`);
-        const exists = await fileExists(path.join(agentPluginDir, ".claude-plugin", "plugin.json"));
+        const exists = await fileExists(
+          path.join(agentPluginDir, SOURCE_PATHS.PLUGIN_MANIFEST_DIR, "plugin.json"),
+        );
         expect(exists, `Missing plugin manifest for agent-${agentName}`).toBe(true);
       }
     });
@@ -116,7 +118,7 @@ describe("build agent plugins", () => {
         const manifestPath = path.join(
           pluginsDir,
           `agent-${agentName}`,
-          ".claude-plugin",
+          SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
           "plugin.json",
         );
         const content = await readTestFile(manifestPath);
@@ -220,7 +222,9 @@ describe("build agent plugins", () => {
       expect(result.stdout).toContain("Compiled 1 agent plugins");
 
       const pluginDir = path.join(edgeSourceDir, "dist", "plugins", "agent-good-agent");
-      expect(await fileExists(path.join(pluginDir, ".claude-plugin", "plugin.json"))).toBe(true);
+      expect(
+        await fileExists(path.join(pluginDir, SOURCE_PATHS.PLUGIN_MANIFEST_DIR, "plugin.json")),
+      ).toBe(true);
     });
 
     it("should handle empty agents directory gracefully", async () => {
@@ -272,7 +276,7 @@ describe("build agent plugins", () => {
         customOutSourceDir,
         customOutputDir,
         "agent-test-agent",
-        ".claude-plugin",
+        SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
         "plugin.json",
       );
       expect(

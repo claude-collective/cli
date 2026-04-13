@@ -1,7 +1,7 @@
 import path from "path";
 import { CLI } from "../fixtures/cli.js";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { EXIT_CODES } from "../pages/constants.js";
+import { EXIT_CODES, SOURCE_PATHS } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
@@ -125,7 +125,11 @@ describe("build commands", () => {
     it("should use a custom marketplace name with --name", async () => {
       tempDir = await createTempDir();
       const customName = "my-custom-marketplace";
-      const defaultOutputPath = path.join(tempDir, ".claude-plugin", "marketplace.json");
+      const defaultOutputPath = path.join(
+        tempDir,
+        SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
+        "marketplace.json",
+      );
 
       const { exitCode, stdout } = await CLI.run(["build", "marketplace", "--name", customName], {
         dir: tempDir,

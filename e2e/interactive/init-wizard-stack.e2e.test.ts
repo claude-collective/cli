@@ -2,14 +2,12 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { E2E_AGENTS } from "../fixtures/expected-values.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { ensureBinaryExists, cleanupTempDir } from "../helpers/test-utils.js";
+import { STEP_TEXT } from "../pages/constants.js";
+import { ensureBinaryExists } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
 
 describe("init wizard — stack flow", () => {
   let wizard: InitWizard | undefined;
-  let source: { sourceDir: string; tempDir: string } | undefined;
 
   beforeAll(ensureBinaryExists);
 
@@ -77,8 +75,8 @@ describe("init wizard — stack flow", () => {
       await result.exitCode;
 
       const output = result.output;
-      expect(output).toContain("Agents compiled to:");
-      expect(output).toContain("Configuration:");
+      expect(output).toContain(STEP_TEXT.AGENTS_COMPILED_TO);
+      expect(output).toContain(STEP_TEXT.CONFIGURATION_LABEL);
     });
 
     describe("local install verification", () => {
@@ -123,7 +121,7 @@ describe("init wizard — stack flow", () => {
         await result.exitCode;
 
         const output = result.output;
-        expect(output).toContain("Skills copied to:");
+        expect(output).toContain(STEP_TEXT.SKILLS_COPIED_TO);
         expect(output).toContain(".claude/skills");
       });
     });
@@ -137,7 +135,7 @@ describe("init wizard — stack flow", () => {
       const build = await domain.acceptDefaults();
 
       const output = build.getOutput();
-      expect(output).toContain("Framework");
+      expect(output).toContain(STEP_TEXT.BUILD);
     });
   });
 

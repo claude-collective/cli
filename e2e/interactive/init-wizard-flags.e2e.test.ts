@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import { STEP_TEXT, TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { STEP_TEXT, EXIT_CODES } from "../pages/constants.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
@@ -52,7 +52,7 @@ describe("init wizard — flags and permissions", () => {
       });
 
       const output = editWizard.build.getOutput();
-      expect(output).toContain("Framework");
+      expect(output).toContain(STEP_TEXT.BUILD);
       expect(output).toContain("react");
     });
   });

@@ -14,6 +14,11 @@ import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { CLI } from "../fixtures/cli.js";
 import type { SkillId } from "../../src/cli/types/index.js";
 
+/** Write a minimal agent .md file to the agents directory (no frontmatter needed for doctor). */
+async function writeAgentFile(baseDir: string, agentName: string): Promise<void> {
+  await writeFile(path.join(agentsPath(baseDir), `${agentName}.md`), `# ${agentName}\n`);
+}
+
 describe("doctor diagnostics", () => {
   let tempDir: string;
   let sourceTempDir: string | undefined;
@@ -84,8 +89,7 @@ describe("doctor diagnostics", () => {
       const projectDir = project.dir;
 
       // Create the compiled agent .md file so checkAgentsCompiled passes
-      const agentsDir = agentsPath(projectDir);
-      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer\n");
+      await writeAgentFile(projectDir, "web-developer");
 
       const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
         dir: projectDir,
@@ -133,9 +137,8 @@ describe("doctor diagnostics", () => {
       const projectDir = project.dir;
 
       // Create the configured agent file AND an orphan
-      const agentsDir = agentsPath(projectDir);
-      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer\n");
-      await writeFile(path.join(agentsDir, "orphan-agent.md"), "# Orphan\n");
+      await writeAgentFile(projectDir, "web-developer");
+      await writeAgentFile(projectDir, "orphan-agent");
 
       const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
         dir: projectDir,
@@ -192,7 +195,8 @@ describe("doctor diagnostics", () => {
       });
       tempDir = path.dirname(project.dir);
 
-      // Create an extra (orphaned) skill dir NOT in the config
+      // Manual mkdir+writeFile: fabricated orphan skill ID not in SkillId union,
+      // so createLocalSkill() cannot be used without a type cast.
       const orphanDir = path.join(
         project.dir,
         DIRS.CLAUDE,
@@ -203,8 +207,7 @@ describe("doctor diagnostics", () => {
       await writeFile(path.join(orphanDir, FILES.SKILL_MD), "# Orphan Skill\n");
 
       // Create the compiled agent so checkAgentsCompiled passes
-      const agentsDir = agentsPath(project.dir);
-      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer\n");
+      await writeAgentFile(project.dir, "web-developer");
 
       const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
         dir: project.dir,
@@ -288,8 +291,7 @@ describe("doctor diagnostics", () => {
       tempDir = path.dirname(project.dir);
 
       // Create the compiled agent file
-      const agentsDir = agentsPath(project.dir);
-      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer\n");
+      await writeAgentFile(project.dir, "web-developer");
 
       const { exitCode, stdout } = await CLI.run(
         ["doctor", "--verbose", "--source", source.sourceDir],
@@ -342,8 +344,7 @@ describe("doctor diagnostics", () => {
       tempDir = path.dirname(project.dir);
 
       // Create the compiled agent file so all checks pass
-      const agentsDir = agentsPath(project.dir);
-      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer\n");
+      await writeAgentFile(project.dir, "web-developer");
 
       const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
         dir: project.dir,

@@ -1,7 +1,7 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { DIRS, EXIT_CODES, FILES } from "../pages/constants.js";
+import { DIRS, EXIT_CODES, FILES, SOURCE_PATHS } from "../pages/constants.js";
 import {
   isClaudeCLIAvailable,
   claudePluginMarketplaceList,
@@ -64,7 +64,7 @@ describe.skipIf(!claudeAvailable)("claude plugin install (smoke)", () => {
       // Create a minimal marketplace structure that `claude plugin marketplace add`
       // expects: a directory with a marketplace.json in .claude-plugin/
       const marketplaceDir = path.join(tempDir, "test-marketplace");
-      const pluginDir = path.join(marketplaceDir, ".claude-plugin");
+      const pluginDir = path.join(marketplaceDir, SOURCE_PATHS.PLUGIN_MANIFEST_DIR);
       await mkdir(pluginDir, { recursive: true });
       await writeFile(
         path.join(pluginDir, "marketplace.json"),

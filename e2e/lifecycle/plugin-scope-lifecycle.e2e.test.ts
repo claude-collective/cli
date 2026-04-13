@@ -7,7 +7,7 @@ import {
   type E2EPluginSource,
 } from "../helpers/create-e2e-plugin-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, DIRS, EXIT_CODES, FILES } from "../pages/constants.js";
+import { TIMEOUTS, DIRS, EXIT_CODES } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import {
   isClaudeCLIAvailable,
@@ -15,8 +15,6 @@ import {
   createPermissionsFile,
   createTempDir,
   ensureBinaryExists,
-  fileExists,
-  readTestFile,
 } from "../helpers/test-utils.js";
 
 /**
@@ -119,62 +117,27 @@ describe.skipIf(!claudeAvailable)(
         // Phase 2: Verify initial state
         // ================================================================
 
-        // P2-A: Project config exists
-        const projectConfigPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-        expect(await fileExists(projectConfigPath), "Project config must exist").toBe(true);
-
-        // P2-B: Global config exists
-        const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-        expect(await fileExists(globalConfigPath), "Global config must exist (scope split)").toBe(
-          true,
-        );
-
-        const globalConfigContent = await readTestFile(globalConfigPath);
-        const projectConfigContent = await readTestFile(projectConfigPath);
-
-        // P2-D: Config scope split
-        expect(globalConfigContent).toContain("web-developer");
-        expect(projectConfigContent).toContain("api-developer");
+        // P2-A+B: Config scope split — global has web-developer, project has api-developer
+        await expect({ dir: fakeHome }).toHaveConfig({ agents: ["web-developer"] });
+        await expect({ dir: projectDir }).toHaveConfig({ agents: ["api-developer"] });
 
         // --- Scope routing ---
-        const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
-        const projectWebDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "web-developer.md");
-        const globalApiDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "api-developer.md");
-        const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "api-developer.md");
+        await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+        await expect({ dir: projectDir }).not.toHaveCompiledAgent("web-developer");
 
-        expect(
-          await fileExists(globalWebDevPath),
-          "web-developer.md must exist in global agents dir",
-        ).toBe(true);
-        expect(
-          await fileExists(projectWebDevPath),
-          "web-developer.md must NOT exist in project agents dir",
-        ).toBe(false);
-
-        expect(
-          await fileExists(projectApiDevPath),
-          "api-developer.md must exist in project agents dir",
-        ).toBe(true);
-        expect(
-          await fileExists(globalApiDevPath),
-          "api-developer.md must NOT exist in global agents dir",
-        ).toBe(false);
+        await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+        await expect({ dir: fakeHome }).not.toHaveCompiledAgent("api-developer");
 
         // --- Agent content assertions ---
-        const webDevContent = await readTestFile(globalWebDevPath);
-        expect(webDevContent).toMatch(/^---/);
-        expect(webDevContent).toMatch(/name:\s*web-developer/);
-        expect(webDevContent).toContain("web-framework-react");
-        expect(webDevContent).toContain("web-testing-vitest");
-        expect(webDevContent).toContain("web-state-zustand");
-        expect(webDevContent).not.toContain("api-framework-hono");
+        await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
+          contains: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+          notContains: ["api-framework-hono"],
+        });
 
-        const apiDevContent = await readTestFile(projectApiDevPath);
-        expect(apiDevContent).toMatch(/^---/);
-        expect(apiDevContent).toMatch(/name:\s*api-developer/);
-        expect(apiDevContent).toContain("api-framework-hono");
-        expect(apiDevContent).toContain("meta-reviewing");
-        expect(apiDevContent).not.toContain("web-framework-react");
+        await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+          contains: ["api-framework-hono", "meta-reviewing"],
+          notContains: ["web-framework-react"],
+        });
 
         // ================================================================
         // Phase 3: Run compile and verify scope preserved
@@ -189,20 +152,21 @@ describe.skipIf(!claudeAvailable)(
           EXIT_CODES.SUCCESS,
         );
 
-        // Re-verify scope routing
-        expect(await fileExists(globalWebDevPath)).toBe(true);
-        expect(await fileExists(projectWebDevPath)).toBe(false);
-        expect(await fileExists(projectApiDevPath)).toBe(true);
-        expect(await fileExists(globalApiDevPath)).toBe(false);
+        // Re-verify scope routing after recompilation
+        await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+        await expect({ dir: projectDir }).not.toHaveCompiledAgent("web-developer");
+        await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+        await expect({ dir: fakeHome }).not.toHaveCompiledAgent("api-developer");
 
         // Re-verify content after recompilation
-        const webDevRecompiled = await readTestFile(globalWebDevPath);
-        expect(webDevRecompiled).toContain("web-framework-react");
-        expect(webDevRecompiled).not.toContain("api-framework-hono");
-
-        const apiDevRecompiled = await readTestFile(projectApiDevPath);
-        expect(apiDevRecompiled).toContain("api-framework-hono");
-        expect(apiDevRecompiled).not.toContain("web-framework-react");
+        await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
+          contains: ["web-framework-react"],
+          notContains: ["api-framework-hono"],
+        });
+        await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+          contains: ["api-framework-hono"],
+          notContains: ["web-framework-react"],
+        });
       },
     );
   },

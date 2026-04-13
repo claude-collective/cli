@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { E2E_AGENTS } from "../fixtures/expected-values.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
+import { STEP_TEXT } from "../pages/constants.js";
 import { ensureBinaryExists } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
 
@@ -117,7 +117,7 @@ describe("init wizard — scratch flow", () => {
       const build = await domain.advance();
 
       const buildOutput = build.getOutput();
-      expect(buildOutput).toContain("Framework");
+      expect(buildOutput).toContain(STEP_TEXT.BUILD);
     });
   });
 

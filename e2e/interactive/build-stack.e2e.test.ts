@@ -78,7 +78,7 @@ describe("build stack command", () => {
 
       prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.SELECT_STACK_COMPILE, TIMEOUTS.WIZARD_LOAD);
     });
 
     it("should display the E2E test stack name in the selector", async () => {
@@ -88,7 +88,7 @@ describe("build stack command", () => {
 
       prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.SELECT_STACK_COMPILE, TIMEOUTS.WIZARD_LOAD);
 
       const output = prompt.getScreen();
       expect(output).toContain("e2e-test-stack");
@@ -101,7 +101,7 @@ describe("build stack command", () => {
 
       prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.SELECT_STACK_COMPILE, TIMEOUTS.WIZARD_LOAD);
       await prompt.pressEnter();
 
       // After selecting, the command should begin compilation
@@ -136,7 +136,7 @@ describe("build stack command", () => {
 
       prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.SELECT_STACK_COMPILE, TIMEOUTS.WIZARD_LOAD);
 
       // Both stacks should be listed in the selector
       const screenBefore = prompt.getScreen();
@@ -333,7 +333,7 @@ describe("build stack command", () => {
 
       prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.SELECT_STACK_COMPILE, TIMEOUTS.WIZARD_LOAD);
 
       await prompt.ctrlC();
 
@@ -348,7 +348,7 @@ describe("build stack command", () => {
 
       prompt = new InteractivePrompt(["build", "stack", "--source", sourceDir], sourceDir);
 
-      await prompt.waitForText("Select a stack to compile", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.SELECT_STACK_COMPILE, TIMEOUTS.WIZARD_LOAD);
 
       await prompt.ctrlC();
 

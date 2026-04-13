@@ -183,7 +183,7 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
       // Phase D: Verify agent content
 
       // D-1: web-developer.md (global) contains its assigned web skills
-      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, "agents", "web-developer.md");
+      const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
       expect(await fileExists(globalWebDevPath)).toBe(true);
       const webDevContent = await readTestFile(globalWebDevPath);
       expect(webDevContent).toContain("web-framework-react");
@@ -191,7 +191,7 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
       expect(webDevContent).not.toContain("api-framework-hono");
 
       // D-2: api-developer.md (project) contains api-framework-hono (now local)
-      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, "agents", "api-developer.md");
+      const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
       expect(await fileExists(projectApiDevPath)).toBe(true);
       const apiDevContent = await readTestFile(projectApiDevPath);
       expect(apiDevContent).toContain("api-framework-hono");

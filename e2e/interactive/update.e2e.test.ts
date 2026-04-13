@@ -1,6 +1,6 @@
 import path from "path";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, STEP_TEXT } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
@@ -75,7 +75,7 @@ describe("update command", () => {
 
       prompt = new InteractivePrompt(["update"], projectDir);
 
-      await prompt.waitForText("Loading skills...", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.LOADING_SKILLS, TIMEOUTS.WIZARD_LOAD);
     });
 
     it("should report all skills up to date when no outdated skills exist", async () => {
@@ -150,7 +150,7 @@ describe("update command", () => {
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(output).not.toContain("Recompiling agents");
+      expect(output).not.toContain(STEP_TEXT.RECOMPILING);
     });
   });
 
@@ -195,13 +195,12 @@ describe("update command", () => {
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(output).toContain("Loaded from local:");
+      expect(output).toContain(STEP_TEXT.LOADED_LOCAL);
     });
   });
 
   describe("update with multiple outdated skills", () => {
     it("should update all outdated skills when multiple exist", async () => {
-      tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
 
@@ -300,11 +299,11 @@ describe("update command", () => {
 
       prompt = new InteractivePrompt(["update", "--source", source.sourceDir], projectDir);
 
-      await prompt.waitForText("Proceed with update?", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UPDATE, TIMEOUTS.WIZARD_LOAD);
 
       const output = prompt.getOutput();
       expect(output).toContain("web-framework-react");
-      expect(output).toContain("Proceed with update?");
+      expect(output).toContain(STEP_TEXT.CONFIRM_UPDATE);
     });
 
     // BUG: The update command's interactive confirm hangs after pressing 'y'.
@@ -341,7 +340,7 @@ describe("update command", () => {
 
       prompt = new InteractivePrompt(["update", "--source", source.sourceDir], projectDir);
 
-      await prompt.waitForText("Proceed with update?", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UPDATE, TIMEOUTS.WIZARD_LOAD);
 
       await prompt.confirm();
 
@@ -365,7 +364,7 @@ describe("update command", () => {
 
       prompt = new InteractivePrompt(["update", "--source", source.sourceDir], projectDir);
 
-      await prompt.waitForText("Loaded from local:", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.LOADED_LOCAL, TIMEOUTS.WIZARD_LOAD);
 
       const output = prompt.getOutput();
       expect(output).toContain(source.sourceDir);
@@ -383,7 +382,7 @@ describe("update command", () => {
         projectDir,
       );
 
-      await prompt.waitForText("Loading skills...", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.LOADING_SKILLS, TIMEOUTS.WIZARD_LOAD);
 
       await prompt.ctrlC();
 

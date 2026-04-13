@@ -1,4 +1,4 @@
-import { mkdir, readdir } from "fs/promises";
+import { mkdir } from "fs/promises";
 import path from "path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
@@ -14,6 +14,7 @@ import {
   cleanupTempDir,
   fileExists,
   createTempDir,
+  listFiles,
   readTestFile,
 } from "../helpers/test-utils.js";
 
@@ -65,7 +66,7 @@ describe.skipIf(!claudeAvailable)(
 
     // Step 1: Verify build plugins produced output
     it("should have built plugin directories with manifests", async () => {
-      const pluginDirs = await readdir(fixture.pluginsDir);
+      const pluginDirs = await listFiles(fixture.pluginsDir);
       expect(pluginDirs.length).toBeGreaterThanOrEqual(1);
 
       // Check at least one has .claude-plugin/plugin.json

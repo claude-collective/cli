@@ -1,6 +1,6 @@
 import path from "path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { EXIT_CODES, TIMEOUTS } from "../pages/constants.js";
+import { EXIT_CODES, TIMEOUTS, SOURCE_PATHS } from "../pages/constants.js";
 import {
   ensureBinaryExists,
   cleanupTempDir,
@@ -72,7 +72,12 @@ describe("build pipeline (plugin chain)", () => {
       const pluginsDir = path.join(sourceDir, "dist", "plugins");
 
       for (const skillName of E2E_SKILL_NAMES) {
-        const manifestPath = path.join(pluginsDir, skillName, ".claude-plugin", "plugin.json");
+        const manifestPath = path.join(
+          pluginsDir,
+          skillName,
+          SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
+          "plugin.json",
+        );
         const exists = await fileExists(manifestPath);
         expect(exists, `Missing manifest for ${skillName}: ${manifestPath}`).toBe(true);
       }
@@ -85,7 +90,12 @@ describe("build pipeline (plugin chain)", () => {
       expect(pluginDirs.length).toBeGreaterThanOrEqual(1);
 
       for (const pluginDirName of pluginDirs) {
-        const manifestPath = path.join(pluginsDir, pluginDirName, ".claude-plugin", "plugin.json");
+        const manifestPath = path.join(
+          pluginsDir,
+          pluginDirName,
+          SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
+          "plugin.json",
+        );
 
         if (!(await fileExists(manifestPath))) continue;
 
@@ -116,12 +126,20 @@ describe("build pipeline (plugin chain)", () => {
     });
 
     it("should create marketplace.json at the expected path", async () => {
-      const marketplacePath = path.join(sourceDir, ".claude-plugin", "marketplace.json");
+      const marketplacePath = path.join(
+        sourceDir,
+        SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
+        "marketplace.json",
+      );
       expect(await fileExists(marketplacePath)).toBe(true);
     });
 
     it("should have correct name, version, and plugins in marketplace.json", async () => {
-      const marketplacePath = path.join(sourceDir, ".claude-plugin", "marketplace.json");
+      const marketplacePath = path.join(
+        sourceDir,
+        SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
+        "marketplace.json",
+      );
       const content = await readTestFile(marketplacePath);
       const marketplace = JSON.parse(content);
 

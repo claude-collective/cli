@@ -1,8 +1,12 @@
 import path from "path";
-import { writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { TIMEOUTS, EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
-import { cleanupTempDir, ensureBinaryExists, directoryExists } from "../helpers/test-utils.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, STEP_TEXT } from "../pages/constants.js";
+import {
+  cleanupTempDir,
+  ensureBinaryExists,
+  directoryExists,
+  addForkedFromMetadata,
+} from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { InteractivePrompt } from "../fixtures/interactive-prompt.js";
 
@@ -46,24 +50,7 @@ describe("uninstall interactive", () => {
     const projectDir = project.dir;
 
     // Add forkedFrom metadata so uninstall recognizes the skill as CLI-managed
-    const skillMetadataPath = path.join(
-      projectDir,
-      DIRS.CLAUDE,
-      "skills",
-      "web-framework-react",
-      FILES.METADATA_YAML,
-    );
-    await writeFile(
-      skillMetadataPath,
-      [
-        'author: "@test"',
-        'contentHash: "e2e-hash-web-framework-react"',
-        "forkedFrom:",
-        "  skillId: web-framework-react",
-        '  contentHash: "e2e-hash"',
-        "  date: 2026-01-01",
-      ].join("\n") + "\n",
-    );
+    await addForkedFromMetadata(projectDir);
 
     return projectDir;
   }
@@ -78,7 +65,7 @@ describe("uninstall interactive", () => {
 
       const output = prompt.getOutput();
       expect(output).toContain("CLI-managed files");
-      expect(output).toContain("Are you sure you want to uninstall");
+      expect(output).toContain(STEP_TEXT.CONFIRM_UNINSTALL);
     });
 
     it("should show the y/N prompt defaulting to cancel", async () => {
@@ -86,7 +73,7 @@ describe("uninstall interactive", () => {
 
       prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UNINSTALL, TIMEOUTS.WIZARD_LOAD);
 
       const output = prompt.getOutput();
       expect(output).toContain("y/N");
@@ -99,12 +86,12 @@ describe("uninstall interactive", () => {
 
       prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UNINSTALL, TIMEOUTS.WIZARD_LOAD);
       await prompt.pressEnter(); // Wait for stable render via transition delay
 
       await prompt.deny();
 
-      await prompt.waitForText("Uninstall cancelled", TIMEOUTS.EXIT);
+      await prompt.waitForText(STEP_TEXT.UNINSTALL_CANCELLED, TIMEOUTS.EXIT);
 
       const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
@@ -121,7 +108,7 @@ describe("uninstall interactive", () => {
 
       prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UNINSTALL, TIMEOUTS.WIZARD_LOAD);
       await prompt.pressEnter(); // Wait for stable render via transition delay
 
       await prompt.deny();
@@ -138,12 +125,12 @@ describe("uninstall interactive", () => {
 
       prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UNINSTALL, TIMEOUTS.WIZARD_LOAD);
       await prompt.pressEnter(); // Wait for stable render via transition delay
 
       await prompt.pressEnter();
 
-      await prompt.waitForText("Uninstall cancelled", TIMEOUTS.EXIT);
+      await prompt.waitForText(STEP_TEXT.UNINSTALL_CANCELLED, TIMEOUTS.EXIT);
 
       const exitCode = await prompt.waitForExit(TIMEOUTS.EXIT);
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
@@ -156,7 +143,7 @@ describe("uninstall interactive", () => {
 
       prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UNINSTALL, TIMEOUTS.WIZARD_LOAD);
       await prompt.confirm();
 
       await prompt.waitForText(STEP_TEXT.UNINSTALL_SUCCESS, TIMEOUTS.EXIT);
@@ -176,7 +163,7 @@ describe("uninstall interactive", () => {
 
       prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UNINSTALL, TIMEOUTS.WIZARD_LOAD);
       await prompt.confirm();
 
       await prompt.waitForExit(TIMEOUTS.EXIT);
@@ -207,7 +194,7 @@ describe("uninstall interactive", () => {
 
       prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UNINSTALL, TIMEOUTS.WIZARD_LOAD);
       await prompt.pressEnter(); // Wait for stable render via transition delay
 
       await prompt.ctrlC();
@@ -224,7 +211,7 @@ describe("uninstall interactive", () => {
 
       prompt = new InteractivePrompt(["uninstall"], projectDir);
 
-      await prompt.waitForText("Are you sure you want to uninstall", TIMEOUTS.WIZARD_LOAD);
+      await prompt.waitForText(STEP_TEXT.CONFIRM_UNINSTALL, TIMEOUTS.WIZARD_LOAD);
       await prompt.pressEnter(); // Wait for stable render via transition delay
 
       await prompt.ctrlC();

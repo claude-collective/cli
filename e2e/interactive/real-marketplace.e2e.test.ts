@@ -3,7 +3,7 @@ import { stat } from "fs/promises";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, STEP_TEXT } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
 import "../matchers/setup.js";
 import {
@@ -102,8 +102,8 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
     });
 
     it("should have displayed completion details", () => {
-      expect(initOutput).toContain("Agents compiled to:");
-      expect(initOutput).toContain("Configuration:");
+      expect(initOutput).toContain(STEP_TEXT.AGENTS_COMPILED_TO);
+      expect(initOutput).toContain(STEP_TEXT.CONFIGURATION_LABEL);
     });
   });
 
@@ -151,7 +151,7 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
       const { exitCode, stdout } = await CLI.run(["list"], { dir: projectDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).not.toContain("No installation found");
+      expect(stdout).not.toContain(STEP_TEXT.NO_INSTALLATION);
       expect(stdout).toMatch(/skills/i);
       expect(stdout).toMatch(/agents/i);
     });

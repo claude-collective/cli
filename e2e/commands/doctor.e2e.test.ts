@@ -109,7 +109,9 @@ describe("doctor command", () => {
     it("should not crash and should report config error with corrupt config.ts", async () => {
       tempDir = await createTempDir();
 
-      // Create a corrupt config.ts file with invalid JavaScript syntax
+      // Manual writeFile: intentionally creating a corrupt config.ts with invalid
+      // JavaScript syntax. writeProjectConfig() generates valid configs, so manual
+      // construction is required to test the error-handling path.
       const configDir = path.join(tempDir, DIRS.CLAUDE_SRC);
       await mkdir(configDir, { recursive: true });
       await writeFile(path.join(configDir, FILES.CONFIG_TS), "export default {{{CORRUPT SYNTAX!!!");

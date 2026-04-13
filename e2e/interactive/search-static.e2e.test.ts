@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { EXIT_CODES } from "../pages/constants.js";
+import { EXIT_CODES, STEP_TEXT } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
@@ -153,7 +153,7 @@ describe("search command — static mode", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Verify the source was loaded from the local path
-      expect(output).toContain("Loaded from local:");
+      expect(output).toContain(STEP_TEXT.LOADED_LOCAL);
       expect(output).toContain(sourceDir!);
 
       // The E2E source contains methodology skills
@@ -170,7 +170,7 @@ describe("search command — static mode", () => {
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // Output should indicate the source was loaded from the local path
-      expect(output).toContain("Loaded from local:");
+      expect(output).toContain(STEP_TEXT.LOADED_LOCAL);
       expect(output).toContain(sourceDir!);
     });
 

@@ -15,9 +15,14 @@ import {
   addForkedFromMetadata,
 } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
-import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
 import { CLI } from "../fixtures/cli.js";
 import "../matchers/setup.js";
+
+/** Write a minimal agent .md file to the agents directory. */
+async function writeAgentFile(baseDir: string, agentName: string, content: string): Promise<void> {
+  await writeFile(path.join(agentsPath(baseDir), `${agentName}.md`), content);
+}
 
 describe("uninstall command", () => {
   let tempDir: string;
@@ -76,7 +81,7 @@ describe("uninstall command", () => {
     const { exitCode, stdout } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     // Skills and agents should be removed
     await expectCleanUninstall(projectDir);
@@ -103,7 +108,7 @@ describe("uninstall command", () => {
     });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Uninstall complete!");
+    expect(stdout).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
 
     // Config directory, skills, and agents should all be removed with --all
     await expectCleanUninstall(projectDir, { removeConfig: true });
@@ -153,14 +158,14 @@ describe("uninstall command", () => {
 
     // ProjectBuilder.editable() generates config with agents: ["web-developer"]
     // Add an extra agent file NOT in the config
-    const agentsDir = agentsPath(projectDir);
-    await writeFile(path.join(agentsDir, "my-custom-agent.md"), "# Custom Agent");
+    await writeAgentFile(projectDir, "my-custom-agent", "# Custom Agent");
 
     const { exitCode } = await CLI.run(["uninstall", "--yes"], { dir: projectDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Custom agent should be preserved (not in config.agents)
+    const agentsDir = agentsPath(projectDir);
     expect(await fileExists(path.join(agentsDir, "my-custom-agent.md"))).toBe(true);
 
     // CLI-managed agent (web-developer) should be removed
