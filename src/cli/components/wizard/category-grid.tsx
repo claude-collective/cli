@@ -132,9 +132,9 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, showLabels }) =>
       borderStyle="single"
       flexShrink={0}
       paddingLeft={1}
+      flexDirection="row"
     >
       <>
-        <Text />
         {option.scope && (
           <>
             <Text
@@ -165,9 +165,11 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, showLabels }) =>
             (option.selected && !!option.requiredBy)
           }
         >
-          {getSkillById(option.id).displayName}
-          {option.installed && option.scope === "global" ? ` ${UI_SYMBOLS.LOCK}` : ""}{" "}
+          {getSkillById(option.id).displayName}{" "}
         </Text>
+        {option.installed && option.scope === "global" && (
+          <Text>{UI_SYMBOLS.LOCK} </Text>
+        )}
         {compatibilityLabel && (
           <Text color={textColor} dimColor>
             {compatibilityLabel}{" "}
