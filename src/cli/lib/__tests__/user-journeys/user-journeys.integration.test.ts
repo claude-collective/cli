@@ -20,6 +20,7 @@ import type {
 } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import { splitConfigByScope } from "../../configuration/config-generator";
+import { generateConfigSource } from "../../configuration/config-writer";
 import { createBasicMatrix, createComprehensiveMatrix } from "../factories/matrix-factories.js";
 import {
   buildProjectConfig,
@@ -27,6 +28,7 @@ import {
   buildSourceResult,
 } from "../factories/config-factories.js";
 import {
+  buildSkillConfigs,
   buildWizardResultFromStore,
   simulateSkillSelections,
   extractSkillIdsFromAssignment,
@@ -89,13 +91,13 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
 
     // Verify initial state: full config structure
     const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
-    expectSkillConfigs(initialConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      initialConfig,
+      buildSkillConfigs(["web-framework-react", "web-state-zustand"]),
+    );
     expectAgentConfigs(
       initialConfig,
-      EXPECTED_AGENTS.WEB.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB], { scope: "global" }),
     );
     expectCompiledAgents(initialResult, [...EXPECTED_AGENTS.WEB]);
 
@@ -125,16 +127,15 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // Config now includes all three skills with full structure (merge preserves existing order, appends new)
-    expectSkillConfigs(updatedConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      updatedConfig,
+      buildSkillConfigs(["web-framework-react", "web-state-zustand", "api-framework-hono"]),
+    );
 
     // Agents include both web and api (merged), all global scope
     expectAgentConfigs(
       updatedConfig,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
 
     // Stack: every agent gets every skill's category
@@ -187,12 +188,10 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
 
     // Verify initial config fully
     const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
-    expectSkillConfigs(initialConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(initialConfig, buildSkillConfigs(["web-framework-react"]));
     expectAgentConfigs(
       initialConfig,
-      EXPECTED_AGENTS.WEB.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB], { scope: "global" }),
     );
     expect(initialConfig.stack).toBeDefined();
     expect(Object.keys(initialConfig.stack!).sort()).toStrictEqual([...EXPECTED_AGENTS.WEB]);
@@ -219,14 +218,14 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     // All initial web agents + new API agents should be present (merge unions agents), all global
     expectAgentConfigs(
       updatedConfig,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
 
     // Skills include both web + api
-    expectSkillConfigs(updatedConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      updatedConfig,
+      buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+    );
 
     // Stack: every agent gets every skill's category (react + hono)
     expect(updatedConfig.stack).toBeDefined();
@@ -287,14 +286,13 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
 
     // Verify initial config: 3 skills, web+api agents, stack with 3 categories
     const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
-    expectSkillConfigs(initialConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      initialConfig,
+      buildSkillConfigs(["web-framework-react", "web-state-zustand", "api-framework-hono"]),
+    );
     expectAgentConfigs(
       initialConfig,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
     expect(initialConfig.stack).toBeDefined();
     expect(Object.keys(initialConfig.stack!).sort()).toStrictEqual([
@@ -326,16 +324,15 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // Merge UNIONS skills: zustand persists from first install, react + hono updated
-    expectSkillConfigs(updatedConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      updatedConfig,
+      buildSkillConfigs(["web-framework-react", "web-state-zustand", "api-framework-hono"]),
+    );
 
     // All agents preserved via merge (web + api), all global scope
     expectAgentConfigs(
       updatedConfig,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
 
     // Stack: merged union — all agents have all skill categories from both installs
@@ -377,10 +374,10 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
 
     // Verify initial config: web+api skills, web+api agents, stack with 2 categories
     const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
-    expectSkillConfigs(initialConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      initialConfig,
+      buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+    );
     expect(initialConfig.stack).toBeDefined();
     expect(Object.keys(initialConfig.stack!).sort()).toStrictEqual([
       ...EXPECTED_AGENTS.WEB_AND_API,
@@ -406,15 +403,15 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // Merge UNIONS: both react and hono persist (hono from first install, react updated)
-    expectSkillConfigs(updatedConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      updatedConfig,
+      buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+    );
 
     // Merge UNIONS agents: both web + api agents preserved, all global
     expectAgentConfigs(
       updatedConfig,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
 
     // Stack: merged union — all agents have both categories from both installs
@@ -487,13 +484,12 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
     expect(loadedConfig).not.toBeNull();
     expectAgentConfigs(
       loadedConfig!.config,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
-    expectSkillConfigs(loadedConfig!.config, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      loadedConfig!.config,
+      buildSkillConfigs(["web-framework-react", "web-state-zustand", "api-framework-hono"]),
+    );
 
     // Loaded stack: every agent has all skill categories
     const loadedStack = loadedConfig!.config.stack;
@@ -548,12 +544,12 @@ describe("Init -> Compile Standalone (From Existing Config)", () => {
     const loadedConfig = await loadProjectConfig(dirs.projectDir);
     expectAgentConfigs(
       loadedConfig!.config,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
-    expectSkillConfigs(loadedConfig!.config, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      loadedConfig!.config,
+      buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+    );
 
     // Loaded stack: every agent has both categories
     const loadedStack = loadedConfig!.config.stack;
@@ -647,16 +643,19 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     // Merged agents: web agents from first init + api agents from second init, all global
     expectAgentConfigs(
       mergedConfig,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
 
     // Merged skills: react + zustand from first, hono + drizzle from second (union, no overlap)
-    expectSkillConfigs(mergedConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-      { id: "api-database-drizzle", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      mergedConfig,
+      buildSkillConfigs([
+        "web-framework-react",
+        "web-state-zustand",
+        "api-framework-hono",
+        "api-database-drizzle",
+      ]),
+    );
 
     // Config was merged
     expect(secondResult.wasMerged).toBe(true);
@@ -712,7 +711,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     // No duplicate agents — exact agent list with scopes
     expectAgentConfigs(
       mergedConfig,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
 
     // No duplicate agent names
@@ -720,11 +719,10 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
     expect(agentNames).toStrictEqual([...new Set(agentNames)]);
 
     // Skills: react + hono from both inits (deduplicated), drizzle new
-    expectSkillConfigs(mergedConfig, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-      { id: "api-database-drizzle", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      mergedConfig,
+      buildSkillConfigs(["web-framework-react", "api-framework-hono", "api-database-drizzle"]),
+    );
   });
 
   it("should preserve description from first init when re-initializing", async () => {
@@ -813,18 +811,21 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     // Full skills with scope and source
-    expectSkillConfigs(config, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
-      { id: "web-styling-scss-modules", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-      { id: "api-database-drizzle", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      config,
+      buildSkillConfigs([
+        "web-framework-react",
+        "web-state-zustand",
+        "web-styling-scss-modules",
+        "api-framework-hono",
+        "api-database-drizzle",
+      ]),
+    );
 
     // Full agents with scope
     expectAgentConfigs(
       config,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
 
     // Stack: every agent gets every skill's category (no stack filtering without selectedStackId)
@@ -910,19 +911,22 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     // Full skills verification
-    expectSkillConfigs(config, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
-      { id: "web-styling-scss-modules", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-      { id: "api-database-drizzle", scope: "project", source: "eject" },
-      { id: "web-testing-vitest", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      config,
+      buildSkillConfigs([
+        "web-framework-react",
+        "web-state-zustand",
+        "web-styling-scss-modules",
+        "api-framework-hono",
+        "api-database-drizzle",
+        "web-testing-vitest",
+      ]),
+    );
 
     // Full agents verification (shared domain has no domain agents)
     expectAgentConfigs(
       config,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
 
     // Stack: exact agent keys and category keys
@@ -1093,13 +1097,12 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
     expectAgentConfigs(
       config,
-      EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
+      buildAgentConfigs([...EXPECTED_AGENTS.WEB_AND_API], { scope: "global" }),
     );
-    expectSkillConfigs(config, [
-      { id: "web-framework-react", scope: "project", source: "eject" },
-      { id: "web-state-zustand", scope: "project", source: "eject" },
-      { id: "api-framework-hono", scope: "project", source: "eject" },
-    ]);
+    expectSkillConfigs(
+      config,
+      buildSkillConfigs(["web-framework-react", "web-state-zustand", "api-framework-hono"]),
+    );
 
     // Source should be preserved
     expect(config.source).toBe("github:test/source");
@@ -1197,7 +1200,7 @@ describe("per-agent scope", () => {
     const result = buildWizardResultFromStore(comprehensiveMatrix);
 
     const webDevConfig = result.agentConfigs.find((ac) => ac.name === "web-developer");
-    expect(webDevConfig).toStrictEqual({ name: "web-developer", scope: "project" });
+    expect(webDevConfig).toStrictEqual(buildAgentConfigs(["web-developer"])[0]);
 
     // Other agents should remain global
     const otherConfigs = result.agentConfigs.filter((ac) => ac.name !== "web-developer");
@@ -1209,8 +1212,8 @@ describe("per-agent scope", () => {
   it("edit-mode restores agent scope configs", () => {
     // Simulate what useWizardInitialization does: set state directly with mixed scopes
     const agentConfigs: AgentScopeConfig[] = [
-      { name: "web-developer", scope: "project" },
-      { name: "api-developer", scope: "global" },
+      ...buildAgentConfigs(["web-developer"]),
+      ...buildAgentConfigs(["api-developer"], { scope: "global" }),
     ];
 
     useWizardStore.setState({
@@ -1220,8 +1223,8 @@ describe("per-agent scope", () => {
 
     const state = useWizardStore.getState();
     expect(state.agentConfigs).toStrictEqual([
-      { name: "web-developer", scope: "project" },
-      { name: "api-developer", scope: "global" },
+      ...buildAgentConfigs(["web-developer"]),
+      ...buildAgentConfigs(["api-developer"], { scope: "global" }),
     ]);
     expect(state.selectedAgents).toStrictEqual(["web-developer", "api-developer"]);
   });
@@ -1240,30 +1243,29 @@ describe("per-agent scope", () => {
   it("deselecting global agent marks it as excluded during edit", () => {
     simulateSkillSelections(["web-framework-react"], matrix, ["web"]);
     useWizardStore.getState().preselectAgentsFromDomains();
-    // Simulate edit flow: set installed agent configs
+    // Simulate edit flow from global scope: set installed agent configs
     useWizardStore.setState({
-      installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+      installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+      isEditingFromGlobalScope: true,
     });
 
     // Deselect web-developer (global scope, installed) → should be marked excluded
     useWizardStore.getState().toggleAgent("web-developer");
 
     const config = useWizardStore.getState().agentConfigs.find((ac) => ac.name === "web-developer");
-    expect(config).toStrictEqual({
-      name: "web-developer",
-      scope: "global",
-      excluded: true,
-    });
+    expect(config).toStrictEqual(
+      buildAgentConfigs(["web-developer"], { scope: "global", excluded: true })[0],
+    );
   });
 
   it("agent scope changes detected in edit flow", () => {
-    const oldAgentConfigs: AgentScopeConfig[] = [
-      { name: "web-developer", scope: "global" },
-      { name: "api-developer", scope: "global" },
-    ];
+    const oldAgentConfigs: AgentScopeConfig[] = buildAgentConfigs(
+      ["web-developer", "api-developer"],
+      { scope: "global" },
+    );
     const newAgentConfigs: AgentScopeConfig[] = [
-      { name: "web-developer", scope: "project" },
-      { name: "api-developer", scope: "global" },
+      ...buildAgentConfigs(["web-developer"]),
+      ...buildAgentConfigs(["api-developer"], { scope: "global" }),
     ];
 
     // Compute changes: find agents where old.scope !== new.scope
@@ -1273,7 +1275,7 @@ describe("per-agent scope", () => {
     });
 
     expect(changes).toHaveLength(1);
-    expect(changes[0]).toStrictEqual({ name: "web-developer", scope: "project" });
+    expect(changes[0]).toStrictEqual(buildAgentConfigs(["web-developer"])[0]);
 
     // api-developer should have no change
     const apiChange = changes.find((c) => c.name === "api-developer");
@@ -1300,13 +1302,15 @@ describe("Excluded Skills — Global/Project Interaction", () => {
     // Override scopes: react + zustand global, hono project
     useWizardStore.setState({
       skillConfigs: [
-        { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        { id: "web-state-zustand", scope: "global", source: "agents-inc" },
-        { id: "api-framework-hono", scope: "project", source: "agents-inc" },
+        ...buildSkillConfigs(["web-framework-react", "web-state-zustand"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        ...buildSkillConfigs(["api-framework-hono"], { scope: "project", source: "agents-inc" }),
       ],
       agentConfigs: [
-        { name: "web-developer", scope: "global" },
-        { name: "api-developer", scope: "project" },
+        ...buildAgentConfigs(["web-developer"], { scope: "global" }),
+        ...buildAgentConfigs(["api-developer"]),
       ],
     });
 
@@ -1335,7 +1339,10 @@ describe("Excluded Skills — Global/Project Interaction", () => {
     // Set up: react is selected globally, simulate project init with existing global installation
     const store = useWizardStore.getState();
     useWizardStore.setState({
-      installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+      installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+        scope: "global",
+        source: "agents-inc",
+      }),
       isInitMode: true,
     });
     store.toggleDomain("web");
@@ -1401,9 +1408,13 @@ describe("Excluded Skills — Global/Project Interaction", () => {
     // Set up active skills + one excluded skill
     const activeSkillIds: SkillId[] = ["web-framework-react", "api-framework-hono"];
     const savedConfigs: SkillConfig[] = [
-      { id: "web-framework-react", scope: "global", source: "agents-inc" },
-      { id: "api-framework-hono", scope: "project", source: "agents-inc" },
-      { id: "web-state-zustand", scope: "global", source: "agents-inc", excluded: true },
+      ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+      ...buildSkillConfigs(["api-framework-hono"], { scope: "project", source: "agents-inc" }),
+      ...buildSkillConfigs(["web-state-zustand"], {
+        scope: "global",
+        source: "agents-inc",
+        excluded: true,
+      }),
     ];
 
     // Simulate re-edit: populateFromSkillIds with active IDs + savedConfigs (including excluded)
@@ -1419,22 +1430,24 @@ describe("Excluded Skills — Global/Project Interaction", () => {
 
     // Excluded skill IS preserved in skillConfigs
     const zustandConfig = state.skillConfigs.find((sc) => sc.id === "web-state-zustand");
-    expect(zustandConfig).toStrictEqual({
-      id: "web-state-zustand",
-      scope: "global",
-      source: "agents-inc",
-      excluded: true,
-    });
+    expect(zustandConfig).toStrictEqual(
+      buildSkillConfigs(["web-state-zustand"], {
+        scope: "global",
+        source: "agents-inc",
+        excluded: true,
+      })[0],
+    );
 
     // Build wizard result — excluded entries flow through
     const wizardResult = buildWizardResultFromStore(matrix);
     const excludedInResult = wizardResult.skills.find((sc) => sc.id === "web-state-zustand");
-    expect(excludedInResult).toStrictEqual({
-      id: "web-state-zustand",
-      scope: "global",
-      source: "agents-inc",
-      excluded: true,
-    });
+    expect(excludedInResult).toStrictEqual(
+      buildSkillConfigs(["web-state-zustand"], {
+        scope: "global",
+        source: "agents-inc",
+        excluded: true,
+      })[0],
+    );
   });
 
   it("should allow project eject to global when no global eject exists", () => {
@@ -1444,7 +1457,7 @@ describe("Excluded Skills — Global/Project Interaction", () => {
 
     // Set scope to project, source to eject, no global preselections
     useWizardStore.setState({
-      skillConfigs: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+      skillConfigs: buildSkillConfigs(["web-framework-react"]),
       globalPreselections: null,
     });
 
@@ -1462,7 +1475,10 @@ describe("Excluded Skills — Global/Project Interaction", () => {
     store.toggleTechnology("web", "web-framework", "web-framework-react", true);
     // Set installed configs to simulate project init (react was previously installed globally)
     useWizardStore.setState({
-      installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+      installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+        scope: "global",
+        source: "agents-inc",
+      }),
       isInitMode: true,
     });
 
@@ -1483,9 +1499,11 @@ describe("Excluded Skills — Global/Project Interaction", () => {
     // Step 3: Simulate re-edit — populateFromSkillIds with no active skills but excluded in savedConfigs
     store.reset();
     initializeMatrix(matrix);
-    const savedConfigs: SkillConfig[] = [
-      { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
-    ];
+    const savedConfigs: SkillConfig[] = buildSkillConfigs(["web-framework-react"], {
+      scope: "global",
+      source: "agents-inc",
+      excluded: true,
+    });
     store.populateFromSkillIds([], savedConfigs);
 
     const afterPopulate = useWizardStore.getState();
@@ -1494,12 +1512,13 @@ describe("Excluded Skills — Global/Project Interaction", () => {
     expect(afterPopulate.getAllSelectedTechnologies()).not.toContain("web-framework-react");
     // React IS in skillConfigs as excluded
     const reactInConfigs = afterPopulate.skillConfigs.find((sc) => sc.id === "web-framework-react");
-    expect(reactInConfigs).toStrictEqual({
-      id: "web-framework-react",
-      scope: "global",
-      source: "agents-inc",
-      excluded: true,
-    });
+    expect(reactInConfigs).toStrictEqual(
+      buildSkillConfigs(["web-framework-react"], {
+        scope: "global",
+        source: "agents-inc",
+        excluded: true,
+      })[0],
+    );
 
     // Step 4: Re-select react via toggleTechnology — clears exclusion
     store.toggleDomain("web");
@@ -1509,5 +1528,133 @@ describe("Excluded Skills — Global/Project Interaction", () => {
     expect(afterReselect.getAllSelectedTechnologies()).toContain("web-framework-react");
     const reactCleared = afterReselect.skillConfigs.find((sc) => sc.id === "web-framework-react");
     expect(reactCleared?.excluded).toBeUndefined();
+  });
+});
+
+// ── D-198: Config Propagation — Skill Scope Corruption ─────────────────────
+
+describe("Config Propagation — Dual-Scope Skill Rendering", () => {
+  let matrix: MergedSkillsMatrix;
+
+  beforeEach(() => {
+    matrix = createComprehensiveMatrix();
+    initializeMatrix(matrix);
+    useWizardStore.getState().reset();
+  });
+
+  it("should produce project-scoped entry when same skill exists at project and global scope", () => {
+    // Step 1: Simulate project init with react at project scope
+    simulateSkillSelections(["web-framework-react"], matrix, ["web"]);
+    useWizardStore.getState().preselectAgentsFromDomains();
+
+    // Override scope to project
+    useWizardStore.setState({
+      skillConfigs: buildSkillConfigs(["web-framework-react"]),
+      agentConfigs: buildAgentConfigs(["web-developer"]),
+    });
+
+    const wizardResult = buildWizardResultFromStore(matrix);
+    const config = buildProjectConfig({
+      skills: wizardResult.skills,
+      agents: wizardResult.agentConfigs,
+    });
+
+    // Step 2: Split into global + project
+    const { global: globalConfig, project: projectConfig } = splitConfigByScope(config);
+
+    // Step 3: Simulate global config also having react at global scope
+    const globalWithReact = buildProjectConfig({
+      name: "global",
+      skills: buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+      agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+    });
+
+    // Step 4: Generate inlined project config with global config
+    const source = generateConfigSource(projectConfig, {
+      isProjectConfig: true,
+      globalConfig: globalWithReact,
+    });
+
+    // Assertion: react should appear TWICE — once in global section, once in project section
+    const skillsSection = source.slice(
+      source.indexOf("const skills:"),
+      source.indexOf("];", source.indexOf("const skills:")) + 2,
+    );
+    const reactMatches = skillsSection.match(/"web-framework-react"/g);
+    expect(reactMatches).toHaveLength(2);
+
+    // Both scope entries should be present
+    expect(skillsSection).toContain('"scope":"global"');
+    expect(skillsSection).toContain('"scope":"project"');
+  });
+
+  it("should use project scope when populateFromSkillIds receives configs with both scopes for same skill", () => {
+    // Simulate a scenario where saved configs have duplicate entries for the same skill
+    const savedConfigs: SkillConfig[] = [
+      ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+      ...buildSkillConfigs(["web-framework-react"]),
+      ...buildSkillConfigs(["api-framework-hono"], { scope: "project", source: "agents-inc" }),
+    ];
+
+    useWizardStore
+      .getState()
+      .populateFromSkillIds(["web-framework-react", "api-framework-hono"], savedConfigs);
+
+    const { skillConfigs } = useWizardStore.getState();
+
+    // React should appear once with project scope
+    const reactConfigs = skillConfigs.filter((sc) => sc.id === "web-framework-react");
+    expect(reactConfigs).toHaveLength(1);
+    expect(reactConfigs[0].scope).toBe("project");
+    expect(reactConfigs[0].source).toBe("eject");
+
+    // Hono should be unaffected
+    const honoConfigs = skillConfigs.filter((sc) => sc.id === "api-framework-hono");
+    expect(honoConfigs).toHaveLength(1);
+    expect(honoConfigs[0].scope).toBe("project");
+  });
+
+  it("should produce clean inlined config when skill was globally installed then project-installed", () => {
+    // Full flow: build config, split by scope, then inline into project config
+    const combinedConfig = buildProjectConfig({
+      name: "test-project",
+      skills: [
+        ...buildSkillConfigs(["web-framework-react"]),
+        ...buildSkillConfigs(["web-state-zustand"], { scope: "global", source: "agents-inc" }),
+      ],
+      agents: [...buildAgentConfigs(["web-developer"])],
+    });
+
+    const { global: globalConfig, project: projectConfig } = splitConfigByScope(combinedConfig);
+
+    // Simulate global config also containing react (from a separate global install)
+    const globalWithReactToo = buildProjectConfig({
+      ...globalConfig,
+      name: "global",
+      skills: [
+        ...globalConfig.skills,
+        ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+      ],
+    });
+
+    const source = generateConfigSource(projectConfig, {
+      isProjectConfig: true,
+      globalConfig: globalWithReactToo,
+    });
+
+    // React should appear twice — once in global section, once in project section
+    const skillsSection = source.slice(
+      source.indexOf("const skills:"),
+      source.indexOf("];", source.indexOf("const skills:")) + 2,
+    );
+    const reactMatches = skillsSection.match(/"web-framework-react"/g);
+    expect(reactMatches).toHaveLength(2);
+
+    // Both scope entries should be present
+    expect(skillsSection).toContain('"scope":"global"');
+    expect(skillsSection).toContain('"scope":"project"');
+
+    // Zustand from global should still appear (no conflict)
+    expect(skillsSection).toContain('"web-state-zustand"');
   });
 });

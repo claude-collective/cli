@@ -15,6 +15,22 @@ import {
 import { CLAUDE_SRC_DIR } from "../../../consts";
 import { EXPECTED_SKILLS } from "../../__tests__/expected-values";
 
+function extractNamedSection(source: string, name: "skills" | "agents" | "stack"): string {
+  const startMarker = `const ${name}:`;
+  const endMarker = name === "stack" ? "};" : "];";
+  const start = source.indexOf(startMarker);
+  return source.slice(start, source.indexOf(endMarker, start) + 2);
+}
+
+function extractScopeSections(section: string): { global: string; project: string } {
+  const globalStart = section.indexOf("// global");
+  const projectStart = section.indexOf("// project");
+  return {
+    global: section.slice(globalStart, projectStart),
+    project: section.slice(projectStart),
+  };
+}
+
 describe("generateConfigSource", () => {
   it("produces valid TypeScript with import type, export default, and named variables", () => {
     const config = buildProjectConfig();
@@ -86,7 +102,7 @@ describe("generateConfigSource", () => {
   it("preserves preloaded flag as object in stack", () => {
     const config = buildProjectConfig({
       name: "preloaded-project",
-      agents: [{ name: "api-developer", scope: "project" }],
+      agents: buildAgentConfigs(["api-developer"]),
       skills: buildSkillConfigs([...EXPECTED_SKILLS.API_DEFAULT]),
       stack: {
         "api-developer": {
@@ -223,10 +239,7 @@ describe("generateConfigSource", () => {
       });
       const source = generateConfigSource(config);
       // Each agent object should contain scope: "global"
-      const agentSection = source.slice(
-        source.indexOf("const agents:"),
-        source.indexOf("];", source.indexOf("const agents:")) + 2,
-      );
+      const agentSection = extractNamedSection(source, "agents");
       expect(agentSection).toContain('"scope":"global"');
       expect(agentSection).toContain('"name":"web-developer"');
       expect(agentSection).toContain('"name":"api-developer"');
@@ -437,10 +450,7 @@ describe("generateConfigSource", () => {
         isProjectConfig: true,
         globalConfig,
       });
-      const agentsSection = source.slice(
-        source.indexOf("const agents:"),
-        source.indexOf("];", source.indexOf("const agents:")) + 2,
-      );
+      const agentsSection = extractNamedSection(source, "agents");
       expect(agentsSection).toContain("// global");
       expect(agentsSection).toContain('"web-reviewer"');
     });
@@ -470,10 +480,7 @@ describe("generateConfigSource", () => {
         isProjectConfig: true,
         globalConfig,
       });
-      const skillsSection = source.slice(
-        source.indexOf("const skills:"),
-        source.indexOf("];", source.indexOf("const skills:")) + 2,
-      );
+      const skillsSection = extractNamedSection(source, "skills");
       expect(skillsSection).toContain("// global");
       expect(skillsSection).not.toContain("// project");
     });
@@ -728,10 +735,7 @@ describe("generateConfigSource", () => {
         globalConfig: buildProjectConfig({ name: "global", skills: [], agents: [] }),
       });
 
-      const stackSection = source.slice(
-        source.indexOf("const stack:"),
-        source.indexOf("};", source.indexOf("const stack:")) + 2,
-      );
+      const stackSection = extractNamedSection(source, "stack");
       // Single-skill category must remain an array, not a bare string
       expect(stackSection).toContain('"web-framework": [\n');
       expect(stackSection).toContain('"web-framework-react"');
@@ -761,10 +765,7 @@ describe("generateConfigSource", () => {
         globalConfig: buildProjectConfig({ name: "global", skills: [], agents: [] }),
       });
 
-      const stackSection = source.slice(
-        source.indexOf("const stack:"),
-        source.indexOf("};", source.indexOf("const stack:")) + 2,
-      );
+      const stackSection = extractNamedSection(source, "stack");
       // Multi-skill category must be an array with both elements
       expect(stackSection).toContain('"web-framework": [\n');
       expect(stackSection).toContain('"web-framework-react"');
@@ -791,10 +792,7 @@ describe("generateConfigSource", () => {
         globalConfig: buildProjectConfig({ name: "global", skills: [], agents: [] }),
       });
 
-      const stackSection = source.slice(
-        source.indexOf("const stack:"),
-        source.indexOf("};", source.indexOf("const stack:")) + 2,
-      );
+      const stackSection = extractNamedSection(source, "stack");
       // Non-preloaded: bare string in array (no object wrapper)
       expect(stackSection).toContain('"web-framework": [\n');
       const frameworkArray = stackSection.slice(
@@ -848,15 +846,151 @@ describe("generateConfigSource", () => {
       expect(source).toContain('"api-framework-hono"');
 
       // Extract stack section to check it doesn't contain global agent entries
-      const stackSection = source.slice(
-        source.indexOf("const stack:"),
-        source.indexOf("};", source.indexOf("const stack:")) + 2,
-      );
+      const stackSection = extractNamedSection(source, "stack");
       // Global agent stack entries must NOT be present in stack
       expect(stackSection).not.toMatch(/"web-developer":\s*\{/);
       expect(stackSection).not.toMatch(/"web-reviewer":\s*\{/);
       expect(stackSection).not.toContain('"web-framework-react"');
       expect(stackSection).not.toContain('"web-styling-tailwind"');
+    });
+
+    it("shows skill in both sections when same skill exists at project and global scope", () => {
+      const globalWithReact = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+      });
+      const projectWithReact = buildProjectConfig({
+        name: "my-project",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "project" }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "project" }),
+      });
+      const source = generateConfigSource(projectWithReact, {
+        isProjectConfig: true,
+        globalConfig: globalWithReact,
+      });
+
+      const skillsSection = extractNamedSection(source, "skills");
+
+      // React should appear in both global and project sections
+      const reactMatches = skillsSection.match(/"web-framework-react"/g);
+      expect(reactMatches).toHaveLength(2);
+
+      // Global entry appears in the global section
+      const { global: globalSection, project: projectSection } =
+        extractScopeSections(skillsSection);
+      expect(globalSection).toContain('"web-framework-react"');
+      expect(globalSection).toContain('"scope":"global"');
+      // Project entry appears in the project section
+      expect(projectSection).toContain('"web-framework-react"');
+      expect(projectSection).toContain('"scope":"project"');
+    });
+
+    it("shows agent in both sections when same agent exists at project and global scope", () => {
+      const globalWithAgent = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+      });
+      const projectWithAgent = buildProjectConfig({
+        name: "my-project",
+        skills: buildSkillConfigs(["web-styling-tailwind"]),
+        agents: buildAgentConfigs(["web-developer"], { scope: "project" }),
+      });
+      const source = generateConfigSource(projectWithAgent, {
+        isProjectConfig: true,
+        globalConfig: globalWithAgent,
+      });
+
+      const agentsSection = extractNamedSection(source, "agents");
+
+      // web-developer should appear in both global and project sections
+      const agentMatches = agentsSection.match(/"web-developer"/g);
+      expect(agentMatches).toHaveLength(2);
+
+      // Global entry appears in the global section, project entry in the project section
+      const { global: globalSection, project: projectSection } =
+        extractScopeSections(agentsSection);
+      expect(globalSection).toContain('"web-developer"');
+      expect(globalSection).toContain('"scope":"global"');
+      expect(projectSection).toContain('"web-developer"');
+      expect(projectSection).toContain('"scope":"project"');
+    });
+
+    it("preserves both scope entries for overlapping skill, non-overlapping skills kept", () => {
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: [],
+      });
+      const projectConfig = buildProjectConfig({
+        name: "my-project",
+        skills: [
+          ...buildSkillConfigs(["web-framework-react"], { scope: "project" }),
+          ...buildSkillConfigs(["web-styling-tailwind"]),
+        ],
+        agents: [],
+      });
+      const source = generateConfigSource(projectConfig, {
+        isProjectConfig: true,
+        globalConfig,
+      });
+
+      const skillsSection = extractNamedSection(source, "skills");
+
+      // React should appear in both global and project sections
+      const reactMatches = skillsSection.match(/"web-framework-react"/g);
+      expect(reactMatches).toHaveLength(2);
+
+      // Global entry in global section, project entry in project section
+      const { global: globalSection, project: projectSection } =
+        extractScopeSections(skillsSection);
+      expect(globalSection).toContain('"web-framework-react"');
+      expect(globalSection).toContain('"scope":"global"');
+      expect(projectSection).toContain('"web-framework-react"');
+      expect(projectSection).toContain('"scope":"project"');
+
+      // Tailwind should still be present (no conflict)
+      expect(skillsSection).toContain('"web-styling-tailwind"');
+    });
+
+    it("emits excluded tombstone in global section when same skill is active at project scope", () => {
+      // Edge case: global has react active, project has react excluded (tombstone) AND react active
+      // Expected: global section shows the excluded tombstone, project section shows the active entry
+      const globalConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: [],
+      });
+      const projectConfig = buildProjectConfig({
+        name: "my-project",
+        skills: [
+          // Excluded tombstone (masks the global active entry)
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global", excluded: true }),
+          // Active project entry
+          ...buildSkillConfigs(["web-framework-react"], { scope: "project" }),
+        ],
+        agents: [],
+      });
+      const source = generateConfigSource(projectConfig, {
+        isProjectConfig: true,
+        globalConfig,
+      });
+
+      const skillsSection = extractNamedSection(source, "skills");
+
+      // react should appear exactly twice: once excluded in global, once active in project
+      const reactMatches = skillsSection.match(/"web-framework-react"/g);
+      expect(reactMatches).toHaveLength(2);
+
+      // Global section should contain the excluded tombstone
+      const { global: globalSection, project: projectSection } =
+        extractScopeSections(skillsSection);
+      expect(globalSection).toContain('"excluded":true');
+
+      // Project section should contain the active entry without excluded flag
+      expect(projectSection).toContain('"scope":"project"');
+      expect(projectSection).not.toContain('"excluded"');
     });
   });
 
