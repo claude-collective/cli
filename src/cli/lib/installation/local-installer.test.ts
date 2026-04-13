@@ -1,4 +1,4 @@
-import { mkdir, writeFile, readFile, rm } from "fs/promises";
+import { mkdir, writeFile, readFile } from "fs/promises";
 import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -108,12 +108,26 @@ describe("local-installer", () => {
 
   afterEach(async () => {
     await cleanupTempDir(tempDir);
-    // Clean global config files written by writeScopedConfigs to the mocked home dir
-    const globalClaudeSrc = path.join(os.homedir(), CLAUDE_SRC_DIR);
-    await rm(globalClaudeSrc, { recursive: true, force: true }).catch(() => {});
   });
 
   describe("installEject", () => {
+    let savedHome: string | undefined;
+
+    beforeEach(async () => {
+      savedHome = process.env.HOME;
+      const fakeHome = path.join(tempDir, "fake-home");
+      await mkdir(fakeHome, { recursive: true });
+      process.env.HOME = fakeHome;
+    });
+
+    afterEach(() => {
+      if (savedHome !== undefined) {
+        process.env.HOME = savedHome;
+      } else {
+        delete process.env.HOME;
+      }
+    });
+
     it("should create required directories", async () => {
       const matrix = EMPTY_MATRIX;
       const wizardResult = buildWizardResult(buildSkillConfigs([TEST_SKILL_ID]));
@@ -526,6 +540,23 @@ describe("local-installer", () => {
   describe("writeScopedConfigs", () => {
     // Boundary cast: empty agents record for tests that don't need agent definitions
     const emptyAgents = {} as Record<AgentName, AgentDefinition>;
+    let savedHome: string | undefined;
+    let globalHome: string;
+
+    beforeEach(async () => {
+      savedHome = process.env.HOME;
+      globalHome = path.join(tempDir, "fake-home");
+      await mkdir(globalHome, { recursive: true });
+      process.env.HOME = globalHome;
+    });
+
+    afterEach(() => {
+      if (savedHome !== undefined) {
+        process.env.HOME = savedHome;
+      } else {
+        delete process.env.HOME;
+      }
+    });
 
     it("should skip project config when no existing project installation and no project-scoped items", async () => {
       // Setup: all items are global-scoped, so project split will be empty.
@@ -554,7 +585,7 @@ describe("local-installer", () => {
       );
 
       // Global config should be written (blank existing global + has global-scoped items)
-      const globalConfigPath = path.join(os.homedir(), CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const { fileExists } = await import("../../utils/fs");
       expect(await fileExists(globalConfigPath)).toBe(true);
 
@@ -588,7 +619,7 @@ describe("local-installer", () => {
       );
 
       // Global config should be written (blank existing global + has global-scoped items)
-      const globalConfigPath = path.join(os.homedir(), CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const globalConfigPath = path.join(globalHome, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const { fileExists } = await import("../../utils/fs");
       expect(await fileExists(globalConfigPath)).toBe(true);
       // Project config should be written (has project-scoped items)
