@@ -8,11 +8,16 @@ import { TIMEOUTS } from "../pages/constants.js";
 import "../matchers/setup.js";
 
 /**
- * Unique-skill-in-category guard E2E test.
+ * Skill deselection behavior E2E test.
  *
- * Verifies that a skill cannot be deselected when it is the only skill
- * available in its category. The guard shows a toast message and leaves
- * the selection unchanged. Multi-skill categories allow normal toggling.
+ * Verifies that a skill CAN be deselected when it is the only skill in a
+ * non-required category (no guard fires, skill is removed from config).
+ * Multi-skill categories also allow normal toggling.
+ *
+ * Note: The exclusive+required guard (which blocks deselection) cannot be
+ * tested at E2E level because the E2E source has no category that is both
+ * exclusive and required with only one skill. That edge case is covered by
+ * the unit test in wizard-store.test.ts.
  */
 
 describe("unique skill in category guard", () => {
@@ -38,7 +43,7 @@ describe("unique skill in category guard", () => {
   });
 
   it(
-    "should block deselecting the only skill in a single-skill category",
+    "should allow deselecting the only skill in a non-required single-skill category",
     { timeout: TIMEOUTS.INTERACTIVE },
     async () => {
       const project = await ProjectBuilder.editable({
@@ -54,24 +59,24 @@ describe("unique skill in category guard", () => {
         rows: 40,
       });
 
-      // Attempt to deselect vitest — the only skill in web-testing category
+      // Deselect vitest — web-testing is not required, so deselection succeeds
       await wizard.build.selectSkill("web-testing-vitest");
 
-      // Verify the toast message appeared
+      // Verify no toast message appeared (guard no longer fires for non-required categories)
       const output = wizard.build.getOutput();
-      expect(output).toContain("Cannot deselect the only skill in this category");
+      expect(output).not.toContain("Cannot deselect the only skill in this category");
 
-      // Verify the wizard can still advance (skill remained selected)
+      // Complete the wizard
       const sources = await wizard.build.advanceToSources();
       const agents = await sources.acceptDefaults();
       const confirm = await agents.acceptDefaults("edit");
       const result = await confirm.confirm();
 
-      // Verify the skill is still in the config after save (guard preserved it)
+      // Config should reflect the deselection (vitest removed, only react remains)
       await expectPhaseSuccess(result, {
-        skillIds: ["web-framework-react", "web-testing-vitest"],
+        skillIds: ["web-framework-react"],
         agents: ["web-developer"],
-        compiledAgents: [],
+        compiledAgents: ["web-developer"],
       });
 
       await result.destroy();

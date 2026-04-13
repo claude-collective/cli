@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { initializeMatrix } from "../lib/matrix/matrix-provider";
-import { SKILLS } from "../lib/__tests__/test-fixtures";
+import { SKILLS, TEST_CATEGORIES } from "../lib/__tests__/test-fixtures";
 import { createMockMatrix } from "../lib/__tests__/factories/matrix-factories";
 import { buildSkillConfigs } from "../lib/__tests__/helpers/wizard-simulation";
 import { buildAgentConfigs } from "../lib/__tests__/factories/config-factories";
@@ -17,7 +17,7 @@ import {
   ALL_SKILLS_MULTI_DOMAIN_MATRIX,
   REACT_HONO_FRAMEWORK_API_MATRIX,
 } from "../lib/__tests__/mock-data/mock-matrices";
-import type { SkillAssignment, SkillConfig, SkillId, SkillSource } from "../types";
+import type { SkillConfig, SkillId, SkillSource } from "../types";
 import { createMockSkillAssignment as sa } from "../lib/__tests__/factories/skill-factories";
 import { EXPECTED_AGENTS } from "../lib/__tests__/expected-values";
 
@@ -501,7 +501,10 @@ describe("WizardStore", () => {
       expect(toastMessage).toBeNull();
     });
 
-    it("should block deselecting the only skill in an exclusive category", () => {
+    it("should block deselecting the only skill in an exclusive+required category", () => {
+      const m = createMockMatrix(...Object.values(SKILLS));
+      m.categories["api-api"] = { ...TEST_CATEGORIES.api, required: true };
+      initializeMatrix(m);
       const store = useWizardStore.getState();
       store.toggleTechnology("api", "api-api", "api-framework-hono", true);
 
@@ -512,15 +515,15 @@ describe("WizardStore", () => {
       expect(toastMessage).toBe("Cannot deselect the only skill in this category");
     });
 
-    it("should block deselecting the only skill in a non-exclusive category", () => {
+    it("should allow deselecting the only skill in a non-required category", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
 
       store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
 
       const { domainSelections, toastMessage } = useWizardStore.getState();
-      expect(domainSelections.web!["web-testing"]).toStrictEqual(["web-testing-vitest"]);
-      expect(toastMessage).toBe("Cannot deselect the only skill in this category");
+      expect(domainSelections.web!["web-testing"]).toStrictEqual([]);
+      expect(toastMessage).toBeNull();
     });
 
     it("should allow deselecting in a category with multiple skills", () => {

@@ -844,11 +844,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const isSelected = currentSelections.includes(technology);
 
       if (isSelected) {
-        const categorySkillCount = Object.values(matrix.skills).filter(
-          (s) => s?.category === category,
-        ).length;
-        if (categorySkillCount <= 1) {
-          return { toastMessage: "Cannot deselect the only skill in this category" };
+        const categoryDef = matrix.categories[category];
+        if (categoryDef?.exclusive && categoryDef?.required) {
+          const categorySkillCount = Object.values(matrix.skills).filter(
+            (s) => s?.category === category,
+          ).length;
+          if (categorySkillCount <= 1) {
+            return { toastMessage: "Cannot deselect the only skill in this category" };
+          }
         }
       }
 
