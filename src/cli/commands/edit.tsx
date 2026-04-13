@@ -127,7 +127,7 @@ export default class Edit extends BaseCommand {
       return;
     }
 
-    this.logChangeSummary(changes);
+    this.logChangeSummary(changes, filteredResult.skills, filteredOldConfig?.skills ?? []);
     const migratedSkillIds = await this.applyMigrations(
       changes,
       filteredResult,
@@ -263,7 +263,11 @@ export default class Edit extends BaseCommand {
     }
   }
 
-  private logChangeSummary(changes: ConfigChanges): void {
+  private logChangeSummary(
+    changes: ConfigChanges,
+    newSkills: SkillConfig[],
+    oldSkills: SkillConfig[],
+  ): void {
     const {
       addedSkills,
       removedSkills,
@@ -276,11 +280,17 @@ export default class Edit extends BaseCommand {
 
     this.log(`\n${chalk.hex(CLI_COLORS.WHITE).bold("Changes:")}`);
     for (const skillId of addedSkills) {
-      this.log(chalk.hex(CLI_COLORS.SUCCESS)(`  + ${getSkillById(skillId).displayName}`));
+      const scope = newSkills.find((s) => s.id === skillId)?.scope;
+      const scopeLabel = scope ? ` [${scope === "global" ? "G" : "P"}]` : "";
+      this.log(
+        chalk.hex(CLI_COLORS.SUCCESS)(`  + ${getSkillById(skillId).displayName}${scopeLabel}`),
+      );
     }
     for (const skillId of removedSkills) {
       const skill = matrix.skills[skillId];
-      this.log(chalk.hex(CLI_COLORS.ERROR)(`  - ${skill?.displayName ?? skillId}`));
+      const scope = oldSkills.find((s) => s.id === skillId)?.scope;
+      const scopeLabel = scope ? ` [${scope === "global" ? "G" : "P"}]` : "";
+      this.log(chalk.hex(CLI_COLORS.ERROR)(`  - ${skill?.displayName ?? skillId}${scopeLabel}`));
     }
     for (const agentName of addedAgents) {
       this.log(
@@ -294,18 +304,23 @@ export default class Edit extends BaseCommand {
       );
     }
     for (const [skillId, change] of sourceChanges) {
+      const displayName = matrix.skills[skillId]?.displayName ?? skillId;
       const fromLabel = formatSourceDisplayName(change.from);
       const toLabel = formatSourceDisplayName(change.to);
       this.log(
-        chalk.hex(CLI_COLORS.WARNING)(`  ~ ${skillId}`) +
+        chalk.hex(CLI_COLORS.WARNING)(`  ~ ${displayName}`) +
           chalk.hex(CLI_COLORS.NEUTRAL)(` (${fromLabel} \u2192 ${toLabel})`),
       );
     }
     for (const [skillId, change] of scopeChanges) {
+      const displayName = matrix.skills[skillId]?.displayName ?? skillId;
       const fromLabel = change.from === "global" ? "[G]" : "[P]";
       const toLabel = change.to === "global" ? "[G]" : "[P]";
+      const isGlobalToProject = change.from === "global" && change.to === "project";
+      const prefix = isGlobalToProject ? "+" : "~";
+      const color = isGlobalToProject ? CLI_COLORS.SUCCESS : CLI_COLORS.WARNING;
       this.log(
-        chalk.hex(CLI_COLORS.WARNING)(`  ~ ${skillId}`) +
+        chalk.hex(color)(`  ${prefix} ${displayName}`) +
           chalk.hex(CLI_COLORS.NEUTRAL)(` (${fromLabel} \u2192 ${toLabel})`),
       );
     }
@@ -601,7 +616,8 @@ export default class Edit extends BaseCommand {
   }
 }
 
-type ConfigChanges = {
+/** @internal Exported for testing */
+export type ConfigChanges = {
   addedSkills: SkillId[];
   removedSkills: SkillId[];
   addedAgents: AgentName[];
@@ -611,7 +627,8 @@ type ConfigChanges = {
   agentScopeChanges: Map<AgentName, { from: "project" | "global"; to: "project" | "global" }>;
 };
 
-function detectConfigChanges(
+/** @internal Exported for testing */
+export function detectConfigChanges(
   oldConfig: ProjectConfig | null,
   wizardResult: WizardResultV2,
 ): ConfigChanges {

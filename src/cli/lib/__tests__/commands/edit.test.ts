@@ -8,6 +8,7 @@ import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
 import { createMockSkill } from "../factories/skill-factories.js";
 import { createMockMatrix } from "../factories/matrix-factories.js";
 import {
+  buildProjectConfig,
   buildSourceResult,
   buildWizardResult,
   buildAgentConfigs,
@@ -18,8 +19,12 @@ import { EXPECTED_SKILLS } from "../expected-values";
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
-import type { CategoryPath, SkillId } from "../../../types";
-import Edit, { migratePluginSkillScopes } from "../../../commands/edit.js";
+import type { AgentName, CategoryPath, SkillId } from "../../../types";
+import Edit, {
+  migratePluginSkillScopes,
+  detectConfigChanges,
+  type ConfigChanges,
+} from "../../../commands/edit.js";
 
 // --- Module mocks (hoisted by vitest) ---
 
@@ -579,11 +584,7 @@ describe("edit command eject-mode skill fallback", () => {
       configPath: path.join(projectDir, ".claude-src/config.ts"),
     });
 
-    try {
-      await Edit.run([], { root: CLI_ROOT });
-    } catch {
-      // Expected: command errors after render because wizardResult is null
-    }
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
 
     expect(mockRender).toHaveBeenCalledTimes(2);
     const installedSkillIds = getRenderedInstalledSkillIds();
@@ -603,11 +604,7 @@ describe("edit command eject-mode skill fallback", () => {
       configPath: path.join(projectDir, ".claude-src/config.ts"),
     });
 
-    try {
-      await Edit.run([], { root: CLI_ROOT });
-    } catch {
-      // Expected: command errors after render because wizardResult is null
-    }
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
 
     expect(mockRender).toHaveBeenCalledTimes(2);
     const installedSkillIds = getRenderedInstalledSkillIds();
@@ -685,11 +682,7 @@ describe("edit command detects added agents", () => {
       return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
     });
 
-    try {
-      await Edit.run([], { root: CLI_ROOT });
-    } catch {
-      // Command may error on later steps — that's OK for this test
-    }
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
 
     // With the fix, the command detects agent changes and proceeds past the
     // early return into agent loading (loadAgentDefs -> getAgentDefinitions).
@@ -767,11 +760,7 @@ describe("edit command copies newly added local skills", () => {
       return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
     });
 
-    try {
-      await Edit.run([], { root: CLI_ROOT });
-    } catch {
-      // Expected: command errors after copy (getAgentDefinitions is not mocked)
-    }
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
 
     // The copy function should have been called for the newly added local skill
     expect(mockCopySkillsToLocalFlattened).toHaveBeenCalledOnce();
@@ -1003,5 +992,419 @@ describe("migratePluginSkillScopes", () => {
 
     installSpy.mockRestore();
     uninstallSpy.mockRestore();
+  });
+});
+
+// detectConfigChanges is a pure function that compares old and new configs
+// to produce a structured diff. These tests verify each change type is
+// correctly detected without requiring the full command lifecycle.
+
+describe("detectConfigChanges", () => {
+  it("should detect added skills", () => {
+    const oldConfig = buildProjectConfig({
+      skills: buildSkillConfigs(["web-framework-react"]),
+      agents: [],
+    });
+    const wizardResult = buildWizardResult(
+      buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+    );
+
+    const changes = detectConfigChanges(oldConfig, wizardResult);
+
+    expect(changes.addedSkills).toStrictEqual(["api-framework-hono"]);
+    expect(changes.removedSkills).toStrictEqual([]);
+  });
+
+  it("should detect removed skills", () => {
+    const oldConfig = buildProjectConfig({
+      skills: buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+      agents: [],
+    });
+    const wizardResult = buildWizardResult(buildSkillConfigs(["web-framework-react"]));
+
+    const changes = detectConfigChanges(oldConfig, wizardResult);
+
+    expect(changes.removedSkills).toStrictEqual(["api-framework-hono"]);
+    expect(changes.addedSkills).toStrictEqual([]);
+  });
+
+  it("should detect scope changes on skills", () => {
+    const oldConfig = buildProjectConfig({
+      skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+      agents: [],
+    });
+    const wizardResult = buildWizardResult(
+      buildSkillConfigs(["web-framework-react"], { scope: "project" }),
+    );
+
+    const changes = detectConfigChanges(oldConfig, wizardResult);
+
+    expect(changes.scopeChanges.size).toBe(1);
+    expect(changes.scopeChanges.get("web-framework-react")).toStrictEqual({
+      from: "global",
+      to: "project",
+    });
+    // Skill is not added or removed — just scope-changed
+    expect(changes.addedSkills).toStrictEqual([]);
+    expect(changes.removedSkills).toStrictEqual([]);
+  });
+
+  it("should detect source changes on skills", () => {
+    const oldConfig = buildProjectConfig({
+      skills: buildSkillConfigs(["web-framework-react"], { source: "eject" }),
+      agents: [],
+    });
+    const wizardResult = buildWizardResult(
+      buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+    );
+
+    const changes = detectConfigChanges(oldConfig, wizardResult);
+
+    expect(changes.sourceChanges.size).toBe(1);
+    expect(changes.sourceChanges.get("web-framework-react")).toStrictEqual({
+      from: "eject",
+      to: "agents-inc",
+    });
+  });
+
+  it("should detect added and removed agents", () => {
+    const oldConfig = buildProjectConfig({
+      skills: [],
+      agents: buildAgentConfigs(["web-developer"]),
+    });
+    const wizardResult = buildWizardResult([], {
+      agentConfigs: buildAgentConfigs(["api-developer"]),
+    });
+
+    const changes = detectConfigChanges(oldConfig, wizardResult);
+
+    expect(changes.addedAgents).toStrictEqual(["api-developer"]);
+    expect(changes.removedAgents).toStrictEqual(["web-developer"]);
+  });
+
+  it("should detect agent scope changes", () => {
+    const oldConfig = buildProjectConfig({
+      skills: [],
+      agents: buildAgentConfigs(["web-developer"], { scope: "project" }),
+    });
+    const wizardResult = buildWizardResult([], {
+      agentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+    });
+
+    const changes = detectConfigChanges(oldConfig, wizardResult);
+
+    // Boundary cast: buildAgentConfigs uses AgentName cast for test names
+    expect(changes.agentScopeChanges.get("web-developer" as AgentName)).toStrictEqual({
+      from: "project",
+      to: "global",
+    });
+  });
+
+  it("should return empty changes when configs are identical", () => {
+    const skills = buildSkillConfigs(["web-framework-react"]);
+    const agents = buildAgentConfigs(["web-developer"]);
+    const oldConfig = buildProjectConfig({ skills, agents });
+    const wizardResult = buildWizardResult(skills, { agentConfigs: agents });
+
+    const changes = detectConfigChanges(oldConfig, wizardResult);
+
+    expect(changes.addedSkills).toStrictEqual([]);
+    expect(changes.removedSkills).toStrictEqual([]);
+    expect(changes.addedAgents).toStrictEqual([]);
+    expect(changes.removedAgents).toStrictEqual([]);
+    expect(changes.sourceChanges.size).toBe(0);
+    expect(changes.scopeChanges.size).toBe(0);
+    expect(changes.agentScopeChanges.size).toBe(0);
+  });
+
+  it("should treat null old config as empty (all skills/agents are additions)", () => {
+    const wizardResult = buildWizardResult(
+      buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+      {
+        agentConfigs: buildAgentConfigs(["web-developer"]),
+      },
+    );
+
+    const changes = detectConfigChanges(null, wizardResult);
+
+    expect(changes.addedSkills).toStrictEqual(["web-framework-react", "api-framework-hono"]);
+    expect(changes.removedSkills).toStrictEqual([]);
+    expect(changes.addedAgents).toStrictEqual(["web-developer"]);
+    expect(changes.removedAgents).toStrictEqual([]);
+    expect(changes.sourceChanges.size).toBe(0);
+    expect(changes.scopeChanges.size).toBe(0);
+  });
+
+  it("should detect multiple change types simultaneously", () => {
+    const oldConfig = buildProjectConfig({
+      skills: [
+        ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "eject" }),
+        ...buildSkillConfigs(["web-testing-vitest"]),
+      ],
+      agents: buildAgentConfigs(["web-developer"]),
+    });
+    const wizardResult = buildWizardResult(
+      [
+        ...buildSkillConfigs(["web-framework-react"], { scope: "project", source: "agents-inc" }),
+        ...buildSkillConfigs(["api-framework-hono"]),
+      ],
+      {
+        agentConfigs: buildAgentConfigs(["web-developer", "api-developer"]),
+      },
+    );
+
+    const changes = detectConfigChanges(oldConfig, wizardResult);
+
+    // Added hono, removed vitest
+    expect(changes.addedSkills).toStrictEqual(["api-framework-hono"]);
+    expect(changes.removedSkills).toStrictEqual(["web-testing-vitest"]);
+    // React: scope G→P and source eject→agents-inc
+    expect(changes.scopeChanges.get("web-framework-react")).toStrictEqual({
+      from: "global",
+      to: "project",
+    });
+    expect(changes.sourceChanges.get("web-framework-react")).toStrictEqual({
+      from: "eject",
+      to: "agents-inc",
+    });
+    // Added api-developer agent
+    expect(changes.addedAgents).toStrictEqual(["api-developer"]);
+    expect(changes.removedAgents).toStrictEqual([]);
+  });
+});
+
+// The change summary must display human-readable names, scope labels, and
+// appropriate change prefixes. These tests drive the edit command through
+// the full flow to capture stdout and verify the formatted output.
+
+describe("edit change summary display", () => {
+  let tempDir: string;
+  let projectDir: string;
+  let originalCwd: string;
+  let stdoutChunks: string[] = [];
+  let origWrite: typeof process.stdout.write;
+
+  const testMatrix = FULLSTACK_PAIR_MATRIX;
+  const testSourceResult = buildSourceResult(testMatrix, "/test/source");
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    tempDir = await createTempDir("cc-edit-summary-");
+    projectDir = path.join(tempDir, "project");
+    await mkdir(projectDir, { recursive: true });
+    process.chdir(projectDir);
+
+    stdoutChunks = [];
+    origWrite = process.stdout.write;
+    process.stdout.write = function (str: unknown): boolean {
+      stdoutChunks.push(String(str));
+      return true;
+    } as typeof process.stdout.write;
+
+    mockRender.mockClear();
+    mockDetectInstallation.mockResolvedValue({
+      mode: "eject",
+      scope: "project",
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+      agentsDir: path.join(projectDir, ".claude/agents"),
+      skillsDir: path.join(projectDir, ".claude/skills"),
+      projectDir,
+    });
+
+    mockLoadSkillsMatrixFromSource.mockResolvedValue(testSourceResult);
+    initializeMatrix(testSourceResult.matrix);
+    mockDiscoverAllPluginSkills.mockResolvedValue({});
+  });
+
+  afterEach(async () => {
+    process.stdout.write = origWrite;
+    process.chdir(originalCwd);
+    await cleanupTempDir(tempDir);
+  });
+
+  it("should show display names instead of raw skill IDs for added skills", async () => {
+    mockLoadProjectConfig.mockResolvedValue({
+      config: buildProjectConfig({ skills: [], agents: buildAgentConfigs(["web-developer"]) }),
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+    });
+
+    mockRender.mockImplementation((element: ReactElement) => {
+      const onComplete = element.props.onComplete as ((result: unknown) => void) | undefined;
+      if (onComplete) {
+        onComplete(
+          buildWizardResult(buildSkillConfigs(["web-framework-react"], { scope: "project" }), {
+            agentConfigs: buildAgentConfigs(["web-developer"]),
+          }),
+        );
+      }
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
+    });
+
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
+
+    const output = stdoutChunks.join("");
+
+    // Should use display name "React", not raw ID "web-framework-react"
+    expect(output).toContain("React");
+    expect(output).not.toContain("web-framework-react");
+  });
+
+  it("should show scope labels [G]/[P] on added skill lines", async () => {
+    mockLoadProjectConfig.mockResolvedValue({
+      config: buildProjectConfig({ skills: [], agents: buildAgentConfigs(["web-developer"]) }),
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+    });
+
+    mockRender.mockImplementation((element: ReactElement) => {
+      const onComplete = element.props.onComplete as ((result: unknown) => void) | undefined;
+      if (onComplete) {
+        onComplete(
+          buildWizardResult(buildSkillConfigs(["web-framework-react"], { scope: "global" }), {
+            agentConfigs: buildAgentConfigs(["web-developer"]),
+          }),
+        );
+      }
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
+    });
+
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
+
+    const output = stdoutChunks.join("");
+
+    // Should show [G] scope label for the globally-scoped added skill
+    expect(output).toContain("[G]");
+  });
+
+  it("should show + prefix for G-to-P scope changes instead of ~", async () => {
+    mockLoadProjectConfig.mockResolvedValue({
+      config: buildProjectConfig({
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer"]),
+      }),
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+    });
+
+    mockRender.mockImplementation((element: ReactElement) => {
+      const onComplete = element.props.onComplete as ((result: unknown) => void) | undefined;
+      if (onComplete) {
+        onComplete(
+          buildWizardResult(buildSkillConfigs(["web-framework-react"], { scope: "project" }), {
+            agentConfigs: buildAgentConfigs(["web-developer"]),
+          }),
+        );
+      }
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
+    });
+
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
+
+    const output = stdoutChunks.join("");
+
+    // G→P scope change should show "+" prefix (treat as addition to project)
+    // and show scope transition labels
+    expect(output).toContain("+ React");
+    expect(output).toContain("[G]");
+    expect(output).toContain("[P]");
+    // Should NOT show "~" for G→P changes
+    expect(output).not.toContain("~ React");
+  });
+
+  it("should show ~ prefix for P-to-G scope changes", async () => {
+    mockLoadProjectConfig.mockResolvedValue({
+      config: buildProjectConfig({
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "project" }),
+        agents: buildAgentConfigs(["web-developer"]),
+      }),
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+    });
+
+    mockRender.mockImplementation((element: ReactElement) => {
+      const onComplete = element.props.onComplete as ((result: unknown) => void) | undefined;
+      if (onComplete) {
+        onComplete(
+          buildWizardResult(buildSkillConfigs(["web-framework-react"], { scope: "global" }), {
+            agentConfigs: buildAgentConfigs(["web-developer"]),
+          }),
+        );
+      }
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
+    });
+
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
+
+    const output = stdoutChunks.join("");
+
+    // P→G scope change should show "~" prefix (modification, not addition)
+    expect(output).toContain("~ React");
+    expect(output).toContain("[P]");
+    expect(output).toContain("[G]");
+    // Should NOT show "+" for P→G changes
+    expect(output).not.toContain("+ React");
+  });
+
+  it("should show display names for removed skills", async () => {
+    mockLoadProjectConfig.mockResolvedValue({
+      config: buildProjectConfig({
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "project" }),
+        agents: buildAgentConfigs(["web-developer"]),
+      }),
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+    });
+
+    mockRender.mockImplementation((element: ReactElement) => {
+      const onComplete = element.props.onComplete as ((result: unknown) => void) | undefined;
+      if (onComplete) {
+        // Remove all skills — wizard result has no skills
+        onComplete(
+          buildWizardResult([], {
+            agentConfigs: buildAgentConfigs(["web-developer"]),
+          }),
+        );
+      }
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
+    });
+
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
+
+    const output = stdoutChunks.join("");
+
+    // Should use display name "React", not raw ID "web-framework-react"
+    expect(output).toContain("React");
+    expect(output).not.toContain("web-framework-react");
+    // Should show scope label for removed skill (from old config)
+    expect(output).toContain("[P]");
+  });
+
+  it("should show display names and formatted source labels for source changes", async () => {
+    mockLoadProjectConfig.mockResolvedValue({
+      config: buildProjectConfig({
+        skills: buildSkillConfigs(["web-framework-react"], { source: "eject" }),
+        agents: buildAgentConfigs(["web-developer"]),
+      }),
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
+    });
+
+    mockRender.mockImplementation((element: ReactElement) => {
+      const onComplete = element.props.onComplete as ((result: unknown) => void) | undefined;
+      if (onComplete) {
+        onComplete(
+          buildWizardResult(buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }), {
+            agentConfigs: buildAgentConfigs(["web-developer"]),
+          }),
+        );
+      }
+      return { waitUntilExit: () => Promise.resolve(), clear: vi.fn(), unmount: vi.fn() };
+    });
+
+    await Edit.run([], { root: CLI_ROOT }).catch(() => {});
+
+    const output = stdoutChunks.join("");
+
+    // Should show display name, not raw skill ID
+    expect(output).toContain("React");
+    expect(output).not.toContain("web-framework-react");
+    // Should show formatted source labels (Eject → Agents Inc)
+    expect(output).toContain("Eject");
+    expect(output).toContain("Agents Inc");
   });
 });
