@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.126.0] - 2026-04-14
+
+**Bug fixes: global plugin scope migration, source step navigation, build step cleanup**
+
+- Global plugin no longer uninstalled when migrating to project-scope eject
+- Source step rows sorted to match visual grouping (fixes navigation jumps)
+- Removed lock icon and eject indicator from build step skill tags
+
+See [changelogs/0.126.0.md](./changelogs/0.126.0.md) for full details.
+
 ## [0.125.0] - 2026-04-13
 
 **D-168: E2E test audit — 86 files swept, ~45 files fixed, 6 new anti-pattern rules**
