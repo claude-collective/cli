@@ -578,15 +578,15 @@ describe("StepConfirm component", () => {
       const { lastFrame, unmount } = render(
         <SkillAgentSummary
           skillConfigs={[
-            { id: "web-framework-react" as SkillId, scope: "project", source: "agents-inc" },
+            { id: "web-framework-react", scope: "project", source: "agents-inc" },
             {
-              id: "web-framework-react" as SkillId,
+              id: "web-framework-react",
               scope: "global",
               source: "agents-inc",
               excluded: true,
             },
             {
-              id: "web-testing-vitest" as SkillId,
+              id: "web-testing-vitest",
               scope: "global",
               source: "agents-inc",
               excluded: true,
@@ -618,6 +618,138 @@ describe("StepConfirm component", () => {
       cleanup = unmount;
 
       expect(lastFrame()).toBeDefined();
+    });
+  });
+});
+
+describe("SkillAgentSummary component", () => {
+  let cleanup: (() => void) | undefined;
+
+  beforeEach(() => {
+    initializeMatrix(WEB_PAIR_MATRIX);
+    useWizardStore.setState({
+      installedSkillConfigs: null,
+      installedAgentConfigs: null,
+      isInitMode: false,
+    });
+  });
+
+  afterEach(() => {
+    cleanup?.();
+    cleanup = undefined;
+  });
+
+  describe("source mode changes", () => {
+    it("should show ~ prefix when skill source changes from plugin to eject", () => {
+      useWizardStore.setState({
+        isInitMode: false,
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+        installedAgentConfigs: null,
+      });
+
+      const { lastFrame, unmount } = render(
+        <SkillAgentSummary
+          skillConfigs={buildSkillConfigs(["web-framework-react"])}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      expect(output).toContain("~");
+      expect(output).toContain("React");
+      expect(output).toContain("Agents Inc");
+      expect(output).toContain("Eject");
+    });
+
+    it("should show ~ prefix when skill source changes from eject to plugin", () => {
+      useWizardStore.setState({
+        isInitMode: false,
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"]),
+        installedAgentConfigs: null,
+      });
+
+      const { lastFrame, unmount } = render(
+        <SkillAgentSummary
+          skillConfigs={buildSkillConfigs(["web-framework-react"], { source: "agents-inc" })}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      expect(output).toContain("~");
+      expect(output).toContain("React");
+      expect(output).toContain("Eject");
+      expect(output).toContain("Agents Inc");
+    });
+
+    it("should not show ~ when skill source is unchanged", () => {
+      useWizardStore.setState({
+        isInitMode: false,
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+        installedAgentConfigs: null,
+      });
+
+      const { lastFrame, unmount } = render(
+        <SkillAgentSummary
+          skillConfigs={buildSkillConfigs(["web-framework-react"], { source: "agents-inc" })}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      expect(output).not.toContain("~");
+      expect(output).toContain("React");
+      expect(output).toContain("\u2022");
+    });
+
+    it("should show ~ for global-scoped skill source change", () => {
+      useWizardStore.setState({
+        isInitMode: false,
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+        installedAgentConfigs: null,
+      });
+
+      const { lastFrame, unmount } = render(
+        <SkillAgentSummary
+          skillConfigs={buildSkillConfigs(["web-framework-react"], { scope: "global" })}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+      expect(output).toContain("~");
+      expect(output).toContain("React");
+      expect(output).toContain("Global");
+    });
+
+    it("should show both source change and new skill markers together", () => {
+      initializeMatrix(WEB_TRIO_MATRIX);
+      useWizardStore.setState({
+        isInitMode: false,
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+        installedAgentConfigs: null,
+      });
+
+      const { lastFrame, unmount } = render(
+        <SkillAgentSummary
+          skillConfigs={[
+            ...buildSkillConfigs(["web-framework-react"]),
+            ...buildSkillConfigs(["web-testing-vitest"], { source: "agents-inc" }),
+          ]}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame()!;
+
+      const lines = output.split("\n");
+      const reactLine = lines.find((line) => line.includes("React"));
+      expect(reactLine).toBeDefined();
+      expect(reactLine).toContain("~");
+
+      const vitestLine = lines.find((line) => line.includes("Vitest"));
+      expect(vitestLine).toBeDefined();
+      expect(vitestLine).toContain("+");
     });
   });
 });

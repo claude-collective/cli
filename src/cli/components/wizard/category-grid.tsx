@@ -165,7 +165,8 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, showLabels }) =>
             (option.selected && !!option.requiredBy)
           }
         >
-          {getSkillById(option.id).displayName}{" "}
+          {getSkillById(option.id).displayName}
+          {option.installed && option.scope === "global" ? ` ${UI_SYMBOLS.LOCK}` : ""}{" "}
         </Text>
         {compatibilityLabel && (
           <Text color={textColor} dimColor>

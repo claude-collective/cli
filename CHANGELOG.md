@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.122.0] - 2026-04-13
+
+**Scope bug fixes, dual-scope badges, lock icons, source mode markers**
+
+- Dual-scope badges (G+P) for skills and agents after scope toggle (D-191, D-183)
+- Lock icon on globally installed skills, source mode change markers in info panel (D-189, D-200)
+- Agent toggle guard, change summary with display names and scope labels (D-196, D-197)
+- Fixed P→G reverse toggle, skill scope corruption, config-writer dedup (D-199, D-198)
+
+See [changelogs/0.122.0.md](./changelogs/0.122.0.md) for full details.
+
 ## [0.121.0] - 2026-04-13
 
 **Edit command change summary: scope labels, display names, G→P as additions**

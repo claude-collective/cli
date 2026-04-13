@@ -165,6 +165,7 @@ function buildFocusableIds(groups: AgentGroup[]): FocusId[] {
 export const StepAgents: React.FC = () => {
   const selectedAgents = useWizardStore((s) => s.selectedAgents);
   const agentConfigs = useWizardStore((s) => s.agentConfigs);
+  const installedAgentConfigs = useWizardStore((s) => s.installedAgentConfigs);
 
   const agentGroups = useMemo(() => buildAgentGroups(matrix), []);
   const flatRows = useMemo(() => buildFlatRows(agentGroups), [agentGroups]);
@@ -260,6 +261,13 @@ export const StepAgents: React.FC = () => {
         const pointer = isFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER;
         const agentConfig = agentConfigs.find((ac) => ac.name === row.agent.id && !ac.excluded);
         const scope = agentConfig?.scope ?? "global";
+        const excludedConfig = agentConfigs.find(
+          (ac) => ac.name === row.agent.id && ac.excluded,
+        );
+        const secondaryScope =
+          excludedConfig && agentConfig && excludedConfig.scope !== agentConfig.scope
+            ? excludedConfig.scope
+            : undefined;
         return (
           <Box key={row.agent.id} flexShrink={0}>
             <Text>
@@ -274,6 +282,13 @@ export const StepAgents: React.FC = () => {
               <Text color={scope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.TOAST_BG}>
                 {scope === "global" ? "[G]" : "[P]"}
               </Text>
+              {secondaryScope && (
+                <Text
+                  color={secondaryScope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.TOAST_BG}
+                >
+                  {secondaryScope === "global" ? "[G]" : "[P]"}
+                </Text>
+              )}
               <Text
                 color={isSelected || isFocused ? CLI_COLORS.PRIMARY : undefined}
                 bold={isFocused}

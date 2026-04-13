@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
 import React from "react";
-import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import { CLI_COLORS, SOURCE_DISPLAY_NAMES, UI_SYMBOLS } from "../../consts.js";
 import { matrix } from "../../lib/matrix/matrix-provider.js";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import type { SkillId } from "../../types/index.js";
@@ -51,6 +51,9 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
 
   const prevSkillKeySet = installedSkillConfigs
     ? new Set(installedSkillConfigs.map((s) => `${s.id}:${s.scope}`))
+    : null;
+  const prevSourceMap = installedSkillConfigs
+    ? new Map(installedSkillConfigs.map((s) => [`${s.id}:${s.scope}`, s.source]))
     : null;
   const prevAgentKeySet = installedAgentConfigs
     ? new Set(installedAgentConfigs.map((a) => `${a.name}:${a.scope}`))
@@ -134,16 +137,29 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Project</ScopeLabel>
             <Box flexWrap="wrap">
               {projectSkills.map((skill) => {
-                const isNew =
-                  prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`);
-                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
-                const color = isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL;
+                const key = `${skill.id}:${skill.scope}`;
+                const isNew = prevSkillKeySet === null || !prevSkillKeySet.has(key);
+                const prevSource = prevSourceMap?.get(key);
+                const sourceChanged = !isNew && prevSource != null && prevSource !== skill.source;
+                const prefix = sourceChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = sourceChanged
+                  ? CLI_COLORS.WARNING
+                  : isNew
+                    ? CLI_COLORS.SUCCESS
+                    : CLI_COLORS.NEUTRAL;
                 return (
                   <Box key={skill.id} width="50%" flexDirection="row">
                     <Text color={color}>
                       {prefix}
                       {getSkillDisplayName(skill.id)}
                     </Text>
+                    {sourceChanged && (
+                      <Text dimColor>
+                        {" "}
+                        ({SOURCE_DISPLAY_NAMES[prevSource] ?? prevSource} →{" "}
+                        {SOURCE_DISPLAY_NAMES[skill.source] ?? skill.source})
+                      </Text>
+                    )}
                     {skill.source === "eject" && <EjectIcon />}
                   </Box>
                 );
@@ -162,16 +178,29 @@ export const SkillAgentSummary: React.FC<SkillAgentSummaryProps> = ({
             <ScopeLabel>Global</ScopeLabel>
             <Box flexWrap="wrap">
               {allGlobalSkills.map((skill) => {
-                const isNew =
-                  prevSkillKeySet === null || !prevSkillKeySet.has(`${skill.id}:${skill.scope}`);
-                const prefix = isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
-                const color = isNew ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL;
+                const key = `${skill.id}:${skill.scope}`;
+                const isNew = prevSkillKeySet === null || !prevSkillKeySet.has(key);
+                const prevSource = prevSourceMap?.get(key);
+                const sourceChanged = !isNew && prevSource != null && prevSource !== skill.source;
+                const prefix = sourceChanged ? "~ " : isNew ? "+ " : `${UI_SYMBOLS.BULLET} `;
+                const color = sourceChanged
+                  ? CLI_COLORS.WARNING
+                  : isNew
+                    ? CLI_COLORS.SUCCESS
+                    : CLI_COLORS.NEUTRAL;
                 return (
                   <Box key={skill.id} width="50%" flexDirection="row">
                     <Text color={color}>
                       {prefix}
                       {getSkillDisplayName(skill.id)}
                     </Text>
+                    {sourceChanged && (
+                      <Text dimColor>
+                        {" "}
+                        ({SOURCE_DISPLAY_NAMES[prevSource] ?? prevSource} →{" "}
+                        {SOURCE_DISPLAY_NAMES[skill.source] ?? skill.source})
+                      </Text>
+                    )}
                     {skill.source === "eject" && <EjectIcon />}
                   </Box>
                 );

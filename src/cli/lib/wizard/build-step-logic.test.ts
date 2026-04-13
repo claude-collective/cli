@@ -579,4 +579,47 @@ describe("buildCategoriesForDomain", () => {
       expect(vueOption?.state.status).toBe("discouraged");
     });
   });
+
+  describe("lock icon eligibility", () => {
+    it("should mark globally installed skills as lock-eligible", () => {
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+      const installedSkillIds: SkillId[] = ["web-framework-react"];
+      const skillConfigs = buildSkillConfigs(["web-framework-react"], { scope: "global" });
+
+      const result = buildCategoriesForDomain("web", [], {}, installedSkillIds, skillConfigs);
+
+      const frameworkRow = result.find((r) => r.id === frameworkCategory);
+      const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+      // Component renders UI_SYMBOLS.LOCK when both installed and scope === "global"
+      expect(reactOption?.installed).toBe(true);
+      expect(reactOption?.scope).toBe("global");
+    });
+
+    it("should not mark project-scoped installed skills as lock-eligible", () => {
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+      const installedSkillIds: SkillId[] = ["web-framework-react"];
+      const skillConfigs = buildSkillConfigs(["web-framework-react"]);
+
+      const result = buildCategoriesForDomain("web", [], {}, installedSkillIds, skillConfigs);
+
+      const frameworkRow = result.find((r) => r.id === frameworkCategory);
+      const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+      expect(reactOption?.installed).toBe(true);
+      expect(reactOption?.scope).toBe("project");
+    });
+
+    it("should not mark uninstalled skills as lock-eligible", () => {
+      initializeMatrix(BUILD_STEP_WEB_MATRIX);
+
+      const skillConfigs = buildSkillConfigs(["web-framework-react"], { scope: "global" });
+
+      const result = buildCategoriesForDomain("web", [], {}, [], skillConfigs);
+
+      const frameworkRow = result.find((r) => r.id === frameworkCategory);
+      const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");
+      expect(reactOption?.installed).toBe(false);
+    });
+  });
 });

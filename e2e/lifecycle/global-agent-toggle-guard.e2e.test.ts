@@ -8,11 +8,15 @@ import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import "../matchers/setup.js";
 
 /**
- * Global agent toggle guard E2E test.
+ * Global agent toggle guard E2E tests (D-196, D-183).
  *
- * Verifies that globally installed agents cannot be toggled from project
- * scope in the edit wizard's agents step. The guard shows a toast message
- * and leaves the agent selection unchanged.
+ * D-196: Verifies that globally installed agents cannot be toggled (Space)
+ * from project scope in the edit wizard's agents step.
+ *
+ * D-183: Verifies that globally installed agents cannot be re-scoped (S key)
+ * from project scope in the edit wizard's agents step.
+ *
+ * Both guards show a toast message and leave the agent config unchanged.
  */
 
 describe("global agent toggle guard from project scope", () => {

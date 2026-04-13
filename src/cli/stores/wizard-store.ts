@@ -22,6 +22,7 @@ import type {
   CategorySelections,
 } from "../types/index.js";
 import type { SourceOption } from "../components/wizard/source-grid.js";
+import { isAgentName } from "../utils/type-guards.js";
 import { warn } from "../utils/logger.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
 
@@ -727,11 +728,20 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       const skillConfigs: SkillConfig[] = [...allSkillIds].map(createDefaultSkillConfig);
 
+      // Derive agent preselection from the stack's agent keys
+      const stackAgents: AgentName[] = Object.keys(stack.agents).filter(isAgentName).sort();
+      const agentConfigs: AgentScopeConfig[] = stackAgents.map((name) => ({
+        name,
+        scope: "global" as const,
+      }));
+
       return {
         domainSelections,
         _stackDomainSelections: structuredClone(domainSelections),
         selectedDomains: sortDomainsCanonically([...domains]),
         skillConfigs,
+        selectedAgents: stackAgents,
+        agentConfigs,
       };
     }),
 
