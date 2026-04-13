@@ -1,7 +1,17 @@
+---
+scope: reference
+area: testing
+keywords: [vitest, factories, fixtures, mock-data, e2e, pom, matchers, assertions, helpers]
+related:
+  - reference/type-system.md
+  - reference/utilities.md
+last_validated: 2026-04-13
+---
+
 # Test Infrastructure
 
-**Last Updated:** 2026-04-02
-**Last Validated:** 2026-04-02
+**Last Updated:** 2026-04-13
+**Last Validated:** 2026-04-13
 
 ## Test Framework
 
@@ -37,12 +47,33 @@ Vitest is configured with 3 test projects:
 
 ```
 src/cli/lib/__tests__/
-  helpers.ts                         # Shared test utilities (MANDATORY: use for all test data)
-  helpers.test.ts                    # Tests for helpers themselves
   content-generators.ts              # Pure content renderers: renderSkillMd, renderAgentYaml, renderConfigTs
+  expected-values.ts                 # Canonical expected agent/skill lists for assertions (EXPECTED_AGENTS, EXPECTED_SKILLS)
+  helpers.test.ts                    # Tests for helpers themselves
   test-constants.ts                  # Keyboard constants, timing delays
   test-fixtures.ts                   # Canonical skill registry (SKILLS), test categories
   test-fs-utils.ts                   # createTempDir, cleanupTempDir, fileExists, directoryExists
+  factories/                         # Object creation factories (split from former helpers.ts)
+    index.ts                         # Barrel re-export of all factories
+    agent-factories.ts               # createMockAgent, createMockAgentConfig, createMockCompiledAgentData
+    category-factories.ts            # createMockCategory
+    config-factories.ts              # buildSourceConfig, buildProjectConfig, buildWizardResult, buildAgentConfigs, etc.
+    matrix-factories.ts              # createMockMatrix, createComprehensiveMatrix, createBasicMatrix, createMockMatrixConfig
+    plugin-factories.ts              # createCompileContext, createMockCompileConfig, createMockMarketplace, etc.
+    skill-factories.ts               # createMockSkill, createMockExtractedSkill, createMockSkillEntry, etc.
+    stack-factories.ts               # createMockResolvedStack, createMockStack, createMockRawStacksConfig, etc.
+  helpers/                           # Test utility functions (split from former helpers.ts)
+    index.ts                         # Barrel re-export of all helpers
+    cli-runner.ts                    # CLI_ROOT, runCliCommand
+    config-io.ts                     # readTestYaml, readTestTsConfig, writeTestTsConfig
+    disk-writers.ts                  # writeTestSkill, writeSourceSkill, writeTestAgent
+    test-dir-setup.ts                # createTestDirs, cleanupTestDirs
+    wizard-simulation.ts             # buildSkillConfigs, simulateSkillSelections, buildWizardResultFromStore, extractSkillIdsFromAssignment
+  assertions/                        # Test assertion helpers (split from former helpers.ts)
+    index.ts                         # Barrel re-export of all assertions
+    agent-assertions.ts              # parseCompiledAgent, expectAgentCompilation, expectValidAgentMarkdown, expectCompiledAgents
+    config-assertions.ts             # expectConfigSkills, expectConfigAgents, expectFullConfig, assertConfigIntegrity, etc.
+    install-assertions.ts            # expectInstallResult
   mock-data/                         # Extracted test fixtures (shared across test files)
     mock-agents.ts                   # AGENT_DEFS, agent config maps, DEFAULT_TEST_AGENTS
     mock-categories.ts               # Category definitions with domain overrides
@@ -89,6 +120,7 @@ src/cli/lib/__tests__/
     source-switching.integration.test.ts
     wizard-flow.integration.test.tsx
   user-journeys/
+    _diagnostic.test.ts
     compile-flow.test.ts
     config-precedence.test.ts
     edit-recompile.test.ts
@@ -256,7 +288,7 @@ e2e/
     dual-scope-helpers.ts            # createTestEnvironment, initGlobal, initProject, setupDualScope
     interactive-prompt.ts            # InteractivePrompt class for PTY-based tests
     project-builder.ts               # ProjectBuilder class (minimal, editable, plugin project factories)
-  commands/                          # Command E2E tests (23 files)
+  commands/                          # Command E2E tests (22 files)
     build.e2e.test.ts
     build-agent-plugins.e2e.test.ts
     compile.e2e.test.ts
@@ -268,7 +300,6 @@ e2e/
     eject.e2e.test.ts
     help.e2e.test.ts
     import-skill.e2e.test.ts
-    info.e2e.test.ts
     list.e2e.test.ts
     new-agent.e2e.test.ts
     new-marketplace.e2e.test.ts
@@ -280,17 +311,19 @@ e2e/
     uninstall.e2e.test.ts
     uninstall-preservation.e2e.test.ts
     validate.e2e.test.ts
-  interactive/                       # Interactive wizard E2E tests (29 files)
+  interactive/                       # Interactive wizard E2E tests (32 files)
     build-stack.e2e.test.ts
     edit-agent-scope-routing.e2e.test.ts
     edit-skill-accumulation.e2e.test.ts
     edit-wizard-completion.e2e.test.ts
     edit-wizard-detection.e2e.test.ts
+    edit-wizard-excluded-skills.e2e.test.ts
     edit-wizard-launch.e2e.test.ts
     edit-wizard-local.e2e.test.ts
     edit-wizard-navigation.e2e.test.ts
     edit-wizard-plugin-migration.e2e.test.ts
     edit-wizard-plugin-operations.e2e.test.ts
+    edit-wizard-unique-skill-guard.e2e.test.ts
     init-wizard-default-source.e2e.test.ts
     init-wizard-exclusive-compat.e2e.test.ts
     init-wizard-existing.e2e.test.ts
@@ -303,6 +336,7 @@ e2e/
     init-wizard-scratch.e2e.test.ts
     init-wizard-sources.e2e.test.ts
     init-wizard-stack.e2e.test.ts
+    init-wizard-stack-agents.e2e.test.ts
     init-wizard-ui.e2e.test.ts
     real-marketplace.e2e.test.ts
     search-interactive.e2e.test.ts
@@ -310,7 +344,7 @@ e2e/
     smoke.e2e.test.ts
     uninstall.e2e.test.ts
     update.e2e.test.ts
-  lifecycle/                         # Lifecycle E2E tests (18 files)
+  lifecycle/                         # Lifecycle E2E tests (25 files)
     config-scope-integrity.e2e.test.ts
     cross-scope-lifecycle.e2e.test.ts
     dual-scope-edit-display.e2e.test.ts
@@ -319,13 +353,20 @@ e2e/
     dual-scope-edit-scope-changes.e2e.test.ts
     dual-scope-edit-source-changes.e2e.test.ts
     edit-add-local-skills.e2e.test.ts
+    exclusion-lifecycle.e2e.test.ts
+    global-agent-toggle-guard.e2e.test.ts
     global-scope-lifecycle.e2e.test.ts
+    global-skill-toggle-guard.e2e.test.ts
+    init-global-preselection-confirm.e2e.test.ts
     init-then-edit-merge.e2e.test.ts
     local-lifecycle.e2e.test.ts
     plugin-lifecycle.e2e.test.ts
     plugin-scope-lifecycle.e2e.test.ts
+    project-tracking-propagation.e2e.test.ts
     re-edit-cycles.e2e.test.ts
     scope-aware-local-copy.e2e.test.ts
+    scope-change-deselect-integrity.e2e.test.ts
+    selected-agent-name-excluded.e2e.test.ts
     source-switching-modes.e2e.test.ts
     source-switching-per-skill.e2e.test.ts
     unified-config-view.e2e.test.ts
@@ -360,7 +401,7 @@ The E2E tests use a Page Object Model pattern in `e2e/pages/`. Constants are sel
 | `DIRS`            | Directory names (`.claude`, `.claude-src`, `skills`, etc.)                                                                                                                       |
 | `FILES`           | File names (`config.ts`, `metadata.yaml`, `SKILL.md`, etc.)                                                                                                                      |
 | `STEP_TEXT`       | Text used to identify wizard steps and completion states                                                                                                                         |
-| `TIMEOUTS`        | Test timeouts (WIZARD_LOAD=15s, INSTALL=30s, PLUGIN_INSTALL=60s, EXIT=10s, EXIT_WAIT=30s, SETUP=60s, LIFECYCLE=180s, EXTENDED_LIFECYCLE=300s, INTERACTIVE=120s, PLUGIN_TEST=90s) |
+| `TIMEOUTS`        | Test timeouts (WIZARD_LOAD=15s, INSTALL=30s, PLUGIN_INSTALL=60s, EXIT=10s, SESSION_DEFAULT=10s, SESSION_DEFAULT_CI=20s, EXIT_WAIT=30s, SETUP=60s, LIFECYCLE=180s, EXTENDED_LIFECYCLE=300s, INTERACTIVE=120s, PLUGIN_TEST=90s) |
 | `INTERNAL_DELAYS` | Framework-internal delays (STEP_TRANSITION=500ms, KEYSTROKE=150ms)                                                                                                               |
 | `EXIT_CODES`      | Process exit codes (SUCCESS=0, ERROR=1, CANCELLED=4, etc.)                                                                                                                       |
 | `SOURCE_PATHS`    | Paths within source directories (skills, config, stacks)                                                                                                                         |
@@ -382,6 +423,14 @@ The E2E tests use a Page Object Model pattern in `e2e/pages/`. Constants are sel
 | `StackStep`        | `pages/steps/stack-step.ts`    | Stack selection interactions     |
 | `EditWizard`       | `pages/wizards/edit-wizard.ts` | Composed edit wizard flows       |
 | `InitWizard`       | `pages/wizards/init-wizard.ts` | Composed init wizard flows       |
+
+**Timeout Infrastructure:**
+
+`TerminalSession` has a `defaultTimeout` readonly property (set from `TerminalSessionOptions.defaultTimeout` or CI-aware defaults: `TIMEOUTS.SESSION_DEFAULT` (10s) locally, `TIMEOUTS.SESSION_DEFAULT_CI` (20s) in CI). Methods `waitForText()` and `waitForExit()` use this as their fallback timeout.
+
+`BaseStep` sets its own `defaultTimeout` to `TIMEOUTS.WIZARD_LOAD` (15s) -- intentionally different from the session default -- used by `waitForStep()` and `waitForStableRender()`.
+
+`InitWizardOptions` and `EditWizardOptions` both accept `defaultTimeout` which is passed through to `TerminalSession`. `InitWizardOptions` also accepts `loadTimeout` to override the initial `waitForReady()` timeout separately.
 
 **Custom Matchers (`e2e/matchers/`):**
 
@@ -406,76 +455,110 @@ Imported per-test via `import "../matchers/setup.js"`. Provides:
 | `interactive-prompt.ts` | `InteractivePrompt` class for PTY-based wizard tests                                                                                                                                                                                 |
 | `project-builder.ts`    | `ProjectBuilder` class with `minimal()`, `editable()`, plugin project factories                                                                                                                                                      |
 
-## Test Helpers (`src/cli/lib/__tests__/helpers.ts`)
+## Test Utilities (Domain-Scoped Directories)
 
-### Factory Functions
+The former monolithic `helpers.ts` has been split into three domain-scoped directories under `src/cli/lib/__tests__/`. Each has a barrel `index.ts` for imports. Tests import from `factories/`, `helpers/`, or `assertions/` as needed.
+
+### Factory Functions (`src/cli/lib/__tests__/factories/`)
 
 **MANDATORY: All test data must use these factories. Never construct inline.**
 
-| Factory                                  | Purpose                            | Signature                                              |
-| ---------------------------------------- | ---------------------------------- | ------------------------------------------------------ |
-| `createMockSkill()`                      | Create a ResolvedSkill mock        | `(id, overrides?) => ResolvedSkill`                    |
-| `createMockMatrix()`                     | Create a MergedSkillsMatrix mock   | `(...skills) => MergedSkillsMatrix`                    |
-| `createMockCategory()`                   | Create a CategoryDefinition mock   | `(id, displayName, overrides?) => CategoryDefinition`  |
-| `createMockAgent()`                      | Create an AgentDefinition mock     | `(name, overrides?) => AgentDefinition`                |
-| `createMockAgentConfig()`                | Create an AgentConfig mock         | `(name, skills?, overrides?) => AgentConfig`           |
-| `createMockSkillEntry()`                 | Create a Skill entry               | `(id, preloaded?, overrides?) => Skill`                |
-| `createMockSkillSource()`                | Create a SkillSource mock          | `(type, overrides?) => SkillSource`                    |
-| `createMockExtractedSkill()`             | Create ExtractedSkillMetadata      | `(id, overrides?) => ExtractedSkillMetadata`           |
-| `createMockSkillDefinition()`            | Create a SkillDefinition mock      | `(id, overrides?) => SkillDefinition`                  |
-| `createMockResolvedStack()`              | Create a ResolvedStack mock        | `(id, name, overrides?) => ResolvedStack`              |
-| `createMockStack()`                      | Create a Stack mock                | `(id, config) => Stack`                                |
-| `createMockMatrixConfig()`               | Create decomposed matrix config    | `(categories, overrides?) => MockMatrixConfig`         |
-| `createMockCompileConfig()`              | Create a CompileConfig mock        | `(agents, overrides?) => CompileConfig`                |
-| `createMockCompiledStackPlugin()`        | Create a CompiledStackPlugin mock  | `(overrides?) => CompiledStackPlugin`                  |
-| `createMockSkillAssignment()`            | Create a SkillAssignment mock      | `(id, preloaded?) => SkillAssignment`                  |
-| `createMockMultiSourceSkill()`           | Create multi-source ResolvedSkill  | `(id, sources, overrides?) => ResolvedSkill`           |
-| `createMockCompiledAgentData()`          | Create CompiledAgentData mock      | `(overrides?) => CompiledAgentData`                    |
-| `createMockMarketplace()`                | Create a Marketplace mock          | `(plugins?) => Marketplace`                            |
-| `createMockMarketplacePlugin()`          | Create a MarketplacePlugin mock    | `(name, source?) => MarketplacePlugin`                 |
-| `createMockRawStacksConfig()`            | Create raw stacks config (2-stack) | `() => RawStacksConfig`                                |
-| `createMockRawStacksConfigWithArrays()`  | Raw stacks with array categories   | `() => RawStacksConfig`                                |
-| `createMockRawStacksConfigWithObjects()` | Raw stacks with object assignments | `() => RawStacksConfig`                                |
-| `buildWizardResult()`                    | Create a WizardResultV2 mock       | `(skills, overrides?) => WizardResultV2`               |
-| `buildSourceResult()`                    | Create a SourceLoadResult mock     | `(matrix, sourcePath, overrides?) => SourceLoadResult` |
-| `buildProjectConfig()`                   | Create a ProjectConfig mock        | `(overrides?) => ProjectConfig`                        |
-| `buildSourceConfig()`                    | Create source config object        | `(overrides?) => Record<string, unknown>`              |
-| `buildSkillConfigs()`                    | Create SkillConfig array           | `(skillIds, overrides?) => SkillConfig[]`              |
-| `buildAgentConfigs()`                    | Create AgentScopeConfig array      | `(agentNames, overrides?) => AgentScopeConfig[]`       |
-| `buildTestProjectConfig()`               | Create TestProjectConfig           | `(agents, skills, overrides?) => TestProjectConfig`    |
-| `buildWizardResultFromStore()`           | Build WizardResultV2 from store    | `(matrix, overrides?) => WizardResultV2`               |
-| `createTestSkill()`                      | Create a TestSkill for disk tests  | `(id, description, overrides?) => TestSkill`           |
-| `createComprehensiveMatrix()`            | Full matrix with 8 skills + stacks | `(overrides?) => MergedSkillsMatrix`                   |
-| `createBasicMatrix()`                    | Minimal matrix with 5 skills       | `(overrides?) => MergedSkillsMatrix`                   |
-| `createCompileContext()`                 | Create a CompileContext mock       | `(overrides?) => CompileContext`                       |
-| `simulateSkillSelections()`              | Simulate user skill selections     | `(skillIds, matrix, selectedDomains) => void`          |
-| `testSkillToResolvedSkill()`             | Convert TestSkill to ResolvedSkill | `(skill, overrides?) => ResolvedSkill`                 |
-| `extractSkillIdsFromAssignment()`        | Extract IDs from stack assignment  | `(assignment) => string[]`                             |
-| `assertConfigIntegrity()`                | Assert config file integrity       | `(dir, expectations) => Promise<void>`                 |
+Barrel import: `import { createMockSkill, buildProjectConfig } from "../__tests__/factories/index.js"`
 
-### Skill File Creators
+| Factory                                  | File                   | Purpose                            | Signature                                              |
+| ---------------------------------------- | ---------------------- | ---------------------------------- | ------------------------------------------------------ |
+| `createMockSkill()`                      | `skill-factories.ts`   | Create a ResolvedSkill mock        | `(id, overrides?) => ResolvedSkill`                    |
+| `createMockExtractedSkill()`             | `skill-factories.ts`   | Create ExtractedSkillMetadata      | `(id, overrides?) => ExtractedSkillMetadata`           |
+| `createMockSkillEntry()`                 | `skill-factories.ts`   | Create a Skill entry               | `(id, preloaded?, overrides?) => Skill`                |
+| `createMockSkillDefinition()`            | `skill-factories.ts`   | Create a SkillDefinition mock      | `(id, overrides?) => SkillDefinition`                  |
+| `createMockSkillAssignment()`            | `skill-factories.ts`   | Create a SkillAssignment mock      | `(id, preloaded?) => SkillAssignment`                  |
+| `createMockMultiSourceSkill()`           | `skill-factories.ts`   | Create multi-source ResolvedSkill  | `(id, sources, overrides?) => ResolvedSkill`           |
+| `createMockSkillSource()`               | `skill-factories.ts`   | Create a SkillSource mock          | `(type, overrides?) => SkillSource`                    |
+| `createTestSkill()`                      | `skill-factories.ts`   | Create a TestSkill for disk tests  | `(id, description, overrides?) => TestSkill`           |
+| `testSkillToResolvedSkill()`             | `skill-factories.ts`   | Convert TestSkill to ResolvedSkill | `(skill, overrides?) => ResolvedSkill`                 |
+| `createMockAgent()`                      | `agent-factories.ts`   | Create an AgentDefinition mock     | `(name, overrides?) => AgentDefinition`                |
+| `createMockAgentConfig()`                | `agent-factories.ts`   | Create an AgentConfig mock         | `(name, skills?, overrides?) => AgentConfig`           |
+| `createMockCompiledAgentData()`          | `agent-factories.ts`   | Create CompiledAgentData mock      | `(overrides?) => CompiledAgentData`                    |
+| `createMockMatrix()`                     | `matrix-factories.ts`  | Create a MergedSkillsMatrix mock   | `(...skills) => MergedSkillsMatrix`                    |
+| `createComprehensiveMatrix()`            | `matrix-factories.ts`  | Full matrix with 8 skills + stacks | `(overrides?) => MergedSkillsMatrix`                   |
+| `createBasicMatrix()`                    | `matrix-factories.ts`  | Minimal matrix with 5 skills       | `(overrides?) => MergedSkillsMatrix`                   |
+| `createMockMatrixConfig()`               | `matrix-factories.ts`  | Create decomposed matrix config    | `(categories, overrides?) => MockMatrixConfig`         |
+| `createMockCategory()`                   | `category-factories.ts`| Create a CategoryDefinition mock   | `(id, displayName, overrides?) => CategoryDefinition`  |
+| `buildSourceConfig()`                    | `config-factories.ts`  | Create source config object        | `(overrides?) => Record<string, unknown>`              |
+| `buildProjectConfig()`                   | `config-factories.ts`  | Create a ProjectConfig mock        | `(overrides?) => ProjectConfig`                        |
+| `buildWizardResult()`                    | `config-factories.ts`  | Create a WizardResultV2 mock       | `(skills, overrides?) => WizardResultV2`               |
+| `buildAgentConfigs()`                    | `config-factories.ts`  | Create AgentScopeConfig array      | `(agentNames, overrides?) => AgentScopeConfig[]`       |
+| `buildSourceResult()`                    | `config-factories.ts`  | Create a SourceLoadResult mock     | `(matrix, sourcePath, overrides?) => SourceLoadResult` |
+| `buildTestProjectConfig()`               | `config-factories.ts`  | Create TestProjectConfig           | `(agents, skills, overrides?) => TestProjectConfig`    |
+| `createMockResolvedStack()`              | `stack-factories.ts`   | Create a ResolvedStack mock        | `(id, name, overrides?) => ResolvedStack`              |
+| `createMockStack()`                      | `stack-factories.ts`   | Create a Stack mock                | `(id, config) => Stack`                                |
+| `createMockRawStacksConfig()`            | `stack-factories.ts`   | Create raw stacks config (2-stack) | `() => RawStacksConfig`                                |
+| `createMockRawStacksConfigWithArrays()`  | `stack-factories.ts`   | Raw stacks with array categories   | `() => RawStacksConfig`                                |
+| `createMockRawStacksConfigWithObjects()` | `stack-factories.ts`   | Raw stacks with object assignments | `() => RawStacksConfig`                                |
+| `createCompileContext()`                 | `plugin-factories.ts`  | Create a CompileContext mock       | `(overrides?) => CompileContext`                       |
+| `createMockCompileConfig()`              | `plugin-factories.ts`  | Create a CompileConfig mock        | `(agents, overrides?) => CompileConfig`                |
+| `createMockCompiledStackPlugin()`        | `plugin-factories.ts`  | Create a CompiledStackPlugin mock  | `(overrides?) => CompiledStackPlugin`                  |
+| `createMockMarketplace()`                | `plugin-factories.ts`  | Create a Marketplace mock          | `(plugins?) => Marketplace`                            |
+| `createMockMarketplacePlugin()`          | `plugin-factories.ts`  | Create a MarketplacePlugin mock    | `(name, source?) => MarketplacePlugin`                 |
 
-| Helper               | Purpose                                   |
-| -------------------- | ----------------------------------------- |
-| `writeTestSkill()`   | Write SKILL.md + metadata.yaml to dir     |
-| `writeSourceSkill()` | Write skill to source directory structure |
-| `writeTestAgent()`   | Write agent metadata.yaml to dir          |
+### Helper Functions (`src/cli/lib/__tests__/helpers/`)
 
-### Test Utilities
+Barrel import: `import { runCliCommand, writeTestSkill } from "../__tests__/helpers/index.js"`
 
-| Helper                   | Purpose                                                  |
-| ------------------------ | -------------------------------------------------------- |
-| `runCliCommand()`        | Run CLI command, capture stdout/stderr/error             |
-| `readTestYaml<T>()`      | Read and parse YAML test file                            |
-| `readTestTsConfig<T>()`  | Load TS config file via jiti                             |
-| `writeTestTsConfig()`    | Write a config.ts file to a project directory            |
-| `parseTestFrontmatter()` | Lightweight frontmatter parser for assertions            |
-| `createTestDirs()`       | Create plugin test directory structure                   |
-| `cleanupTestDirs()`      | Clean up plugin test directory structure                 |
-| `createTempDir()`        | Create temp directory (re-export from test-fs-utils)     |
-| `cleanupTempDir()`       | Remove temp directory (re-export from test-fs-utils)     |
-| `fileExists()`           | Check if file exists (re-export from test-fs-utils)      |
-| `directoryExists()`      | Check if directory exists (re-export from test-fs-utils) |
+| Helper                          | File                    | Purpose                                                  |
+| ------------------------------- | ----------------------- | -------------------------------------------------------- |
+| `CLI_ROOT`                      | `cli-runner.ts`         | Root path constant for CLI commands                      |
+| `runCliCommand()`               | `cli-runner.ts`         | Run CLI command, capture stdout/stderr/error             |
+| `readTestYaml<T>()`             | `config-io.ts`          | Read and parse YAML test file                            |
+| `readTestTsConfig<T>()`         | `config-io.ts`          | Load TS config file via jiti                             |
+| `writeTestTsConfig()`           | `config-io.ts`          | Write a config.ts file to a project directory            |
+| `writeTestSkill()`              | `disk-writers.ts`       | Write SKILL.md + metadata.yaml to dir                    |
+| `writeSourceSkill()`            | `disk-writers.ts`       | Write skill to source directory structure                |
+| `writeTestAgent()`              | `disk-writers.ts`       | Write agent metadata.yaml to dir                         |
+| `createTestDirs()`              | `test-dir-setup.ts`     | Create plugin test directory structure                   |
+| `cleanupTestDirs()`             | `test-dir-setup.ts`     | Clean up plugin test directory structure                 |
+| `buildSkillConfigs()`           | `wizard-simulation.ts`  | Create SkillConfig array                                 |
+| `simulateSkillSelections()`     | `wizard-simulation.ts`  | Simulate user skill selections                           |
+| `buildWizardResultFromStore()`  | `wizard-simulation.ts`  | Build WizardResultV2 from store                          |
+| `extractSkillIdsFromAssignment()`| `wizard-simulation.ts` | Extract IDs from stack assignment                        |
+| `parseTestFrontmatter()`        | `index.ts`             | Lightweight frontmatter parser for assertions            |
+
+### Assertion Helpers (`src/cli/lib/__tests__/assertions/`)
+
+Barrel import: `import { assertConfigIntegrity, expectCompiledAgents } from "../__tests__/assertions/index.js"`
+
+| Helper                      | File                      | Purpose                                          |
+| --------------------------- | ------------------------- | ------------------------------------------------ |
+| `expectConfigSkills()`      | `config-assertions.ts`    | Assert expected skills in config                 |
+| `expectConfigAgents()`      | `config-assertions.ts`    | Assert expected agents in config                 |
+| `expectFullConfig()`        | `config-assertions.ts`    | Assert full config structure                     |
+| `expectSkillConfigs()`      | `config-assertions.ts`    | Assert skill config entries                      |
+| `expectAgentConfigs()`      | `config-assertions.ts`    | Assert agent config entries                      |
+| `expectConfigOnDisk()`      | `config-assertions.ts`    | Assert config file on disk                       |
+| `assertConfigIntegrity()`   | `config-assertions.ts`    | Assert config file integrity                     |
+| `parseCompiledAgent()`      | `agent-assertions.ts`     | Parse compiled agent output                      |
+| `expectAgentCompilation()`  | `agent-assertions.ts`     | Assert agent was compiled                        |
+| `expectValidAgentMarkdown()`| `agent-assertions.ts`     | Assert valid agent markdown                      |
+| `expectCompiledAgents()`    | `agent-assertions.ts`     | Assert multiple agents compiled                  |
+| `expectInstallResult()`     | `install-assertions.ts`   | Assert installation result                       |
+
+### FS Utilities (`src/cli/lib/__tests__/test-fs-utils.ts`)
+
+| Helper             | Purpose                                              |
+| ------------------ | ---------------------------------------------------- |
+| `createTempDir()`  | Create temp directory                                |
+| `cleanupTempDir()` | Remove temp directory                                |
+| `fileExists()`     | Check if file exists                                 |
+| `directoryExists()`| Check if directory exists                            |
+
+### Expected Values (`src/cli/lib/__tests__/expected-values.ts`)
+
+Canonical expected value constants for test assertions:
+
+| Export             | Purpose                                                                    |
+| ------------------ | -------------------------------------------------------------------------- |
+| `EXPECTED_AGENTS`  | Agent name lists per domain (WEB, API, CLI, WEB_AND_API, ALL)             |
+| `EXPECTED_SKILLS`  | Skill ID lists per fixture (WEB_DEFAULT, API_DEFAULT, WEB_AND_API, ALL_TEST) |
 
 ### Content Generators (`src/cli/lib/__tests__/content-generators.ts`)
 
@@ -492,7 +575,7 @@ Pure content renderers for test file generation:
 ### Temp Directory Management
 
 ```typescript
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers.js";
+import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils.js";
 
 let tempDir: string;
 beforeEach(async () => {
@@ -506,7 +589,7 @@ afterEach(async () => {
 ### CLI Command Runner
 
 ```typescript
-import { runCliCommand } from "../__tests__/helpers.js";
+import { runCliCommand } from "../__tests__/helpers/index.js";
 
 const result = await runCliCommand(["compile", "--verbose"]);
 // result.stdout, result.stderr, result.error
@@ -669,6 +752,26 @@ const dirs = await createTestSource({
 | ----------- | ------------------------------------------ |
 | `delay(ms)` | Promise-based delay helper for test timing |
 
+## Error Handling in Tests
+
+All `try/catch/finally` blocks have been removed from unit and integration test files. The standard patterns are:
+
+- **Cleanup:** Lifted to `afterEach` hooks (runs even on test failure)
+- **Expected rejections:** `await expect(fn()).rejects.toThrow("message")`
+- **Fire-and-forget with expected errors:** `await Command.run(args).catch(() => {})`
+- **No `try/finally` for cleanup in test bodies** -- `afterEach` is sufficient
+
+This applies to all 127+ test files in `src/cli/`. Zero `try {` blocks remain in test code.
+
+### Config-Writer Test Helpers
+
+Two local extraction helpers in `src/cli/lib/configuration/__tests__/config-writer.test.ts` for asserting on generated config sections:
+
+- `extractNamedSection(source, name)` -- Extracts a named `const` block (skills, agents, stack) from generated config source
+- `extractScopeSections(section)` -- Splits a section into `{ global, project }` parts using `// global` / `// project` comment markers
+
+These are file-local (not exported) and specific to config-writer test assertions.
+
 ## Test Anti-Patterns (From CLAUDE.md)
 
 - NEVER construct test data inline (configs, matrices, skills, stacks, agents)
@@ -677,3 +780,4 @@ const dirs = await createTestSource({
 - NEVER create alias/mapping hacks to paper over wrong test data
 - NEVER put TODO/task IDs in test describe blocks
 - NEVER use raw `mkdtemp`/`rm` -- use `createTempDir()`/`cleanupTempDir()`
+- NEVER use `try/catch/finally` in test bodies -- use `afterEach` for cleanup, `.catch(() => {})` or `rejects.toThrow()` for errors

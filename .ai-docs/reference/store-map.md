@@ -1,6 +1,17 @@
+---
+scope: reference
+area: wizard
+keywords: [zustand, wizard-store, state, actions, consumers, initial-state, toast, preselections]
+related:
+  - reference/state-transitions.md
+  - reference/component-patterns.md
+  - reference/features/wizard-flow.md
+last_validated: 2026-04-13
+---
+
 # Store / State Map
 
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-13
 
 ## State Management Library
 
@@ -12,11 +23,11 @@
 
 | Store          | File                                 | Purpose                  |
 | -------------- | ------------------------------------ | ------------------------ |
-| useWizardStore | `src/cli/stores/wizard-store.ts:560` | Entire wizard flow state |
+| useWizardStore | `src/cli/stores/wizard-store.ts` | Entire wizard flow state |
 
 There is exactly **one** Zustand store in the codebase.
 
-## WizardState Shape (`src/cli/stores/wizard-store.ts:190-497`)
+## WizardState Shape (`src/cli/stores/wizard-store.ts`)
 
 ### Navigation State
 
@@ -51,8 +62,6 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 | `skillConfigs`           | `SkillConfig[]`              | Per-skill source and scope configuration                                |
 | `installedSkillConfigs`  | `SkillConfig[] \| null`      | Snapshot of configs installed before wizard opened (for diff rendering) |
 | `installedAgentConfigs`  | `AgentScopeConfig[] \| null` | Snapshot of agent configs installed before wizard opened                |
-| `lockedSkillIds`         | `SkillId[]`                  | Skills that cannot be toggled (existing global items)                   |
-| `lockedAgentNames`       | `AgentName[]`                | Agents that cannot be toggled (existing global agents)                  |
 
 ### UI State
 
@@ -64,7 +73,11 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 | `showInfo`                 | `boolean`           | Info overlay visible (selected skills and agents)               |
 | `focusedSkillId`           | `SkillId \| null`   | Currently focused skill (for S hotkey)                          |
 | `focusedAgentId`           | `AgentName \| null` | Currently focused agent (for S hotkey)                          |
-| `isEditingFromGlobalScope` | `boolean`           | When true, scope toggling is disabled (editing from ~/.claude/) |
+| `isInitMode`               | `boolean`           | True when running init (first-time setup); false when editing existing installation |
+| `isEditingFromGlobalScope` | `boolean`           | When true, scope toggling is disabled (editing from ~/.claude/)                     |
+| `toastMessage`             | `string \| null`    | Temporary toast message shown in the wizard (auto-cleared after timeout)            |
+| `globalPreselections`      | `SkillConfig[] \| null` | Global skill configs to pre-select when a stack or scratch is chosen in init    |
+| `globalAgentPreselections` | `{ agents: AgentName[]; configs: AgentScopeConfig[] } \| null` | Global agent preselections to restore after selectStack wipes state |
 
 ### Source State
 
@@ -96,7 +109,7 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 | ----------------------- | --------------------------------------------------- | ------------------------------------------------- |
 | `toggleDomain`          | `(domain: Domain) => void`                          | Add/remove domain, manages selections             |
 | `toggleTechnology`      | `(domain, category, technology, exclusive) => void` | Radio (exclusive) or checkbox toggle              |
-| `toggleAgent`           | `(agent: AgentName) => void`                        | Add/remove agent, syncs agentConfigs              |
+| `toggleAgent`           | `(agent: AgentName) => void`                        | Add/remove agent; guards against toggling globally-installed agents from project scope (shows toast); tombstone-aware toggle logic |
 | `bindSkill`             | `(skill: BoundSkill) => void`                       | Add foreign skill from search                     |
 | `nextDomain`            | `() => boolean`                                     | Advance to next domain, returns success           |
 | `prevDomain`            | `() => boolean`                                     | Go to previous domain, returns success            |
@@ -106,7 +119,7 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 
 | Action              | Signature                                    | Effect                            |
 | ------------------- | -------------------------------------------- | --------------------------------- |
-| `toggleSkillScope`  | `(skillId: SkillId) => void`                 | Toggle skill scope project/global |
+| `toggleSkillScope`  | `(skillId: SkillId) => void`                 | Toggle skill scope project/global; eject guard blocks project->global when global eject exists (allows undo if excluded tombstone present) |
 | `setSkillSource`    | `(skillId: SkillId, source: string) => void` | Set source for a skill in configs |
 | `setFocusedSkillId` | `(id: SkillId \| null) => void`              | Set focused skill for S hotkey    |
 | `toggleAgentScope`  | `(agentName: AgentName) => void`             | Toggle agent scope project/global |
@@ -120,6 +133,7 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 | `toggleFilterIncompatible` | `() => void` | Toggle filtering of incompatible skills; removes incompatible web skills on enable |
 | `toggleSettings`           | `() => void` | Toggle settings overlay                                                            |
 | `toggleInfo`               | `() => void` | Toggle info overlay (selected skills and agents)                                   |
+| `setToastMessage`          | `(message: string \| null) => void` | Set a temporary toast message, or null to clear it                    |
 
 ### Source Management
 
@@ -141,7 +155,7 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 
 | Action                       | Signature                           | When Used                              |
 | ---------------------------- | ----------------------------------- | -------------------------------------- |
-| `populateFromStack`          | `(stack) => void`                   | Stack selection in init wizard         |
+| `populateFromStack`          | `(stack) => void`                   | Stack selection in init wizard; now returns `selectedAgents` and `agentConfigs` derived from `Object.keys(stack.agents)` |
 | `populateFromSkillIds`       | `(skillIds, savedConfigs?) => void` | Edit mode: restore from project config |
 | `preselectAgentsFromDomains` | `() => void`                        | After domain selection                 |
 
@@ -162,7 +176,7 @@ Step progression: `stack -> domains -> build -> sources -> agents -> confirm`
 | `getStepProgress`                  | `{ completedSteps, skippedSteps }`   | For wizard tab indicators        |
 | `canGoToNextDomain`                | `() => boolean`                      | Has next domain                  |
 | `canGoToPreviousDomain`            | `() => boolean`                      | Has previous domain              |
-| `buildSourceRows`                  | `{ skillId, options }[]`             | Sources step UI data             |
+| `buildSourceRows`                  | `{ skillId, options, scope?, readOnly? }[]` | Sources step UI data      |
 
 ## Usage Pattern
 
@@ -191,9 +205,15 @@ const store = useWizardStore();
 - `src/cli/components/wizard/skill-agent-summary.tsx` - Skill/agent summary display
 - `src/cli/components/hooks/use-wizard-initialization.ts` - Init hook
 
+## Internal Helpers
+
+**`buildSkillConfigForId(id, savedConfigs?)`** in `wizard-store.ts`: Builds a `SkillConfig` for a skill ID, preferring a project-scoped non-excluded entry from `savedConfigs` over a global one when duplicates exist (D-198 defensive fix). Falls back to `createDefaultSkillConfig` pattern.
+
+**`applySkillRemoval(configs, removedIds, installedSkillConfigs)`** in `wizard-store.ts`: Removes project-scope skills outright; marks global-scope skills as `excluded: true` only if they were previously installed.
+
 ## Internal Constants
 
-**Domain-to-agent mapping** (`wizard-store.ts:93-104`):
+**Domain-to-agent mapping** in `wizard-store.ts`:
 
 ```typescript
 DOMAIN_AGENTS = {
@@ -219,7 +239,7 @@ DOMAIN_AGENTS = {
 
 ## State Reset
 
-`reset()` action restores all state to `createInitialState()` defaults (`wizard-store.ts:530-558`, `reset` at `:958`).
+`reset()` action restores all state to `createInitialState()` defaults.
 
 `selectStack()` also resets: domainSelections, \_stackDomainSelections, selectedDomains, skillConfigs, selectedAgents, agentConfigs, boundSkills, currentDomainIndex, stackAction.
 
@@ -231,5 +251,5 @@ Initial state:
 - `skillConfigs: []`, `focusedSkillId: null`, `customizeSources: false`
 - `enabledSources: {}`, `selectedAgents: []`, `agentConfigs: []`, `focusedAgentId: null`
 - `boundSkills: []`, `installedSkillConfigs: null`, `installedAgentConfigs: null`
-- `lockedSkillIds: []`, `lockedAgentNames: []`
-- `isEditingFromGlobalScope: false`, `history: []`
+- `isInitMode: false`, `isEditingFromGlobalScope: false`, `toastMessage: null`
+- `globalPreselections: null`, `globalAgentPreselections: null`, `history: []`

@@ -1,6 +1,18 @@
+---
+scope: reference
+area: wizard
+keywords: [wizard-steps, navigation, guards, scope-toggle, dual-scope, lock-icon, stack-grouping, agent-preselection, init-mode, edit-mode]
+related:
+  - reference/store-map.md
+  - reference/state-transitions.md
+  - reference/component-patterns.md
+  - reference/commands.md
+last_validated: 2026-04-13
+---
+
 # Wizard Flow
 
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-13
 
 ## Overview
 
@@ -23,7 +35,7 @@ stack -> domains -> build -> sources -> agents -> confirm
 - `agents`: Select which agents to compile
 - `confirm`: Review selections and confirm
 
-**Step type** (`src/cli/stores/wizard-store.ts:172-178`):
+**Step type** in `src/cli/stores/wizard-store.ts`:
 
 ```typescript
 type WizardStep = "stack" | "domains" | "build" | "sources" | "agents" | "confirm";
@@ -81,7 +93,7 @@ Feature flags live at `src/cli/lib/feature-flags.ts`:
 ## Wizard Props (from commands)
 
 ```typescript
-// src/cli/components/wizard/wizard.tsx:46-62
+// src/cli/components/wizard/wizard.tsx
 type WizardProps = {
   onComplete: (result: WizardResultV2) => void; // Called on confirm
   onCancel: () => void; // Called on Escape/Ctrl+C
@@ -93,17 +105,17 @@ type WizardProps = {
   installedSkillIds?: SkillId[]; // Current skills for edit mode
   installedSkillConfigs?: SkillConfig[]; // Saved scope/source configs for edit mode
   installedAgentConfigs?: AgentScopeConfig[]; // Saved agent scope configs for edit mode
-  lockedSkillIds?: SkillId[]; // Skills that cannot be toggled (D9: global items in project context)
-  lockedAgentNames?: AgentName[]; // Agents that cannot be toggled (D9: global items in project context)
   isEditingFromGlobalScope?: boolean; // When true, S key (scope toggle) is disabled
   projectDir?: string;
   startupMessages?: StartupMessage[]; // Messages to display on startup
 };
 ```
 
+**Removed in 0.122.0:** `lockedSkillIds` and `lockedAgentNames` props are gone. Global-item locking is now handled inside the store via `isInstalledGlobal` guards on `toggleAgent`/`toggleTechnology` (checks `installedSkillConfigs`/`installedAgentConfigs` + `isInitMode`).
+
 **Note:** The wizard does NOT receive a `matrix` prop. It accesses the matrix singleton via `matrix-provider.ts` imports.
 
-## WizardResultV2 (`src/cli/components/wizard/wizard.tsx:31-44`)
+## WizardResultV2 (`src/cli/components/wizard/wizard.tsx`)
 
 ```typescript
 type WizardResultV2 = {
@@ -161,7 +173,7 @@ When `edit` command enters the wizard:
 2. `installedSkillIds` populated from current installation
 3. `installedSkillConfigs` carries saved scope/source configs
 4. `installedAgentConfigs` carries saved agent scope configs
-5. `lockedSkillIds`/`lockedAgentNames` mark global items as read-only in project context
+5. Global-item locking handled inside store: `toggleAgent`/`toggleTechnology` check `installedSkillConfigs`/`installedAgentConfigs` + `isInitMode` and show toast if blocked
 6. `isEditingFromGlobalScope` disables scope toggle (S key) when editing global config
 7. `useWizardInitialization` calls `populateFromSkillIds(skillIds, savedConfigs)` to hydrate store
 8. `useWizardInitialization` walks through steps via `setStep()` to build `history` naturally
@@ -212,28 +224,29 @@ Common key labels exported from `hotkeys.ts`:
 
 ## Build Step Domain Order
 
-From `src/cli/consts.ts:199`:
+From `src/cli/consts.ts`:
 
 ```typescript
-BUILT_IN_DOMAIN_ORDER = ["web", "api", "ai", "mobile", "cli", "infra", "meta", "shared"];
+BUILT_IN_DOMAIN_ORDER = ["web", "api", "ai", "mobile", "desktop", "cli", "infra", "meta", "shared"];
 ```
 
 Custom domains appear before built-in domains, alphabetically.
 
-Default scratch domains (`src/cli/consts.ts:211`): `["web", "api", "mobile"]`.
+Default scratch domains in `src/cli/consts.ts`: `["web", "api", "mobile"]`.
 
 Domain descriptions defined in `domain-selection.tsx`:
 
-| Domain   | Description                                            |
-| -------- | ------------------------------------------------------ |
-| `web`    | Frontend web applications                              |
-| `api`    | Backend APIs and services                              |
-| `ai`     | AI and LLM integrations                                |
-| `cli`    | Command-line tools                                     |
-| `mobile` | Mobile applications                                    |
-| `infra`  | CI/CD, deployment, and infrastructure                  |
-| `meta`   | Design patterns, code review, and research methodology |
-| `shared` | Shared utilities and methodology                       |
+| Domain    | Description                                            |
+| --------- | ------------------------------------------------------ |
+| `web`     | Frontend web applications                              |
+| `api`     | Backend APIs and services                              |
+| `ai`      | AI and LLM integrations                                |
+| `cli`     | Command-line tools                                     |
+| `mobile`  | Mobile applications                                    |
+| `desktop` | Desktop applications                                   |
+| `infra`   | CI/CD, deployment, and infrastructure                  |
+| `meta`    | Design patterns, code review, and research methodology |
+| `shared`  | Shared utilities and methodology                       |
 
 ## Framework-First Filtering
 
@@ -260,3 +273,54 @@ Pressing `I` opens a panel in `wizard-layout.tsx` that replaces the step content
 - Closes with `I` or `Escape`
 
 **Key difference from StepConfirm:** InfoPanel reads `skillConfigs`/`agentConfigs` directly from the wizard store. StepConfirm receives them as props.
+
+## Global-Item Guards (D-196)
+
+> **Detailed documentation:** See [concepts/guard-pattern.md](../concepts/guard-pattern.md) for the unified guard reference, [concepts/scope-system.md](../concepts/scope-system.md) for scope system, and [concepts/tombstone-pattern.md](../concepts/tombstone-pattern.md) for tombstone lifecycle.
+
+Since 0.122.0, toggling globally-installed agents from project scope is blocked via an `isInstalledGlobal` guard in the `toggleAgent` store action in `wizard-store.ts`. When triggered, a toast message is shown: "Global agents cannot be changed from project scope". The guard is bypassed when `isEditingFromGlobalScope` is true or when `isInitMode` is true.
+
+The same pattern guards `toggleTechnology` in `wizard-store.ts`: globally-installed skills cannot be toggled from project scope. In exclusive (radio) categories, it also blocks selecting a new skill when the current selection is globally installed.
+
+**Key state field:** `isInitMode` (boolean, default `false`) distinguishes init wizard (first-time setup, no restrictions) from edit wizard (existing installation, global items locked).
+
+## Scope Toggle Eject Guard (D-199)
+
+`toggleSkillScope` in `wizard-store.ts` blocks project-eject to global-eject promotion when a non-excluded global eject entry already exists in `installedSkillConfigs`. However, if the current `skillConfigs` already contains an excluded tombstone for that skill ID, the guard allows the toggle (undo path). This prevents accidental overwrites while allowing users to reverse a previous scope change.
+
+## Dual-Scope Badges (D-183)
+
+Both the build step (CategoryGrid) and agent step (StepAgents) now show dual-scope badges when a scope toggle creates a tombstone:
+
+- **CategoryGrid** in `category-grid.tsx`: `CategoryOption.secondaryScope` renders a second `[G]`/`[P]` badge next to the primary scope badge.
+- **StepAgents** in `step-agents.tsx`: Computes `secondaryScope` by checking for an excluded entry in `agentConfigs` with a different scope than the active entry. Renders `[G]`/`[P]` badge after the primary scope badge.
+
+## Lock Icon for Globally Installed Skills (D-189)
+
+In the build step, `SkillTag` in `category-grid.tsx` appends `UI_SYMBOLS.LOCK` after the display name when `option.installed && option.scope === "global"`. This visually marks skills that cannot be toggled from project scope.
+
+## Source Mode Transition Labels (D-200)
+
+`SkillAgentSummary` in `skill-agent-summary.tsx` shows a `~` prefix (instead of `+` or bullet) when a skill's source has changed from the installed version. The transition label is rendered as dim text: `(OldSource -> NewSource)` using `SOURCE_DISPLAY_NAMES` from `consts.ts` for human-readable names. Only shown when `prevSource != null && prevSource !== skill.source`.
+
+## Stack Selection Grouping (D-194)
+
+`StackSelection` in `stack-selection.tsx` now groups stacks by the `group` property on each stack definition (in `types/matrix.ts`: `Stack.group` and `ResolvedStack.group`).
+
+- `GROUP_ORDER` constant in `stack-selection.tsx`: `["React", "CLI"]` -- determines display priority
+- Groups sorted by `GROUP_ORDER` index (known groups first), then alphabetically
+- Ungrouped stacks appear under "Other Frameworks" label
+- When no stacks have `group`, falls back to flat list with no headers
+
+## Stack Agent Preselection (D-195)
+
+Stack selection now preselects agents from `Object.keys(stack.agents)` filtered through `isAgentName`, merged with global agent preselections.
+
+In `populateFromStack` in `wizard-store.ts`: derives `stackAgents` from `Object.keys(stack.agents).filter(isAgentName).sort()`, builds `agentConfigs` with default `"global"` scope, and returns both `selectedAgents` and `agentConfigs`.
+
+In `stack-selection.tsx` (customize path): the component merges stack agents with `globalAgentPreselections` (set by `use-wizard-initialization`) and applies the merged list via `useWizardStore.setState()`.
+
+**New store fields supporting preselection:**
+
+- `globalPreselections: SkillConfig[] | null` -- global skill configs to pre-select when a stack or scratch is chosen
+- `globalAgentPreselections: { agents: AgentName[]; configs: AgentScopeConfig[] } | null` -- global agent preselections to restore after `selectStack` wipes `selectedAgents`/`agentConfigs`

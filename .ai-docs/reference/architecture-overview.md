@@ -1,14 +1,27 @@
+---
+scope: reference
+area: architecture
+keywords: [scope, directory-structure, data-flow, entry-points, tombstone, stack-grouping, config-writer]
+related:
+  - reference/dependency-graph.md
+  - reference/boundary-map.md
+  - reference/features/configuration.md
+  - reference/features/operations-layer.md
+  - reference/commands.md
+last_validated: 2026-04-13
+---
+
 # Architecture Overview
 
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-13
 
 ## Project Identity
 
 | Field       | Value                                                                    |
 | ----------- | ------------------------------------------------------------------------ |
 | Package     | `@agents-inc/cli`                                                        |
-| Version     | 0.100.0                                                                  |
-| Binary      | `agentsinc` (also `CLI_BIN_NAME` in `src/cli/consts.ts:27`)              |
+| Version     | 0.123.0                                                                  |
+| Binary      | `agentsinc` (also `CLI_BIN_NAME` in `src/cli/consts.ts`)                 |
 | Type        | ESM (`"type": "module"` in package.json)                                 |
 | Entry Point | `src/cli/index.ts` (runs oclif with `run()`)                             |
 | Build       | tsup -> `dist/`                                                          |
@@ -157,7 +170,7 @@ Compilation (lib/compiler.ts)
 
 ### 1. oclif Command Pattern
 
-Every command extends `BaseCommand` (`src/cli/base-command.ts:12`).
+Every command extends `BaseCommand` in `src/cli/base-command.ts`.
 
 ```
 BaseCommand provides:
@@ -181,7 +194,7 @@ Runs before every command. Extracts `--source` / `-s` from raw argv (before ocli
 --source flag > CC_SOURCE env var > .claude-src/config.ts (project) > ~/.claude-src/config.ts (global) > default (github:agents-inc/skills)
 ```
 
-Implemented in: `src/cli/lib/configuration/config.ts:84-132`
+Implemented in: `src/cli/lib/configuration/config.ts` (`resolveSource()`)
 
 ### 4. Install Modes
 
@@ -191,9 +204,9 @@ Implemented in: `src/cli/lib/configuration/config.ts:84-132`
 | plugin | Claude plugin cache                               | `.claude/agents/` | `.claude-src/config.ts` |
 | mixed  | `.claude/skills/` (eject) + plugin cache (plugin) | `.claude/agents/` | `.claude-src/config.ts` |
 
-Detection: `src/cli/lib/installation/installation.ts` — `detectInstallation()` at line 84, `detectProjectInstallation()` at line 35
+Detection: `src/cli/lib/installation/installation.ts` — `detectInstallation()`, `detectProjectInstallation()`
 
-Scope-aware config splitting: `writeScopedConfigs()` in `src/cli/lib/installation/local-installer.ts:369` splits config into global and project-scoped files.
+Scope-aware config splitting: `writeScopedConfigs()` in `src/cli/lib/installation/local-installer.ts` splits config into global and project-scoped files.
 
 ### 5. Liquid Template Compilation
 
@@ -205,7 +218,7 @@ Template root resolution order (first match wins):
 2. `{project}/.claude/templates/` (legacy)
 3. `{CLI_ROOT}/templates/` (built-in)
 
-Implemented in: `src/cli/lib/compiler.ts:394-419` (`createLiquidEngine()`)
+Implemented in: `src/cli/lib/compiler.ts` (`createLiquidEngine()`)
 
 ### 6. Zod Schema Validation
 
@@ -230,20 +243,69 @@ The `src/cli/types/generated/matrix.ts` file contains the full `BUILT_IN_MATRIX`
 - `getSkillById(id)` — asserting lookup by SkillId
 - `getSkillBySlug(slug)` — asserting lookup by SkillSlug
 
-`src/cli/lib/matrix/skill-resolution.ts` contains `resolveRelationships()` (line 150) — a single unified function that resolves all skill relationships (replaces 5 separate resolve functions).
+`src/cli/lib/matrix/skill-resolution.ts` contains `resolveRelationships()` — a single unified function that resolves all skill relationships (replaces 5 separate resolve functions).
 
 ### 9. Security Measures
 
-- Source validation: `validateSourceFormat()` in `src/cli/lib/configuration/config.ts:291-320` (with helper functions through line 447)
+- Source validation: `validateSourceFormat()` in `src/cli/lib/configuration/config.ts`
   - Blocks null bytes, UNC paths, private IPs, path traversal
   - Validates remote and local source formats
-- Liquid injection prevention: `sanitizeCompiledAgentData()` in `src/cli/lib/compiler.ts:77-111`
+- Liquid injection prevention: `sanitizeCompiledAgentData()` in `src/cli/lib/compiler.ts`
   - Strips `{{`, `}}`, `{%`, `%}` from all user-controlled fields
-- File size limits: `MAX_MARKETPLACE_FILE_SIZE`, `MAX_PLUGIN_FILE_SIZE`, `MAX_CONFIG_FILE_SIZE` in `src/cli/consts.ts:150-152`
-- Command injection prevention: Input validation in `src/cli/utils/exec.ts:7-87`
+- File size limits: `MAX_MARKETPLACE_FILE_SIZE`, `MAX_PLUGIN_FILE_SIZE`, `MAX_CONFIG_FILE_SIZE` in `src/cli/consts.ts`
+- Command injection prevention: Input validation in `src/cli/utils/exec.ts`
 
 ### 10. Config Writer
 
 `src/cli/lib/configuration/config-writer.ts` — `generateConfigSource()` generates TypeScript config files from `ProjectConfig` objects. Supports standalone configs and project configs that import/extend global configs.
 
-Key function: `generateConfigSource(config, options?)` at line 35. When `options.isProjectConfig` is true, generates config that imports from the global `~/.claude-src/config` and spreads global arrays.
+Key function: `generateConfigSource(config, options?)`. When `options.isProjectConfig` is true, generates config that imports from the global `~/.claude-src/config` and spreads global arrays.
+
+### 11. Scope System (Project vs Global)
+
+> **Detailed documentation:** See [concepts/scope-system.md](./concepts/scope-system.md) for the full cross-cutting reference.
+
+Skills and agents can exist at two scopes:
+
+| Scope     | Skills Path                  | Agents Path                  | Config Path                  |
+| --------- | ---------------------------- | ---------------------------- | ---------------------------- |
+| `project` | `{projectDir}/.claude/skills/` | `{projectDir}/.claude/agents/` | `{projectDir}/.claude-src/config.ts` |
+| `global`  | `~/.claude/skills/`          | `~/.claude/agents/`          | `~/.claude-src/config.ts`    |
+
+**Path resolution:** `resolveInstallPaths(projectDir, scope)` in `src/cli/lib/installation/local-installer.ts` returns the correct base directory (`os.homedir()` for global, `projectDir` for project).
+
+**Config splitting:** `writeScopedConfigs()` in `src/cli/lib/installation/local-installer.ts` splits a unified `ProjectConfig` into separate global and project config files. Project config imports from and extends the global config.
+
+**Skill/agent scope:** Each `SkillConfig` and `AgentScopeConfig` carries a `scope: "project" | "global"` field (in `src/cli/types/config.ts`). During installation, skills are split by scope before path-dependent operations (copy, delete, install).
+
+**Wizard enforcement:** When editing from project scope (`isEditingFromGlobalScope === false`), the wizard blocks changes to globally-installed skills/agents with a toast message. The `isInitMode` flag bypasses this guard during fresh initialization.
+
+### 12. Excluded Tombstone Pattern
+
+> **Detailed documentation:** See [concepts/tombstone-pattern.md](./concepts/tombstone-pattern.md) for the full cross-cutting reference.
+
+When a project needs to override (disable) a globally-installed skill or agent without removing it from the global config, it uses an **excluded tombstone**: a config entry with `excluded: true`.
+
+**Types:** `SkillConfig.excluded?: boolean` and `AgentScopeConfig.excluded?: boolean` in `src/cli/types/config.ts`.
+
+**How tombstones are created:**
+
+- **Skill removal** (`applySkillRemoval()` in `wizard-store.ts`): When deselecting a globally-installed skill, instead of removing the config entry, it sets `excluded: true`. Project-scoped skills are simply removed.
+- **Agent toggle off** (`applyAgentToggle()` in `wizard-store.ts`): When toggling off a globally-installed agent, it marks the config entry as `excluded: true` and keeps the agent in `selectedAgents` (so the global config stays correct for other projects).
+- **Scope toggle** (`toggleSkillScope()` in `wizard-store.ts`): Moving a globally-installed skill from global to project scope adds an excluded tombstone for the global entry.
+
+**How tombstones are consumed:**
+
+- Tombstoned entries are skipped during compilation (not compiled into agent prompts)
+- Re-selecting a tombstoned skill/agent clears the `excluded` flag (restores it)
+- The `toggleSkillScope()` action checks for existing excluded entries to allow undo of scope overrides
+
+### 13. Stack Grouping System
+
+Stacks can be organized into visual groups in the stack selection screen.
+
+**Type:** `Stack.group?: string` and `ResolvedStack.group?: string` in `src/cli/types/matrix.ts`.
+
+**UI grouping:** `groupStacks()` in `src/cli/components/wizard/stack-selection.tsx` sorts stacks into `StackGroup[]` objects. Groups are ordered by `GROUP_ORDER` (React first, then CLI, then alphabetical). Ungrouped stacks go into an "Other Frameworks" section. If no stacks have a `group` field, the list renders flat without headers.
+
+**Agent preselection from stacks:** `populateFromStack()` in `wizard-store.ts` now derives `selectedAgents` and `agentConfigs` from the stack's agent keys (via `Object.keys(stack.agents).filter(isAgentName)`), ensuring agent selection matches the stack definition.

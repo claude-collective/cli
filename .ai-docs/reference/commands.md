@@ -1,6 +1,18 @@
+---
+scope: reference
+area: commands
+keywords: [init, edit, compile, config, new-agent, build, eject, import, list, search, validate, uninstall, info]
+related:
+  - reference/architecture-overview.md
+  - reference/features/wizard-flow.md
+  - reference/features/operations-layer.md
+  - reference/features/compilation-pipeline.md
+last_validated: 2026-04-13
+---
+
 # Commands Reference
 
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-13
 
 ## Command Architecture
 
@@ -82,7 +94,7 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 ### `edit` (src/cli/commands/edit.tsx)
 
-**Purpose:** Modify installed skills via wizard re-entry with diff-based change detection. Outputs a styled change summary (chalk-colored `+`/`-`/`~` lines for added/removed/changed skills, agents, sources, scopes) and a simplified completion message (`"Done"`).
+**Purpose:** Modify installed skills via wizard re-entry with diff-based change detection. Outputs a styled change summary (chalk-colored `+`/`-`/`~` lines for added/removed/changed skills, agents, sources, scopes) and a simplified completion message (`"Done"`). Change summary uses skill display names (from matrix) and scope labels (`[G]`/`[P]`). Global-to-project scope changes render as green `+` additions.
 
 **Flags:**
 
@@ -97,15 +109,23 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 1. **Operation: `detectProject()`** -- detect installation + load project config
 2. **Operation: `loadSource()`** -- load matrix with startup messages
 3. Discover current installed skills: `discoverAllPluginSkills()` + merge with config skills
-4. Render `<Wizard>` with `initialStep="build"`, `installedSkillIds`, `installedSkillConfigs`, `lockedSkillIds`, `lockedAgentNames`, `isEditingFromGlobalScope`
-5. `detectConfigChanges()` -- compute added/removed skills, added/removed agents, source changes, scope changes, agent scope changes
-6. `detectMigrations()` + `executeMigration()` -- handle eject-to-plugin and plugin-to-eject mode migrations
-7. `applyScopeChanges()` -- `migrateLocalSkillScope()` for local skills, `migratePluginSkillScopes()` for plugin skills (uninstall old scope + install new scope)
-8. `applySourceChanges()` -- delete old local copies for non-migration source changes
-9. `applyPluginChanges()` -- **Operation: `ensureMarketplace()`**, **Operation: `installPluginSkills()`** for added plugins, **Operation: `uninstallPluginSkills()`** for removed
-10. **Operation: `copyLocalSkills()`** for newly added local-source skills
-11. **Operation: `loadAgentDefs()`**, **Operation: `writeProjectConfig()`**, **Operation: `discoverInstalledSkills()`**, **Operation: `compileAgents()`**
-12. `cleanupStaleAgentFiles()` -- remove old agent .md files after scope changes
+4. Render `<Wizard>` with `initialStep="build"`, `installedSkillIds`, `installedSkillConfigs`, `installedAgentConfigs`, `isEditingFromGlobalScope`, `initialDomains`, `initialAgents`, `startupMessages`
+5. `detectConfigChanges()` -- compute added/removed skills, added/removed agents, source changes, scope changes, agent scope changes. Returns `ConfigChanges` type.
+6. `logChangeSummary(changes, newSkills, oldSkills)` -- renders styled diff using display names from matrix, scope labels `[G]`/`[P]`, and green `+` for G-to-P scope migrations
+7. `detectMigrations()` + `executeMigration()` -- handle eject-to-plugin and plugin-to-eject mode migrations
+8. `applyScopeChanges()` -- `migrateLocalSkillScope()` for local skills, `migratePluginSkillScopes()` for plugin skills (uninstall old scope + install new scope)
+9. `applySourceChanges()` -- delete old local copies for non-migration source changes
+10. `applyPluginChanges()` -- **Operation: `ensureMarketplace()`**, **Operation: `installPluginSkills()`** for added plugins, **Operation: `uninstallPluginSkills()`** for removed
+11. **Operation: `copyLocalSkills()`** for newly added local-source skills
+12. **Operation: `loadAgentDefs()`**, **Operation: `writeProjectConfig()`**, **Operation: `discoverInstalledSkills()`**, **Operation: `compileAgents()`**
+13. `cleanupStaleAgentFiles()` -- remove old agent .md files after scope changes
+
+**Exported utilities (`@internal`, for testing):**
+
+- `ConfigChanges` type -- shape of the diff between old and new config (added/removed skills, agents, source changes, scope changes, agent scope changes)
+- `detectConfigChanges(oldConfig, wizardResult)` -- computes `ConfigChanges` from old `ProjectConfig` and new `WizardResultV2`
+- `migratePluginSkillScopes(scopeChanges, skills, marketplace, projectDir)` -- migrates plugin skill scope registrations (uninstall old scope, install new scope). Returns `PluginScopeMigrationResult`.
+- `PluginScopeMigrationResult` type -- `{ migrated: SkillId[]; failed: Array<{ id: SkillId; error: string }> }`
 
 **Key dependencies:**
 

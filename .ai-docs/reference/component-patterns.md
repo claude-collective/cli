@@ -1,6 +1,17 @@
+---
+scope: reference
+area: wizard
+keywords: [ink, components, hooks, category-grid, skill-tag, scope-badge, dual-scope, lock-icon, stack-selection, hotkeys]
+related:
+  - reference/store-map.md
+  - reference/state-transitions.md
+  - reference/features/wizard-flow.md
+last_validated: 2026-04-13
+---
+
 # Component Patterns
 
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-13
 
 ## Rendering Library
 
@@ -100,26 +111,32 @@ export const StepBuild: React.FC<StepBuildProps> = ({ matrix }) => {
 - Named exports only (no default exports)
 - `React.FC<Props>` type annotation
 - Ink primitives: `<Box>`, `<Text>`, `useInput()`, `useApp()`, `useStdout()`
-- Colors from `CLI_COLORS` constant (`src/cli/consts.ts:185-196`)
+- Colors from `CLI_COLORS` constant in `src/cli/consts.ts`
 - Store access via `useWizardStore()` selectors
 - No SCSS/CSS - all styling via Ink props
 
-## Color Constants (`src/cli/consts.ts:185-196`)
+## Color Constants (CLI_COLORS in `src/cli/consts.ts`)
 
 | Constant    | Value     | Usage                             |
 | ----------- | --------- | --------------------------------- |
-| `PRIMARY`   | "cyan"    | Headers, focus                    |
-| `SUCCESS`   | "green"   | Checkmarks, success               |
-| `ERROR`     | "red"     | Errors                            |
-| `WARNING`   | "yellow"  | Warnings                          |
-| `INFO`      | "blue"    | Info text                         |
-| `NEUTRAL`   | "gray"    | Dimmed text                       |
-| `FOCUS`     | "cyan"    | Focused elements                  |
-| `UNFOCUSED` | "white"   | Unfocused elements                |
-| `WHITE`     | "white"   | Default text                      |
+| `PRIMARY`   | "#99FFFF" | Headers, focus                    |
+| `SUCCESS`   | "#90EE90" | Checkmarks, success               |
+| `ERROR`     | "#DC343B" | Errors                            |
+| `WARNING`   | "#E6A817" | Warnings                          |
+| `INFO`      | "#3B82F6" | Info text                         |
+| `NEUTRAL`   | "#888888" | Dimmed text                       |
+| `FOCUS`     | "#87CEFA" | Focused elements                  |
+| `UNFOCUSED` | "#FFFFFF" | Unfocused elements                |
+| `WHITE`     | "#FFFFFF" | Default text                      |
+| `BLACK`     | "#000000" | Dark backgrounds                  |
+| `DIM`       | "#666666" | Dimmed/muted text                 |
+| `GRAY_1`    | "#ddd"    | Light gray                        |
 | `LABEL_BG`  | "#383838" | Background for scope/focus labels |
+| `TOAST_BG`  | "#EEEEEE" | Toast background                  |
+| `TOAST_FG`  | "#000000" | Toast foreground                  |
+| `HOVER_BG`  | "#333333" | Hover background                  |
 
-## UI Symbols (`src/cli/consts.ts:99-115`)
+## UI Symbols (UI_SYMBOLS in `src/cli/consts.ts`)
 
 | Symbol               | Value           | Usage                               |
 | -------------------- | --------------- | ----------------------------------- |
@@ -157,7 +174,7 @@ type SelectListProps<T> = {
 
 ## Grid Types
 
-### OptionState (`src/cli/types/matrix.ts:302-306`)
+### OptionState (`src/cli/types/matrix.ts`)
 
 Discriminated union for skill option advisory state. Imported by `category-grid.tsx` from `types/index.js`:
 
@@ -169,7 +186,7 @@ type OptionState =
   | { status: "incompatible"; reason: string };
 ```
 
-### CategoryOption and CategoryRow (`src/cli/components/wizard/category-grid.tsx:12-35`)
+### CategoryOption and CategoryRow (`src/cli/components/wizard/category-grid.tsx`)
 
 Types for the build step skill selection grid:
 
@@ -181,7 +198,9 @@ type CategoryOption = {
   local?: boolean;
   installed?: boolean;
   scope?: "project" | "global";
-  locked?: boolean;
+  /** Secondary scope badge shown alongside primary (e.g. after G->P toggle, excluded tombstone) */
+  secondaryScope?: "project" | "global";
+  source?: string;
   hasUnmetRequirements?: boolean;
   unmetRequirementsReason?: string;
   requiredBy?: string;
@@ -197,6 +216,36 @@ type CategoryRow = {
 ```
 
 **Consumers:** `category-grid.tsx` (defines both types), `use-category-grid-input.ts` (imports both), `use-framework-filtering.ts` (imports `CategoryRow` only), `src/cli/lib/wizard/build-step-logic.ts` (imports both). Note: `checkbox-grid.tsx` does NOT use these types -- it has its own `CheckboxItem<T>` / `CheckboxGridProps<T>`.
+
+### SkillTag Rendering (in `src/cli/components/wizard/category-grid.tsx`)
+
+Internal component within `category-grid.tsx` that renders a single skill option as a bordered tag.
+
+**Scope badges:** When `option.scope` is set, renders a primary badge (`G` or `P` with background). When `option.secondaryScope` is also set, renders a second badge immediately after the primary one -- used for dual-scope display (e.g., after G->P toggle, excluded tombstone still showing original scope).
+
+**Lock icon:** When `option.installed && option.scope === "global"`, appends `UI_SYMBOLS.LOCK` after the display name -- indicates globally installed skills that are read-only in project context.
+
+**Eject icon:** When `option.source === "eject"`, renders `UI_SYMBOLS.EJECT` before the display name.
+
+**Compatibility labels:** Shown on focus (with labels mode) or always for requiredBy/unmetRequirements. Labels include: `(required by X)`, `(incompatible)`, `(recommended)`, `(discouraged)`, or unmet requirements reason.
+
+### StepAgents Dual Scope Badges (in `src/cli/components/wizard/step-agents.tsx`)
+
+**Store access:** Reads `selectedAgents`, `agentConfigs`, and `installedAgentConfigs` from wizard store.
+
+**Secondary scope computation:** For each agent row, finds both the active config (`!excluded`) and the excluded config. When an excluded config exists with a different scope than the active config, displays a `secondaryScope` badge -- mirrors the `secondaryScope` pattern in `CategoryOption`/`SkillTag`.
+
+**Rendering:** Scope badges use `[G]`/`[P]` text labels (not background badges like `SkillTag`). Primary scope badge always shown; secondary badge only when computed.
+
+### StackSelection Grouping (in `src/cli/components/wizard/stack-selection.tsx`)
+
+**`groupStacks()` function:** Groups stacks using the `stack.group` field from `ResolvedStack`. Stacks with a `group` string are bucketed together; stacks without `group` go to an "Other Frameworks" section. When no stacks have a `group`, returns a single group with an empty label (no header).
+
+**`GROUP_ORDER` constant:** Defines sort order for group labels: `["React", "CLI"]`. Groups in this list appear first in order; unlisted groups sort alphabetically after.
+
+**`StackSection` component:** Conditionally renders the section title -- when `title` is empty string, the header `<Box>` is omitted entirely (flat list with no visual grouping).
+
+**Agent preselection:** When a stack is selected, derives agent preselection from stack agent keys (`typedKeys(focusedStack.skills)`), merges with `globalAgentPreselections`, and sets both `selectedAgents` and `agentConfigs` in the store. Preserves excluded entries not in the merged list.
 
 ## Hotkeys Registry (`src/cli/components/wizard/hotkeys.ts`)
 
@@ -237,7 +286,7 @@ Scrollable panel showing marketplace/stack header and a skill/agent summary. Tog
 
 ## SkillAgentSummary (`src/cli/components/wizard/skill-agent-summary.tsx`)
 
-Two-column (skills | agents) summary component with scope labels (Project/Global), eject icons for local skills, and diff markers (+/- for added/removed items in edit mode). Uses `UI_SYMBOLS.BULLET` for existing items.
+Two-column (skills | agents) summary component with scope labels (Project/Global), eject icons for local skills, diff markers (+/- for added/removed items in edit mode), and source change markers (~). Uses `UI_SYMBOLS.BULLET` for existing items, `SOURCE_DISPLAY_NAMES` for human-readable source labels.
 
 **Exports:**
 
@@ -247,7 +296,15 @@ Two-column (skills | agents) summary component with scope labels (Project/Global
 - `ScopeLabel` (React.FC) -- white-on-LABEL_BG scope badge
 - `EjectIcon` (React.FC) -- yellow eject symbol for local/ejected skills
 
-**Store access:** Reads `installedSkillConfigs` and `installedAgentConfigs` from wizard store to compute diffs (new/removed items).
+**Store access:** Reads `installedSkillConfigs`, `installedAgentConfigs`, and `isInitMode` from wizard store to compute diffs (new/removed items) and source change detection.
+
+**Source change detection:** Builds a `prevSourceMap` from `installedSkillConfigs` (keyed by `"${id}:${scope}"`). When a skill's source differs from the previous source, renders a `~` prefix with `CLI_COLORS.WARNING` color and a transition label (e.g., "Public -> Eject") using `SOURCE_DISPLAY_NAMES` from `consts.ts`.
+
+**Diff markers:**
+- `+ ` (green) -- newly added skill/agent
+- `- ` (red) -- removed skill/agent
+- `~ ` (yellow) -- source mode changed (with "from -> to" label)
+- `BULLET` (neutral) -- unchanged item
 
 **Consumers:** `step-confirm.tsx`, `info-panel.tsx`
 
@@ -311,7 +368,7 @@ Test files use:
 
 **File:** `src/cli/components/hooks/use-virtual-scroll.ts`
 
-For long skill lists that exceed terminal height. Constants in `SCROLL_VIEWPORT` (`src/cli/consts.ts:157-168`):
+For long skill lists that exceed terminal height. Constants in `SCROLL_VIEWPORT` in `src/cli/consts.ts`:
 
 | Constant                  | Value | Purpose                                    |
 | ------------------------- | ----- | ------------------------------------------ |

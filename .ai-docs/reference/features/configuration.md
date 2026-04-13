@@ -1,6 +1,18 @@
+---
+scope: reference
+area: config
+keywords: [config-resolution, config-writer, scope-splitting, config-merger, global-config, project-config, tombstone, excluded]
+related:
+  - reference/architecture-overview.md
+  - reference/type-system.md
+  - reference/state-transitions.md
+  - reference/boundary-map.md
+last_validated: 2026-04-13
+---
+
 # Configuration System
 
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-13
 
 ## Overview
 
@@ -40,7 +52,7 @@ Config uses a unified `ProjectConfig` type for both source-level settings (sourc
 
 ## Key Types
 
-### ProjectConfig (`src/cli/types/config.ts:66-146`)
+### ProjectConfig (`src/cli/types/config.ts`)
 
 Unified configuration type. Stores both source-resolution fields and installed skill/agent data.
 
@@ -66,29 +78,32 @@ type ProjectConfig = {
   stacksFile?: string;
   categoriesFile?: string;
   rulesFile?: string;
+  projects?: string[];
 };
 ```
 
-### SkillConfig (`src/cli/types/config.ts:23-27`)
+### SkillConfig (`src/cli/types/config.ts`)
 
 ```typescript
 type SkillConfig = {
   id: SkillId;
   scope: "project" | "global";
   source: string; // "eject" | marketplace name
+  excluded?: boolean;
 };
 ```
 
-### AgentScopeConfig (`src/cli/types/config.ts:30-33`)
+### AgentScopeConfig (`src/cli/types/config.ts`)
 
 ```typescript
 type AgentScopeConfig = {
   name: AgentName;
   scope: "project" | "global";
+  excluded?: boolean;
 };
 ```
 
-### ResolvedConfig (`src/cli/lib/configuration/config.ts:18-22`)
+### ResolvedConfig (`src/cli/lib/configuration/config.ts`)
 
 ```typescript
 type ResolvedConfig = {
@@ -100,7 +115,7 @@ type ResolvedConfig = {
 
 ## Source Resolution
 
-**Function:** `resolveSource()` at `src/cli/lib/configuration/config.ts:84`
+**Function:** `resolveSource()` in `src/cli/lib/configuration/config.ts`
 
 **Precedence (highest to lowest):**
 
@@ -110,7 +125,7 @@ type ResolvedConfig = {
 4. `~/.claude-src/config.ts` `source` field (global-level)
 5. Default: `github:agents-inc/skills`
 
-**Source validation:** `validateSourceFormat()` at `src/cli/lib/configuration/config.ts:291`
+**Source validation:** `validateSourceFormat()` in `src/cli/lib/configuration/config.ts`
 
 Validates:
 
@@ -119,17 +134,17 @@ Validates:
 - Remote sources: valid URL/shorthand, no path traversal, no private IPs
 - Local sources: no control chars, no UNC paths
 
-**Source classification:** `isLocalSource()` at `src/cli/lib/configuration/config.ts:431` - Returns `true` for paths starting with `/` or `.`, `false` for remote protocols. Rejects `..` and `~` in non-remote sources.
+**Source classification:** `isLocalSource()` in `src/cli/lib/configuration/config.ts` - Returns `true` for paths starting with `/` or `.`, `false` for remote protocols. Rejects `..` and `~` in non-remote sources.
 
 ## Agent Source Resolution
 
-**Function:** `resolveAgentsSource()` at `src/cli/lib/configuration/config.ts:142`
+**Function:** `resolveAgentsSource()` in `src/cli/lib/configuration/config.ts`
 
 **Precedence:** `--agent-source` flag > project config `agentsSource` > global config `agentsSource` > default (local CLI)
 
 ## Config Generation
 
-**Function:** `generateProjectConfigFromSkills()` at `src/cli/lib/configuration/config-generator.ts:47`
+**Function:** `generateProjectConfigFromSkills()` in `src/cli/lib/configuration/config-generator.ts`
 
 Generates `ProjectConfig` from wizard result:
 
@@ -137,21 +152,35 @@ Generates `ProjectConfig` from wizard result:
 - Builds stack property from agent-skill mappings
 - Resolves agent names from selected domains
 
-**Function:** `buildStackProperty()` at `src/cli/lib/configuration/config-generator.ts:146` - Builds the `stack` record in config from a loaded Stack definition.
+**Function:** `buildStackProperty()` in `src/cli/lib/configuration/config-generator.ts` - Builds the `stack` record in config from a loaded Stack definition.
 
-**Function:** `splitConfigByScope()` at `src/cli/lib/configuration/config-generator.ts:169` - Splits a `ProjectConfig` into global and project partitions by skill/agent scope. Returns `SplitConfigResult` (`{ global: ProjectConfig; project: ProjectConfig }`).
+**Function:** `splitConfigByScope()` in `src/cli/lib/configuration/config-generator.ts` - Splits a `ProjectConfig` into global and project partitions by skill/agent scope. Returns `SplitConfigResult` (`{ global: ProjectConfig; project: ProjectConfig }`).
+
+### Skill Config Construction in Wizard Store
+
+**Function:** `buildSkillConfigForId()` in `src/cli/stores/wizard-store.ts`
+
+Builds a `SkillConfig` for a resolved skill ID, preferring saved config values. When duplicate entries exist for the same skill ID (e.g., both global and project scoped), the project-scoped entry takes precedence:
+
+```typescript
+const saved =
+  savedConfigs?.find((sc) => sc.id === id && !sc.excluded && sc.scope === "project") ??
+  savedConfigs?.find((sc) => sc.id === id && !sc.excluded);
+```
+
+Falls back to: `scope: "global"`, `source: primarySource ?? DEFAULT_PUBLIC_SOURCE_NAME`.
 
 ## Config Merging
 
-**Function:** `mergeWithExistingConfig()` at `src/cli/lib/configuration/config-merger.ts:89`
+**Function:** `mergeWithExistingConfig()` in `src/cli/lib/configuration/config-merger.ts`
 
 When `edit` command modifies skills:
 
 - Loads existing config
-- Merges new selections with existing via `mergeConfigs()` (line `:25`)
+- Merges new selections with existing via `mergeConfigs()`
 - Preserves user customizations (author, source, etc.)
 
-**Pure merge function:** `mergeConfigs()` at `src/cli/lib/configuration/config-merger.ts:25`
+**Pure merge function:** `mergeConfigs()` in `src/cli/lib/configuration/config-merger.ts`
 
 - Existing values take precedence for identity fields (name, description, source, author)
 - Agents are unioned by name
@@ -160,21 +189,21 @@ When `edit` command modifies skills:
 
 ## Config I/O
 
-| Function                      | Purpose                                 | File                   |
-| ----------------------------- | --------------------------------------- | ---------------------- |
-| `loadProjectSourceConfig()`   | Load .claude-src/config.ts (partial)    | `config.ts:28`         |
-| `loadGlobalSourceConfig()`    | Load ~/.claude-src/config.ts (partial)  | `config.ts:52`         |
-| `loadProjectConfig()`         | Load + validate with global fallback    | `project-config.ts:75` |
-| `loadProjectConfigFromDir()`  | Load + validate from specific dir only  | `project-config.ts:18` |
-| `validateProjectConfig()`     | Validate project config structure       | `project-config.ts:88` |
-| `generateConfigSource()`      | Generate TypeScript source string       | `config-writer.ts:35`  |
-| `saveSourceToProjectConfig()` | Save source field to config file        | `config-saver.ts:8`    |
-| `loadConfig()`                | Generic TypeScript config loader (jiti) | `config-loader.ts:26`  |
-| `defineConfig()`              | Type-safe config helper (identity fn)   | `define-config.ts:10`  |
-| `getProjectConfigPath()`      | Build absolute path to project config   | `config.ts:24`         |
-| `resolveAllSources()`         | Resolve primary + extra sources         | `config.ts:224`        |
-| `resolveAuthor()`             | Resolve author from effective config    | `config.ts:204`        |
-| `formatOrigin()`              | Human-readable label for source origin  | `config.ts:172`        |
+| Function                      | Purpose                                 | File                 |
+| ----------------------------- | --------------------------------------- | -------------------- |
+| `loadProjectSourceConfig()`   | Load .claude-src/config.ts (partial)    | `config.ts`          |
+| `loadGlobalSourceConfig()`    | Load ~/.claude-src/config.ts (partial)  | `config.ts`          |
+| `loadProjectConfig()`         | Load + validate with global fallback    | `project-config.ts`  |
+| `loadProjectConfigFromDir()`  | Load + validate from specific dir only  | `project-config.ts`  |
+| `validateProjectConfig()`     | Validate project config structure       | `project-config.ts`  |
+| `generateConfigSource()`      | Generate TypeScript source string       | `config-writer.ts`   |
+| `saveSourceToProjectConfig()` | Save source field to config file        | `config-saver.ts`    |
+| `loadConfig()`                | Generic TypeScript config loader (jiti) | `config-loader.ts`   |
+| `defineConfig()`              | Type-safe config helper (identity fn)   | `define-config.ts`   |
+| `getProjectConfigPath()`      | Build absolute path to project config   | `config.ts`          |
+| `resolveAllSources()`         | Resolve primary + extra sources         | `config.ts`          |
+| `resolveAuthor()`             | Resolve author from effective config    | `config.ts`          |
+| `formatOrigin()`              | Human-readable label for source origin  | `config.ts`          |
 
 ## Config Writer
 
@@ -190,7 +219,10 @@ Replaced the former `writeProjectSourceConfig()`. Generates TypeScript source st
 | `ensureBlankGlobalConfig()`              | Creates blank global config at `~/.claude-src/` if missing |
 | `getGlobalConfigImportPath()`            | Returns absolute path to `~/.claude-src/`                  |
 
-The `generateConfigSource()` function accepts an optional `ConfigSourceOptions` parameter. When `isProjectConfig: true`, the generated config imports from the global config and spreads global arrays into skills, agents, and domains.
+The `generateConfigSource()` function accepts an optional `ConfigSourceOptions` parameter:
+
+- When `isProjectConfig: true` (no `globalConfig`): generates a config that imports from the global config and spreads global arrays into skills, agents, and domains.
+- When `isProjectConfig: true` with `globalConfig` provided: generates a self-contained config snapshot via `generateProjectConfigWithInlinedGlobal()`. Both global and project entries for the same skill ID are preserved (no deduplication). Global entries appear under a `// global` comment, project entries under `// project`. Excluded global entries (tombstones) replace their active global counterparts in the global section while the active project entry appears separately in the project section. Stack entries are filtered to project-scoped agents only.
 
 ## Config Types Writer
 
@@ -210,10 +242,12 @@ When a global installation exists, project `config-types.ts` imports from global
 
 ## Scope-Aware Config Splitting
 
+> **Detailed documentation:** See [concepts/scope-system.md](../concepts/scope-system.md) for the full cross-cutting scope reference.
+
 Config supports `"project"` and `"global"` scopes on both skills and agents. During installation:
 
 1. `splitConfigByScope()` partitions the merged config into global and project parts
-2. `writeScopedConfigs()` (in `local-installer.ts:369`) writes:
+2. `writeScopedConfigs()` in `local-installer.ts` writes:
    - Global config to `~/.claude-src/config.ts` (standalone)
    - Project config to `{projectDir}/.claude-src/config.ts` (imports from global)
 3. Config-types files are split similarly: global gets standalone types, project extends global
@@ -232,7 +266,7 @@ When installing from the home directory (not a project), a single standalone con
 
 ## Branding / White-Labeling
 
-**Function:** `resolveBranding()` at `src/cli/lib/configuration/config.ts:216`
+**Function:** `resolveBranding()` in `src/cli/lib/configuration/config.ts`
 
 Supports custom branding via `.claude-src/config.ts`:
 
@@ -248,7 +282,7 @@ export default {
 } satisfies ProjectConfig;
 ```
 
-Falls back to `DEFAULT_BRANDING` from `src/cli/consts.ts:170-173`:
+Falls back to `DEFAULT_BRANDING` from `src/cli/consts.ts`:
 
 - Name: "Agents Inc."
 - Tagline: "AI-powered development tools"
@@ -262,13 +296,13 @@ Config files are validated at parse boundaries using Zod schemas from `src/cli/l
 | `projectSourceConfigSchema` | Lenient loader for source config fields |
 | `projectConfigLoaderSchema` | Lenient loader for full ProjectConfig   |
 
-Schema URLs defined in `SCHEMA_PATHS` at `src/cli/consts.ts:78-85`.
+Schema URLs defined in `SCHEMA_PATHS` in `src/cli/consts.ts`.
 
 ## Operations Layer: writeProjectConfig
 
 **File:** `src/cli/lib/operations/project/write-project-config.ts`
 
-The operations layer provides `writeProjectConfig()` (line `:43`) as a high-level orchestrator that runs the full config pipeline:
+The operations layer provides `writeProjectConfig()` as a high-level orchestrator that runs the full config pipeline:
 
 1. `buildAndMergeConfig()` -- generates config from wizard result, merges with existing
 2. `loadAllAgents()` -- loads agent definitions for config-types generation

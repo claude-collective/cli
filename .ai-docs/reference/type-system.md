@@ -1,6 +1,18 @@
+---
+scope: reference
+area: types
+keywords: [union-types, generated-types, zod-schemas, type-guards, branded-types, config-changes, operations-types]
+related:
+  - reference/boundary-map.md
+  - reference/features/operations-layer.md
+  - reference/features/configuration.md
+  - reference/test-infrastructure.md
+last_validated: 2026-04-13
+---
+
 # Type System
 
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-13
 
 ## Type Module Structure
 
@@ -21,7 +33,7 @@ All types are defined in `src/cli/types/` and re-exported through `src/cli/types
 
 Union types for Domain, Category, AgentName, SkillId, and SkillSlug are **auto-generated** from the skills source and agent metadata. Run `bun run generate:types` to regenerate.
 
-### SkillId (`src/cli/types/generated/source-types.ts:6`)
+### SkillId in `src/cli/types/generated/source-types.ts`
 
 ```typescript
 export const SKILL_MAP = {
@@ -30,17 +42,17 @@ export const SKILL_MAP = {
   // ... 161 entries total
 } as const;
 
-export type SkillSlug = keyof typeof SKILL_MAP; // line 170
-export type SkillId = (typeof SKILL_MAP)[SkillSlug]; // line 171
+export type SkillSlug = keyof typeof SKILL_MAP;
+export type SkillId = (typeof SKILL_MAP)[SkillSlug];
 ```
 
 - Derived from `SKILL_MAP` constant (slug-to-ID mapping), not a template literal
 - Runtime validation uses `skillIdSchema` in `schemas.ts` with `.refine()` against `SKILL_IDS` array
 - 161 skill IDs, 161 skill slugs
-- Re-exported from `src/cli/types/skills.ts:4`
+- Re-exported from `src/cli/types/skills.ts`
 - Examples: `"web-framework-react"`, `"meta-methodology-research-methodology"`, `"api-database-drizzle"`, `"ai-provider-anthropic-sdk"`, `"desktop-framework-electron"`
 
-### SkillSlug (`src/cli/types/generated/source-types.ts:170`)
+### SkillSlug in `src/cli/types/generated/source-types.ts`
 
 ```typescript
 type SkillSlug = keyof typeof SKILL_MAP;
@@ -48,9 +60,9 @@ type SkillSlug = keyof typeof SKILL_MAP;
 
 - 161 members (one per skill): `"react"`, `"zustand"`, `"vitest"`, `"drizzle"`, `"anthropic-sdk"`, `"electron"`, `"tauri"`, etc.
 - Used in relationship rules (conflicts, recommends, requires) instead of full SkillId
-- Re-exported from `src/cli/types/skills.ts:4`
+- Re-exported from `src/cli/types/skills.ts`
 
-### AgentName (`src/cli/types/generated/source-types.ts:579`)
+### AgentName in `src/cli/types/generated/source-types.ts`
 
 ```typescript
 export const AGENT_NAMES = [
@@ -82,9 +94,9 @@ export const AGENT_NAMES = [
 export type AgentName = (typeof AGENT_NAMES)[number];
 ```
 
-23 members total. Re-exported from `src/cli/types/agents.ts:5`.
+23 members total. Re-exported from `src/cli/types/agents.ts`.
 
-### Domain (`src/cli/types/generated/source-types.ts:563`)
+### Domain in `src/cli/types/generated/source-types.ts`
 
 ```typescript
 export const DOMAINS = [
@@ -101,9 +113,9 @@ export const DOMAINS = [
 export type Domain = (typeof DOMAINS)[number];
 ```
 
-9 members. Re-exported from `src/cli/types/matrix.ts:4`.
+9 members. Re-exported from `src/cli/types/matrix.ts`.
 
-### Category (`src/cli/types/generated/source-types.ts:505`)
+### Category in `src/cli/types/generated/source-types.ts`
 
 51 values covering all skill categories across domains:
 
@@ -117,21 +129,21 @@ export type Domain = (typeof DOMAINS)[number];
 - shared-\*: monorepo, security, tooling (3)
 - web-\*: accessibility, animation, client-state, error-handling, file-upload, files, forms, framework, i18n, meta-framework, mocking, performance, pwa, realtime, routing, server-state, styling, testing, tooling, ui-components, utilities (21)
 
-Re-exported from `src/cli/types/matrix.ts:4`.
+Re-exported from `src/cli/types/matrix.ts`.
 
-### CategoryPath (`src/cli/types/skills.ts:14`)
+### CategoryPath in `src/cli/types/skills.ts`
 
 ```typescript
 type CategoryPath = Category | "local";
 ```
 
-### ModelName (`src/cli/types/matrix.ts:11`)
+### ModelName in `src/cli/types/matrix.ts`
 
 ```typescript
 type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
 ```
 
-### PermissionMode (`src/cli/types/matrix.ts:14-20`)
+### PermissionMode in `src/cli/types/matrix.ts`
 
 ```typescript
 type PermissionMode =
@@ -145,24 +157,24 @@ type PermissionMode =
 
 ## Named Aliases (Composite Types)
 
-| Alias                    | Definition                                                                                         | File:Line           |
-| ------------------------ | -------------------------------------------------------------------------------------------------- | ------------------- |
-| `CategorySelections`     | `Partial<Record<Category, SkillId[]>>`                                                             | `skills.ts:21`      |
-| `ResolvedCategorySkills` | `Partial<Record<Category, SkillId>>`                                                               | `skills.ts:28`      |
-| `DomainSelections`       | `Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>`                                    | `matrix.ts:41`      |
-| `CategoryMap`            | `Partial<Record<Category, CategoryDefinition>>`                                                    | `matrix.ts:27`      |
-| `CategoryDomainMap`      | `Partial<Record<Category, { domain?: Domain }>>`                                                   | `matrix.ts:30`      |
-| `SkillSlugMap`           | `{ slugToId: Partial<Record<SkillSlug, SkillId>>; idToSlug: Partial<Record<SkillId, SkillSlug>> }` | `matrix.ts:139-144` |
-| `StackAgentConfig`       | `Partial<Record<Category, SkillAssignment[]>>`                                                     | `stacks.ts:6`       |
-| `PluginSkillRef`         | `` `${SkillId}:${SkillId}` ``                                                                      | `skills.ts:8`       |
-| `SkillDefinitionMap`     | `Partial<Record<SkillId, SkillDefinition>>`                                                        | `skills.ts:38`      |
-| `SkillAlias`             | `string`                                                                                           | `matrix.ts:251`     |
+| Alias                    | Definition                                                                                         | File              |
+| ------------------------ | -------------------------------------------------------------------------------------------------- | ----------------- |
+| `CategorySelections`     | `Partial<Record<Category, SkillId[]>>`                                                             | `skills.ts`       |
+| `ResolvedCategorySkills` | `Partial<Record<Category, SkillId>>`                                                               | `skills.ts`       |
+| `DomainSelections`       | `Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>`                                    | `matrix.ts`       |
+| `CategoryMap`            | `Partial<Record<Category, CategoryDefinition>>`                                                    | `matrix.ts`       |
+| `CategoryDomainMap`      | `Partial<Record<Category, { domain?: Domain }>>`                                                   | `matrix.ts`       |
+| `SkillSlugMap`           | `{ slugToId: Partial<Record<SkillSlug, SkillId>>; idToSlug: Partial<Record<SkillId, SkillSlug>> }` | `matrix.ts`       |
+| `StackAgentConfig`       | `Partial<Record<Category, SkillAssignment[]>>`                                                     | `stacks.ts`       |
+| `PluginSkillRef`         | `` `${SkillId}:${SkillId}` ``                                                                      | `skills.ts`       |
+| `SkillDefinitionMap`     | `Partial<Record<SkillId, SkillDefinition>>`                                                        | `skills.ts`       |
+| `SkillAlias`             | `string`                                                                                           | `matrix.ts`       |
 
-Note: There is no `SkillRef` type alias. The type at `skills.ts:56` is `SkillReference` (an object type, not an alias).
+Note: There is no `SkillRef` type alias. The type `SkillReference` in `skills.ts` is an object type, not an alias.
 
 ## Core Data Structures
 
-### ResolvedSkill (`src/cli/types/matrix.ts:169-212`)
+### ResolvedSkill in `src/cli/types/matrix.ts`
 
 The primary skill representation after matrix merge. Contains:
 
@@ -174,7 +186,7 @@ The primary skill representation after matrix merge. Contains:
 - Sources: `availableSources`, `activeSource`
 - Author: `author`
 
-### MergedSkillsMatrix (`src/cli/types/matrix.ts:150-163`)
+### MergedSkillsMatrix in `src/cli/types/matrix.ts`
 
 The primary read model for the wizard and CLI commands:
 
@@ -186,7 +198,7 @@ The primary read model for the wizard and CLI commands:
 - `agentDefinedDomains` - Domain overrides from agent metadata
 - `generatedAt: string` - ISO timestamp
 
-### ProjectConfig (`src/cli/types/config.ts:66-146`)
+### ProjectConfig in `src/cli/types/config.ts`
 
 Unified project configuration stored at `.claude-src/config.ts`:
 
@@ -202,7 +214,7 @@ Unified project configuration stored at `.claude-src/config.ts`:
 - `branding?: BrandingConfig` - White-label overrides
 - Directory overrides: `skillsDir`, `agentsDir`, `stacksFile`, `categoriesFile`, `rulesFile`
 
-### CompileConfig (`src/cli/types/config.ts:41-48`)
+### CompileConfig in `src/cli/types/config.ts`
 
 Compile configuration derived from stack:
 
@@ -210,19 +222,19 @@ Compile configuration derived from stack:
 - `stack?: string`
 - `agents: Record<string, CompileAgentConfig>`
 
-### CompileContext (`src/cli/types/config.ts:51-56`)
+### CompileContext in `src/cli/types/config.ts`
 
 Compilation context passed through pipeline:
 
 - `stackId`, `verbose`, `projectRoot`, `outputDir`
 
-### ValidationResult (`src/cli/types/config.ts:59-63`)
+### ValidationResult in `src/cli/types/config.ts`
 
 Generic validation result:
 
 - `valid: boolean`, `errors: string[]`, `warnings: string[]`
 
-### AgentConfig (`src/cli/types/agents.ts:55-59`)
+### AgentConfig in `src/cli/types/agents.ts`
 
 Fully resolved agent for compilation:
 
@@ -230,7 +242,7 @@ Fully resolved agent for compilation:
 - `name: string`
 - `skills: Skill[]` - Unified skills list
 
-### CompiledAgentData (`src/cli/types/agents.ts:89-105`)
+### CompiledAgentData in `src/cli/types/agents.ts`
 
 Template context for Liquid rendering:
 
@@ -239,7 +251,7 @@ Template context for Liquid rendering:
 - `skills: Skill[]` - All skills
 - Skill splits: `preloadedSkills`, `dynamicSkills`, `preloadedSkillIds`
 
-### ExtractedSkillMetadata (`src/cli/types/matrix.ts:353-377`)
+### ExtractedSkillMetadata in `src/cli/types/matrix.ts`
 
 Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix merge:
 
@@ -249,19 +261,19 @@ Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix
 
 ### Wizard/UI Types in `matrix.ts`
 
-| Type                  | Lines   | Purpose                                                                                    |
-| --------------------- | ------- | ------------------------------------------------------------------------------------------ |
-| `OptionState`         | 302-306 | Discriminated union for skill advisory state (normal/recommended/discouraged/incompatible) |
-| `SkillOption`         | 312-324 | Skill as displayed in wizard (advisoryState/selected/unmetRequirements state)              |
-| `SelectionValidation` | 327-331 | Result of validating skill selections                                                      |
-| `ValidationError`     | 334-338 | Blocking validation error                                                                  |
-| `ValidationWarning`   | 341-345 | Non-blocking validation warning                                                            |
-| `SkillSource`         | 257-271 | Source from which a skill can be obtained                                                  |
-| `SkillSourceType`     | 254     | `"public" \| "private" \| "local"`                                                         |
-| `BoundSkill`          | 274-285 | Foreign skill bound to category via search                                                 |
-| `BoundSkillCandidate` | 288-299 | Search result candidate before binding                                                     |
-| `ResolvedStack`       | 239-248 | Stack with resolved skill IDs                                                              |
-| `SuggestedStack`      | 129-136 | Pre-configured stack from stacks.ts (before resolution)                                    |
+| Type                  | Purpose                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `OptionState`         | Discriminated union for skill advisory state (normal/recommended/discouraged/incompatible) |
+| `SkillOption`         | Skill as displayed in wizard (advisoryState/selected/unmetRequirements state)              |
+| `SelectionValidation` | Result of validating skill selections                                                      |
+| `ValidationError`     | Blocking validation error                                                                  |
+| `ValidationWarning`   | Non-blocking validation warning                                                            |
+| `SkillSource`         | Source from which a skill can be obtained                                                  |
+| `SkillSourceType`     | `"public" \| "private" \| "local"`                                                         |
+| `BoundSkill`          | Foreign skill bound to category via search                                                 |
+| `BoundSkillCandidate` | Search result candidate before binding                                                     |
+| `ResolvedStack`       | Stack with resolved skill IDs; `group?: string` for UI grouping                            |
+| `SuggestedStack`      | Pre-configured stack from stacks.ts (before resolution); `group?: string` for UI grouping  |
 
 ## Operations Layer Types (`src/cli/lib/operations/types.ts`)
 
@@ -269,36 +281,87 @@ The operations layer defines focused result types for each operation, re-exporte
 
 ### Source Operations
 
-| Type                | File                                         | Purpose                                     |
-| ------------------- | -------------------------------------------- | ------------------------------------------- |
-| `LoadSourceOptions` | `operations/source/load-source.ts:9`         | Options for loading a skills source         |
-| `LoadedSource`      | `operations/source/load-source.ts:17`        | Result of loading a source (matrix + paths) |
-| `MarketplaceResult` | `operations/source/ensure-marketplace.ts:10` | Result of marketplace registration          |
+| Type                | File                                      | Purpose                                     |
+| ------------------- | ----------------------------------------- | ------------------------------------------- |
+| `LoadSourceOptions` | `operations/source/load-source.ts`        | Options for loading a skills source         |
+| `LoadedSource`      | `operations/source/load-source.ts`        | Result of loading a source (matrix + paths) |
+| `MarketplaceResult` | `operations/source/ensure-marketplace.ts` | Result of marketplace registration          |
 
 ### Skill Operations
 
-| Type                     | File                                                | Purpose                                         |
-| ------------------------ | --------------------------------------------------- | ----------------------------------------------- |
-| `DiscoveredSkills`       | `operations/skills/discover-skills.ts:12`           | Result of skill discovery (local + marketplace) |
-| `ScopedSkillDir`         | `operations/skills/collect-scoped-skill-dirs.ts:6`  | Single scoped skill directory entry             |
-| `ScopedSkillDirsResult`  | `operations/skills/collect-scoped-skill-dirs.ts:12` | Collected scoped dirs with counts               |
-| `SkillCopyResult`        | `operations/skills/copy-local-skills.ts:7`          | Result of copying local skills                  |
-| `SkillComparisonResults` | `operations/skills/compare-skills.ts:7`             | Comparison results (added/removed/changed)      |
-| `SkillMatchResult`       | `operations/skills/find-skill-match.ts:3`           | Result of matching a skill to a source          |
-| `PluginInstallResult`    | `operations/skills/install-plugin-skills.ts:6`      | Result of plugin skill installation             |
-| `PluginUninstallResult`  | `operations/skills/uninstall-plugin-skills.ts:6`    | Result of plugin skill uninstallation           |
+| Type                     | File                                             | Purpose                                         |
+| ------------------------ | ------------------------------------------------ | ----------------------------------------------- |
+| `DiscoveredSkills`       | `operations/skills/discover-skills.ts`           | Result of skill discovery (local + marketplace) |
+| `ScopedSkillDir`         | `operations/skills/collect-scoped-skill-dirs.ts` | Single scoped skill directory entry             |
+| `ScopedSkillDirsResult`  | `operations/skills/collect-scoped-skill-dirs.ts` | Collected scoped dirs with counts               |
+| `SkillCopyResult`        | `operations/skills/copy-local-skills.ts`         | Result of copying local skills                  |
+| `SkillComparisonResults` | `operations/skills/compare-skills.ts`            | Comparison results (added/removed/changed)      |
+| `SkillMatchResult`       | `operations/skills/find-skill-match.ts`          | Result of matching a skill to a source          |
+| `PluginInstallResult`    | `operations/skills/install-plugin-skills.ts`     | Result of plugin skill installation             |
+| `PluginUninstallResult`  | `operations/skills/uninstall-plugin-skills.ts`   | Result of plugin skill uninstallation           |
 
 ### Project Operations
 
-| Type                   | File                                                | Purpose                                    |
-| ---------------------- | --------------------------------------------------- | ------------------------------------------ |
-| `DetectedProject`      | `operations/project/detect-project.ts:5`            | Detected project installation state        |
-| `BothInstallations`    | `operations/project/detect-both-installations.ts:9` | Combined project + global installation     |
-| `ConfigWriteOptions`   | `operations/project/write-project-config.ts:16`     | Options for writing project config         |
-| `ConfigWriteResult`    | `operations/project/write-project-config.ts:25`     | Result of config write operation           |
-| `CompileAgentsOptions` | `operations/project/compile-agents.ts:7`            | Options for agent compilation              |
-| `CompilationResult`    | `operations/project/compile-agents.ts:20`           | Result of agent compilation                |
-| `AgentDefs`            | `operations/project/load-agent-defs.ts:6`           | Loaded agent definitions with source paths |
+| Type                   | File                                             | Purpose                                    |
+| ---------------------- | ------------------------------------------------ | ------------------------------------------ |
+| `DetectedProject`      | `operations/project/detect-project.ts`           | Detected project installation state        |
+| `BothInstallations`    | `operations/project/detect-both-installations.ts` | Combined project + global installation    |
+| `ConfigWriteOptions`   | `operations/project/write-project-config.ts`     | Options for writing project config         |
+| `ConfigWriteResult`    | `operations/project/write-project-config.ts`     | Result of config write operation           |
+| `CompileAgentsOptions` | `operations/project/compile-agents.ts`           | Options for agent compilation              |
+| `CompilationResult`    | `operations/project/compile-agents.ts`           | Result of agent compilation                |
+| `AgentDefs`            | `operations/project/load-agent-defs.ts`          | Loaded agent definitions with source paths |
+
+## Edit Command Types (`src/cli/commands/edit.tsx`)
+
+Types and functions exported from `edit.tsx` for config change detection and plugin scope migration. All marked `@internal` (exported for testing).
+
+### ConfigChanges in `src/cli/commands/edit.tsx`
+
+```typescript
+type ConfigChanges = {
+  addedSkills: SkillId[];
+  removedSkills: SkillId[];
+  addedAgents: AgentName[];
+  removedAgents: AgentName[];
+  sourceChanges: Map<SkillId, { from: string; to: string }>;
+  scopeChanges: Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>;
+  agentScopeChanges: Map<AgentName, { from: "project" | "global"; to: "project" | "global" }>;
+};
+```
+
+### detectConfigChanges in `src/cli/commands/edit.tsx`
+
+```typescript
+function detectConfigChanges(
+  oldConfig: ProjectConfig | null,
+  wizardResult: WizardResultV2,
+): ConfigChanges;
+```
+
+Compares old project config against wizard result. Uses `remeda.difference()` for added/removed and `remeda.indexBy()` for property change detection (source, scope, agent scope).
+
+### PluginScopeMigrationResult in `src/cli/commands/edit.tsx`
+
+```typescript
+type PluginScopeMigrationResult = {
+  migrated: SkillId[];
+  failed: Array<{ id: SkillId; error: string }>;
+};
+```
+
+### migratePluginSkillScopes in `src/cli/commands/edit.tsx`
+
+```typescript
+async function migratePluginSkillScopes(
+  scopeChanges: Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>,
+  skills: Array<{ id: SkillId; source: string }>,
+  marketplace: string,
+  projectDir: string,
+): Promise<PluginScopeMigrationResult>;
+```
+
+Handles plugin-mode skill scope migrations. Skips `source === "eject"` skills (handled separately by `migrateLocalSkillScope`). For project-to-global: uninstalls project-scope, installs global-scope. For global-to-project: adds project-scope registration (keeps global for other projects).
 
 ## Type Narrowing Rules
 
