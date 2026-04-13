@@ -150,7 +150,10 @@ function applyAgentToggle(
 
 /** Builds a SkillConfig for a resolved skill ID, preferring saved config values. */
 function buildSkillConfigForId(id: SkillId, savedConfigs?: SkillConfig[]): SkillConfig {
-  const saved = savedConfigs?.find((sc) => sc.id === id && !sc.excluded);
+  // Prefer project-scoped entry over global when duplicates exist (D-198 defensive fix)
+  const saved =
+    savedConfigs?.find((sc) => sc.id === id && !sc.excluded && sc.scope === "project") ??
+    savedConfigs?.find((sc) => sc.id === id && !sc.excluded);
   const skill = matrix.skills[id];
   const primarySource = skill?.availableSources?.find((s) => s.primary)?.name;
   return {
@@ -950,7 +953,12 @@ export const useWizardStore = create<WizardState>((set, get) => ({
             sc.id === skillId && sc.scope === "global" && sc.source === "eject" && !sc.excluded,
         );
         if (globalEjectInstalled) {
-          return { toastMessage: "Already exists as ejected skill at global scope" };
+          const hasExcludedEntry = state.skillConfigs.some(
+            (sc) => sc.id === skillId && sc.excluded,
+          );
+          if (!hasExcludedEntry) {
+            return { toastMessage: "Already exists as ejected skill at global scope" };
+          }
         }
       }
 
@@ -1047,6 +1055,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleAgent: (agent) =>
     set((state) => {
+      const isInstalledGlobal =
+        state.installedAgentConfigs?.some(
+          (ac) => ac.name === agent && ac.scope === "global" && !ac.excluded,
+        ) ?? false;
+      if (isInstalledGlobal && !state.isEditingFromGlobalScope && !state.isInitMode) {
+        return { toastMessage: "Global agents cannot be changed from project scope" };
+      }
+
       const isInList = state.selectedAgents.includes(agent);
       const hasExcludedTombstone = state.agentConfigs.some(
         (ac) => ac.name === agent && ac.excluded,
@@ -1055,18 +1071,25 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       // When it has an excluded tombstone, it's visually "off" and toggling means "re-enable".
       const isSelected = isInList && !hasExcludedTombstone;
 
+      // In init mode without pre-existing global config, treat as fresh — clean add/remove (no tombstones).
+      // When a global config exists (installedAgentConfigs populated), allow tombstone creation.
+      const effectiveInstalledConfigs =
+        state.isInitMode && !state.installedAgentConfigs?.length
+          ? null
+          : state.installedAgentConfigs;
+
       const updatedAgentConfigs = applyAgentToggle(
         state.agentConfigs,
         agent,
         isSelected,
-        state.installedAgentConfigs,
+        effectiveInstalledConfigs,
       );
 
       // When toggling off a globally-installed agent, keep it in selectedAgents.
       // It gets an excluded tombstone in agentConfigs but must remain in selectedAgents
       // so SelectedAgentName stays correct for other projects sharing the global config.
       const wasInstalledGlobal =
-        state.installedAgentConfigs?.some((ac) => ac.name === agent && ac.scope === "global") ??
+        effectiveInstalledConfigs?.some((ac) => ac.name === agent && ac.scope === "global") ??
         false;
       const isExcludedToggleOff = isSelected && wasInstalledGlobal;
 

@@ -4,6 +4,7 @@ import { initializeMatrix } from "../lib/matrix/matrix-provider";
 import { SKILLS } from "../lib/__tests__/test-fixtures";
 import { createMockMatrix } from "../lib/__tests__/factories/matrix-factories";
 import { buildSkillConfigs } from "../lib/__tests__/helpers/wizard-simulation";
+import { buildAgentConfigs } from "../lib/__tests__/factories/config-factories";
 import { typedKeys } from "../utils/typed-object";
 import {
   ALL_SKILLS_TEST_CATEGORIES_MATRIX,
@@ -245,9 +246,9 @@ describe("WizardStore", () => {
       expect(selectedDomains).toStrictEqual(["api"]);
       expect(domainSelections.web).toBeUndefined();
       expect(domainSelections.api!["api-api"]).toStrictEqual(["api-framework-hono"]);
-      expect(skillConfigs).toStrictEqual([
-        { id: "api-framework-hono", scope: "global", source: "agents-inc" },
-      ]);
+      expect(skillConfigs).toStrictEqual(
+        buildSkillConfigs(["api-framework-hono"], { scope: "global", source: "agents-inc" }),
+      );
       expect(store.getAllSelectedTechnologies()).toStrictEqual(["api-framework-hono"]);
     });
 
@@ -373,9 +374,9 @@ describe("WizardStore", () => {
 
       const { domainSelections, skillConfigs } = useWizardStore.getState();
       expect(domainSelections.web!["web-framework"]).toStrictEqual(["web-framework-react"]);
-      expect(skillConfigs).toStrictEqual([
-        { id: "web-framework-react", scope: "global", source: "agents-inc" },
-      ]);
+      expect(skillConfigs).toStrictEqual(
+        buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+      );
     });
 
     it("should replace technology in exclusive mode", () => {
@@ -387,9 +388,12 @@ describe("WizardStore", () => {
       expect(domainSelections.web!["web-framework"]).toStrictEqual([
         "web-framework-vue-composition-api",
       ]);
-      expect(skillConfigs).toStrictEqual([
-        { id: "web-framework-vue-composition-api", scope: "global", source: "agents-inc" },
-      ]);
+      expect(skillConfigs).toStrictEqual(
+        buildSkillConfigs(["web-framework-vue-composition-api"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+      );
     });
 
     it("should toggle off technology in exclusive mode", () => {
@@ -412,10 +416,12 @@ describe("WizardStore", () => {
         "web-testing-vitest",
         "web-testing-playwright-e2e",
       ]);
-      expect(skillConfigs).toStrictEqual([
-        { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
-        { id: "web-testing-playwright-e2e", scope: "global", source: "agents-inc" },
-      ]);
+      expect(skillConfigs).toStrictEqual(
+        buildSkillConfigs(["web-testing-vitest", "web-testing-playwright-e2e"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+      );
     });
 
     it("should toggle off technology in non-exclusive mode", () => {
@@ -426,9 +432,9 @@ describe("WizardStore", () => {
 
       const { domainSelections, skillConfigs } = useWizardStore.getState();
       expect(domainSelections.web!["web-styling"]).toStrictEqual(["web-styling-tailwind"]);
-      expect(skillConfigs).toStrictEqual([
-        { id: "web-styling-tailwind", scope: "global", source: "agents-inc" },
-      ]);
+      expect(skillConfigs).toStrictEqual(
+        buildSkillConfigs(["web-styling-tailwind"], { scope: "global", source: "agents-inc" }),
+      );
     });
 
     it("should block toggling globally installed skills from project scope and set toastMessage", () => {
@@ -684,11 +690,9 @@ describe("WizardStore", () => {
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(1);
-      expect(skillConfigs[0]).toStrictEqual({
-        id: "web-framework-react",
-        scope: "global",
-        source: "agents-inc",
-      });
+      expect(skillConfigs[0]).toStrictEqual(
+        buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" })[0],
+      );
     });
 
     it("should remove global skill when toggling off during fresh init (no installed configs)", () => {
@@ -703,9 +707,10 @@ describe("WizardStore", () => {
     it("should mark global skill as excluded when toggling off during edit (installed configs set)", () => {
       const store = useWizardStore.getState();
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         isEditingFromGlobalScope: true,
       });
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
@@ -713,12 +718,13 @@ describe("WizardStore", () => {
 
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(1);
-      expect(skillConfigs[0]).toStrictEqual({
-        id: "web-framework-react",
-        scope: "global",
-        source: "agents-inc",
-        excluded: true,
-      });
+      expect(skillConfigs[0]).toStrictEqual(
+        buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+          excluded: true,
+        })[0],
+      );
     });
 
     it("should remove old global skill in exclusive mode during fresh init and add new skill", () => {
@@ -727,21 +733,21 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-vue-composition-api", true);
 
       const { skillConfigs } = useWizardStore.getState();
-      expect(skillConfigs).toStrictEqual([
-        {
-          id: "web-framework-vue-composition-api",
+      expect(skillConfigs).toStrictEqual(
+        buildSkillConfigs(["web-framework-vue-composition-api"], {
           scope: "global",
           source: "agents-inc",
-        },
-      ]);
+        }),
+      );
     });
 
     it("should mark old global skill as excluded in exclusive mode during edit and add new skill", () => {
       const store = useWizardStore.getState();
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         isEditingFromGlobalScope: true,
       });
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
@@ -749,30 +755,29 @@ describe("WizardStore", () => {
 
       const { skillConfigs } = useWizardStore.getState();
       const active = skillConfigs.filter((sc) => !sc.excluded);
-      expect(active).toStrictEqual([
-        {
-          id: "web-framework-vue-composition-api",
+      expect(active).toStrictEqual(
+        buildSkillConfigs(["web-framework-vue-composition-api"], {
           scope: "global",
           source: "agents-inc",
-        },
-      ]);
+        }),
+      );
       const excluded = skillConfigs.filter((sc) => sc.excluded);
-      expect(excluded).toStrictEqual([
-        {
-          id: "web-framework-react",
+      expect(excluded).toStrictEqual(
+        buildSkillConfigs(["web-framework-react"], {
           scope: "global",
           source: "agents-inc",
           excluded: true,
-        },
-      ]);
+        }),
+      );
     });
 
     it("should clear excluded flag when re-selecting excluded skill during edit", () => {
       const store = useWizardStore.getState();
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         isEditingFromGlobalScope: true,
       });
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
@@ -825,13 +830,16 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        skillConfigs: [{ id: "web-framework-react", scope: "project", source: "eject" }],
-        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+        skillConfigs: buildSkillConfigs(["web-framework-react"]),
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "eject",
+        }),
       });
 
       store.toggleSkillScope("web-framework-react");
       const { skillConfigs, toastMessage } = useWizardStore.getState();
-      expect(skillConfigs[0].scope).toBe("project");
+      expect(skillConfigs).toStrictEqual(buildSkillConfigs(["web-framework-react"]));
       expect(toastMessage).toBe("Already exists as ejected skill at global scope");
     });
 
@@ -839,8 +847,14 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        skillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
-        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+        skillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "eject",
+        }),
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "eject",
+        }),
       });
 
       store.toggleSkillScope("web-framework-react");
@@ -853,7 +867,7 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        skillConfigs: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        skillConfigs: buildSkillConfigs(["web-framework-react"]),
         globalPreselections: [],
       });
 
@@ -877,16 +891,21 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
       });
 
       store.toggleSkillScope("web-framework-react");
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toStrictEqual([
-        { id: "web-framework-react", scope: "project", source: "agents-inc" },
-        { id: "web-framework-react", scope: "global", excluded: true, source: "agents-inc" },
+        ...buildSkillConfigs(["web-framework-react"], { scope: "project", source: "agents-inc" }),
+        ...buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+          excluded: true,
+        }),
       ]);
     });
 
@@ -894,17 +913,18 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
       });
 
       store.toggleSkillScope("web-framework-react"); // global → project (adds excluded)
       store.toggleSkillScope("web-framework-react"); // project → global (removes excluded)
       const { skillConfigs } = useWizardStore.getState();
-      expect(skillConfigs).toStrictEqual([
-        { id: "web-framework-react", scope: "global", source: "agents-inc" },
-      ]);
+      expect(skillConfigs).toStrictEqual(
+        buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+      );
     });
 
     it("should not add excluded entry when toggling scope during fresh init", () => {
@@ -916,6 +936,42 @@ describe("WizardStore", () => {
       const { skillConfigs } = useWizardStore.getState();
       expect(skillConfigs).toHaveLength(1);
       expect(skillConfigs[0].scope).toBe("project");
+    });
+
+    it("should allow P→G reverse toggle for ejected skills after G→P toggle (round-trip)", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      useWizardStore.setState({
+        skillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "eject",
+        }),
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "eject",
+        }),
+      });
+
+      // G→P: should succeed and create tombstone
+      store.toggleSkillScope("web-framework-react");
+      const afterGtoP = useWizardStore.getState();
+      expect(afterGtoP.skillConfigs).toStrictEqual([
+        ...buildSkillConfigs(["web-framework-react"], { source: "eject" }),
+        ...buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "eject",
+          excluded: true,
+        }),
+      ]);
+      expect(afterGtoP.toastMessage).toBeNull();
+
+      // P→G: should succeed (not blocked) and remove tombstone
+      store.toggleSkillScope("web-framework-react");
+      const afterPtoG = useWizardStore.getState();
+      expect(afterPtoG.skillConfigs).toStrictEqual(
+        buildSkillConfigs(["web-framework-react"], { scope: "global", source: "eject" }),
+      );
+      expect(afterPtoG.toastMessage).toBeNull();
     });
 
     it("should update source via setSkillSource", () => {
@@ -995,12 +1051,11 @@ describe("WizardStore", () => {
 
       const savedConfigs: SkillConfig[] = [
         ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
-        {
-          id: "web-testing-vitest",
+        ...buildSkillConfigs(["web-testing-vitest"], {
           scope: "global",
           source: "agents-inc",
           excluded: true,
-        },
+        }),
       ];
 
       store.populateFromSkillIds(["web-framework-react", "api-framework-hono"], savedConfigs);
@@ -1021,7 +1076,11 @@ describe("WizardStore", () => {
       initializeMatrix(REACT_HONO_FRAMEWORK_API_MATRIX);
 
       const savedConfigs: SkillConfig[] = [
-        { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+        ...buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+          excluded: true,
+        }),
       ];
 
       // Pass the same skill ID that is excluded in savedConfigs
@@ -1032,6 +1091,26 @@ describe("WizardStore", () => {
       // Should have exactly one entry for react (active, not excluded)
       expect(reactConfigs).toHaveLength(1);
       expect(reactConfigs[0].excluded).toBeUndefined();
+    });
+
+    it("should prefer project-scoped entry when savedConfigs has duplicate skill with both scopes", () => {
+      const store = useWizardStore.getState();
+
+      initializeMatrix(REACT_HONO_FRAMEWORK_API_MATRIX);
+
+      // D-198: savedConfigs contains the same skill ID twice — once global, once project
+      const savedConfigs: SkillConfig[] = [
+        ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+        ...buildSkillConfigs(["web-framework-react"]),
+      ];
+
+      store.populateFromSkillIds(["web-framework-react"], savedConfigs);
+
+      const { skillConfigs } = useWizardStore.getState();
+      const reactConfigs = skillConfigs.filter((sc) => sc.id === "web-framework-react");
+      expect(reactConfigs).toHaveLength(1);
+      // Project scope should win over global scope — verify full shape
+      expect(reactConfigs[0]).toStrictEqual(buildSkillConfigs(["web-framework-react"])[0]);
     });
 
     it("should remove global skillConfigs when domain is deselected during fresh init", () => {
@@ -1050,9 +1129,10 @@ describe("WizardStore", () => {
     it("should mark global skillConfigs as excluded when domain is deselected during edit", () => {
       const store = useWizardStore.getState();
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         isEditingFromGlobalScope: true,
       });
       store.toggleDomain("web");
@@ -1074,7 +1154,7 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       // Set scope to project
       useWizardStore.setState({
-        skillConfigs: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        skillConfigs: buildSkillConfigs(["web-framework-react"]),
       });
 
       store.toggleDomain("web");
@@ -1087,7 +1167,7 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       // Change scope to project
       useWizardStore.setState({
-        skillConfigs: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        skillConfigs: buildSkillConfigs(["web-framework-react"]),
       });
 
       // Toggle off the skill
@@ -1107,8 +1187,8 @@ describe("WizardStore", () => {
       // Set react to global, zustand to project
       useWizardStore.setState({
         skillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-state-zustand", scope: "project", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-state-zustand"]),
         ],
       });
 
@@ -1123,9 +1203,10 @@ describe("WizardStore", () => {
       initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
       const store = useWizardStore.getState();
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         isEditingFromGlobalScope: true,
       });
       store.toggleDomain("web");
@@ -1134,8 +1215,8 @@ describe("WizardStore", () => {
       // Set react to global, zustand to project
       useWizardStore.setState({
         skillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-state-zustand", scope: "project", source: "eject" },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "global", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-state-zustand"]),
         ],
       });
 
@@ -1680,7 +1761,10 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "eject",
+        }),
       });
 
       const rows = store.buildSourceRows();
@@ -1703,7 +1787,10 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
         isEditingFromGlobalScope: true,
-        installedSkillConfigs: [{ id: "web-framework-react", scope: "global", source: "eject" }],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "eject",
+        }),
       });
 
       const rows = store.buildSourceRows();
@@ -1715,7 +1802,7 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        installedSkillConfigs: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"]),
       });
 
       const rows = store.buildSourceRows();
@@ -1728,10 +1815,14 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       // Simulate: was installed globally, now toggled to project
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
-        skillConfigs: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        skillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "project",
+          source: "agents-inc",
+        }),
       });
 
       const rows = store.buildSourceRows();
@@ -1754,7 +1845,10 @@ describe("WizardStore", () => {
       // No installedSkillConfigs entry for this skill — it's new
       useWizardStore.setState({
         installedSkillConfigs: [],
-        skillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        skillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
       });
 
       const rows = store.buildSourceRows();
@@ -1767,10 +1861,14 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
-        skillConfigs: [{ id: "web-framework-react", scope: "global", source: "agents-inc" }],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        skillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
       });
 
       const rows = store.buildSourceRows();
@@ -1783,12 +1881,15 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       // Don't toggle any technology — the excluded skill was deselected
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
-        skillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
+        skillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+          excluded: true,
+        }),
       });
 
       const rows = store.buildSourceRows();
@@ -1802,12 +1903,17 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         skillConfigs: [
-          { id: "web-framework-react", scope: "project", source: "agents-inc" },
-          { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "project", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-framework-react"], {
+            scope: "global",
+            source: "agents-inc",
+            excluded: true,
+          }),
         ],
       });
 
@@ -1824,7 +1930,10 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
         installedSkillConfigs: [],
-        skillConfigs: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
+        skillConfigs: buildSkillConfigs(["web-framework-react"], {
+          scope: "project",
+          source: "agents-inc",
+        }),
       });
 
       const rows = store.buildSourceRows();
@@ -1839,14 +1948,17 @@ describe("WizardStore", () => {
       // React is selected (re-scoped to project), Vitest is NOT selected (purely excluded)
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       useWizardStore.setState({
-        installedSkillConfigs: [
-          { id: "web-framework-react", scope: "global", source: "agents-inc" },
-          { id: "web-testing-vitest", scope: "global", source: "agents-inc" },
-        ],
+        installedSkillConfigs: buildSkillConfigs(["web-framework-react", "web-testing-vitest"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         skillConfigs: [
-          { id: "web-framework-react", scope: "project", source: "agents-inc" },
-          { id: "web-framework-react", scope: "global", source: "agents-inc", excluded: true },
-          { id: "web-testing-vitest", scope: "global", source: "agents-inc", excluded: true },
+          ...buildSkillConfigs(["web-framework-react"], { scope: "project", source: "agents-inc" }),
+          ...buildSkillConfigs(["web-framework-react", "web-testing-vitest"], {
+            scope: "global",
+            source: "agents-inc",
+            excluded: true,
+          }),
         ],
       });
 
@@ -1883,7 +1995,63 @@ describe("WizardStore", () => {
 
       const { selectedAgents, agentConfigs } = useWizardStore.getState();
       expect(selectedAgents).toStrictEqual(["web-developer"]);
-      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "global" }]);
+      expect(agentConfigs).toStrictEqual(buildAgentConfigs(["web-developer"], { scope: "global" }));
+    });
+
+    it("should block toggling globally installed agents from project scope and set toastMessage", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      useWizardStore.setState({
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        isEditingFromGlobalScope: false,
+        isInitMode: false,
+      });
+
+      store.toggleAgent("web-developer");
+
+      const { selectedAgents, agentConfigs, toastMessage } = useWizardStore.getState();
+      expect(selectedAgents).toStrictEqual(["web-developer"]);
+      expect(agentConfigs).toStrictEqual(buildAgentConfigs(["web-developer"], { scope: "global" }));
+      expect(toastMessage).toBe("Global agents cannot be changed from project scope");
+    });
+
+    it("should allow toggling globally installed agents during init mode", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      useWizardStore.setState({
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        isEditingFromGlobalScope: false,
+        isInitMode: true,
+      });
+
+      store.toggleAgent("web-developer");
+
+      const { selectedAgents, agentConfigs, toastMessage } = useWizardStore.getState();
+      // With a pre-existing global config, tombstone creation works — agent stays in list with excluded flag
+      expect(selectedAgents).toStrictEqual(["web-developer"]);
+      expect(agentConfigs).toStrictEqual(
+        buildAgentConfigs(["web-developer"], { scope: "global", excluded: true }),
+      );
+      expect(toastMessage).toBeNull();
+    });
+
+    it("should allow toggling globally installed agents from global scope", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      useWizardStore.setState({
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        isEditingFromGlobalScope: true,
+        isInitMode: false,
+      });
+
+      store.toggleAgent("web-developer");
+
+      const { selectedAgents, agentConfigs, toastMessage } = useWizardStore.getState();
+      expect(selectedAgents).toStrictEqual(["web-developer"]);
+      expect(agentConfigs).toStrictEqual(
+        buildAgentConfigs(["web-developer"], { scope: "global", excluded: true }),
+      );
+      expect(toastMessage).toBeNull();
     });
 
     it("should toggle agent off", () => {
@@ -1927,7 +2095,7 @@ describe("WizardStore", () => {
       store.toggleAgent("web-developer");
 
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "global" }]);
+      expect(agentConfigs).toStrictEqual(buildAgentConfigs(["web-developer"], { scope: "global" }));
     });
 
     it("should remove global agent from agentConfigs when toggled off during fresh init", () => {
@@ -1942,15 +2110,16 @@ describe("WizardStore", () => {
     it("should mark global agent as excluded in agentConfigs when toggled off during edit", () => {
       const store = useWizardStore.getState();
       useWizardStore.setState({
-        installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        isEditingFromGlobalScope: true,
       });
       store.toggleAgent("web-developer");
       store.toggleAgent("web-developer");
 
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toStrictEqual([
-        { name: "web-developer", scope: "global", excluded: true },
-      ]);
+      expect(agentConfigs).toStrictEqual(
+        buildAgentConfigs(["web-developer"], { scope: "global", excluded: true }),
+      );
     });
 
     it("should remove project agent from agentConfigs when toggled off", () => {
@@ -1958,7 +2127,7 @@ describe("WizardStore", () => {
       store.toggleAgent("web-developer");
       // Set to project scope
       useWizardStore.setState({
-        agentConfigs: [{ name: "web-developer", scope: "project" as const }],
+        agentConfigs: buildAgentConfigs(["web-developer"]),
       });
       store.toggleAgent("web-developer");
 
@@ -1972,12 +2141,12 @@ describe("WizardStore", () => {
       store.toggleAgentScope("web-developer");
 
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "project" }]);
+      expect(agentConfigs).toStrictEqual(buildAgentConfigs(["web-developer"]));
 
       store.toggleAgentScope("web-developer");
-      expect(useWizardStore.getState().agentConfigs).toStrictEqual([
-        { name: "web-developer", scope: "global" },
-      ]);
+      expect(useWizardStore.getState().agentConfigs).toStrictEqual(
+        buildAgentConfigs(["web-developer"], { scope: "global" }),
+      );
     });
 
     it("should set and clear focusedAgentId", () => {
@@ -2004,7 +2173,8 @@ describe("WizardStore", () => {
     it("should mark global agent as excluded when deselected during edit and keep in selectedAgents", () => {
       const store = useWizardStore.getState();
       useWizardStore.setState({
-        installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        isEditingFromGlobalScope: true,
       });
       store.toggleAgent("web-developer");
       // web-developer is now selected with global scope
@@ -2012,15 +2182,16 @@ describe("WizardStore", () => {
       store.toggleAgent("web-developer");
       const { selectedAgents, agentConfigs } = useWizardStore.getState();
       expect(selectedAgents).toStrictEqual(["web-developer"]);
-      expect(agentConfigs).toStrictEqual([
-        { name: "web-developer", scope: "global", excluded: true },
-      ]);
+      expect(agentConfigs).toStrictEqual(
+        buildAgentConfigs(["web-developer"], { scope: "global", excluded: true }),
+      );
     });
 
     it("should clear excluded flag when re-selecting agent during edit", () => {
       const store = useWizardStore.getState();
       useWizardStore.setState({
-        installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        isEditingFromGlobalScope: true,
       });
       store.toggleAgent("web-developer");
       store.toggleAgent("web-developer"); // deselect → excluded (edit flow)
@@ -2037,7 +2208,8 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleAgent("web-developer");
       useWizardStore.setState({
-        installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        isEditingFromGlobalScope: true,
       });
 
       store.toggleAgent("web-developer");
@@ -2063,7 +2235,7 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleAgent("web-developer");
       useWizardStore.setState({
-        installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
       });
 
       store.toggleAgent("web-developer");
@@ -2083,21 +2255,21 @@ describe("WizardStore", () => {
 
       store.toggleAgentScope("web-developer");
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "global" }]);
+      expect(agentConfigs).toStrictEqual(buildAgentConfigs(["web-developer"], { scope: "global" }));
     });
 
     it("should add excluded global entry when toggling previously-installed global agent to project", () => {
       const store = useWizardStore.getState();
       store.toggleAgent("web-developer");
       useWizardStore.setState({
-        installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
       });
 
       store.toggleAgentScope("web-developer");
       const { agentConfigs } = useWizardStore.getState();
       expect(agentConfigs).toStrictEqual([
-        { name: "web-developer", scope: "project" },
-        { name: "web-developer", scope: "global", excluded: true },
+        ...buildAgentConfigs(["web-developer"]),
+        ...buildAgentConfigs(["web-developer"], { scope: "global", excluded: true }),
       ]);
     });
 
@@ -2105,13 +2277,13 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleAgent("web-developer");
       useWizardStore.setState({
-        installedAgentConfigs: [{ name: "web-developer", scope: "global" }],
+        installedAgentConfigs: buildAgentConfigs(["web-developer"], { scope: "global" }),
       });
 
       store.toggleAgentScope("web-developer"); // global → project (adds excluded)
       store.toggleAgentScope("web-developer"); // project → global (removes excluded)
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "global" }]);
+      expect(agentConfigs).toStrictEqual(buildAgentConfigs(["web-developer"], { scope: "global" }));
     });
 
     it("should not add excluded entry when toggling agent scope during fresh init", () => {
@@ -2121,7 +2293,7 @@ describe("WizardStore", () => {
 
       store.toggleAgentScope("web-developer");
       const { agentConfigs } = useWizardStore.getState();
-      expect(agentConfigs).toStrictEqual([{ name: "web-developer", scope: "project" }]);
+      expect(agentConfigs).toStrictEqual(buildAgentConfigs(["web-developer"]));
     });
   });
 
@@ -2231,7 +2403,7 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       // Set up an excluded agent config that is not in any domain's agents
       useWizardStore.setState({
-        agentConfigs: [{ name: "codex-keeper", scope: "global", excluded: true }],
+        agentConfigs: buildAgentConfigs(["codex-keeper"], { scope: "global", excluded: true }),
       });
 
       store.toggleDomain("web");
@@ -2250,7 +2422,7 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       // Set up web-developer as excluded (it IS in web domain's agent list)
       useWizardStore.setState({
-        agentConfigs: [{ name: "web-developer", scope: "global", excluded: true }],
+        agentConfigs: buildAgentConfigs(["web-developer"], { scope: "global", excluded: true }),
       });
 
       store.toggleDomain("web");
@@ -2504,7 +2676,10 @@ describe("WizardStore", () => {
       initializeMatrix(ALL_SKILLS_FULLSTACK_CATEGORIES_MATRIX);
       const store = useWizardStore.getState();
       useWizardStore.setState({
-        installedSkillConfigs: [{ id: "web-state-pinia", scope: "global", source: "agents-inc" }],
+        installedSkillConfigs: buildSkillConfigs(["web-state-pinia"], {
+          scope: "global",
+          source: "agents-inc",
+        }),
         isEditingFromGlobalScope: true,
       });
 
@@ -2518,12 +2693,13 @@ describe("WizardStore", () => {
       // Edit flow: pinia removed from domainSelections but kept as excluded in skillConfigs
       expect(state.domainSelections.web!["web-client-state"]).not.toContain("web-state-pinia");
       const piniaConfig = state.skillConfigs.find((sc) => sc.id === "web-state-pinia");
-      expect(piniaConfig).toStrictEqual({
-        id: "web-state-pinia",
-        scope: "global",
-        source: "agents-inc",
-        excluded: true,
-      });
+      expect(piniaConfig).toStrictEqual(
+        buildSkillConfigs(["web-state-pinia"], {
+          scope: "global",
+          source: "agents-inc",
+          excluded: true,
+        })[0],
+      );
       // Zustand kept in both
       expect(state.domainSelections.web!["web-client-state"]).toContain("web-state-zustand");
       expect(state.skillConfigs.some((sc) => sc.id === "web-state-zustand")).toBe(true);
