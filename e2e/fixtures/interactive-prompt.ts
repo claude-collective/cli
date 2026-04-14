@@ -5,7 +5,7 @@ import { TIMEOUTS, INTERNAL_DELAYS } from "../pages/constants.js";
 
 /**
  * Page object for non-wizard interactive prompts (uninstall confirmation,
- * update confirmation, build stack selector, search UI).
+ * update confirmation, search UI).
  *
  * Wraps TerminalSession + TerminalScreen so test files do NOT import
  * TerminalSession directly.

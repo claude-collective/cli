@@ -85,7 +85,6 @@ Every command extends `BaseCommand` and defines `static flags`. oclif handles ty
 | `new agent`         | `commands/new/agent.tsx`        | `--purpose` (string), `--non-interactive` (boolean), `--refresh` (boolean)                                                                                                                 |
 | `new marketplace`   | `commands/new/marketplace.ts`   | `--force` (boolean), `--output` (string)                                                                                                                                                   |
 | `build plugins`     | `commands/build/plugins.ts`     | `--skills-dir` (string), `--agents-dir` (string), `--output-dir` (string), `--skill` (string), `--verbose` (boolean)                                                                       |
-| `build stack`       | `commands/build/stack.tsx`      | `--stack` (string), `--output-dir` (string), `--agent-source` (string), `--refresh` (boolean), `--verbose` (boolean)                                                                       |
 | `build marketplace` | `commands/build/marketplace.ts` | `--plugins-dir` (string), `--output` (string), `--name` (string), `--version` (string), `--description` (string), `--owner-name` (string), `--owner-email` (string), `--verbose` (boolean) |
 
 **Validation pattern:** oclif validates flag types, required status, and enum `options` at parse time. String flags pass through without content validation -- downstream code validates semantics (e.g., `validateSourceFormat` for source strings).

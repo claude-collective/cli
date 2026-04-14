@@ -49,7 +49,6 @@ export const STEP_TEXT = {
   // Status / progress
   LOADING_SKILLS: "Loading skills",
   RECOMPILING: "Recompiling agents",
-  COMPILING_STACK: "Compiling stack",
   LOADED: "Loaded",
   LOADED_LOCAL: "Loaded from local:",
 
@@ -75,7 +74,6 @@ export const STEP_TEXT = {
   CONFIGURATION_LABEL: "Configuration:",
   READY_TO_INSTALL: "Ready to install",
   NO_SKILLS_FOUND: "No skills found",
-  SELECT_STACK_COMPILE: "Select a stack to compile",
   UNINSTALL_CANCELLED: "Uninstall cancelled",
 
   // Scope warnings

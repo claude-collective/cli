@@ -90,9 +90,8 @@ describe("help command", () => {
     it("should list build subcommands", async () => {
       const { stdout } = await runCliCommand(["help", "build"]);
 
-      // build has subcommands: plugins, stack, marketplace
+      // build has subcommands: plugins, marketplace
       expect(stdout).toContain("plugins");
-      expect(stdout).toContain("stack");
       expect(stdout).toContain("marketplace");
     });
   });
