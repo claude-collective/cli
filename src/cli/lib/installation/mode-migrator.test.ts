@@ -376,7 +376,11 @@ describe("mode-migrator", () => {
 
         const result = await executeMigration(plan, tempDir, sourceResult);
 
-        expect(claudePluginUninstall).toHaveBeenCalledWith("web-framework-react", "project", tempDir);
+        expect(claudePluginUninstall).toHaveBeenCalledWith(
+          "web-framework-react",
+          "project",
+          tempDir,
+        );
         expect(result.ejectedSkills).toStrictEqual(["web-framework-react"]);
       });
 
