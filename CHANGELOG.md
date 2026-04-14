@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.127.0] - 2026-04-14
+
+**Wizard sources-step UX polish**
+
+- Read-only global rows are now focusable from project scope; pressing Space surfaces an explanatory toast instead of being silently ignored
+- Lock icon moved before the skill name in the source grid for cleaner alignment
+- Mode-migrator tests isolated from real user home directory
+
+See [changelogs/0.127.0.md](./changelogs/0.127.0.md) for full details.
+
 ## [0.126.0] - 2026-04-14
 
 **Bug fixes: global plugin scope migration, source step navigation, build step cleanup**
