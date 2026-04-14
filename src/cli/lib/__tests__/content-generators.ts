@@ -34,6 +34,29 @@ tools:
 ${tools.map((t) => `  - ${t}`).join("\n")}`;
 }
 
+/**
+ * Renders an installed agent markdown file with YAML frontmatter.
+ * Used for `~/.claude/agents/<name>.md` or `<project>/.claude/agents/<name>.md`,
+ * which is the format validated by `validateAgentFrontmatter`.
+ */
+export function renderAgentMd(
+  name: string,
+  description?: string,
+  options?: { tools?: string[]; body?: string },
+): string {
+  const desc = description ?? `Test ${name} agent`;
+  const tools = (options?.tools ?? ["Read", "Write"]).join(", ");
+  const body = options?.body ?? `# ${name}\n\n${desc}`;
+  return `---
+name: ${name}
+description: ${desc}
+tools: ${tools}
+---
+
+${body}
+`;
+}
+
 export function renderCategoriesTs(categories: Record<string, unknown>): string {
   return renderConfigTs(categories);
 }

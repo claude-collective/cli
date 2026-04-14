@@ -187,7 +187,7 @@ type E2ESourceOptions = {
  *
  * When `options.relationships` is provided, a `config/skill-rules.ts` file is
  * written to the source with those relationship rules. This enables E2E testing
- * of slug-based relationship resolution via `cc validate --source` and `cc info`.
+ * of slug-based relationship resolution via `cc validate` and `cc info`.
  */
 export async function createE2ESource(options?: E2ESourceOptions): Promise<{
   sourceDir: string;

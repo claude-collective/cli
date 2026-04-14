@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
+import { stringify as stringifyYaml } from "yaml";
 import {
   isSnakeCase,
   validateMetadataConventions,
@@ -8,8 +9,22 @@ import {
   validateSource,
 } from "./source-validator";
 import { createTempDir, cleanupTempDir } from "./__tests__/test-fs-utils";
-import { STANDARD_DIRS, STANDARD_FILES } from "../consts";
-import { renderSkillMd } from "./__tests__/content-generators";
+import {
+  DIRS,
+  SKILL_CATEGORIES_PATH,
+  SKILL_RULES_PATH,
+  STACKS_FILE_PATH,
+  STANDARD_DIRS,
+  STANDARD_FILES,
+} from "../consts";
+import { renderConfigTs, renderAgentYaml, renderSkillMd } from "./__tests__/content-generators";
+import {
+  VALID_EMBEDDED_SKILL_METADATA_FILE,
+  VALID_SKILL_CATEGORIES_FILE,
+  VALID_SKILL_RULES_FILE,
+  VALID_STACK_CONFIG_FILE,
+  VALID_STACKS_CONFIG_FILE,
+} from "./__tests__/mock-data/mock-source-files.js";
 
 describe("source-validator", () => {
   describe("isSnakeCase", () => {
@@ -292,6 +307,250 @@ describe("source-validator", () => {
           warningCount: expect.any(Number),
         }),
       );
+    });
+
+    describe("Phase 4 — stacks", () => {
+      it("should report zero issues when src/stacks/ is absent", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const result = await validateSource(sourceDir);
+
+        const stackIssues = result.issues.filter((i) => i.file.startsWith(DIRS.stacks));
+        expect(stackIssues).toStrictEqual([]);
+      });
+
+      it("should report zero issues for valid stack config.yaml and embedded-skill metadata", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const stackDir = path.join(sourceDir, DIRS.stacks, "test-stack");
+        await mkdir(stackDir, { recursive: true });
+        await writeFile(
+          path.join(stackDir, STANDARD_FILES.CONFIG_YAML),
+          stringifyYaml(VALID_STACK_CONFIG_FILE),
+        );
+
+        const embeddedSkillDir = path.join(stackDir, "skills", "react");
+        await mkdir(embeddedSkillDir, { recursive: true });
+        await writeFile(
+          path.join(embeddedSkillDir, STANDARD_FILES.METADATA_YAML),
+          stringifyYaml(VALID_EMBEDDED_SKILL_METADATA_FILE),
+        );
+
+        const result = await validateSource(sourceDir);
+
+        const stackIssues = result.issues.filter((i) => i.file.startsWith(DIRS.stacks));
+        expect(stackIssues).toStrictEqual([]);
+      });
+
+      it("should report error when stack config.yaml has schema violation", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const stackDir = path.join(sourceDir, DIRS.stacks, "test-stack");
+        await mkdir(stackDir, { recursive: true });
+        const invalidStackConfig = { ...VALID_STACK_CONFIG_FILE, version: undefined };
+        await writeFile(
+          path.join(stackDir, STANDARD_FILES.CONFIG_YAML),
+          stringifyYaml(invalidStackConfig),
+        );
+
+        const result = await validateSource(sourceDir);
+
+        const configPath = path.join(DIRS.stacks, "test-stack", STANDARD_FILES.CONFIG_YAML);
+        const versionErrors = result.issues.filter(
+          (i) => i.file === configPath && i.message.includes("version"),
+        );
+        expect(versionErrors.length).toBeGreaterThan(0);
+        expect(versionErrors[0]?.severity).toBe("error");
+      });
+
+      it("should report error when embedded-skill metadata.yaml has schema violation", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const stackDir = path.join(sourceDir, DIRS.stacks, "test-stack");
+        await mkdir(stackDir, { recursive: true });
+        await writeFile(
+          path.join(stackDir, STANDARD_FILES.CONFIG_YAML),
+          stringifyYaml(VALID_STACK_CONFIG_FILE),
+        );
+
+        const embeddedSkillDir = path.join(stackDir, "skills", "react");
+        await mkdir(embeddedSkillDir, { recursive: true });
+        const invalidMetadata = { ...VALID_EMBEDDED_SKILL_METADATA_FILE, author: "no-at-sign" };
+        await writeFile(
+          path.join(embeddedSkillDir, STANDARD_FILES.METADATA_YAML),
+          stringifyYaml(invalidMetadata),
+        );
+
+        const result = await validateSource(sourceDir);
+
+        const metadataPath = path.join(
+          DIRS.stacks,
+          "test-stack",
+          "skills",
+          "react",
+          STANDARD_FILES.METADATA_YAML,
+        );
+        const authorErrors = result.issues.filter(
+          (i) => i.file === metadataPath && i.message.includes("author"),
+        );
+        expect(authorErrors.length).toBeGreaterThan(0);
+        expect(authorErrors[0]?.severity).toBe("error");
+      });
+    });
+
+    describe("Phase 5 — agents", () => {
+      it("should report zero issues when src/agents/ is absent", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const result = await validateSource(sourceDir);
+
+        const agentIssues = result.issues.filter((i) => i.file.startsWith(DIRS.agents));
+        expect(agentIssues).toStrictEqual([]);
+      });
+
+      it("should report zero issues for valid agent metadata.yaml", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const agentDir = path.join(sourceDir, DIRS.agents, "developer", "web-developer");
+        await mkdir(agentDir, { recursive: true });
+        await writeFile(
+          path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML),
+          renderAgentYaml("web-developer"),
+        );
+
+        const result = await validateSource(sourceDir);
+
+        const agentIssues = result.issues.filter((i) => i.file.startsWith(DIRS.agents));
+        expect(agentIssues).toStrictEqual([]);
+      });
+
+      it("should report error when agent metadata.yaml has schema violation", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const agentDir = path.join(sourceDir, DIRS.agents, "developer", "web-developer");
+        await mkdir(agentDir, { recursive: true });
+        // Missing required 'tools' field (schema requires min(1))
+        const invalidAgent = {
+          id: "web-developer",
+          title: "Web Developer",
+          description: "Builds web apps",
+        };
+        await writeFile(
+          path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML),
+          stringifyYaml(invalidAgent),
+        );
+
+        const result = await validateSource(sourceDir);
+
+        const agentPath = path.join(
+          DIRS.agents,
+          "developer",
+          "web-developer",
+          STANDARD_FILES.AGENT_METADATA_YAML,
+        );
+        const toolsErrors = result.issues.filter(
+          (i) => i.file === agentPath && i.message.includes("tools"),
+        );
+        expect(toolsErrors.length).toBeGreaterThan(0);
+        expect(toolsErrors[0]?.severity).toBe("error");
+      });
+    });
+
+    describe("Phase 6 — config TS files", () => {
+      it("should report zero issues when config/ directory is absent", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const result = await validateSource(sourceDir);
+
+        const configFilePaths = [SKILL_CATEGORIES_PATH, SKILL_RULES_PATH, STACKS_FILE_PATH];
+        const configIssues = result.issues.filter(
+          (i) =>
+            configFilePaths.includes(i.file) &&
+            !i.message.includes("Cross-reference validation skipped"),
+        );
+        expect(configIssues).toStrictEqual([]);
+      });
+
+      it("should report zero issues for valid config/skill-categories.ts, skill-rules.ts, stacks.ts", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const configDir = path.join(sourceDir, "config");
+        await mkdir(configDir, { recursive: true });
+        await writeFile(
+          path.join(sourceDir, SKILL_CATEGORIES_PATH),
+          renderConfigTs(VALID_SKILL_CATEGORIES_FILE),
+        );
+        await writeFile(
+          path.join(sourceDir, SKILL_RULES_PATH),
+          renderConfigTs(VALID_SKILL_RULES_FILE),
+        );
+        await writeFile(
+          path.join(sourceDir, STACKS_FILE_PATH),
+          renderConfigTs(VALID_STACKS_CONFIG_FILE),
+        );
+
+        const result = await validateSource(sourceDir);
+
+        const configFilePaths = [SKILL_CATEGORIES_PATH, SKILL_RULES_PATH, STACKS_FILE_PATH];
+        const configIssues = result.issues.filter((i) => configFilePaths.includes(i.file));
+        expect(configIssues).toStrictEqual([]);
+      });
+
+      it("should report error when config/skill-categories.ts default export fails schema", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const configDir = path.join(sourceDir, "config");
+        await mkdir(configDir, { recursive: true });
+        // Missing required 'version' field
+        await writeFile(
+          path.join(sourceDir, SKILL_CATEGORIES_PATH),
+          renderConfigTs({ categories: {} }),
+        );
+
+        const result = await validateSource(sourceDir);
+
+        const categoriesErrors = result.issues.filter(
+          (i) => i.file === SKILL_CATEGORIES_PATH && i.severity === "error",
+        );
+        expect(categoriesErrors.length).toBeGreaterThan(0);
+      });
+
+      it("should report error when config/stacks.ts has no default export", async () => {
+        const sourceDir = path.join(tempDir, "source");
+        const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+        await mkdir(skillsDir, { recursive: true });
+
+        const configDir = path.join(sourceDir, "config");
+        await mkdir(configDir, { recursive: true });
+        await writeFile(path.join(sourceDir, STACKS_FILE_PATH), "export const stacks = {};\n");
+
+        const result = await validateSource(sourceDir);
+
+        const stacksErrors = result.issues.filter(
+          (i) => i.file === STACKS_FILE_PATH && i.severity === "error",
+        );
+        expect(stacksErrors.length).toBeGreaterThan(0);
+      });
     });
   });
 });
