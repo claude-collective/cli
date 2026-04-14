@@ -120,14 +120,14 @@ const SourceSection: React.FC<SourceSectionProps> = ({
     <Box flexDirection="row">
       <Box width={SKILL_NAME_WIDTH}>
         {effectiveFocused ? (
-          <Text
-            color={CLI_COLORS.WHITE}
-            backgroundColor={CLI_COLORS.LABEL_BG}
-          >{` ${getSkillById(row.skillId).displayName} `}</Text>
+          <Text color={CLI_COLORS.WHITE} backgroundColor={CLI_COLORS.LABEL_BG}>
+            {row.readOnly ? `${UI_SYMBOLS.LOCK} ` : ""}
+            {` ${getSkillById(row.skillId).displayName} `}
+          </Text>
         ) : (
           <Text color={CLI_COLORS.NEUTRAL} dimColor={row.readOnly}>
+            {row.readOnly ? `${UI_SYMBOLS.LOCK} ` : ""}
             {getSkillById(row.skillId).displayName}
-            {row.readOnly ? ` ${UI_SYMBOLS.LOCK}` : ""}
           </Text>
         )}
       </Box>
