@@ -11,7 +11,7 @@ An agent composition framework for [Claude Code](https://docs.anthropic.com/en/d
 3. Select your subagents
 4. Customize per skill and subagent:
    - **Mode** plugin (managed) or eject (full control)
-   - **Scope** global (all projects) or project (local)
+   - **Scope** global (all projects) or project (local) — keep meta agents global, send domain agents project-side when you work across frameworks
    - **Loading** preloaded (SKILL.md always loaded) or dynamic (loaded via agent content)
 5. Map skills to subagents in the strictly-typed `config.ts`
 6. Compile
@@ -141,7 +141,6 @@ Each subagent is composed from modular partials (role, workflow, output format) 
 | ------------------- | ---------------------------------------------- |
 | `build marketplace` | Generate `marketplace.json` from source skills |
 | `build plugins`     | Build skill and agent plugins for distribution |
-| `build stack`       | Build a stack as a single plugin               |
 
 ### Diagnostics
 
@@ -150,10 +149,9 @@ Each subagent is composed from modular partials (role, workflow, output format) 
 | `doctor`    | Diagnose setup issues               |
 | `list`      | Show installed skills and agents    |
 | `validate`  | Validate config and skill structure |
-| `info`      | Show project configuration details  |
 | `uninstall` | Remove Agents Inc from your project |
 
-Run `agentsinc --help` for full usage.
+Run `agentsinc --help` for full usage, or see the [full commands reference](./docs/reference/commands.md).
 
 ## Links
 

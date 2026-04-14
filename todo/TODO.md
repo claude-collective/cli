@@ -2,10 +2,9 @@
 
 | ID    | Task                                                                        | Status        |
 | ----- | --------------------------------------------------------------------------- | ------------- |
-| D-181 | Add YOLO mode toggle to build step                                          | Investigate   |
+| D-181 | Add YOLO mode toggle to build step. [Plan](./D-181-yolo-mode-toggle.md)     | Ready for Dev |
 | D-180 | Write "Bring your own skills" guide                                         | Investigate   |
 | D-179 | Extract shared post-wizard pipeline into ProjectLifecycle orchestrator      | Investigate   |
-| D-178 | Make stack the hero of project-level installs                               | Investigate   |
 | D-170 | Add PostHog anonymous telemetry                                             | Investigate   |
 | D-168 | Audit E2E tests — replace manual file construction with CLI commands        | Ready for Dev |
 | D-138 | Iterate on sub-agents — review and improve all agent definitions            | Ready for Dev |
@@ -44,13 +43,7 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 
 #### D-181: Add YOLO mode toggle to build step
 
-Disables all skill relationship constraints (single-select categories, requires, conflicts, discourages) so users can select any combination freely. Surface in footer hotkeys.
-
----
-
-#### D-178: Make stack the hero of project-level installs
-
-Without project agents the project config is useless. Guide users toward project stacks with project agents.
+Disables all skill relationship constraints (single-select categories, requires, conflicts, discourages) so users can select any combination freely. Surface in footer hotkeys. **See [./D-181-yolo-mode-toggle.md](./D-181-yolo-mode-toggle.md) for the full plan and open questions.**
 
 ---
 
