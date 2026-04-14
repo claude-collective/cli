@@ -78,17 +78,6 @@ describe("compile command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
 
-    it("should accept --agent-source flag", async () => {
-      const { error } = await runCliCommand([
-        "compile",
-        "--agent-source",
-        "https://example.com/agents",
-      ]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
     it("should accept --refresh flag", async () => {
       const { error } = await runCliCommand(["compile", "--refresh"]);
 
@@ -269,11 +258,6 @@ describe("compile command", () => {
         "/definitely/not/real/path/xyz",
       ]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
-    });
-
-    it("should handle invalid agent-source URL gracefully", async () => {
-      const { error } = await runCliCommand(["compile", "--agent-source", "not-a-valid-url"]);
       expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
   });

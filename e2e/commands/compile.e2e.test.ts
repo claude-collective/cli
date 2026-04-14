@@ -398,49 +398,6 @@ describe("compile command", () => {
     });
   });
 
-  describe("--agent-source flag", () => {
-    let sourceTempDir: string;
-
-    afterEach(async () => {
-      if (sourceTempDir) {
-        await cleanupTempDir(sourceTempDir);
-      }
-    });
-
-    it("should compile using --agent-source flag to load agent definitions from custom path", async () => {
-      tempDir = await createTempDir();
-      const projectDir = path.join(tempDir, "project");
-      await writeProjectConfig(projectDir, { name: "e2e-test", skills: [], agents: [] });
-
-      // Create a local skill in the project
-      await createLocalSkill(projectDir, "web-state-redux-toolkit", {
-        description: "Skill for --agent-source flag verification",
-        metadata: `author: "@test"\ncontentHash: "hash-agent-source"\n`,
-      });
-
-      // Create an E2E source directory (provides agent definitions + templates)
-      const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
-      sourceTempDir = srcTempDir;
-
-      const { exitCode, output } = await CLI.run(["compile", "--agent-source", sourceDir], {
-        dir: projectDir,
-      });
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(output).toContain("Discovered 1 local skills");
-      expect(output).toContain("Fetching agent partials...");
-      expect(output).toContain("Agent partials fetched");
-      expect(output).toMatch(/Recompiled \d+ global agents/);
-
-      await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
-        contains: ["name: web-developer"],
-      });
-      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
-        contains: ["name: api-developer"],
-      });
-    });
-  });
-
   describe("global installation fallback", () => {
     it("should use global installation paths when no project config exists", async () => {
       tempDir = await createTempDir();

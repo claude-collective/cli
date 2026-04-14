@@ -89,9 +89,9 @@ describe("global scope lifecycle -- doctor command", () => {
     const { fakeHome, projectDir } = sharedEnv;
 
     const { exitCode, stdout } = await CLI.run(
-      ["doctor", "--source", sourceDir],
+      ["doctor"],
       { dir: projectDir },
-      { env: { HOME: fakeHome } },
+      { env: { HOME: fakeHome, CC_SOURCE: sourceDir } },
     );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -103,9 +103,9 @@ describe("global scope lifecycle -- doctor command", () => {
     const { fakeHome, projectDir } = sharedEnv;
 
     const { exitCode, stdout } = await CLI.run(
-      ["doctor", "--source", sourceDir],
+      ["doctor"],
       { dir: projectDir },
-      { env: { HOME: fakeHome } },
+      { env: { HOME: fakeHome, CC_SOURCE: sourceDir } },
     );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);

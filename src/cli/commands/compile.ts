@@ -35,9 +35,6 @@ export default class Compile extends BaseCommand {
       description: "Enable verbose logging",
       default: false,
     }),
-    "agent-source": Flags.string({
-      description: "Remote agent partials source (default: local CLI)",
-    }),
   };
 
   async run(): Promise<void> {
@@ -47,7 +44,7 @@ export default class Compile extends BaseCommand {
 
     const installations = await this.detectInstallations(cwd);
     await this.resolveAndLogSource(flags.source);
-    const agentDefs = await this.loadAgentDefsOrFail(flags, cwd);
+    const agentDefs = await this.loadAgentDefsOrFail(cwd);
     await this.compileAllScopes(installations, agentDefs, cwd);
   }
 
@@ -74,18 +71,11 @@ export default class Compile extends BaseCommand {
     }
   }
 
-  private async loadAgentDefsOrFail(
-    flags: { "agent-source"?: string },
-    cwd: string,
-  ): Promise<AgentDefs> {
-    this.log(
-      flags["agent-source"]
-        ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS
-        : STATUS_MESSAGES.LOADING_AGENT_PARTIALS,
-    );
+  private async loadAgentDefsOrFail(cwd: string): Promise<AgentDefs> {
+    this.log(STATUS_MESSAGES.LOADING_AGENT_PARTIALS);
     try {
-      const defs = await loadAgentDefs(flags["agent-source"], { projectDir: cwd });
-      this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");
+      const defs = await loadAgentDefs(undefined, { projectDir: cwd });
+      this.log("Agent partials loaded");
       verbose(`  Agents: ${defs.agentSourcePaths.agentsDir}`);
       verbose(`  Templates: ${defs.agentSourcePaths.templatesDir}`);
       return defs;

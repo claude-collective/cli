@@ -29,7 +29,6 @@ export const STATUS_MESSAGES = {
   DISCOVERING_SKILLS: "Discovering skills...",
   RESOLVING_SOURCE: "Resolving source...",
   RESOLVING_MARKETPLACE_SOURCE: "Resolving marketplace source...",
-  FETCHING_AGENT_PARTIALS: "Fetching agent partials...",
   LOADING_AGENT_PARTIALS: "Loading agent partials...",
   FETCHING_REPOSITORY: "Fetching repository...",
   COPYING_SKILLS: "Copying skills...",

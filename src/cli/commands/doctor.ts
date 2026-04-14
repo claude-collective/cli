@@ -264,13 +264,9 @@ async function checkSkillsInstalled(
   };
 }
 
-async function checkSourceReachable(
-  sourceFlag: string | undefined,
-  projectDir: string,
-): Promise<CheckResult> {
+async function checkSourceReachable(projectDir: string): Promise<CheckResult> {
   try {
     const { sourceResult: result } = await loadSource({
-      sourceFlag,
       projectDir,
     });
 
@@ -387,14 +383,9 @@ export default class Doctor extends BaseCommand {
   static examples = [
     "<%= config.bin %> <%= command.id %>",
     "<%= config.bin %> <%= command.id %> --verbose",
-    "<%= config.bin %> <%= command.id %> --source /path/to/marketplace",
   ];
 
   static flags = {
-    source: Flags.string({
-      char: "s",
-      description: "Skills source path or URL",
-    }),
     verbose: Flags.boolean({
       char: "v",
       description: "Show detailed output",
@@ -426,14 +417,14 @@ export default class Doctor extends BaseCommand {
 
   private async runAllChecks(
     projectDir: string,
-    flags: { source?: string; verbose: boolean },
+    flags: { verbose: boolean },
   ): Promise<CheckResult[]> {
     const detected = await detectProject(projectDir);
     const { result: configResult, config } = checkConfigValid(detected?.config ?? null);
     this.logCheck("Config Valid", configResult, flags.verbose);
 
     // loadSource (called by checkSourceReachable) populates the matrix automatically
-    const sourceResult = await checkSourceReachable(flags.source, projectDir);
+    const sourceResult = await checkSourceReachable(projectDir);
 
     const filteredConfig = config ? filterExcludedEntries(config) : null;
 

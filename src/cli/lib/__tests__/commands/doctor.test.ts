@@ -82,22 +82,6 @@ describe("doctor command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
-
-    it("should accept --source flag", async () => {
-      const { error } = await runCliCommand(["doctor", "--source", "/some/path"]);
-
-      // Should accept --source flag
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept -s shorthand for source", async () => {
-      const { error } = await runCliCommand(["doctor", "-s", "/some/path"]);
-
-      // Should accept -s shorthand
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
   });
 
   describe("config validation", () => {
@@ -388,24 +372,6 @@ describe("doctor command", () => {
 
       // The skill should be resolved (found as local skill)
       expect(output).not.toContain("web-framework-react (not found)");
-    });
-  });
-
-  describe("combined flags", () => {
-    it("should accept --verbose with --source", async () => {
-      const { error } = await runCliCommand(["doctor", "--verbose", "--source", "/custom/path"]);
-
-      // Should accept both flags
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept -v with -s", async () => {
-      const { error } = await runCliCommand(["doctor", "-v", "-s", "/custom/path"]);
-
-      // Should accept both shorthand flags
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
 });

@@ -66,18 +66,6 @@ describe("doctor command", () => {
     expect(stdout).toContain("init");
   });
 
-  it("should accept --source flag", async () => {
-    tempDir = await createTempDir();
-
-    const { exitCode, stdout } = await CLI.run(["doctor", "--source", "/nonexistent"], {
-      dir: tempDir,
-    });
-
-    expect(exitCode).toBe(EXIT_CODES.ERROR);
-    expect(stdout).toContain("Doctor");
-    expect(stdout).toContain("Summary:");
-  });
-
   it("should pass config check with valid config file", async () => {
     tempDir = await createTempDir();
     await writeProjectConfig(tempDir, {
@@ -101,7 +89,6 @@ describe("doctor command", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Diagnose");
       expect(stdout).toContain("--verbose");
-      expect(stdout).toContain("--source");
     });
   });
 

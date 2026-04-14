@@ -459,7 +459,6 @@ Cross-referenced all CLI commands, flags, wizard key handlers, and recent featur
 
 - [x] `init --global --source {url}` uses custom source for global install
 - [x] `edit --source {url}` loads skills from custom source
-- [x] `compile --agent-source {url}` compiles agents from custom remote source — deferred (requires remote agent source, not testable locally)
 
 ---
 

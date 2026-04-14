@@ -42,8 +42,9 @@ describe("doctor diagnostics", () => {
       sourceTempDir = source.tempDir;
 
       const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--verbose", "--source", source.sourceDir],
+        ["doctor", "--verbose"],
         { dir: tempDir },
+        { env: { CC_SOURCE: source.sourceDir } },
       );
 
       // --verbose causes formatCheckLine to show details even for "pass" results.
@@ -62,8 +63,9 @@ describe("doctor diagnostics", () => {
       tempDir = path.dirname(project.dir);
 
       const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--verbose", "--source", source.sourceDir],
+        ["doctor", "--verbose"],
         { dir: project.dir },
+        { env: { CC_SOURCE: source.sourceDir } },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -91,9 +93,11 @@ describe("doctor diagnostics", () => {
       // Create the compiled agent .md file so checkAgentsCompiled passes
       await writeAgentFile(projectDir, "web-developer");
 
-      const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
-        dir: projectDir,
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: projectDir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
 
       // checkAgentsCompiled returns pass with "N/N agents compiled"
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -112,9 +116,11 @@ describe("doctor diagnostics", () => {
       const projectDir = project.dir;
       // Do NOT create web-developer.md -- it's missing
 
-      const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
-        dir: projectDir,
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: projectDir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // checkAgentsCompiled returns warn with "N agent(s) need recompilation"
@@ -140,9 +146,11 @@ describe("doctor diagnostics", () => {
       await writeAgentFile(projectDir, "web-developer");
       await writeAgentFile(projectDir, "orphan-agent");
 
-      const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
-        dir: projectDir,
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: projectDir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // checkNoOrphans returns warn with "N orphaned agent file(s)"
@@ -171,9 +179,11 @@ describe("doctor diagnostics", () => {
 
       // Do NOT create .claude/skills/ directory -- it is missing
 
-      const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
-        dir: tempDir,
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: tempDir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
 
       // Config is valid, but the nonexistent skill is not in the source matrix
       // and not found locally, so Skills Resolved should fail
@@ -209,9 +219,11 @@ describe("doctor diagnostics", () => {
       // Create the compiled agent so checkAgentsCompiled passes
       await writeAgentFile(project.dir, "web-developer");
 
-      const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
-        dir: project.dir,
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: project.dir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
 
       // Orphaned skill dirs are NOT checked by doctor (only orphaned agent files are).
       // Doctor checks: Config Valid, Skills Resolved, Agents Compiled, No Orphans (agents), Source Reachable.
@@ -242,9 +254,11 @@ describe("doctor diagnostics", () => {
         },
       });
 
-      const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
-        dir: tempDir,
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: tempDir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
 
       // Skills Resolved should fail with "not found"
       expect(exitCode).toBe(EXIT_CODES.ERROR);
@@ -267,9 +281,11 @@ describe("doctor diagnostics", () => {
       // Do NOT create any agent .md files — they are all missing
       // The editable builder creates an empty agents dir but no .md files
 
-      const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
-        dir: project.dir,
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: project.dir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
 
       // Agents Compiled should warn (not fail) with "need recompilation"
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -294,8 +310,9 @@ describe("doctor diagnostics", () => {
       await writeAgentFile(project.dir, "web-developer");
 
       const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--verbose", "--source", source.sourceDir],
+        ["doctor", "--verbose"],
         { dir: project.dir },
+        { env: { CC_SOURCE: source.sourceDir } },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -322,8 +339,9 @@ describe("doctor diagnostics", () => {
       });
 
       const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--verbose", "--source", source.sourceDir],
+        ["doctor", "--verbose"],
         { dir: tempDir },
+        { env: { CC_SOURCE: source.sourceDir } },
       );
 
       // Should show the specific missing skill in the details
@@ -346,9 +364,11 @@ describe("doctor diagnostics", () => {
       // Create the compiled agent file so all checks pass
       await writeAgentFile(project.dir, "web-developer");
 
-      const { exitCode, stdout } = await CLI.run(["doctor", "--source", source.sourceDir], {
-        dir: project.dir,
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: project.dir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // Config Valid passes
