@@ -2,12 +2,10 @@
 
 | ID    | Task                                                                        | Status        |
 | ----- | --------------------------------------------------------------------------- | ------------- |
-| D-182 | Sources step: global skills focusable but read-only with toast              | Ready for Dev |
 | D-181 | Add YOLO mode toggle to build step                                          | Investigate   |
 | D-180 | Write "Bring your own skills" guide                                         | Investigate   |
 | D-179 | Extract shared post-wizard pipeline into ProjectLifecycle orchestrator      | Investigate   |
 | D-178 | Make stack the hero of project-level installs                               | Investigate   |
-| D-176 | Sources step: show all skills, global read-only from project scope          | Ready for Dev |
 | D-170 | Add PostHog anonymous telemetry                                             | Investigate   |
 | D-168 | Audit E2E tests — replace manual file construction with CLI commands        | Ready for Dev |
 | D-138 | Iterate on sub-agents — review and improve all agent definitions            | Ready for Dev |
@@ -44,12 +42,6 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 
 ### Wizard UX
 
-#### D-182: Sources step — global skills focusable but read-only
-
-Highlight the name on focus, show a toast explaining why when user tries to toggle, instead of silently ignoring input.
-
----
-
 #### D-181: Add YOLO mode toggle to build step
 
 Disables all skill relationship constraints (single-select categories, requires, conflicts, discourages) so users can select any combination freely. Surface in footer hotkeys.
@@ -59,12 +51,6 @@ Disables all skill relationship constraints (single-select categories, requires,
 #### D-178: Make stack the hero of project-level installs
 
 Without project agents the project config is useless. Guide users toward project stacks with project agents.
-
----
-
-#### D-176: Sources step — show all skills, global read-only from project scope
-
-Show ALL skills (including installed global) with global skills read-only from project scope.
 
 ---
 
@@ -332,7 +318,6 @@ E2E tests currently use `STEP_TEXT` display strings (e.g., `"Choose a stack"`, `
 - Alternative: xterm's buffer API may expose cell-level style attributes that survive processing.
 
 ---
-
 
 ---
 
