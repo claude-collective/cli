@@ -57,7 +57,6 @@ describe("help and version", () => {
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(result.stdout).toContain("Diagnose");
     expect(result.stdout).toContain("--verbose");
-    expect(result.stdout).toContain("--source");
   });
 
   it("should display validate-specific help", async () => {
@@ -66,9 +65,10 @@ describe("help and version", () => {
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(result.stdout).toContain("Validate");
-    expect(result.stdout).toContain("--plugins");
-    expect(result.stdout).toContain("--all");
+    expect(result.stdout).toContain("--verbose");
     expect(result.stdout).toContain("--source");
+    expect(result.stdout).not.toContain("--plugins");
+    expect(result.stdout).not.toContain("--all");
   });
 
   it("should display help using 'help <command>' syntax", async () => {
@@ -107,15 +107,6 @@ describe("help and version", () => {
     expect(result.stdout).toContain("Edit skills");
     expect(result.stdout).toContain("--refresh");
     expect(result.stdout).toContain("--agent-source");
-  });
-
-  it("should display build stack help via 'help build stack' syntax", async () => {
-    tempDir = await createTempDir();
-    const result = await CLI.run(["help", "build", "stack"], { dir: tempDir });
-
-    expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(result.stdout).toContain("Build a stack");
-    expect(result.stdout).toContain("USAGE");
   });
 
   it("should display search help via 'help search' syntax", async () => {

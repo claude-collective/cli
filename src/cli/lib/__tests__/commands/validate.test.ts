@@ -3,242 +3,73 @@ import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { runCliCommand } from "../helpers/cli-runner.js";
+import { writeTestTsConfig } from "../helpers/config-io.js";
 import { createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { validateSource } from "../../source-validator";
 import { validatePlugin } from "../../plugins/plugin-validator";
 import {
   PLUGIN_MANIFEST_DIR,
   PLUGIN_MANIFEST_FILE,
+  PLUGINS_SUBDIR,
+  CLAUDE_DIR,
   STANDARD_DIRS,
   STANDARD_FILES,
 } from "../../../consts";
 import type { TestSkill } from "../fixtures/create-test-source";
-import { renderConfigTs, renderSkillMd } from "../content-generators";
+import { renderAgentMd, renderConfigTs, renderSkillMd } from "../content-generators";
 import { EXIT_CODES } from "../../exit-codes";
 
-describe("validate command", () => {
-  let tempDir: string;
-  let projectDir: string;
-  let originalCwd: string;
+const INSTALLED_SKILLS_SUBDIR = path.join(CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+const INSTALLED_AGENTS_SUBDIR = path.join(CLAUDE_DIR, "agents");
 
-  beforeEach(async () => {
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-validate-test-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
-    process.chdir(projectDir);
-  });
+/** Write a valid installed skill under `<skillsDir>/<dirName>/` with strict-schema metadata. */
+async function writeValidInstalledSkill(
+  skillsDir: string,
+  dirName: string,
+  overrides?: Record<string, unknown>,
+): Promise<void> {
+  const skillDir = path.join(skillsDir, dirName);
+  await mkdir(skillDir, { recursive: true });
 
-  afterEach(async () => {
-    process.chdir(originalCwd);
-    await cleanupTempDir(tempDir);
-  });
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.SKILL_MD),
+    renderSkillMd("web-framework-react", "React framework"),
+  );
 
-  describe("schema validation (default)", () => {
-    it("should run schema validation when no args provided", async () => {
-      const { error } = await runCliCommand(["validate"]);
+  const metadata: Record<string, unknown> = {
+    category: "web-framework",
+    domain: "web",
+    author: "@test",
+    displayName: "react",
+    cliDescription: "React JavaScript framework",
+    usageGuidance: "Use React for building component-based UIs",
+    slug: "react",
+    ...overrides,
+  };
 
-      // Schema validation should complete without unhandled errors
-      // (may exit 0 or with validation-specific codes, but not parsing errors)
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("missing required arg");
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
+  await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
+}
 
-    it("should complete schema validation without argument errors", async () => {
-      const { error } = await runCliCommand(["validate"]);
+/** Write a valid installed agent `.md` file with real markdown frontmatter. */
+async function writeValidInstalledAgent(
+  agentsDir: string,
+  name: string,
+  overrides?: { description?: string; tools?: string[]; rawFrontmatter?: Record<string, unknown> },
+): Promise<void> {
+  await mkdir(agentsDir, { recursive: true });
+  const filePath = path.join(agentsDir, `${name}.md`);
 
-      // Should not fail due to argument parsing
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("parse");
-    });
-  });
+  if (overrides?.rawFrontmatter) {
+    const frontmatterYaml = stringifyYaml(overrides.rawFrontmatter);
+    await writeFile(filePath, `---\n${frontmatterYaml}---\n\n# ${name}\n`);
+    return;
+  }
 
-  describe("plugin validation (--plugins flag)", () => {
-    it("should accept --plugins flag", async () => {
-      const { error } = await runCliCommand(["validate", "--plugins"]);
-
-      // Should not error on invalid flag
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept -p shorthand for plugins", async () => {
-      const { error } = await runCliCommand(["validate", "-p"]);
-
-      // Should not error on shorthand flag
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should validate plugin at current directory with valid structure", async () => {
-      // Create a minimal plugin structure
-      const pluginManifestDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
-      await mkdir(pluginManifestDir, { recursive: true });
-      await writeFile(
-        path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE),
-        JSON.stringify({
-          name: "test-plugin",
-          version: "1.0.0",
-        }),
-      );
-
-      const { error } = await runCliCommand(["validate", "--plugins"]);
-
-      // With valid plugin structure, should not have critical errors
-      // (may have warnings, but not validation failures)
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("missing .claude-plugin");
-    });
-  });
-
-  describe("plugin validation (path argument)", () => {
-    it("should accept path as first argument", async () => {
-      const pluginPath = path.join(tempDir, "my-plugin");
-      const pluginManifestDir = path.join(pluginPath, PLUGIN_MANIFEST_DIR);
-      await mkdir(pluginManifestDir, { recursive: true });
-
-      await writeFile(
-        path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE),
-        JSON.stringify({
-          name: "my-plugin",
-          version: "1.0.0",
-        }),
-      );
-
-      const { error } = await runCliCommand(["validate", pluginPath]);
-
-      // Should accept path argument without parsing errors
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
-
-    it("should accept --all flag", async () => {
-      // Create plugins directory with multiple plugins
-      const pluginsDir = path.join(tempDir, "plugins");
-      const plugin1Dir = path.join(pluginsDir, "plugin1", PLUGIN_MANIFEST_DIR);
-      const plugin2Dir = path.join(pluginsDir, "plugin2", PLUGIN_MANIFEST_DIR);
-
-      await mkdir(plugin1Dir, { recursive: true });
-      await mkdir(plugin2Dir, { recursive: true });
-
-      await writeFile(
-        path.join(plugin1Dir, PLUGIN_MANIFEST_FILE),
-        JSON.stringify({ name: "plugin1", version: "1.0.0" }),
-      );
-      await writeFile(
-        path.join(plugin2Dir, PLUGIN_MANIFEST_FILE),
-        JSON.stringify({ name: "plugin2", version: "1.0.0" }),
-      );
-
-      const { error } = await runCliCommand(["validate", pluginsDir, "--all"]);
-
-      // Should accept --all flag
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept -a shorthand for all", async () => {
-      const pluginsDir = path.join(tempDir, "plugins");
-      await mkdir(pluginsDir, { recursive: true });
-
-      const { error } = await runCliCommand(["validate", pluginsDir, "-a"]);
-
-      // Should accept -a shorthand
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-  });
-
-  describe("verbose mode", () => {
-    it("should accept --verbose flag", async () => {
-      const { error } = await runCliCommand(["validate", "--verbose"]);
-
-      // Should not error on --verbose flag
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept -v shorthand for verbose", async () => {
-      const { error } = await runCliCommand(["validate", "-v"]);
-
-      // Should accept -v shorthand
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept --verbose with --plugins", async () => {
-      // Create valid plugin structure to avoid validation errors
-      const pluginManifestDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
-      await mkdir(pluginManifestDir, { recursive: true });
-      await writeFile(
-        path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE),
-        JSON.stringify({ name: "test-plugin", version: "1.0.0" }),
-      );
-
-      const { error } = await runCliCommand(["validate", "--plugins", "--verbose"]);
-
-      // Should accept both flags together
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-  });
-
-  describe("error handling", () => {
-    it("should exit with error for non-existent plugin path", async () => {
-      const nonExistentPath = path.join(tempDir, "does-not-exist");
-
-      const { error } = await runCliCommand(["validate", nonExistentPath]);
-
-      // Should exit with error code when path doesn't exist
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
-    });
-
-    it("should exit with error for invalid plugin structure", async () => {
-      // Create directory without plugin.json
-      const invalidPluginDir = path.join(tempDir, "invalid-plugin");
-      await mkdir(invalidPluginDir, { recursive: true });
-
-      const { error } = await runCliCommand(["validate", invalidPluginDir]);
-
-      // Should exit with error when plugin.json is missing
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
-    });
-
-    it("should fail validation when .claude-plugin directory is missing", async () => {
-      // projectDir already exists but has no .claude-plugin
-      const { error } = await runCliCommand(["validate", "--plugins"]);
-
-      // Should fail because plugin structure is invalid
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
-    });
-
-    it("should report specific error for malformed plugin.json (invalid JSON)", async () => {
-      const pluginManifestDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
-      await mkdir(pluginManifestDir, { recursive: true });
-      await writeFile(path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE), "{ not valid json !!!");
-
-      const result = await validatePlugin(projectDir);
-
-      expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("Invalid JSON"))).toBe(true);
-    });
-
-    it("should not crash when validating directory with malformed plugin.json via CLI", async () => {
-      const pluginManifestDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
-      await mkdir(pluginManifestDir, { recursive: true });
-      await writeFile(path.join(pluginManifestDir, PLUGIN_MANIFEST_FILE), "<<<broken>>>");
-
-      const { error } = await runCliCommand(["validate", "--plugins"]);
-
-      // Should exit with a validation error, not an unhandled crash
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
-    });
-  });
-});
+  await writeFile(
+    filePath,
+    renderAgentMd(name, overrides?.description, { tools: overrides?.tools }),
+  );
+}
 
 /**
  * Creates a valid skill directory with full metadata.yaml fields
@@ -306,6 +137,687 @@ async function writeTestMatrix(
   };
   await writeFile(path.join(configDir, "skill-rules.ts"), renderConfigTs(rulesData));
 }
+
+/** Build a valid minimal source at the given path. */
+async function buildValidSource(sourceDir: string): Promise<void> {
+  const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+  const configDir = path.join(sourceDir, "config");
+  await mkdir(configDir, { recursive: true });
+
+  await writeValidSourceSkill(skillsDir, "web/framework/react", {
+    id: "web-framework-react",
+    description: "React framework",
+    category: "web-framework",
+    domain: "web",
+    displayName: "react",
+    cliDescription: "React JavaScript framework",
+    usageGuidance: "Use React for building component-based UIs",
+    slug: "react",
+    author: "@test",
+  });
+
+  await writeTestMatrix(configDir, {
+    "web-framework": { domain: "web", displayName: "Framework" },
+  });
+}
+
+/** Build a source with a metadata schema violation (missing required fields). */
+async function buildInvalidSource(sourceDir: string): Promise<void> {
+  const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
+  const skillDir = path.join(skillsDir, "web", "framework", "react");
+  await mkdir(skillDir, { recursive: true });
+
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.SKILL_MD),
+    renderSkillMd("web-framework-react", "React"),
+  );
+
+  // Missing required fields: displayName, cliDescription, usageGuidance, slug
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+    stringifyYaml({ category: "web-framework", author: "@test" }),
+  );
+}
+
+describe("validate command", () => {
+  let tempDir: string;
+  let projectDir: string;
+  let fakeHome: string;
+  let originalCwd: string;
+  let originalHome: string | undefined;
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    originalHome = process.env.HOME;
+    tempDir = await createTempDir("cc-validate-test-");
+    projectDir = path.join(tempDir, "project");
+    fakeHome = path.join(tempDir, "fakehome");
+    await mkdir(projectDir, { recursive: true });
+    await mkdir(fakeHome, { recursive: true });
+    process.chdir(projectDir);
+    process.env.HOME = fakeHome;
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    process.env.HOME = originalHome;
+    await cleanupTempDir(tempDir);
+  });
+
+  describe("no-args flow", () => {
+    it("should iterate over the registered primary source and exit 0 when it is valid", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Validating sources");
+      expect(stdout).toContain("Validating plugins");
+      expect(stdout).toContain("Result: 0 error(s), 0 warning(s)");
+      expect(stdout).toContain(sourceDir);
+    });
+
+    it("should exit with ERROR when the primary source has validation errors", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildInvalidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Validating sources");
+      expect(stdout).toMatch(/Result: [1-9]\d* error\(s\)/);
+    });
+
+    it("should iterate over plugin directories and report when absent", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Validating plugins");
+      expect(stdout).toContain("not present");
+    });
+
+    it("should iterate over installed plugins when present", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      // Create a plugin in the project's .claude/plugins/ directory
+      const pluginDir = path.join(projectDir, CLAUDE_DIR, PLUGINS_SUBDIR, "my-plugin");
+      const manifestDir = path.join(pluginDir, PLUGIN_MANIFEST_DIR);
+      await mkdir(manifestDir, { recursive: true });
+      await writeFile(
+        path.join(manifestDir, PLUGIN_MANIFEST_FILE),
+        JSON.stringify({ name: "my-plugin", version: "1.0.0" }),
+      );
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Validating plugins");
+      expect(stdout).toContain("1 plugin(s)");
+      expect(stdout).toContain("my-plugin");
+    });
+
+    it("should surface plugin errors in the aggregate exit code", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      // Create a plugin with malformed plugin.json — validator should report it as invalid
+      const pluginDir = path.join(projectDir, CLAUDE_DIR, PLUGINS_SUBDIR, "broken-plugin");
+      const manifestDir = path.join(pluginDir, PLUGIN_MANIFEST_DIR);
+      await mkdir(manifestDir, { recursive: true });
+      await writeFile(path.join(manifestDir, PLUGIN_MANIFEST_FILE), "{ not valid json !!!");
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Validating plugins");
+    });
+
+    it("should skip remote sources and not count them as errors", async () => {
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: "github:agents-inc/skills",
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Validating sources");
+      expect(stdout).toContain("— skipped (remote source)");
+      expect(stdout).toContain("github:agents-inc/skills");
+      expect(stdout).toContain("Result: 0 error(s), 0 warning(s)");
+    });
+
+    it("should continue past one broken skill and report valid skills in the same pass", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalSkillsDir = path.join(fakeHome, INSTALLED_SKILLS_SUBDIR);
+      // One valid skill alongside one broken skill in the same directory.
+      await writeValidInstalledSkill(globalSkillsDir, "web-framework-react");
+      const brokenSkillDir = path.join(globalSkillsDir, "web-framework-vue");
+      await mkdir(brokenSkillDir, { recursive: true });
+      await writeFile(
+        path.join(brokenSkillDir, STANDARD_FILES.METADATA_YAML),
+        stringifyYaml({
+          category: "web-framework",
+          domain: "web",
+          author: "@test",
+          displayName: "vue",
+          cliDescription: "Vue framework",
+          usageGuidance: "Use Vue for building component-based UIs",
+          slug: "vue",
+        }),
+      );
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Validating skills");
+      // Counter reports both skills: 2 total, 1 invalid.
+      expect(stdout).toMatch(/2 skill\(s\), 1 invalid/);
+      // The broken skill's error is surfaced — pass did not abort after it.
+      expect(stdout).toContain("Missing SKILL.md");
+    });
+
+    it("should aggregate errors across all four passes in the final summary", async () => {
+      // Seed exactly 1 error in sources + 1 in plugins + 1 in skills.
+      // Source with no skills directory → 1 error.
+      const sourceDir = path.join(tempDir, "source");
+      await mkdir(sourceDir, { recursive: true });
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      // Plugin with invalid JSON in plugin.json → 1 error.
+      const pluginDir = path.join(projectDir, CLAUDE_DIR, PLUGINS_SUBDIR, "broken-plugin");
+      const manifestDir = path.join(pluginDir, PLUGIN_MANIFEST_DIR);
+      await mkdir(manifestDir, { recursive: true });
+      await writeFile(path.join(manifestDir, PLUGIN_MANIFEST_FILE), "{ not valid json !!!");
+
+      // Installed skill missing metadata.yaml → 1 error.
+      const globalSkillsDir = path.join(fakeHome, INSTALLED_SKILLS_SUBDIR);
+      const skillDir = path.join(globalSkillsDir, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react", "React"),
+      );
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Result: 3 error(s)");
+    });
+
+    it("should iterate over both primary and extra sources", async () => {
+      const primarySourceDir = path.join(tempDir, "primary-source");
+      const extraSourceDir = path.join(tempDir, "extra-source");
+      await buildValidSource(primarySourceDir);
+      await buildValidSource(extraSourceDir);
+
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: primarySourceDir,
+        sources: [{ name: "acme-extra", url: extraSourceDir }],
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      const sourcesBlock = stdout.slice(
+        stdout.indexOf("Validating sources"),
+        stdout.indexOf("Validating plugins"),
+      );
+      expect(sourcesBlock).toContain(primarySourceDir);
+      expect(sourcesBlock).toContain(extraSourceDir);
+      expect(sourcesBlock).toContain("acme-extra");
+    });
+
+    it("should exit with ERROR when a registered source path does not exist", async () => {
+      const missingSourceDir = path.join(tempDir, "does-not-exist");
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: missingSourceDir,
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Validating sources");
+      expect(stdout).toContain(missingSourceDir);
+      expect(stdout).toMatch(/does not exist/);
+    });
+  });
+
+  describe("flag acceptance", () => {
+    it("should accept --verbose flag", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const { error } = await runCliCommand(["validate", "--verbose"]);
+
+      expect(error).toBeUndefined();
+    });
+
+    it("should accept -v shorthand for verbose", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const { error } = await runCliCommand(["validate", "-v"]);
+
+      expect(error).toBeUndefined();
+    });
+  });
+
+  describe("installed skills pass", () => {
+    it("should render Validating skills header in the output", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Validating skills");
+    });
+
+    it("should render — not present when no skills dir exists", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      const skillsBlock = stdout.slice(stdout.indexOf("Validating skills"));
+      expect(skillsBlock).toContain("— not present");
+    });
+
+    it("should render — none when the skills dir exists but is empty", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+      await mkdir(path.join(fakeHome, INSTALLED_SKILLS_SUBDIR), { recursive: true });
+      await mkdir(path.join(projectDir, INSTALLED_SKILLS_SUBDIR), { recursive: true });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      const skillsBlock = stdout.slice(stdout.indexOf("Validating skills"));
+      expect(skillsBlock).toContain("— none");
+    });
+
+    it("should count a valid installed skill and exit 0", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalSkillsDir = path.join(fakeHome, INSTALLED_SKILLS_SUBDIR);
+      await writeValidInstalledSkill(globalSkillsDir, "web-framework-react");
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Validating skills");
+      expect(stdout).toMatch(/1 skill\(s\), 0 invalid/);
+      expect(stdout).toContain("Result: 0 error(s)");
+    });
+
+    it("should exit ERROR when an installed skill is missing SKILL.md", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalSkillsDir = path.join(fakeHome, INSTALLED_SKILLS_SUBDIR);
+      const skillDir = path.join(globalSkillsDir, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        stringifyYaml({
+          category: "web-framework",
+          domain: "web",
+          author: "@test",
+          displayName: "react",
+          cliDescription: "React JavaScript framework",
+          usageGuidance: "Use React for building component-based UIs",
+          slug: "react",
+        }),
+      );
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Missing SKILL.md");
+    });
+
+    it("should exit ERROR when an installed skill is missing metadata.yaml", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalSkillsDir = path.join(fakeHome, INSTALLED_SKILLS_SUBDIR);
+      const skillDir = path.join(globalSkillsDir, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react", "React"),
+      );
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Missing metadata.yaml");
+    });
+
+    it("should exit ERROR when metadata.yaml is malformed YAML", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalSkillsDir = path.join(fakeHome, INSTALLED_SKILLS_SUBDIR);
+      const skillDir = path.join(globalSkillsDir, "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        renderSkillMd("web-framework-react", "React"),
+      );
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        ":\n  - broken: [unclosed\n    bad",
+      );
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("metadata.yaml");
+    });
+
+    it("should exit ERROR when metadata has custom: true but a non-kebab slug", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalSkillsDir = path.join(fakeHome, INSTALLED_SKILLS_SUBDIR);
+      await writeValidInstalledSkill(globalSkillsDir, "custom-tools-my-skill", {
+        custom: true,
+        category: "custom-tools",
+        slug: "My_Slug",
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("slug");
+    });
+
+    it("should exit ERROR when metadata has custom: false and an unknown category", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalSkillsDir = path.join(fakeHome, INSTALLED_SKILLS_SUBDIR);
+      await writeValidInstalledSkill(globalSkillsDir, "web-framework-react", {
+        category: "not-a-real-category",
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("category");
+    });
+  });
+
+  describe("installed agents pass", () => {
+    it("should render Validating agents header in the output", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Validating agents");
+    });
+
+    it("should render — not present when no agents dir exists", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      const agentsBlock = stdout.slice(stdout.indexOf("Validating agents"));
+      expect(agentsBlock).toContain("— not present");
+    });
+
+    it("should count a valid installed agent and exit 0", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalAgentsDir = path.join(fakeHome, INSTALLED_AGENTS_SUBDIR);
+      await writeValidInstalledAgent(globalAgentsDir, "web-developer", {
+        description: "A frontend developer agent",
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+      expect(stdout).toContain("Validating agents");
+      expect(stdout).toMatch(/1 agent\(s\), 0 invalid/);
+      expect(stdout).toContain("Result: 0 error(s)");
+    });
+
+    it("should exit ERROR when an agent .md has no frontmatter", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalAgentsDir = path.join(fakeHome, INSTALLED_AGENTS_SUBDIR);
+      await mkdir(globalAgentsDir, { recursive: true });
+      await writeFile(
+        path.join(globalAgentsDir, "bad-agent.md"),
+        "# Just a plain markdown file, no frontmatter here.\n",
+      );
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Missing or invalid YAML frontmatter");
+    });
+
+    it("should exit ERROR when an agent frontmatter has a non-kebab name", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(projectDir, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      const globalAgentsDir = path.join(fakeHome, INSTALLED_AGENTS_SUBDIR);
+      await writeValidInstalledAgent(globalAgentsDir, "BadAgent", {
+        rawFrontmatter: {
+          name: "Bad_Agent",
+          description: "An agent with a non-kebab name",
+          tools: "Read, Write",
+        },
+      });
+
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("name");
+    });
+  });
+
+  describe("cwd === $HOME dedup", () => {
+    it("should run only the global pass for skills and agents when cwd === homedir()", async () => {
+      const sourceDir = path.join(tempDir, "source");
+      await buildValidSource(sourceDir);
+      await writeTestTsConfig(fakeHome, {
+        name: "test-project",
+        skills: [],
+        agents: [],
+        source: sourceDir,
+      });
+
+      // Install a skill and an agent under the fake-home location only.
+      await writeValidInstalledSkill(
+        path.join(fakeHome, INSTALLED_SKILLS_SUBDIR),
+        "web-framework-react",
+      );
+      await writeValidInstalledAgent(path.join(fakeHome, INSTALLED_AGENTS_SUBDIR), "web-developer");
+
+      // Run validate from the fake-home directory: cwd === homedir().
+      process.chdir(fakeHome);
+      const { stdout, error } = await runCliCommand(["validate"]);
+
+      expect(error).toBeUndefined();
+
+      const skillsBlock = stdout.slice(
+        stdout.indexOf("Validating skills"),
+        stdout.indexOf("Validating agents"),
+      );
+      const agentsBlock = stdout.slice(stdout.indexOf("Validating agents"));
+
+      const skillRowMatches = skillsBlock.match(/\d+ skill\(s\)/g) ?? [];
+      const agentRowMatches = agentsBlock.match(/\d+ agent\(s\)/g) ?? [];
+
+      expect(skillRowMatches).toHaveLength(1);
+      expect(agentRowMatches).toHaveLength(1);
+    });
+  });
+});
 
 describe("source validation (validateSource)", () => {
   let tempDir: string;
@@ -709,106 +1221,26 @@ describe("source validation (validateSource)", () => {
   });
 });
 
-describe("validate --source integration", () => {
+describe("plugin-validator (validatePlugin)", () => {
   let tempDir: string;
-  let originalCwd: string;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-validate-source-int-");
+    tempDir = await createTempDir("cc-validate-plugin-");
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
     await cleanupTempDir(tempDir);
   });
 
-  it("should accept --source flag and validate source", async () => {
-    const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
-    const configDir = path.join(sourceDir, "config");
-    await mkdir(configDir, { recursive: true });
+  it("should report invalid JSON in plugin.json", async () => {
+    const pluginDir = path.join(tempDir, "plugin");
+    const manifestDir = path.join(pluginDir, PLUGIN_MANIFEST_DIR);
+    await mkdir(manifestDir, { recursive: true });
+    await writeFile(path.join(manifestDir, PLUGIN_MANIFEST_FILE), "{ not valid json !!!");
 
-    await writeValidSourceSkill(skillsDir, "web/framework/react", {
-      id: "web-framework-react",
-      description: "React framework",
-      category: "web-framework",
-      domain: "web",
-      displayName: "react",
-      cliDescription: "React JavaScript framework",
-      usageGuidance: "Use React for building component-based UIs",
-      slug: "react",
-      author: "@test",
-    });
+    const result = await validatePlugin(pluginDir);
 
-    await writeTestMatrix(configDir, {
-      "web-framework": { domain: "web", displayName: "Framework" },
-    });
-
-    const { stdout, error } = await runCliCommand(["validate", "--source", sourceDir]);
-
-    expect(error).toBeUndefined();
-    expect(stdout).toContain("Validating source");
-    expect(stdout).toContain("Checked 1 skill(s)");
-    expect(stdout).toContain("0 error(s)");
-  });
-
-  it("should exit with error when source has invalid metadata", async () => {
-    const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
-    const skillDir = path.join(skillsDir, "web", "framework", "react");
-    await mkdir(skillDir, { recursive: true });
-
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.SKILL_MD),
-      renderSkillMd("web-framework-react", "React"),
-    );
-
-    // Missing required fields
-    await writeFile(
-      path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      stringifyYaml({ category: "web-framework", author: "@test" }),
-    );
-
-    const { error } = await runCliCommand(["validate", "--source", sourceDir]);
-
-    expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
-  });
-
-  it("should exit with error for missing skills directory", async () => {
-    const sourceDir = path.join(tempDir, "source");
-    await mkdir(sourceDir, { recursive: true });
-
-    const { error } = await runCliCommand(["validate", "--source", sourceDir]);
-
-    expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
-  });
-
-  it("should accept -s shorthand for source flag", async () => {
-    const sourceDir = path.join(tempDir, "source");
-    const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
-    const configDir = path.join(sourceDir, "config");
-    await mkdir(configDir, { recursive: true });
-
-    await writeValidSourceSkill(skillsDir, "web/framework/react", {
-      id: "web-framework-react",
-      description: "React framework",
-      category: "web-framework",
-      domain: "web",
-      displayName: "react",
-      cliDescription: "React JavaScript framework",
-      usageGuidance: "Use React for building component-based UIs",
-      slug: "react",
-      author: "@test",
-    });
-
-    await writeTestMatrix(configDir, {
-      "web-framework": { domain: "web", displayName: "Framework" },
-    });
-
-    const { stdout, error } = await runCliCommand(["validate", "-s", sourceDir]);
-
-    expect(error).toBeUndefined();
-    expect(stdout).toContain("Validating source");
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("Invalid JSON"))).toBe(true);
   });
 });
