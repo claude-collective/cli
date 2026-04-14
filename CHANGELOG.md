@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.128.0] - 2026-04-14
+
+**CLI surface cleanup + validate rewrite**
+
+- Removed: `build stack` command, `compile --agent-source`, `doctor --source`, and all `validate` positional args/flags
+- `validate` is now a zero-arg four-pass command (registered sources + installed plugins + skills + agents); `validateSource` extended to cover stacks, source agents, and TS config exports
+- New [commands reference](./docs/reference/commands.md); README polyglot hint
+
+See [changelogs/0.128.0.md](./changelogs/0.128.0.md) for full details.
+
 ## [0.127.0] - 2026-04-14
 
 **Wizard sources-step UX polish**
