@@ -2,28 +2,28 @@
 
 Every command available in the `agentsinc` CLI. Run `agentsinc <command> --help` for flag help; this doc is the fuller picture: purpose, invocation model, flag semantics, and current gaps.
 
-> **Base flag (all commands unless noted):** `--source, -s <path|url>` — Skills source path or URL. Defined on `BaseCommand.baseFlags` and inherited by every command that spreads `...BaseCommand.baseFlags` into its `flags` object.
+> **Base flag (most commands):** `--source, -s <path|url>` — Skills source path or URL. Defined on `BaseCommand.baseFlags` and inherited by every command that doesn't override it. **Five commands override `baseFlags` to `{}`** because `--source` has no meaning there: `doctor`, `build plugins`, `build marketplace`, `new skill`, `import skill`.
 
 ## Command matrix
 
-| Command                  | Purpose                                                        | Interactive | Flags (excl. base)                                                                                         |
-| ------------------------ | -------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------- |
-| `init`                   | First-time wizard: pick a stack, skills, agents, compile       | Yes         | `--refresh`                                                                                                |
-| `edit`                   | Modify an existing installation via the wizard                 | Yes         | `--refresh`, `--agent-source`                                                                              |
-| `compile`                | Recompile agents from the current config                       | No          | `--verbose`                                                                                                |
-| `update [skill]`         | Pull latest skill content from source (optionally one skill)   | Hybrid      | `--yes/-y`, `--no-recompile`                                                                               |
-| `search [query]`         | Search or browse skills across sources                         | Hybrid      | `--interactive/-i`, `--category/-c`, `--refresh`, `--json`                                                 |
-| `eject <type>`           | Export partials / templates / skills / all for customization   | No          | `--force/-f`, `--output/-o`, `--refresh`                                                                   |
-| `new skill <name>`       | Scaffold a local skill                                         | No          | `--author/-a`, `--category/-c`, `--domain/-d`, `--force/-f`, `--output/-o`                                 |
-| `new agent <name>`       | Scaffold a local agent (Claude assists via prompt)             | Yes         | `--purpose/-p`, `--force/-f`, `--non-interactive/-n`, `--refresh/-r`                                       |
-| `new marketplace <name>` | Scaffold a new skill marketplace repo                          | No          | `--force/-f`, `--output/-o`                                                                                |
-| `import skill <source>`  | Import skills from a third-party GitHub repo                   | No          | `--skill/-n`, `--all/-a`, `--list/-l`, `--subdir`, `--force/-f`, `--refresh`                               |
-| `build plugins`          | Compile skills/agents into distributable plugin bundles        | No          | `--skills-dir/-s`, `--agents-dir/-a`, `--output-dir/-o`, `--skill`, `--verbose/-v`                         |
-| `build marketplace`      | Generate `marketplace.json` from built plugins                 | No          | `--plugins-dir/-p`, `--output/-o`, `--name`, `--version`, `--description`, `--owner-name`, `--owner-email` |
-| `doctor`                 | Diagnose installation, skills, agents, orphans                 | No          | `--verbose/-v` _(does NOT inherit base `--source`)_                                                        |
-| `list`                   | Show installation mode, source, skills, agents                 | No          | (base only)                                                                                                |
-| `validate`               | Validate registered sources, installed plugins, skills, agents | No          | `--verbose/-v`                                                                                             |
-| `uninstall`              | Remove CLI-managed files, optionally including `.claude-src/`  | Yes         | `--yes/-y`, `--all`                                                                                        |
+| Command                  | Purpose                                                         | Interactive | Flags (excl. base)                                                                        |
+| ------------------------ | --------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------- |
+| `init`                   | First-time wizard: pick a stack, skills, agents, compile        | Yes         | `--refresh`                                                                               |
+| `edit`                   | Modify an existing installation via the wizard                  | Yes         | `--refresh`, `--agent-source`                                                             |
+| `compile`                | Recompile agents from the current config                        | No          | `--verbose`                                                                               |
+| `update [skill]`         | Pull latest skill content from source (optionally one skill)    | Hybrid      | `--yes/-y`, `--no-recompile`                                                              |
+| `search [query]`         | Search or browse skills across sources                          | Hybrid      | `--interactive/-i`, `--category/-c`, `--refresh`, `--json`                                |
+| `eject <type>`           | Export partials / templates / skills / all for customization    | No          | `--force/-f`, `--output/-o`, `--refresh`                                                  |
+| `new skill <name>`       | Scaffold a local skill                                          | No          | `--author/-a`, `--category/-c`, `--domain/-d`, `--force/-f` _(no base)_                   |
+| `new agent <name>`       | Scaffold a local agent (Claude assists via prompt)              | Yes         | `--purpose/-p`, `--force/-f`                                                              |
+| `new marketplace <name>` | Scaffold a new skill marketplace repo                           | No          | `--force/-f`, `--output/-o`                                                               |
+| `import skill <source>`  | Import skills from a third-party GitHub repo                    | No          | `--skill/-n`, `--all/-a`, `--list/-l`, `--force/-f` _(no base)_                           |
+| `build plugins`          | Compile skills/agents into distributable plugin bundles         | No          | `--agents-dir/-a`, `--output-dir/-o`, `--skill`, `--verbose/-v` _(no base)_               |
+| `build marketplace`      | Generate `marketplace.json` from built plugins + `package.json` | No          | `--plugins-dir/-p`, `--output/-o`, `--verbose/-v` _(no base; reads id from package.json)_ |
+| `doctor`                 | Diagnose installation, skills, agents, orphans                  | No          | (none — always verbose, no base)                                                          |
+| `list`                   | Show installation mode, source, skills, agents                  | No          | (base only)                                                                               |
+| `validate`               | Validate registered sources, installed plugins, skills, agents  | No          | `--verbose/-v`                                                                            |
+| `uninstall`              | Remove CLI-managed files, optionally including `.claude-src/`   | Yes         | `--yes/-y`, `--all`                                                                       |
 
 Interactive = renders an Ink UI. Hybrid = interactive only when a required arg is omitted (`search`) or when prompting for confirmation (`update`).
 
@@ -109,9 +109,9 @@ Exports source material for user modification. Types: `agent-partials`, `templat
 
 **File:** `src/cli/commands/new/skill.ts`
 
-Scaffolds a `SKILL.md` + `metadata.yaml` in the detected local marketplace (or `--output`).
+Scaffolds a `SKILL.md` + `metadata.yaml` in the detected local marketplace. Core scaffolding logic lives in the exported `scaffoldSkillFiles` function, which is also called directly by `new marketplace` for its starter skill. Author resolves via `resolveAuthorOrDefault` (checks user config).
 
-**Flags:** `--author/-a`, `--category/-c`, `--domain/-d`, `--force/-f`, `--output/-o`, `--source`.
+**Flags:** `--author/-a`, `--category/-c`, `--domain/-d`, `--force/-f`. Does not inherit `--source` (scaffolding doesn't consume a source).
 
 > **TODO:** Verify the generated `metadata.yaml` satisfies every field the CLI's skill loader expects (`parseFrontmatter`, `skillMetadataSchema`, matrix registration). After scaffolding, the new skill must appear in `agentsinc search`, `agentsinc list`, and in the wizard's skill grid — round-trip test required.
 
@@ -121,9 +121,9 @@ Scaffolds a `SKILL.md` + `metadata.yaml` in the detected local marketplace (or `
 
 **File:** `src/cli/commands/new/agent.tsx`
 
-Interactive scaffolder. Prompts for purpose, then drives Claude (via the `claude` CLI) to draft the agent's identity/playbook/output partials.
+Scaffolder for custom agents. Prompts interactively for purpose unless `--purpose` is provided, then drives Claude (via the `claude` CLI) to draft the agent's identity/playbook/output partials. The `--purpose` flag is the one signal used to pick the path — no separate `--non-interactive` toggle.
 
-**Flags:** `--purpose/-p`, `--force/-f`, `--non-interactive/-n`, `--refresh/-r`, `--source`.
+**Flags:** `--purpose/-p`, `--force/-f`, `--source` (inherited).
 
 **Requires:** Anthropic's `claude` CLI on `$PATH`.
 
@@ -135,9 +135,9 @@ Interactive scaffolder. Prompts for purpose, then drives Claude (via the `claude
 
 **File:** `src/cli/commands/new/marketplace.ts`
 
-Creates a fresh marketplace directory with `skills-matrix.yaml`, default categories, and starter skills.
+Creates a fresh marketplace directory with `skills-matrix.yaml`, default categories, and a starter skill. The starter skill is scaffolded by calling `scaffoldSkillFiles` directly (not via `runCommand`) — author resolves via `resolveAuthorOrDefault(undefined, parentDir)`, consistent with `new skill`.
 
-**Flags:** `--force/-f`, `--output/-o`, `--source`.
+**Flags:** `--force/-f`, `--output/-o`, `--source` (inherited).
 
 ---
 
@@ -145,9 +145,9 @@ Creates a fresh marketplace directory with `skills-matrix.yaml`, default categor
 
 **File:** `src/cli/commands/import/skill.ts`
 
-Imports skills from a GitHub repo (`github:owner/repo`, `owner/repo`, or URL).
+Imports skills from a GitHub repo (`github:owner/repo`, `owner/repo`, or URL). Skills dir is hardcoded to `skills/` (no longer a flag). Source fetches go through `giget` with default caching.
 
-**Flags:** `--skill/-n`, `--all/-a`, `--list/-l`, `--subdir` (default: `skills`), `--force/-f`, `--refresh`, `--source`.
+**Flags:** `--skill/-n`, `--all/-a`, `--list/-l`, `--force/-f`. Does not inherit `--source` (the positional arg is the source).
 
 **Modes:** `--list` prints available skills; `--skill <name>` imports one; `--all` imports every skill in the repo. At least one must be provided.
 
@@ -161,9 +161,9 @@ Imports skills from a GitHub repo (`github:owner/repo`, `owner/repo`, or URL).
 
 **File:** `src/cli/commands/build/plugins.ts`
 
-Compiles skills (and optionally agents) from a source tree into standalone Claude Code plugins. Used by marketplace authors.
+Compiles skills (and optionally agents) from a source tree into standalone Claude Code plugins. Used by marketplace authors. Skills dir is hardcoded to `src/skills/` (marketplace convention — no longer a flag).
 
-**Flags:** `--skills-dir/-s`, `--agents-dir/-a`, `--output-dir/-o`, `--skill` (single-skill mode), `--verbose/-v`, `--source`.
+**Flags:** `--agents-dir/-a`, `--output-dir/-o`, `--skill` (single-skill mode), `--verbose/-v`. Does not inherit `--source` (produces plugins from a source, doesn't consume one).
 
 ---
 
@@ -171,9 +171,21 @@ Compiles skills (and optionally agents) from a source tree into standalone Claud
 
 **File:** `src/cli/commands/build/marketplace.ts`
 
-Walks `--plugins-dir` and writes a `marketplace.json` describing every plugin.
+Walks `--plugins-dir` and writes a `marketplace.json` describing every plugin. **Reads marketplace identity from `package.json` at cwd** — `name`, `version`, `description` are required fields; `author` is optional (warns when missing but continues).
 
-**Flags:** `--plugins-dir/-p`, `--output/-o`, `--name`, `--version`, `--description`, `--owner-name`, `--owner-email`, `--source`.
+The `author` field is parsed flexibly:
+
+- String form `"Name <email>"` → `{ name, email }`
+- String form `"Name <email> (url)"` (npm's official format, URL discarded) → `{ name, email }`
+- String form `"<email>"` (email only, warns) → `{ name: "", email }`
+- String form `"Name"` (no brackets, warns) → `{ name }`
+- Object form `{ name, email?, url? }` (URL discarded) → passed through
+
+The `MarketplaceIdentity` type is derived from `z.infer<typeof packageJsonSchema>` via `Pick` rather than redeclared.
+
+**Flags:** `--plugins-dir/-p`, `--output/-o`, `--verbose/-v`. Does not inherit `--source`.
+
+**Exit codes:** non-zero when `package.json` is missing at cwd, required fields fail schema validation, or any plugin fails to manifest.
 
 ---
 
@@ -183,11 +195,15 @@ Walks `--plugins-dir` and writes a `marketplace.json` describing every plugin.
 
 **File:** `src/cli/commands/doctor.ts`
 
-Runs health checks: config parse, skills present, agents compiled, orphans, etc. Exits non-zero if any check fails.
+Runs health checks: config parse, skills resolved, agents compiled, orphans, installed skill files, source reachable. Exits non-zero if any check fails. No flags — details are always emitted (diagnostic commands shouldn't have a "hide info" mode).
 
-**Flags:** `--verbose/-v`.
+**Per-check resilience:** each check runs inside a `safeCheck(kind, fn)` wrapper — a single throwing check produces a `status: "fail"` result with the error in `details`, rather than killing the whole run. Partial results always surface.
 
-**Note:** `doctor` does **not** spread `BaseCommand.baseFlags`, so it does not accept `--source`. Every other command does.
+**`CheckKind` discriminator** (`"config" | "skills" | "agents" | "orphans" | "installed" | "source"`) tags every `CheckResult`. `formatTips()` keys remediation hints off `kind`, not message substring — renaming a message can't silently lose a tip.
+
+**Check ordering:** the source reachability check runs first (its side effect populates the global matrix used by later checks). If the source fails, `checkSkillsResolved` is marked **skipped** rather than run against an empty matrix — avoids misleading "all skills missing" reports.
+
+**Flags:** (none — `static flags = {}`). `doctor` overrides `baseFlags` to `{}`, so it does not accept `--source`.
 
 ---
 
