@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.132.0] - 2026-04-15
+
+**Wizard first-frame flash fix + edit-mode escape navigation fix**
+
+- `cc edit` no longer briefly renders the stack-selection screen before jumping to the build step. Initialization moved from a render-phase hook into `hydrateWizardStore()` called before `render(<Wizard>)`
+- Two escape presses from the build step in edit mode no longer land on the stack-selection screen. `goBack` no-ops on empty history instead of falling back to `"stack"`
+- D-215 logged: config shape simplification (singular-for-exclusive categories, drop `preloaded: false` default, drop `selectedAgents`, rename `domains` → `selectedDomains`)
+
+See [changelogs/0.132.0.md](./changelogs/0.132.0.md) for full details.
+
 ## [0.131.0] - 2026-04-15
 
 **Three scaffolding commands gated behind feature flags**
