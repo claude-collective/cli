@@ -87,9 +87,6 @@ export default class Edit extends BaseCommand {
       description: "Force refresh from remote sources",
       default: false,
     }),
-    "agent-source": Flags.string({
-      description: "Remote agent partials source (default: local CLI)",
-    }),
   };
 
   async run(): Promise<void> {
@@ -497,13 +494,13 @@ export default class Edit extends BaseCommand {
     result: WizardResultV2,
     activeNewSkills: SkillConfig[],
     context: EditContext,
-    flags: { source?: string; refresh: boolean; "agent-source"?: string },
+    flags: { source?: string; refresh: boolean },
     cwd: string,
   ): Promise<void> {
     // Load agent definitions — needed for both config-types.ts and recompilation
     let agentDefsResult: AgentDefs;
     try {
-      agentDefsResult = await loadAgentDefs(flags["agent-source"], {
+      agentDefsResult = await loadAgentDefs({
         forceRefresh: flags.refresh,
       });
     } catch (error) {

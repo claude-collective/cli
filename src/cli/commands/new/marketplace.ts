@@ -118,10 +118,6 @@ export default class NewMarketplace extends BaseCommand {
       command: "<%= config.bin %> <%= command.id %> .",
     },
     {
-      description: "Create in a specific location",
-      command: "<%= config.bin %> <%= command.id %> acme-skills --output ~/projects",
-    },
-    {
       description: "Overwrite an existing directory",
       command: "<%= config.bin %> <%= command.id %> acme-skills --force",
     },
@@ -142,15 +138,11 @@ export default class NewMarketplace extends BaseCommand {
       description: "Overwrite existing marketplace directory",
       default: false,
     }),
-    output: Flags.string({
-      char: "o",
-      description: "Parent directory to create the marketplace in (default: current directory)",
-    }),
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(NewMarketplace);
-    const parentDir = flags.output ? path.resolve(flags.output) : process.cwd();
+    const parentDir = process.cwd();
     const useCurrentDir = args.name === ".";
 
     const marketplaceName = useCurrentDir ? path.basename(parentDir) : args.name;

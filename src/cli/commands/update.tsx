@@ -73,10 +73,6 @@ export default class Update extends BaseCommand {
       description: "Skip confirmation prompt",
       default: false,
     }),
-    "no-recompile": Flags.boolean({
-      description: "Skip agent recompilation after update",
-      default: false,
-    }),
   };
 
   static examples = [
@@ -84,7 +80,6 @@ export default class Update extends BaseCommand {
     "<%= config.bin %> <%= command.id %> my-skill",
     "<%= config.bin %> <%= command.id %> --yes",
     "<%= config.bin %> <%= command.id %> --source /path/to/marketplace",
-    "<%= config.bin %> <%= command.id %> --no-recompile",
   ];
 
   async run(): Promise<void> {
@@ -108,9 +103,7 @@ export default class Update extends BaseCommand {
       const updateResult = await this.executeUpdates(outdatedSkills, context);
       this.printUpdateResults(updateResult);
 
-      const recompiledAgents = flags["no-recompile"]
-        ? []
-        : await this.recompileAfterUpdate(updateResult, context);
+      const recompiledAgents = await this.recompileAfterUpdate(updateResult, context);
 
       this.printCompletionSummary(updateResult, recompiledAgents);
     } catch (error) {
