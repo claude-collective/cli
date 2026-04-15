@@ -2,6 +2,10 @@
 
 | ID    | Task                                                                        | Status        |
 | ----- | --------------------------------------------------------------------------- | ------------- |
+| D-214 | Matrix composition hardening — prereq to re-enabling `new marketplace`      | Ready for Dev |
+| D-213 | Custom agent lifecycle — `new agent` depends on agent-summoner + wiring gaps | Ready for Dev |
+| D-212 | Custom skill lifecycle — install pipeline bug + UX gaps around `custom: true` | Ready for Dev |
+| D-211 | Reorder stack-selection render: scratch → React → other frameworks → CLI    | Ready for Dev |
 | D-210 | Merge `validate` into `doctor` — single command, layered output             | Investigate   |
 | D-181 | Add YOLO mode toggle to build step. [Plan](./D-181-yolo-mode-toggle.md)     | Ready for Dev |
 | D-180 | Write "Bring your own skills" guide                                         | Investigate   |
@@ -39,6 +43,224 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
+
+### Wizard UX
+
+#### D-214: Matrix composition hardening — prereq to re-enabling `new marketplace`
+
+`cc new marketplace` scaffolds a marketplace repo, creates a starter skill, and runs `build marketplace` at the end. The output is a working tree that users can then consume via `cc init --source <their-marketplace>`. But the runtime matrix composition pipeline on the consumer side has ~20 hardening gaps surfaced by a 10-agent investigation (see session logs). Scaffolding a marketplace today produces infrastructure built on a shaky foundation. **`new marketplace` is currently disabled behind `FEATURE_FLAGS.NEW_MARKETPLACE_COMMAND`** until the gaps below are addressed.
+
+**The scaffold itself works.** Files get written correctly. The problem is what happens when someone consumes the scaffolded marketplace.
+
+### Must-fix before flipping the flag
+
+High-impact correctness bugs where broken output happens silently:
+
+1. **Duplicate skill IDs silently overwrite** in `mergeMatrixWithSkills` (`src/cli/lib/matrix/skill-resolution.ts`). Order depends on glob. Add a dedup warn matching the existing one for duplicate slugs.
+2. **Invalid YAML in a single `metadata.yaml` crashes the whole matrix load** (`extractAllSkills` in `matrix-loader.ts` wraps `parseYaml` with no try/catch). Mirror `loadAllAgents` which warns-and-continues per-file.
+3. **Custom skill slugs are never added to `slugMap`.** `mergeLocalSkillsIntoMatrix` skips `buildSlugMap`. `getSkillBySlug("my-custom-slug")` throws. Users can't reference their own skills by slug from stacks or relationship rules.
+4. **Partial `requires` resolution pretends to be complete.** `resolveRelationships` filters out unresolved slugs then proceeds with the remaining subset — `needsAny: false` (AND) silently narrows to "AND of whatever resolved". Should fail the rule.
+5. **`"imported" as CategoryPath`** in `commands/search.ts:142` — illegal union widening (`CategoryPath = Category | "local"`). Either widen the type or change the display model.
+6. **Extras can't participate in the relationship graph.** Extra sources' `skill-rules.ts` is never read. A skill shipped in an extra with `requires: [...]` has no effect. Either compose extras' rules too or document loudly that extras are skills-only tagging.
+7. **Unresolved slugs drop before `checkMatrixHealth`** — there's no way for `validate` to surface a slug typo in a marketplace's `skill-rules.ts`. Return `unresolvedSlugs[]` from `mergeMatrixWithSkills` and have `checkMatrixHealth` flag them as errors.
+
+### Should-fix before flipping the flag
+
+Quality-of-life and architectural cleanup:
+
+8. Scope category auto-synthesis to `custom: true` only. Today a built-in skill referencing an unknown category silently gets a `order: 999` stub instead of failing loudly — masks marketplace drift.
+9. Eliminate the **double `initializeMatrix` write** in `source-loader.ts` (intermediate write at `:278` before the real one at `:146`). Footgun for any consumer reading between those two points.
+10. Extract a non-mutating **`computeMatrix()`** for `source-validator.ts` and `config-types-writer.ts` — they currently mutate the global singleton as a side effect.
+11. **Deduplicate the `metadata.yaml` loader schemas.** Inline `rawMetadataSchema` in `matrix-loader.ts` is ~70% overlap with `localRawMetadataSchema` but omits the `validateCategoryField` superRefine. Two parse paths for the same file.
+12. **Alternatives dedup** — same `(skillId, purpose)` can appear multiple times if declared twice.
+13. **Duplicate slug reverse map** — `buildSlugMap` only writes `idToSlug` when `slugToId` was free, so the loser's reverse entry is missing entirely. Every consumer using `idToSlug` gets `undefined` for the loser.
+14. **Delete dead `MergedSkillsMatrix.version`** and `agentDefinedDomains?` fields.
+15. **Shared `publishMetadataBase`** and extend for strict + custom variants (kills the 90% duplication between `metadataValidationSchema` and `customMetadataValidationSchema`).
+16. **Synthesized-category domain consistency** — warn if two skills trigger synthesis on the same category with different domains.
+
+### Nice-to-have
+
+17. **Cycle detection** in `requires` graph.
+18. **Stack reference validation** against the matrix (currently warn-only in `stacks-loader.ts:117`).
+19. **Shared `jiti` instance** with `moduleCache: true` (config-loader.ts). ~300–900ms win per custom-source load.
+20. **JSON Schema generation** alongside Zod — so marketplaces can self-validate against the CLI version they target.
+21. **`ForeignSkillId` brand** for multi-source IDs to eliminate `as SkillId` casts at the multi-source boundary.
+22. **Order-stable matrix serialization** (sort `resolvedSkills` and `synthesizedCategories` keys).
+
+### Edge cases that would break today
+
+- Marketplace author's `metadata.yaml` has a typo → whole matrix load fails with no file path in the error
+- Custom skill has slug `react` (collides with built-in) → built-in loses, every rule referencing `react` silently routes to the custom skill
+- Extra source ships a novel skill with its own category → skill drops from wizard, no warning
+- Marketplace `skill-rules.ts` has a typo slug → dropped silently, users never learn their stack is missing a dep
+- Two skills in the same source declare the same ID → second silently wins
+- Custom skill with `domain: "my-domain"` (not in closed `DOMAINS` union) → invisible in every domain tab
+
+### Related tasks
+
+- **D-212** (custom skill lifecycle) — overlapping concerns with items 3, 13 here. Fix together.
+- **D-213** (custom agent lifecycle) — overlapping concerns with the "scaffolded but not wired" pattern.
+- **R-01** in `todo/TODO-refactor.md` — adds env-var override for feature flags, so these three gated commands can have tests re-enabled without flipping source.
+
+### Re-enabling
+
+Once items 1–7 (must-fix) and 8–10 (should-fix minimum) are resolved and tests confirm multi-source marketplaces compose correctly:
+
+1. Flip `FEATURE_FLAGS.NEW_MARKETPLACE_COMMAND` to `true`
+2. Un-skip `new/marketplace.test.ts` and `new-marketplace.e2e.test.ts` (cli-tester handles)
+3. Add E2E test: `new marketplace` → consumer `init --source <new-mkt>` → skill works end-to-end
+4. Close D-212, D-213, D-214 together
+
+---
+
+#### D-213: Custom agent lifecycle — `new agent` depends on compiled agent-summoner + wiring gaps
+
+Running `cc new agent dummy-agent` after a fresh install fails immediately:
+
+```
+Create New Agent
+What should this agent do?
+> doing stuff
+
+Agent name: dummy-agent
+Purpose: doing stuff
+Output: /home/vince/dev/agents-inc/test-consume-marketplace/.claude/agents/_custom
+
+Fetching agent-summoner from source...
+ ›   Error: Agent 'agent-summoner' not found.
+ ›
+ ›   Run 'compile' first to generate agents.
+```
+
+Currently **disabled behind `FEATURE_FLAGS.NEW_AGENT_COMMAND`** (default `false`). Resolve the gaps below before flipping back on.
+
+**Root problem:** `new agent` drives Claude via the `agent-summoner` meta-agent, then post-processes the output. The meta-agent has to be resolvable at runtime, but the command currently looks for it in only two places:
+
+1. `<projectDir>/.claude/agents/agent-summoner.md` (already compiled into the install)
+2. `getAgentDefinitions(source).sourcePath/.claude/agents/agent-summoner.md` (fetched from the source)
+
+If the user's install doesn't include `agent-summoner` in their `config.agents` array, step 1 fails. If their registered source doesn't ship a compiled `agent-summoner.md` under `.claude/agents/`, step 2 fails too. The error message then points at `cc compile` — which won't help, because compile only rebuilds against `config.agents`. The user has no clear path forward.
+
+**Required fixes:**
+
+1. **Bundle a known-good `agent-summoner` template with the CLI.** The meta-agent shouldn't be a runtime discovery problem — it's infrastructure for the scaffolding command. Store the compiled meta-agent under `src/agents/agent-summoner.md` (or similar) and have `loadMetaAgent` fall back to it when the user's install + source both miss. This removes the "install it via wizard first" prerequisite entirely.
+2. **Fix the error message** when the fallback is also missing (shouldn't happen after fix 1, but defensive). Current text says `"Run 'compile' first to generate agents."` which is wrong. New text should reference the actual remediation or the D-213 follow-up.
+3. **Output path.** The command writes to `<projectDir>/.claude/agents/_custom/` (non-standard `_custom` subdir). Regular agents land in `<projectDir>/.claude/agents/*.md` (flat). Decide:
+   - Keep `_custom/` as a quarantine dir for user-created agents and update the install pipeline to recognize it, OR
+   - Flatten to `<projectDir>/.claude/agents/<name>.md` matching the regular layout, and add `custom: true` to frontmatter (same discriminator pattern as skills).
+4. **No installation wiring.** Like `new skill`, `new agent` scaffolds to disk but doesn't update the user's `config.agents` array. They'd have to re-run `edit` to pick up the new agent. Same options as D-212:
+   - Interactive post-scaffold prompt: "Add to current installation? [y/N]"
+   - `--install` flag for non-interactive
+   - Or accept the two-step flow but fix the completion message to tell users `cc edit`, not `cc compile`.
+5. **Config-types regression** — verify the same shape-regression bug from D-212's last item (the project `config-types.ts` collapsing from `GlobalAgentName | "custom-agent"` into a flat enumeration) doesn't also happen when a custom agent is added. If it does, fix in the same `config-types-writer.ts` pass.
+
+**Related to D-212.** Both custom-skill and custom-agent flows share the "scaffolded but not installed" and "project config-types regression" patterns. Consider fixing them together so the scaffolding commands have a consistent lifecycle contract.
+
+**Re-enabling:** once gaps 1–5 are resolved, flip `FEATURE_FLAGS.NEW_AGENT_COMMAND` to `true` and un-skip the tests (cli-tester will handle when requested).
+
+---
+
+#### D-212: Custom skill lifecycle — install-pipeline bug + sources-step UX + scaffold messaging
+
+A user creates a custom skill via `new skill my-skill`, opens `cc edit`, toggles it on, and gets a warning at install time:
+
+```
+Changes:
+  + Custom Skill2 [P]
+  ~ Tailwind CSS ([P] → [G])
+
+ ›   Warning: Failed to install plugin custom-skill2: Plugin installation failed:
+ ›   ✘ Failed to install plugin "custom-skill2@agents-inc": Plugin "custom-skill2"
+ ›     not found in marketplace "agents-inc"
+Recompiled 9 agents
+
+✓ Done
+```
+
+The pipeline tries to install the custom skill as a marketplace plugin, the marketplace doesn't have it (because the user just created it locally), and the install fails. Agents recompile fine — they pick up the skill content from disk — so the end state is *usable*, but the user sees a scary warning and the skill is technically in a confused state (config says marketplace source, install failed, content found via local fallback).
+
+**Root cause:** the sources step allows selecting "plugin (marketplace)" as the source for a `custom: true` skill. A custom skill by definition does not exist in any registered marketplace — the only valid source is local/eject. The install pipeline then honors the user's selection and attempts marketplace install.
+
+**Required fixes (two places, both thin):**
+
+1. **Sources step UI (`step-sources.tsx` / `source-grid.tsx`)** — for any skill with `custom: true`, restrict the source options to `eject` only. Grey out / skip rendering of the `agents-inc` (or any marketplace) column for that row. Same mechanism that currently disables source switching for non-installable skills.
+2. **Install pipeline (`claudePluginInstall` / `compileAllScopes` / wherever the marketplace dispatch happens)** — defensively check `skill.custom === true` before attempting marketplace install. If custom, skip the plugin install entirely and treat as local-only, regardless of what the SkillConfig says. Belt-and-suspenders for cases where config was hand-edited or the UI guard was bypassed.
+
+**Key files to look at:**
+
+- `src/cli/components/wizard/step-sources.tsx` — the step rendering source selection
+- `src/cli/components/wizard/source-grid.tsx` — row-level rendering
+- `src/cli/stores/wizard-store.ts` — source-selection state
+- `src/cli/lib/installation/` — install pipeline entry
+- `src/cli/lib/plugins/` — marketplace plugin install
+
+**Related UX gaps from the `new skill` investigation** (file these as part of the same task or separate, developer's choice):
+
+- **Misleading completion message.** `src/cli/commands/new/skill.ts` ends with `"Run 'cc compile' to include it in your agents."` This is wrong — `compile` alone won't include a newly scaffolded skill because `compile` only recompiles against `config.skills` and scaffolding doesn't update that array. Correct message: `"Run 'cc edit' to add this skill to your installation, or hand-edit .claude-src/config.ts."`
+- **No single-step path from `new skill` to installed.** The user has to re-enter the wizard every time. Consider either:
+  - An interactive prompt at the end of `new skill`: "Add to current installation? [y/N]" → if yes, append SkillConfig with `source: "eject"` + run `compileAgents`. Uses existing helpers.
+  - A `--install` flag on `new skill` that does the same non-interactively.
+- **`cc list` doesn't show scaffolded-but-unconfigured skills.** A user who forgets they created a skill has no way to surface it via `list`. Consider adding a "Scaffolded (not configured)" section that reads from `discoverLocalSkills()` and subtracts the ones already in `config.skills`.
+- **`config-types.ts` regresses to flat listing after a custom-skill install.** Before installing the custom skill, the project's `config-types.ts` uses the extend-global shape:
+  ```ts
+  import type {
+    SkillId as GlobalSkillId,
+    AgentName as GlobalAgentName,
+    Domain as GlobalDomain,
+    Category as GlobalCategory,
+  } from "../../../../.claude-src/config-types";
+
+  export type SkillId = GlobalSkillId | "custom-skill2";
+  export type AgentName = GlobalAgentName;
+  ```
+
+  After installing the custom skill via `cc edit`, it rewrites to a flat enumeration instead:
+  ```ts
+  export type SkillId =
+    // Custom
+    | "custom-skill2"
+    // Marketplace
+    | "cli-framework-oclif-ink"
+    | "cli-prompts-clack"
+    | "meta-design-expressive-typescript"
+    | ...
+  export type AgentName =
+    | "cli-developer"
+    | "cli-reviewer"
+    | ...
+  ```
+
+  Losing the `GlobalSkillId` import means the project's types are no longer coupled to the global `config-types.ts` — any global-only change (new marketplace skills) won't flow into the project's union. The post-install regeneration code path appears to be falling into a "full listing" branch in `config-types-writer.ts` instead of the "extend global" branch that `new skill` originally used.
+
+  **Where to look:** `src/cli/lib/configuration/config-types-writer.ts` — two codegen paths (probably `formatMaybeSectionedUnion` / `generateProjectConfigTypes` / similar). Figure out what flag or context trigger the shape change and force the extend-global shape for project-scope regenerations.
+
+**Out of scope for this task but related** (D-213 candidate?): the deeper question of "what does `source: 'eject'` mean for a skill that was created locally and was never in any marketplace?" The `source` field's discriminator (`"eject"` vs. marketplace name) is doing two jobs — "install mode" (locally managed vs. managed-by-plugin) and "origin" (forked from marketplace vs. created locally). Custom skills confuse this because they have no marketplace origin at all.
+
+---
+
+#### D-211: Reorder stack-selection render — scratch → React → other frameworks → CLI
+
+The stack-selection step currently presents every available stack in a flat (presumably alphabetical or definition-order) list. Reorder so the visual hierarchy matches user intent and expected preselection frequency:
+
+1. **Start from scratch** at the top — visually separated from the rest (blank line / divider below it)
+2. **React stacks** — the most common starting point, rendered immediately after the scratch option
+3. **Other frameworks** — Vue, Angular, Svelte, SolidJS, Next.js, Remix, Nuxt, SvelteKit, Astro, Qwik, etc. grouped together
+4. **CLI stacks** — at the bottom, after the frameworks section
+
+**Key files to look at:**
+
+- `src/cli/components/wizard/step-stack.tsx` — rendering logic
+- `src/stacks/` (in the skills marketplace repo) — stack definitions and any category/ordering metadata
+- Check whether stacks already have a `category` or `domain` field that can drive the sort, or whether the ordering needs to be declared explicitly (stack ID prefix, ordinal, group name)
+
+**Open questions for the implementer:**
+
+- Do stacks self-declare a section (`group: "react" | "framework" | "cli"`) or is the grouping inferred from ID prefix / domain?
+- Is the "scratch" option a real stack entry or a synthetic row? If synthetic, where does it currently render — could be a simple reorder in the same component. If it's a real entry, it needs a reserved ID to sort first.
+- Should "other frameworks" be alphabetical within the group, or manually ordered by popularity?
+- Any visual treatment — divider row, heading row (e.g. grey "Frameworks" text), or just a blank line?
+
+---
 
 ### CLI UX
 
