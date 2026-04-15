@@ -2,6 +2,7 @@
 
 | ID    | Task                                                                        | Status        |
 | ----- | --------------------------------------------------------------------------- | ------------- |
+| D-210 | Merge `validate` into `doctor` — single command, layered output             | Investigate   |
 | D-181 | Add YOLO mode toggle to build step. [Plan](./D-181-yolo-mode-toggle.md)     | Ready for Dev |
 | D-180 | Write "Bring your own skills" guide                                         | Investigate   |
 | D-179 | Extract shared post-wizard pipeline into ProjectLifecycle orchestrator      | Investigate   |
@@ -38,6 +39,33 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
+
+### CLI UX
+
+#### D-210: Merge `validate` into `doctor` — single command, layered output
+
+`validate` and `doctor` answer the same question from different layers: "is everything OK?" Content bugs `validate` catches (schema errors in installed metadata.yaml, broken frontmatter) cascade directly into operational failures `doctor` surfaces (unresolved skills, agents not compiled). Two commands for one question — users guess which to run.
+
+**Proposed shape:** drop `validate`, extend `doctor` with validate's six sub-passes. One command, layered output:
+
+1. **Content validation first** (validate's passes): schema errors with `file:line`. If any fail, print these and skip the operational layer — operational errors are downstream cascades, reporting them adds noise.
+2. **Operational checks second** (current doctor checks, only if content is clean): source reachable, agents compiled, orphans, config parse. Tips via `formatTips()` keyed to `CheckKind`.
+3. **One aggregated exit code.** Non-zero on any failure, warnings non-fatal.
+
+**Marketplace-author UX:** running `doctor` from a source-repo dir sees only the content-validation section (operational checks no-op because there's no installed state). Same command, different contexts — one cognitive slot.
+
+**Migration:**
+- Fold `validateSource`, installed-skills pass, installed-agents pass, plugins pass into `doctor` as additional `CheckKind` variants (or a structural layer above the existing checks)
+- Delete `src/cli/commands/validate.ts` and `validate.test.ts` / `validate.e2e.test.ts`
+- Preserve `validateSource`, `validatePlugin`, `validateAllPlugins`, etc. as library functions — `doctor` calls them
+- Update README / `docs/reference/commands.md` to drop `validate`
+
+**Open questions:**
+- Name: keep `doctor` (user-facing, intuitive) or rename to something more neutral like `check`?
+- CI-focused strict-schema-only mode: is there a real need for a fast-path that skips operational checks? If so, how is it surfaced — a subcommand (`doctor schemas`) or kept implicit (operational checks are already fast)?
+- Should `validate`'s table-style output be preserved under `doctor`, or fully switched to doctor's tip-driven style? Authors may prefer structured output for CI parsing.
+
+---
 
 ### Wizard UX
 
