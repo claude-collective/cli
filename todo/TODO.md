@@ -1,31 +1,32 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID    | Task                                                                        | Status        |
-| ----- | --------------------------------------------------------------------------- | ------------- |
-| D-214 | Matrix composition hardening — prereq to re-enabling `new marketplace`      | Ready for Dev |
-| D-213 | Custom agent lifecycle — `new agent` depends on agent-summoner + wiring gaps | Ready for Dev |
+| ID    | Task                                                                          | Status        |
+| ----- | ----------------------------------------------------------------------------- | ------------- |
+| D-215 | Config shape simplification — singular-for-exclusive, drop redundant fields   | Ready for Dev |
+| D-214 | Matrix composition hardening — prereq to re-enabling `new marketplace`        | Ready for Dev |
+| D-213 | Custom agent lifecycle — `new agent` depends on agent-summoner + wiring gaps  | Ready for Dev |
 | D-212 | Custom skill lifecycle — install pipeline bug + UX gaps around `custom: true` | Ready for Dev |
-| D-211 | Reorder stack-selection render: scratch → React → other frameworks → CLI    | Ready for Dev |
-| D-210 | Merge `validate` into `doctor` — single command, layered output             | Investigate   |
-| D-181 | Add YOLO mode toggle to build step. [Plan](./D-181-yolo-mode-toggle.md)     | Ready for Dev |
-| D-180 | Write "Bring your own skills" guide                                         | Investigate   |
-| D-179 | Extract shared post-wizard pipeline into ProjectLifecycle orchestrator      | Investigate   |
-| D-170 | Add PostHog anonymous telemetry                                             | Investigate   |
-| D-168 | Audit E2E tests — replace manual file construction with CLI commands        | Ready for Dev |
-| D-138 | Iterate on sub-agents — review and improve all agent definitions            | Ready for Dev |
-| D-111 | Create a GIF demo for the README                                            | Ready for Dev |
-| D-110 | Fix the logo in the README                                                  | Ready for Dev |
-| D-109 | Fix the screenshots in the README                                           | Ready for Dev |
-| D-62  | Review default stacks: add reviewing/research skills                        | Ready for Dev |
-| D-118 | Investigate renaming "project/global" scope to "project/user"               | Investigate   |
-| D-111 | Replace E2E text anchors with stable test identifiers                       | Investigate   |
-| D-90  | Add Sentry tracking for unresolved matrix references                        | Ready for Dev |
-| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md) | Ready for Dev |
-| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)              | Ready for Dev |
-| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`             | Ready for Dev |
-| D-66  | AI-assisted PR review: categorize diffs by type                             | Investigate   |
-| D-69  | Config migration strategy for outdated config shapes                        | Investigate   |
-| D-162 | Skill Olympics — benchmark expressive-typescript skill                      | Investigate   |
+| D-211 | Reorder stack-selection render: scratch → React → other frameworks → CLI      | Ready for Dev |
+| D-210 | Merge `validate` into `doctor` — single command, layered output               | Investigate   |
+| D-181 | Add YOLO mode toggle to build step. [Plan](./D-181-yolo-mode-toggle.md)       | Ready for Dev |
+| D-180 | Write "Bring your own skills" guide                                           | Investigate   |
+| D-179 | Extract shared post-wizard pipeline into ProjectLifecycle orchestrator        | Investigate   |
+| D-170 | Add PostHog anonymous telemetry                                               | Investigate   |
+| D-168 | Audit E2E tests — replace manual file construction with CLI commands          | Ready for Dev |
+| D-138 | Iterate on sub-agents — review and improve all agent definitions              | Ready for Dev |
+| D-111 | Create a GIF demo for the README                                              | Ready for Dev |
+| D-110 | Fix the logo in the README                                                    | Ready for Dev |
+| D-109 | Fix the screenshots in the README                                             | Ready for Dev |
+| D-62  | Review default stacks: add reviewing/research skills                          | Ready for Dev |
+| D-118 | Investigate renaming "project/global" scope to "project/user"                 | Investigate   |
+| D-111 | Replace E2E text anchors with stable test identifiers                         | Investigate   |
+| D-90  | Add Sentry tracking for unresolved matrix references                          | Ready for Dev |
+| D-41  | Create `agents-inc` configuration skill. [Plan](./D-41-config-sub-agent.md)   | Ready for Dev |
+| D-52  | Expand `new agent` command. [Plan](./D-52-expand-new-agent.md)                | Ready for Dev |
+| D-64  | Create CLI E2E testing skill + update `cli-framework-oclif-ink`               | Ready for Dev |
+| D-66  | AI-assisted PR review: categorize diffs by type                               | Investigate   |
+| D-69  | Config migration strategy for outdated config shapes                          | Investigate   |
+| D-162 | Skill Olympics — benchmark expressive-typescript skill                        | Investigate   |
 
 ---
 
@@ -45,6 +46,55 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ## Active Tasks
 
 ### Wizard UX
+
+#### D-215: Config shape simplification — singular-for-exclusive, drop redundant fields
+
+Tighten the emitted `.claude-src/config.ts` so the common case is terse. The loader schema already accepts all target shapes (`z.union([element, z.array(element)])` + `skillAssignmentElementSchema = z.union([z.string(), skillAssignmentSchema])`) so this is a writer-side + type-generator change. No runtime fallback / dual-format shim needed — `edit` rewrites the full config on every run, so existing configs auto-upgrade implicitly.
+
+Investigated via a 10-agent parallel sweep. Dropping the domain prefix from category keys was **rejected** (5-way collision on `framework`; `tooling` collides under `web-developer` which references both `web-tooling` and `shared-tooling`; `populateFromStack` does a direct `matrix.categories[key]` lookup and would silently skip entries).
+
+### Emission rules
+
+For each category assignment under an agent:
+
+| Category kind  | No flags (`preloaded` falsy, no `local`/`path`) | Any flag set                                                 |
+| -------------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| Exclusive (15) | `"web-framework": "web-framework-react"`        | `"web-framework": { id: "...", preloaded: true }`            |
+| Multi (33)     | `"web-styling": ["web-styling-tailwind"]`       | `"web-styling": [{ id: "...", preloaded: true }]`            |
+
+Per-category exclusivity is already available via matrix metadata — drives the writer branch.
+
+### Field cleanup
+
+- **Drop `ProjectConfig.selectedAgents: AgentName[]`.** Redundant with `agents: AgentScopeConfig[]` which already carries `{ name, scope, excluded? }`. Hydrate the wizard's in-memory `selectedAgents` from `agents.map(a => a.name)` at load time. The in-memory store split (for tombstone behavior on globally-installed agents) stays unchanged.
+- **Rename `ProjectConfig.domains` → `selectedDomains`** to match the wizard store field name. Pure rename.
+- **Drop `preloaded: false` emission.** It's the default — `{ id }` round-trips identically. When collapsed with the rules above, most exclusive entries become bare strings and most multi entries become bare-string arrays.
+
+### Consumers to update
+
+- `config-types-writer.ts` — per-category branch: emit `SkillAssignment<...> | SkillId` for exclusive, `(SkillAssignment<...> | SkillId)[]` for multi. Category exclusivity pulled from matrix metadata.
+- `config-generator.ts` — emit new shape; collapse bare-string defaults.
+- `config-writer.ts` / `generateConfigSource` — pretty-print the mixed shape cleanly.
+- `default-stacks.ts` — hand-rewrite to new shape (single source, readable diff).
+- Hydration — `edit.tsx` and `init.tsx` pass `agents.map(a => a.name)` as `initialAgents` instead of `selectedAgents`.
+- `ProjectConfig` type in `types/config.ts` and `projectSourceConfigSchema` in `schemas.ts` — remove `selectedAgents`, rename `domains`.
+
+### Tests to update
+
+Writer-layer assertions that spell literal config shape:
+- `config-round-trip.test.ts` — stack-shape tests (exclusive categories become singular).
+- `config-generator.test.ts` — several `toStrictEqual` on full stack objects.
+- `define-config.test.ts` — any literal shape assertions.
+- `user-journeys.integration.test.ts` — a few inner category-key literals.
+- `config-types-writer.test.ts` — emitted union shape changes.
+
+Reader-layer is shape-tolerant (schema union already there; every consumer iterates `Object.values` and reads `SkillAssignment.id`), so no read-path tests break.
+
+### Non-goals
+
+- Dropping domain prefix from category keys — rejected.
+- Skill slugs instead of IDs — rejected (slugs are not structurally unique).
+- Dual-format support / migration shim — unnecessary.
 
 #### D-214: Matrix composition hardening — prereq to re-enabling `new marketplace`
 
@@ -177,7 +227,7 @@ Recompiled 9 agents
 ✓ Done
 ```
 
-The pipeline tries to install the custom skill as a marketplace plugin, the marketplace doesn't have it (because the user just created it locally), and the install fails. Agents recompile fine — they pick up the skill content from disk — so the end state is *usable*, but the user sees a scary warning and the skill is technically in a confused state (config says marketplace source, install failed, content found via local fallback).
+The pipeline tries to install the custom skill as a marketplace plugin, the marketplace doesn't have it (because the user just created it locally), and the install fails. Agents recompile fine — they pick up the skill content from disk — so the end state is _usable_, but the user sees a scary warning and the skill is technically in a confused state (config says marketplace source, install failed, content found via local fallback).
 
 **Root cause:** the sources step allows selecting "plugin (marketplace)" as the source for a `custom: true` skill. A custom skill by definition does not exist in any registered marketplace — the only valid source is local/eject. The install pipeline then honors the user's selection and attempts marketplace install.
 
@@ -202,6 +252,7 @@ The pipeline tries to install the custom skill as a marketplace plugin, the mark
   - A `--install` flag on `new skill` that does the same non-interactively.
 - **`cc list` doesn't show scaffolded-but-unconfigured skills.** A user who forgets they created a skill has no way to surface it via `list`. Consider adding a "Scaffolded (not configured)" section that reads from `discoverLocalSkills()` and subtracts the ones already in `config.skills`.
 - **`config-types.ts` regresses to flat listing after a custom-skill install.** Before installing the custom skill, the project's `config-types.ts` uses the extend-global shape:
+
   ```ts
   import type {
     SkillId as GlobalSkillId,
@@ -215,6 +266,7 @@ The pipeline tries to install the custom skill as a marketplace plugin, the mark
   ```
 
   After installing the custom skill via `cc edit`, it rewrites to a flat enumeration instead:
+
   ```ts
   export type SkillId =
     // Custom
@@ -277,12 +329,14 @@ The stack-selection step currently presents every available stack in a flat (pre
 **Marketplace-author UX:** running `doctor` from a source-repo dir sees only the content-validation section (operational checks no-op because there's no installed state). Same command, different contexts — one cognitive slot.
 
 **Migration:**
+
 - Fold `validateSource`, installed-skills pass, installed-agents pass, plugins pass into `doctor` as additional `CheckKind` variants (or a structural layer above the existing checks)
 - Delete `src/cli/commands/validate.ts` and `validate.test.ts` / `validate.e2e.test.ts`
 - Preserve `validateSource`, `validatePlugin`, `validateAllPlugins`, etc. as library functions — `doctor` calls them
 - Update README / `docs/reference/commands.md` to drop `validate`
 
 **Open questions:**
+
 - Name: keep `doctor` (user-facing, intuitive) or rename to something more neutral like `check`?
 - CI-focused strict-schema-only mode: is there a real need for a fast-path that skips operational checks? If so, how is it surfaced — a subcommand (`doctor schemas`) or kept implicit (operational checks are already fast)?
 - Should `validate`'s table-style output be preserved under `doctor`, or fully switched to doctor's tip-driven style? Authors may prefer structured output for CI parsing.
