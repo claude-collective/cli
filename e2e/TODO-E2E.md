@@ -66,7 +66,6 @@
   - new marketplace builds marketplace.json during scaffold
   - new marketplace duplicate error without --force
   - new marketplace --force overwrite
-  - new marketplace --output flag
 
 ---
 

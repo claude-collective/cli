@@ -156,12 +156,10 @@
 - **Workaround/Pattern:** Tests can verify both the scaffold output (stacks.ts, skills, README) and the build output (marketplace.json in `PLUGIN_MANIFEST_DIR`) from a single `new marketplace` invocation.
 - **Should this become a standard?** YES. Scaffold commands that include automatic build steps should be tested for both the created structure and the build artifacts.
 
-### Finding 19: `new marketplace` supports `--output` to specify the parent directory
+### Finding 19: `new marketplace --output` removed (0.129.0+)
 
-- **What happened:** The `--output` flag changes where the marketplace directory is created. Instead of `<cwd>/<name>`, it creates `<output>/<name>`. The output directory is created automatically if it doesn't exist.
-- **Why:** This allows creating marketplaces outside the current working directory, which is useful for CI/CD pipelines and scripted setups.
-- **Workaround/Pattern:** Test with `--output` pointed to a subdirectory of the temp dir to verify the flag works and the parent directory is auto-created.
-- **Should this become a standard?** Not critical. Standard `--output` flag behavior.
+- **Historical:** `new marketplace` previously accepted `--output <parent>` to create the marketplace in a custom parent dir. Removed as part of the CLI flag simplification — `cd <parent> && cc new marketplace <name>` achieves the same in one more keystroke.
+- **Current:** marketplace is always created under `process.cwd()`. Positional `.` shortcut still uses cwd as the marketplace itself.
 
 ---
 

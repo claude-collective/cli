@@ -2,30 +2,30 @@
 
 Every command available in the `agentsinc` CLI. Run `agentsinc <command> --help` for flag help; this doc is the fuller picture: purpose, invocation model, flag semantics, and current gaps.
 
-> **Base flag (most commands):** `--source, -s <path|url>` — Skills source path or URL. Defined on `BaseCommand.baseFlags` and inherited by every command that doesn't override it. **Five commands override `baseFlags` to `{}`** because `--source` has no meaning there: `doctor`, `build plugins`, `build marketplace`, `new skill`, `import skill`.
+> **Base flag (most commands):** `--source, -s <path|url>` — Skills source path or URL. Defined on `BaseCommand.baseFlags` and inherited by every command that doesn't override it. **Seven commands override `baseFlags` to `{}`** because `--source` has no meaning there: `doctor`, `build plugins`, `build marketplace`, `new skill`, `import skill`, `search`, `validate`.
 
 ## Command matrix
 
 | Command                  | Purpose                                                         | Interactive | Flags (excl. base)                                                                        |
 | ------------------------ | --------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------- |
 | `init`                   | First-time wizard: pick a stack, skills, agents, compile        | Yes         | `--refresh`                                                                               |
-| `edit`                   | Modify an existing installation via the wizard                  | Yes         | `--refresh`, `--agent-source`                                                             |
+| `edit`                   | Modify an existing installation via the wizard                  | Yes         | `--refresh`                                                                               |
 | `compile`                | Recompile agents from the current config                        | No          | `--verbose`                                                                               |
-| `update [skill]`         | Pull latest skill content from source (optionally one skill)    | Hybrid      | `--yes/-y`, `--no-recompile`                                                              |
-| `search [query]`         | Search or browse skills across sources                          | Hybrid      | `--interactive/-i`, `--category/-c`, `--refresh`, `--json`                                |
+| `update [skill]`         | Pull latest skill content from source (optionally one skill)    | Hybrid      | `--yes/-y`                                                                                |
+| `search <query>`         | Read-only catalog search across all registered sources          | No          | (none — no base)                                                                          |
 | `eject <type>`           | Export partials / templates / skills / all for customization    | No          | `--force/-f`, `--output/-o`, `--refresh`                                                  |
 | `new skill <name>`       | Scaffold a local skill                                          | No          | `--author/-a`, `--category/-c`, `--domain/-d`, `--force/-f` _(no base)_                   |
 | `new agent <name>`       | Scaffold a local agent (Claude assists via prompt)              | Yes         | `--purpose/-p`, `--force/-f`                                                              |
-| `new marketplace <name>` | Scaffold a new skill marketplace repo                           | No          | `--force/-f`, `--output/-o`                                                               |
+| `new marketplace <name>` | Scaffold a new skill marketplace repo                           | No          | `--force/-f`                                                                              |
 | `import skill <source>`  | Import skills from a third-party GitHub repo                    | No          | `--skill/-n`, `--all/-a`, `--list/-l`, `--force/-f` _(no base)_                           |
 | `build plugins`          | Compile skills/agents into distributable plugin bundles         | No          | `--agents-dir/-a`, `--output-dir/-o`, `--skill`, `--verbose/-v` _(no base)_               |
 | `build marketplace`      | Generate `marketplace.json` from built plugins + `package.json` | No          | `--plugins-dir/-p`, `--output/-o`, `--verbose/-v` _(no base; reads id from package.json)_ |
 | `doctor`                 | Diagnose installation, skills, agents, orphans                  | No          | (none — always verbose, no base)                                                          |
 | `list`                   | Show installation mode, source, skills, agents                  | No          | (base only)                                                                               |
-| `validate`               | Validate registered sources, installed plugins, skills, agents  | No          | `--verbose/-v`                                                                            |
+| `validate`               | Validate registered sources, installed plugins, skills, agents  | No          | (none — no base)                                                                          |
 | `uninstall`              | Remove CLI-managed files, optionally including `.claude-src/`   | Yes         | `--yes/-y`, `--all`                                                                       |
 
-Interactive = renders an Ink UI. Hybrid = interactive only when a required arg is omitted (`search`) or when prompting for confirmation (`update`).
+Interactive = renders an Ink UI. Hybrid = interactive only when prompting for confirmation (`update`).
 
 ---
 
@@ -49,7 +49,7 @@ Greenfield setup. Detects if already installed (shows dashboard), otherwise open
 
 Re-enters the wizard with the current selections pre-loaded. Diff is shown at the confirm step. On confirm: re-copies locals, installs/uninstalls plugins, re-writes config, recompiles agents.
 
-**Flags:** `--refresh`, `--agent-source` (remote agent partials source — default local CLI), `--source`.
+**Flags:** `--refresh`, `--source`.
 
 **When to use:** Change skills, agents, scope, or mode after `init`.
 
@@ -71,25 +71,27 @@ Re-runs the agent compiler using the persisted config. Non-interactive — safe 
 
 **File:** `src/cli/commands/update.tsx`
 
-Pulls the latest skill content from the configured source. With no argument, updates every out-of-date skill after showing a diff and prompting for confirmation. With an argument, updates that one skill only. By default, recompiles agents afterward.
+Pulls the latest skill content from the configured source. With no argument, updates every out-of-date skill after showing a diff and prompting for confirmation. With an argument, updates that one skill only. Always recompiles agents afterward (auto-recompile is the sensible default — users who want finer control can run `cc compile` separately).
 
-**Flags:** `--yes/-y` (skip confirmation), `--no-recompile` (update files only, don't rebuild agents), `--source`.
+**Flags:** `--yes/-y` (skip confirmation), `--source`.
 
 **When to use:** Source marketplace has newer skill revisions than what's on disk.
 
-> **TODO:** Exercise end-to-end against a modified source — confirm the diff view, confirmation prompt, `--yes` bypass, `--no-recompile` skip, and the single-skill `update <name>` path all behave correctly and that the post-update recompile produces the expected agent output.
+> **TODO:** Exercise end-to-end against a modified source — confirm the diff view, confirmation prompt, `--yes` bypass, and the single-skill `update <name>` path all behave correctly and that the post-update recompile produces the expected agent output.
 
 ---
 
-### `search [query]`
+### `search <query>`
 
-**File:** `src/cli/commands/search.tsx`
+**File:** `src/cli/commands/search.ts`
 
-Non-interactive when `--json` or `query` is supplied; interactive (multi-select + preview) otherwise.
+Read-only catalog browse. Takes one required positional arg and zero flags. Searches every registered source (primary + extras) by `id`, `displayName`, `slug`, `description`, or `category`. Prints an `@oclif/table` with columns ID / Source / Category / Description.
 
-**Flags:** `--interactive/-i`, `--category/-c` (filter), `--refresh`, `--json`, `--source`.
+**Flags:** (none — `static flags = {}`, `baseFlags = {}`).
 
-**When to use:** Explore what's in the current source(s) without opening the wizard.
+**When to use:** See what skills are available before wiring them into config. For actually installing a skill, use `import skill` (ad-hoc GitHub repo) or the wizard (`init`/`edit`) to add it to your registered sources.
+
+**Multi-source merge:** results include skills from the primary source (matrix) plus every registered extra (fetched via `giget`). Extras show their source name in the `Source` column so you can distinguish them at a glance.
 
 ---
 
@@ -137,7 +139,7 @@ Scaffolder for custom agents. Prompts interactively for purpose unless `--purpos
 
 Creates a fresh marketplace directory with `skills-matrix.yaml`, default categories, and a starter skill. The starter skill is scaffolded by calling `scaffoldSkillFiles` directly (not via `runCommand`) — author resolves via `resolveAuthorOrDefault(undefined, parentDir)`, consistent with `new skill`.
 
-**Flags:** `--force/-f`, `--output/-o`, `--source` (inherited).
+**Flags:** `--force/-f`, `--source` (inherited).
 
 ---
 
@@ -227,7 +229,7 @@ Takes no arguments. Runs four validation passes over everything the CLI knows ab
 
 1. **Sources** — every source from `resolveAllSources(projectDir)` (primary + extras). Uses `validateSource`, which internally runs six sub-passes over a source tree:
    - **Skills** (`src/skills/**/metadata.yaml` + `SKILL.md`) — schema + pairing + displayName/dirname consistency + snake_case detection
-   - **Matrix cross-references** — `checkMatrixHealth` confirms `requires` / `conflictsWith` IDs resolve
+   - **Matrix cross-references** — `checkMatrixHealth` confirms `requires` / `conflictsWith` IDs resolve. Unresolved slugs (a skill's relationship references a slug not in the same source) emit via `warn()` → stderr, always visible.
    - **Stacks** — `src/stacks/*/config.yaml` against `stackConfigValidationSchema`, plus `src/stacks/**/skills/**/metadata.yaml` against `metadataValidationSchema`
    - **Source-side agents** — `src/agents/**/metadata.yaml` against `agentYamlGenerationSchema`
    - **TS config exports** — runtime-loads `config/skill-categories.ts`, `skill-rules.ts`, `stacks.ts` via `loadConfig` and Zod-checks each default export
@@ -239,9 +241,9 @@ Takes no arguments. Runs four validation passes over everything the CLI knows ab
 3. **Installed skills** — `~/.claude/skills/` and `<project>/.claude/skills/`. Checks each skill has `SKILL.md` + valid `metadata.yaml` against the strict schema (`customMetadataValidationSchema` for `custom: true` entries).
 4. **Installed agents** — `~/.claude/agents/*.md` and `<project>/.claude/agents/*.md`. Checks frontmatter parses and required fields are present; enforces kebab-case on `name`.
 
-**Dedup:** when `cwd === $HOME`, the global and project paths for skills/agents resolve to the same directory; the project pass is skipped to avoid double-validation (matches `doctor`). The plugins pass does **not** dedupe today — known, deferred.
+**Dedup:** when `cwd === $HOME`, the global and project paths resolve to the same directory; the project pass is skipped across **all three** installed-directory passes (plugins, skills, agents) to avoid double-validation. `inHome` is computed once via `fs.realpathSync` on both sides, so macOS symlinked `$HOME` no longer misses the collision.
 
-**Flags:** `--verbose/-v`. `--source` is inherited from `BaseCommand.baseFlags` but ignored.
+**Flags:** (none — `static flags = {}`, `static baseFlags = {}`). Zero-arg, zero-flag.
 
 **Exit codes:** `EXIT_CODES.ERROR` if any pass produced an error; `EXIT_CODES.SUCCESS` otherwise. Warnings are reported but non-fatal.
 
@@ -285,11 +287,12 @@ Removes CLI-managed plugins and compiled agents. With `--all`, also removes `.cl
 
 ## Conventions across commands
 
-- **Exit codes** from `EXIT_CODES`: `SUCCESS = 0`, `ERROR = 1`, `CANCELLED = 2`, etc. Every `this.error()` call passes an explicit code.
-- **Base flag `--source`** is accepted by every command except `doctor`.
-- **Interactive vs non-interactive TTY handling** — `update`, `list`, `search`, `new agent` all degrade to non-interactive output when `process.stdin.isTTY` is false.
-- **`--refresh`** consistently means "ignore cache and fetch from remote". Used by commands that read from a source.
-- **`--force/-f`** consistently means "overwrite existing files" for scaffolding and eject commands.
+- **Exit codes** from `EXIT_CODES`: `SUCCESS = 0`, `ERROR = 1`, `CANCELLED = 2`, `INVALID_ARGS = 2`. Every `this.error()` call passes an explicit code.
+- **Base flag `--source`** is inherited by commands that consume a skills source. Seven commands override `baseFlags` to `{}`: `doctor`, `build plugins`, `build marketplace`, `new skill`, `import skill`, `search`, `validate`.
+- **Interactive vs non-interactive TTY handling** — `update`, `list`, `new agent` degrade gracefully when `process.stdin.isTTY` is false.
+- **`--refresh`** consistently means "ignore cache and fetch from remote". Used only by commands that legitimately re-fetch a source (`init`, `edit`, `update`, `eject`).
+- **`--force/-f`** normalized to `"Overwrite existing {noun}"` across scaffolding commands (`new skill`, `new agent`, `new marketplace`, `import skill`).
+- **`--verbose/-v`** retained only on `compile`, `build plugins`, `build marketplace`. `doctor` and `validate` always emit full detail (diagnostic commands shouldn't have a hide-info toggle). `search` prints a table, no verbosity levels.
 
 ---
 
@@ -297,21 +300,19 @@ Removes CLI-managed plugins and compiled agents. With `--all`, also removes `.cl
 
 | Command        | TODO                                                                                                                |
 | -------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `update`       | Exercise end-to-end against a modified source — confirmation, `--yes`, `--no-recompile`, single-skill path.         |
+| `update`       | Exercise end-to-end against a modified source — confirmation, `--yes`, single-skill path.                           |
 | `new skill`    | Verify generated `metadata.yaml` passes the skill loader and makes the new skill visible in `search`/`list`/wizard. |
 | `new agent`    | Same as `new skill` but for the agent schema — scaffolded agent must show up in `list` and the wizard agents step.  |
-| `import skill` | Exercise end-to-end against a real GitHub repo; cover `--list`, `--skill`, `--all`, `--subdir`.                     |
+| `import skill` | Exercise end-to-end against a real GitHub repo; cover `--list`, `--skill`, `--all`.                                 |
 
 ## Known gaps / audit items
 
-Updated 2026-04-14. Tracked here rather than in inline comments.
+Updated 2026-04-15. Tracked here rather than in inline comments.
 
-1. **`edit --agent-source` still exists.** The flag was recently removed from `compile` and `build stack` (the latter via command removal). If the user wants the same cleanup on `edit`, audit it — otherwise document the use case.
-2. **`doctor` does not inherit `BaseCommand.baseFlags`.** Likely an oversight from when `--source` was removed from `doctor`. Either intentionally exclude it going forward or add the spread back with deliberate scope.
-3. **Scaffolding commands (`new skill`, `new agent`, `new marketplace`) have ~1 E2E test each.** Edge cases (kebab-case validation, existing dirs without `--force`, metadata defaults) are under-covered.
-4. **`import skill --subdir`** is a string flag with a default, but the use case (non-`skills/` layouts) isn't documented in the README or guides.
-5. **`update` and `search` non-TTY behavior** — limited E2E coverage for CI / piped execution.
-6. **`validate` plugins pass double-lists when `cwd === $HOME`.** The dedup that skills and agents passes use isn't applied to plugins. Minor cosmetic issue, deferred.
+1. **Scaffolding commands (`new skill`, `new agent`, `new marketplace`) have ~1 E2E test each.** Edge cases (kebab-case validation, existing dirs without `--force`, metadata defaults) are under-covered.
+2. **`update` non-TTY behavior** — limited E2E coverage for CI / piped execution (`search` now non-interactive always).
+3. **`validate` unresolved-slug warnings don't increment `totals.warnings`.** The message reaches stderr via `warn()` but the validate command's aggregate counter only picks up structured `ValidationResult.warnings`. If you want the counter to reflect these warnings, `validateRegisteredSource` needs to detect that a `warn()` fired during source loading and bump the total. Separate small wiring change.
+4. **`getAgentDefinitions(remoteSource?, options?)`** still accepts a first param used only by `new/agent.tsx` to locate a custom `agent-summoner` meta-agent via the user's `--source` flag. Niche feature — custom sources that ship their own meta-agent. Not removing; flagged so it doesn't slip through a future cleanup without deliberate intent.
 
 ---
 
@@ -332,4 +333,8 @@ Running list of internal `.ai-docs/` references that lag behind the CLI's actual
 - [ ] `.ai-docs/DOCUMENTATION_MAP.md` (~lines 386–387) — references `schema-validator.ts:200` / `:156` with line numbers; `validateAllSchemas` deleted, surviving `formatZodErrors` is now at a different line. Drop line numbers per the "no source code line numbers in .ai-docs" rule and update the symbol list.
 - [ ] `.ai-docs/reference/commands.md` (~line 203) — mentions the deleted `validateAllSchemas()`.
 - [ ] `.ai-docs/reference/dependency-graph.md` (~line 117) — lists `validateAllSchemas, printValidationResults` under `validate`; both deleted.
+- [ ] **0.129.0 flag removals** — any `.ai-docs/` that enumerates CLI flags needs a sweep for: `doctor --verbose`, `build plugins --skills-dir`, `build marketplace --name/--version/--description/--owner-name/--owner-email`, `new skill --output`, `new agent --non-interactive/--refresh`, `import skill --subdir/--refresh`, `search --interactive/--category/--refresh/--json`, `validate --verbose`. All removed; `--source` inheritance now overridden on 7 commands.
+- [ ] **Deleted production files (0.129.0)** — `src/cli/components/skill-search/` (entire dir), `src/cli/components/hooks/use-filtered-results.ts`. If `.ai-docs/reference/*` listed these as parts of the component graph, remove.
+- [ ] **Post-0.129.0 additional flag/code removals** — `edit --agent-source`, `new marketplace --output`, `resolveAgentsSource` helper + error message, `formatOrigin` + `AgentsSourceOrigin` type, `loadAgentDefs`'s first `agentSource` parameter, `SUCCESS_MESSAGES.IMPORT_COMPLETE`, `HOTKEY_COPY_LINK`, `UI_LAYOUT` consts block. Sweep any `.ai-docs/` that references these symbols.
+- [ ] **Unresolved-slug diagnostic** — `src/cli/lib/matrix/skill-resolution.ts`'s unresolved-slug log call flipped from `verbose()` to `warn()`. Any `.ai-docs/` describing the matrix-resolution silent-drop behavior needs to note it now warns to stderr.
 - [ ] **When `new skill` / `new agent` metadata generation is hardened** (see TODOs) — update any skill-loading or agent-loading reference docs that describe the current schema expectations.
