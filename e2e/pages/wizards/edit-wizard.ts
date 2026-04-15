@@ -15,7 +15,7 @@ export type EditWizardOptions = {
   rows?: number;
   /** Custom environment variables (merged with defaults). */
   env?: Record<string, string | undefined>;
-  /** Extra CLI flags to pass (e.g., ["--agent-source", "/path"]). */
+  /** Extra CLI flags to pass (e.g., ["--refresh"]). */
   extraArgs?: string[];
   /** Override the default timeout for the underlying TerminalSession. */
   defaultTimeout?: number;

@@ -83,14 +83,6 @@ describe("update command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
 
-    it("should accept --no-recompile flag", async () => {
-      const { error } = await runCliCommand(["update", "--no-recompile"]);
-
-      // Should not error on --no-recompile flag
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
     it("should accept --source flag", async () => {
       const { error } = await runCliCommand(["update", "--source", "/some/path"]);
 
@@ -109,14 +101,6 @@ describe("update command", () => {
   });
 
   describe("combined flags", () => {
-    it("should accept --yes with --no-recompile", async () => {
-      const { error } = await runCliCommand(["update", "--yes", "--no-recompile"]);
-
-      // Should accept both flags
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
     it("should accept --yes with --source", async () => {
       const { error } = await runCliCommand(["update", "--yes", "--source", "/custom/path"]);
 
@@ -130,7 +114,6 @@ describe("update command", () => {
         "update",
         "my-skill",
         "--yes",
-        "--no-recompile",
         "--source",
         "/some/path",
       ]);
@@ -180,14 +163,6 @@ describe("update command", () => {
       const { error } = await runCliCommand(["update", "--yes"]);
 
       // Should bypass interactive prompt with --yes
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept --no-recompile with local skills", async () => {
-      const { error } = await runCliCommand(["update", "--yes", "--no-recompile"]);
-
-      // Should accept --no-recompile flag
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });

@@ -97,20 +97,6 @@ describe("loadAgentDefs", () => {
     expect(result.sourcePath).toBe("/tmp/source");
   });
 
-  it("should pass agentSource and options to getAgentDefinitions", async () => {
-    mockLoadAllAgents.mockResolvedValue({} as Record<AgentName, AgentDefinition>);
-
-    await loadAgentDefs("github:test/agents", {
-      projectDir: "/tmp/project",
-      forceRefresh: true,
-    });
-
-    expect(mockGetAgentDefinitions).toHaveBeenCalledWith("github:test/agents", {
-      projectDir: "/tmp/project",
-      forceRefresh: true,
-    });
-  });
-
   it("should return complete agentSourcePaths", async () => {
     mockLoadAllAgents.mockResolvedValue({} as Record<AgentName, AgentDefinition>);
 

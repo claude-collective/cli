@@ -6,13 +6,11 @@ import { readTestTsConfig, writeTestTsConfig } from "../__tests__/helpers/config
 import { buildSourceConfig } from "../__tests__/factories/config-factories.js";
 import {
   DEFAULT_SOURCE,
-  formatOrigin,
   getProjectConfigPath,
   isLocalSource,
   loadProjectSourceConfig,
   resolveBranding,
   resolveSource,
-  resolveAgentsSource,
   SOURCE_ENV_VAR,
   validateSourceFormat,
 } from "./config";
@@ -362,40 +360,6 @@ describe("config", () => {
     });
   });
 
-  describe("formatOrigin", () => {
-    it("should format source flag origin", () => {
-      expect(formatOrigin("source", "flag")).toBe("--source flag");
-    });
-
-    it("should format source env origin", () => {
-      expect(formatOrigin("source", "env")).toContain(SOURCE_ENV_VAR);
-    });
-
-    it("should format source project origin", () => {
-      expect(formatOrigin("source", "project")).toContain("project config");
-    });
-
-    it("should format source default origin", () => {
-      expect(formatOrigin("source", "default")).toBe("default");
-    });
-
-    it("should format agents flag origin", () => {
-      expect(formatOrigin("agents", "flag")).toBe("--agent-source flag");
-    });
-
-    it("should format agents project origin", () => {
-      expect(formatOrigin("agents", "project")).toContain("project config");
-    });
-
-    it("should format agents default origin", () => {
-      expect(formatOrigin("agents", "default")).toBe("default (local CLI)");
-    });
-
-    it("should return same project label for both source and agents", () => {
-      expect(formatOrigin("source", "project")).toBe(formatOrigin("agents", "project"));
-    });
-  });
-
   describe("loadProjectSourceConfig", () => {
     it("should return null if config file does not exist", async () => {
       const config = await loadProjectSourceConfig(tempDir);
@@ -643,78 +607,6 @@ describe("config", () => {
 
         expect(result.marketplace).toBeUndefined();
       });
-    });
-  });
-
-  describe("resolveAgentsSource", () => {
-    it("should return flag value with highest priority", async () => {
-      await writeTestTsConfig(
-        tempDir,
-        buildSourceConfig({ agentsSource: "https://project.example.com/agents" }),
-      );
-
-      const result = await resolveAgentsSource("https://flag.example.com/agents", tempDir);
-
-      expect(result.agentsSource).toBe("https://flag.example.com/agents");
-      expect(result.agentsSourceOrigin).toBe("flag");
-    });
-
-    it("should return project config when no flag is provided", async () => {
-      await writeTestTsConfig(
-        tempDir,
-        buildSourceConfig({ agentsSource: "https://project.example.com/agents" }),
-      );
-
-      const result = await resolveAgentsSource(undefined, tempDir);
-
-      expect(result.agentsSource).toBe("https://project.example.com/agents");
-      expect(result.agentsSourceOrigin).toBe("project");
-    });
-
-    it("should return default when no config is set", async () => {
-      const result = await resolveAgentsSource(undefined, tempDir);
-
-      expect(result.agentsSourceOrigin).toBe("default");
-      expect(result.agentsSource).toBeUndefined();
-    });
-
-    it("should handle undefined projectDir", async () => {
-      const result = await resolveAgentsSource(undefined, undefined);
-
-      expect(result.agentsSourceOrigin).toBe("default");
-      expect(result.agentsSource).toBeUndefined();
-    });
-
-    it("should throw error for empty agent-source flag", async () => {
-      await expect(resolveAgentsSource("", tempDir)).rejects.toThrow(
-        /--agent-source flag cannot be empty/,
-      );
-    });
-
-    it("should throw error for whitespace-only agent-source flag", async () => {
-      await expect(resolveAgentsSource("   ", tempDir)).rejects.toThrow(
-        /--agent-source flag cannot be empty/,
-      );
-    });
-
-    it("should throw error for incomplete github: URL in agent-source flag", async () => {
-      await expect(resolveAgentsSource("github:", tempDir)).rejects.toThrow(/incomplete URL/);
-    });
-
-    it("should throw error for github: without owner/repo in agent-source flag", async () => {
-      await expect(resolveAgentsSource("github:just-a-name", tempDir)).rejects.toThrow(
-        /owner\/repo format/,
-      );
-    });
-
-    it("should throw error for incomplete https:// URL in agent-source flag", async () => {
-      await expect(resolveAgentsSource("https://x", tempDir)).rejects.toThrow(/incomplete URL/);
-    });
-
-    it("should throw error for https:// URL without valid hostname in agent-source flag", async () => {
-      await expect(resolveAgentsSource("https://not-a-host/repo", tempDir)).rejects.toThrow(
-        /invalid URL/,
-      );
     });
   });
 

@@ -31,6 +31,7 @@ describe("validate command", () => {
       expect(stdout).toContain("Validate");
       expect(stdout).not.toContain("--plugins");
       expect(stdout).not.toContain("--all");
+      expect(stdout).not.toContain("--verbose");
     });
   });
 
@@ -51,18 +52,6 @@ describe("validate command", () => {
         expect(stdout).toMatch(/Result: 0 error\(s\), \d+ warning\(s\)/);
       },
     );
-
-    it("should accept --verbose on the no-args flow", { timeout: TIMEOUTS.LIFECYCLE }, async () => {
-      wizard = await InitWizard.launch();
-      const result = await wizard.completeWithDefaults();
-      expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      const { exitCode, stdout } = await CLI.run(["validate", "--verbose"], result.project);
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Validating sources");
-      expect(stdout).toContain("Validating plugins");
-    });
   });
 
   describe("installed skills and agents", () => {

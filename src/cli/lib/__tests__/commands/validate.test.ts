@@ -429,38 +429,6 @@ describe("validate command", () => {
     });
   });
 
-  describe("flag acceptance", () => {
-    it("should accept --verbose flag", async () => {
-      const sourceDir = path.join(tempDir, "source");
-      await buildValidSource(sourceDir);
-      await writeTestTsConfig(projectDir, {
-        name: "test-project",
-        skills: [],
-        agents: [],
-        source: sourceDir,
-      });
-
-      const { error } = await runCliCommand(["validate", "--verbose"]);
-
-      expect(error).toBeUndefined();
-    });
-
-    it("should accept -v shorthand for verbose", async () => {
-      const sourceDir = path.join(tempDir, "source");
-      await buildValidSource(sourceDir);
-      await writeTestTsConfig(projectDir, {
-        name: "test-project",
-        skills: [],
-        agents: [],
-        source: sourceDir,
-      });
-
-      const { error } = await runCliCommand(["validate", "-v"]);
-
-      expect(error).toBeUndefined();
-    });
-  });
-
   describe("installed skills pass", () => {
     it("should render Validating skills header in the output", async () => {
       const sourceDir = path.join(tempDir, "source");

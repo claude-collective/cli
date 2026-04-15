@@ -28,7 +28,6 @@ describe("ERROR_MESSAGES", () => {
 describe("SUCCESS_MESSAGES", () => {
   it("should have all expected keys", () => {
     expect(Object.keys(SUCCESS_MESSAGES)).toStrictEqual([
-      "IMPORT_COMPLETE",
       "UNINSTALL_COMPLETE",
       "INIT_SUCCESS",
       "PLUGIN_COMPILE_COMPLETE",

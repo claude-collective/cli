@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mkdir, writeFile } from "fs/promises";
 import {
   resolveSource,
-  resolveAgentsSource,
   loadProjectSourceConfig,
   getProjectConfigPath,
   saveSourceToProjectConfig,
@@ -254,58 +253,6 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       expect(result.source).toBe("github:flag/source");
       expect(result.sourceOrigin).toBe("flag");
       expect(result.marketplace).toBe("https://marketplace.example.com");
-    });
-  });
-});
-
-describe("User Journey: Config Precedence - Agent Source Resolution", () => {
-  let tempDir: string;
-  let projectDir: string;
-
-  beforeEach(async () => {
-    tempDir = await createTempDir("cc-agent-precedence-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
-  });
-
-  afterEach(async () => {
-    await cleanupTempDir(tempDir);
-  });
-
-  describe("agentsSource precedence", () => {
-    it("should use flag value with highest priority", async () => {
-      await createProjectConfig(projectDir, {
-        agentsSource: "https://project.example.com/agents",
-      });
-
-      const result = await resolveAgentsSource("https://flag.example.com/agents", projectDir);
-
-      expect(result.agentsSource).toBe("https://flag.example.com/agents");
-      expect(result.agentsSourceOrigin).toBe("flag");
-    });
-
-    it("should use project config when no flag provided", async () => {
-      await createProjectConfig(projectDir, {
-        agentsSource: "https://project.example.com/agents",
-      });
-
-      const result = await resolveAgentsSource(undefined, projectDir);
-
-      expect(result.agentsSource).toBe("https://project.example.com/agents");
-      expect(result.agentsSourceOrigin).toBe("project");
-    });
-
-    it("should use default when no config exists", async () => {
-      const result = await resolveAgentsSource(undefined, projectDir);
-
-      expect(result.agentsSourceOrigin).toBe("default");
-      expect(result.agentsSource).toBeUndefined();
-    });
-
-    it("should reject empty flag value", async () => {
-      await expect(resolveAgentsSource("", projectDir)).rejects.toThrow(
-        /--agent-source flag cannot be empty/,
-      );
     });
   });
 });

@@ -1,20 +1,47 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { EXIT_CODES, STEP_TEXT } from "../pages/constants.js";
+import path from "path";
+import { mkdir, writeFile } from "fs/promises";
+import { EXIT_CODES } from "../pages/constants.js";
 import {
   createTempDir,
   cleanupTempDir,
   createE2ESource,
   ensureBinaryExists,
+  writeProjectConfig,
 } from "../helpers/test-utils.js";
 import { CLI } from "../fixtures/cli.js";
 
+const EXTRA_SKILL_DIR = "extra-search-marker";
+const EXTRA_SKILL_DESCRIPTION = "Extra-source-only marker skill for search merge tests";
+const EXTRA_SOURCE_NAME = "acme-extra";
+
 /**
- * E2E tests for the `search` command — static (non-interactive) mode.
- *
- * Static mode is triggered by providing a query argument without -i flag.
- * It prints a table of matching skills and exits.
+ * Creates an extras-style source directory at `<dir>/skills/<skillDir>/SKILL.md`.
+ * Search loads extras with this flat layout (not the primary `src/skills` layout).
  */
-describe("search command — static mode", () => {
+async function createExtrasSourceWithSkill(
+  baseDir: string,
+  skillDir: string,
+  description: string,
+): Promise<string> {
+  const sourceDir = path.join(baseDir, "extra-source");
+  const skillPath = path.join(sourceDir, "skills", skillDir);
+  await mkdir(skillPath, { recursive: true });
+  await writeFile(
+    path.join(skillPath, "SKILL.md"),
+    `---\nname: ${skillDir}\ndescription: ${description}\n---\n\n# ${skillDir}\n`,
+  );
+  return sourceDir;
+}
+
+/**
+ * E2E tests for the `search` command.
+ *
+ * The search command takes a single required positional `query` arg and
+ * prints a read-only table of matching skills across the primary source
+ * plus any registered extras. There are no flags.
+ */
+describe("search command", () => {
   let tempDir: string;
   let sourceDir: string | undefined;
   let sourceTempDir: string | undefined;
@@ -44,20 +71,33 @@ describe("search command — static mode", () => {
       const { exitCode, stdout } = await CLI.run(["search", "--help"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("Search available skills");
+      expect(stdout).toContain("Search");
       expect(stdout).toContain("USAGE");
       expect(stdout).toContain("query");
     });
   });
 
-  describe("static search with query argument", () => {
+  describe("argument validation", () => {
+    it("should exit with INVALID_ARGS when query is missing", async () => {
+      tempDir = await createTempDir();
+
+      const { exitCode, output } = await CLI.run(["search"], { dir: tempDir });
+
+      expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS);
+      expect(output).toContain("Missing 1 required arg");
+    });
+  });
+
+  describe("search with query argument", () => {
     it("should display a table of matching skills", async () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      const { exitCode, stdout } = await CLI.run(["search", "react", "--source", sourceDir!], {
-        dir: tempDir,
-      });
+      const { exitCode, stdout } = await CLI.run(
+        ["search", "react"],
+        { dir: tempDir },
+        { env: { CC_SOURCE: sourceDir } },
+      );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("react");
@@ -70,43 +110,13 @@ describe("search command — static mode", () => {
       await createSourceFixture();
 
       const { exitCode, output } = await CLI.run(
-        ["search", "zzz-nonexistent-skill-xyz", "--source", sourceDir!],
+        ["search", "zzz-nonexistent-skill-xyz"],
         { dir: tempDir },
+        { env: { CC_SOURCE: sourceDir } },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("No skills found");
-    });
-
-    it("should filter results by category flag", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      const { exitCode, stdout } = await CLI.run(
-        ["search", "framework", "-c", "web-framework", "--source", sourceDir!],
-        { dir: tempDir },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(stdout).toContain("react");
-      expect(stdout).toContain("Category filter");
-    });
-
-    it("should only show skills matching the category filter", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      const { exitCode, stdout } = await CLI.run(
-        ["search", "framework", "-c", "api-api", "--source", sourceDir!],
-        { dir: tempDir },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // api-api category should show hono, not react
-      expect(stdout).toContain("hono");
-      expect(stdout).toContain("Category filter");
-      // React is in web-framework, not api-api, so it should not appear
-      expect(stdout).not.toContain("react");
     });
   });
 
@@ -116,77 +126,64 @@ describe("search command — static mode", () => {
       await createSourceFixture();
 
       const { exitCode, output } = await CLI.run(
-        ["search", "zzz-absolutely-nothing-xyz", "--source", sourceDir!],
+        ["search", "zzz-absolutely-nothing-xyz"],
         { dir: tempDir },
+        { env: { CC_SOURCE: sourceDir } },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("No skills found");
       expect(output).toContain("zzz-absolutely-nothing-xyz");
     });
-
-    it("should show no results when category filter excludes all matches", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      // Search for "react" but filter by api-api category — react is not in api-api
-      const { exitCode, output } = await CLI.run(
-        ["search", "react", "-c", "api-api", "--source", sourceDir!],
-        { dir: tempDir },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(output).toContain("No skills found");
-    });
   });
 
-  describe("--source flag in non-interactive mode", () => {
-    it("should load skills from the custom source path", async () => {
+  describe("primary source from CC_SOURCE env var", () => {
+    it("should load skills from the source pointed to by CC_SOURCE", async () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      const { exitCode, stdout, output } = await CLI.run(
-        ["search", "methodology", "--source", sourceDir!],
+      const { exitCode, stdout } = await CLI.run(
+        ["search", "framework"],
         { dir: tempDir },
+        { env: { CC_SOURCE: sourceDir } },
       );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-
-      // Verify the source was loaded from the local path
-      expect(output).toContain(STEP_TEXT.LOADED_LOCAL);
-      expect(output).toContain(sourceDir!);
-
-      // The E2E source contains methodology skills
-      expect(stdout).toContain("methodology");
-    });
-
-    it("should show source path in output when using --source", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      const { exitCode, output } = await CLI.run(["search", "hono", "--source", sourceDir!], {
-        dir: tempDir,
-      });
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // Output should indicate the source was loaded from the local path
-      expect(output).toContain(STEP_TEXT.LOADED_LOCAL);
-      expect(output).toContain(sourceDir!);
-    });
-
-    it("should find skills across different categories with --source", async () => {
-      tempDir = await createTempDir();
-      await createSourceFixture();
-
-      // Search for a term that spans multiple categories
-      const { exitCode, stdout } = await CLI.run(["search", "framework", "--source", sourceDir!], {
-        dir: tempDir,
-      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       // E2E source has react (web-framework) and hono (api-api with "framework" in description)
       expect(stdout).toContain("react");
       expect(stdout).toContain("hono");
+    });
+  });
+
+  describe("extras merge", () => {
+    it("should include skills from registered extra sources in results", async () => {
+      tempDir = await createTempDir();
+      await createSourceFixture();
+
+      // Register an extra source via project config (`sources` field).
+      // Extras are loaded with a flat `<source>/skills/<dir>/SKILL.md` layout.
+      const extraSourceDir = await createExtrasSourceWithSkill(
+        tempDir,
+        EXTRA_SKILL_DIR,
+        EXTRA_SKILL_DESCRIPTION,
+      );
+
+      await writeProjectConfig(tempDir, {
+        name: "search-extras-test",
+        sources: [{ name: EXTRA_SOURCE_NAME, url: extraSourceDir }],
+      });
+
+      const { exitCode, stdout } = await CLI.run(
+        ["search", "marker"],
+        { dir: tempDir },
+        { env: { CC_SOURCE: sourceDir } },
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // Skill from the extra source appears in the results table
+      expect(stdout).toContain(EXTRA_SKILL_DIR);
+      // Source label for the extra is the configured `name`
+      expect(stdout).toContain(EXTRA_SOURCE_NAME);
     });
   });
 });

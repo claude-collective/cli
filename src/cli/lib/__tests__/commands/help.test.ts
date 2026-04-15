@@ -106,8 +106,7 @@ describe("help command", () => {
     it("should show search command summary", async () => {
       const { stdout } = await runCliCommand(["help", "search"]);
 
-      // Search command summary contains "Search available skills"
-      expect(stdout).toContain("Search available skills");
+      expect(stdout).toContain("Search the catalog");
     });
   });
 

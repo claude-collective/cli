@@ -31,7 +31,7 @@ describe("new marketplace command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Scaffold a new private marketplace project");
     expect(stdout).toContain("--force");
-    expect(stdout).toContain("--output");
+    expect(stdout).not.toContain("--output");
   });
 
   it("should error when no name is provided", async () => {
@@ -193,24 +193,6 @@ describe("new marketplace command", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Marketplace created successfully");
-  });
-
-  it("should support --output to specify parent directory", async () => {
-    tempDir = await createTempDir();
-    const marketplaceName = "output-test";
-    const outputDir = path.join(tempDir, "custom-parent");
-
-    const { exitCode, stdout } = await CLI.run(
-      ["new", "marketplace", marketplaceName, "--output", outputDir],
-      { dir: tempDir },
-    );
-
-    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Marketplace created successfully");
-
-    const marketplaceDir = path.join(outputDir, marketplaceName);
-    expect(await directoryExists(marketplaceDir)).toBe(true);
-    expect(await fileExists(path.join(marketplaceDir, SOURCE_PATHS.STACKS_FILE))).toBe(true);
   });
 
   it("should produce a valid skill-categories.ts with dummy category", async () => {

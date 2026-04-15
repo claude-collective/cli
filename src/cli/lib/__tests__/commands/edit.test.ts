@@ -178,36 +178,9 @@ describe("edit command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
-
-    it("should accept --agent-source flag with URL", async () => {
-      const { error } = await runCliCommand([
-        "edit",
-        "--agent-source",
-        "https://example.com/agents",
-      ]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
   });
 
   describe("combined flags", () => {
-    it("when --refresh, --source, and --agent-source provided together, should accept all flags", async () => {
-      const { error } = await runCliCommand([
-        "edit",
-        "--refresh",
-        "--source",
-        "/custom/source",
-        "--agent-source",
-        "https://example.com/agents",
-      ]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
-
     it("when mixing -s shorthand and --refresh long flag, should accept both", async () => {
       const { error } = await runCliCommand(["edit", "--refresh", "-s", "/custom/source"]);
 

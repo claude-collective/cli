@@ -66,8 +66,8 @@ describe("help and version", () => {
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(result.stdout).toContain("Validate");
-    expect(result.stdout).toContain("--verbose");
-    expect(result.stdout).toContain("--source");
+    expect(result.stdout).not.toContain("--verbose");
+    expect(result.stdout).not.toContain("--source");
     expect(result.stdout).not.toContain("--plugins");
     expect(result.stdout).not.toContain("--all");
   });
@@ -107,7 +107,7 @@ describe("help and version", () => {
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(result.stdout).toContain("Edit skills");
     expect(result.stdout).toContain("--refresh");
-    expect(result.stdout).toContain("--agent-source");
+    expect(result.stdout).not.toContain("--agent-source");
   });
 
   it("should display search help via 'help search' syntax", async () => {
@@ -115,7 +115,7 @@ describe("help and version", () => {
     const result = await CLI.run(["help", "search"], { dir: tempDir });
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(result.stdout).toContain("Search available skills");
+    expect(result.stdout).toContain("Search the catalog");
     expect(result.stdout).toContain("USAGE");
   });
 

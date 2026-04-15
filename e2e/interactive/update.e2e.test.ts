@@ -52,7 +52,6 @@ describe("update command", () => {
       expect(stdout).toContain("Update local skills from source");
       expect(stdout).toContain("--yes");
       expect(stdout).toContain("--source");
-      expect(stdout).toContain("--no-recompile");
     });
   });
 
@@ -131,26 +130,6 @@ describe("update command", () => {
 
       expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
       expect(output).toContain("Did you mean");
-    });
-  });
-
-  describe("update --yes --no-recompile", () => {
-    it("should not recompile agents when --no-recompile is set", async () => {
-      const source = await createE2ESource();
-      sourceTempDir = source.tempDir;
-      const project = await ProjectBuilder.editable({
-        skills: ["web-framework-react"],
-      });
-      tempDir = path.dirname(project.dir);
-      const projectDir = project.dir;
-
-      const { exitCode, output } = await CLI.run(
-        ["update", "--yes", "--no-recompile", "--source", source.sourceDir],
-        { dir: projectDir },
-      );
-
-      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(output).not.toContain(STEP_TEXT.RECOMPILING);
     });
   });
 

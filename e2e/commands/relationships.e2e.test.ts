@@ -36,7 +36,7 @@ describe("slug-based relationship rules", () => {
         const result = await wizard.completeWithDefaults();
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-        const { output } = await CLI.run(["validate", "--verbose"], result.project);
+        const { output } = await CLI.run(["validate"], result.project);
 
         // Slug resolution should detect that "angular-standalone" has no matching skill in the source
         expect(output).toContain("Unresolved slug");
@@ -69,7 +69,7 @@ describe("slug-based relationship rules", () => {
         const result = await wizard.completeWithDefaults();
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-        const { output } = await CLI.run(["validate", "--verbose"], result.project);
+        const { output } = await CLI.run(["validate"], result.project);
 
         expect(output).toContain("Unresolved slug");
         expect(output).toContain("angular-standalone");
@@ -110,7 +110,7 @@ describe("slug-based relationship rules", () => {
         const result = await wizard.completeWithDefaults();
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-        const { output } = await CLI.run(["validate", "--verbose"], result.project);
+        const { output } = await CLI.run(["validate"], result.project);
 
         // Default rules may produce unresolved references for slugs not in E2E source
         // (e.g., "angular", "vue"), but E2E source slugs should all resolve cleanly.
@@ -163,7 +163,7 @@ describe("slug-based relationship rules", () => {
         const result = await wizard.completeWithDefaults();
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-        const { output } = await CLI.run(["validate", "--verbose"], result.project);
+        const { output } = await CLI.run(["validate"], result.project);
 
         // "angular-standalone" slug does not exist in the E2E source
         expect(output).toContain("Unresolved slug");

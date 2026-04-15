@@ -128,12 +128,11 @@ describe("edit recompile routes agents to correct scope directory", () => {
       await createPermissionsFile(projectDir);
 
       // --- Action: run edit wizard, navigate through without changes ---
-      // --agent-source is needed so that recompileAgents finds agent definitions.
+      // Agent definitions come from the CLI built-ins (web-developer, api-developer).
       wizard = await EditWizard.launch({
         projectDir,
         source: { sourceDir, tempDir: sourceTempDir },
         env: { HOME: tempHOME },
-        extraArgs: ["--agent-source", sourceDir],
       });
 
       // Single domain — advance through build -> sources -> agents -> confirm

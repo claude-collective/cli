@@ -234,19 +234,6 @@ describe("new:marketplace command", () => {
     });
   });
 
-  describe("flags", () => {
-    it("should accept --output flag to create in a different directory", async () => {
-      const outputDir = path.join(tempDir, "custom-output");
-      await mkdir(outputDir, { recursive: true });
-
-      await runCliCommand(["new:marketplace", "acme-skills", "--output", outputDir]);
-
-      const marketplaceDir = path.join(outputDir, "acme-skills");
-      expect(await directoryExists(marketplaceDir)).toBe(true);
-      expect(await fileExists(path.join(marketplaceDir, STACKS_FILE_PATH))).toBe(true);
-    });
-  });
-
   describe("existing directory handling", () => {
     it("should error if directory already exists without --force", async () => {
       const marketplaceDir = path.join(projectDir, "existing-market");
@@ -395,20 +382,6 @@ describe("new:marketplace command", () => {
 
       expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
       expect(error?.message).toContain("not valid kebab-case");
-    });
-
-    it("should use --output directory basename when combined with '.'", async () => {
-      const outputDir = path.join(tempDir, "my-org-skills");
-      await mkdir(outputDir, { recursive: true });
-
-      await runCliCommand(["new:marketplace", ".", "--output", outputDir]);
-
-      const stacksPath = path.join(outputDir, STACKS_FILE_PATH);
-      expect(await fileExists(stacksPath)).toBe(true);
-
-      const content = await readFile(stacksPath, "utf-8");
-      expect(content).toContain('"id": "dummy-stack"');
-      expect(content).toContain('"dummy-category": "dummy-skill"');
     });
 
     it("should omit cd step in next steps when using '.'", async () => {
