@@ -14,7 +14,6 @@ export const ERROR_MESSAGES = {
 } as const;
 
 export const SUCCESS_MESSAGES = {
-  IMPORT_COMPLETE: "Import complete!",
   UNINSTALL_COMPLETE: "Uninstall complete!",
   INIT_SUCCESS: `${DEFAULT_BRANDING.NAME} initialized successfully!`,
   PLUGIN_COMPILE_COMPLETE: "Plugin compile complete!",

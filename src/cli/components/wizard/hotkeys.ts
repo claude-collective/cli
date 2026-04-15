@@ -36,12 +36,6 @@ export const HOTKEY_SET_ALL_PLUGIN = { key: "p", label: "P" } as const;
 export const HOTKEY_ADD_SOURCE = { key: "a", label: "A" } as const;
 
 // ---------------------------------------------------------------------------
-// Skill search hotkey
-// ---------------------------------------------------------------------------
-
-export const HOTKEY_COPY_LINK = { key: "c", label: "C" } as const;
-
-// ---------------------------------------------------------------------------
 // Common key labels (for structural keys handled via Ink key objects)
 // ---------------------------------------------------------------------------
 

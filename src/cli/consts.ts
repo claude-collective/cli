@@ -116,13 +116,6 @@ export const UI_SYMBOLS = {
   CROSS: "\u2717",
 } as const;
 
-export const UI_LAYOUT = {
-  MAX_VISIBLE_RESULTS: 10,
-  DESCRIPTION_WIDTH: 30,
-  COPIED_MESSAGE_TIMEOUT_MS: 2000,
-  FALLBACK_MESSAGE_TIMEOUT_MS: 3000,
-} as const;
-
 export const GITHUB_SOURCE = {
   HTTPS_PREFIX: "https://github.com/",
   GITHUB_PREFIX: "github:",
