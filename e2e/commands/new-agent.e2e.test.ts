@@ -28,7 +28,8 @@ describe("new agent command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Create a new custom agent");
     expect(stdout).toContain("--purpose");
-    expect(stdout).toContain("--non-interactive");
+    expect(stdout).not.toContain("--non-interactive");
+    expect(stdout).not.toContain("--refresh");
   });
 
   it("should error when no agent name is provided", async () => {
@@ -55,15 +56,6 @@ describe("new agent command", () => {
     expect(exitCode).toBe(EXIT_CODES.ERROR);
   });
 
-  it("should show --refresh flag in help output", async () => {
-    tempDir = await createTempDir();
-
-    const { exitCode, stdout } = await CLI.run(["new", "agent", "--help"], { dir: tempDir });
-
-    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("--refresh");
-  });
-
   it("should include _custom directory in output path", async () => {
     tempDir = await createTempDir();
 
@@ -75,31 +67,6 @@ describe("new agent command", () => {
     // to load the meta-agent (which fails in a fresh directory).
     expect(output).toContain("Output:");
     expect(output).toContain("_custom");
-  });
-
-  it("should accept --refresh flag without INVALID_ARGS error", async () => {
-    tempDir = await createTempDir();
-
-    const { exitCode, output } = await CLI.run(
-      [
-        "new",
-        "agent",
-        "refresh-test",
-        "--refresh",
-        "--non-interactive",
-        "--purpose",
-        "Test refresh",
-      ],
-      { dir: tempDir },
-    );
-
-    // --refresh is a valid flag, so the command should NOT exit with INVALID_ARGS.
-    // It fails at source resolution (no agent-summoner in a fresh temp dir),
-    // which produces EXIT_CODES.ERROR — confirming the flag was accepted.
-    expect(exitCode).not.toBe(EXIT_CODES.INVALID_ARGS);
-    expect(exitCode).toBe(EXIT_CODES.ERROR);
-    expect(output).toContain("Agent name: refresh-test");
-    expect(output).toContain("Purpose: Test refresh");
   });
 
   it("should show --source flag in help output", async () => {
@@ -185,19 +152,6 @@ describe("new agent command", () => {
     expect(await directoryExists(customDir)).toBe(false);
   });
 
-  it("should accept --non-interactive flag with short alias -n", async () => {
-    tempDir = await createTempDir();
-
-    const { exitCode, output } = await CLI.run(
-      ["new", "agent", "alias-test", "-n", "--purpose", "Test short alias"],
-      { dir: tempDir },
-    );
-
-    // The -n alias should be accepted without INVALID_ARGS.
-    expect(exitCode).not.toBe(EXIT_CODES.INVALID_ARGS);
-    expect(output).toContain("Agent name: alias-test");
-  });
-
   it("should accept --purpose flag with short alias -p", async () => {
     tempDir = await createTempDir();
 
@@ -209,18 +163,6 @@ describe("new agent command", () => {
     expect(output).toContain("Purpose: Short alias purpose");
   });
 
-  it("should accept --refresh flag with short alias -r", async () => {
-    tempDir = await createTempDir();
-
-    const { exitCode, output } = await CLI.run(
-      ["new", "agent", "refresh-alias", "-r", "--purpose", "Test refresh alias"],
-      { dir: tempDir },
-    );
-
-    expect(exitCode).not.toBe(EXIT_CODES.INVALID_ARGS);
-    expect(output).toContain("Agent name: refresh-alias");
-  });
-
   // BUG: The command accepts any string as agent name without validation.
   // Agent names with spaces or uppercase should be rejected since agents
   // are stored as directory names (e.g., .claude/agents/_custom/<name>/).
@@ -229,7 +171,7 @@ describe("new agent command", () => {
     tempDir = await createTempDir();
 
     const { exitCode, output } = await CLI.run(
-      ["new", "agent", "my agent", "--non-interactive", "--purpose", "Test invalid name"],
+      ["new", "agent", "my agent", "--purpose", "Test invalid name"],
       { dir: tempDir },
     );
 
@@ -246,7 +188,7 @@ describe("new agent command", () => {
     await mkdir(agentDir, { recursive: true });
 
     const { exitCode, output } = await CLI.run(
-      ["new", "agent", agentName, "--non-interactive", "--purpose", "Test existing agent"],
+      ["new", "agent", agentName, "--purpose", "Test existing agent"],
       { dir: tempDir },
     );
 

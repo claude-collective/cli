@@ -81,14 +81,13 @@ describe("build agent plugins", () => {
 
     beforeAll(async () => {
       // We also need a minimal skills directory for the skills portion.
-      // Create an empty skills dir so the skill compilation doesn't fail.
+      // `build plugins` reads skills from `src/skills/` relative to cwd.
       const skillsDir = path.join(sourceDir, "src", "skills");
       await mkdir(skillsDir, { recursive: true });
 
-      buildResult = await CLI.run(
-        ["build", "plugins", "--agents-dir", agentsDir, "--skills-dir", skillsDir],
-        { dir: sourceDir },
-      );
+      buildResult = await CLI.run(["build", "plugins", "--agents-dir", agentsDir], {
+        dir: sourceDir,
+      });
     }, TIMEOUTS.SETUP);
 
     it("should exit with code 0", () => {
@@ -173,9 +172,7 @@ describe("build agent plugins", () => {
       const skillsDir = path.join(noAgentSourceDir, "src", "skills");
       await mkdir(skillsDir, { recursive: true });
 
-      const result = await CLI.run(["build", "plugins", "--skills-dir", skillsDir], {
-        dir: noAgentSourceDir,
-      });
+      const result = await CLI.run(["build", "plugins"], { dir: noAgentSourceDir });
       expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(result.stdout).not.toContain("Compiling agent plugins");
       expect(result.stdout).not.toContain("agent plugins");
@@ -212,10 +209,9 @@ describe("build agent plugins", () => {
         "# No frontmatter here\n\nJust plain markdown.",
       );
 
-      const result = await CLI.run(
-        ["build", "plugins", "--agents-dir", edgeAgentsDir, "--skills-dir", edgeSkillsDir],
-        { dir: edgeSourceDir },
-      );
+      const result = await CLI.run(["build", "plugins", "--agents-dir", edgeAgentsDir], {
+        dir: edgeSourceDir,
+      });
 
       expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(result.stdout).toContain("agent-good-agent");
@@ -234,10 +230,9 @@ describe("build agent plugins", () => {
       await mkdir(emptyAgentsDir, { recursive: true });
       await mkdir(emptySkillsDir, { recursive: true });
 
-      const result = await CLI.run(
-        ["build", "plugins", "--agents-dir", emptyAgentsDir, "--skills-dir", emptySkillsDir],
-        { dir: emptySourceDir },
-      );
+      const result = await CLI.run(["build", "plugins", "--agents-dir", emptyAgentsDir], {
+        dir: emptySourceDir,
+      });
 
       expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(result.stdout).toContain("Compiled 0 agent plugins");
@@ -257,16 +252,7 @@ describe("build agent plugins", () => {
       );
 
       const result = await CLI.run(
-        [
-          "build",
-          "plugins",
-          "--agents-dir",
-          customAgentsDir,
-          "--skills-dir",
-          customSkillsDir,
-          "--output-dir",
-          customOutputDir,
-        ],
+        ["build", "plugins", "--agents-dir", customAgentsDir, "--output-dir", customOutputDir],
         { dir: customOutSourceDir },
       );
 

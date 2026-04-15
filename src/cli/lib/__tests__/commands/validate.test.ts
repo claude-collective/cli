@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { runCliCommand } from "../helpers/cli-runner.js";
 import { writeTestTsConfig } from "../helpers/config-io.js";
+import { setupIsolatedHome } from "../helpers/isolated-home.js";
 import { createTempDir, cleanupTempDir } from "../test-fs-utils";
 import { validateSource } from "../../source-validator";
 import { validatePlugin } from "../../plugins/plugin-validator";
@@ -17,6 +18,11 @@ import {
 } from "../../../consts";
 import type { TestSkill } from "../fixtures/create-test-source";
 import { renderAgentMd, renderConfigTs, renderSkillMd } from "../content-generators";
+import {
+  VALID_EMBEDDED_SKILL_METADATA_FILE,
+  VALID_SKILL_CATEGORIES_FILE,
+  VALID_SKILL_RULES_FILE,
+} from "../mock-data/mock-source-files.js";
 import { EXIT_CODES } from "../../exit-codes";
 
 const INSTALLED_SKILLS_SUBDIR = path.join(CLAUDE_DIR, STANDARD_DIRS.SKILLS);
@@ -37,13 +43,8 @@ async function writeValidInstalledSkill(
   );
 
   const metadata: Record<string, unknown> = {
-    category: "web-framework",
+    ...VALID_EMBEDDED_SKILL_METADATA_FILE,
     domain: "web",
-    author: "@test",
-    displayName: "react",
-    cliDescription: "React JavaScript framework",
-    usageGuidance: "Use React for building component-based UIs",
-    slug: "react",
     ...overrides,
   };
 
@@ -122,11 +123,11 @@ async function writeTestMatrix(
     };
   }
 
-  const categoriesData = { version: "1.0.0", categories: matrixCategories };
+  const categoriesData = { ...VALID_SKILL_CATEGORIES_FILE, categories: matrixCategories };
   await writeFile(path.join(configDir, "skill-categories.ts"), renderConfigTs(categoriesData));
 
   const rulesData = {
-    version: "1.0.0",
+    ...VALID_SKILL_RULES_FILE,
     relationships: {
       conflicts: [],
       discourages: [],
@@ -183,25 +184,14 @@ describe("validate command", () => {
   let tempDir: string;
   let projectDir: string;
   let fakeHome: string;
-  let originalCwd: string;
-  let originalHome: string | undefined;
+  let cleanup: () => Promise<void>;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
-    originalHome = process.env.HOME;
-    tempDir = await createTempDir("cc-validate-test-");
-    projectDir = path.join(tempDir, "project");
-    fakeHome = path.join(tempDir, "fakehome");
-    await mkdir(projectDir, { recursive: true });
-    await mkdir(fakeHome, { recursive: true });
-    process.chdir(projectDir);
-    process.env.HOME = fakeHome;
+    ({ tempDir, projectDir, fakeHome, cleanup } = await setupIsolatedHome("cc-validate-test-"));
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
-    process.env.HOME = originalHome;
-    await cleanupTempDir(tempDir);
+    await cleanup();
   });
 
   describe("no-args flow", () => {

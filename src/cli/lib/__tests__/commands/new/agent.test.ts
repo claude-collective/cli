@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../../helpers/cli-runner.js";
 import { createTempDir, cleanupTempDir } from "../../test-fs-utils";
 import { writeTestTsConfig } from "../../helpers/config-io.js";
+import { setupIsolatedHome } from "../../helpers/isolated-home.js";
 import { buildSourceConfig, buildAgentConfigs } from "../../factories/config-factories.js";
 import { buildAgentPrompt } from "../../../../commands/new/agent";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../../consts";
@@ -43,21 +44,15 @@ describe("buildAgentPrompt", () => {
 });
 
 describe("new:agent command", () => {
-  let tempDir: string;
   let projectDir: string;
-  let originalCwd: string;
+  let cleanup: () => Promise<void>;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-new-agent-test-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
-    process.chdir(projectDir);
+    ({ projectDir, cleanup } = await setupIsolatedHome("new-agent-test-home-"));
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
-    await cleanupTempDir(tempDir);
+    await cleanup();
   });
 
   async function expectFlagAccepted(args: string[]): Promise<void> {
@@ -98,28 +93,12 @@ describe("new:agent command", () => {
       await expectFlagAccepted(["new:agent", "my-agent", "--source", "/some/path"]);
     });
 
-    it("should accept --non-interactive flag without parsing error", async () => {
-      await expectFlagAccepted(["new:agent", "my-agent", "--non-interactive"]);
-    });
-
     it("should accept -p shorthand for purpose flag", async () => {
       await expectFlagAccepted(["new:agent", "my-agent", "-p", "test purpose"]);
     });
 
-    it("should accept -n shorthand for non-interactive flag", async () => {
-      await expectFlagAccepted(["new:agent", "my-agent", "-n"]);
-    });
-
     it("should accept -s shorthand for source flag (from base command)", async () => {
       await expectFlagAccepted(["new:agent", "my-agent", "-s", "/some/source"]);
-    });
-
-    it("should accept --refresh flag without parsing error", async () => {
-      await expectFlagAccepted(["new:agent", "my-agent", "--refresh"]);
-    });
-
-    it("should accept -r shorthand for refresh flag", async () => {
-      await expectFlagAccepted(["new:agent", "my-agent", "-r"]);
     });
   });
 
@@ -128,13 +107,7 @@ describe("new:agent command", () => {
       // Providing valid args/flags should not trigger parsing errors.
       // The command may still fail at runtime (e.g., claude CLI not found)
       // but should not fail with "unknown flag" or "missing required arg".
-      const { error } = await runCliCommand([
-        "new:agent",
-        "test-agent",
-        "--purpose",
-        "testing",
-        "--non-interactive",
-      ]);
+      const { error } = await runCliCommand(["new:agent", "test-agent", "--purpose", "testing"]);
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");

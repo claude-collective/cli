@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../helpers/cli-runner.js";
-import { createTempDir, cleanupTempDir } from "../test-fs-utils";
+import { setupIsolatedHome } from "../helpers/isolated-home.js";
 import { EXIT_CODES } from "../../exit-codes";
 import { renderConfigTs, renderSkillMd } from "../content-generators";
 import { buildAgentConfigs } from "../factories/config-factories.js";
@@ -10,21 +10,16 @@ import { buildSkillConfigs } from "../helpers/wizard-simulation.js";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 
 describe("doctor command", () => {
-  let tempDir: string;
   let projectDir: string;
-  let originalCwd: string;
+  let fakeHome: string;
+  let cleanup: () => Promise<void>;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-doctor-test-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
-    process.chdir(projectDir);
+    ({ projectDir, fakeHome, cleanup } = await setupIsolatedHome("doctor-test-home-"));
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
-    await cleanupTempDir(tempDir);
+    await cleanup();
   });
 
   describe("basic execution", () => {
@@ -63,24 +58,6 @@ describe("doctor command", () => {
       // (may fail on Source Reachable if no source is available)
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("config.ts has errors");
-    });
-  });
-
-  describe("flag validation", () => {
-    it("should accept --verbose flag", async () => {
-      const { error } = await runCliCommand(["doctor", "--verbose"]);
-
-      // Should not error on --verbose flag
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept -v shorthand for verbose", async () => {
-      const { error } = await runCliCommand(["doctor", "-v"]);
-
-      // Should accept -v shorthand
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
 
@@ -222,7 +199,7 @@ describe("doctor command", () => {
         "# Web Developer Agent\n\nExcluded agent content.",
       );
 
-      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const { stdout, error } = await runCliCommand(["doctor"]);
       const output = stdout + (error?.message || "");
 
       // Excluded project agent .md should be flagged as orphan
@@ -246,7 +223,7 @@ describe("doctor command", () => {
         }),
       );
 
-      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const { stdout, error } = await runCliCommand(["doctor"]);
       const output = stdout + (error?.message || "");
 
       // Should report the missing skill
@@ -276,7 +253,7 @@ describe("doctor command", () => {
         renderSkillMd("web-framework-react"),
       );
 
-      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const { stdout, error } = await runCliCommand(["doctor"]);
       const output = stdout + (error?.message || "");
 
       // Should NOT report missing skills
@@ -298,7 +275,7 @@ describe("doctor command", () => {
         }),
       );
 
-      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const { stdout, error } = await runCliCommand(["doctor"]);
       const output = stdout + (error?.message || "");
 
       // Plugin skills should not be checked for disk presence
@@ -328,7 +305,7 @@ describe("doctor command", () => {
         }),
       );
 
-      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const { stdout, error } = await runCliCommand(["doctor"]);
       const output = stdout + (error?.message || "");
 
       // Should report the unresolvable skill in the stack
@@ -367,7 +344,7 @@ describe("doctor command", () => {
         "name: web-framework-react\ndescription: React framework\ncategory: web-framework\ndomain: web\n",
       );
 
-      const { stdout, error } = await runCliCommand(["doctor", "--verbose"]);
+      const { stdout, error } = await runCliCommand(["doctor"]);
       const output = stdout + (error?.message || "");
 
       // The skill should be resolved (found as local skill)

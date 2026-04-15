@@ -3,8 +3,9 @@ import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import {
+  checkDisplayNameMatches,
+  checkSnakeCaseKeys,
   isSnakeCase,
-  validateMetadataConventions,
   validateSkillFilePairs,
   validateSource,
 } from "./source-validator";
@@ -59,106 +60,91 @@ describe("source-validator", () => {
     });
   });
 
-  describe("validateMetadataConventions", () => {
-    const VALID_METADATA = { displayName: "react", category: "web-framework" };
+  describe("checkSnakeCaseKeys", () => {
     const REL_PATH = "src/skills/web/framework/react/metadata.yaml";
-    const DIR_NAME = "react";
 
-    it("should return no issues for valid metadata", () => {
-      const rawMetadata = { displayName: "react", category: "web-framework", slug: "react" };
+    it("should report error for snake_case keys", () => {
+      const rawMetadata = {
+        display_name: "react",
+        category: "web-framework",
+      };
 
-      const issues = validateMetadataConventions(rawMetadata, VALID_METADATA, REL_PATH, DIR_NAME);
+      const issues = checkSnakeCaseKeys(rawMetadata, REL_PATH);
+
+      expect(issues).toHaveLength(1);
+      expect(issues[0]?.severity).toBe("error");
+      expect(issues[0]?.message).toContain("display_name");
+      expect(issues[0]?.file).toBe(REL_PATH);
+    });
+
+    it("should report multiple snake_case keys", () => {
+      const rawMetadata = {
+        display_name: "react",
+        usage_guidance: "use for React",
+        category: "web-framework",
+      };
+
+      const issues = checkSnakeCaseKeys(rawMetadata, REL_PATH);
+
+      expect(issues).toHaveLength(2);
+    });
+
+    it("should return no issues for camelCase keys", () => {
+      const rawMetadata = {
+        displayName: "react",
+        usageGuidance: "use for React",
+        category: "web-framework",
+      };
+
+      const issues = checkSnakeCaseKeys(rawMetadata, REL_PATH);
 
       expect(issues).toStrictEqual([]);
     });
 
-    describe("snake_case key detection", () => {
-      it("should report error for snake_case keys", () => {
-        const rawMetadata = {
-          display_name: "react",
-          category: "web-framework",
-        };
+    it("should handle null rawMetadata without crashing", () => {
+      const issues = checkSnakeCaseKeys(null, REL_PATH);
 
-        const issues = validateMetadataConventions(rawMetadata, VALID_METADATA, REL_PATH, DIR_NAME);
-
-        const snakeCaseIssues = issues.filter((i) => i.message.includes("snake_case"));
-        expect(snakeCaseIssues).toHaveLength(1);
-        expect(snakeCaseIssues[0]?.severity).toBe("error");
-        expect(snakeCaseIssues[0]?.message).toContain("display_name");
-      });
-
-      it("should report multiple snake_case keys", () => {
-        const rawMetadata = {
-          display_name: "react",
-          usage_guidance: "use for React",
-          category: "web-framework",
-        };
-
-        const issues = validateMetadataConventions(rawMetadata, VALID_METADATA, REL_PATH, DIR_NAME);
-
-        const snakeCaseIssues = issues.filter((i) => i.message.includes("snake_case"));
-        expect(snakeCaseIssues).toHaveLength(2);
-      });
-
-      it("should not report camelCase keys", () => {
-        const rawMetadata = {
-          displayName: "react",
-          usageGuidance: "use for React",
-          category: "web-framework",
-        };
-
-        const issues = validateMetadataConventions(rawMetadata, VALID_METADATA, REL_PATH, DIR_NAME);
-
-        const snakeCaseIssues = issues.filter((i) => i.message.includes("snake_case"));
-        expect(snakeCaseIssues).toHaveLength(0);
-      });
-
-      it("should handle null rawMetadata without crashing", () => {
-        const issues = validateMetadataConventions(null, VALID_METADATA, REL_PATH, DIR_NAME);
-
-        // Should still check displayName/dir match and category
-        expect(issues.every((i) => !i.message.includes("snake_case"))).toBe(true);
-      });
-
-      it("should handle array rawMetadata without crashing", () => {
-        const issues = validateMetadataConventions([1, 2, 3], VALID_METADATA, REL_PATH, DIR_NAME);
-
-        expect(issues.every((i) => !i.message.includes("snake_case"))).toBe(true);
-      });
+      expect(issues).toStrictEqual([]);
     });
 
-    describe("displayName/directory name mismatch", () => {
-      it("should warn when displayName does not match directory name", () => {
-        const metadata = { displayName: "React.js", category: "web-framework" };
+    it("should handle array rawMetadata without crashing", () => {
+      const issues = checkSnakeCaseKeys([1, 2, 3], REL_PATH);
 
-        const issues = validateMetadataConventions({}, metadata, REL_PATH, "react");
-
-        const mismatchIssues = issues.filter((i) => i.message.includes("does not match directory"));
-        expect(mismatchIssues).toHaveLength(1);
-        expect(mismatchIssues[0]?.severity).toBe("warning");
-        expect(mismatchIssues[0]?.message).toContain("React.js");
-        expect(mismatchIssues[0]?.message).toContain("react");
-      });
-
-      it("should not warn when displayName matches directory name", () => {
-        const metadata = { displayName: "react", category: "web-framework" };
-
-        const issues = validateMetadataConventions({}, metadata, REL_PATH, "react");
-
-        const mismatchIssues = issues.filter((i) => i.message.includes("does not match directory"));
-        expect(mismatchIssues).toHaveLength(0);
-      });
+      expect(issues).toStrictEqual([]);
     });
 
     it("should set file path on all reported issues", () => {
-      const rawMetadata = { display_name: "Mismatched" };
-      const metadata = { displayName: "Mismatched", category: "bad-category" };
+      const rawMetadata = { display_name: "A", usage_guidance: "B" };
 
-      const issues = validateMetadataConventions(rawMetadata, metadata, REL_PATH, "other-dir");
+      const issues = checkSnakeCaseKeys(rawMetadata, REL_PATH);
 
       for (const issue of issues) {
         expect(issue.file).toBe(REL_PATH);
       }
+    });
+  });
+
+  describe("checkDisplayNameMatches", () => {
+    const REL_PATH = "src/skills/web/framework/react/metadata.yaml";
+
+    it("should warn when displayName does not match directory name", () => {
+      const metadata = { displayName: "React.js" };
+
+      const issues = checkDisplayNameMatches(metadata, REL_PATH, "react");
+
+      expect(issues).toHaveLength(1);
+      expect(issues[0]?.severity).toBe("warning");
+      expect(issues[0]?.message).toContain("React.js");
+      expect(issues[0]?.message).toContain("react");
+      expect(issues[0]?.file).toBe(REL_PATH);
+    });
+
+    it("should return no issues when displayName matches directory name", () => {
+      const metadata = { displayName: "react" };
+
+      const issues = checkDisplayNameMatches(metadata, REL_PATH, "react");
+
+      expect(issues).toStrictEqual([]);
     });
   });
 
@@ -309,7 +295,7 @@ describe("source-validator", () => {
       );
     });
 
-    describe("Phase 4 — stacks", () => {
+    describe("stack config validation", () => {
       it("should report zero issues when src/stacks/ is absent", async () => {
         const sourceDir = path.join(tempDir, "source");
         const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
@@ -406,7 +392,7 @@ describe("source-validator", () => {
       });
     });
 
-    describe("Phase 5 — agents", () => {
+    describe("source-side agent metadata validation", () => {
       it("should report zero issues when src/agents/ is absent", async () => {
         const sourceDir = path.join(tempDir, "source");
         const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);
@@ -470,7 +456,7 @@ describe("source-validator", () => {
       });
     });
 
-    describe("Phase 6 — config TS files", () => {
+    describe("TS config file validation", () => {
       it("should report zero issues when config/ directory is absent", async () => {
         const sourceDir = path.join(tempDir, "source");
         const skillsDir = path.join(sourceDir, "src", STANDARD_DIRS.SKILLS);

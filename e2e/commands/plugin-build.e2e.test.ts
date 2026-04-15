@@ -6,7 +6,9 @@ import {
   cleanupTempDir,
   fileExists,
   listFiles,
+  readMarketplaceJson,
   readTestFile,
+  writeTestPackageJson,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { CLI } from "../fixtures/cli.js";
@@ -116,9 +118,12 @@ describe("build pipeline (plugin chain)", () => {
     beforeAll(async () => {
       // P-BUILD-2 depends on P-BUILD-1 having already run (plugins built).
       // Vitest runs describes in order within the same file.
-      marketplaceResult = await CLI.run(["build", "marketplace", "--name", MARKETPLACE_NAME], {
-        dir: sourceDir,
+      // `build marketplace` reads identity from package.json at cwd.
+      await writeTestPackageJson(sourceDir, {
+        name: MARKETPLACE_NAME,
+        description: "Plugin-build test marketplace",
       });
+      marketplaceResult = await CLI.run(["build", "marketplace"], { dir: sourceDir });
     }, TIMEOUTS.SETUP);
 
     it("should exit with code 0", () => {
@@ -140,8 +145,7 @@ describe("build pipeline (plugin chain)", () => {
         SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
         "marketplace.json",
       );
-      const content = await readTestFile(marketplacePath);
-      const marketplace = JSON.parse(content);
+      const marketplace = await readMarketplaceJson(marketplacePath);
 
       expect(marketplace.name).toBe(MARKETPLACE_NAME);
       expect(typeof marketplace.version).toBe("string");

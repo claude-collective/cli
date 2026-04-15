@@ -2,8 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { runCliCommand } from "../../helpers/cli-runner.js";
-import { createTempDir, cleanupTempDir, fileExists, directoryExists } from "../../test-fs-utils";
+import { fileExists, directoryExists } from "../../test-fs-utils";
 import { writeTestTsConfig } from "../../helpers/config-io.js";
+import { setupIsolatedHome } from "../../helpers/isolated-home.js";
 import { buildSourceConfig } from "../../factories/config-factories.js";
 import { EXIT_CODES } from "../../../exit-codes";
 import {
@@ -209,22 +210,16 @@ describe("generateMetadataYaml", () => {
 });
 
 describe("new:skill command", () => {
-  let tempDir: string;
   let projectDir: string;
-  let originalCwd: string;
+  let cleanup: () => Promise<void>;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-new-skill-test-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
+    ({ projectDir, cleanup } = await setupIsolatedHome("new-skill-test-home-"));
     await writeTestTsConfig(projectDir, buildSourceConfig({ skills: [] }));
-    process.chdir(projectDir);
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
-    await cleanupTempDir(tempDir);
+    await cleanup();
   });
 
   describe("argument validation", () => {
@@ -416,32 +411,6 @@ describe("new:skill command", () => {
       const marketplaceSkillDir = path.join(projectDir, SKILLS_DIR_PATH, "my-local-skill");
       expect(await directoryExists(marketplaceSkillDir)).toBe(false);
     });
-
-    it("should use --output flag to override marketplace detection", async () => {
-      const marketplaceJsonDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
-      await mkdir(marketplaceJsonDir, { recursive: true });
-      await writeFile(path.join(marketplaceJsonDir, "marketplace.json"), '{"name":"test"}');
-
-      const customOutput = path.join(tempDir, "custom-skills");
-      await mkdir(customOutput, { recursive: true });
-
-      await runCliCommand([
-        "new:skill",
-        "my-custom-skill",
-        "--output",
-        customOutput,
-        "--domain",
-        "web",
-      ]);
-
-      const skillDir = path.join(customOutput, "my-custom-skill");
-      expect(await directoryExists(skillDir)).toBe(true);
-      expect(await fileExists(path.join(skillDir, STANDARD_FILES.SKILL_MD))).toBe(true);
-
-      // Should NOT be in marketplace location since --output overrides
-      const marketplaceSkillDir = path.join(projectDir, SKILLS_DIR_PATH, "my-custom-skill");
-      expect(await directoryExists(marketplaceSkillDir)).toBe(false);
-    });
   });
 
   describe("config file updates in marketplace context", () => {
@@ -475,23 +444,6 @@ describe("new:skill command", () => {
 
     it("should NOT create config files for local skills", async () => {
       await runCliCommand(["new:skill", "my-local-skill", "--domain", "web"]);
-
-      const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_PATH);
-      const rulesPath = path.join(projectDir, SKILL_RULES_PATH);
-
-      expect(await fileExists(categoriesPath)).toBe(false);
-      expect(await fileExists(rulesPath)).toBe(false);
-    });
-
-    it("should NOT create config files when --output is used", async () => {
-      const marketplaceJsonDir = path.join(projectDir, PLUGIN_MANIFEST_DIR);
-      await mkdir(marketplaceJsonDir, { recursive: true });
-      await writeFile(path.join(marketplaceJsonDir, "marketplace.json"), '{"name":"test"}');
-
-      const customOutput = path.join(tempDir, "custom-skills");
-      await mkdir(customOutput, { recursive: true });
-
-      await runCliCommand(["new:skill", "my-skill", "--output", customOutput, "--domain", "web"]);
 
       const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_PATH);
       const rulesPath = path.join(projectDir, SKILL_RULES_PATH);

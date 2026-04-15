@@ -31,13 +31,8 @@ const LOCAL_SOURCE_NAME = "test-import-source";
 
 // ── Test Source Builders ────────────────────────────────────────────────────────
 
-async function createLocalSource(
-  projectDir: string,
-  skills: ImportSourceSkill[],
-  options?: { subdir?: string },
-): Promise<void> {
-  const subdir = options?.subdir ?? STANDARD_DIRS.SKILLS;
-  const skillsDir = path.join(projectDir, LOCAL_SOURCE_NAME, subdir);
+async function createLocalSource(projectDir: string, skills: ImportSourceSkill[]): Promise<void> {
+  const skillsDir = path.join(projectDir, LOCAL_SOURCE_NAME, STANDARD_DIRS.SKILLS);
 
   for (const skill of skills) {
     const skillDir = path.join(skillsDir, skill.name);
@@ -348,78 +343,6 @@ Leverage Suspense for data fetching and code splitting.
       "utf-8",
     );
     expect(afterContent).toBe(originalContent);
-  });
-});
-
-describe("Integration: Import with --subdir and Compile", () => {
-  let tempDir: string;
-  let projectDir: string;
-  let originalCwd: string;
-
-  beforeEach(async () => {
-    vi.spyOn(console, "log").mockImplementation(() => {});
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-import-subdir-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
-    process.chdir(projectDir);
-  });
-
-  afterEach(async () => {
-    vi.restoreAllMocks();
-    process.chdir(originalCwd);
-    await cleanupTempDir(tempDir);
-  });
-
-  it("should import from custom subdirectory and compile successfully", async () => {
-    // Create source with custom subdirectory
-    await createLocalSource(projectDir, [IMPORT_API_SECURITY_SKILL], {
-      subdir: "custom-skills",
-    });
-
-    // Import from custom subdir
-    const { error } = await runCliCommand([
-      "import:skill",
-      LOCAL_SOURCE_NAME,
-      "--skill",
-      "api-security",
-      "--subdir",
-      "custom-skills",
-    ]);
-    expect(error?.oclif?.exit).toBeUndefined();
-
-    // Verify import
-    const importedDir = path.join(projectDir, LOCAL_SKILLS_DIR, "api-security");
-    expect(await directoryExists(importedDir)).toBe(true);
-
-    // Compile imported skill
-    const outputDir = path.join(tempDir, "plugins");
-    await mkdir(outputDir, { recursive: true });
-
-    const result = await compileSkillPlugin({
-      skillPath: importedDir,
-      outputDir,
-    });
-
-    // Verify compiled output
-    expect(result.skillName).toBe("api-security");
-
-    const compiledSkillMd = path.join(
-      result.pluginPath,
-      STANDARD_DIRS.SKILLS,
-      "api-security",
-      STANDARD_FILES.SKILL_MD,
-    );
-    const content = await readFile(compiledSkillMd, "utf-8");
-    expect(content).toContain("API Security");
-    expect(content).toContain("Authentication");
-    expect(content).toContain("Rate Limiting");
-
-    // Validate the plugin
-    const validation = await validatePlugin(result.pluginPath);
-    expect(validation.valid).toBe(true);
   });
 });
 

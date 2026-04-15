@@ -1,5 +1,5 @@
 import path from "path";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, rm } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import {
@@ -35,19 +35,19 @@ describe("doctor diagnostics", () => {
     }
   });
 
-  describe("--verbose flag", () => {
-    it("should show additional details with --verbose", async () => {
+  describe("verbose diagnostics always emitted", () => {
+    it("should show additional details for all checks", async () => {
       tempDir = await createTempDir();
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
 
       const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--verbose"],
+        ["doctor"],
         { dir: tempDir },
         { env: { CC_SOURCE: source.sourceDir } },
       );
 
-      // --verbose causes formatCheckLine to show details even for "pass" results.
+      // Doctor now always emits details (no --verbose flag needed).
       // The Source Reachable check passes and includes "N skills available" in details.
       expect(exitCode).toBe(EXIT_CODES.ERROR);
       expect(stdout).toContain("skills available");
@@ -63,7 +63,7 @@ describe("doctor diagnostics", () => {
       tempDir = path.dirname(project.dir);
 
       const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--verbose"],
+        ["doctor"],
         { dir: project.dir },
         { env: { CC_SOURCE: source.sourceDir } },
       );
@@ -296,8 +296,8 @@ describe("doctor diagnostics", () => {
     });
   });
 
-  describe("--verbose diagnostics", () => {
-    it("should show detailed output for passing checks with --verbose", async () => {
+  describe("details always emitted", () => {
+    it("should show detailed output for passing checks", async () => {
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
 
@@ -310,26 +310,26 @@ describe("doctor diagnostics", () => {
       await writeAgentFile(project.dir, "web-developer");
 
       const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--verbose"],
+        ["doctor"],
         { dir: project.dir },
         { env: { CC_SOURCE: source.sourceDir } },
       );
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // --verbose causes formatCheckLine to show details even for "pass" results
+      // doctor always shows details even for "pass" results
       expect(stdout).toContain("skills available");
       expect(stdout).toContain("Connected to local:");
       expect(stdout).toContain("Config Valid");
       expect(stdout).toContain("is valid");
     });
 
-    it("should show skill resolution details with --verbose when skills are missing", async () => {
+    it("should show skill resolution details when skills are missing", async () => {
       const source = await createE2ESource();
       sourceTempDir = source.tempDir;
 
       tempDir = await createTempDir();
       await writeProjectConfig(tempDir, {
-        name: "test-verbose-missing",
+        name: "test-missing-skill-details",
         agents: [{ name: "web-developer", scope: "project" }],
         stack: {
           "web-developer": {
@@ -339,7 +339,7 @@ describe("doctor diagnostics", () => {
       });
 
       const { exitCode, stdout } = await CLI.run(
-        ["doctor", "--verbose"],
+        ["doctor"],
         { dir: tempDir },
         { env: { CC_SOURCE: source.sourceDir } },
       );
@@ -348,6 +348,73 @@ describe("doctor diagnostics", () => {
       expect(exitCode).toBe(EXIT_CODES.ERROR);
       expect(stdout).toContain("web-framework-doesnt-exist");
       expect(stdout).toContain("not found");
+    });
+  });
+
+  describe("tip discrimination by check kind", () => {
+    it("should emit 'Check skill IDs' tip when skills check fails", async () => {
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+
+      tempDir = await createTempDir();
+      await writeProjectConfig(tempDir, {
+        name: "skills-check-fails",
+        agents: [{ name: "web-developer", scope: "project" }],
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-unknown-skill" as SkillId, preloaded: true }],
+          },
+        },
+      });
+
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: tempDir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.ERROR);
+      // Skills Resolved fails, so hasSkillError tip is emitted
+      expect(stdout).toContain("Check skill IDs");
+    });
+
+    it("should emit 'reinstall missing skill files' tip when installed check warns", async () => {
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+
+      const project = await ProjectBuilder.editable({
+        agents: ["web-developer"],
+      });
+      tempDir = path.dirname(project.dir);
+      const projectDir = project.dir;
+
+      // Overwrite config to register an eject-mode skill whose disk files are missing
+      await writeProjectConfig(projectDir, {
+        name: "installed-skill-missing",
+        skills: [{ id: "web-framework-react", scope: "project", source: "eject" }],
+        agents: [{ name: "web-developer", scope: "project" }],
+      });
+
+      // Make agents compile check pass so the only warn is from checkSkillsInstalled
+      await writeAgentFile(projectDir, "web-developer");
+
+      // Ensure the eject skill directory is absent so checkSkillsInstalled warns
+      const ejectedSkillDir = path.join(
+        projectDir,
+        DIRS.CLAUDE,
+        DIRS.SKILLS,
+        "web-framework-react",
+      );
+      await rm(ejectedSkillDir, { recursive: true, force: true });
+
+      const { exitCode, stdout } = await CLI.run(
+        ["doctor"],
+        { dir: projectDir },
+        { env: { CC_SOURCE: source.sourceDir } },
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain("reinstall missing skill files");
     });
   });
 

@@ -56,7 +56,8 @@ describe("help and version", () => {
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(result.stdout).toContain("Diagnose");
-    expect(result.stdout).toContain("--verbose");
+    expect(result.stdout).not.toContain("--verbose");
+    expect(result.stdout).not.toContain("--source");
   });
 
   it("should display validate-specific help", async () => {

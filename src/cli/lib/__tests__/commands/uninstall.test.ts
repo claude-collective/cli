@@ -3,7 +3,8 @@ import path from "path";
 import fs from "fs";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { runCliCommand } from "../helpers/cli-runner.js";
-import { createTempDir, cleanupTempDir, fileExists, directoryExists } from "../test-fs-utils";
+import { setupIsolatedHome } from "../helpers/isolated-home.js";
+import { fileExists, directoryExists } from "../test-fs-utils";
 import { writeTestSkill } from "../helpers/disk-writers.js";
 import { createMockSkill } from "../factories/skill-factories.js";
 import { createMockMatrix } from "../factories/matrix-factories.js";
@@ -193,19 +194,10 @@ describe("uninstall command", () => {
   let tempDir: string;
   let projectDir: string;
   let fakeHome: string;
-  let originalCwd: string;
-  let originalHome: string | undefined;
+  let cleanup: () => Promise<void>;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
-    originalHome = process.env.HOME;
-    tempDir = await createTempDir("cc-uninstall-test-");
-    projectDir = path.join(tempDir, "project");
-    fakeHome = path.join(tempDir, "fakehome");
-    await mkdir(projectDir, { recursive: true });
-    await mkdir(fakeHome, { recursive: true });
-    process.chdir(projectDir);
-    process.env.HOME = fakeHome;
+    ({ tempDir, projectDir, fakeHome, cleanup } = await setupIsolatedHome("cc-uninstall-test-"));
 
     initializeMatrix(
       createMockMatrix(
@@ -223,9 +215,7 @@ describe("uninstall command", () => {
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
-    process.env.HOME = originalHome;
-    await cleanupTempDir(tempDir);
+    await cleanup();
   });
 
   describe("flag validation", () => {

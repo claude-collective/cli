@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { runCliCommand } from "../../helpers/cli-runner.js";
-import { createTempDir, cleanupTempDir, fileExists, directoryExists } from "../../test-fs-utils";
+import { setupIsolatedHome } from "../../helpers/isolated-home.js";
+import { fileExists, directoryExists } from "../../test-fs-utils";
 import { renderSkillMd } from "../../content-generators";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, STANDARD_FILES } from "../../../../consts";
 import type { PluginManifest } from "../../../../types";
@@ -10,19 +11,14 @@ import type { PluginManifest } from "../../../../types";
 describe("build:plugins command", () => {
   let tempDir: string;
   let projectDir: string;
-  let originalCwd: string;
+  let cleanup: () => Promise<void>;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-build-plugins-test-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
-    process.chdir(projectDir);
+    ({ tempDir, projectDir, cleanup } = await setupIsolatedHome("build-plugins-test-home-"));
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
-    await cleanupTempDir(tempDir);
+    await cleanup();
   });
 
   describe("basic execution", () => {
@@ -47,27 +43,6 @@ describe("build:plugins command", () => {
   });
 
   describe("flag validation", () => {
-    it("should accept --skills-dir flag with path", async () => {
-      const skillsPath = path.join(tempDir, "custom-skills");
-
-      const { error } = await runCliCommand(["build:plugins", "--skills-dir", skillsPath]);
-
-      // Should not error on --skills-dir flag
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
-
-    it("should accept -s shorthand for skills-dir", async () => {
-      const skillsPath = path.join(tempDir, "custom-skills");
-
-      const { error } = await runCliCommand(["build:plugins", "-s", skillsPath]);
-
-      // Should accept -s shorthand
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
     it("should accept --output-dir flag with path", async () => {
       const outputPath = path.join(tempDir, "output");
 
@@ -116,13 +91,10 @@ describe("build:plugins command", () => {
 
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {
-      const skillsPath = path.join(tempDir, "skills");
       const outputPath = path.join(tempDir, "output");
 
       const { error } = await runCliCommand([
         "build:plugins",
-        "--skills-dir",
-        skillsPath,
         "--output-dir",
         outputPath,
         "--verbose",
@@ -134,17 +106,9 @@ describe("build:plugins command", () => {
     });
 
     it("should accept shorthand flags together", async () => {
-      const skillsPath = path.join(tempDir, "skills");
       const outputPath = path.join(tempDir, "output");
 
-      const { error } = await runCliCommand([
-        "build:plugins",
-        "-s",
-        skillsPath,
-        "-o",
-        outputPath,
-        "-v",
-      ]);
+      const { error } = await runCliCommand(["build:plugins", "-o", outputPath, "-v"]);
 
       // Should accept all shorthand flags
       const output = error?.message || "";
@@ -177,18 +141,6 @@ describe("build:plugins command", () => {
   });
 
   describe("error handling", () => {
-    it("should handle missing skills directory gracefully", async () => {
-      const { stdout, error } = await runCliCommand([
-        "build:plugins",
-        "--skills-dir",
-        "/definitely/not/real/path/xyz",
-      ]);
-
-      // Command completes (may succeed with 0 skills or error gracefully)
-      const output = stdout + (error?.message || "");
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
     it("should error when specific skill not found", async () => {
       const { error } = await runCliCommand(["build:plugins", "--skill", "nonexistent-skill-xyz"]);
 
@@ -216,13 +168,7 @@ describe("build:plugins command", () => {
         renderSkillMd("web-framework-react", "React framework"),
       );
 
-      const { stdout, error } = await runCliCommand([
-        "build:plugins",
-        "--skills-dir",
-        skillsDir,
-        "--output-dir",
-        outputDir,
-      ]);
+      const { stdout, error } = await runCliCommand(["build:plugins", "--output-dir", outputDir]);
 
       expect(error).toBeUndefined();
 
@@ -250,7 +196,7 @@ describe("build:plugins command", () => {
         renderSkillMd("web-framework-react", "React framework"),
       );
 
-      await runCliCommand(["build:plugins", "--skills-dir", skillsDir, "--output-dir", outputDir]);
+      await runCliCommand(["build:plugins", "--output-dir", outputDir]);
 
       // SKILL.md should be copied into skills/{skillName}/ inside plugin dir
       const copiedSkillMd = path.join(
@@ -275,7 +221,7 @@ describe("build:plugins command", () => {
         renderSkillMd("web-framework-react", "React framework"),
       );
 
-      await runCliCommand(["build:plugins", "--skills-dir", skillsDir, "--output-dir", outputDir]);
+      await runCliCommand(["build:plugins", "--output-dir", outputDir]);
 
       const readmePath = path.join(outputDir, "web-framework-react", "README.md");
       expect(await fileExists(readmePath)).toBe(true);
@@ -293,13 +239,7 @@ describe("build:plugins command", () => {
         await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), renderSkillMd(name));
       }
 
-      const { stdout, error } = await runCliCommand([
-        "build:plugins",
-        "--skills-dir",
-        skillsDir,
-        "--output-dir",
-        outputDir,
-      ]);
+      const { stdout, error } = await runCliCommand(["build:plugins", "--output-dir", outputDir]);
 
       expect(error).toBeUndefined();
       expect(stdout).toContain("Compiled 2 skill plugins");
@@ -319,8 +259,6 @@ describe("build:plugins command", () => {
 
       const { stdout, error } = await runCliCommand([
         "build:plugins",
-        "--skills-dir",
-        skillsDir,
         "--output-dir",
         outputDir,
         "--skill",
@@ -343,13 +281,7 @@ describe("build:plugins command", () => {
         renderSkillMd("web-framework-react"),
       );
 
-      const { stdout, error } = await runCliCommand([
-        "build:plugins",
-        "--skills-dir",
-        skillsDir,
-        "--output-dir",
-        outputDir,
-      ]);
+      const { stdout, error } = await runCliCommand(["build:plugins", "--output-dir", outputDir]);
 
       expect(error).toBeUndefined();
       expect(stdout).toContain("Plugin compilation complete!");

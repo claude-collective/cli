@@ -121,5 +121,24 @@ describe("validate command", () => {
         expect(stdout).toMatch(/\d+ agent\(s\)/);
       },
     );
+
+    it(
+      "should emit all four section headers (sources, plugins, skills, agents) in a fully installed project",
+      { timeout: TIMEOUTS.LIFECYCLE },
+      async () => {
+        wizard = await InitWizard.launch();
+        const result = await wizard.completeWithDefaults();
+        expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+        const { exitCode, stdout } = await CLI.run(["validate"], result.project);
+
+        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+        // All four validation passes must render their headers in a fully installed project
+        expect(stdout).toContain("Validating sources");
+        expect(stdout).toContain("Validating plugins");
+        expect(stdout).toContain("Validating skills");
+        expect(stdout).toContain("Validating agents");
+      },
+    );
   });
 });

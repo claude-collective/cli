@@ -277,7 +277,8 @@ describe("new skill command", () => {
     await rm(path.join(marketplaceDir, SOURCE_PATHS.SKILL_CATEGORIES), { force: true });
     await rm(path.join(marketplaceDir, SOURCE_PATHS.SKILL_RULES), { force: true });
 
-    // Create a new skill with custom domain/category, using --source . to point at the marketplace
+    // Create a new skill with custom domain/category. `new skill` auto-detects marketplace
+    // context via .claude-plugin/marketplace.json, so no --source flag is needed.
     const { exitCode, stdout } = await CLI.run(
       [
         "new",
@@ -287,8 +288,6 @@ describe("new skill command", () => {
         "custom-e2e-domain",
         "--category",
         "custom-e2e-category",
-        "--source",
-        ".",
       ],
       { dir: marketplaceDir },
     );

@@ -3,10 +3,10 @@ import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { runCliCommand } from "../../helpers/cli-runner.js";
-import { createTempDir, cleanupTempDir, fileExists, directoryExists } from "../../test-fs-utils";
+import { fileExists, directoryExists } from "../../test-fs-utils";
+import { setupIsolatedHome } from "../../helpers/isolated-home.js";
 import { EXIT_CODES } from "../../../exit-codes";
-import { STANDARD_FILES } from "../../../../consts";
-const LOCAL_SKILLS_DIR = ".claude/skills";
+import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../../consts";
 
 // Plain directory name (no slashes/colons) so parseGitHubSource passes it
 // through as-is and fetchFromSource treats it as a local path relative to cwd
@@ -15,10 +15,9 @@ const LOCAL_SOURCE_NAME = "testrepo";
 async function createLocalSource(
   projectDir: string,
   skills: string[],
-  options?: { subdir?: string; withMetadata?: boolean },
+  options?: { withMetadata?: boolean },
 ): Promise<void> {
-  const subdir = options?.subdir ?? "skills";
-  const skillsDir = path.join(projectDir, LOCAL_SOURCE_NAME, subdir);
+  const skillsDir = path.join(projectDir, LOCAL_SOURCE_NAME, "skills");
 
   for (const skillName of skills) {
     const skillDir = path.join(skillsDir, skillName);
@@ -35,21 +34,15 @@ async function createLocalSource(
 }
 
 describe("import:skill command", () => {
-  let tempDir: string;
   let projectDir: string;
-  let originalCwd: string;
+  let cleanup: () => Promise<void>;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-import-skill-test-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
-    process.chdir(projectDir);
+    ({ projectDir, cleanup } = await setupIsolatedHome("import-skill-test-home-"));
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
-    await cleanupTempDir(tempDir);
+    await cleanup();
   });
 
   describe("argument validation", () => {
@@ -79,37 +72,12 @@ describe("import:skill command", () => {
   });
 
   describe("flag validation", () => {
-    it("should accept --subdir flag", async () => {
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--list",
-        "--subdir",
-        "custom-dir",
-      ]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
     it("should accept --force flag", async () => {
       const { error } = await runCliCommand([
         "import:skill",
         LOCAL_SOURCE_NAME,
         "--all",
         "--force",
-      ]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept --refresh flag", async () => {
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--list",
-        "--refresh",
       ]);
 
       const output = error?.message || "";
@@ -213,7 +181,7 @@ describe("import:skill command", () => {
       expect(error?.oclif?.exit).toBeUndefined();
 
       // Verify skill was copied to the destination
-      const destSkillDir = path.join(projectDir, LOCAL_SKILLS_DIR, "react-patterns");
+      const destSkillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "react-patterns");
       expect(await directoryExists(destSkillDir)).toBe(true);
       expect(await fileExists(path.join(destSkillDir, STANDARD_FILES.SKILL_MD))).toBe(true);
     });
@@ -246,7 +214,7 @@ describe("import:skill command", () => {
       // Read the created metadata.yaml
       const metadataPath = path.join(
         projectDir,
-        LOCAL_SKILLS_DIR,
+        LOCAL_SKILLS_PATH,
         "my-skill",
         STANDARD_FILES.METADATA_YAML,
       );
@@ -277,7 +245,7 @@ describe("import:skill command", () => {
 
       const metadataPath = path.join(
         projectDir,
-        LOCAL_SKILLS_DIR,
+        LOCAL_SKILLS_PATH,
         "my-skill",
         STANDARD_FILES.METADATA_YAML,
       );
@@ -302,7 +270,7 @@ describe("import:skill command", () => {
 
       // Verify all skills were imported
       for (const name of skillNames) {
-        const destDir = path.join(projectDir, LOCAL_SKILLS_DIR, name);
+        const destDir = path.join(projectDir, LOCAL_SKILLS_PATH, name);
         expect(await directoryExists(destDir)).toBe(true);
         expect(await fileExists(path.join(destDir, STANDARD_FILES.SKILL_MD))).toBe(true);
       }
@@ -325,7 +293,7 @@ describe("import:skill command", () => {
       await createLocalSource(projectDir, ["existing-skill"]);
 
       // Pre-create the destination skill directory
-      const destSkillDir = path.join(projectDir, LOCAL_SKILLS_DIR, "existing-skill");
+      const destSkillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "existing-skill");
       await mkdir(destSkillDir, { recursive: true });
       await writeFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), "# Original content\n");
 
@@ -348,7 +316,7 @@ describe("import:skill command", () => {
       await createLocalSource(projectDir, ["existing-skill"]);
 
       // Pre-create the destination skill directory
-      const destSkillDir = path.join(projectDir, LOCAL_SKILLS_DIR, "existing-skill");
+      const destSkillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "existing-skill");
       await mkdir(destSkillDir, { recursive: true });
       await writeFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), "# Original content\n");
 
@@ -368,7 +336,7 @@ describe("import:skill command", () => {
       await createLocalSource(projectDir, ["skill-a", "skill-b", "skill-c"]);
 
       // Pre-create only skill-b at the destination
-      const destSkillB = path.join(projectDir, LOCAL_SKILLS_DIR, "skill-b");
+      const destSkillB = path.join(projectDir, LOCAL_SKILLS_PATH, "skill-b");
       await mkdir(destSkillB, { recursive: true });
       await writeFile(path.join(destSkillB, STANDARD_FILES.SKILL_MD), "# Original B\n");
 
@@ -383,12 +351,12 @@ describe("import:skill command", () => {
       // skill-a and skill-c should be imported
       expect(
         await fileExists(
-          path.join(projectDir, LOCAL_SKILLS_DIR, "skill-a", STANDARD_FILES.SKILL_MD),
+          path.join(projectDir, LOCAL_SKILLS_PATH, "skill-a", STANDARD_FILES.SKILL_MD),
         ),
       ).toBe(true);
       expect(
         await fileExists(
-          path.join(projectDir, LOCAL_SKILLS_DIR, "skill-c", STANDARD_FILES.SKILL_MD),
+          path.join(projectDir, LOCAL_SKILLS_PATH, "skill-c", STANDARD_FILES.SKILL_MD),
         ),
       ).toBe(true);
 
@@ -401,7 +369,7 @@ describe("import:skill command", () => {
       await createLocalSource(projectDir, ["existing-skill"]);
 
       // Pre-create the destination skill directory with old content
-      const destSkillDir = path.join(projectDir, LOCAL_SKILLS_DIR, "existing-skill");
+      const destSkillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "existing-skill");
       await mkdir(destSkillDir, { recursive: true });
       await writeFile(path.join(destSkillDir, STANDARD_FILES.SKILL_MD), "# Original content\n");
 
@@ -426,7 +394,7 @@ describe("import:skill command", () => {
 
       // Pre-create both destination skill directories
       for (const name of ["skill-a", "skill-b"]) {
-        const destDir = path.join(projectDir, LOCAL_SKILLS_DIR, name);
+        const destDir = path.join(projectDir, LOCAL_SKILLS_PATH, name);
         await mkdir(destDir, { recursive: true });
         await writeFile(path.join(destDir, STANDARD_FILES.SKILL_MD), "# Original\n");
       }
@@ -446,120 +414,11 @@ describe("import:skill command", () => {
       // Both skills should be overwritten
       for (const name of ["skill-a", "skill-b"]) {
         const content = await readFile(
-          path.join(projectDir, LOCAL_SKILLS_DIR, name, STANDARD_FILES.SKILL_MD),
+          path.join(projectDir, LOCAL_SKILLS_PATH, name, STANDARD_FILES.SKILL_MD),
           "utf-8",
         );
         expect(content).not.toBe("# Original\n");
       }
-    });
-  });
-
-  describe("--subdir flag behavior", () => {
-    it("should look for skills in custom subdirectory", async () => {
-      await createLocalSource(projectDir, ["custom-skill"], { subdir: "custom-dir" });
-
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--skill",
-        "custom-skill",
-        "--subdir",
-        "custom-dir",
-      ]);
-
-      expect(error?.oclif?.exit).toBeUndefined();
-
-      const destDir = path.join(projectDir, LOCAL_SKILLS_DIR, "custom-skill");
-      expect(await directoryExists(destDir)).toBe(true);
-    });
-
-    it("should error when custom subdirectory does not exist", async () => {
-      await createLocalSource(projectDir, ["some-skill"]);
-
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--list",
-        "--subdir",
-        "nonexistent-subdir",
-      ]);
-
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
-    });
-
-    it("should block path traversal with .. sequences", async () => {
-      await createLocalSource(projectDir, ["some-skill"]);
-
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--list",
-        "--subdir",
-        "../../../etc",
-      ]);
-
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
-      expect(error?.message).toContain("escapes repository boundary");
-    });
-
-    it("should block absolute paths in --subdir", async () => {
-      await createLocalSource(projectDir, ["some-skill"]);
-
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--list",
-        "--subdir",
-        "/etc/passwd",
-      ]);
-
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
-      expect(error?.message).toContain("must be a relative path");
-    });
-
-    it("should block null bytes in --subdir", async () => {
-      await createLocalSource(projectDir, ["some-skill"]);
-
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--list",
-        "--subdir",
-        "skills\x00/../../../etc",
-      ]);
-
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
-      expect(error?.message).toContain("null bytes");
-    });
-
-    it("should block intermediate traversal in --subdir", async () => {
-      await createLocalSource(projectDir, ["some-skill"]);
-
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--list",
-        "--subdir",
-        "skills/../../../etc/passwd",
-      ]);
-
-      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
-      expect(error?.message).toContain("escapes repository boundary");
-    });
-
-    it("should allow nested subdirectories within repository", async () => {
-      await createLocalSource(projectDir, ["nested-skill"], { subdir: "deep/nested/skills" });
-
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--list",
-        "--subdir",
-        "deep/nested/skills",
-      ]);
-
-      // Should succeed (no exit code error), listing skills from nested subdir
-      expect(error?.oclif?.exit).toBeUndefined();
     });
   });
 

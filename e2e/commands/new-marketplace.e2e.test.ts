@@ -7,6 +7,7 @@ import {
   cleanupTempDir,
   ensureBinaryExists,
   fileExists,
+  readMarketplaceJson,
   readTestFile,
   directoryExists,
 } from "../helpers/test-utils.js";
@@ -138,6 +139,26 @@ describe("new marketplace command", () => {
       "marketplace.json",
     );
     expect(await fileExists(marketplaceJsonPath)).toBe(true);
+  });
+
+  it("should produce a marketplace.json containing the dummy-skill plugin entry", async () => {
+    tempDir = await createTempDir();
+    const marketplaceName = "dummy-skill-verify";
+
+    const { exitCode } = await CLI.run(["new", "marketplace", marketplaceName], { dir: tempDir });
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+    const marketplaceJsonPath = path.join(
+      tempDir,
+      marketplaceName,
+      SOURCE_PATHS.PLUGIN_MANIFEST_DIR,
+      "marketplace.json",
+    );
+    const marketplace = await readMarketplaceJson(marketplaceJsonPath);
+
+    expect(marketplace.plugins.length).toBeGreaterThanOrEqual(1);
+    const dummyPlugin = marketplace.plugins.find((p) => p.name === "dummy-skill");
+    expect(dummyPlugin, "Expected dummy-skill plugin entry in marketplace.json").toBeDefined();
   });
 
   it("should error when marketplace already exists without --force", async () => {

@@ -303,12 +303,7 @@ describe("config-scope integrity -- global config includes source field", () => 
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
   });
 
-  // TODO: This test has never passed. The dual-scope local install fails with ENOENT because
-  // the skill copier can't resolve source paths in the project context. Plugin mode also
-  // falls back to local when no marketplace is registered in the test env. The test itself
-  // likely needs restructuring — the D-92 functionality (splitConfigByScope preserving the
-  // source field) still needs proper E2E coverage.
-  it.skip(
+  it(
     "should include source field in both global and project configs after scope split",
     { timeout: TIMEOUTS.LIFECYCLE },
     async () => {

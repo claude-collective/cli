@@ -81,14 +81,14 @@ describe("doctor command", () => {
   });
 
   describe("--help flag", () => {
-    it("should display help output with expected flags", async () => {
+    it("should display help output", async () => {
       tempDir = await createTempDir();
 
       const { exitCode, stdout } = await CLI.run(["doctor", "--help"], { dir: tempDir });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Diagnose");
-      expect(stdout).toContain("--verbose");
+      expect(stdout).not.toContain("--verbose");
     });
   });
 

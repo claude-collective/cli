@@ -3,9 +3,13 @@ import { z } from "zod";
 import { buildAgentConfigs } from "./__tests__/factories/config-factories.js";
 import { buildSkillConfigs } from "./__tests__/helpers/wizard-simulation.js";
 import {
+  VALID_EMBEDDED_SKILL_METADATA_FILE,
+  VALID_SKILL_CATEGORIES_FILE,
+} from "./__tests__/mock-data/mock-source-files.js";
+import {
   agentYamlConfigSchema,
   categoryPathSchema,
-  formatZodErrors,
+  formatZodIssues,
   localRawMetadataSchema,
   metadataValidationSchema,
   projectConfigLoaderSchema,
@@ -413,10 +417,9 @@ describe("custom: true in schemas", () => {
 
   it("should accept custom: true in metadataValidationSchema", () => {
     const result = metadataValidationSchema.safeParse({
-      category: "web-framework",
+      ...VALID_EMBEDDED_SKILL_METADATA_FILE,
       author: "@acme",
       displayName: "My Custom Skill",
-      slug: "react",
       cliDescription: "A custom skill for deployment",
       usageGuidance: "Use when deploying services to staging or production.",
       custom: true,
@@ -425,20 +428,7 @@ describe("custom: true in schemas", () => {
   });
 
   it("should accept valid category definition via skillCategoriesFileSchema", () => {
-    const result = skillCategoriesFileSchema.safeParse({
-      version: "1.0.0",
-      categories: {
-        "web-framework": {
-          id: "web-framework",
-          displayName: "Framework",
-          description: "Web frameworks",
-          domain: "web",
-          exclusive: true,
-          required: false,
-          order: 1,
-        },
-      },
-    });
+    const result = skillCategoriesFileSchema.safeParse(VALID_SKILL_CATEGORIES_FILE);
     expect(result.success).toBe(true);
   });
 });
@@ -623,7 +613,8 @@ describe("skillCategoriesFileSchema", () => {
 
   it("should reject missing version", () => {
     const result = skillCategoriesFileSchema.safeParse({
-      categories: {},
+      ...VALID_SKILL_CATEGORIES_FILE,
+      version: undefined,
     });
     expect(result.success).toBe(false);
   });
@@ -690,7 +681,7 @@ describe("lenient schemas accept custom values without pre-registration", () => 
   });
 });
 
-describe("formatZodErrors", () => {
+describe("formatZodIssues", () => {
   it("should format a single issue with path and message", () => {
     const issues: z.ZodIssue[] = [
       {
@@ -700,7 +691,7 @@ describe("formatZodErrors", () => {
         message: "Expected string",
       },
     ];
-    expect(formatZodErrors(issues)).toBe("name: Expected string");
+    expect(formatZodIssues(issues)).toBe("name: Expected string");
   });
 
   it("should join multiple issues with semicolons", () => {
@@ -708,7 +699,7 @@ describe("formatZodErrors", () => {
       { code: "invalid_type" as const, expected: "string", path: ["name"], message: "Required" },
       { code: "invalid_type" as const, expected: "string", path: ["email"], message: "Required" },
     ];
-    expect(formatZodErrors(issues)).toBe("name: Required; email: Required");
+    expect(formatZodIssues(issues)).toBe("name: Required; email: Required");
   });
 
   it("should handle nested paths", () => {
@@ -720,15 +711,15 @@ describe("formatZodErrors", () => {
         message: "Expected string",
       },
     ];
-    expect(formatZodErrors(issues)).toBe("author.name: Expected string");
+    expect(formatZodIssues(issues)).toBe("author.name: Expected string");
   });
 
   it("should handle empty path", () => {
     const issues: z.ZodIssue[] = [{ code: "custom" as const, path: [], message: "Invalid input" }];
-    expect(formatZodErrors(issues)).toBe(": Invalid input");
+    expect(formatZodIssues(issues)).toBe(": Invalid input");
   });
 
   it("should handle empty issues array", () => {
-    expect(formatZodErrors([])).toBe("");
+    expect(formatZodIssues([])).toBe("");
   });
 });

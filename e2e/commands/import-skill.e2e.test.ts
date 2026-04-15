@@ -35,13 +35,14 @@ describe("import skill command", () => {
     expect(stdout).toContain("--list");
   });
 
-  it("should document --subdir flag in help output", async () => {
+  it("should not document removed --subdir flag in help output", async () => {
     tempDir = await createTempDir();
 
     const { exitCode, stdout } = await CLI.run(["import", "skill", "--help"], { dir: tempDir });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("--subdir");
+    expect(stdout).not.toContain("--subdir");
+    expect(stdout).not.toContain("--refresh");
   });
 
   it("should document --force flag in help output", async () => {
@@ -97,25 +98,6 @@ describe("import skill command", () => {
     expect(output).toContain("Cannot use --skill and --all together");
   });
 
-  // BUG: The --subdir validation for absolute paths (line 213 in import/skill.ts) runs
-  // AFTER fetchFromSource(). parseGitHubSource() corrupts local paths by prepending
-  // "github:", so we cannot reach the subdir check without a real GitHub source.
-  // The import command should support local sources or validate --subdir before fetching.
-  it.fails("should error when --subdir is an absolute path", async () => {
-    tempDir = await createTempDir();
-    const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
-    e2eSourceDir = sourceDir;
-    e2eSourceTempDir = srcTempDir;
-
-    const { exitCode, output } = await CLI.run(
-      ["import", "skill", sourceDir, "--list", "--subdir", "/absolute/path"],
-      { dir: tempDir },
-    );
-
-    expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS);
-    expect(output).toContain("--subdir must be a relative path");
-  });
-
   // BUG: parseGitHubSource() in import/skill.ts prepends "github:" to any source path
   // containing "/" without ":", which corrupts local filesystem paths. The import command
   // does not support local source directories as its positional argument.
@@ -144,15 +126,7 @@ describe("import skill command", () => {
     e2eSourceTempDir = srcTempDir;
 
     const { exitCode, stdout } = await CLI.run(
-      [
-        "import",
-        "skill",
-        sourceDir,
-        "--skill",
-        "web-framework-react",
-        "--subdir",
-        "src/skills/web-framework",
-      ],
+      ["import", "skill", sourceDir, "--skill", "web-framework-react"],
       { dir: tempDir },
     );
 
@@ -175,30 +149,13 @@ describe("import skill command", () => {
     e2eSourceTempDir = srcTempDir;
 
     // First import
-    await CLI.run(
-      [
-        "import",
-        "skill",
-        sourceDir,
-        "--skill",
-        "web-framework-react",
-        "--subdir",
-        "src/skills/web-framework",
-      ],
-      { dir: tempDir },
-    );
+    await CLI.run(["import", "skill", sourceDir, "--skill", "web-framework-react"], {
+      dir: tempDir,
+    });
 
     // Second import should warn about skipping
     const { output } = await CLI.run(
-      [
-        "import",
-        "skill",
-        sourceDir,
-        "--skill",
-        "web-framework-react",
-        "--subdir",
-        "src/skills/web-framework",
-      ],
+      ["import", "skill", sourceDir, "--skill", "web-framework-react"],
       { dir: tempDir },
     );
 
@@ -213,46 +170,19 @@ describe("import skill command", () => {
     e2eSourceTempDir = srcTempDir;
 
     // First import
-    await CLI.run(
-      [
-        "import",
-        "skill",
-        sourceDir,
-        "--skill",
-        "web-framework-react",
-        "--subdir",
-        "src/skills/web-framework",
-      ],
-      { dir: tempDir },
-    );
+    await CLI.run(["import", "skill", sourceDir, "--skill", "web-framework-react"], {
+      dir: tempDir,
+    });
 
     // Second import with --force should succeed
     const { exitCode, stdout } = await CLI.run(
-      [
-        "import",
-        "skill",
-        sourceDir,
-        "--skill",
-        "web-framework-react",
-        "--subdir",
-        "src/skills/web-framework",
-        "--force",
-      ],
+      ["import", "skill", sourceDir, "--skill", "web-framework-react", "--force"],
       { dir: tempDir },
     );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Imported:");
     expect(stdout).toContain("Import complete:");
-  });
-
-  it("should document --refresh flag in help output", async () => {
-    tempDir = await createTempDir();
-
-    const { exitCode, stdout } = await CLI.run(["import", "skill", "--help"], { dir: tempDir });
-
-    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("--refresh");
   });
 
   // BUG: parseGitHubSource() corrupts local paths by prepending "github:" to any
@@ -263,10 +193,9 @@ describe("import skill command", () => {
     e2eSourceDir = sourceDir;
     e2eSourceTempDir = srcTempDir;
 
-    const { exitCode, stdout } = await CLI.run(
-      ["import", "skill", sourceDir, "--all", "--subdir", "src/skills/web-framework"],
-      { dir: tempDir },
-    );
+    const { exitCode, stdout } = await CLI.run(["import", "skill", sourceDir, "--all"], {
+      dir: tempDir,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Import complete:");
@@ -286,24 +215,6 @@ describe("import skill command", () => {
     // Source without "/" or ":" is passed through as-is to giget, which fails
     expect(exitCode).toBe(EXIT_CODES.NETWORK_ERROR);
     expect(output).toContain("Fetching repository");
-  });
-
-  // BUG: parseGitHubSource() corrupts local paths. Cannot reach the subdir validation
-  // that checks for non-existent subdirectories inside the fetched repo.
-  it.fails("should error when --subdir points to a non-existent subdirectory", async () => {
-    tempDir = await createTempDir();
-    const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
-    e2eSourceDir = sourceDir;
-    e2eSourceTempDir = srcTempDir;
-
-    const { exitCode, output } = await CLI.run(
-      ["import", "skill", sourceDir, "--list", "--subdir", "this-dir-does-not-exist"],
-      { dir: tempDir },
-    );
-
-    expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS);
-    expect(output).toContain("Skills directory not found");
-    expect(output).toContain("Use --subdir");
   });
 
   it("should error when --skill specifies a non-existent skill name (with github: prefix)", async () => {

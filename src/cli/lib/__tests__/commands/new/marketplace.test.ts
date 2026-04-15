@@ -2,8 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { runCliCommand } from "../../helpers/cli-runner.js";
-import { createTempDir, cleanupTempDir, fileExists, directoryExists } from "../../test-fs-utils";
+import { fileExists, directoryExists } from "../../test-fs-utils";
 import { writeTestTsConfig } from "../../helpers/config-io.js";
+import { setupIsolatedHome } from "../../helpers/isolated-home.js";
 import { buildSourceConfig } from "../../factories/config-factories.js";
 import { EXIT_CODES } from "../../../exit-codes";
 import {
@@ -139,20 +140,15 @@ describe("generateReadme", () => {
 describe("new:marketplace command", () => {
   let tempDir: string;
   let projectDir: string;
-  let originalCwd: string;
+  let cleanup: () => Promise<void>;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-new-marketplace-test-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
+    ({ tempDir, projectDir, cleanup } = await setupIsolatedHome("new-marketplace-test-home-"));
     await writeTestTsConfig(projectDir, buildSourceConfig({ skills: [] }));
-    process.chdir(projectDir);
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
-    await cleanupTempDir(tempDir);
+    await cleanup();
   });
 
   describe("argument validation", () => {
