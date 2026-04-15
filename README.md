@@ -130,9 +130,6 @@ Each subagent is composed from modular partials (role, workflow, output format) 
 | Command           | Description                                                               |
 | ----------------- | ------------------------------------------------------------------------- |
 | `eject <type>`    | Export for customization (`agent-partials`, `templates`, `skills`, `all`) |
-| `new skill`       | Scaffold a custom skill                                                   |
-| `new agent`       | Scaffold a custom agent                                                   |
-| `new marketplace` | Scaffold a new skill marketplace                                          |
 | `import skill`    | Import a skill from an external GitHub repository                         |
 
 ### Build

@@ -6,24 +6,24 @@ Every command available in the `agentsinc` CLI. Run `agentsinc <command> --help`
 
 ## Command matrix
 
-| Command                  | Purpose                                                         | Interactive | Flags (excl. base)                                                                        |
-| ------------------------ | --------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------- |
-| `init`                   | First-time wizard: pick a stack, skills, agents, compile        | Yes         | `--refresh`                                                                               |
-| `edit`                   | Modify an existing installation via the wizard                  | Yes         | `--refresh`                                                                               |
-| `compile`                | Recompile agents from the current config                        | No          | `--verbose`                                                                               |
-| `update [skill]`         | Pull latest skill content from source (optionally one skill)    | Hybrid      | `--yes/-y`                                                                                |
-| `search <query>`         | Read-only catalog search across all registered sources          | No          | (none — no base)                                                                          |
-| `eject <type>`           | Export partials / templates / skills / all for customization    | No          | `--force/-f`, `--output/-o`, `--refresh`                                                  |
-| `new skill <name>`       | Scaffold a local skill                                          | No          | `--author/-a`, `--category/-c`, `--domain/-d`, `--force/-f` _(no base)_                   |
-| `new agent <name>`       | Scaffold a local agent (Claude assists via prompt)              | Yes         | `--purpose/-p`, `--force/-f`                                                              |
-| `new marketplace <name>` | Scaffold a new skill marketplace repo                           | No          | `--force/-f`                                                                              |
-| `import skill <source>`  | Import skills from a third-party GitHub repo                    | No          | `--skill/-n`, `--all/-a`, `--list/-l`, `--force/-f` _(no base)_                           |
-| `build plugins`          | Compile skills/agents into distributable plugin bundles         | No          | `--agents-dir/-a`, `--output-dir/-o`, `--skill`, `--verbose/-v` _(no base)_               |
-| `build marketplace`      | Generate `marketplace.json` from built plugins + `package.json` | No          | `--plugins-dir/-p`, `--output/-o`, `--verbose/-v` _(no base; reads id from package.json)_ |
-| `doctor`                 | Diagnose installation, skills, agents, orphans                  | No          | (none — always verbose, no base)                                                          |
-| `list`                   | Show installation mode, source, skills, agents                  | No          | (base only)                                                                               |
-| `validate`               | Validate registered sources, installed plugins, skills, agents  | No          | (none — no base)                                                                          |
-| `uninstall`              | Remove CLI-managed files, optionally including `.claude-src/`   | Yes         | `--yes/-y`, `--all`                                                                       |
+| Command                     | Purpose                                                                  | Interactive | Flags (excl. base)                                                                        |
+| --------------------------- | ------------------------------------------------------------------------ | ----------- | ----------------------------------------------------------------------------------------- |
+| `init`                      | First-time wizard: pick a stack, skills, agents, compile                 | Yes         | `--refresh`                                                                               |
+| `edit`                      | Modify an existing installation via the wizard                           | Yes         | `--refresh`                                                                               |
+| `compile`                   | Recompile agents from the current config                                 | No          | `--verbose`                                                                               |
+| `update [skill]`            | Pull latest skill content from source (optionally one skill)             | Hybrid      | `--yes/-y`                                                                                |
+| `search <query>`            | Read-only catalog search across all registered sources                   | No          | (none — no base)                                                                          |
+| `eject <type>`              | Export partials / templates / skills / all for customization             | No          | `--force/-f`, `--output/-o`, `--refresh`                                                  |
+| `new skill <name>` ⚠️       | Scaffold a local skill — **currently disabled** (feature flag)           | No          | `--author/-a`, `--category/-c`, `--domain/-d`, `--force/-f` _(no base)_                   |
+| `new agent <name>` ⚠️       | Scaffold a local agent — **currently disabled** (feature flag)           | Yes         | `--purpose/-p`, `--force/-f`                                                              |
+| `new marketplace <name>` ⚠️ | Scaffold a new skill marketplace — **currently disabled** (feature flag) | No          | `--force/-f`                                                                              |
+| `import skill <source>`     | Import skills from a third-party GitHub repo                             | No          | `--skill/-n`, `--all/-a`, `--list/-l`, `--force/-f` _(no base)_                           |
+| `build plugins`             | Compile skills/agents into distributable plugin bundles                  | No          | `--agents-dir/-a`, `--output-dir/-o`, `--skill`, `--verbose/-v` _(no base)_               |
+| `build marketplace`         | Generate `marketplace.json` from built plugins + `package.json`          | No          | `--plugins-dir/-p`, `--output/-o`, `--verbose/-v` _(no base; reads id from package.json)_ |
+| `doctor`                    | Diagnose installation, skills, agents, orphans                           | No          | (none — always verbose, no base)                                                          |
+| `list`                      | Show installation mode, source, skills, agents                           | No          | (base only)                                                                               |
+| `validate`                  | Validate registered sources, installed plugins, skills, agents           | No          | (none — no base)                                                                          |
+| `uninstall`                 | Remove CLI-managed files, optionally including `.claude-src/`            | Yes         | `--yes/-y`, `--all`                                                                       |
 
 Interactive = renders an Ink UI. Hybrid = interactive only when prompting for confirmation (`update`).
 
@@ -107,39 +107,51 @@ Exports source material for user modification. Types: `agent-partials`, `templat
 
 ---
 
-### `new skill <name>`
+### `new skill <name>` ⚠️ disabled
 
 **File:** `src/cli/commands/new/skill.ts`
 
-Scaffolds a `SKILL.md` + `metadata.yaml` in the detected local marketplace. Core scaffolding logic lives in the exported `scaffoldSkillFiles` function, which is also called directly by `new marketplace` for its starter skill. Author resolves via `resolveAuthorOrDefault` (checks user config).
+**Currently disabled behind `FEATURE_FLAGS.NEW_SKILL_COMMAND` (default `false`)** while D-212 is open. Running it exits non-zero with a message pointing at the task. The `scaffoldSkillFiles` library function is NOT gated — `new marketplace` still calls it internally to create its starter skill.
 
-**Flags:** `--author/-a`, `--category/-c`, `--domain/-d`, `--force/-f`. Does not inherit `--source` (scaffolding doesn't consume a source).
+**Why disabled:** post-install the custom skill tries to install as a marketplace plugin and fails (marketplace lookup 404s), config-types regresses from the extend-global shape to a flat listing, and the scaffold command's completion message incorrectly tells users to run `cc compile` (which is a no-op for newly scaffolded skills). See `todo/TODO.md` D-212.
+
+**Behavior when the flag is flipped back on:** scaffolds a `SKILL.md` + `metadata.yaml` in the detected local marketplace (or `.claude/skills/` when not in one). Always sets `custom: true`. Core logic lives in the exported `scaffoldSkillFiles` function, which is also called directly by `new marketplace` for its starter skill. Author resolves via `resolveAuthorOrDefault` (checks user config).
+
+**Flags (when enabled):** `--author/-a`, `--category/-c`, `--domain/-d`, `--force/-f`. Does not inherit `--source` (scaffolding doesn't consume a source).
 
 > **TODO:** Verify the generated `metadata.yaml` satisfies every field the CLI's skill loader expects (`parseFrontmatter`, `skillMetadataSchema`, matrix registration). After scaffolding, the new skill must appear in `agentsinc search`, `agentsinc list`, and in the wizard's skill grid — round-trip test required.
 
 ---
 
-### `new agent <name>`
+### `new agent <name>` ⚠️ disabled
 
 **File:** `src/cli/commands/new/agent.tsx`
 
-Scaffolder for custom agents. Prompts interactively for purpose unless `--purpose` is provided, then drives Claude (via the `claude` CLI) to draft the agent's identity/playbook/output partials. The `--purpose` flag is the one signal used to pick the path — no separate `--non-interactive` toggle.
+**Currently disabled behind `FEATURE_FLAGS.NEW_AGENT_COMMAND` (default `false`)** while D-213 is open. Running it exits non-zero with a message pointing at the task.
 
-**Flags:** `--purpose/-p`, `--force/-f`, `--source` (inherited).
+**Why disabled:** the command fails immediately for any user whose install doesn't pre-include the `agent-summoner` meta-agent. `new agent` drives Claude via that meta-agent, and the lookup falls back only to a user-registered source. If neither place has it, the command errors with a misleading `"Run 'compile' first"` hint. See `todo/TODO.md` D-213 for the full list of gaps (bundled fallback, output path, install wiring, config-types regression).
 
-**Requires:** Anthropic's `claude` CLI on `$PATH`.
+**Behavior when the flag is flipped back on:** scaffolds a custom agent under `<projectDir>/.claude/agents/_custom/`. Prompts interactively for purpose unless `--purpose` is provided, then drives Claude (via the `claude` CLI) to draft the agent's identity/playbook/output partials.
+
+**Flags (when enabled):** `--purpose/-p`, `--force/-f`, `--source` (inherited).
+
+**Requires (when enabled):** Anthropic's `claude` CLI on `$PATH` **and** `agent-summoner` resolvable either locally (in `<projectDir>/.claude/agents/`) or in the registered source.
 
 > **TODO:** Same as `new skill` — verify the scaffolded agent produces a valid `metadata.yaml` (agent schema, not skill schema) and that the new agent is picked up by the agent loader, appears in `agentsinc list`, and is selectable in the wizard's agents step. Round-trip test from scaffold → visible in CLI surfaces.
 
 ---
 
-### `new marketplace <name>`
+### `new marketplace <name>` ⚠️ disabled
 
 **File:** `src/cli/commands/new/marketplace.ts`
 
-Creates a fresh marketplace directory with `skills-matrix.yaml`, default categories, and a starter skill. The starter skill is scaffolded by calling `scaffoldSkillFiles` directly (not via `runCommand`) — author resolves via `resolveAuthorOrDefault(undefined, parentDir)`, consistent with `new skill`.
+**Currently disabled behind `FEATURE_FLAGS.NEW_MARKETPLACE_COMMAND` (default `false`)** while D-214 is open. The scaffold itself works; the problem is what happens when the scaffolded marketplace is later consumed via `cc init --source <that-marketplace>` — matrix composition has ~20 hardening gaps that make consumption unreliable (silent ID overwrites, orphaned custom skills, extras can't participate in relationships, schema drift, etc.). Scaffolding a marketplace today creates infrastructure built on a shaky foundation.
 
-**Flags:** `--force/-f`, `--source` (inherited).
+See `todo/TODO.md` D-214 for the full fix list (must-fix, should-fix, nice-to-have) required before flipping the flag.
+
+**Behavior when the flag is flipped back on:** creates a fresh marketplace directory with the three config TS files (`config/skill-categories.ts`, `config/skill-rules.ts`, `config/stacks.ts`), a `package.json`, a README, and a starter skill. The starter skill is scaffolded by calling `scaffoldSkillFiles` directly (not via `runCommand`) — author resolves via `resolveAuthorOrDefault(undefined, parentDir)`, consistent with `new skill`. `build marketplace` is then invoked automatically at the end to produce the initial `marketplace.json`.
+
+**Flags (when enabled):** `--force/-f`, `--source` (inherited).
 
 ---
 
@@ -337,4 +349,8 @@ Running list of internal `.ai-docs/` references that lag behind the CLI's actual
 - [ ] **Deleted production files (0.129.0)** — `src/cli/components/skill-search/` (entire dir), `src/cli/components/hooks/use-filtered-results.ts`. If `.ai-docs/reference/*` listed these as parts of the component graph, remove.
 - [ ] **Post-0.129.0 additional flag/code removals** — `edit --agent-source`, `new marketplace --output`, `resolveAgentsSource` helper + error message, `formatOrigin` + `AgentsSourceOrigin` type, `loadAgentDefs`'s first `agentSource` parameter, `SUCCESS_MESSAGES.IMPORT_COMPLETE`, `HOTKEY_COPY_LINK`, `UI_LAYOUT` consts block. Sweep any `.ai-docs/` that references these symbols.
 - [ ] **Unresolved-slug diagnostic** — `src/cli/lib/matrix/skill-resolution.ts`'s unresolved-slug log call flipped from `verbose()` to `warn()`. Any `.ai-docs/` describing the matrix-resolution silent-drop behavior needs to note it now warns to stderr.
+- [ ] **`skills-matrix.yaml` is dead** — not referenced anywhere in `src/`, not created by any scaffolding command. Matrix data now lives in `config/skill-categories.ts` + `config/skill-rules.ts` + `config/stacks.ts` + per-skill `metadata.yaml`. Cleanup needed:
+  - `.ai-docs/reference/features/skills-and-matrix.md` — name and content likely both reference the YAML. Rewrite to describe the TS-file composition, or rename to `skills-and-matrix-config.md` and prune the YAML sections.
+  - Any other `.ai-docs/` with `skills-matrix.yaml` references — grep `grep -rn "skills-matrix" .ai-docs/` before touching.
+  - Changelogs retain their period-correct mentions — leave alone.
 - [ ] **When `new skill` / `new agent` metadata generation is hardened** (see TODOs) — update any skill-loading or agent-loading reference docs that describe the current schema expectations.
