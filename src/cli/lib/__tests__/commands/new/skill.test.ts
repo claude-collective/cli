@@ -209,7 +209,11 @@ describe("generateMetadataYaml", () => {
   });
 });
 
-describe("new:skill command", () => {
+// D-212: `cc new skill` is gated behind FEATURE_FLAGS.NEW_SKILL_COMMAND (default false).
+// These tests exercise the CLI layer via runCliCommand, which loads the compiled
+// dist bundle where the flag is inlined -- vi.mock cannot reach it. Re-enable once
+// D-212 is resolved and the flag flips back to true.
+describe.skip("new:skill command", () => {
   let projectDir: string;
   let cleanup: () => Promise<void>;
 

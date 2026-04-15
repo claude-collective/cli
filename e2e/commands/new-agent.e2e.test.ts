@@ -9,7 +9,12 @@ import {
   ensureBinaryExists,
   directoryExists,
 } from "../helpers/test-utils.js";
-describe("new agent command", () => {
+// D-213: `cc new agent` is gated behind FEATURE_FLAGS.NEW_AGENT_COMMAND (default false).
+// E2E tests spawn the CLI binary as a separate process, so vi.mock cannot override
+// the flag. Re-enable once D-213 is resolved and the flag flips back to true, or once
+// the feature-flags module supports an env-var override that the E2E harness can set
+// (see todo/TODO-refactor.md R-01).
+describe.skip("new agent command", () => {
   let tempDir: string;
 
   beforeAll(ensureBinaryExists);

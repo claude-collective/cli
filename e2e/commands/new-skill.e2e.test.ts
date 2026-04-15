@@ -13,7 +13,11 @@ import {
 } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 
-describe("new skill command", () => {
+// D-212: `cc new skill` is gated behind FEATURE_FLAGS.NEW_SKILL_COMMAND (default false).
+// E2E tests spawn the CLI binary as a separate process, so vi.mock cannot override
+// the flag. Re-enable once D-212 is resolved and the flag flips back to true, or once
+// the feature-flags module supports an env-var override that the E2E harness can set.
+describe.skip("new skill command", () => {
   let tempDir: string;
 
   beforeAll(ensureBinaryExists);

@@ -137,7 +137,12 @@ describe("generateReadme", () => {
   });
 });
 
-describe("new:marketplace command", () => {
+// D-214: `cc new marketplace` is gated behind FEATURE_FLAGS.NEW_MARKETPLACE_COMMAND (default false).
+// These tests exercise the CLI layer via runCliCommand, which loads the compiled
+// dist bundle where the flag is inlined -- vi.mock cannot reach it (see
+// todo/TODO-refactor.md R-01). Re-enable once D-214 is resolved and the flag
+// flips back to true, or once feature-flags supports an env-var override.
+describe.skip("new:marketplace command", () => {
   let tempDir: string;
   let projectDir: string;
   let cleanup: () => Promise<void>;

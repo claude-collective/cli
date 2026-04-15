@@ -96,10 +96,7 @@ describe("search command", () => {
       "should return no results for unlikely query without crashing",
       { timeout: COMMAND_TIMEOUT },
       async () => {
-        const { stdout, stderr, error } = await runCliCommand([
-          "search",
-          "zzz-unlikely-query-xyz",
-        ]);
+        const { stdout, stderr, error } = await runCliCommand(["search", "zzz-unlikely-query-xyz"]);
 
         // Should complete without crashing — warns about no results
         expect(error).toBeUndefined();
