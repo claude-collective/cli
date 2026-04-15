@@ -7,6 +7,16 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.129.0] - 2026-04-15
+
+**CLI simplification round 2 — 13 flags pruned, doctor + validate hardened**
+
+- Removed 13 flags across 6 commands (`doctor --verbose`, `build plugins --skills-dir`, `build marketplace` 5 metadata flags, `new skill --output`, `new agent --non-interactive/-r`, `import skill --subdir/--refresh`) — `build marketplace` now reads identity from `package.json`
+- `doctor` gains per-check `safeCheck` isolation and a `CheckKind` discriminator for tip emission; `validate` dedup is realpath-based and now covers the plugins pass
+- Shared test helpers extracted: `setupIsolatedHome` (9 files migrated), `writeTestPackageJson` (4 sites), `readMarketplaceJson` (3 sites)
+
+See [changelogs/0.129.0.md](./changelogs/0.129.0.md) for full details.
+
 ## [0.128.0] - 2026-04-14
 
 **CLI surface cleanup + validate rewrite**
