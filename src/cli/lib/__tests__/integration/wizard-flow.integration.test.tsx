@@ -1,9 +1,11 @@
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Wizard } from "../../../components/wizard/wizard";
-import { useWizardStore } from "../../../stores/wizard-store";
+import { hydrateWizardStore, useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
+import * as wizardLib from "../../wizard/index.js";
 import { createComprehensiveMatrix, createBasicMatrix } from "../factories/matrix-factories.js";
+import type { AgentName, SkillId } from "../../../types";
 import {
   ARROW_DOWN,
   ENTER,
@@ -885,16 +887,16 @@ describe("Wizard integration", () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
+      hydrateWizardStore({
+        initialStep: "build",
+        installedSkillIds: [
+          "web-framework-react" as import("../../../types").SkillId,
+          "api-framework-hono" as import("../../../types").SkillId,
+        ],
+      });
+
       const { lastFrame, unmount } = render(
-        <Wizard
-          onComplete={onComplete}
-          onCancel={onCancel}
-          initialStep="build"
-          installedSkillIds={[
-            "web-framework-react" as import("../../../types").SkillId,
-            "api-framework-hono" as import("../../../types").SkillId,
-          ]}
-        />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -921,13 +923,13 @@ describe("Wizard integration", () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
+      hydrateWizardStore({
+        initialStep: "build",
+        installedSkillIds: [],
+      });
+
       const { lastFrame, unmount } = render(
-        <Wizard
-          onComplete={onComplete}
-          onCancel={onCancel}
-          initialStep="build"
-          installedSkillIds={[]}
-        />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -947,16 +949,16 @@ describe("Wizard integration", () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
+      hydrateWizardStore({
+        initialStep: "build",
+        installedSkillIds: [
+          "web-framework-react" as import("../../../types").SkillId,
+          "api-framework-hono" as import("../../../types").SkillId,
+        ],
+      });
+
       const { stdin, unmount } = render(
-        <Wizard
-          onComplete={onComplete}
-          onCancel={onCancel}
-          initialStep="build"
-          installedSkillIds={[
-            "web-framework-react" as import("../../../types").SkillId,
-            "api-framework-hono" as import("../../../types").SkillId,
-          ]}
-        />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -975,6 +977,156 @@ describe("Wizard integration", () => {
         "web-framework-react",
       );
       expect(stateAfterBuild.domainSelections.api?.["api-api"]).toContain("api-framework-hono");
+    });
+
+    it("should start with empty history when initialStep is set (edit flow)", async () => {
+      initializeMatrix(createComprehensiveMatrix());
+      const onComplete = vi.fn();
+      const onCancel = vi.fn();
+
+      hydrateWizardStore({
+        initialStep: "build",
+        installedSkillIds: ["web-framework-react"],
+      });
+
+      const { unmount } = render(<Wizard onComplete={onComplete} onCancel={onCancel} />);
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      const state = useWizardStore.getState();
+      expect(state.step).toBe("build");
+      expect(state.history).toStrictEqual([]);
+    });
+
+    it("renders build step on first frame when hydrated with initialStep='build' (no stack flash)", () => {
+      initializeMatrix(createComprehensiveMatrix());
+      const onComplete = vi.fn();
+      const onCancel = vi.fn();
+
+      hydrateWizardStore({
+        initialStep: "build",
+        installedSkillIds: ["web-framework-react"],
+      });
+
+      const { frames, unmount } = render(<Wizard onComplete={onComplete} onCancel={onCancel} />);
+      cleanup = unmount;
+
+      // First frame must not show stack-selection chrome
+      expect(frames[0]).not.toMatch(/Select a stack/i);
+      expect(frames[0]).not.toMatch(/Start from scratch/i);
+      // Positive assertion: first frame is the build step (tabs row includes "Skills")
+      expect(frames[0]).toContain("Skills");
+    });
+  });
+
+  // Regression tests for the two render-time props restored after the
+  // hydrateWizardStore refactor. See wizard.tsx WizardProps:
+  //   - installedSkillIds flows through useBuildStepProps into StepBuild so
+  //     that buildCategoriesForDomain marks the correct skills as `installed`.
+  //   - initialAgents gates the StepSources.onContinue call to
+  //     preselectAgentsFromDomains (launch-time closure, not click-time store read).
+  describe("Flow F regressions: restored render-time props", () => {
+    it("forwards installedSkillIds prop to buildCategoriesForDomain (not derived from store)", async () => {
+      initializeMatrix(createComprehensiveMatrix());
+      const onComplete = vi.fn();
+      const onCancel = vi.fn();
+
+      const PROP_INSTALLED_IDS: SkillId[] = ["web-framework-react"];
+
+      hydrateWizardStore({
+        initialStep: "build",
+        // Deliberately leave installedSkillConfigs/installedSkillIds unset on the store —
+        // the prop is the source of truth at render time.
+      });
+
+      const spy = vi.spyOn(wizardLib, "buildCategoriesForDomain");
+
+      const { unmount } = render(
+        <Wizard
+          onComplete={onComplete}
+          onCancel={onCancel}
+          installedSkillIds={PROP_INSTALLED_IDS}
+        />,
+      );
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      // buildCategoriesForDomain signature:
+      //   (domain, allSelections, selections, installedSkillIds?, skillConfigs?, filterIncompatible?)
+      // Assert that at least one call received our prop value as the 4th arg.
+      const calls = spy.mock.calls;
+      expect(calls.length).toBeGreaterThan(0);
+      const matchingCall = calls.find((c) => c[3] === PROP_INSTALLED_IDS);
+      expect(matchingCall).toBeDefined();
+
+      spy.mockRestore();
+    });
+
+    it("does NOT preselect agents from domains when initialAgents prop is provided (launch-time closure)", async () => {
+      initializeMatrix(createComprehensiveMatrix());
+      const onComplete = vi.fn();
+      const onCancel = vi.fn();
+
+      const INITIAL_AGENTS: AgentName[] = ["web-developer"];
+
+      hydrateWizardStore({
+        initialStep: "sources",
+        initialAgents: INITIAL_AGENTS,
+      });
+
+      const { stdin, unmount } = render(
+        <Wizard
+          onComplete={onComplete}
+          onCancel={onCancel}
+          initialAgents={INITIAL_AGENTS}
+        />,
+      );
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      // Simulate the user deselecting all saved agents after reaching sources.
+      useWizardStore.setState({ selectedAgents: [] });
+
+      // Press Enter to trigger StepSources.onContinue.
+      await stdin.write(ENTER);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Gate behavior: because initialAgents was non-empty at launch,
+      // preselectAgentsFromDomains must NOT run — the user's explicit empty
+      // selection is preserved.
+      const state = useWizardStore.getState();
+      expect(state.selectedAgents).toStrictEqual([]);
+    });
+
+    it("DOES preselect agents from domains when initialAgents prop is absent", async () => {
+      initializeMatrix(createComprehensiveMatrix());
+      const onComplete = vi.fn();
+      const onCancel = vi.fn();
+
+      hydrateWizardStore({
+        initialStep: "sources",
+        // No initialAgents — simulates fresh init flow.
+      });
+
+      // Seed selectedDomains so preselectAgentsFromDomains has something to pull from.
+      useWizardStore.setState({ selectedDomains: ["web"], selectedAgents: [] });
+
+      const { stdin, unmount } = render(<Wizard onComplete={onComplete} onCancel={onCancel} />);
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      await stdin.write(ENTER);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // No initialAgents gate -> preselect should have populated selectedAgents
+      // from DOMAIN_AGENTS["web"].
+      const state = useWizardStore.getState();
+      expect(state.selectedAgents.length).toBeGreaterThan(0);
+      expect(state.selectedAgents).toContain("web-developer");
     });
   });
 });

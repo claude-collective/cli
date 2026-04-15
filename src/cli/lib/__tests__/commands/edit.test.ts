@@ -17,6 +17,7 @@ import { SKILLS, TEST_CATEGORIES } from "../test-fixtures";
 import { FULLSTACK_PAIR_MATRIX } from "../mock-data/mock-matrices";
 import { EXPECTED_SKILLS } from "../expected-values";
 import { EXIT_CODES } from "../../exit-codes";
+import * as wizardStore from "../../../stores/wizard-store";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { initializeMatrix } from "../../matrix/matrix-provider";
 import type { AgentName, CategoryPath, SkillId } from "../../../types";
@@ -504,13 +505,17 @@ describe("edit command eject-mode skill fallback", () => {
 
   const testSourceResult = buildSourceResult(testMatrix, "/test/source");
 
+  let hydrateSpy: ReturnType<typeof vi.spyOn>;
+
   function getRenderedInstalledSkillIds(): SkillId[] | undefined {
-    // First render call is the spinner, second is the wizard
-    const renderCall = mockRender.mock.calls[1];
-    if (!renderCall) return undefined;
-    // ink.render receives a React element; props are on .props
-    const element = renderCall[0] as ReactElement;
-    return element.props.installedSkillIds as SkillId[];
+    // edit.tsx passes the merged (plugin + config) skill id list to BOTH
+    // hydrateWizardStore({ installedSkillIds }) and <Wizard installedSkillIds />.
+    // We inspect the hydrate call because it's easy to spy on; the Wizard prop
+    // receives the same value (currentSkillIds) so either signal is valid.
+    const hydrateCall = hydrateSpy.mock.calls[0];
+    if (!hydrateCall) return undefined;
+    const options = hydrateCall[0] as { installedSkillIds?: SkillId[] };
+    return options.installedSkillIds;
   }
 
   beforeEach(async () => {
@@ -519,6 +524,8 @@ describe("edit command eject-mode skill fallback", () => {
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
+
+    hydrateSpy = vi.spyOn(wizardStore, "hydrateWizardStore");
 
     // Reset all mocks to known state for each test
     mockRender.mockClear();
@@ -542,6 +549,7 @@ describe("edit command eject-mode skill fallback", () => {
   });
 
   afterEach(async () => {
+    hydrateSpy.mockRestore();
     process.chdir(originalCwd);
     await cleanupTempDir(tempDir);
   });

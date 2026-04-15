@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useWizardStore } from "./wizard-store";
+import { hydrateWizardStore, useWizardStore } from "./wizard-store";
 import { initializeMatrix } from "../lib/matrix/matrix-provider";
 import { SKILLS, TEST_CATEGORIES } from "../lib/__tests__/test-fixtures";
 import { createMockMatrix } from "../lib/__tests__/factories/matrix-factories";
@@ -99,15 +99,29 @@ describe("WizardStore", () => {
       expect(history).toStrictEqual(["stack"]);
     });
 
-    it("when goBack is called with empty history, should return to stack step", () => {
+    it("when goBack is called with empty history, should no-op", () => {
       const store = useWizardStore.getState();
 
       store.setStep("build");
       store.goBack();
-      store.goBack();
+      const afterFirstGoBack = useWizardStore.getState();
+      expect(afterFirstGoBack.step).toBe("stack");
+      expect(afterFirstGoBack.history).toStrictEqual([]);
 
-      const { step } = useWizardStore.getState();
-      expect(step).toBe("stack");
+      store.goBack();
+      const afterSecondGoBack = useWizardStore.getState();
+      expect(afterSecondGoBack.step).toBe("stack");
+      expect(afterSecondGoBack.history).toStrictEqual([]);
+    });
+
+    it("goBack from a mid-wizard step with empty history is a no-op", () => {
+      useWizardStore.setState({ step: "build", history: [] });
+
+      useWizardStore.getState().goBack();
+
+      const { step, history } = useWizardStore.getState();
+      expect(step).toBe("build");
+      expect(history).toStrictEqual([]);
     });
   });
 
@@ -2748,6 +2762,87 @@ describe("WizardStore", () => {
 
       store.setToastMessage(null);
       expect(useWizardStore.getState().toastMessage).toBeNull();
+    });
+  });
+
+  describe("hydrateWizardStore", () => {
+    beforeEach(() => {
+      initializeMatrix(REACT_HONO_FRAMEWORK_API_MATRIX);
+    });
+
+    it("sets edit-mode state when initialStep is provided", () => {
+      hydrateWizardStore({
+        initialStep: "build",
+        initialDomains: ["web"],
+        installedSkillIds: ["web-framework-react"],
+      });
+
+      const state = useWizardStore.getState();
+      expect(state.step).toBe("build");
+      expect(state.history).toStrictEqual([]);
+      expect(state.approach).toBe("scratch");
+      expect(state.selectedDomains).toStrictEqual(["web"]);
+      expect(state.isInitMode).toBe(false);
+    });
+
+    it("sets init-mode defaults when no options are provided", () => {
+      hydrateWizardStore({});
+
+      const state = useWizardStore.getState();
+      expect(state.step).toBe("stack");
+      expect(state.history).toStrictEqual([]);
+      expect(state.isInitMode).toBe(true);
+    });
+
+    it("populates installedSkillConfigs for diff rendering", () => {
+      const skillConfigs: SkillConfig[] = [
+        { id: "web-framework-react", scope: "global", source: "eject" },
+      ];
+
+      hydrateWizardStore({
+        initialStep: "build",
+        installedSkillConfigs: skillConfigs,
+      });
+
+      const state = useWizardStore.getState();
+      expect(state.installedSkillConfigs).toStrictEqual(skillConfigs);
+    });
+
+    it("sets isEditingFromGlobalScope when flag is true", () => {
+      hydrateWizardStore({
+        initialStep: "build",
+        isEditingFromGlobalScope: true,
+      });
+
+      expect(useWizardStore.getState().isEditingFromGlobalScope).toBe(true);
+    });
+
+    it("resets prior store state before applying new hydration", () => {
+      // Seed some state
+      useWizardStore.setState({ step: "confirm", selectedDomains: ["api"] });
+
+      hydrateWizardStore({
+        initialStep: "build",
+        initialDomains: ["web"],
+      });
+
+      const state = useWizardStore.getState();
+      expect(state.step).toBe("build");
+      expect(state.selectedDomains).toStrictEqual(["web"]);
+    });
+
+    it("stores globalPreselections in init flow when installedSkillConfigs provided", () => {
+      const skillConfigs: SkillConfig[] = [
+        { id: "web-framework-react", scope: "global", source: "eject" },
+      ];
+
+      hydrateWizardStore({
+        installedSkillConfigs: skillConfigs,
+      });
+
+      const state = useWizardStore.getState();
+      expect(state.isInitMode).toBe(true);
+      expect(state.globalPreselections).toStrictEqual(skillConfigs);
     });
   });
 });

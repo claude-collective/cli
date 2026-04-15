@@ -69,7 +69,7 @@ describe("edit wizard — navigation and hotkeys", () => {
       expect(output).toContain(STEP_TEXT.SOURCES);
     });
 
-    it("should navigate to domain selection when pressing ESC from build step", async () => {
+    it("should stay on build step when pressing ESC in edit flow with no prior history", async () => {
       const project = await ProjectBuilder.editable();
 
       wizard = await EditWizard.launch({ projectDir: project.dir, cols: 120, rows: 40 });
@@ -77,7 +77,8 @@ describe("edit wizard — navigation and hotkeys", () => {
       await wizard.build.goBack();
 
       const screen = wizard.build.getScreen();
-      expect(screen).toContain("Select domains");
+      expect(screen).toContain(STEP_TEXT.BUILD);
+      expect(screen).not.toContain("Select domains");
     });
   });
 

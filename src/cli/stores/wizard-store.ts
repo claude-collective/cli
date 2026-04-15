@@ -503,7 +503,7 @@ export type WizardState = {
   bindSkill: (skill: BoundSkill) => void;
   /**
    * Navigate to the previous wizard step using the history stack.
-   * Falls back to "stack" if history is empty.
+   * No-op when history is empty (e.g., edit flow starting at a mid-wizard step).
    *
    * Side effects: pops from `history`, sets `step` to the popped value
    */
@@ -628,7 +628,7 @@ type WizardStateData = Pick<
   | "history"
 >;
 
-const createInitialState = (): WizardStateData => ({
+export const createInitialState = (overrides?: Partial<WizardStateData>): WizardStateData => ({
   step: "stack",
   approach: null,
   selectedStackId: null,
@@ -658,6 +658,7 @@ const createInitialState = (): WizardStateData => ({
   globalPreselections: null,
   globalAgentPreselections: null,
   history: [],
+  ...overrides,
 });
 
 export const useWizardStore = create<WizardState>((set, get) => ({
@@ -1056,10 +1057,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   goBack: () =>
     set((state) => {
+      if (state.history.length === 0) return state;
       const history = [...state.history];
-      const previousStep = history.pop();
+      const previousStep = history.pop()!;
       return {
-        step: previousStep || "stack",
+        step: previousStep,
         history,
       };
     }),
@@ -1404,3 +1406,91 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     return rows;
   },
 }));
+
+export type HydrateOptions = {
+  initialStep?: WizardStep;
+  initialDomains?: Domain[];
+  initialAgents?: AgentName[];
+  installedSkillIds?: SkillId[];
+  installedSkillConfigs?: SkillConfig[];
+  installedAgentConfigs?: AgentScopeConfig[];
+  isEditingFromGlobalScope?: boolean;
+};
+
+/**
+ * Imperatively hydrates the wizard store before the first render.
+ *
+ * Must be called BEFORE render(<Wizard ... />) so React captures the correct
+ * initial snapshot on the first frame. Running this inside a render-phase hook
+ * causes a one-frame flash of the default "stack" step before the jump to the
+ * intended step is committed to stdout.
+ */
+export function hydrateWizardStore(options: HydrateOptions): void {
+  const {
+    initialStep,
+    initialDomains,
+    initialAgents,
+    installedSkillIds,
+    installedSkillConfigs,
+    installedAgentConfigs,
+    isEditingFromGlobalScope,
+  } = options;
+
+  useWizardStore.setState(createInitialState());
+
+  useWizardStore.setState({ isInitMode: !initialStep });
+
+  if (initialStep && installedSkillIds?.length) {
+    useWizardStore.getState().populateFromSkillIds(installedSkillIds, installedSkillConfigs);
+  }
+
+  if (initialStep) {
+    // Jump directly to initialStep with empty history. The user is starting
+    // fresh at this step — no prior steps to navigate back through.
+    useWizardStore.setState({ step: initialStep, history: [], approach: "scratch" });
+  }
+
+  // Restore saved domains from config, overriding the domains
+  // derived by populateFromSkillIds
+  if (initialDomains?.length) {
+    useWizardStore.setState({ selectedDomains: initialDomains, currentDomainIndex: 0 });
+  }
+
+  // Restore saved agents from config, overriding the default empty array
+  if (initialAgents?.length) {
+    useWizardStore.setState({ selectedAgents: initialAgents });
+  }
+
+  // Restore saved agent scope configs (project vs global)
+  if (initialAgents?.length && installedAgentConfigs?.length) {
+    useWizardStore.setState({ agentConfigs: installedAgentConfigs });
+  }
+
+  // Snapshot installed configs for diff rendering in SkillAgentSummary
+  if (installedSkillConfigs?.length || installedAgentConfigs?.length) {
+    useWizardStore.setState({
+      installedSkillConfigs: installedSkillConfigs ?? null,
+      installedAgentConfigs: installedAgentConfigs ?? null,
+    });
+  }
+
+  if (isEditingFromGlobalScope) {
+    useWizardStore.setState({ isEditingFromGlobalScope: true });
+  }
+
+  // Store global preselections for stack-selection.tsx to merge after stack/scratch choice.
+  // In init flow (!initialStep), skills are not populated yet — the stack step runs first.
+  if (!initialStep && installedSkillConfigs?.length) {
+    useWizardStore.setState({ globalPreselections: installedSkillConfigs });
+  }
+
+  // Store global agent preselections so stack-selection.tsx can restore them after selectStack wipes agents.
+  if (!initialStep && (initialAgents?.length || installedAgentConfigs?.length)) {
+    useWizardStore.setState({
+      globalAgentPreselections: {
+        agents: initialAgents ?? [],
+        configs: installedAgentConfigs ?? [],
+      },
+    });
+  }
+}

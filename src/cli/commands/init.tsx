@@ -7,6 +7,7 @@ import fs from "fs";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
+import { hydrateWizardStore } from "../stores/wizard-store.js";
 import { useTerminalDimensions } from "../components/hooks/use-terminal-dimensions.js";
 import { type SourceLoadResult } from "../lib/loading/index.js";
 import {
@@ -259,17 +260,22 @@ export default class Init extends BaseCommand {
   ): Promise<WizardResultV2 | null> {
     let wizardResult: WizardResultV2 | null = null;
 
+    hydrateWizardStore({
+      initialAgents: globalConfig?.selectedAgents,
+      installedSkillIds: globalConfig?.skills?.map((s) => s.id),
+      installedSkillConfigs: globalConfig?.skills,
+      installedAgentConfigs: globalConfig?.agents,
+      isEditingFromGlobalScope: isGlobalRoot,
+    });
+
     const { waitUntilExit, clear } = render(
       <Wizard
         version={this.config.version}
         logo={ASCII_LOGO}
-        projectDir={projectDir}
-        isEditingFromGlobalScope={isGlobalRoot}
-        startupMessages={startupMessages}
-        installedSkillIds={globalConfig?.skills?.map((s) => s.id)}
-        installedSkillConfigs={globalConfig?.skills}
-        installedAgentConfigs={globalConfig?.agents}
         initialAgents={globalConfig?.selectedAgents}
+        installedSkillIds={globalConfig?.skills?.map((s) => s.id)}
+        projectDir={projectDir}
+        startupMessages={startupMessages}
         onComplete={(result) => {
           wizardResult = result;
         }}

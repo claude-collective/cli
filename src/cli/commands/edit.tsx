@@ -10,6 +10,7 @@ import { difference, indexBy } from "remeda";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
+import { hydrateWizardStore } from "../stores/wizard-store.js";
 import {
   CLAUDE_DIR,
   CLI_BIN_NAME,
@@ -220,16 +221,21 @@ export default class Edit extends BaseCommand {
 
     const isGlobalDir = cwd === GLOBAL_INSTALL_ROOT;
 
+    hydrateWizardStore({
+      initialStep: "build",
+      initialDomains: projectConfig?.domains,
+      initialAgents: projectConfig?.selectedAgents,
+      installedSkillIds: currentSkillIds,
+      installedSkillConfigs: projectConfig?.skills,
+      installedAgentConfigs: projectConfig?.agents,
+      isEditingFromGlobalScope: isGlobalDir,
+    });
+
     const { waitUntilExit, clear } = render(
       <Wizard
         version={this.config.version}
-        initialStep="build"
-        initialDomains={projectConfig?.domains}
         initialAgents={projectConfig?.selectedAgents}
         installedSkillIds={currentSkillIds}
-        installedSkillConfigs={projectConfig?.skills}
-        installedAgentConfigs={projectConfig?.agents}
-        isEditingFromGlobalScope={isGlobalDir}
         projectDir={projectDir}
         startupMessages={context.startupMessages}
         onComplete={(result) => {

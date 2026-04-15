@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import { useApp, useInput } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
-import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
+import { useWizardStore } from "../../stores/wizard-store.js";
 import { cliTheme } from "../themes/default.js";
 import { WizardLayout } from "./wizard-layout.js";
 import { StepStack } from "./step-stack.js";
@@ -23,7 +23,6 @@ import {
 import type { AgentName, Domain, DomainSelections, SkillId } from "../../types/index.js";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import type { StartupMessage } from "../../utils/logger.js";
-import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
 import { useBuildStepProps } from "../hooks/use-build-step-props.js";
 import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 
@@ -49,15 +48,10 @@ type WizardProps = {
   onCancel: () => void;
   version?: string;
   logo?: string;
-  initialStep?: WizardStep;
-  initialDomains?: Domain[];
-  initialAgents?: AgentName[];
-  installedSkillIds?: SkillId[];
-  installedSkillConfigs?: SkillConfig[];
-  installedAgentConfigs?: AgentScopeConfig[];
-  isEditingFromGlobalScope?: boolean;
   projectDir?: string;
   startupMessages?: StartupMessage[];
+  initialAgents?: AgentName[];
+  installedSkillIds?: SkillId[];
 };
 
 export const Wizard: React.FC<WizardProps> = ({
@@ -65,28 +59,13 @@ export const Wizard: React.FC<WizardProps> = ({
   onCancel,
   version,
   logo,
-  initialStep,
-  initialDomains,
-  initialAgents,
-  installedSkillIds,
-  installedSkillConfigs,
-  installedAgentConfigs,
-  isEditingFromGlobalScope,
   projectDir,
   startupMessages,
+  initialAgents,
+  installedSkillIds,
 }) => {
   const store = useWizardStore();
   const { exit } = useApp();
-
-  useWizardInitialization({
-    initialStep,
-    initialDomains,
-    initialAgents,
-    installedSkillIds,
-    installedSkillConfigs,
-    installedAgentConfigs,
-    isEditingFromGlobalScope,
-  });
 
   const toastMessage = useWizardStore((s) => s.toastMessage);
 
