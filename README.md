@@ -127,10 +127,10 @@ Each subagent is composed from modular partials (role, workflow, output format) 
 
 ### Customization
 
-| Command           | Description                                                               |
-| ----------------- | ------------------------------------------------------------------------- |
-| `eject <type>`    | Export for customization (`agent-partials`, `templates`, `skills`, `all`) |
-| `import skill`    | Import a skill from an external GitHub repository                         |
+| Command        | Description                                                               |
+| -------------- | ------------------------------------------------------------------------- |
+| `eject <type>` | Export for customization (`agent-partials`, `templates`, `skills`, `all`) |
+| `import skill` | Import a skill from an external GitHub repository                         |
 
 ### Build
 

@@ -143,10 +143,9 @@ export default class NewMarketplace extends BaseCommand {
 
   async run(): Promise<void> {
     if (!FEATURE_FLAGS.NEW_MARKETPLACE_COMMAND) {
-      this.error(
-        "The `new marketplace` command is currently disabled while being improved.",
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error("The `new marketplace` command is currently disabled while being improved.", {
+        exit: EXIT_CODES.ERROR,
+      });
     }
 
     const { args, flags } = await this.parse(NewMarketplace);

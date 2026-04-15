@@ -89,10 +89,9 @@ export default class NewSkill extends BaseCommand {
 
   async run(): Promise<void> {
     if (!FEATURE_FLAGS.NEW_SKILL_COMMAND) {
-      this.error(
-        "The `new skill` command is currently disabled while being improved",
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error("The `new skill` command is currently disabled while being improved", {
+        exit: EXIT_CODES.ERROR,
+      });
     }
 
     const { args, flags } = await this.parse(NewSkill);
