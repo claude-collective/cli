@@ -4,6 +4,8 @@ import { createJiti } from "jiti";
 import { fileExists } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { getErrorMessage } from "../../utils/errors";
+import { formatZodIssues } from "../schemas";
+import type { z } from "zod";
 
 /** Resolve @agents-inc/cli/config to the source config-exports.ts so jiti can load it in dev. */
 const CONFIG_EXPORTS_PATH = path.resolve(
@@ -12,7 +14,7 @@ const CONFIG_EXPORTS_PATH = path.resolve(
 );
 
 type ZodLikeSchema = {
-  safeParse: (data: unknown) => { success: boolean; data?: unknown; error?: unknown };
+  safeParse: (data: unknown) => { success: boolean; data?: unknown; error?: z.ZodError };
 };
 
 /**
@@ -52,9 +54,10 @@ export async function loadConfig<T>(configPath: string, schema?: ZodLikeSchema):
   if (schema) {
     const result = schema.safeParse(raw);
     if (!result.success) {
-      throw new Error(
-        `Config validation failed at '${configPath}': ${JSON.stringify(result.error)}`,
-      );
+      // safeParse({success: false}) always populates `error`; the loose ZodLikeSchema
+      // type marks it optional, so narrow before formatting.
+      const issues: z.ZodIssue[] = result.error ? result.error.issues : [];
+      throw new Error(`Config validation failed at '${configPath}': ${formatZodIssues(issues)}`);
     }
     // Post-safeParse cast: schema.safeParse widened by passthrough, narrow to actual type
     return result.data as T;

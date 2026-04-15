@@ -777,7 +777,7 @@ export const stackConfigValidationSchema = z
   .strict();
 
 /** Format Zod validation issues into a human-readable string (e.g., "path.to.field: Expected string; other: Required") */
-export function formatZodErrors(issues: z.ZodIssue[]): string {
+export function formatZodIssues(issues: z.ZodIssue[]): string {
   return issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
 }
 
@@ -797,6 +797,16 @@ export function validateNestingDepth(value: unknown, maxDepth: number): boolean 
     return true;
   }
   return check(value, 0);
+}
+
+/**
+ * Returns true when raw parsed metadata has `custom: true`.
+ * Used to pick between strict (built-in vocabulary) and relaxed (user-authored) validation schemas.
+ */
+export function isCustomMetadata(raw: unknown): boolean {
+  if (raw == null || typeof raw !== "object") return false;
+  if (!("custom" in raw)) return false;
+  return (raw as { custom: unknown }).custom === true;
 }
 
 /**

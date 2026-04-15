@@ -11,7 +11,7 @@ import {
 import { parseFrontmatter } from "../loading";
 import { computeSkillFolderHash, determinePluginVersion, writeContentHash } from "../versioning";
 import type { PluginManifest, SkillFrontmatter } from "../../types";
-import { formatZodErrors, skillMetadataLoaderSchema } from "../schemas";
+import { formatZodIssues, skillMetadataLoaderSchema } from "../schemas";
 import type { z } from "zod";
 
 type SkillMetadata = z.infer<typeof skillMetadataLoaderSchema>;
@@ -50,7 +50,7 @@ async function readSkillMetadata(skillPath: string): Promise<SkillMetadata | nul
 
     const result = skillMetadataLoaderSchema.safeParse(parseYaml(yamlContent));
     if (!result.success) {
-      warn(`Invalid metadata.yaml at '${skillPath}': ${formatZodErrors(result.error.issues)}`);
+      warn(`Invalid metadata.yaml at '${skillPath}': ${formatZodIssues(result.error.issues)}`);
       return null;
     }
     return result.data;
@@ -60,11 +60,7 @@ async function readSkillMetadata(skillPath: string): Promise<SkillMetadata | nul
   }
 }
 
-function generateReadme(
-  skillName: string,
-  frontmatter: SkillFrontmatter,
-  metadata: SkillMetadata | null,
-): string {
+function generateReadme(skillName: string, frontmatter: SkillFrontmatter): string {
   const lines: string[] = [];
 
   lines.push(`# ${skillName}`);
@@ -175,7 +171,7 @@ export async function compileSkillPlugin(
     }
   }
 
-  const readme = generateReadme(skillName, frontmatter, metadata);
+  const readme = generateReadme(skillName, frontmatter);
   await writeFile(path.join(pluginDir, "README.md"), readme);
   verbose("  Generated README.md");
 

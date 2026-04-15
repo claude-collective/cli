@@ -17,7 +17,7 @@ import { ensureDir, directoryExists, readFileSafe, remove } from "../../utils/fs
 import { verbose, warn } from "../../utils/logger";
 import { isLocalSource } from "../configuration";
 import {
-  formatZodErrors,
+  formatZodIssues,
   marketplaceSchema,
   validateNestingDepth,
   warnUnknownFields,
@@ -278,7 +278,7 @@ export async function fetchMarketplace(
   if (!validation.success) {
     throw new Error(
       `Invalid marketplace.json at: ${marketplacePath}\n\n` +
-        `Validation errors: ${formatZodErrors(validation.error.issues)}`,
+        `Validation errors: ${formatZodIssues(validation.error.issues)}`,
     );
   }
 

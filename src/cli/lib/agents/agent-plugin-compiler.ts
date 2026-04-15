@@ -10,7 +10,7 @@ import {
 import { computeStringHash, determinePluginVersion, writeContentHash } from "../versioning";
 import { extractFrontmatter } from "../../utils/frontmatter";
 import type { AgentFrontmatter, PluginManifest } from "../../types";
-import { agentFrontmatterValidationSchema, formatZodErrors } from "../schemas";
+import { agentFrontmatterValidationSchema, formatZodIssues } from "../schemas";
 
 export type AgentPluginOptions = {
   agentPath: string;
@@ -34,7 +34,7 @@ function parseAgentFrontmatter(
 
   const result = agentFrontmatterValidationSchema.safeParse(raw);
   if (!result.success) {
-    warn(`Invalid agent frontmatter in ${filePath}: ${formatZodErrors(result.error.issues)}`);
+    warn(`Invalid agent frontmatter in ${filePath}: ${formatZodIssues(result.error.issues)}`);
     return null;
   }
 

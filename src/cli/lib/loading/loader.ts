@@ -13,7 +13,7 @@ import type {
   SkillFrontmatter,
   SkillId,
 } from "../../types";
-import { formatZodErrors, skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "../schemas";
+import { formatZodIssues, skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "../schemas";
 
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
 
@@ -26,7 +26,7 @@ export function parseFrontmatter(content: string, filePath?: string): SkillFront
 
   if (!parsed.success) {
     const location = filePath ?? "unknown file";
-    warn(`Invalid SKILL.md frontmatter in '${location}': ${formatZodErrors(parsed.error.issues)}`);
+    warn(`Invalid SKILL.md frontmatter in '${location}': ${formatZodIssues(parsed.error.issues)}`);
     return null;
   }
   // Boundary cast: YAML name field may not match strict SkillId pattern (e.g., local skills)

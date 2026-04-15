@@ -13,7 +13,7 @@ import {
   yamlSchemaComment,
 } from "../../consts";
 import type { SkillId } from "../../types";
-import { formatZodErrors, localSkillMetadataSchema } from "../schemas";
+import { formatZodIssues, localSkillMetadataSchema } from "../schemas";
 import { warn } from "../../utils/logger";
 
 /**
@@ -110,7 +110,7 @@ export async function readLocalSkillMetadata(skillDir: string): Promise<LocalSki
   const result = localSkillMetadataSchema.safeParse(parseYaml(content));
 
   if (!result.success) {
-    warn(`Invalid metadata.yaml at ${metadataPath}: ${formatZodErrors(result.error.issues)}`);
+    warn(`Invalid metadata.yaml at ${metadataPath}: ${formatZodIssues(result.error.issues)}`);
     return null;
   }
 

@@ -5,7 +5,7 @@ import { verbose } from "../../utils/logger";
 import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../consts";
 import { parseFrontmatter } from "../loading";
 import type { CategoryPath, Domain, ExtractedSkillMetadata, SkillSlug } from "../../types";
-import { formatZodErrors, localRawMetadataSchema } from "../schemas";
+import { formatZodIssues, localRawMetadataSchema } from "../schemas";
 import { LOCAL_DEFAULTS } from "../metadata-keys";
 
 type LocalRawMetadata = {
@@ -79,7 +79,7 @@ async function extractLocalSkill(
 
   if (!parsed.success) {
     verbose(
-      `Skipping local skill '${skillDirName}': invalid metadata.yaml — ${formatZodErrors(parsed.error.issues)}`,
+      `Skipping local skill '${skillDirName}': invalid metadata.yaml — ${formatZodIssues(parsed.error.issues)}`,
     );
     return null;
   }

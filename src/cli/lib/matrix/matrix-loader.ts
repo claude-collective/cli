@@ -10,7 +10,7 @@ import { parseFrontmatter } from "../loading";
 import {
   skillCategoriesFileSchema,
   skillRulesFileSchema,
-  formatZodErrors,
+  formatZodIssues,
   categoryPathSchema,
 } from "../schemas";
 import { mergeMatrixWithSkills } from "./skill-resolution";
@@ -124,7 +124,7 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
 
     if (!metadataResult.success) {
       warn(
-        `Skipping '${metadataFile}': invalid metadata.yaml — ${formatZodErrors(metadataResult.error.issues)}`,
+        `Skipping '${metadataFile}': invalid metadata.yaml — ${formatZodIssues(metadataResult.error.issues)}`,
       );
       continue;
     }
