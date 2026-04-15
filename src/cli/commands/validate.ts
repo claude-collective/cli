@@ -1,4 +1,3 @@
-import { Flags } from "@oclif/core";
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -27,7 +26,6 @@ import {
 import { PLUGIN_MANIFEST_DIR, STANDARD_FILES } from "../consts.js";
 import type { ValidationResult } from "../types/index.js";
 import { directoryExists, fileExists, glob, listDirectories, readFile } from "../utils/fs.js";
-import { setVerbose } from "../utils/logger.js";
 
 const COL_NAME_WIDTH = 30;
 const COL_URL_WIDTH = 40;
@@ -49,39 +47,26 @@ export default class Validate extends BaseCommand {
   static summary =
     "Validate every registered source, installed plugin, installed skill, and installed agent";
   static description =
-    "Validates every registered source (primary + extras), every installed plugin " +
-    "directory (global `~/.claude/plugins/` and project `./.claude/plugins/`), every installed " +
-    "skill (global `~/.claude/skills/` and project `./.claude/skills/`), and every installed " +
-    "agent (global `~/.claude/agents/` and project `./.claude/agents/`).";
+    "Read-only validation. Walks every registered source, every installed plugin, " +
+    "every installed skill, and every installed agent. Prints a summary table with " +
+    "per-directory counts; exits non-zero if any pass produced an error.";
 
   static examples = [
-    {
-      description: "Validate everything (sources, plugins, installed skills, installed agents)",
-      command: "<%= config.bin %> <%= command.id %>",
-    },
-    {
-      description: "Validate with verbose output",
-      command: "<%= config.bin %> <%= command.id %> --verbose",
-    },
+    { description: "Validate everything", command: "<%= config.bin %> <%= command.id %>" },
   ];
 
-  static flags = {
-    ...BaseCommand.baseFlags,
-    verbose: Flags.boolean({
-      char: "v",
-      description: "Enable verbose logging",
-      default: false,
-    }),
-  };
+  // Override parent baseFlags to drop --source (validate is a zero-flag command)
+  static baseFlags = {} as (typeof BaseCommand)["baseFlags"];
+
+  static flags = {};
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(Validate);
-    setVerbose(flags.verbose);
+    await this.parse(Validate);
 
     const totals: AggregateCounts = { errors: 0, warnings: 0 };
 
     try {
-      await this.validateAllRegistered(flags.verbose, totals);
+      await this.validateAllRegistered(totals);
     } catch (error) {
       const message = getErrorMessage(error);
       this.error(`${ERROR_MESSAGES.VALIDATION_FAILED}: ${message}`, { exit: EXIT_CODES.ERROR });
@@ -96,7 +81,7 @@ export default class Validate extends BaseCommand {
     }
   }
 
-  private async validateAllRegistered(verbose: boolean, totals: AggregateCounts): Promise<void> {
+  private async validateAllRegistered(totals: AggregateCounts): Promise<void> {
     const projectDir = process.cwd();
     const globalPaths = resolveInstallPaths(projectDir, "global");
     const projectPaths = resolveInstallPaths(projectDir, "project");
@@ -120,25 +105,25 @@ export default class Validate extends BaseCommand {
     this.log("");
     this.log("Validating plugins");
 
-    await this.validatePluginsDirectory(getUserPluginsDir(), verbose, totals);
+    await this.validatePluginsDirectory(getUserPluginsDir(), totals);
     if (!inHome) {
-      await this.validatePluginsDirectory(getProjectPluginsDir(projectDir), verbose, totals);
+      await this.validatePluginsDirectory(getProjectPluginsDir(projectDir), totals);
     }
 
     this.log("");
     this.log("Validating skills");
 
-    await this.validateInstalledSkillsDirectory(globalPaths.skillsDir, verbose, totals);
+    await this.validateInstalledSkillsDirectory(globalPaths.skillsDir, totals);
     if (!inHome) {
-      await this.validateInstalledSkillsDirectory(projectPaths.skillsDir, verbose, totals);
+      await this.validateInstalledSkillsDirectory(projectPaths.skillsDir, totals);
     }
 
     this.log("");
     this.log("Validating agents");
 
-    await this.validateInstalledAgentsDirectory(globalPaths.agentsDir, verbose, totals);
+    await this.validateInstalledAgentsDirectory(globalPaths.agentsDir, totals);
     if (!inHome) {
-      await this.validateInstalledAgentsDirectory(projectPaths.agentsDir, verbose, totals);
+      await this.validateInstalledAgentsDirectory(projectPaths.agentsDir, totals);
     }
   }
 
@@ -177,7 +162,6 @@ export default class Validate extends BaseCommand {
 
   private async validatePluginsDirectory(
     pluginsDir: string,
-    verbose: boolean,
     totals: AggregateCounts,
   ): Promise<void> {
     const displayPath = displayDir(pluginsDir);
@@ -200,7 +184,7 @@ export default class Validate extends BaseCommand {
     );
 
     for (const { name, result: pluginResult } of result.results) {
-      printPluginValidationResult(name, pluginResult, verbose);
+      printPluginValidationResult(name, pluginResult);
       if (!pluginResult.valid) totals.errors += pluginResult.errors.length;
       totals.warnings += pluginResult.warnings.length;
     }
@@ -208,7 +192,6 @@ export default class Validate extends BaseCommand {
 
   private async validateInstalledSkillsDirectory(
     skillsDir: string,
-    verbose: boolean,
     totals: AggregateCounts,
   ): Promise<void> {
     const displayPath = displayDir(skillsDir);
@@ -239,7 +222,7 @@ export default class Validate extends BaseCommand {
     );
 
     for (const { name, result } of results) {
-      printPluginValidationResult(name, result, verbose);
+      printPluginValidationResult(name, result);
       if (!result.valid) totals.errors += result.errors.length;
       totals.warnings += result.warnings.length;
     }
@@ -247,7 +230,6 @@ export default class Validate extends BaseCommand {
 
   private async validateInstalledAgentsDirectory(
     agentsDir: string,
-    verbose: boolean,
     totals: AggregateCounts,
   ): Promise<void> {
     const displayPath = displayDir(agentsDir);
@@ -278,7 +260,7 @@ export default class Validate extends BaseCommand {
     );
 
     for (const { name, result } of results) {
-      printPluginValidationResult(name, result, verbose);
+      printPluginValidationResult(name, result);
       if (!result.valid) totals.errors += result.errors.length;
       totals.warnings += result.warnings.length;
     }

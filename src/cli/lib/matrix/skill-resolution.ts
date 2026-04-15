@@ -80,7 +80,7 @@ function resolveToCanonicalId(
     return slugResult;
   }
   const location = context ? ` in ${context}` : "";
-  verbose(`Unresolved slug '${slug}'${location} — skipping`);
+  warn(`Unresolved slug '${slug}'${location} — skipping`);
   return null;
 }
 

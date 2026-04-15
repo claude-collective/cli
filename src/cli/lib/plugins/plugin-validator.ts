@@ -456,14 +456,10 @@ export async function validateAllPlugins(pluginsDir: string): Promise<{
   };
 }
 
-export function printPluginValidationResult(
-  name: string,
-  result: ValidationResult,
-  verbose = false,
-): void {
+export function printPluginValidationResult(name: string, result: ValidationResult): void {
   const status = result.valid ? "\u2713" : "\u2717";
 
-  if (result.valid && result.warnings.length === 0 && !verbose) {
+  if (result.valid && result.warnings.length === 0) {
     return;
   }
 
