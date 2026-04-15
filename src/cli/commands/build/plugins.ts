@@ -20,20 +20,32 @@ export default class BuildPlugins extends BaseCommand {
     "Build skills and agents into standalone plugins. By default, compiles all skills. Use --skill to compile a specific skill only. Use --agents-dir to also compile agents.";
 
   static examples = [
-    "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --skill cli-commander",
-    "<%= config.bin %> <%= command.id %> --skills-dir ./src/skills --output-dir ./plugins",
-    "<%= config.bin %> <%= command.id %> --agents-dir ./agents",
-    "<%= config.bin %> <%= command.id %> --verbose",
+    {
+      description: "Compile every skill into plugins",
+      command: "<%= config.bin %> <%= command.id %>",
+    },
+    {
+      description: "Compile a single skill by name",
+      command: "<%= config.bin %> <%= command.id %> --skill cli-commander",
+    },
+    {
+      description: "Write plugins to a custom output directory",
+      command: "<%= config.bin %> <%= command.id %> --output-dir ./plugins",
+    },
+    {
+      description: "Also compile agents from a directory",
+      command: "<%= config.bin %> <%= command.id %> --agents-dir ./agents",
+    },
+    {
+      description: "Compile with verbose logging",
+      command: "<%= config.bin %> <%= command.id %> --verbose",
+    },
   ];
 
+  // Override parent baseFlags to drop --source (build plugins reads from local DIRS.skills, not a remote source)
+  static baseFlags = {} as (typeof BaseCommand)["baseFlags"];
+
   static flags = {
-    ...BaseCommand.baseFlags,
-    "skills-dir": Flags.string({
-      char: "s",
-      description: "Skills source directory",
-      default: DIRS.skills,
-    }),
     "agents-dir": Flags.string({
       char: "a",
       description: "Agents source directory (builds one plugin per agent)",
@@ -58,7 +70,7 @@ export default class BuildPlugins extends BaseCommand {
     setVerbose(flags.verbose);
 
     const projectRoot = process.cwd();
-    const skillsDir = path.resolve(projectRoot, flags["skills-dir"]);
+    const skillsDir = path.resolve(projectRoot, DIRS.skills);
     const outputDir = path.resolve(projectRoot, flags["output-dir"]);
 
     this.printHeader(skillsDir, outputDir);

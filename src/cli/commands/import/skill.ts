@@ -6,6 +6,7 @@ import { getErrorMessage } from "../../utils/errors.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { fetchFromSource } from "../../lib/loading/index.js";
 import { importedSkillMetadataSchema } from "../../lib/schemas.js";
+import { toTitleCase } from "../../lib/skills/generators.js";
 import { getCurrentDate, computeFileHash } from "../../lib/versioning.js";
 import {
   copy,
@@ -47,11 +48,6 @@ export default class ImportSkill extends BaseCommand {
       description: "Import all skills from a repository",
       command: "<%= config.bin %> import skill github:vercel-labs/agent-skills --all",
     },
-    {
-      description: "Import with custom skills directory",
-      command:
-        "<%= config.bin %> import skill github:owner/repo --skill my-skill --subdir custom-skills",
-    },
   ];
 
   static args = {
@@ -62,8 +58,10 @@ export default class ImportSkill extends BaseCommand {
     }),
   };
 
+  // Override parent baseFlags to drop --source (positional source arg IS the source)
+  static baseFlags = {} as (typeof BaseCommand)["baseFlags"];
+
   static flags = {
-    ...BaseCommand.baseFlags,
     skill: Flags.string({
       char: "n",
       description: "Name of the specific skill to import",
@@ -79,17 +77,9 @@ export default class ImportSkill extends BaseCommand {
       description: "List available skills without importing",
       default: false,
     }),
-    subdir: Flags.string({
-      description: "Subdirectory containing skills (default: skills)",
-      default: DEFAULT_SKILLS_SUBDIR,
-    }),
     force: Flags.boolean({
       char: "f",
       description: "Overwrite existing skills",
-      default: false,
-    }),
-    refresh: Flags.boolean({
-      description: "Force refresh from remote (ignore cache)",
       default: false,
     }),
   };
@@ -104,9 +94,9 @@ export default class ImportSkill extends BaseCommand {
     const { gigetSource, displaySource } = parseGitHubSource(args.source);
     this.log(`Source: ${displaySource}`);
 
-    const repoPath = await this.fetchRepository(gigetSource, args.source, flags.refresh);
-    const skillsDir = this.resolveSkillsDir(repoPath, flags.subdir);
-    const availableSkills = await this.discoverAndValidate(skillsDir, flags.subdir);
+    const repoPath = await this.fetchRepository(gigetSource, args.source);
+    const skillsDir = this.resolveSkillsDir(repoPath);
+    const availableSkills = await this.discoverAndValidate(skillsDir);
 
     if (flags.list) {
       this.listAvailableSkills(availableSkills);
@@ -137,54 +127,29 @@ export default class ImportSkill extends BaseCommand {
     }
   }
 
-  private async fetchRepository(
-    gigetSource: string,
-    sourceArg: string,
-    refresh: boolean,
-  ): Promise<string> {
+  private async fetchRepository(gigetSource: string, sourceArg: string): Promise<string> {
     this.log(STATUS_MESSAGES.FETCHING_REPOSITORY);
 
     try {
-      const result = await fetchSkillSource({
-        gigetSource,
-        forceRefresh: refresh,
-      });
+      const result = await fetchSkillSource({ gigetSource });
       this.log(result.fromCache ? "Using cached source" : "Downloaded fresh copy");
       return result.path;
     } catch (error) {
-      this.error(error instanceof Error ? error.message : `Failed to fetch: ${sourceArg}`, {
+      this.error(`Failed to fetch ${sourceArg}: ${getErrorMessage(error)}`, {
         exit: EXIT_CODES.NETWORK_ERROR,
       });
     }
   }
 
-  private resolveSkillsDir(repoPath: string, subdir: string): string {
-    if (/\0/.test(subdir)) {
-      this.error("--subdir contains null bytes", {
-        exit: EXIT_CODES.INVALID_ARGS,
-      });
-    }
-    if (path.isAbsolute(subdir)) {
-      this.error(`--subdir must be a relative path, got: ${subdir}`, {
-        exit: EXIT_CODES.INVALID_ARGS,
-      });
-    }
-    const skillsDir = path.resolve(path.join(repoPath, subdir));
-    const resolvedRepoPath = path.resolve(repoPath);
-    if (!skillsDir.startsWith(resolvedRepoPath + path.sep) && skillsDir !== resolvedRepoPath) {
-      this.error(`--subdir path escapes repository boundary: ${subdir}`, {
-        exit: EXIT_CODES.INVALID_ARGS,
-      });
-    }
-    return skillsDir;
+  private resolveSkillsDir(repoPath: string): string {
+    return path.resolve(path.join(repoPath, DEFAULT_SKILLS_SUBDIR));
   }
 
-  private async discoverAndValidate(skillsDir: string, subdir: string): Promise<string[]> {
+  private async discoverAndValidate(skillsDir: string): Promise<string[]> {
     if (!(await directoryExists(skillsDir))) {
       this.error(
-        `Skills directory not found: ${subdir}\n` +
-          `The repository doesn't have a '${subdir}' directory.\n` +
-          `Use --subdir to specify a different location.`,
+        `Skills directory not found: ${DEFAULT_SKILLS_SUBDIR}\n` +
+          `The repository doesn't have a '${DEFAULT_SKILLS_SUBDIR}' directory.`,
         { exit: EXIT_CODES.INVALID_ARGS },
       );
     }
@@ -192,9 +157,10 @@ export default class ImportSkill extends BaseCommand {
     const availableSkills = await discoverValidSkills(skillsDir);
 
     if (availableSkills.length === 0) {
-      this.error(`No valid skills found in ${subdir}/\nSkills must have a SKILL.md file.`, {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.error(
+        `No valid skills found in ${DEFAULT_SKILLS_SUBDIR}/\nSkills must have a SKILL.md file.`,
+        { exit: EXIT_CODES.ERROR },
+      );
     }
 
     return availableSkills;
@@ -299,7 +265,6 @@ type ParsedGitHubSource = {
 
 type FetchSourceOptions = {
   gigetSource: string;
-  forceRefresh?: boolean;
 };
 
 type FetchedSource = {
@@ -361,9 +326,7 @@ function parseGitHubSource(source: string): ParsedGitHubSource {
  * loading layer.
  */
 async function fetchSkillSource(options: FetchSourceOptions): Promise<FetchedSource> {
-  const result = await fetchFromSource(options.gigetSource, {
-    forceRefresh: options.forceRefresh,
-  });
+  const result = await fetchFromSource(options.gigetSource);
   return { path: result.path, fromCache: result.fromCache };
 }
 
@@ -477,6 +440,7 @@ async function mergeForkedFromIntoYaml(
         `  Validate your YAML syntax at https://yamllint.com`,
     );
   }
+  // Boundary cast: .passthrough() widens Zod output; narrow back to consumer shape.
   const metadata = parseResult.success
     ? (parseResult.data as SkillMetadata)
     : { forkedFrom: undefined };
@@ -506,6 +470,7 @@ async function convertJsonToYamlWithForkedFrom(
     return;
   }
   const jsonResult = importedSkillMetadataSchema.safeParse(jsonParsed);
+  // Boundary cast: .passthrough() widens Zod output; narrow back to consumer shape.
   const metadata = jsonResult.success
     ? (jsonResult.data as SkillMetadata)
     : { forkedFrom: undefined };
@@ -532,11 +497,4 @@ async function createMinimalMetadata(
     lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE,
   });
   await writeFile(yamlPath, yamlContent);
-}
-
-function toTitleCase(kebab: string): string {
-  return kebab
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 }

@@ -70,6 +70,21 @@ export default class NewAgent extends BaseCommand {
   static description =
     "Uses the agent-summoner meta-agent to scaffold a new agent with proper structure and documentation.";
 
+  static examples = [
+    {
+      description: "Scaffold an agent (interactive prompt)",
+      command: "<%= config.bin %> <%= command.id %> my-agent",
+    },
+    {
+      description: "Scaffold with purpose provided up front",
+      command: '<%= config.bin %> <%= command.id %> my-agent --purpose "Manage DB migrations"',
+    },
+    {
+      description: "Overwrite an existing agent",
+      command: "<%= config.bin %> <%= command.id %> my-agent --force",
+    },
+  ];
+
   static args = {
     name: Args.string({
       description: "Name of the agent to create",
@@ -86,17 +101,7 @@ export default class NewAgent extends BaseCommand {
     }),
     force: Flags.boolean({
       char: "f",
-      description: "Overwrite existing agent directory",
-      default: false,
-    }),
-    "non-interactive": Flags.boolean({
-      char: "n",
-      description: "Run in non-interactive mode",
-      default: false,
-    }),
-    refresh: Flags.boolean({
-      char: "r",
-      description: "Force refresh remote source",
+      description: "Overwrite existing agent",
       default: false,
     }),
   };
@@ -163,9 +168,10 @@ export default class NewAgent extends BaseCommand {
     if (cancelled || !inputResult) {
       this.log("Cancelled");
       this.exit(EXIT_CODES.CANCELLED);
+      throw new Error("unreachable");
     }
 
-    return inputResult as string;
+    return inputResult;
   }
 
   private logAgentPlan(name: string, purpose: string, outputDir: string): void {
@@ -180,7 +186,7 @@ export default class NewAgent extends BaseCommand {
     name: string,
     purpose: string,
     outputDir: string,
-    flags: { source: string | undefined; refresh: boolean; "non-interactive": boolean },
+    flags: { source: string | undefined },
     projectDir: string,
   ): Promise<void> {
     this.log("Fetching agent-summoner from source...");
@@ -190,7 +196,6 @@ export default class NewAgent extends BaseCommand {
       const agentDef = await loadMetaAgent({
         projectDir,
         source: sourceConfig.source,
-        forceRefresh: flags.refresh,
       });
       this.log("Meta-agent loaded");
       this.log("");
@@ -204,7 +209,6 @@ export default class NewAgent extends BaseCommand {
       await invokeMetaAgent({
         agentDef,
         prompt: agentPrompt,
-        nonInteractive: flags["non-interactive"],
       });
     } catch (error) {
       this.handleError(error);
@@ -238,13 +242,11 @@ type NewAgentInput = {
 type LoadMetaAgentOptions = {
   projectDir: string;
   source: string;
-  forceRefresh: boolean;
 };
 
 type InvokeMetaAgentOptions = {
   agentDef: NewAgentInput;
   prompt: string;
-  nonInteractive: boolean;
 };
 
 function parseCompiledAgent(content: string): NewAgentInput {
@@ -263,7 +265,7 @@ function parseCompiledAgent(content: string): NewAgentInput {
 }
 
 async function loadMetaAgent(options: LoadMetaAgentOptions): Promise<NewAgentInput> {
-  const { projectDir, source, forceRefresh } = options;
+  const { projectDir, source } = options;
   const compiledFileName = `${META_AGENT_NAME}.md`;
 
   const localAgentPath = path.join(projectDir, CLAUDE_DIR, "agents", compiledFileName);
@@ -272,7 +274,7 @@ async function loadMetaAgent(options: LoadMetaAgentOptions): Promise<NewAgentInp
   }
 
   try {
-    const agentPaths = await getAgentDefinitions(source, { forceRefresh, projectDir });
+    const agentPaths = await getAgentDefinitions(source, { projectDir });
     const remoteAgentPath = path.join(
       agentPaths.sourcePath,
       CLAUDE_DIR,
@@ -309,7 +311,7 @@ Follow the existing agent patterns in the codebase. Keep the agent focused and p
 }
 
 async function invokeMetaAgent(options: InvokeMetaAgentOptions): Promise<void> {
-  const { agentDef, prompt, nonInteractive } = options;
+  const { agentDef, prompt } = options;
 
   const agentsJson = JSON.stringify({
     [META_AGENT_NAME]: {
@@ -320,13 +322,7 @@ async function invokeMetaAgent(options: InvokeMetaAgentOptions): Promise<void> {
     },
   });
 
-  const args = ["--agents", agentsJson, "--agent", META_AGENT_NAME];
-
-  if (nonInteractive) {
-    args.push("-p", prompt);
-  } else {
-    args.push("--prompt", prompt);
-  }
+  const args = ["--agents", agentsJson, "--agent", META_AGENT_NAME, "--prompt", prompt];
 
   return new Promise((resolve, reject) => {
     const child = spawn("claude", args, {

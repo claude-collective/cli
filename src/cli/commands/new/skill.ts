@@ -3,6 +3,7 @@ import path from "path";
 import { BaseCommand } from "../../base-command.js";
 import { resolveAuthor } from "../../lib/configuration/index.js";
 import { loadConfig } from "../../lib/configuration/config-loader.js";
+import { skillCategoriesFileSchema } from "../../lib/schemas.js";
 import {
   loadConfigTypesDataInBackground,
   regenerateConfigTypes,
@@ -24,7 +25,7 @@ import {
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { detectInstallation } from "../../lib/installation/index.js";
 import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
-import type { CategoryPath } from "../../types/index.js";
+import type { CategoryDefinition, CategoryMap, CategoryPath } from "../../types/index.js";
 import {
   toTitleCase,
   generateSkillCategoriesTs,
@@ -37,6 +38,21 @@ export default class NewSkill extends BaseCommand {
   static summary = "Create a new local skill with proper structure";
   static description = "Create a new local skill scaffold with SKILL.md and metadata.yaml files";
 
+  static examples = [
+    {
+      description: "Scaffold a skill in the local marketplace",
+      command: "<%= config.bin %> <%= command.id %> my-skill",
+    },
+    {
+      description: "Scaffold with explicit category and domain",
+      command: "<%= config.bin %> <%= command.id %> my-skill --category web/forms --domain web",
+    },
+    {
+      description: "Overwrite an existing skill",
+      command: "<%= config.bin %> <%= command.id %> my-skill --force",
+    },
+  ];
+
   static args = {
     name: Args.string({
       description: "Name of the skill to create (kebab-case)",
@@ -44,8 +60,10 @@ export default class NewSkill extends BaseCommand {
     }),
   };
 
+  // Override parent baseFlags to drop --source (new skill auto-detects marketplace context)
+  static baseFlags = {} as (typeof BaseCommand)["baseFlags"];
+
   static flags = {
-    ...BaseCommand.baseFlags,
     author: Flags.string({
       char: "a",
       description: "Author identifier (e.g., @myhandle)",
@@ -63,12 +81,8 @@ export default class NewSkill extends BaseCommand {
     }),
     force: Flags.boolean({
       char: "f",
-      description: "Overwrite existing skill directory",
+      description: "Overwrite existing skill",
       default: false,
-    }),
-    output: Flags.string({
-      char: "o",
-      description: "Output directory for the skill (overrides marketplace detection)",
     }),
   };
 
@@ -76,8 +90,8 @@ export default class NewSkill extends BaseCommand {
     const { args, flags } = await this.parse(NewSkill);
     const projectDir = process.cwd();
 
-    await this.ensureInstallation(projectDir, flags.output);
-    const configTypesReady = this.startConfigTypesLoading(flags, projectDir);
+    await this.ensureInstallation(projectDir);
+    const configTypesReady = loadConfigTypesDataInBackground(undefined, projectDir);
 
     this.printHeader();
     this.validateName(args.name);
@@ -86,7 +100,7 @@ export default class NewSkill extends BaseCommand {
     // Boundary cast: CLI flag accepts custom category values not in the generated union
     const category = flags.category as CategoryPath;
     const domain = flags.domain ?? LOCAL_DEFAULTS.DOMAIN;
-    const skillsBasePath = await this.resolveSkillsBasePath(flags, projectDir);
+    const skillsBasePath = await this.resolveSkillsBasePath(projectDir);
     const skillDir = path.join(skillsBasePath, args.name);
 
     await this.checkExistingDir(skillDir, flags.force);
@@ -97,28 +111,18 @@ export default class NewSkill extends BaseCommand {
       category,
       domain,
       skillDir,
-      flags,
       projectDir,
       configTypesReady,
     );
   }
 
-  private async ensureInstallation(projectDir: string, output: string | undefined): Promise<void> {
-    if (!output) {
-      const installation = await detectInstallation(projectDir);
-      if (!installation) {
-        this.error(`No installation found. Run '${CLI_BIN_NAME} init' first.`, {
-          exit: EXIT_CODES.ERROR,
-        });
-      }
+  private async ensureInstallation(projectDir: string): Promise<void> {
+    const installation = await detectInstallation(projectDir);
+    if (!installation) {
+      this.error(`No installation found. Run '${CLI_BIN_NAME} init' first.`, {
+        exit: EXIT_CODES.ERROR,
+      });
     }
-  }
-
-  private startConfigTypesLoading(
-    flags: { output?: string; source?: string },
-    projectDir: string,
-  ): ReturnType<typeof loadConfigTypesDataInBackground> | null {
-    return flags.output ? null : loadConfigTypesDataInBackground(flags.source, projectDir);
   }
 
   private printHeader(): void {
@@ -138,17 +142,10 @@ export default class NewSkill extends BaseCommand {
     authorFlag: string | undefined,
     projectDir: string,
   ): Promise<string> {
-    if (authorFlag) return authorFlag;
-    return (await resolveAuthor(projectDir)) || LOCAL_DEFAULTS.AUTHOR;
+    return resolveAuthorOrDefault(authorFlag, projectDir);
   }
 
-  private async resolveSkillsBasePath(
-    flags: { output?: string },
-    projectDir: string,
-  ): Promise<string> {
-    if (flags.output) {
-      return path.resolve(flags.output);
-    }
+  private async resolveSkillsBasePath(projectDir: string): Promise<string> {
     const marketplacePath = path.join(projectDir, PLUGIN_MANIFEST_DIR, "marketplace.json");
     if (await fileExists(marketplacePath)) {
       this.log(`Detected marketplace context, creating skill in ${SKILLS_DIR_PATH}/`);
@@ -187,9 +184,8 @@ export default class NewSkill extends BaseCommand {
     category: CategoryPath,
     domain: string,
     skillDir: string,
-    flags: { output?: string; source?: string; force?: boolean },
     projectDir: string,
-    configTypesReady: ReturnType<typeof loadConfigTypesDataInBackground> | null,
+    configTypesReady: ReturnType<typeof loadConfigTypesDataInBackground>,
   ): Promise<void> {
     this.log("Creating skill files...");
 
@@ -206,29 +202,23 @@ export default class NewSkill extends BaseCommand {
       this.logSuccess(`Created ${STANDARD_FILES.SKILL_MD} at ${result.skillMdPath}`);
       this.logSuccess(`Created ${STANDARD_FILES.METADATA_YAML} at ${result.metadataPath}`);
 
-      if (!flags.output) {
-        const marketplacePath = path.join(projectDir, PLUGIN_MANIFEST_DIR, "marketplace.json");
-        if (await fileExists(marketplacePath)) {
-          try {
-            await updateSkillRegistryConfig({ projectRoot: projectDir, category, domain });
-          } catch (error) {
-            this.warn(`Could not update config files: ${getErrorMessage(error)}`);
-          }
+      const marketplacePath = path.join(projectDir, PLUGIN_MANIFEST_DIR, "marketplace.json");
+      if (await fileExists(marketplacePath)) {
+        try {
+          await updateSkillRegistryConfig({ projectRoot: projectDir, category, domain });
+        } catch (error) {
+          this.warn(`Could not update config files: ${getErrorMessage(error)}`);
         }
       }
 
-      if (configTypesReady) {
-        try {
-          await regenerateConfigTypes(projectDir, configTypesReady, {
-            extraSkillIds: [name],
-            extraDomains: [domain],
-            extraCategories: [category],
-          });
-        } catch (error) {
-          this.warn(
-            `Could not update ${STANDARD_FILES.CONFIG_TYPES_TS}: ${getErrorMessage(error)}`,
-          );
-        }
+      try {
+        await regenerateConfigTypes(projectDir, configTypesReady, {
+          extraSkillIds: [name],
+          extraDomains: [domain],
+          extraCategories: [category],
+        });
+      } catch (error) {
+        this.warn(`Could not update ${STANDARD_FILES.CONFIG_TYPES_TS}: ${getErrorMessage(error)}`);
       }
 
       this.log("");
@@ -262,12 +252,6 @@ type RegistryUpdateOptions = {
   domain: string;
 };
 
-type RegistryUpdateResult = {
-  categoriesCreated: boolean;
-  categoriesUpdated: boolean;
-  rulesCreated: boolean;
-};
-
 export function validateSkillName(name: string): string | null {
   if (!name || name.trim() === "") {
     return "Skill name is required";
@@ -278,6 +262,14 @@ export function validateSkillName(name: string): string | null {
   }
 
   return null;
+}
+
+export async function resolveAuthorOrDefault(
+  authorFlag: string | undefined,
+  projectDir: string,
+): Promise<string> {
+  if (authorFlag) return authorFlag;
+  return (await resolveAuthor(projectDir)) || LOCAL_DEFAULTS.AUTHOR;
 }
 
 export function generateSkillMd(name: string): string {
@@ -358,7 +350,9 @@ contentHash: ${contentHash}
 `;
 }
 
-async function scaffoldSkillFiles(options: ScaffoldSkillOptions): Promise<ScaffoldSkillResult> {
+export async function scaffoldSkillFiles(
+  options: ScaffoldSkillOptions,
+): Promise<ScaffoldSkillResult> {
   const { name, author, category, domain, skillDir } = options;
 
   const skillMdContent = generateSkillMd(name);
@@ -374,44 +368,40 @@ async function scaffoldSkillFiles(options: ScaffoldSkillOptions): Promise<Scaffo
   return { skillMdPath, metadataPath, contentHash };
 }
 
-async function updateSkillRegistryConfig(
-  options: RegistryUpdateOptions,
-): Promise<RegistryUpdateResult> {
+async function updateSkillRegistryConfig(options: RegistryUpdateOptions): Promise<void> {
   const { projectRoot, category, domain } = options;
 
   const categoriesPath = path.join(projectRoot, SKILL_CATEGORIES_PATH);
   const rulesPath = path.join(projectRoot, SKILL_RULES_PATH);
 
-  let categoriesCreated = false;
-  let categoriesUpdated = false;
-  let rulesCreated = false;
-
   if (await fileExists(categoriesPath)) {
-    // Boundary cast: loadConfig returns unknown structure from TS file
-    const parsed = (await loadConfig<Record<string, unknown>>(categoriesPath)) ?? {};
-    const categories = (parsed.categories ?? {}) as Record<string, unknown>;
+    const parsed = await loadConfig<{ version: string; categories: CategoryMap }>(
+      categoriesPath,
+      skillCategoriesFileSchema,
+    );
+    if (!parsed) {
+      throw new Error(
+        `Config at ${categoriesPath} has no default export — delete the file or add \`export default { version, categories: {} }\``,
+      );
+    }
+    // Boundary cast: CategoryMap keys are strict Category; CLI flag may introduce custom category IDs
+    const categories = parsed.categories as Record<string, CategoryDefinition>;
     if (!categories[category]) {
-      categories[category] = buildCategoryEntry(category, domain);
-      parsed.categories = categories;
+      categories[category] = buildCategoryEntry(category, domain) as CategoryDefinition;
       await writeFile(categoriesPath, formatTsExport(CATEGORIES_TS_COMMENT, parsed));
       verbose(`Added category '${category}' to ${SKILL_CATEGORIES_PATH}`);
-      categoriesUpdated = true;
     }
   } else {
     await ensureDir(path.dirname(categoriesPath));
     await writeFile(categoriesPath, generateSkillCategoriesTs(category, domain));
     verbose(`Created ${SKILL_CATEGORIES_PATH}`);
-    categoriesCreated = true;
   }
 
   if (!(await fileExists(rulesPath))) {
     await ensureDir(path.dirname(rulesPath));
     await writeFile(rulesPath, generateSkillRulesTs());
     verbose(`Created ${SKILL_RULES_PATH}`);
-    rulesCreated = true;
   }
-
-  return { categoriesCreated, categoriesUpdated, rulesCreated };
 }
 
 const CATEGORIES_TS_COMMENT = "// Skill category definitions";

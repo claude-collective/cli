@@ -25,6 +25,7 @@ import { generateConfigSource } from "../../lib/configuration/config-writer.js";
 import { generateMarketplace, writeMarketplace } from "../../lib/marketplace-generator.js";
 import { generateSkillCategoriesTs, generateSkillRulesTs } from "../../lib/skills/generators.js";
 import type { Category, SkillId } from "../../types/index.js";
+import { resolveAuthorOrDefault, scaffoldSkillFiles } from "./skill.js";
 
 export function validateMarketplaceName(name: string): string | null {
   if (!name || name.trim() === "") {
@@ -138,7 +139,7 @@ export default class NewMarketplace extends BaseCommand {
     ...BaseCommand.baseFlags,
     force: Flags.boolean({
       char: "f",
-      description: "Overwrite existing directory",
+      description: "Overwrite existing marketplace directory",
       default: false,
     }),
     output: Flags.string({
@@ -164,7 +165,8 @@ export default class NewMarketplace extends BaseCommand {
     this.log("");
 
     try {
-      await this.createMarketplaceFiles(marketplaceName, marketplaceDir, flags.force);
+      const author = await resolveAuthorOrDefault(undefined, parentDir);
+      await this.createMarketplaceFiles(marketplaceName, marketplaceDir, author);
       await this.buildMarketplace(marketplaceDir, marketplaceName);
       this.printNextSteps(marketplaceName, useCurrentDir);
     } catch (error) {
@@ -209,7 +211,7 @@ export default class NewMarketplace extends BaseCommand {
   private async createMarketplaceFiles(
     marketplaceName: string,
     marketplaceDir: string,
-    force: boolean,
+    author: string,
   ): Promise<void> {
     const skillName = "dummy-skill";
 
@@ -232,9 +234,13 @@ export default class NewMarketplace extends BaseCommand {
     await writeFile(rulesPath, rulesContent);
 
     const skillsDir = path.join(marketplaceDir, SKILLS_DIR_PATH);
-    const skillArgs = [skillName, "--output", skillsDir, "--domain", LOCAL_DEFAULTS.DOMAIN];
-    if (force) skillArgs.push("--force");
-    await this.config.runCommand("new:skill", skillArgs);
+    await scaffoldSkillFiles({
+      name: skillName,
+      author,
+      category: LOCAL_DEFAULTS.CATEGORY,
+      domain: LOCAL_DEFAULTS.DOMAIN,
+      skillDir: path.join(skillsDir, skillName),
+    });
 
     const readmeContent = generateReadme(marketplaceName);
     const readmePath = path.join(marketplaceDir, "README.md");

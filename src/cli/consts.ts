@@ -112,6 +112,8 @@ export const UI_SYMBOLS = {
   BULLET: "\u2022",
   SCROLL_UP: "\u25B2",
   SCROLL_DOWN: "\u25BC",
+  CHECK: "\u2713",
+  CROSS: "\u2717",
 } as const;
 
 export const UI_LAYOUT = {

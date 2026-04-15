@@ -1,4 +1,3 @@
-import { Flags } from "@oclif/core";
 import os from "os";
 import path from "path";
 import { BaseCommand } from "../base-command";
@@ -19,11 +18,15 @@ import {
   DEFAULT_BRANDING,
   LOCAL_SKILLS_PATH,
   STANDARD_FILES,
+  UI_SYMBOLS,
 } from "../consts";
 import { countBy } from "remeda";
 import { setVerbose } from "../utils/logger";
 
+type CheckKind = "config" | "skills" | "agents" | "orphans" | "installed" | "source";
+
 type CheckResult = {
+  kind: CheckKind;
   status: "pass" | "fail" | "warn" | "skip";
   message: string;
   details?: string[];
@@ -38,6 +41,7 @@ function checkConfigValid(config: ProjectConfig | null): ConfigCheckOutput {
   if (!config) {
     return {
       result: {
+        kind: "config",
         status: "fail",
         message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} not found`,
         details: [`Run '${CLI_BIN_NAME} init' to create a configuration`],
@@ -51,6 +55,7 @@ function checkConfigValid(config: ProjectConfig | null): ConfigCheckOutput {
   if (!validation.valid) {
     return {
       result: {
+        kind: "config",
         status: "fail",
         message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} has errors`,
         details: validation.errors,
@@ -62,6 +67,7 @@ function checkConfigValid(config: ProjectConfig | null): ConfigCheckOutput {
   if (validation.warnings.length > 0) {
     return {
       result: {
+        kind: "config",
         status: "warn",
         message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} has warnings`,
         details: validation.warnings,
@@ -72,6 +78,7 @@ function checkConfigValid(config: ProjectConfig | null): ConfigCheckOutput {
 
   return {
     result: {
+      kind: "config",
       status: "pass",
       message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} is valid`,
     },
@@ -95,6 +102,7 @@ async function checkSkillsResolved(
 
   if (uniqueSkills.length === 0) {
     return {
+      kind: "skills",
       status: "pass",
       message: "No skills configured",
     };
@@ -118,6 +126,7 @@ async function checkSkillsResolved(
 
   if (missingSkills.length > 0) {
     return {
+      kind: "skills",
       status: "fail",
       message: `${uniqueSkills.length - missingSkills.length}/${uniqueSkills.length} skills found`,
       details: missingSkills.map((s) => `- ${s} (not found)`),
@@ -125,6 +134,7 @@ async function checkSkillsResolved(
   }
 
   return {
+    kind: "skills",
     status: "pass",
     message: `${uniqueSkills.length}/${uniqueSkills.length} skills found`,
   };
@@ -138,6 +148,7 @@ async function checkAgentsCompiled(
 
   if (agents.length === 0) {
     return {
+      kind: "agents",
       status: "pass",
       message: "No agents configured",
     };
@@ -158,6 +169,7 @@ async function checkAgentsCompiled(
 
   if (missingAgents.length > 0) {
     return {
+      kind: "agents",
       status: "warn",
       message: `${missingAgents.length} agent${missingAgents.length === 1 ? "" : "s"} need${missingAgents.length === 1 ? "s" : ""} recompilation`,
       details: missingAgents.map((a) => `- ${a} (missing)`),
@@ -165,6 +177,7 @@ async function checkAgentsCompiled(
   }
 
   return {
+    kind: "agents",
     status: "pass",
     message: `${agents.length}/${agents.length} agents compiled`,
   };
@@ -179,6 +192,7 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
 
   if (!projectExists && !globalExists) {
     return {
+      kind: "orphans",
       status: "pass",
       message: "No agents directory",
     };
@@ -212,6 +226,7 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
 
   if (orphanedFiles.length > 0) {
     return {
+      kind: "orphans",
       status: "warn",
       message: `${orphanedFiles.length} orphaned agent file${orphanedFiles.length === 1 ? "" : "s"}`,
       details: orphanedFiles.map((f) => `- ${f}.md (not in config)`),
@@ -219,6 +234,7 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
   }
 
   return {
+    kind: "orphans",
     status: "pass",
     message: "No orphaned agent files",
   };
@@ -233,6 +249,7 @@ async function checkSkillsInstalled(
 
   if (ejectSkills.length === 0) {
     return {
+      kind: "installed",
       status: "pass",
       message: "No eject-mode skills configured",
     };
@@ -252,6 +269,7 @@ async function checkSkillsInstalled(
 
   if (missingSkills.length > 0) {
     return {
+      kind: "installed",
       status: "warn",
       message: `${missingSkills.length} skill${missingSkills.length === 1 ? "" : "s"} missing from disk`,
       details: missingSkills.map((s) => `- ${s} (not found in ${LOCAL_SKILLS_PATH}/)`),
@@ -259,6 +277,7 @@ async function checkSkillsInstalled(
   }
 
   return {
+    kind: "installed",
     status: "pass",
     message: `${ejectSkills.length}/${ejectSkills.length} eject-mode skills installed`,
   };
@@ -274,6 +293,7 @@ async function checkSourceReachable(projectDir: string): Promise<CheckResult> {
     const sourceLabel = result.isLocal ? "local" : "remote";
 
     return {
+      kind: "source",
       status: "pass",
       message: `Connected to ${sourceLabel}: ${result.sourcePath}`,
       details: [`${skillCount} skills available`],
@@ -281,6 +301,7 @@ async function checkSourceReachable(projectDir: string): Promise<CheckResult> {
   } catch (error) {
     const message = getErrorMessage(error);
     return {
+      kind: "source",
       status: "fail",
       message: "Failed to load source",
       details: [message],
@@ -297,9 +318,9 @@ function formatCheckName(name: string): string {
 function formatStatus(status: CheckResult["status"]): string {
   switch (status) {
     case "pass":
-      return "\u2713"; // ✓
+      return UI_SYMBOLS.CHECK;
     case "fail":
-      return "\u2717"; // ✗
+      return UI_SYMBOLS.CROSS;
     case "warn":
       return "!";
     case "skip":
@@ -309,7 +330,7 @@ function formatStatus(status: CheckResult["status"]): string {
   }
 }
 
-function formatCheckLine(name: string, result: CheckResult, verbose: boolean): string[] {
+function formatCheckLine(name: string, result: CheckResult): string[] {
   const statusIcon = formatStatus(result.status);
   const nameFormatted = formatCheckName(name);
   const lines: string[] = [];
@@ -317,11 +338,7 @@ function formatCheckLine(name: string, result: CheckResult, verbose: boolean): s
   lines.push(`  ${nameFormatted}${statusIcon}  ${result.message}`);
 
   const { details } = result;
-  if (
-    details &&
-    details.length > 0 &&
-    (verbose || result.status === "fail" || result.status === "warn")
-  ) {
+  if (details && details.length > 0) {
     for (const detail of details) {
       lines.push(`  ${" ".repeat(CHECK_WIDTH)}   ${detail}`);
     }
@@ -344,13 +361,10 @@ function formatSummary(results: CheckResult[]): string {
 }
 
 function formatTips(results: CheckResult[]): string[] {
-  const hasAgentWarning = results.some(
-    (r) => r.status === "warn" && r.message.includes("recompilation"),
-  );
-  const hasConfigError = results.some((r) => r.status === "fail" && r.message.includes("config"));
-  const hasSkillError = results.some(
-    (r) => r.status === "fail" && r.message.includes("skills found"),
-  );
+  const hasAgentWarning = results.some((r) => r.kind === "agents" && r.status === "warn");
+  const hasConfigError = results.some((r) => r.kind === "config" && r.status === "fail");
+  const hasSkillError = results.some((r) => r.kind === "skills" && r.status === "fail");
+  const hasMissingSkills = results.some((r) => r.kind === "installed" && r.status === "warn");
 
   const tips: string[] = [];
 
@@ -363,9 +377,6 @@ function formatTips(results: CheckResult[]): string[] {
   if (hasSkillError) {
     tips.push("  Tip: Check skill IDs in config match available skills");
   }
-  const hasMissingSkills = results.some(
-    (r) => r.status === "warn" && r.message.includes("missing from disk"),
-  );
   if (hasMissingSkills) {
     tips.push(`  Tip: Run '${CLI_BIN_NAME} compile' to reinstall missing skill files`);
   }
@@ -373,33 +384,41 @@ function formatTips(results: CheckResult[]): string[] {
   return tips;
 }
 
-const SKIP_RESULT: CheckResult = { status: "skip", message: "Skipped (config invalid)" };
+function skippedResult(kind: CheckKind): CheckResult {
+  return { kind, status: "skip", message: "Skipped (config invalid)" };
+}
+
+/**
+ * Wrap a check so a thrown exception becomes a `fail` result instead of crashing the
+ * whole doctor run. Per-check isolation ensures one broken check does not mask others.
+ */
+async function safeCheck(kind: CheckKind, fn: () => Promise<CheckResult>): Promise<CheckResult> {
+  try {
+    return await fn();
+  } catch (error) {
+    return { kind, status: "fail", message: "Check threw", details: [getErrorMessage(error)] };
+  }
+}
 
 export default class Doctor extends BaseCommand {
   static summary = "Diagnose common configuration issues";
 
   static description = `Run diagnostic checks on your ${DEFAULT_BRANDING.NAME} configuration to identify issues with config validity, skill resolution, agent compilation, and source connectivity.`;
 
-  static examples = [
-    "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --verbose",
-  ];
+  static examples = ["<%= config.bin %> <%= command.id %>"];
 
-  static flags = {
-    verbose: Flags.boolean({
-      char: "v",
-      description: "Show detailed output",
-      default: false,
-    }),
-  };
+  // Override parent baseFlags to drop --source (not relevant for diagnostics)
+  static baseFlags = {} as (typeof BaseCommand)["baseFlags"];
+
+  static flags = {};
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(Doctor);
-    setVerbose(flags.verbose);
+    await this.parse(Doctor);
+    setVerbose(true);
     const projectDir = process.cwd();
 
     this.printHeader();
-    const results = await this.runAllChecks(projectDir, flags);
+    const results = await this.runAllChecks(projectDir);
     this.printResults(results);
 
     if (results.some((r) => r.status === "fail")) {
@@ -415,44 +434,51 @@ export default class Doctor extends BaseCommand {
     this.log("");
   }
 
-  private async runAllChecks(
-    projectDir: string,
-    flags: { verbose: boolean },
-  ): Promise<CheckResult[]> {
+  private async runAllChecks(projectDir: string): Promise<CheckResult[]> {
     const detected = await detectProject(projectDir);
     const { result: configResult, config } = checkConfigValid(detected?.config ?? null);
-    this.logCheck("Config Valid", configResult, flags.verbose);
+    this.logCheck("Config Valid", configResult);
 
-    // loadSource (called by checkSourceReachable) populates the matrix automatically
-    const sourceResult = await checkSourceReachable(projectDir);
+    // loadSource (called by checkSourceReachable) populates the matrix. Run it
+    // before checkSkillsResolved so skills lookups see a populated matrix; if
+    // source fails, skip skills rather than reporting false "not found" errors.
+    const sourceResult = await safeCheck("source", () => checkSourceReachable(projectDir));
 
     const filteredConfig = config ? filterExcludedEntries(config) : null;
 
-    const skillsResult = config
-      ? await checkSkillsResolved(config, matrix, projectDir)
-      : SKIP_RESULT;
-    this.logCheck("Skills Resolved", skillsResult, flags.verbose);
+    const skillsResult = !config
+      ? skippedResult("skills")
+      : sourceResult.status === "fail"
+        ? {
+            kind: "skills" as const,
+            status: "skip" as const,
+            message: "Skipped (source unreachable)",
+          }
+        : await safeCheck("skills", () => checkSkillsResolved(config, matrix, projectDir));
+    this.logCheck("Skills Resolved", skillsResult);
 
     const agentsResult = filteredConfig
-      ? await checkAgentsCompiled(filteredConfig, projectDir)
-      : SKIP_RESULT;
-    this.logCheck("Agents Compiled", agentsResult, flags.verbose);
+      ? await safeCheck("agents", () => checkAgentsCompiled(filteredConfig, projectDir))
+      : skippedResult("agents");
+    this.logCheck("Agents Compiled", agentsResult);
 
-    const orphansResult = config ? await checkNoOrphans(config, projectDir) : SKIP_RESULT;
-    this.logCheck("No Orphans", orphansResult, flags.verbose);
+    const orphansResult = config
+      ? await safeCheck("orphans", () => checkNoOrphans(config, projectDir))
+      : skippedResult("orphans");
+    this.logCheck("No Orphans", orphansResult);
 
     const installedResult = filteredConfig
-      ? await checkSkillsInstalled(filteredConfig, projectDir)
-      : SKIP_RESULT;
-    this.logCheck("Skills Installed", installedResult, flags.verbose);
+      ? await safeCheck("installed", () => checkSkillsInstalled(filteredConfig, projectDir))
+      : skippedResult("installed");
+    this.logCheck("Skills Installed", installedResult);
 
-    this.logCheck("Source Reachable", sourceResult, flags.verbose);
+    this.logCheck("Source Reachable", sourceResult);
 
     return [configResult, skillsResult, agentsResult, orphansResult, installedResult, sourceResult];
   }
 
-  private logCheck(name: string, result: CheckResult, verbose: boolean): void {
-    for (const line of formatCheckLine(name, result, verbose)) {
+  private logCheck(name: string, result: CheckResult): void {
+    for (const line of formatCheckLine(name, result)) {
       this.log(line);
     }
   }
