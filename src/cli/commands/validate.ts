@@ -1,4 +1,5 @@
 import { Flags } from "@oclif/core";
+import fs from "fs";
 import os from "os";
 import path from "path";
 import { parse as parseYaml } from "yaml";
@@ -18,7 +19,11 @@ import { validateSource } from "../lib/source-validator.js";
 import { isLocalSource, resolveAllSources, type SourceEntry } from "../lib/configuration/index.js";
 import { resolveInstallPaths } from "../lib/installation/index.js";
 import { formatZodErrors } from "../lib/schema-validator.js";
-import { metadataValidationSchema, customMetadataValidationSchema } from "../lib/schemas.js";
+import {
+  isCustomMetadata,
+  metadataValidationSchema,
+  customMetadataValidationSchema,
+} from "../lib/schemas.js";
 import { PLUGIN_MANIFEST_DIR, STANDARD_FILES } from "../consts.js";
 import type { ValidationResult } from "../types/index.js";
 import { directoryExists, fileExists, glob, listDirectories, readFile } from "../utils/fs.js";
@@ -96,6 +101,12 @@ export default class Validate extends BaseCommand {
     const globalPaths = resolveInstallPaths(projectDir, "global");
     const projectPaths = resolveInstallPaths(projectDir, "project");
 
+    // Use realpath to compare project vs home — string comparison fails on macOS
+    // where $HOME may be a symlink.
+    const projectReal = fs.realpathSync(projectDir);
+    const homeReal = fs.realpathSync(os.homedir());
+    const inHome = projectReal === homeReal;
+
     this.log("");
     this.log("Validating sources");
 
@@ -110,9 +121,9 @@ export default class Validate extends BaseCommand {
     this.log("Validating plugins");
 
     await this.validatePluginsDirectory(getUserPluginsDir(), verbose, totals);
-    await this.validatePluginsDirectory(getProjectPluginsDir(projectDir), verbose, totals);
-
-    const inHome = projectPaths.skillsDir === globalPaths.skillsDir;
+    if (!inHome) {
+      await this.validatePluginsDirectory(getProjectPluginsDir(projectDir), verbose, totals);
+    }
 
     this.log("");
     this.log("Validating skills");
@@ -326,11 +337,7 @@ async function validateInstalledSkillMetadata(metadataPath: string): Promise<Val
     };
   }
 
-  const isCustom =
-    rawMetadata != null &&
-    typeof rawMetadata === "object" &&
-    "custom" in rawMetadata &&
-    (rawMetadata as Record<string, unknown>).custom === true;
+  const isCustom = isCustomMetadata(rawMetadata);
   const schema = isCustom ? customMetadataValidationSchema : metadataValidationSchema;
 
   const result = schema.safeParse(rawMetadata);

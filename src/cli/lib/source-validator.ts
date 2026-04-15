@@ -13,6 +13,7 @@ import {
 import {
   agentYamlGenerationSchema,
   customMetadataValidationSchema,
+  isCustomMetadata,
   metadataValidationSchema,
   skillCategoriesFileSchema,
   skillRulesFileSchema,
@@ -44,21 +45,11 @@ export function isSnakeCase(key: string): boolean {
 }
 
 /**
- * Validates metadata conventions (pure function, no I/O).
- *
- * Checks:
- * - snake_case keys (should be camelCase)
- * - displayName/directory name mismatch
+ * Checks top-level keys for snake_case usage (camelCase is the convention).
+ * Non-object input yields no issues.
  */
-export function validateMetadataConventions(
-  rawMetadata: unknown,
-  validatedMetadata: { displayName: string; category: string },
-  relPath: string,
-  dirName: string,
-): SourceValidationIssue[] {
+export function checkSnakeCaseKeys(rawMetadata: unknown, relPath: string): SourceValidationIssue[] {
   const issues: SourceValidationIssue[] = [];
-
-  // Check for snake_case keys
   if (rawMetadata && typeof rawMetadata === "object" && !Array.isArray(rawMetadata)) {
     for (const key of Object.keys(rawMetadata as Record<string, unknown>)) {
       if (isSnakeCase(key)) {
@@ -70,17 +61,25 @@ export function validateMetadataConventions(
       }
     }
   }
+  return issues;
+}
 
-  // Check displayName matches directory name
-  if (validatedMetadata.displayName !== dirName) {
-    issues.push({
+/**
+ * Warns when a skill's `displayName` does not match its directory name.
+ */
+export function checkDisplayNameMatches(
+  validatedMetadata: { displayName: string },
+  relPath: string,
+  dirName: string,
+): SourceValidationIssue[] {
+  if (validatedMetadata.displayName === dirName) return [];
+  return [
+    {
       severity: "warning",
       file: relPath,
       message: `displayName '${validatedMetadata.displayName}' does not match directory name '${dirName}'`,
-    });
-  }
-
-  return issues;
+    },
+  ];
 }
 
 /**
@@ -198,23 +197,12 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
     }
 
     // Use relaxed schema for custom skills (any category/slug), strict schema for built-in skills
-    const isCustom =
-      rawMetadata != null &&
-      typeof rawMetadata === "object" &&
-      "custom" in rawMetadata &&
-      (rawMetadata as Record<string, unknown>).custom === true;
+    const isCustom = isCustomMetadata(rawMetadata);
     const schema = isCustom ? customMetadataValidationSchema : metadataValidationSchema;
     const result = schema.safeParse(rawMetadata);
     if (!result.success) {
       // Check for snake_case keys even on schema failure (useful diagnostics)
-      issues.push(
-        ...validateMetadataConventions(
-          rawMetadata,
-          { displayName: "", category: "" },
-          relPath,
-          path.basename(skillDir),
-        ).filter((i) => i.message.includes("snake_case")),
-      );
+      issues.push(...checkSnakeCaseKeys(rawMetadata, relPath));
 
       for (const issue of result.error.issues) {
         const fieldPath = issue.path.join(".");
@@ -230,7 +218,8 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
     const metadata = result.data;
     const dirName = path.basename(skillDir);
 
-    issues.push(...validateMetadataConventions(rawMetadata, metadata, relPath, dirName));
+    issues.push(...checkSnakeCaseKeys(rawMetadata, relPath));
+    issues.push(...checkDisplayNameMatches(metadata, relPath, dirName));
   }
 
   // Phase 3: Cross-reference validation via matrix health check
@@ -366,6 +355,9 @@ async function validateYamlFiles(opts: {
 /**
  * Runtime-loads a TypeScript config file via loadConfig and reports validation failures.
  * Absent files are not errors — only report when the file exists but fails to load or validate.
+ *
+ * loadConfig already unwraps the default export (via jiti's `{ default: true }` + interopDefault),
+ * so a returned `null` means the module has no default export (named-only modules surface here).
  */
 async function validateTsConfig(
   resolvedPath: string,
@@ -382,8 +374,20 @@ async function validateTsConfig(
     }
     return [];
   } catch (error) {
-    return [{ severity: "error", file: relConfigPath, message: getErrorMessage(error) }];
+    return [
+      { severity: "error", file: relConfigPath, message: formatLoadError(relConfigPath, error) },
+    ];
   }
+}
+
+/**
+ * Normalizes a loadConfig error so the message references the relative config path,
+ * not the absolute path embedded by loadConfig's own template string.
+ */
+function formatLoadError(relConfigPath: string, error: unknown): string {
+  const raw = getErrorMessage(error);
+  const stripped = raw.replace(/Failed to load config from '[^']+':\s*/, "");
+  return `Failed to load ${relConfigPath}: ${stripped}`;
 }
 
 function buildResult(issues: SourceValidationIssue[], skillCount: number): SourceValidationResult {
