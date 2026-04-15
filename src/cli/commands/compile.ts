@@ -74,7 +74,7 @@ export default class Compile extends BaseCommand {
   private async loadAgentDefsOrFail(cwd: string): Promise<AgentDefs> {
     this.log(STATUS_MESSAGES.LOADING_AGENT_PARTIALS);
     try {
-      const defs = await loadAgentDefs(undefined, { projectDir: cwd });
+      const defs = await loadAgentDefs({ projectDir: cwd });
       this.log("Agent partials loaded");
       verbose(`  Agents: ${defs.agentSourcePaths.agentsDir}`);
       verbose(`  Templates: ${defs.agentSourcePaths.templatesDir}`);

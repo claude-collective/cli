@@ -19,10 +19,9 @@ export type AgentDefs = {
  * Returns the merged definitions plus the source path for compilation.
  */
 export async function loadAgentDefs(
-  agentSource?: string,
   options?: { projectDir?: string; forceRefresh?: boolean },
 ): Promise<AgentDefs> {
-  const agentSourcePaths = await getAgentDefinitions(agentSource, options);
+  const agentSourcePaths = await getAgentDefinitions(undefined, options);
   const cliAgents = await loadAllAgents(PROJECT_ROOT);
   const sourceAgents = await loadAllAgents(agentSourcePaths.sourcePath);
   const agents: Record<AgentName, AgentDefinition> = { ...cliAgents, ...sourceAgents };
