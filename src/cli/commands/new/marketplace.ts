@@ -15,6 +15,7 @@ import {
   STANDARD_FILES,
 } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
 import { compileAllSkillPlugins } from "../../lib/skills/skill-plugin-compiler.js";
 import {
@@ -141,6 +142,13 @@ export default class NewMarketplace extends BaseCommand {
   };
 
   async run(): Promise<void> {
+    if (!FEATURE_FLAGS.NEW_MARKETPLACE_COMMAND) {
+      this.error(
+        "The `new marketplace` command is currently disabled while being improved.",
+        { exit: EXIT_CODES.ERROR },
+      );
+    }
+
     const { args, flags } = await this.parse(NewMarketplace);
     const parentDir = process.cwd();
     const useCurrentDir = args.name === ".";

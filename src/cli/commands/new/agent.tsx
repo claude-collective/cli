@@ -16,6 +16,7 @@ import {
   regenerateConfigTypes,
 } from "../../lib/configuration/config-types-writer.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { getAgentDefinitions } from "../../lib/agents/index.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import { isClaudeCLIAvailable } from "../../utils/exec.js";
@@ -107,6 +108,13 @@ export default class NewAgent extends BaseCommand {
   };
 
   async run(): Promise<void> {
+    if (!FEATURE_FLAGS.NEW_AGENT_COMMAND) {
+      this.error(
+        "The `new agent` command is currently disabled while being improved.",
+        { exit: EXIT_CODES.ERROR },
+      );
+    }
+
     const { args, flags } = await this.parse(NewAgent);
     const projectDir = process.cwd();
 

@@ -5,4 +5,10 @@ export const FEATURE_FLAGS = {
   SOURCE_CHOICE: false,
   // Controls whether the I key opens the info panel overlay
   INFO_PANEL: true,
+  // Controls whether `cc new skill` is enabled
+  NEW_SKILL_COMMAND: false,
+  // Controls whether `cc new agent` is enabled
+  NEW_AGENT_COMMAND: false,
+  // Controls whether `cc new marketplace` is enabled
+  NEW_MARKETPLACE_COMMAND: false,
 } as const;

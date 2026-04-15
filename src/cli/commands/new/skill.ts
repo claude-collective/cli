@@ -23,6 +23,7 @@ import {
   STANDARD_FILES,
 } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { detectInstallation } from "../../lib/installation/index.js";
 import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
 import type { CategoryDefinition, CategoryMap, CategoryPath } from "../../types/index.js";
@@ -87,6 +88,13 @@ export default class NewSkill extends BaseCommand {
   };
 
   async run(): Promise<void> {
+    if (!FEATURE_FLAGS.NEW_SKILL_COMMAND) {
+      this.error(
+        "The `new skill` command is currently disabled while being improved",
+        { exit: EXIT_CODES.ERROR },
+      );
+    }
+
     const { args, flags } = await this.parse(NewSkill);
     const projectDir = process.cwd();
 
