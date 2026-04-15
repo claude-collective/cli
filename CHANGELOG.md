@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.130.0] - 2026-04-15
+
+**CLI simplification round 3 — 8 more flags pruned, dead helpers removed**
+
+- `search` is now a zero-flag read-only catalog browse (`<query>` required); interactive multi-select + import side effects gone — use `import skill` instead
+- `validate --verbose`, `edit --agent-source`, `new marketplace --output`, `update --no-recompile` all removed
+- Dead helpers deleted: `resolveAgentsSource`, `formatOrigin`, `loadAgentDefs`'s first param, `SkillSearch` component (449 LOC)
+- Unresolved-slug matrix diagnostic promoted `verbose()` → `warn()` so source-authoring bugs surface on stderr
+
+See [changelogs/0.130.0.md](./changelogs/0.130.0.md) for full details.
+
 ## [0.129.0] - 2026-04-15
 
 **CLI simplification round 2 — 13 flags pruned, doctor + validate hardened**
