@@ -2,7 +2,12 @@ import { parse as parseYaml } from "yaml";
 
 // --- Re-exports from sub-files ---
 export { CLI_ROOT, runCliCommand } from "./cli-runner.js";
-export { readTestYaml, readTestTsConfig, writeTestTsConfig } from "./config-io.js";
+export {
+  readTestYaml,
+  readTestTsConfig,
+  writeTestTsConfig,
+  writeTestPackageJson,
+} from "./config-io.js";
 export { writeTestSkill, writeSourceSkill, writeTestAgent } from "./disk-writers.js";
 export {
   buildSkillConfigs,
@@ -12,6 +17,8 @@ export {
 } from "./wizard-simulation.js";
 export { createTestDirs, cleanupTestDirs } from "./test-dir-setup.js";
 export type { PluginTestDirs } from "./test-dir-setup.js";
+export { setupIsolatedHome } from "./isolated-home.js";
+export type { IsolatedHome } from "./isolated-home.js";
 
 // --- Remaining utility function ---
 

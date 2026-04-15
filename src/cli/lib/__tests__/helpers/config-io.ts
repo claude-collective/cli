@@ -5,6 +5,7 @@ import { parse as parseYaml } from "yaml";
 import { createJiti } from "jiti";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../../consts";
 import { renderConfigTs } from "../content-generators";
+import { VALID_PACKAGE_JSON_FILE } from "../mock-data/mock-source-files.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,4 +42,19 @@ export async function writeTestTsConfig(
   const configDir = path.join(projectDir, configSubdir);
   await mkdir(configDir, { recursive: true });
   await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), renderConfigTs(config));
+}
+
+/**
+ * Writes a package.json at the given directory.
+ *
+ * Used by `build marketplace` tests (unit + E2E) which read marketplace
+ * identity (name, version, description, author) from package.json at the cwd.
+ * Accepts overrides to vary individual fields for negative-case tests.
+ */
+export async function writeTestPackageJson(
+  dir: string,
+  overrides: Partial<typeof VALID_PACKAGE_JSON_FILE> = {},
+): Promise<void> {
+  const pkg = { ...VALID_PACKAGE_JSON_FILE, ...overrides };
+  await writeFile(path.join(dir, "package.json"), JSON.stringify(pkg, null, 2));
 }

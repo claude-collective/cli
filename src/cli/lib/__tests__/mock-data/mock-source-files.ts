@@ -57,3 +57,17 @@ export const VALID_STACKS_CONFIG_FILE = {
     },
   ],
 };
+
+/**
+ * Minimal package.json fixture for `build marketplace` tests.
+ *
+ * `build marketplace` reads marketplace identity (name, version, description,
+ * author) from package.json at the cwd. Tests that exercise happy-path
+ * marketplace generation need this file on disk.
+ */
+export const VALID_PACKAGE_JSON_FILE = {
+  name: "test-marketplace",
+  version: "0.1.0",
+  description: "Test marketplace",
+  author: "Test Author <test@example.com>",
+};

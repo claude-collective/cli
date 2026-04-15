@@ -1,30 +1,13 @@
 // Shared stack constants for test files.
 // TestStack arrays are used with createTestSource() for integration tests.
 
-import type { SkillId, Stack } from "../../../types";
+import type { SkillId } from "../../../types";
 import type { TestStack } from "../fixtures/create-test-source.js";
 import { createMockSkillAssignment } from "../factories/skill-factories.js";
 import { createMockStack } from "../factories/stack-factories.js";
 
 /** Shorthand alias for createMockSkillAssignment */
 const sa = (id: SkillId, preloaded = false) => createMockSkillAssignment(id, preloaded);
-
-// ---------------------------------------------------------------------------
-// Stack templates — spread with a unique id per test:
-//   { id: "my-test-stack", ...SINGLE_AGENT_STACK_TEMPLATE }
-// ---------------------------------------------------------------------------
-
-export const SINGLE_AGENT_STACK_TEMPLATE: Omit<Stack, "id"> = {
-  name: "Test Stack",
-  description: "A test stack",
-  agents: { "web-developer": {} } as Stack["agents"],
-};
-
-export const MULTI_AGENT_STACK_TEMPLATE: Omit<Stack, "id"> = {
-  name: "Full Stack",
-  description: "A multi-agent stack",
-  agents: { "web-developer": {}, "api-developer": {}, "web-tester": {} } as Stack["agents"],
-};
 
 // ---------------------------------------------------------------------------
 // Stacks from resolver.test.ts

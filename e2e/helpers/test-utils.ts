@@ -9,13 +9,14 @@ import {
   renderConfigTs,
   renderSkillMd,
 } from "../../src/cli/lib/__tests__/content-generators.js";
+import { writeTestPackageJson } from "../../src/cli/lib/__tests__/helpers/config-io.js";
 import {
   cleanupTempDir,
   createTempDir as createTempDirBase,
   directoryExists,
   fileExists,
 } from "../../src/cli/lib/__tests__/test-fs-utils.js";
-import type { ProjectConfig, SkillId } from "../../src/cli/types/index.js";
+import type { Marketplace, ProjectConfig, SkillId } from "../../src/cli/types/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +59,7 @@ export {
   renderAgentYaml,
   renderConfigTs,
   renderSkillMd,
+  writeTestPackageJson,
 };
 
 /** Write a config.ts file to the .claude-src/ directory of the given base dir. */
@@ -129,6 +131,18 @@ export async function listFiles(dirPath: string): Promise<string[]> {
 
 export async function readTestFile(filePath: string): Promise<string> {
   return readFile(filePath, "utf-8");
+}
+
+/**
+ * Reads and parses a generated marketplace.json file.
+ *
+ * Used by `build marketplace` / `new marketplace` E2E tests to assert on the
+ * generated marketplace contents.
+ */
+export async function readMarketplaceJson(outputPath: string): Promise<Marketplace> {
+  const content = await readFile(outputPath, "utf-8");
+  // Boundary cast: JSON.parse returns `unknown`, caller consumes as Marketplace
+  return JSON.parse(content) as Marketplace;
 }
 
 /**

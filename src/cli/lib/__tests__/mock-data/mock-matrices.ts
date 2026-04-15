@@ -2,11 +2,7 @@
 
 import { groupBy, mapValues } from "remeda";
 
-import {
-  createMockMultiSourceSkill,
-  createMockSkill,
-  testSkillToResolvedSkill,
-} from "../factories/skill-factories.js";
+import { createMockMultiSourceSkill, createMockSkill } from "../factories/skill-factories.js";
 import { createMockCategory } from "../factories/category-factories.js";
 import { createMockMatrix, createMockMatrixConfig } from "../factories/matrix-factories.js";
 import { createMockCompileConfig } from "../factories/plugin-factories.js";
@@ -26,7 +22,6 @@ import {
   MULTI_SOURCE_ACME_SKILLS,
   MULTI_SOURCE_INTERNAL_SKILLS,
   PINIA_CONFLICTS_ZUSTAND,
-  PIPELINE_TEST_SKILLS,
   REACT_CONFLICTS_VUE,
   REACT_LOCAL,
   REACT_RECOMMENDED,
@@ -343,16 +338,6 @@ export const UNRESOLVED_CONFLICT_MATRIX = createMockMatrixConfig(
       ],
     },
   },
-);
-
-// ---------------------------------------------------------------------------
-// Pipeline matrix from wizard-init-compile-pipeline.test.ts
-// ---------------------------------------------------------------------------
-
-export const PIPELINE_MATRIX = createMockMatrix(
-  Object.fromEntries(
-    PIPELINE_TEST_SKILLS.map((skill) => [skill.id, testSkillToResolvedSkill(skill)]),
-  ),
 );
 
 // ---------------------------------------------------------------------------

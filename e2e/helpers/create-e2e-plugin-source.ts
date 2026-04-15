@@ -1,6 +1,6 @@
 import path from "path";
 import { createE2ESource } from "./create-e2e-source.js";
-import { runCLI } from "./test-utils.js";
+import { runCLI, writeTestPackageJson } from "./test-utils.js";
 import type { RelationshipDefinitions } from "../../src/cli/types/index.js";
 
 export type E2EPluginSource = {
@@ -35,10 +35,8 @@ export async function createE2EPluginSource(options?: {
   }
 
   const marketplaceName = options?.marketplaceName ?? `e2e-test-${Date.now()}`;
-  const buildMarketplaceResult = await runCLI(
-    ["build", "marketplace", "--name", marketplaceName],
-    sourceDir,
-  );
+  await writeTestPackageJson(sourceDir, { name: marketplaceName });
+  const buildMarketplaceResult = await runCLI(["build", "marketplace"], sourceDir);
   if (buildMarketplaceResult.exitCode !== 0) {
     throw new Error(
       `build marketplace failed (exit ${buildMarketplaceResult.exitCode}):\n${buildMarketplaceResult.combined}`,

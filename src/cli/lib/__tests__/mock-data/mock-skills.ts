@@ -81,11 +81,6 @@ export const COMPILE_LOCAL_SKILL: TestSkill = createTestSkill(
 
 export const DEFAULT_TEST_SKILLS: TestSkill[] = [reactSkill, zustandSkill, vitestSkill, honoSkill];
 
-export const PIPELINE_TEST_SKILLS: TestSkill[] = [
-  ...DEFAULT_TEST_SKILLS,
-  ...EXTRA_DOMAIN_TEST_SKILLS,
-];
-
 // TestSkill constants from consumer-stacks-matrix.integration.test.ts
 
 export const DOCKER_TOOLING_SKILL: TestSkill = createTestSkill(
