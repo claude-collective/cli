@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.131.0] - 2026-04-15
+
+**Three scaffolding commands gated behind feature flags**
+
+- `new skill`, `new agent`, `new marketplace` now exit non-zero with a disabled message pointing at tracking tasks (D-212, D-213, D-214). Library helpers (`scaffoldSkillFiles` etc.) remain un-gated
+- 5 new tasks logged: D-210 (validate/doctor merge), D-211 (stack reorder), D-212/213/214 (scaffolding lifecycle fixes), R-01 (env-var feature flag override)
+- 10-agent matrix composition investigation produced a 22-item hardening backlog under D-214
+- `skills-matrix.yaml` reference removed from docs — file is legacy, not read anywhere
+
+See [changelogs/0.131.0.md](./changelogs/0.131.0.md) for full details.
+
 ## [0.130.0] - 2026-04-15
 
 **CLI simplification round 3 — 8 more flags pruned, dead helpers removed**
