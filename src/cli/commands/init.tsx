@@ -27,7 +27,7 @@ import {
 } from "../lib/configuration/project-config.js";
 import {
   type InstallMode,
-  detectProjectInstallation,
+  detectInstallation,
   detectGlobalInstallation,
   deriveInstallMode,
   resolveInstallPaths,
@@ -204,7 +204,7 @@ export default class Init extends BaseCommand {
   }
 
   private async showDashboardIfInitialized(projectDir: string): Promise<boolean> {
-    const existingInstallation = await detectProjectInstallation(projectDir);
+    const existingInstallation = await detectInstallation(projectDir);
     if (!existingInstallation) return false;
 
     const selectedCommand = await showDashboard(projectDir, (msg) => this.log(msg));
@@ -302,31 +302,31 @@ export default class Init extends BaseCommand {
   ): Promise<void> {
     const projectDir = process.cwd();
     const activeSkills = result.skills.filter((s) => !s.excluded);
-    let installMode = deriveInstallMode(activeSkills);
+    const installMode = deriveInstallMode(activeSkills);
     const ejectedSkills = activeSkills.filter((s) => s.source === "eject");
     const pluginSkills = activeSkills.filter((s) => s.source !== "eject");
 
     this.logInstallPlan(installMode, ejectedSkills, pluginSkills);
 
-    let copiedSkills = [...ejectedSkills];
+    // Resolve marketplace up front — BEFORE any filesystem mutation. If
+    // resolution fails in mixed mode, the hard-error must fire before
+    // `copyEjectSkillsStep` copies anything to `.claude/skills/`, otherwise
+    // we leave an orphaned half-install with no config.ts to recognise it.
+    const resolvedMarketplace =
+      pluginSkills.length > 0
+        ? await this.requireMarketplace(sourceResult, "install plugin skills")
+        : null;
+
+    const copiedSkills = [...ejectedSkills];
     let pluginModeSucceeded = false;
 
     if (installMode === "eject" || installMode === "mixed") {
       await this.copyEjectSkillsStep(ejectedSkills, projectDir, sourceResult, installMode);
     }
 
-    if (installMode === "plugin" || installMode === "mixed") {
-      const pluginStepResult = await this.installPluginsStep(
-        pluginSkills,
-        sourceResult,
-        projectDir,
-        installMode,
-        copiedSkills,
-        activeSkills,
-      );
-      copiedSkills = pluginStepResult.copiedSkills;
-      installMode = pluginStepResult.installMode;
-      pluginModeSucceeded = pluginStepResult.succeeded;
+    if (resolvedMarketplace !== null) {
+      await this.installPluginsStep(pluginSkills, resolvedMarketplace, projectDir);
+      pluginModeSucceeded = true;
     }
 
     try {
@@ -399,39 +399,11 @@ export default class Init extends BaseCommand {
 
   private async installPluginsStep(
     pluginSkills: WizardResultV2["skills"],
-    sourceResult: SourceLoadResult,
+    marketplace: string,
     projectDir: string,
-    installMode: InstallMode,
-    copiedSkills: WizardResultV2["skills"],
-    allSkills: WizardResultV2["skills"],
-  ): Promise<{
-    copiedSkills: WizardResultV2["skills"];
-    installMode: InstallMode;
-    succeeded: boolean;
-  }> {
-    const mpResult = await ensureMarketplace(sourceResult);
-
-    if (!mpResult.marketplace) {
-      this.warn("Could not resolve marketplace. Falling back to Eject Mode...");
-      // Marketplace unavailable — copy all plugin-intended skills locally as fallback.
-      // In "mixed" mode, ejectedSkills were already copied; only copy plugin-intended skills.
-      // In "plugin" mode, no skills were copied yet; copy all skills.
-      const fallbackSkills = installMode === "mixed" ? pluginSkills : allSkills;
-      const fallbackCopyResult = await copyLocalSkills(fallbackSkills, projectDir, sourceResult);
-      this.log(`Copied ${fallbackCopyResult.totalCopied} skills to .claude/skills/\n`);
-      return {
-        copiedSkills: [...copiedSkills, ...fallbackSkills],
-        installMode: "eject",
-        succeeded: false,
-      };
-    }
-
-    if (mpResult.registered) {
-      this.log(`Registering marketplace "${mpResult.marketplace}"...`);
-    }
-
+  ): Promise<void> {
     this.log("Installing skill plugins...");
-    const pluginResult = await installPluginSkills(pluginSkills, mpResult.marketplace, projectDir);
+    const pluginResult = await installPluginSkills(pluginSkills, marketplace, projectDir);
 
     for (const item of pluginResult.installed) {
       this.log(`  Installed ${item.ref}`);
@@ -441,7 +413,30 @@ export default class Init extends BaseCommand {
     }
 
     this.log(`Installed ${pluginResult.installed.length} skill plugins\n`);
-    return { copiedSkills, installMode, succeeded: true };
+  }
+
+  /**
+   * Lazily resolves the marketplace for plugin operations and hard-errors when
+   * resolution fails. Plugin install intent is inviolable — we never silently
+   * fall back to eject or skip. Call BEFORE any filesystem mutation so that a
+   * failure leaves no partial state on disk.
+   */
+  private async requireMarketplace(
+    sourceResult: SourceLoadResult,
+    purpose: string,
+  ): Promise<string> {
+    const mpResult = await ensureMarketplace(sourceResult);
+    if (!mpResult.marketplace) {
+      this.error(
+        `Cannot ${purpose}: marketplace could not be resolved from source '${sourceResult.sourceConfig.source}'. ` +
+          `Plugin install mode requires a marketplace — fix the source or re-run with all skills in eject mode.`,
+        { exit: EXIT_CODES.ERROR },
+      );
+    }
+    if (mpResult.registered) {
+      this.log(`Registering marketplace "${mpResult.marketplace}"...`);
+    }
+    return mpResult.marketplace;
   }
 
   private async writeConfigAndCompile(

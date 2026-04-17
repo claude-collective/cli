@@ -393,17 +393,27 @@ export default class Edit extends BaseCommand {
       }
     }
 
-    // Handle scope migrations for plugin-mode skills
-    if (context.sourceResult.marketplace && scopeChanges.size > 0) {
-      const pluginScopeResult = await migratePluginSkillScopes(
-        scopeChanges,
-        filteredResult.skills,
-        context.sourceResult.marketplace,
-        cwd,
-      );
-      for (const item of pluginScopeResult.failed) {
-        this.warn(`Failed to migrate plugin scope for ${item.id}: ${item.error}`);
-      }
+    // Plugin scope migrations require a marketplace.
+    // Compute eligible migrations first; only resolve/demand marketplace when there are any.
+    const hasPluginScopeChanges = [...scopeChanges.keys()].some((skillId) => {
+      const skillConfig = filteredResult.skills.find((s) => s.id === skillId);
+      return skillConfig && skillConfig.source !== "eject";
+    });
+    if (!hasPluginScopeChanges) return;
+
+    const marketplace = await this.requireMarketplace(
+      context.sourceResult,
+      "migrate plugin skill scopes",
+    );
+
+    const pluginScopeResult = await migratePluginSkillScopes(
+      scopeChanges,
+      filteredResult.skills,
+      marketplace,
+      cwd,
+    );
+    for (const item of pluginScopeResult.failed) {
+      this.warn(`Failed to migrate plugin scope for ${item.id}: ${item.error}`);
     }
   }
 
@@ -439,42 +449,68 @@ export default class Edit extends BaseCommand {
   ): Promise<void> {
     const { addedSkills, removedSkills } = changes;
 
-    if (context.sourceResult.marketplace) {
-      await ensureMarketplace(context.sourceResult);
+    // Compute plugin-intent lists per-skill (ungated) — per-skill `source` drives install mode.
+    const addedPluginSkills = filteredResult.skills.filter(
+      (s) => addedSkills.includes(s.id) && s.source !== "eject",
+    );
+    const removedPluginSkills = removedSkills.filter(
+      (id) => activeOldSkills.find((s) => s.id === id)?.source !== "eject",
+    );
 
-      const addedPluginSkills = filteredResult.skills.filter(
-        (s) => addedSkills.includes(s.id) && s.source !== "eject",
-      );
-      if (addedPluginSkills.length > 0) {
-        const pluginResult = await installPluginSkills(
-          addedPluginSkills,
-          context.sourceResult.marketplace,
-          cwd,
+    if (addedPluginSkills.length === 0 && removedPluginSkills.length === 0) return;
+
+    const marketplace = await this.requireMarketplace(
+      context.sourceResult,
+      "install or uninstall plugin skills",
+    );
+
+    if (addedPluginSkills.length > 0) {
+      const pluginResult = await installPluginSkills(addedPluginSkills, marketplace, cwd);
+      if (pluginResult.installed.length > 0) {
+        this.log(
+          chalk.hex(CLI_COLORS.NEUTRAL)(`Installed ${pluginResult.installed.length} plugin(s)`),
         );
-        if (pluginResult.installed.length > 0) {
-          this.log(
-            chalk.hex(CLI_COLORS.NEUTRAL)(`Installed ${pluginResult.installed.length} plugin(s)`),
-          );
-        }
-        for (const item of pluginResult.failed) {
-          this.warn(`Failed to install plugin ${item.id}: ${item.error}`);
-        }
       }
-
-      if (removedSkills.length > 0) {
-        const uninstallResult = await uninstallPluginSkills(removedSkills, activeOldSkills, cwd);
-        if (uninstallResult.uninstalled.length > 0) {
-          this.log(
-            chalk.hex(CLI_COLORS.NEUTRAL)(
-              `Removed ${uninstallResult.uninstalled.length} plugin(s)`,
-            ),
-          );
-        }
-        for (const item of uninstallResult.failed) {
-          this.warn(`Failed to uninstall plugin ${item.id}: ${item.error}`);
-        }
+      for (const item of pluginResult.failed) {
+        this.warn(`Failed to install plugin ${item.id}: ${item.error}`);
       }
     }
+
+    if (removedPluginSkills.length > 0) {
+      const uninstallResult = await uninstallPluginSkills(
+        removedPluginSkills,
+        activeOldSkills,
+        cwd,
+      );
+      if (uninstallResult.uninstalled.length > 0) {
+        this.log(
+          chalk.hex(CLI_COLORS.NEUTRAL)(`Removed ${uninstallResult.uninstalled.length} plugin(s)`),
+        );
+      }
+      for (const item of uninstallResult.failed) {
+        this.warn(`Failed to uninstall plugin ${item.id}: ${item.error}`);
+      }
+    }
+  }
+
+  /**
+   * Lazily resolves the marketplace for plugin operations and hard-errors when
+   * resolution fails. Plugin install intent is inviolable — we never silently
+   * fall back to eject or skip.
+   */
+  private async requireMarketplace(
+    sourceResult: SourceLoadResult,
+    purpose: string,
+  ): Promise<string> {
+    const mpResult = await ensureMarketplace(sourceResult);
+    if (!mpResult.marketplace) {
+      this.error(
+        `Cannot ${purpose}: marketplace could not be resolved from source '${sourceResult.sourceConfig.source}'. ` +
+          `Plugin install mode requires a marketplace — fix the source or switch affected skills to eject mode.`,
+        { exit: EXIT_CODES.ERROR },
+      );
+    }
+    return mpResult.marketplace;
   }
 
   private async copyNewLocalSkills(

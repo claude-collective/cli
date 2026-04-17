@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.133.0] - 2026-04-17
+
+**Plugin install pipeline hardening — no silent skips, no partial-state installs**
+
+- `cc init` now resolves the marketplace BEFORE any filesystem mutation in `mixed`/`plugin` install modes. Previously, eject skills were copied before the plugin step ran, leaving orphaned files on disk when marketplace resolution failed
+- `cc edit` plugin skill install/uninstall/scope migration now hard-errors when marketplace can't be resolved, instead of silently no-op'ing. Pure eject edits skip marketplace resolution entirely
+- New `requireMarketplace` helper in both commands; 3 new E2E tests guarding the hard-error and partial-state paths
+- D-218 item (2) resolved; items (1) and (3) remain open
+
+See [changelogs/0.133.0.md](./changelogs/0.133.0.md) for full details.
+
 ## [0.132.0] - 2026-04-15
 
 **Wizard first-frame flash fix + edit-mode escape navigation fix**
