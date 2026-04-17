@@ -92,18 +92,20 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
       ]);
 
       // Full skills shape check
-      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
+      expectSkillConfigs(
+        config,
+        buildSkillConfigs(selectedSkillIds, { scope: "global", source: "agents-inc" }),
+      );
 
-      // Full stack shape: every agent gets every category with all skill assignments
-      // compactStackAssignments strips { id, preloaded: false } to bare strings
-      const expectedCategoryAssignments = {
+      // All selected skills are assigned to every selected agent (no domain filtering).
+      const allAssignments = {
         "api-api": ["api-framework-hono"],
         "web-client-state": ["web-state-zustand"],
         "web-framework": ["web-framework-react"],
         "web-styling": ["web-styling-scss-modules"],
       };
       const expectedStack = Object.fromEntries(
-        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, allAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
     });
@@ -125,22 +127,22 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       assertConfigIntegrity(config, selectedSkillIds);
 
-      // Full skills shape check
-      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
+      expectSkillConfigs(
+        config,
+        buildSkillConfigs(selectedSkillIds, { scope: "global", source: "agents-inc" }),
+      );
 
-      // Full agents shape check
       expectAgentConfigs(config, [
         ...EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
       ]);
 
-      // Full stack shape: every agent gets both categories
-      // compactStackAssignments strips { id, preloaded: false } to bare strings
-      const expectedCategoryAssignments = {
+      // All selected skills are assigned to every selected agent.
+      const allAssignments = {
         "api-api": ["api-framework-hono"],
         "web-framework": ["web-framework-react"],
       };
       const expectedStack = Object.fromEntries(
-        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, allAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
     });
@@ -254,23 +256,23 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-      // Full agents shape check
       expectAgentConfigs(config, [
         ...EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
       ]);
 
-      // Full skills shape check
-      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
+      expectSkillConfigs(
+        config,
+        buildSkillConfigs(selectedSkillIds, { scope: "global", source: "agents-inc" }),
+      );
 
-      // Full stack shape
-      // compactStackAssignments strips { id, preloaded: false } to bare strings
-      const expectedCategoryAssignments = {
+      // All selected skills are assigned to every selected agent (no domain filtering).
+      const allAssignments = {
         "api-api": ["api-framework-hono"],
         "web-client-state": ["web-state-zustand"],
         "web-framework": ["web-framework-react"],
       };
       const expectedStack = Object.fromEntries(
-        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, allAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
 
@@ -337,17 +339,17 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       assertConfigIntegrity(config, selectedSkillIds);
 
-      // Full skills shape check
-      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
+      expectSkillConfigs(
+        config,
+        buildSkillConfigs(selectedSkillIds, { scope: "global", source: "agents-inc" }),
+      );
 
-      // Full agents shape check
       expectAgentConfigs(config, [
         ...EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
       ]);
 
-      // Full stack shape: every agent gets every category
-      // compactStackAssignments strips { id, preloaded: false } to bare strings
-      const expectedCategoryAssignments = {
+      // All selected skills are assigned to every selected agent (no domain filtering).
+      const allAssignments = {
         "api-api": ["api-framework-hono"],
         "api-database": ["api-database-drizzle"],
         "web-client-state": ["web-state-zustand"],
@@ -356,7 +358,7 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
         "web-testing": ["web-testing-vitest"],
       };
       const expectedStack = Object.fromEntries(
-        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, allAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
     });
@@ -381,24 +383,24 @@ describe("end-to-end: wizard store -> handleComplete -> installEject", () => {
 
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-      // Full skills shape check
-      expectSkillConfigs(config, buildSkillConfigs(selectedSkillIds));
+      expectSkillConfigs(
+        config,
+        buildSkillConfigs(selectedSkillIds, { scope: "global", source: "agents-inc" }),
+      );
 
-      // Full agents shape check
       expectAgentConfigs(config, [
         ...EXPECTED_AGENTS.WEB_AND_API.map((name) => ({ name, scope: "global" })),
       ]);
 
-      // Full stack shape: every agent gets every category
-      // compactStackAssignments strips { id, preloaded: false } to bare strings
-      const expectedCategoryAssignments = {
+      // All selected skills are assigned to every selected agent (no domain filtering).
+      const allAssignments = {
         "api-api": ["api-framework-hono"],
         "api-database": ["api-database-drizzle"],
         "web-client-state": ["web-state-zustand"],
         "web-framework": ["web-framework-react"],
       };
       const expectedStack = Object.fromEntries(
-        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, expectedCategoryAssignments]),
+        [...EXPECTED_AGENTS.WEB_AND_API].sort().map((name) => [name, allAssignments]),
       );
       expect(config.stack).toStrictEqual(expectedStack);
     });

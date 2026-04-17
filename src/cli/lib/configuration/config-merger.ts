@@ -2,7 +2,6 @@ import { indexBy } from "remeda";
 
 import type { ProjectConfig } from "../../types";
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
-import { typedEntries } from "../../utils/typed-object";
 import { loadProjectConfig } from "./project-config";
 import { loadProjectSourceConfig } from "./config";
 
@@ -19,8 +18,7 @@ export type MergeResult = {
 /**
  * Pure merge logic: existing values take precedence for identity fields;
  * agents are merged by name (new overrides existing, keeps the rest);
- * skills are merged by ID (new overrides existing, keeps the rest);
- * stack is deep-merged by agent.
+ * skills are merged by ID (new overrides existing, keeps the rest).
  */
 export function mergeConfigs(
   newConfig: ProjectConfig,
@@ -64,12 +62,11 @@ export function mergeConfigs(
     merged.skills = [...updatedExisting, ...addedSkills];
   }
 
-  if (existingConfig.stack) {
-    const mergedStack = { ...merged.stack };
-    for (const [agentId, agentConfig] of typedEntries(existingConfig.stack)) {
-      mergedStack[agentId] = { ...mergedStack[agentId], ...agentConfig };
-    }
-    merged.stack = mergedStack;
+  // Stack is the pure output of the mutator — trust newConfig.stack whenever it
+  // is defined. Only fall back to existingConfig.stack when the new config has
+  // none (preserves existing during non-stack-touching operations).
+  if (newConfig.stack === undefined && existingConfig.stack) {
+    merged.stack = existingConfig.stack;
   }
 
   if (existingConfig.author) {
@@ -87,7 +84,6 @@ export function mergeConfigs(
   return merged;
 }
 
-// Existing values take precedence for identity fields; arrays are unioned; stack is deep-merged
 export async function mergeWithExistingConfig(
   newConfig: ProjectConfig,
   context: MergeContext,

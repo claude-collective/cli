@@ -1,7 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { unique } from "remeda";
+import { isDeepEqual, unique } from "remeda";
 import type {
   AgentConfig,
   AgentDefinition,
@@ -26,6 +26,7 @@ import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "
 import {
   type MergeResult,
   mergeWithExistingConfig,
+  loadProjectConfig,
   loadProjectConfigFromDir,
 } from "../configuration";
 import { loadAllAgents, loadSkillsByIds, type SourceLoadResult } from "../loading";
@@ -166,6 +167,7 @@ async function loadMergedAgents(sourcePath: string): Promise<Record<AgentName, A
 async function buildEjectConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
+  projectDir: string,
 ): Promise<{ config: ProjectConfig; loadedStack: Stack | null }> {
   const skillIds = unique(wizardResult.skills.map((s) => s.id));
   verbose(
@@ -182,68 +184,53 @@ async function buildEjectConfig(
     );
   }
 
+  const existing = await loadProjectConfig(projectDir);
+  // Boundary cast: ProjectConfig.stack types agents as Record<string, StackAgentConfig>
+  // (it comes from parsed TS/JSON); narrow to typed AgentName keys at the load boundary.
+  // The `?? {}` is a first-init fallback when no prior config exists — not a silent
+  // fallback on data that must exist.
+  const existingStack = (existing?.config.stack ?? {}) as Partial<
+    Record<AgentName, StackAgentConfig>
+  >;
+
   let localConfig: ProjectConfig;
 
-  // Pass user's agent selection and skill configs to config generator
+  // Pass user's agent selection and skill configs to config generator.
+  // Both skillConfigs and agentConfigs are always passed when selectedAgents is
+  // set — the config generator enforces that invariant to prevent silent
+  // "project" scope defaults on missing lookups.
   const agentOptions: {
     selectedAgents?: AgentName[];
     skillConfigs: SkillConfig[];
-    agentConfigs?: AgentScopeConfig[];
+    agentConfigs: AgentScopeConfig[];
+    existingStack: Partial<Record<AgentName, StackAgentConfig>>;
   } = {
     skillConfigs: wizardResult.skills,
+    agentConfigs: wizardResult.agentConfigs,
+    existingStack,
     ...(wizardResult.selectedAgents.length > 0 && {
       selectedAgents: wizardResult.selectedAgents,
-    }),
-    ...(wizardResult.agentConfigs.length > 0 && {
-      agentConfigs: wizardResult.agentConfigs,
     }),
   };
 
   if (wizardResult.selectedStackId) {
     if (loadedStack) {
-      localConfig = generateProjectConfigFromSkills(DEFAULT_PLUGIN_NAME, skillIds, agentOptions);
-
-      // Replace the generic "all skills → all agents" stack with per-agent assignments
-      // from the stack definition, filtered to only include user-selected skills and
-      // preserving preloaded flags from the stack YAML.
-      const stackProperty = buildStackProperty(loadedStack);
-      const selectedSkillSet = new Set(skillIds);
-      const filteredStack: Partial<Record<AgentName, StackAgentConfig>> = {};
-      for (const [agentId, agentConfig] of typedEntries(stackProperty)) {
-        if (!agentConfig) continue;
-        const filtered: StackAgentConfig = {};
-        for (const [category, assignments] of typedEntries<Category, SkillAssignment[]>(
-          agentConfig,
-        )) {
-          if (!assignments) continue;
-          const selectedAssignments = assignments.filter((a) => selectedSkillSet.has(a.id));
-          if (selectedAssignments.length > 0) {
-            filtered[category] = selectedAssignments;
-          }
-        }
-        if (typedKeys<Category>(filtered).length > 0) {
-          filteredStack[agentId] = filtered;
-        }
-      }
-      localConfig.stack =
-        Object.keys(filteredStack).length > 0
-          ? (filteredStack as Record<AgentName, StackAgentConfig>)
-          : undefined;
+      // Overlay the YAML stack as `existingStack` so the ownership-based builder
+      // inherits preloaded flags for (agent, category, skill) triples the stack
+      // author marked. Ownership rules still govern which agents and categories
+      // land in the final stack, so Phase A (init) and Phase B (edit) produce
+      // equivalent stacks for the same selection.
+      const yamlStack = buildStackProperty(loadedStack);
+      const mergedExistingStack: Partial<Record<AgentName, StackAgentConfig>> = {
+        ...yamlStack,
+        ...existingStack,
+      };
+      localConfig = generateProjectConfigFromSkills(DEFAULT_PLUGIN_NAME, skillIds, {
+        ...agentOptions,
+        existingStack: mergedExistingStack,
+      });
 
       localConfig.description = loadedStack.description;
-      // Only add stack agents that the user selected (or all if no explicit selection)
-      const stackAgentIds = typedKeys<AgentName>(loadedStack.agents);
-      const existingAgentNames = new Set(localConfig.agents.map((a) => a.name));
-      for (const agentId of stackAgentIds) {
-        if (
-          !existingAgentNames.has(agentId) &&
-          (wizardResult.selectedAgents.length === 0 ||
-            wizardResult.selectedAgents.includes(agentId))
-        ) {
-          localConfig.agents.push({ name: agentId, scope: "project" });
-        }
-      }
-      localConfig.agents.sort((a, b) => a.name.localeCompare(b.name));
     } else {
       throw new Error(
         `Stack '${wizardResult.selectedStackId}' not found in config/stacks.ts. ` +
@@ -299,7 +286,7 @@ export async function buildAndMergeConfig(
   projectDir: string,
   sourceFlag?: string,
 ): Promise<MergeResult> {
-  const { config } = await buildEjectConfig(wizardResult, sourceResult);
+  const { config } = await buildEjectConfig(wizardResult, sourceResult, projectDir);
   verbose(
     `buildAndMergeConfig: before merge — stack=${config.stack ? Object.keys(config.stack).length + " agents" : "UNDEFINED"}`,
   );
@@ -365,10 +352,85 @@ export function buildAgentScopeMap(config: ProjectConfig): Map<AgentName, "proje
 }
 
 /**
+ * Deep-additive stack merge: appends any (agent, category, skill) triple present in
+ * `incoming` but missing in `existing`. Never removes or overwrites existing entries
+ * (including their `preloaded` flags). Returns a fresh stack object — inputs are not
+ * mutated. `changed` is true iff at least one new agent, category, or skill assignment
+ * was appended.
+ */
+function additiveMergeStack(
+  existing: Partial<Record<AgentName, StackAgentConfig>> | undefined,
+  incoming: Partial<Record<AgentName, StackAgentConfig>> | undefined,
+): { stack: Partial<Record<AgentName, StackAgentConfig>>; changed: boolean } {
+  const merged: Partial<Record<AgentName, StackAgentConfig>> = existing
+    ? structuredClone(existing)
+    : {};
+  if (!incoming) return { stack: merged, changed: false };
+
+  let changed = false;
+  for (const [agentName, incomingAgentStack] of typedEntries<AgentName, StackAgentConfig>(
+    incoming,
+  )) {
+    if (!incomingAgentStack) continue;
+
+    const existingAgentStack = merged[agentName];
+    if (!existingAgentStack) {
+      merged[agentName] = structuredClone(incomingAgentStack);
+      changed = true;
+      continue;
+    }
+
+    if (mergeAgentCategories(existingAgentStack, incomingAgentStack)) {
+      changed = true;
+    }
+  }
+
+  return { stack: merged, changed };
+}
+
+/**
+ * Mutates `existingAgentStack` in place by appending any category or skill assignment
+ * from `incomingAgentStack` that is not already present. Returns true if anything was
+ * appended. Caller must pass a cloned `existingAgentStack` — this function is only
+ * called on the merged copy, never on the original input.
+ */
+function mergeAgentCategories(
+  existingAgentStack: StackAgentConfig,
+  incomingAgentStack: StackAgentConfig,
+): boolean {
+  let changed = false;
+  for (const [category, incomingAssignments] of typedEntries<Category, SkillAssignment[]>(
+    incomingAgentStack,
+  )) {
+    if (!incomingAssignments) continue;
+
+    const existingAssignments = existingAgentStack[category];
+    if (!existingAssignments) {
+      existingAgentStack[category] = incomingAssignments.map((a) => ({ ...a }));
+      changed = true;
+      continue;
+    }
+
+    const existingIds = new Set(existingAssignments.map((a) => a.id));
+    for (const assignment of incomingAssignments) {
+      if (!existingIds.has(assignment.id)) {
+        existingAssignments.push({ ...assignment });
+        existingIds.add(assignment.id);
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
+/**
  * Merges new global-scoped items into an existing global config.
  * Adds skills/agents that don't already exist. Never removes existing items.
+ *
+ * Exported for unit testing. See `mergeGlobalConfigs` describe block in
+ * `local-installer.test.ts`.
  */
-function mergeGlobalConfigs(
+export function mergeGlobalConfigs(
   existing: ProjectConfig,
   incoming: ProjectConfig,
 ): { config: ProjectConfig; changed: boolean } {
@@ -383,17 +445,21 @@ function mergeGlobalConfigs(
   const mergedSkills = [...existing.skills, ...newSkills];
   const mergedAgents = [...existing.agents, ...newAgents];
 
-  // Merge stack: preserve existing agent entries, add new ones
-  const mergedStack = { ...existing.stack };
-  let newStackEntries = 0;
-  if (incoming.stack) {
-    for (const [agentName, agentConfig] of Object.entries(incoming.stack)) {
-      if (!mergedStack[agentName as AgentName]) {
-        mergedStack[agentName as AgentName] = agentConfig;
-        newStackEntries++;
-      }
-    }
-  }
+  // Per-agent stack merge policy: deep-additive. Project-context edits must NEVER remove
+  // or overwrite global state; individual projects express their local view via tombstones
+  // in the PROJECT config, not by rewriting the GLOBAL config (see commit 403df46:
+  // "never modify global config from project-level operations").
+  //
+  // Merge rule per triple (agent, category, skill):
+  //   - agent absent in existing    -> add from incoming
+  //   - category absent in existing -> add from incoming
+  //   - skill id absent in existing -> append from incoming
+  //   - everything already present  -> keep existing as-is (including its preloaded flag)
+  // Anything present only in `existing` is left untouched.
+  const { stack: mergedStack, changed: stackChanged } = additiveMergeStack(
+    existing.stack,
+    incoming.stack,
+  );
 
   // Merge domains and selectedAgents (union, no duplicates)
   const mergedDomains = [...new Set([...(existing.domains ?? []), ...(incoming.domains ?? [])])];
@@ -404,9 +470,9 @@ function mergeGlobalConfigs(
   const changed =
     newSkills.length > 0 ||
     newAgents.length > 0 ||
-    newStackEntries > 0 ||
-    mergedDomains.length > (existing.domains ?? []).length ||
-    mergedSelectedAgents.length > (existing.selectedAgents ?? []).length;
+    stackChanged ||
+    !isDeepEqual(existing.domains ?? [], mergedDomains) ||
+    !isDeepEqual(existing.selectedAgents ?? [], mergedSelectedAgents);
 
   return {
     config: {

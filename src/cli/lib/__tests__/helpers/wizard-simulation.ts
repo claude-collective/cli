@@ -85,8 +85,20 @@ export function buildWizardResultFromStore(
 
   const validation = validateSelection(allSkills);
 
+  // Auto-scope skills to match agent scope when every agent is global — this mirrors
+  // a home-dir install where both sides of the stack equation live at global scope.
+  // Without alignment, the stack mutator correctly rejects the scope mismatch and
+  // integration tests that simulate home installs end up with empty stacks.
+  // Tests that verify cross-scope mismatch behavior must pass skills explicitly via
+  // `skillConfigs` rather than relying on this synthesis path.
+  const allAgentsGlobal =
+    store.agentConfigs.length > 0 && store.agentConfigs.every((ac) => ac.scope === "global");
+  const synthesizedSkills = allAgentsGlobal
+    ? buildSkillConfigs(allSkills, { scope: "global", source: "agents-inc" })
+    : buildSkillConfigs(allSkills);
+
   return {
-    skills: store.skillConfigs.length > 0 ? store.skillConfigs : buildSkillConfigs(allSkills),
+    skills: store.skillConfigs.length > 0 ? store.skillConfigs : synthesizedSkills,
     selectedAgents: store.selectedAgents,
     agentConfigs: store.agentConfigs,
     selectedStackId: store.selectedStackId,

@@ -169,7 +169,7 @@ describe("Init Flow Integration: Eject Mode", () => {
     expectConfigSkills(config, SELECTED_SKILLS_ALL);
   });
 
-  it("should assign all skills to all selected agents", async () => {
+  it("assigns all selected skills to every selected agent", async () => {
     const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WEB_API,
@@ -180,14 +180,17 @@ describe("Init Flow Integration: Eject Mode", () => {
 
     const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
-    // Stack property should exist and map agents to skills
     expect(Object.keys(config.stack!).sort()).toStrictEqual([...SELECTED_AGENTS_WEB_API].sort());
 
-    // Every selected agent should have exactly these skill category keys
-    for (const agentId of SELECTED_AGENTS_WEB_API) {
-      const agentStack = config.stack![agentId] as Record<string, unknown>;
-      expect(Object.keys(agentStack).sort()).toStrictEqual(["api-api", "web-framework"]);
-    }
+    // Every agent receives all selected skill categories (no domain filtering).
+    expect(Object.keys(config.stack!["web-developer"]!).sort()).toStrictEqual([
+      "api-api",
+      "web-framework",
+    ]);
+    expect(Object.keys(config.stack!["api-developer"]!).sort()).toStrictEqual([
+      "api-api",
+      "web-framework",
+    ]);
   });
 });
 
@@ -595,7 +598,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
     assertConfigIntegrity(config, SELECTED_SKILLS_REACT_HONO, SELECTED_AGENTS_WITH_REVIEWER);
   });
 
-  it("should assign all skills to all selected agents", async () => {
+  it("assigns all selected skills to every selected agent", async () => {
     const result = await installEject({
       wizardResult: buildWizardResult(buildSkillConfigs(SELECTED_SKILLS_REACT_HONO), {
         selectedAgents: SELECTED_AGENTS_WITH_REVIEWER,
@@ -610,7 +613,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
       [...SELECTED_AGENTS_WITH_REVIEWER].sort(),
     );
 
-    // Every agent should have exactly these skill category keys
+    // Every agent receives all selected skill categories (no domain filtering).
     for (const agentId of SELECTED_AGENTS_WITH_REVIEWER) {
       const agentStack = config.stack![agentId] as Record<string, unknown>;
       expect(Object.keys(agentStack).sort()).toStrictEqual(["api-api", "web-framework"]);

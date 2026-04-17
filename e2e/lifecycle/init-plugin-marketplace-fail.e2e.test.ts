@@ -1,10 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import {
-  cleanupTempDir,
-  ensureBinaryExists,
-} from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
 import { EXIT_CODES, TIMEOUTS } from "../pages/constants.js";
 import "../matchers/setup.js";
 

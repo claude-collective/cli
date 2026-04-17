@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.134.0] - 2026-04-17
+
+**Config-generation correctness overhaul — additive global merge, ownership-based stack builder, hardened invariants**
+
+- `mergeGlobalConfigs` now uses a **deep-additive merge** per `(agent, category, skill)`. Project-context edits never remove or overwrite existing global state — fixes silent data loss where per-agent stack updates were dropped on write
+- `buildAgentStack` rewritten as an ownership-based builder; `generateProjectConfigFromSkills` hardened with hard invariants replacing silent `"project"` scope defaults
+- `matrix-provider.ts::getCategoryDomain` multi-tier fallback removed (CLAUDE.md violation; test fixtures corrected instead)
+- 5 new E2E tests cover stack ownership round-trip + scope toggle correctness; 8 new unit tests cover `mergeGlobalConfigs` additive semantics including input-immutability
+
+See [changelogs/0.134.0.md](./changelogs/0.134.0.md) for full details.
+
 ## [0.133.0] - 2026-04-17
 
 **Plugin install pipeline hardening — no silent skips, no partial-state installs**

@@ -32,10 +32,17 @@ export function buildWizardResult(
   skills: SkillConfig[],
   overrides?: Partial<WizardResultV2>,
 ): WizardResultV2 {
+  const selectedAgents = overrides?.selectedAgents ?? [];
+  // Keep agentConfigs in sync with selectedAgents by default — the production
+  // pipeline (generateProjectConfigFromSkills) requires every selected agent
+  // to have a matching AgentScopeConfig. Callers can override agentConfigs
+  // explicitly to test mismatch behavior.
+  const defaultAgentConfigs =
+    selectedAgents.length > 0 ? buildAgentConfigs([...selectedAgents]) : [];
   return {
     skills,
     selectedAgents: [],
-    agentConfigs: [],
+    agentConfigs: defaultAgentConfigs,
     selectedStackId: null,
     domainSelections: {} as DomainSelections,
     selectedDomains: [],

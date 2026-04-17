@@ -209,13 +209,13 @@ describe("config-merger", () => {
       });
     });
 
-    describe("deep merge of stack", () => {
+    describe("stack merge — new wins (mutator output is authoritative)", () => {
       /** Shorthand: creates a SkillAssignment[] from an id */
       function sa(id: string): SkillAssignment[] {
         return [{ id: id as SkillId, preloaded: false }];
       }
 
-      it("should deep merge stack with existing agent configs taking precedence", async () => {
+      it("should replace existing stack with new stack (mutator folds existing in)", async () => {
         await writeFullConfig(
           buildProjectConfig({
             name: "project",
@@ -245,18 +245,15 @@ describe("config-merger", () => {
         });
 
         expect(result.merged).toBe(true);
-        // Existing values take precedence (framework, styling kept)
-        // New values added where not existing (client-state added)
         expect(result.config.stack).toStrictEqual({
           "web-developer": {
-            "web-framework": sa("web-framework-react-existing"),
-            "web-styling": sa("web-styling-scss-existing"),
+            "web-framework": sa("web-framework-react-new"),
             "web-client-state": sa("web-state-zustand-new"),
           },
         });
       });
 
-      it("should add new agents to stack from new config", async () => {
+      it("should replace existing stack agents with new stack agents", async () => {
         await writeFullConfig(
           buildProjectConfig({
             name: "project",
@@ -290,10 +287,10 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         expect(result.config.stack).toStrictEqual({
           "web-developer": {
-            "web-framework": sa("web-framework-react"), // existing takes precedence
+            "web-framework": sa("web-framework-vue"),
           },
           "api-developer": {
-            "api-api": sa("api-framework-hono"), // new agent added
+            "api-api": sa("api-framework-hono"),
           },
         });
       });
@@ -667,8 +664,8 @@ describe("config-merger", () => {
       });
     });
 
-    describe("stack — deep-merged by agent", () => {
-      it("should deep merge stack with existing agent configs taking precedence", () => {
+    describe("stack — new wins (mutator output is authoritative)", () => {
+      it("should replace existing stack entirely when new stack is defined", () => {
         const newConfig = buildProjectConfig({
           name: "project",
           skills: [],
@@ -698,15 +695,14 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              "web-framework": sa("web-framework-react-existing"),
-              "web-styling": sa("web-styling-scss-existing"),
+              "web-framework": sa("web-framework-react-new"),
               "web-client-state": sa("web-state-zustand-new"),
             },
           },
         });
       });
 
-      it("should add new agents to stack from new config", () => {
+      it("should replace existing stack agents with new stack agents", () => {
         const newConfig = buildProjectConfig({
           name: "project",
           skills: [],
@@ -726,7 +722,7 @@ describe("config-merger", () => {
         const result = mergeConfigs(newConfig, existingConfig);
 
         expect(result.stack).toStrictEqual({
-          "web-developer": { "web-framework": sa("web-framework-react") },
+          "web-developer": { "web-framework": sa("web-framework-vue") },
           "api-developer": { "api-api": sa("api-framework-hono") },
         });
       });
@@ -746,6 +742,40 @@ describe("config-merger", () => {
         expect(result.stack).toStrictEqual({
           "web-developer": { "web-framework": sa("web-framework-react") },
         });
+      });
+
+      it("should preserve existing stack when new config has no stack at all", () => {
+        const newConfig = buildProjectConfig({ name: "project", skills: [] });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          skills: [],
+          stack: {
+            "web-developer": { "web-framework": sa("web-framework-react") },
+          },
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        expect(result.stack).toStrictEqual({
+          "web-developer": { "web-framework": sa("web-framework-react") },
+        });
+      });
+
+      it("should use new config empty stack {} (not preserve existing)", () => {
+        // An empty stack on newConfig is a deliberate mutator output (no agents survived),
+        // distinct from `undefined` (stack-untouching op). Merge must trust `{}`.
+        const newConfig = buildProjectConfig({ name: "project", skills: [], stack: {} });
+        const existingConfig = buildProjectConfig({
+          name: "project",
+          skills: [],
+          stack: {
+            "web-developer": { "web-framework": sa("web-framework-react") },
+          },
+        });
+
+        const result = mergeConfigs(newConfig, existingConfig);
+
+        expect(result.stack).toStrictEqual({});
       });
     });
 

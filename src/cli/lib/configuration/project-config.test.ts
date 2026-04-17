@@ -9,6 +9,7 @@ import { initializeMatrix } from "../matrix/matrix-provider";
 import { createTempDir, cleanupTempDir } from "../__tests__/test-fs-utils";
 import { writeTestTsConfig } from "../__tests__/helpers/config-io.js";
 import { buildProjectConfig, buildAgentConfigs } from "../__tests__/factories/config-factories.js";
+import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation.js";
 import { SINGLE_REACT_MATRIX, WEB_PAIR_MATRIX } from "../__tests__/mock-data/mock-matrices";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 import { EXPECTED_SKILLS } from "../__tests__/expected-values";
@@ -221,7 +222,11 @@ describe("round-trip tests", () => {
     const generated = generateProjectConfigFromSkills(
       "test-project",
       [...EXPECTED_SKILLS.WEB_DEFAULT],
-      { selectedAgents },
+      {
+        selectedAgents,
+        skillConfigs: buildSkillConfigs([...EXPECTED_SKILLS.WEB_DEFAULT]),
+        agentConfigs: buildAgentConfigs(selectedAgents),
+      },
     );
 
     // Write to temp dir as config
@@ -252,6 +257,8 @@ describe("round-trip tests", () => {
         description: "An awesome project for testing",
         author: "@testuser",
         selectedAgents,
+        skillConfigs: buildSkillConfigs(["web-framework-react"]),
+        agentConfigs: buildAgentConfigs(selectedAgents),
       },
     );
 

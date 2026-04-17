@@ -9,6 +9,7 @@ import {
   buildEjectSkillsMap,
   buildCompileAgents,
   buildAgentScopeMap,
+  mergeGlobalConfigs,
   setConfigMetadata,
   deregisterProjectPath,
   propagateGlobalChangesToProjects,
@@ -30,7 +31,11 @@ import { buildSkillConfigs } from "../__tests__/helpers/wizard-simulation";
 import { readTestTsConfig } from "../__tests__/helpers/config-io";
 import { expectInstallResult } from "../__tests__/assertions/index.js";
 import { SKILLS } from "../__tests__/test-fixtures";
-import { EMPTY_MATRIX, SINGLE_REACT_MATRIX } from "../__tests__/mock-data/mock-matrices";
+import {
+  EMPTY_MATRIX,
+  FULLSTACK_PAIR_MATRIX,
+  SINGLE_REACT_MATRIX,
+} from "../__tests__/mock-data/mock-matrices";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
@@ -469,15 +474,25 @@ describe("local-installer", () => {
     });
 
     it("should preserve preloaded flags from stack skill assignments", async () => {
-      const mockLoadStackById = vi.mocked((await import("../stacks/stacks-loader")).loadStackById);
+      // Stack-picked init seeds `existingStack` from `buildStackProperty(loadedStack)`.
+      // The real `generateProjectConfigFromSkills` then inherits preloaded flags via
+      // `wasPreviouslyPreloaded` for every (agent, category, skill) triple the stack
+      // author marked. Exercise the real seam end-to-end — no config-generator mocks.
+      initializeMatrix(FULLSTACK_PAIR_MATRIX);
+
+      const configGenerator = await vi.importActual<
+        typeof import("../configuration/config-generator")
+      >("../configuration/config-generator");
       const mockGenerateConfig = vi.mocked(
         (await import("../configuration/config-generator")).generateProjectConfigFromSkills,
       );
       const mockBuildStackProperty = vi.mocked(
         (await import("../configuration/config-generator")).buildStackProperty,
       );
+      mockGenerateConfig.mockImplementationOnce(configGenerator.generateProjectConfigFromSkills);
+      mockBuildStackProperty.mockImplementationOnce(configGenerator.buildStackProperty);
 
-      // Stack defines a skill with preloaded: true
+      const mockLoadStackById = vi.mocked((await import("../stacks/stacks-loader")).loadStackById);
       mockLoadStackById.mockResolvedValueOnce({
         id: "test-stack",
         name: "Test Stack",
@@ -489,31 +504,13 @@ describe("local-installer", () => {
         },
       });
 
-      // generateProjectConfigFromSkills hardcodes preloaded: false (the bug)
-      mockGenerateConfig.mockReturnValueOnce(
-        buildProjectConfig({
-          name: "agents-inc",
-          skills: buildSkillConfigs(["web-framework-react"]),
-          stack: {
-            "web-developer": {
-              "web-framework": [{ id: "web-framework-react", preloaded: false }],
-            },
-          },
-        }),
-      );
-
-      // buildStackProperty extracts stack data preserving preloaded: true
-      mockBuildStackProperty.mockReturnValueOnce({
-        "web-developer": {
-          "web-framework": [{ id: "web-framework-react", preloaded: true }],
-        },
-      });
-
-      const matrix = EMPTY_MATRIX;
+      const selectedAgents: AgentName[] = ["web-developer"];
       const wizardResult = buildWizardResult(buildSkillConfigs(["web-framework-react"]), {
         selectedStackId: "test-stack",
+        selectedAgents,
+        agentConfigs: buildAgentConfigs(selectedAgents),
       });
-      const sourceResult = buildSourceResult(matrix, tempDir);
+      const sourceResult = buildSourceResult(FULLSTACK_PAIR_MATRIX, tempDir);
 
       const result = await installEject({
         wizardResult,
@@ -521,17 +518,79 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      // Verify preloaded: true survived into the final config
+      // Preloaded: true from the stack YAML must round-trip into the final config stack
       expect(result.config.stack?.["web-developer"]?.["web-framework"]).toStrictEqual([
         { id: "web-framework-react", preloaded: true },
       ]);
 
-      // Also verify it's written correctly to the config file
+      // And it must be persisted to disk identically
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsedConfig = await readTestTsConfig<ProjectConfig>(configPath);
-      // Inlined path preserves SkillAssignment[] arrays with preloaded objects
       const parsedWebDev = parsedConfig.stack?.["web-developer"] as Record<string, unknown>;
       expect(parsedWebDev?.["web-framework"]).toStrictEqual([
+        { id: "web-framework-react", preloaded: true },
+      ]);
+    });
+
+    it("stack-picked init filters unselected agents out of the stack", async () => {
+      // When the wizard picks a stack but the user deselects some of its agents,
+      // the final config.stack must only contain the selected agents. Ownership-driven
+      // stack construction (in generateProjectConfigFromSkills) drops agents not in
+      // `selectedAgents` even when the stack YAML lists them.
+      initializeMatrix(FULLSTACK_PAIR_MATRIX);
+
+      const configGenerator = await vi.importActual<
+        typeof import("../configuration/config-generator")
+      >("../configuration/config-generator");
+      const mockGenerateConfig = vi.mocked(
+        (await import("../configuration/config-generator")).generateProjectConfigFromSkills,
+      );
+      const mockBuildStackProperty = vi.mocked(
+        (await import("../configuration/config-generator")).buildStackProperty,
+      );
+      mockGenerateConfig.mockImplementationOnce(configGenerator.generateProjectConfigFromSkills);
+      mockBuildStackProperty.mockImplementationOnce(configGenerator.buildStackProperty);
+
+      const mockLoadStackById = vi.mocked((await import("../stacks/stacks-loader")).loadStackById);
+      mockLoadStackById.mockResolvedValueOnce({
+        id: "fullstack",
+        name: "Fullstack",
+        description: "Web + API",
+        agents: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: true }],
+          },
+          "api-developer": {
+            "api-api": [{ id: "api-framework-hono", preloaded: true }],
+          },
+        },
+      });
+
+      // User selected only web-developer; api-developer is intentionally absent.
+      const selectedAgents: AgentName[] = ["web-developer"];
+      const wizardResult = buildWizardResult(
+        buildSkillConfigs(["web-framework-react", "api-framework-hono"]),
+        {
+          selectedStackId: "fullstack",
+          selectedAgents,
+          agentConfigs: buildAgentConfigs(selectedAgents),
+        },
+      );
+      const sourceResult = buildSourceResult(FULLSTACK_PAIR_MATRIX, tempDir);
+
+      const result = await installEject({
+        wizardResult,
+        sourceResult,
+        projectDir: tempDir,
+      });
+
+      // Only web-developer appears in the final stack — api-developer is filtered
+      // because the user did not select it, despite the stack YAML listing it.
+      expect(Object.keys(result.config.stack ?? {})).toStrictEqual(["web-developer"]);
+      expect(result.config.stack?.["api-developer"]).toBeUndefined();
+      // Full content: guards against a silent regression that preserves the key
+      // but drops or mutates the SkillAssignment payload.
+      expect(result.config.stack?.["web-developer"]?.["web-framework"]).toStrictEqual([
         { id: "web-framework-react", preloaded: true },
       ]);
     });
@@ -951,9 +1010,6 @@ describe("local-installer", () => {
         expect(skills.map((s) => s.id)).toContain("web-framework-react");
       });
     });
-
-    // mergeGlobalConfigs is not exported (private function) — excluded filtering in that
-    // function is tested indirectly via writeScopedConfigs integration tests above.
   });
 
   describe("buildAgentScopeMap", () => {
@@ -988,6 +1044,398 @@ describe("local-installer", () => {
 
       expect(result.size).toBe(1);
       expect(result.get("web-developer")).toBe("project");
+    });
+  });
+
+  describe("mergeGlobalConfigs", () => {
+    it("adds new category to existing agent's stack, preserving existing categories", () => {
+      // Scenario: global has web-developer.web-framework. User adds a new global skill in
+      // web-styling owned by web-developer. Incoming carries both categories. Additive merge:
+      // the new category is appended, the existing category is preserved as-is.
+      const existing: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+      const incoming: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"], {
+          scope: "global",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: true }],
+            "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
+          },
+        },
+      });
+
+      const { config, changed } = mergeGlobalConfigs(existing, incoming);
+
+      expect(config.stack?.["web-developer"]).toStrictEqual({
+        // Existing category preserved (preloaded: false kept, NOT overwritten to true)
+        "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        // New category appended from incoming
+        "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
+      });
+      expect(changed).toBe(true);
+    });
+
+    it("preserves existing per-agent stack entry when incoming omits the agent", () => {
+      // Scenario: an agent lives in existing global stack but has moved to project scope,
+      // so splitConfigByScope omits it from incoming.stack. The existing entry must survive.
+      const existing: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer", "api-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+          "api-developer": {
+            "api-framework": [{ id: "api-framework-hono", preloaded: false }],
+          },
+        },
+      });
+      const incoming: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"], {
+          scope: "global",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+            "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
+          },
+          // api-developer intentionally absent (moved to project scope)
+        },
+      });
+
+      const { config } = mergeGlobalConfigs(existing, incoming);
+
+      expect(config.stack?.["api-developer"]).toStrictEqual({
+        "api-framework": [{ id: "api-framework-hono", preloaded: false }],
+      });
+      // Existing entry survives unchanged (not replaced, not merged)
+      expect(config.stack?.["api-developer"]).toStrictEqual(existing.stack?.["api-developer"]);
+      expect(config.stack?.["web-developer"]).toStrictEqual({
+        "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
+      });
+    });
+
+    it("appends new skill under existing category, preserving existing skill", () => {
+      // Additive-per-skill: react stays, vue is appended. Project-context edits cannot
+      // remove vue from global; they'd tombstone it in the project config instead.
+      const sharedSkills = buildSkillConfigs(
+        ["web-framework-react", "web-framework-vue-composition-api"],
+        { scope: "global" },
+      );
+      const existing: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: sharedSkills,
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+      const incoming: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: sharedSkills,
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-vue-composition-api", preloaded: false }],
+          },
+        },
+      });
+
+      const { config, changed } = mergeGlobalConfigs(existing, incoming);
+
+      expect(config.stack?.["web-developer"]).toStrictEqual({
+        "web-framework": [
+          { id: "web-framework-react", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
+      });
+      expect(changed).toBe(true);
+    });
+
+    it("adds skill to new agent while preserving it on existing agent", () => {
+      // Additive across agents: react stays on web-developer AND is added to web-reviewer.
+      // Project-context edits cannot remove web-developer's assignment from global.
+      const sharedSkills = buildSkillConfigs(["web-framework-react"], { scope: "global" });
+      const sharedAgents = buildAgentConfigs(["web-developer", "web-reviewer"], {
+        scope: "global",
+      });
+      const existing: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: sharedSkills,
+        agents: sharedAgents,
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+      const incoming: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: sharedSkills,
+        agents: sharedAgents,
+        stack: {
+          "web-reviewer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+
+      const { config, changed } = mergeGlobalConfigs(existing, incoming);
+
+      expect(config.stack?.["web-developer"]).toStrictEqual({
+        "web-framework": [{ id: "web-framework-react", preloaded: false }],
+      });
+      expect(config.stack?.["web-reviewer"]).toStrictEqual({
+        "web-framework": [{ id: "web-framework-react", preloaded: false }],
+      });
+      expect(changed).toBe(true);
+    });
+
+    it("leaves changed false for a fully identical merge", () => {
+      // Guards against Approach C creep — identical configs must not be flagged dirty.
+      const sharedSkills = buildSkillConfigs(["web-framework-react"], { scope: "global" });
+      const sharedAgents = buildAgentConfigs(["web-developer"], { scope: "global" });
+      const sharedStack: NonNullable<ProjectConfig["stack"]> = {
+        "web-developer": {
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        },
+      };
+      const existing: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: sharedSkills,
+        agents: sharedAgents,
+        stack: sharedStack,
+        domains: ["web"],
+        selectedAgents: ["web-developer"],
+      });
+      const incoming: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: sharedSkills,
+        agents: sharedAgents,
+        stack: sharedStack,
+        domains: ["web"],
+        selectedAgents: ["web-developer"],
+      });
+
+      const { changed } = mergeGlobalConfigs(existing, incoming);
+
+      expect(changed).toBe(false);
+    });
+
+    it("preserves existing skills when incoming omits a skill under an existing category", () => {
+      // Tombstone scenario: existing global has [react, vue]; user tombstones vue in the
+      // PROJECT config so splitConfigByScope emits incoming global with [react] only.
+      // Additive merge must preserve vue on the global side — the project's tombstone is
+      // expressed in the project config, never by rewriting global state.
+      const existing: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react", "web-framework-vue-composition-api"], {
+          scope: "global",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [
+              { id: "web-framework-react", preloaded: false },
+              { id: "web-framework-vue-composition-api", preloaded: false },
+            ],
+          },
+        },
+      });
+      const incoming: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+
+      const { config, changed } = mergeGlobalConfigs(existing, incoming);
+
+      expect(config.stack?.["web-developer"]).toStrictEqual({
+        "web-framework": [
+          { id: "web-framework-react", preloaded: false },
+          { id: "web-framework-vue-composition-api", preloaded: false },
+        ],
+      });
+      expect(changed).toBe(false);
+    });
+
+    it("preserves existing preloaded flag when incoming has different preloaded for same triple", () => {
+      // Additive-only: existing `preloaded: true` is authoritative. Project-context edits
+      // cannot flip a global skill's preloaded flag; the existing entry wins.
+      const existing: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: true }],
+          },
+        },
+      });
+      const incoming: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+
+      const { config, changed } = mergeGlobalConfigs(existing, incoming);
+
+      expect(config.stack?.["web-developer"]).toStrictEqual({
+        "web-framework": [{ id: "web-framework-react", preloaded: true }],
+      });
+      expect(changed).toBe(false);
+    });
+
+    it("preserves existing category when incoming omits it entirely for an existing agent", () => {
+      // Whole-category tombstone: project tombstones every hono skill so incoming global
+      // for web-developer has web-framework only. The api-api category (only in existing)
+      // must survive.
+      const existing: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react", "api-framework-hono"], {
+          scope: "global",
+        }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+            "api-framework": [{ id: "api-framework-hono", preloaded: false }],
+          },
+        },
+      });
+      const incoming: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react"], { scope: "global" }),
+        agents: buildAgentConfigs(["web-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+
+      const { config, changed } = mergeGlobalConfigs(existing, incoming);
+
+      expect(config.stack?.["web-developer"]).toStrictEqual({
+        "web-framework": [{ id: "web-framework-react", preloaded: false }],
+        "api-framework": [{ id: "api-framework-hono", preloaded: false }],
+      });
+      expect(changed).toBe(false);
+    });
+
+    it("does not mutate inputs and returns unaliased stack references", () => {
+      // Rich overlap scenario: exercises every clone path in additiveMergeStack.
+      //   - web-developer / web-framework:  react overlaps (existing wins), vue omitted from
+      //     incoming (existing preserved), preloaded flag dedup path hit.
+      //   - web-developer / web-styling:    existing-only category (untouched by incoming).
+      //   - web-developer / web-testing:    incoming-only new category (append-clone path).
+      //   - api-developer:                  existing-only agent (must survive absence in incoming).
+      //   - web-reviewer:                   incoming-only agent (full structuredClone path).
+      const existing: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(
+          [
+            "web-framework-react",
+            "web-framework-vue-composition-api",
+            "web-styling-scss-modules",
+            "api-framework-hono",
+          ],
+          { scope: "global" },
+        ),
+        agents: buildAgentConfigs(["web-developer", "api-developer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [
+              { id: "web-framework-react", preloaded: false },
+              { id: "web-framework-vue-composition-api", preloaded: true },
+            ],
+            "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
+          },
+          "api-developer": {
+            "api-framework": [{ id: "api-framework-hono", preloaded: false }],
+          },
+        },
+      });
+      const incoming: ProjectConfig = buildProjectConfig({
+        name: "global",
+        skills: buildSkillConfigs(["web-framework-react", "web-testing-vitest"], {
+          scope: "global",
+        }),
+        agents: buildAgentConfigs(["web-developer", "web-reviewer"], { scope: "global" }),
+        stack: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: true }],
+            "web-testing": [{ id: "web-testing-vitest", preloaded: false }],
+          },
+          "web-reviewer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+
+      // Snapshot inputs before the call — deep clone detaches snapshots from live refs.
+      const existingSnapshot = structuredClone(existing);
+      const incomingSnapshot = structuredClone(incoming);
+
+      const { config } = mergeGlobalConfigs(existing, incoming);
+
+      // 1. Structural immutability — neither input's deep structure changed.
+      expect(existing).toStrictEqual(existingSnapshot);
+      expect(incoming).toStrictEqual(incomingSnapshot);
+
+      // 2. Reference non-sharing at the stack level. Mutating the merged output's nested
+      //    array must NOT bleed into `existing`. We use an overlapping (agent, category)
+      //    pair so the merged array was cloned out of `existing.stack` — the exact path
+      //    that a shallow clone would corrupt.
+      const mergedWebFramework = config.stack?.["web-developer"]?.["web-framework"];
+      const existingWebFramework = existing.stack?.["web-developer"]?.["web-framework"];
+      expect(mergedWebFramework).toBeDefined();
+      expect(existingWebFramework).toBeDefined();
+      const existingWebFrameworkLengthBefore = existingWebFramework!.length;
+      const SENTINEL = { id: "web-framework-react" as SkillId, preloaded: true as const };
+      mergedWebFramework!.push(SENTINEL);
+      // Existing array untouched — same length, no sentinel leaked in.
+      expect(existing.stack?.["web-developer"]?.["web-framework"]).toHaveLength(
+        existingWebFrameworkLengthBefore,
+      );
+      expect(existing.stack?.["web-developer"]?.["web-framework"]).not.toContain(SENTINEL);
+      // And the input still matches its pre-call snapshot after the sentinel push to the output.
+      expect(existing).toStrictEqual(existingSnapshot);
+
+      // 3. Reference non-sharing for incoming-only agents — `web-reviewer` was cloned out
+      //    of `incoming.stack`, so mutating the merged entry must not corrupt incoming.
+      const mergedWebReviewer = config.stack?.["web-reviewer"]?.["web-framework"];
+      expect(mergedWebReviewer).toBeDefined();
+      mergedWebReviewer!.push(SENTINEL);
+      expect(incoming).toStrictEqual(incomingSnapshot);
     });
   });
 

@@ -8,6 +8,8 @@ import type {
   StackAgentConfig,
   Category,
 } from "../../types";
+import { indexBy } from "remeda";
+
 import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import { matrix } from "../matrix/matrix-provider";
 import { verbose, warn } from "../../utils/logger";
@@ -29,19 +31,109 @@ function extractCategoryFromPath(categoryPath: CategoryPath): Category | undefin
   return categoryPath;
 }
 
+type StackBuildInputs = {
+  agentList: AgentName[];
+  activeSkillsByCategory: Map<Category, SkillId[]>;
+  skillScope: Map<SkillId, "project" | "global">;
+  agentScope: Map<AgentName, "project" | "global">;
+  existingStack: Partial<Record<AgentName, StackAgentConfig>>;
+};
+
+function wasPreviouslyPreloaded(
+  existingStack: Partial<Record<AgentName, StackAgentConfig>>,
+  agent: AgentName,
+  category: Category,
+  skillId: SkillId,
+): boolean {
+  const prior = existingStack[agent]?.[category]?.find((a) => a.id === skillId);
+  return prior?.preloaded === true;
+}
+
+function getScopeOrThrow<K>(
+  map: Map<K, "project" | "global">,
+  key: K,
+  kind: "skill" | "agent",
+): "project" | "global" {
+  const scope = map.get(key);
+  if (scope === undefined) {
+    throw new Error(
+      `generateProjectConfigFromSkills: ${kind} '${String(key)}' missing from ` +
+        `${kind === "skill" ? "skillConfigs" : "agentConfigs"}. ` +
+        `Caller must pass a ${kind === "skill" ? "SkillConfig" : "AgentScopeConfig"} ` +
+        `for every selected ${kind}.`,
+    );
+  }
+  return scope;
+}
+
+function isScopeCompatible(
+  skillId: SkillId,
+  agent: AgentName,
+  skillScope: Map<SkillId, "project" | "global">,
+  agentScope: Map<AgentName, "project" | "global">,
+): boolean {
+  const sScope = getScopeOrThrow(skillScope, skillId, "skill");
+  const aScope = getScopeOrThrow(agentScope, agent, "agent");
+  // Project skills never reach global agents; global skills reach any agent.
+  if (sScope === "project" && aScope === "global") return false;
+  return true;
+}
+
+function buildAgentStack(agent: AgentName, inputs: StackBuildInputs): StackAgentConfig | undefined {
+  const agentStack: StackAgentConfig = {};
+  for (const [category, skillIds] of inputs.activeSkillsByCategory) {
+    const assignments = skillIds
+      .filter((id) => isScopeCompatible(id, agent, inputs.skillScope, inputs.agentScope))
+      .map<SkillAssignment>((id) => ({
+        id,
+        preloaded: wasPreviouslyPreloaded(inputs.existingStack, agent, category, id),
+      }));
+    if (assignments.length > 0) {
+      agentStack[category] = assignments;
+    }
+  }
+  return typedKeys<Category>(agentStack).length > 0 ? agentStack : undefined;
+}
+
+function buildStackForSelection(
+  inputs: StackBuildInputs,
+): Partial<Record<AgentName, StackAgentConfig>> | undefined {
+  if (inputs.agentList.length === 0 || inputs.activeSkillsByCategory.size === 0) {
+    verbose(
+      `buildStackForSelection: short-circuit (agents=${inputs.agentList.length}, ` +
+        `categories=${inputs.activeSkillsByCategory.size}) — returning undefined`,
+    );
+    return undefined;
+  }
+
+  const result: Partial<Record<AgentName, StackAgentConfig>> = {};
+  for (const agent of inputs.agentList) {
+    const built = buildAgentStack(agent, inputs);
+    if (built) result[agent] = built;
+  }
+  return typedKeys<AgentName>(result).length > 0 ? result : undefined;
+}
+
 /**
- * Generates a ProjectConfig from a list of selected skill IDs by building the
- * stack property (agent -> category -> SkillAssignment[]).
+ * Generates a ProjectConfig from a list of selected skill IDs, rebuilding the
+ * stack property (agent -> category -> SkillAssignment[]) from the current
+ * wizard selection plus any previously-saved stack entries.
  *
- * Every selected skill is assigned to every selected agent. When no agents are
- * provided, the agents list is empty (the wizard always provides selectedAgents
- * via the agents step).
+ * Ownership rules (what lands in each agent's stack):
+ * - agent is selected AND skill is non-excluded AND agent is non-excluded
+ * - scope filter: a project-scoped skill never lands on a global-scoped agent
+ *
+ * Preloaded flags are inherited from `options.existingStack` when the same
+ * (agent, category, skill) triple was present before. New pairs default to
+ * `preloaded: false` — preloaded is author-asserted via stack YAML at init
+ * time and is never auto-set here.
  *
  * @param name - Project name for the config
  * @param selectedSkillIds - Skill IDs selected by the user in the wizard
- * @param options - Optional description, author, selectedAgents, and skillConfigs fields.
- *                  When skillConfigs is provided, it is used directly as `skills` in the config.
- *                  Otherwise, SkillConfig entries are synthesized from selectedSkillIds with defaults.
+ * @param options - Optional description, author, selectedAgents, skillConfigs,
+ *                  agentConfigs, and existingStack fields. When skillConfigs is
+ *                  provided, it is used directly as `skills` in the config;
+ *                  otherwise SkillConfig entries are synthesized with defaults.
  * @returns Complete ProjectConfig ready to be saved to config.ts
  */
 export function generateProjectConfigFromSkills(
@@ -51,9 +143,34 @@ export function generateProjectConfigFromSkills(
     selectedAgents?: AgentName[];
     skillConfigs?: SkillConfig[];
     agentConfigs?: AgentScopeConfig[];
+    existingStack?: Partial<Record<AgentName, StackAgentConfig>>;
   },
 ): ProjectConfig {
   const agentList = options?.selectedAgents ? [...options.selectedAgents].sort() : [];
+
+  // Invariant: when selectedAgents is provided, callers must also supply the
+  // authoritative SkillConfig and AgentScopeConfig entries so scope lookups
+  // never silently default. Enforced here to prevent Bug 1-class regressions
+  // where a missing config silently resolves every scope to "project".
+  if (agentList.length > 0) {
+    if (!options?.skillConfigs) {
+      throw new Error(
+        `generateProjectConfigFromSkills: selectedAgents was passed without skillConfigs. ` +
+          `Callers must pass a SkillConfig for every selected skill.`,
+      );
+    }
+    if (!options.agentConfigs) {
+      throw new Error(
+        `generateProjectConfigFromSkills: selectedAgents was passed without agentConfigs. ` +
+          `Callers must pass an AgentScopeConfig for every selected agent.`,
+      );
+    }
+  }
+
+  // Safe after invariant: when agentList is non-empty these are guaranteed present.
+  // When agentList is empty, no scope/ownership work runs so `[]` is a valid no-op.
+  const skillConfigs = options?.skillConfigs ?? [];
+  const agentConfigs = options?.agentConfigs ?? [];
 
   verbose(
     `generateProjectConfigFromSkills: ${selectedSkillIds.length} skills, ` +
@@ -73,12 +190,21 @@ export function generateProjectConfigFromSkills(
   );
   const skippedCount = looked.length - found.length;
 
+  // Exclude an ID only when every entry for it is excluded. A skill with an
+  // excluded global entry AND an active project entry must NOT be filtered —
+  // the active entry still needs to reach the stack builder.
+  const activeSkillIds = new Set(skillConfigs.filter((s) => !s.excluded).map((s) => s.id));
+  const excludedSkillIds = new Set(
+    skillConfigs.filter((s) => s.excluded && !activeSkillIds.has(s.id)).map((s) => s.id),
+  );
+
   const validSkills = found
     .map(({ skillId, skill }) => ({
       skillId,
       category: extractCategoryFromPath(skill.category),
     }))
-    .filter((entry): entry is typeof entry & { category: Category } => entry.category != null);
+    .filter((entry): entry is typeof entry & { category: Category } => entry.category != null)
+    .filter((entry) => !excludedSkillIds.has(entry.skillId));
 
   verbose(
     `generateProjectConfigFromSkills: ${found.length} found, ${skippedCount} not found, ` +
@@ -94,42 +220,65 @@ export function generateProjectConfigFromSkills(
     );
   }
 
-  // Group skills by category so multiple skills in the same category all survive
-  const grouped = new Map<Category, SkillAssignment[]>();
+  const activeSkillsByCategory = new Map<Category, SkillId[]>();
   for (const { skillId, category } of validSkills) {
-    const arr = grouped.get(category) ?? [];
-    arr.push({ id: skillId, preloaded: false });
-    grouped.set(category, arr);
+    const arr = activeSkillsByCategory.get(category) ?? [];
+    arr.push(skillId);
+    activeSkillsByCategory.set(category, arr);
   }
 
-  const stackProperty =
-    agentList.length > 0 && grouped.size > 0
-      ? Object.fromEntries(
-          agentList.map((agentId) => [
-            agentId,
-            // Structural cast: Object.fromEntries returns Record<string, V>, narrowing to typed keys
-            Object.fromEntries(grouped) as StackAgentConfig,
-          ]),
-        )
-      : undefined;
+  // When a skill has both an excluded and an active entry (excluded global +
+  // active project), the active entry's scope is authoritative. Build the
+  // Map from active entries first so later excluded entries can't overwrite.
+  const skillScope = new Map<SkillId, "project" | "global">();
+  for (const s of skillConfigs) {
+    if (!s.excluded) skillScope.set(s.id, s.scope);
+  }
+  for (const s of skillConfigs) {
+    if (s.excluded && !skillScope.has(s.id)) skillScope.set(s.id, s.scope);
+  }
+  const agentScope = new Map<AgentName, "project" | "global">(
+    agentConfigs.filter((a) => !a.excluded).map((a) => [a.name, a.scope]),
+  );
+
+  const stackProperty = buildStackForSelection({
+    agentList,
+    activeSkillsByCategory,
+    skillScope,
+    agentScope,
+    existingStack: options?.existingStack ?? {},
+  });
 
   const skills: SkillConfig[] =
     options?.skillConfigs ??
     selectedSkillIds.map((id) => ({ id, scope: "project" as const, source: "eject" }));
 
-  const activeAgentConfigs: AgentScopeConfig[] = options?.agentConfigs
-    ? agentList.map((agentName) => {
-        const provided = options.agentConfigs!.find((ac) => ac.name === agentName && !ac.excluded);
-        return provided ?? { name: agentName, scope: "project" as const };
-      })
-    : agentList.map((agentName) => ({ name: agentName, scope: "project" as const }));
+  const providedAgentsByName = options?.agentConfigs
+    ? indexBy(
+        options.agentConfigs.filter((a) => !a.excluded),
+        (a) => a.name,
+      )
+    : {};
+  const activeAgentConfigs: AgentScopeConfig[] = agentList.map((agentName) => {
+    if (options?.agentConfigs) {
+      const provided = providedAgentsByName[agentName];
+      if (!provided) {
+        throw new Error(
+          `generateProjectConfigFromSkills: selected agent '${agentName}' has no ` +
+            `non-excluded AgentScopeConfig in agentConfigs.`,
+        );
+      }
+      return provided;
+    }
+    return { name: agentName, scope: "project" as const };
+  });
   // Excluded agents aren't in selectedAgents but must be preserved in config
-  const excludedAgentConfigs = options?.agentConfigs?.filter((ac) => ac.excluded) ?? [];
-  const agentConfigs: AgentScopeConfig[] = [...activeAgentConfigs, ...excludedAgentConfigs];
+  const excludedAgentConfigs = agentConfigs.filter((ac) => ac.excluded);
+  const finalAgentConfigs: AgentScopeConfig[] = [...activeAgentConfigs, ...excludedAgentConfigs];
 
   return {
     name,
-    agents: agentConfigs,
+    agents: finalAgentConfigs,
     skills,
     ...(stackProperty && { stack: stackProperty }),
     ...(options?.description && { description: options.description }),

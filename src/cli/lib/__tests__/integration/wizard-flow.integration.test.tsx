@@ -895,9 +895,7 @@ describe("Wizard integration", () => {
         ],
       });
 
-      const { lastFrame, unmount } = render(
-        <Wizard onComplete={onComplete} onCancel={onCancel} />,
-      );
+      const { lastFrame, unmount } = render(<Wizard onComplete={onComplete} onCancel={onCancel} />);
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
@@ -928,9 +926,7 @@ describe("Wizard integration", () => {
         installedSkillIds: [],
       });
 
-      const { lastFrame, unmount } = render(
-        <Wizard onComplete={onComplete} onCancel={onCancel} />,
-      );
+      const { lastFrame, unmount } = render(<Wizard onComplete={onComplete} onCancel={onCancel} />);
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
@@ -957,9 +953,7 @@ describe("Wizard integration", () => {
         ],
       });
 
-      const { stdin, unmount } = render(
-        <Wizard onComplete={onComplete} onCancel={onCancel} />,
-      );
+      const { stdin, unmount } = render(<Wizard onComplete={onComplete} onCancel={onCancel} />);
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
@@ -1077,11 +1071,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, unmount } = render(
-        <Wizard
-          onComplete={onComplete}
-          onCancel={onCancel}
-          initialAgents={INITIAL_AGENTS}
-        />,
+        <Wizard onComplete={onComplete} onCancel={onCancel} initialAgents={INITIAL_AGENTS} />,
       );
       cleanup = unmount;
 
