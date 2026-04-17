@@ -7,6 +7,17 @@ Each release has detailed notes in its own file under [`changelogs/`](./changelo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.136.0] - 2026-04-17
+
+**E2E lifecycle coverage expansion + documentation**
+
+- 7 new E2E lifecycle tests covering init → edit → compile round-trips, scope-change re-compile, doctor across dual-scope installs, uninstall-reinit cycle, source switching, and error-guard paths
+- New `.ai-docs/e2e-coverage-gaps.md` systematic audit maps gaps to proposed tests
+- E2E standard adds three Critical Rules: state-change verification, page-object key-press safety, and strict-assertion discipline
+- No production code changes
+
+See [changelogs/0.136.0.md](./changelogs/0.136.0.md) for full details.
+
 ## [0.135.0] - 2026-04-17
 
 **E2E test infrastructure refactor — fixtures, page objects, matchers**

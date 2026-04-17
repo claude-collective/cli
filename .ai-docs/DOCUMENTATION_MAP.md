@@ -1254,10 +1254,10 @@ Validated against source code after significant test infrastructure and command 
 
 **commands.md:**
 
-- Updated `init` flow: documented Dashboard shown when project CLI config exists (`detectProjectInstallation()`)
+- Updated `init` flow: documented Dashboard shown when project CLI config exists (`detectInstallation()`)
 - Added marketplace registration step before plugin installation (`claudePluginMarketplaceExists()` + `claudePluginMarketplaceAdd()`)
 - Added `edit` cwd fix note (commit 093e18b)
-- Updated key dependencies: added `detectProjectInstallation`, `deriveInstallMode`
+- Updated key dependencies: added `detectInstallation`, `deriveInstallMode`
 - Fixed SUCCESS_MESSAGES count: 5 (was 6)
 - Fixed INFO_MESSAGES count: 6 (was 7)
 - Removed DRY_RUN_MESSAGES (object deleted from messages.ts)

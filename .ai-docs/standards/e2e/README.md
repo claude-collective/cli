@@ -144,7 +144,7 @@ All constants live in `e2e/pages/constants.ts`. Tests import from here, never fr
 
 **Files (`FILES`):** `CONFIG_TS`, `CONFIG_TYPES_TS`, `SKILL_MD`, `METADATA_YAML`, `SETTINGS_JSON`, `INSTALLED_PLUGINS_JSON`, `IDENTITY_MD`, `PLAYBOOK_MD`, `PLUGIN_JSON`
 
-**Step text (`STEP_TEXT`):** `STACK`, `DOMAINS`, `DOMAIN_WEB`, `DOMAIN_API`, `DOMAIN_META`, `DOMAIN_MOBILE`, `BUILD`, `BUILD_CATEGORY_COUNT`, `SOURCES`, `AGENTS`, `CONFIRM`, `INIT_SUCCESS`, `EDIT_SUCCESS`, `EDIT_UNCHANGED`, `COMPILE_SUCCESS`, `EJECT_SUCCESS`, `IMPORT_SUCCESS`, `UNINSTALL_SUCCESS`, `LOADING_SKILLS`, `RECOMPILING`, `COMPILING_STACK`, `LOADED`, `LOADED_LOCAL`, `CONFIRM_UPDATE`, `CONFIRM_UNINSTALL`, `SEARCH`, `DASHBOARD`, `FOOTER_SELECT`, `START_FROM_SCRATCH`, `TOGGLE_SELECTION`, `NO_INSTALLATION`, `TOO_NARROW`, `TOO_SHORT`
+**Step text (`STEP_TEXT`):** `STACK`, `DOMAINS`, `DOMAIN_WEB`, `DOMAIN_API`, `DOMAIN_META`, `DOMAIN_MOBILE`, `BUILD`, `BUILD_FOOTER`, `SOURCES`, `AGENTS`, `CONFIRM`, `INIT_SUCCESS`, `EDIT_SUCCESS`, `EDIT_UNCHANGED`, `COMPILE_SUCCESS`, `EJECT_SUCCESS`, `IMPORT_SUCCESS`, `UNINSTALL_SUCCESS`, `LOADING_SKILLS`, `RECOMPILING`, `COMPILING_STACK`, `LOADED`, `LOADED_LOCAL`, `CONFIRM_UPDATE`, `CONFIRM_UNINSTALL`, `SEARCH`, `DASHBOARD`, `FOOTER_SELECT`, `START_FROM_SCRATCH`, `TOGGLE_SELECTION`, `NO_INSTALLATION`, `TOO_NARROW`, `TOO_SHORT`
 
 **Timeouts (`TIMEOUTS`):** `WIZARD_LOAD` (15s), `INSTALL` (30s), `PLUGIN_INSTALL` (60s), `PLUGIN_TEST` (90s = PLUGIN_INSTALL + EXIT_WAIT), `EXIT` (10s), `SESSION_DEFAULT` (10s), `SESSION_DEFAULT_CI` (20s), `EXIT_WAIT` (30s), `SETUP` (60s), `LIFECYCLE` (180s), `EXTENDED_LIFECYCLE` (300s), `INTERACTIVE` (120s)
 
@@ -155,6 +155,16 @@ All constants live in `e2e/pages/constants.ts`. Tests import from here, never fr
 **Source paths (`SOURCE_PATHS`):** `SKILLS_DIR`, `SKILL_CATEGORIES`, `SKILL_RULES`, `STACKS_FILE`, `PLUGIN_MANIFEST_DIR`
 
 These are paths within a skills source directory (not a project directory). Use for tests that assert on source structure.
+
+---
+
+## Critical Rules
+
+**State-change verification.** Any test that completes a wizard flow or runs a command that creates, modifies, or removes files or config entries MUST assert the resulting state of both config AND filesystem. If the operation should NOT change something, snapshot before and assert identical after. Never check only one side.
+
+**Page object key-press rule.** Every step page-object method that sends a key press MUST call `await this.waitForStableRender()` before the press if it's the first interaction after a wizard launch or step transition. React effects fire after render commit — without the wait, the key may arrive before effects run, causing silent no-ops.
+
+**Never broaden assertions.** When a strict assertion fails, investigate why — don't weaken it. If the failure is a fixture limitation, keep the strict assertion as a commented-out `// KNOWN GAP:` with an explanation. If it's a product bug, use `it.fails`.
 
 ---
 

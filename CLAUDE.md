@@ -105,6 +105,9 @@ This file provides behavioral rules and conventions. For codebase reference docu
 - When fixing test data, ALWAYS evaluate the construction pattern too, not just the values
 - ALWAYS read `.ai-docs/standards/e2e/README.md` before writing or modifying E2E tests
 - ALWAYS use `toStrictEqual` (not `toEqual`) for object and array comparisons in assertions
+- ALWAYS verify config AND filesystem after any operation that changes either. If a test completes a wizard flow or runs a command that creates, modifies, or removes files or config entries, assert the resulting state of both. If it should NOT change something, snapshot before and assert identical after. Never check only one side.
+- NEVER broaden an assertion to make a failing test pass — investigate why it fails. If it's a fixture limitation, keep the strict assertion as a commented-out `// KNOWN GAP:` with an explanation. If it's a product bug, mark the test `it.fails`.
+- NEVER add a key-press method to an E2E step page object without calling `waitForStableRender()` first — React effects may not have fired yet, causing handlers to silently no-op
 
 ---
 
