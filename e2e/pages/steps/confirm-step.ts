@@ -35,6 +35,18 @@ export class ConfirmStep extends BaseStep {
     return new WizardResult(this.session, this.projectDir);
   }
 
+  /**
+   * Confirm and wait for the process to exit, without requiring a success
+   * banner. Use for tests that expect the install step to hard-error.
+   * Callers assert on the resulting exit code and output.
+   */
+  async confirmExpectingExit(): Promise<WizardResult> {
+    await this.screen.waitForText(STEP_TEXT.CONFIRM, TIMEOUTS.WIZARD_LOAD);
+    await this.waitForStableRender();
+    await this.pressEnter();
+    return new WizardResult(this.session, this.projectDir);
+  }
+
   /** Go back from confirm step (Escape). */
   async goBack(): Promise<void> {
     await this.pressEscape();

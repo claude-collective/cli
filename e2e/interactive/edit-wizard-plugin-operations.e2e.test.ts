@@ -198,6 +198,11 @@ describe.skipIf(!claudeAvailable)("edit wizard — plugin mode operations", () =
         const rawOutput = result.rawOutput;
         expect(rawOutput).not.toContain("Installed");
         expect(rawOutput).not.toContain("Removed");
+
+        await expect(result.project).toHaveConfig({
+          skillIds: ["web-framework-react"],
+        });
+        await expect(result.project).toHaveCompiledAgent("web-developer");
       },
     );
   });

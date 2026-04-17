@@ -4,7 +4,7 @@ import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
-import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-helpers.js";
+import { createTestEnvironment, setupDualScopeWithEject } from "../fixtures/dual-scope-helpers.js";
 import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
 
 /**
@@ -66,7 +66,7 @@ describe("dual-scope edit lifecycle -- display and locking", () => {
       tempDir = env.tempDir;
       const { fakeHome, projectDir } = env;
 
-      await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+      await setupDualScopeWithEject(sourceDir, sourceTempDir, fakeHome, projectDir);
 
       // Phase C: Edit from project dir -- navigate through without changes
       wizard = await EditWizard.launch({

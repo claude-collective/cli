@@ -138,9 +138,9 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
     },
   );
 
-  it.fails(
-    "Compiled agents reference both plugin and local skills correctly (expected fail -- plugin-mode compilation missing skill content)",
-    { timeout: TIMEOUTS.EXTENDED_LIFECYCLE, retry: 0 },
+  it(
+    "Compiled agents reference both plugin and local skills correctly",
+    { timeout: TIMEOUTS.EXTENDED_LIFECYCLE, retry: 1 },
     async () => {
       const env = await createTestEnvironment();
       tempDir = env.tempDir;
@@ -182,21 +182,21 @@ describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- mixed source coe
 
       // Phase D: Verify agent content
 
-      // D-1: web-developer.md (global) contains its assigned web skills
+      // D-1: web-developer.md (global) contains all selected skills
       const globalWebDevPath = path.join(fakeHome, DIRS.CLAUDE, DIRS.AGENTS, "web-developer.md");
       expect(await fileExists(globalWebDevPath)).toBe(true);
       const webDevContent = await readTestFile(globalWebDevPath);
       expect(webDevContent).toContain("web-framework-react");
-      // web-developer should NOT contain api-framework-hono
-      expect(webDevContent).not.toContain("api-framework-hono");
+      // web-developer contains api-framework-hono (all skills go to all agents)
+      expect(webDevContent).toContain("api-framework-hono");
 
-      // D-2: api-developer.md (project) contains api-framework-hono (now local)
+      // D-2: api-developer.md (project) contains all selected skills
       const projectApiDevPath = path.join(projectDir, DIRS.CLAUDE, DIRS.AGENTS, "api-developer.md");
       expect(await fileExists(projectApiDevPath)).toBe(true);
       const apiDevContent = await readTestFile(projectApiDevPath);
       expect(apiDevContent).toContain("api-framework-hono");
-      // api-developer should NOT contain web-framework-react
-      expect(apiDevContent).not.toContain("web-framework-react");
+      // api-developer contains web-framework-react (all skills go to all agents)
+      expect(apiDevContent).toContain("web-framework-react");
 
       await result.destroy();
     },

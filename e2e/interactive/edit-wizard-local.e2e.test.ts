@@ -1,10 +1,10 @@
 import path from "path";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import { TIMEOUTS, EXIT_CODES } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import "../matchers/setup.js";
 
@@ -65,8 +65,13 @@ describe("edit wizard — eject mode", () => {
         // Select the vitest skill by name
         await wizard.build.selectSkill("vitest");
 
-        // Navigate through remaining steps: build -> sources -> agents -> confirm -> complete
-        const result = await wizard.completeFromBuild();
+        // Navigate through remaining steps with explicit eject source selection
+        const sources = await wizard.build.advanceToSources();
+        await sources.waitForReady();
+        await sources.setAllLocal();
+        const agents = await sources.advance();
+        const confirm = await agents.acceptDefaults("edit");
+        const result = await confirm.confirm();
 
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -79,6 +84,14 @@ describe("edit wizard — eject mode", () => {
         await expect(result.project).toHaveConfig({
           skillIds: ["web-framework-react", "web-testing-vitest"],
           agents: ["web-developer"],
+        });
+
+        // Eject mode: skill must be physically copied to .claude/skills/
+        await expect(result.project).toHaveSkillCopied("web-testing-vitest");
+
+        // Compiled agent should contain the newly added skill
+        await expect(result.project).toHaveCompiledAgentContent("web-developer", {
+          contains: ["web-testing-vitest"],
         });
       },
     );
@@ -114,6 +127,8 @@ describe("edit wizard — eject mode", () => {
 
         // The "Changes:" section should list additions
         expect(rawOutput).toContain("Changes:");
+
+        await expect(result.project).toHaveCompiledAgents();
       },
     );
 
@@ -217,6 +232,13 @@ describe("edit wizard — eject mode", () => {
 
       // The changes summary should list removals
       expect(rawOutput).toContain("Changes:");
+
+      const config = await readTestFile(
+        path.join(result.project.dir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      expect(config).not.toContain('"web-testing-vitest"');
+
+      await expect(result.project).toHaveCompiledAgents();
     });
 
     it(
@@ -274,6 +296,8 @@ describe("edit wizard — eject mode", () => {
           copiedSkills: ["web-framework-react"],
           compiledAgents: [],
         });
+
+        await expect(result.project).toHaveCompiledAgents();
       },
     );
   });

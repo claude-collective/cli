@@ -1,7 +1,7 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { TIMEOUTS, DIRS, FILES, EXIT_CODES } from "../pages/constants.js";
+import { TIMEOUTS, DIRS, FILES, EXIT_CODES, STEP_TEXT } from "../pages/constants.js";
 import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
 import { createGlobalOnlyEnv, type DualScopeEnv } from "../fixtures/dual-scope-helpers.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
@@ -65,7 +65,7 @@ describe("global skill toggle guard from project scope", () => {
 
       // Verify the toast message appeared (selectSkill's internal delay allows render)
       const output = wizard.build.getOutput();
-      expect(output).toContain("Global skills cannot be changed from project scope");
+      expect(output).toContain(STEP_TEXT.GLOBAL_SKILLS_BLOCKED);
 
       // Pass through the rest of the wizard without changes
       const sources = await wizard.build.passThroughAllDomains();
@@ -74,21 +74,22 @@ describe("global skill toggle guard from project scope", () => {
       const result = await confirm.confirm();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      await result.destroy();
 
       // Verify the global config still contains all original skills (unchanged)
       const globalConfigPath = path.join(env.fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const globalConfig = await readTestFile(globalConfigPath);
       expect(globalConfig).toContain("web-framework-react");
+      // Guard against a silent scope flip: the skill must remain global-scoped.
+      expect(globalConfig).toContain('"scope":"global"');
 
       // Verify global skill directories still exist on disk
       await expect({ dir: env.fakeHome }).toHaveLocalSkills(["web-framework-react"]);
 
-      // Verify the project config still references the skill as global (unchanged)
-      const projectConfigPath = path.join(env.projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const projectConfig = await readTestFile(projectConfigPath);
-      expect(projectConfig).toContain('"web-framework-react"');
-      expect(projectConfig).toContain('"scope":"global"');
+      // Guard blocked the toggle: no project config written and wizard reported no-op.
+      await expect({ dir: env.projectDir }).not.toHaveConfig();
+      expect(result.output).toContain(STEP_TEXT.EDIT_UNCHANGED);
+
+      await result.destroy();
     },
   );
 
@@ -114,7 +115,7 @@ describe("global skill toggle guard from project scope", () => {
 
       // Verify the toast message appeared
       const output = wizard.build.getOutput();
-      expect(output).toContain("Global skills cannot be changed from project scope");
+      expect(output).toContain(STEP_TEXT.GLOBAL_SKILLS_BLOCKED);
 
       // Pass through the rest of the wizard without changes
       const sources = await wizard.build.passThroughAllDomains();
@@ -123,7 +124,6 @@ describe("global skill toggle guard from project scope", () => {
       const result = await confirm.confirm();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      await result.destroy();
 
       // Verify the global config still contains zustand (not replaced by pinia)
       const globalConfigPath = path.join(env.fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
@@ -134,10 +134,11 @@ describe("global skill toggle guard from project scope", () => {
       // Verify global skill directories still exist on disk (eject mode)
       await expect({ dir: env.fakeHome }).toHaveLocalSkills(["web-state-zustand"]);
 
-      // Verify the project config doesn't incorrectly add pinia or remove zustand
-      const projectConfigPath = path.join(env.projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const projectConfig = await readTestFile(projectConfigPath);
-      expect(projectConfig).not.toContain("pinia");
+      // Guard blocked the swap: no project config written and wizard reported no-op.
+      await expect({ dir: env.projectDir }).not.toHaveConfig();
+      expect(result.output).toContain(STEP_TEXT.EDIT_UNCHANGED);
+
+      await result.destroy();
     },
   );
 });

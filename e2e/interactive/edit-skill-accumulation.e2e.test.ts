@@ -156,6 +156,11 @@ describe("project config does not accumulate global skills after edit", () => {
       await expect({ dir: tempHOME }).toHaveConfig({
         skillIds: ["web-framework-react"],
       });
+
+      // In this test, the installation is global-only (no project init was run).
+      // Agents are compiled at HOME scope, not project scope.
+      await expect({ dir: tempHOME }).toHaveCompiledAgents();
+      await expect({ dir: tempHOME }).toHaveCompiledAgent("web-developer");
     },
   );
 });

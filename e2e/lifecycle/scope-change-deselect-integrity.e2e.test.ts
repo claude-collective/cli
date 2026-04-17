@@ -7,7 +7,7 @@ import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/tes
 import {
   createGlobalOnlyEnv,
   createTestEnvironment,
-  setupDualScope,
+  setupDualScopeWithEject,
   type DualScopeEnv,
 } from "../fixtures/dual-scope-helpers.js";
 import "../matchers/setup.js";
@@ -58,7 +58,7 @@ describe("scope change deselect integrity", () => {
       // Setup: dual-scope env (global web skills + project hono)
       const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
       testTempDir = tempDir;
-      await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+      await setupDualScopeWithEject(sourceDir, sourceTempDir, fakeHome, projectDir);
 
       // Launch edit wizard from project scope
       wizard = await EditWizard.launch({
@@ -156,6 +156,11 @@ describe("scope change deselect integrity", () => {
       await expect({ dir: env.fakeHome }).toHaveCompiledAgent("web-developer");
       await expect({ dir: env.fakeHome }).toHaveCompiledAgent("api-developer");
 
+      // Global skill files must still exist on disk
+      await expect({ dir: env.fakeHome }).toHaveSkillCopied("web-framework-react");
+      await expect({ dir: env.fakeHome }).toHaveSkillCopied("web-testing-vitest");
+      await expect({ dir: env.fakeHome }).toHaveSkillCopied("web-state-zustand");
+
       await result.destroy();
     },
   );
@@ -167,7 +172,7 @@ describe("scope change deselect integrity", () => {
       // Setup: dual-scope env (global web skills + project hono)
       const { tempDir, fakeHome, projectDir } = await createTestEnvironment();
       testTempDir = tempDir;
-      await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+      await setupDualScopeWithEject(sourceDir, sourceTempDir, fakeHome, projectDir);
 
       // Snapshot global skills before edit
       const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);

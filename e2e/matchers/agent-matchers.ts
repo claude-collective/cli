@@ -46,6 +46,7 @@ export const agentMatchers = {
       model?: string;
       tools?: string[];
       skills?: string[];
+      hasSkills?: boolean;
       noSkills?: boolean;
     },
   ) {
@@ -117,6 +118,16 @@ export const agentMatchers = {
               `Expected agent frontmatter skills to contain "${skill}" but found: ${JSON.stringify(skills)}`,
           };
         }
+      }
+    }
+
+    if (expectations.hasSkills) {
+      const skills = Array.isArray(fm.skills) ? fm.skills : [];
+      if (skills.length === 0) {
+        return {
+          pass: false,
+          message: () => `Expected agent frontmatter to have skills but found none`,
+        };
       }
     }
 

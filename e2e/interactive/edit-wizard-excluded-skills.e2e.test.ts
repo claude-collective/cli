@@ -115,6 +115,8 @@ describe("edit wizard — excluded skills", () => {
       const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const updatedConfig = await readTestFile(configPath);
       expect(updatedConfig).toContain('"excluded":true');
+
+      await expect(result.project).toHaveCompiledAgents();
     },
   );
 
@@ -163,6 +165,8 @@ describe("edit wizard — excluded skills", () => {
       const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const updatedConfig = await readTestFile(configPath);
       expect(updatedConfig).toContain('"excluded":true');
+
+      await expect(result.project).toHaveCompiledAgents();
     },
   );
 
@@ -228,6 +232,8 @@ describe("edit wizard — excluded skills", () => {
       const configPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const updatedConfig = await readTestFile(configPath);
       expect(updatedConfig).toContain('"excluded":true');
+
+      await expect(result.project).toHaveCompiledAgents();
     },
   );
 
@@ -301,6 +307,8 @@ describe("edit wizard — excluded skills", () => {
 
       // The zustand local skill directory must still exist after save
       await expect({ dir: projectDir }).toHaveLocalSkills(["web-state-zustand"]);
+
+      await expect(result.project).toHaveCompiledAgents();
     },
   );
 
@@ -360,6 +368,8 @@ describe("edit wizard — excluded skills", () => {
       // Both scope entries must be present: global (tombstone) and project (active)
       expect(updatedConfig).toContain('"scope":"global"');
       expect(updatedConfig).toContain('"scope":"project"');
+
+      await expect(result.project).toHaveCompiledAgents();
     },
   );
 });

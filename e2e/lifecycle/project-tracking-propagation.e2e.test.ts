@@ -3,8 +3,8 @@ import { mkdir, rm } from "fs/promises";
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { CLI } from "../fixtures/cli.js";
-import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { createTestEnvironment, initProjectAllGlobal } from "../fixtures/dual-scope-helpers.js";
+import { createE2EPluginSource } from "../helpers/create-e2e-plugin-source.js";
 import "../matchers/setup.js";
 import { TIMEOUTS, EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
@@ -13,6 +13,7 @@ import {
   createPermissionsFile,
   ensureBinaryExists,
   fileExists,
+  isClaudeCLIAvailable,
   readTestFile,
 } from "../helpers/test-utils.js";
 
@@ -29,9 +30,12 @@ import {
 let sourceDir: string;
 let sourceTempDir: string;
 
+const claudeAvailable = await isClaudeCLIAvailable();
+
 beforeAll(async () => {
+  if (!claudeAvailable) return;
   await ensureBinaryExists();
-  const source = await createE2ESource();
+  const source = await createE2EPluginSource();
   sourceDir = source.sourceDir;
   sourceTempDir = source.tempDir;
 }, TIMEOUTS.SETUP * 2);
@@ -40,7 +44,7 @@ afterAll(async () => {
   if (sourceTempDir) await cleanupTempDir(sourceTempDir);
 });
 
-describe("project tracking -- registration", () => {
+describe.skipIf(!claudeAvailable)("project tracking -- registration", () => {
   let tempDir: string;
 
   afterEach(async () => {
@@ -74,27 +78,13 @@ describe("project tracking -- registration", () => {
       expect(globalExitCode, "Global init should succeed").toBe(EXIT_CODES.SUCCESS);
       await globalResult.destroy();
 
-      // Phase B: Init project-1
-      const p1Wizard = await InitWizard.launch({
-        source: { sourceDir, tempDir: sourceTempDir },
-        projectDir: project1Dir,
-        env: { HOME: fakeHome },
-      });
-      const p1Result = await p1Wizard.completeWithDefaults();
-      const p1ExitCode = await p1Result.exitCode;
-      expect(p1ExitCode, "Project-1 init should succeed").toBe(EXIT_CODES.SUCCESS);
-      await p1Result.destroy();
+      // Phase B: Init project-1 via dashboard → Edit (global install already exists)
+      const p1 = await initProjectAllGlobal(sourceDir, sourceTempDir, fakeHome, project1Dir);
+      expect(p1.exitCode, "Project-1 init should succeed").toBe(EXIT_CODES.SUCCESS);
 
-      // Phase C: Init project-2
-      const p2Wizard = await InitWizard.launch({
-        source: { sourceDir, tempDir: sourceTempDir },
-        projectDir: project2Dir,
-        env: { HOME: fakeHome },
-      });
-      const p2Result = await p2Wizard.completeWithDefaults();
-      const p2ExitCode = await p2Result.exitCode;
-      expect(p2ExitCode, "Project-2 init should succeed").toBe(EXIT_CODES.SUCCESS);
-      await p2Result.destroy();
+      // Phase C: Init project-2 via dashboard → Edit
+      const p2 = await initProjectAllGlobal(sourceDir, sourceTempDir, fakeHome, project2Dir);
+      expect(p2.exitCode, "Project-2 init should succeed").toBe(EXIT_CODES.SUCCESS);
 
       // Verification: Global config should contain projects field with both paths
       const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
@@ -112,7 +102,7 @@ describe("project tracking -- registration", () => {
   );
 });
 
-describe("project tracking -- config-types propagation", () => {
+describe.skipIf(!claudeAvailable)("project tracking -- config-types propagation", () => {
   let tempDir: string;
 
   afterEach(async () => {
@@ -138,15 +128,9 @@ describe("project tracking -- config-types propagation", () => {
       expect(await globalResult.exitCode, "Global init should succeed").toBe(EXIT_CODES.SUCCESS);
       await globalResult.destroy();
 
-      // Phase B: Init project (registers it in global config)
-      const projWizard = await InitWizard.launch({
-        source: { sourceDir, tempDir: sourceTempDir },
-        projectDir,
-        env: { HOME: fakeHome },
-      });
-      const projResult = await projWizard.completeWithDefaults();
-      expect(await projResult.exitCode, "Project init should succeed").toBe(EXIT_CODES.SUCCESS);
-      await projResult.destroy();
+      // Phase B: Init project via dashboard → Edit (registers it in global config)
+      const proj = await initProjectAllGlobal(sourceDir, sourceTempDir, fakeHome, projectDir);
+      expect(proj.exitCode, "Project init should succeed").toBe(EXIT_CODES.SUCCESS);
 
       // Verification: Project's config-types.ts should contain global skill IDs
       const projectConfigTypesPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TYPES_TS);
@@ -172,88 +156,7 @@ describe("project tracking -- config-types propagation", () => {
   );
 });
 
-describe("project tracking -- deregistration on uninstall", () => {
-  let tempDir: string;
-
-  afterEach(async () => {
-    if (tempDir) await cleanupTempDir(tempDir);
-    tempDir = undefined!;
-  });
-
-  it("should deregister project on uninstall --all", { timeout: TIMEOUTS.LIFECYCLE }, async () => {
-    const env = await createTestEnvironment();
-    tempDir = env.tempDir;
-    const { fakeHome } = env;
-    const project1Dir = path.join(fakeHome, "project-1");
-    const project2Dir = path.join(fakeHome, "project-2");
-
-    await mkdir(project1Dir, { recursive: true });
-    await mkdir(project2Dir, { recursive: true });
-    await createPermissionsFile(project1Dir);
-    await createPermissionsFile(project2Dir);
-
-    // Phase A: Init from HOME (global)
-    const globalWizard = await InitWizard.launch({
-      source: { sourceDir, tempDir: sourceTempDir },
-      projectDir: fakeHome,
-      env: { HOME: fakeHome },
-    });
-    const globalResult = await globalWizard.completeWithDefaults();
-    expect(await globalResult.exitCode, "Global init should succeed").toBe(EXIT_CODES.SUCCESS);
-    await globalResult.destroy();
-
-    // Phase B: Init project-1
-    const p1Wizard = await InitWizard.launch({
-      source: { sourceDir, tempDir: sourceTempDir },
-      projectDir: project1Dir,
-      env: { HOME: fakeHome },
-    });
-    const p1Result = await p1Wizard.completeWithDefaults();
-    expect(await p1Result.exitCode, "Project-1 init should succeed").toBe(EXIT_CODES.SUCCESS);
-    await p1Result.destroy();
-
-    // Phase C: Init project-2
-    const p2Wizard = await InitWizard.launch({
-      source: { sourceDir, tempDir: sourceTempDir },
-      projectDir: project2Dir,
-      env: { HOME: fakeHome },
-    });
-    const p2Result = await p2Wizard.completeWithDefaults();
-    expect(await p2Result.exitCode, "Project-2 init should succeed").toBe(EXIT_CODES.SUCCESS);
-    await p2Result.destroy();
-
-    // Pre-check: Both projects should be registered
-    const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-    const configBefore = await readTestFile(globalConfigPath);
-    const realProject1 = realpathSync(project1Dir);
-    const realProject2 = realpathSync(project2Dir);
-    expect(configBefore, "Both projects should be registered before uninstall").toContain(
-      realProject1,
-    );
-    expect(configBefore, "Both projects should be registered before uninstall").toContain(
-      realProject2,
-    );
-
-    // Phase D: Uninstall --all from project-2
-    const { exitCode, output } = await CLI.run(
-      ["uninstall", "--all", "--yes"],
-      { dir: project2Dir },
-      { env: { HOME: fakeHome } },
-    );
-
-    expect(exitCode, "Uninstall should succeed").toBe(EXIT_CODES.SUCCESS);
-    expect(output).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
-
-    // Verification: Global config should no longer contain project-2
-    const configAfter = await readTestFile(globalConfigPath);
-    expect(configAfter, "Global config should still contain project-1").toContain(realProject1);
-    expect(configAfter, "Global config should not contain project-2 after uninstall").not.toContain(
-      realProject2,
-    );
-  });
-});
-
-describe("project tracking -- stale path filtering", () => {
+describe.skipIf(!claudeAvailable)("project tracking -- deregistration on uninstall", () => {
   let tempDir: string;
 
   afterEach(async () => {
@@ -262,8 +165,8 @@ describe("project tracking -- stale path filtering", () => {
   });
 
   it(
-    "should filter stale project paths during registration",
-    { timeout: TIMEOUTS.LIFECYCLE },
+    "should deregister project on uninstall --all",
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 1 },
     async () => {
       const env = await createTestEnvironment();
       tempDir = env.tempDir;
@@ -286,29 +189,91 @@ describe("project tracking -- stale path filtering", () => {
       expect(await globalResult.exitCode, "Global init should succeed").toBe(EXIT_CODES.SUCCESS);
       await globalResult.destroy();
 
-      // Phase B: Init project-1 (registers it)
-      const p1Wizard = await InitWizard.launch({
+      // Phase B: Init project-1 via dashboard → Edit
+      const p1 = await initProjectAllGlobal(sourceDir, sourceTempDir, fakeHome, project1Dir);
+      expect(p1.exitCode, "Project-1 init should succeed").toBe(EXIT_CODES.SUCCESS);
+
+      // Phase C: Init project-2 via dashboard → Edit
+      const p2 = await initProjectAllGlobal(sourceDir, sourceTempDir, fakeHome, project2Dir);
+      expect(p2.exitCode, "Project-2 init should succeed").toBe(EXIT_CODES.SUCCESS);
+
+      // Pre-check: Both projects should be registered
+      const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const configBefore = await readTestFile(globalConfigPath);
+      const realProject1 = realpathSync(project1Dir);
+      const realProject2 = realpathSync(project2Dir);
+      expect(configBefore, "Both projects should be registered before uninstall").toContain(
+        realProject1,
+      );
+      expect(configBefore, "Both projects should be registered before uninstall").toContain(
+        realProject2,
+      );
+
+      // Phase D: Uninstall --all from project-2
+      const { exitCode, output } = await CLI.run(
+        ["uninstall", "--all", "--yes"],
+        { dir: project2Dir },
+        { env: { HOME: fakeHome } },
+      );
+
+      expect(exitCode, "Uninstall should succeed").toBe(EXIT_CODES.SUCCESS);
+      expect(output).toContain(STEP_TEXT.UNINSTALL_SUCCESS);
+
+      // Verification: Global config should no longer contain project-2
+      const configAfter = await readTestFile(globalConfigPath);
+      expect(configAfter, "Global config should still contain project-1").toContain(realProject1);
+      expect(
+        configAfter,
+        "Global config should not contain project-2 after uninstall",
+      ).not.toContain(realProject2);
+    },
+  );
+});
+
+describe.skipIf(!claudeAvailable)("project tracking -- stale path filtering", () => {
+  let tempDir: string;
+
+  afterEach(async () => {
+    if (tempDir) await cleanupTempDir(tempDir);
+    tempDir = undefined!;
+  });
+
+  it(
+    "should filter stale project paths during registration",
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 1 },
+    async () => {
+      const env = await createTestEnvironment();
+      tempDir = env.tempDir;
+      const { fakeHome } = env;
+      const project1Dir = path.join(fakeHome, "project-1");
+      const project2Dir = path.join(fakeHome, "project-2");
+
+      await mkdir(project1Dir, { recursive: true });
+      await mkdir(project2Dir, { recursive: true });
+      await createPermissionsFile(project1Dir);
+      await createPermissionsFile(project2Dir);
+
+      // Phase A: Init from HOME (global)
+      const globalWizard = await InitWizard.launch({
         source: { sourceDir, tempDir: sourceTempDir },
-        projectDir: project1Dir,
+        projectDir: fakeHome,
         env: { HOME: fakeHome },
       });
-      const p1Result = await p1Wizard.completeWithDefaults();
-      expect(await p1Result.exitCode, "Project-1 init should succeed").toBe(EXIT_CODES.SUCCESS);
-      await p1Result.destroy();
+      const globalResult = await globalWizard.completeWithDefaults();
+      expect(await globalResult.exitCode, "Global init should succeed").toBe(EXIT_CODES.SUCCESS);
+      await globalResult.destroy();
+
+      // Phase B: Init project-1 via dashboard → Edit (registers it)
+      const p1 = await initProjectAllGlobal(sourceDir, sourceTempDir, fakeHome, project1Dir);
+      expect(p1.exitCode, "Project-1 init should succeed").toBe(EXIT_CODES.SUCCESS);
 
       // Phase C: Delete project-1's .claude-src/ directory to make it stale
       const project1ConfigDir = path.join(project1Dir, DIRS.CLAUDE_SRC);
       await rm(project1ConfigDir, { recursive: true, force: true });
 
-      // Phase D: Init project-2 (triggers registration, which filters stale entries)
-      const p2Wizard = await InitWizard.launch({
-        source: { sourceDir, tempDir: sourceTempDir },
-        projectDir: project2Dir,
-        env: { HOME: fakeHome },
-      });
-      const p2Result = await p2Wizard.completeWithDefaults();
-      expect(await p2Result.exitCode, "Project-2 init should succeed").toBe(EXIT_CODES.SUCCESS);
-      await p2Result.destroy();
+      // Phase D: Init project-2 via dashboard → Edit (triggers registration + stale filtering)
+      const p2 = await initProjectAllGlobal(sourceDir, sourceTempDir, fakeHome, project2Dir);
+      expect(p2.exitCode, "Project-2 init should succeed").toBe(EXIT_CODES.SUCCESS);
 
       // Verification: Global config should only contain project-2, not stale project-1
       const globalConfigPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);

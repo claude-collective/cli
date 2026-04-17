@@ -2,8 +2,11 @@ import { mkdir } from "fs/promises";
 import path from "path";
 import { expect } from "vitest";
 import { cleanupTempDir, createPermissionsFile, createTempDir } from "../helpers/test-utils.js";
-import { EXIT_CODES } from "../pages/constants.js";
+import { EXIT_CODES, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
+import type { DashboardSession } from "../pages/dashboard-session.js";
+import type { ConfirmStep } from "../pages/steps/confirm-step.js";
+import type { WizardResult } from "../pages/wizard-result.js";
 
 export type DualScopeEnv = {
   fakeHome: string;
@@ -76,8 +79,15 @@ export async function initGlobal(
 }
 
 /**
- * Runs Phase B: Init from project directory.
- * Toggles api-framework-hono skill and api-developer agent to project scope.
+ * Runs Phase B: Init from project directory when an install already exists.
+ *
+ * Since a global install exists from Phase A, `cc init` shows the dashboard
+ * (Edit / Compile / Doctor / List) instead of the setup wizard. This helper
+ * drives the dashboard exactly like a real user: wait for the menu → press
+ * Enter on the default "Edit" option → drive the edit wizard.
+ *
+ * Toggles api-framework-hono skill and api-developer agent to project scope
+ * via the edit wizard to produce the same end state as a fresh install would.
  */
 export async function initProject(
   sourceDir: string,
@@ -86,16 +96,17 @@ export async function initProject(
   projectDir: string,
   options?: { setLocal?: boolean },
 ): Promise<{ exitCode: number; output: string }> {
-  const wizard = await InitWizard.launch({
-    source: { sourceDir, tempDir: sourceTempDir },
+  const dashboard = await InitWizard.launchForDashboard({
     projectDir,
+    source: { sourceDir, tempDir: sourceTempDir },
     env: { HOME: homeDir },
   });
 
   try {
-    // Stack -> Domain -> Build
-    const domain = await wizard.stack.selectFirstStack();
-    const build = await domain.acceptDefaults();
+    await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_TRANSITION);
+
+    // "Edit" is the first (default) dashboard option — press Enter to launch it.
+    const build = await dashboard.selectEdit();
 
     // Web domain (pass through, all skills stay global)
     await build.advanceDomain();
@@ -116,18 +127,33 @@ export async function initProject(
     // Agents step -- navigate to api-developer and toggle to project scope
     await agents.navigateCursorToAgent("API Developer");
     await agents.toggleScopeOnFocusedAgent();
-    const confirm = await agents.advance("init");
+    const confirm = await agents.advance("edit");
 
     // Confirm step
-    const result = await confirm.confirm();
-    const exitCode = await result.exitCode;
-    const output = result.rawOutput;
-    await result.destroy();
-    return { exitCode, output };
+    return await finalizeEdit(confirm, dashboard);
   } catch (e) {
-    await wizard.destroy();
+    await dashboard.destroy();
     throw e;
   }
+}
+
+/**
+ * Confirm the edit wizard and return the exit code + raw output.
+ * Shared by initProject() and initProjectAllGlobal(): both flows end with a
+ * confirm step followed by session exit and cleanup of the dashboard session.
+ */
+async function finalizeEdit(
+  confirm: ConfirmStep,
+  dashboard: DashboardSession,
+): Promise<{ exitCode: number; output: string }> {
+  const result: WizardResult = await confirm.confirm();
+  const exitCode = await result.exitCode;
+  const output = result.rawOutput;
+  await result.destroy();
+  // result.destroy() destroys the underlying session; dashboard shares it, so
+  // we only clean up the dashboard's cleanupDirs.
+  await dashboard.destroy();
+  return { exitCode, output };
 }
 
 /**
@@ -219,8 +245,11 @@ export async function createDualScopeEnv(
 }
 
 /**
- * Runs init in project directory with eject mode, but without toggling
- * any skills to project scope. All skills remain global-scoped.
+ * Runs init in project directory when an install already exists, but without
+ * toggling any skills/agents to project scope. All skills remain global-scoped.
+ *
+ * Same dashboard → Edit flow as initProject(), but the edit wizard is just
+ * passed through without scope changes. Sources are set to local.
  */
 export async function initProjectAllGlobal(
   sourceDir: string,
@@ -228,29 +257,29 @@ export async function initProjectAllGlobal(
   homeDir: string,
   projectDir: string,
 ): Promise<{ exitCode: number; output: string }> {
-  const wizard = await InitWizard.launch({
-    source: { sourceDir, tempDir: sourceTempDir },
+  const dashboard = await InitWizard.launchForDashboard({
     projectDir,
+    source: { sourceDir, tempDir: sourceTempDir },
     env: { HOME: homeDir },
   });
 
   try {
-    const domain = await wizard.stack.selectFirstStack();
-    const build = await domain.acceptDefaults();
-    const sources = await build.passThroughAllDomains();
+    await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_TRANSITION);
+
+    // "Edit" is the default dashboard option.
+    const build = await dashboard.selectEdit();
+
+    // Pass through all domains without changes.
+    const sources = await build.passThroughAllDomainsGeneric();
 
     await sources.waitForReady();
     await sources.setAllLocal();
     const agents = await sources.advance();
 
-    const confirm = await agents.acceptDefaults("init");
-    const result = await confirm.confirm();
-    const exitCode = await result.exitCode;
-    const output = result.rawOutput;
-    await result.destroy();
-    return { exitCode, output };
+    const confirm = await agents.acceptDefaults("edit");
+    return await finalizeEdit(confirm, dashboard);
   } catch (e) {
-    await wizard.destroy();
+    await dashboard.destroy();
     throw e;
   }
 }

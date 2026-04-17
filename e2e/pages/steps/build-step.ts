@@ -1,5 +1,5 @@
 import { BaseStep } from "../base-step.js";
-import { STEP_TEXT, TIMEOUTS } from "../constants.js";
+import { INTERNAL_DELAYS, INTERNAL_RETRIES, STEP_TEXT, TIMEOUTS } from "../constants.js";
 import { SearchModal } from "./search-modal.js";
 import { SourcesStep } from "./sources-step.js";
 
@@ -11,19 +11,48 @@ export class BuildStep extends BaseStep {
   /** Advance current domain without changes (Enter). */
   async advanceDomain(): Promise<void> {
     await this.waitForStableRender();
-    await this.pressEnter();
+    await this.pressEnterWaitNewFrame();
     this.gridRow = 0;
     this.gridCol = 0;
   }
 
   /**
-   * Navigate to a skill by label in the grid and press Space.
+   * Press Enter and wait for the NEXT frame's footer to paint AFTER the cursor
+   * snapshot. Retries with INTERNAL_RETRIES budget to absorb dropped keystrokes
+   * when Ink's useInput handler for the incoming frame is not yet mounted.
+   *
+   * Used for build-step domain → domain transitions, where both the current
+   * and next frame render the same tab labels ("Web | API | Methodology") in
+   * scrollback — so scrollback-matched waits fire instantly on stale residue.
+   * The footer "select" IS re-emitted on every fresh paint, so anchoring on
+   * raw-output position after the cursor snapshot correctly detects a new
+   * frame without depending on domain-specific text.
+   */
+  private async pressEnterWaitNewFrame(): Promise<void> {
+    let lastError: unknown;
+    for (let i = 0; i < INTERNAL_RETRIES.MAX_ATTEMPTS; i++) {
+      const cursor = this.getRawCursor();
+      this.session.enter();
+      await this.delay(INTERNAL_DELAYS.STEP_TRANSITION);
+      try {
+        await this.waitForStableRenderAfter(cursor, INTERNAL_RETRIES.INTERVAL_MS);
+        return;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError;
+  }
+
+  /**
+   * Navigate focus to a skill by label in the grid (without pressing Space).
    *
    * Parses the screen to find the skill's (row, col) position,
    * navigates DOWN to the target category (which resets col to 0),
-   * then RIGHT to the target column.
+   * then RIGHT to the target column. Use before `toggleScopeOnFocusedSkill()`
+   * or `toggleFocusedSkill()` when you need to act on a specific skill.
    */
-  async selectSkill(skillLabel: string): Promise<void> {
+  async focusSkill(skillLabel: string): Promise<void> {
     const { row, col, totalRows } = this.findSkillGridPosition(skillLabel);
 
     // Navigate DOWN to target row (DOWN always resets col to 0)
@@ -41,7 +70,13 @@ export class BuildStep extends BaseStep {
       await this.pressArrowRight();
     }
     this.gridCol = col;
+  }
 
+  /**
+   * Navigate to a skill by label in the grid and press Space to toggle selection.
+   */
+  async selectSkill(skillLabel: string): Promise<void> {
+    await this.focusSkill(skillLabel);
     await this.pressSpace();
   }
 
@@ -52,28 +87,31 @@ export class BuildStep extends BaseStep {
 
   /** Toggle scope on the currently focused skill (press "s"). */
   async toggleScopeOnFocusedSkill(): Promise<void> {
+    await this.waitForStableRender();
     await this.pressKey("s");
   }
 
   /**
    * Pass through all domains one by one, then advance to SourcesStep.
    * Expects Web, API, and Methodology domains (matches the standard E2E source).
+   *
+   * Uses cursor-anchored waits between each Enter: the build step's tab
+   * labels ("Web | API | Methodology") are rendered in every domain frame,
+   * so a scrollback-matched waitForText would match stale residue from the
+   * previous frame and return before the new domain has actually painted.
    */
   async passThroughAllDomains(): Promise<SourcesStep> {
-    // Web domain
+    // Initial Web frame must be fully painted before we start (guaranteed by
+    // the wizard launcher, but re-checked here for robustness).
     await this.screen.waitForText(STEP_TEXT.BUILD, TIMEOUTS.WIZARD_LOAD);
     await this.waitForStableRender();
-    await this.pressEnter();
 
-    // API domain
-    await this.screen.waitForText(STEP_TEXT.DOMAIN_API, TIMEOUTS.WIZARD_LOAD);
-    await this.waitForStableRender();
-    await this.pressEnter();
-
-    // Methodology domain
-    await this.screen.waitForText(STEP_TEXT.DOMAIN_META, TIMEOUTS.WIZARD_LOAD);
-    await this.waitForStableRender();
-    await this.pressEnter();
+    // Web -> API
+    await this.pressEnterWaitNewFrame();
+    // API -> Methodology
+    await this.pressEnterWaitNewFrame();
+    // Methodology -> Sources step
+    await this.pressEnterWaitNewFrame();
 
     return new SourcesStep(this.session, this.projectDir);
   }
@@ -85,13 +123,13 @@ export class BuildStep extends BaseStep {
   async passThroughAllDomainsGeneric(): Promise<SourcesStep> {
     await this.waitForStableRender();
     for (let i = 0; i < 10; i++) {
-      await this.pressEnter();
-      // Check if we've reached the sources step
+      await this.pressEnterWaitNewFrame();
+      // The Sources step emits a distinct sentinel that does NOT appear in
+      // any build-step frame — safe to check on full output here.
       const output = this.screen.getFullOutput();
       if (output.includes(STEP_TEXT.SOURCES)) {
         return new SourcesStep(this.session, this.projectDir);
       }
-      await this.waitForStableRender();
     }
     throw new Error(
       "passThroughAllDomainsGeneric: did not reach Sources step after 10 Enter presses",
@@ -108,18 +146,15 @@ export class BuildStep extends BaseStep {
     await this.screen.waitForText(STEP_TEXT.DOMAIN_WEB, TIMEOUTS.WIZARD_LOAD);
     await this.waitForStableRender();
     await this.pressSpace();
-    await this.pressEnter();
+    await this.pressEnterWaitNewFrame();
 
-    // API domain — select required skill
-    await this.screen.waitForText(STEP_TEXT.DOMAIN_API, TIMEOUTS.WIZARD_LOAD);
-    await this.waitForStableRender();
+    // API domain — select required skill. pressEnterWaitNewFrame above
+    // already confirmed the new frame painted, so Space is safe to press.
     await this.pressSpace();
-    await this.pressEnter();
+    await this.pressEnterWaitNewFrame();
 
-    // Mobile domain — no skills in E2E source, just advance
-    await this.screen.waitForText(STEP_TEXT.DOMAIN_MOBILE, TIMEOUTS.WIZARD_LOAD);
-    await this.waitForStableRender();
-    await this.pressEnter();
+    // Mobile domain — no skills in E2E source, just advance to Sources
+    await this.pressEnterWaitNewFrame();
 
     return new SourcesStep(this.session, this.projectDir);
   }
@@ -128,15 +163,13 @@ export class BuildStep extends BaseStep {
    * Pass through Web and Methodology domains (when API is deselected).
    */
   async passThroughWebAndMethodologyDomains(): Promise<SourcesStep> {
-    // Web domain
     await this.screen.waitForText(STEP_TEXT.BUILD, TIMEOUTS.WIZARD_LOAD);
     await this.waitForStableRender();
-    await this.pressEnter();
 
-    // Methodology domain
-    await this.screen.waitForText(STEP_TEXT.DOMAIN_META, TIMEOUTS.WIZARD_LOAD);
-    await this.waitForStableRender();
-    await this.pressEnter();
+    // Web -> Methodology
+    await this.pressEnterWaitNewFrame();
+    // Methodology -> Sources step
+    await this.pressEnterWaitNewFrame();
 
     return new SourcesStep(this.session, this.projectDir);
   }
@@ -147,7 +180,7 @@ export class BuildStep extends BaseStep {
    */
   async advanceToSources(): Promise<SourcesStep> {
     await this.waitForStableRender();
-    await this.pressEnter();
+    await this.pressEnterWaitNewFrame();
     return new SourcesStep(this.session, this.projectDir);
   }
 

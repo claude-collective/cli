@@ -5,6 +5,7 @@ import {
   createTempDir,
   cleanupTempDir,
   createLocalSkill,
+  directoryExists,
   ensureBinaryExists,
   listFiles,
   readTestFile,
@@ -47,6 +48,10 @@ describe("compile command", () => {
     await expect(project).toHaveCompiledAgentContent("api-developer", {
       contains: ["name: api-developer"],
     });
+
+    // Compiled agent should start with YAML frontmatter
+    const agentContent = await readTestFile(path.join(agentsPath(project.dir), "web-developer.md"));
+    expect(agentContent).toMatch(/^---\n/);
   });
 
   it("should produce valid compiled agent files with frontmatter", async () => {
@@ -92,6 +97,13 @@ describe("compile command", () => {
 
     expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     expect(output).toContain("No skills found");
+
+    // No agent files should be created on compile failure
+    const agentsDirPath = path.join(projectDir, ".claude", "agents");
+    expect(
+      await directoryExists(agentsDirPath),
+      "agents directory should not exist after compile failure",
+    ).toBe(false);
   });
 
   describe("multiple skills", () => {
@@ -124,6 +136,14 @@ describe("compile command", () => {
       });
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
         contains: ["name: api-developer"],
+      });
+
+      // Both agents must exist with valid YAML frontmatter
+      await expect({ dir: projectDir }).toHaveCompiledAgent("web-developer");
+      await expect({ dir: projectDir }).toHaveCompiledAgent("api-developer");
+      // Agent frontmatter must have name field
+      await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
+        name: "web-developer",
       });
     });
 

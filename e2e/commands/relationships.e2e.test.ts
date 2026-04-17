@@ -1,18 +1,29 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { ensureBinaryExists } from "../helpers/test-utils.js";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
+import { cleanupTempDir, ensureBinaryExists, isClaudeCLIAvailable } from "../helpers/test-utils.js";
+import {
+  createE2EPluginSource,
+  type E2EPluginSource,
+} from "../helpers/create-e2e-plugin-source.js";
 import { CLI } from "../fixtures/cli.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EXIT_CODES, TIMEOUTS } from "../pages/constants.js";
 
-describe("slug-based relationship rules", () => {
+// Plugin-source fixture is required because local sources without
+// marketplace.json now hard-error on default plugin-intent install.
+// See feedback_no_plugin_to_eject_fallback.md.
+const claudeAvailable = await isClaudeCLIAvailable();
+
+describe.skipIf(!claudeAvailable)("slug-based relationship rules", () => {
   let wizard: InitWizard | undefined;
+  let fixture: E2EPluginSource | undefined;
 
   beforeAll(ensureBinaryExists);
 
   afterEach(async () => {
     await wizard?.destroy();
     wizard = undefined;
+    if (fixture) await cleanupTempDir(fixture.tempDir);
+    fixture = undefined;
   });
 
   describe("conflict rules", () => {
@@ -21,7 +32,7 @@ describe("slug-based relationship rules", () => {
       { timeout: TIMEOUTS.LIFECYCLE },
       async () => {
         // "angular-standalone" slug does not exist in the E2E source — should be flagged as unresolved
-        const source = await createE2ESource({
+        fixture = await createE2EPluginSource({
           relationships: {
             conflicts: [
               {
@@ -32,7 +43,9 @@ describe("slug-based relationship rules", () => {
           },
         });
 
-        wizard = await InitWizard.launch({ source });
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
         const result = await wizard.completeWithDefaults();
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -53,7 +66,7 @@ describe("slug-based relationship rules", () => {
         // "angular-standalone" is a valid SkillSlug but does not exist in the E2E source.
         // The slug must be valid for the rules file to pass schema validation,
         // but the matrix health check will then detect it as unresolved.
-        const source = await createE2ESource({
+        fixture = await createE2EPluginSource({
           relationships: {
             requires: [
               {
@@ -65,7 +78,9 @@ describe("slug-based relationship rules", () => {
           },
         });
 
-        wizard = await InitWizard.launch({ source });
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
         const result = await wizard.completeWithDefaults();
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -82,7 +97,7 @@ describe("slug-based relationship rules", () => {
       "should not flag E2E source slugs as unresolved references",
       { timeout: TIMEOUTS.LIFECYCLE },
       async () => {
-        const source = await createE2ESource({
+        fixture = await createE2EPluginSource({
           relationships: {
             conflicts: [
               {
@@ -106,7 +121,9 @@ describe("slug-based relationship rules", () => {
           },
         });
 
-        wizard = await InitWizard.launch({ source });
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
         const result = await wizard.completeWithDefaults();
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -148,7 +165,7 @@ describe("slug-based relationship rules", () => {
       "should detect unresolved discourages references via validate",
       { timeout: TIMEOUTS.LIFECYCLE },
       async () => {
-        const source = await createE2ESource({
+        fixture = await createE2EPluginSource({
           relationships: {
             discourages: [
               {
@@ -159,7 +176,9 @@ describe("slug-based relationship rules", () => {
           },
         });
 
-        wizard = await InitWizard.launch({ source });
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
         const result = await wizard.completeWithDefaults();
         expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
 

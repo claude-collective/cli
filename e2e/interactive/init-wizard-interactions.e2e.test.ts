@@ -1,20 +1,41 @@
-import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
+import {
+  createE2EPluginSource,
+  type E2EPluginSource,
+} from "../helpers/create-e2e-plugin-source.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
-import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
+import { cleanupTempDir, ensureBinaryExists, isClaudeCLIAvailable } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
 
 /**
  * Init wizard interaction tests: domain deselection, agent deselection,
  * and scope toggling via S hotkey.
+ *
+ * The entire suite is skipped when the Claude CLI is not available because
+ * the wizard's default install mode is "plugin", which requires a marketplace
+ * and a working Claude CLI for plugin registration. Tests use a plugin source
+ * (built via `createE2EPluginSource`) so the wizard's default install path
+ * succeeds end-to-end — these tests verify interaction behavior (domain/agent
+ * toggling, scope hotkey), not install mode.
  */
 
-describe("init wizard — interactions", () => {
+const claudeAvailable = await isClaudeCLIAvailable();
+
+describe.skipIf(!claudeAvailable)("init wizard — interactions", () => {
+  let fixture: E2EPluginSource;
   let wizard: InitWizard | undefined;
 
-  beforeAll(ensureBinaryExists);
+  beforeAll(async () => {
+    await ensureBinaryExists();
+    fixture = await createE2EPluginSource();
+  }, TIMEOUTS.SETUP);
+
+  afterAll(async () => {
+    if (fixture) await cleanupTempDir(fixture.tempDir);
+  });
 
   afterEach(async () => {
     await wizard?.destroy();
@@ -26,7 +47,9 @@ describe("init wizard — interactions", () => {
       "should not install skills from a deselected domain",
       { timeout: TIMEOUTS.INTERACTIVE },
       async () => {
-        wizard = await InitWizard.launch();
+        wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+        });
 
         // Select E2E Test Stack
         const domain = await wizard.stack.selectFirstStack();
@@ -57,7 +80,9 @@ describe("init wizard — interactions", () => {
 
   describe("agent deselection", () => {
     it("should not compile a deselected agent", { timeout: TIMEOUTS.INTERACTIVE }, async () => {
-      wizard = await InitWizard.launch();
+      wizard = await InitWizard.launch({
+        source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
+      });
 
       // Select stack, accept domains, advance through build step
       const domain = await wizard.stack.selectFirstStack();
@@ -99,6 +124,7 @@ describe("init wizard — interactions", () => {
         const { fakeHome, projectDir } = env;
 
         wizard = await InitWizard.launch({
+          source: { sourceDir: fixture.sourceDir, tempDir: fixture.tempDir },
           projectDir,
           env: { HOME: fakeHome },
         });

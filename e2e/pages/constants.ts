@@ -32,7 +32,7 @@ export const STEP_TEXT = {
   DOMAIN_META: "Methodology",
   DOMAIN_MOBILE: "Mobile",
   BUILD: "Framework", // First category visible in build step
-  BUILD_CATEGORY_COUNT: " of ", // Category counter (e.g., "(1 of 1)") — unique to build step
+  BUILD_FOOTER: "Filter incompatible", // Build-step-only footer hint — always rendered on first build frame
   SOURCES: "Customize skill sources",
   AGENTS: "Select agents",
   CONFIRM: "to install",
@@ -87,6 +87,14 @@ export const STEP_TEXT = {
 
 export const TIMEOUTS = {
   WIZARD_LOAD: 15_000,
+  /**
+   * Enter → next-wizard-view first-frame waits (e.g. init → dashboard render,
+   * dashboard selectEdit → build step first frame, EditWizard.launch → build
+   * step first frame). Higher than WIZARD_LOAD to absorb full-suite
+   * parallelism load: individual runs land in ~1–2s, but contention can push
+   * these transitions past 15s. Do NOT use for intra-step waits.
+   */
+  WIZARD_TRANSITION: 45_000,
   INSTALL: 30_000,
   PLUGIN_INSTALL: 60_000,
   /** Combined timeout for tests that include plugin operations + exit wait */
@@ -106,6 +114,18 @@ export const TIMEOUTS = {
 export const INTERNAL_DELAYS = {
   STEP_TRANSITION: 500,
   KEYSTROKE: 150,
+} as const;
+
+/**
+ * Retry budget for closed-loop Enter presses on Ink components that may drop
+ * the first keystroke if the useInput handler is not mounted yet under load.
+ * Framework-internal — NOT for test files.
+ */
+export const INTERNAL_RETRIES = {
+  /** Max re-presses before giving up (total budget = MAX_ATTEMPTS * INTERVAL_MS). */
+  MAX_ATTEMPTS: 5,
+  /** Time to wait for the expected post-input sentinel before re-pressing. */
+  INTERVAL_MS: 3_000,
 } as const;
 
 export const EXIT_CODES = {

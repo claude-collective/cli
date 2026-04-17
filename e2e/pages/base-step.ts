@@ -1,6 +1,6 @@
 import type { TerminalSession } from "../helpers/terminal-session.js";
 import { delay } from "../helpers/test-utils.js";
-import { INTERNAL_DELAYS, TIMEOUTS } from "./constants.js";
+import { INTERNAL_DELAYS, INTERNAL_RETRIES, TIMEOUTS } from "./constants.js";
 import { TerminalScreen } from "./terminal-screen.js";
 
 export abstract class BaseStep {
@@ -102,9 +102,68 @@ export abstract class BaseStep {
     await this.screen.waitForText(stepText, timeout ?? this.defaultTimeout);
   }
 
+  /**
+   * Cursor-anchored version of waitForStep. Waits for `stepText` to appear
+   * in raw output AFTER `cursor`. Use when a previous wizard step may have
+   * left identical text in scrollback (e.g. "API" or "Methodology" tab
+   * labels rendered in the build step header for every domain).
+   */
+  protected async waitForStepAfter(
+    stepText: string,
+    cursor: number,
+    timeout?: number,
+  ): Promise<void> {
+    await this.screen.waitForTextAfter(stepText, cursor, timeout ?? this.defaultTimeout);
+  }
+
   /** Wait for stable render (footer visible). */
   protected async waitForStableRender(timeout?: number): Promise<void> {
     await this.screen.waitForStableRender(timeout ?? this.defaultTimeout);
+  }
+
+  /**
+   * Cursor-anchored version of waitForStableRender. Waits for the footer
+   * sentinel "select" to appear in raw output AFTER `cursor`. The footer
+   * is present in every wizard step, so the non-anchored variant returns
+   * instantly on scrollback residue.
+   */
+  protected async waitForStableRenderAfter(cursor: number, timeout?: number): Promise<void> {
+    await this.screen.waitForStableRenderAfter(cursor, timeout ?? this.defaultTimeout);
+  }
+
+  /** Capture raw-output cursor for use with waitForStepAfter / waitForStableRenderAfter. */
+  protected getRawCursor(): number {
+    return this.screen.getRawCursor();
+  }
+
+  /**
+   * Press Enter and wait for `nextStepText` to appear AFTER the snapshot cursor.
+   *
+   * Closed-loop retry: under parallel-suite contention, Ink's useInput handler
+   * for the next step may not be mounted when the first Enter fires, dropping
+   * the keystroke silently. We snapshot the cursor before each press and poll
+   * for the sentinel post-cursor; if the sentinel does not appear within
+   * INTERNAL_RETRIES.INTERVAL_MS we re-press. Mirrors DashboardSession.selectEdit.
+   *
+   * IMPORTANT: the sentinel must be text that is ONLY printed by the next
+   * step's first frame — not text that also appears in the current step's
+   * footer or tabs. Otherwise this helper returns prematurely on the Enter's
+   * own repaint.
+   */
+  protected async pressEnterAndWaitFor(nextStepText: string): Promise<void> {
+    let lastError: unknown;
+    for (let i = 0; i < INTERNAL_RETRIES.MAX_ATTEMPTS; i++) {
+      const cursor = this.getRawCursor();
+      this.session.enter();
+      await this.delay(INTERNAL_DELAYS.STEP_TRANSITION);
+      try {
+        await this.screen.waitForTextAfter(nextStepText, cursor, INTERNAL_RETRIES.INTERVAL_MS);
+        return;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError;
   }
 
   /** Get the full output including scrollback (for test assertions). */

@@ -76,6 +76,11 @@ describe("eject command", () => {
     const partialFiles = await listFiles(path.join(agentsDir, firstAgentDir!));
     expect(partialFiles.length).toBeGreaterThan(0);
 
+    // At least one agent partial should contain agent content
+    const partials = await listFiles(agentsDir);
+    const agentPartials = partials.filter((e) => !e.startsWith("_"));
+    expect(agentPartials.length).toBeGreaterThan(0);
+
     // Config should be created
     await expect({ dir: tempDir }).toHaveConfig();
   });
@@ -99,6 +104,9 @@ describe("eject command", () => {
     );
     const templateContent = await readTestFile(templatePath);
     expect(templateContent).toContain("---");
+
+    // Template must contain Liquid syntax
+    expect(templateContent).toContain("{{");
 
     // Config should be created
     await expect({ dir: tempDir }).toHaveConfig();
@@ -247,6 +255,9 @@ describe("eject command", () => {
 
     // Verify the config file was actually created with source reference
     await expect({ dir: tempDir }).toHaveConfig({ source: sourceDir });
+
+    const configContent = await readTestFile(path.join(tempDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS));
+    expect(configContent).toContain("source");
   });
 
   it("should create config.ts in a fresh directory after eject", async () => {

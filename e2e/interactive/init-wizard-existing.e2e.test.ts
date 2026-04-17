@@ -74,7 +74,7 @@ describe("init wizard — existing projects", () => {
         source: { sourceDir: source.sourceDir, tempDir: source.tempDir },
       });
 
-      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_LOAD);
+      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_TRANSITION);
 
       dashboard.escape();
 
@@ -104,7 +104,7 @@ describe("init wizard — existing projects", () => {
         source: { sourceDir: source!.sourceDir, tempDir: source!.tempDir },
       });
 
-      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_LOAD);
+      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_TRANSITION);
 
       const output = dashboard.getOutput();
       expect(output).toContain("Edit");
@@ -128,7 +128,7 @@ describe("init wizard — existing projects", () => {
         source: { sourceDir: source!.sourceDir, tempDir: source!.tempDir },
       });
 
-      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_LOAD);
+      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_TRANSITION);
 
       await dashboard.arrowDown();
       await dashboard.arrowDown();
@@ -152,7 +152,7 @@ describe("init wizard — existing projects", () => {
         source: { sourceDir: source!.sourceDir, tempDir: source!.tempDir },
       });
 
-      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_LOAD);
+      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_TRANSITION);
 
       dashboard.escape();
 
@@ -171,7 +171,7 @@ describe("init wizard — existing projects", () => {
         source: { sourceDir: source!.sourceDir, tempDir: source!.tempDir },
       });
 
-      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_LOAD);
+      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_TRANSITION);
 
       dashboard.ctrlC();
 
@@ -180,8 +180,8 @@ describe("init wizard — existing projects", () => {
     });
   });
 
-  describe("global config detection prompt", () => {
-    it("should go straight to wizard when global config exists but no project config", async () => {
+  describe("dashboard when only global config exists", () => {
+    it("should show dashboard when global config exists but no project config", async () => {
       source = await createE2ESource();
       tempDir = await createTempDir();
 
@@ -192,17 +192,18 @@ describe("init wizard — existing projects", () => {
       const workDir = path.join(tempDir, "work");
       await mkdir(workDir, { recursive: true });
 
-      wizard = await InitWizard.launch({
+      dashboard = await InitWizard.launchForDashboard({
         projectDir: workDir,
         source: { sourceDir: source.sourceDir, tempDir: source.tempDir },
         env: { HOME: tempDir },
       });
 
-      const output = wizard.stack.getOutput();
-      expect(output).toContain(STEP_TEXT.STACK);
+      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_TRANSITION);
 
-      wizard.escape();
-      await wizard.waitForExit(TIMEOUTS.EXIT);
+      dashboard.escape();
+
+      const exitCode = await dashboard.waitForExit();
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     });
   });
 

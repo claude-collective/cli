@@ -1,17 +1,22 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { cleanupTempDir, ensureBinaryExists } from "../helpers/test-utils.js";
+import {
+  createE2EPluginSource,
+  type E2EPluginSource,
+} from "../helpers/create-e2e-plugin-source.js";
+import { cleanupTempDir, ensureBinaryExists, isClaudeCLIAvailable } from "../helpers/test-utils.js";
 import { EXIT_CODES, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import "../matchers/setup.js";
 
-describe("init wizard — stack agent preselection", () => {
+const claudeAvailable = await isClaudeCLIAvailable();
+
+describe.skipIf(!claudeAvailable)("init wizard — stack agent preselection", () => {
   let wizard: InitWizard | undefined;
-  let source: { sourceDir: string; tempDir: string } | undefined;
+  let source: E2EPluginSource | undefined;
 
   beforeAll(async () => {
     await ensureBinaryExists();
-    source = await createE2ESource();
+    source = await createE2EPluginSource();
   }, TIMEOUTS.SETUP);
 
   afterAll(async () => {
@@ -59,6 +64,9 @@ describe("init wizard — stack agent preselection", () => {
       const result = await confirm.confirm();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      await expect(result.project).toHaveConfig({ agents: ["web-developer"] });
+      await expect(result.project).toHaveCompiledAgents();
     },
   );
 });

@@ -1,15 +1,21 @@
 import path from "path";
-import { describe, it, expect, afterEach, beforeAll } from "vitest";
+import { describe, it, expect, afterAll, afterEach, beforeAll } from "vitest";
 import "../matchers/setup.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
 import { ProjectBuilder } from "../fixtures/project-builder.js";
 import { CLI } from "../fixtures/cli.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { ensureBinaryExists, cleanupTempDir } from "../helpers/test-utils.js";
+import {
+  createE2EPluginSource,
+  type E2EPluginSource,
+} from "../helpers/create-e2e-plugin-source.js";
+import { ensureBinaryExists, cleanupTempDir, isClaudeCLIAvailable } from "../helpers/test-utils.js";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { EXIT_CODES, STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
 import type { WizardResult, ProjectHandle } from "../pages/wizard-result.js";
+
+const claudeAvailable = await isClaudeCLIAvailable();
 
 /**
  * POM Framework Smoke Tests (D-134, Step 0 Validation)
@@ -26,8 +32,17 @@ import type { WizardResult, ProjectHandle } from "../pages/wizard-result.js";
 describe("POM Framework Smoke Tests", () => {
   beforeAll(ensureBinaryExists, TIMEOUTS.SETUP);
 
-  describe("InitWizard.completeWithDefaults", () => {
+  describe.skipIf(!claudeAvailable)("InitWizard.completeWithDefaults", () => {
     let result: WizardResult | undefined;
+    let pluginFixture: E2EPluginSource | undefined;
+
+    beforeAll(async () => {
+      pluginFixture = await createE2EPluginSource({ marketplaceName: "agents-inc" });
+    }, TIMEOUTS.SETUP * 2);
+
+    afterAll(async () => {
+      if (pluginFixture) await cleanupTempDir(pluginFixture.tempDir);
+    });
 
     afterEach(async () => {
       await result?.destroy();
@@ -37,7 +52,9 @@ describe("POM Framework Smoke Tests", () => {
     it(
       "should complete init with defaults and produce config + compiled agents",
       async () => {
-        const wizard = await InitWizard.launch();
+        const wizard = await InitWizard.launch({
+          source: { sourceDir: pluginFixture!.sourceDir, tempDir: pluginFixture!.tempDir },
+        });
         result = await wizard.completeWithDefaults();
 
         await expectPhaseSuccess(result, {

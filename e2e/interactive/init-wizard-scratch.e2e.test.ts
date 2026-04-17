@@ -84,6 +84,7 @@ describe("init wizard — scratch flow", () => {
       const domain = await wizard.stack.selectScratch();
       const build = await domain.acceptDefaults();
       const sources = await build.passThroughScratchDomains();
+      await sources.setAllLocal();
       const agents = await sources.acceptDefaults();
       const confirm = await agents.acceptDefaults("init");
       const result = await confirm.confirm();
@@ -93,7 +94,7 @@ describe("init wizard — scratch flow", () => {
         {
           skillIds: ["web-framework-react", "api-framework-hono"],
           agents: E2E_AGENTS.WEB_AND_API,
-          source: "agents-inc",
+          source: "eject",
           compiledAgents: E2E_AGENTS.WEB_AND_API,
           copiedSkills: ["web-framework-react", "api-framework-hono"],
         },

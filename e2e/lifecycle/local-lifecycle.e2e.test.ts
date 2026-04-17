@@ -57,7 +57,17 @@ describe("eject mode lifecycle: init -> compile -> uninstall", () => {
         source: { sourceDir, tempDir: sourceTempDir },
         projectDir,
       });
-      const initResult = await wizard.completeWithDefaults();
+
+      // Eject mode: explicitly switch all sources to local via "l" hotkey.
+      // Without this, the wizard defaults to plugin mode (source: "agents-inc").
+      const domain = await wizard.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughAllDomains();
+      await sources.waitForReady();
+      await sources.setAllLocal();
+      const agents = await sources.advance();
+      const confirm = await agents.acceptDefaults("init");
+      const initResult = await confirm.confirm();
 
       // --- Phase 1 Verification ---
 
@@ -66,7 +76,7 @@ describe("eject mode lifecycle: init -> compile -> uninstall", () => {
         {
           skillIds: ["web-framework-react"],
           agents: E2E_AGENTS.WEB_AND_API,
-          source: "agents-inc",
+          source: "eject",
           copiedSkills: ["web-framework-react"],
         },
       );
@@ -107,7 +117,7 @@ describe("eject mode lifecycle: init -> compile -> uninstall", () => {
         {
           skillIds: ["web-framework-react"],
           agents: E2E_AGENTS.WEB_AND_API,
-          source: "agents-inc",
+          source: "eject",
         },
       );
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {

@@ -41,6 +41,10 @@ describe("dual-scope compile", () => {
 
     await expect(globalHome).toHaveCompiledAgent("web-developer");
     await expect(project).toHaveCompiledAgent("api-developer");
+
+    // Global scope should NOT have project agent
+    const globalAgents = await listFiles(agentsPath(globalHome.dir));
+    expect(globalAgents).not.toContain("api-developer.md");
   });
 
   it("should compile global agents referencing only global skills", async () => {
@@ -59,6 +63,11 @@ describe("dual-scope compile", () => {
       contains: ["web-testing-cypress-e2e"],
       notContains: ["web-testing-playwright-e2e"],
     });
+
+    // Global agent should NOT contain project-scoped skill
+    await expect({ dir: globalHome.dir }).toHaveCompiledAgentContent("web-developer", {
+      notContains: ["api-framework-hono"],
+    });
   });
 
   it("should compile project agents referencing both global and project skills", async () => {
@@ -75,6 +84,11 @@ describe("dual-scope compile", () => {
 
     await expect({ dir: project.dir }).toHaveCompiledAgentContent("api-developer", {
       contains: ["web-testing-playwright-e2e", "web-testing-cypress-e2e"],
+    });
+
+    // Project agent should NOT contain web-only skills (different domain)
+    await expect({ dir: project.dir }).toHaveCompiledAgentContent("api-developer", {
+      notContains: ["web-framework-react"],
     });
   });
 

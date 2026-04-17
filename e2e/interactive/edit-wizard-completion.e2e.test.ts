@@ -78,8 +78,13 @@ describe("edit wizard — confirm step and completion", () => {
           agents: ["web-developer"],
           compiledAgents: ["web-developer"],
         });
+        await expect(result.project).toHaveConfig({ skillIds: ["web-framework-react"] });
         await expect(result.project).toHaveCompiledAgentContent("web-developer", {
           contains: ["name: web-developer", "web-framework-react"],
+        });
+        // Compiled agent should contain the project's skill
+        await expect(result.project).toHaveCompiledAgentContent("web-developer", {
+          contains: ["web-framework-react"],
         });
       },
     );

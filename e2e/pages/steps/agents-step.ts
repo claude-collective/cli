@@ -31,6 +31,7 @@ export class AgentsStep extends BaseStep {
 
   /** Toggle scope on the currently focused agent (press "s"). */
   async toggleScopeOnFocusedAgent(): Promise<void> {
+    await this.waitForStableRender();
     await this.pressKey("s");
   }
 

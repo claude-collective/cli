@@ -4,16 +4,28 @@ import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
 import { E2E_AGENTS } from "../fixtures/expected-values.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
+import {
+  createE2EPluginSource,
+  type E2EPluginSource,
+} from "../helpers/create-e2e-plugin-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, DIRS, FILES } from "../pages/constants.js";
-import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
+import { DIRS, EXIT_CODES, FILES, TIMEOUTS } from "../pages/constants.js";
+import { EditWizard } from "../pages/wizards/edit-wizard.js";
+import {
+  cleanupTempDir,
+  ensureBinaryExists,
+  isClaudeCLIAvailable,
+  readTestFile,
+} from "../helpers/test-utils.js";
 import {
   createTestEnvironment,
   initGlobal,
+  initGlobalWithEject,
   initProject,
-  setupDualScope,
   setupDualScopeWithEject,
 } from "../fixtures/dual-scope-helpers.js";
+
+const claudeAvailable = await isClaudeCLIAvailable();
 
 /**
  * Dual-scope edit lifecycle E2E test -- agent content and config integrity.
@@ -48,7 +60,7 @@ describe("dual-scope edit lifecycle -- agent content and config integrity", () =
     testTempDir = tempDir;
     fakeHome = fh;
     projectDir = pd;
-    await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+    await setupDualScopeWithEject(sourceDir, sourceTempDir, fakeHome, projectDir);
   });
 
   afterEach(async () => {
@@ -71,20 +83,36 @@ describe("dual-scope edit lifecycle -- agent content and config integrity", () =
         },
       });
 
-      // web-developer (global) contains its preloaded skills, not API skills
+      // web-developer (global) contains its preloaded skills and all selected skills
       await expect({ dir: fakeHome }).toHaveAgentFrontmatter("web-developer", {
         skills: ["web-framework-react"],
       });
       await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
-        notContains: ["api-framework-hono"],
+        contains: ["api-framework-hono"],
       });
 
-      // api-developer (project) contains its assigned skill, not web skills
+      // api-developer (project) contains its assigned skill and all selected skills
       await expect({ dir: projectDir }).toHaveAgentFrontmatter("api-developer", {
         skills: ["api-framework-hono"],
       });
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
-        notContains: ["web-framework-react"],
+        contains: ["web-framework-react"],
+      });
+    },
+  );
+
+  it(
+    "Cross-cutting meta skills appear in both agents compiled output",
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
+    async () => {
+      // web-developer (global) contains both cross-cutting meta skills
+      await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
+        contains: ["meta-reviewing-reviewing", "meta-methodology-research-methodology"],
+      });
+
+      // api-developer (project) also contains both cross-cutting meta skills
+      await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
+        contains: ["meta-reviewing-reviewing", "meta-methodology-research-methodology"],
       });
     },
   );
@@ -94,19 +122,19 @@ describe("dual-scope edit lifecycle -- agent content and config integrity", () =
 // Test Suite -- Config Source Preservation
 // =====================================================================
 
-describe("dual-scope edit lifecycle -- config preservation", () => {
-  let sourceDir: string;
-  let sourceTempDir: string;
+describe.skipIf(!claudeAvailable)("dual-scope edit lifecycle -- config preservation", () => {
+  let pluginFixture: E2EPluginSource;
 
   beforeAll(async () => {
     await ensureBinaryExists();
-    const source = await createE2ESource();
-    sourceDir = source.sourceDir;
-    sourceTempDir = source.tempDir;
+    // Marketplace name "agents-inc" matches DEFAULT_PUBLIC_SOURCE_NAME so the
+    // saved config source field is "agents-inc" — the exact value this test
+    // asserts on to verify marketplace source preservation.
+    pluginFixture = await createE2EPluginSource({ marketplaceName: "agents-inc" });
   }, TIMEOUTS.SETUP * 2);
 
   afterAll(async () => {
-    if (sourceTempDir) await cleanupTempDir(sourceTempDir);
+    if (pluginFixture) await cleanupTempDir(pluginFixture.tempDir);
   });
 
   let testTempDir: string;
@@ -129,7 +157,7 @@ describe("dual-scope edit lifecycle -- config preservation", () => {
     { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
     async () => {
       // Phase A: Init global (completeWithDefaults — marketplace source "agents-inc")
-      const phaseA = await initGlobal(sourceDir, sourceTempDir, fakeHome);
+      const phaseA = await initGlobal(pluginFixture.sourceDir, pluginFixture.tempDir, fakeHome);
       await expectPhaseSuccess(
         { project: { dir: fakeHome }, exitCode: phaseA.exitCode },
         {
@@ -147,7 +175,12 @@ describe("dual-scope edit lifecycle -- config preservation", () => {
       const globalConfigAfterA = await readTestFile(globalConfigPath);
 
       // Phase B: Init project with scope toggling (eject for project-scoped skills)
-      const phaseB = await initProject(sourceDir, sourceTempDir, fakeHome, projectDir);
+      const phaseB = await initProject(
+        pluginFixture.sourceDir,
+        pluginFixture.tempDir,
+        fakeHome,
+        projectDir,
+      );
       await expectPhaseSuccess(
         { project: { dir: projectDir }, exitCode: phaseB.exitCode },
         {
@@ -227,6 +260,95 @@ describe("dual-scope edit lifecycle -- eject scope toggle copies skill to projec
           agents: [...E2E_AGENTS.API],
         },
       });
+    },
+  );
+});
+
+describe("dual-scope edit lifecycle -- stack field preserves selected agents", () => {
+  let sourceDir: string;
+  let sourceTempDir: string;
+
+  beforeAll(async () => {
+    await ensureBinaryExists();
+    const source = await createE2ESource();
+    sourceDir = source.sourceDir;
+    sourceTempDir = source.tempDir;
+  }, TIMEOUTS.SETUP * 2);
+
+  afterAll(async () => {
+    if (sourceTempDir) await cleanupTempDir(sourceTempDir);
+  });
+
+  let testTempDir: string;
+  let fakeHome: string;
+  let projectDir: string;
+
+  beforeEach(async () => {
+    const { tempDir, fakeHome: fh, projectDir: pd } = await createTestEnvironment();
+    testTempDir = tempDir;
+    fakeHome = fh;
+    projectDir = pd;
+  });
+
+  afterEach(async () => {
+    await cleanupTempDir(testTempDir);
+  });
+
+  it(
+    "Stack field contains only selected agents and survives passthrough edit",
+    { timeout: TIMEOUTS.LIFECYCLE, retry: 0 },
+    async () => {
+      // Phase A: Global init with eject (all agents selected by default)
+      const phaseA = await initGlobalWithEject(sourceDir, sourceTempDir, fakeHome);
+      expect(phaseA.exitCode, `Phase A init failed: ${phaseA.output}`).toBe(EXIT_CODES.SUCCESS);
+
+      // Read config.ts after init and extract stack agent keys
+      const configPath = path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
+      const configAfterInit = await readTestFile(configPath);
+
+      const stackMatch = configAfterInit.match(/const stack[\s\S]*?\};/);
+      expect(stackMatch, "Config must have a stack variable after init").not.toBeNull();
+      const stackBlock = stackMatch![0];
+
+      // Stack must contain both agents from the E2E test stack
+      expect(stackBlock).toContain('"web-developer"');
+      expect(stackBlock).toContain('"api-developer"');
+
+      // Phase B: Edit wizard passthrough (no changes)
+      const wizard = await EditWizard.launch({
+        projectDir: fakeHome,
+        source: { sourceDir, tempDir: sourceTempDir },
+        env: { HOME: fakeHome },
+        rows: 60,
+        cols: 120,
+      });
+
+      const result = await wizard.passThrough();
+      const exitCode = await result.exitCode;
+      expect(exitCode, "Edit passthrough must succeed").toBe(EXIT_CODES.SUCCESS);
+      await result.destroy();
+
+      // Re-read config.ts after edit passthrough
+      const configAfterEdit = await readTestFile(configPath);
+
+      const stackMatchAfterEdit = configAfterEdit.match(/const stack[\s\S]*?\};/);
+      expect(
+        stackMatchAfterEdit,
+        "Config must still have a stack variable after edit",
+      ).not.toBeNull();
+      const stackBlockAfterEdit = stackMatchAfterEdit![0];
+
+      // Stack must still contain the same 2 agents (no agents added or removed)
+      expect(stackBlockAfterEdit).toContain('"web-developer"');
+      expect(stackBlockAfterEdit).toContain('"api-developer"');
+
+      // Normalize both blocks to compare agent key sets
+      const extractAgentKeys = (block: string): string[] => {
+        const matches = block.match(/"([\w-]+)":\s*\{/g) ?? [];
+        return matches.map((m) => m.replace(/[":\s{]/g, "")).sort();
+      };
+
+      expect(extractAgentKeys(stackBlockAfterEdit)).toStrictEqual(extractAgentKeys(stackBlock));
     },
   );
 });

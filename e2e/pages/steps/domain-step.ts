@@ -7,7 +7,12 @@ export class DomainStep extends BaseStep {
   /** Accept the default domain selection (Enter). Returns BuildStep. */
   async acceptDefaults(): Promise<BuildStep> {
     await this.waitForStep(STEP_TEXT.DOMAINS);
-    await this.pressEnter();
+    // Cursor-anchored Enter: "Framework" (BUILD) is the first category label
+    // printed by the build step's first frame. Using waitForText on scrollback
+    // is unsafe here because an earlier wizard step may have printed "Framework"
+    // (e.g. the stack step's "Other Frameworks" group) — the anchored wait
+    // ensures we only match the NEW render triggered by this Enter press.
+    await this.pressEnterAndWaitFor(STEP_TEXT.BUILD);
     return new BuildStep(this.session, this.projectDir);
   }
 
@@ -23,7 +28,7 @@ export class DomainStep extends BaseStep {
 
   /** Advance to build step after toggling domains. */
   async advance(): Promise<BuildStep> {
-    await this.pressEnter();
+    await this.pressEnterAndWaitFor(STEP_TEXT.BUILD);
     return new BuildStep(this.session, this.projectDir);
   }
 

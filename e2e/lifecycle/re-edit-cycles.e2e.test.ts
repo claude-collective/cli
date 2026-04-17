@@ -121,11 +121,21 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         // Phase 1: Init via wizard
         // ================================================================
 
+        // Explicit eject: press "l" on the sources step so new skills are
+        // eject-sourced. Without this, the wizard defaults to plugin mode and
+        // hard-errors when the source has no marketplace (no silent fallback).
         const initWizard = await InitWizard.launch({
           source: { sourceDir, tempDir: sourceTempDir },
           projectDir,
         });
-        const initResult = await initWizard.completeWithDefaults();
+        const initDomain = await initWizard.stack.selectFirstStack();
+        const initBuild = await initDomain.acceptDefaults();
+        const initSources = await initBuild.passThroughAllDomains();
+        await initSources.waitForReady();
+        await initSources.setAllLocal();
+        const initAgentsStep = await initSources.advance();
+        const initConfirm = await initAgentsStep.acceptDefaults("init");
+        const initResult = await initConfirm.confirm();
         await initResult.destroy();
 
         // --- Phase 1 verification ---
@@ -134,7 +144,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           {
             skillIds: ["web-framework-react"],
             agents: ["web-developer"],
-            source: "agents-inc",
+            source: "eject",
           },
         );
         await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
@@ -167,7 +177,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           {
             skillIds: ["web-framework-react"],
             agents: ["web-developer"],
-            source: "agents-inc",
+            source: "eject",
           },
         );
         await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
@@ -203,7 +213,7 @@ describe("re-edit cycles: config stability across multiple edits", () => {
           {
             skillIds: ["web-framework-react"],
             agents: ["web-developer"],
-            source: "agents-inc",
+            source: "eject",
           },
         );
         await expect({ dir: projectDir }).toHaveAgentFrontmatter("web-developer", {
@@ -291,8 +301,13 @@ describe("re-edit cycles: config stability across multiple edits", () => {
         await edit1Wizard.build.toggleFocusedSkill();
 
         // Navigate through: Build -> Sources -> Agents -> Confirm -> Complete
+        // Explicit eject: press "l" so the newly added skill is eject-sourced.
+        // Without this, the wizard defaults to plugin mode and hard-errors
+        // because the local source has no marketplace (no silent fallback).
         const sources1 = await edit1Wizard.build.advanceToSources();
-        const agents1 = await sources1.acceptDefaults();
+        await sources1.waitForReady();
+        await sources1.setAllLocal();
+        const agents1 = await sources1.advance();
         const confirm1 = await agents1.acceptDefaults("edit");
         const edit1Result = await confirm1.confirm();
 

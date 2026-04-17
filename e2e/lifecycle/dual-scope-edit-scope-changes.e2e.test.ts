@@ -103,6 +103,10 @@ describe("dual-scope edit lifecycle -- scope changes via S hotkey", () => {
         "api-framework-hono directory must exist at global scope after P→G toggle",
       ).toBe(true);
 
+      // SKILL.md must exist at global scope with content
+      const globalSkillMd = path.join(globalSkillDir, FILES.SKILL_MD);
+      expect(await fileExists(globalSkillMd), "SKILL.md must exist at global scope").toBe(true);
+
       // D-2: Skill directory does NOT exist at project scope (moved away)
       const projectSkillDir = path.join(projectDir, DIRS.CLAUDE, DIRS.SKILLS, "api-framework-hono");
       expect(

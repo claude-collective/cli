@@ -145,6 +145,7 @@ describe.skipIf(!claudeAvailable)("edit: add new local-source skills", () => {
       // The eject-sourced skill should be copied to .claude/skills/
       // This validates the source migration path (plugin → eject) in edit.
       await expect({ dir: projectDir }).toHaveSkillCopied("web-framework-react");
+      await expect({ dir: projectDir }).toHaveCompiledAgents();
     },
   );
 });

@@ -1,13 +1,17 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createE2ESource } from "../helpers/create-e2e-source.js";
+import {
+  createE2EPluginSource,
+  type E2EPluginSource,
+} from "../helpers/create-e2e-plugin-source.js";
 import "../matchers/setup.js";
-import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES, STEP_TEXT } from "../pages/constants.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
 import {
   cleanupTempDir,
   ensureBinaryExists,
   fileExists,
+  isClaudeCLIAvailable,
   readTestFile,
 } from "../helpers/test-utils.js";
 import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
@@ -20,16 +24,19 @@ import { createTestEnvironment } from "../fixtures/dual-scope-helpers.js";
  * This prevents the generated union from being too narrow.
  */
 
-describe("SelectedAgentName includes excluded global agents", () => {
+const claudeAvailable = await isClaudeCLIAvailable();
+
+describe.skipIf(!claudeAvailable)("SelectedAgentName includes excluded global agents", () => {
+  let fixture: E2EPluginSource;
   let sourceDir: string;
   let sourceTempDir: string;
 
   beforeAll(async () => {
     await ensureBinaryExists();
-    const source = await createE2ESource();
-    sourceDir = source.sourceDir;
-    sourceTempDir = source.tempDir;
-  }, TIMEOUTS.SETUP);
+    fixture = await createE2EPluginSource();
+    sourceDir = fixture.sourceDir;
+    sourceTempDir = fixture.tempDir;
+  }, TIMEOUTS.SETUP * 2);
 
   afterAll(async () => {
     if (sourceTempDir) await cleanupTempDir(sourceTempDir);
@@ -61,27 +68,38 @@ describe("SelectedAgentName includes excluded global agents", () => {
       expect(await globalResult.exitCode).toBe(EXIT_CODES.SUCCESS);
       await globalResult.destroy();
 
-      // Phase 2: Project init -- deselect one agent
-      const projectWizard = await InitWizard.launch({
-        source: { sourceDir, tempDir: sourceTempDir },
+      // Phase 2: Project init -- global install exists, so `cc init` lands on the
+      // dashboard. Drive dashboard -> Edit -> build/sources/agents -> deselect
+      // api-developer -> confirm, to produce a project config that excludes the
+      // globally-installed agent.
+      const dashboard = await InitWizard.launchForDashboard({
         projectDir,
+        source: { sourceDir, tempDir: sourceTempDir },
         env: { HOME: fakeHome },
-        rows: 60,
-        cols: 120,
       });
 
-      const domain = await projectWizard.stack.selectFirstStack();
-      const build = await domain.acceptDefaults();
-      const sources = await build.passThroughAllDomains();
-      const agents = await sources.acceptDefaults();
+      await dashboard.waitForText(STEP_TEXT.DASHBOARD, TIMEOUTS.WIZARD_TRANSITION);
 
-      // Deselect api-developer by toggling it off (display name on screen)
+      // "Edit" is the first (default) dashboard option — press Enter to launch it.
+      const build = await dashboard.selectEdit();
+
+      // Establish project scope by toggling scope on a skill in the first domain.
+      // Without this, no project-level .claude-src/config-types.ts is generated.
+      await build.toggleScopeOnFocusedSkill();
+
+      // Pass through remaining domains, then sources.
+      const sources = await build.passThroughAllDomainsGeneric();
+      await sources.waitForReady();
+      const agents = await sources.advance();
+
+      // Deselect api-developer by toggling it off (display name on screen).
       await agents.toggleAgent("API Developer");
 
-      const confirm = await agents.advance("init");
+      const confirm = await agents.advance("edit");
       const result = await confirm.confirm();
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
       await result.destroy();
+      await dashboard.destroy();
 
       // Read the project's config-types.ts
       const configTypesPath = path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TYPES_TS);

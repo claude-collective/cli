@@ -1,7 +1,7 @@
 import path from "path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
-import { TIMEOUTS, DIRS, FILES, EXIT_CODES } from "../pages/constants.js";
+import { TIMEOUTS, DIRS, FILES, EXIT_CODES, STEP_TEXT } from "../pages/constants.js";
 import { cleanupTempDir, ensureBinaryExists, readTestFile } from "../helpers/test-utils.js";
 import { createGlobalOnlyEnv, type DualScopeEnv } from "../fixtures/dual-scope-helpers.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
@@ -69,25 +69,26 @@ describe("global agent toggle guard from project scope", () => {
 
       // Verify the toast message appeared
       const output = agents.getOutput();
-      expect(output).toContain("Global agents cannot be changed from project scope");
+      expect(output).toContain(STEP_TEXT.GLOBAL_AGENTS_BLOCKED);
 
       // Complete the wizard without changes
       const confirm = await agents.advance("edit");
       const result = await confirm.confirm();
 
       expect(await result.exitCode).toBe(EXIT_CODES.SUCCESS);
-      await result.destroy();
 
       // Verify the global config still contains the agent (unchanged)
       const globalConfigPath = path.join(env.fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
       const globalConfig = await readTestFile(globalConfigPath);
       expect(globalConfig).toContain("web-developer");
+      // Guard against a silent scope flip: the agent must remain global-scoped.
+      expect(globalConfig).toContain('"scope":"global"');
 
-      // Verify the project config still references the agent as global (unchanged)
-      const projectConfigPath = path.join(env.projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS);
-      const projectConfig = await readTestFile(projectConfigPath);
-      expect(projectConfig).toContain('"web-developer"');
-      expect(projectConfig).toContain('"scope":"global"');
+      // Guard blocked the toggle: no project config written and wizard reported no-op.
+      await expect({ dir: env.projectDir }).not.toHaveConfig();
+      expect(result.output).toContain(STEP_TEXT.EDIT_UNCHANGED);
+
+      await result.destroy();
     },
   );
 });

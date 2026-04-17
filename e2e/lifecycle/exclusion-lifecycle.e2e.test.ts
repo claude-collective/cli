@@ -3,10 +3,15 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 import "../matchers/setup.js";
 import { expectDualScopeInstallation } from "../assertions/scope-assertions.js";
-import { TIMEOUTS, EXIT_CODES, DIRS } from "../pages/constants.js";
+import { TIMEOUTS, EXIT_CODES, DIRS, FILES } from "../pages/constants.js";
 import { EditWizard } from "../pages/wizards/edit-wizard.js";
-import { cleanupTempDir, ensureBinaryExists, listFiles } from "../helpers/test-utils.js";
-import { createTestEnvironment, setupDualScope } from "../fixtures/dual-scope-helpers.js";
+import {
+  cleanupTempDir,
+  ensureBinaryExists,
+  listFiles,
+  readTestFile,
+} from "../helpers/test-utils.js";
+import { createTestEnvironment, setupDualScopeWithEject } from "../fixtures/dual-scope-helpers.js";
 
 /**
  * Exclusion lifecycle E2E test.
@@ -55,7 +60,7 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
       // scope and api-developer agent to project scope.
       // ================================================================
 
-      await setupDualScope(sourceDir, sourceTempDir, fakeHome, projectDir);
+      await setupDualScopeWithEject(sourceDir, sourceTempDir, fakeHome, projectDir);
 
       // --- User-visible outcomes after setup ---
 
@@ -76,6 +81,17 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
       // 2. Global agent files from Phase A still exist (untouched)
       await expect({ dir: fakeHome }).toHaveCompiledAgent("api-developer");
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+
+      // Excluded tombstone entries must exist in project config
+      const configWithExclusions = await readTestFile(
+        path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      expect(configWithExclusions).toContain('"excluded":true');
+
+      // Snapshot config before passthrough edit
+      const configBeforeEdit = await readTestFile(
+        path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
 
       // ================================================================
       // Phase C: Edit passthrough — navigate through without changes
@@ -115,17 +131,20 @@ describe("exclusion lifecycle: scope toggle persistence and file placement", () 
       });
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
 
-      // 8. api-developer agent at project scope contains the project-scoped skill
-      //    and does NOT contain the global-only skill
+      // Verify config unchanged by passthrough
+      const configAfterEdit = await readTestFile(
+        path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TS),
+      );
+      expect(configAfterEdit).toStrictEqual(configBeforeEdit);
+
+      // 8. api-developer agent at project scope contains all selected skills
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("api-developer", {
-        contains: ["api-framework-hono"],
-        notContains: ["web-framework-react"],
+        contains: ["api-framework-hono", "web-framework-react"],
       });
 
-      // 8b. web-developer agent at global scope does NOT contain the project-scoped skill
+      // 8b. web-developer agent at global scope contains all selected skills
       await expect({ dir: fakeHome }).toHaveCompiledAgentContent("web-developer", {
-        contains: ["web-framework-react"],
-        notContains: ["api-framework-hono"],
+        contains: ["web-framework-react", "api-framework-hono"],
       });
 
       // 9. No duplicate agent files in either scope directory

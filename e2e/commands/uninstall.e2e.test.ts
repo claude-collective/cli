@@ -91,6 +91,9 @@ describe("uninstall command", () => {
       skillIds: ["web-framework-react"],
       agents: ["web-developer"],
     });
+
+    // Config directory preserved (without --all)
+    expect(await directoryExists(path.join(projectDir, DIRS.CLAUDE_SRC))).toBe(true);
   });
 
   it("should also remove config directory with --all --yes", async () => {

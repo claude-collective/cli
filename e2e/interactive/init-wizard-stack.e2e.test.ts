@@ -1,10 +1,16 @@
-import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { expectPhaseSuccess } from "../assertions/phase-assertions.js";
 import { E2E_AGENTS } from "../fixtures/expected-values.js";
+import {
+  createE2EPluginSource,
+  type E2EPluginSource,
+} from "../helpers/create-e2e-plugin-source.js";
 import { InitWizard } from "../pages/wizards/init-wizard.js";
-import { STEP_TEXT } from "../pages/constants.js";
-import { ensureBinaryExists } from "../helpers/test-utils.js";
+import { STEP_TEXT, TIMEOUTS } from "../pages/constants.js";
+import { cleanupTempDir, ensureBinaryExists, isClaudeCLIAvailable } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
+
+const claudeAvailable = await isClaudeCLIAvailable();
 
 describe("init wizard — stack flow", () => {
   let wizard: InitWizard | undefined;
@@ -49,81 +55,138 @@ describe("init wizard — stack flow", () => {
       const output = domain.getOutput();
       expect(output).toContain(STEP_TEXT.DOMAIN_WEB);
     });
+  });
 
-    it("should complete a full stack-based init flow with defaults", async () => {
-      wizard = await InitWizard.launch();
-      const result = await wizard.completeWithDefaults();
+  describe.skipIf(!claudeAvailable)("stack selection happy path — plugin install", () => {
+    let pluginSource: E2EPluginSource | undefined;
 
-      await expectPhaseSuccess(
-        { project: result.project, exitCode: result.exitCode },
-        {
-          skillIds: ["web-framework-react"],
-          agents: E2E_AGENTS.WEB_AND_API,
-          source: "agents-inc",
-          compiledAgents: E2E_AGENTS.WEB_AND_API,
-        },
-      );
-      await expect(result.project).toHaveAgentFrontmatter("web-developer", {
-        skills: ["web-framework-react"],
-      });
+    beforeAll(async () => {
+      pluginSource = await createE2EPluginSource();
+    }, TIMEOUTS.SETUP);
+
+    afterAll(async () => {
+      if (pluginSource) await cleanupTempDir(pluginSource.tempDir);
     });
 
-    it("should display completion details after install", async () => {
-      wizard = await InitWizard.launch();
-      const result = await wizard.completeWithDefaults();
-
-      await result.exitCode;
-
-      const output = result.output;
-      expect(output).toContain(STEP_TEXT.AGENTS_COMPILED_TO);
-      expect(output).toContain(STEP_TEXT.CONFIGURATION_LABEL);
-    });
-
-    describe("local install verification", () => {
-      it("should copy skills to .claude/skills/ directory", async () => {
-        wizard = await InitWizard.launch();
+    it(
+      "should complete a full stack-based init flow with defaults",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        wizard = await InitWizard.launch({
+          source: { sourceDir: pluginSource!.sourceDir, tempDir: pluginSource!.tempDir },
+        });
         const result = await wizard.completeWithDefaults();
+
+        await expectPhaseSuccess(
+          { project: result.project, exitCode: result.exitCode },
+          {
+            skillIds: ["web-framework-react"],
+            agents: E2E_AGENTS.WEB_AND_API,
+            source: pluginSource!.marketplaceName,
+            compiledAgents: E2E_AGENTS.WEB_AND_API,
+          },
+        );
+        await expect(result.project).toHaveAgentFrontmatter("web-developer", {
+          skills: ["web-framework-react:web-framework-react"],
+        });
+      },
+    );
+
+    it(
+      "should display completion details after install",
+      { timeout: TIMEOUTS.PLUGIN_TEST },
+      async () => {
+        wizard = await InitWizard.launch({
+          source: { sourceDir: pluginSource!.sourceDir, tempDir: pluginSource!.tempDir },
+        });
+        const result = await wizard.completeWithDefaults();
+
+        await result.exitCode;
+
+        const output = result.output;
+        expect(output).toContain(STEP_TEXT.AGENTS_COMPILED_TO);
+        expect(output).toContain(STEP_TEXT.CONFIGURATION_LABEL);
+        await expect(result.project).toHaveConfig({ agents: ["web-developer"] });
+        await expect(result.project).toHaveCompiledAgents();
+        await expect(result.project).toHaveCompiledAgentContent("web-developer", {
+          contains: ["web-framework-react"],
+        });
+      },
+    );
+  });
+
+  describe("local install verification", () => {
+    /** Navigate the full wizard and explicitly set all sources to eject (local copy). */
+    async function completeWithEjectSources(w: InitWizard) {
+      const domain = await w.stack.selectFirstStack();
+      const build = await domain.acceptDefaults();
+      const sources = await build.passThroughAllDomains();
+      await sources.setAllLocal();
+      const agents = await sources.advance();
+      const confirm = await agents.acceptDefaults("init");
+      return confirm.confirm();
+    }
+
+    it(
+      "should copy skills to .claude/skills/ directory",
+      { timeout: TIMEOUTS.INTERACTIVE },
+      async () => {
+        wizard = await InitWizard.launch();
+        const result = await completeWithEjectSources(wizard);
 
         await expectPhaseSuccess(
           { project: result.project, exitCode: result.exitCode },
           { copiedSkills: ["web-framework-react"] },
         );
-      });
+        await expect(result.project).toHaveCompiledAgents();
+      },
+    );
 
-      it("should not produce archive warnings during first install", async () => {
+    it(
+      "should not produce archive warnings during first install",
+      { timeout: TIMEOUTS.INTERACTIVE },
+      async () => {
         wizard = await InitWizard.launch();
-        const result = await wizard.completeWithDefaults();
+        const result = await completeWithEjectSources(wizard);
 
         await result.exitCode;
 
         const output = result.output;
         expect(output).not.toContain("Failed to archive");
         expect(output).not.toContain("ENOENT");
-      });
+        await expect(result.project).toHaveCompiledAgents();
+      },
+    );
 
-      it("should produce SkillConfig[] with id, scope, and source in config", async () => {
+    it(
+      "should produce SkillConfig[] with id, scope, and source in config",
+      { timeout: TIMEOUTS.INTERACTIVE },
+      async () => {
         wizard = await InitWizard.launch();
-        const result = await wizard.completeWithDefaults();
+        const result = await completeWithEjectSources(wizard);
 
         await result.exitCode;
 
         await expect(result.project).toHaveConfig({
           skillIds: ["web-framework-react"],
           agents: ["web-developer"],
-          source: "agents-inc",
+          source: "eject",
         });
-      });
+        await expect(result.project).toHaveCompiledAgents();
+      },
+    );
 
-      it("should list copied skills in output", async () => {
-        wizard = await InitWizard.launch();
-        const result = await wizard.completeWithDefaults();
+    it("should list copied skills in output", { timeout: TIMEOUTS.INTERACTIVE }, async () => {
+      wizard = await InitWizard.launch();
+      const result = await completeWithEjectSources(wizard);
 
-        await result.exitCode;
+      await result.exitCode;
 
-        const output = result.output;
-        expect(output).toContain(STEP_TEXT.SKILLS_COPIED_TO);
-        expect(output).toContain(".claude/skills");
-      });
+      const output = result.output;
+      expect(output).toContain(STEP_TEXT.SKILLS_COPIED_TO);
+      expect(output).toContain(".claude/skills");
+      await expect(result.project).toHaveConfig({ agents: ["web-developer"] });
+      await expect(result.project).toHaveCompiledAgents();
     });
   });
 

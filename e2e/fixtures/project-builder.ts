@@ -34,6 +34,14 @@ export type PluginProjectOptions = {
   marketplace: string;
   agents?: AgentName[];
   domains?: Domain[];
+  /**
+   * When true, skips writing the `marketplace` field into config.ts even
+   * though the skills carry plugin-sourced `source` values. Simulates legacy
+   * installs where marketplace was never persisted — the scenario that
+   * triggered the silent plugin-install skip regression (see
+   * feedback_no_plugin_to_eject_fallback.md).
+   */
+  omitMarketplaceField?: boolean;
 };
 
 export class ProjectBuilder {
@@ -462,7 +470,7 @@ contentHash: "e5f6a7b"
 
     await writeProjectConfig(projectDir, {
       name: "plugin-edit-test",
-      marketplace: options.marketplace,
+      ...(options.omitMarketplaceField ? {} : { marketplace: options.marketplace }),
       skills: skills.map((id) => ({
         id,
         scope: "project" as const,

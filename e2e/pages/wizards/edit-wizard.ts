@@ -57,13 +57,20 @@ export class EditWizard {
       defaultTimeout: options.defaultTimeout,
     });
 
-    // Edit wizard opens directly to the build step.
-    // Wait for the category counter ("X of 1") which only appears on the build step.
-    // Cannot use STEP_TEXT.BUILD ("Framework") because the stack step's "Other Frameworks"
-    // group label also matches, causing premature detection.
+    // Edit wizard opens directly to the build step (no stack step in this path,
+    // so STEP_TEXT.BUILD's "Framework" label does not collide with the stack
+    // step's "Other Frameworks" group). Three-sentinel sequence:
+    //   1. BUILD_FOOTER ("Filter incompatible") -- build-step-only footer hint,
+    //      rendered on the first build frame.
+    //   2. waitForStableRender -- absorbs subsequent redraws.
+    //   3. BUILD ("Framework") -- first category label, ensures build content
+    //      has fully painted before callers read scrollback. Without this,
+    //      mid-redraw frames can pollute getFullOutput() with category labels
+    //      overwritten by later rows.
     const screen = new TerminalScreen(session);
-    await screen.waitForText(STEP_TEXT.BUILD_CATEGORY_COUNT, TIMEOUTS.WIZARD_LOAD);
-    await screen.waitForStableRender(TIMEOUTS.WIZARD_LOAD);
+    await screen.waitForText(STEP_TEXT.BUILD_FOOTER, TIMEOUTS.WIZARD_TRANSITION);
+    await screen.waitForStableRender(TIMEOUTS.WIZARD_TRANSITION);
+    await screen.waitForText(STEP_TEXT.BUILD, TIMEOUTS.WIZARD_TRANSITION);
 
     const build = new BuildStep(session, options.projectDir);
     return new EditWizard(session, options.projectDir, build);

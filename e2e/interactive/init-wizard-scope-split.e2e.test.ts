@@ -9,6 +9,7 @@ import {
   cleanupTempDir,
   ensureBinaryExists,
   createPermissionsFile,
+  fileExists,
   readTestFile,
 } from "../helpers/test-utils.js";
 import "../matchers/setup.js";
@@ -126,6 +127,16 @@ describe("init wizard — mixed scope config split", () => {
 
       // web-developer should be compiled (global agent)
       await expect({ dir: fakeHome }).toHaveCompiledAgent("web-developer");
+
+      // config-types.ts must exist at both scopes
+      expect(
+        await fileExists(path.join(fakeHome, DIRS.CLAUDE_SRC, FILES.CONFIG_TYPES_TS)),
+        "Global config-types.ts must exist",
+      ).toBe(true);
+      expect(
+        await fileExists(path.join(projectDir, DIRS.CLAUDE_SRC, FILES.CONFIG_TYPES_TS)),
+        "Project config-types.ts must exist",
+      ).toBe(true);
     },
   );
 

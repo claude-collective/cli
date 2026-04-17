@@ -100,6 +100,9 @@ describe("custom sub-agents", () => {
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("my-custom-agent", {
         contains: ["E2E-CUSTOM-AGENT-INTRO", "E2E-CUSTOM-AGENT-WORKFLOW"],
       });
+      await expect({ dir: projectDir }).toHaveAgentFrontmatter("my-custom-agent", {
+        name: "my-custom-agent",
+      });
     });
 
     it("should override a built-in agent with a custom agent of the same name", async () => {
@@ -164,6 +167,9 @@ describe("custom sub-agents", () => {
       await expect({ dir: projectDir }).toHaveCompiledAgentContent("web-developer", {
         contains: ["name: web-developer"],
         notContains: ["E2E-CUSTOM-ONLY-CONTENT"],
+      });
+      await expect({ dir: projectDir }).toHaveAgentFrontmatter("my-custom-agent", {
+        name: "my-custom-agent",
       });
     });
   });

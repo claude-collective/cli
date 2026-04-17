@@ -20,6 +20,7 @@ type AgentFrontmatterExpectations = {
   model?: string;
   tools?: string[];
   skills?: string[];
+  hasSkills?: boolean;
   noSkills?: boolean;
 };
 

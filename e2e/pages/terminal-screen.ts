@@ -20,6 +20,33 @@ export class TerminalScreen {
     }
   }
 
+  /**
+   * Auto-retrying wait for text appearing AFTER the given RAW-output cursor.
+   * Needed for closed-loop retry: xterm's processed buffer is not append-only
+   * (Ink rewrites lines in place), so cursoring it is unreliable. Raw output
+   * IS append-only, so callers capture `getRawCursor()` before the action and
+   * assert on post-cursor raw output.
+   */
+  async waitForTextAfter(text: string, cursor: number, timeoutMs: number): Promise<void> {
+    const start = Date.now();
+    while (!this.session.getRawOutput().slice(cursor).includes(text)) {
+      if (Date.now() - start > timeoutMs) {
+        throw new Error(
+          `TerminalScreen: timeout waiting for "${text}" after raw cursor ${cursor} ` +
+            `within ${timeoutMs}ms.\n` +
+            `Screen:\n${this.session.getScreen()}\n` +
+            `Post-cursor raw tail:\n${this.session.getRawOutput().slice(cursor).slice(-2000)}`,
+        );
+      }
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+    }
+  }
+
+  /** Captures the current raw-output length for use as a cursor in waitForTextAfter. */
+  getRawCursor(): number {
+    return this.session.getRawOutput().length;
+  }
+
   /** Auto-retrying wait for text in raw PTY output (no xterm processing). */
   async waitForRawText(text: string, timeoutMs: number): Promise<void> {
     const start = Date.now();
@@ -56,6 +83,18 @@ export class TerminalScreen {
   /** Wait for the wizard footer ("select") to render, indicating stable layout. */
   async waitForStableRender(timeoutMs: number): Promise<void> {
     await this.waitForText("select", timeoutMs);
+  }
+
+  /**
+   * Cursor-anchored version of waitForStableRender. Waits for the wizard
+   * footer ("select") to appear in raw output AFTER the given cursor.
+   *
+   * Use this when a previous wizard step already printed "select" into
+   * scrollback — the non-anchored variant would return instantly on the
+   * stale residue, masking the fact that the next frame has not rendered.
+   */
+  async waitForStableRenderAfter(cursor: number, timeoutMs: number): Promise<void> {
+    await this.waitForTextAfter("select", cursor, timeoutMs);
   }
 
   /** Get the current visible screen (viewport only). */
